@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.table &#8212; SDV 0.15.0 documentation</title>
+    <title>sdv.metadata.table &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -105,7 +105,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../../_static/slack-32.png">
             </a>
           </li>
@@ -171,15 +171,16 @@
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">rdt</span>
 <span class="kn">from</span> <span class="nn">faker</span> <span class="kn">import</span> <span class="n">Faker</span>
 
-<span class="kn">from</span> <span class="nn">sdv.constraints.base</span> <span class="kn">import</span> <span class="n">Constraint</span>
-<span class="kn">from</span> <span class="nn">sdv.constraints.errors</span> <span class="kn">import</span> <span class="n">MissingConstraintColumnError</span>
-<span class="kn">from</span> <span class="nn">sdv.errors</span> <span class="kn">import</span> <span class="n">ConstraintsNotMetError</span>
+<span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">Constraint</span>
+<span class="kn">from</span> <span class="nn">sdv.constraints.errors</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FunctionError</span><span class="p">,</span> <span class="n">MissingConstraintColumnError</span><span class="p">,</span> <span class="n">MultipleConstraintsErrors</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sdv.metadata.errors</span> <span class="kn">import</span> <span class="n">MetadataError</span><span class="p">,</span> <span class="n">MetadataNotFittedError</span>
 <span class="kn">from</span> <span class="nn">sdv.metadata.utils</span> <span class="kn">import</span> <span class="n">strings_from_regex</span>
 
@@ -271,8 +272,6 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_hyper_transformer</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">_fakers</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">_constraint_instances</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_fields_metadata</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">fitted</span> <span class="o">=</span> <span class="kc">False</span>
 
@@ -414,32 +413,16 @@
             <span class="p">})</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_prepare_constraints</span><span class="p">(</span><span class="n">constraints</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_load_constraints</span><span class="p">(</span><span class="n">constraints</span><span class="p">):</span>
         <span class="n">constraints</span> <span class="o">=</span> <span class="n">constraints</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="n">rebuild_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="n">transform_constraints</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">reject_sampling_constraints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">loaded_constraints</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
-                <span class="n">constraint</span> <span class="o">=</span> <span class="n">constraint</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">):</span>
-                <span class="n">constraint</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-
-            <span class="n">constraint</span> <span class="o">=</span> <span class="n">Constraint</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">constraint</span><span class="o">.</span><span class="n">rebuild_columns</span><span class="p">:</span>
-                <span class="n">reject_sampling_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">rebuild_columns</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">constraint</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">):</span>
-                <span class="n">intersecting_columns</span> <span class="o">=</span> <span class="n">rebuild_columns</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">constraint</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">)</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Multiple constraints will modify the same column(s): &#39;</span>
-                                <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">intersecting_columns</span><span class="si">}</span><span class="s1">&quot;, which may lead to the constraint &#39;</span>
-                                <span class="s1">&#39;being unenforceable. Please use &quot;reject_sampling&quot; as the &#39;</span>
-                                <span class="s1">&#39;&quot;handling_strategy&quot; instead.&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">loaded_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Constraint</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">constraint</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">transform_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
-                <span class="n">rebuild_columns</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">constraint</span><span class="o">.</span><span class="n">rebuild_columns</span><span class="p">)</span>
+                <span class="n">loaded_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">reject_sampling_constraints</span> <span class="o">+</span> <span class="n">transform_constraints</span>
+        <span class="k">return</span> <span class="n">loaded_constraints</span>
 
 <div class="viewcode-block" id="Table.__init__"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.html#sdv.metadata.table.Table.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -457,7 +440,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_index</span> <span class="o">=</span> <span class="n">sequence_index</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_entity_columns</span> <span class="o">=</span> <span class="n">entity_columns</span> <span class="ow">or</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_context_columns</span> <span class="o">=</span> <span class="n">context_columns</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_constraints</span><span class="p">(</span><span class="n">constraints</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_constraints</span><span class="p">(</span><span class="n">constraints</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_constraints_to_reverse</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dtype_transformers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DTYPE_TRANSFORMERS</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_transformer_templates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_TRANSFORMER_TEMPLATES</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_transformer_templates</span><span class="p">(</span><span class="n">rounding</span><span class="p">,</span> <span class="n">min_value</span><span class="p">,</span> <span class="n">max_value</span><span class="p">)</span>
@@ -610,9 +594,58 @@
 
         <span class="k">return</span> <span class="n">transformers</span>
 
-    <span class="k">def</span> <span class="nf">_fit_transform_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_fit_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">constraint</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MultipleConstraintsErrors</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">errors</span><span class="p">)))</span>
+
+    <span class="k">def</span> <span class="nf">_transform_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">is_condition</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_condition</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_constraints_to_reverse</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">is_condition</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_constraints_to_reverse</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="p">(</span><span class="n">MissingConstraintColumnError</span><span class="p">,</span> <span class="n">FunctionError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">MissingConstraintColumnError</span><span class="p">):</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">constraint</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1"> cannot be transformed because columns: &#39;</span>
+                        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">missing_columns</span><span class="si">}</span><span class="s1"> were not found. Using the reject sampling approach &#39;</span>
+                        <span class="s1">&#39;instead.&#39;</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;Error transforming </span><span class="si">{</span><span class="n">constraint</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">. &#39;</span>
+                        <span class="s1">&#39;Using the reject sampling approach instead.&#39;</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="n">is_condition</span><span class="p">:</span>
+                    <span class="n">indices_to_drop</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">constraint</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">)</span>
+                    <span class="n">columns_to_drop</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">indices_to_drop</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns_to_drop</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MultipleConstraintsErrors</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">errors</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">_fit_transform_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="c1"># Fit and validate all constraints first because `transform` might change columns</span>
+        <span class="c1"># making the following constraints invalid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fit_constraints</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_constraints</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">data</span>
 
@@ -760,61 +793,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_fit_hyper_transformer</span><span class="p">(</span><span class="n">constrained</span><span class="p">,</span> <span class="n">extra_columns</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fitted</span> <span class="o">=</span> <span class="kc">True</span></div>
 
-    <span class="k">def</span> <span class="nf">_transform_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">on_missing_column</span><span class="o">=</span><span class="s1">&#39;error&#39;</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-            <span class="k">except</span> <span class="n">MissingConstraintColumnError</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">on_missing_column</span> <span class="o">==</span> <span class="s1">&#39;error&#39;</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">MissingConstraintColumnError</span><span class="p">()</span>
-
-                <span class="k">elif</span> <span class="n">on_missing_column</span> <span class="o">==</span> <span class="s1">&#39;drop&#39;</span><span class="p">:</span>
-                    <span class="n">indices_to_drop</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">constraint</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">)</span>
-                    <span class="n">columns_to_drop</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">indices_to_drop</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
-                    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns_to_drop</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;on_missing_column must be </span><span class="se">\&#39;</span><span class="s1">drop</span><span class="se">\&#39;</span><span class="s1"> or </span><span class="se">\&#39;</span><span class="s1">error</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">data</span>
-
-    <span class="k">def</span> <span class="nf">_validate_data_on_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Make sure the given data is valid for the given constraints.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            data (pandas.DataFrame):</span>
-<span class="sd">                Table data.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            None</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ConstraintsNotMetError:</span>
-<span class="sd">                If the table data is not valid for the provided constraints.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">constraint</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">constraint</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-                    <span class="k">raise</span> <span class="n">ConstraintsNotMetError</span><span class="p">(</span><span class="s1">&#39;Data is not valid for the given constraints&#39;</span><span class="p">)</span>
-
-<div class="viewcode-block" id="Table.transform"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.transform.html#sdv.metadata.table.Table.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">on_missing_column</span><span class="o">=</span><span class="s1">&#39;error&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="Table.transform"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.transform.html#sdv.metadata.table.Table.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">is_condition</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Transform the given data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (pandas.DataFrame):</span>
 <span class="sd">                Table data.</span>
-<span class="sd">            on_missing_column (str):</span>
-<span class="sd">                If the value is error, then a `MissingConstraintColumnError` is raised.</span>
-<span class="sd">                If the value is drop, then the columns involved in the constraint that</span>
-<span class="sd">                are present in data will be dropped.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pandas.DataFrame:</span>
 <span class="sd">                Transformed data.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ConstraintsNotMetError:</span>
-<span class="sd">                If the table data is not valid for the provided constraints.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fitted</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">MetadataNotFittedError</span><span class="p">()</span>
@@ -823,10 +811,8 @@
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Anonymizing table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anonymize</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">fields</span><span class="p">])</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_data_on_constraints</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Transforming constraints for table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_constraints</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">on_missing_column</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_constraints</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">is_condition</span><span class="p">)</span>
 
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Transforming table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
@@ -869,7 +855,7 @@
         <span class="k">except</span> <span class="n">rdt</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">NotFittedError</span><span class="p">:</span>
             <span class="n">reversed_data</span> <span class="o">=</span> <span class="n">data</span>
 
-        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_constraints_to_reverse</span><span class="p">):</span>
             <span class="n">reversed_data</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">reversed_data</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field_metadata</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -880,6 +866,9 @@
                 <span class="n">field_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">Table</span><span class="o">.</span><span class="n">_get_fake_values</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">reversed_data</span><span class="p">)))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">field_data</span> <span class="o">=</span> <span class="n">reversed_data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">field_metadata</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;numerical&#39;</span> <span class="ow">and</span> <span class="n">field_metadata</span><span class="p">[</span><span class="s1">&#39;subtype&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;integer&#39;</span><span class="p">:</span>
+                <span class="n">field_data</span> <span class="o">=</span> <span class="n">field_data</span><span class="o">.</span><span class="n">round</span><span class="p">()</span>
 
             <span class="n">reversed_data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">field_data</span><span class="p">[</span><span class="n">field_data</span><span class="o">.</span><span class="n">notnull</span><span class="p">()]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dtypes</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
 

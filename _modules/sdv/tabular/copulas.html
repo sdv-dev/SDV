@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulas &#8212; SDV 0.15.0 documentation</title>
+    <title>sdv.tabular.copulas &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -105,7 +105,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../../_static/slack-32.png">
             </a>
           </li>
@@ -418,72 +418,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_metadata</span><span class="p">()</span>
-
-<div class="viewcode-block" id="GaussianCopula.sample_conditions"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.copulas.GaussianCopula.sample_conditions.html#sdv.tabular.copulas.GaussianCopula.sample_conditions">[docs]</a>    <span class="k">def</span> <span class="nf">sample_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">randomize_samples</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                          <span class="n">output_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample rows from this table with the given conditions.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            conditions (list[sdv.sampling.Condition]):</span>
-<span class="sd">                A list of sdv.sampling.Condition objects, which specify the column</span>
-<span class="sd">                values in a condition, along with the number of rows for that</span>
-<span class="sd">                condition.</span>
-<span class="sd">            batch_size (int or None):</span>
-<span class="sd">                The batch size to sample. Defaults to `num_rows`, if None.</span>
-<span class="sd">            randomize_samples (bool):</span>
-<span class="sd">                Whether or not to use a fixed seed when sampling. Defaults</span>
-<span class="sd">                to True.</span>
-<span class="sd">            output_file_path (str or None):</span>
-<span class="sd">                The file to periodically write sampled rows to. Defaults to</span>
-<span class="sd">                a temporary file, if None.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            pandas.DataFrame:</span>
-<span class="sd">                Sampled data.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ConstraintsNotMetError:</span>
-<span class="sd">                If the conditions are not valid for the given constraints.</span>
-<span class="sd">            ValueError:</span>
-<span class="sd">                If any of the following happens:</span>
-<span class="sd">                    * any of the conditions&#39; columns are not valid.</span>
-<span class="sd">                    * no rows could be generated.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_conditions</span><span class="p">(</span>
-            <span class="n">conditions</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">randomize_samples</span><span class="p">,</span> <span class="n">output_file_path</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="GaussianCopula.sample_remaining_columns"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.copulas.GaussianCopula.sample_remaining_columns.html#sdv.tabular.copulas.GaussianCopula.sample_remaining_columns">[docs]</a>    <span class="k">def</span> <span class="nf">sample_remaining_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">known_columns</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">randomize_samples</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                                 <span class="n">output_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample rows from this table.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            known_columns (pandas.DataFrame):</span>
-<span class="sd">                A pandas.DataFrame with the columns that are already known. The output</span>
-<span class="sd">                is a DataFrame such that each row in the output is sampled</span>
-<span class="sd">                conditionally on the corresponding row in the input.</span>
-<span class="sd">            batch_size (int or None):</span>
-<span class="sd">                The batch size to sample. Defaults to `num_rows`, if None.</span>
-<span class="sd">            randomize_samples (bool):</span>
-<span class="sd">                Whether or not to use a fixed seed when sampling. Defaults</span>
-<span class="sd">                to True.</span>
-<span class="sd">            output_file_path (str or None):</span>
-<span class="sd">                The file to periodically write sampled rows to. Defaults to</span>
-<span class="sd">                a temporary file, if None.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            pandas.DataFrame:</span>
-<span class="sd">                Sampled data.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ConstraintsNotMetError:</span>
-<span class="sd">                If the conditions are not valid for the given constraints.</span>
-<span class="sd">            ValueError:</span>
-<span class="sd">                If any of the following happens:</span>
-<span class="sd">                    * any of the conditions&#39; columns are not valid.</span>
-<span class="sd">                    * no rows could be generated.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_remaining_columns</span><span class="p">(</span>
-            <span class="n">known_columns</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">randomize_samples</span><span class="p">,</span> <span class="n">output_file_path</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>

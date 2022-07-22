@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>Quickstart &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quickstart &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../_static/slack-32.png">
             </a>
           </li>
@@ -207,18 +206,18 @@
               
               <div>
                 
-  <section id="quickstart">
+  <div class="section" id="quickstart">
 <span id="id1"></span><h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
 <p>In this short tutorial we will guide you through a series of steps that
 will help you getting started using <strong>SDV</strong>.</p>
-<section id="model-the-dataset-using-sdv">
+<div class="section" id="model-the-dataset-using-sdv">
 <h2>Model the dataset using SDV<a class="headerlink" href="#model-the-dataset-using-sdv" title="Permalink to this headline">¶</a></h2>
 <p>To model a multi table, relational dataset, we follow two steps. In the
 first step, we will load the data and configures the meta data. In the
 second step, we will use the SDV API to fit and save a hierarchical
 model. We will cover these two steps in this section using an example
 dataset.</p>
-<section id="load-example-data">
+<div class="section" id="load-example-data">
 <h3>Load example data<a class="headerlink" href="#load-example-data" title="Permalink to this headline">¶</a></h3>
 <p><strong>SDV</strong> comes with a toy dataset to play with, which can be loaded using
 the <code class="docutils literal notranslate"><span class="pre">sdv.load_demo</span></code> function:</p>
@@ -289,8 +288,8 @@ described in the metadata object.</p></li>
 <span class="go"> 9               9           9 2019-01-29 12:10:48    99.9      False}</span>
 </pre></div>
 </div>
-</section>
-<section id="fit-a-model-using-the-sdv-api">
+</div>
+<div class="section" id="fit-a-model-using-the-sdv-api">
 <h3>Fit a model using the SDV API.<a class="headerlink" href="#fit-a-model-using-the-sdv-api" title="Permalink to this headline">¶</a></h3>
 <p>First, we build a hierarchical statistical model of the data using
 <strong>SDV</strong>. For this we will create an instance of the <code class="docutils literal notranslate"><span class="pre">sdv.SDV</span></code> class
@@ -305,9 +304,9 @@ the probability distributions of the values in the columns.</p>
 <span class="gp">In [8]: </span><span class="n">sdv</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">tables</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-</section>
-<section id="sample-data-from-the-fitted-model">
+</div>
+</div>
+<div class="section" id="sample-data-from-the-fitted-model">
 <h2>Sample data from the fitted model<a class="headerlink" href="#sample-data-from-the-fitted-model" title="Permalink to this headline">¶</a></h2>
 <p>Once the modeling has finished you are ready to generate new synthetic
 data using the <code class="docutils literal notranslate"><span class="pre">sdv</span></code> instance that you have.</p>
@@ -328,42 +327,42 @@ following the original distribution of your dataset.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">sampled</span>
 <span class="gh">Out[10]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0        0      US      F   37</span>
-<span class="go"> 1        1      ES      M   36</span>
-<span class="go"> 2        2      DE      M   56</span>
-<span class="go"> 3        3      DE    NaN   44</span>
-<span class="go"> 4        4      US      F   39</span>
-<span class="go"> 5        5      DE      F   35</span>
-<span class="go"> 6        6      FR      M   43</span>
-<span class="go"> 7        7      BG      M   57</span>
-<span class="go"> 8        8      US      F   51</span>
-<span class="go"> 9        9      UK      M   23,</span>
+<span class="go"> 0        0      US      M   30</span>
+<span class="go"> 1        1      US      M   42</span>
+<span class="go"> 2        2      ES      M   23</span>
+<span class="go"> 3        3      ES      F   44</span>
+<span class="go"> 4        4      US    NaN   44</span>
+<span class="go"> 5        5      UK      F   43</span>
+<span class="go"> 6        6      US      F   46</span>
+<span class="go"> 7        7      BG      M   38</span>
+<span class="go"> 8        8      FR      M   31</span>
+<span class="go"> 9        9      ES      M   22,</span>
 <span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os  minutes</span>
-<span class="go"> 0           0        0  tablet      ios       19</span>
-<span class="go"> 1           1        1  tablet      ios       19</span>
-<span class="go"> 2           2        2  tablet      ios       18</span>
-<span class="go"> 3           3        3  mobile  android       28</span>
-<span class="go"> 4           4        4  mobile      ios       18</span>
-<span class="go"> 5           5        5  mobile      ios       34</span>
-<span class="go"> 6           6        6  mobile  android       24</span>
-<span class="go"> 7           7        7  mobile      ios       19</span>
-<span class="go"> 8           8        8  tablet  android       11</span>
-<span class="go"> 9           9        9  tablet  android       10,</span>
+<span class="go"> 0           0        0  tablet      ios       24</span>
+<span class="go"> 1           1        1  mobile      ios       24</span>
+<span class="go"> 2           2        2  tablet  android       17</span>
+<span class="go"> 3           3        3  mobile      ios       10</span>
+<span class="go"> 4           4        4  tablet  android       32</span>
+<span class="go"> 5           5        5  mobile      ios       16</span>
+<span class="go"> 6           6        6  mobile      ios       17</span>
+<span class="go"> 7           7        7  mobile      ios       28</span>
+<span class="go"> 8           8        8  tablet      ios       23</span>
+<span class="go"> 9           9        9  tablet      ios       15,</span>
 <span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp  amount  cancelled</span>
-<span class="go"> 0               0           0 2019-01-06 20:22:51    62.7      False</span>
-<span class="go"> 1               1           1 2019-01-20 13:24:12    87.7      False</span>
-<span class="go"> 2               2           2 2019-01-15 17:27:16    93.4      False</span>
-<span class="go"> 3               3           3 2019-01-12 17:40:44    79.2      False</span>
-<span class="go"> 4               4           4 2019-01-17 15:41:48    92.4       True</span>
-<span class="go"> 5               5           5 2019-01-14 14:03:53    79.7      False</span>
-<span class="go"> 6               6           6 2019-01-15 09:44:33   103.9      False</span>
-<span class="go"> 7               7           7 2019-01-27 00:22:11    91.4      False</span>
-<span class="go"> 8               8           8 2019-01-04 00:54:49   102.5      False</span>
-<span class="go"> 9               9           9 2019-01-03 14:09:58    78.0      False}</span>
+<span class="go"> 0               0           0 2019-01-23 02:12:53   106.8      False</span>
+<span class="go"> 1               1           1 2019-01-25 18:22:26   132.1       True</span>
+<span class="go"> 2               2           2 2019-01-18 21:10:19    69.9      False</span>
+<span class="go"> 3               3           3 2019-01-12 16:08:34    84.2       True</span>
+<span class="go"> 4               4           4 2019-01-18 18:19:33    84.9      False</span>
+<span class="go"> 5               5           5 2019-01-14 02:56:52    79.2      False</span>
+<span class="go"> 6               6           6 2019-01-16 19:57:32   100.8      False</span>
+<span class="go"> 7               7           7 2019-01-29 12:10:48    64.9      False</span>
+<span class="go"> 8               8           8 2019-01-13 06:57:01    98.1      False</span>
+<span class="go"> 9               9           9 2019-01-26 12:49:30   110.0      False}</span>
 </pre></div>
 </div>
-</section>
-<section id="saving-and-loading-your-model">
+</div>
+<div class="section" id="saving-and-loading-your-model">
 <h2>Saving and Loading your model<a class="headerlink" href="#saving-and-loading-your-model" title="Permalink to this headline">¶</a></h2>
 <p>In some cases, you might want to save the fitted SDV instance to be able
 to generate synthetic data from it later or on a different system.</p>
@@ -387,27 +386,27 @@ need to load it from its <code class="docutils literal notranslate"><span class=
 <span class="gp">In [14]: </span><span class="n">sampled</span>
 <span class="gh">Out[14]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0       10      UK      F   25</span>
-<span class="go"> 1       11      UK      M   42</span>
-<span class="go"> 2       12      DE      M   25</span>
-<span class="go"> 3       13      US    NaN   38</span>
-<span class="go"> 4       14      BG      M   57,</span>
-<span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os  minutes</span>
-<span class="go"> 0          10       10  tablet      ios       21</span>
-<span class="go"> 1          11       11  tablet      ios       22</span>
-<span class="go"> 2          12       12  mobile      ios       34</span>
-<span class="go"> 3          13       13  mobile  android       31</span>
-<span class="go"> 4          14       14  mobile      ios       31,</span>
+<span class="go"> 0       10      US      F   25</span>
+<span class="go"> 1       11      DE      F   41</span>
+<span class="go"> 2       12      US      F   33</span>
+<span class="go"> 3       13      FR      M   36</span>
+<span class="go"> 4       14      ES      F   31,</span>
+<span class="go"> &#39;sessions&#39;:    session_id  user_id  device   os  minutes</span>
+<span class="go"> 0          10       10  tablet  ios        9</span>
+<span class="go"> 1          11       11  mobile  ios       10</span>
+<span class="go"> 2          12       12  mobile  ios       34</span>
+<span class="go"> 3          13       13  mobile  ios       25</span>
+<span class="go"> 4          14       14  mobile  ios       19,</span>
 <span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp  amount  cancelled</span>
-<span class="go"> 0              10          10 2019-01-05 17:03:46    55.3      False</span>
-<span class="go"> 1              11          11 2019-01-21 06:34:50    67.6      False</span>
-<span class="go"> 2              12          12 2019-01-29 12:10:48   108.3      False</span>
-<span class="go"> 3              13          13 2019-01-13 21:15:09    92.9      False</span>
-<span class="go"> 4              14          14 2019-01-19 15:17:05    93.2      False}</span>
+<span class="go"> 0              10          10 2019-01-10 03:57:08    83.1      False</span>
+<span class="go"> 1              11          11 2019-01-13 19:24:19    77.0      False</span>
+<span class="go"> 2              12          12 2019-01-28 00:02:05    85.5      False</span>
+<span class="go"> 3              13          13 2019-01-28 14:55:43    92.2      False</span>
+<span class="go"> 4              14          14 2019-01-21 20:17:50   102.4       True}</span>
 </pre></div>
 </div>
-</section>
-</section>
+</div>
+</div>
 
 
               </div>

@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>Multi Table Metrics &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multi Table Metrics &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../_static/slack-32.png">
             </a>
           </li>
@@ -249,7 +248,7 @@
               
               <div>
                 
-  <section id="multi-table-metrics">
+  <div class="section" id="multi-table-metrics">
 <span id="id1"></span><h1>Multi Table Metrics<a class="headerlink" href="#multi-table-metrics" title="Permalink to this headline">¶</a></h1>
 <p>In this section we will show you which metrics exist for multi table datasets and
 how to use them.</p>
@@ -364,7 +363,7 @@ by the <code class="docutils literal notranslate"><span class="pre">HMA1</span><
 </div>
 <p>These three elements, or their corresponding equivalents, are all you will need to
 run most of the <em>Multi Table Metrics</em> on your own <em>Synthetic Dataset</em>.</p>
-<section id="multi-table-metric-families">
+<div class="section" id="multi-table-metric-families">
 <h2>Multi Table Metric Families<a class="headerlink" href="#multi-table-metric-families" title="Permalink to this headline">¶</a></h2>
 <p>The <em>Multi Table Metrics</em> are grouped in multiple families:</p>
 <ul class="simple">
@@ -376,7 +375,7 @@ on the resulting tables. If there is more than one parent-child relationship in 
 the overall score is the average of the scores obtained by the <em>Single Table Detection Metric</em>
 on each one of them.</p></li>
 </ul>
-<section id="multi-single-table-metrics">
+<div class="section" id="multi-single-table-metrics">
 <h3>Multi Single Table Metrics<a class="headerlink" href="#multi-single-table-metrics" title="Permalink to this headline">¶</a></h3>
 <p>These metrics simply apply a <em>Single Table Metric</em> on each table from the dataset and then
 report back the average score obtained.</p>
@@ -397,8 +396,8 @@ report back the average score obtained.</p>
 <span class="gh">Out[7]: </span><span class="go">0.8194444444444443</span>
 </pre></div>
 </div>
-</section>
-<section id="parent-child-detection-metrics">
+</div>
+<div class="section" id="parent-child-detection-metrics">
 <h3>Parent Child Detection Metrics<a class="headerlink" href="#parent-child-detection-metrics" title="Permalink to this headline">¶</a></h3>
 <p>These metrics will de-normalize each parent-child relationship on the dataset and build
 a table out of it. Afterwards, they will apply a <em>Single Table Detection Metric</em> on the
@@ -435,9 +434,9 @@ with a <code class="docutils literal notranslate"><span class="pre">tuple</span>
 <span class="gh">Out[11]: </span><span class="go">0.8333333333333333</span>
 </pre></div>
 </div>
-</section>
-</section>
-</section>
+</div>
+</div>
+</div>
 
 
               </div>

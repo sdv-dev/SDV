@@ -27,21 +27,6 @@ The following public methods are implemented in this class:
 * ``from_dict``: Build a ``Constraint`` from its dict representation.
 * ``to_dict``: Return a dict representing the ``Constraint``.
 
-handling_strategy
-~~~~~~~~~~~~~~~~~
-
-Additionally, the ``Constraint.__init__`` method sets up the class based on the value of the
-argument ``handling_strategy`` as follows:
-
-* If ``handling_strategy`` equals ``'transform'``, the ``filter_valid`` method is disabled by
-  replacing it with an identity function.
-* If ``handling_strategy`` equals ``'reject_sampling'``, both the ``transform`` and
-  ``reverse_transform`` methods are disabled by replacing them with an identity function.
-
-Because of this, any subclass has the option to implement both the transformation and reject
-sampling strategies and later on give the user the choice to choose between the two by just
-calling the ``super().__init__`` method passing the corresponding ``handling_strategy`` value.
-
 Implementing a Custom Constraint
 --------------------------------
 
@@ -131,23 +116,13 @@ modeling and sampling the number of `pairs of legs` instead of the number of `le
             table_data[self._column_name] = table_data[self._column_name] * 2
             return table_data
 
-With this new implementation, our Constraint would be ready to handle both strategies,
-`reject sampling` and `transform`, but in some cases we might want to let the user
-chose only one of them, so the other is skipped.
-
-In a situation like this, we can simply add a ``handling_strategy`` parameter to our
-``__init__`` method and call ``super().__init__`` passing it, so the base ``Constraint`` class
-can handle it adequately:
-
-
 .. code-block:: python
 
     class PositiveEven(Constraint):
         """Ensure that values are positive and even."""
 
-        def __init__(self, column_name, handling_strategy='transform'):
+        def __init__(self, column_name):
             self._column_name = column_name
-            super().__init__(handling_strategy=handling_strategy)
 
         def is_valid(self, table_data):
             """Say if values are positive and even."""

@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>sdv.tabular.ctgan.TVAE.sample &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sdv.tabular.ctgan.TVAE.sample &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../../_static/slack-32.png">
             </a>
           </li>
@@ -141,6 +140,12 @@
             
                 <li class="">
                     <a href="../../sdv.html">sdv</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../../lite/index.html">sdv.lite</a>
                 </li>
             
           
@@ -296,11 +301,11 @@
               
               <div>
                 
-  <section id="sdv-tabular-ctgan-tvae-sample">
+  <div class="section" id="sdv-tabular-ctgan-tvae-sample">
 <h1>sdv.tabular.ctgan.TVAE.sample<a class="headerlink" href="#sdv-tabular-ctgan-tvae-sample" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt id="sdv.tabular.ctgan.TVAE.sample">
-<code class="sig-prename descclassname">TVAE.</code><code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_rows</span></em>, <em class="sig-param"><span class="n">randomize_samples</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">output_file_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">conditions</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.tabular.ctgan.TVAE.sample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">TVAE.</code><code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_rows</span></em>, <em class="sig-param"><span class="n">randomize_samples</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">max_tries_per_batch</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">output_file_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">conditions</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.tabular.ctgan.TVAE.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample rows from this table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -308,6 +313,7 @@
 <li><p><strong>num_rows</strong> (<em>int</em>) – Number of rows to sample. This parameter is required.</p></li>
 <li><p><strong>randomize_samples</strong> (<em>bool</em>) – Whether or not to use a fixed seed when sampling. Defaults
 to True.</p></li>
+<li><p><strong>max_tries_per_batch</strong> (<em>int</em>) – Number of times to retry sampling until the batch size is met. Defaults to 100.</p></li>
 <li><p><strong>batch_size</strong> (<em>int</em><em> or </em><em>None</em>) – The batch size to sample. Defaults to <cite>num_rows</cite>, if None.</p></li>
 <li><p><strong>output_file_path</strong> (<em>str</em><em> or </em><em>None</em>) – The file to periodically write sampled rows to. If None, does not
 write rows anywhere.</p></li>
@@ -324,7 +330,7 @@ write rows anywhere.</p></li>
 </dl>
 </dd></dl>
 
-</section>
+</div>
 
 
               </div>

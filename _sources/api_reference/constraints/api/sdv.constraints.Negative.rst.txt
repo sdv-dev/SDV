@@ -32,6 +32,5 @@
    .. autosummary::
    
       ~Negative.constraint_columns
-      ~Negative.rebuild_columns
    
    

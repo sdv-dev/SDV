@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>Running on Docker &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Running on Docker &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../_static/slack-32.png">
             </a>
           </li>
@@ -259,15 +258,15 @@
               
               <div>
                 
-  <section id="running-on-docker">
+  <div class="section" id="running-on-docker">
 <span id="benchmarking-docker"></span><h1>Running on Docker<a class="headerlink" href="#running-on-docker" title="Permalink to this headline">¶</a></h1>
 <p>We support using Docker to run SDGym. This can help you avoid dependency
 issues when running SDGym on Windows as well as in environments where
 you don’t have permission to install libraries.</p>
-<section id="basic-usage">
+<div class="section" id="basic-usage">
 <h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h2>
 <p>To get started with SDGym on Docker, you should do the two following steps.</p>
-<section id="pull-sdgym">
+<div class="section" id="pull-sdgym">
 <h3>Pull SDGym<a class="headerlink" href="#pull-sdgym" title="Permalink to this headline">¶</a></h3>
 <p>Pull the latest SDGym image &lt;<a class="reference external" href="https://hub.docker.com/r/sdvproject/sdgym">https://hub.docker.com/r/sdvproject/sdgym</a>&gt;`__
 from DockerHub by running:</p>
@@ -282,8 +281,8 @@ from DockerHub by running:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;any</span> <span class="pre">other</span> <span class="pre">tag&gt;</span></code> to get the corresponding version</p></li>
 </ul>
 </div></blockquote>
-</section>
-<section id="run-sdgym">
+</div>
+<div class="section" id="run-sdgym">
 <h3>Run SDGym<a class="headerlink" href="#run-sdgym" title="Permalink to this headline">¶</a></h3>
 <p>Run SDGym using the following command:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker run -ti sdvproject/sdgym -- sdgym COMMAND OPTIONS
@@ -295,9 +294,9 @@ from DockerHub by running:</p>
 </pre></div>
 </div>
 <p>to benchmark the CTGAN model on the adult dataset.</p>
-</section>
-</section>
-<section id="advanced-usage">
+</div>
+</div>
+<div class="section" id="advanced-usage">
 <h2>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h2>
 <p>The above basic usage describes how you can run the benchmark on the
 built-in datasets which will automatically be downloaded inside your
@@ -310,8 +309,8 @@ container:</p>
 </div>
 <p>The above command will take the path <code class="docutils literal notranslate"><span class="pre">/path/to/data</span></code> and mount it
 inside the Docker container so it is available to SDGym.</p>
-</section>
-</section>
+</div>
+</div>
 
 
               </div>

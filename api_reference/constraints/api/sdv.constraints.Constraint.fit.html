@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>sdv.constraints.Constraint.fit &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sdv.constraints.Constraint.fit &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../../_static/slack-32.png">
             </a>
           </li>
@@ -141,6 +140,12 @@
             
                 <li class="">
                     <a href="../../sdv.html">sdv</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../../lite/index.html">sdv.lite</a>
                 </li>
             
           
@@ -286,16 +291,12 @@
               
               <div>
                 
-  <section id="sdv-constraints-constraint-fit">
+  <div class="section" id="sdv-constraints-constraint-fit">
 <h1>sdv.constraints.Constraint.fit<a class="headerlink" href="#sdv-constraints-constraint-fit" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt id="sdv.constraints.Constraint.fit">
 <code class="sig-prename descclassname">Constraint.</code><code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">table_data</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdv/constraints/base.html#Constraint.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.constraints.Constraint.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class to data.</p>
-<p>If <code class="docutils literal notranslate"><span class="pre">fit_columns_model</span></code> is True, then this method will fit
-a <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model to the relevant columns in <code class="docutils literal notranslate"><span class="pre">table_data</span></code>.
-Subclasses can overwrite this method, or overwrite the <code class="docutils literal notranslate"><span class="pre">_fit</span></code> method
-if they will not be needing the model to handle conditional sampling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>table_data</strong> (<em>pandas.DataFrame</em>) – Table data.</p>
@@ -303,7 +304,7 @@ if they will not be needing the model to handle conditional sampling.</p>
 </dl>
 </dd></dl>
 
-</section>
+</div>
 
 
               </div>

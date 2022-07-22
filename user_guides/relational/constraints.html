@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>Constraints &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Constraints &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../_static/slack-32.png">
             </a>
           </li>
@@ -224,7 +223,7 @@
               
               <div>
                 
-  <section id="constraints">
+  <div class="section" id="constraints">
 <span id="relational-constraints"></span><h1>Constraints<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h1>
 <p>SDV supports adding constraints within a single table. See <a class="reference internal" href="../single_table/constraints.html#single-table-constraints"><span class="std std-ref">Constraints</span></a>
 for more information about the available single table constraints.</p>
@@ -304,30 +303,30 @@ appear in the original data.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [14]: </span><span class="n">new_data</span>
 <span class="gh">Out[14]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0        0      BG      F   36</span>
-<span class="go"> 1        1      BG      F   54</span>
-<span class="go"> 2        2      ES      M   35</span>
-<span class="go"> 3        3      ES      F   22</span>
-<span class="go"> 4        4      ES      F   24</span>
-<span class="go"> 5        5      ES      M   36</span>
-<span class="go"> 6        6      ES      F   45</span>
-<span class="go"> 7        7      DE    NaN   44</span>
-<span class="go"> 8        8      US      M   34</span>
-<span class="go"> 9        9      UK    NaN   45,</span>
-<span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os  minutes</span>
-<span class="go"> 0           0        0  tablet      ios       27</span>
-<span class="go"> 1           1        1  mobile      ios       17</span>
-<span class="go"> 2           2        2  tablet      ios       23</span>
-<span class="go"> 3           3        3  mobile  android       33</span>
-<span class="go"> 4           4        4  mobile      ios       22</span>
-<span class="go"> 5           5        5  mobile  android       29</span>
-<span class="go"> 6           6        6  mobile  android       25</span>
-<span class="go"> 7           7        7  tablet      ios       34</span>
-<span class="go"> 8           8        8  tablet      ios       24</span>
-<span class="go"> 9           9        9  tablet      ios        9}</span>
+<span class="go"> 0        0      ES    NaN   31</span>
+<span class="go"> 1        1      DE      M   51</span>
+<span class="go"> 2        2      BG      F   34</span>
+<span class="go"> 3        3      UK      F   41</span>
+<span class="go"> 4        4      DE    NaN   57</span>
+<span class="go"> 5        5      DE      M   29</span>
+<span class="go"> 6        6      DE      F   29</span>
+<span class="go"> 7        7      US      F   34</span>
+<span class="go"> 8        8      UK      M   26</span>
+<span class="go"> 9        9      UK    NaN   42,</span>
+<span class="go"> &#39;sessions&#39;:    session_id  user_id  device   os  minutes</span>
+<span class="go"> 0           0        0  tablet  ios       34</span>
+<span class="go"> 1           1        1  mobile  ios       17</span>
+<span class="go"> 2           2        2  mobile  ios       25</span>
+<span class="go"> 3           3        3  mobile  ios        7</span>
+<span class="go"> 4           4        4  tablet  ios       34</span>
+<span class="go"> 5           5        5  mobile  ios       10</span>
+<span class="go"> 6           6        6  mobile  ios       17</span>
+<span class="go"> 7           7        7  tablet  ios        7</span>
+<span class="go"> 8           8        8  tablet  ios       11</span>
+<span class="go"> 9           9        9  tablet  ios        7}</span>
 </pre></div>
 </div>
-</section>
+</div>
 
 
               </div>

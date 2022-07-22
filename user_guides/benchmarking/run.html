@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>Running SDGym &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Running SDGym &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../_static/slack-32.png">
             </a>
           </li>
@@ -277,7 +276,7 @@
               
               <div>
                 
-  <section id="running-sdgym">
+  <div class="section" id="running-sdgym">
 <span id="sdgym-run"></span><h1>Running SDGym<a class="headerlink" href="#running-sdgym" title="Permalink to this headline">¶</a></h1>
 <p>The main component of the <strong>SDGym</strong> project is the <code class="docutils literal notranslate"><span class="pre">sdgym.run</span></code>
 function.</p>
@@ -308,7 +307,7 @@ present them in a table.</p>
 </div>
 <p>Let’s see what other arguments we can use to control the behavior of the
 <code class="docutils literal notranslate"><span class="pre">sdgym.run</span></code> function.</p>
-<section id="arguments-for-the-sdgym-run-function">
+<div class="section" id="arguments-for-the-sdgym-run-function">
 <h2>Arguments for the sdgym.run function<a class="headerlink" href="#arguments-for-the-sdgym-run-function" title="Permalink to this headline">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">sdgym.run</span></code> function accepts the following arguments:</p>
 <ul class="simple">
@@ -353,9 +352,9 @@ key id will be used to read from the specified bucket.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">aws_secret</span> <span class="pre">(str)</span></code>:: If an <code class="docutils literal notranslate"><span class="pre">aws_secret</span></code> is provided, the given
 secret access key will be used to read from the specified bucket.</p></li>
 </ul>
-<section id="synthesizers">
+<div class="section" id="synthesizers">
 <h3>Synthesizers<a class="headerlink" href="#synthesizers" title="Permalink to this headline">¶</a></h3>
-<section id="synthesizer-classes">
+<div class="section" id="synthesizer-classes">
 <h4>Synthesizer Classes<a class="headerlink" href="#synthesizer-classes" title="Permalink to this headline">¶</a></h4>
 <p>The most basic scenario is to pass a synthesizer function as we saw above,
 but the sdgym.run function can also be used to evaluate any <code class="docutils literal notranslate"><span class="pre">Synthesizer</span></code>
@@ -367,8 +366,8 @@ passing the class directly to the sdgym.run function:</p>
 <span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">sdgym</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">synthesizers</span><span class="o">=</span><span class="n">Independent</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-<section id="evaluating-multiple-synthesizers">
+</div>
+<div class="section" id="evaluating-multiple-synthesizers">
 <h4>Evaluating multiple Synthesizers<a class="headerlink" href="#evaluating-multiple-synthesizers" title="Permalink to this headline">¶</a></h4>
 <p>The <code class="docutils literal notranslate"><span class="pre">sdgym.run</span></code> function can be used to evaluate more than one
 Synthesizer at a time.</p>
@@ -389,8 +388,8 @@ subclasses of <code class="docutils literal notranslate"><span class="pre">Basel
 <span class="n">In</span> <span class="p">[</span><span class="mi">11</span><span class="p">]:</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">sdgym</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">Baseline</span><span class="o">.</span><span class="n">get_subclasses</span><span class="p">())</span>
 </pre></div>
 </div>
-</section>
-<section id="customizing-the-synthesizer-names">
+</div>
+<div class="section" id="customizing-the-synthesizer-names">
 <h4>Customizing the Synthesizer names.<a class="headerlink" href="#customizing-the-synthesizer-names" title="Permalink to this headline">¶</a></h4>
 <p>Sometimes we might want to customize the name that we give to the
 function or class that we are passing to the benchmark, so they show up
@@ -406,9 +405,9 @@ classes as the values:</p>
 <span class="n">In</span> <span class="p">[</span><span class="mi">13</span><span class="p">]:</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">sdgym</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">synthesizers</span><span class="o">=</span><span class="n">synthesizers</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-</section>
-<section id="datasets">
+</div>
+</div>
+<div class="section" id="datasets">
 <h3>Datasets<a class="headerlink" href="#datasets" title="Permalink to this headline">¶</a></h3>
 <p>By default, the sdgym.run function will run on all the <a class="reference internal" href="datasets.html#sdgym-datasets"><span class="std std-ref">SDGym Datasets</span></a>.</p>
 <p>However, this takes a lot of time to run, and sometimes we will be
@@ -422,8 +421,8 @@ their names as strings:</p>
 <span class="n">In</span> <span class="p">[</span><span class="mi">15</span><span class="p">]:</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">sdgym</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">my_synthesizer_function</span><span class="p">,</span> <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-<section id="running-on-private-datasets">
+</div>
+<div class="section" id="running-on-private-datasets">
 <h3>Running on Private Datasets<a class="headerlink" href="#running-on-private-datasets" title="Permalink to this headline">¶</a></h3>
 <p>If we want to run sdgym on datasets in a private S3 bucket for which we do not have
 <a class="reference external" href="https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html">system-wide credentials configured</a>,
@@ -438,8 +437,8 @@ access key. For example:</p>
     <span class="o">...</span><span class="p">:</span> <span class="p">)</span>
 </pre></div>
 </div>
-</section>
-<section id="iterations">
+</div>
+<div class="section" id="iterations">
 <h3>Iterations<a class="headerlink" href="#iterations" title="Permalink to this headline">¶</a></h3>
 <p>By default, the SDGym benchmark evaluates each synthesizer on each
 datasets exactly once. However, in some cases you may want to run each
@@ -451,9 +450,9 @@ combination can be altered by passing a different value to the
 <div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">17</span><span class="p">]:</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">sdgym</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">my_synthesizer_function</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-</section>
-</section>
+</div>
+</div>
+</div>
 
 
               </div>

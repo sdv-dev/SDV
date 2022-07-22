@@ -32,6 +32,5 @@
    .. autosummary::
    
       ~FixedCombinations.constraint_columns
-      ~FixedCombinations.rebuild_columns
    
    

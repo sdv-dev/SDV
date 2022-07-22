@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>Metadata Schema &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Metadata Schema &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../_static/slack-32.png">
             </a>
           </li>
@@ -246,10 +245,10 @@
               
               <div>
                 
-  <section id="metadata-schema">
+  <div class="section" id="metadata-schema">
 <span id="id1"></span><h1>Metadata Schema<a class="headerlink" href="#metadata-schema" title="Permalink to this headline">¶</a></h1>
 <p>This section explains the format of the metadata JSON file.</p>
-<section id="top-level">
+<div class="section" id="top-level">
 <h2>Top Level<a class="headerlink" href="#top-level" title="Permalink to this headline">¶</a></h2>
 <p>At the topmost level of the <strong>Metadata</strong> dictionary, there is only one element:</p>
 <dl class="field-list simple">
@@ -258,8 +257,8 @@
 the table name as the corresponding key.</p>
 </dd>
 </dl>
-</section>
-<section id="table">
+</div>
+<div class="section" id="table">
 <h2>Table<a class="headerlink" href="#table" title="Permalink to this headline">¶</a></h2>
 <p>A node <code class="docutils literal notranslate"><span class="pre">table</span></code> should be made for each table in your dataset. It contains the configuration on
 how to handle this table. It has the following elements:</p>
@@ -291,8 +290,8 @@ data is being passed as <code class="docutils literal notranslate"><span class="
 <dd class="field-odd"><p>Optional. If set to false, skip this table when modeling and sampling the dataset.</p>
 </dd>
 </dl>
-</section>
-<section id="field-details">
+</div>
+<div class="section" id="field-details">
 <h2>Field details<a class="headerlink" href="#field-details" title="Permalink to this headline">¶</a></h2>
 <p>Each field within a table needs to have its type specified,
 Additionally, some field types need additional details, such as the subtype or
@@ -360,7 +359,7 @@ other properties.</p>
 <dd class="field-odd"><p>The type of the field.</p>
 </dd>
 </dl>
-<section id="datetime-fields">
+<div class="section" id="datetime-fields">
 <h3>Datetime fields<a class="headerlink" href="#datetime-fields" title="Permalink to this headline">¶</a></h3>
 <p>For  <code class="docutils literal notranslate"><span class="pre">datetime</span></code> types, a <code class="docutils literal notranslate"><span class="pre">format</span></code> key should be included containing the date format using
 <a class="reference external" href="https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior">strftime</a> format.</p>
@@ -379,8 +378,8 @@ other properties.</p>
 <span class="p">}</span>
 </pre></div>
 </div>
-</section>
-<section id="categorical-fields-data-anonymization">
+</div>
+<div class="section" id="categorical-fields-data-anonymization">
 <h3>Categorical fields (Data anonymization)<a class="headerlink" href="#categorical-fields-data-anonymization" title="Permalink to this headline">¶</a></h3>
 <p>For <code class="docutils literal notranslate"><span class="pre">categorical</span></code> types, there is an option to anonymize data labeled as Personally Identifiable
 Information, <code class="docutils literal notranslate"><span class="pre">pii</span></code>, but keeping its statistical properties. To anonymize a field, you should use
@@ -431,7 +430,7 @@ but any value supported by faker can be used:</p>
 argument. If that is the case, you set a <code class="docutils literal notranslate"><span class="pre">list</span></code> containing both the category and
 the type instead of only the string: <code class="docutils literal notranslate"><span class="pre">'pii_category':</span> <span class="pre">['credict_card_number',</span> <span class="pre">'visa']</span></code></p>
 </div>
-<section id="localized-data-anonymization">
+<div class="section" id="localized-data-anonymization">
 <h4>Localized data anonymization<a class="headerlink" href="#localized-data-anonymization" title="Permalink to this headline">¶</a></h4>
 <p>To use localizations in anonymization to get values in the specified language,
 the <code class="docutils literal notranslate"><span class="pre">pii_locales</span></code> parameter must be set.
@@ -459,9 +458,9 @@ A list of all possible localizations can be found on the <a class="reference ext
 <p>Specifying localizations and using <code class="docutils literal notranslate"><span class="pre">Faker</span></code> categories may result in an error
 if the defined <code class="docutils literal notranslate"><span class="pre">pii_category</span></code> is not available for all specified languages.</p>
 </div>
-</section>
-</section>
-<section id="primary-key-fields">
+</div>
+</div>
+<div class="section" id="primary-key-fields">
 <h3>Primary key fields<a class="headerlink" href="#primary-key-fields" title="Permalink to this headline">¶</a></h3>
 <p>If a field is specified as a <code class="docutils literal notranslate"><span class="pre">primary_key</span></code> of the table, then the field must be of type <code class="docutils literal notranslate"><span class="pre">id</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="p">{</span>
@@ -497,8 +496,8 @@ generate keys that match it:</p>
 <span class="p">}</span>
 </pre></div>
 </div>
-</section>
-<section id="foreign-key-fields">
+</div>
+<div class="section" id="foreign-key-fields">
 <h3>Foreign key fields<a class="headerlink" href="#foreign-key-fields" title="Permalink to this headline">¶</a></h3>
 <p>If a field is a foreign key to another table, then it has to also be of type <code class="docutils literal notranslate"><span class="pre">id</span></code>, and
 define define a relationship using the <code class="docutils literal notranslate"><span class="pre">ref</span></code> field:</p>
@@ -528,9 +527,9 @@ define define a relationship using the <code class="docutils literal notranslate
 <dd class="field-even"><p>Parent table field name.</p>
 </dd>
 </dl>
-</section>
-</section>
-</section>
+</div>
+</div>
+</div>
 
 
               </div>

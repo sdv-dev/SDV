@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>Defining Custom Constraints &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Constraints &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -44,7 +43,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Relational Data" href="../relational/index.html" />
-    <link rel="prev" title="Handling Constraints" href="handling_constraints.html" />
+    <link rel="prev" title="Inputting Business Logic Using Constraints" href="handling_constraints.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
   </head>
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../_static/slack-32.png">
             </a>
           </li>
@@ -161,11 +160,11 @@
                                 <ul>
                                 
                                     <li class="">
-                                        <a href="handling_constraints.html">Handling Constraints</a>
+                                        <a href="handling_constraints.html">Inputting Business Logic Using Constraints</a>
                                     </li>
                                 
                                     <li class="active">
-                                        <a href="">Defining Custom Constraints</a>
+                                        <a href="">Custom Constraints</a>
                                     </li>
                                 
                                 </ul>
@@ -226,19 +225,31 @@
     <ul class="nav section-nav flex-column">
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#using-the-customconstraint" class="nav-link">Using the CustomConstraint</a>
+            <a href="#defining-your-custom-constraint" class="nav-link">Defining your custom constraint</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#example" class="nav-link">Example</a><ul class="nav section-nav flex-column">
+                
+        <li class="nav-item toc-entry toc-h4">
+            <a href="#validity-check" class="nav-link">Validity Check</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h4">
+            <a href="#transformations" class="nav-link">Transformations</a>
+        </li>
+    
+            </ul>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h3">
+            <a href="#creating-your-class" class="nav-link">Creating your class</a>
+        </li>
+    
+            </ul>
         </li>
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#can-i-apply-the-same-function-to-multiple-columns" class="nav-link">Can I apply the same function to multiple columns?</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h2">
-            <a href="#can-i-access-the-rest-of-the-table-from-my-column-functions" class="nav-link">Can I access the rest of the table from my column functions?</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h2">
-            <a href="#can-i-write-a-customconstraint-based-on-reject-sampling" class="nav-link">Can I write a CustomConstraint based on reject sampling?</a>
+            <a href="#using-your-custom-constraint" class="nav-link">Using your custom constraint</a>
         </li>
     
     </ul>
@@ -254,240 +265,194 @@
               
               <div>
                 
-  <section id="defining-custom-constraints">
-<span id="custom-constraints"></span><h1>Defining Custom Constraints<a class="headerlink" href="#defining-custom-constraints" title="Permalink to this headline">¶</a></h1>
-<p>In some cases, the predefined constraints do not cover all your needs.
-In such scenarios, you can use <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code> to define your own
-logic on how to constrain your data. There are three main functions that
-you can create:</p>
+  <div class="section" id="custom-constraints">
+<span id="id1"></span><h1>Custom Constraints<a class="headerlink" href="#custom-constraints" title="Permalink to this headline">¶</a></h1>
+<p>If you have business logic that cannot be represented using
+<a class="reference internal" href="handling_constraints.html#predefined-constraints"><span class="std std-ref">Predefined Constraints</span></a>,
+you can define custom logic. In this guide, we’ll walk through the process for defining a custom
+constraint and using it.</p>
+<div class="section" id="defining-your-custom-constraint">
+<h2>Defining your custom constraint<a class="headerlink" href="#defining-your-custom-constraint" title="Permalink to this headline">¶</a></h2>
+<p>To define your custom constraint you need to write some functionality in a separate Python file.
+This includes:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">transform</span></code> which is responsible for the forward pass when using <code class="docutils literal notranslate"><span class="pre">transform</span></code> strategy.
-Its main function is to change your data in a way that enforces the constraint.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> which defines how to reverse the transformation of the <code class="docutils literal notranslate"><span class="pre">transform</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">is_valid</span></code> which indicates which rows satisfy the constraint and which ones do not.</p></li>
+<li><p><strong>Validity Check</strong>: A test that determines whether a row in the data meets the rule, and</p></li>
+<li><p>(optional) <strong>Transformation Functions</strong>: Functions to modify the data before &amp; after modeling</p></li>
 </ul>
-<p>Let’s look at a demo dataset:</p>
+<p>The SDV then uses the functionality you provided, as shown in the diagram below.</p>
+<img alt="../../_images/custom_constraint.png" src="../../_images/custom_constraint.png" />
+<p>Each function (validity, transform and reverse transform) must accept the same inputs:</p>
+<ul class="simple">
+<li><p>column_names: The names of the columns involved in the constraints</p></li>
+<li><p>data: The full dataset, represented as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></p></li>
+<li><p>&lt;other parameters&gt;: Any other parameters that are necessary for your logic</p></li>
+</ul>
+<div class="section" id="example">
+<h3>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h3>
+<p>Let’s demonstrate this using our demo dataset.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv.demo</span> <span class="kn">import</span> <span class="n">load_tabular_demo</span>
 
 <span class="gp">In [2]: </span><span class="n">employees</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">()</span>
 
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">     company     department  employee_id  ...  full_time  part_time  contractor</span>
-<span class="go">0       Pear          Sales            1  ...        1.0        0.0         0.0</span>
-<span class="go">1       Pear         Design            5  ...        0.0        0.0         1.0</span>
-<span class="go">2    Glasses             AI            1  ...        1.0        0.0         0.0</span>
-<span class="go">3    Glasses  Search Engine            7  ...        0.0        0.0         1.0</span>
-<span class="go">4   Cheerper        BigData            6  ...        0.0        1.0         0.0</span>
-<span class="go">5   Cheerper        Support           11  ...        0.0        1.0         0.0</span>
-<span class="go">6       Pear          Sales           28  ...        1.0        0.0         0.0</span>
-<span class="go">7       Pear         Design           75  ...        0.0        0.0         1.0</span>
-<span class="go">8    Glasses             AI           33  ...        1.0        0.0         0.0</span>
-<span class="go">9    Glasses  Search Engine           56  ...        0.0        0.0         1.0</span>
-<span class="go">10  Cheerper        BigData           42  ...        0.0        1.0         0.0</span>
-<span class="go">11  Cheerper        Support           80  ...        0.0        1.0         0.0</span>
-
-<span class="go">[12 rows x 12 columns]</span>
+<span class="go">     company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
+<span class="go">0       Pear          Sales            1   30               24                     6   92500.00      22000.00                       2        1.0        0.0         0.0</span>
+<span class="go">1       Pear         Design            5   47               44                     3   55272.18      10663.06                       4        0.0        0.0         1.0</span>
+<span class="go">2    Glasses             AI            1   40               35                     5   67500.00      17000.00                       2        1.0        0.0         0.0</span>
+<span class="go">3    Glasses  Search Engine            7   30               27                     3  109454.26       8614.26                       4        0.0        0.0         1.0</span>
+<span class="go">4   Cheerper        BigData            6   47               43                     4  159000.00      23500.00                       5        0.0        1.0         0.0</span>
+<span class="go">5   Cheerper        Support           11   37               33                     4   76500.00       6000.00                       5        0.0        1.0         0.0</span>
+<span class="go">6       Pear          Sales           28   42               36                     6   69000.00      18500.00                       1        1.0        0.0         0.0</span>
+<span class="go">7       Pear         Design           75   31               26                     5   30743.95       8660.86                       2        0.0        0.0         1.0</span>
+<span class="go">8    Glasses             AI           33   40               32                     8   93500.00      16000.00                       3        1.0        0.0         0.0</span>
+<span class="go">9    Glasses  Search Engine           56   36               35                     1   66558.44      20027.26                       2        0.0        0.0         1.0</span>
+<span class="go">10  Cheerper        BigData           42   46               38                     8   60500.00      24000.00                       5        0.0        1.0         0.0</span>
+<span class="go">11  Cheerper        Support           80   39               33                     6  153500.00      10500.00                       1        0.0        1.0         0.0</span>
 </pre></div>
 </div>
-<p>The dataset defined in <a class="reference internal" href="handling_constraints.html#handling-constraints"><span class="std std-ref">Handling Constraints</span></a> contains basic details about employees.
-We will use this dataset to demonstrate how you can create your own constraint.</p>
-<section id="using-the-customconstraint">
-<h2>Using the <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code><a class="headerlink" href="#using-the-customconstraint" title="Permalink to this headline">¶</a></h2>
-<p>We wish to generate synthetic data from the <code class="docutils literal notranslate"><span class="pre">employees</span></code> records. If you look at the data
-above, you will notice that the <code class="docutils literal notranslate"><span class="pre">salary</span></code> column is a multiple of a <em>base</em> value, in
-this case the base unit is 500. In other words, the <code class="docutils literal notranslate"><span class="pre">salary</span></code> increments by 500.
-We will define <code class="docutils literal notranslate"><span class="pre">transform</span></code> and <code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> methods to make sure our
-data satisfy our constraint.</p>
-<p>We can achieve our goal by performing transformations in a 2 step process:</p>
+<p>The dataset contains basic details about employees in some fictional companies. Many of the rules
+in the dataset can be described using predefined constraints. However, there is one complex rule
+that needs a custom constraint:</p>
 <ul class="simple">
-<li><p>Divide <code class="docutils literal notranslate"><span class="pre">salary</span></code> by the base unit (500). This transformation makes it easier for the model
-to learn the data since it would now learn regular integer values without any explicit constraint on the data.</p></li>
-<li><p>Reversing the effect by multiplying <code class="docutils literal notranslate"><span class="pre">salary</span></code> back with the base unit. Now that the model has
-learned regular integer values, we multiply it with the base (500) such that it now conforms to our original data range.</p></li>
+<li><p>If the employee is not a contractor (contractor == 0), then the salary must be divisible by 500</p></li>
+<li><p>Otherwise if the employee is a contractor (contractor == 1), then this rule does not apply</p></li>
 </ul>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [4]: </span><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">table_data</span><span class="p">):</span>
-<span class="gp">   ...: </span>    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
-<span class="gp">   ...: </span>    <span class="n">table_data</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">base</span>
-<span class="gp">   ...: </span>    <span class="k">return</span> <span class="n">table_data</span>
-<span class="gp">   ...: </span>
-</pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is similar to the predefined <a class="reference internal" href="handling_constraints.html#fixedincrements"><span class="std std-ref">FixedIncrements</span></a> constraint
+with the addition of an exclusion criteria (exclude the constraint check if the employee
+is a contractor).</p>
 </div>
-<p>After defining <code class="docutils literal notranslate"><span class="pre">transform</span></code> we create <code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> that reverses the operations made.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [5]: </span><span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="n">table_data</span><span class="p">):</span>
-<span class="gp">   ...: </span>    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
-<span class="gp">   ...: </span>    <span class="n">table_data</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">()</span> <span class="o">*</span> <span class="n">base</span>
-<span class="gp">   ...: </span>    <span class="k">return</span> <span class="n">table_data</span>
-<span class="gp">   ...: </span>
-</pre></div>
-</div>
-<p>Then, we pack every thing together in <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code>.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">CustomConstraint</span>
+<div class="section" id="validity-check">
+<h4>Validity Check<a class="headerlink" href="#validity-check" title="Permalink to this headline">¶</a></h4>
+<p>The validity check should return a <code class="docutils literal notranslate"><span class="pre">pandas.Series</span></code> of <code class="docutils literal notranslate"><span class="pre">True</span></code>/<code class="docutils literal notranslate"><span class="pre">False</span></code> values that determine
+whether each row is valid.</p>
+<p>Let’s code the logic up using parameters:</p>
+<ul class="simple">
+<li><p><strong>column_names</strong> will be a single item list containing the column that must be divisible
+(eg. salary)</p></li>
+<li><p><strong>data</strong> will be the full dataset</p></li>
+<li><p>Custom parameter: <strong>increment</strong> describes the numerical increment (eg. 500)</p></li>
+<li><p>Custom parameter: <strong>exclusion_column</strong> describes the column with the exclusion criteria
+(eg. contractor)</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="n">column_names</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">increment</span><span class="p">,</span> <span class="n">exclusion_column</span><span class="p">):</span>
+    <span class="n">column_name</span><span class="o">=</span><span class="n">column_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-<span class="gp">In [7]: </span><span class="n">constraint</span> <span class="o">=</span> <span class="n">CustomConstraint</span><span class="p">(</span>
-<span class="gp">   ...: </span>    <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">,</span>
-<span class="gp">   ...: </span>    <span class="n">reverse_transform</span><span class="o">=</span><span class="n">reverse_transform</span>
+    <span class="n">is_divisible</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">%</span> <span class="n">increment</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">is_excluded</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">exclusion_column</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">is_divisible</span> <span class="o">|</span> <span class="n">is_excluded</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="transformations">
+<h4>Transformations<a class="headerlink" href="#transformations" title="Permalink to this headline">¶</a></h4>
+<p>The transformations must return the full datasets with particular columns transformed. We can
+modify, delete or add columns as long as we can reverse the transformation later.</p>
+<p>In our case, the transformation can just divide each of the values in the column by the increment.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">column_names</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">increment</span><span class="p">,</span> <span class="n">exclusion_column</span><span class="p">):</span>
+    <span class="n">column_name</span> <span class="o">=</span> <span class="n">column_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">/</span> <span class="n">increment</span>
+    <span class="k">return</span> <span class="n">data</span>
+</pre></div>
+</div>
+<p>Reversing the transformation is trickier. If we multiply every value by the increment, the
+salaries won’t necessarily be divisible by 500. Instead we should:</p>
+<ul class="simple">
+<li><p>Round values to whole numbers whenever the employee is not a contractor first, and then</p></li>
+<li><p>Multiply every value by 500</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="n">column_names</span><span class="p">,</span> <span class="n">transformed_data</span><span class="p">,</span> <span class="n">increment</span><span class="p">,</span> <span class="n">exclusion_column</span><span class="p">):</span>
+    <span class="n">column_name</span> <span class="o">=</span> <span class="n">column_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">is_included</span> <span class="o">=</span> <span class="p">(</span><span class="n">transformed_data</span><span class="p">[</span><span class="n">exclusion_column</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">rounded_data</span> <span class="o">=</span> <span class="n">transformed_data</span><span class="p">[</span><span class="n">is_included</span><span class="p">][</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">transformed_data</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">is_included</span><span class="p">,</span> <span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">rounded_data</span>
+
+    <span class="n">transformed_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">*=</span> <span class="n">increment</span>
+    <span class="k">return</span> <span class="n">transformed_data</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="creating-your-class">
+<h3>Creating your class<a class="headerlink" href="#creating-your-class" title="Permalink to this headline">¶</a></h3>
+<p>Finally, we can put all the functionality together to create a class that describes our
+constraint. Use the <strong>create_custom_constraint</strong> factory method to do this. It accepts your
+functions as inputs and returns a class that’s ready to use.</p>
+<p>You can name this class whatever you’d like. Since our constraint is similar to
+<code class="docutils literal notranslate"><span class="pre">FixedIncrements</span></code>, let’s call it <code class="docutils literal notranslate"><span class="pre">FixedIncrementsWithExclusion</span></code>.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [4]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">create_custom_constraint</span>
+
+<span class="gp">In [5]: </span><span class="n">FixedIncrementsWithExclusion</span> <span class="o">=</span> <span class="n">create_custom_constraint</span><span class="p">(</span>
+<span class="gp">   ...: </span>    <span class="n">is_valid_fn</span><span class="o">=</span><span class="n">is_valid</span><span class="p">,</span>
+<span class="gp">   ...: </span>    <span class="n">transform_fn</span><span class="o">=</span><span class="n">transform</span><span class="p">,</span> <span class="c1"># optional</span>
+<span class="gp">   ...: </span>    <span class="n">reverse_transform_fn</span><span class="o">=</span><span class="n">reverse_transform</span> <span class="c1"># optional</span>
 <span class="gp">   ...: </span><span class="p">)</span>
 <span class="gp">   ...: </span>
 </pre></div>
 </div>
-</section>
-<section id="can-i-apply-the-same-function-to-multiple-columns">
-<h2>Can I apply the same function to multiple columns?<a class="headerlink" href="#can-i-apply-the-same-function-to-multiple-columns" title="Permalink to this headline">¶</a></h2>
-<p>In the example above we fixed the <code class="docutils literal notranslate"><span class="pre">salary</span></code> format, but if we continue observing the data
-we will see that <code class="docutils literal notranslate"><span class="pre">annual_bonus</span></code> is also constrained by the same logic. Rather than
-defining two constraints, or editing the code of our functions for each new column that we want
-to constraint, we provide another style of writing functions such that the function should accept
-a column data as input.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">transform</span></code> function takes <code class="docutils literal notranslate"><span class="pre">column_data</span></code> as input and returns the transformed column.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">column_data</span><span class="p">):</span>
-<span class="gp">   ...: </span>    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
-<span class="gp">   ...: </span>    <span class="k">return</span> <span class="n">column_data</span> <span class="o">/</span> <span class="n">base</span>
+</div>
+</div>
+<div class="section" id="using-your-custom-constraint">
+<h2>Using your custom constraint<a class="headerlink" href="#using-your-custom-constraint" title="Permalink to this headline">¶</a></h2>
+<p>Now that you have a class, you can use it like any other predefined constraint. Create an object
+by putting in the parameters you defined. Note that you do not need to input the data.</p>
+<p>You can apply the same constraint to other columns by creating a different object. In our case
+the <strong>annual_bonus</strong> column also follows the same logic.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="n">salary_divis_500</span> <span class="o">=</span> <span class="n">FixedIncrementsWithExclusion</span><span class="p">(</span>
+<span class="gp">   ...: </span>   <span class="n">column_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">],</span>
+<span class="gp">   ...: </span>   <span class="n">increment</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+<span class="gp">   ...: </span>   <span class="n">exclusion_column</span><span class="o">=</span><span class="s1">&#39;contractor&#39;</span>
+<span class="gp">   ...: </span><span class="p">)</span>
+<span class="gp">   ...: </span>
+
+<span class="gp">In [7]: </span><span class="n">bonus_divis_500</span> <span class="o">=</span> <span class="n">FixedIncrementsWithExclusion</span><span class="p">(</span>
+<span class="gp">   ...: </span>   <span class="n">column_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;annual_bonus&#39;</span><span class="p">],</span>
+<span class="gp">   ...: </span>   <span class="n">increment</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+<span class="gp">   ...: </span>   <span class="n">exclusion_column</span><span class="o">=</span><span class="s1">&#39;contractor&#39;</span>
+<span class="gp">   ...: </span><span class="p">)</span>
 <span class="gp">   ...: </span>
 </pre></div>
 </div>
-<p>Similarly we defined <code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> in a way that it operates on the data of a
-single column.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="n">column_data</span><span class="p">):</span>
-<span class="gp">   ...: </span>    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
-<span class="gp">   ...: </span>    <span class="k">return</span> <span class="n">column_data</span><span class="o">.</span><span class="n">round</span><span class="p">()</span> <span class="o">*</span> <span class="n">base</span>
+<p>Finally, input these constraints into your model using the constraints parameter just like you
+would for predefined constraints.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
+
+<span class="gp">In [9]: </span><span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">   ...: </span>  <span class="n">salary_divis_500</span><span class="p">,</span>
+<span class="gp">   ...: </span>  <span class="n">bonus_divis_500</span>
+<span class="gp">   ...: </span><span class="p">]</span>
 <span class="gp">   ...: </span>
-</pre></div>
-</div>
-<p>Now that we have our functions, we initialize <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code> and we
-specify which column(s) are the desired ones.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">constraint</span> <span class="o">=</span> <span class="n">CustomConstraint</span><span class="p">(</span>
-<span class="gp">   ....: </span>    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">,</span> <span class="s1">&#39;annual_bonus&#39;</span><span class="p">],</span>
-<span class="gp">   ....: </span>    <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">reverse_transform</span><span class="o">=</span><span class="n">reverse_transform</span>
-<span class="gp">   ....: </span><span class="p">)</span>
-<span class="gp">   ....: </span>
-</pre></div>
-</div>
-</section>
-<section id="can-i-access-the-rest-of-the-table-from-my-column-functions">
-<h2>Can I access the rest of the table from my column functions?<a class="headerlink" href="#can-i-access-the-rest-of-the-table-from-my-column-functions" title="Permalink to this headline">¶</a></h2>
-<p>If we look closely at the data, we notice that <code class="docutils literal notranslate"><span class="pre">salary</span></code> and <code class="docutils literal notranslate"><span class="pre">annual_bonus</span></code> are only a
-multiple of 500 when the employee is not a “contractor”. To take this requirement into
-consideration, we refer to a “fixed” column <code class="docutils literal notranslate"><span class="pre">contractor</span></code> in order to know whether we
-should apply this constraint or not. The access to <code class="docutils literal notranslate"><span class="pre">contractor</span></code> column will allow us
-to properly transform and reverse transform the data.</p>
-<p>We write our functions to take as input:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">table_data</span></code> which contains all the information.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">column</span></code> which is a an argument to represent the columns of interest.</p></li>
-</ul>
-<p>Now we can construct our functions freely, we write our methods
-with said arguments and be able to access <code class="docutils literal notranslate"><span class="pre">'contractor'</span></code>.</p>
-<p>We first write our <code class="docutils literal notranslate"><span class="pre">transform</span></code> function as we have done previously:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">table_data</span><span class="p">,</span> <span class="n">column</span><span class="p">):</span>
-<span class="gp">   ....: </span>    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
-<span class="gp">   ....: </span>    <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">/</span> <span class="n">base</span>
-<span class="gp">   ....: </span>    <span class="k">return</span> <span class="n">table_data</span>
-<span class="gp">   ....: </span>
-</pre></div>
-</div>
-<p>When it comes to defining <code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code>, we need to distinguish between
-contractors and non contractors, the operations are as follows:</p>
-<ol class="arabic simple">
-<li><p>round values to four decimal points for contractors such that the end result will
-be two decimal points after multiplying the result with 500.</p></li>
-<li><p>round values to zero for employees that are not contractors such that the end
-result will be a multiple of 500.</p></li>
-</ol>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="n">table_data</span><span class="p">,</span> <span class="n">column</span><span class="p">):</span>
-<span class="gp">   ....: </span>    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
-<span class="gp">   ....: </span>    <span class="n">is_not_contractor</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">contractor</span> <span class="o">==</span> <span class="mf">0.</span>
-<span class="gp">   ....: </span>    <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
-<span class="gp">   ....: </span>    <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">is_not_contractor</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">is_not_contractor</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">()</span>
-<span class="gp">   ....: </span>    <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">*=</span> <span class="n">base</span>
-<span class="gp">   ....: </span>    <span class="k">return</span> <span class="n">table_data</span>
-<span class="gp">   ....: </span>
-</pre></div>
-</div>
-<p>We now stich everything together and pass it to the model.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
 
-<span class="gp">In [14]: </span><span class="n">constraint</span> <span class="o">=</span> <span class="n">CustomConstraint</span><span class="p">(</span>
-<span class="gp">   ....: </span>    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">,</span> <span class="s1">&#39;annual_bonus&#39;</span><span class="p">],</span>
-<span class="gp">   ....: </span>    <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">reverse_transform</span><span class="o">=</span><span class="n">reverse_transform</span>
-<span class="gp">   ....: </span><span class="p">)</span>
-<span class="gp">   ....: </span>
+<span class="gp">In [10]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
-<span class="gp">In [15]: </span><span class="n">gc</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">constraint</span><span class="p">])</span>
-
-<span class="gp">In [16]: </span><span class="n">gc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">employees</span><span class="p">)</span>
-
-<span class="gp">In [17]: </span><span class="n">sampled</span> <span class="o">=</span> <span class="n">gc</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">In [11]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">employees</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>When we view the <code class="docutils literal notranslate"><span class="pre">sampled</span></code> data, we should find that all the rows in the sampled
-data have a salary that is a multiple of the base value with the exception
-of “contractor” records.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [18]: </span><span class="n">sampled</span>
-<span class="gh">Out[18]: </span><span class="go"></span>
-<span class="go">    company     department  employee_id  ...  full_time  part_time  contractor</span>
-<span class="go">0  Cheerper             AI            4  ...        1.0        0.0         0.0</span>
-<span class="go">1   Glasses             AI            9  ...        0.0        0.0         1.0</span>
-<span class="go">2   Glasses             AI           15  ...        0.0        1.0         0.0</span>
-<span class="go">3   Glasses        BigData           47  ...        0.0        1.0         0.0</span>
-<span class="go">4      Pear          Sales           37  ...        1.0        0.0         0.0</span>
-<span class="go">5   Glasses             AI           56  ...        0.0        0.0         1.0</span>
-<span class="go">6   Glasses         Design           54  ...        0.0        0.0         1.0</span>
-<span class="go">7  Cheerper         Design           23  ...        1.0        1.0         0.0</span>
-<span class="go">8   Glasses  Search Engine           20  ...        0.0        0.0         1.0</span>
-<span class="go">9   Glasses         Design           29  ...        0.0        0.0         1.0</span>
+<p>Now, when you sample from the model, all rows of the synthetic data will follow the custom
+constraint.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">synthetic_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 
-<span class="go">[10 rows x 12 columns]</span>
+<span class="gp">In [13]: </span><span class="n">synthetic_data</span>
+<span class="gh">Out[13]: </span><span class="go"></span>
+<span class="go">    company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
+<span class="go">0  Cheerper        BigData           11   45               40                     3   74575.65      19814.43                       5        0.0        1.0         1.0</span>
+<span class="go">1   Glasses             AI           21   42               39                     4  147192.93      19598.30                       4        1.0        0.0         1.0</span>
+<span class="go">2   Glasses        BigData           78   39               39                     6   60861.16      12088.23                       1        0.0        1.0         1.0</span>
+<span class="go">3   Glasses             AI           13   32               26                     2   82059.90      15814.22                       3        0.0        0.0         1.0</span>
+<span class="go">4   Glasses             AI           27   31               25                     1   96187.49       6393.85                       1        1.0        0.0         1.0</span>
+<span class="go">5   Glasses        BigData           53   43               42                     5   99031.69      13639.29                       3        0.0        0.0         1.0</span>
+<span class="go">6      Pear             AI           24   34               30                     6   41603.28      17695.37                       3        1.0        0.0         1.0</span>
+<span class="go">7   Glasses  Search Engine           35   35               36                     7   66247.75      18555.39                       3        1.0        0.0         1.0</span>
+<span class="go">8   Glasses             AI           11   30               25                     4   78590.14       6049.89                       3        1.0        0.0         1.0</span>
+<span class="go">9  Cheerper        BigData           44   41               38                     7   53353.86      11635.67                       4        0.0        0.0         1.0</span>
 </pre></div>
 </div>
-<p>This style gives flexibility to access any column in the table while still operating on
-a column basis.</p>
-</section>
-<section id="can-i-write-a-customconstraint-based-on-reject-sampling">
-<h2>Can I write a <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code> based on reject sampling?<a class="headerlink" href="#can-i-write-a-customconstraint-based-on-reject-sampling" title="Permalink to this headline">¶</a></h2>
-<p>In the previous section, we defined our <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code> using <code class="docutils literal notranslate"><span class="pre">transform</span></code> and
-<code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> functions. Sometimes, our constraints are not possible to implement
-using these methods, that is when we rely on the <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code> strategy.
-In <code class="docutils literal notranslate"><span class="pre">reject_sampling</span></code> we need to implement an <code class="docutils literal notranslate"><span class="pre">is_valid</span></code> function that identifies
-which rows do not follow the said constraint, in our case, which rows are not a multiple
-of the <em>base</em> unit.</p>
-<p>We can define <code class="docutils literal notranslate"><span class="pre">is_valid</span></code> according to the three styles mentioned in the previous section:</p>
-<ol class="arabic simple">
-<li><p>function with <code class="docutils literal notranslate"><span class="pre">table_data</span></code> argument.</p></li>
-<li><p>function with <code class="docutils literal notranslate"><span class="pre">column_data</span></code> argument.</p></li>
-<li><p>function with <code class="docutils literal notranslate"><span class="pre">table_data</span></code> and <code class="docutils literal notranslate"><span class="pre">column</span></code> argument.</p></li>
-</ol>
-<p><code class="docutils literal notranslate"><span class="pre">is_valid</span></code> should return a <code class="docutils literal notranslate"><span class="pre">pd.Series</span></code> where every valid row corresponds to <em>True</em>,
-otherwise it should contain <em>False</em>. Here is an example of how you would define
-<code class="docutils literal notranslate"><span class="pre">is_valid</span></code> for each one of the mentioned styles:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="n">table_data</span><span class="p">):</span>
-    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
-    <span class="k">return</span> <span class="n">table_data</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">]</span> <span class="o">%</span> <span class="n">base</span> <span class="o">==</span> <span class="mi">0</span>
-
-<span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="n">column_data</span><span class="p">):</span>
-    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
-    <span class="k">return</span> <span class="n">column_data</span> <span class="o">%</span> <span class="n">base</span> <span class="o">==</span> <span class="mi">0</span>
-
-<span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="n">table_data</span><span class="p">,</span> <span class="n">column</span><span class="p">):</span>
-    <span class="n">base</span> <span class="o">=</span> <span class="mf">500.</span>
-    <span class="n">is_contractor</span> <span class="o">=</span> <span class="n">table_data</span><span class="o">.</span><span class="n">contractor</span> <span class="o">==</span> <span class="mi">1</span>
-    <span class="n">valid</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">%</span> <span class="n">base</span> <span class="o">==</span> <span class="mi">0</span>
-    <span class="n">contractor_salary</span> <span class="o">=</span> <span class="n">employees</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">is_contractor</span><span class="p">]</span>
-    <span class="n">valid</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">is_contractor</span><span class="p">]</span> <span class="o">=</span> <span class="n">contractor_salary</span> <span class="o">==</span> <span class="n">contractor_salary</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">valid</span>
-</pre></div>
 </div>
-<p>Then we construct <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code> to take <code class="docutils literal notranslate"><span class="pre">is_valid</span></code> on its own.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">constraint</span> <span class="o">=</span> <span class="n">CustomConstraint</span><span class="p">(</span>
-    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;salary&#39;</span><span class="p">,</span> <span class="s1">&#39;annual_bonus&#39;</span><span class="p">],</span>
-    <span class="n">is_valid</span><span class="o">=</span><span class="n">is_valid</span>
-<span class="p">)</span>
-</pre></div>
 </div>
-</section>
-</section>
 
 
               </div>
@@ -495,7 +460,7 @@ otherwise it should contain <em>False</em>. Here is an example of how you would 
               
               <div class='prev-next-bottom'>
                 
-    <a class='left-prev' id="prev-link" href="handling_constraints.html" title="previous page">Handling Constraints</a>
+    <a class='left-prev' id="prev-link" href="handling_constraints.html" title="previous page">Inputting Business Logic Using Constraints</a>
     <a class='right-next' id="next-link" href="../relational/index.html" title="next page">Relational Data</a>
 
               </div>

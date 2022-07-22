@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>Contributing to SDV &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contributing to SDV &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../_static/slack-32.png">
             </a>
           </li>
@@ -229,7 +228,7 @@
               
               <div>
                 
-  <section id="contributing-to-sdv">
+  <div class="section" id="contributing-to-sdv">
 <span id="contributing"></span><h1>Contributing to SDV<a class="headerlink" href="#contributing-to-sdv" title="Permalink to this headline">¶</a></h1>
 <p>The Synthetic Data Vault project is a collection of several open source libraries with purposes
 that range from simple reversible transformations to the most complex state-of-the-art Generative
@@ -238,12 +237,12 @@ Deep Learning models.</p>
 of developers from all around the world that contribute their knowledge, code and feedback to make
 the project grow and improve over time.</p>
 <p>Are you ready to join this community? If so, please feel welcome and keep reading!</p>
-<section id="types-of-contributions">
+<div class="section" id="types-of-contributions">
 <h2>Types of contributions<a class="headerlink" href="#types-of-contributions" title="Permalink to this headline">¶</a></h2>
 <p>There are several ways to contribute to a project like <strong>SDV</strong>, and they do not always involve
 coding.</p>
 <p>If you want to contribute but do not know where to start, consider one of the following options:</p>
-<section id="reporting-issues">
+<div class="section" id="reporting-issues">
 <h3>Reporting Issues<a class="headerlink" href="#reporting-issues" title="Permalink to this headline">¶</a></h3>
 <p>If there is something that you would like to see changed in the project, or that you just want
 to ask, please create an issue at the <a class="reference external" href="https://github.com/sdv-dev/SDV/issues">GitHub issues page</a>.</p>
@@ -254,22 +253,22 @@ to ask, please create an issue at the <a class="reference external" href="https:
 <li><p>Remember that this is a volunteer-driven project and that the maintainers will attend every
 request as soon as possible, but that in some cases this might take some time.</p></li>
 </ul>
-</section>
-<section id="write-documentation">
+</div>
+<div class="section" id="write-documentation">
 <h3>Write Documentation<a class="headerlink" href="#write-documentation" title="Permalink to this headline">¶</a></h3>
 <p>SDV could always use more documentation, whether as part of the official SDV
 docs, in docstrings, or even on the web in blog posts, articles, and such, so feel free to
 contribute any changes that you deem necessary, from fixing a simple typo, to writing whole
 new pages of documentation.</p>
-</section>
-<section id="contribute-code">
+</div>
+<div class="section" id="contribute-code">
 <h3>Contribute code<a class="headerlink" href="#contribute-code" title="Permalink to this headline">¶</a></h3>
 <p>Obviously, the main element in the SDV library is the code.</p>
 <p>If you are willing to contribute to it, please head for the next sections for detailed guidelines
 about how to do so.</p>
-</section>
-</section>
-<section id="get-started">
+</div>
+</div>
+<div class="section" id="get-started">
 <h2>Get Started!<a class="headerlink" href="#get-started" title="Permalink to this headline">¶</a></h2>
 <p>Ready to contribute? Here’s how to set up <cite>SDV</cite> for local development.</p>
 <ol class="arabic">
@@ -329,8 +328,8 @@ $ git push origin name-of-your-bugfix-or-feature
 </li>
 <li><p>Submit a pull request through the GitHub website.</p></li>
 </ol>
-</section>
-<section id="pull-request-guidelines">
+</div>
+<div class="section" id="pull-request-guidelines">
 <h2>Pull Request Guidelines<a class="headerlink" href="#pull-request-guidelines" title="Permalink to this headline">¶</a></h2>
 <p>Before you submit a pull request, check that it meets these guidelines:</p>
 <ol class="arabic simple">
@@ -345,8 +344,8 @@ feature to the documentation in an appropriate place.</p></li>
 <li><p>The pull request should work for all the supported Python versions. Check the <a class="reference external" href="https://travis-ci.org/sdv-dev/SDV/pull_requests">Travis Build
 Status page</a> and make sure that all the checks pass.</p></li>
 </ol>
-</section>
-<section id="unit-testing-guidelines">
+</div>
+<div class="section" id="unit-testing-guidelines">
 <h2>Unit Testing Guidelines<a class="headerlink" href="#unit-testing-guidelines" title="Permalink to this headline">¶</a></h2>
 <p>All the Unit Tests should comply with the following requirements:</p>
 <ol class="arabic simple">
@@ -373,16 +372,16 @@ the only thing that will be tested is that our code passes the right values to t
 includes not reading or writing to any file system or database, which will be properly
 mocked.</p></li>
 </ol>
-</section>
-<section id="tips">
+</div>
+<div class="section" id="tips">
 <h2>Tips<a class="headerlink" href="#tips" title="Permalink to this headline">¶</a></h2>
 <p>To run a subset of tests:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python -m pytest tests.test_sdv
 $ python -m pytest -k &#39;foo&#39;
 </pre></div>
 </div>
-</section>
-<section id="release-workflow">
+</div>
+<div class="section" id="release-workflow">
 <h2>Release Workflow<a class="headerlink" href="#release-workflow" title="Permalink to this headline">¶</a></h2>
 <p>The process of releasing a new version involves several steps combining both <code class="docutils literal notranslate"><span class="pre">git</span></code> and
 <code class="docutils literal notranslate"><span class="pre">bumpversion</span></code> which, briefly:</p>
@@ -420,7 +419,7 @@ since the last release.</p>
 </div>
 </li>
 </ol>
-<section id="release-candidates">
+<div class="section" id="release-candidates">
 <h3>Release Candidates<a class="headerlink" href="#release-candidates" title="Permalink to this headline">¶</a></h3>
 <p>Sometimes it is necessary or convenient to upload a release candidate to PyPi as a pre-release,
 in order to make some of the new features available for testing on other projects before they
@@ -447,9 +446,9 @@ dependency specification, either in <code class="docutils literal notranslate"><
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="s1">&#39;sdv&gt;=X.Y.Z.dev&#39;</span>
 </pre></div>
 </div>
-</section>
-</section>
-</section>
+</div>
+</div>
+</div>
 
 
               </div>

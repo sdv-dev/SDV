@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>Constraints &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Constraints &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../_static/slack-32.png">
             </a>
           </li>
@@ -198,13 +197,7 @@
     <ul class="nav section-nav flex-column">
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#base-constraint" class="nav-link">Base Constraint</a><ul class="nav section-nav flex-column">
-                
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#handling-strategy" class="nav-link">handling_strategy</a>
-        </li>
-    
-            </ul>
+            <a href="#base-constraint" class="nav-link">Base Constraint</a>
         </li>
     
         <li class="nav-item toc-entry toc-h2">
@@ -224,10 +217,10 @@
               
               <div>
                 
-  <section id="constraints">
+  <div class="section" id="constraints">
 <span id="developer-constraints"></span><h1>Constraints<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h1>
 <p>The Constraints are implemented in the sub-package <a class="reference internal" href="../../api_reference/constraints/index.html#sdv-constraints"><span class="std std-ref">sdv.constraints</span></a>.</p>
-<section id="base-constraint">
+<div class="section" id="base-constraint">
 <h2>Base Constraint<a class="headerlink" href="#base-constraint" title="Permalink to this headline">¶</a></h2>
 <p>All the Constraints in SDV inherit from the <code class="docutils literal notranslate"><span class="pre">sdv.constraint.base.Constraint</span></code> class.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> defines the public API for all its subclasses. The public API is implemented
@@ -246,22 +239,8 @@ given data.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">from_dict</span></code>: Build a <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> from its dict representation.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">to_dict</span></code>: Return a dict representing the <code class="docutils literal notranslate"><span class="pre">Constraint</span></code>.</p></li>
 </ul>
-<section id="handling-strategy">
-<h3>handling_strategy<a class="headerlink" href="#handling-strategy" title="Permalink to this headline">¶</a></h3>
-<p>Additionally, the <code class="docutils literal notranslate"><span class="pre">Constraint.__init__</span></code> method sets up the class based on the value of the
-argument <code class="docutils literal notranslate"><span class="pre">handling_strategy</span></code> as follows:</p>
-<ul class="simple">
-<li><p>If <code class="docutils literal notranslate"><span class="pre">handling_strategy</span></code> equals <code class="docutils literal notranslate"><span class="pre">'transform'</span></code>, the <code class="docutils literal notranslate"><span class="pre">filter_valid</span></code> method is disabled by
-replacing it with an identity function.</p></li>
-<li><p>If <code class="docutils literal notranslate"><span class="pre">handling_strategy</span></code> equals <code class="docutils literal notranslate"><span class="pre">'reject_sampling'</span></code>, both the <code class="docutils literal notranslate"><span class="pre">transform</span></code> and
-<code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> methods are disabled by replacing them with an identity function.</p></li>
-</ul>
-<p>Because of this, any subclass has the option to implement both the transformation and reject
-sampling strategies and later on give the user the choice to choose between the two by just
-calling the <code class="docutils literal notranslate"><span class="pre">super().__init__</span></code> method passing the corresponding <code class="docutils literal notranslate"><span class="pre">handling_strategy</span></code> value.</p>
-</section>
-</section>
-<section id="implementing-a-custom-constraint">
+</div>
+<div class="section" id="implementing-a-custom-constraint">
 <h2>Implementing a Custom Constraint<a class="headerlink" href="#implementing-a-custom-constraint" title="Permalink to this headline">¶</a></h2>
 <p>In order to implement a custom constraint, all you need to do is create a subclass of
 <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> and implement your own <code class="docutils literal notranslate"><span class="pre">fit</span></code>, <code class="docutils literal notranslate"><span class="pre">transform</span></code>, <code class="docutils literal notranslate"><span class="pre">reverse_transform</span></code> and
@@ -342,18 +321,11 @@ modeling and sampling the number of <cite>pairs of legs</cite> instead of the nu
         <span class="k">return</span> <span class="n">table_data</span>
 </pre></div>
 </div>
-<p>With this new implementation, our Constraint would be ready to handle both strategies,
-<cite>reject sampling</cite> and <cite>transform</cite>, but in some cases we might want to let the user
-chose only one of them, so the other is skipped.</p>
-<p>In a situation like this, we can simply add a <code class="docutils literal notranslate"><span class="pre">handling_strategy</span></code> parameter to our
-<code class="docutils literal notranslate"><span class="pre">__init__</span></code> method and call <code class="docutils literal notranslate"><span class="pre">super().__init__</span></code> passing it, so the base <code class="docutils literal notranslate"><span class="pre">Constraint</span></code> class
-can handle it adequately:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">PositiveEven</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Ensure that values are positive and even.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">handling_strategy</span><span class="o">=</span><span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_name</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span> <span class="o">=</span> <span class="n">column_name</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">handling_strategy</span><span class="o">=</span><span class="n">handling_strategy</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Say if values are positive and even.&quot;&quot;&quot;</span>
@@ -374,8 +346,8 @@ can handle it adequately:</p>
         <span class="k">return</span> <span class="n">table_data</span>
 </pre></div>
 </div>
-</section>
-</section>
+</div>
+</div>
 
 
               </div>

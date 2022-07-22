@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>Constraints &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Constraints &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../_static/slack-32.png">
             </a>
           </li>
@@ -141,6 +140,12 @@
             
                 <li class="">
                     <a href="../sdv.html">sdv</a>
+                </li>
+            
+          
+            
+                <li class="">
+                    <a href="../lite/index.html">sdv.lite</a>
                 </li>
             
           
@@ -293,9 +298,9 @@
               
               <div>
                 
-  <section id="constraints">
+  <div class="section" id="constraints">
 <span id="sdv-constraints-base"></span><h1>Constraints<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h1>
-<section id="constraint">
+<div class="section" id="constraint">
 <h2>Constraint<a class="headerlink" href="#constraint" title="Permalink to this headline">¶</a></h2>
 <table class="longtable table autosummary">
 <colgroup>
@@ -303,7 +308,7 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.Constraint.html#sdv.constraints.Constraint" title="sdv.constraints.Constraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Constraint</span></code></a>(handling_strategy[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.Constraint.html#sdv.constraints.Constraint" title="sdv.constraints.Constraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Constraint</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Constraint base class.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.Constraint.fit.html#sdv.constraints.Constraint.fit" title="sdv.constraints.Constraint.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Constraint.fit</span></code></a>(table_data)</p></td>
@@ -316,7 +321,7 @@
 <td><p>Fit this Constraint to the data and then transform it.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.constraints.Constraint.reverse_transform.html#sdv.constraints.Constraint.reverse_transform" title="sdv.constraints.Constraint.reverse_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Constraint.reverse_transform</span></code></a>(table_data)</p></td>
-<td><p>Identity method for completion.</p></td>
+<td><p>Handle logic around reverse transforming constraints.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/sdv.constraints.Constraint.is_valid.html#sdv.constraints.Constraint.is_valid" title="sdv.constraints.Constraint.is_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Constraint.is_valid</span></code></a>(table_data)</p></td>
 <td><p>Say whether the given table rows are valid.</p></td>
@@ -332,8 +337,8 @@
 </tr>
 </tbody>
 </table>
-</section>
-</section>
+</div>
+</div>
 
 
               </div>

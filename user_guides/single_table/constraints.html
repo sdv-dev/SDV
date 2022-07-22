@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>Constraints &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Constraints &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -43,7 +42,7 @@
     <link rel="shortcut icon" href="../../_static/SDV.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Handling Constraints" href="handling_constraints.html" />
+    <link rel="next" title="Inputting Business Logic Using Constraints" href="handling_constraints.html" />
     <link rel="prev" title="TVAE Model" href="tvae.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../_static/slack-32.png">
             </a>
           </li>
@@ -161,11 +160,11 @@
                                 <ul>
                                 
                                     <li class="">
-                                        <a href="handling_constraints.html">Handling Constraints</a>
+                                        <a href="handling_constraints.html">Inputting Business Logic Using Constraints</a>
                                     </li>
                                 
                                     <li class="">
-                                        <a href="custom_constraints.html">Defining Custom Constraints</a>
+                                        <a href="custom_constraints.html">Custom Constraints</a>
                                     </li>
                                 
                                 </ul>
@@ -235,27 +234,25 @@
               
               <div>
                 
-  <section id="constraints">
+  <div class="section" id="constraints">
 <span id="single-table-constraints"></span><h1>Constraints<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="handling_constraints.html">Handling Constraints</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="handling_constraints.html">Inputting Business Logic Using Constraints</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="handling_constraints.html#load-a-tabular-demo">Load a Tabular Demo</a></li>
-<li class="toctree-l2"><a class="reference internal" href="handling_constraints.html#how-does-sdv-handle-constraints">How does SDV Handle Constraints?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="handling_constraints.html#predefined-constraints">Predefined Constraints</a></li>
-<li class="toctree-l2"><a class="reference internal" href="handling_constraints.html#using-the-constraints">Using the Constraints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="handling_constraints.html#applying-the-constraints">Applying the Constraints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="handling_constraints.html#faqs">FAQs</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="custom_constraints.html">Defining Custom Constraints</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="custom_constraints.html#using-the-customconstraint">Using the <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="custom_constraints.html#can-i-apply-the-same-function-to-multiple-columns">Can I apply the same function to multiple columns?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="custom_constraints.html#can-i-access-the-rest-of-the-table-from-my-column-functions">Can I access the rest of the table from my column functions?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="custom_constraints.html#can-i-write-a-customconstraint-based-on-reject-sampling">Can I write a <code class="docutils literal notranslate"><span class="pre">CustomConstraint</span></code> based on reject sampling?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_constraints.html">Custom Constraints</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="custom_constraints.html#defining-your-custom-constraint">Defining your custom constraint</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_constraints.html#using-your-custom-constraint">Using your custom constraint</a></li>
 </ul>
 </li>
 </ul>
 </div>
-</section>
+</div>
 
 
               </div>
@@ -264,7 +261,7 @@
               <div class='prev-next-bottom'>
                 
     <a class='left-prev' id="prev-link" href="tvae.html" title="previous page">TVAE Model</a>
-    <a class='right-next' id="next-link" href="handling_constraints.html" title="next page">Handling Constraints</a>
+    <a class='right-next' id="next-link" href="handling_constraints.html" title="next page">Inputting Business Logic Using Constraints</a>
 
               </div>
               

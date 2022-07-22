@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <title>Tabular Preset &#8212; SDV 0.15.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tabular Preset &#8212; SDV 0.16.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -108,7 +107,7 @@
         
         
           <li class="nav-item">
-            <a class="nav-link" href="https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw" target="_blank" rel="noopener">
+            <a class="nav-link" href="https://bit.ly/sdv-slack-invite" target="_blank" rel="noopener">
               <img class="nav-icon-img" src="../../_static/slack-32.png">
             </a>
           </li>
@@ -296,7 +295,7 @@
               
               <div>
                 
-  <section id="tabular-preset">
+  <div class="section" id="tabular-preset">
 <span id="id1"></span><h1>Tabular Preset<a class="headerlink" href="#tabular-preset" title="Permalink to this headline">¶</a></h1>
 <p>The <code class="docutils literal notranslate"><span class="pre">TabularPreset</span></code> is a tabular model that comes with pre-configured settings. This
 is meant for users who want to get started with using synthetic data and spend
@@ -307,13 +306,13 @@ less time worrying about which model to choose or how to tune its parameters.</p
 testing the model and <a class="reference external" href="https://github.com/sdv-dev/SDV/issues/new/choose">filing issues</a>
 for any bugs or feature requests you may have.</p>
 </div>
-<section id="what-is-the-fast-ml-preset">
+<div class="section" id="what-is-the-fast-ml-preset">
 <h2>What is the FAST_ML preset?<a class="headerlink" href="#what-is-the-fast-ml-preset" title="Permalink to this headline">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">FAST_ML</span></code> preset is our first preset. It uses machine learning (ML) to model your data
 while optimizing for the modeling time. This is a great choice if it’s your first time using
 the SDV for a large custom dataset or if you’re exploring the benefits of using ML to create
 synthetic data.</p>
-<section id="what-will-you-get-with-this-preset">
+<div class="section" id="what-will-you-get-with-this-preset">
 <h3>What will you get with this preset?<a class="headerlink" href="#what-will-you-get-with-this-preset" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>This preset optimizes for the modeling time while still applying machine learning to model
@@ -326,11 +325,11 @@ min/max values, averages and standard deviations.</p></li>
 <p>While other SDV models may create higher quality synthetic data, they will take longer.
 Using the <code class="docutils literal notranslate"><span class="pre">FAST_ML</span></code> preset allows you to get started with ML to create synthetic data
 right now.</p>
-</section>
-</section>
-<section id="quick-usage">
+</div>
+</div>
+<div class="section" id="quick-usage">
 <h2>Quick Usage<a class="headerlink" href="#quick-usage" title="Permalink to this headline">¶</a></h2>
-<section id="preparation">
+<div class="section" id="preparation">
 <h3>Preparation<a class="headerlink" href="#preparation" title="Permalink to this headline">¶</a></h3>
 <p>To use this preset, you must have:</p>
 <ol class="arabic simple">
@@ -345,14 +344,12 @@ information about students, including their grades, major and work experience.</
 
 <span class="gp">In [3]: </span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
-<span class="go">   student_id gender  second_perc  ...  start_date   end_date  duration</span>
-<span class="go">0       17264      M        67.00  ...  2020-07-23 2020-10-12       3.0</span>
-<span class="go">1       17265      M        79.33  ...  2020-01-11 2020-04-09       3.0</span>
-<span class="go">2       17266      M        65.00  ...  2020-01-26 2020-07-13       6.0</span>
-<span class="go">3       17267      M        56.00  ...         NaT        NaT       NaN</span>
-<span class="go">4       17268      M        85.80  ...  2020-07-04 2020-09-27       3.0</span>
-
-<span class="go">[5 rows x 17 columns]</span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date  duration</span>
+<span class="go">0       17264      M        67.00      91.00  Commerce        58.00    Sci&amp;Tech            False                 0                55.0   Mkt&amp;HR     58.80  27000.0    True 2020-07-23 2020-10-12       3.0</span>
+<span class="go">1       17265      M        79.33      78.33   Science        77.48    Sci&amp;Tech             True                 1                86.5  Mkt&amp;Fin     66.28  20000.0    True 2020-01-11 2020-04-09       3.0</span>
+<span class="go">2       17266      M        65.00      68.00      Arts        64.00   Comm&amp;Mgmt            False                 0                75.0  Mkt&amp;Fin     57.80  25000.0    True 2020-01-26 2020-07-13       6.0</span>
+<span class="go">3       17267      M        56.00      52.00   Science        52.00    Sci&amp;Tech            False                 0                66.0   Mkt&amp;HR     59.43      NaN   False        NaT        NaT       NaN</span>
+<span class="go">4       17268      M        85.80      73.60  Commerce        73.30   Comm&amp;Mgmt            False                 0                96.8  Mkt&amp;Fin     55.50  42500.0    True 2020-07-04 2020-09-27       3.0</span>
 </pre></div>
 </div>
 <p>If you want to use your custom dataset, you can load it using pandas.
@@ -386,8 +383,8 @@ something like this:</p>
 }
 </pre></div>
 </div>
-</section>
-<section id="modeling">
+</div>
+<div class="section" id="modeling">
 <h3>Modeling<a class="headerlink" href="#modeling" title="Permalink to this headline">¶</a></h3>
 <p>Pass in your metadata to create the TabularPreset FAST_ML model.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [4]: </span><span class="kn">from</span> <span class="nn">sdv.lite</span> <span class="kn">import</span> <span class="n">TabularPreset</span>
@@ -415,8 +412,8 @@ rough benchmark, our analysis shows that:</p>
 <span class="gp">In [8]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">TabularPreset</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;fast_ml_model.pkl&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-<section id="sampling">
+</div>
+<div class="section" id="sampling">
 <h3>Sampling<a class="headerlink" href="#sampling" title="Permalink to this headline">¶</a></h3>
 <p>Once you have your model, you can begin to create synthetic data. Use the sample method and
 pass in the number of rows you want to synthesize.</p>
@@ -424,14 +421,12 @@ pass in the number of rows you want to synthesize.</p>
 
 <span class="gp">In [10]: </span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[10]: </span><span class="go"></span>
-<span class="go">   student_id gender  ...                      end_date  duration</span>
-<span class="go">0           0      F  ...                           NaT       NaN</span>
-<span class="go">1           1      F  ... 2020-08-21 16:48:26.298002176       NaN</span>
-<span class="go">2           2      F  ... 2020-10-21 11:20:34.264411136       NaN</span>
-<span class="go">3           3      F  ...                           NaT       6.0</span>
-<span class="go">4           4      M  ... 2020-08-02 21:05:52.004792832       3.0</span>
-
-<span class="go">[5 rows x 17 columns]</span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">0           0      F    63.974949  57.747807   Science    64.633707   Comm&amp;Mgmt            False                 1           78.267418  Mkt&amp;Fin  61.997153  33146.0   False 2020-05-25 15:11:31.053861376 2020-12-28 06:30:37.543383552       NaN</span>
+<span class="go">1           1      F    61.910800  84.848578  Commerce    69.580776   Comm&amp;Mgmt             True                 0           83.870554  Mkt&amp;Fin  61.867925      NaN   False 2020-05-01 18:31:31.582196480 2020-06-22 13:51:19.896036096       3.0</span>
+<span class="go">2           2      M    71.453202  69.572136  Commerce    65.376447      Others            False                 0           65.173351   Mkt&amp;HR  66.649304  20000.0    True 2020-04-27 16:59:17.822418944 2020-08-17 14:42:08.435242496       3.0</span>
+<span class="go">3           3      M    71.357065  71.950765  Commerce    72.145819   Comm&amp;Mgmt            False                 0           73.416602  Mkt&amp;Fin  62.688857      NaN   False 2020-02-21 18:39:02.985586944 2020-11-18 02:45:51.438863616      12.0</span>
+<span class="go">4           4      F    71.865279  50.727358      Arts    72.847738    Sci&amp;Tech            False                 0           82.563002   Mkt&amp;HR  58.137724      NaN    True                           NaT 2020-04-10 06:16:53.547707136       NaN</span>
 </pre></div>
 </div>
 <p>For creating large amounts of synthetic data, provide a batch_size. This breaks up the sampling
@@ -439,24 +434,24 @@ into multiple batches and shows a progress bar. Use the output_file_path paramet
 results to a file.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="o">=</span><span class="mi">1_000_000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span> <span class="n">output_file_path</span><span class="o">=</span><span class="s1">&#39;synthetic_data.csv&#39;</span><span class="p">)</span>
 <span class="gh">Out[11]: </span><span class="go"></span>
-<span class="go">        student_id gender  ...                      end_date  duration</span>
-<span class="go">0                0      M  ...                           NaT      12.0</span>
-<span class="go">1                1      M  ... 2020-07-27 23:51:23.136863744       6.0</span>
-<span class="go">2                2      M  ... 2020-11-23 00:18:03.228760064       3.0</span>
-<span class="go">3                3      M  ...                           NaT       3.0</span>
-<span class="go">4                4      M  ...                           NaT       6.0</span>
-<span class="go">...            ...    ...  ...                           ...       ...</span>
-<span class="go">999995        9995      M  ...                           NaT       NaN</span>
-<span class="go">999996        9996      M  ... 2020-10-21 17:21:25.821657344      12.0</span>
-<span class="go">999997        9997      F  ...                           NaT       6.0</span>
-<span class="go">999998        9998      F  ... 2020-07-19 18:00:02.299542784       NaN</span>
-<span class="go">999999        9999      M  ...                           NaT       NaN</span>
+<span class="go">        student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">0                0      F    79.428637  66.339361  Commerce    65.186631   Comm&amp;Mgmt             True                 1           98.000000   Mkt&amp;HR  63.960092      NaN    True 2020-01-06 02:06:12.250099968 2020-04-10 16:19:00.014724864       3.0</span>
+<span class="go">1                1      F    58.343546  57.663568  Commerce    58.718383   Comm&amp;Mgmt            False                 0           84.245711   Mkt&amp;HR  62.479066  33702.0   False                           NaT                           NaT       3.0</span>
+<span class="go">2                2      M    68.369198  65.786641  Commerce    65.733333   Comm&amp;Mgmt            False                 1           57.948209   Mkt&amp;HR  60.615368      NaN    True 2020-03-30 17:21:50.598199040                           NaT       NaN</span>
+<span class="go">3                3      M    70.223712  77.524134  Commerce    55.142945   Comm&amp;Mgmt             True                 1           71.161809   Mkt&amp;HR  55.232352  20000.0    True                           NaT 2020-09-09 13:28:55.712185600       NaN</span>
+<span class="go">4                4      M    69.671871  56.533118   Science    64.196254    Sci&amp;Tech            False                 0           91.565040   Mkt&amp;HR  65.669524  28800.0   False 2020-04-13 10:08:45.767266304 2020-09-12 09:24:26.958931968       NaN</span>
+<span class="go">...            ...    ...          ...        ...       ...          ...         ...              ...               ...                 ...      ...        ...      ...     ...                           ...                           ...       ...</span>
+<span class="go">999995        9995      M    71.115684  67.048926  Commerce    59.913873    Sci&amp;Tech            False                 0           73.975691   Mkt&amp;HR  67.549082  31122.0   False 2019-11-27 10:09:43.391200512 2020-05-06 11:47:14.914624768       NaN</span>
+<span class="go">999996        9996      M    66.789271  82.810904  Commerce    60.323238   Comm&amp;Mgmt            False                 0           95.666923  Mkt&amp;Fin  61.518616  24932.0   False 2019-12-11 15:56:22.379554816 2020-06-06 09:37:02.972274432       NaN</span>
+<span class="go">999997        9997      M    67.628411  72.650405  Commerce    73.366621    Sci&amp;Tech             True                 1           74.635389  Mkt&amp;Fin  63.699526  28759.0    True                           NaT 2020-09-22 02:10:18.042279936       6.0</span>
+<span class="go">999998        9998      M    69.389908  61.226316  Commerce    55.249141    Sci&amp;Tech             True                 1           69.872232   Mkt&amp;HR  56.071551      NaN    True 2020-02-18 02:50:58.579859200                           NaT       NaN</span>
+<span class="go">999999        9999      M    43.361345  58.138085  Commerce    57.334288    Sci&amp;Tech            False                 0           64.509022   Mkt&amp;HR  58.239168      NaN   False 2020-03-29 06:17:31.554124032 2020-08-01 07:51:57.382935552       3.0</span>
 
 <span class="go">[1000000 rows x 17 columns]</span>
 </pre></div>
 </div>
-</section>
-<section id="conditional-sampling">
+</div>
+<div class="section" id="conditional-sampling">
 <h3>Conditional Sampling<a class="headerlink" href="#conditional-sampling" title="Permalink to this headline">¶</a></h3>
 <p>The model generates new synthetic data – synthetic rows that do not refer to the original.
 But sometimes you may want to fix some values.</p>
@@ -483,92 +478,84 @@ of column names and the exact value you want, along with the number of rows to s
 
 <span class="gp">In [16]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="n">all_conditions</span><span class="p">)</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">     student_id gender  ...                      end_date  duration</span>
-<span class="go">0             0      M  ...                           NaT       3.0</span>
-<span class="go">1             1      F  ...                           NaT       3.0</span>
-<span class="go">2             2      M  ... 2020-07-17 02:35:37.029714688       NaN</span>
-<span class="go">3             3      F  ... 2020-03-02 23:12:10.715367424       NaN</span>
-<span class="go">4             4      M  ...                           NaT      12.0</span>
-<span class="go">..          ...    ...  ...                           ...       ...</span>
-<span class="go">291         291      F  ... 2020-09-16 08:49:52.684590848       3.0</span>
-<span class="go">292         292      M  ... 2021-02-26 12:01:38.025448960       NaN</span>
-<span class="go">293         293      M  ...                           NaT       NaN</span>
-<span class="go">294         294      M  ... 2020-12-27 00:10:25.697350656       6.0</span>
-<span class="go">295         295      F  ... 2020-09-12 08:23:07.567118592       NaN</span>
+<span class="go">     student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">0             0      M    77.687044  81.606717   Science    65.825498    Sci&amp;Tech             True                 1           53.252756   Mkt&amp;HR  62.445713  26604.0    True                           NaT 2020-10-11 01:22:53.241563136       NaN</span>
+<span class="go">1             1      F    57.719257  49.206567   Science    59.262151   Comm&amp;Mgmt             True                 1           76.555499   Mkt&amp;HR  64.650478  29329.0   False 2020-01-25 00:17:56.164072960 2020-08-19 13:52:25.473539072       NaN</span>
+<span class="go">2             2      M    86.619456  64.660627   Science    70.508206    Sci&amp;Tech             True                 1           88.959709  Mkt&amp;Fin  60.173747      NaN    True                           NaT                           NaT       6.0</span>
+<span class="go">3             3      M    86.762124  68.515214   Science    69.175609   Comm&amp;Mgmt             True                 1           81.841868  Mkt&amp;Fin  66.814740  37872.0    True                           NaT 2020-07-27 23:15:55.967211776       NaN</span>
+<span class="go">4             4      F    57.753332  62.205236   Science    64.684953    Sci&amp;Tech             True                 2           63.292387   Mkt&amp;HR  53.082265  22172.0    True 2020-02-02 03:33:01.935560704 2020-10-25 00:56:00.549259776       6.0</span>
+<span class="go">..          ...    ...          ...        ...       ...          ...         ...              ...               ...                 ...      ...        ...      ...     ...                           ...                           ...       ...</span>
+<span class="go">295         295      M    67.595588  63.441182  Commerce    67.993936    Sci&amp;Tech             True                 1           65.631336   Mkt&amp;HR  62.975867      NaN   False 2020-02-02 06:40:56.830706176                           NaT       NaN</span>
+<span class="go">296         296      F    81.998645  63.930336  Commerce    58.577062   Comm&amp;Mgmt             True                 1           92.502376  Mkt&amp;Fin  71.969636      NaN    True                           NaT                           NaT       3.0</span>
+<span class="go">297         297      F    56.632340  61.279020  Commerce    62.365854   Comm&amp;Mgmt             True                 1           62.324177  Mkt&amp;Fin  66.148704  33440.0    True                           NaT 2020-03-20 17:51:59.504945408       6.0</span>
+<span class="go">298         298      F    84.050310  64.538493  Commerce    75.897567   Comm&amp;Mgmt             True                 2           66.931020  Mkt&amp;Fin  72.784392  33221.0    True 2020-04-21 21:31:05.828751360 2020-12-09 15:41:35.926264064       NaN</span>
+<span class="go">299         299      F    59.348801  45.945729  Commerce    56.377569    Sci&amp;Tech             True                 1           54.750850   Mkt&amp;HR  69.045082  30376.0   False 2020-03-07 12:21:16.096726784 2020-09-03 21:08:26.863586304       NaN</span>
 
-<span class="go">[296 rows x 17 columns]</span>
+<span class="go">[300 rows x 17 columns]</span>
 </pre></div>
 </div>
-</section>
-</section>
-<section id="advanced-usage">
+</div>
+</div>
+<div class="section" id="advanced-usage">
 <h2>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h2>
-<section id="adding-constraints">
+<div class="section" id="adding-constraints">
 <h3>Adding Constraints<a class="headerlink" href="#adding-constraints" title="Permalink to this headline">¶</a></h3>
 <p>A constraint is a logical business rule that must be met by every row in your dataset.</p>
 <p>In most cases, the preset is able to learn a general trend and create synthetic data where <em>most</em>
 of the rows follow the rule. Use a constraint if you want to enforce that <em>all</em> of the rows
 must follow the rule.</p>
-<p>In our dataset, we have a constraint: If experience_years=0, then work_experience=False.
-Otherwise, work_experience=True. We can describe this using a
-<a class="reference external" href="https://sdv.dev/SDV/user_guides/single_table/handling_constraints.html#columnformula-constraint">ColumnFormula constraint</a>.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [17]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">ColumnFormula</span>
-
-<span class="go"># define the formula for computing work experience</span>
-<span class="gp">In [18]: </span><span class="k">def</span> <span class="nf">calculate_work_experience</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-<span class="gp">   ....: </span>    <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;experience_years&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
-<span class="gp">   ....: </span>
+<p>In our dataset, we have a constraint: All the numerical values in the duration column must be divisible by 3.
+We can describe this using a FixedIncrements constraint.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [17]: </span><span class="kn">from</span> <span class="nn">sdv.constraints</span> <span class="kn">import</span> <span class="n">FixedIncrements</span>
 
 <span class="go"># use the formula when defining the constraint</span>
-<span class="gp">In [19]: </span><span class="n">work_constraint</span> <span class="o">=</span> <span class="n">ColumnFormula</span><span class="p">(</span>
-<span class="gp">   ....: </span>    <span class="n">column</span><span class="o">=</span><span class="s1">&#39;work_experience&#39;</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">formula</span><span class="o">=</span><span class="n">calculate_work_experience</span><span class="p">,</span>
+<span class="gp">In [18]: </span><span class="n">duration_constraint</span> <span class="o">=</span> <span class="n">FixedIncrements</span><span class="p">(</span>
+<span class="gp">   ....: </span>    <span class="n">column_name</span><span class="o">=</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span>
+<span class="gp">   ....: </span>    <span class="n">increment_value</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
 <span class="gp">   ....: </span><span class="p">)</span>
 <span class="gp">   ....: </span>
 </pre></div>
 </div>
 <p>You can input constraints into the presets when creating your model.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [20]: </span><span class="n">constrained_model</span> <span class="o">=</span> <span class="n">TabularPreset</span><span class="p">(</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [19]: </span><span class="n">constrained_model</span> <span class="o">=</span> <span class="n">TabularPreset</span><span class="p">(</span>
 <span class="gp">   ....: </span>    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;FAST_ML&#39;</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">work_constraint</span><span class="p">],</span>
+<span class="gp">   ....: </span>    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">duration_constraint</span><span class="p">],</span>
 <span class="gp">   ....: </span><span class="p">)</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [21]: </span><span class="n">constrained_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="gp">In [20]: </span><span class="n">constrained_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>When you sample from the model, the synthetic data will follow the constraints</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [22]: </span><span class="n">constrained_synthetic_data</span> <span class="o">=</span> <span class="n">constrained_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="o">=</span><span class="mi">1_000</span><span class="p">)</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [21]: </span><span class="n">constrained_synthetic_data</span> <span class="o">=</span> <span class="n">constrained_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="o">=</span><span class="mi">1_000</span><span class="p">)</span>
 
-<span class="gp">In [23]: </span><span class="n">constrained_synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-<span class="gh">Out[23]: </span><span class="go"></span>
-<span class="go">   student_id gender  ...                      end_date  duration</span>
-<span class="go">0           0      F  ...                           NaT       3.0</span>
-<span class="go">1           1      M  ... 2020-06-30 10:35:05.327057152      12.0</span>
-<span class="go">2           2      F  ...                           NaT       NaN</span>
-<span class="go">3           3      F  ...                           NaT       6.0</span>
-<span class="go">4           4      F  ... 2020-05-01 16:10:38.467646464       3.0</span>
-<span class="go">5           5      F  ...                           NaT       NaN</span>
-<span class="go">6           6      M  ...                           NaT       NaN</span>
-<span class="go">7           7      M  ...                           NaT       NaN</span>
-<span class="go">8           8      F  ... 2020-08-25 05:55:29.006303488       6.0</span>
-<span class="go">9           9      M  ... 2020-04-12 09:09:57.670391296       6.0</span>
-
-<span class="go">[10 rows x 17 columns]</span>
+<span class="gp">In [22]: </span><span class="n">constrained_synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="gh">Out[22]: </span><span class="go"></span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">0           0      M    57.300087  67.655502   Science    68.966324   Comm&amp;Mgmt            False                 0           67.170571   Mkt&amp;HR  61.888224      NaN   False                           NaT                           NaT       NaN</span>
+<span class="go">1           1      M    74.405132  85.949325   Science    78.102963    Sci&amp;Tech             True                 1           60.505013  Mkt&amp;Fin  72.047568  31659.0    True 2020-03-13 16:16:41.582030080 2020-09-07 00:24:08.715815168       3.0</span>
+<span class="go">2           2      F    77.209456  58.763720   Science    57.548742      Others             True                 1           65.874506  Mkt&amp;Fin  58.990687  34824.0    True 2020-04-03 08:27:32.995629568 2020-06-22 10:11:37.373638656       3.0</span>
+<span class="go">3           3      F    62.608397  78.420730   Science    61.782102   Comm&amp;Mgmt            False                 0           86.614222  Mkt&amp;Fin  65.971146      NaN   False                           NaT                           NaT       NaN</span>
+<span class="go">4           4      M    70.156224  70.635905  Commerce    67.887657   Comm&amp;Mgmt            False                 1           88.464566  Mkt&amp;Fin  60.118939  34382.0    True 2020-05-08 15:24:00.926043392 2020-07-21 00:54:49.278088704      12.0</span>
+<span class="go">5           5      F    81.897872  97.700000  Commerce    86.951382   Comm&amp;Mgmt             True                 1           88.468107  Mkt&amp;Fin  74.257821  27077.0    True 2019-12-05 14:52:51.676180992 2020-07-08 17:14:31.438298368       NaN</span>
+<span class="go">6           6      M    72.116456  64.526462  Commerce    60.811772    Sci&amp;Tech             True                 1           56.857718  Mkt&amp;Fin  57.972075      NaN   False                           NaT                           NaT       6.0</span>
+<span class="go">7           7      M    75.107764  73.646129  Commerce    79.962107   Comm&amp;Mgmt            False                 0           83.288892  Mkt&amp;Fin  57.733449  43861.0    True 2019-12-05 00:23:39.837441536 2020-05-22 20:08:59.201916672       NaN</span>
+<span class="go">8           8      M    65.769230  64.672046   Science    70.161421   Comm&amp;Mgmt             True                 1           85.717844  Mkt&amp;Fin  60.681209  22385.0    True 2019-08-10 15:05:12.937857280 2020-06-03 16:53:57.754783232      12.0</span>
+<span class="go">9           9      M    48.721607  37.121656   Science    68.214546   Comm&amp;Mgmt             True                 1           55.290857   Mkt&amp;HR  62.585819      NaN   False                           NaT                           NaT       3.0</span>
 </pre></div>
 </div>
 <p>To read more about defining constraints, see the
 <a class="reference external" href="https://sdv.dev/SDV/user_guides/single_table/handling_constraints.html">Handling Constraints User Guide</a>.</p>
-</section>
-</section>
-<section id="resources">
+</div>
+</div>
+<div class="section" id="resources">
 <h2>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h2>
 <p>The SDV (Synthetic Data Vault) is an open source project built &amp; maintained by DataCebo. It is free to use under the MIT License.</p>
 <p>For other resources see our: <a class="reference external" href="https://github.com/sdv-dev/SDV">GitHub</a>,
 <a class="reference external" href="https://sdv.dev/SDV/">Docs</a>, <a class="reference external" href="https://sdv.dev/blog/">Blog</a>.</p>
-</section>
-</section>
+</div>
+</div>
 
 
               </div>
