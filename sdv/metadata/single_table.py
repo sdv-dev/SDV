@@ -249,6 +249,10 @@ class SingleTableMetadata:
             id (str, tuple):
                 Name (or tuple of names) of the primary key column(s).
         """
+        is_tuple_of_str = isinstance(id, tuple) and all([isinstance(i, str) for i in id])
+        if not isinstance(id, str) and not is_tuple_of_str:
+            raise ValueError('"primary_key" must be a string or tuple of strings.')
+
         if self._primary_key is not None:
             warnings.warn(
                 f'There is an existing primary key {self._primary_key}. This key will be removed.'
@@ -264,6 +268,12 @@ class SingleTableMetadata:
             ids (list[str], list[tuple]):
                 List of names (or tuple of names) of the alternate key columns.
         """
+        is_list_of_tuple_str = all([isinstance(i, (str, tuple)) for i in ids])
+        is_list_of_tuple_of_str = all([all([isinstance(i, str) for i in tpl])] for tpl in ids)
+        if not isinstance(ids, list) or not is_list_of_tuple_str or not is_list_of_tuple_of_str:
+            raise ValueError(
+                '"alternate_keys" must be a list of strings or a nested list of strings.')
+
         self._alternate_keys = ids
         self._metadata['alternate_keys'] = ids
 
@@ -274,6 +284,9 @@ class SingleTableMetadata:
             id (str):
                 Name of the sequence key column.
         """
+        if not isinstance(id, str):
+            raise ValueError('"sequence_key" must a string.')
+
         self._metadata['sequence_key'] = id
 
     def set_sequence_index(self, column_name):
@@ -283,6 +296,9 @@ class SingleTableMetadata:
             column_name (str):
                 Name of the sequence index column.
         """
+        if not isinstance(column_name, str):
+            raise ValueError('"sequence_index" must a string.')
+
         self._metadata['sequence_index'] = column_name
 
     def to_dict(self):
