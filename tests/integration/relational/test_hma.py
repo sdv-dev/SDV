@@ -26,7 +26,7 @@ def test_sdv_model_kwargs():
     assert model._DTYPE_TRANSFORMERS['O'] == 'label_encoding'
     assert isinstance(
         model._metadata._hyper_transformer.field_transformers['gender'],
-        rdt.transformers.categorical.LabelEncodingTransformer
+        rdt.transformers.categorical.LabelEncoder
     )
 
 
