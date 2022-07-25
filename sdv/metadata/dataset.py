@@ -459,25 +459,6 @@ class Metadata:
 
         return transformers_dict
 
-    def _load_hyper_transformer(self, table_name):
-        """Create and return a new ``rdt.HyperTransformer`` instance for a table.
-
-        First get the ``dtypes`` and ``pii fields`` from a given table, then use
-        those to build a transformer dictionary to be used by the ``HyperTransformer``.
-
-        Args:
-            table_name (str):
-                Table name for which to load the HyperTransformer.
-
-        Returns:
-            rdt.HyperTransformer:
-                Instance of ``rdt.HyperTransformer`` for the given table.
-        """
-        dtypes = self.get_dtypes(table_name)
-        pii_fields = self._get_pii_fields(table_name)
-        transformers_dict = self._get_transformers(dtypes, pii_fields)
-        return HyperTransformer(field_transformers=transformers_dict)
-
     def transform(self, table_name, data):
         """Transform data for a given table.
 
@@ -495,14 +476,12 @@ class Metadata:
         """
         hyper_transformer = self._hyper_transformers.get(table_name)
         if hyper_transformer is None:
-            hyper_transformer = self._load_hyper_transformer(table_name)
-            fields = list(hyper_transformer.transformers.keys())
-            hyper_transformer.fit(data[fields])
+            hyper_transformer = HyperTransformer()
+            hyper_transformer.detect_initial_config(data)
+            hyper_transformer.fit(data)
             self._hyper_transformers[table_name] = hyper_transformer
 
-        hyper_transformer = self._hyper_transformers.get(table_name)
-        fields = list(hyper_transformer.transformers.keys())
-        return hyper_transformer.transform(data[fields])
+        return hyper_transformer.transform(data)
 
     def reverse_transform(self, table_name, data):
         """Reverse the transformed data for a given table.
