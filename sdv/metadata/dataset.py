@@ -444,7 +444,6 @@ class Metadata:
             elif dtype.kind == 'f':
                 transformer = transformers.FloatFormatter()
             elif dtype.kind == 'O':
-                anonymize = pii_fields.get(name)
                 transformer = transformers.FrequencyEncoder()
             elif dtype.kind == 'b':
                 transformer = transformers.BinaryEncoder()
