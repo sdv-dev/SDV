@@ -37,10 +37,10 @@ class GaussianCopula(BaseTabularModel):
                 * ``integer``: Uses a ``FloatFormatter`` of dtype ``int``.
                 * ``float``: Uses a ``FloatFormatter`` of dtype ``float``.
                 * ``categorical``: Uses a ``FrequencyEncoder`` without gaussian noise.
-                * ``categorical_fuzzy``: Uses a ``FrequencyEncoder`` adding gaussian noise.
+                * ``categorical_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
                 * ``one_hot_encoding``: Uses a ``OneHotEncoder``.
                 * ``label_encoding``: Uses a ``LabelEncoder`` without gaussian nose.
-                * ``label_encoding_fuzzy``: Uses a ``LabelEncoder`` adding gaussian noise.
+                * ``label_encoding_noised``: Uses a ``LabelEncoder`` adding gaussian noise.
                 * ``boolean``: Uses a ``BinaryEncoder``.
                 * ``datetime``: Uses a ``UnixTimestampEncoder``.
 
@@ -94,7 +94,7 @@ class GaussianCopula(BaseTabularModel):
                 * ``categorical_noised``: Apply a ``FrequencyEncoder`` with the
                   ``add_noise`` argument set to ``True``, which makes it add gaussian
                   noise around each value.
-            Defaults to ``categorical_fuzzy``.
+            Defaults to ``categorical_noised``.
         learn_rounding_scheme (bool):
             Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
             ``reverse_transform`` will be rounded to that place. Defaults to ``True``.
@@ -118,7 +118,7 @@ class GaussianCopula(BaseTabularModel):
         'truncated_gaussian': copulas.univariate.TruncatedGaussian,
     }
     _DEFAULT_DISTRIBUTION = _DISTRIBUTIONS['truncated_gaussian']
-    _DEFAULT_TRANSFORMER = 'categorical_fuzzy'
+    _DEFAULT_TRANSFORMER = 'categorical_noised'
 
     @classmethod
     def _validate_distribution(cls, distribution):

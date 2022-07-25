@@ -78,11 +78,11 @@ def test_gaussian_copula():
             'type': 'categorical',
             'pii': True,
             'pii_category': 'country_code',
-            'transformer': 'categorical_fuzzy',
+            'transformer': 'categorical_noised',
         },
         'gender': {
             'type': 'categorical',
-            'transformer': 'categorical_fuzzy',
+            'transformer': 'categorical_noised',
         },
         'age': {
             'type': 'numerical',

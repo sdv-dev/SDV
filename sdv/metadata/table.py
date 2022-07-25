@@ -47,7 +47,7 @@ class Table:
                 * ``integer``: Uses a ``FloatFormatter`` of dtype ``int``.
                 * ``float``: Uses a ``FloatFormatter`` of dtype ``float``.
                 * ``categorical``: Uses a ``FrequencyEncoder`` without gaussian noise.
-                * ``categorical_fuzzy``: Uses a ``FrequencyEncoder`` adding gaussian noise.
+                * ``categorical_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
                 * ``one_hot_encoding``: Uses a ``OneHotEncoder``.
                 * ``label_encoding``: Uses a ``LabelEncoder``.
                 * ``boolean``: Uses a ``BinaryEncoder``.

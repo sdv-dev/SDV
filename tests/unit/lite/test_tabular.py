@@ -60,29 +60,31 @@ class TestTabularPreset:
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=None,
             constraints=None,
-            categorical_transformer='categorical_fuzzy',
+            categorical_transformer='categorical_noised',
             default_distribution='gaussian',
-            rounding=None,
+            learn_rounding_scheme=False,
         )
         metadata = gaussian_copula_mock.return_value._metadata
         metadata._dtype_transformers.update.assert_called_once_with({
-            'i': transformers_mock.NumericalTransformer(
-                dtype=np.int64,
-                nan=None,
-                null_column=False,
-                min_value='auto',
-                max_value='auto',
+            'i': transformers_mock.FloatFormatter(
+                missing_value_replacement=None,
+                model_missing_values=False,
+                enforce_min_max_values=True,
             ),
-            'f': transformers_mock.NumericalTransformer(
-                dtype=np.float64,
-                nan=None,
-                null_column=False,
-                min_value='auto',
-                max_value='auto',
+            'f': transformers_mock.FloatFormatter(
+                missing_value_replacement=None,
+                model_missing_values=False,
+                enforce_min_max_values=True,
             ),
-            'O': transformers_mock.CategoricalTransformer(fuzzy=True),
-            'b': transformers_mock.BooleanTransformer(nan=None, null_column=False),
-            'M': transformers_mock.DatetimeTransformer(nan=None, null_column=False),
+            'O': transformers_mock.FrequencyEncoder(add_noise=True),
+            'b': transformers_mock.BinaryEncoder(
+                missing_value_replacement=None,
+                model_missing_values=False
+            ),
+            'M': transformers_mock.UnixTimestampEncoder(
+                missing_value_replacement=None,
+                model_missing_values=False
+            )
         })
 
     @patch('sdv.lite.tabular.GaussianCopula', spec_set=GaussianCopula)
@@ -106,9 +108,9 @@ class TestTabularPreset:
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=metadata.to_dict(),
             constraints=None,
-            categorical_transformer='categorical_fuzzy',
+            categorical_transformer='categorical_noised',
             default_distribution='gaussian',
-            rounding=None,
+            learn_rounding_scheme=False,
         )
 
     @patch('sdv.lite.tabular.rdt.transformers')
@@ -134,29 +136,31 @@ class TestTabularPreset:
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=None,
             constraints=[constraint],
-            categorical_transformer='categorical_fuzzy',
+            categorical_transformer='categorical_noised',
             default_distribution='gaussian',
-            rounding=None,
+            learn_rounding_scheme=False,
         )
         metadata = gaussian_copula_mock.return_value._metadata
         metadata._dtype_transformers.update.assert_called_once_with({
-            'i': transformers_mock.NumericalTransformer(
-                dtype=np.int64,
-                nan='mean',
-                null_column=None,
-                min_value='auto',
-                max_value='auto',
+            'i': transformers_mock.FloatFormatter(
+                missing_value_replacement='mean',
+                model_missing_values=False,
+                enforce_min_max_values=True,
             ),
-            'f': transformers_mock.NumericalTransformer(
-                dtype=np.float64,
-                nan='mean',
-                null_column=None,
-                min_value='auto',
-                max_value='auto',
+            'f': transformers_mock.FloatFormatter(
+                missing_value_replacement='mean',
+                model_missing_values=False,
+                enforce_min_max_values=True,
             ),
-            'O': transformers_mock.CategoricalTransformer(fuzzy=True),
-            'b': transformers_mock.BooleanTransformer(nan=-1, null_column=None),
-            'M': transformers_mock.DatetimeTransformer(nan='mean', null_column=None),
+            'O': transformers_mock.FrequencyEncoder(add_noise=True),
+            'b': transformers_mock.BinaryEncoder(
+                missing_value_replacement=-1,
+                model_missing_values=False
+            ),
+            'M': transformers_mock.UnixTimestampEncoder(
+                missing_value_replacement='mean',
+                model_missing_values=False
+            )
         })
         assert preset._null_column is True
 
@@ -187,9 +191,9 @@ class TestTabularPreset:
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=expected_metadata,
             constraints=None,
-            categorical_transformer='categorical_fuzzy',
+            categorical_transformer='categorical_noised',
             default_distribution='gaussian',
-            rounding=None,
+            learn_rounding_scheme=False,
         )
         metadata = gaussian_copula_mock.return_value._metadata
         assert metadata._dtype_transformers.update.call_count == 1

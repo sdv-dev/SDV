@@ -54,10 +54,10 @@ class BaseTabularModel:
                 * ``integer``: Uses a ``FloatFormatter`` of dtype ``int``.
                 * ``float``: Uses a ``FloatFormatter`` of dtype ``float``.
                 * ``categorical``: Uses a ``FrequencyEncoder`` without gaussian noise.
-                * ``categorical_fuzzy``: Uses a ``FrequencyEncoder`` adding gaussian noise.
+                * ``categorical_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
                 * ``one_hot_encoding``: Uses a ``OneHotEncoder``.
                 * ``label_encoding``: Uses a ``LabelEncoder`` without gaussian nose.
-                * ``label_encoding_fuzzy``: Uses a ``LabelEncoder`` adding gaussian noise.
+                * ``label_encoding_noised``: Uses a ``LabelEncoder`` adding gaussian noise.
                 * ``boolean``: Uses a ``BinaryEncoder``.
                 * ``datetime``: Uses a ``UnixTimestampEncoder``.
 

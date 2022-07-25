@@ -30,7 +30,7 @@ def test_constraints(tmpdir):
     ]
 
     # Run
-    gc = GaussianCopula(constraints=constraints, min_value=None, max_value=None)
+    gc = GaussianCopula(constraints=constraints)
     gc.fit(employees)
     gc.save(tmpdir / 'test.pkl')
     gc = gc.load(tmpdir / 'test.pkl')

@@ -53,7 +53,7 @@ class TestBaseTabularModel:
                     'field_distributions': {
                         'a_field': 'gaussian',
                     },
-                    'categorical_transformer': 'categorical_fuzzy',
+                    'categorical_transformer': 'categorical_noised',
                 }
             }
         }
@@ -1054,7 +1054,7 @@ def test___init__passes_correct_parameters(metadata_mock):
     expected_calls = [
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
              anonymize_fields=None, constraints=None,
-             dtype_transformers={'O': 'categorical_fuzzy'}, rounding=-1, max_value=100,
+             dtype_transformers={'O': 'categorical_noised'}, rounding=-1, max_value=100,
              min_value=-50),
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
              anonymize_fields=None, constraints=None, dtype_transformers={'O': None},
