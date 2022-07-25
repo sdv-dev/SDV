@@ -68,7 +68,7 @@ class TabularPreset():
                 constraints=constraints,
                 categorical_transformer='categorical_fuzzy',
                 default_distribution='gaussian',
-                rounding=None,
+                learn_rounding_scheme=False,
             )
 
             # Decide if transformers should model the null column or not.
@@ -78,31 +78,27 @@ class TabularPreset():
 
             # If transformers should model the null column, pass None to let each transformer
             # decide if it's necessary or not.
-            transformer_null_column = None if self._null_column else False
+            transformer_model_missing_values = bool(self._null_column)
 
             dtype_transformers = {
-                'i': rdt.transformers.NumericalTransformer(
-                    dtype=np.int64,
-                    nan='mean' if self._null_column else None,
-                    null_column=transformer_null_column,
-                    min_value='auto',
-                    max_value='auto',
+                'i': rdt.transformers.FloatFormatter(
+                    missing_value_replacement='mean' if self._null_column else None,
+                    model_missing_values=transformer_model_missing_values,
+                    enforce_min_max_values=True,
                 ),
-                'f': rdt.transformers.NumericalTransformer(
-                    dtype=np.float64,
-                    nan='mean' if self._null_column else None,
-                    null_column=transformer_null_column,
-                    min_value='auto',
-                    max_value='auto',
+                'f': rdt.transformers.FloatFormatter(
+                    missing_value_replacement='mean' if self._null_column else None,
+                    model_missing_values=transformer_model_missing_values,
+                    enforce_min_max_values=True,
                 ),
-                'O': rdt.transformers.CategoricalTransformer(fuzzy=True),
-                'b': rdt.transformers.BooleanTransformer(
-                    nan=-1 if self._null_column else None,
-                    null_column=transformer_null_column,
+                'O': rdt.transformers.FrequencyEncoder(add_noise=True),
+                'b': rdt.transformers.BinaryEncoder(
+                    missing_value_replacement=-1 if self._null_column else None,
+                    model_missing_values=transformer_model_missing_values,
                 ),
-                'M': rdt.transformers.DatetimeTransformer(
-                    nan='mean' if self._null_column else None,
-                    null_column=transformer_null_column,
+                'M': rdt.transformers.UnixTimestampEncoder(
+                    missing_value_replacement='mean' if self._null_column else None,
+                    model_missing_values=transformer_model_missing_values,
                 ),
             }
             self._model._metadata._dtype_transformers.update(dtype_transformers)
