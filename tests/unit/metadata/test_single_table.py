@@ -54,14 +54,14 @@ class TestSingleTableMetadata:
 
         # Assert
         assert instance._columns == {}
-        assert instance._primary_key is None
-        assert instance._alternate_keys == []
         assert instance._constraints == []
         assert instance._version == 'SINGLE_TABLE_V1'
         assert instance._metadata == {
             'columns': {},
             'primary_key': None,
             'alternate_keys': [],
+            'sequence_key': None,
+            'sequence_index': None,
             'constraints': [],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
@@ -787,6 +787,23 @@ class TestSingleTableMetadata:
         ]
         assert mock_print.call_args_list == expected_print_calls
 
+    def test_set_primary_key_validation(self):
+        """Test that ``set_primary_key`` crashes for invalid arguments.
+
+        Input:
+            - A tuple with non-string values.
+
+        Side Effect:
+            - A ``ValueError`` should be raised.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        err_msg = '"primary_key" must be a string or tuple of strings.'
+        # Run / Assert
+        with pytest.raises(ValueError, match=err_msg):
+            instance.set_primary_key(('1', 2, '3'))
+
     def test_set_primary_key(self):
         """Test that ``set_primary_key`` sets the ``_metadata['primary_key']`` value."""
         # Setup
@@ -814,7 +831,7 @@ class TestSingleTableMetadata:
         """Test that ``set_primary_key`` raises a warning when a primary key already exists.
 
         Setup:
-            - An instance of ``SingleTableMetadata`` with ``_primary_key`` set.
+            - An instance of ``SingleTableMetadata`` with ``_metadata['primary_key']`` set.
 
         Input:
             - String.
@@ -824,15 +841,32 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
-        instance._primary_key = 'column'
+        instance._metadata['primary_key'] = 'column0'
 
         # Run
-        instance.set_primary_key('column')
+        instance.set_primary_key('column1')
 
         # Assert
-        warning_msg = "There is an existing primary key 'column'. This key will be removed."
+        warning_msg = "There is an existing primary key 'column0'. This key will be removed."
         warning_mock.warn.called_once_with(warning_msg)
-        instance._metadata['primary_key'] == 'column'
+        instance._metadata['primary_key'] == 'column1'
+
+    def test_set_alternate_keys_validation(self):
+        """Test that ``set_alternate_keys`` crashes for invalid arguments.
+
+        Input:
+            - A list with tuples with non-string values.
+
+        Side Effect:
+            - A ``ValueError`` should be raised.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        err_msg = '"alternate_keys" must be a list of strings or a list of tuples of strings.'
+        # Run / Assert
+        with pytest.raises(ValueError, match=err_msg):
+            instance.set_alternate_keys(['col1', ('1', 2, '3'), 'col3'])
 
     def test_set_alternate_keys(self):
         """Test that ``set_alternate_keys`` sets the ``_metadata['alternate_keys']`` value."""
@@ -845,8 +879,25 @@ class TestSingleTableMetadata:
         # Assert
         instance._metadata['alternate_keys'] == ['column1', ('column2', 'column3')]
 
+    def test_set_sequence_key_validation(self):
+        """Test that ``set_sequence_key`` crashes for invalid arguments.
+
+        Input:
+            - A tuple with non-string values.
+
+        Side Effect:
+            - A ``ValueError`` should be raised.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        err_msg = '"sequence_key" must be a string or tuple of strings.'
+        # Run / Assert
+        with pytest.raises(ValueError, match=err_msg):
+            instance.set_sequence_key(('1', 2, '3'))
+
     def test_set_sequence_key(self):
-        """Test that ``set_sequence_key`` sets the ``_metadata['sequence_key]`` value."""
+        """Test that ``set_sequence_key`` sets the ``_metadata['sequence_key']`` value."""
         # Setup
         instance = SingleTableMetadata()
 
@@ -856,8 +907,61 @@ class TestSingleTableMetadata:
         # Assert
         instance._metadata['sequence_key'] == 'column'
 
+    def test_set_sequence_key_tuple(self):
+        """Test that ``set_sequence_key`` sets ``_metadata['sequence_key']`` for tuples."""
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance.set_sequence_key(('column1', 'column2'))
+
+        # Assert
+        instance._metadata['sequence_key'] == ('column1', 'column2')
+
+    @patch('sdv.tabular.utils.warnings')
+    def test_set_sequence_key_warning(self, warning_mock):
+        """Test that ``set_sequence_key`` raises a warning when a sequence key already exists.
+
+        Setup:
+            - An instance of ``SingleTableMetadata`` with ``_metadata['sequence_key']`` set.
+
+        Input:
+            - String.
+
+        Side Effect:
+            - A warning should be raised.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance._metadata['sequence_key'] = 'column0'
+
+        # Run
+        instance.set_primary_key('column1')
+
+        # Assert
+        warning_msg = "There is an existing sequence key 'column0'. This key will be removed."
+        warning_mock.warn.called_once_with(warning_msg)
+        instance._metadata['sequence_key'] == 'column1'
+
+    def test_set_sequence_index_validation(self):
+        """Test that ``set_sequence_index`` crashes for invalid arguments.
+
+        Input:
+            - A non-string value.
+
+        Side Effect:
+            - A ``ValueError`` should be raised.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        err_msg = '"sequence_index" must be a string.'
+        # Run / Assert
+        with pytest.raises(ValueError, match=err_msg):
+            instance.set_sequence_index(('column1', 'column2'))
+
     def test_set_sequence_index(self):
-        """Test that ``set_sequence_index`` sets the ``_metadata['sequence_index]`` value."""
+        """Test that ``set_sequence_index`` sets the ``_metadata['sequence_index']`` value."""
         # Setup
         instance = SingleTableMetadata()
 
@@ -943,6 +1047,8 @@ class TestSingleTableMetadata:
             'columns': {'my_column': 'value'},
             'primary_key': 'pk',
             'alternate_keys': [],
+            'sequence_keys': None,
+            'sequence_index': None,
             'constraints': [],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
@@ -953,8 +1059,6 @@ class TestSingleTableMetadata:
         # Assert
         assert instance._metadata == my_metadata
         assert instance._columns == {'my_column': 'value'}
-        assert instance._primary_key == 'pk'
-        assert instance._alternate_keys == []
         assert instance._constraints == []
 
     @patch('sdv.metadata.single_table.Path')
@@ -1073,13 +1177,13 @@ class TestSingleTableMetadata:
             'columns': {'animals': {'type': 'categorical'}},
             'primary_key': 'animals',
             'alternate_keys': [],
+            'sequence_keys': None,
+            'sequence_index': None,
             'constraints': [{'my_constraint': 'my_params'}],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
         assert instance._columns == {'animals': {'type': 'categorical'}}
-        assert instance._primary_key == 'animals'
         assert instance._constraints == [{'my_constraint': 'my_params'}]
-        assert instance._alternate_keys == []
         assert instance._metadata == expected_metadata
         mock_constraint.from_dict.assert_called_once()
 

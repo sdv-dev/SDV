@@ -103,14 +103,14 @@ class SingleTableMetadata:
 
     def __init__(self):
         self._columns = {}
-        self._primary_key = None
-        self._alternate_keys = []
         self._constraints = []
         self._version = self.SCHEMA_VERSION
         self._metadata = {
             'columns': self._columns,
-            'primary_key': self._primary_key,
-            'alternate_keys': self._alternate_keys,
+            'primary_key': None,
+            'alternate_keys': [],
+            'sequence_key': None,
+            'sequence_index': None,
             'constraints': self._constraints,
             'SCHEMA_VERSION': self.SCHEMA_VERSION
         }
@@ -249,16 +249,16 @@ class SingleTableMetadata:
             id (str, tuple):
                 Name (or tuple of names) of the primary key column(s).
         """
-        is_tuple_of_str = isinstance(id, tuple) and all([isinstance(i, str) for i in id])
+        is_tuple_of_str = isinstance(id, tuple) and all(isinstance(i, str) for i in id)
         if not isinstance(id, str) and not is_tuple_of_str:
             raise ValueError('"primary_key" must be a string or tuple of strings.')
 
-        if self._primary_key is not None:
+        if self._metadata['primary_key'] is not None:
             warnings.warn(
-                f'There is an existing primary key {self._primary_key}. This key will be removed.'
+                f"There is an existing primary key {self._metadata['primary_key']}."
+                ' This key will be removed.'
             )
 
-        self._primary_key = id
         self._metadata['primary_key'] = id
 
     def set_alternate_keys(self, ids):
@@ -268,24 +268,32 @@ class SingleTableMetadata:
             ids (list[str], list[tuple]):
                 List of names (or tuple of names) of the alternate key columns.
         """
-        is_list_of_tuple_str = all([isinstance(i, (str, tuple)) for i in ids])
-        is_list_of_tuple_of_str = all([all([isinstance(i, str) for i in tpl])] for tpl in ids)
+        is_list_of_tuple_str = all(isinstance(id, (str, tuple)) for id in ids)
+        is_list_of_tuple_of_str = \
+            all(all(isinstance(i, str) for i in id) for id in ids if isinstance(id, tuple))
+
         if not isinstance(ids, list) or not is_list_of_tuple_str or not is_list_of_tuple_of_str:
             raise ValueError(
-                '"alternate_keys" must be a list of strings or a nested list of strings.')
+                '"alternate_keys" must be a list of strings or a list of tuples of strings.')
 
-        self._alternate_keys = ids
         self._metadata['alternate_keys'] = ids
 
     def set_sequence_key(self, id):
         """Set the metadata sequence key.
 
         Args:
-            id (str):
-                Name of the sequence key column.
+            id (str, tuple):
+                Name (or tuple of names) of the sequence key column(s).
         """
-        if not isinstance(id, str):
-            raise ValueError('"sequence_key" must a string.')
+        is_tuple_of_str = isinstance(id, tuple) and all(isinstance(i, str) for i in id)
+        if not isinstance(id, str) and not is_tuple_of_str:
+            raise ValueError('"sequence_key" must be a string or tuple of strings.')
+
+        if self._metadata['sequence_key'] is not None:
+            warnings.warn(
+                f"There is an existing sequence key {self._metadata['sequence_key']}."
+                ' This key will be removed.'
+            )
 
         self._metadata['sequence_key'] = id
 
@@ -297,7 +305,7 @@ class SingleTableMetadata:
                 Name of the sequence index column.
         """
         if not isinstance(column_name, str):
-            raise ValueError('"sequence_index" must a string.')
+            raise ValueError('"sequence_index" must be a string.')
 
         self._metadata['sequence_index'] = column_name
 
