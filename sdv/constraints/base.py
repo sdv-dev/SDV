@@ -112,29 +112,18 @@ class Constraint(metaclass=ConstraintMeta):
                 args.append(arg_name)
 
         missing_values = set(args) - set(kwargs)
-        constraint_name = cls.__name__
+        constraint = cls.__name__
+        article = 'an' if constraint == 'Inequality' else 'a'
         if missing_values:
-            if constraint_name == 'Inequality':
-                errors.append(ValueError(
-                    f'Missing required values {missing_values} in an {constraint_name} constraint.'
-                ))
-            else:
-                errors.append(ValueError(
-                    f'Missing required values {missing_values} in a {constraint_name} constraint.'
-                ))
+            errors.append(ValueError(
+                f'Missing required values {missing_values} in {article} {constraint} constraint.'
+            ))
 
-        invalid_values = set(kwargs) - set(args)
-        if invalid_values:
-            if constraint_name == 'Inequality':
-                errors.append(ValueError(
-                    f'Invalid values {invalid_values} are present in an'
-                    f' {constraint_name} constraint.'
-                ))
-            else:
-                errors.append(ValueError(
-                    f'Invalid values {invalid_values} are present in a'
-                    f' {constraint_name} constraint.'
-                ))
+        invalid_vals = set(kwargs) - set(args)
+        if invalid_vals:
+            errors.append(ValueError(
+                f'Invalid values {invalid_vals} are present in {article} {constraint} constraint.'
+            ))
 
         raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
