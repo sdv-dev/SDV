@@ -1037,34 +1037,34 @@ def test___init__passes_correct_parameters(metadata_mock):
     class.
 
     Input:
-    - rounding set to an int
-    - max_value set to an int
-    - min_value set to an int
+    - ``learn_rounding_scheme`` set to ``False``.
+    - ``enforce_min_max_values`` set to ``False``.
+
     Side Effects:
     - ``instance._metadata`` should receive the correct parameters
     """
     # Run
-    GaussianCopula(rounding=-1, max_value=100, min_value=-50)
-    CTGAN(epochs=1, rounding=-1, max_value=100, min_value=-50)
-    TVAE(epochs=1, rounding=-1, max_value=100, min_value=-50)
-    CopulaGAN(epochs=1, rounding=-1, max_value=100, min_value=-50)
+    GaussianCopula(learn_rounding_scheme=False, enforce_min_max_values=False)
+    CTGAN(epochs=1, learn_rounding_scheme=False, enforce_min_max_values=False)
+    TVAE(epochs=1, learn_rounding_scheme=False, enforce_min_max_values=False)
+    CopulaGAN(epochs=1, learn_rounding_scheme=False, enforce_min_max_values=False)
 
     # Asserts
     assert len(metadata_mock.mock_calls) == 5
     expected_calls = [
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
              anonymize_fields=None, constraints=None,
-             dtype_transformers={'O': 'categorical_noised'}, rounding=-1, max_value=100,
-             min_value=-50),
+             dtype_transformers={'O': 'categorical_noised'}, learn_rounding_scheme=False,
+             enforce_min_max_values=False),
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
              anonymize_fields=None, constraints=None, dtype_transformers={'O': None},
-             rounding=-1, max_value=100, min_value=-50),
+             learn_rounding_scheme=False, enforce_min_max_values=False),
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
              anonymize_fields=None, constraints=None, dtype_transformers={'O': None},
-             rounding=-1, max_value=100, min_value=-50),
+             learn_rounding_scheme=False, enforce_min_max_values=False),
         call(field_names=None, primary_key=None, field_types=None, field_transformers=None,
              anonymize_fields=None, constraints=None, dtype_transformers={'O': None},
-             rounding=-1, max_value=100, min_value=-50)
+             learn_rounding_scheme=False, enforce_min_max_values=False),
     ]
     metadata_mock.assert_has_calls(expected_calls, any_order=True)
 
