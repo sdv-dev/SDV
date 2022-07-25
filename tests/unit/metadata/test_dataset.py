@@ -434,18 +434,18 @@ class TestMetadata(TestCase):
         # Asserts
         assert result == {'foo': 'email'}
 
-    @patch('sdv.metadata.dataset.transformers.DatetimeTransformer')
-    @patch('sdv.metadata.dataset.transformers.BooleanTransformer')
-    @patch('sdv.metadata.dataset.transformers.CategoricalTransformer')
-    @patch('sdv.metadata.dataset.transformers.NumericalTransformer')
+    @patch('sdv.metadata.dataset.transformers.UnixTimestampEncoder')
+    @patch('sdv.metadata.dataset.transformers.BinaryEncoder')
+    @patch('sdv.metadata.dataset.transformers.FrequencyEncoder')
+    @patch('sdv.metadata.dataset.transformers.FloatFormatter')
     def test__get_transformers_no_error(self, numerical_mock, categorical_mock,
                                         boolean_mock, datetime_mock):
         """Test get transformers dict for each data type."""
         # Setup
-        numerical_mock.return_value = 'NumericalTransformer'
-        categorical_mock.return_value = 'CategoricalTransformer'
-        boolean_mock.return_value = 'BooleanTransformer'
-        datetime_mock.return_value = 'DatetimeTransformer'
+        numerical_mock.return_value = 'FloatFormatter'
+        categorical_mock.return_value = 'FrequencyEncoder'
+        boolean_mock.return_value = 'BinaryEncoder'
+        datetime_mock.return_value = 'UnixTimestampEncoder'
 
         # Run
         dtypes = {
@@ -462,20 +462,20 @@ class TestMetadata(TestCase):
 
         # Asserts
         expected = {
-            'integer': 'NumericalTransformer',
-            'float': 'NumericalTransformer',
-            'categorical': 'CategoricalTransformer',
-            'boolean': 'BooleanTransformer',
-            'datetime': 'DatetimeTransformer'
+            'integer': 'FloatFormatter',
+            'float': 'FloatFormatter',
+            'categorical': 'FrequencyEncoder',
+            'boolean': 'BinaryEncoder',
+            'datetime': 'UnixTimestampEncoder'
         }
-        expected_numerical_calls = [call(dtype=int), call(dtype=float)]
+        expected_numerical_calls = [call(), call()]
 
         assert result == expected
         assert len(numerical_mock.call_args_list) == len(expected_numerical_calls)
         for item in numerical_mock.call_args_list:
             assert item in expected_numerical_calls
 
-        assert categorical_mock.call_args == call(anonymize='email')
+        assert categorical_mock.call_args == call()
         assert boolean_mock.call_args == call()
         assert datetime_mock.call_args == call()
 
@@ -487,29 +487,6 @@ class TestMetadata(TestCase):
         }
         with pytest.raises(ValueError):
             Metadata._get_transformers(dtypes, None)
-
-    @patch('sdv.metadata.dataset.HyperTransformer')
-    def test__load_hyper_transformer(self, mock_ht):
-        """Test load HyperTransformer"""
-        # Setup
-        metadata = Mock(spec_set=Metadata)
-        metadata.get_dtypes.return_value = {'meta': 'dtypes'}
-        metadata._get_pii_fields.return_value = {'meta': 'pii_fields'}
-        metadata._get_transformers.return_value = {'meta': 'transformers'}
-        mock_ht.return_value = 'hypertransformer'
-
-        # Run
-        result = Metadata._load_hyper_transformer(metadata, 'test')
-
-        # Asserts
-        assert result == 'hypertransformer'
-        metadata.get_dtypes.assert_called_once_with('test')
-        metadata._get_pii_fields.assert_called_once_with('test')
-        metadata._get_transformers.assert_called_once_with(
-            {'meta': 'dtypes'},
-            {'meta': 'pii_fields'}
-        )
-        mock_ht.assert_called_once_with(field_transformers={'meta': 'transformers'})
 
     def test_get_tables(self):
         """Test get table names"""

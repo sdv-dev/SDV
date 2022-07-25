@@ -440,16 +440,16 @@ class Metadata:
         for name, dtype in dtypes.items():
             dtype = np.dtype(dtype)
             if dtype.kind == 'i':
-                transformer = transformers.NumericalTransformer(dtype=int)
+                transformer = transformers.FloatFormatter()
             elif dtype.kind == 'f':
-                transformer = transformers.NumericalTransformer(dtype=float)
+                transformer = transformers.FloatFormatter()
             elif dtype.kind == 'O':
                 anonymize = pii_fields.get(name)
-                transformer = transformers.CategoricalTransformer(anonymize=anonymize)
+                transformer = transformers.FrequencyEncoder()
             elif dtype.kind == 'b':
-                transformer = transformers.BooleanTransformer()
+                transformer = transformers.BinaryEncoder()
             elif dtype.kind == 'M':
-                transformer = transformers.DatetimeTransformer()
+                transformer = transformers.UnixTimestampEncoder()
             else:
                 raise ValueError('Unsupported dtype: {}'.format(dtype))
 
