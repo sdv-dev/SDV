@@ -37,7 +37,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.base import Constraint
-from sdv.constraints.errors import FunctionError, InvalidFunctionError
+from sdv.constraints.errors import FunctionError, InvalidFunctionError, MultipleConstraintsErrors
 from sdv.constraints.utils import (
     cast_to_datetime64, get_datetime_format, is_datetime_type, logit, sigmoid)
 
@@ -96,6 +96,13 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
             is_valid (callable):
                 Function to replace the ``is_valid`` method.
         """
+
+        @classmethod
+        def _validate_inputs(cls, **kwargs):
+            if 'column_names' not in set(kwargs):
+                raise MultipleConstraintsErrors(
+                    "Missing required values {'column_names'} in a CustomConstraint constraint."
+                )
 
         def __init__(self, column_names, **kwargs):
             self.column_names = column_names
@@ -325,7 +332,7 @@ class Inequality(Constraint):
     """
 
     @staticmethod
-    def _validate_inputs(low_column_name, high_column_name, strict_boundaries):
+    def _validate_init_inputs(low_column_name, high_column_name, strict_boundaries):
         if not (isinstance(low_column_name, str) and isinstance(high_column_name, str)):
             raise ValueError('`low_column_name` and `high_column_name` must be strings.')
 
@@ -333,7 +340,7 @@ class Inequality(Constraint):
             raise ValueError('`strict_boundaries` must be a boolean.')
 
     def __init__(self, low_column_name, high_column_name, strict_boundaries=False):
-        self._validate_inputs(low_column_name, high_column_name, strict_boundaries)
+        self._validate_init_inputs(low_column_name, high_column_name, strict_boundaries)
         self._low_column_name = low_column_name
         self._high_column_name = high_column_name
         self._diff_column_name = f'{self._low_column_name}#{self._high_column_name}'
@@ -459,8 +466,26 @@ class ScalarInequality(Constraint):
             Scalar value to compare.
     """
 
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
+        errors = []
+        try:
+            super()._validate_inputs(**kwargs)
+        except Exception as e:
+            errors.append(str(e))
+
+        if 'relation' in kwargs and kwargs['relation'] not in {'>', '>=', '<', '<='}:
+            wrong_relation = {kwargs['relation']}
+            errors.append(
+                f'Invalid relation value {wrong_relation} in a ScalarInequality constraint.'
+                " The relation must be one of: '>', '>=', '<' or '<='."
+            )
+
+        if errors:
+            raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
+
     @staticmethod
-    def _validate_inputs(column_name, value, relation):
+    def _validate_init_inputs(column_name, value, relation):
         value_is_datetime = is_datetime_type(value)
         if not isinstance(column_name, str):
             raise ValueError('`column_name` must be a string.')
@@ -475,7 +500,7 @@ class ScalarInequality(Constraint):
             raise ValueError('Datetime must be represented as a string.')
 
     def __init__(self, column_name, relation, value):
-        self._validate_inputs(column_name, value, relation)
+        self._validate_init_inputs(column_name, value, relation)
         self._value = cast_to_datetime64(value) if is_datetime_type(value) else value
         self._column_name = column_name
         self._diff_column_name = f'{self._column_name}#diff'
@@ -642,6 +667,7 @@ class Range(Constraint):
         strict_boundaries (bool):
             Whether the comparison of the values should be strict ``>=`` or
             not ``>`` when comparing them.
+            Defaults to True.
     """
 
     def __init__(self, low_column_name, middle_column_name, high_column_name,
@@ -797,7 +823,7 @@ class ScalarRange(Constraint):
     """
 
     @staticmethod
-    def _validate_inputs(low_value, high_value):
+    def _validate_init_inputs(low_value, high_value):
         values_are_datetimes = is_datetime_type(low_value) and is_datetime_type(high_value)
         values_are_strings = isinstance(low_value, str) and isinstance(high_value, str)
         if values_are_datetimes and not values_are_strings:
@@ -815,7 +841,7 @@ class ScalarRange(Constraint):
     def __init__(self, column_name, low_value, high_value, strict_boundaries=True):
         self.constraint_columns = (column_name,)
         self._column_name = column_name
-        self._validate_inputs(low_value, high_value)
+        self._validate_init_inputs(low_value, high_value)
         self._is_datetime = None
         self._datetime_format = None
         self._low_value = low_value
@@ -953,6 +979,24 @@ class FixedIncrements(Constraint):
     """
 
     _dtype = None
+
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
+        errors = []
+        try:
+            super()._validate_inputs(**kwargs)
+        except Exception as e:
+            errors.append(str(e))
+
+        if 'increment_value' in kwargs and kwargs['increment_value'] <= 0:
+            wrong_increment = {kwargs['increment_value']}
+            errors.append(
+                f'Invalid increment value {wrong_increment} in a FixedIncrements constraint.'
+                ' Increments must be positive integers.'
+            )
+
+        if errors:
+            raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     def __init__(self, column_name, increment_value):
         if increment_value <= 0:
