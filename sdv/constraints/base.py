@@ -10,7 +10,7 @@ from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianUnivariate
 from rdt import HyperTransformer
 
-from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.constraints.errors import MissingConstraintColumnError, MultipleConstraintsErrors
 from sdv.errors import ConstraintsNotMetError
 
 LOGGER = logging.getLogger(__name__)
@@ -102,22 +102,41 @@ class Constraint(metaclass=ConstraintMeta):
     constraint_columns = ()
     _hyper_transformer = None
 
-    @staticmethod
-    def _validate_inputs(valid_parameters, constraint, **kwargs):
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
         errors = []
-        missing_values = valid_parameters - set(kwargs)
+        args = []
+        params = inspect.signature(cls).parameters
+        for arg_name, value in params.items():
+            if value.default is inspect._empty:
+                args.append(arg_name)
+
+        missing_values = set(args) - set(kwargs)
+        constraint_name = cls.__name__
         if missing_values:
-            errors.append(ValueError(
-                f'Missing required values {missing_values} in {constraint} constraint.'
-            ))
+            if constraint_name == 'Inequality':
+                errors.append(ValueError(
+                    f'Missing required values {missing_values} in an {constraint_name} constraint.'
+                ))
+            else:
+                errors.append(ValueError(
+                    f'Missing required values {missing_values} in a {constraint_name} constraint.'
+                ))
 
-        invalid_values = set(kwargs.keys()) - valid_parameters
+        invalid_values = set(kwargs) - set(args)
         if invalid_values:
-            errors.append(ValueError(
-                f'Invalid values {invalid_values} are present in {constraint} constraint.'
-            ))
+            if constraint_name == 'Inequality':
+                errors.append(ValueError(
+                    f'Invalid values {invalid_values} are present in an'
+                    f' {constraint_name} constraint.'
+                ))
+            else:
+                errors.append(ValueError(
+                    f'Invalid values {invalid_values} are present in a'
+                    f' {constraint_name} constraint.'
+                ))
 
-        return errors
+        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
 
     def _validate_data_meets_constraint(self, table_data):
         """Make sure the given data is valid for the constraint.

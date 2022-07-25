@@ -817,6 +817,7 @@ class TestInequality():
             r'Missing required values {(.*)} in an Inequality constraint.'
             r'\n\nInvalid values {(.*)} are present in an Inequality constraint.'
         )
+        print(str(error.value))
         groups = re.search(err_msg, str(error.value))
         assert groups is not None
         assert set(eval(groups.group(1))) == {'low_column_name', 'high_column_name'}
@@ -1789,6 +1790,7 @@ class TestPositive():
             r'Missing required values {(.*)} in a Positive constraint.'
             r'\n\nInvalid values {(.*)} are present in a Positive constraint.'
         )
+        print(str(error.value))
         groups = re.search(err_msg, str(error.value))
         assert groups is not None
         assert str(eval(groups.group(1))) == 'column_name'
@@ -1892,7 +1894,8 @@ class TestRange():
         groups = re.search(err_msg, str(error.value))
         assert groups is not None
         assert set(eval(groups.group(1))) == {
-            'between_column_name', 'high_column_name', 'low_column_name'}
+            'middle_column_name', 'high_column_name', 'low_column_name'
+        }
         assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
 
     def test___init__(self):
@@ -2865,7 +2868,7 @@ class TestUnique():
         """
         # Run / Assert
         with pytest.raises(MultipleConstraintsErrors) as error:
-            Unique._validate_inputs(not_column_name=None, something_else=None)
+            Unique._validate_inputs(not_column_names=None, something_else=None)
 
         err_msg = (
             r'Missing required values {(.*)} in a Unique constraint.'
@@ -2873,8 +2876,8 @@ class TestUnique():
         )
         groups = re.search(err_msg, str(error.value))
         assert groups is not None
-        assert str(eval(groups.group(1))) == 'column_name'
-        assert set(eval(groups.group(2))) == {'not_column_name', 'something_else'}
+        assert str(eval(groups.group(1))) == 'column_names'
+        assert set(eval(groups.group(2))) == {'not_column_names', 'something_else'}
 
     def test___init__(self):
         """Test the ``Unique.__init__`` method.
@@ -3143,7 +3146,7 @@ class TestFixedIncrements():
         # Run / Assert
         with pytest.raises(MultipleConstraintsErrors) as error:
             FixedIncrements._validate_inputs(
-                not_column_name=None, increment=-1, something_else=None)
+                not_column_name=None, increment_value=-1, something_else=None)
 
         groups = re.search(err_msg, str(error.value))
         assert groups is not None
