@@ -285,10 +285,10 @@ class SingleTableMetadata:
 
     def _validate_constraint_columns_in_metadata(self, constraint_name, column_names):
         missing_columns = [column not in self._columns for column in column_names]
-        if missing_columns=:
+        if missing_columns:
             raise MetadataError(
-                f' A {constraint_name} constraint is being applied to invalid column names {missing_columns}.
-                The columns must exist in the table.'
+                f' A {constraint_name} constraint is being applied to invalid column names {missing_columns}.'
+                'The columns must exist in the table.'
             )
 
     def _validate_constraint_against_metadata(self, constraint_name, **kwargs):
@@ -374,6 +374,42 @@ class SingleTableMetadata:
                     'Numerical columns must be compared to integer or float values. '
                     'Datetimes column must be compared to datetime strings.'
                 )
+        if constraint_name == 'Positive':
+            column_name = kwargs.get('column_name')
+            if column_name not in self._columns:
+                raise MetadataError(
+                    f'A {constraint_name} constraint is being applied to invalid column names '
+                    f'({column_name}). The columns must exist in the table.'
+                )
+            sdtype = self._columns.get(column_name, {}).get('sdtype')
+            if 'sdtype' != 'numerical':
+                raise MetadataError(
+                    f'A {constraint_name} constraint is being applied to an invalid column '
+                    f'{column_name}. This constraint is only defined for numerical columns.'
+                )
+        if constraint_name == 'Negative':
+            column_name = kwargs.get('column_name')
+            if column_name not in self._columns:
+                raise MetadataError(
+                    f'A {constraint_name} constraint is being applied to invalid column names '
+                    f'({column_name}). The columns must exist in the table.'
+                )
+            sdtype = self._columns.get(column_name, {}).get('sdtype')
+            if 'sdtype' != 'numerical':
+                raise MetadataError(
+                    f'A {constraint_name} constraint is being applied to an invalid column '
+                    f'{column_name}. This constraint is only defined for numerical columns.'
+                )
+        if constraint_name == 'FixedIncrements':
+            column_name = kwargs.get('column_name')
+            if column_name not in self._columns:
+                raise MetadataError(
+                    f'A {constraint_name} constraint is being applied to invalid column names '
+                    f'({column_name}). The columns must exist in the table.'
+                )
+        if constraint_name == 'OneHotEncoding':
+            column_names = kwargs.get('column_names')
+            self._validate_constraint_columns_in_metadata(constraint_name, column_names)
 
     def add_constraint(self, constraint_name, **kwargs):
         """Add a constraint to the single table metadata.
@@ -387,7 +423,10 @@ class SingleTableMetadata:
         """
         constraint_dict = {'constraint': constraint_name}
         constraint_dict.update(**kwargs)
-        constraint = Constraint.from_dict(constraint_dict)
+        try:
+            constraint = Constraint.from_dict(constraint_dict)
+        except Exception:
+            raise MetadataError(f'Invalid constraint \'{constraint_name}\'.')
         # TODO: call validation
         self._constraints.append(constraint)
 
