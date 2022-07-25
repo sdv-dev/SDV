@@ -195,6 +195,7 @@ class CopulaGAN(CTGAN):
                 dict(),
             ).get('type') != 'categorical':
                 transformers[field] = GaussianNormalizer(
+                    model_missing_values=True,
                     distribution=distributions.get(field_name, self._default_distribution)
                 )
 
