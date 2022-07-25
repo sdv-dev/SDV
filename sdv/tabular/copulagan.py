@@ -1,7 +1,7 @@
 """Combination of GaussianCopula transformation and GANs."""
 
 from rdt import HyperTransformer
-from rdt.transformers import GaussianCopulaTransformer
+from rdt.transformers import GaussianNormalizer
 
 from sdv.tabular.ctgan import CTGAN
 
@@ -10,12 +10,12 @@ class CopulaGAN(CTGAN):
     """Combination of GaussianCopula transformation and GANs.
 
     This model extends the ``CTGAN`` model to add the flexibility of the GaussianCopula
-    transformations provided by the ``GaussianCopulaTransformer`` from ``RDT``.
+    transformations provided by the ``GaussianNormalizer`` from ``RDT``.
 
     Overall, the fitting process consists of the following steps:
 
     1. Transform each non categorical variable from the input
-       data using a ``GaussianCopulaTransformer``:
+       data using a ``GaussianNormalizer``:
 
        i. If not specified, find out the distribution which each one
           of the variables from the input dataset has.
@@ -63,14 +63,15 @@ class CopulaGAN(CTGAN):
             Dictinary specifying which transformers to use for each field.
             Available transformers are:
 
-                * ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.
-                * ``float``: Uses a ``NumericalTransformer`` of dtype ``float``.
-                * ``categorical``: Uses a ``CategoricalTransformer`` without gaussian noise.
-                * ``categorical_fuzzy``: Uses a ``CategoricalTransformer`` adding gaussian noise.
-                * ``one_hot_encoding``: Uses a ``OneHotEncodingTransformer``.
-                * ``label_encoding``: Uses a ``LabelEncodingTransformer``.
-                * ``boolean``: Uses a ``BooleanTransformer``.
-                * ``datetime``: Uses a ``DatetimeTransformer``.
+                * ``integer``: Uses a ``FloatFormatter`` of dtype ``int``.
+                * ``float``: Uses a ``FloatFormatter`` of dtype ``float``.
+                * ``categorical``: Uses a ``FrequencyEncoder`` without gaussian noise.
+                * ``categorical_fuzzy``: Uses a ``FrequencyEncoder`` adding gaussian noise.
+                * ``one_hot_encoding``: Uses a ``OneHotEncoder``.
+                * ``label_encoding``: Uses a ``LabelEncoder`` without gaussian nose.
+                * ``label_encoding_fuzzy``: Uses a ``LabelEncoder`` adding gaussian noise.
+                * ``boolean``: Uses a ``BinaryEncoder``.
+                * ``datetime``: Uses a ``UnixTimestampEncoder``.
 
         anonymize_fields (dict[str, str]):
             Dict specifying which fields to anonymize and what faker
@@ -112,21 +113,13 @@ class CopulaGAN(CTGAN):
         default_distribution (copulas.univariate.Univariate or str):
             Distribution to use on the fields for which no specific distribution has been given.
             Defaults to ``truncated_gaussian``.
-        rounding (int, str or None):
-            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
-            will be rounded to that number of decimal places. If ``None``, values will not
-            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
-            of decimal places detected in the fitted data. Defaults to ``'auto'``.
-        min_value (int, str or None):
-            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
-            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
-            is given, there won't be a minimum. Defaults to ``'auto'``.
-        max_value (int, str or None):
-            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be less than or equal to it. If the string ``'auto'``
-            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
-            is given, there won't be a maximum. Defaults to ``'auto'``.
+        learn_rounding_scheme (bool):
+            Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
+            ``reverse_transform`` will be rounded to that place. Defaults to ``True``.
+        enforce_min_max_values (bool):
+            Specify whether or not to clip the data returned by ``reverse_transform`` of
+            the numerical transformer, ``FloatFormatter``, to the min and max values seen
+            during ``fit``. Defaults to ``True``.
     """
 
     DEFAULT_DISTRIBUTION = 'truncated_gaussian'
@@ -140,8 +133,8 @@ class CopulaGAN(CTGAN):
                  generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
                  discriminator_decay=1e-6, batch_size=500, discriminator_steps=1,
                  log_frequency=True, verbose=False, epochs=300, cuda=True,
-                 field_distributions=None, default_distribution=None, rounding='auto',
-                 min_value='auto', max_value='auto'):
+                 field_distributions=None, default_distribution=None, learn_rounding_scheme=True,
+                 enforce_min_max_values=True):
         super().__init__(
             field_names=field_names,
             primary_key=primary_key,
@@ -163,9 +156,8 @@ class CopulaGAN(CTGAN):
             verbose=verbose,
             epochs=epochs,
             cuda=cuda,
-            rounding=rounding,
-            max_value=max_value,
-            min_value=min_value
+            learn_rounding_scheme=learn_rounding_scheme,
+            enforce_min_max_values=enforce_min_max_values,
         )
         self._field_distributions = field_distributions or dict()
         self._default_distribution = default_distribution or self.DEFAULT_DISTRIBUTION
@@ -181,7 +173,7 @@ class CopulaGAN(CTGAN):
         return {
             transformer.column_prefix: transformer._univariate.to_dict()['type']
             for transformer in self._ht._transformers_sequence
-            if isinstance(transformer, GaussianCopulaTransformer)
+            if isinstance(transformer, GaussianNormalizer)
         }
 
     def _fit(self, table_data):
@@ -202,11 +194,13 @@ class CopulaGAN(CTGAN):
                 field_name,
                 dict(),
             ).get('type') != 'categorical':
-                transformers[field] = GaussianCopulaTransformer(
+                transformers[field] = GaussianNormalizer(
                     distribution=distributions.get(field_name, self._default_distribution)
                 )
 
-        self._ht = HyperTransformer(field_transformers=transformers)
+        self._ht = HyperTransformer()
+        self._ht.detect_initial_config(table_data)
+        self._ht.update_transformers(transformers)
         table_data = self._ht.fit_transform(table_data)
 
         super()._fit(table_data)

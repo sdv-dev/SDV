@@ -34,14 +34,15 @@ class GaussianCopula(BaseTabularModel):
             Dictinary specifying which transformers to use for each field.
             Available transformers are:
 
-                * ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.
-                * ``float``: Uses a ``NumericalTransformer`` of dtype ``float``.
-                * ``categorical``: Uses a ``CategoricalTransformer`` without gaussian noise.
-                * ``categorical_fuzzy``: Uses a ``CategoricalTransformer`` adding gaussian noise.
-                * ``one_hot_encoding``: Uses a ``OneHotEncodingTransformer``.
-                * ``label_encoding``: Uses a ``LabelEncodingTransformer``.
-                * ``boolean``: Uses a ``BooleanTransformer``.
-                * ``datetime``: Uses a ``DatetimeTransformer``.
+                * ``integer``: Uses a ``FloatFormatter`` of dtype ``int``.
+                * ``float``: Uses a ``FloatFormatter`` of dtype ``float``.
+                * ``categorical``: Uses a ``FrequencyEncoder`` without gaussian noise.
+                * ``categorical_fuzzy``: Uses a ``FrequencyEncoder`` adding gaussian noise.
+                * ``one_hot_encoding``: Uses a ``OneHotEncoder``.
+                * ``label_encoding``: Uses a ``LabelEncoder`` without gaussian nose.
+                * ``label_encoding_fuzzy``: Uses a ``LabelEncoder`` adding gaussian noise.
+                * ``boolean``: Uses a ``BinaryEncoder``.
+                * ``datetime``: Uses a ``UnixTimestampEncoder``.
 
         anonymize_fields (dict[str, str]):
             Dict specifying which fields to anonymize and what faker
@@ -77,35 +78,30 @@ class GaussianCopula(BaseTabularModel):
             Type of transformer to use for the categorical variables, which must be one of the
             following values:
 
-                * ``one_hot_encoding``: Apply a OneHotEncodingTransformer to the
+                * ``one_hot_encoding``: Apply a ``OneHotEncoder`` to the
                   categorical column, which replaces the  column with one boolean
                   column for each possible category, indicating whether each row
                   had that value or not.
-                * ``label_encoding``: Apply a LabelEncodingTransformer, which
+                * ``label_encoding``: Apply a ``LabelEncoder``, which
                   replaces the value of each category with an integer value that
                   acts as its *label*.
-                * ``categorical``: Apply CategoricalTransformer, which replaces
+                * ``label_encoding_noised``: Apply a ``LabelEncoder``, which
+                  replaces the value of each category with an integer value that
+                  acts as its *label*.
+                * ``categorical``: Apply ``FrequencyEncoder``, which replaces
                   each categorical value with a float number in the `[0, 1]` range
                   which is inversely proportional to the frequency of that category.
-                * ``categorical_fuzzy``: Apply a CategoricalTransformer with the
-                  ``fuzzy`` argument set to ``True``, which makes it add gaussian
+                * ``categorical_noised``: Apply a ``FrequencyEncoder`` with the
+                  ``add_noise`` argument set to ``True``, which makes it add gaussian
                   noise around each value.
             Defaults to ``categorical_fuzzy``.
-        rounding (int, str or None):
-            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
-            will be rounded to that number of decimal places. If ``None``, values will not
-            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
-            of decimal places detected in the fitted data. Defaults to ``'auto'``.
-        min_value (int, str or None):
-            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
-            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
-            is given, there won't be a minimum. Defaults to ``'auto'``.
-        max_value (int, str or None):
-            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be less than or equal to it. If the string ``'auto'``
-            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
-            is given, there won't be a maximum. Defaults to ``'auto'``.
+        learn_rounding_scheme (bool):
+            Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
+            ``reverse_transform`` will be rounded to that place. Defaults to ``True``.
+        enforce_min_max_values (bool):
+            Specify whether or not to clip the data returned by ``reverse_transform`` of
+            the numerical transformer, ``FloatFormatter``, to the min and max values seen
+            during ``fit``. Defaults to ``True``.
     """
 
     _field_distributions = None
@@ -141,8 +137,8 @@ class GaussianCopula(BaseTabularModel):
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
                  field_distributions=None, default_distribution=None,
-                 categorical_transformer=None, rounding='auto', min_value='auto',
-                 max_value='auto'):
+                 categorical_transformer=None, learn_rounding_scheme=True,
+                 enforce_min_max_values=True):
 
         if isinstance(table_metadata, dict):
             table_metadata = Table.from_dict(table_metadata)
@@ -181,9 +177,8 @@ class GaussianCopula(BaseTabularModel):
             primary_key=primary_key,
             constraints=constraints,
             table_metadata=table_metadata,
-            rounding=rounding,
-            max_value=max_value,
-            min_value=min_value
+            learn_rounding_scheme=learn_rounding_scheme,
+            enforce_min_max_values=enforce_min_max_values
         )
 
         self._metadata.set_model_kwargs(self.__class__.__name__, {
