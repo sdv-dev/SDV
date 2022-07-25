@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from faker import Faker
 from faker.config import DEFAULT_LOCALE
-from rdt.transformers.numerical import NumericalTransformer
+from rdt.transformers.numerical import FloatFormatter
 
 from sdv.constraints.errors import (
     FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
@@ -231,30 +231,39 @@ class TestTable:
         assert len(foo_mappings) == 2
         assert list(foo_mappings.keys()) == ['test1@example.com', 'test2@example.com']
 
-    @patch('sdv.metadata.table.rdt.transformers.NumericalTransformer',
-           spec_set=NumericalTransformer)
+    @patch('sdv.metadata.table.rdt.transformers.FloatFormatter',
+           spec_set=FloatFormatter)
     def test___init__(self, transformer_mock):
         """Test that ``__init__`` method passes parameters.
 
         The ``__init__`` method should pass the custom parameters
-        to the ``NumericalTransformer``.
+        to the ``FloatFormatter``.
 
         Input:
-        - rounding set to an int
-        - max_value set to an int
-        - min_value set to an int
+        - ``learn_rounding_scheme`` set to ``True``
+        - ``enforce_min_max_values`` set to ``True``
         Side Effects:
-        - ``NumericalTransformer`` should receive the correct parameters
+        - ``FloatFormatter`` should receive the correct parameters
         """
         # Run
-        Table(rounding=-1, max_value=100, min_value=-50)
+        Table(learn_rounding_scheme=True, enforce_min_max_values=True)
 
         # Asserts
         assert len(transformer_mock.mock_calls) == 2
-        transformer_mock.assert_any_call(
-            dtype=int, rounding=-1, max_value=100, min_value=-50)
-        transformer_mock.assert_any_call(
-            dtype=float, rounding=-1, max_value=100, min_value=-50)
+        assert transformer_mock.call_args_list == [
+            call(
+                learn_rounding_scheme=True,
+                enforce_min_max_values=True,
+                missing_value_replacement='mean',
+                model_missing_values=True,
+            ),
+            call(
+                learn_rounding_scheme=True,
+                enforce_min_max_values=True,
+                missing_value_replacement='mean',
+                model_missing_values=True,
+            ),
+        ]
 
     def test__make_ids(self):
         """Test whether regex is correctly generating expressions."""
@@ -643,7 +652,8 @@ class TestTable:
             },
         }
         table._hyper_transformer = Mock()
-        table._hyper_transformer.reverse_transform.return_value = data
+        table._hyper_transformer._output_columns = []
+        table._hyper_transformer.reverse_transform_subset.return_value = data
         table._constraints_to_reverse = []
         table._dtypes = {'bar': 'int'}
         table._field_names = ['bar']
@@ -654,34 +664,3 @@ class TestTable:
         # Assert
         expected_data = pd.DataFrame({'bar': [0, 2, 2]})
         pd.testing.assert_frame_equal(output, expected_data, check_dtype=False)
-
-    def test_from_dict_min_max(self):
-        """Test the ``Table.from_dict`` method.
-
-        Expect that when min_value and max_value are not provided,
-        they are set to 'auto'.
-
-        Input:
-        - A dictionary representing a table's metadata
-        Output:
-        - A Table object
-        """
-        # Setup
-        metadata_dict = {
-            'fields': {
-                'item 0': {'type': 'id', 'subtype': 'integer'},
-                'item 1': {'type': 'boolean'}
-            },
-            'primary_key': 'item 0'
-        }
-
-        # Run
-        metadata = Table.from_dict(metadata_dict)
-
-        # Assert
-        assert metadata._transformer_templates['integer'].max_value == 'auto'
-        assert metadata._transformer_templates['integer'].min_value == 'auto'
-        assert metadata._transformer_templates['integer'].rounding == 'auto'
-        assert metadata._transformer_templates['float'].max_value == 'auto'
-        assert metadata._transformer_templates['float'].min_value == 'auto'
-        assert metadata._transformer_templates['float'].rounding == 'auto'
