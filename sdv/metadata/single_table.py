@@ -118,11 +118,8 @@ class SingleTableMetadata:
         expected_kwargs = self._EXPECTED_KWARGS.get(sdtype, ['pii'])
         unexpected_kwargs = set(list(kwargs)) - set(expected_kwargs)
         if unexpected_kwargs:
-            unexpected_kwargs = list(unexpected_kwargs)
-            unexpected_kwargs.sort()
-            unexpected_kwargs = ', '.join(unexpected_kwargs)
             raise ValueError(
-                f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'.")
+                f"Invalid values {unexpected_kwargs} for {sdtype} column '{column_name}'.")
 
     def _validate_column_exists(self, column_name):
         if column_name not in self._columns:

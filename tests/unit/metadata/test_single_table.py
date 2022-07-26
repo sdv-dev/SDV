@@ -33,18 +33,19 @@ class TestSingleTableMetadata:
 
     INVALID_KWARGS = [
         ('age', 'numerical', {'representation': 'int', 'datetime_format': None, 'pii': True},
-         re.escape("Invalid values '(datetime_format, pii)' for numerical column 'age'."),),
+         '(?i)(?:pii.*datetime_format|datetime_format.*pii)'),
         ('start_date', 'datetime', {'datetime_format': '%Y-%d', 'pii': True},
-         re.escape("Invalid values '(pii)' for datetime column 'start_date'.")),
+         re.escape("Invalid values {'pii'} for datetime column 'start_date'.")),
         ('name', 'categorical',
          {'pii': True, 'ordering': ['a', 'b'], 'ordered': 'numerical_values'},
-         re.escape("Invalid values '(ordered, ordering, pii)' for categorical column 'name'.")),
+         ('(?i)(?:pii..*ordered..*ordering|ordered..*pii..*ordering|ordering..*ordered..*pii|'
+         'pii..*ordering..*ordered|ordered..*ordering..*pii|ordering..*pii..*ordered)')),
         ('synthetic', 'boolean', {'pii': True},
-         re.escape("Invalid values '(pii)' for boolean column 'synthetic'.")),
+         re.escape("Invalid values {'pii'} for boolean column 'synthetic'.")),
         ('phrase', 'text', {'regex_format': '[A-z]', 'pii': True, 'anonymization': True},
-         re.escape("Invalid values '(anonymization, pii)' for text column 'phrase'.")),
+         '(?i)(?:pii.*anonymization|anonymization.*pii)'),
         ('phone', 'phone_number', {'anonymization': True, 'order_by': 'phone_number'},
-         re.escape("Invalid values '(anonymization, order_by)' for phone_number column 'phone'."))
+         '(?i)(?:order_by.*anonymization|anonymization.*order_by)')
     ]
 
     def test___init__(self):
