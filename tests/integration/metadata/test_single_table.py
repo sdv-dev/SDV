@@ -17,14 +17,14 @@ def test_single_table_metadata():
         'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
     }
     assert instance._columns == {}
-    assert instance._primary_key is None
-    assert instance._alternate_keys == []
     assert instance._constraints == []
     assert instance._version == 'SINGLE_TABLE_V1'
     assert instance._metadata == {
         'columns': {},
         'primary_key': None,
         'alternate_keys': [],
+        'sequence_key': None,
+        'sequence_index': None,
         'constraints': [],
         'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
     }
