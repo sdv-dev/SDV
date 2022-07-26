@@ -92,7 +92,7 @@ class TestMultiTableMetadata:
             - A dict representing a ``MultiTableMetadata``.
 
         Mock:
-            - Mock ``SingleTableMetadata`` from ``sdv.metadata.multi_tbale``
+            - Mock ``SingleTableMetadata`` from ``sdv.metadata.multi_table``
 
         Side Effects:
             - ``instance`` now contains ``instance._tables`` and ``instance._relationships``.
@@ -157,7 +157,7 @@ class TestMultiTableMetadata:
             - A dict representing a ``MultiTableMetadata``.
 
         Mock:
-            - Mock ``SingleTableMetadata`` from ``sdv.metadata.multi_tbale``
+            - Mock ``SingleTableMetadata`` from ``sdv.metadata.multi_table``
 
         Output:
             - ``instance`` that contains ``instance._tables`` and ``instance._relationships``.
