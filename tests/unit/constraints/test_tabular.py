@@ -11,7 +11,8 @@ import pandas as pd
 import pytest
 
 from sdv.constraints.errors import (
-    FunctionError, InvalidFunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
+    ConstraintMetadataError, FunctionError, InvalidFunctionError, MissingConstraintColumnError,
+    MultipleConstraintsErrors)
 from sdv.constraints.tabular import (
     FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
     ScalarInequality, ScalarRange, Unique, _validate_inputs_custom_constraint,
@@ -144,6 +145,55 @@ class TestCreateCustomConstraint():
         with pytest.raises(ValueError, match=err_msg):
             _validate_inputs_custom_constraint(
                 is_valid_fn=sorted, transform_fn=sorted, reverse_transform_fn=10)
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed in column_names should be in the metadata.
+
+        Setup:
+            - Create custom constraint class.
+
+        Input:
+            - column_names with columns that are all in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        constraint_class = create_custom_constraint(sorted, sorted, sorted)
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        constraint_class._validate_metadata_columns(metadata, column_names=['a', 'b'])
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If any columns in column_names are not in the metadata, an error should be raised.
+
+        Setup:
+            - Create custom constraint class.
+
+        Input:
+            - column_names that contains a column not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        constraint_class = create_custom_constraint(sorted, sorted, sorted)
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        error_message = re.escape(
+            'A CustomConstraint constraint is being applied to invalid column names '
+            "['c']. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            constraint_class._validate_metadata_columns(metadata, column_names=['a', 'c'])
 
     @patch('sdv.constraints.tabular._validate_inputs_custom_constraint')
     def test_create_custom_constraint(self, mock_validate):
@@ -425,6 +475,49 @@ class TestFixedCombinations():
         assert groups is not None
         assert str(eval(groups.group(1))) == 'column_names'
         assert set(eval(groups.group(2))) == {'something_else', 'not_column_name'}
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed in column_names should be in the metadata.
+
+        Input:
+            - column_names with columns that are all in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        constraint_class = FixedCombinations
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        constraint_class._validate_metadata_columns(metadata, column_names=['a', 'b'])
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If any columns in column_names are not in the metadata, an error should be raised.
+
+        Input:
+            - column_names that contains a column not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        constraint_class = FixedCombinations
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        error_message = re.escape(
+            'A FixedCombinations constraint is being applied to invalid column names '
+            "['c']. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            constraint_class._validate_metadata_columns(metadata, column_names=['a', 'c'])
 
     def test___init__(self):
         """Test the ``FixedCombinations.__init__`` method.
@@ -821,6 +914,51 @@ class TestInequality():
         assert groups is not None
         assert set(eval(groups.group(1))) == {'low_column_name', 'high_column_name'}
         assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed should be in the metadata.
+
+        Input:
+            - column_names with columns that are all in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        constraint_class = Inequality
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        constraint_class._validate_metadata_columns(
+            metadata, low_column_name='a', high_column_name='b')
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If any columns passed are not in the metadata, an error should be raised.
+
+        Input:
+            - hihg_column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        constraint_class = Inequality
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        error_message = re.escape(
+            'A Inequality constraint is being applied to invalid column names '
+            "['c']. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            constraint_class._validate_metadata_columns(
+                metadata, low_column_name='a', high_column_name='c')
 
     def test__validate_init_inputs_incorrect_column(self):
         """Test the ``_validate_init_inputs`` method.
@@ -1311,6 +1449,49 @@ class TestScalarInequality():
         assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
         assert str(eval(groups.group(3))) == '+'
 
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed in column_names should be in the metadata.
+
+        Input:
+            - column_name with column that is in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        constraint_class = ScalarInequality
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        constraint_class._validate_metadata_columns(metadata, column_name='a')
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If the column_name is not in the metadata, an error should be raised.
+
+        Input:
+            - column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        constraint_class = ScalarInequality
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        error_message = re.escape(
+            'A ScalarInequality constraint is being applied to invalid column names '
+            "['c']. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            constraint_class._validate_metadata_columns(metadata, column_name='c')
+
     def test__validate_init_inputs_incorrect_column(self):
         """Test the ``_validate_init_inputs`` method.
 
@@ -1794,6 +1975,49 @@ class TestPositive():
         assert str(eval(groups.group(1))) == 'column_name'
         assert set(eval(groups.group(2))) == {'something_else', 'not_column_name'}
 
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        The column passed in column_name should be in the metadata.
+
+        Input:
+            - column_name that is in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        constraint_class = Positive
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        constraint_class._validate_metadata_columns(metadata, column_name='a')
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If column_name is not in the metadata, an error should be raised.
+
+        Input:
+            - column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        constraint_class = Positive
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        error_message = re.escape(
+            'A Positive constraint is being applied to invalid column names '
+            "['c']. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            constraint_class._validate_metadata_columns(metadata, column_name='c')
+
     def test__init__(self):
         """Test the ``Positive.__init__`` method.
 
@@ -1843,6 +2067,49 @@ class TestNegative():
         assert groups is not None
         assert str(eval(groups.group(1))) == 'column_name'
         assert set(eval(groups.group(2))) == {'something_else', 'not_column_name'}
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        The column passed in column_name should be in the metadata.
+
+        Input:
+            - column_name that is in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        constraint_class = Negative
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        constraint_class._validate_metadata_columns(metadata, column_name='a')
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If column_name is not in the metadata, an error should be raised.
+
+        Input:
+            - column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        constraint_class = Negative
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        error_message = re.escape(
+            'A Negative constraint is being applied to invalid column names '
+            "['c']. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            constraint_class._validate_metadata_columns(metadata, column_name='c')
 
     def test__init__(self):
         """Test the ``Negative.__init__`` method.
@@ -1895,6 +2162,60 @@ class TestRange():
             'middle_column_name', 'high_column_name', 'low_column_name'
         }
         assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed should be in the metadata.
+
+        Input:
+            - high_column_name, low_column_name and middle_column_name that are all in the
+            metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        constraint_class = Range
+        metadata = Mock()
+        metadata._columns = ['a', 'b', 'c']
+
+        # Run
+        constraint_class._validate_metadata_columns(
+            metadata,
+            high_column_name='a',
+            low_column_name='b',
+            middle_column_name='c'
+        )
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If any columns passed are not in the metadata, an error should be raised.
+
+        Input:
+            - low_column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        constraint_class = Range
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        error_message = re.escape(
+            'A Range constraint is being applied to invalid column names '
+            "['c']. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            constraint_class._validate_metadata_columns(
+                metadata,
+                high_column_name='a',
+                low_column_name='b',
+                middle_column_name='c'
+            )
 
     def test___init__(self):
         """Test the ``Range.__init__`` method.
@@ -2335,6 +2656,49 @@ class TestScalarRange():
         assert groups is not None
         assert set(eval(groups.group(1))) == {'low_value', 'high_value', 'column_name'}
         assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        The column passed in column_name should be in the metadata.
+
+        Input:
+            - column_name that is in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        constraint_class = ScalarRange
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        constraint_class._validate_metadata_columns(metadata, column_name='a')
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If column_name is not in the metadata, an error should be raised.
+
+        Input:
+            - column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        constraint_class = ScalarRange
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        error_message = re.escape(
+            'A ScalarRange constraint is being applied to invalid column names '
+            "['c']. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            constraint_class._validate_metadata_columns(metadata, column_name='c')
 
     def test__validate_init_inputs(self):
         """Test the ``_validate_init_inputs`` method.
@@ -2795,6 +3159,49 @@ class TestOneHotEncoding():
         assert str(eval(groups.group(1))) == 'column_names'
         assert set(eval(groups.group(2))) == {'not_column_names', 'something_else'}
 
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed in column_names should be in the metadata.
+
+        Input:
+            - column_names with columns that are all in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        constraint_class = OneHotEncoding
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        constraint_class._validate_metadata_columns(metadata, column_names=['a', 'b'])
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If any columns in column_names are not in the metadata, an error should be raised.
+
+        Input:
+            - column_names that contains a column not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        constraint_class = OneHotEncoding
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        error_message = re.escape(
+            'A OneHotEncoding constraint is being applied to invalid column names '
+            "['c']. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            constraint_class._validate_metadata_columns(metadata, column_names=['a', 'c'])
+
     def test_reverse_transform(self):
         """Test the ``OneHotEncoding.reverse_transform`` method.
 
@@ -2876,6 +3283,49 @@ class TestUnique():
         assert groups is not None
         assert str(eval(groups.group(1))) == 'column_names'
         assert set(eval(groups.group(2))) == {'not_column_names', 'something_else'}
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed in column_names should be in the metadata.
+
+        Input:
+            - column_names with columns that are all in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        constraint_class = Unique
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        constraint_class._validate_metadata_columns(metadata, column_names=['a', 'b'])
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If any columns in column_names are not in the metadata, an error should be raised.
+
+        Input:
+            - column_names that contains a column not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        constraint_class = Unique
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        error_message = re.escape(
+            'A Unique constraint is being applied to invalid column names '
+            "['c']. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            constraint_class._validate_metadata_columns(metadata, column_names=['a', 'c'])
 
     def test___init__(self):
         """Test the ``Unique.__init__`` method.
@@ -3151,6 +3601,49 @@ class TestFixedIncrements():
         assert str(eval(groups.group(1))) == 'column_name'
         assert set(eval(groups.group(2))) == {'something_else', 'not_column_name'}
         assert int(eval(groups.group(3))) == -1
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        The column passed in column_name should be in the metadata.
+
+        Input:
+            - column_name that is in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        constraint_class = FixedIncrements
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        constraint_class._validate_metadata_columns(metadata, column_name='a')
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If column_name is not in the metadata, an error should be raised.
+
+        Input:
+            - column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        constraint_class = FixedIncrements
+        metadata = Mock()
+        metadata._columns = ['a', 'b']
+
+        # Run
+        error_message = re.escape(
+            'A FixedIncrements constraint is being applied to invalid column names '
+            "['c']. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            constraint_class._validate_metadata_columns(metadata, column_name='c')
 
     def test___init__(self):
         """Test the ``FixedIncrements.__init__`` method.

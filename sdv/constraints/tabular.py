@@ -91,12 +91,10 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
         """CustomConstraint class.
 
         Args:
-            transform (callable):
-                Function to replace the ``transform`` method.
-            reverse_transform (callable):
-                Function to replace the ``reverse_transform`` method.
-            is_valid (callable):
-                Function to replace the ``is_valid`` method.
+            column_names (list):
+                List of strings representing column names involved in this constraint.
+            **kwargs (dict):
+                Any kwargs necessary for constraint.
         """
 
         @classmethod
@@ -345,7 +343,7 @@ class Inequality(Constraint):
     @classmethod
     def _validate_metadata_columns(cls, metadata, **kwargs):
         column_names = [kwargs.get('high_column_name'), kwargs.get('low_column_name')]
-        missing_columns = [column not in metadata._columns for column in column_names]
+        missing_columns = [column for column in column_names if column not in metadata._columns]
         if missing_columns:
             raise ConstraintMetadataError(
                 f' A {cls.__name__} constraint is being applied to invalid column names '
@@ -747,7 +745,7 @@ class Range(Constraint):
         low = kwargs.get('low_column_name')
         middle = kwargs.get('middle_column_name')
         column_names = [high, low, middle]
-        missing_columns = [column not in metadata._columns for column in column_names]
+        missing_columns = [column for column in column_names if column not in metadata._columns]
         if missing_columns:
             raise ConstraintMetadataError(
                 f' A {cls.__name__} constraint is being applied to invalid column names '

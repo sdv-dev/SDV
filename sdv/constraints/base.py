@@ -135,7 +135,8 @@ class Constraint(metaclass=ConstraintMeta):
         else:
             column_names = kwargs.get('column_names')
 
-        missing_columns = [column not in metadata._columns for column in column_names]
+        missing_columns = [column for column in column_names if column not in metadata._columns]
+
         if missing_columns:
             raise ConstraintMetadataError(
                 f'A {cls.__name__} constraint is being applied to invalid column names '
