@@ -12,6 +12,7 @@ from rdt import HyperTransformer
 
 from sdv.constraints.errors import MissingConstraintColumnError, MultipleConstraintsErrors
 from sdv.errors import ConstraintsNotMetError
+from sdv.metadata.errors import MetadataError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -125,7 +126,57 @@ class Constraint(metaclass=ConstraintMeta):
                 f'Invalid values {invalid_vals} are present in {article} {constraint} constraint.'
             ))
 
-        raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
+        raise MultipleConstraintsErrors(errors)
+
+    @classmethod
+    def _validate_metadata_columns(cls, metadata, **kwargs):
+        if 'column_name' in kwargs:
+            column_names = [kwargs.get('column_name')]
+        else:
+            column_names = kwargs.get('column_names')
+
+        missing_columns = [column not in metadata._columns for column in column_names]
+        if missing_columns:
+            raise MetadataError(
+                f' A {cls.__name__} constraint is being applied to invalid column names '
+                f'{missing_columns}. The columns must exist in the table.'
+            )
+
+    @classmethod
+    def _validate_metadata_specific_to_constraint(cls, metadata, **kwargs):
+        pass
+
+    @classmethod
+    def _validate_metadata(cls, metadata, **kwargs):
+        """Validate the metadata against the constraint.
+
+        Args:
+            metadata (dict):
+                Single table metadata instance.
+            **kwargs (dict):
+                Any required kwargs for the constraint.
+
+        Raises:
+            MultipleConstraintsErrors:
+                All the errors from validating the metadata.
+        """
+        errors = []
+        try:
+            cls._validate_inputs(**kwargs)
+        except MultipleConstraintsErrors as mce:
+            errors.extend(mce.errors)
+
+        try:
+            cls._validate_metadata_columns(metadata, **kwargs)
+        except Exception as e:
+            errors.append(e)
+
+        try:
+            cls._validate_metadata_specific_to_constraint(metadata, **kwargs)
+        except Exception as e:
+            errors.append(e)
+
+        return MultipleConstraintsErrors(errors)
 
     def _validate_data_meets_constraint(self, table_data):
         """Make sure the given data is valid for the constraint.
@@ -273,6 +324,18 @@ class Constraint(metaclass=ConstraintMeta):
         return table_data[valid]
 
     @classmethod
+    def _get_class_from_dict(cls, constraint_dict):
+        constraint_dict = constraint_dict.copy()
+        constraint_class = constraint_dict.pop('constraint')
+        subclasses = get_subclasses(cls)
+        if isinstance(constraint_class, str):
+            if '.' in constraint_class:
+                constraint_class = import_object(constraint_class)
+            else:
+                constraint_class = subclasses[constraint_class]
+        return constraint_class
+
+    @classmethod
     def from_dict(cls, constraint_dict):
         """Build a Constraint object from a dict.
 
@@ -285,14 +348,7 @@ class Constraint(metaclass=ConstraintMeta):
             Constraint:
                 New constraint instance.
         """
-        constraint_dict = constraint_dict.copy()
-        constraint_class = constraint_dict.pop('constraint')
-        subclasses = get_subclasses(cls)
-        if isinstance(constraint_class, str):
-            if '.' in constraint_class:
-                constraint_class = import_object(constraint_class)
-            else:
-                constraint_class = subclasses[constraint_class]
+        constraint_class = cls._get_class_from_dict(constraint_dict)
 
         return constraint_class(**constraint_dict)
 

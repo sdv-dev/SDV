@@ -817,7 +817,6 @@ class TestInequality():
             r'Missing required values {(.*)} in an Inequality constraint.'
             r'\n\nInvalid values {(.*)} are present in an Inequality constraint.'
         )
-        print(str(error.value))
         groups = re.search(err_msg, str(error.value))
         assert groups is not None
         assert set(eval(groups.group(1))) == {'low_column_name', 'high_column_name'}
@@ -1790,7 +1789,6 @@ class TestPositive():
             r'Missing required values {(.*)} in a Positive constraint.'
             r'\n\nInvalid values {(.*)} are present in a Positive constraint.'
         )
-        print(str(error.value))
         groups = re.search(err_msg, str(error.value))
         assert groups is not None
         assert str(eval(groups.group(1))) == 'column_name'
