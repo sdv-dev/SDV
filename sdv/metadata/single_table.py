@@ -5,13 +5,10 @@ import re
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from numpy import isin
 
 import pandas as pd
 
 from sdv.constraints import Constraint
-from sdv.metadata.errors import MetadataError
-from torch import constant_pad_nd
 
 
 class SingleTableMetadata:
@@ -293,13 +290,9 @@ class SingleTableMetadata:
             **kwargs:
                 Any other arguments the constraint requires.
         """
-        constraint_dict = {'constraint': constraint_name}
-        constraint_dict.update(**kwargs)
-        try:
-            constraint = Constraint.from_dict(constraint_dict)
-        except Exception:
-            raise MetadataError(f'Invalid constraint \'{constraint_name}\'.')
-        # TODO: call validation
+        constraint_class = Constraint._get_class_from_dict(constraint_name)
+        constraint_class._validate_metadata(self, **kwargs)
+        constraint = constraint_class(**kwargs)
         self._constraints.append(constraint)
 
     @classmethod

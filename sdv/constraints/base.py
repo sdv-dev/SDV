@@ -10,9 +10,9 @@ from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianUnivariate
 from rdt import HyperTransformer
 
-from sdv.constraints.errors import MissingConstraintColumnError, MultipleConstraintsErrors
+from sdv.constraints.errors import (
+    ConstraintMetadataError, MissingConstraintColumnError, MultipleConstraintsErrors)
 from sdv.errors import ConstraintsNotMetError
-from sdv.metadata.errors import MetadataError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -137,8 +137,8 @@ class Constraint(metaclass=ConstraintMeta):
 
         missing_columns = [column not in metadata._columns for column in column_names]
         if missing_columns:
-            raise MetadataError(
-                f' A {cls.__name__} constraint is being applied to invalid column names '
+            raise ConstraintMetadataError(
+                f'A {cls.__name__} constraint is being applied to invalid column names '
                 f'{missing_columns}. The columns must exist in the table.'
             )
 
@@ -176,7 +176,8 @@ class Constraint(metaclass=ConstraintMeta):
         except Exception as e:
             errors.append(e)
 
-        return MultipleConstraintsErrors(errors)
+        if errors:
+            raise MultipleConstraintsErrors(errors)
 
     def _validate_data_meets_constraint(self, table_data):
         """Make sure the given data is valid for the constraint.
@@ -324,9 +325,7 @@ class Constraint(metaclass=ConstraintMeta):
         return table_data[valid]
 
     @classmethod
-    def _get_class_from_dict(cls, constraint_dict):
-        constraint_dict = constraint_dict.copy()
-        constraint_class = constraint_dict.pop('constraint')
+    def _get_class_from_dict(cls, constraint_class):
         subclasses = get_subclasses(cls)
         if isinstance(constraint_class, str):
             if '.' in constraint_class:
@@ -348,7 +347,9 @@ class Constraint(metaclass=ConstraintMeta):
             Constraint:
                 New constraint instance.
         """
-        constraint_class = cls._get_class_from_dict(constraint_dict)
+        constraint_dict = constraint_dict.copy()
+        constraint_class = constraint_dict.pop('constraint')
+        constraint_class = cls._get_class_from_dict(constraint_class)
 
         return constraint_class(**constraint_dict)
 

@@ -56,14 +56,14 @@ def get_datetime_format(value):
 
 
 def matches_datetime_format(value, format):
-    """Checks is datetime value matches the provided format.
-    
+    """Check if datetime value matches the provided format.
+
     Args:
         value (str):
             The datetime value.
         format (str):
             The datetime format to check for.
-    
+
     Return:
         True if the value matches the format. Otherwise False.
     """
@@ -71,7 +71,7 @@ def matches_datetime_format(value, format):
         datetime.strptime(value, format)
     except ValueError:
         return False
-    
+
     return True
 
 

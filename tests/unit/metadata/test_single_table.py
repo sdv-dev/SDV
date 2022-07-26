@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.metadata.errors import MetadataError
 from sdv.metadata.single_table import SingleTableMetadata
 
 
@@ -1102,8 +1101,8 @@ class TestSingleTableMetadata:
         """
         # Setup
         metadata = SingleTableMetadata()
-        dummy_constraint = Mock()
-        constraint_mock.from_dict.return_value = dummy_constraint
+        dummy_constraint_class = Mock()
+        constraint_mock._get_class_from_dict.return_value = dummy_constraint_class
 
         # Run
         metadata.add_constraint(
@@ -1113,26 +1112,14 @@ class TestSingleTableMetadata:
         )
 
         # Assert
-        constraint_mock.from_dict.assert_called_once_with({
-            'constraint': 'Inequality',
-            'low_column_name': 'child_age',
-            'high_column_name': 'start_date'
-        })
-        metadata._constraints == [dummy_constraint]
-    
-    def test_add_constraint_non_existent_constraint(self):
-        """Test the ``add_constraint`` method with a non-existent constraint.
-        
-        Input:
-            - constraint_name should be a non-existent constraint.
-        
-        Side effect:
-            - An error should be raised.
-        """
-        # Setup
-        metadata = SingleTableMetadata()
-
-        # Run / Assert
-        error_message = 'Invalid constraint \'FakeConstraint\'.'
-        with pytest.raises(MetadataError, match=error_message):
-            metadata.add_constraint(constraint_name='FakeConstraint')
+        constraint_mock._get_class_from_dict.assert_called_once_with('Inequality')
+        assert metadata._constraints == [dummy_constraint_class.return_value]
+        dummy_constraint_class.assert_called_once_with(
+            low_column_name='child_age',
+            high_column_name='start_date'
+        )
+        dummy_constraint_class._validate_metadata.assert_called_once_with(
+            metadata,
+            low_column_name='child_age',
+            high_column_name='start_date'
+        )

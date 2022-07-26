@@ -24,3 +24,7 @@ class InvalidFunctionError(Exception):
 
 class FunctionError(Exception):
     """Error used when an a function produces an unexpected error."""
+
+
+class ConstraintMetadataError(Exception):
+    """Error to raise when Metadata is not valid."""
