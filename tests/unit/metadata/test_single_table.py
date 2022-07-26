@@ -803,7 +803,7 @@ class TestSingleTableMetadata:
         out = instance._validate_datatype('10')
 
         # Assert
-        out is True
+        assert out is True
 
     def test__validate_dataype_int(self):
         """Test ``_validate_dataype`` for invalid datatypes.
@@ -821,7 +821,7 @@ class TestSingleTableMetadata:
         out = instance._validate_datatype(10)
 
         # Assert
-        out is False
+        assert out is False
 
     def test__validate_dataype_tuple(self):
         """Test ``_validate_dataype`` for tuples.
@@ -839,7 +839,7 @@ class TestSingleTableMetadata:
         out = instance._validate_datatype(('10', '20'))
 
         # Assert
-        out is True
+        assert out is True
 
     def test__validate_dataype_invalid_tuple(self):
         """Test ``_validate_dataype`` for tuples of non-strings.
@@ -857,7 +857,7 @@ class TestSingleTableMetadata:
         out = instance._validate_datatype(('10', '20', 30))
 
         # Assert
-        out is False
+        assert out is False
 
     def test_set_primary_key_validation(self):
         """Test that ``set_primary_key`` crashes for invalid arguments.
