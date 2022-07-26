@@ -787,6 +787,78 @@ class TestSingleTableMetadata:
         ]
         assert mock_print.call_args_list == expected_print_calls
 
+    def test__validate_dataype_strings(self):
+        """Test ``_validate_dataype`` for strings.
+
+        Input:
+            - A string
+
+        Output:
+            - True
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        out = instance._validate_datatype('10')
+
+        # Assert
+        out is True
+
+    def test__validate_dataype_int(self):
+        """Test ``_validate_dataype`` for invalid datatypes.
+
+        Input:
+            - A non-string and non-tuple
+
+        Output:
+            - False
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        out = instance._validate_datatype(10)
+
+        # Assert
+        out is False
+
+    def test__validate_dataype_tuple(self):
+        """Test ``_validate_dataype`` for tuples.
+
+        Input:
+            - A tuple of strings
+
+        Output:
+            - True
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        out = instance._validate_datatype(('10', '20'))
+
+        # Assert
+        out is True
+
+    def test__validate_dataype_invalid_tuple(self):
+        """Test ``_validate_dataype`` for tuples of non-strings.
+
+        Input:
+            - A tuple with some non-strings
+
+        Output:
+            - False
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        out = instance._validate_datatype(('10', '20', 30))
+
+        # Assert
+        out is False
+
     def test_set_primary_key_validation(self):
         """Test that ``set_primary_key`` crashes for invalid arguments.
 
@@ -799,7 +871,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
 
-        err_msg = '"primary_key" must be a string or tuple of strings.'
+        err_msg = "'primary_key' must be a string or tuple of strings."
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
             instance.set_primary_key(('1', 2, '3'))
@@ -863,7 +935,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
 
-        err_msg = '"alternate_keys" must be a list of strings or a list of tuples of strings.'
+        err_msg = "'alternate_keys' must be a list of strings or a list of tuples of strings."
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
             instance.set_alternate_keys(['col1', ('1', 2, '3'), 'col3'])
@@ -891,7 +963,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
 
-        err_msg = '"sequence_key" must be a string or tuple of strings.'
+        err_msg = "'sequence_key' must be a string or tuple of strings."
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
             instance.set_sequence_key(('1', 2, '3'))
@@ -955,7 +1027,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
 
-        err_msg = '"sequence_index" must be a string.'
+        err_msg = "'sequence_index' must be a string."
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
             instance.set_sequence_index(('column1', 'column2'))

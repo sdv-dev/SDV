@@ -242,6 +242,11 @@ class SingleTableMetadata:
         data = pd.read_csv(filepath, **pandas_kwargs)
         self.detect_from_dataframe(data)
 
+    @staticmethod
+    def _validate_datatype(id):
+        """Check whether id is a string or a tuple of strings."""
+        return isinstance(id, str) or isinstance(id, tuple) and all(isinstance(i, str) for i in id)
+
     def set_primary_key(self, id):
         """Set the metadata primary key.
 
@@ -249,9 +254,8 @@ class SingleTableMetadata:
             id (str, tuple):
                 Name (or tuple of names) of the primary key column(s).
         """
-        is_tuple_of_str = isinstance(id, tuple) and all(isinstance(i, str) for i in id)
-        if not isinstance(id, str) and not is_tuple_of_str:
-            raise ValueError('"primary_key" must be a string or tuple of strings.')
+        if not self._validate_datatype(id):
+            raise ValueError("'primary_key' must be a string or tuple of strings.")
 
         if self._metadata['primary_key'] is not None:
             warnings.warn(
@@ -268,13 +272,10 @@ class SingleTableMetadata:
             ids (list[str], list[tuple]):
                 List of names (or tuple of names) of the alternate key columns.
         """
-        is_list_of_tuple_str = all(isinstance(id, (str, tuple)) for id in ids)
-        is_list_of_tuple_of_str = \
-            all(all(isinstance(i, str) for i in id) for id in ids if isinstance(id, tuple))
-
-        if not isinstance(ids, list) or not is_list_of_tuple_str or not is_list_of_tuple_of_str:
+        if not isinstance(ids, list) or not all(self._validate_datatype(id) for id in ids):
             raise ValueError(
-                '"alternate_keys" must be a list of strings or a list of tuples of strings.')
+                "'alternate_keys' must be a list of strings or a list of tuples of strings."
+            )
 
         self._metadata['alternate_keys'] = ids
 
@@ -285,9 +286,8 @@ class SingleTableMetadata:
             id (str, tuple):
                 Name (or tuple of names) of the sequence key column(s).
         """
-        is_tuple_of_str = isinstance(id, tuple) and all(isinstance(i, str) for i in id)
-        if not isinstance(id, str) and not is_tuple_of_str:
-            raise ValueError('"sequence_key" must be a string or tuple of strings.')
+        if not self._validate_datatype(id):
+            raise ValueError("'sequence_key' must be a string or tuple of strings.")
 
         if self._metadata['sequence_key'] is not None:
             warnings.warn(
@@ -305,7 +305,7 @@ class SingleTableMetadata:
                 Name of the sequence index column.
         """
         if not isinstance(column_name, str):
-            raise ValueError('"sequence_index" must be a string.')
+            raise ValueError("'sequence_index' must be a string.")
 
         self._metadata['sequence_index'] = column_name
 
