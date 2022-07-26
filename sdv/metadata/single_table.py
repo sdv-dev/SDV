@@ -2,6 +2,7 @@
 
 import json
 import re
+import warnings
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
@@ -37,9 +38,11 @@ class SingleTableMetadata:
     ])
     _KEYS = frozenset([
         'columns',
+        'constraints',
         'primary_key',
         'alternate_keys',
-        'constraints',
+        'sequence_key',
+        'sequence_index',
         'SCHEMA_VERSION'
     ])
     SCHEMA_VERSION = 'SINGLE_TABLE_V1'
@@ -102,14 +105,14 @@ class SingleTableMetadata:
 
     def __init__(self):
         self._columns = {}
-        self._primary_key = None
-        self._alternate_keys = []
         self._constraints = []
         self._version = self.SCHEMA_VERSION
         self._metadata = {
             'columns': self._columns,
-            'primary_key': self._primary_key,
-            'alternate_keys': self._alternate_keys,
+            'primary_key': None,
+            'alternate_keys': [],
+            'sequence_key': None,
+            'sequence_index': None,
             'constraints': self._constraints,
             'SCHEMA_VERSION': self.SCHEMA_VERSION
         }
@@ -118,8 +121,7 @@ class SingleTableMetadata:
         expected_kwargs = self._EXPECTED_KWARGS.get(sdtype, ['pii'])
         unexpected_kwargs = set(list(kwargs)) - set(expected_kwargs)
         if unexpected_kwargs:
-            unexpected_kwargs = list(unexpected_kwargs)
-            unexpected_kwargs.sort()
+            unexpected_kwargs = sorted(unexpected_kwargs)
             unexpected_kwargs = ', '.join(unexpected_kwargs)
             raise ValueError(
                 f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'.")
@@ -242,6 +244,73 @@ class SingleTableMetadata:
         data = pd.read_csv(filepath, **pandas_kwargs)
         self.detect_from_dataframe(data)
 
+    @staticmethod
+    def _validate_datatype(id):
+        """Check whether id is a string or a tuple of strings."""
+        return isinstance(id, str) or isinstance(id, tuple) and all(isinstance(i, str) for i in id)
+
+    def set_primary_key(self, id):
+        """Set the metadata primary key.
+
+        Args:
+            id (str, tuple):
+                Name (or tuple of names) of the primary key column(s).
+        """
+        if not self._validate_datatype(id):
+            raise ValueError("'primary_key' must be a string or tuple of strings.")
+
+        if self._metadata['primary_key'] is not None:
+            warnings.warn(
+                f"There is an existing primary key {self._metadata['primary_key']}."
+                ' This key will be removed.'
+            )
+
+        self._metadata['primary_key'] = id
+
+    def set_alternate_keys(self, ids):
+        """Set the metadata alternate keys.
+
+        Args:
+            ids (list[str], list[tuple]):
+                List of names (or tuple of names) of the alternate key columns.
+        """
+        if not isinstance(ids, list) or not all(self._validate_datatype(id) for id in ids):
+            raise ValueError(
+                "'alternate_keys' must be a list of strings or a list of tuples of strings."
+            )
+
+        self._metadata['alternate_keys'] = ids
+
+    def set_sequence_key(self, id):
+        """Set the metadata sequence key.
+
+        Args:
+            id (str, tuple):
+                Name (or tuple of names) of the sequence key column(s).
+        """
+        if not self._validate_datatype(id):
+            raise ValueError("'sequence_key' must be a string or tuple of strings.")
+
+        if self._metadata['sequence_key'] is not None:
+            warnings.warn(
+                f"There is an existing sequence key {self._metadata['sequence_key']}."
+                ' This key will be removed.'
+            )
+
+        self._metadata['sequence_key'] = id
+
+    def set_sequence_index(self, column_name):
+        """Set the metadata sequence index.
+
+        Args:
+            column_name (str):
+                Name of the sequence index column.
+        """
+        if not isinstance(column_name, str):
+            raise ValueError("'sequence_index' must be a string.")
+
+        self._metadata['sequence_index'] = column_name
+
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
         metadata = {}
@@ -262,13 +331,12 @@ class SingleTableMetadata:
         return deepcopy(metadata)
 
     def _set_metadata_dict(self, metadata):
-        """Set a ``metadata`` dictionary to the current instance.
+        """Set the ``metadata`` dictionary to the current instance.
 
         Args:
             metadata (dict):
                 Python dictionary representing a ``SingleTableMetadata`` object.
         """
-        self._metadata = {}
         for key in self._KEYS:
             value = deepcopy(metadata.get(key))
             if key == 'constraints' and value:
@@ -277,8 +345,6 @@ class SingleTableMetadata:
             if value:
                 self._metadata[key] = value
                 setattr(self, f'_{key}', value)
-            else:
-                self._metadata[key] = getattr(self, f'_{key}')
 
     @classmethod
     def _load_from_dict(cls, metadata):
