@@ -143,6 +143,38 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             instance._validate_datetime('start_date', datetime_format='%1-%Y-%m-%d-%')
 
+    @patch('sdv.metadata.single_table.datetime')
+    def test__validate_datetime_strftime_raises_an_error(self, mock_datetime):
+        """Test the ``_validate_datetime`` method.
+
+        Test that when ``datetime.strftime`` raises an error a proper message is being prompted
+        to the end user.
+
+        Setup:
+            - instance of ``SingleTableMetadata``
+
+        Mock:
+            - Mock the ``datetime`` to raise an ``ValueError``.
+
+        Input:
+            - Column name.
+            - sdtype datetime
+            - Valid ``datetime_format``.
+            - Invalid ``datetime_format``.
+
+        Side Effects:
+            - ``ValueError`` indicating the format ``%`` that has not been formatted.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        mock_datetime.now.return_value.strftime.side_effect = [ValueError()]
+
+        # Run / Assert
+        error_msg = re.escape(
+            "Invalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'start_date'.")
+        with pytest.raises(ValueError, match=error_msg):
+            instance._validate_datetime('start_date', datetime_format='%1-%Y-%m-%d-%')
+
     def test__validate_categorical(self):
         """Test the ``_validate_categorical`` method.
 
