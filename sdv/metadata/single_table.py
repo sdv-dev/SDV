@@ -38,9 +38,11 @@ class SingleTableMetadata:
     ])
     _KEYS = frozenset([
         'columns',
+        'constraints',
         'primary_key',
         'alternate_keys',
-        'constraints',
+        'sequence_key',
+        'sequence_index',
         'SCHEMA_VERSION'
     ])
     SCHEMA_VERSION = 'SINGLE_TABLE_V1'
@@ -329,13 +331,12 @@ class SingleTableMetadata:
         return deepcopy(metadata)
 
     def _set_metadata_dict(self, metadata):
-        """Set a ``metadata`` dictionary to the current instance.
+        """Set the ``metadata`` dictionary to the current instance.
 
         Args:
             metadata (dict):
                 Python dictionary representing a ``SingleTableMetadata`` object.
         """
-        self._metadata = {}
         for key in self._KEYS:
             value = deepcopy(metadata.get(key))
             if key == 'constraints' and value:
@@ -344,8 +345,6 @@ class SingleTableMetadata:
             if value:
                 self._metadata[key] = value
                 setattr(self, f'_{key}', value)
-            else:
-                self._metadata[key] = getattr(self, f'_{key}')
 
     @classmethod
     def _load_from_dict(cls, metadata):

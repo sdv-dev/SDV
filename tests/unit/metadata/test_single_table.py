@@ -1106,6 +1106,8 @@ class TestSingleTableMetadata:
             'columns': {'my_column': 'value'},
             'primary_key': None,
             'alternate_keys': [],
+            'sequence_key': None,
+            'sequence_index': None,
             'constraints': [],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
@@ -1119,7 +1121,7 @@ class TestSingleTableMetadata:
             'columns': {'my_column': 'value'},
             'primary_key': 'pk',
             'alternate_keys': [],
-            'sequence_keys': None,
+            'sequence_key': None,
             'sequence_index': None,
             'constraints': [],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
@@ -1249,7 +1251,7 @@ class TestSingleTableMetadata:
             'columns': {'animals': {'type': 'categorical'}},
             'primary_key': 'animals',
             'alternate_keys': [],
-            'sequence_keys': None,
+            'sequence_key': None,
             'sequence_index': None,
             'constraints': [{'my_constraint': 'my_params'}],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
