@@ -69,7 +69,7 @@ def matches_datetime_format(value, format):
     """
     try:
         datetime.strptime(value, format)
-    except ValueError:
+    except Exception:
         return False
 
     return True

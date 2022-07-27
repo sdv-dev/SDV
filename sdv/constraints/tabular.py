@@ -358,7 +358,7 @@ class Inequality(Constraint):
         low_sdtype = metadata._columns.get(low, {}).get('sdtype')
         both_datetime = high_sdtype == low_sdtype == 'datetime'
         both_numerical = high_sdtype == low_sdtype == 'numerical'
-        if not both_datetime or both_numerical:
+        if not (both_datetime or both_numerical):
             raise ConstraintMetadataError(
                 f'An {cls.__name__} constraint is being applied to mismatched sdtypes '
                 f'{[high, low]}. Both columns must be either numerical or datetime.'
@@ -516,14 +516,14 @@ class ScalarInequality(Constraint):
         val = kwargs.get('value')
         if sdtype == 'numerical':
             if not isinstance(val, (int, float)):
-                raise ConstraintMetadataError('"value" must be an int or float')
+                raise ConstraintMetadataError("'value' must be an int or float")
 
         elif sdtype == 'datetime':
             datetime_format = metadata._columns.get(column_name).get('datetime_format')
             matches_format = matches_datetime_format(val, datetime_format)
             if not matches_format:
                 raise ConstraintMetadataError(
-                    '\'value\' must be a datetime string of the right format'
+                    "'value' must be a datetime string of the right format"
                 )
 
         else:
@@ -684,7 +684,7 @@ class Positive(ScalarInequality):
         if sdtype != 'numerical':
             raise ConstraintMetadataError(
                 f'A {cls.__name__} constraint is being applied to an invalid column '
-                f'{column_name}. This constraint is only defined for numerical columns.'
+                f"'{column_name}'. This constraint is only defined for numerical columns."
             )
 
     def __init__(self, column_name, strict=False):
@@ -712,7 +712,7 @@ class Negative(ScalarInequality):
         if sdtype != 'numerical':
             raise ConstraintMetadataError(
                 f'A {cls.__name__} constraint is being applied to an invalid column '
-                f'{column_name}. This constraint is only defined for numerical columns.'
+                f"'{column_name}'. This constraint is only defined for numerical columns."
             )
 
     def __init__(self, column_name, strict=False):
@@ -762,9 +762,9 @@ class Range(Constraint):
         middle_sdtype = metadata._columns.get(middle, {}).get('sdtype')
         all_datetime = high_sdtype == low_sdtype == middle_sdtype == 'datetime'
         all_numerical = high_sdtype == low_sdtype == middle_sdtype == 'numerical'
-        if not all_datetime or all_numerical:
+        if not (all_datetime or all_numerical):
             raise ConstraintMetadataError(
-                f'An {cls.__name__} constraint is being applied to mismatched sdtypes '
+                f'A {cls.__name__} constraint is being applied to mismatched sdtypes '
                 f'{[high, middle, low]}. All columns must be either numerical or datetime.'
             )
 
