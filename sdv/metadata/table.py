@@ -434,7 +434,7 @@ class Table:
                 errors.append(e)
 
         if errors:
-            raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
+            raise MultipleConstraintsErrors(errors)
 
     def _transform_constraints(self, data, is_condition=False):
         errors = []
@@ -468,7 +468,7 @@ class Table:
                 errors.append(e)
 
         if errors:
-            raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
+            raise MultipleConstraintsErrors(errors)
 
         return data
 

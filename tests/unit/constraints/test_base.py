@@ -10,7 +10,8 @@ from rdt.transformers import OneHotEncoder
 from sdv.constraints.base import (
     ColumnsModel, Constraint, _get_qualified_name, _module_contains_callable_name, get_subclasses,
     import_object)
-from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.constraints.errors import (
+    ConstraintMetadataError, MissingConstraintColumnError, MultipleConstraintsErrors)
 from sdv.constraints.tabular import FixedCombinations
 from sdv.errors import ConstraintsNotMetError
 
@@ -158,6 +159,42 @@ def test_import_object_function():
 
 
 class TestConstraint():
+
+    @patch('sdv.constraints.base.Constraint._validate_inputs')
+    @patch('sdv.constraints.base.Constraint._validate_metadata_columns')
+    @patch('sdv.constraints.base.Constraint._validate_metadata_specific_to_constraint')
+    def test__validate_metadata(
+            self, validate_metadata_columns_mock, validate_metadata_specific_to_constraint_mock,
+            validate_inputs_mock):
+        """Test the ``_validate_metadata`` method.
+
+        The method should compile the error messages returned from ``_validate_inputs``,
+        ``_validate_metadata_columns`` and ``_validate_metadata_specific_to_constraint``
+        and surface them together.
+
+        Setup:
+            - Patch the ``_validate_metadata_columns``, ``_validate_inputs`` and
+            ``_validate_metadata_specific_to_constraint`` methods to raise errors.
+
+        Input:
+            - Mock for metadata
+
+        Side effect:
+            - A MultipleConstraintsErrors error should be raised.
+        """
+        # Setup
+        validate_inputs_mock.side_effect = [
+            MultipleConstraintsErrors(errors=[ConstraintMetadataError('input errors')])
+        ]
+        validate_metadata_columns_mock.side_effect = [ConstraintMetadataError('column errors')]
+        validate_metadata_specific_to_constraint_mock.side_effect = [
+            ConstraintMetadataError('constraint specific errors')
+        ]
+
+        # Run
+        error_message = re.escape('\ninput errors\n\nconstraint specific errors\n\ncolumn errors')
+        with pytest.raises(MultipleConstraintsErrors, match=error_message):
+            Constraint._validate_metadata(Mock())
 
     def test_fit(self):
         """Test the ``Constraint.fit`` method.
