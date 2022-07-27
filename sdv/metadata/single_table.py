@@ -346,6 +346,21 @@ class SingleTableMetadata:
                 self._metadata[key] = value
                 setattr(self, f'_{key}', value)
 
+    def add_constraint(self, constraint_name, **kwargs):
+        """Add a constraint to the single table metadata.
+
+        Args:
+            constraint_name (string):
+                Name of the constraint class.
+
+            **kwargs:
+                Any other arguments the constraint requires.
+        """
+        constraint_class = Constraint._get_class_from_dict(constraint_name)
+        constraint_class._validate_metadata(self, **kwargs)
+        constraint = constraint_class(**kwargs)
+        self._constraints.append(constraint)
+
     @classmethod
     def _load_from_dict(cls, metadata):
         """Create a ``SingleTableMetadata`` instance from a python ``dict``.
