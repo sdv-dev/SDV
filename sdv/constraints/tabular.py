@@ -342,13 +342,8 @@ class Inequality(Constraint):
 
     @classmethod
     def _validate_metadata_columns(cls, metadata, **kwargs):
-        column_names = [kwargs.get('high_column_name'), kwargs.get('low_column_name')]
-        missing_columns = [column for column in column_names if column not in metadata._columns]
-        if missing_columns:
-            raise ConstraintMetadataError(
-                f' A {cls.__name__} constraint is being applied to invalid column names '
-                f'{missing_columns}. The columns must exist in the table.'
-            )
+        kwargs['column_names'] = [kwargs.get('high_column_name'), kwargs.get('low_column_name')]
+        super()._validate_metadata_columns(metadata, **kwargs)
 
     @classmethod
     def _validate_metadata_specific_to_constraint(cls, metadata, **kwargs):
@@ -744,13 +739,8 @@ class Range(Constraint):
         high = kwargs.get('high_column_name')
         low = kwargs.get('low_column_name')
         middle = kwargs.get('middle_column_name')
-        column_names = [high, low, middle]
-        missing_columns = [column for column in column_names if column not in metadata._columns]
-        if missing_columns:
-            raise ConstraintMetadataError(
-                f' A {cls.__name__} constraint is being applied to invalid column names '
-                f'{missing_columns}. The columns must exist in the table.'
-            )
+        kwargs['column_names'] = [high, low, middle]
+        super()._validate_metadata_columns(metadata, **kwargs)
 
     @classmethod
     def _validate_metadata_specific_to_constraint(cls, metadata, **kwargs):
@@ -1275,21 +1265,24 @@ class Unique(Constraint):
 
     @classmethod
     def _validate_metadata_specific_to_constraint(cls, metadata, **kwargs):
-        keys = []
         column_names = kwargs.get('column_names')
+        keys = set()
         if isinstance(metadata._primary_key, tuple):
-            primary_key = metadata._primary_key
+            keys.update(metadata._primary_key)
         else:
-            primary_key = tuple(metadata._primary_key)
+            keys.add(metadata._primary_key)
 
-        for column in column_names:
-            if column in metadata._alternate_keys or column in primary_key:
-                keys.append(column)
+        for key in metadata._alternate_keys:
+            if isinstance(key, tuple):
+                keys.update(key)
+        else:
+            keys.add(key)
 
-        raise ConstraintMetadataError(
-            f"A Unique constraint is being applied to columns '{keys}'. "
-            'These columns are already a key for that table.'
-        )
+        if len(set(column_names) - keys) == 0:
+            raise ConstraintMetadataError(
+                f"A Unique constraint is being applied to columns '{column_names}'. "
+                'These columns are already a key for that table.'
+            )
 
     def is_valid(self, table_data):
         """Get indices of first instance of unique rows.

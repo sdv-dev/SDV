@@ -165,10 +165,10 @@ class TestConstraint():
     def test__validate_metadata(
             self, validate_metadata_columns_mock, validate_metadata_specific_to_constraint_mock,
             validate_inputs_mock):
-        """Test the ``_validate_metadata method.
+        """Test the ``_validate_metadata`` method.
 
         The method should compile the error messages returned from ``_validate_inputs``,
-        ``_validate_metadata_columns and ``_validate_metadata_specific_to_constraint``
+        ``_validate_metadata_columns`` and ``_validate_metadata_specific_to_constraint``
         and surface them together.
 
         Setup:

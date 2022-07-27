@@ -135,7 +135,7 @@ class Constraint(metaclass=ConstraintMeta):
         else:
             column_names = kwargs.get('column_names')
 
-        missing_columns = [column for column in column_names if column not in metadata._columns]
+        missing_columns = set(column_names) - set(metadata._columns)
 
         if missing_columns:
             raise ConstraintMetadataError(
@@ -152,7 +152,7 @@ class Constraint(metaclass=ConstraintMeta):
         """Validate the metadata against the constraint.
 
         Args:
-            metadata (dict):
+            metadata (sdv.metadata.SingleTableMetadata):
                 Single table metadata instance.
             **kwargs (dict):
                 Any required kwargs for the constraint.
@@ -333,6 +333,7 @@ class Constraint(metaclass=ConstraintMeta):
                 constraint_class = import_object(constraint_class)
             else:
                 constraint_class = subclasses[constraint_class]
+
         return constraint_class
 
     @classmethod

@@ -190,7 +190,7 @@ class TestCreateCustomConstraint():
         # Run
         error_message = re.escape(
             'A CustomConstraint constraint is being applied to invalid column names '
-            "['c']. The columns must exist in the table."
+            "{'c'}. The columns must exist in the table."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             constraint_class._validate_metadata_columns(metadata, column_names=['a', 'c'])
@@ -512,7 +512,7 @@ class TestFixedCombinations():
         # Run
         error_message = re.escape(
             'A FixedCombinations constraint is being applied to invalid column names '
-            "['c']. The columns must exist in the table."
+            "{'c'}. The columns must exist in the table."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             FixedCombinations._validate_metadata_columns(metadata, column_names=['a', 'c'])
@@ -949,7 +949,7 @@ class TestInequality():
         # Run
         error_message = re.escape(
             'A Inequality constraint is being applied to invalid column names '
-            "['c']. The columns must exist in the table."
+            "{'c'}. The columns must exist in the table."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             Inequality._validate_metadata_columns(
@@ -1570,7 +1570,7 @@ class TestScalarInequality():
         # Run
         error_message = re.escape(
             'A ScalarInequality constraint is being applied to invalid column names '
-            "['c']. The columns must exist in the table."
+            "{'c'}. The columns must exist in the table."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             ScalarInequality._validate_metadata_columns(metadata, column_name='c')
@@ -2236,7 +2236,7 @@ class TestPositive():
         # Run
         error_message = re.escape(
             'A Positive constraint is being applied to invalid column names '
-            "['c']. The columns must exist in the table."
+            "{'c'}. The columns must exist in the table."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             Positive._validate_metadata_columns(metadata, column_name='c')
@@ -2377,7 +2377,7 @@ class TestNegative():
         # Run
         error_message = re.escape(
             'A Negative constraint is being applied to invalid column names '
-            "['c']. The columns must exist in the table."
+            "{'c'}. The columns must exist in the table."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             Negative._validate_metadata_columns(metadata, column_name='c')
@@ -2526,7 +2526,7 @@ class TestRange():
         # Run
         error_message = re.escape(
             'A Range constraint is being applied to invalid column names '
-            "['c']. The columns must exist in the table."
+            "{'c'}. The columns must exist in the table."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             Range._validate_metadata_columns(
@@ -3124,7 +3124,7 @@ class TestScalarRange():
         # Run
         error_message = re.escape(
             'A ScalarRange constraint is being applied to invalid column names '
-            "['c']. The columns must exist in the table."
+            "{'c'}. The columns must exist in the table."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             ScalarRange._validate_metadata_columns(metadata, column_name='c')
@@ -3833,7 +3833,7 @@ class TestOneHotEncoding():
         # Run
         error_message = re.escape(
             'A OneHotEncoding constraint is being applied to invalid column names '
-            "['c']. The columns must exist in the table."
+            "{'c'}. The columns must exist in the table."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             OneHotEncoding._validate_metadata_columns(metadata, column_names=['a', 'c'])
@@ -3956,10 +3956,57 @@ class TestUnique():
         # Run
         error_message = re.escape(
             'A Unique constraint is being applied to invalid column names '
-            "['c']. The columns must exist in the table."
+            "{'c'}. The columns must exist in the table."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             Unique._validate_metadata_columns(metadata, column_names=['a', 'c'])
+
+    def test__validate_metadata_specific_to_constraint(self):
+        """Test the ``_validate_metadata_specific_to_constraint``.
+
+        If at least one of the columns in ``column_names`` is not a key, no error should
+        be raised.
+
+        Input:
+            - Metadata with primary and alternate keys.
+            - Column names with list of columns different htan the primary key and alternate keys.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._primary_key = 'a'
+        metadata._alternate_keys = ['b', 'c']
+
+        # Run
+        Unique._validate_metadata_specific_to_constraint(
+            metadata,
+            column_names=['a', 'b', 'd']
+        )
+
+    def test__validate_metadata_specific_to_constraint_error(self):
+        """Test the ``_validate_metadata_specific_to_constraint``.
+
+        If all of the columns in ``column_names`` are keys, an error should
+        be raised.
+
+        Input:
+            - Metadata with primary and alternate keys.
+            - Column names with list of columns different htan the primary key and alternate keys.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._primary_key = 'a'
+        metadata._alternate_keys = [('b', 'c'), 'd']
+
+        # Run
+        error_message = re.escape(
+            "A Unique constraint is being applied to columns '['a', 'b', 'c']'. "
+            'These columns are already a key for that table.'
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            Unique._validate_metadata_specific_to_constraint(
+                metadata,
+                column_names=['a', 'b', 'c']
+            )
 
     def test___init__(self):
         """Test the ``Unique.__init__`` method.
@@ -4272,7 +4319,7 @@ class TestFixedIncrements():
         # Run
         error_message = re.escape(
             'A FixedIncrements constraint is being applied to invalid column names '
-            "['c']. The columns must exist in the table."
+            "{'c'}. The columns must exist in the table."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             FixedIncrements._validate_metadata_columns(metadata, column_name='c')
