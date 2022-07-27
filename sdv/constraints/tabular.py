@@ -37,9 +37,11 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.base import Constraint
-from sdv.constraints.errors import FunctionError, InvalidFunctionError, MultipleConstraintsErrors
+from sdv.constraints.errors import (
+    ConstraintMetadataError, FunctionError, InvalidFunctionError, MultipleConstraintsErrors)
 from sdv.constraints.utils import (
-    cast_to_datetime64, get_datetime_format, is_datetime_type, logit, sigmoid)
+    cast_to_datetime64, get_datetime_format, is_datetime_type, logit, matches_datetime_format,
+    sigmoid)
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,
@@ -89,20 +91,19 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
         """CustomConstraint class.
 
         Args:
-            transform (callable):
-                Function to replace the ``transform`` method.
-            reverse_transform (callable):
-                Function to replace the ``reverse_transform`` method.
-            is_valid (callable):
-                Function to replace the ``is_valid`` method.
+            column_names (list):
+                List of strings representing column names involved in this constraint.
+            **kwargs (dict):
+                Any kwargs necessary for constraint.
         """
 
         @classmethod
         def _validate_inputs(cls, **kwargs):
             if 'column_names' not in set(kwargs):
-                raise MultipleConstraintsErrors(
+                errors = [ConstraintMetadataError(
                     "Missing required values {'column_names'} in a CustomConstraint constraint."
-                )
+                )]
+                raise MultipleConstraintsErrors(errors)
 
         def __init__(self, column_names, **kwargs):
             self.column_names = column_names
@@ -339,6 +340,25 @@ class Inequality(Constraint):
         if not isinstance(strict_boundaries, bool):
             raise ValueError('`strict_boundaries` must be a boolean.')
 
+    @classmethod
+    def _validate_metadata_columns(cls, metadata, **kwargs):
+        kwargs['column_names'] = [kwargs.get('high_column_name'), kwargs.get('low_column_name')]
+        super()._validate_metadata_columns(metadata, **kwargs)
+
+    @classmethod
+    def _validate_metadata_specific_to_constraint(cls, metadata, **kwargs):
+        high = kwargs.get('high_column_name')
+        low = kwargs.get('low_column_name')
+        high_sdtype = metadata._columns.get(high, {}).get('sdtype')
+        low_sdtype = metadata._columns.get(low, {}).get('sdtype')
+        both_datetime = high_sdtype == low_sdtype == 'datetime'
+        both_numerical = high_sdtype == low_sdtype == 'numerical'
+        if not (both_datetime or both_numerical):
+            raise ConstraintMetadataError(
+                f'An {cls.__name__} constraint is being applied to mismatched sdtypes '
+                f'{[high, low]}. Both columns must be either numerical or datetime.'
+            )
+
     def __init__(self, low_column_name, high_column_name, strict_boundaries=False):
         self._validate_init_inputs(low_column_name, high_column_name, strict_boundaries)
         self._low_column_name = low_column_name
@@ -472,17 +492,41 @@ class ScalarInequality(Constraint):
         try:
             super()._validate_inputs(**kwargs)
         except Exception as e:
-            errors.append(str(e))
+            errors.append(e)
 
         if 'relation' in kwargs and kwargs['relation'] not in {'>', '>=', '<', '<='}:
             wrong_relation = {kwargs['relation']}
-            errors.append(
+            errors.append(ConstraintMetadataError(
                 f'Invalid relation value {wrong_relation} in a ScalarInequality constraint.'
                 " The relation must be one of: '>', '>=', '<' or '<='."
-            )
+            ))
 
         if errors:
-            raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
+            raise MultipleConstraintsErrors(errors)
+
+    @classmethod
+    def _validate_metadata_specific_to_constraint(cls, metadata, **kwargs):
+        column_name = kwargs.get('column_name')
+        sdtype = metadata._columns.get(column_name, {}).get('sdtype')
+        val = kwargs.get('value')
+        if sdtype == 'numerical':
+            if not isinstance(val, (int, float)):
+                raise ConstraintMetadataError("'value' must be an int or float")
+
+        elif sdtype == 'datetime':
+            datetime_format = metadata._columns.get(column_name).get('datetime_format')
+            matches_format = matches_datetime_format(val, datetime_format)
+            if not matches_format:
+                raise ConstraintMetadataError(
+                    "'value' must be a datetime string of the right format"
+                )
+
+        else:
+            raise ConstraintMetadataError(
+                f'A {cls.__name__} constraint is being applied to mismatched sdtypes. '
+                'Numerical columns must be compared to integer or float values. '
+                'Datetimes column must be compared to datetime strings.'
+            )
 
     @staticmethod
     def _validate_init_inputs(column_name, value, relation):
@@ -628,6 +672,16 @@ class Positive(ScalarInequality):
             zero ``>`` or include it ``>=``.
     """
 
+    @classmethod
+    def _validate_metadata_specific_to_constraint(cls, metadata, **kwargs):
+        column_name = kwargs.get('column_name')
+        sdtype = metadata._columns.get(column_name, {}).get('sdtype')
+        if sdtype != 'numerical':
+            raise ConstraintMetadataError(
+                f'A {cls.__name__} constraint is being applied to an invalid column '
+                f"'{column_name}'. This constraint is only defined for numerical columns."
+            )
+
     def __init__(self, column_name, strict=False):
         super().__init__(column_name=column_name, relation='>' if strict else '>=', value=0)
 
@@ -645,6 +699,16 @@ class Negative(ScalarInequality):
             Whether the comparison of the values should be strict, disclude
             zero ``<`` or include it ``<=``.
     """
+
+    @classmethod
+    def _validate_metadata_specific_to_constraint(cls, metadata, **kwargs):
+        column_name = kwargs.get('column_name')
+        sdtype = metadata._columns.get(column_name, {}).get('sdtype')
+        if sdtype != 'numerical':
+            raise ConstraintMetadataError(
+                f'A {cls.__name__} constraint is being applied to an invalid column '
+                f"'{column_name}'. This constraint is only defined for numerical columns."
+            )
 
     def __init__(self, column_name, strict=False):
         super().__init__(column_name=column_name, relation='<' if strict else '<=', value=0)
@@ -669,6 +733,30 @@ class Range(Constraint):
             not ``>`` when comparing them.
             Defaults to True.
     """
+
+    @classmethod
+    def _validate_metadata_columns(cls, metadata, **kwargs):
+        high = kwargs.get('high_column_name')
+        low = kwargs.get('low_column_name')
+        middle = kwargs.get('middle_column_name')
+        kwargs['column_names'] = [high, low, middle]
+        super()._validate_metadata_columns(metadata, **kwargs)
+
+    @classmethod
+    def _validate_metadata_specific_to_constraint(cls, metadata, **kwargs):
+        high = kwargs.get('high_column_name')
+        low = kwargs.get('low_column_name')
+        middle = kwargs.get('middle_column_name')
+        high_sdtype = metadata._columns.get(high, {}).get('sdtype')
+        low_sdtype = metadata._columns.get(low, {}).get('sdtype')
+        middle_sdtype = metadata._columns.get(middle, {}).get('sdtype')
+        all_datetime = high_sdtype == low_sdtype == middle_sdtype == 'datetime'
+        all_numerical = high_sdtype == low_sdtype == middle_sdtype == 'numerical'
+        if not (all_datetime or all_numerical):
+            raise ConstraintMetadataError(
+                f'A {cls.__name__} constraint is being applied to mismatched sdtypes '
+                f'{[high, middle, low]}. All columns must be either numerical or datetime.'
+            )
 
     def __init__(self, low_column_name, middle_column_name, high_column_name,
                  strict_boundaries=True):
@@ -838,6 +926,40 @@ class ScalarRange(Constraint):
                 'represents a datetime.'
             )
 
+    @classmethod
+    def _validate_metadata_specific_to_constraint(cls, metadata, **kwargs):
+        column_name = kwargs.get('column_name')
+        if column_name not in metadata._columns:
+            raise ConstraintMetadataError(
+                f'A {cls.__name__} constraint is being applied to invalid column names '
+                f'({column_name}). The columns must exist in the table.'
+            )
+        sdtype = metadata._columns.get(column_name).get('sdtype')
+        high_value = kwargs.get('high_value')
+        low_value = kwargs.get('low_value')
+        if sdtype == 'numerical':
+            if not isinstance(high_value, (int, float)) or not isinstance(low_value, (int, float)):
+                raise ConstraintMetadataError(
+                    "Both 'high_value' and 'low_value' must be ints or floats"
+                )
+
+        elif sdtype == 'datetime':
+            datetime_format = metadata._columns.get(column_name, {}).get('datetime_format')
+            high_matches_format = matches_datetime_format(high_value, datetime_format)
+            low_matches_format = matches_datetime_format(low_value, datetime_format)
+            if not (low_matches_format and high_matches_format):
+                raise ConstraintMetadataError(
+                    "Both 'high_value' and 'low_value' must be a datetime string of the right "
+                    'format'
+                )
+
+        else:
+            raise ConstraintMetadataError(
+                f'A {cls.__name__} constraint is being applied to mismatched sdtypes. '
+                'Numerical columns must be compared to integer or float values. '
+                'Datetimes column must be compared to datetime strings.'
+            )
+
     def __init__(self, column_name, low_value, high_value, strict_boundaries=True):
         self.constraint_columns = (column_name,)
         self._column_name = column_name
@@ -985,18 +1107,20 @@ class FixedIncrements(Constraint):
         errors = []
         try:
             super()._validate_inputs(**kwargs)
+        except MultipleConstraintsErrors as mce:
+            errors.extend(mce.errors)
         except Exception as e:
-            errors.append(str(e))
+            errors.append(e)
 
         if 'increment_value' in kwargs and kwargs['increment_value'] <= 0:
             wrong_increment = {kwargs['increment_value']}
-            errors.append(
+            errors.append(ConstraintMetadataError(
                 f'Invalid increment value {wrong_increment} in a FixedIncrements constraint.'
                 ' Increments must be positive integers.'
-            )
+            ))
 
         if errors:
-            raise MultipleConstraintsErrors('\n' + '\n\n'.join(map(str, errors)))
+            raise MultipleConstraintsErrors(errors)
 
     def __init__(self, column_name, increment_value):
         if increment_value <= 0:
@@ -1138,6 +1262,27 @@ class Unique(Constraint):
     def __init__(self, column_names):
         self.column_names = column_names
         self.constraint_columns = tuple(self.column_names)
+
+    @classmethod
+    def _validate_metadata_specific_to_constraint(cls, metadata, **kwargs):
+        column_names = kwargs.get('column_names')
+        keys = set()
+        if isinstance(metadata._primary_key, tuple):
+            keys.update(metadata._primary_key)
+        else:
+            keys.add(metadata._primary_key)
+
+        for key in metadata._alternate_keys:
+            if isinstance(key, tuple):
+                keys.update(key)
+        else:
+            keys.add(key)
+
+        if len(set(column_names) - keys) == 0:
+            raise ConstraintMetadataError(
+                f"A Unique constraint is being applied to columns '{column_names}'. "
+                'These columns are already a key for that table.'
+            )
 
     def is_valid(self, table_data):
         """Get indices of first instance of unique rows.

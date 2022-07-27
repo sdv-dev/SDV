@@ -11,7 +11,8 @@ import pandas as pd
 import pytest
 
 from sdv.constraints.errors import (
-    FunctionError, InvalidFunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
+    ConstraintMetadataError, FunctionError, InvalidFunctionError, MissingConstraintColumnError,
+    MultipleConstraintsErrors)
 from sdv.constraints.tabular import (
     FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
     ScalarInequality, ScalarRange, Unique, _validate_inputs_custom_constraint,
@@ -144,6 +145,55 @@ class TestCreateCustomConstraint():
         with pytest.raises(ValueError, match=err_msg):
             _validate_inputs_custom_constraint(
                 is_valid_fn=sorted, transform_fn=sorted, reverse_transform_fn=10)
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed in column_names should be in the metadata.
+
+        Setup:
+            - Create custom constraint class.
+
+        Input:
+            - column_names with columns that are all in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        constraint_class = create_custom_constraint(sorted, sorted, sorted)
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        constraint_class._validate_metadata_columns(metadata, column_names=['a', 'b'])
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If any columns in column_names are not in the metadata, an error should be raised.
+
+        Setup:
+            - Create custom constraint class.
+
+        Input:
+            - column_names that contains a column not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        constraint_class = create_custom_constraint(sorted, sorted, sorted)
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        error_message = re.escape(
+            'A CustomConstraint constraint is being applied to invalid column names '
+            "{'c'}. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            constraint_class._validate_metadata_columns(metadata, column_names=['a', 'c'])
 
     @patch('sdv.constraints.tabular._validate_inputs_custom_constraint')
     def test_create_custom_constraint(self, mock_validate):
@@ -425,6 +475,47 @@ class TestFixedCombinations():
         assert groups is not None
         assert str(eval(groups.group(1))) == 'column_names'
         assert set(eval(groups.group(2))) == {'something_else', 'not_column_name'}
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed in column_names should be in the metadata.
+
+        Input:
+            - column_names with columns that are all in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        FixedCombinations._validate_metadata_columns(metadata, column_names=['a', 'b'])
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If any columns in column_names are not in the metadata, an error should be raised.
+
+        Input:
+            - column_names that contains a column not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        error_message = re.escape(
+            'A FixedCombinations constraint is being applied to invalid column names '
+            "{'c'}. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            FixedCombinations._validate_metadata_columns(metadata, column_names=['a', 'c'])
 
     def test___init__(self):
         """Test the ``FixedCombinations.__init__`` method.
@@ -817,11 +908,142 @@ class TestInequality():
             r'Missing required values {(.*)} in an Inequality constraint.'
             r'\n\nInvalid values {(.*)} are present in an Inequality constraint.'
         )
-        print(str(error.value))
         groups = re.search(err_msg, str(error.value))
         assert groups is not None
         assert set(eval(groups.group(1))) == {'low_column_name', 'high_column_name'}
         assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed should be in the metadata.
+
+        Input:
+            - column_names with columns that are all in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        Inequality._validate_metadata_columns(metadata, low_column_name='a', high_column_name='b')
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If any columns passed are not in the metadata, an error should be raised.
+
+        Input:
+            - hihg_column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        error_message = re.escape(
+            'A Inequality constraint is being applied to invalid column names '
+            "{'c'}. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            Inequality._validate_metadata_columns(
+                metadata, low_column_name='a', high_column_name='c')
+
+    def test__validate_metadata_specific_to_constraint_datetime(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` with datetimes.
+
+        If both the ``high_column_name`` and ``low_column_name`` are datetimes, then the
+        validation should not raise an error.
+
+        Input:
+            - Metadata with sdtypes set to datetime for both the high and low column.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'datetime'}}
+
+        # Run
+        Inequality._validate_metadata_specific_to_constraint(
+            metadata,
+            high_column_name='a',
+            low_column_name='b'
+        )
+
+    def test__validate_metadata_specific_to_constraint_datetime_error(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` with datetimes.
+
+        If both the ``high_column_name`` and ``low_column_name`` are not datetimes, then the
+        validation should raise an error.
+
+        Input:
+            - Metadata with sdtypes set to datetime for the high but not low column.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'categorical'}}
+
+        # Run
+        error_message = re.escape(
+            'An Inequality constraint is being applied to mismatched sdtypes '
+            "['a', 'b']. Both columns must be either numerical or datetime."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            Inequality._validate_metadata_specific_to_constraint(
+                metadata,
+                high_column_name='a',
+                low_column_name='b'
+            )
+
+    def test__validate_metadata_specific_to_constraint_numerical(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` with numerical.
+
+        If both the ``high_column`` and ``low_column`` are numerical, then the validation
+        should not raise an error.
+
+        Input:
+            - Metadata with sdtypes set to numerical for both the high and low column.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'numerical'}, 'b': {'sdtype': 'numerical'}}
+
+        # Run
+        Inequality._validate_metadata_specific_to_constraint(
+            metadata,
+            high_column_name='a',
+            low_column_name='b'
+        )
+
+    def test__validate_metadata_specific_to_constraint_numerical_error(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` with numerical.
+
+        If both the ``high_column`` and ``low_column`` are not numerical, then the validation
+        should raise an error.
+
+        Input:
+            - Metadata with sdtypes set to numerical for the high but not low column.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'numerical'}, 'b': {'sdtype': 'categorical'}}
+
+        # Run
+        error_message = re.escape(
+            'An Inequality constraint is being applied to mismatched sdtypes '
+            "['a', 'b']. Both columns must be either numerical or datetime."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            Inequality._validate_metadata_specific_to_constraint(
+                metadata,
+                high_column_name='a',
+                low_column_name='b'
+            )
 
     def test__validate_init_inputs_incorrect_column(self):
         """Test the ``_validate_init_inputs`` method.
@@ -1312,6 +1534,189 @@ class TestScalarInequality():
         assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
         assert str(eval(groups.group(3))) == '+'
 
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed in column_names should be in the metadata.
+
+        Input:
+            - column_name with column that is in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        ScalarInequality._validate_metadata_columns(metadata, column_name='a')
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If the column_name is not in the metadata, an error should be raised.
+
+        Input:
+            - column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        error_message = re.escape(
+            'A ScalarInequality constraint is being applied to invalid column names '
+            "{'c'}. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            ScalarInequality._validate_metadata_columns(metadata, column_name='c')
+
+    def test__validate_metadata_specific_to_constraint_numerical(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column_name has an sdtype of numerical, and the value
+        is an int or float, then no error should be raised.
+
+        Setup:
+            - Metadata with the sdtype set to numerical.
+
+        Input:
+            - The column name and a value set to a number.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'numerical'}}
+
+        # Run
+        ScalarInequality._validate_metadata_specific_to_constraint(
+            metadata,
+            column_name='a',
+            relation='>',
+            value=7
+        )
+
+    def test__validate_metadata_specific_to_constraint_numerical_error(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column_name has an sdtype of numerical, and the value
+        is not an int or float, then an error should be raised.
+
+        Setup:
+            - Metadata with the sdtype set to numerical.
+
+        Input:
+            - The column name and a value set to a string.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'numerical'}}
+
+        # Run
+        error_message = "'value' must be an int or float"
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            ScalarInequality._validate_metadata_specific_to_constraint(
+                metadata,
+                column_name='a',
+                relation='>',
+                value='7'
+            )
+
+    @patch('sdv.constraints.tabular.matches_datetime_format')
+    def test__validate_metadata_specific_to_constraint_datetime(self, datetime_format_mock):
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column_name has an sdtype of datetime, and the value
+        is a datetime string that matches the format, then no error should be raised.
+
+        Setup:
+            - Metadata with the sdtype set to datetime and a datetime_format.
+            - Mock the ``matches_datetime_format`` function to return True.
+
+        Input:
+            - The column name and a value set to a datetime of the right format.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        datetime_format_mock.return_value = True
+
+        # Run
+        ScalarInequality._validate_metadata_specific_to_constraint(
+            metadata,
+            column_name='a',
+            relation='>',
+            value='1/1/2020'
+        )
+
+    @patch('sdv.constraints.tabular.matches_datetime_format')
+    def test__validate_metadata_specific_to_constraint_datetime_error(self, datetime_format_mock):
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column_name has an sdtype of datetime, and the value
+        is a datetime string that doesn't match the format, then an error should be raised.
+
+        Setup:
+            - Metadata with the sdtype set to datetime and a datetime_format.
+            - Mock the ``matches_datetime_format`` function to return False.
+
+        Input:
+            - The column name and a value set to a datetime of the wrong format.
+
+        Side effect:
+            - A ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        datetime_format_mock.return_value = False
+
+        # Run
+        error_message = "'value' must be a datetime string of the right format"
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            ScalarInequality._validate_metadata_specific_to_constraint(
+                metadata,
+                column_name='a',
+                relation='>',
+                value='1-1-2020'
+            )
+
+    def test__validate_metadata_specific_to_constraint_bad_type(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column_name has an sdtype that is not a datetime string, int or
+        float then an error should be raised.
+
+        Setup:
+            - Metadata with the sdtype set to categorical.
+
+        Input:
+            - The column name, relation and value.
+
+        Side effect:
+            - A ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'categorical'}}
+
+        # Run
+        error_message = (
+            'A ScalarInequality constraint is being applied to mismatched sdtypes. '
+            'Numerical columns must be compared to integer or float values. '
+            'Datetimes column must be compared to datetime strings.'
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            ScalarInequality._validate_metadata_specific_to_constraint(
+                metadata,
+                column_name='a',
+                relation='>',
+                value=7
+            )
+
     def test__validate_init_inputs_incorrect_column(self):
         """Test the ``_validate_init_inputs`` method.
 
@@ -1790,11 +2195,101 @@ class TestPositive():
             r'Missing required values {(.*)} in a Positive constraint.'
             r'\n\nInvalid values {(.*)} are present in a Positive constraint.'
         )
-        print(str(error.value))
         groups = re.search(err_msg, str(error.value))
         assert groups is not None
         assert str(eval(groups.group(1))) == 'column_name'
         assert set(eval(groups.group(2))) == {'something_else', 'not_column_name'}
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        The column passed in column_name should be in the metadata.
+
+        Input:
+            - column_name that is in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        Positive._validate_metadata_columns(metadata, column_name='a')
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If column_name is not in the metadata, an error should be raised.
+
+        Input:
+            - column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        error_message = re.escape(
+            'A Positive constraint is being applied to invalid column names '
+            "{'c'}. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            Positive._validate_metadata_columns(metadata, column_name='c')
+
+    def test__validate_metadata_specific_to_constraint(self):
+        """ Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column name provided has an sdtype of numerical, then no error should
+        be raised.
+
+        Input:
+            - Metadata with the column's sdtype set to numerical.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {
+            'a': {'sdtype': 'numerical'}
+        }
+
+        # Run
+        Positive._validate_metadata_specific_to_constraint(
+            metadata,
+            column_name='a'
+        )
+
+    def test__validate_metadata_specific_to_constraint_error(self):
+        """ Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column name provided does not have an sdtype of numerical, then an error should
+        be raised.
+
+        Input:
+            - Metadata with the column's sdtype set to datetime.
+
+        Side effect:
+            - Raises ConstraintMetadataError
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {
+            'a': {'sdtype': 'datetime'}
+        }
+
+        # Run
+        error_message = (
+            'A Positive constraint is being applied to an invalid column '
+            "'a'. This constraint is only defined for numerical columns."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            Positive._validate_metadata_specific_to_constraint(
+                metadata,
+                column_name='a'
+            )
 
     def test__init__(self):
         """Test the ``Positive.__init__`` method.
@@ -1845,6 +2340,97 @@ class TestNegative():
         assert groups is not None
         assert str(eval(groups.group(1))) == 'column_name'
         assert set(eval(groups.group(2))) == {'something_else', 'not_column_name'}
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        The column passed in column_name should be in the metadata.
+
+        Input:
+            - column_name that is in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        Negative._validate_metadata_columns(metadata, column_name='a')
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If column_name is not in the metadata, an error should be raised.
+
+        Input:
+            - column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        error_message = re.escape(
+            'A Negative constraint is being applied to invalid column names '
+            "{'c'}. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            Negative._validate_metadata_columns(metadata, column_name='c')
+
+    def test__validate_metadata_specific_to_constraint(self):
+        """ Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column name provided has an sdtype of numerical, then no error should
+        be raised.
+
+        Input:
+            - Metadata with the column's sdtype set to numerical.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {
+            'a': {'sdtype': 'numerical'}
+        }
+
+        # Run
+        Positive._validate_metadata_specific_to_constraint(
+            metadata,
+            column_name='a'
+        )
+
+    def test__validate_metadata_specific_to_constraint_error(self):
+        """ Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column name provided does not have an sdtype of numerical, then an error should
+        be raised.
+
+        Input:
+            - Metadata with the column's sdtype set to datetime.
+
+        Side effect:
+            - Raises ConstraintMetadataError
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {
+            'a': {'sdtype': 'datetime'}
+        }
+
+        # Run
+        error_message = (
+            'A Negative constraint is being applied to an invalid column '
+            "'a'. This constraint is only defined for numerical columns."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            Negative._validate_metadata_specific_to_constraint(
+                metadata,
+                column_name='a'
+            )
 
     def test__init__(self):
         """Test the ``Negative.__init__`` method.
@@ -1897,6 +2483,170 @@ class TestRange():
             'middle_column_name', 'high_column_name', 'low_column_name'
         }
         assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed should be in the metadata.
+
+        Input:
+            - high_column_name, low_column_name and middle_column_name that are all in the
+            metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2, 'c': 3}
+
+        # Run
+        Range._validate_metadata_columns(
+            metadata,
+            high_column_name='a',
+            low_column_name='b',
+            middle_column_name='c'
+        )
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If any columns passed are not in the metadata, an error should be raised.
+
+        Input:
+            - low_column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        error_message = re.escape(
+            'A Range constraint is being applied to invalid column names '
+            "{'c'}. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            Range._validate_metadata_columns(
+                metadata,
+                high_column_name='a',
+                low_column_name='b',
+                middle_column_name='c'
+            )
+
+    def test__validate_metadata_specific_to_constraint_datetime(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` with datetimes.
+
+        If the ``high_column_name``, ``middle_column_name`` and ``low_column_name``
+        are datetimes, then the validation should not raise an error.
+
+        Input:
+            - Metadata with sdtypes set to datetime for the high, middle and low column.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'datetime'},
+            'c': {'sdtype': 'datetime'}
+        }
+
+        # Run
+        Range._validate_metadata_specific_to_constraint(
+            metadata,
+            high_column_name='a',
+            low_column_name='b',
+            middle_column_name='c'
+        )
+
+    def test__validate_metadata_specific_to_constraint_datetime_error(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` with datetimes.
+
+        If the ``high_column_name``, ``middle_column_name`` and ``low_column_name``
+        are not all datetimes, then the validation should raise an error.
+
+        Input:
+            - Metadata with sdtypes set to datetime for the high and low column
+            but not the middle.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'datetime'},
+            'c': {'sdtype': 'numerical'}
+        }
+
+        # Run
+        error_message = re.escape(
+            'A Range constraint is being applied to mismatched sdtypes '
+            "['a', 'c', 'b']. All columns must be either numerical or datetime."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            Range._validate_metadata_specific_to_constraint(
+                metadata,
+                high_column_name='a',
+                low_column_name='b',
+                middle_column_name='c'
+            )
+
+    def test__validate_metadata_specific_to_constraint_numerical(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` with numerical.
+
+        If the ``high_column_name``, ``middle_column_name`` and ``low_column_name``
+        are numerical, then the validation should not raise an error.
+
+        Input:
+            - Metadata with sdtypes set to numerical for the high, middle and low column.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {
+            'a': {'sdtype': 'numerical'},
+            'b': {'sdtype': 'numerical'},
+            'c': {'sdtype': 'numerical'}
+        }
+
+        # Run
+        Range._validate_metadata_specific_to_constraint(
+            metadata,
+            high_column_name='a',
+            low_column_name='b',
+            middle_column_name='c'
+        )
+
+    def test__validate_metadata_specific_to_constraint_numerical_error(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` with numerical.
+
+        If the ``high_column_name``, ``middle_column_name`` and ``low_column_name``
+        are not all numerical, then the validation should raise an error.
+
+        Input:
+            - Metadata with sdtypes set to numerical for the high and low column
+            but not the middle.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {
+            'a': {'sdtype': 'numerical'},
+            'b': {'sdtype': 'numerical'},
+            'c': {'sdtype': 'datetime'}
+        }
+
+        # Run
+        error_message = re.escape(
+            'A Range constraint is being applied to mismatched sdtypes '
+            "['a', 'c', 'b']. All columns must be either numerical or datetime."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            Range._validate_metadata_specific_to_constraint(
+                metadata,
+                high_column_name='a',
+                low_column_name='b',
+                middle_column_name='c'
+            )
 
     def test___init__(self):
         """Test the ``Range.__init__`` method.
@@ -2337,6 +3087,256 @@ class TestScalarRange():
         assert groups is not None
         assert set(eval(groups.group(1))) == {'low_value', 'high_value', 'column_name'}
         assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        The column passed in column_name should be in the metadata.
+
+        Input:
+            - column_name that is in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        ScalarRange._validate_metadata_columns(metadata, column_name='a')
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If column_name is not in the metadata, an error should be raised.
+
+        Input:
+            - column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        error_message = re.escape(
+            'A ScalarRange constraint is being applied to invalid column names '
+            "{'c'}. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            ScalarRange._validate_metadata_columns(metadata, column_name='c')
+
+    def test__validate_metadata_specific_to_constraint_numerical(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column_name has an sdtype of numerical, and the high_value
+        and low_value are ints or floats, then no error should be raised.
+
+        Setup:
+            - Metadata with the sdtype set to numerical.
+
+        Input:
+            - The column name and both high_value and low_value set to a number.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'numerical'}}
+
+        # Run
+        ScalarRange._validate_metadata_specific_to_constraint(
+            metadata,
+            column_name='a',
+            high_value=10,
+            low_value=5
+        )
+
+    def test__validate_metadata_specific_to_constraint_numerical_high_not_numerical_error(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column_name has an sdtype of numerical, and the high_value
+        is not an int or float, then an error should be raised.
+
+        Setup:
+            - Metadata with the sdtype set to numerical.
+
+        Input:
+            - The column name, low_value set to a number and high_value set to a string.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'numerical'}}
+
+        # Run
+        error_message = "Both 'high_value' and 'low_value' must be ints or floats"
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            ScalarRange._validate_metadata_specific_to_constraint(
+                metadata,
+                column_name='a',
+                low_value=5,
+                high_value='10'
+            )
+
+    def test__validate_metadata_specific_to_constraint_numerical_low_not_numerical_error(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column_name has an sdtype of numerical, and the low_value
+        is not an int or float, then an error should be raised.
+
+        Setup:
+            - Metadata with the sdtype set to numerical.
+
+        Input:
+            - The column name, high_value set to a number and low_value set to a string.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'numerical'}}
+
+        # Run
+        error_message = "Both 'high_value' and 'low_value' must be ints or floats"
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            ScalarRange._validate_metadata_specific_to_constraint(
+                metadata,
+                column_name='a',
+                low_value='5',
+                high_value=10
+            )
+
+    @patch('sdv.constraints.tabular.matches_datetime_format')
+    def test__validate_metadata_specific_to_constraint_datetime(self, datetime_format_mock):
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column_name has an sdtype of datetime, and both the high_value and low_value
+        are datetime strings that match the format, then no error should be raised.
+
+        Setup:
+            - Metadata with the sdtype set to datetime and a datetime_format.
+            - Mock the ``matches_datetime_format`` function to return True.
+
+        Input:
+            - The column name and both low_value and high_value set to a datetime of the
+            right format.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        datetime_format_mock.return_value = True
+
+        # Run
+        ScalarRange._validate_metadata_specific_to_constraint(
+            metadata,
+            column_name='a',
+            low_value='1/1/2020',
+            high_value='1/30/2020'
+        )
+
+    @patch('sdv.constraints.tabular.matches_datetime_format')
+    def test__validate_metadata_specific_to_constraint_high_datetime_error(
+            self, datetime_format_mock):
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column_name has an sdtype of datetime, and the high_value
+        is a datetime string that doesn't match the format, then an error should be raised.
+
+        Setup:
+            - Metadata with the sdtype set to datetime and a datetime_format.
+            - Mock the ``matches_datetime_format`` function to return False, then True.
+
+        Input:
+            - The column name, a low_value set to a datetime of the right format and
+            a high_value set to a datetime of the wrong format.
+
+        Side effect:
+            - A ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        datetime_format_mock.side_effect = [False, True]
+
+        # Run
+        error_message = (
+            "Both 'high_value' and 'low_value' must be a datetime string of the right format"
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            ScalarRange._validate_metadata_specific_to_constraint(
+                metadata,
+                column_name='a',
+                high_value='1/1/2019',
+                low_value='1-1-2020'
+            )
+
+    @patch('sdv.constraints.tabular.matches_datetime_format')
+    def test__validate_metadata_specific_to_constraint_low_datetime_error(
+            self, datetime_format_mock):
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column_name has an sdtype of datetime, and the low_value
+        is a datetime string that doesn't match the format, then an error should be raised.
+
+        Setup:
+            - Metadata with the sdtype set to datetime and a datetime_format.
+            - Mock the ``matches_datetime_format`` function to return True, then False.
+
+        Input:
+            - The column name, a low_value set to a datetime of the wrong format and
+            a high_value set to a datetime of the right format.
+
+        Side effect:
+            - A ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        datetime_format_mock.side_effect = [True, False]
+
+        # Run
+        error_message = (
+            "Both 'high_value' and 'low_value' must be a datetime string of the right format"
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            ScalarRange._validate_metadata_specific_to_constraint(
+                metadata,
+                column_name='a',
+                high_value='1-1-2019',
+                low_value='1/1/2020'
+            )
+
+    def test__validate_metadata_specific_to_constraint_bad_type(self):
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
+
+        If the column_name has an sdtype that is not a datetime string, int or
+        float then an error should be raised.
+
+        Setup:
+            - Metadata with the sdtype set to categorical.
+
+        Input:
+            - The column name, relation and value.
+
+        Side effect:
+            - A ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': {'sdtype': 'categorical'}}
+
+        # Run
+        error_message = (
+            'A ScalarRange constraint is being applied to mismatched sdtypes. '
+            'Numerical columns must be compared to integer or float values. '
+            'Datetimes column must be compared to datetime strings.'
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            ScalarRange._validate_metadata_specific_to_constraint(
+                metadata,
+                column_name='a',
+                high_value='10',
+                low_value='7'
+            )
 
     def test__validate_init_inputs(self):
         """Test the ``_validate_init_inputs`` method.
@@ -2797,6 +3797,47 @@ class TestOneHotEncoding():
         assert str(eval(groups.group(1))) == 'column_names'
         assert set(eval(groups.group(2))) == {'not_column_names', 'something_else'}
 
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed in column_names should be in the metadata.
+
+        Input:
+            - column_names with columns that are all in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        OneHotEncoding._validate_metadata_columns(metadata, column_names=['a', 'b'])
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If any columns in column_names are not in the metadata, an error should be raised.
+
+        Input:
+            - column_names that contains a column not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        error_message = re.escape(
+            'A OneHotEncoding constraint is being applied to invalid column names '
+            "{'c'}. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            OneHotEncoding._validate_metadata_columns(metadata, column_names=['a', 'c'])
+
     def test_reverse_transform(self):
         """Test the ``OneHotEncoding.reverse_transform`` method.
 
@@ -2878,6 +3919,94 @@ class TestUnique():
         assert groups is not None
         assert str(eval(groups.group(1))) == 'column_names'
         assert set(eval(groups.group(2))) == {'not_column_names', 'something_else'}
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        All of the columns passed in column_names should be in the metadata.
+
+        Input:
+            - column_names with columns that are all in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        Unique._validate_metadata_columns(metadata, column_names=['a', 'b'])
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If any columns in column_names are not in the metadata, an error should be raised.
+
+        Input:
+            - column_names that contains a column not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        error_message = re.escape(
+            'A Unique constraint is being applied to invalid column names '
+            "{'c'}. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            Unique._validate_metadata_columns(metadata, column_names=['a', 'c'])
+
+    def test__validate_metadata_specific_to_constraint(self):
+        """Test the ``_validate_metadata_specific_to_constraint``.
+
+        If at least one of the columns in ``column_names`` is not a key, no error should
+        be raised.
+
+        Input:
+            - Metadata with primary and alternate keys.
+            - Column names with list of columns different htan the primary key and alternate keys.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._primary_key = 'a'
+        metadata._alternate_keys = ['b', 'c']
+
+        # Run
+        Unique._validate_metadata_specific_to_constraint(
+            metadata,
+            column_names=['a', 'b', 'd']
+        )
+
+    def test__validate_metadata_specific_to_constraint_error(self):
+        """Test the ``_validate_metadata_specific_to_constraint``.
+
+        If all of the columns in ``column_names`` are keys, an error should
+        be raised.
+
+        Input:
+            - Metadata with primary and alternate keys.
+            - Column names with list of columns different htan the primary key and alternate keys.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._primary_key = 'a'
+        metadata._alternate_keys = [('b', 'c'), 'd']
+
+        # Run
+        error_message = re.escape(
+            "A Unique constraint is being applied to columns '['a', 'b', 'c']'. "
+            'These columns are already a key for that table.'
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            Unique._validate_metadata_specific_to_constraint(
+                metadata,
+                column_names=['a', 'b', 'c']
+            )
 
     def test___init__(self):
         """Test the ``Unique.__init__`` method.
@@ -3153,6 +4282,47 @@ class TestFixedIncrements():
         assert str(eval(groups.group(1))) == 'column_name'
         assert set(eval(groups.group(2))) == {'something_else', 'not_column_name'}
         assert int(eval(groups.group(3))) == -1
+
+    def test__validate_metadata_columns(self):
+        """Test the ``_validate_metadata_columns`` method.
+
+        The column passed in column_name should be in the metadata.
+
+        Input:
+            - column_name that is in the metadata.
+
+        Side effect:
+            - No error should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        FixedIncrements._validate_metadata_columns(metadata, column_name='a')
+
+    def test__validate_metadata_columns_raises_error(self):
+        """Test the ``_validate_metadata_columns`` method's error condition.
+
+        If column_name is not in the metadata, an error should be raised.
+
+        Input:
+            - column_name that is not in the metadata.
+
+        Side effect:
+            - ConstraintMetadataError should be raised.
+        """
+        # Setup
+        metadata = Mock()
+        metadata._columns = {'a': 1, 'b': 2}
+
+        # Run
+        error_message = re.escape(
+            'A FixedIncrements constraint is being applied to invalid column names '
+            "{'c'}. The columns must exist in the table."
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            FixedIncrements._validate_metadata_columns(metadata, column_name='c')
 
     def test___init__(self):
         """Test the ``FixedIncrements.__init__`` method.
