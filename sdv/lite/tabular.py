@@ -66,7 +66,7 @@ class TabularPreset():
             self._model = GaussianCopula(
                 table_metadata=metadata,
                 constraints=constraints,
-                categorical_transformer='categorical_noised',
+                categorical_transformer='FrequencyEncoder_noised',
                 default_distribution='gaussian',
                 learn_rounding_scheme=False,
             )

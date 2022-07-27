@@ -79,7 +79,7 @@ class BaseTimeseriesModel:
         'O': None,
     }
     _CONTEXT_MODELS = {
-        'gaussian_copula': (GaussianCopula, {'categorical_transformer': 'categorical_noised'})
+        'gaussian_copula': (GaussianCopula, {'categorical_transformer': 'FrequencyEncoder_noised'})
     }
 
     _metadata = None

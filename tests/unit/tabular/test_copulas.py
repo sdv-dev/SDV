@@ -49,13 +49,13 @@ class TestGaussianCopula:
             constraints=[Inequality('col1', 'col2')],
             field_distributions={'a_field': 'gaussian'},
             default_distribution='beta',
-            categorical_transformer='categorical_noised'
+            categorical_transformer='FrequencyEncoder_noised'
         )
 
         assert gc._field_distributions == {'a_field': GaussianUnivariate}
         assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['beta']
-        assert gc._categorical_transformer == 'categorical_noised'
-        assert gc._DTYPE_TRANSFORMERS == {'O': 'categorical_noised'}
+        assert gc._categorical_transformer == 'FrequencyEncoder_noised'
+        assert gc._DTYPE_TRANSFORMERS == {'O': 'FrequencyEncoder_noised'}
 
         metadata = gc._metadata.to_dict()
         assert metadata == {
@@ -73,7 +73,7 @@ class TestGaussianCopula:
                         'a_field': 'gaussian'
                     },
                     'default_distribution': 'beta',
-                    'categorical_transformer': 'categorical_noised'
+                    'categorical_transformer': 'FrequencyEncoder_noised'
                 }
             },
             'name': None,
@@ -111,7 +111,7 @@ class TestGaussianCopula:
                     'field_distributions': {
                         'a_field': 'gaussian',
                     },
-                    'categorical_transformer': 'categorical_noised',
+                    'categorical_transformer': 'FrequencyEncoder_noised',
                 }
             }
         }
@@ -122,8 +122,8 @@ class TestGaussianCopula:
 
         assert gc._field_distributions == {'a_field': GaussianUnivariate}
         assert gc._default_distribution == GaussianCopula._DISTRIBUTIONS['gamma']
-        assert gc._categorical_transformer == 'categorical_noised'
-        assert gc._DTYPE_TRANSFORMERS == {'O': 'categorical_noised'}
+        assert gc._categorical_transformer == 'FrequencyEncoder_noised'
+        assert gc._DTYPE_TRANSFORMERS == {'O': 'FrequencyEncoder_noised'}
 
         metadata = gc._metadata.to_dict()
         assert metadata == {
@@ -140,7 +140,7 @@ class TestGaussianCopula:
                         'a_field': 'gaussian'
                     },
                     'default_distribution': 'gamma',
-                    'categorical_transformer': 'categorical_noised'
+                    'categorical_transformer': 'FrequencyEncoder_noised'
                 }
             },
             'primary_key': None,

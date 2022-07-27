@@ -44,14 +44,14 @@ class Table:
             Dictinary specifying which transformers to use for each field.
             Available transformers are:
 
-                * ``integer``: Uses a ``FloatFormatter`` of dtype ``int``.
-                * ``float``: Uses a ``FloatFormatter`` of dtype ``float``.
-                * ``categorical``: Uses a ``FrequencyEncoder`` without gaussian noise.
-                * ``categorical_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
-                * ``one_hot_encoding``: Uses a ``OneHotEncoder``.
-                * ``label_encoding``: Uses a ``LabelEncoder``.
-                * ``boolean``: Uses a ``BinaryEncoder``.
-                * ``datetime``: Uses a ``UnixTimestampEncoder``.
+                * ``FloatFormatter``: Uses a ``FloatFormatter`` of dtype ``int``.
+                * ``FloatFormatter``: Uses a ``FloatFormatter`` of dtype ``FloatFormatter``.
+                * ``FrequencyEncoder``: Uses a ``FrequencyEncoder`` without gaussian noise.
+                * ``FrequencyEncoder_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
+                * ``OneHotEncoder``: Uses a ``OneHotEncoder``.
+                * ``LabelEncoder``: Uses a ``LabelEncoder``.
+                * ``BinaryEncoder``: Uses a ``BinaryEncoder``.
+                * ``UnixTimestampEncoder``: Uses a ``UnixTimestampEncoder``.
 
         anonymize_fields (dict[str, str]):
             Dict specifying which fields to anonymize and what faker
@@ -101,38 +101,32 @@ class Table:
 
     _ANONYMIZATION_MAPPINGS = dict()
     _TRANSFORMER_TEMPLATES = {
-        'integer': rdt.transformers.FloatFormatter(
+        'FloatFormatter': rdt.transformers.FloatFormatter(
             learn_rounding_scheme=True,
             enforce_min_max_values=True,
             missing_value_replacement='mean',
             model_missing_values=True,
         ),
-        'float': rdt.transformers.FloatFormatter(
-            learn_rounding_scheme=True,
-            enforce_min_max_values=True,
-            missing_value_replacement='mean',
-            model_missing_values=True,
-        ),
-        'categorical': rdt.transformers.FrequencyEncoder,
-        'categorical_noised': rdt.transformers.FrequencyEncoder(add_noise=True),
-        'one_hot_encoding': rdt.transformers.OneHotEncoder,
-        'label_encoding': rdt.transformers.LabelEncoder,
-        'label_encoding_noised': rdt.transformers.LabelEncoder(add_noise=True),
-        'boolean': rdt.transformers.BinaryEncoder(
+        'FrequencyEncoder': rdt.transformers.FrequencyEncoder,
+        'FrequencyEncoder_noised': rdt.transformers.FrequencyEncoder(add_noise=True),
+        'OneHotEncoder': rdt.transformers.OneHotEncoder,
+        'LabelEncoder': rdt.transformers.LabelEncoder,
+        'LabelEncoder_noised': rdt.transformers.LabelEncoder(add_noise=True),
+        'BinaryEncoder': rdt.transformers.BinaryEncoder(
             missing_value_replacement=-1,
             model_missing_values=True
         ),
-        'datetime': rdt.transformers.UnixTimestampEncoder(
+        'UnixTimestampEncoder': rdt.transformers.UnixTimestampEncoder(
             missing_value_replacement='mean',
             model_missing_values=True,
         )
     }
     _DTYPE_TRANSFORMERS = {
-        'i': 'integer',
-        'f': 'float',
-        'O': 'one_hot_encoding',
-        'b': 'boolean',
-        'M': 'datetime',
+        'i': 'FloatFormatter',
+        'f': 'FloatFormatter',
+        'O': 'OneHotEncoder',
+        'b': 'BinaryEncoder',
+        'M': 'UnixTimestampEncoder',
     }
     _DTYPES_TO_TYPES = {
         'i': {
@@ -240,23 +234,15 @@ class Table:
         )
 
     def _update_transformer_templates(self, learn_rounding_scheme, enforce_min_max_values):
-        if learn_rounding_scheme or enforce_min_max_values:
-            custom_int = rdt.transformers.FloatFormatter(
-                missing_value_replacement='mean',
-                model_missing_values=True,
-                learn_rounding_scheme=learn_rounding_scheme,
-                enforce_min_max_values=enforce_min_max_values
-            )
-            custom_float = rdt.transformers.FloatFormatter(
-                missing_value_replacement='mean',
-                model_missing_values=True,
-                learn_rounding_scheme=learn_rounding_scheme,
-                enforce_min_max_values=enforce_min_max_values
-            )
-            self._transformer_templates.update({
-                'integer': custom_int,
-                'float': custom_float
-            })
+        custom_float_formatter = rdt.transformers.FloatFormatter(
+            missing_value_replacement='mean',
+            model_missing_values=True,
+            learn_rounding_scheme=learn_rounding_scheme,
+            enforce_min_max_values=enforce_min_max_values
+        )
+        self._transformer_templates.update({
+            'FloatFormatter': custom_float_formatter,
+        })
 
     @staticmethod
     def _load_constraints(constraints):
@@ -274,7 +260,7 @@ class Table:
                  anonymize_fields=None, primary_key=None, constraints=None,
                  dtype_transformers=None, model_kwargs=None, sequence_index=None,
                  entity_columns=None, context_columns=None,
-                 learn_rounding_scheme=False, enforce_min_max_values=False):
+                 learn_rounding_scheme=True, enforce_min_max_values=True):
         self.name = name
         self._field_names = field_names
         self._field_types = field_types or {}
@@ -290,7 +276,9 @@ class Table:
         self._constraints_to_reverse = []
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
-        self._update_transformer_templates(learn_rounding_scheme, enforce_min_max_values)
+        if learn_rounding_scheme is not None or enforce_min_max_values is not None:
+            self._update_transformer_templates(learn_rounding_scheme, enforce_min_max_values)
+
         if dtype_transformers:
             self._dtype_transformers.update(dtype_transformers)
 

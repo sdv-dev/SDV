@@ -682,7 +682,7 @@ class Range(Constraint):
         """Fit the constraint.
 
         The fit process consists in generating the ``transformed_column`` name and determine
-        whether or not the data is ``datetime``.
+        whether or not the data is ``UnixTimestampEncoder``.
 
         Args:
             table_data (pandas.DataFrame):
@@ -845,7 +845,7 @@ class ScalarRange(Constraint):
         return is_datetime
 
     def _fit(self, table_data):
-        """Learn whether or not the ``column_name`` is ``datetime``.
+        """Learn whether or not the ``column_name`` is ``UnixTimestampEncoder``.
 
         Args:
             table_data (pandas.DataFrame):

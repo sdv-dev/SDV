@@ -60,7 +60,7 @@ class TestTabularPreset:
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=None,
             constraints=None,
-            categorical_transformer='categorical_noised',
+            categorical_transformer='FrequencyEncoder_noised',
             default_distribution='gaussian',
             learn_rounding_scheme=False,
         )
@@ -108,7 +108,7 @@ class TestTabularPreset:
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=metadata.to_dict(),
             constraints=None,
-            categorical_transformer='categorical_noised',
+            categorical_transformer='FrequencyEncoder_noised',
             default_distribution='gaussian',
             learn_rounding_scheme=False,
         )
@@ -136,7 +136,7 @@ class TestTabularPreset:
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=None,
             constraints=[constraint],
-            categorical_transformer='categorical_noised',
+            categorical_transformer='FrequencyEncoder_noised',
             default_distribution='gaussian',
             learn_rounding_scheme=False,
         )
@@ -191,7 +191,7 @@ class TestTabularPreset:
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=expected_metadata,
             constraints=None,
-            categorical_transformer='categorical_noised',
+            categorical_transformer='FrequencyEncoder_noised',
             default_distribution='gaussian',
             learn_rounding_scheme=False,
         )

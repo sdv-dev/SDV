@@ -34,15 +34,15 @@ class GaussianCopula(BaseTabularModel):
             Dictinary specifying which transformers to use for each field.
             Available transformers are:
 
-                * ``integer``: Uses a ``FloatFormatter`` of dtype ``int``.
-                * ``float``: Uses a ``FloatFormatter`` of dtype ``float``.
-                * ``categorical``: Uses a ``FrequencyEncoder`` without gaussian noise.
-                * ``categorical_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
-                * ``one_hot_encoding``: Uses a ``OneHotEncoder``.
-                * ``label_encoding``: Uses a ``LabelEncoder`` without gaussian nose.
-                * ``label_encoding_noised``: Uses a ``LabelEncoder`` adding gaussian noise.
-                * ``boolean``: Uses a ``BinaryEncoder``.
-                * ``datetime``: Uses a ``UnixTimestampEncoder``.
+                * ``FloatFormatter``: Uses a ``FloatFormatter`` of dtype ``int``.
+                * ``FloatFormatter``: Uses a ``FloatFormatter`` of dtype ``FloatFormatter``.
+                * ``FrequencyEncoder``: Uses a ``FrequencyEncoder`` without gaussian noise.
+                * ``FrequencyEncoder_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
+                * ``OneHotEncoder``: Uses a ``OneHotEncoder``.
+                * ``LabelEncoder``: Uses a ``LabelEncoder`` without gaussian nose.
+                * ``LabelEncoder_noised``: Uses a ``LabelEncoder`` adding gaussian noise.
+                * ``BinaryEncoder``: Uses a ``BinaryEncoder``.
+                * ``UnixTimestampEncoder``: Uses a ``UnixTimestampEncoder``.
 
         anonymize_fields (dict[str, str]):
             Dict specifying which fields to anonymize and what faker
@@ -78,23 +78,23 @@ class GaussianCopula(BaseTabularModel):
             Type of transformer to use for the categorical variables, which must be one of the
             following values:
 
-                * ``one_hot_encoding``: Apply a ``OneHotEncoder`` to the
+                * ``OneHotEncoder``: Apply a ``OneHotEncoder`` to the
                   categorical column, which replaces the  column with one boolean
                   column for each possible category, indicating whether each row
                   had that value or not.
-                * ``label_encoding``: Apply a ``LabelEncoder``, which
+                * ``LabelEncoder``: Apply a ``LabelEncoder``, which
                   replaces the value of each category with an integer value that
                   acts as its *label*.
-                * ``label_encoding_noised``: Apply a ``LabelEncoder``, which
+                * ``LabelEncoder_noised``: Apply a ``LabelEncoder``, which
                   replaces the value of each category with an integer value that
                   acts as its *label*.
-                * ``categorical``: Apply ``FrequencyEncoder``, which replaces
+                * ``FrequencyEncoder``: Apply ``FrequencyEncoder``, which replaces
                   each categorical value with a float number in the `[0, 1]` range
                   which is inversely proportional to the frequency of that category.
-                * ``categorical_noised``: Apply a ``FrequencyEncoder`` with the
+                * ``FrequencyEncoder_noised``: Apply a ``FrequencyEncoder`` with the
                   ``add_noise`` argument set to ``True``, which makes it add gaussian
                   noise around each value.
-            Defaults to ``categorical_noised``.
+            Defaults to ``FrequencyEncoder_noised``.
         learn_rounding_scheme (bool):
             Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
             ``reverse_transform`` will be rounded to that place. Defaults to ``True``.
@@ -118,7 +118,7 @@ class GaussianCopula(BaseTabularModel):
         'truncated_gaussian': copulas.univariate.TruncatedGaussian,
     }
     _DEFAULT_DISTRIBUTION = _DISTRIBUTIONS['truncated_gaussian']
-    _DEFAULT_TRANSFORMER = 'categorical_noised'
+    _DEFAULT_TRANSFORMER = 'FrequencyEncoder_noised'
 
     @classmethod
     def _validate_distribution(cls, distribution):

@@ -107,15 +107,15 @@ class CTGAN(CTGANModel):
             Dictinary specifying which transformers to use for each field.
             Available transformers are:
 
-                * ``integer``: Uses a ``FloatFormatter`` of dtype ``int``.
-                * ``float``: Uses a ``FloatFormatter`` of dtype ``float``.
-                * ``categorical``: Uses a ``FrequencyEncoder`` without gaussian noise.
-                * ``categorical_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
-                * ``one_hot_encoding``: Uses a ``OneHotEncoder``.
-                * ``label_encoding``: Uses a ``LabelEncoder`` without gaussian nose.
-                * ``label_encoding_noised``: Uses a ``LabelEncoder`` adding gaussian noise.
-                * ``boolean``: Uses a ``BinaryEncoder``.
-                * ``datetime``: Uses a ``UnixTimestampEncoder``.
+                * ``FloatFormatter``: Uses a ``FloatFormatter`` of dtype ``int``.
+                * ``FloatFormatter``: Uses a ``FloatFormatter`` of dtype ``FloatFormatter``.
+                * ``FrequencyEncoder``: Uses a ``FrequencyEncoder`` without gaussian noise.
+                * ``FrequencyEncoder_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
+                * ``OneHotEncoder``: Uses a ``OneHotEncoder``.
+                * ``LabelEncoder``: Uses a ``LabelEncoder`` without gaussian nose.
+                * ``LabelEncoder_noised``: Uses a ``LabelEncoder`` adding gaussian noise.
+                * ``BinaryEncoder``: Uses a ``BinaryEncoder``.
+                * ``UnixTimestampEncoder``: Uses a ``UnixTimestampEncoder``.
 
         anonymize_fields (dict[str, str]):
             Dict specifying which fields to anonymize and what faker
@@ -231,15 +231,15 @@ class TVAE(CTGANModel):
             Dictinary specifying which transformers to use for each field.
             Available transformers are:
 
-                * ``integer``: Uses a ``FloatFormatter`` of dtype ``int``.
-                * ``float``: Uses a ``FloatFormatter`` of dtype ``float``.
-                * ``categorical``: Uses a ``FrequencyEncoder`` without gaussian noise.
-                * ``categorical_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
-                * ``one_hot_encoding``: Uses a ``OneHotEncoder``.
-                * ``label_encoding``: Uses a ``LabelEncoder`` without gaussian nose.
-                * ``label_encoding_noised``: Uses a ``LabelEncoder`` adding gaussian noise.
-                * ``boolean``: Uses a ``BinaryEncoder``.
-                * ``datetime``: Uses a ``UnixTimestampEncoder``.
+                * ``FloatFormatter``: Uses a ``FloatFormatter`` of dtype ``int``.
+                * ``FloatFormatter``: Uses a ``FloatFormatter`` of dtype ``FloatFormatter``.
+                * ``FrequencyEncoder``: Uses a ``FrequencyEncoder`` without gaussian noise.
+                * ``FrequencyEncoder_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
+                * ``OneHotEncoder``: Uses a ``OneHotEncoder``.
+                * ``LabelEncoder``: Uses a ``LabelEncoder`` without gaussian nose.
+                * ``LabelEncoder_noised``: Uses a ``LabelEncoder`` adding gaussian noise.
+                * ``BinaryEncoder``: Uses a ``BinaryEncoder``.
+                * ``UnixTimestampEncoder``: Uses a ``UnixTimestampEncoder``.
 
         anonymize_fields (dict[str, str]):
             Dict specifying which fields to anonymize and what faker
