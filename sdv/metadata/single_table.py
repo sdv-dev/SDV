@@ -250,6 +250,22 @@ class SingleTableMetadata:
         """Check whether id is a string or a tuple of strings."""
         return isinstance(id, str) or isinstance(id, tuple) and all(isinstance(i, str) for i in id)
 
+    def _validate_primary_key(self, id):
+        if not self._validate_datatype(id):
+            raise ValueError("'primary_key' must be a string or tuple of strings.")
+
+        invalid_ids = {}
+        if isinstance(id, str) and id not in self._columns:
+            invalid_ids = {id}
+        elif isinstance(id, tuple):
+            invalid_ids = {invalid_id for invalid_id in id if invalid_id in self._columns}
+
+        if invalid_ids:
+            raise ValueError(
+                f'Unknown primary key values {invalid_ids}.'
+                ' Keys should be columns that exist in the table.'
+            )
+
     def set_primary_key(self, id):
         """Set the metadata primary key.
 
@@ -257,8 +273,7 @@ class SingleTableMetadata:
             id (str, tuple):
                 Name (or tuple of names) of the primary key column(s).
         """
-        if not self._validate_datatype(id):
-            raise ValueError("'primary_key' must be a string or tuple of strings.")
+        self._validate_primary_key(id)
 
         if self._metadata['primary_key'] is not None:
             warnings.warn(
@@ -268,6 +283,25 @@ class SingleTableMetadata:
 
         self._metadata['primary_key'] = id
 
+    def _validate_alternate_keys(self, ids):
+        if not isinstance(ids, list) or not all(self._validate_datatype(id) for id in ids):
+            raise ValueError(
+                "'alternate_keys' must be a list of strings or a list of tuples of strings."
+            )
+        
+        invalid_ids = {}
+        for id in ids:
+            if isinstance(id, str) and id not in self._columns:
+                invalid_ids.add(id)
+            elif isinstance(id, tuple):
+                invalid_ids.update({invalid_id for invalid_id in id if invalid_id in self._columns})
+
+        if invalid_ids:
+            raise ValueError(
+                f'Unknown alternate key values {invalid_ids}.'
+                ' Keys should be columns that exist in the table.'
+            )
+
     def set_alternate_keys(self, ids):
         """Set the metadata alternate keys.
 
@@ -275,12 +309,24 @@ class SingleTableMetadata:
             ids (list[str], list[tuple]):
                 List of names (or tuple of names) of the alternate key columns.
         """
-        if not isinstance(ids, list) or not all(self._validate_datatype(id) for id in ids):
-            raise ValueError(
-                "'alternate_keys' must be a list of strings or a list of tuples of strings."
-            )
-
+        self._validate_alternate_keys(ids)
         self._metadata['alternate_keys'] = ids
+
+    def _validate_sequence_key(self, id):
+        if not self._validate_datatype(id):
+            raise ValueError("'sequence_key' must be a string or tuple of strings.")
+
+        invalid_ids = {}
+        if isinstance(id, str) and id not in self._columns:
+            invalid_ids = {id}
+        elif isinstance(id, tuple):
+            invalid_ids = {invalid_id for invalid_id in id if invalid_id in self._columns}
+
+        if invalid_ids:
+            raise ValueError(
+                f'Unknown sequence key values {invalid_ids}.'
+                ' Keys should be columns that exist in the table.'
+            )
 
     def set_sequence_key(self, id):
         """Set the metadata sequence key.
@@ -289,8 +335,7 @@ class SingleTableMetadata:
             id (str, tuple):
                 Name (or tuple of names) of the sequence key column(s).
         """
-        if not self._validate_datatype(id):
-            raise ValueError("'sequence_key' must be a string or tuple of strings.")
+        self._validate_sequence_key(id)
 
         if self._metadata['sequence_key'] is not None:
             warnings.warn(
@@ -300,6 +345,16 @@ class SingleTableMetadata:
 
         self._metadata['sequence_key'] = id
 
+    def _validate_sequence_index(self, column_name):
+        if not isinstance(column_name, str):
+            raise ValueError("'sequence_index' must be a string.")
+
+        if column_name not in self._columns:
+            raise ValueError(
+                f'Unknown sequence key value {column_name}.'
+                ' Keys should be columns that exist in the table.'
+            )
+
     def set_sequence_index(self, column_name):
         """Set the metadata sequence index.
 
@@ -307,10 +362,36 @@ class SingleTableMetadata:
             column_name (str):
                 Name of the sequence index column.
         """
-        if not isinstance(column_name, str):
-            raise ValueError("'sequence_index' must be a string.")
-
+        self._validate_sequence_index(column_name)
         self._metadata['sequence_index'] = column_name
+
+    def _validate_sequence_key_not_sequence_index(self):
+        """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
+        if (
+            (isinstance(self._sequence_key, tuple) and self._sequence_index in self._sequence_key)
+            or self._sequence_index == self._sequence_key
+        ):
+            raise ValueError(
+                f'sequence_index and sequence_key have the same value {self._sequence_index}.'
+                ' These columns must be different.'
+            )
+
+    def validate(self):
+        """Validate the metadata.
+        
+        Raises:
+            - ``InvalidMetadataError`` if the metadata is invalid.
+        """
+        # Validate keys
+        self._validate_primary_key(self._primary_key)
+        self._validate_alternate_keys(self._alternate_keys)
+        self._validate_sequence_key(self._sequence_key)
+        self._validate_sequence_index(self._sequence_index)
+        self._validate_sequence_key_not_sequence_index()
+
+        # Validate constraints
+
+        # Validate columns
 
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
