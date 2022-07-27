@@ -28,7 +28,7 @@ def test_tvae():
             'user_id': {
                 'type': 'id',
                 'subtype': 'integer',
-                'transformer': 'integer',
+                'transformer': 'FloatFormatter',
             },
             'country': {
                 'type': 'categorical',
@@ -41,7 +41,7 @@ def test_tvae():
             'age': {
                 'type': 'numerical',
                 'subtype': 'integer',
-                'transformer': 'integer',
+                'transformer': 'FloatFormatter',
             }
         },
         'primary_key': 'user_id',

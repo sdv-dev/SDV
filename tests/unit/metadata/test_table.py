@@ -249,20 +249,14 @@ class TestTable:
         Table(learn_rounding_scheme=True, enforce_min_max_values=True)
 
         # Asserts
-        assert len(transformer_mock.mock_calls) == 2
+        assert len(transformer_mock.mock_calls) == 1
         assert transformer_mock.call_args_list == [
             call(
                 learn_rounding_scheme=True,
                 enforce_min_max_values=True,
                 missing_value_replacement='mean',
                 model_missing_values=True,
-            ),
-            call(
-                learn_rounding_scheme=True,
-                enforce_min_max_values=True,
-                missing_value_replacement='mean',
-                model_missing_values=True,
-            ),
+            )
         ]
 
     def test__make_ids(self):

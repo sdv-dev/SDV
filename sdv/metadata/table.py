@@ -276,8 +276,7 @@ class Table:
         self._constraints_to_reverse = []
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
-        if learn_rounding_scheme is not None or enforce_min_max_values is not None:
-            self._update_transformer_templates(learn_rounding_scheme, enforce_min_max_values)
+        self._update_transformer_templates(learn_rounding_scheme, enforce_min_max_values)
 
         if dtype_transformers:
             self._dtype_transformers.update(dtype_transformers)
