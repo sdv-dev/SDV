@@ -1339,3 +1339,45 @@ class TestSingleTableMetadata:
         # Assert
         mock_json.dumps.assert_called_once_with(instance.to_dict(), indent=4)
         assert res == mock_json.dumps.return_value
+
+    @patch('sdv.metadata.single_table.Constraint')
+    def test_add_constraint(self, constraint_mock):
+        """Test the ``add_constraint`` method.
+
+        The method should create an instance of the specified constraint, run validation on the
+        constraint against the rest of the metadata and add the instance to the
+        ``self._constraints`` list.
+
+        Setup:
+            - Mock ``Constraint``
+
+        Input:
+            - Inequality constraint
+
+        Side effect:
+            - Constraint instance added to list of constraints
+        """
+        # Setup
+        metadata = SingleTableMetadata()
+        dummy_constraint_class = Mock()
+        constraint_mock._get_class_from_dict.return_value = dummy_constraint_class
+
+        # Run
+        metadata.add_constraint(
+            constraint_name='Inequality',
+            low_column_name='child_age',
+            high_column_name='start_date'
+        )
+
+        # Assert
+        constraint_mock._get_class_from_dict.assert_called_once_with('Inequality')
+        assert metadata._constraints == [dummy_constraint_class.return_value]
+        dummy_constraint_class.assert_called_once_with(
+            low_column_name='child_age',
+            high_column_name='start_date'
+        )
+        dummy_constraint_class._validate_metadata.assert_called_once_with(
+            metadata,
+            low_column_name='child_age',
+            high_column_name='start_date'
+        )
