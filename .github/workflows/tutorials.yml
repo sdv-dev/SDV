@@ -1,8 +1,9 @@
 name: Run Tutorials
 
 on:
-  - push
-  - pull_request
+  push:
+  pull_request:
+    types: [opened, reopened]
 
 jobs:
   tutorials:
