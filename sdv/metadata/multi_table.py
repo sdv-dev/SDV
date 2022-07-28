@@ -1,13 +1,10 @@
 """Multi Table Metadata."""
 
 import json
-import warnings
 from copy import deepcopy
 
-import graphviz
-
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.metadata.visualization import _get_graphviz_extension
+from sdv.metadata.visualization import visualize_graph
 
 
 class MultiTableMetadata:
@@ -55,19 +52,8 @@ class MultiTableMetadata:
         Returns:
             ``graphviz.Digraph`` object.
         """
-        filename, graphviz_extension = _get_graphviz_extension(output_filepath)
-        digraph = graphviz.Digraph(
-            'Metadata',
-            format=graphviz_extension,
-            node_attr={
-                "shape": "Mrecord",
-                "fillcolor": "lightgoldenrod1",
-                "style": "filled"
-            },
-        )
-
         nodes = {}
-        edges = {}
+        edges = []
         for table_name, table_meta in self._tables.items():
             columns = []
             for column_name, column_meta in table_meta._columns.items():
@@ -79,33 +65,27 @@ class MultiTableMetadata:
 
         for relationship in self._relationships:
             parent = relationship.get('parent_table_name')
-            child_node = nodes.get(relationship.get('child_table_name'))
-            foreign_key = f"Foreign key: ({parent}): {relationship.get('child_foreign_key')}"
+            child = relationship.get('child_table_name')
+            child_node = nodes.get(child)
+            foreign_key = relationship.get('child_foreign_key')
+            foreign_key_text = f"Foreign key: ({parent}): {foreign_key}"
             if 'foreign_key' in child_node:
-                child_node.get('foreign_keys').append(foreign_key)
+                child_node.get('foreign_keys').append(foreign_key_text)
             else:
-                child_node['foreign_keys'] = [foreign_key]
+                child_node['foreign_keys'] = [foreign_key_text]
+            
+            if show_relationship_labels:
+                primary_key = self._tables.get(parent)._metadata.get('primary_key')
+                edge_label = f'{foreign_key} -> {primary_key}'
+                edges.append((parent, child, edge_label))
         
         for table, info in nodes.items():
             foreign_keys = r'\l'.join(info.get('foreign_keys', []))
             keys = r'\l'.join([info['primary_key'], foreign_keys])
             label = f"{table}|{info['columns']}|{keys}"
-            digraph.node(table, label=label)
+            nodes[table] = label
         
-        if filename:
-            digraph.render(filename=filename, cleanup=True, format=graphviz_extension)
-        else:
-            try:
-                graphviz.version()
-            except graphviz.ExecutableNotFound:
-                warning_message = (
-                    'Graphviz does not seem to be installed on this system. For full '
-                    'metadata visualization capabilities, please make sure to have its '
-                    'binaries propertly installed: https://graphviz.gitlab.io/download/'
-                )
-                warnings.warn(warning_message, RuntimeWarning)
-
-        return digraph
+        return visualize_graph(nodes, edges)
 
     @classmethod
     def _load_from_dict(cls, metadata):
