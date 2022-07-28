@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv.metadata.errors import MetadataError
 from sdv.metadata.single_table import SingleTableMetadata
 
 
@@ -1381,3 +1382,22 @@ class TestSingleTableMetadata:
             low_column_name='child_age',
             high_column_name='start_date'
         )
+
+    def test_add_constraint_bad_constraint(self):
+        """Test the ``add_constraint`` method with a non-existent constraint.
+
+        If the constraint_name passed doesn't exist, an error should be raised.
+
+        Input:
+            - Fakse constraint name
+
+        Side effect:
+            - MetadataError should be raised
+        """
+        # Setup
+        metadata = SingleTableMetadata()
+
+        # Run
+        error_message = re.escape("Invalid constraint ('fake_constraint').")
+        with pytest.raises(MetadataError, match=error_message):
+            metadata.add_constraint(constraint_name='fake_constraint')
