@@ -12,6 +12,8 @@ import pytest
 
 from sdv.metadata.errors import MetadataError
 from sdv.metadata.single_table import SingleTableMetadata
+from sdv.constraints.errors import MultipleConstraintsErrors
+
 
 
 class TestSingleTableMetadata:
@@ -863,6 +865,9 @@ class TestSingleTableMetadata:
     def test_set_primary_key_validation(self):
         """Test that ``set_primary_key`` crashes for invalid arguments.
 
+        Setup:
+            - A ``SingleTableMetadata`` instance with ``_columns`` set.
+
         Input:
             - A tuple with non-string values.
 
@@ -871,11 +876,16 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
+        instance._columns = {'a', 'd'}
 
-        err_msg = "'primary_key' must be a string or tuple of strings."
+        err_msg = (
+            "'primary_key' must be a string or tuple of strings."
+            "\n\nUnknown primary key values {'b', 'c'}."
+            ' Keys should be columns that exist in the table.'
+        )
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
-            instance.set_primary_key(('1', 2, '3'))
+        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
+            instance.set_primary_key(('a', 'b', 'd', 'c'))
 
     def test_set_primary_key(self):
         """Test that ``set_primary_key`` sets the ``_metadata['primary_key']`` value."""
