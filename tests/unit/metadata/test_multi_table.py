@@ -184,7 +184,7 @@ class TestMultiTableMetadata:
                 'parent_table_name': 'accounts',
                 'parent_primary_key': 'id',
                 'child_table_name': 'branches',
-                'chil_foreign_key': 'branch_id',
+                'child_foreign_key': 'branch_id',
             }]
         }
 
