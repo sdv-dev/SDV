@@ -44,8 +44,7 @@ class Table:
             Dictinary specifying which transformers to use for each field.
             Available transformers are:
 
-                * ``FloatFormatter``: Uses a ``FloatFormatter`` of dtype ``int``.
-                * ``FloatFormatter``: Uses a ``FloatFormatter`` of dtype ``FloatFormatter``.
+                * ``FloatFormatter``: Uses a ``FloatFormatter`` for numerical data.
                 * ``FrequencyEncoder``: Uses a ``FrequencyEncoder`` without gaussian noise.
                 * ``FrequencyEncoder_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
                 * ``OneHotEncoder``: Uses a ``OneHotEncoder``.
@@ -513,7 +512,12 @@ class Table:
 
         transformers_dict = self._get_transformers(dtypes)
         for column in numerical_extras:
-            transformers_dict[column] = rdt.transformers.FloatFormatter()
+            transformers_dict[column] = rdt.transformers.FloatFormatter(
+                learn_rounding_scheme=True,
+                enforce_min_max_values=True,
+                missing_value_replacement='mean',
+                model_missing_values=True,
+            )
 
         self._hyper_transformer = rdt.HyperTransformer()
         self._hyper_transformer.detect_initial_config(data)

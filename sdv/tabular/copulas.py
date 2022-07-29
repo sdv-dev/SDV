@@ -34,8 +34,7 @@ class GaussianCopula(BaseTabularModel):
             Dictinary specifying which transformers to use for each field.
             Available transformers are:
 
-                * ``FloatFormatter``: Uses a ``FloatFormatter`` of dtype ``int``.
-                * ``FloatFormatter``: Uses a ``FloatFormatter`` of dtype ``FloatFormatter``.
+                * ``FloatFormatter``: Uses a ``FloatFormatter`` for numerical data.
                 * ``FrequencyEncoder``: Uses a ``FrequencyEncoder`` without gaussian noise.
                 * ``FrequencyEncoder_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
                 * ``OneHotEncoder``: Uses a ``OneHotEncoder``.
