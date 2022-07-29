@@ -71,7 +71,7 @@ class MultiTableMetadata:
             child = relationship.get('child_table_name')
             foreign_key = relationship.get('child_foreign_key')
             primary_key = self._tables.get(parent)._metadata.get('primary_key')
-            edge_label = f'   {foreign_key} → {primary_key}' if show_relationship_labels else ''
+            edge_label = f'  {foreign_key} → {primary_key}' if show_relationship_labels else ''
             edges.append((parent, child, edge_label))
 
             if show_table_details:

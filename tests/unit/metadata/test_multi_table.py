@@ -208,7 +208,7 @@ class TestMultiTableMetadata:
             'parent_table_name': 'accounts',
             'parent_primary_key': 'id',
             'child_table_name': 'branches',
-            'chil_foreign_key': 'branch_id',
+            'child_foreign_key': 'branch_id',
         }]
 
     @patch('sdv.metadata.multi_table.json')
@@ -235,3 +235,113 @@ class TestMultiTableMetadata:
         # Assert
         mock_json.dumps.assert_called_once_with(instance.to_dict(), indent=4)
         assert res == mock_json.dumps.return_value
+
+    def get_metadata(self):
+        """Set the tables and relationships for metadata"""
+        metadata = {}
+        metadata['tables'] = {
+            'users': {
+                'columns': {
+                    'id': {'sdtype': 'numerical'},
+                    'country': {'sdtype': 'categorical'}
+                },
+                'primary_key': 'id'
+            },
+            'payments': {
+                'columns': {
+                    'payment_id': {'sdtype': 'numerical'},
+                    'user_id': {'sdtype': 'numerical'},
+                    'date': {'sdtype': 'datetime'}
+                },
+                'primary_key': 'payment_id'
+            },
+            'sessions': {
+                'columns': {
+                    'session_id': {'sdtype': 'numerical'},
+                    'user_id': {'sdtype': 'numerical'},
+                    'device': {'sdtype': 'categorical'}
+                },
+                'primary_key': 'session_id'
+            },
+            'transactions': {
+                'columns': {
+                    'transaction_id': {'sdtype': 'numerical'},
+                    'session_id': {'sdtype': 'numerical'},
+                    'timestamp': {'sdtype': 'datetime'}
+                },
+                'primary_key': 'transaction_id'
+            }
+        }
+
+        metadata['relationships'] = [
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'id',
+                'child_table_name': 'sessions',
+                'child_foreign_key': 'user_id',
+            },
+            {
+                'parent_table_name': 'sessions',
+                'parent_primary_key': 'session_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'session_id',
+            },
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'id',
+                'child_table_name': 'payments',
+                'child_foreign_key': 'user_id',
+            }
+        ]
+
+        return MultiTableMetadata._load_from_dict(metadata)
+
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_show_relationship_and_details(self, visualize_graph_mock):
+        """Test the ``visualize`` method.
+
+        If both the ``show_relationship_labels`` and ``show_table_details`` parameters are
+        True, then the edges should have labels and the labels for the nodes should include
+        column info, primary keys and alternate keys.
+
+        Setup:
+            - Mock the ``visualize_graph`` function.
+            - Set the tables and relationships for the multi-table metadata.
+
+        Input:
+            - Both ``show_relationship_labels`` and ``show_table_details`` set to True.
+
+        Side effects:
+            - The ``visualize_graph_mock`` should be called with the correct nodes and edges.
+        """
+        # Setup
+        metadata = self.get_metadata()
+
+        # Run
+        metadata.visualize(True, True)
+
+        # Assert
+        expected_payments_label = (
+            '{payments|payment_id : numerical\\luser_id : numerical\\ldate : datetime\\l|'
+            'Primary key: payment_id\\lForeign key (users): user_id\\l}'
+        )
+        expected_sessions_label = (
+            '{sessions|session_id : numerical\\luser_id : numerical\\ldevice : categorical\\l|'
+            'Primary key: session_id\\lForeign key (users): user_id\\l}'
+        )
+        expected_transactions_label = (
+            '{transactions|transaction_id : numerical\\lsession_id : numerical\\ltimestamp : '
+            'datetime\\l|Primary key: transaction_id\\lForeign key (sessions): session_id\\l}'
+        )
+        expected_nodes = {
+            'users': '{users|id : numerical\\lcountry : categorical\\l|Primary key: id\\l\\l}',
+            'payments': expected_payments_label,
+            'sessions': expected_sessions_label,
+            'transactions': expected_transactions_label
+        }
+        expected_edges = [
+            ('users', 'sessions', '  user_id → id'),
+            ('sessions', 'transactions', '  session_id → session_id'),
+            ('users', 'payments', '  user_id → id')
+        ]
+        visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges)
