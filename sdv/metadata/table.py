@@ -513,8 +513,6 @@ class Table:
         transformers_dict = self._get_transformers(dtypes)
         for column in numerical_extras:
             transformers_dict[column] = rdt.transformers.FloatFormatter(
-                learn_rounding_scheme=True,
-                enforce_min_max_values=True,
                 missing_value_replacement='mean',
                 model_missing_values=True,
             )
