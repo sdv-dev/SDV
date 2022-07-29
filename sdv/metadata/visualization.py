@@ -148,6 +148,7 @@ def visualize(metadata, path=None, names=True, details=True):
 
         return digraph
 
+
 def visualize_graph(nodes, edges, path=None):
     """Plot metadata usign graphviz.
 
@@ -177,7 +178,7 @@ def visualize_graph(nodes, edges, path=None):
 
     for name, label in nodes.items():
         digraph.node(name, label=label)
-        
+
     for parent, child, label in edges:
         digraph.edge(parent, child, label=label, arrowhead='oinv')
 
@@ -194,4 +195,4 @@ def visualize_graph(nodes, edges, path=None):
             )
             warnings.warn(warning_message, RuntimeWarning)
 
-        return digraph
+    return digraph
