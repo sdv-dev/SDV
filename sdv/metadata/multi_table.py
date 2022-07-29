@@ -93,7 +93,7 @@ class MultiTableMetadata:
 
             nodes[table] = label
 
-        return visualize_graph(nodes, edges)
+        return visualize_graph(nodes, edges, output_filepath)
 
     @classmethod
     def _load_from_dict(cls, metadata):

@@ -344,4 +344,94 @@ class TestMultiTableMetadata:
             ('sessions', 'transactions', '  session_id → session_id'),
             ('users', 'payments', '  user_id → id')
         ]
-        visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges)
+        visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
+
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_show_relationship_only(self, visualize_graph_mock):
+        """Test the ``visualize`` method.
+
+        If ``show_relationship_labels`` is True but ``show_table_details``is False,
+        then the edges should have labels and the labels for the nodes should be just
+        the table name.
+
+        Setup:
+            - Mock the ``visualize_graph`` function.
+            - Set the tables and relationships for the multi-table metadata.
+
+        Input:
+            - ``show_relationship_labels`` set to True.
+            - ``show_table_details`` set to False.
+
+        Side effects:
+            - The ``visualize_graph_mock`` should be called with the correct nodes and edges.
+        """
+        # Setup
+        metadata = self.get_metadata()
+
+        # Run
+        metadata.visualize(False, True, 'output.jpg')
+
+        # Assert
+        expected_nodes = {
+            'users': 'users',
+            'payments': 'payments',
+            'sessions': 'sessions',
+            'transactions': 'transactions'
+        }
+        expected_edges = [
+            ('users', 'sessions', '  user_id → id'),
+            ('sessions', 'transactions', '  session_id → session_id'),
+            ('users', 'payments', '  user_id → id')
+        ]
+        visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
+
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_show_table_details_only(self, visualize_graph_mock):
+        """Test the ``visualize`` method.
+
+        If ``show_relationship_labels`` is False but ``show_table_details``is True,
+        then the edges should not have labels and the labels for the nodes should should include
+        column info, primary keys and alternate keys.
+
+        Setup:
+            - Mock the ``visualize_graph`` function.
+            - Set the tables and relationships for the multi-table metadata.
+
+        Input:
+            - ``show_relationship_labels`` set to False.
+            - ``show_table_details`` set to True.
+
+        Side effects:
+            - The ``visualize_graph_mock`` should be called with the correct nodes and edges.
+        """
+        # Setup
+        metadata = self.get_metadata()
+
+        # Run
+        metadata.visualize(True, False, 'output.jpg')
+
+        # Assert
+        expected_payments_label = (
+            '{payments|payment_id : numerical\\luser_id : numerical\\ldate : datetime\\l|'
+            'Primary key: payment_id\\lForeign key (users): user_id\\l}'
+        )
+        expected_sessions_label = (
+            '{sessions|session_id : numerical\\luser_id : numerical\\ldevice : categorical\\l|'
+            'Primary key: session_id\\lForeign key (users): user_id\\l}'
+        )
+        expected_transactions_label = (
+            '{transactions|transaction_id : numerical\\lsession_id : numerical\\ltimestamp : '
+            'datetime\\l|Primary key: transaction_id\\lForeign key (sessions): session_id\\l}'
+        )
+        expected_nodes = {
+            'users': '{users|id : numerical\\lcountry : categorical\\l|Primary key: id\\l\\l}',
+            'payments': expected_payments_label,
+            'sessions': expected_sessions_label,
+            'transactions': expected_transactions_label
+        }
+        expected_edges = [
+            ('users', 'sessions', ''),
+            ('sessions', 'transactions', ''),
+            ('users', 'payments', '')
+        ]
+        visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
