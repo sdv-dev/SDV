@@ -404,24 +404,25 @@ class Table:
         for name, dtype in dtypes.items():
             field_metadata = self._fields_metadata.get(name, {})
             transformer_template = field_metadata.get('transformer')
-            if self._dtype_transformers[np.dtype(dtype).kind] is None:
-                transformers[name] = None
-
-            elif transformer_template is None:
+            if transformer_template is None:
                 transformer_template = self._dtype_transformers[np.dtype(dtype).kind]
+                if transformer_template is None:
+                    transformers[name] = None
+                    continue
+
                 field_metadata['transformer'] = transformer_template
 
-                if isinstance(transformer_template, str):
-                    transformer_template = self._transformer_templates[transformer_template]
+            if isinstance(transformer_template, str):
+                transformer_template = self._transformer_templates[transformer_template]
 
-                if isinstance(transformer_template, type):
-                    transformer = transformer_template()
-                else:
-                    transformer = copy.deepcopy(transformer_template)
+            if isinstance(transformer_template, type):
+                transformer = transformer_template()
+            else:
+                transformer = copy.deepcopy(transformer_template)
 
-                LOGGER.debug('Loading transformer %s for field %s',
-                             transformer.__class__.__name__, name)
-                transformers[name] = transformer
+            LOGGER.debug('Loading transformer %s for field %s',
+                         transformer.__class__.__name__, name)
+            transformers[name] = transformer
 
         return transformers
 

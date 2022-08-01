@@ -1,6 +1,6 @@
 import os
 from unittest import TestCase
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
@@ -408,104 +408,6 @@ class TestMetadata(TestCase):
         Metadata.get_dtypes(metadata, 'test', ids=True, errors=errors)
 
         assert len(errors) == 1
-
-    def test__get_pii_fields(self):
-        """Test get pii fields"""
-        # Setup
-        table_meta = {
-            'fields': {
-                'foo': {
-                    'type': 'categorical',
-                    'pii': True,
-                    'pii_category': 'email'
-                },
-                'bar': {
-                    'type': 'categorical',
-                    'pii_category': 'email'
-                }
-            }
-        }
-        metadata = Mock(spec_set=Metadata)
-        metadata.get_table_meta.return_value = table_meta
-
-        # Run
-        result = Metadata._get_pii_fields(metadata, 'test')
-
-        # Asserts
-        assert result == {'foo': 'email'}
-
-    @patch('sdv.metadata.dataset.transformers.UnixTimestampEncoder')
-    @patch('sdv.metadata.dataset.transformers.BinaryEncoder')
-    @patch('sdv.metadata.dataset.transformers.FrequencyEncoder')
-    @patch('sdv.metadata.dataset.transformers.FloatFormatter')
-    def test__get_transformers_no_error(self, numerical_mock, categorical_mock,
-                                        boolean_mock, datetime_mock):
-        """Test get transformers dict for each data type."""
-        # Setup
-        numerical_mock.return_value = 'FloatFormatter'
-        categorical_mock.return_value = 'FrequencyEncoder'
-        boolean_mock.return_value = 'BinaryEncoder'
-        datetime_mock.return_value = 'UnixTimestampEncoder'
-
-        # Run
-        dtypes = {
-            'integer': 'int',
-            'float': 'float',
-            'categorical': 'object',
-            'boolean': 'bool',
-            'datetime': 'datetime64'
-        }
-        pii_fields = {
-            'categorical': 'email'
-        }
-        result = Metadata._get_transformers(dtypes, pii_fields)
-
-        # Asserts
-        expected = {
-            'integer': 'FloatFormatter',
-            'float': 'FloatFormatter',
-            'categorical': 'FrequencyEncoder',
-            'boolean': 'BinaryEncoder',
-            'datetime': 'UnixTimestampEncoder'
-        }
-        expected_numerical_calls = [call(), call()]
-
-        assert result == expected
-        assert len(numerical_mock.call_args_list) == len(expected_numerical_calls)
-        for item in numerical_mock.call_args_list:
-            assert item in expected_numerical_calls
-
-        assert categorical_mock.call_args == call()
-        assert boolean_mock.call_args == call()
-        assert datetime_mock.call_args == call()
-
-    def test__get_transformers_raise_valueerror(self):
-        """Test get transformers dict raise ValueError."""
-        # Run
-        dtypes = {
-            'void': 'void'
-        }
-        with pytest.raises(ValueError):
-            Metadata._get_transformers(dtypes, None)
-
-    def test_get_tables(self):
-        """Test get table names"""
-        # Setup
-        _metadata = {
-            'tables': {
-                'table 1': None,
-                'table 2': None,
-                'table 3': None
-            }
-        }
-        metadata = Mock(spec_set=Metadata)
-        metadata._metadata = _metadata
-
-        # Run
-        result = Metadata.get_tables(metadata)
-
-        # Asserts
-        assert sorted(result) == ['table 1', 'table 2', 'table 3']
 
     def test_load_tables(self):
         """Test get tables"""

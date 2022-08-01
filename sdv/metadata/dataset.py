@@ -8,7 +8,7 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-from rdt import HyperTransformer, transformers
+from rdt import HyperTransformer
 
 from sdv.constraints import Constraint
 from sdv.metadata import visualization
@@ -400,63 +400,6 @@ class Metadata:
                     dtypes[name] = dtype
 
         return dtypes
-
-    def _get_pii_fields(self, table_name):
-        """Get the ``pii_category`` for each field of the table that contains PII.
-
-        Args:
-            table_name (str):
-                Table name for which to get the pii fields.
-
-        Returns:
-            dict:
-                pii field names and categories.
-        """
-        pii_fields = dict()
-        for name, field in self.get_table_meta(table_name)['fields'].items():
-            if field['type'] == 'categorical' and field.get('pii', False):
-                pii_fields[name] = field['pii_category']
-
-        return pii_fields
-
-    @staticmethod
-    def _get_transformers(dtypes, pii_fields):
-        """Create the transformer instances needed to process the given dtypes.
-
-        Temporary drop-in replacement of ``HyperTransformer._analyze`` method,
-        before RDT catches up.
-
-        Args:
-            dtypes (dict):
-                mapping of field names and dtypes.
-            pii_fields (dict):
-                mapping of pii field names and categories.
-
-        Returns:
-            dict:
-                mapping of field names and transformer instances.
-        """
-        transformers_dict = dict()
-        for name, dtype in dtypes.items():
-            dtype = np.dtype(dtype)
-            if dtype.kind == 'i':
-                transformer = transformers.FloatFormatter()
-            elif dtype.kind == 'f':
-                transformer = transformers.FloatFormatter()
-            elif dtype.kind == 'O':
-                transformer = transformers.FrequencyEncoder()
-            elif dtype.kind == 'b':
-                transformer = transformers.BinaryEncoder()
-            elif dtype.kind == 'M':
-                transformer = transformers.UnixTimestampEncoder()
-            else:
-                raise ValueError('Unsupported dtype: {}'.format(dtype))
-
-            LOGGER.info('Loading transformer %s for field %s',
-                        transformer.__class__.__name__, name)
-            transformers_dict[name] = transformer
-
-        return transformers_dict
 
     def transform(self, table_name, data):
         """Transform data for a given table.

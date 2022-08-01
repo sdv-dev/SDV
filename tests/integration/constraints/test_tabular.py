@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from rdt.transformers import FloatFormatter
 
 from sdv.constraints import (
     FixedIncrements, Inequality, Range, ScalarInequality, ScalarRange, create_custom_constraint)
@@ -165,7 +166,10 @@ def test_ScalarRange_conditions():
     condition = Condition({'input': 88}, num_rows=10)
     model = GaussianCopula(
         field_names=['input', 'output'],
-        field_transformers={'input': 'integer', 'output': 'float'},
+        field_transformers={
+            'input': FloatFormatter,
+            'output': FloatFormatter
+        },
         constraints=[constraint],
     )
 
