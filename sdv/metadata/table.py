@@ -403,14 +403,12 @@ class Table:
         transformers = dict()
         for name, dtype in dtypes.items():
             field_metadata = self._fields_metadata.get(name, {})
-            transformer_template = field_metadata.get('transformer')
-            if transformer_template is None:
-                transformer_template = self._dtype_transformers[np.dtype(dtype).kind]
-                if transformer_template is None:
-                    transformers[name] = None
-                    continue
+            transformer_template = field_metadata.get(
+                'transformer', self._dtype_transformers[np.dtype(dtype).kind])
 
-                field_metadata['transformer'] = transformer_template
+            if transformer_template is None:
+                transformers[name] = None
+                continue
 
             if isinstance(transformer_template, str):
                 transformer_template = self._transformer_templates[transformer_template]
