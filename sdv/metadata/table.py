@@ -410,6 +410,7 @@ class Table:
                 transformers[name] = None
                 continue
 
+            field_metadata['transformer'] = transformer_template
             if isinstance(transformer_template, str):
                 transformer_template = self._transformer_templates[transformer_template]
 
