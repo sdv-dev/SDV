@@ -3,6 +3,7 @@
 import json
 from copy import deepcopy
 
+from sdv.metadata.errors import MetadataError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.visualization import visualize_graph
 
@@ -163,3 +164,38 @@ class MultiTableMetadata:
         self._validate_table_name(table_name)
         table = self._tables.get(table_name)
         table.add_column(column_name, **kwargs)
+
+    def _check_if_table_exists(self, table_name):
+        if table_name in self._tables:
+            raise MetadataError(
+                f"Metadata for table '{table_name}' already exists. Specify a new table name or"
+                'create a new MultiTableMetadata object for other data sources.'
+            )
+
+    def detect_table_from_csv(self, table_name, filepath):
+        """Detect the metadata for a table from a csv file.
+
+        Args:
+            table_name (str):
+                Name of the table to detect.
+            filepath (str):
+                String that represents the ``path`` to the ``csv`` file.
+        """
+        self._check_if_table_exists(table_name)
+        table = SingleTableMetadata()
+        table.detect_from_csv(filepath)
+        self._tables[table_name] = table
+
+    def detect_table_from_dataframe(self, table_name, data):
+        """Detect the metadata for a table from a dataframe.
+
+        Args:
+            table_name (str):
+                Name of the table to detect.
+            data (pandas.DataFrame):
+                ``pandas.DataFrame`` to detect the metadata from.
+        """
+        self._check_if_table_exists(table_name)
+        table = SingleTableMetadata()
+        table.detect_from_dataframe(data)
+        self._tables[table_name] = table
