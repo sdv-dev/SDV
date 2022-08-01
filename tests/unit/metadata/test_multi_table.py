@@ -237,7 +237,7 @@ class TestMultiTableMetadata:
         assert res == mock_json.dumps.return_value
 
     def get_metadata(self):
-        """Set the tables and relationships for metadata"""
+        """Set the tables and relationships for metadata."""
         metadata = {}
         metadata['tables'] = {
             'users': {
