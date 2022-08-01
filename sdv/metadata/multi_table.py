@@ -36,15 +36,17 @@ class MultiTableMetadata:
         for relationship in metadata.get('relationships', []):
             self._relationships.append(relationship)
 
-    def visualize(self, show_table_details, show_relationship_labels, output_filepath=None):
+    def visualize(self, show_table_details=True, show_relationship_labels=True,
+                  output_filepath=None):
         """Create a visualization of the multi-table dataset.
 
         Args:
             show_table_details (bool):
                 If True, the column names, primary and foreign keys are all shown along with the
-                table names. If False, only the table names are shown.
+                table names. If False, only the table names are shown. Defaults to True.
             show_relationship_labels (bool):
                 If True, every edge is labeled with the column names (eg. purchaser_id -> user_id).
+                Defaults to True.
             output_filepath (str):
                 Full path of where to savve the visualization. If None, the visualization is not
                 saved. Defaults to None.
