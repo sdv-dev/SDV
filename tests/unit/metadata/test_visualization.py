@@ -238,3 +238,34 @@ def test_visualize_graph_no_path_graphviz_not_installed(warnings_mock, digraph_m
     digraph.render.assert_not_called()
     assert result == digraph
     warnings_mock.warn.assert_called_once_with(warning, RuntimeWarning)
+
+
+@patch('sdv.metadata.visualization._get_graphviz_extension')
+def test_visualize_graph_bad_extension(extension_mock):
+    """Test the ``visualize_graph`` method.
+
+    If the file extension is bad, an error should be raised.
+
+    Setup:
+        - Mock the ``_get_graphviz_extension`` to raise an error.
+
+    Input:
+        - nodes set to a dictionary with one node.
+        - edges set to a list with one edge.
+        - path set to a string with no extension.
+
+    Side effect:
+        - A ``ValueError`` should be raised.
+    """
+    # Setup
+    extension_mock.side_effect = ValueError()
+    nodes = {'node': 'node label'}
+    edges = [('node1', 'node2', 'edge label')]
+
+    # Run
+    error_message = (
+        'Unable to save a visualization with this file type. Try a supported file type like '
+        "'png', 'jpg' or 'pdf'. For a full list, see 'https://graphviz.org/docs/outputs/'"
+    )
+    with pytest.raises(ValueError, match=error_message):
+        visualization.visualize_graph(nodes=nodes, edges=edges, path='path')

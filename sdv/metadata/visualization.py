@@ -9,7 +9,7 @@ def _get_graphviz_extension(path):
     if path:
         path_splitted = path.split('.')
         if len(path_splitted) == 1:
-            raise ValueError('Path without graphviz extansion.')
+            raise ValueError('Path without graphviz extension.')
 
         graphviz_extension = path_splitted[-1]
 
@@ -165,7 +165,14 @@ def visualize_graph(nodes, edges, path=None):
             supported extension. If ``None`` do not save the plot.
             Defaults to ``None``.
     """
-    filename, graphviz_extension = _get_graphviz_extension(path)
+    try:
+        filename, graphviz_extension = _get_graphviz_extension(path)
+    except ValueError:
+        raise ValueError(
+            'Unable to save a visualization with this file type. Try a supported file type like '
+            "'png', 'jpg' or 'pdf'. For a full list, see 'https://graphviz.org/docs/outputs/'"
+        )
+
     digraph = graphviz.Digraph(
         'Metadata',
         format=graphviz_extension,
