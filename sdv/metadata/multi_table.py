@@ -2,6 +2,7 @@
 
 import json
 import warnings
+from collections import defaultdict
 from copy import deepcopy
 
 from sdv.metadata.errors import InvalidMetadataError
@@ -16,6 +17,160 @@ class MultiTableMetadata:
     def __init__(self):
         self._tables = {}
         self._relationships = []
+        self._child_map = defaultdict(set)
+        self._parent_map = defaultdict(set)
+
+    @staticmethod
+    def _validate_missing_relationship_keys(parent_table, parent_table_name, parent_primary_key,
+                                            child_table_name, child_foreign_key):
+        missing_key = set(parent_table._primary_key) - set(parent_primary_key)
+        if missing_key:
+            raise ValueError(
+                f'Relationship between tables ({parent_table_name}, {child_table_name}) contains '
+                'an unknown foreign key {missing_key}.'
+            )
+
+        missing_keys = {}
+        if isinstance(child_foreign_key, str) and child_foreign_key not in parent_table.columns:
+            missing_keys.add(child_foreign_key)
+
+        elif isinstance(child_foreign_key, (list, tuple)):
+            for key in child_foreign_key:
+                if key not in parent_table._columns:
+                    missing_keys.add(key)
+
+        if missing_keys:
+            raise ValueError(
+                f'Relationship between tables ({parent_table_name}, {child_table_name}) '
+                f'contains an unknown foreign key {missing_keys}.'
+            )
+
+    @staticmethod
+    def _validate_missing_relationship_tables(parent_table_name, child_table_name, tables):
+        missing_table_name = set(parent_table_name, child_table_name) - set(tables)
+        if missing_table_name:
+            raise ValueError(f"Relationship contains an unknown table '{missing_table_name}'.")
+
+    @staticmethod
+    def _validate_relationship_key_length(parent_table_name, parent_primary_key,
+                                          child_table_name, child_foreign_key):
+        pk_len = len(set(parent_primary_key))
+        fk_len = len(set(child_foreign_key))
+        if pk_len != fk_len:
+            raise ValueError(
+                f"Relationship between tables ('{parent_table_name}', '{child_table_name}') is "
+                f'invalid. Primary key has length {pk_len} but the foreign key has '
+                f'length {fk_len}.'
+            )
+
+    @staticmethod
+    def _validate_relationship_sdtypes(parent_table, parent_table_name, parent_primary_key,
+                                       child_table_name, child_foreign_key):
+        error = False
+        if isinstance(parent_primary_key, (list, tuple)):
+            for pk, fk in zip(parent_primary_key, child_foreign_key):
+                if parent_table[pk]['sdtype'] != parent_table[fk]['sdtype']:
+                    error = True
+                    break
+
+        else:
+            pk_sdtype = parent_table[parent_primary_key]['sdtype']
+            fk_sdtype = parent_table[child_foreign_key]['sdtype']
+            if pk_sdtype != fk_sdtype:
+                error = True
+
+        if error:
+            raise ValueError(
+                f'Relationship between tables ({parent_table_name}, {child_table_name}) is '
+                'invalid. The primary and foreign key columns are not the same type.'
+            )
+
+    def _validate_circular_relationships(self, parent, children=None,
+                                         parents=None, child_map=None, errors=None):
+        """Validate that there is no circular relatioship in the metadata."""
+        parents = set() if parents is None else parents
+        if children is None:
+            children = child_map[parent]
+
+        if parent in children:
+            errors.append(parent)
+
+        for child in children:
+            if child in parents:
+                break
+
+            parents.add(child)
+            self._validate_circular_relationships(
+                parent,
+                children=child_map.get(child, set()),
+                child_map=child_map,
+                parents=parents,
+                errors=errors
+            )
+
+    def add_relationship(self, parent_table_name, child_table_name,
+                         parent_primary_key, child_foreign_key):
+        """Add a relationship between two tables.
+
+        Args:
+            parent_table_name (str):
+                A string representing the name of the parent table.
+            child_table_name (str):
+                A string representing the name of the child table.
+            parent_primary_key (str or tuple):
+                A string or tuple of strings representing the primary key of the parent.
+            child_foreign_key (str or tuple):
+                A string or tuple of strings representing the foreign key of the child.
+
+        Raises:
+            - ``ValueError`` if a table is missing.
+            - ``ValueError`` if the ``parent_primary_key`` or ``child_foreign_key`` are missing.
+            - ``ValueError`` if the ``parent_primary_key`` and ``child_foreign_key`` have different
+              size.
+            - ``ValueError`` if the ``parent_primary_key`` and ``child_foreign_key`` are different
+              ``sdtype``.
+            - ``ValueError`` if the relationship causes a circular dependency.
+        """
+        parent_table = self._tables.get(parent_table_name)
+        self._validate_missing_relationship_tables(
+            parent_table_name, child_table_name, self._tables.keys())
+
+        self._validate_missing_relationship_keys(
+            parent_table,
+            parent_table_name,
+            parent_primary_key,
+            child_table_name,
+            child_foreign_key
+        )
+        self._validate_relationship_key_length(
+            parent_table_name, parent_primary_key, child_table_name, child_foreign_key)
+
+        self._validate_relationship_sdtypes(
+            parent_table_name, parent_primary_key, child_table_name, child_foreign_key)
+
+        child_map = defaultdict(set)
+        for relation in self._relationships:
+            parent_name = relation['parent_table_name']
+            child_name = relation['child_table_name']
+            child_map[parent_name].add(child_name)
+
+        child_map[parent_table_name].add(child_table_name)
+        errors = []
+        for table_name in self._tables.keys():
+            self._validate_circular_relationships(table_name, child_map=child_map, errors=errors)
+
+        if errors:
+            raise ValueError(
+                'The relationships in the dataset describe a circular dependency between '
+                f'tables {set(errors)}.'
+            )
+
+        self._relationships.append({
+            'parent_table_name': parent_table_name,
+            'child_table_name': child_table_name,
+            'parent_primary_key': deepcopy(parent_primary_key),
+            'child_foreign_key': deepcopy(child_foreign_key),
+        })
 
     def to_dict(self):
         """Return a python ``dict`` representation of the ``MultiTableMetadata``."""
