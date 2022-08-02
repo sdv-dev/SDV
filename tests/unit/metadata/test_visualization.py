@@ -132,3 +132,140 @@ def test_visualize(add_nodes_mock, add_edges_mock, digraph_mock):
     add_edges_mock.assert_called_once_with(metadata, digraph, True, True)
 
     digraph.render.assert_called_once_with(filename='output', cleanup=True, format='png')
+
+
+@patch('sdv.metadata.visualization.graphviz.Digraph', spec_set=graphviz.Digraph)
+def test_visualize_graph(digraph_mock):
+    """Test the ``visualize_graph`` method.
+
+    Setup:
+        - Mock the ``graphviz.Digraph`` object.
+
+    Input:
+        - nodes set to a dictionary with one node.
+        - edges set to a list with one edge.
+        - path set to a filepath
+
+    Side effect:
+        - The digraph_mock should add the edge and node and call ``render`` with
+        the correct parameters.
+    """
+    # Setup
+    digraph = digraph_mock.return_value
+    nodes = {'node': 'node label'}
+    edges = [('node1', 'node2', 'edge label')]
+
+    # Run
+    result = visualization.visualize_graph(nodes=nodes, edges=edges, path='output.png')
+
+    # Asserts
+    digraph.edge.assert_called_once_with('node1', 'node2', label='edge label', arrowhead='oinv')
+    digraph.node.assert_called_once_with('node', label='node label')
+    digraph.render.assert_called_once_with(filename='output', cleanup=True, format='png')
+    assert result == digraph
+
+
+@patch('sdv.metadata.visualization.graphviz.Digraph', spec_set=graphviz.Digraph)
+def test_visualize_graph_no_path(digraph_mock):
+    """Test the ``visualize_graph`` method.
+
+    If no path is provided, the digraph should not be rendered.
+
+    Setup:
+        - Mock the ``graphviz.Digraph`` object.
+
+    Input:
+        - nodes set to a dictionary with one node.
+        - edges set to a list with one edge.
+        - path set to None
+
+    Side effect:
+        - The digraph_mock should add the edge and node.
+    """
+    # Setup
+    digraph = digraph_mock.return_value
+    nodes = {'node': 'node label'}
+    edges = [('node1', 'node2', 'edge label')]
+
+    # Run
+    result = visualization.visualize_graph(nodes=nodes, edges=edges)
+
+    # Asserts
+    digraph.edge.assert_called_once_with('node1', 'node2', label='edge label', arrowhead='oinv')
+    digraph.node.assert_called_once_with('node', label='node label')
+    digraph.render.assert_not_called()
+    assert result == digraph
+
+
+@patch('sdv.metadata.visualization.graphviz.version')
+@patch('sdv.metadata.visualization.graphviz.Digraph', spec_set=graphviz.Digraph)
+@patch('sdv.metadata.visualization.warnings')
+def test_visualize_graph_no_path_graphviz_not_installed(warnings_mock, digraph_mock, version_mock):
+    """Test the ``visualize_graph`` method.
+
+    If graphviz is not installed, raise a warning.
+
+    Setup:
+        - Mock the ``graphviz.Digraph`` object.
+        - Mock warnings.
+        - Set the side effect for ``version`` to raise a ``graphviz.ExecutableNotFound`` error.
+
+    Input:
+        - nodes set to a dictionary with one node.
+        - edges set to a list with one edge.
+        - path set to None
+
+    Side effect:
+        - A warning should be raised.
+    """
+    # Setup
+    digraph = digraph_mock.return_value
+    nodes = {'node': 'node label'}
+    edges = [('node1', 'node2', 'edge label')]
+    version_mock.side_effect = Mock(side_effect=graphviz.ExecutableNotFound(['version']))
+
+    # Run
+    result = visualization.visualize_graph(nodes=nodes, edges=edges)
+
+    # Asserts
+    warning = (
+        'Graphviz does not seem to be installed on this system. For full '
+        'metadata visualization capabilities, please make sure to have its '
+        'binaries propertly installed: https://graphviz.gitlab.io/download/'
+    )
+    digraph.edge.assert_called_once_with('node1', 'node2', label='edge label', arrowhead='oinv')
+    digraph.node.assert_called_once_with('node', label='node label')
+    digraph.render.assert_not_called()
+    assert result == digraph
+    warnings_mock.warn.assert_called_once_with(warning, RuntimeWarning)
+
+
+@patch('sdv.metadata.visualization._get_graphviz_extension')
+def test_visualize_graph_bad_extension(extension_mock):
+    """Test the ``visualize_graph`` method.
+
+    If the file extension is bad, an error should be raised.
+
+    Setup:
+        - Mock the ``_get_graphviz_extension`` to raise an error.
+
+    Input:
+        - nodes set to a dictionary with one node.
+        - edges set to a list with one edge.
+        - path set to a string with no extension.
+
+    Side effect:
+        - A ``ValueError`` should be raised.
+    """
+    # Setup
+    extension_mock.side_effect = ValueError()
+    nodes = {'node': 'node label'}
+    edges = [('node1', 'node2', 'edge label')]
+
+    # Run
+    error_message = (
+        'Unable to save a visualization with this file type. Try a supported file type like '
+        "'png', 'jpg' or 'pdf'. For a full list, see 'https://graphviz.org/docs/outputs/'"
+    )
+    with pytest.raises(ValueError, match=error_message):
+        visualization.visualize_graph(nodes=nodes, edges=edges, path='path')
