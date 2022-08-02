@@ -114,15 +114,6 @@ class SingleTableMetadata:
         self._sequence_key = None
         self._sequence_index = None
         self._version = self.SCHEMA_VERSION
-        self._metadata = {
-            'columns': self._columns,
-            'primary_key': None,
-            'alternate_keys': [],
-            'sequence_key': None,
-            'sequence_index': None,
-            'constraints': self._constraints,
-            'SCHEMA_VERSION': self.SCHEMA_VERSION
-        }
 
     def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
         expected_kwargs = self._EXPECTED_KWARGS.get(sdtype, ['pii'])
@@ -278,9 +269,9 @@ class SingleTableMetadata:
         """
         self._validate_key(id, 'primary')
 
-        if self._metadata['primary_key'] is not None:
+        if self._primary_key is not None:
             warnings.warn(
-                f"There is an existing primary key {self._metadata['primary_key']}."
+                f"There is an existing primary key {self._primary_key}."
                 ' This key will be removed.'
             )
 
@@ -295,9 +286,9 @@ class SingleTableMetadata:
         """
         self._validate_key(id, 'sequence')
 
-        if self._metadata['sequence_key'] is not None:
+        if self._sequence_key is not None:
             warnings.warn(
-                f"There is an existing sequence key {self._metadata['sequence_key']}."
+                f"There is an existing sequence key {self._sequence_key}."
                 ' This key will be removed.'
             )
 
@@ -328,7 +319,7 @@ class SingleTableMetadata:
                 List of names (or tuple of names) of the alternate key columns.
         """
         self._validate_alternate_keys(ids)
-        self._metadata['alternate_keys'] = ids
+        self._alternate_keys = ids
 
     def _validate_sequence_index(self, column_name):
         if not isinstance(column_name, str):
@@ -408,10 +399,21 @@ class SingleTableMetadata:
                 + '\n'.join([str(e) for e in errors])
             )
 
+    def _metadata_dict(self):
+        return {
+            'columns': self._columns,
+            'constraints': self._constraints,
+            'primary_key': self._primary_key,
+            'alternate_keys': self._alternate_keys,
+            'sequence_key': self._sequence_key,
+            'sequence_index': self._sequence_index,
+            'SCHEMA_VERSION': self._version
+        }
+
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
         metadata = {}
-        for key, value in self._metadata.items():
+        for key, value in self._metadata_dict().items():
             if key == 'constraints' and value:
                 constraints = []
                 for constraint in value:
@@ -427,8 +429,8 @@ class SingleTableMetadata:
 
         return deepcopy(metadata)
 
-    def _set_metadata_dict(self, metadata):
-        """Set the ``metadata`` dictionary to the current instance.
+    def _set_metadata_attributes(self, metadata):
+        """Set the metadata attributes to the current instance.
 
         Args:
             metadata (dict):
@@ -440,7 +442,6 @@ class SingleTableMetadata:
                 value = [Constraint.from_dict(constraint_dict) for constraint_dict in value]
 
             if value:
-                self._metadata[key] = value
                 setattr(self, f'_{key}', value)
 
     def add_constraint(self, constraint_name, **kwargs):
@@ -474,7 +475,7 @@ class SingleTableMetadata:
             Instance of ``SingleTableMetadata``.
         """
         instance = cls()
-        instance._set_metadata_dict(metadata)
+        instance._set_metadata_attributes(metadata)
         return instance
 
     @classmethod
