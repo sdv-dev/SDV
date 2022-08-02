@@ -413,7 +413,8 @@ class SingleTableMetadata:
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
         metadata = {}
-        for key, value in self._metadata_dict().items():
+        for key in self._KEYS:
+            value = getattr(self, f'_{key}') if key != 'SCHEMA_VERSION' else self._version
             if key == 'constraints' and value:
                 constraints = []
                 for constraint in value:
