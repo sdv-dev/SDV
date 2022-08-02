@@ -1,6 +1,9 @@
 """Test Multi Table Metadata."""
 
+import re
 from unittest.mock import Mock, patch
+
+import pytest
 
 from sdv.metadata.multi_table import MultiTableMetadata
 
@@ -435,3 +438,99 @@ class TestMultiTableMetadata:
             ('users', 'payments', '')
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
+
+    def test_add_column(self):
+        """Test the ``add_column`` method.
+
+        The method should get the appropriate table and call ``add_column`` on it.
+
+        Setup:
+            - Set the ``_tables`` attribute to have a mock for the table name.
+
+        Input:
+            - table_name that matches what is in ``_tables``.
+            - column_name.
+            - Some key word arguments.
+
+        Side effect:
+            - The mock should have the ``add_column`` method called with the right attributes.
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        table = Mock()
+        metadata._tables = {'table': table}
+
+        # Run
+        metadata.add_column('table', 'column', sdtype='numerical', pii=False)
+
+        # Assert
+        table.add_column.assert_called_once_with('column', sdtype='numerical', pii=False)
+
+    def test_add_column_table_does_not_exist(self):
+        """Test the ``add_column`` method.
+
+        If the table doesn't exist, an error should be raised.
+
+        Input:
+            - table_name that isn't in ``_tables``.
+            - column_name.
+            - Some key word arguments.
+
+        Side effect:
+            - Should raise an error.
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+
+        # Run
+        error_message = re.escape("Unknown table name ('table')")
+        with pytest.raises(ValueError, match=error_message):
+            metadata.add_column('table', 'column', sdtype='numerical', pii=False)
+
+    def test_update_column(self):
+        """Test the ``update_column`` method.
+
+        The method should get the appropriate table and call ``update_column`` on it.
+
+        Setup:
+            - Set the ``_tables`` attribute to have a mock for the table name.
+
+        Input:
+            - table_name that matches what is in ``_tables``.
+            - column_name.
+            - Some key word arguments.
+
+        Side effect:
+            - The mock should have the ``update_column`` method called with the right attributes.
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        table = Mock()
+        metadata._tables = {'table': table}
+
+        # Run
+        metadata.update_column('table', 'column', sdtype='numerical', pii=False)
+
+        # Assert
+        table.update_column.assert_called_once_with('column', sdtype='numerical', pii=False)
+
+    def test_update_column_table_does_not_exist(self):
+        """Test the ``update_column`` method.
+
+        If the table doesn't exist, an error should be raised.
+
+        Input:
+            - table_name that isn't in ``_tables``.
+            - column_name.
+            - Some key word arguments.
+
+        Side effect:
+            - Should raise an error.
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+
+        # Run
+        error_message = re.escape("Unknown table name ('table')")
+        with pytest.raises(ValueError, match=error_message):
+            metadata.update_column('table', 'column', sdtype='numerical', pii=False)
