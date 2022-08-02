@@ -116,3 +116,22 @@ class MultiTableMetadata:
         """Pretty print the ``MultiTableMetadata``."""
         printed = json.dumps(self.to_dict(), indent=4)
         return printed
+
+    def update_column(self, table_name, column_name, **kwargs):
+        """Update an existing column  for a table in the ``MultiTableMetadata``.
+
+        Args:
+            table_name (str):
+                Name of table the column belongs to.
+            column_name (str):
+                The column name to be updated.
+            **kwargs (type):
+                Any key word arguments that describe metadata for the column.
+
+        Raises:
+            - ``ValueError`` if the column doesn't already exist in the ``SingleTableMetadata``.
+            - ``ValueError`` if the column has unexpected values or ``kwargs`` for the current
+              ``sdtype``.
+            - ``ValueError`` if the table doesn't exist in the ``MultiTableMetdata``.
+        """
+        
