@@ -10,7 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from sdv.constraints import Constraint
-from sdv.metadata.errors import InvalidMetadataError, MetadataError
+from sdv.metadata.errors import InvalidMetadataError
 
 
 class SingleTableMetadata:
@@ -457,7 +457,7 @@ class SingleTableMetadata:
         try:
             constraint_class = Constraint._get_class_from_dict(constraint_name)
         except KeyError:
-            raise MetadataError(f"Invalid constraint ('{constraint_name}').")
+            raise InvalidMetadataError(f"Invalid constraint ('{constraint_name}').")
 
         constraint_class._validate_metadata(self, **kwargs)
         constraint = constraint_class(**kwargs)

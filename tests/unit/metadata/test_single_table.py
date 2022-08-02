@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.metadata.errors import MetadataError
+from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
 
 
@@ -1549,12 +1549,12 @@ class TestSingleTableMetadata:
             - Fakse constraint name
 
         Side effect:
-            - MetadataError should be raised
+            - InvalidMetadataError should be raised
         """
         # Setup
         metadata = SingleTableMetadata()
 
         # Run
         error_message = re.escape("Invalid constraint ('fake_constraint').")
-        with pytest.raises(MetadataError, match=error_message):
+        with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.add_constraint(constraint_name='fake_constraint')
