@@ -10,9 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from sdv.constraints import Constraint
-from sdv.metadata.errors import MetadataError
-
-import inspect
+from sdv.metadata.errors import InvalidMetadataError, MetadataError
 
 
 class SingleTableMetadata:
@@ -54,13 +52,16 @@ class SingleTableMetadata:
         representation = kwargs.get('representation')
         if representation and representation not in self._NUMERICAL_REPRESENTATIONS:
             raise ValueError(
-                f"Invalid value for 'representation' {representation} for column '{column_name}'.")
+                f"Invalid value for 'representation' '{representation}'"
+                f" for column '{column_name}'."
+            )
 
     @staticmethod
     def _validate_datetime(column_name, **kwargs):
         datetime_format = kwargs.get('datetime_format')
-        if datetime_format:
+        if datetime_format is not None:
             try:
+                # NOTE: I don't know if this ever crashes, it just returns the string as is
                 formated_date = datetime.now().strftime(datetime_format)
             except Exception as exception:
                 raise ValueError(
@@ -79,12 +80,12 @@ class SingleTableMetadata:
     def _validate_categorical(column_name, **kwargs):
         order = kwargs.get('order')
         order_by = kwargs.get('order_by')
-        if order and order_by:
+        if order is not None and order_by is not None:
             raise ValueError(
                 f"Categorical column '{column_name}' has both an 'order' and 'order_by' "
                 'attribute. Only 1 is allowed.'
             )
-        if order_by and order_by not in ('numerical_value', 'alphabetical'):
+        if order_by is not None and order_by not in ('numerical_value', 'alphabetical'):
             raise ValueError(
                 f"Unknown ordering method '{order_by}' provided for categorical column "
                 f"'{column_name}'. Ordering method must be 'numerical_value' or 'alphabetical'."
@@ -284,7 +285,7 @@ class SingleTableMetadata:
                 ' This key will be removed.'
             )
 
-        self._metadata['primary_key'] = id
+        self._primary_key = id
 
     def set_sequence_key(self, id):
         """Set the metadata sequence key.
@@ -301,7 +302,7 @@ class SingleTableMetadata:
                 ' This key will be removed.'
             )
 
-        self._metadata['sequence_key'] = id
+        self._sequence_key = id
 
     def _validate_alternate_keys(self, ids):
         if not isinstance(ids, list) or not all(self._validate_datatype(id) for id in ids):
@@ -349,7 +350,7 @@ class SingleTableMetadata:
                 Name of the sequence index column.
         """
         self._validate_sequence_index(column_name)
-        self._metadata['sequence_index'] = column_name
+        self._sequence_index = column_name
 
     def _validate_sequence_index_not_in_sequence_key(self):
         """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
@@ -369,25 +370,44 @@ class SingleTableMetadata:
             - ``InvalidMetadataError`` if the metadata is invalid.
         """
         # Validate keys
-        self._validate_key(self._primary_key, 'primary')
-        self._validate_alternate_keys(self._alternate_keys)
-        self._validate_key(self._sequence_key, 'sequence')
-        self._validate_sequence_index(self._sequence_index)
-        self._validate_sequence_index_not_in_sequence_key()
+        errors = []
+        try:
+            self._validate_key(self._primary_key, 'primary')
+        except ValueError as e:
+            errors.append(e)
 
-        # Validate constraints
-        for constraint in self._constraints:
-            params = inspect.signature(constraint.__init__).parameters.keys()
-            params = ['_' + arg for arg in params]
-            kwargs = {arg[1:]: constraint.arg for arg in params}
-            constraint._validate_metadata(self, **kwargs)
+        try:
+            self._validate_key(self._sequence_key, 'sequence')
+        except ValueError as e:
+            errors.append(e)
 
-        assert 1 == 2
+        try:
+            self._validate_alternate_keys(self._alternate_keys)
+        except ValueError as e:
+            errors.append(e)
+
+        try:
+            self._validate_sequence_index(self._sequence_index)
+        except ValueError as e:
+            errors.append(e)
+
+        try:
+            self._validate_sequence_index_not_in_sequence_key()
+        except ValueError as e:
+            errors.append(e)
 
         # Validate columns
-        for column, kwargs in self._columns:
-            sdtype = kwargs.get('sdtype')
-            self._validate_column(column, sdtype, **kwargs)
+        for column, kwargs in self._columns.items():
+            try:
+                self._validate_column(column, **kwargs)
+            except ValueError as e:
+                errors.append(e)
+
+        if errors:
+            raise InvalidMetadataError(
+                'The following errors were found in the metadata:\n\n'
+                + '\n'.join([str(e) for e in errors])
+            )
 
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
