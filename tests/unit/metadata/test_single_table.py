@@ -896,12 +896,13 @@ class TestSingleTableMetadata:
         instance._columns = {'a', 'd'}
 
         err_msg = (
-            "Unknown primary key values {'b', 'c'}."
+            "Unknown primary key values {'b'}."
             ' Keys should be columns that exist in the table.'
         )
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
-            instance.set_primary_key(('a', 'b', 'd', 'c'))
+            instance.set_primary_key(('a', 'b', 'd'))
+            # NOTE: used to be ('a', 'b', 'd', 'c')
 
     def test_set_primary_key(self):
         """Test that ``set_primary_key`` sets the ``_metadata['primary_key']`` value."""
@@ -987,12 +988,13 @@ class TestSingleTableMetadata:
         instance._columns = {'a', 'd'}
 
         err_msg = (
-            "Unknown sequence key values {'b', 'c'}."
+            "Unknown sequence key values {'b'}."
             ' Keys should be columns that exist in the table.'
         )
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
-            instance.set_sequence_key(('a', 'b', 'd', 'c'))
+            instance.set_sequence_key(('a', 'b', 'd'))
+            # NOTE: used to be ('a', 'b', 'd', 'c')
 
     def test_set_sequence_key(self):
         """Test that ``set_sequence_key`` sets the ``_metadata['sequence_key']`` value."""
@@ -1078,12 +1080,13 @@ class TestSingleTableMetadata:
         instance._columns = {'abc', '213', '312'}
 
         err_msg = (
-            "Unknown alternate key values {'bca', '123'}."
+            "Unknown alternate key values {'123'}."
             ' Keys should be columns that exist in the table.'
         )
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
-            instance.set_alternate_keys(['abc', ('123', '213', '312'), 'bca'])
+            instance.set_alternate_keys(['abc', ('123', '213', '312')])
+            # NOTE: used to be ['abc', ('123', '213', '312'), 'bca']
 
     def test_set_alternate_keys(self):
         """Test that ``set_alternate_keys`` sets the ``_metadata['alternate_keys']`` value."""

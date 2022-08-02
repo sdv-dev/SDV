@@ -61,7 +61,6 @@ class SingleTableMetadata:
         datetime_format = kwargs.get('datetime_format')
         if datetime_format is not None:
             try:
-                # NOTE: I don't know if this ever crashes, it just returns the string as is
                 formated_date = datetime.now().strftime(datetime_format)
             except Exception as exception:
                 raise ValueError(

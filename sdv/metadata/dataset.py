@@ -654,7 +654,8 @@ class Metadata:
             self._validate_circular_relationships(table_name, errors=errors)
 
         if errors:
-            raise InvalidMetadataError('Invalid Metadata specification:\n - ' + '\n - '.join(errors))
+            raise InvalidMetadataError(
+                'Invalid Metadata specification:\n - ' + '\n - '.join(errors))
 
     def _check_field(self, table, field, exists=False):
         """Validate the existance of the table and existance (or not) of field."""
