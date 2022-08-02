@@ -126,7 +126,8 @@ class Constraint(metaclass=ConstraintMeta):
                 f'Invalid values {invalid_vals} are present in {article} {constraint} constraint.'
             ))
 
-        raise MultipleConstraintsErrors(errors)
+        if errors:
+            raise MultipleConstraintsErrors(errors)
 
     @classmethod
     def _validate_metadata_columns(cls, metadata, **kwargs):

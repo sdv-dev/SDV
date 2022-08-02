@@ -44,6 +44,12 @@ def test_validate():
         low_column_name='col1',
         high_column_name='col2'
     )
+    instance.add_constraint(
+        constraint_name='ScalarInequality',
+        column_name='col1',
+        relation='<',
+        value=10
+    )
     instance.set_primary_key('col1')
     instance.set_alternate_keys([('col1', 'col2')])
     instance.set_sequence_index('col1')

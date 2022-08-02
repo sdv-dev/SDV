@@ -1495,8 +1495,8 @@ class TestSingleTableMetadata:
     def test_add_constraint(self, constraint_mock):
         """Test the ``add_constraint`` method.
 
-        The method should create an instance of the specified constraint, run validation on the
-        constraint against the rest of the metadata and add the instance to the
+        The method should create an instance of the specified constraint, validate it
+        against the rest of the metadata and add ``{constraint_name: kwargs}`` to the
         ``self._constraints`` list.
 
         Setup:
@@ -1522,16 +1522,18 @@ class TestSingleTableMetadata:
 
         # Assert
         constraint_mock._get_class_from_dict.assert_called_once_with('Inequality')
-        assert metadata._constraints == [dummy_constraint_class.return_value]
-        dummy_constraint_class.assert_called_once_with(
-            low_column_name='child_age',
-            high_column_name='start_date'
-        )
         dummy_constraint_class._validate_metadata.assert_called_once_with(
             metadata,
             low_column_name='child_age',
             high_column_name='start_date'
         )
+
+        assert metadata._constraints == [(
+            'Inequality', {
+                'low_column_name': 'child_age',
+                'high_column_name': 'start_date'
+            }
+        )]
 
     def test_add_constraint_bad_constraint(self):
         """Test the ``add_constraint`` method with a non-existent constraint.

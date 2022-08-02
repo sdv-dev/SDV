@@ -353,14 +353,35 @@ class SingleTableMetadata:
                 ' These columns must be different.'
             )
 
+    def _validate_constraint(self, constraint_name, **kwargs):
+        """Validate a constraint against the single table metadata.
+
+        Args:
+            constraint_name (string):
+                Name of the constraint class.
+            **kwargs:
+                Any other arguments the constraint requires.
+        """
+        try:
+            constraint_class = Constraint._get_class_from_dict(constraint_name)
+        except KeyError:
+            raise InvalidMetadataError(f"Invalid constraint ('{constraint_name}').")
+
+        constraint_class._validate_metadata(self, **kwargs)
+
     def validate(self):
         """Validate the metadata.
 
         Raises:
             - ``InvalidMetadataError`` if the metadata is invalid.
         """
-        # Validate keys
+        # Validate constraints
         errors = []
+        for tuple in self._constraints:
+            constraint_name, kwargs = tuple
+            self._validate_constraint(constraint_name, **kwargs)
+
+        # Validate keys
         try:
             self._validate_key(self._primary_key, 'primary')
         except ValueError as e:
@@ -398,17 +419,6 @@ class SingleTableMetadata:
                 'The following errors were found in the metadata:\n\n'
                 + '\n'.join([str(e) for e in errors])
             )
-
-    def _metadata_dict(self):
-        return {
-            'columns': self._columns,
-            'constraints': self._constraints,
-            'primary_key': self._primary_key,
-            'alternate_keys': self._alternate_keys,
-            'sequence_key': self._sequence_key,
-            'sequence_index': self._sequence_index,
-            'SCHEMA_VERSION': self._version
-        }
 
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
@@ -455,14 +465,8 @@ class SingleTableMetadata:
             **kwargs:
                 Any other arguments the constraint requires.
         """
-        try:
-            constraint_class = Constraint._get_class_from_dict(constraint_name)
-        except KeyError:
-            raise InvalidMetadataError(f"Invalid constraint ('{constraint_name}').")
-
-        constraint_class._validate_metadata(self, **kwargs)
-        constraint = constraint_class(**kwargs)
-        self._constraints.append(constraint)
+        self._validate_constraint(constraint_name, **kwargs)
+        self._constraints.append((constraint_name, kwargs))
 
     @classmethod
     def _load_from_dict(cls, metadata):
