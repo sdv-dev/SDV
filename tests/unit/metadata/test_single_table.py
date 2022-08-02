@@ -1164,6 +1164,27 @@ class TestSingleTableMetadata:
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
             instance._validate_sequence_index_not_in_sequence_key()
+    
+    def test_validate(self):
+        """Test ``validate``."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance._columns = {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
+        instance._constraints = []
+        instance._primary_key = 'col1'
+        instance._alternate_keys = ['col2']
+        instance._sequence_key = 'col1'
+        instance._sequence_index = 'col2'
+
+        instance.add_constraint(
+            constraint_name='Inequality',
+            low_column_name='col1',
+            high_column_name='col2'
+        )
+
+        # Run
+        instance.validate()
+
 
     def test_to_dict(self):
         """Test the ``to_dict`` method from ``SingleTableMetadata``.

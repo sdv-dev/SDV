@@ -8,10 +8,11 @@ from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
-from sdv.constraints.errors import MultipleConstraintsErrors
 
 from sdv.constraints import Constraint
 from sdv.metadata.errors import MetadataError
+
+import inspect
 
 
 class SingleTableMetadata:
@@ -354,7 +355,7 @@ class SingleTableMetadata:
         """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
         sk = self._sequence_key
         sequence_key = {sk} if isinstance(sk, str) else set(sk)
-        if self._sequence_index in sequence_key:
+        if self._sequence_index in sequence_key or sk is None:
             index = {self._sequence_index}
             raise ValueError(
                 f"'sequence_index' and 'sequence_key' have the same value {index}."
@@ -363,7 +364,7 @@ class SingleTableMetadata:
 
     def validate(self):
         """Validate the metadata.
-        
+
         Raises:
             - ``InvalidMetadataError`` if the metadata is invalid.
         """
@@ -375,8 +376,13 @@ class SingleTableMetadata:
         self._validate_sequence_index_not_in_sequence_key()
 
         # Validate constraints
-        for constraint, args in self._constraints.items():
-            constraint._validate_metadata(self, **args)
+        for constraint in self._constraints:
+            params = inspect.signature(constraint.__init__).parameters.keys()
+            params = ['_' + arg for arg in params]
+            kwargs = {arg[1:]: constraint.arg for arg in params}
+            constraint._validate_metadata(self, **kwargs)
+
+        assert 1 == 2
 
         # Validate columns
         for column, kwargs in self._columns:
