@@ -51,14 +51,14 @@ class BaseTabularModel:
             Dictinary specifying which transformers to use for each field.
             Available transformers are:
 
-                * ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.
-                * ``float``: Uses a ``NumericalTransformer`` of dtype ``float``.
-                * ``categorical``: Uses a ``CategoricalTransformer`` without gaussian noise.
-                * ``categorical_fuzzy``: Uses a ``CategoricalTransformer`` adding gaussian noise.
-                * ``one_hot_encoding``: Uses a ``OneHotEncodingTransformer``.
-                * ``label_encoding``: Uses a ``LabelEncodingTransformer``.
-                * ``boolean``: Uses a ``BooleanTransformer``.
-                * ``datetime``: Uses a ``DatetimeTransformer``.
+                * ``FloatFormatter``: Uses a ``FloatFormatter`` for numerical data.
+                * ``FrequencyEncoder``: Uses a ``FrequencyEncoder`` without gaussian noise.
+                * ``FrequencyEncoder_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
+                * ``OneHotEncoder``: Uses a ``OneHotEncoder``.
+                * ``LabelEncoder``: Uses a ``LabelEncoder`` without gaussian nose.
+                * ``LabelEncoder_noised``: Uses a ``LabelEncoder`` adding gaussian noise.
+                * ``BinaryEncoder``: Uses a ``BinaryEncoder``.
+                * ``UnixTimestampEncoder``: Uses a ``UnixTimestampEncoder``.
 
         anonymize_fields (dict[str, str]):
             Dict specifying which fields to anonymize and what faker
@@ -73,21 +73,13 @@ class BaseTabularModel:
             exception will be raised.
             If not given at all, it will be built using the other
             arguments or learned from the data.
-        rounding (int, str or None):
-            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
-            will be rounded to that number of decimal places. If ``None``, values will not
-            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
-            of decimal places detected in the fitted data. Defaults to ``'auto'``.
-        min_value (int, str or None):
-            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
-            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
-            is given, there won't be a minimum. Defaults to ``'auto'``.
-        max_value (int, str or None):
-            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be less than or equal to it. If the string ``'auto'``
-            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
-            is given, there won't be a maximum. Defaults to ``'auto'``.
+        learn_rounding_scheme (bool):
+            Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
+            ``reverse_transform`` will be rounded to that place. Defaults to ``True``.
+        enforce_min_max_values (bool):
+            Specify whether or not to clip the data returned by ``reverse_transform`` of
+            the numerical transformer, ``FloatFormatter``, to the min and max values seen
+            during ``fit``. Defaults to ``True``.
     """
 
     _DTYPE_TRANSFORMERS = None
@@ -96,7 +88,7 @@ class BaseTabularModel:
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
-                 rounding='auto', min_value='auto', max_value='auto'):
+                 learn_rounding_scheme=True, enforce_min_max_values=True):
         if table_metadata is None:
             self._metadata = Table(
                 field_names=field_names,
@@ -106,9 +98,8 @@ class BaseTabularModel:
                 anonymize_fields=anonymize_fields,
                 constraints=constraints,
                 dtype_transformers=self._DTYPE_TRANSFORMERS,
-                rounding=rounding,
-                min_value=min_value,
-                max_value=max_value
+                learn_rounding_scheme=learn_rounding_scheme,
+                enforce_min_max_values=enforce_min_max_values
             )
             self._metadata_fitted = False
         else:

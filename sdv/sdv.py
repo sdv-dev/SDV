@@ -22,7 +22,7 @@ class SDV:
         model_kwargs (dict):
             Keyword arguments to pass to the model. If no ``model`` is given,
             this defaults to using a ``GaussianCopula`` with ``gaussian`` distribution
-            and ``categorical_fuzzy`` categorical transformer.
+            and ``FrequencyEncoder_noised`` categorical transformer.
     """
 
     _model_instance = None
@@ -31,7 +31,7 @@ class SDV:
         'model': GaussianCopula,
         'model_kwargs': {
             'default_distribution': 'gaussian',
-            'categorical_transformer': 'categorical_fuzzy',
+            'categorical_transformer': 'FrequencyEncoder_noised',
         }
     }
 

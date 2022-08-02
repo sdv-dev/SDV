@@ -9,6 +9,7 @@ import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianUnivariate
 from rdt import HyperTransformer
+from rdt.transformers import OneHotEncoder
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.errors import ConstraintsNotMetError
@@ -323,9 +324,9 @@ class ColumnsModel:
                 Table data.
         """
         data_to_model = table_data[self.constraint_columns]
-        self._hyper_transformer = HyperTransformer(
-            default_data_type_transformers={'categorical': 'OneHotEncodingTransformer'}
-        )
+        self._hyper_transformer = HyperTransformer()
+        self._hyper_transformer.detect_initial_config(data_to_model)
+        self._hyper_transformer.update_transformers_by_sdtype({'categorical': OneHotEncoder})
         transformed_data = self._hyper_transformer.fit_transform(data_to_model)
         self._model = GaussianMultivariate(distribution=GaussianUnivariate)
         self._model.fit(transformed_data)

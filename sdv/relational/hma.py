@@ -26,14 +26,14 @@ class HMA1(BaseRelationalModel):
             ``sdv.models.copulas.GaussianCopula``.
         model_kwargs (dict):
             Keyword arguments to pass to the model. If the default model is used, this
-            defaults to using a ``gaussian`` distribution and a ``categorical_fuzzy``
+            defaults to using a ``gaussian`` distribution and a ``FrequencyEncoder_noised``
             transformer.
     """
 
     DEFAULT_MODEL = GaussianCopula
     DEFAULT_MODEL_KWARGS = {
         'default_distribution': 'gaussian',
-        'categorical_transformer': 'categorical_fuzzy',
+        'categorical_transformer': 'FrequencyEncoder_noised',
     }
 
     def __init__(self, metadata, root_path=None, model=None, model_kwargs=None):
@@ -212,7 +212,7 @@ class HMA1(BaseRelationalModel):
 
                 column_data = table_data[column]
                 if column_data.dtype in (np.int, np.float):
-                    fill_value = column_data.mean()
+                    fill_value = 0 if column_data.isna().all() else column_data.mean()
                 else:
                     fill_value = column_data.mode()[0]
 

@@ -43,11 +43,11 @@ def test___init___copies_metadata():
 
     # Run
     model = GaussianCopula(table_metadata=metadata,
-                           categorical_transformer='label_encoding',
+                           categorical_transformer='LabelEncoder',
                            default_distribution='gamma')
     model.fit(data)
     model2 = GaussianCopula(table_metadata=metadata,
-                            categorical_transformer='label_encoding',
+                            categorical_transformer='LabelEncoder',
                             default_distribution='beta')
     model2.fit(data)
 
@@ -280,7 +280,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
         'state': ['CA', 'CA', 'IL', 'CA', 'CA'],
         'age': [27, 28, 26, 21, 30]
     })
-    model = GaussianCopula(constraints=[constraint], categorical_transformer='label_encoding')
+    model = GaussianCopula(constraints=[constraint], categorical_transformer='LabelEncoder')
     sampled_numeric_data = [pd.DataFrame({
         'city#state.value': [0, 1, 2, 0, 0],
         'age.value': [30, 30, 30, 30, 30]

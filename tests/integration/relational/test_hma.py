@@ -17,16 +17,16 @@ def test_sdv_model_kwargs():
 
     hma = HMA1(metadata, model=GaussianCopula, model_kwargs={
         'default_distribution': 'beta',
-        'categorical_transformer': 'label_encoding',
+        'categorical_transformer': 'LabelEncoder',
     })
     hma.fit(tables)
 
     model = hma._models['users']
     assert model._default_distribution == BetaUnivariate
-    assert model._DTYPE_TRANSFORMERS['O'] == 'label_encoding'
+    assert model._DTYPE_TRANSFORMERS['O'] == 'LabelEncoder'
     assert isinstance(
         model._metadata._hyper_transformer.field_transformers['gender'],
-        rdt.transformers.categorical.LabelEncodingTransformer
+        rdt.transformers.categorical.LabelEncoder
     )
 
 
