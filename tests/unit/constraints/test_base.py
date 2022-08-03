@@ -159,6 +159,21 @@ def test_import_object_function():
 
 class TestConstraint():
 
+    def test__validate_inputs(self):
+        """Test the ``_validate_inputs`` method.
+
+        The method should only raise errors if the input paramaters are invalid.
+
+        Raise:
+            - ``MultipleConstraintsErrors`` if errors were found.
+        """
+        # Run
+        Constraint._validate_inputs(args='value', kwargs='value')
+
+        # Run / Assert
+        with pytest.raises(MultipleConstraintsErrors):
+            Constraint._validate_inputs(wrong_args='value')
+
     @patch('sdv.constraints.base.Constraint._validate_inputs')
     @patch('sdv.constraints.base.Constraint._validate_metadata_columns')
     @patch('sdv.constraints.base.Constraint._validate_metadata_specific_to_constraint')

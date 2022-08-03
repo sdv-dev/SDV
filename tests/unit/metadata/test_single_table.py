@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
 
@@ -1186,14 +1187,23 @@ class TestSingleTableMetadata:
         instance._alternate_keys = ['col2']
         instance._sequence_key = 'col1'
         instance._sequence_index = 'col2'
-        instance._validate_constraint = Mock()
+        instance._validate_constraint = Mock(side_effect=MultipleConstraintsErrors(['cnt_error']))
         instance._validate_key = Mock()
         instance._validate_alternate_keys = Mock()
         instance._validate_sequence_index = Mock()
         instance._validate_sequence_index_not_in_sequence_key = Mock()
+        instance._validate_column = Mock(side_effect=ValueError('column_error'))
 
+        err_msg = re.escape(
+            'The following errors were found in the metadata:'
+            '\n\ncnt_error'
+            '\ncnt_error'
+            '\ncolumn_error'
+            '\ncolumn_error'
+        )
         # Run
-        instance.validate()
+        with pytest.raises(InvalidMetadataError, match=err_msg):
+            instance.validate()
 
         # Assert
         instance._validate_constraint.assert_has_calls([
@@ -1202,6 +1212,9 @@ class TestSingleTableMetadata:
         ])
         instance._validate_key.assert_has_calls(
             [call(instance._primary_key, 'primary'), call(instance._sequence_key, 'sequence')]
+        )
+        instance._validate_column.assert_has_calls(
+            [call('col1', sdtype='numerical'), call('col2', sdtype='numerical')]
         )
         instance._validate_alternate_keys.assert_called_once_with(instance._alternate_keys)
         instance._validate_sequence_index.assert_called_once_with(instance._sequence_index)

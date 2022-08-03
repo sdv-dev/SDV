@@ -355,7 +355,7 @@ class Inequality(Constraint):
         both_numerical = high_sdtype == low_sdtype == 'numerical'
         if not (both_datetime or both_numerical) and not (high is None or low is None):
             raise ConstraintMetadataError(
-                f'An Inequality constraint is being applied to mismatched sdtype columns'
+                'An Inequality constraint is being applied to columns with mismatched sdtypes'
                 f' {[high, low]}. Both columns must be either numerical or datetime.'
             )
 
@@ -523,7 +523,8 @@ class ScalarInequality(Constraint):
 
         else:
             raise ConstraintMetadataError(
-                'A ScalarInequality constraint is being applied to mismatched sdtypes. '
+                'A ScalarInequality constraint is being applied '
+                'to columns with mismatched sdtypes. '
                 'Numerical columns must be compared to integer or float values. '
                 'Datetimes column must be compared to datetime strings.'
             )
@@ -755,7 +756,7 @@ class Range(Constraint):
         if not (all_datetime or all_numerical) and \
            not (high is None or low is None or middle is None):
             raise ConstraintMetadataError(
-                f'A Range constraint is being applied to mismatched sdtype columns '
+                'A Range constraint is being applied to columns with mismatched sdtypes '
                 f'{[high, middle, low]}. All columns must be either numerical or datetime.'
             )
 
@@ -956,7 +957,7 @@ class ScalarRange(Constraint):
 
         else:
             raise ConstraintMetadataError(
-                'A ScalarRange constraint is being applied to mismatched sdtypes. '
+                'A ScalarRange constraint is being applied to columns with mismatched sdtypes. '
                 'Numerical columns must be compared to integer or float values. '
                 'Datetimes column must be compared to datetime strings.'
             )

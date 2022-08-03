@@ -990,7 +990,7 @@ class TestInequality():
 
         # Run
         error_message = re.escape(
-            'An Inequality constraint is being applied to mismatched sdtype columns '
+            'An Inequality constraint is being applied to columns with mismatched sdtypes '
             "['a', 'b']. Both columns must be either numerical or datetime."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
@@ -1035,7 +1035,7 @@ class TestInequality():
 
         # Run
         error_message = re.escape(
-            'An Inequality constraint is being applied to mismatched sdtype columns '
+            'An Inequality constraint is being applied to columns with mismatched sdtypes '
             "['a', 'b']. Both columns must be either numerical or datetime."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
@@ -1705,7 +1705,7 @@ class TestScalarInequality():
 
         # Run
         error_message = (
-            'A ScalarInequality constraint is being applied to mismatched sdtypes. '
+            'A ScalarInequality constraint is being applied to columns with mismatched sdtypes. '
             'Numerical columns must be compared to integer or float values. '
             'Datetimes column must be compared to datetime strings.'
         )
@@ -2581,7 +2581,7 @@ class TestRange():
 
         # Run
         error_message = re.escape(
-            'A Range constraint is being applied to mismatched sdtype columns '
+            'A Range constraint is being applied to columns with mismatched sdtypes '
             "['a', 'c', 'b']. All columns must be either numerical or datetime."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
@@ -2637,7 +2637,7 @@ class TestRange():
 
         # Run
         error_message = re.escape(
-            'A Range constraint is being applied to mismatched sdtype columns '
+            'A Range constraint is being applied to columns with mismatched sdtypes '
             "['a', 'c', 'b']. All columns must be either numerical or datetime."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
@@ -3326,7 +3326,7 @@ class TestScalarRange():
 
         # Run
         error_message = (
-            'A ScalarRange constraint is being applied to mismatched sdtypes. '
+            'A ScalarRange constraint is being applied to columns with mismatched sdtypes. '
             'Numerical columns must be compared to integer or float values. '
             'Datetimes column must be compared to datetime strings.'
         )
