@@ -1129,7 +1129,7 @@ class TestSingleTableMetadata:
         instance._columns = {'a', 'd'}
 
         err_msg = (
-            "Unknown sequence key value {'column'}."
+            "Unknown sequence index value {'column'}."
             ' Keys should be columns that exist in the table.'
         )
         # Run / Assert

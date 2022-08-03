@@ -10,8 +10,8 @@ from pathlib import Path
 import pandas as pd
 
 from sdv.constraints import Constraint
-from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.metadata.errors import InvalidMetadataError
+from sdv.constraints.errors import MultipleConstraintsErrors
 
 
 class SingleTableMetadata:
@@ -329,7 +329,7 @@ class SingleTableMetadata:
         if column_name not in self._columns:
             column_name = {column_name}
             raise ValueError(
-                f'Unknown sequence key value {column_name}.'
+                f'Unknown sequence index value {column_name}.'
                 ' Keys should be columns that exist in the table.'
             )
 

@@ -948,7 +948,7 @@ class TestInequality():
 
         # Run
         error_message = re.escape(
-            'A Inequality constraint is being applied to invalid column names '
+            'An Inequality constraint is being applied to invalid column names '
             "{'c'}. The columns must exist in the table."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
@@ -990,7 +990,7 @@ class TestInequality():
 
         # Run
         error_message = re.escape(
-            'An Inequality constraint is being applied to mismatched sdtypes '
+            'An Inequality constraint is being applied to mismatched sdtype columns '
             "['a', 'b']. Both columns must be either numerical or datetime."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
@@ -1035,7 +1035,7 @@ class TestInequality():
 
         # Run
         error_message = re.escape(
-            'An Inequality constraint is being applied to mismatched sdtypes '
+            'An Inequality constraint is being applied to mismatched sdtype columns '
             "['a', 'b']. Both columns must be either numerical or datetime."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
@@ -2581,7 +2581,7 @@ class TestRange():
 
         # Run
         error_message = re.escape(
-            'A Range constraint is being applied to mismatched sdtypes '
+            'A Range constraint is being applied to mismatched sdtype columns '
             "['a', 'c', 'b']. All columns must be either numerical or datetime."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
@@ -2637,7 +2637,7 @@ class TestRange():
 
         # Run
         error_message = re.escape(
-            'A Range constraint is being applied to mismatched sdtypes '
+            'A Range constraint is being applied to mismatched sdtype columns '
             "['a', 'c', 'b']. All columns must be either numerical or datetime."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
