@@ -1616,7 +1616,7 @@ class TestScalarInequality():
         metadata._columns = {'a': {'sdtype': 'numerical'}}
 
         # Run
-        error_message = "'value' must be an int or float"
+        error_message = "'value' must be an int or float."
         with pytest.raises(ConstraintMetadataError, match=error_message):
             ScalarInequality._validate_metadata_specific_to_constraint(
                 metadata,

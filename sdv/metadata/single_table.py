@@ -10,6 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from sdv.constraints import Constraint
+from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.metadata.errors import InvalidMetadataError
 
 
@@ -379,7 +380,11 @@ class SingleTableMetadata:
         errors = []
         for tuple in self._constraints:
             constraint_name, kwargs = tuple
-            self._validate_constraint(constraint_name, **kwargs)
+            try:
+                self._validate_constraint(constraint_name, **kwargs)
+            except MultipleConstraintsErrors as e:
+                reformated_errors = '\n'.join(map(str, e.errors))
+                errors.append(reformated_errors)
 
         # Validate keys
         try:

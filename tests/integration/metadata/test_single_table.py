@@ -74,6 +74,10 @@ def test_validate_errors():
         'col9': {'sdtype': 'datetime', 'datetime_format': '%1-%Y-%m-%d-%'},
         'col10': {'sdtype': 'text', 'regex_format': '[A-{6}'},
     }
+    instance._constraints = [
+        ('Inequality', {'low_column_name': 'col1', 'wrong_arg': 'col2'}),
+        ('ScalarInequality', {'column_name': 'col1', 'relation': '<', 'value': 'string'})
+    ]
     instance._primary_key = 10
     instance._alternate_keys = 'col1'
     instance._sequence_key = ('col3', 'col1')
@@ -81,7 +85,14 @@ def test_validate_errors():
 
     err_msg = re.escape(
         'The following errors were found in the metadata:'
-        "\n\n'primary_key' must be a string or tuple of strings."
+        "\n\nMissing required values {'high_column_name'} in an Inequality constraint."
+        "\nInvalid values {'wrong_arg'} are present in an Inequality constraint."
+        "\nA Inequality constraint is being applied to invalid column names {None}."
+        ' The columns must exist in the table.'
+        "\nAn Inequality constraint is being applied to mismatched sdtypes [None, 'col1']."
+        ' Both columns must be either numerical or datetime.'
+        "\n'value' must be an int or float"
+        "\n'primary_key' must be a string or tuple of strings."
         "\nUnknown sequence key values {'col3'}. Keys should be columns that exist in the table."
         "\n'alternate_keys' must be a list of strings or a list of tuples of strings."
         "\nUnknown sequence key value {'col3'}. Keys should be columns that exist in the table."
