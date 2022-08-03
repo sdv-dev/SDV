@@ -122,7 +122,7 @@ class MultiTableMetadata:
             raise ValueError(f"Unknown table name ('{table_name}')")
 
     def update_column(self, table_name, column_name, **kwargs):
-        """Update an existing column  for a table in the ``MultiTableMetadata``.
+        """Update an existing column for a table in the ``MultiTableMetadata``.
 
         Args:
             table_name (str):
@@ -136,7 +136,7 @@ class MultiTableMetadata:
             - ``ValueError`` if the column doesn't already exist in the ``SingleTableMetadata``.
             - ``ValueError`` if the column has unexpected values or ``kwargs`` for the current
               ``sdtype``.
-            - ``ValueError`` if the table doesn't exist in the ``MultiTableMetdata``.
+            - ``ValueError`` if the table doesn't exist in the ``MultiTableMetadata``.
         """
         self._validate_table_name(table_name)
         table = self._tables.get(table_name)
@@ -158,7 +158,7 @@ class MultiTableMetadata:
             - ``ValueError`` if the ``kwargs`` do not contain ``sdtype``.
             - ``ValueError`` if the column has unexpected values or ``kwargs`` for the given
               ``sdtype``.
-            - ``ValueError`` if the table doesn't exist in the ``MultiTableMetdata``.
+            - ``ValueError`` if the table doesn't exist in the ``MultiTableMetadata``.
         """
         self._validate_table_name(table_name)
         table = self._tables.get(table_name)
