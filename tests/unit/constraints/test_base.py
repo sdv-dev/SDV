@@ -171,8 +171,9 @@ class TestConstraint():
         Constraint._validate_inputs(args='value', kwargs='value')
 
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors):
-            Constraint._validate_inputs(wrong_args='value')
+        err_msg = "Invalid values {'wrong_args'} are present in a Constraint constraint."
+        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
+            Constraint._validate_inputs(args='value', kwargs='value', wrong_args='value')
 
     @patch('sdv.constraints.base.Constraint._validate_inputs')
     @patch('sdv.constraints.base.Constraint._validate_metadata_columns')

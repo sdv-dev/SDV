@@ -345,9 +345,9 @@ class SingleTableMetadata:
 
     def _validate_sequence_index_not_in_sequence_key(self):
         """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
-        sk = self._sequence_key
-        sequence_key = {sk} if isinstance(sk, str) else set(sk)
-        if self._sequence_index in sequence_key or sk is None:
+        seq_key = self._sequence_key
+        sequence_key = {seq_key} if isinstance(seq_key, str) else set(seq_key)
+        if self._sequence_index in sequence_key or seq_key is None:
             index = {self._sequence_index}
             raise ValueError(
                 f"'sequence_index' and 'sequence_key' have the same value {index}."
