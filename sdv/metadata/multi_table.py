@@ -7,7 +7,7 @@ from copy import deepcopy
 
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.metadata.utils import read_json, validate_file_does_not_exist
+from sdv.metadata.utils import cast_to_iterable, read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import visualize_graph
 
 
@@ -17,27 +17,27 @@ class MultiTableMetadata:
     def __init__(self):
         self._tables = {}
         self._relationships = []
-        self._child_map = defaultdict(set)
-        self._parent_map = defaultdict(set)
 
     @staticmethod
     def _validate_missing_relationship_keys(parent_table, parent_table_name, parent_primary_key,
                                             child_table_name, child_foreign_key):
-        missing_key = set(parent_table._primary_key) - set(parent_primary_key)
-        if missing_key:
+
+        missing_keys = set()
+        parent_primary_key = cast_to_iterable(parent_primary_key)
+        table_primary_keys = set(cast_to_iterable(parent_table._primary_key))
+        for key in parent_primary_key:
+            if key not in table_primary_keys:
+                missing_keys.add(key)
+
+        if missing_keys:
             raise ValueError(
                 f'Relationship between tables ({parent_table_name}, {child_table_name}) contains '
-                'an unknown foreign key {missing_key}.'
+                f'an unknown primary key {missing_keys}.'
             )
 
-        missing_keys = {}
-        if isinstance(child_foreign_key, str) and child_foreign_key not in parent_table.columns:
-            missing_keys.add(child_foreign_key)
-
-        elif isinstance(child_foreign_key, (list, tuple)):
-            for key in child_foreign_key:
-                if key not in parent_table._columns:
-                    missing_keys.add(key)
+        for key in set(cast_to_iterable(child_foreign_key)):
+            if key not in parent_table._columns:
+                missing_keys.add(key)
 
         if missing_keys:
             raise ValueError(
@@ -47,15 +47,15 @@ class MultiTableMetadata:
 
     @staticmethod
     def _validate_missing_relationship_tables(parent_table_name, child_table_name, tables):
-        missing_table_name = set(parent_table_name, child_table_name) - set(tables)
+        missing_table_name = set([parent_table_name, child_table_name]) - set(tables)
         if missing_table_name:
-            raise ValueError(f"Relationship contains an unknown table '{missing_table_name}'.")
+            raise ValueError(f'Relationship contains an unknown table {missing_table_name}.')
 
     @staticmethod
     def _validate_relationship_key_length(parent_table_name, parent_primary_key,
                                           child_table_name, child_foreign_key):
-        pk_len = len(set(parent_primary_key))
-        fk_len = len(set(child_foreign_key))
+        pk_len = len(set(cast_to_iterable(parent_primary_key)))
+        fk_len = len(set(cast_to_iterable(child_foreign_key)))
         if pk_len != fk_len:
             raise ValueError(
                 f"Relationship between tables ('{parent_table_name}', '{child_table_name}') is "

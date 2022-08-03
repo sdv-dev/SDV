@@ -25,6 +25,151 @@ class TestMultiTableMetadata:
         assert instance._tables == {}
         assert instance._relationships == []
 
+    def test__validate_missing_relationship_keys_foreign_key(self):
+        """Test the ``_validate_missing_relationship_keys`` method of ``MultiTableMetadata``.
+
+        Test that when the provided ``child_foreign_key`` key is not in the
+        ``parent_table._primary_key``, this raises an error.
+
+        Setup:
+            - Create ``parent_table``.
+            - Store the input in variables.
+
+        Mock:
+            - ``SingleTableMetadata`` instance that represents the ``parent_table``.
+
+        Input:
+            - ``parent_table`` that represents ``SingleTableMetadata``.
+            - ``parent_table_name`` string.
+            - ``parent_primary_key`` a string that is not the parent primary key.
+            - ``child_table_name`` string.
+            - ``child_foreign_key`` string.
+
+        Side Effects:
+            - Raises ``ValueError`` stating that primary key is unknown.
+        """
+        # Setup
+        parent_table = Mock()
+        parent_table._primary_key = 'users_id'
+        parent_table._columns = {
+            'users_id': {'sdtype': 'numerical'},
+            'session': {'sdtype': 'numerical'},
+            'transactions': {'sdtype': 'numerical'},
+        }
+        parent_table_name = 'users'
+        parent_primary_key = 'users_id'
+        child_table_name = 'sessions'
+        child_foreign_key = 'session_id'
+
+        # Run / Assert
+        error_msg = re.escape(
+            'Relationship between tables (users, sessions) contains '
+            "an unknown foreign key {'session_id'}."
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            MultiTableMetadata._validate_missing_relationship_keys(
+                parent_table,
+                parent_table_name,
+                parent_primary_key,
+                child_table_name,
+                child_foreign_key
+            )
+
+    def test__validate_missing_relationship_keys_primary_key(self):
+        """Test the ``_validate_missing_relationship_keys`` method of ``MultiTableMetadata``.
+
+        Test that when the provided ``child_foreign_key`` key is not in the
+        ``parent_table._columns``, this raises an error.
+
+        Setup:
+            - Create ``parent_table``.
+            - Store the input in variables.
+
+        Mock:
+            - ``SingleTableMetadata`` instance that represents the ``parent_table``.
+
+        Input:
+            - ``parent_table`` that represents ``SingleTableMetadata``.
+            - ``parent_table_name`` string.
+            - ``parent_primary_key`` a string that is the parent primary key.
+            - ``child_table_name`` string.
+            - ``child_foreign_key`` a string that is not in the ``parent_table._columns``.
+
+        Side Effects:
+            - Raises ``ValueError`` stating that primary key is unknown.
+        """
+        # Setup
+        parent_table = Mock()
+        parent_table._primary_key = 'users_id'
+        parent_table_name = 'users'
+        parent_primary_key = 'primary_key'
+        child_table_name = 'sessions'
+        child_foreign_key = 'session_id'
+
+        # Run / Assert
+        error_msg = re.escape(
+            'Relationship between tables (users, sessions) contains '
+            "an unknown primary key {'primary_key'}."
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            MultiTableMetadata._validate_missing_relationship_keys(
+                parent_table,
+                parent_table_name,
+                parent_primary_key,
+                child_table_name,
+                child_foreign_key
+            )
+
+    def test__validate_missing_relationship_tables(self):
+        """Test the ``_validate_missing_relationship_tables`` method of ``MultiTableMetadata``.
+
+        Setup:
+            - Create a list of ``tables``.
+
+        Input:
+            - ``parent_table_name`` string.
+            - ``child_table_name`` string that is not inside tables.
+            - ``tables`` list of table names.
+        """
+        # Setup
+        tables = ['users', 'sessions', 'transactions']
+
+        # Run
+        error_msg = re.escape("Relationship contains an unknown table {'session'}.")
+        with pytest.raises(ValueError, match=error_msg):
+            MultiTableMetadata._validate_missing_relationship_tables('users', 'session', tables)
+
+    def test__validate_missing_relationship_key_length(self):
+        """Test the ``_validate_missing_relationship_key_length`` method of ``MultiTableMetadata``.
+
+
+        """
+        pass
+
+    def test__validate_missing_relationship_sdtype(self):
+        """Test the ``_validate_missing_relationship_sdtype`` method of ``MultiTableMetadata``.
+        """
+        pass
+
+    def test__validate_circular_relationships(self):
+        """Test the ``_validate_circular_relationships`` method of ``MultiTableMetadata``.
+        """
+        pass
+
+    def test_add_relationship_raises_value_error(self):
+        """Test the ``add_relationship`` method of ``MultiTableMetadata``.
+
+        Test that when a circular relationship occurs with the new relationship,
+        a ``ValueError`` is being raised.
+
+        """
+        pass
+
+    def test_add_relationship(self):
+        """Test the ``add_relationship`` method of ``MultiTableMetadata``.
+        """
+        pass
+
     def test_to_dict(self):
         """Test the ``to_dict`` method of ``MultiTableMetadata``.
 
