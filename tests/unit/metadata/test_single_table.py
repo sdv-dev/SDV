@@ -1178,11 +1178,15 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         instance._columns = {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
-        instance._constraints = []
+        instance._constraints = [
+            ('Inequality', {'low_column_name': 'col1', 'high_column_name': 'col2'}),
+            ('ScalarInequality', {'column_name': 'col1', 'relation': '<', 'value': 10})
+        ]
         instance._primary_key = 'col1'
         instance._alternate_keys = ['col2']
         instance._sequence_key = 'col1'
         instance._sequence_index = 'col2'
+        instance._validate_constraint = Mock()
         instance._validate_key = Mock()
         instance._validate_alternate_keys = Mock()
         instance._validate_sequence_index = Mock()
@@ -1192,6 +1196,10 @@ class TestSingleTableMetadata:
         instance.validate()
 
         # Assert
+        instance._validate_constraint.assert_has_calls([
+            call('Inequality', low_column_name='col1', high_column_name='col2'),
+            call('ScalarInequality', column_name='col1', relation='<', value=10)
+        ])
         instance._validate_key.assert_has_calls(
             [call(instance._primary_key, 'primary'), call(instance._sequence_key, 'sequence')]
         )
