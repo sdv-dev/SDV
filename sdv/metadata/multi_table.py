@@ -116,3 +116,50 @@ class MultiTableMetadata:
         """Pretty print the ``MultiTableMetadata``."""
         printed = json.dumps(self.to_dict(), indent=4)
         return printed
+
+    def _validate_table_name(self, table_name):
+        if table_name not in self._tables:
+            raise ValueError(f"Unknown table name ('{table_name}')")
+
+    def update_column(self, table_name, column_name, **kwargs):
+        """Update an existing column for a table in the ``MultiTableMetadata``.
+
+        Args:
+            table_name (str):
+                Name of table the column belongs to.
+            column_name (str):
+                The column name to be updated.
+            **kwargs (type):
+                Any key word arguments that describe metadata for the column.
+
+        Raises:
+            - ``ValueError`` if the column doesn't already exist in the ``SingleTableMetadata``.
+            - ``ValueError`` if the column has unexpected values or ``kwargs`` for the current
+              ``sdtype``.
+            - ``ValueError`` if the table doesn't exist in the ``MultiTableMetadata``.
+        """
+        self._validate_table_name(table_name)
+        table = self._tables.get(table_name)
+        table.update_column(column_name, **kwargs)
+
+    def add_column(self, table_name, column_name, **kwargs):
+        """Add a column to a table in the ``MultiTableMetadata``.
+
+        Args:
+            table_name (str):
+                Name of the table to add the column to.
+            column_name (str):
+                The column name to be added.
+            **kwargs (type):
+                Any additional key word arguments for the column, where ``sdtype`` is required.
+
+        Raises:
+            - ``ValueError`` if the column already exists.
+            - ``ValueError`` if the ``kwargs`` do not contain ``sdtype``.
+            - ``ValueError`` if the column has unexpected values or ``kwargs`` for the given
+              ``sdtype``.
+            - ``ValueError`` if the table doesn't exist in the ``MultiTableMetadata``.
+        """
+        self._validate_table_name(table_name)
+        table = self._tables.get(table_name)
+        table.add_column(column_name, **kwargs)
