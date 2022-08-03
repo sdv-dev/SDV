@@ -87,8 +87,6 @@ def test_validate_errors():
         'The following errors were found in the metadata:'
         "\n\nMissing required values {'high_column_name'} in an Inequality constraint."
         "\nInvalid values {'wrong_arg'} are present in an Inequality constraint."
-        "\nAn Inequality constraint is being applied to mismatched sdtype columns [None, 'col1']."
-        ' Both columns must be either numerical or datetime.'
         "\n'value' must be an int or float."
         "\n'primary_key' must be a string or tuple of strings."
         "\nUnknown sequence key values {'col3'}. Keys should be columns that exist in the table."

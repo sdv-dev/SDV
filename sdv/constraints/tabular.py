@@ -353,7 +353,7 @@ class Inequality(Constraint):
         low_sdtype = metadata._columns.get(low, {}).get('sdtype')
         both_datetime = high_sdtype == low_sdtype == 'datetime'
         both_numerical = high_sdtype == low_sdtype == 'numerical'
-        if not (both_datetime or both_numerical):
+        if not (both_datetime or both_numerical) and not (high is None or low is None):
             raise ConstraintMetadataError(
                 f'An Inequality constraint is being applied to mismatched sdtype columns'
                 f' {[high, low]}. Both columns must be either numerical or datetime.'
@@ -518,12 +518,12 @@ class ScalarInequality(Constraint):
             matches_format = matches_datetime_format(val, datetime_format)
             if not matches_format:
                 raise ConstraintMetadataError(
-                    "'value' must be a datetime string of the right format"
+                    "'value' must be a datetime string of the right format."
                 )
 
         else:
             raise ConstraintMetadataError(
-                f'A ScalarInequality constraint is being applied to mismatched sdtypes. '
+                'A ScalarInequality constraint is being applied to mismatched sdtypes. '
                 'Numerical columns must be compared to integer or float values. '
                 'Datetimes column must be compared to datetime strings.'
             )
@@ -752,7 +752,8 @@ class Range(Constraint):
         middle_sdtype = metadata._columns.get(middle, {}).get('sdtype')
         all_datetime = high_sdtype == low_sdtype == middle_sdtype == 'datetime'
         all_numerical = high_sdtype == low_sdtype == middle_sdtype == 'numerical'
-        if not (all_datetime or all_numerical):
+        if not (all_datetime or all_numerical) and \
+           not (high is None or low is None or middle is None):
             raise ConstraintMetadataError(
                 f'A Range constraint is being applied to mismatched sdtype columns '
                 f'{[high, middle, low]}. All columns must be either numerical or datetime.'
@@ -955,7 +956,7 @@ class ScalarRange(Constraint):
 
         else:
             raise ConstraintMetadataError(
-                f'A ScalarRange constraint is being applied to mismatched sdtypes. '
+                'A ScalarRange constraint is being applied to mismatched sdtypes. '
                 'Numerical columns must be compared to integer or float values. '
                 'Datetimes column must be compared to datetime strings.'
             )

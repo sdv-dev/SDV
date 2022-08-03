@@ -10,8 +10,8 @@ from pathlib import Path
 import pandas as pd
 
 from sdv.constraints import Constraint
-from sdv.metadata.errors import InvalidMetadataError
 from sdv.constraints.errors import MultipleConstraintsErrors
+from sdv.metadata.errors import InvalidMetadataError
 
 
 class SingleTableMetadata:
@@ -370,6 +370,13 @@ class SingleTableMetadata:
 
         constraint_class._validate_metadata(self, **kwargs)
 
+    def _append_error(self, errors, method, *args, **kwargs):
+        """Inplace, append the produced error to the passed ``errors`` list."""
+        try:
+            method(*args, **kwargs)
+        except ValueError as e:
+            errors.append(e)
+
     def validate(self):
         """Validate the metadata.
 
@@ -387,37 +394,15 @@ class SingleTableMetadata:
                 errors.append(reformated_errors)
 
         # Validate keys
-        try:
-            self._validate_key(self._primary_key, 'primary')
-        except ValueError as e:
-            errors.append(e)
-
-        try:
-            self._validate_key(self._sequence_key, 'sequence')
-        except ValueError as e:
-            errors.append(e)
-
-        try:
-            self._validate_alternate_keys(self._alternate_keys)
-        except ValueError as e:
-            errors.append(e)
-
-        try:
-            self._validate_sequence_index(self._sequence_index)
-        except ValueError as e:
-            errors.append(e)
-
-        try:
-            self._validate_sequence_index_not_in_sequence_key()
-        except ValueError as e:
-            errors.append(e)
+        self._append_error(errors, self._validate_key, self._primary_key, 'primary')
+        self._append_error(errors, self._validate_key, self._sequence_key, 'sequence')
+        self._append_error(errors, self._validate_alternate_keys, self._alternate_keys)
+        self._append_error(errors, self._validate_sequence_index, self._sequence_index)
+        self._append_error(errors, self._validate_sequence_index_not_in_sequence_key)
 
         # Validate columns
         for column, kwargs in self._columns.items():
-            try:
-                self._validate_column(column, **kwargs)
-            except ValueError as e:
-                errors.append(e)
+            self._append_error(errors, self._validate_column, column, **kwargs)
 
         if errors:
             raise InvalidMetadataError(
