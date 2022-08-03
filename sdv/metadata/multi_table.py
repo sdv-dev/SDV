@@ -1,6 +1,7 @@
 """Multi Table Metadata."""
 
 import json
+import warnings
 from copy import deepcopy
 
 from sdv.metadata.errors import InvalidMetadataError
@@ -226,6 +227,7 @@ class MultiTableMetadata:
                 Name (or tuple of names) of the sequence key column(s).
         """
         self._validate_table_exists(table_name)
+        warnings.warn('Sequential modeling is not yet supported on SDV Multi Table models.')
         self._tables[table_name].set_sequence_key(id)
 
     def set_alternate_keys(self, table_name, ids):
@@ -250,4 +252,5 @@ class MultiTableMetadata:
                 Name of the sequence index column.
         """
         self._validate_table_exists(table_name)
+        warnings.warn('Sequential modeling is not yet supported on SDV Multi Table models.')
         self._tables[table_name].set_sequence_index(column_name)

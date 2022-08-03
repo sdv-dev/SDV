@@ -698,7 +698,9 @@ class TestMultiTableMetadata:
         metadata._validate_table_exists = Mock()
 
         # Run
-        metadata.set_sequence_key('table1', 'col')
+        warn_msg = 'Sequential modeling is not yet supported on SDV Multi Table models.'
+        with pytest.warns(match=warn_msg):
+            metadata.set_sequence_key('table1', 'col')
 
         # Assert
         metadata._validate_table_exists.assert_called_once_with('table1')
@@ -742,7 +744,9 @@ class TestMultiTableMetadata:
         metadata._validate_table_exists = Mock()
 
         # Run
-        metadata.set_sequence_index('table1', 'col')
+        warn_msg = 'Sequential modeling is not yet supported on SDV Multi Table models.'
+        with pytest.warns(match=warn_msg):
+            metadata.set_sequence_index('table1', 'col')
 
         # Assert
         metadata._validate_table_exists.assert_called_once_with('table1')
