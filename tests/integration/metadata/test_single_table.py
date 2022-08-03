@@ -60,7 +60,7 @@ def test_validate():
 
 
 def test_validate_errors():
-    """Test Test ``SingleTableMetadata.validate`` raises the correct errors."""
+    """Test ``SingleTableMetadata.validate`` raises the correct errors."""
     # Setup
     instance = SingleTableMetadata()
     instance._columns = {
