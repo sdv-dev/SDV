@@ -585,7 +585,7 @@ class TestMultiTableMetadata:
 
         # Run
         error_message = (
-            "Metadata for table 'table' already exists. Specify a new table name or"
+            "Metadata for table 'table' already exists. Specify a new table name or "
             'create a new MultiTableMetadata object for other data sources.'
         )
         with pytest.raises(MetadataError, match=error_message):
@@ -640,7 +640,7 @@ class TestMultiTableMetadata:
 
         # Run
         error_message = (
-            "Metadata for table 'table' already exists. Specify a new table name or"
+            "Metadata for table 'table' already exists. Specify a new table name or "
             'create a new MultiTableMetadata object for other data sources.'
         )
         with pytest.raises(MetadataError, match=error_message):

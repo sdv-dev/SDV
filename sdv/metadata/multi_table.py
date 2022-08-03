@@ -165,10 +165,10 @@ class MultiTableMetadata:
         table = self._tables.get(table_name)
         table.add_column(column_name, **kwargs)
 
-    def _check_if_table_exists(self, table_name):
+    def _validate_table_not_detected(self, table_name):
         if table_name in self._tables:
             raise MetadataError(
-                f"Metadata for table '{table_name}' already exists. Specify a new table name or"
+                f"Metadata for table '{table_name}' already exists. Specify a new table name or "
                 'create a new MultiTableMetadata object for other data sources.'
             )
 
@@ -181,7 +181,7 @@ class MultiTableMetadata:
             filepath (str):
                 String that represents the ``path`` to the ``csv`` file.
         """
-        self._check_if_table_exists(table_name)
+        self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
         table.detect_from_csv(filepath)
         self._tables[table_name] = table
@@ -195,7 +195,7 @@ class MultiTableMetadata:
             data (pandas.DataFrame):
                 ``pandas.DataFrame`` to detect the metadata from.
         """
-        self._check_if_table_exists(table_name)
+        self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
         table.detect_from_dataframe(data)
         self._tables[table_name] = table
