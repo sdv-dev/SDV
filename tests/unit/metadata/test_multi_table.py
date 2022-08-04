@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
-from sdv.metadata.errors import MetadataError
+from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata
 
 
@@ -588,7 +588,7 @@ class TestMultiTableMetadata:
             "Metadata for table 'table' already exists. Specify a new table name or "
             'create a new MultiTableMetadata object for other data sources.'
         )
-        with pytest.raises(MetadataError, match=error_message):
+        with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.detect_table_from_csv('table', 'path.csv')
 
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
@@ -643,5 +643,5 @@ class TestMultiTableMetadata:
             "Metadata for table 'table' already exists. Specify a new table name or "
             'create a new MultiTableMetadata object for other data sources.'
         )
-        with pytest.raises(MetadataError, match=error_message):
+        with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.detect_table_from_dataframe('table', pd.DataFrame())

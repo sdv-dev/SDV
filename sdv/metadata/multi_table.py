@@ -3,7 +3,7 @@
 import json
 from copy import deepcopy
 
-from sdv.metadata.errors import MetadataError
+from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.visualization import visualize_graph
 
@@ -167,7 +167,7 @@ class MultiTableMetadata:
 
     def _validate_table_not_detected(self, table_name):
         if table_name in self._tables:
-            raise MetadataError(
+            raise InvalidMetadataError(
                 f"Metadata for table '{table_name}' already exists. Specify a new table name or "
                 'create a new MultiTableMetadata object for other data sources.'
             )
