@@ -13,7 +13,7 @@ from faker import Faker
 from sdv.constraints import Constraint
 from sdv.constraints.errors import (
     FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
-from sdv.metadata.errors import MetadataError, MetadataNotFittedError
+from sdv.metadata.errors import InvalidMetadataError, MetadataNotFittedError
 from sdv.metadata.utils import strings_from_regex
 
 LOGGER = logging.getLogger(__name__)
@@ -306,7 +306,7 @@ class Table:
         field_subtype = field_metadata.get('subtype')
         dtype = self._TYPES_TO_DTYPES.get((field_type, field_subtype))
         if not dtype:
-            raise MetadataError(
+            raise InvalidMetadataError(
                 'Invalid type and subtype combination for field {}: ({}, {})'.format(
                     field_name, field_type, field_subtype)
             )
