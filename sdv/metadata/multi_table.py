@@ -62,7 +62,7 @@ class MultiTableMetadata:
                 columns = [f"{name} : {meta.get('sdtype')}" for name, meta in column_dict]
                 nodes[table_name] = {
                     'columns': r'\l'.join(columns),
-                    'primary_key': f"Primary key: {table_meta._metadata['primary_key']}"
+                    'primary_key': f'Primary key: {table_meta._primary_key}'
                 }
 
         else:
@@ -72,7 +72,7 @@ class MultiTableMetadata:
             parent = relationship.get('parent_table_name')
             child = relationship.get('child_table_name')
             foreign_key = relationship.get('child_foreign_key')
-            primary_key = self._tables.get(parent)._metadata.get('primary_key')
+            primary_key = self._tables.get(parent)._primary_key
             edge_label = f'  {foreign_key} → {primary_key}' if show_relationship_labels else ''
             edges.append((parent, child, edge_label))
 
