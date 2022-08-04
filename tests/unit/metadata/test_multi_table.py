@@ -647,7 +647,17 @@ class TestMultiTableMetadata:
             metadata.detect_table_from_dataframe('table', pd.DataFrame())
 
     def test__validate_table_exists(self):
-        """Test ``_validate_table_exists`` correctly raises an error."""
+        """Test ``_validate_table_exists``.
+
+        Expected to raise an error when the passed table name is not present in the metadata.
+        Expected to do nothing otherwise.
+
+        Input:
+            - Table name
+
+        Raises:
+            - ``ValueError`` if the table name is not in the metadata.
+        """
         # Setup
         metadata = MultiTableMetadata()
         metadata._tables = {'table1': 'val', 'table2': 'val'}
@@ -656,8 +666,8 @@ class TestMultiTableMetadata:
         metadata._validate_table_exists('table1')
 
         # Assert
-        err_msg = "Unknown table name 'table3'."
-        with pytest.raises(InvalidMetadataError, match=err_msg):
+        err_msg = re.escape("Unknown table name ('table3').")
+        with pytest.raises(ValueError, match=err_msg):
             metadata._validate_table_exists('table3')
 
     def test_set_primary_key(self):
@@ -665,6 +675,10 @@ class TestMultiTableMetadata:
 
         The method should validate the table exists and call
         ``SingleTableMetadata.set_primary_key``.
+
+        Setup:
+            - Instantiate ``MultiTableMetadata`` with some ``_tables``.
+            - Mock ``_validate_table_exists``.
 
         Input:
             - Table name
@@ -687,6 +701,10 @@ class TestMultiTableMetadata:
 
         The method should validate the table exists and call
         ``SingleTableMetadata.set_sequence_key``.
+
+        Setup:
+            - Instantiate ``MultiTableMetadata`` with some ``_tables``.
+            - Mock ``_validate_table_exists``.
 
         Input:
             - Table name
@@ -712,6 +730,10 @@ class TestMultiTableMetadata:
         The method should validate the table exists and call
         ``SingleTableMetadata.set_alternate_keys``.
 
+        Setup:
+            - Instantiate ``MultiTableMetadata`` with some ``_tables``.
+            - Mock ``_validate_table_exists``.
+
         Input:
             - Table name
             - List of column names
@@ -733,6 +755,10 @@ class TestMultiTableMetadata:
 
         The method should validate the table exists and call
         ``SingleTableMetadata.set_sequence_index``.
+
+        Setup:
+            - Instantiate ``MultiTableMetadata`` with some ``_tables``.
+            - Mock ``_validate_table_exists``.
 
         Input:
             - Table name

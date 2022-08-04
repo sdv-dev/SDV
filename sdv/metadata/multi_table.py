@@ -119,9 +119,9 @@ class MultiTableMetadata:
         printed = json.dumps(self.to_dict(), indent=4)
         return printed
 
-    def _validate_table_name(self, table_name):
+    def _validate_table_exists(self, table_name):
         if table_name not in self._tables:
-            raise ValueError(f"Unknown table name ('{table_name}')")
+            raise ValueError(f"Unknown table name ('{table_name}').")
 
     def update_column(self, table_name, column_name, **kwargs):
         """Update an existing column for a table in the ``MultiTableMetadata``.
@@ -140,7 +140,7 @@ class MultiTableMetadata:
               ``sdtype``.
             - ``ValueError`` if the table doesn't exist in the ``MultiTableMetadata``.
         """
-        self._validate_table_name(table_name)
+        self._validate_table_exists(table_name)
         table = self._tables.get(table_name)
         table.update_column(column_name, **kwargs)
 
@@ -162,7 +162,7 @@ class MultiTableMetadata:
               ``sdtype``.
             - ``ValueError`` if the table doesn't exist in the ``MultiTableMetadata``.
         """
-        self._validate_table_name(table_name)
+        self._validate_table_exists(table_name)
         table = self._tables.get(table_name)
         table.add_column(column_name, **kwargs)
 
@@ -200,10 +200,6 @@ class MultiTableMetadata:
         table = SingleTableMetadata()
         table.detect_from_dataframe(data)
         self._tables[table_name] = table
-
-    def _validate_table_exists(self, table_name):
-        if table_name not in self._tables:
-            raise InvalidMetadataError(f"Unknown table name '{table_name}'.")
 
     def set_primary_key(self, table_name, id):
         """Set the primary key of a table.
