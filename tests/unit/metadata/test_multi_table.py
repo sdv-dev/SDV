@@ -8,7 +8,6 @@ import pytest
 
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata
-from sdv.metadata.single_table import SingleTableMetadata
 
 
 class TestMultiTableMetadata:
@@ -646,6 +645,7 @@ class TestMultiTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.detect_table_from_dataframe('table', pd.DataFrame())
+
     def test__validate_table_exists(self):
         """Test ``_validate_table_exists`` correctly raises an error."""
         # Setup
@@ -662,7 +662,7 @@ class TestMultiTableMetadata:
 
     def test_set_primary_key(self):
         """Test ``set_primary_key``.
-        
+
         The method should validate the table exists and call
         ``SingleTableMetadata.set_primary_key``.
 
@@ -684,7 +684,7 @@ class TestMultiTableMetadata:
 
     def test_set_sequence_key(self):
         """Test ``set_sequence_key``.
-        
+
         The method should validate the table exists and call
         ``SingleTableMetadata.set_sequence_key``.
 
@@ -706,7 +706,7 @@ class TestMultiTableMetadata:
 
     def test_set_alternate_keys(self):
         """Test ``set_alternate_keys``.
-        
+
         The method should validate the table exists and call
         ``SingleTableMetadata.set_alternate_keys``.
 
@@ -728,7 +728,7 @@ class TestMultiTableMetadata:
 
     def test_set_sequence_index(self):
         """Test ``set_sequence_index``.
-        
+
         The method should validate the table exists and call
         ``SingleTableMetadata.set_sequence_index``.
 

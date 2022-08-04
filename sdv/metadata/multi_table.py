@@ -199,6 +199,7 @@ class MultiTableMetadata:
         table = SingleTableMetadata()
         table.detect_from_dataframe(data)
         self._tables[table_name] = table
+
     def _validate_table_exists(self, table_name):
         if table_name not in self._tables:
             raise InvalidMetadataError(f"Unknown table name '{table_name}'.")
