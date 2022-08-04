@@ -126,7 +126,8 @@ class Constraint(metaclass=ConstraintMeta):
                 f'Invalid values {invalid_vals} are present in {article} {constraint} constraint.'
             ))
 
-        raise MultipleConstraintsErrors(errors)
+        if errors:
+            raise MultipleConstraintsErrors(errors)
 
     @classmethod
     def _validate_metadata_columns(cls, metadata, **kwargs):
@@ -135,16 +136,16 @@ class Constraint(metaclass=ConstraintMeta):
         else:
             column_names = kwargs.get('column_names')
 
-        missing_columns = set(column_names) - set(metadata._columns)
-
+        missing_columns = set(column_names) - set(metadata._columns) - {None}
         if missing_columns:
+            article = 'An' if cls.__name__ == 'Inequality' else 'A'
             raise ConstraintMetadataError(
-                f'A {cls.__name__} constraint is being applied to invalid column names '
+                f'{article} {cls.__name__} constraint is being applied to invalid column names '
                 f'{missing_columns}. The columns must exist in the table.'
             )
 
-    @classmethod
-    def _validate_metadata_specific_to_constraint(cls, metadata, **kwargs):
+    @staticmethod
+    def _validate_metadata_specific_to_constraint(metadata, **kwargs):
         pass
 
     @classmethod

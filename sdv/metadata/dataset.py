@@ -12,7 +12,7 @@ from rdt import HyperTransformer, transformers
 
 from sdv.constraints import Constraint
 from sdv.metadata import visualization
-from sdv.metadata.errors import MetadataError
+from sdv.metadata.errors import InvalidMetadataError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -551,7 +551,7 @@ class Metadata:
                 on the metadata.
 
         Raises:
-            MetadataError:
+            InvalidMetadataError:
                 If there is any error in the metadata or the data does not
                 match the metadata description.
         """
@@ -635,7 +635,7 @@ class Metadata:
         """
         tables_meta = self._metadata.get('tables')
         if not tables_meta:
-            raise MetadataError('"tables" entry not found in Metadata.')
+            raise InvalidMetadataError('"tables" entry not found in Metadata.')
 
         if tables and not isinstance(tables, dict):
             tables = self.load_tables()
@@ -654,7 +654,8 @@ class Metadata:
             self._validate_circular_relationships(table_name, errors=errors)
 
         if errors:
-            raise MetadataError('Invalid Metadata specification:\n - ' + '\n - '.join(errors))
+            raise InvalidMetadataError(
+                'Invalid Metadata specification:\n - ' + '\n - '.join(errors))
 
     def _check_field(self, table, field, exists=False):
         """Validate the existance of the table and existance (or not) of field."""
@@ -832,7 +833,7 @@ class Metadata:
         if validate:
             try:
                 self.validate()
-            except MetadataError:
+            except InvalidMetadataError:
                 self._metadata = metadata_backup
                 raise
 
