@@ -203,7 +203,7 @@ class SingleTableMetadata:
         This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
 
         Args:
-            data (pd.DataFrame):
+            data (pandas.DataFrame):
                 ``pandas.DataFrame`` to detect the metadata from.
         """
         if self._columns:
