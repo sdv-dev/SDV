@@ -33,9 +33,7 @@ class MultiTableMetadata:
             metadata (dict):
                 Python dictionary representing a ``MultiTableMetadata`` object.
         """
-        print('oneuth')
         for table_name, table_dict in metadata.get('tables', {}).items():
-            print('ntohu')
             self._tables[table_name] = SingleTableMetadata._load_from_dict(table_dict)
 
         for relationship in metadata.get('relationships', []):
@@ -284,11 +282,9 @@ class MultiTableMetadata:
             A ``MultiTableMetadata`` instance.
         """
         metadata = open_path(filepath)
-        print(metadata)
         return cls._load_from_dict(metadata)
 
-    @classmethod
-    def save_to_json(cls, filepath):
+    def save_to_json(self, filepath):
         """Save the current ``MultiTableMetadata`` in to a ``json`` file.
 
         Args:
@@ -299,6 +295,6 @@ class MultiTableMetadata:
             Raises an ``Error`` if the path already exists.
         """
         validate_path(filepath)
-        metadata = cls.to_dict()
+        metadata = self.to_dict()
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)
