@@ -10,7 +10,8 @@ from pathlib import Path
 import pandas as pd
 
 from sdv.constraints import Constraint
-from sdv.metadata.errors import MetadataError
+from sdv.constraints.errors import MultipleConstraintsErrors
+from sdv.metadata.errors import InvalidMetadataError
 
 
 class SingleTableMetadata:
@@ -52,12 +53,14 @@ class SingleTableMetadata:
         representation = kwargs.get('representation')
         if representation and representation not in self._NUMERICAL_REPRESENTATIONS:
             raise ValueError(
-                f"Invalid value for 'representation' {representation} for column '{column_name}'.")
+                f"Invalid value for 'representation' '{representation}'"
+                f" for column '{column_name}'."
+            )
 
     @staticmethod
     def _validate_datetime(column_name, **kwargs):
         datetime_format = kwargs.get('datetime_format')
-        if datetime_format:
+        if datetime_format is not None:
             try:
                 formated_date = datetime.now().strftime(datetime_format)
             except Exception as exception:
@@ -77,12 +80,12 @@ class SingleTableMetadata:
     def _validate_categorical(column_name, **kwargs):
         order = kwargs.get('order')
         order_by = kwargs.get('order_by')
-        if order and order_by:
+        if order is not None and order_by is not None:
             raise ValueError(
                 f"Categorical column '{column_name}' has both an 'order' and 'order_by' "
                 'attribute. Only 1 is allowed.'
             )
-        if order_by and order_by not in ('numerical_value', 'alphabetical'):
+        if order_by is not None and order_by not in ('numerical_value', 'alphabetical'):
             raise ValueError(
                 f"Unknown ordering method '{order_by}' provided for categorical column "
                 f"'{column_name}'. Ordering method must be 'numerical_value' or 'alphabetical'."
@@ -107,16 +110,11 @@ class SingleTableMetadata:
     def __init__(self):
         self._columns = {}
         self._constraints = []
+        self._primary_key = None
+        self._alternate_keys = []
+        self._sequence_key = None
+        self._sequence_index = None
         self._version = self.SCHEMA_VERSION
-        self._metadata = {
-            'columns': self._columns,
-            'primary_key': None,
-            'alternate_keys': [],
-            'sequence_key': None,
-            'sequence_index': None,
-            'constraints': self._constraints,
-            'SCHEMA_VERSION': self.SCHEMA_VERSION
-        }
 
     def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
         expected_kwargs = self._EXPECTED_KWARGS.get(sdtype, ['pii'])
@@ -250,6 +248,19 @@ class SingleTableMetadata:
         """Check whether id is a string or a tuple of strings."""
         return isinstance(id, str) or isinstance(id, tuple) and all(isinstance(i, str) for i in id)
 
+    def _validate_key(self, id, key_type):
+        """Validate the primary and sequence keys."""
+        if not self._validate_datatype(id):
+            raise ValueError(f"'{key_type}_key' must be a string or tuple of strings.")
+
+        keys = {id} if isinstance(id, str) else set(id)
+        invalid_ids = keys - set(self._columns)
+        if invalid_ids:
+            raise ValueError(
+                f'Unknown {key_type} key values {invalid_ids}.'
+                ' Keys should be columns that exist in the table.'
+            )
+
     def set_primary_key(self, id):
         """Set the metadata primary key.
 
@@ -257,30 +268,15 @@ class SingleTableMetadata:
             id (str, tuple):
                 Name (or tuple of names) of the primary key column(s).
         """
-        if not self._validate_datatype(id):
-            raise ValueError("'primary_key' must be a string or tuple of strings.")
+        self._validate_key(id, 'primary')
 
-        if self._metadata['primary_key'] is not None:
+        if self._primary_key is not None:
             warnings.warn(
-                f"There is an existing primary key {self._metadata['primary_key']}."
+                f"There is an existing primary key {self._primary_key}."
                 ' This key will be removed.'
             )
 
-        self._metadata['primary_key'] = id
-
-    def set_alternate_keys(self, ids):
-        """Set the metadata alternate keys.
-
-        Args:
-            ids (list[str], list[tuple]):
-                List of names (or tuple of names) of the alternate key columns.
-        """
-        if not isinstance(ids, list) or not all(self._validate_datatype(id) for id in ids):
-            raise ValueError(
-                "'alternate_keys' must be a list of strings or a list of tuples of strings."
-            )
-
-        self._metadata['alternate_keys'] = ids
+        self._primary_key = id
 
     def set_sequence_key(self, id):
         """Set the metadata sequence key.
@@ -289,16 +285,53 @@ class SingleTableMetadata:
             id (str, tuple):
                 Name (or tuple of names) of the sequence key column(s).
         """
-        if not self._validate_datatype(id):
-            raise ValueError("'sequence_key' must be a string or tuple of strings.")
+        self._validate_key(id, 'sequence')
 
-        if self._metadata['sequence_key'] is not None:
+        if self._sequence_key is not None:
             warnings.warn(
-                f"There is an existing sequence key {self._metadata['sequence_key']}."
+                f"There is an existing sequence key {self._sequence_key}."
                 ' This key will be removed.'
             )
 
-        self._metadata['sequence_key'] = id
+        self._sequence_key = id
+
+    def _validate_alternate_keys(self, ids):
+        if not isinstance(ids, list) or not all(self._validate_datatype(id) for id in ids):
+            raise ValueError(
+                "'alternate_keys' must be a list of strings or a list of tuples of strings."
+            )
+
+        keys = set()
+        for id in ids:
+            keys.update({id} if isinstance(id, str) else set(id))
+
+        invalid_ids = keys - set(self._columns)
+        if invalid_ids:
+            raise ValueError(
+                f'Unknown alternate key values {invalid_ids}.'
+                ' Keys should be columns that exist in the table.'
+            )
+
+    def set_alternate_keys(self, ids):
+        """Set the metadata alternate keys.
+
+        Args:
+            ids (list[str], list[tuple]):
+                List of names (or tuple of names) of the alternate key columns.
+        """
+        self._validate_alternate_keys(ids)
+        self._alternate_keys = ids
+
+    def _validate_sequence_index(self, column_name):
+        if not isinstance(column_name, str):
+            raise ValueError("'sequence_index' must be a string.")
+
+        if column_name not in self._columns:
+            column_name = {column_name}
+            raise ValueError(
+                f'Unknown sequence index value {column_name}.'
+                ' Keys should be columns that exist in the table.'
+            )
 
     def set_sequence_index(self, column_name):
         """Set the metadata sequence index.
@@ -307,15 +340,81 @@ class SingleTableMetadata:
             column_name (str):
                 Name of the sequence index column.
         """
-        if not isinstance(column_name, str):
-            raise ValueError("'sequence_index' must be a string.")
+        self._validate_sequence_index(column_name)
+        self._sequence_index = column_name
 
-        self._metadata['sequence_index'] = column_name
+    def _validate_sequence_index_not_in_sequence_key(self):
+        """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
+        seq_key = self._sequence_key
+        sequence_key = {seq_key} if isinstance(seq_key, str) else set(seq_key)
+        if self._sequence_index in sequence_key or seq_key is None:
+            index = {self._sequence_index}
+            raise ValueError(
+                f"'sequence_index' and 'sequence_key' have the same value {index}."
+                ' These columns must be different.'
+            )
+
+    def _validate_constraint(self, constraint_name, **kwargs):
+        """Validate a constraint against the single table metadata.
+
+        Args:
+            constraint_name (string):
+                Name of the constraint class.
+            **kwargs:
+                Any other arguments the constraint requires.
+        """
+        try:
+            constraint_class = Constraint._get_class_from_dict(constraint_name)
+        except KeyError:
+            raise InvalidMetadataError(f"Invalid constraint ('{constraint_name}').")
+
+        constraint_class._validate_metadata(self, **kwargs)
+
+    def _append_error(self, errors, method, *args, **kwargs):
+        """Inplace, append the produced error to the passed ``errors`` list."""
+        try:
+            method(*args, **kwargs)
+        except ValueError as e:
+            errors.append(e)
+
+    def validate(self):
+        """Validate the metadata.
+
+        Raises:
+            - ``InvalidMetadataError`` if the metadata is invalid.
+        """
+        # Validate constraints
+        errors = []
+        for tuple in self._constraints:
+            constraint_name, kwargs = tuple
+            try:
+                self._validate_constraint(constraint_name, **kwargs)
+            except MultipleConstraintsErrors as e:
+                reformated_errors = '\n'.join(map(str, e.errors))
+                errors.append(reformated_errors)
+
+        # Validate keys
+        self._append_error(errors, self._validate_key, self._primary_key, 'primary')
+        self._append_error(errors, self._validate_key, self._sequence_key, 'sequence')
+        self._append_error(errors, self._validate_alternate_keys, self._alternate_keys)
+        self._append_error(errors, self._validate_sequence_index, self._sequence_index)
+        self._append_error(errors, self._validate_sequence_index_not_in_sequence_key)
+
+        # Validate columns
+        for column, kwargs in self._columns.items():
+            self._append_error(errors, self._validate_column, column, **kwargs)
+
+        if errors:
+            raise InvalidMetadataError(
+                'The following errors were found in the metadata:\n\n'
+                + '\n'.join([str(e) for e in errors])
+            )
 
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
         metadata = {}
-        for key, value in self._metadata.items():
+        for key in self._KEYS:
+            value = getattr(self, f'_{key}') if key != 'SCHEMA_VERSION' else self._version
             if key == 'constraints' and value:
                 constraints = []
                 for constraint in value:
@@ -331,8 +430,8 @@ class SingleTableMetadata:
 
         return deepcopy(metadata)
 
-    def _set_metadata_dict(self, metadata):
-        """Set the ``metadata`` dictionary to the current instance.
+    def _set_metadata_attributes(self, metadata):
+        """Set the metadata attributes to the current instance.
 
         Args:
             metadata (dict):
@@ -344,7 +443,6 @@ class SingleTableMetadata:
                 value = [Constraint.from_dict(constraint_dict) for constraint_dict in value]
 
             if value:
-                self._metadata[key] = value
                 setattr(self, f'_{key}', value)
 
     def add_constraint(self, constraint_name, **kwargs):
@@ -357,14 +455,8 @@ class SingleTableMetadata:
             **kwargs:
                 Any other arguments the constraint requires.
         """
-        try:
-            constraint_class = Constraint._get_class_from_dict(constraint_name)
-        except KeyError:
-            raise MetadataError(f"Invalid constraint ('{constraint_name}').")
-
-        constraint_class._validate_metadata(self, **kwargs)
-        constraint = constraint_class(**kwargs)
-        self._constraints.append(constraint)
+        self._validate_constraint(constraint_name, **kwargs)
+        self._constraints.append((constraint_name, kwargs))
 
     @classmethod
     def _load_from_dict(cls, metadata):
@@ -378,7 +470,7 @@ class SingleTableMetadata:
             Instance of ``SingleTableMetadata``.
         """
         instance = cls()
-        instance._set_metadata_dict(metadata)
+        instance._set_metadata_attributes(metadata)
         return instance
 
     @classmethod
