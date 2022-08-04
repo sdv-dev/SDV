@@ -21,7 +21,6 @@ class MultiTableMetadata:
     @staticmethod
     def _validate_missing_relationship_keys(parent_table, parent_table_name, parent_primary_key,
                                             child_table_name, child_foreign_key):
-
         missing_keys = set()
         parent_primary_key = cast_to_iterable(parent_primary_key)
         table_primary_keys = set(cast_to_iterable(parent_table._primary_key))
@@ -66,22 +65,23 @@ class MultiTableMetadata:
     @staticmethod
     def _validate_relationship_sdtypes(parent_table, parent_table_name, parent_primary_key,
                                        child_table_name, child_foreign_key):
+        parent_columns = parent_table._columns
         error = False
         if isinstance(parent_primary_key, (list, tuple)):
             for pk, fk in zip(parent_primary_key, child_foreign_key):
-                if parent_table[pk]['sdtype'] != parent_table[fk]['sdtype']:
+                if parent_columns[pk]['sdtype'] != parent_columns[fk]['sdtype']:
                     error = True
                     break
 
         else:
-            pk_sdtype = parent_table[parent_primary_key]['sdtype']
-            fk_sdtype = parent_table[child_foreign_key]['sdtype']
+            pk_sdtype = parent_columns[parent_primary_key]['sdtype']
+            fk_sdtype = parent_columns[child_foreign_key]['sdtype']
             if pk_sdtype != fk_sdtype:
                 error = True
 
         if error:
             raise ValueError(
-                f'Relationship between tables ({parent_table_name}, {child_table_name}) is '
+                f"Relationship between tables ('{parent_table_name}', '{child_table_name}') is "
                 'invalid. The primary and foreign key columns are not the same type.'
             )
 
@@ -146,7 +146,12 @@ class MultiTableMetadata:
             parent_table_name, parent_primary_key, child_table_name, child_foreign_key)
 
         self._validate_relationship_sdtypes(
-            parent_table_name, parent_primary_key, child_table_name, child_foreign_key)
+            parent_table,
+            parent_table_name,
+            parent_primary_key,
+            child_table_name,
+            child_foreign_key
+        )
 
         child_map = defaultdict(set)
         for relation in self._relationships:
