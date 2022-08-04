@@ -8,6 +8,7 @@ from pathlib import Path
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.visualization import visualize_graph
+from sdv.metadata.utils import open_file_path
 
 
 class MultiTableMetadata:

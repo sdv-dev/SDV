@@ -1,11 +1,14 @@
 """Tools to generate strings from regular expressions."""
 
+import json
 import re
 import string
 
 import numpy as np
 
 import sre_parse  # isort:skip
+from pathlib import Path
+
 
 
 def _literal(character, max_repeat):
@@ -150,3 +153,14 @@ def strings_from_regex(regex, max_repeat=16):
             sizes.append(size)
 
     return _from_generators(generators, max_repeat), np.prod(sizes)
+
+def open_file_path(filepath):
+    filepath = Path(filepath)
+    if not filepath.exists():
+        raise ValueError(
+            f"A file named '{filepath.name}' does not exist. "
+            'Please specify a different filename.'
+        )
+
+    with open(filepath, 'r', encoding='utf-8') as metadata_file:
+        return json.load(metadata_file)
