@@ -8,6 +8,7 @@ import pytest
 
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata
+from sdv.metadata.single_table import SingleTableMetadata
 
 
 class TestMultiTableMetadata:
@@ -645,3 +646,104 @@ class TestMultiTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.detect_table_from_dataframe('table', pd.DataFrame())
+    def test__validate_table_exists(self):
+        """Test ``_validate_table_exists`` correctly raises an error."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._tables = {'table1': 'val', 'table2': 'val'}
+
+        # Run
+        metadata._validate_table_exists('table1')
+
+        # Assert
+        err_msg = "Unknown table name 'table3'."
+        with pytest.raises(InvalidMetadataError, match=err_msg):
+            metadata._validate_table_exists('table3')
+
+    def test_set_primary_key(self):
+        """Test ``set_primary_key``.
+        
+        The method should validate the table exists and call
+        ``SingleTableMetadata.set_primary_key``.
+
+        Input:
+            - Table name
+            - Column name
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._tables = {'table1': Mock(), 'table2': 'val'}
+        metadata._validate_table_exists = Mock()
+
+        # Run
+        metadata.set_primary_key('table1', 'col')
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table1')
+        metadata._tables['table1'].set_primary_key.assert_called_once_with('col')
+
+    def test_set_sequence_key(self):
+        """Test ``set_sequence_key``.
+        
+        The method should validate the table exists and call
+        ``SingleTableMetadata.set_sequence_key``.
+
+        Input:
+            - Table name
+            - Column name
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._tables = {'table1': Mock(), 'table2': 'val'}
+        metadata._validate_table_exists = Mock()
+
+        # Run
+        metadata.set_sequence_key('table1', 'col')
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table1')
+        metadata._tables['table1'].set_sequence_key.assert_called_once_with('col')
+
+    def test_set_alternate_keys(self):
+        """Test ``set_alternate_keys``.
+        
+        The method should validate the table exists and call
+        ``SingleTableMetadata.set_alternate_keys``.
+
+        Input:
+            - Table name
+            - List of column names
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._tables = {'table1': Mock(), 'table2': 'val'}
+        metadata._validate_table_exists = Mock()
+
+        # Run
+        metadata.set_alternate_keys('table1', ['col1', 'col2'])
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table1')
+        metadata._tables['table1'].set_alternate_keys.assert_called_once_with(['col1', 'col2'])
+
+    def test_set_sequence_index(self):
+        """Test ``set_sequence_index``.
+        
+        The method should validate the table exists and call
+        ``SingleTableMetadata.set_sequence_index``.
+
+        Input:
+            - Table name
+            - Column name
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._tables = {'table1': Mock(), 'table2': 'val'}
+        metadata._validate_table_exists = Mock()
+
+        # Run
+        metadata.set_sequence_index('table1', 'col')
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table1')
+        metadata._tables['table1'].set_sequence_index.assert_called_once_with('col')

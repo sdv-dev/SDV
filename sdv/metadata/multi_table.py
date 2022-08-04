@@ -37,58 +37,6 @@ class MultiTableMetadata:
         for relationship in metadata.get('relationships', []):
             self._relationships.append(relationship)
 
-    def _validate_table_exists(self, table_name):
-        if table_name not in self._tables:
-            raise MetadataError(f"Unknown table name '{table_name}'.")
-
-    def set_primary_key(self, table_name, id):
-        """Set the primary key of a table.
-
-        Args:
-            table_name (str):
-                Name of the table to set the primary key.
-            id (str, tulple[str]):
-                Name (or tuple of names) of the primary key column(s).
-        """
-        self._validate_table_exists(table_name)
-        self._tables[table_name].set_primary_key(id)
-
-    def set_sequence_key(self, table_name, id):
-        """Set the sequence key of a table.
-
-        Args:
-            table_name (str):
-                Name of the table to set the sequence key.
-            id (str, tulple[str]):
-                Name (or tuple of names) of the sequence key column(s).
-        """
-        self._validate_table_exists(table_name)
-        self._tables[table_name].set_sequence_key(id)
-
-    def set_alternate_keys(self, table_name, ids):
-        """Set the alternate keys of a table.
-
-        Args:
-            table_name (str):
-                Name of the table to set the sequence key.
-            ids (list[str], list[tuple]):
-                List of names (or tuple of names) of the alternate key columns.
-        """
-        self._validate_table_exists(table_name)
-        self._tables[table_name].set_alternate_keys(ids)
-
-    def set_sequence_index(self, table_name, column_name):
-        """Set the sequence index of a table.
-
-        Args:
-            table_name (str):
-                Name of the table to set the sequence index.
-            column_name (str):
-                Name of the sequence index column.
-        """
-        self._validate_table_exists(table_name)
-        self._tables[table_name].set_sequence_index(column_name)
-
     def visualize(self, show_table_details=True, show_relationship_labels=True,
                   output_filepath=None):
         """Create a visualization of the multi-table dataset.
@@ -251,3 +199,54 @@ class MultiTableMetadata:
         table = SingleTableMetadata()
         table.detect_from_dataframe(data)
         self._tables[table_name] = table
+    def _validate_table_exists(self, table_name):
+        if table_name not in self._tables:
+            raise InvalidMetadataError(f"Unknown table name '{table_name}'.")
+
+    def set_primary_key(self, table_name, id):
+        """Set the primary key of a table.
+
+        Args:
+            table_name (str):
+                Name of the table to set the primary key.
+            id (str, tulple[str]):
+                Name (or tuple of names) of the primary key column(s).
+        """
+        self._validate_table_exists(table_name)
+        self._tables[table_name].set_primary_key(id)
+
+    def set_sequence_key(self, table_name, id):
+        """Set the sequence key of a table.
+
+        Args:
+            table_name (str):
+                Name of the table to set the sequence key.
+            id (str, tulple[str]):
+                Name (or tuple of names) of the sequence key column(s).
+        """
+        self._validate_table_exists(table_name)
+        self._tables[table_name].set_sequence_key(id)
+
+    def set_alternate_keys(self, table_name, ids):
+        """Set the alternate keys of a table.
+
+        Args:
+            table_name (str):
+                Name of the table to set the sequence key.
+            ids (list[str], list[tuple]):
+                List of names (or tuple of names) of the alternate key columns.
+        """
+        self._validate_table_exists(table_name)
+        self._tables[table_name].set_alternate_keys(ids)
+
+    def set_sequence_index(self, table_name, column_name):
+        """Set the sequence index of a table.
+
+        Args:
+            table_name (str):
+                Name of the table to set the sequence index.
+            column_name (str):
+                Name of the sequence index column.
+        """
+        self._validate_table_exists(table_name)
+        self._tables[table_name].set_sequence_index(column_name)
