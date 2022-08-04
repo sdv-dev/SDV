@@ -3,8 +3,10 @@
 import re
 from unittest.mock import Mock, patch
 
+import pandas as pd
 import pytest
 
+from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata
 
 
@@ -534,3 +536,112 @@ class TestMultiTableMetadata:
         error_message = re.escape("Unknown table name ('table')")
         with pytest.raises(ValueError, match=error_message):
             metadata.update_column('table', 'column', sdtype='numerical', pii=False)
+
+    @patch('sdv.metadata.multi_table.SingleTableMetadata')
+    def test_detect_table_from_csv(self, single_table_mock):
+        """Test the ``detect_table_from_csv`` method.
+
+        If the table does not already exist, a ``SingleTableMetadata`` instance
+        should be created and call the ``detect_from_csv`` method.
+
+        Setup:
+            - Mock the ``SingleTableMetadata`` class.
+
+        Input:
+            - Table name.
+            - Path.
+
+        Side effect:
+            - Table should be added to ``self._tables``.
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+
+        # Run
+        metadata.detect_table_from_csv('table', 'path.csv')
+
+        # Assert
+        single_table_mock.return_value.detect_from_csv.assert_called_once_with('path.csv')
+        assert metadata._tables == {'table': single_table_mock.return_value}
+
+    def test_detect_table_from_csv_table_already_exists(self):
+        """Test the ``detect_table_from_csv`` method.
+
+        If the table already exists, an error should be raised.
+
+        Setup:
+            - Set the ``_tables`` dict to already have the table.
+
+        Input:
+            - Table name.
+            - Path.
+
+        Side effect:
+            - An error should be raised.
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._tables = {'table': Mock()}
+
+        # Run
+        error_message = (
+            "Metadata for table 'table' already exists. Specify a new table name or "
+            'create a new MultiTableMetadata object for other data sources.'
+        )
+        with pytest.raises(InvalidMetadataError, match=error_message):
+            metadata.detect_table_from_csv('table', 'path.csv')
+
+    @patch('sdv.metadata.multi_table.SingleTableMetadata')
+    def test_detect_table_from_dataframe(self, single_table_mock):
+        """Test the ``detect_table_from_dataframe`` method.
+
+        If the table does not already exist, a ``SingleTableMetadata`` instance
+        should be created and call the ``detect_from_dataframe`` method.
+
+        Setup:
+            - Mock the ``SingleTableMetadata`` class.
+
+        Input:
+            - Table name.
+            - Dataframe.
+
+        Side effect:
+            - Table should be added to ``self._tables``.
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        data = pd.DataFrame()
+
+        # Run
+        metadata.detect_table_from_dataframe('table', data)
+
+        # Assert
+        single_table_mock.return_value.detect_from_dataframe.assert_called_once_with(data)
+        assert metadata._tables == {'table': single_table_mock.return_value}
+
+    def test_detect_table_from_dataframe_table_already_exists(self):
+        """Test the ``detect_table_from_dataframe`` method.
+
+        If the table already exists, an error should be raised.
+
+        Setup:
+            - Set the ``_tables`` dict to already have the table.
+
+        Input:
+            - Table name.
+            - Dataframe.
+
+        Side effect:
+            - An error should be raised.
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._tables = {'table': Mock()}
+
+        # Run
+        error_message = (
+            "Metadata for table 'table' already exists. Specify a new table name or "
+            'create a new MultiTableMetadata object for other data sources.'
+        )
+        with pytest.raises(InvalidMetadataError, match=error_message):
+            metadata.detect_table_from_dataframe('table', pd.DataFrame())
