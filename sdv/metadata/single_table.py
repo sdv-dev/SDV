@@ -12,6 +12,7 @@ import pandas as pd
 from sdv.constraints import Constraint
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.utils import open_path, validate_path
 
 
 class SingleTableMetadata:
@@ -488,16 +489,7 @@ class SingleTableMetadata:
         Returns:
             A ``SingleTableMetadata`` instance.
         """
-        filepath = Path(filepath)
-        if not filepath.exists():
-            raise ValueError(
-                f"A file named '{filepath.name}' does not exist. "
-                'Please specify a different filename.'
-            )
-
-        with open(filepath, 'r', encoding='utf-8') as metadata_file:
-            metadata = json.load(metadata_file)
-
+        metadata = open_path(filepath)
         if 'SCHEMA_VERSION' not in metadata:
             raise ValueError(
                 'This metadata file is incompatible with the ``SingleTableMetadata`` '
@@ -516,13 +508,7 @@ class SingleTableMetadata:
         Raises:
             Raises an ``Error`` if the path already exists.
         """
-        filepath = Path(filepath)
-        if filepath.exists():
-            raise ValueError(
-                f"A file named '{filepath.name}' already exists in this folder. Please specify "
-                'a different filename.'
-            )
-
+        validate_path(filepath)
         metadata = self.to_dict()
         metadata['SCHEMA_VERSION'] = self.SCHEMA_VERSION
         with open(filepath, 'w', encoding='utf-8') as metadata_file:

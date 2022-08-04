@@ -3,12 +3,11 @@
 import json
 import warnings
 from copy import deepcopy
-from pathlib import Path
 
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata.utils import open_path, validate_path
 from sdv.metadata.visualization import visualize_graph
-from sdv.metadata.utils import open_file_path
 
 
 class MultiTableMetadata:
@@ -282,16 +281,7 @@ class MultiTableMetadata:
         Returns:
             A ``MultiTableMetadata`` instance.
         """
-        filepath = Path(filepath)
-        if not filepath.exists():
-            raise ValueError(
-                f"A file named '{filepath.name}' does not exist. "
-                'Please specify a different filename.'
-            )
-
-        with open(filepath, 'r', encoding='utf-8') as metadata_file:
-            metadata = json.load(metadata_file)
-
+        metadata = open_path(filepath)
         return cls._load_from_dict(metadata)
 
     def save_to_json(self, filepath):
@@ -304,13 +294,7 @@ class MultiTableMetadata:
         Raises:
             Raises an ``Error`` if the path already exists.
         """
-        filepath = Path(filepath)
-        if filepath.exists():
-            raise ValueError(
-                f"A file named '{filepath.name}' already exists in this folder. Please specify "
-                'a different filename.'
-            )
-
+        validate_path(filepath)
         metadata = self.to_dict()
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)

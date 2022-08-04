@@ -3,12 +3,11 @@
 import json
 import re
 import string
+from pathlib import Path
 
 import numpy as np
 
 import sre_parse  # isort:skip
-from pathlib import Path
-
 
 
 def _literal(character, max_repeat):
@@ -154,7 +153,9 @@ def strings_from_regex(regex, max_repeat=16):
 
     return _from_generators(generators, max_repeat), np.prod(sizes)
 
-def open_file_path(filepath):
+
+def open_path(filepath):
+    """Validate and open the a file path."""
     filepath = Path(filepath)
     if not filepath.exists():
         raise ValueError(
@@ -164,3 +165,13 @@ def open_file_path(filepath):
 
     with open(filepath, 'r', encoding='utf-8') as metadata_file:
         return json.load(metadata_file)
+
+
+def validate_path(filepath):
+    """Validate a file path."""
+    filepath = Path(filepath)
+    if filepath.exists():
+        raise ValueError(
+            f"A file named '{filepath.name}' already exists in this folder. Please specify "
+            'a different filename.'
+        )
