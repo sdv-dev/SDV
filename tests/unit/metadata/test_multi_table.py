@@ -827,3 +827,142 @@ class TestMultiTableMetadata:
         with pytest.raises(ValueError, match=error_message):
             metadata.add_constraint(
                 'table', 'Inequality', low_column_name='a', high_column_name='b')
+    @patch('sdv.metadata.utils.Path')
+    def test_load_from_json_path_does_not_exist(self, mock_path):
+        """Test the ``load_from_json`` method.
+
+        Test that the method raises a ``ValueError`` when the specified path does not exist.
+
+        Mock:
+            - Mock the ``Path`` library in order to return ``False``, that the file does not exist.
+
+        Input:
+            - String representing a filepath.
+
+        Side Effects:
+            - A ``ValueError`` is raised pointing that the ``file`` does not exist.
+        """
+        # Setup
+        mock_path.return_value.exists.return_value = False
+        mock_path.return_value.name = 'filepath.json'
+
+        # Run / Assert
+        error_msg = (
+            "A file named 'filepath.json' does not exist. Please specify a different filename."
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            MultiTableMetadata.load_from_json('filepath.json')
+
+    @patch('sdv.metadata.single_table.Constraint')
+    @patch('sdv.metadata.utils.open')
+    @patch('sdv.metadata.utils.Path')
+    @patch('sdv.metadata.utils.json')
+    def test_load_from_json(self, mock_json, mock_path, mock_open, mock_constraint):
+        """Test the ``load_from_json`` method.
+
+        Test that ``load_from_json`` function creates an instance with the contents returned by the
+        ``json`` load function.
+
+        Mock:
+            - Mock the ``Path`` library in order to return ``True``.
+            - Mock the ``json`` library in order to use a custom return.
+            - Mock the ``open`` in order to avoid loading a binary file.
+            - Mock the ``Constraint`` to ensure that is being loaded.
+
+        Input:
+            - String representing a filepath.
+
+        Output:
+            - ``SingleTableMetadata`` instance with the custom configuration from the ``json``
+              file (``json.load`` return value)
+        """
+        # Setup
+        instance = MultiTableMetadata()
+        mock_path.return_value.exists.return_value = True
+        mock_path.return_value.name = 'filepath.json'
+        mock_constraint.from_dict.return_value = {'my_constraint': 'my_params'}
+        mock_json.load.return_value = {
+            'tables': {
+                'table1': {
+                    'columns': {
+                        'animals': {
+                            'type': 'categorical'
+                        }
+                    },
+                    'primary_key': 'animals',
+                    'constraints': [{
+                        'my_constraint': 'my_params'
+                    }],
+                    'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
+                }
+            },
+            'relationships': {}
+        }
+
+        # Run
+        instance = MultiTableMetadata.load_from_json('filepath.json')
+
+        # Asserts
+        assert list(instance._tables.keys()) == ['table1']
+        assert instance._tables['table1']._columns == {'animals': {'type': 'categorical'}}
+        assert instance._tables['table1']._primary_key == 'animals'
+        assert instance._tables['table1']._sequence_key is None
+        assert instance._tables['table1']._alternate_keys == []
+        assert instance._tables['table1']._sequence_index is None
+        assert instance._tables['table1']._constraints == [{'my_constraint': 'my_params'}]
+        assert instance._tables['table1']._version == 'SINGLE_TABLE_V1'
+        mock_constraint.from_dict.assert_called_once()
+
+    @patch('sdv.metadata.utils.Path')
+    def test_save_to_json_file_exists(self, mock_path):
+        """Test the ``save_to_json`` method.
+
+        Test that when attempting to write over a file that already exists, the method
+        raises a ``ValueError``.
+
+        Setup:
+            - instance of ``SingleTableMetadata``.
+        Mock:
+            - Mock ``Path`` in order to point that the file does exist.
+
+        Side Effects:
+            - Raise ``ValueError`` pointing that the file does exist.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        mock_path.return_value.exists.return_value = True
+        mock_path.return_value.name = 'filepath.json'
+
+        # Run / Assert
+        error_msg = (
+            "A file named 'filepath.json' already exists in this folder. Please specify "
+            'a different filename.'
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            instance.save_to_json('filepath.json')
+
+    def test_save_to_json(self):
+        """Test the ``save_to_json`` method.
+
+        Test that ``save_to_json`` stores a ``json`` file and dumps the instance dict into
+        it.
+
+        Setup:
+            - instance of ``SingleTableMetadata``.
+            - Use ``TemporaryDirectory`` to store the file in order to read it afterwards and
+              assert it's contents.
+
+        Side Effects:
+            - Creates a json representation of the instance.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run / Assert
+        with TemporaryDirectory() as temp_dir:
+            file_name = Path(temp_dir) / 'singletable.json'
+            instance.save_to_json(file_name)
+
+            with open(file_name, 'rb') as single_table_file:
+                saved_metadata = json.load(single_table_file)
+                assert saved_metadata == instance.to_dict()
