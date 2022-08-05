@@ -830,6 +830,7 @@ class TestMultiTableMetadata:
         with pytest.raises(ValueError, match=error_message):
             metadata.add_constraint(
                 'table', 'Inequality', low_column_name='a', high_column_name='b')
+
     @patch('sdv.metadata.utils.Path')
     def test_load_from_json_path_does_not_exist(self, mock_path):
         """Test the ``load_from_json`` method.

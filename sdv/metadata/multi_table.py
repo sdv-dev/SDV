@@ -266,6 +266,7 @@ class MultiTableMetadata:
         self._validate_table_exists(table_name)
         table = self._tables.get(table_name)
         table.add_constraint(constraint_name, **kwargs)
+
     @classmethod
     def load_from_json(cls, filepath):
         """Create a ``MultiTableMetadata`` instance from a ``json`` file.
