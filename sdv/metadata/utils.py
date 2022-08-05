@@ -155,7 +155,7 @@ def strings_from_regex(regex, max_repeat=16):
 
 
 def open_path(filepath):
-    """Validate and open the a file path."""
+    """Validate and open a file path."""
     filepath = Path(filepath)
     if not filepath.exists():
         raise ValueError(
