@@ -12,6 +12,7 @@ import pandas as pd
 from sdv.constraints import Constraint
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.utils import read_json, validate_file_does_not_exist
 
 
 class SingleTableMetadata:
@@ -488,16 +489,7 @@ class SingleTableMetadata:
         Returns:
             A ``SingleTableMetadata`` instance.
         """
-        filepath = Path(filepath)
-        if not filepath.exists():
-            raise ValueError(
-                f"A file named '{filepath.name}' does not exist. "
-                'Please specify a different filename.'
-            )
-
-        with open(filepath, 'r', encoding='utf-8') as metadata_file:
-            metadata = json.load(metadata_file)
-
+        metadata = read_json(filepath)
         if 'SCHEMA_VERSION' not in metadata:
             raise ValueError(
                 'This metadata file is incompatible with the ``SingleTableMetadata`` '
@@ -516,19 +508,13 @@ class SingleTableMetadata:
         Raises:
             Raises an ``Error`` if the path already exists.
         """
-        filepath = Path(filepath)
-        if filepath.exists():
-            raise ValueError(
-                f"A file named '{filepath.name}' already exists in this folder. Please specify "
-                'a different filename.'
-            )
-
+        validate_file_does_not_exist(filepath)
         metadata = self.to_dict()
         metadata['SCHEMA_VERSION'] = self.SCHEMA_VERSION
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)
 
     def __repr__(self):
-        """Pretty print the ``SingleTableMetadata```SingleTableMetadata``."""
+        """Pretty print the ``SingleTableMetadata``."""
         printed = json.dumps(self.to_dict(), indent=4)
         return printed
