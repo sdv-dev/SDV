@@ -6,6 +6,7 @@ from copy import deepcopy
 
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import visualize_graph
 
 
@@ -265,3 +266,36 @@ class MultiTableMetadata:
         self._validate_table_exists(table_name)
         table = self._tables.get(table_name)
         table.add_constraint(constraint_name, **kwargs)
+
+    @classmethod
+    def load_from_json(cls, filepath):
+        """Create a ``MultiTableMetadata`` instance from a ``json`` file.
+
+        Args:
+            filepath (str):
+                String that represents the ``path`` to the ``json`` file.
+
+        Raises:
+            - An ``Error`` if the path does not exist.
+            - An ``Error`` if the ``json`` file does not contain the ``SCHEMA_VERSION``.
+
+        Returns:
+            A ``MultiTableMetadata`` instance.
+        """
+        metadata = read_json(filepath)
+        return cls._load_from_dict(metadata)
+
+    def save_to_json(self, filepath):
+        """Save the current ``MultiTableMetadata`` in to a ``json`` file.
+
+        Args:
+            filepath (str):
+                String that represent the ``path`` to the ``json`` file to be written.
+
+        Raises:
+            Raises an ``Error`` if the path already exists.
+        """
+        validate_file_does_not_exist(filepath)
+        metadata = self.to_dict()
+        with open(filepath, 'w', encoding='utf-8') as metadata_file:
+            json.dump(metadata, metadata_file, indent=4)
