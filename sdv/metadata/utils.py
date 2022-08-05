@@ -154,7 +154,7 @@ def strings_from_regex(regex, max_repeat=16):
     return _from_generators(generators, max_repeat), np.prod(sizes)
 
 
-def open_path(filepath):
+def read_json(filepath):
     """Validate and open a file path."""
     filepath = Path(filepath)
     if not filepath.exists():

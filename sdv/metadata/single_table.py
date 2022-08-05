@@ -12,7 +12,7 @@ import pandas as pd
 from sdv.constraints import Constraint
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.metadata.errors import InvalidMetadataError
-from sdv.metadata.utils import open_path, validate_path
+from sdv.metadata.utils import read_json, validate_path
 
 
 class SingleTableMetadata:
@@ -489,7 +489,7 @@ class SingleTableMetadata:
         Returns:
             A ``SingleTableMetadata`` instance.
         """
-        metadata = open_path(filepath)
+        metadata = read_json(filepath)
         if 'SCHEMA_VERSION' not in metadata:
             raise ValueError(
                 'This metadata file is incompatible with the ``SingleTableMetadata`` '

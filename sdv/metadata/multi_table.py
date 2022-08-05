@@ -6,7 +6,7 @@ from copy import deepcopy
 
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.metadata.utils import open_path, validate_path
+from sdv.metadata.utils import read_json, validate_path
 from sdv.metadata.visualization import visualize_graph
 
 
@@ -281,7 +281,7 @@ class MultiTableMetadata:
         Returns:
             A ``MultiTableMetadata`` instance.
         """
-        metadata = open_path(filepath)
+        metadata = read_json(filepath)
         return cls._load_from_dict(metadata)
 
     def save_to_json(self, filepath):
