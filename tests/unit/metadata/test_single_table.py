@@ -1312,7 +1312,7 @@ class TestSingleTableMetadata:
         assert instance._constraints == []
         assert instance._version == 'SINGLE_TABLE_V1'
 
-    @patch('sdv.metadata.single_table.Path')
+    @patch('sdv.metadata.utils.Path')
     def test_load_from_json_path_does_not_exist(self, mock_path):
         """Test the ``load_from_json`` method.
 
@@ -1338,9 +1338,9 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             SingleTableMetadata.load_from_json('filepath.json')
 
-    @patch('sdv.metadata.single_table.open')
-    @patch('sdv.metadata.single_table.Path')
-    @patch('sdv.metadata.single_table.json')
+    @patch('sdv.metadata.utils.open')
+    @patch('sdv.metadata.utils.Path')
+    @patch('sdv.metadata.utils.json')
     def test_load_from_json_schema_not_present(self, mock_json, mock_path, mock_open):
         """Test the ``load_from_json`` method.
 
@@ -1380,9 +1380,9 @@ class TestSingleTableMetadata:
             SingleTableMetadata.load_from_json('filepath.json')
 
     @patch('sdv.metadata.single_table.Constraint')
-    @patch('sdv.metadata.single_table.open')
-    @patch('sdv.metadata.single_table.Path')
-    @patch('sdv.metadata.single_table.json')
+    @patch('sdv.metadata.utils.open')
+    @patch('sdv.metadata.utils.Path')
+    @patch('sdv.metadata.utils.json')
     def test_load_from_json(self, mock_json, mock_path, mock_open, mock_constraint):
         """Test the ``load_from_json`` method.
 
@@ -1433,7 +1433,7 @@ class TestSingleTableMetadata:
         assert instance._version == 'SINGLE_TABLE_V1'
         mock_constraint.from_dict.assert_called_once()
 
-    @patch('sdv.metadata.single_table.Path')
+    @patch('sdv.metadata.utils.Path')
     def test_save_to_json_file_exists(self, mock_path):
         """Test the ``save_to_json`` method.
 
