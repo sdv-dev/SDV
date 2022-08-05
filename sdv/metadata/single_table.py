@@ -529,6 +529,6 @@ class SingleTableMetadata:
             json.dump(metadata, metadata_file, indent=4)
 
     def __repr__(self):
-        """Pretty print the ``SingleTableMetadata```SingleTableMetadata``."""
+        """Pretty print the ``SingleTableMetadata``."""
         printed = json.dumps(self.to_dict(), indent=4)
         return printed
