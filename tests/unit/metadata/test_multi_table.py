@@ -645,3 +645,135 @@ class TestMultiTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.detect_table_from_dataframe('table', pd.DataFrame())
+
+    def test__validate_table_exists(self):
+        """Test ``_validate_table_exists``.
+
+        Expected to raise an error when the passed table name is not present in the metadata.
+        Expected to do nothing otherwise.
+
+        Input:
+            - Table name
+
+        Raises:
+            - ``ValueError`` if the table name is not in the metadata.
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._tables = {'table1': 'val', 'table2': 'val'}
+
+        # Run
+        metadata._validate_table_exists('table1')
+
+        # Assert
+        err_msg = re.escape("Unknown table name ('table3').")
+        with pytest.raises(ValueError, match=err_msg):
+            metadata._validate_table_exists('table3')
+
+    def test_set_primary_key(self):
+        """Test ``set_primary_key``.
+
+        The method should validate the table exists and call
+        ``SingleTableMetadata.set_primary_key``.
+
+        Setup:
+            - Instantiate ``MultiTableMetadata`` with some ``_tables``.
+            - Mock ``_validate_table_exists``.
+
+        Input:
+            - Table name
+            - Column name
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._tables = {'table1': Mock(), 'table2': 'val'}
+        metadata._validate_table_exists = Mock()
+
+        # Run
+        metadata.set_primary_key('table1', 'col')
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table1')
+        metadata._tables['table1'].set_primary_key.assert_called_once_with('col')
+
+    def test_set_sequence_key(self):
+        """Test ``set_sequence_key``.
+
+        The method should validate the table exists and call
+        ``SingleTableMetadata.set_sequence_key``.
+
+        Setup:
+            - Instantiate ``MultiTableMetadata`` with some ``_tables``.
+            - Mock ``_validate_table_exists``.
+
+        Input:
+            - Table name
+            - Column name
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._tables = {'table1': Mock(), 'table2': 'val'}
+        metadata._validate_table_exists = Mock()
+
+        # Run
+        warn_msg = 'Sequential modeling is not yet supported on SDV Multi Table models.'
+        with pytest.warns(match=warn_msg):
+            metadata.set_sequence_key('table1', 'col')
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table1')
+        metadata._tables['table1'].set_sequence_key.assert_called_once_with('col')
+
+    def test_set_alternate_keys(self):
+        """Test ``set_alternate_keys``.
+
+        The method should validate the table exists and call
+        ``SingleTableMetadata.set_alternate_keys``.
+
+        Setup:
+            - Instantiate ``MultiTableMetadata`` with some ``_tables``.
+            - Mock ``_validate_table_exists``.
+
+        Input:
+            - Table name
+            - List of column names
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._tables = {'table1': Mock(), 'table2': 'val'}
+        metadata._validate_table_exists = Mock()
+
+        # Run
+        metadata.set_alternate_keys('table1', ['col1', 'col2'])
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table1')
+        metadata._tables['table1'].set_alternate_keys.assert_called_once_with(['col1', 'col2'])
+
+    def test_set_sequence_index(self):
+        """Test ``set_sequence_index``.
+
+        The method should validate the table exists and call
+        ``SingleTableMetadata.set_sequence_index``.
+
+        Setup:
+            - Instantiate ``MultiTableMetadata`` with some ``_tables``.
+            - Mock ``_validate_table_exists``.
+
+        Input:
+            - Table name
+            - Column name
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._tables = {'table1': Mock(), 'table2': 'val'}
+        metadata._validate_table_exists = Mock()
+
+        # Run
+        warn_msg = 'Sequential modeling is not yet supported on SDV Multi Table models.'
+        with pytest.warns(match=warn_msg):
+            metadata.set_sequence_index('table1', 'col')
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table1')
+        metadata._tables['table1'].set_sequence_index.assert_called_once_with('col')
