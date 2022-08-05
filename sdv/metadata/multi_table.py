@@ -6,7 +6,7 @@ from copy import deepcopy
 
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.metadata.utils import read_json, validate_path
+from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import visualize_graph
 
 
@@ -294,7 +294,7 @@ class MultiTableMetadata:
         Raises:
             Raises an ``Error`` if the path already exists.
         """
-        validate_path(filepath)
+        validate_file_does_not_exist(filepath)
         metadata = self.to_dict()
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)

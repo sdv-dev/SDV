@@ -167,8 +167,8 @@ def read_json(filepath):
         return json.load(metadata_file)
 
 
-def validate_path(filepath):
-    """Validate a file path."""
+def validate_file_does_not_exist(filepath):
+    """Validate a file path doesn't exist."""
     filepath = Path(filepath)
     if filepath.exists():
         raise ValueError(
