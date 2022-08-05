@@ -1,6 +1,7 @@
 """Multi Table Metadata."""
 
 import json
+import warnings
 from copy import deepcopy
 
 from sdv.metadata.errors import InvalidMetadataError
@@ -118,9 +119,9 @@ class MultiTableMetadata:
         printed = json.dumps(self.to_dict(), indent=4)
         return printed
 
-    def _validate_table_name(self, table_name):
+    def _validate_table_exists(self, table_name):
         if table_name not in self._tables:
-            raise ValueError(f"Unknown table name ('{table_name}')")
+            raise ValueError(f"Unknown table name ('{table_name}').")
 
     def update_column(self, table_name, column_name, **kwargs):
         """Update an existing column for a table in the ``MultiTableMetadata``.
@@ -139,7 +140,7 @@ class MultiTableMetadata:
               ``sdtype``.
             - ``ValueError`` if the table doesn't exist in the ``MultiTableMetadata``.
         """
-        self._validate_table_name(table_name)
+        self._validate_table_exists(table_name)
         table = self._tables.get(table_name)
         table.update_column(column_name, **kwargs)
 
@@ -161,7 +162,7 @@ class MultiTableMetadata:
               ``sdtype``.
             - ``ValueError`` if the table doesn't exist in the ``MultiTableMetadata``.
         """
-        self._validate_table_name(table_name)
+        self._validate_table_exists(table_name)
         table = self._tables.get(table_name)
         table.add_column(column_name, **kwargs)
 
@@ -199,3 +200,53 @@ class MultiTableMetadata:
         table = SingleTableMetadata()
         table.detect_from_dataframe(data)
         self._tables[table_name] = table
+
+    def set_primary_key(self, table_name, id):
+        """Set the primary key of a table.
+
+        Args:
+            table_name (str):
+                Name of the table to set the primary key.
+            id (str, tulple[str]):
+                Name (or tuple of names) of the primary key column(s).
+        """
+        self._validate_table_exists(table_name)
+        self._tables[table_name].set_primary_key(id)
+
+    def set_sequence_key(self, table_name, id):
+        """Set the sequence key of a table.
+
+        Args:
+            table_name (str):
+                Name of the table to set the sequence key.
+            id (str, tulple[str]):
+                Name (or tuple of names) of the sequence key column(s).
+        """
+        self._validate_table_exists(table_name)
+        warnings.warn('Sequential modeling is not yet supported on SDV Multi Table models.')
+        self._tables[table_name].set_sequence_key(id)
+
+    def set_alternate_keys(self, table_name, ids):
+        """Set the alternate keys of a table.
+
+        Args:
+            table_name (str):
+                Name of the table to set the sequence key.
+            ids (list[str], list[tuple]):
+                List of names (or tuple of names) of the alternate key columns.
+        """
+        self._validate_table_exists(table_name)
+        self._tables[table_name].set_alternate_keys(ids)
+
+    def set_sequence_index(self, table_name, column_name):
+        """Set the sequence index of a table.
+
+        Args:
+            table_name (str):
+                Name of the table to set the sequence index.
+            column_name (str):
+                Name of the sequence index column.
+        """
+        self._validate_table_exists(table_name)
+        warnings.warn('Sequential modeling is not yet supported on SDV Multi Table models.')
+        self._tables[table_name].set_sequence_index(column_name)
