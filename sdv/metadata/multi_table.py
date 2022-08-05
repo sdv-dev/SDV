@@ -250,3 +250,18 @@ class MultiTableMetadata:
         self._validate_table_exists(table_name)
         warnings.warn('Sequential modeling is not yet supported on SDV Multi Table models.')
         self._tables[table_name].set_sequence_index(column_name)
+
+    def add_constraint(self, table_name, constraint_name, **kwargs):
+        """Add a constraint to a table in the multi-table metadata.
+
+        Args:
+            table_name (str):
+                Name of the table to add the column to.
+            constraint_name (string):
+                Name of the constraint class.
+            **kwargs:
+                Any other arguments the constraint requires.
+        """
+        self._validate_table_exists(table_name)
+        table = self._tables.get(table_name)
+        table.add_constraint(constraint_name, **kwargs)
