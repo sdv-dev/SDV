@@ -120,8 +120,8 @@ class TestMultiTableMetadata:
                 child_foreign_key
             )
 
-    def test__validate_missing_relationship_tables(self):
-        """Test the ``_validate_missing_relationship_tables`` method of ``MultiTableMetadata``.
+    def test__validate_no_missing_tables_in_relationship(self):
+        """Test the ``_validate_no_missing_tables_in_relationship`` method of ``MultiTableMetadata``.
 
         Setup:
             - Create a list of ``tables``.
@@ -137,7 +137,11 @@ class TestMultiTableMetadata:
         # Run
         error_msg = re.escape("Relationship contains an unknown table {'session'}.")
         with pytest.raises(ValueError, match=error_msg):
-            MultiTableMetadata._validate_missing_relationship_tables('users', 'session', tables)
+            MultiTableMetadata._validate_no_missing_tables_in_relationship(
+                'users',
+                'session',
+                tables
+            )
 
     def test__validate_missing_relationship_key_length(self):
         """Test the ``_validate_missing_relationship_key_length`` method of ``MultiTableMetadata``.
@@ -314,7 +318,7 @@ class TestMultiTableMetadata:
         # Assert
         assert errors == ['users']
 
-    def test_add_relationship_raises_value_error(self):
+    def test_validate_child_map_circular_relationship(self):
         """Test the ``add_relationship`` method of ``MultiTableMetadata``.
 
         Test that when a circular relationship occurs with the new relationship,
@@ -337,27 +341,21 @@ class TestMultiTableMetadata:
         # Setup
         instance = MultiTableMetadata()
         parent_table = Mock()
-        parent_table._primary_key = 'user_id'
-
-        parent_table._columns = {
-            'user_id': {'sdtype': 'numerical'},
-            'session_id': {'sdtype': 'numerical'},
-            'transaction': {'sdtype': 'numerical'}
-        }
         instance._tables = {
             'users': parent_table,
             'sessions': Mock(),
             'transactions': Mock()
         }
-        instance._relationships = [
-            {'parent_table_name': 'users', 'child_table_name': 'sessions'},
-            {'parent_table_name': 'sessions', 'child_table_name': 'users'}
-        ]
+        child_map = {
+            'users': {'sessions', 'transactions'},
+            'sessions': {'users'},
+            'transactions': set()
+        }
 
         # Run / Assert
         # TODO fix match error message
         with pytest.raises(ValueError):
-            instance.add_relationship('users', 'transactions', 'user_id', 'transaction')
+            instance._validate_child_map_circular_relationship(child_map)
 
     def test_add_relationship(self):
         """Test the ``add_relationship`` method of ``MultiTableMetadata``.
