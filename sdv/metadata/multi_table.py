@@ -113,7 +113,7 @@ class MultiTableMetadata:
             )
 
     def _validate_relationship(self, parent_table_name, child_table_name,
-                              parent_primary_key, child_foreign_key):
+                               parent_primary_key, child_foreign_key):
         parent_table = self._tables.get(parent_table_name)
         self._validate_no_missing_tables_in_relationship(
             parent_table_name, child_table_name, self._tables.keys())
