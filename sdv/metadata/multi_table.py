@@ -112,29 +112,8 @@ class MultiTableMetadata:
                 f'tables {set(errors)}.'
             )
 
-    def add_relationship(self, parent_table_name, child_table_name,
-                         parent_primary_key, child_foreign_key):
-        """Add a relationship between two tables.
-
-        Args:
-            parent_table_name (str):
-                A string representing the name of the parent table.
-            child_table_name (str):
-                A string representing the name of the child table.
-            parent_primary_key (str or tuple):
-                A string or tuple of strings representing the primary key of the parent.
-            child_foreign_key (str or tuple):
-                A string or tuple of strings representing the foreign key of the child.
-
-        Raises:
-            - ``ValueError`` if a table is missing.
-            - ``ValueError`` if the ``parent_primary_key`` or ``child_foreign_key`` are missing.
-            - ``ValueError`` if the ``parent_primary_key`` and ``child_foreign_key`` have different
-              size.
-            - ``ValueError`` if the ``parent_primary_key`` and ``child_foreign_key`` are different
-              ``sdtype``.
-            - ``ValueError`` if the relationship causes a circular dependency.
-        """
+    def _validate_relationship(self, parent_table_name, child_table_name,
+                              parent_primary_key, child_foreign_key):
         parent_table = self._tables.get(parent_table_name)
         self._validate_no_missing_tables_in_relationship(
             parent_table_name, child_table_name, self._tables.keys())
@@ -164,8 +143,33 @@ class MultiTableMetadata:
             child_map[parent_name].add(child_name)
 
         child_map[parent_table_name].add(child_table_name)
-
         self._validate_child_map_circular_relationship(child_map)
+
+    def add_relationship(self, parent_table_name, child_table_name,
+                         parent_primary_key, child_foreign_key):
+        """Add a relationship between two tables.
+
+        Args:
+            parent_table_name (str):
+                A string representing the name of the parent table.
+            child_table_name (str):
+                A string representing the name of the child table.
+            parent_primary_key (str or tuple):
+                A string or tuple of strings representing the primary key of the parent.
+            child_foreign_key (str or tuple):
+                A string or tuple of strings representing the foreign key of the child.
+
+        Raises:
+            - ``ValueError`` if a table is missing.
+            - ``ValueError`` if the ``parent_primary_key`` or ``child_foreign_key`` are missing.
+            - ``ValueError`` if the ``parent_primary_key`` and ``child_foreign_key`` have different
+              size.
+            - ``ValueError`` if the ``parent_primary_key`` and ``child_foreign_key`` are different
+              ``sdtype``.
+            - ``ValueError`` if the relationship causes a circular dependency.
+        """
+        self._validate_relationship(
+            parent_table_name, child_table_name, parent_primary_key, child_foreign_key)
         self._relationships.append({
             'parent_table_name': parent_table_name,
             'child_table_name': child_table_name,

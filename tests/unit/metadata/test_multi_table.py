@@ -357,6 +357,69 @@ class TestMultiTableMetadata:
         with pytest.raises(ValueError):
             instance._validate_child_map_circular_relationship(child_map)
 
+    @patch(
+        'sdv.metadata.multi_table.MultiTableMetadata._validate_no_missing_tables_in_relationship'
+    )
+    @patch('sdv.metadata.multi_table.MultiTableMetadata._validate_relationship_key_length')
+    @patch('sdv.metadata.multi_table.MultiTableMetadata._validate_relationship_sdtypes')
+    @patch('sdv.metadata.multi_table.MultiTableMetadata._validate_missing_relationship_keys')
+    def test__validate_relationship(self,
+                                    mock_validate_missing_relationship_keys,
+                                    mock_validate_relationship_sdtypes,
+                                    mock_validate_relationship_key_length,
+                                    mock_validate_no_missing_tables_in_relationship):
+        """Test thath the ``_validate_relationship`` method.
+
+        Test that when calling the ``_validate_relationship`` method, the other validation methods
+        for relationship are being called with the input values from this.
+
+        Setup:
+            - Instance of ``MultiTableMetadata``.
+            - Update with ``tables`` and mock a ``parent_table``.
+
+        Mock:
+            - Mock all validation methods.
+
+        Side Effects:
+            - All the validation methods are being called as expected.
+        """
+        # Setup
+        instance = MultiTableMetadata()
+        instance._validate_child_map_circular_relationship = Mock()
+        parent_table = Mock()
+        parent_table._primary_key = 'user_id'
+        parent_table._columns = {
+            'user_id': {'sdtype': 'numerical'},
+            'session_id': {'sdtype': 'numerical'},
+            'transaction_id': {'sdtype': 'numerical'}
+        }
+        instance._tables = {
+            'users': parent_table,
+            'sessions': Mock(),
+            'transactions': Mock()
+        }
+        instance._relationships = [{
+            'parent_table_name': 'users',
+            'child_table_name': 'transactions',
+            'parent_primary_key': 'user_id',
+            'child_foreign_key': 'transaction_id',
+        }]
+
+        # Run
+        instance._validate_relationship('users', 'transactions', 'user_id', 'transaction_id')
+
+        # Assert
+        mock_validate_no_missing_tables_in_relationship.assert_called_once_with(
+            'users', 'transactions', instance._tables.keys())
+        mock_validate_missing_relationship_keys.assert_called_once_with(
+            parent_table, 'users', 'user_id', 'transactions', 'transaction_id')
+        mock_validate_relationship_key_length.assert_called_once_with(
+            'users', 'user_id', 'transactions', 'transaction_id')
+        mock_validate_relationship_sdtypes.assert_called_once_with(
+            parent_table, 'users', 'user_id', 'transactions', 'transaction_id')
+        instance._validate_child_map_circular_relationship.assert_called_once_with(
+            {'users': {'transactions'}})
+
     def test_add_relationship(self):
         """Test the ``add_relationship`` method of ``MultiTableMetadata``.
 
