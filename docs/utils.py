@@ -19,8 +19,9 @@ def transform(column_names, data, increment, exclusion_column):
 def reverse_transform(column_names, transformed_data, increment, exclusion_column):
     column_name = column_names[0]
 
-    included = transformed_data[column_name].loc[(transformed_data[exclusion_column] == 0)]
-    included = included.round()
+    is_included = (transformed_data[exclusion_column] == 0)
+    rounded_data = transformed_data[is_included][column_name].round()
+    transformed_data.at[is_included, column_name] = rounded_data
 
-    transformed_data[column_name] = transformed_data[column_name].multiply(increment).round(2)
+    transformed_data[column_name] *= increment
     return transformed_data
