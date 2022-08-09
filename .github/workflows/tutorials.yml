@@ -35,5 +35,9 @@ jobs:
       run: python -m pip install pywinpty==2.0.1
     - name: Install package and dependencies
       run: pip install invoke jupyter .
+
+    - if: matrix.python-version != 3.6
+      name: Install NBConvert
+      run: pip install nbconvert==6.4.5 nbformat==5.4.0
     - name: invoke tutorials
       run: invoke tutorials
