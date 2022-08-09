@@ -101,7 +101,7 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
             pandas.Series:
                 Whether each row is valid.
         """
-        valid = self._is_valid(self.column_names, data, **self.kwargs)
+        valid = is_valid_fn(self.column_names, data, **self.kwargs)
         if len(valid) != data.shape[0]:
             raise InvalidFunctionError(
                 '`is_valid_fn` did not produce exactly 1 True/False value for each row.')
@@ -126,11 +126,11 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
                 Transformed data.
         """
         data = data.copy()
-        if self._transform is None:
+        if transform_fn is None:
             return data
 
         try:
-            transformed_data = self._transform(self.column_names, data, **self.kwargs)
+            transformed_data = transform_fn(self.column_names, data, **self.kwargs)
             if data.shape[0] != transformed_data.shape[0]:
                 raise InvalidFunctionError(
                     'Transformation did not produce the same number of rows as the original')
@@ -156,10 +156,10 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
                 Transformed data.
         """
         data = data.copy()
-        if self._reverse_transform is None:
+        if reverse_transform_fn is None:
             return data
 
-        transformed_data = self._reverse_transform(self.column_names, data, **self.kwargs)
+        transformed_data = reverse_transform_fn(self.column_names, data, **self.kwargs)
         if data.shape[0] != transformed_data.shape[0]:
             raise InvalidFunctionError(
                 'Reverse transform did not produce the same number of rows as the original.'
@@ -179,12 +179,6 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
     CustomConstraint = type('CustomConstraint', (Constraint, ), {
         '__init__': constructor,
         '__reduce__': _reduce,
-
-        '_is_valid': staticmethod(is_valid_fn),
-        '_transform': staticmethod(transform_fn) if transform_fn else transform_fn,
-        '_reverse_transform':
-            staticmethod(reverse_transform_fn) if reverse_transform_fn else reverse_transform_fn,
-
         'is_valid': is_valid,
         'transform': transform,
         'reverse_transform': reverse_transform,
