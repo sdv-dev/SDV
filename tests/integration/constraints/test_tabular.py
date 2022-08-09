@@ -8,7 +8,7 @@ from sdv.sampling.tabular import Condition
 from sdv.tabular import GaussianCopula
 
 
-def test_create_custom_constraint():
+def test_create_custom_constraint(tmpdir):
     """Test the ``create_custom_constraint`` method end to end."""
     # Setup
     custom_constraint = create_custom_constraint(
@@ -26,6 +26,7 @@ def test_create_custom_constraint():
 
     # Assert
     assert all(sampled > 0)
+    gc.save(tmpdir / 'test.pkl')
 
 
 def test_invalid_create_custom_constraint():
