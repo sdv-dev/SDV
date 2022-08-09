@@ -10,6 +10,14 @@ import numpy as np
 import sre_parse  # isort:skip
 
 
+def cast_to_iterable(value):
+    """Return a ``list`` if the input object is not a ``list`` or ``tuple``."""
+    if isinstance(value, (list, tuple)):
+        return value
+
+    return [value]
+
+
 def _literal(character, max_repeat):
     del max_repeat
     return iter([chr(character)]), 1
