@@ -12,7 +12,7 @@ import pandas as pd
 from sdv.constraints import Constraint
 from sdv.constraints.errors import MultipleConstraintsErrors
 from sdv.metadata.errors import InvalidMetadataError
-from sdv.metadata.utils import read_json, validate_file_does_not_exist
+from sdv.metadata.utils import cast_to_iterable, read_json, validate_file_does_not_exist
 
 
 class SingleTableMetadata:
@@ -269,7 +269,8 @@ class SingleTableMetadata:
             id (str, tuple):
                 Name (or tuple of names) of the primary key column(s).
         """
-        self._validate_key(id, 'primary')
+        if id is not None:
+            self._validate_key(id, 'primary')
 
         if self._primary_key is not None:
             warnings.warn(
@@ -286,7 +287,8 @@ class SingleTableMetadata:
             id (str, tuple):
                 Name (or tuple of names) of the sequence key column(s).
         """
-        self._validate_key(id, 'sequence')
+        if id is not None:
+            self._validate_key(id, 'sequence')
 
         if self._sequence_key is not None:
             warnings.warn(
@@ -347,7 +349,7 @@ class SingleTableMetadata:
     def _validate_sequence_index_not_in_sequence_key(self):
         """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
         seq_key = self._sequence_key
-        sequence_key = {seq_key} if isinstance(seq_key, str) else set(seq_key)
+        sequence_key = set(cast_to_iterable(seq_key))
         if self._sequence_index in sequence_key or seq_key is None:
             index = {self._sequence_index}
             raise ValueError(
@@ -395,11 +397,17 @@ class SingleTableMetadata:
                 errors.append(reformated_errors)
 
         # Validate keys
-        self._append_error(errors, self._validate_key, self._primary_key, 'primary')
-        self._append_error(errors, self._validate_key, self._sequence_key, 'sequence')
+        if self._primary_key:
+            self._append_error(errors, self._validate_key, self._primary_key, 'primary')
+
+        if self._sequence_key:
+            self._append_error(errors, self._validate_key, self._sequence_key, 'sequence')
+
+        if self._sequence_index:
+            self._append_error(errors, self._validate_sequence_index, self._sequence_index)
+            self._append_error(errors, self._validate_sequence_index_not_in_sequence_key)
+
         self._append_error(errors, self._validate_alternate_keys, self._alternate_keys)
-        self._append_error(errors, self._validate_sequence_index, self._sequence_index)
-        self._append_error(errors, self._validate_sequence_index_not_in_sequence_key)
 
         # Validate columns
         for column, kwargs in self._columns.items():

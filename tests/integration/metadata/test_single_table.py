@@ -90,10 +90,10 @@ def test_validate_errors():
         "\n'value' must be an int or float."
         "\n'primary_key' must be a string or tuple of strings."
         "\nUnknown sequence key values {'col3'}. Keys should be columns that exist in the table."
-        "\n'alternate_keys' must be a list of strings or a list of tuples of strings."
         "\nUnknown sequence index value {'col3'}. Keys should be columns that exist in the table."
         "\n'sequence_index' and 'sequence_key' have the same value {'col3'}."
         ' These columns must be different.'
+        "\n'alternate_keys' must be a list of strings or a list of tuples of strings."
         "\nInvalid values '(invalid1)' for categorical column 'col4'."
         "\nInvalid order value provided for categorical column 'col5'."
         " The 'order' must be a list with 1 or more elements."
