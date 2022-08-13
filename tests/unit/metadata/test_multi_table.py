@@ -385,7 +385,6 @@ class TestMultiTableMetadata:
         """
         # Setup
         instance = MultiTableMetadata()
-        instance._validate_child_map_circular_relationship = Mock()
         parent_table = Mock()
         parent_table._primary_key = 'user_id'
         parent_table._columns = {
@@ -417,8 +416,6 @@ class TestMultiTableMetadata:
             'users', 'user_id', 'transactions', 'transaction_id')
         mock_validate_relationship_sdtypes.assert_called_once_with(
             parent_table, 'users', 'user_id', 'transactions', 'transaction_id')
-        instance._validate_child_map_circular_relationship.assert_called_once_with(
-            {'users': {'transactions'}})
 
     def test_add_relationship(self):
         """Test the ``add_relationship`` method of ``MultiTableMetadata``.
@@ -431,6 +428,9 @@ class TestMultiTableMetadata:
             - Mock of ``parent_table`` simulating a ``SingleTableMetadata``.
             - Update ``_tables``.
 
+        Mock:
+            - Mock ``validate_child_map_circular_relationship``.
+
         Input:
             - ``parent_table_name`` string representing the parent table name.
             - ``child_table_name`` string representing the child table name.
@@ -442,6 +442,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         instance = MultiTableMetadata()
+        instance._validate_child_map_circular_relationship = Mock()
         parent_table = Mock()
         parent_table._primary_key = 'user_id'
         parent_table._columns = {
@@ -465,6 +466,8 @@ class TestMultiTableMetadata:
             'parent_primary_key': 'user_id',
             'child_foreign_key': 'transaction',
         }]
+        instance._validate_child_map_circular_relationship.assert_called_once_with(
+            {'users': {'transactions'}})
 
     def test_to_dict(self):
         """Test the ``to_dict`` method of ``MultiTableMetadata``.
