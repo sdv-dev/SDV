@@ -18,9 +18,10 @@ class MultiTableMetadata:
         self._tables = {}
         self._relationships = []
 
-    @staticmethod
-    def _validate_missing_relationship_keys(parent_table, parent_table_name, parent_primary_key,
+    def _validate_missing_relationship_keys(self, parent_table_name, parent_primary_key,
                                             child_table_name, child_foreign_key):
+        parent_table = self._tables.get(parent_table_name)
+        child_table = self._tables.get(child_table_name)
         if parent_table._primary_key is None:
             raise ValueError(
                 f"The parent table '{parent_table_name}' does not have a primary key set. "
@@ -41,7 +42,7 @@ class MultiTableMetadata:
             )
 
         for key in set(cast_to_iterable(child_foreign_key)):
-            if key not in parent_table._columns:
+            if key not in child_table._columns:
                 missing_keys.add(key)
 
         if missing_keys:
@@ -71,14 +72,14 @@ class MultiTableMetadata:
                 f'length {fk_len}.'
             )
 
-    @staticmethod
-    def _validate_relationship_sdtypes(parent_table, parent_table_name, parent_primary_key,
+    def _validate_relationship_sdtypes(self, parent_table_name, parent_primary_key,
                                        child_table_name, child_foreign_key):
-        parent_columns = parent_table._columns
+        parent_table_columns = self._tables.get(parent_table_name)._columns
+        child_table_columns = self._tables.get(child_table_name)._columns
         parent_primary_key = cast_to_iterable(parent_primary_key)
         child_foreign_key = cast_to_iterable(child_foreign_key)
         for pk, fk in zip(parent_primary_key, child_foreign_key):
-            if parent_columns[pk]['sdtype'] != parent_columns[fk]['sdtype']:
+            if parent_table_columns[pk]['sdtype'] != child_table_columns[fk]['sdtype']:
                 raise ValueError(
                     f"Relationship between tables ('{parent_table_name}', '{child_table_name}') "
                     'is invalid. The primary and foreign key columns are not the same type.'
@@ -120,12 +121,10 @@ class MultiTableMetadata:
 
     def _validate_relationship(self, parent_table_name, child_table_name,
                                parent_primary_key, child_foreign_key):
-        parent_table = self._tables.get(parent_table_name)
         self._validate_no_missing_tables_in_relationship(
             parent_table_name, child_table_name, self._tables.keys())
 
         self._validate_missing_relationship_keys(
-            parent_table,
             parent_table_name,
             parent_primary_key,
             child_table_name,
@@ -135,7 +134,6 @@ class MultiTableMetadata:
             parent_table_name, parent_primary_key, child_table_name, child_foreign_key)
 
         self._validate_relationship_sdtypes(
-            parent_table,
             parent_table_name,
             parent_primary_key,
             child_table_name,
