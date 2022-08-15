@@ -72,6 +72,7 @@ def _validate_arguments(synthetic_data, real_data, metadata, root_path, table_na
 
 
 def _select_metrics(synthetic_data, metrics):
+    # Change stuff here
     if isinstance(synthetic_data, dict):
         modality = 'multi-table'
         metric_classes = sdmetrics.multi_table.MultiTableMetric.get_subclasses()
