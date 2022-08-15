@@ -2,6 +2,7 @@
 
 import json
 import re
+from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock, patch
@@ -10,11 +11,71 @@ import pandas as pd
 import pytest
 
 from sdv.metadata.errors import InvalidMetadataError
-from sdv.metadata.multi_table import MultiTableMetadata
+from sdv.metadata.multi_table import MultiTableMetadata, SingleTableMetadata
 
 
 class TestMultiTableMetadata:
     """Test ``MultiTableMetadata`` class."""
+
+    def get_metadata(self):
+        """Set the tables and relationships for metadata."""
+        metadata = {}
+        metadata['tables'] = {
+            'users': {
+                'columns': {
+                    'id': {'sdtype': 'numerical'},
+                    'country': {'sdtype': 'categorical'}
+                },
+                'primary_key': 'id'
+            },
+            'payments': {
+                'columns': {
+                    'payment_id': {'sdtype': 'numerical'},
+                    'user_id': {'sdtype': 'numerical'},
+                    'date': {'sdtype': 'datetime'}
+                },
+                'primary_key': 'payment_id'
+            },
+            'sessions': {
+                'columns': {
+                    'session_id': {'sdtype': 'numerical'},
+                    'user_id': {'sdtype': 'numerical'},
+                    'device': {'sdtype': 'categorical'}
+                },
+                'primary_key': 'session_id'
+            },
+            'transactions': {
+                'columns': {
+                    'transaction_id': {'sdtype': 'numerical'},
+                    'session_id': {'sdtype': 'numerical'},
+                    'timestamp': {'sdtype': 'datetime'}
+                },
+                'primary_key': 'transaction_id'
+            }
+        }
+
+        metadata['relationships'] = [
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'id',
+                'child_table_name': 'sessions',
+                'child_foreign_key': 'user_id',
+            },
+            {
+                'parent_table_name': 'sessions',
+                'parent_primary_key': 'session_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'session_id',
+            },
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'id',
+                'child_table_name': 'payments',
+                'child_foreign_key': 'user_id',
+            }
+        ]
+
+        return MultiTableMetadata._load_from_dict(metadata)
 
     def test___init__(self):
         """Test the ``__init__`` method of ``MultiTableMetadata``."""
@@ -469,6 +530,208 @@ class TestMultiTableMetadata:
         instance._validate_child_map_circular_relationship.assert_called_once_with(
             {'users': {'transactions'}})
 
+    def test__validate_single_table(self):
+        """Test ``_validate_single_table``.
+
+        Test that ``_validate_single_table`` iterates over the ``self._tables`` items and
+        calls their ``validate()`` method, catches the error if raised and parses it to
+        ``MultiTableMetadata`` error message.
+
+        Setup:
+            - Create a ``SingleTableMetadata`` that's invalid.
+            - Instance of ``MultiTableMetadata`` that contains an invalid and a valid table.
+
+        Side Effects:
+            - Errors has been updated with the error message for that column.
+        """
+        # Setup
+        table_accounts = SingleTableMetadata._load_from_dict({
+            'columns': {
+                'id': {'sdtype': 'numerical'},
+                'branch_id': {'sdtype': 'numerical'},
+                'amount': {'sdtype': 'numerical'},
+                'start_date': {'sdtype': 'datetime'},
+                'owner': {'sdtype': 'text'},
+            },
+            'primary_key': 'branches'
+        })
+
+        instance = Mock()
+        instance._tables = {
+            'accounts': table_accounts,
+            'users': Mock()
+        }
+        errors = []
+
+        # Run
+        MultiTableMetadata._validate_single_table(instance, errors)
+
+        # Assert
+        expected_error_msg = (
+            "Table: accounts\nUnknown primary key values {'branches'}. "
+            'Keys should be columns that exist in the table.'
+            "\nInvalid regex format string 'None' for text column 'owner'."
+        )
+        assert errors == ['\n', expected_error_msg]
+
+    def test__validate_disjoined_tables_connected(self):
+        """Test ``_validate_disjoined_tables``.
+
+        Test that ``_validate_disjoined_tables`` performs a ``DFS`` and marks nodes as
+        ``connected`` if all are connected no error is being raised.
+
+        Setup:
+            - Create a mock instance of the ``MultiTableMetadata``.
+            - Set ``_table`` to the ``instance``.
+            - Create a list of ``relationships``.
+            - Create ``parent_map`` and ``child_map``.
+
+        Mock:
+            - Mock the tables as they are not being used.
+
+        Side Effects:
+            - No error raised.
+        """
+        # Setup
+        instance = Mock()
+        instance._tables = {
+            'users': Mock(),
+            'sessions': Mock(),
+            'transactions': Mock(),
+            'accounts': Mock()
+        }
+        relationships = [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessions'
+            },
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'transactions'
+            },
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'accounts'
+            },
+
+        ]
+
+        parent_map = defaultdict(set)
+        child_map = defaultdict(set)
+        for relation in relationships:
+            parent_name = relation['parent_table_name']
+            child_name = relation['child_table_name']
+            parent_map[child_name].add(parent_name)
+            child_map[parent_name].add(child_name)
+
+        # Run
+        MultiTableMetadata._validate_disjoined_tables(instance, parent_map, child_map)
+
+    def test__validate_disjoined_tables_not_connected(self):
+        """Test ``_validate_disjoined_tables``.
+
+        Test that ``_validate_disjoined_tables`` performs a ``DFS`` and marks nodes as
+        ``connected``. A ``ValueError`` is being raised since one colmn is not connected.
+
+        Setup:
+            - Create a mock instance of the ``MultiTableMetadata``.
+            - Set ``_table`` to the ``instance``.
+            - Create a list of ``relationships``.
+            - Create ``parent_map`` and ``child_map``.
+
+        Mock:
+            - Mock the tables as they are not being used.
+
+        Side Effects:
+            - ``ValueError`` is raised stating that a ``table`` is disjointed.
+        """
+        # Setup
+        instance = Mock()
+        instance._tables = {
+            'users': Mock(),
+            'sessions': Mock(),
+            'transactions': Mock(),
+            'accounts': Mock(),
+        }
+        relationships = [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessions'
+            },
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'transactions'
+            },
+
+        ]
+
+        parent_map = defaultdict(set)
+        child_map = defaultdict(set)
+        for relation in relationships:
+            parent_name = relation['parent_table_name']
+            child_name = relation['child_table_name']
+            parent_map[child_name].add(parent_name)
+            child_map[parent_name].add(child_name)
+
+        # Run
+        error_msg = (
+            "The relationships in the dataset are disjointed. Table {'accounts'} "
+            'is not connected to any of the other tables.'
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            MultiTableMetadata._validate_disjoined_tables(instance, parent_map, child_map)
+
+    def test__validate_disjoined_tables_multiple_not_connected(self):
+        """Test ``_validate_disjoined_tables``.
+
+        Test that ``_validate_disjoined_tables`` performs a ``DFS`` and marks nodes as
+        ``connected``. A ``ValueError`` is being raised since two colmns are not connected.
+
+        Setup:
+            - Create a mock instance of the ``MultiTableMetadata``.
+            - Set ``_table`` to the ``instance``.
+            - Create a list of ``relationships``.
+            - Create ``parent_map`` and ``child_map``.
+
+        Mock:
+            - Mock the tables as they are not being used.
+
+        Side Effects:
+            - ``ValueError`` is raised stating that more than one tables are disjointed.
+        """
+        # Setup
+        instance = Mock()
+        instance._tables = {
+            'users': Mock(),
+            'sessions': Mock(),
+            'transactions': Mock(),
+            'accounts': Mock(),
+            'branches': Mock()
+        }
+        relationships = [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessions'
+            },
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'transactions'
+            },
+
+        ]
+
+        parent_map = defaultdict(set)
+        child_map = defaultdict(set)
+        for relation in relationships:
+            parent_name = relation['parent_table_name']
+            child_name = relation['child_table_name']
+            parent_map[child_name].add(parent_name)
+            child_map[parent_name].add(child_name)
+
+        # Run
+        with pytest.raises(ValueError):
+            MultiTableMetadata._validate_disjoined_tables(instance, parent_map, child_map)
+
     def test_to_dict(self):
         """Test the ``to_dict`` method of ``MultiTableMetadata``.
 
@@ -687,66 +950,6 @@ class TestMultiTableMetadata:
         # Assert
         mock_json.dumps.assert_called_once_with(instance.to_dict(), indent=4)
         assert res == mock_json.dumps.return_value
-
-    def get_metadata(self):
-        """Set the tables and relationships for metadata."""
-        metadata = {}
-        metadata['tables'] = {
-            'users': {
-                'columns': {
-                    'id': {'sdtype': 'numerical'},
-                    'country': {'sdtype': 'categorical'}
-                },
-                'primary_key': 'id'
-            },
-            'payments': {
-                'columns': {
-                    'payment_id': {'sdtype': 'numerical'},
-                    'user_id': {'sdtype': 'numerical'},
-                    'date': {'sdtype': 'datetime'}
-                },
-                'primary_key': 'payment_id'
-            },
-            'sessions': {
-                'columns': {
-                    'session_id': {'sdtype': 'numerical'},
-                    'user_id': {'sdtype': 'numerical'},
-                    'device': {'sdtype': 'categorical'}
-                },
-                'primary_key': 'session_id'
-            },
-            'transactions': {
-                'columns': {
-                    'transaction_id': {'sdtype': 'numerical'},
-                    'session_id': {'sdtype': 'numerical'},
-                    'timestamp': {'sdtype': 'datetime'}
-                },
-                'primary_key': 'transaction_id'
-            }
-        }
-
-        metadata['relationships'] = [
-            {
-                'parent_table_name': 'users',
-                'parent_primary_key': 'id',
-                'child_table_name': 'sessions',
-                'child_foreign_key': 'user_id',
-            },
-            {
-                'parent_table_name': 'sessions',
-                'parent_primary_key': 'session_id',
-                'child_table_name': 'transactions',
-                'child_foreign_key': 'session_id',
-            },
-            {
-                'parent_table_name': 'users',
-                'parent_primary_key': 'id',
-                'child_table_name': 'payments',
-                'child_foreign_key': 'user_id',
-            }
-        ]
-
-        return MultiTableMetadata._load_from_dict(metadata)
 
     @patch('sdv.metadata.multi_table.visualize_graph')
     def test_visualize_show_relationship_and_details(self, visualize_graph_mock):

@@ -458,7 +458,7 @@ class MultiTableMetadata:
                     queue.append(child)
 
         if not all(connected.values()):
-            not_connected_tables = {}
+            not_connected_tables = set()
             for table, value in connected.items():
                 if not value:
                     not_connected_tables.add(table)
@@ -500,7 +500,7 @@ class MultiTableMetadata:
             child_map[parent_name].add(child_name)
 
         try:
-            self._validate_child_map_circular_relationship(self.child_map)
+            self._validate_child_map_circular_relationship(child_map)
         except Exception as error:
             if '\nRelationships:' not in errors:
                 errors.append('\nRelationships:')
