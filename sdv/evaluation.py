@@ -11,6 +11,7 @@ def _validate_arguments(synthetic_data, real_data, metadata, root_path, table_na
 
     If ``metadata`` is an instance of dict create the ``Metadata`` object.
     If ``metadata`` is ``None``, ``real_data`` has to be a ``pandas.DataFrane``.
+    If ``metadata`` is a dict, ``root_path`` must be passed.
 
     If ``real_data`` is ``None`` load all the tables and assert that ``synthetic_data`` is
     a ``dict``. Otherwise, ``real_data`` and ``synthetic_data`` must be of the same type.
@@ -52,6 +53,10 @@ def _validate_arguments(synthetic_data, real_data, metadata, root_path, table_na
     elif not isinstance(synthetic_data, type(real_data)):
         raise TypeError('`real_data` and `synthetic_data` must be of the same type')
 
+    # Get table name from metadata for single tables when table_name is not passed
+    if table_name is None and not isinstance(synthetic_data, dict):
+        table_name = list(metadata.to_dict()['tables'].keys())[0]
+
     if not isinstance(synthetic_data, dict):
         synthetic_data = {table_name: synthetic_data}
 
@@ -80,6 +85,10 @@ def _select_metrics(synthetic_data, metrics):
         metric_classes = sdmetrics.single_table.SingleTableMetric.get_subclasses()
 
     if metrics is None:
+        metric_classes = {
+            'KSComplement': metric_classes['KSComplement'],
+            'CSTest': metric_classes['CSTest'],
+        }
         return metric_classes, modality
 
     final_metrics = {}
@@ -104,6 +113,7 @@ def evaluate(synthetic_data, real_data=None, metadata=None, root_path=None,
         real_data (dict[str, pandas.DataFrame] or pandas.DataFrame):
             Map of names and tables of real data. When evaluating a single table,
             a single ``pandas.DataFrame`` can be passed alone.
+            If metadata is None, this parameter must be a dataframe.
         metadata (str, dict, Metadata or None):
             Metadata instance or details needed to build it.
         root_path (str):

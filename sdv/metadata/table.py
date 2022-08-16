@@ -702,7 +702,6 @@ class Table:
                 )
         except rdt.errors.NotFittedError:
             LOGGER.info('HyperTransformer has not been fitted for table %s', self.name)
-            pass
 
         for constraint in reversed(self._constraints_to_reverse):
             reversed_data = constraint.reverse_transform(reversed_data)
