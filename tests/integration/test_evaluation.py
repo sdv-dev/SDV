@@ -1,7 +1,6 @@
 from sdv import SDV, Metadata, load_demo
 from sdv.evaluation import evaluate
 
-
 def test_evaluate_tables_from_demo():
     tables = load_demo(metadata=False)
 
@@ -32,4 +31,3 @@ def test_evaluate_tables_from_demo():
     score = evaluate(sampled, tables, metadata=new_meta)
 
     assert isinstance(score, float)
-    assert 0 <= score <= 1

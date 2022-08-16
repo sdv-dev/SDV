@@ -80,6 +80,10 @@ def _select_metrics(synthetic_data, metrics):
         metric_classes = sdmetrics.single_table.SingleTableMetric.get_subclasses()
 
     if metrics is None:
+        metric_classes = {
+            'KSComplement': metric_classes['KSComplement'],
+            'CSTest': metric_classes['CSTest'],
+        }
         return metric_classes, modality
 
     final_metrics = {}
