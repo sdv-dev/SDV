@@ -11,6 +11,7 @@ def _validate_arguments(synthetic_data, real_data, metadata, root_path, table_na
 
     If ``metadata`` is an instance of dict create the ``Metadata`` object.
     If ``metadata`` is ``None``, ``real_data`` has to be a ``pandas.DataFrane``.
+    If ``metadata`` is a dict, ``root_path`` must be passed.
 
     If ``real_data`` is ``None`` load all the tables and assert that ``synthetic_data`` is
     a ``dict``. Otherwise, ``real_data`` and ``synthetic_data`` must be of the same type.
@@ -108,6 +109,7 @@ def evaluate(synthetic_data, real_data=None, metadata=None, root_path=None,
         real_data (dict[str, pandas.DataFrame] or pandas.DataFrame):
             Map of names and tables of real data. When evaluating a single table,
             a single ``pandas.DataFrame`` can be passed alone.
+            If metadata is None, this parameter must be a dataframe.
         metadata (str, dict, Metadata or None):
             Metadata instance or details needed to build it.
         root_path (str):
@@ -133,8 +135,8 @@ def evaluate(synthetic_data, real_data=None, metadata=None, root_path=None,
     if modality == 'single-table':
         table = list(metadata['tables'].keys())[0]
         metadata = metadata['tables'][table]
-        real_data = real_data[table]
-        synthetic_data = synthetic_data[table]
+        real_data = real_data[None]
+        synthetic_data = synthetic_data[None]
 
     scores = sdmetrics.compute_metrics(metrics, real_data, synthetic_data, metadata=metadata)
 
