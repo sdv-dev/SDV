@@ -53,6 +53,10 @@ def _validate_arguments(synthetic_data, real_data, metadata, root_path, table_na
     elif not isinstance(synthetic_data, type(real_data)):
         raise TypeError('`real_data` and `synthetic_data` must be of the same type')
 
+    # Get table name from metadata for single tables when table_name is not passed
+    if table_name is None and not isinstance(synthetic_data, dict):
+        table_name = list(metadata.to_dict()['tables'].keys())[0]
+
     if not isinstance(synthetic_data, dict):
         synthetic_data = {table_name: synthetic_data}
 
@@ -135,8 +139,8 @@ def evaluate(synthetic_data, real_data=None, metadata=None, root_path=None,
     if modality == 'single-table':
         table = list(metadata['tables'].keys())[0]
         metadata = metadata['tables'][table]
-        real_data = real_data[None]
-        synthetic_data = synthetic_data[None]
+        real_data = real_data[table]
+        synthetic_data = synthetic_data[table]
 
     scores = sdmetrics.compute_metrics(metrics, real_data, synthetic_data, metadata=metadata)
 

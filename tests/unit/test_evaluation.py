@@ -98,14 +98,13 @@ class TestSDV(TestCase):
         assert score == 1
 
     def test_evaluate_single_table_with_metadata(self):
-        """Test the ``evaluate`` method for single tables with metadata.
-
-        Ensure the default metrics are called when no metrics are passed.
+        """Test the ``evaluate`` method for single tables when metadata is passed.
 
         Setup:
             - Mock ``sdmetrics.compute_metrics`` (but keep it's default behavior).
         Input:
             - The same dataframe twice.
+            - Metadata with one table.
         Output:
             - Score should be 1.
         Side Effect:
