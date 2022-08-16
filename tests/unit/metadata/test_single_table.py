@@ -1180,8 +1180,17 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         instance._columns = {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
         instance._constraints = [
-            ('Inequality', {'low_column_name': 'col1', 'high_column_name': 'col2'}),
-            ('ScalarInequality', {'column_name': 'col1', 'relation': '<', 'value': 10})
+            {
+                'constraint_name': 'Inequality',
+                'low_column_name': 'col1',
+                'high_column_name': 'col2'
+            },
+            {
+                'constraint_name': 'ScalarInequality',
+                'column_name': 'col1',
+                'relation': '<',
+                'value': 10
+            }
         ]
         instance._primary_key = 'col1'
         instance._alternate_keys = ['col2']
@@ -1207,8 +1216,8 @@ class TestSingleTableMetadata:
 
         # Assert
         instance._validate_constraint.assert_has_calls([
-            call('Inequality', low_column_name='col1', high_column_name='col2'),
-            call('ScalarInequality', column_name='col1', relation='<', value=10)
+            call(constraint_name='Inequality', low_column_name='col1', high_column_name='col2'),
+            call(constraint_name='ScalarInequality', column_name='col1', relation='<', value=10)
         ])
         instance._validate_key.assert_has_calls(
             [call(instance._primary_key, 'primary'), call(instance._sequence_key, 'sequence')]
@@ -1226,7 +1235,6 @@ class TestSingleTableMetadata:
         Setup:
             - Instance of ``SingleTableMetadata`` and modify the ``instance._columns`` to ensure
             that ``to_dict`` works properly.
-            - Add constraint Mock and ensure that `to_dict` of the object is being called.
         Output:
             - A dictionary representation of the ``instance`` that does not modify the
               internal dictionaries.
@@ -1234,10 +1242,9 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         instance._columns['my_column'] = 'value'
-        constraint = Mock()
-        constraint.to_dict.return_value = {'column': 'value', 'scalar': 1}
-        dict_constraint = {'column': 'value', 'increment_value': 20}
-        instance._constraints.extend([constraint, dict_constraint])
+        dict_constraint1 = {'column': 'value', 'scalar': 1}
+        dict_constraint2 = {'column': 'value', 'increment_value': 20}
+        instance._constraints.extend([dict_constraint1, dict_constraint2])
 
         # Run
         result = instance.to_dict()
@@ -1251,8 +1258,6 @@ class TestSingleTableMetadata:
             ],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
-
-        constraint.to_dict.assert_called_once()
 
         # Ensure that the output object does not alterate the inside object
         result['columns']['my_column'] = 1
@@ -1546,15 +1551,15 @@ class TestSingleTableMetadata:
         dummy_constraint_class._validate_metadata.assert_called_once_with(
             metadata,
             low_column_name='child_age',
-            high_column_name='start_date'
+            high_column_name='start_date',
+            constraint_name='Inequality'
         )
 
-        assert metadata._constraints == [(
-            'Inequality', {
-                'low_column_name': 'child_age',
-                'high_column_name': 'start_date'
-            }
-        )]
+        assert metadata._constraints == [{
+            'constraint_name': 'Inequality',
+            'low_column_name': 'child_age',
+            'high_column_name': 'start_date'
+        }]
 
     def test_add_constraint_bad_constraint(self):
         """Test the ``add_constraint`` method with a non-existent constraint.
