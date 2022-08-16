@@ -10,7 +10,7 @@ class DataProcessor:
 
     This class handles all pre and post processing that is done to a single table to get it ready
     for modeling and finalize sampling. These processes include formatting, transformations,
-    anonymization and constraint hanlding.
+    anonymization and constraint handling.
 
     Args:
         metadata (metadata.SingleTableMetadata):
@@ -23,7 +23,8 @@ class DataProcessor:
             Specify whether or not to clip the data returned by reverse_transform of the numerical
             transformer, FloatFormatter, to the min and max values seen during fit.
             Defaults to True.
-        model_kwargs (dict): Dictionary specifying the kwargs that need to be used in each tabular
+        model_kwargs (dict):
+            Dictionary specifying the kwargs that need to be used in each tabular
             model when working on this table. This dictionary contains as keys the name of the
             TabularModel class and as values a dictionary containing the keyword arguments to use.
             This argument exists mostly to ensure that the models are fitted using the same
