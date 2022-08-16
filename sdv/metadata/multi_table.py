@@ -451,9 +451,9 @@ class MultiTableMetadata:
                 table.validate()
             except Exception as error:
                 errors.append('\n')
-                tittle = f'Table: {table_name}'
+                title = f'Table: {table_name}'
                 error = str(error).replace(
-                    'The following errors were found in the metadata:\n', tittle)
+                    'The following errors were found in the metadata:\n', title)
                 errors.append(error)
 
     def _validate_all_tables_connected(self, parent_map, child_map):
