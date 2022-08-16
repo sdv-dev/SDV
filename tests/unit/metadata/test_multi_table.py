@@ -1161,7 +1161,7 @@ class TestMultiTableMetadata:
 
         # Run
         warn_msg = 'Sequential modeling is not yet supported on SDV Multi Table models.'
-        with pytest.warns(match=warn_msg):
+        with pytest.warns(Warning, match=warn_msg):
             metadata.set_sequence_key('table1', 'col')
 
         # Assert
@@ -1215,7 +1215,7 @@ class TestMultiTableMetadata:
 
         # Run
         warn_msg = 'Sequential modeling is not yet supported on SDV Multi Table models.'
-        with pytest.warns(match=warn_msg):
+        with pytest.warns(Warning, match=warn_msg):
             metadata.set_sequence_index('table1', 'col')
 
         # Assert
