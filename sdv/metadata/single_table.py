@@ -251,16 +251,17 @@ class SingleTableMetadata:
 
     def _validate_key(self, id, key_type):
         """Validate the primary and sequence keys."""
-        if not self._validate_datatype(id):
-            raise ValueError(f"'{key_type}_key' must be a string or tuple of strings.")
+        if id is not None:
+            if not self._validate_datatype(id):
+                raise ValueError(f"'{key_type}_key' must be a string or tuple of strings.")
 
-        keys = {id} if isinstance(id, str) else set(id)
-        invalid_ids = keys - set(self._columns)
-        if invalid_ids:
-            raise ValueError(
-                f'Unknown {key_type} key values {invalid_ids}.'
-                ' Keys should be columns that exist in the table.'
-            )
+            keys = {id} if isinstance(id, str) else set(id)
+            invalid_ids = keys - set(self._columns)
+            if invalid_ids:
+                raise ValueError(
+                    f'Unknown {key_type} key values {invalid_ids}.'
+                    ' Keys should be columns that exist in the table.'
+                )
 
     def set_primary_key(self, id):
         """Set the metadata primary key.
@@ -269,9 +270,7 @@ class SingleTableMetadata:
             id (str, tuple):
                 Name (or tuple of names) of the primary key column(s).
         """
-        if id is not None:
-            self._validate_key(id, 'primary')
-
+        self._validate_key(id, 'primary')
         if self._primary_key is not None:
             warnings.warn(
                 f"There is an existing primary key {self._primary_key}."
@@ -287,9 +286,7 @@ class SingleTableMetadata:
             id (str, tuple):
                 Name (or tuple of names) of the sequence key column(s).
         """
-        if id is not None:
-            self._validate_key(id, 'sequence')
-
+        self._validate_key(id, 'sequence')
         if self._sequence_key is not None:
             warnings.warn(
                 f"There is an existing sequence key {self._sequence_key}."
@@ -397,12 +394,8 @@ class SingleTableMetadata:
                 errors.append(reformated_errors)
 
         # Validate keys
-        if self._primary_key:
-            self._append_error(errors, self._validate_key, self._primary_key, 'primary')
-
-        if self._sequence_key:
-            self._append_error(errors, self._validate_key, self._sequence_key, 'sequence')
-
+        self._append_error(errors, self._validate_key, self._primary_key, 'primary')
+        self._append_error(errors, self._validate_key, self._sequence_key, 'sequence')
         if self._sequence_index:
             self._append_error(errors, self._validate_sequence_index, self._sequence_index)
             self._append_error(errors, self._validate_sequence_index_not_in_sequence_key)

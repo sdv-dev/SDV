@@ -140,6 +140,24 @@ class MultiTableMetadata:
             child_foreign_key
         )
 
+    def _get_child_map(self):
+        child_map = defaultdict(set)
+        for relation in self._relationships:
+            parent_name = relation['parent_table_name']
+            child_name = relation['child_table_name']
+            child_map[parent_name].add(child_name)
+
+        return child_map
+
+    def _get_parent_map(self):
+        parent_map = defaultdict(set)
+        for relation in self._relationships:
+            parent_name = relation['parent_table_name']
+            child_name = relation['child_table_name']
+            parent_map[child_name].add(parent_name)
+
+        return parent_map
+
     def add_relationship(self, parent_table_name, child_table_name,
                          parent_primary_key, child_foreign_key):
         """Add a relationship between two tables.
@@ -166,12 +184,7 @@ class MultiTableMetadata:
         self._validate_relationship(
             parent_table_name, child_table_name, parent_primary_key, child_foreign_key)
 
-        child_map = defaultdict(set)
-        for relation in self._relationships:
-            parent_name = relation['parent_table_name']
-            child_name = relation['child_table_name']
-            child_map[parent_name].add(child_name)
-
+        child_map = self._get_child_map()
         child_map[parent_table_name].add(child_table_name)
         self._validate_child_map_circular_relationship(child_map)
 
@@ -443,7 +456,7 @@ class MultiTableMetadata:
                     'The following errors were found in the metadata:\n', tittle)
                 errors.append(error)
 
-    def _validate_disjoined_tables(self, parent_map, child_map):
+    def _validate_all_tables_connected(self, parent_map, child_map):
         nodes = list(self._tables.keys())
         queue = [nodes[0]]
         connected = {table_name: False for table_name in nodes}
@@ -472,6 +485,15 @@ class MultiTableMetadata:
 
             raise ValueError(f'The relationships in the dataset are disjointed. {table_msg}')
 
+    def _append_relationships_errors(self, errors, method, *args, **kwargs):
+        try:
+            method(*args, **kwargs)
+        except Exception as error:
+            if '\nRelationships:' not in errors:
+                errors.append('\nRelationships:')
+
+            errors.append(error)
+
     def validate(self):
         """Validate the metadata.
 
@@ -481,41 +503,19 @@ class MultiTableMetadata:
         errors = []
         self._validate_single_table(errors)
         for relation in self._relationships:
-            try:
-                self._validate_relationship(**relation)
-            except Exception as error:
-                if '\nRelationships:' not in errors:
-                    errors.append('\nRelationships:')
+            self._append_relationships_errors(errors, self._validate_relationship, **relation)
 
-                errors.append(error)
+        parent_map = self._get_parent_map()
+        child_map = self._get_child_map()
 
-        parent_map = defaultdict(set)
-        child_map = defaultdict(set)
-        for relation in self._relationships:
-            parent_name = relation['parent_table_name']
-            child_name = relation['child_table_name']
-            parent_map[child_name].add(parent_name)
-            child_map[parent_name].add(child_name)
-
-        try:
-            self._validate_child_map_circular_relationship(child_map)
-        except Exception as error:
-            if '\nRelationships:' not in errors:
-                errors.append('\nRelationships:')
-
-            errors.append(error)
-
-        try:
-            self._validate_disjoined_tables(parent_map, child_map)
-        except Exception as error:
-            if '\nRelationships:' not in errors:
-                errors.append('\nRelationships:')
-
-            errors.append(error)
+        self._append_relationships_errors(
+            errors, self._validate_child_map_circular_relationship, child_map)
+        self._append_relationships_errors(
+            errors, self._validate_all_tables_connected, parent_map, child_map)
 
         if errors:
             raise InvalidMetadataError(
-                'The metdata is not valid' + '\n'.join(str(e) for e in errors)
+                'The metadata is not valid' + '\n'.join(str(e) for e in errors)
             )
 
     @classmethod

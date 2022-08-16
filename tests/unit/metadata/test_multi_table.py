@@ -89,14 +89,14 @@ class TestMultiTableMetadata:
     def test__validate_missing_relationship_keys_foreign_key(self):
         """Test the ``_validate_missing_relationship_keys`` method of ``MultiTableMetadata``.
 
-        Test that when the provided ``child_foreign_key`` key is not in the
-        ``parent_table._primary_key``, this raises an error.
 
         Setup:
-            - Create ``parent_table``.
+            - Mock ``parent_table`` and ``child_table``.
+            - Instance of ``MultiTableMetadata``.
             - Store the input in variables.
 
         Mock:
+            - Mock instance of ``MultiTableMetadata``.
             - ``SingleTableMetadata`` instance that represents the ``parent_table``.
 
         Input:
@@ -107,7 +107,7 @@ class TestMultiTableMetadata:
             - ``child_foreign_key`` string.
 
         Side Effects:
-            - Raises ``ValueError`` stating that primary key is unknown.
+            - Raises ``ValueError`` stating that foreign key is unknown.
         """
         # Setup
         parent_table = Mock()
@@ -351,11 +351,10 @@ class TestMultiTableMetadata:
         # Assert
         assert errors == ['users']
 
-    def test_validate_child_map_circular_relationship(self):
-        """Test the ``add_relationship`` method of ``MultiTableMetadata``.
+    def test__validate_child_map_circular_relationship(self):
+        """Test the ``_validate_child_map_circular_relationship`` method of ``MultiTableMetadata``.
 
-        Test that when a circular relationship occurs with the new relationship,
-        a ``ValueError`` is being raised.
+        Test that when a circular relationship occurs a ``ValueError`` is being raised.
 
         Setup:
             - Instance of ``MultiTableMetadata``.
@@ -467,7 +466,8 @@ class TestMultiTableMetadata:
         Setup:
             - Instance of ``MultiTableMetadata``.
             - Mock of ``parent_table`` simulating a ``SingleTableMetadata``.
-            - Update ``_tables``.
+            - Mock of ``child_table`` simulating a ``SingleTableMetadata``.
+            - Add those to ``instance._tables``.
 
         Mock:
             - Mock ``validate_child_map_circular_relationship``.
@@ -561,11 +561,12 @@ class TestMultiTableMetadata:
             "\nInvalid regex format string 'None' for text column 'owner'."
         )
         assert errors == ['\n', expected_error_msg]
+        instance._tables['users'].validate.assert_called_once()
 
-    def test__validate_disjoined_tables_connected(self):
-        """Test ``_validate_disjoined_tables``.
+    def test__validate_all_tables_connected_connected(self):
+        """Test ``_validate_all_tables_connected``.
 
-        Test that ``_validate_disjoined_tables`` performs a ``DFS`` and marks nodes as
+        Test that ``_validate_all_tables_connected`` performs a ``DFS`` and marks nodes as
         ``connected`` if all are connected no error is being raised.
 
         Setup:
@@ -613,12 +614,12 @@ class TestMultiTableMetadata:
             child_map[parent_name].add(child_name)
 
         # Run
-        MultiTableMetadata._validate_disjoined_tables(instance, parent_map, child_map)
+        MultiTableMetadata._validate_all_tables_connected(instance, parent_map, child_map)
 
-    def test__validate_disjoined_tables_not_connected(self):
-        """Test ``_validate_disjoined_tables``.
+    def test__validate_all_tables_connected_not_connected(self):
+        """Test ``_validate_all_tables_connected``.
 
-        Test that ``_validate_disjoined_tables`` performs a ``DFS`` and marks nodes as
+        Test that ``_validate_all_tables_connected`` performs a ``DFS`` and marks nodes as
         ``connected``. A ``ValueError`` is being raised since one colmn is not connected.
 
         Setup:
@@ -667,12 +668,12 @@ class TestMultiTableMetadata:
             'is not connected to any of the other tables.'
         )
         with pytest.raises(ValueError, match=error_msg):
-            MultiTableMetadata._validate_disjoined_tables(instance, parent_map, child_map)
+            MultiTableMetadata._validate_all_tables_connected(instance, parent_map, child_map)
 
-    def test__validate_disjoined_tables_multiple_not_connected(self):
-        """Test ``_validate_disjoined_tables``.
+    def test__validate_all_tables_connected_multiple_not_connected(self):
+        """Test ``_validate_all_tables_connected``.
 
-        Test that ``_validate_disjoined_tables`` performs a ``DFS`` and marks nodes as
+        Test that ``_validate_all_tables_connected`` performs a ``DFS`` and marks nodes as
         ``connected``. A ``ValueError`` is being raised since two colmns are not connected.
 
         Setup:
@@ -718,7 +719,55 @@ class TestMultiTableMetadata:
 
         # Run
         with pytest.raises(ValueError):
-            MultiTableMetadata._validate_disjoined_tables(instance, parent_map, child_map)
+            MultiTableMetadata._validate_all_tables_connected(instance, parent_map, child_map)
+
+    def test_validate(self):
+        """Test the method ``validate``.
+
+        Test that when a valid ``MultiTableMetadata`` has been provided no errors are being raised.
+
+        Setup:
+            - Instance of ``MultiTableMetadata`` with all valid tables and relationships.
+        """
+        # Setup
+        instance = self.get_metadata()
+
+        # Run
+        instance.validate()
+
+    def test_validate_raises_errors(self):
+        """Test the method ``validate``.
+
+        Test that when an invalid ``MultiTableMetadata`` has been provided, all different errors
+        are being raised.
+
+        Setup:
+            - Instance of ``MultiTableMetadata`` with all valid tables and relationships.
+        """
+        # Setup
+        instance = self.get_metadata()
+        instance._tables['users']._primary_key = None
+        instance._tables['transactions']._columns['session_id']['sdtype'] = 'datetime'
+        instance._tables['payments']._columns['date']['sdtype'] = 'text'
+        instance._relationships.pop(-1)
+
+        # Run
+        error_msg = re.escape(
+            'The metadata is not valid\n'
+            '\nTable: payments'
+            "\nInvalid regex format string 'None' for text column 'date'."
+            '\n\nRelationships:'
+            "\nThe parent table 'users' does not have a primary key set. "
+            "Please use 'set_primary_key' in order to set one."
+            "\nRelationship between tables ('sessions', 'transactions') is invalid. "
+            'The primary and foreign key columns are not the same type.'
+            "\nThe relationships in the dataset are disjointed. Table {'payments'} "
+            'is not connected to any of the other tables.'
+        )
+
+        # Run / Assert
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            instance.validate()
 
     def test_to_dict(self):
         """Test the ``to_dict`` method of ``MultiTableMetadata``.
