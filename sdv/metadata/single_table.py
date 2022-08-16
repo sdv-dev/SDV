@@ -355,14 +355,15 @@ class SingleTableMetadata:
                 ' These columns must be different.'
             )
 
-    def _validate_constraint(self, **kwargs):
+    def _validate_constraint(self, constraint_name, **kwargs):
         """Validate a constraint against the single table metadata.
 
         Args:
+            constraint_name (string):
+                Name of the constraint class.
             **kwargs:
                 Any arguments the constraint requires.
         """
-        constraint_name = kwargs.get('constraint_name')
         try:
             constraint_class = Constraint._get_class_from_dict(constraint_name)
         except KeyError:
@@ -386,8 +387,9 @@ class SingleTableMetadata:
         # Validate constraints
         errors = []
         for constraint_dict in self._constraints:
+            constraint_name = constraint_dict.pop('constraint_name')
             try:
-                self._validate_constraint(**constraint_dict)
+                self._validate_constraint(constraint_name, **constraint_dict)
             except MultipleConstraintsErrors as e:
                 reformated_errors = '\n'.join(map(str, e.errors))
                 errors.append(reformated_errors)
@@ -444,8 +446,8 @@ class SingleTableMetadata:
             **kwargs:
                 Any other arguments the constraint requires.
         """
+        self._validate_constraint(constraint_name, **kwargs)
         kwargs['constraint_name'] = constraint_name
-        self._validate_constraint(**kwargs)
         self._constraints.append(kwargs)
 
     @classmethod

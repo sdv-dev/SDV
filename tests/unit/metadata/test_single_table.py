@@ -1216,8 +1216,8 @@ class TestSingleTableMetadata:
 
         # Assert
         instance._validate_constraint.assert_has_calls([
-            call(constraint_name='Inequality', low_column_name='col1', high_column_name='col2'),
-            call(constraint_name='ScalarInequality', column_name='col1', relation='<', value=10)
+            call('Inequality', low_column_name='col1', high_column_name='col2'),
+            call('ScalarInequality', column_name='col1', relation='<', value=10)
         ])
         instance._validate_key.assert_has_calls(
             [call(instance._primary_key, 'primary'), call(instance._sequence_key, 'sequence')]
@@ -1551,8 +1551,7 @@ class TestSingleTableMetadata:
         dummy_constraint_class._validate_metadata.assert_called_once_with(
             metadata,
             low_column_name='child_age',
-            high_column_name='start_date',
-            constraint_name='Inequality'
+            high_column_name='start_date'
         )
 
         assert metadata._constraints == [{

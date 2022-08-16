@@ -69,8 +69,9 @@ class TestDataProcessor:
         assert transformer.learn_rounding_scheme is False
         assert transformer.enforce_min_max_values is False
 
-    @patch('sdv.data_processing.data_processor.Constraint')
-    def test___init__(self, constraint_mock):
+    @patch('sdv.data_processing.data_processor.DataProcessor._load_constraints')
+    @patch('sdv.data_processing.data_processor.DataProcessor._update_numerical_transformer')
+    def test___init__(self, update_transformer_mock, load_constraints_mock):
         """Test the ``__init__`` method.
 
         Setup:
@@ -100,13 +101,9 @@ class TestDataProcessor:
         data_processor = DataProcessor(
             metadata=metadata_mock,
             learn_rounding_scheme=True,
-            enforce_min_max_values=False
-        )
+            enforce_min_max_values=False)
 
         # Assert
         assert data_processor.metadata == metadata_mock
-        constraint_mock.from_dict.assert_has_calls(
-            [call(constraint1_dict), call(constraint2_dict)])
-        transformer = data_processor._transformers_by_sdtype.get('numerical')
-        assert transformer.learn_rounding_scheme is True
-        assert transformer.enforce_min_max_values is False
+        update_transformer_mock.assert_called_with(True, False)
+        load_constraints_mock.assert_called_once()
