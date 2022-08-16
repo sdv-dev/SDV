@@ -469,18 +469,14 @@ class MultiTableMetadata:
                     queue.append(child)
 
         if not all(connected.values()):
-            not_connected_tables = set()
-            for table, value in connected.items():
-                if not value:
-                    not_connected_tables.add(table)
-
-            if len(not_connected_tables) > 1:
+            disconnected_tables = {table for table, value in connected.items() if not value}
+            if len(disconnected_tables) > 1:
                 table_msg = (
-                    f'Tables {not_connected_tables} are not connected to any of the other tables.'
+                    f'Tables {disconnected_tables} are not connected to any of the other tables.'
                 )
             else:
                 table_msg = (
-                    f'Table {not_connected_tables} is not connected to any of the other tables.'
+                    f'Table {disconnected_tables} is not connected to any of the other tables.'
                 )
 
             raise ValueError(f'The relationships in the dataset are disjointed. {table_msg}')
