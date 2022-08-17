@@ -2,6 +2,7 @@
 
 import json
 import re
+from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock, patch
@@ -10,11 +11,71 @@ import pandas as pd
 import pytest
 
 from sdv.metadata.errors import InvalidMetadataError
-from sdv.metadata.multi_table import MultiTableMetadata
+from sdv.metadata.multi_table import MultiTableMetadata, SingleTableMetadata
 
 
 class TestMultiTableMetadata:
     """Test ``MultiTableMetadata`` class."""
+
+    def get_metadata(self):
+        """Set the tables and relationships for metadata."""
+        metadata = {}
+        metadata['tables'] = {
+            'users': {
+                'columns': {
+                    'id': {'sdtype': 'numerical'},
+                    'country': {'sdtype': 'categorical'}
+                },
+                'primary_key': 'id'
+            },
+            'payments': {
+                'columns': {
+                    'payment_id': {'sdtype': 'numerical'},
+                    'user_id': {'sdtype': 'numerical'},
+                    'date': {'sdtype': 'datetime'}
+                },
+                'primary_key': 'payment_id'
+            },
+            'sessions': {
+                'columns': {
+                    'session_id': {'sdtype': 'numerical'},
+                    'user_id': {'sdtype': 'numerical'},
+                    'device': {'sdtype': 'categorical'}
+                },
+                'primary_key': 'session_id'
+            },
+            'transactions': {
+                'columns': {
+                    'transaction_id': {'sdtype': 'numerical'},
+                    'session_id': {'sdtype': 'numerical'},
+                    'timestamp': {'sdtype': 'datetime'}
+                },
+                'primary_key': 'transaction_id'
+            }
+        }
+
+        metadata['relationships'] = [
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'id',
+                'child_table_name': 'sessions',
+                'child_foreign_key': 'user_id',
+            },
+            {
+                'parent_table_name': 'sessions',
+                'parent_primary_key': 'session_id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'session_id',
+            },
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'id',
+                'child_table_name': 'payments',
+                'child_foreign_key': 'user_id',
+            }
+        ]
+
+        return MultiTableMetadata._load_from_dict(metadata)
 
     def test___init__(self):
         """Test the ``__init__`` method of ``MultiTableMetadata``."""
@@ -28,14 +89,14 @@ class TestMultiTableMetadata:
     def test__validate_missing_relationship_keys_foreign_key(self):
         """Test the ``_validate_missing_relationship_keys`` method of ``MultiTableMetadata``.
 
-        Test that when the provided ``child_foreign_key`` key is not in the
-        ``parent_table._primary_key``, this raises an error.
 
         Setup:
-            - Create ``parent_table``.
+            - Mock ``parent_table`` and ``child_table``.
+            - Instance of ``MultiTableMetadata``.
             - Store the input in variables.
 
         Mock:
+            - Mock instance of ``MultiTableMetadata``.
             - ``SingleTableMetadata`` instance that represents the ``parent_table``.
 
         Input:
@@ -46,29 +107,43 @@ class TestMultiTableMetadata:
             - ``child_foreign_key`` string.
 
         Side Effects:
-            - Raises ``ValueError`` stating that primary key is unknown.
+            - Raises ``ValueError`` stating that foreign key is unknown.
         """
         # Setup
         parent_table = Mock()
-        parent_table._primary_key = 'users_id'
+        parent_table._primary_key = 'id'
         parent_table._columns = {
-            'users_id': {'sdtype': 'numerical'},
+            'id': {'sdtype': 'numerical'},
             'session': {'sdtype': 'numerical'},
             'transactions': {'sdtype': 'numerical'},
         }
         parent_table_name = 'users'
-        parent_primary_key = 'users_id'
+        parent_primary_key = 'id'
+
+        child_table = Mock()
+        child_table._primary_key = 'session_id'
+        child_table._columns = {
+            'user_id': {'sdtype': 'numerical'},
+            'session_id': {'sdtype': 'numerical'},
+            'transactions': {'sdtype': 'numerical'},
+        }
         child_table_name = 'sessions'
-        child_foreign_key = 'session_id'
+        child_foreign_key = 'id'
+
+        instance = Mock()
+        instance._tables = {
+            'users': parent_table,
+            'sessions': child_table,
+        }
 
         # Run / Assert
         error_msg = re.escape(
             'Relationship between tables (users, sessions) contains '
-            "an unknown foreign key {'session_id'}."
+            "an unknown foreign key {'id'}."
         )
         with pytest.raises(ValueError, match=error_msg):
             MultiTableMetadata._validate_missing_relationship_keys(
-                parent_table,
+                instance,
                 parent_table_name,
                 parent_primary_key,
                 child_table_name,
@@ -174,7 +249,7 @@ class TestMultiTableMetadata:
                 child_foreign_key
             )
 
-    def test__validate_relationship_sdtype_pk_fk_are_list(self):
+    def test__validate_relationship_sdtype(self):
         """Test the ``_validate_relationship_sdtype`` method of ``MultiTableMetadata``.
 
         Validate that when a list of primary keys and foreign keys is passed and the ``sdtype``
@@ -183,6 +258,8 @@ class TestMultiTableMetadata:
         Setup:
             - Create ``parent_table`` and update it's ``_columns`` to contain primary keys and
               sdtypes.
+            - Create ``child_table`` and update it's ``_columns`` to contain primary keys and
+              foreign keys with their sdtypes.
             - Create all the input values.
 
         Input:
@@ -201,25 +278,30 @@ class TestMultiTableMetadata:
               does not match.
         """
         # Setup
-        parent_table_name = 'users'
-        parent_primary_key = ['user_id', 'user_name']
-        child_table_name = 'sessions'
-        child_foreign_key = ['session_id', 'timestamp']
-
         parent_table = Mock()
+        parent_table._primary_key = 'id'
         parent_table._columns = {
-            'user_id': {
-                'sdtype': 'numerical'
-            },
-            'user_name': {
-                'sdtype': 'categorical'
-            },
-            'session_id': {
-                'sdtype': 'numerical'
-            },
-            'timestamp': {
-                'sdtype': 'datetime'
-            }
+            'id': {'sdtype': 'numerical'},
+            'user_name': {'sdtype': 'categorical'},
+            'transactions': {'sdtype': 'numerical'},
+        }
+        parent_table_name = 'users'
+        parent_primary_key = ['id', 'user_name']
+
+        child_table = Mock()
+        child_table._primary_key = 'session_id'
+        child_table._columns = {
+            'user_id': {'sdtype': 'numerical'},
+            'session_id': {'sdtype': 'numerical'},
+            'timestamp': {'sdtype': 'datetime'},
+        }
+        child_table_name = 'sessions'
+        child_foreign_key = ['user_id', 'timestamp']
+
+        instance = Mock()
+        instance._tables = {
+            'users': parent_table,
+            'sessions': child_table,
         }
 
         # Run / Assert
@@ -229,56 +311,7 @@ class TestMultiTableMetadata:
         )
         with pytest.raises(ValueError, match=error_msg):
             MultiTableMetadata._validate_relationship_sdtypes(
-                parent_table,
-                parent_table_name,
-                parent_primary_key,
-                child_table_name,
-                child_foreign_key
-            )
-
-    def test__validate_relationship_sdtype_pk_fk_are_string(self):
-        """Test the ``_validate_relationship_sdtype`` method of ``MultiTableMetadata``.
-
-        Validate that when the ``sdtype`` do not match, a value error is being raised.
-
-        Input:
-            - ``parent_table``, a mock representing a ``SingleTableMetadata`` instance with
-              ``_columns``.
-            - ``parent_primary_key`` a string representing the parent primary key.
-            - ``child_foreign_key`` a string representing the foreign key.
-            - ``child_table_name`` a string representing the name of the child table.
-            - ``parent_table_name`` a string representing the name of the parent table.
-
-        Mock:
-            - ``parent_table`` to match the ``SingleTableMetadata`` description.
-
-        Side Effcts:
-            - A ``ValueError`` is being raised because the ``sdtype`` does not match.
-        """
-        # Setup
-        parent_table_name = 'users'
-        parent_primary_key = 'user_id'
-        child_table_name = 'sessions'
-        child_foreign_key = 'session_id'
-
-        parent_table = Mock()
-        parent_table._columns = {
-            'user_id': {
-                'sdtype': 'numerical'
-            },
-            'session_id': {
-                'sdtype': 'categorical'
-            }
-        }
-
-        # Run / Assert
-        error_msg = re.escape(
-            "Relationship between tables ('users', 'sessions') is invalid. "
-            'The primary and foreign key columns are not the same type.'
-        )
-        with pytest.raises(ValueError, match=error_msg):
-            MultiTableMetadata._validate_relationship_sdtypes(
-                parent_table,
+                instance,
                 parent_table_name,
                 parent_primary_key,
                 child_table_name,
@@ -318,11 +351,10 @@ class TestMultiTableMetadata:
         # Assert
         assert errors == ['users']
 
-    def test_validate_child_map_circular_relationship(self):
-        """Test the ``add_relationship`` method of ``MultiTableMetadata``.
+    def test__validate_child_map_circular_relationship(self):
+        """Test the ``_validate_child_map_circular_relationship`` method of ``MultiTableMetadata``.
 
-        Test that when a circular relationship occurs with the new relationship,
-        a ``ValueError`` is being raised.
+        Test that when a circular relationship occurs a ``ValueError`` is being raised.
 
         Setup:
             - Instance of ``MultiTableMetadata``.
@@ -361,11 +393,7 @@ class TestMultiTableMetadata:
         'sdv.metadata.multi_table.MultiTableMetadata._validate_no_missing_tables_in_relationship'
     )
     @patch('sdv.metadata.multi_table.MultiTableMetadata._validate_relationship_key_length')
-    @patch('sdv.metadata.multi_table.MultiTableMetadata._validate_relationship_sdtypes')
-    @patch('sdv.metadata.multi_table.MultiTableMetadata._validate_missing_relationship_keys')
     def test__validate_relationship(self,
-                                    mock_validate_missing_relationship_keys,
-                                    mock_validate_relationship_sdtypes,
                                     mock_validate_relationship_key_length,
                                     mock_validate_no_missing_tables_in_relationship):
         """Test thath the ``_validate_relationship`` method.
@@ -385,40 +413,49 @@ class TestMultiTableMetadata:
         """
         # Setup
         instance = MultiTableMetadata()
-        instance._validate_child_map_circular_relationship = Mock()
+
         parent_table = Mock()
-        parent_table._primary_key = 'user_id'
+        parent_table._primary_key = 'id'
         parent_table._columns = {
+            'id': {'sdtype': 'numerical'},
+            'session': {'sdtype': 'numerical'},
+            'transactions': {'sdtype': 'numerical'},
+        }
+
+        child_table = Mock()
+        child_table._primary_key = 'session_id'
+        child_table._columns = {
             'user_id': {'sdtype': 'numerical'},
             'session_id': {'sdtype': 'numerical'},
-            'transaction_id': {'sdtype': 'numerical'}
+            'transactions': {'sdtype': 'numerical'},
         }
+
         instance._tables = {
             'users': parent_table,
-            'sessions': Mock(),
-            'transactions': Mock()
+            'sessions': child_table,
         }
         instance._relationships = [{
             'parent_table_name': 'users',
-            'child_table_name': 'transactions',
-            'parent_primary_key': 'user_id',
-            'child_foreign_key': 'transaction_id',
+            'child_table_name': 'sessions',
+            'parent_primary_key': 'id',
+            'child_foreign_key': 'user_id',
         }]
 
+        instance._validate_relationship_sdtypes = Mock()
+        instance._validate_missing_relationship_keys = Mock()
+
         # Run
-        instance._validate_relationship('users', 'transactions', 'user_id', 'transaction_id')
+        instance._validate_relationship('users', 'sessions', 'id', 'user_id')
 
         # Assert
         mock_validate_no_missing_tables_in_relationship.assert_called_once_with(
-            'users', 'transactions', instance._tables.keys())
-        mock_validate_missing_relationship_keys.assert_called_once_with(
-            parent_table, 'users', 'user_id', 'transactions', 'transaction_id')
+            'users', 'sessions', instance._tables.keys())
+        instance._validate_missing_relationship_keys.assert_called_once_with(
+            'users', 'id', 'sessions', 'user_id')
         mock_validate_relationship_key_length.assert_called_once_with(
-            'users', 'user_id', 'transactions', 'transaction_id')
-        mock_validate_relationship_sdtypes.assert_called_once_with(
-            parent_table, 'users', 'user_id', 'transactions', 'transaction_id')
-        instance._validate_child_map_circular_relationship.assert_called_once_with(
-            {'users': {'transactions'}})
+            'users', 'id', 'sessions', 'user_id')
+        instance._validate_relationship_sdtypes.assert_called_once_with(
+            'users', 'id', 'sessions', 'user_id')
 
     def test_add_relationship(self):
         """Test the ``add_relationship`` method of ``MultiTableMetadata``.
@@ -429,7 +466,11 @@ class TestMultiTableMetadata:
         Setup:
             - Instance of ``MultiTableMetadata``.
             - Mock of ``parent_table`` simulating a ``SingleTableMetadata``.
-            - Update ``_tables``.
+            - Mock of ``child_table`` simulating a ``SingleTableMetadata``.
+            - Add those to ``instance._tables``.
+
+        Mock:
+            - Mock ``validate_child_map_circular_relationship``.
 
         Input:
             - ``parent_table_name`` string representing the parent table name.
@@ -442,29 +483,291 @@ class TestMultiTableMetadata:
         """
         # Setup
         instance = MultiTableMetadata()
+        instance._validate_child_map_circular_relationship = Mock()
         parent_table = Mock()
-        parent_table._primary_key = 'user_id'
+        parent_table._primary_key = 'id'
         parent_table._columns = {
+            'id': {'sdtype': 'numerical'},
+            'session': {'sdtype': 'numerical'},
+            'transactions': {'sdtype': 'numerical'},
+        }
+
+        child_table = Mock()
+        child_table._primary_key = 'session_id'
+        child_table._columns = {
             'user_id': {'sdtype': 'numerical'},
             'session_id': {'sdtype': 'numerical'},
-            'transaction': {'sdtype': 'numerical'}
+            'transactions': {'sdtype': 'numerical'},
         }
+
         instance._tables = {
             'users': parent_table,
-            'sessions': Mock(),
-            'transactions': Mock()
+            'sessions': child_table,
         }
 
         # Run
-        instance.add_relationship('users', 'transactions', 'user_id', 'transaction')
+        instance.add_relationship('users', 'sessions', 'id', 'user_id')
 
         # Assert
         instance._relationships == [{
             'parent_table_name': 'users',
-            'child_table_name': 'transactions',
-            'parent_primary_key': 'user_id',
-            'child_foreign_key': 'transaction',
+            'child_table_name': 'sessiosns',
+            'parent_primary_key': 'id',
+            'child_foreign_key': 'user_id',
         }]
+        instance._validate_child_map_circular_relationship.assert_called_once_with(
+            {'users': {'sessions'}})
+
+    def test__validate_single_table(self):
+        """Test ``_validate_single_table``.
+
+        Test that ``_validate_single_table`` iterates over the ``self._tables`` items and
+        calls their ``validate()`` method, catches the error if raised and parses it to
+        ``MultiTableMetadata`` error message.
+
+        Setup:
+            - Create a ``SingleTableMetadata`` that's invalid.
+            - Instance of ``MultiTableMetadata`` that contains an invalid and a valid table.
+
+        Side Effects:
+            - Errors has been updated with the error message for that column.
+        """
+        # Setup
+        table_accounts = SingleTableMetadata._load_from_dict({
+            'columns': {
+                'id': {'sdtype': 'numerical'},
+                'branch_id': {'sdtype': 'numerical'},
+                'amount': {'sdtype': 'numerical'},
+                'start_date': {'sdtype': 'datetime'},
+                'owner': {'sdtype': 'text'},
+            },
+            'primary_key': 'branches'
+        })
+
+        instance = Mock()
+        instance._tables = {
+            'accounts': table_accounts,
+            'users': Mock()
+        }
+        errors = []
+
+        # Run
+        MultiTableMetadata._validate_single_table(instance, errors)
+
+        # Assert
+        expected_error_msg = (
+            "Table: accounts\nUnknown primary key values {'branches'}. "
+            'Keys should be columns that exist in the table.'
+            "\nInvalid regex format string 'None' for text column 'owner'."
+        )
+        assert errors == ['\n', expected_error_msg]
+        instance._tables['users'].validate.assert_called_once()
+
+    def test__validate_all_tables_connected_connected(self):
+        """Test ``_validate_all_tables_connected``.
+
+        Test that ``_validate_all_tables_connected`` performs a ``DFS`` and marks nodes as
+        ``connected`` if all are connected no error is being raised.
+
+        Setup:
+            - Create a mock instance of the ``MultiTableMetadata``.
+            - Set ``_table`` to the ``instance``.
+            - Create a list of ``relationships``.
+            - Create ``parent_map`` and ``child_map``.
+
+        Mock:
+            - Mock the tables as they are not being used.
+
+        Side Effects:
+            - No error raised.
+        """
+        # Setup
+        instance = Mock()
+        instance._tables = {
+            'users': Mock(),
+            'sessions': Mock(),
+            'transactions': Mock(),
+            'accounts': Mock()
+        }
+        relationships = [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessions'
+            },
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'transactions'
+            },
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'accounts'
+            },
+
+        ]
+
+        parent_map = defaultdict(set)
+        child_map = defaultdict(set)
+        for relation in relationships:
+            parent_name = relation['parent_table_name']
+            child_name = relation['child_table_name']
+            parent_map[child_name].add(parent_name)
+            child_map[parent_name].add(child_name)
+
+        # Run
+        MultiTableMetadata._validate_all_tables_connected(instance, parent_map, child_map)
+
+    def test__validate_all_tables_connected_not_connected(self):
+        """Test ``_validate_all_tables_connected``.
+
+        Test that ``_validate_all_tables_connected`` performs a ``DFS`` and marks nodes as
+        ``connected``. A ``ValueError`` is being raised since one colmn is not connected.
+
+        Setup:
+            - Create a mock instance of the ``MultiTableMetadata``.
+            - Set ``_table`` to the ``instance``.
+            - Create a list of ``relationships``.
+            - Create ``parent_map`` and ``child_map``.
+
+        Mock:
+            - Mock the tables as they are not being used.
+
+        Side Effects:
+            - ``ValueError`` is raised stating that a ``table`` is disjointed.
+        """
+        # Setup
+        instance = Mock()
+        instance._tables = {
+            'users': Mock(),
+            'sessions': Mock(),
+            'transactions': Mock(),
+            'accounts': Mock(),
+        }
+        relationships = [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessions'
+            },
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'transactions'
+            },
+
+        ]
+
+        parent_map = defaultdict(set)
+        child_map = defaultdict(set)
+        for relation in relationships:
+            parent_name = relation['parent_table_name']
+            child_name = relation['child_table_name']
+            parent_map[child_name].add(parent_name)
+            child_map[parent_name].add(child_name)
+
+        # Run
+        error_msg = (
+            "The relationships in the dataset are disjointed. Table {'accounts'} "
+            'is not connected to any of the other tables.'
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            MultiTableMetadata._validate_all_tables_connected(instance, parent_map, child_map)
+
+    def test__validate_all_tables_connected_multiple_not_connected(self):
+        """Test ``_validate_all_tables_connected``.
+
+        Test that ``_validate_all_tables_connected`` performs a ``DFS`` and marks nodes as
+        ``connected``. A ``ValueError`` is being raised since two colmns are not connected.
+
+        Setup:
+            - Create a mock instance of the ``MultiTableMetadata``.
+            - Set ``_table`` to the ``instance``.
+            - Create a list of ``relationships``.
+            - Create ``parent_map`` and ``child_map``.
+
+        Mock:
+            - Mock the tables as they are not being used.
+
+        Side Effects:
+            - ``ValueError`` is raised stating that more than one tables are disjointed.
+        """
+        # Setup
+        instance = Mock()
+        instance._tables = {
+            'users': Mock(),
+            'sessions': Mock(),
+            'transactions': Mock(),
+            'accounts': Mock(),
+            'branches': Mock()
+        }
+        relationships = [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessions'
+            },
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'transactions'
+            },
+
+        ]
+
+        parent_map = defaultdict(set)
+        child_map = defaultdict(set)
+        for relation in relationships:
+            parent_name = relation['parent_table_name']
+            child_name = relation['child_table_name']
+            parent_map[child_name].add(parent_name)
+            child_map[parent_name].add(child_name)
+
+        # Run
+        with pytest.raises(ValueError):
+            MultiTableMetadata._validate_all_tables_connected(instance, parent_map, child_map)
+
+    def test_validate(self):
+        """Test the method ``validate``.
+
+        Test that when a valid ``MultiTableMetadata`` has been provided no errors are being raised.
+
+        Setup:
+            - Instance of ``MultiTableMetadata`` with all valid tables and relationships.
+        """
+        # Setup
+        instance = self.get_metadata()
+
+        # Run
+        instance.validate()
+
+    def test_validate_raises_errors(self):
+        """Test the method ``validate``.
+
+        Test that when an invalid ``MultiTableMetadata`` has been provided, all different errors
+        are being raised.
+
+        Setup:
+            - Instance of ``MultiTableMetadata`` with all valid tables and relationships.
+        """
+        # Setup
+        instance = self.get_metadata()
+        instance._tables['users']._primary_key = None
+        instance._tables['transactions']._columns['session_id']['sdtype'] = 'datetime'
+        instance._tables['payments']._columns['date']['sdtype'] = 'text'
+        instance._relationships.pop(-1)
+
+        # Run
+        error_msg = re.escape(
+            'The metadata is not valid\n'
+            '\nTable: payments'
+            "\nInvalid regex format string 'None' for text column 'date'."
+            '\n\nRelationships:'
+            "\nThe parent table 'users' does not have a primary key set. "
+            "Please use 'set_primary_key' in order to set one."
+            "\nRelationship between tables ('sessions', 'transactions') is invalid. "
+            'The primary and foreign key columns are not the same type.'
+            "\nThe relationships in the dataset are disjointed. Table {'payments'} "
+            'is not connected to any of the other tables.'
+        )
+
+        # Run / Assert
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            instance.validate()
 
     def test_to_dict(self):
         """Test the ``to_dict`` method of ``MultiTableMetadata``.
@@ -684,66 +987,6 @@ class TestMultiTableMetadata:
         # Assert
         mock_json.dumps.assert_called_once_with(instance.to_dict(), indent=4)
         assert res == mock_json.dumps.return_value
-
-    def get_metadata(self):
-        """Set the tables and relationships for metadata."""
-        metadata = {}
-        metadata['tables'] = {
-            'users': {
-                'columns': {
-                    'id': {'sdtype': 'numerical'},
-                    'country': {'sdtype': 'categorical'}
-                },
-                'primary_key': 'id'
-            },
-            'payments': {
-                'columns': {
-                    'payment_id': {'sdtype': 'numerical'},
-                    'user_id': {'sdtype': 'numerical'},
-                    'date': {'sdtype': 'datetime'}
-                },
-                'primary_key': 'payment_id'
-            },
-            'sessions': {
-                'columns': {
-                    'session_id': {'sdtype': 'numerical'},
-                    'user_id': {'sdtype': 'numerical'},
-                    'device': {'sdtype': 'categorical'}
-                },
-                'primary_key': 'session_id'
-            },
-            'transactions': {
-                'columns': {
-                    'transaction_id': {'sdtype': 'numerical'},
-                    'session_id': {'sdtype': 'numerical'},
-                    'timestamp': {'sdtype': 'datetime'}
-                },
-                'primary_key': 'transaction_id'
-            }
-        }
-
-        metadata['relationships'] = [
-            {
-                'parent_table_name': 'users',
-                'parent_primary_key': 'id',
-                'child_table_name': 'sessions',
-                'child_foreign_key': 'user_id',
-            },
-            {
-                'parent_table_name': 'sessions',
-                'parent_primary_key': 'session_id',
-                'child_table_name': 'transactions',
-                'child_foreign_key': 'session_id',
-            },
-            {
-                'parent_table_name': 'users',
-                'parent_primary_key': 'id',
-                'child_table_name': 'payments',
-                'child_foreign_key': 'user_id',
-            }
-        ]
-
-        return MultiTableMetadata._load_from_dict(metadata)
 
     @patch('sdv.metadata.multi_table.visualize_graph')
     def test_visualize_show_relationship_and_details(self, visualize_graph_mock):
