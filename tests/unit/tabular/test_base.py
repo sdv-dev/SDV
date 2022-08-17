@@ -1072,7 +1072,7 @@ def test___init__passes_correct_parameters(metadata_mock):
 @pytest.mark.parametrize('model', MODELS)
 def test__sample_conditions_graceful_reject_sampling(model):
     data = pd.DataFrame({
-        'column1': list(range(100)),
+        'column1': [str(number) for number in range(100)],
         'column2': list(range(100)),
         'column3': list(range(100))
     })
