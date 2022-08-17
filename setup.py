@@ -12,7 +12,7 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'Faker>=3.0.0,<10',
+    'Faker>=3.0.0,<15',
     'graphviz>=0.13.2,<1',
     "numpy>=1.18.0,<1.20.0;python_version<'3.7'",
     "numpy>=1.20.0,<2;python_version>='3.7'",
@@ -21,7 +21,7 @@ install_requires = [
     'copulas>=0.7.0,<0.8',
     'ctgan>=0.5.2.dev0,<0.6',
     'deepecho>=0.3.0.post1,<0.4',
-    'rdt>=1.1.0,<2.0',
+    'rdt>=1.1.0,<2',
     'sdmetrics>=0.6.0,<0.7',
 ]
 
