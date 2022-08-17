@@ -18,9 +18,16 @@ class MultiTableMetadata:
         self._tables = {}
         self._relationships = []
 
-    @staticmethod
-    def _validate_missing_relationship_keys(parent_table, parent_table_name, parent_primary_key,
+    def _validate_missing_relationship_keys(self, parent_table_name, parent_primary_key,
                                             child_table_name, child_foreign_key):
+        parent_table = self._tables.get(parent_table_name)
+        child_table = self._tables.get(child_table_name)
+        if parent_table._primary_key is None:
+            raise ValueError(
+                f"The parent table '{parent_table_name}' does not have a primary key set. "
+                "Please use 'set_primary_key' in order to set one."
+            )
+
         missing_keys = set()
         parent_primary_key = cast_to_iterable(parent_primary_key)
         table_primary_keys = set(cast_to_iterable(parent_table._primary_key))
@@ -35,7 +42,7 @@ class MultiTableMetadata:
             )
 
         for key in set(cast_to_iterable(child_foreign_key)):
-            if key not in parent_table._columns:
+            if key not in child_table._columns:
                 missing_keys.add(key)
 
         if missing_keys:
@@ -65,14 +72,14 @@ class MultiTableMetadata:
                 f'length {fk_len}.'
             )
 
-    @staticmethod
-    def _validate_relationship_sdtypes(parent_table, parent_table_name, parent_primary_key,
+    def _validate_relationship_sdtypes(self, parent_table_name, parent_primary_key,
                                        child_table_name, child_foreign_key):
-        parent_columns = parent_table._columns
+        parent_table_columns = self._tables.get(parent_table_name)._columns
+        child_table_columns = self._tables.get(child_table_name)._columns
         parent_primary_key = cast_to_iterable(parent_primary_key)
         child_foreign_key = cast_to_iterable(child_foreign_key)
         for pk, fk in zip(parent_primary_key, child_foreign_key):
-            if parent_columns[pk]['sdtype'] != parent_columns[fk]['sdtype']:
+            if parent_table_columns[pk]['sdtype'] != child_table_columns[fk]['sdtype']:
                 raise ValueError(
                     f"Relationship between tables ('{parent_table_name}', '{child_table_name}') "
                     'is invalid. The primary and foreign key columns are not the same type.'
@@ -114,12 +121,10 @@ class MultiTableMetadata:
 
     def _validate_relationship(self, parent_table_name, child_table_name,
                                parent_primary_key, child_foreign_key):
-        parent_table = self._tables.get(parent_table_name)
         self._validate_no_missing_tables_in_relationship(
             parent_table_name, child_table_name, self._tables.keys())
 
         self._validate_missing_relationship_keys(
-            parent_table,
             parent_table_name,
             parent_primary_key,
             child_table_name,
@@ -129,21 +134,29 @@ class MultiTableMetadata:
             parent_table_name, parent_primary_key, child_table_name, child_foreign_key)
 
         self._validate_relationship_sdtypes(
-            parent_table,
             parent_table_name,
             parent_primary_key,
             child_table_name,
             child_foreign_key
         )
 
+    def _get_child_map(self):
         child_map = defaultdict(set)
         for relation in self._relationships:
             parent_name = relation['parent_table_name']
             child_name = relation['child_table_name']
             child_map[parent_name].add(child_name)
 
-        child_map[parent_table_name].add(child_table_name)
-        self._validate_child_map_circular_relationship(child_map)
+        return child_map
+
+    def _get_parent_map(self):
+        parent_map = defaultdict(set)
+        for relation in self._relationships:
+            parent_name = relation['parent_table_name']
+            child_name = relation['child_table_name']
+            parent_map[child_name].add(parent_name)
+
+        return parent_map
 
     def add_relationship(self, parent_table_name, child_table_name,
                          parent_primary_key, child_foreign_key):
@@ -170,6 +183,11 @@ class MultiTableMetadata:
         """
         self._validate_relationship(
             parent_table_name, child_table_name, parent_primary_key, child_foreign_key)
+
+        child_map = self._get_child_map()
+        child_map[parent_table_name].add(child_table_name)
+        self._validate_child_map_circular_relationship(child_map)
+
         self._relationships.append({
             'parent_table_name': parent_table_name,
             'child_table_name': child_table_name,
@@ -241,7 +259,7 @@ class MultiTableMetadata:
 
             if show_table_details:
                 child_node = nodes.get(child)
-                foreign_key_text = f"Foreign key ({parent}): {foreign_key}"
+                foreign_key_text = f'Foreign key ({parent}): {foreign_key}'
                 if 'foreign_keys' in child_node:
                     child_node.get('foreign_keys').append(foreign_key_text)
                 else:
@@ -426,6 +444,75 @@ class MultiTableMetadata:
         self._validate_table_exists(table_name)
         table = self._tables.get(table_name)
         table.add_constraint(constraint_name, **kwargs)
+
+    def _validate_single_table(self, errors):
+        for table_name, table in self._tables.items():
+            try:
+                table.validate()
+            except Exception as error:
+                errors.append('\n')
+                title = f'Table: {table_name}'
+                error = str(error).replace(
+                    'The following errors were found in the metadata:\n', title)
+                errors.append(error)
+
+    def _validate_all_tables_connected(self, parent_map, child_map):
+        nodes = list(self._tables.keys())
+        queue = [nodes[0]]
+        connected = {table_name: False for table_name in nodes}
+
+        while queue:
+            node = queue.pop()
+            connected[node] = True
+            for child in list(child_map[node]) + list(parent_map[node]):
+                if not connected[child] and child not in queue:
+                    queue.append(child)
+
+        if not all(connected.values()):
+            disconnected_tables = {table for table, value in connected.items() if not value}
+            if len(disconnected_tables) > 1:
+                table_msg = (
+                    f'Tables {disconnected_tables} are not connected to any of the other tables.'
+                )
+            else:
+                table_msg = (
+                    f'Table {disconnected_tables} is not connected to any of the other tables.'
+                )
+
+            raise ValueError(f'The relationships in the dataset are disjointed. {table_msg}')
+
+    def _append_relationships_errors(self, errors, method, *args, **kwargs):
+        try:
+            method(*args, **kwargs)
+        except Exception as error:
+            if '\nRelationships:' not in errors:
+                errors.append('\nRelationships:')
+
+            errors.append(error)
+
+    def validate(self):
+        """Validate the metadata.
+
+        Raises:
+            - ``InvalidMetadataError`` if the metadata is invalid.
+        """
+        errors = []
+        self._validate_single_table(errors)
+        for relation in self._relationships:
+            self._append_relationships_errors(errors, self._validate_relationship, **relation)
+
+        parent_map = self._get_parent_map()
+        child_map = self._get_child_map()
+
+        self._append_relationships_errors(
+            errors, self._validate_child_map_circular_relationship, child_map)
+        self._append_relationships_errors(
+            errors, self._validate_all_tables_connected, parent_map, child_map)
+
+        if errors:
+            raise InvalidMetadataError(
+                'The metadata is not valid' + '\n'.join(str(e) for e in errors)
+            )
 
     @classmethod
     def load_from_json(cls, filepath):
