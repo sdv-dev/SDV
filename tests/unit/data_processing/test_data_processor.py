@@ -1,7 +1,6 @@
 from unittest.mock import Mock, call, patch
 
 import pandas as pd
-import pytest
 
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.metadata.single_table import SingleTableMetadata
@@ -112,68 +111,53 @@ class TestDataProcessor:
         update_transformer_mock.assert_called_with(True, False)
         load_constraints_mock.assert_called_once()
 
-    def test__make_ids(self):
-        """Test whether regex is correctly generating expressions."""
-        metadata = {'sdtype': 'categorical', 'regex': '[a-d]'}
-        keys = DataProcessor._make_ids(metadata, 3)
-        assert (keys == pd.Series(['a', 'b', 'c'])).all()
-
-    def test__make_ids_fail(self):
-        """Test if regex fails with more requested ids than available unique values."""
-        metadata = {'sdtype': 'categorical', 'regex': '[a-d]'}
-        with pytest.raises(ValueError):
-            DataProcessor._make_ids(metadata, 20)
-
     def test__make_ids_unique_field_not_unique(self):
-        """Test that id column is replaced with all unique values if not already unique."""
+        """Test the ``make_ids_unique`` method.
+
+        Test that key columns are replaced with all unique values if not already unique.
+        If they a column is already unique or is numerical, do nothing.
+
+        Setup:
+            - Instantiate a ``SingleTableMetadata`` with numerical columns
+            containing non-unique ids.
+            - Set some of the numerical columns as keys.
+            - Create a ``DataProcessor`` instance from this metadata.
+
+        Input:
+            - Dataframe with index out of order.
+
+        Output:
+            - The original dataframe, but the key columns have only unique values.
+        """
+        # Setup
         metadata = SingleTableMetadata()
-        metadata.add_column('item 0', sdtype='id')
-        metadata.add_column('item 1', sdtype='boolean')
-        metadata.set_primary_key('item 0')
+        metadata.add_column('col1', sdtype='numerical')
+        metadata.add_column('col2', sdtype='boolean')
+        metadata.add_column('col3', sdtype='numerical')
+        metadata.add_column('col4', sdtype='numerical')
+        metadata.add_column('col5', sdtype='numerical')
+        metadata.add_column('col6', sdtype='numerical')
+        metadata.set_primary_key(('col1', 'col3'))
+        metadata.set_sequence_key('col4')
+        metadata.set_alternate_keys(['col2', ('col3', 'col6'), 'col5'])
 
-        metadata = DataProcessor.from_dict({'metadata': metadata})
+        instance = DataProcessor.from_dict({'metadata': metadata})
         data = pd.DataFrame({
-            'item 0': [0, 1, 1, 2, 3, 5, 5, 6],
-            'item 1': [True, True, False, False, True, False, False, True]
-        })
+            'col1': [0, 1, 1, 2, 3, 5, 5, 6],
+            'col2': [True, True, False, False, True, False, False, True],
+            'col3': [0, 1, 1, 2, 3, 5, 5, 6],
+            'col4': [0, 1, 1, 2, 3, 5, 5, 6],
+            'col5': [0, 1, 1, 2, 3, 5, 5, 6],
+            'col6': [0, 1, 2, 3, 4, 5, 6, 7],
+        }, index=[0, 1, 1, 2, 3, 5, 5, 7])
 
-        new_data = metadata.make_ids_unique(data)
+        # Run
+        new_data = instance.make_ids_unique(data)
 
-        assert new_data['item 1'].equals(data['item 1'])
-        assert new_data['item 0'].is_unique
-
-    def test__make_ids_unique_field_already_unique(self):
-        """Test that id column is kept if already unique."""
-        metadata = SingleTableMetadata()
-        metadata.add_column('item 0', sdtype='id')
-        metadata.add_column('item 1', sdtype='boolean')
-        metadata.set_primary_key('item 0')
-
-        metadata = DataProcessor.from_dict({'metadata': metadata})
-        data = pd.DataFrame({
-            'item 0': [9, 1, 8, 2, 3, 7, 5, 6],
-            'item 1': [True, True, False, False, True, False, False, True]
-        })
-
-        new_data = metadata.make_ids_unique(data)
-
-        assert new_data['item 1'].equals(data['item 1'])
-        assert new_data['item 0'].equals(data['item 0'])
-
-    def test__make_ids_unique_field_index_out_of_order(self):
-        """Test that updated id column is unique even if index is out of order."""
-        metadata = SingleTableMetadata()
-        metadata.add_column('item 0', sdtype='id')
-        metadata.add_column('item 1', sdtype='boolean')
-        metadata.set_primary_key('item 0')
-
-        metadata = DataProcessor.from_dict({'metadata': metadata})
-        data = pd.DataFrame({
-            'item 0': [0, 1, 1, 2, 3, 5, 5, 6],
-            'item 1': [True, True, False, False, True, False, False, True]
-        }, index=[0, 1, 1, 2, 3, 5, 5, 6])
-
-        new_data = metadata.make_ids_unique(data)
-
-        assert new_data['item 1'].equals(data['item 1'])
-        assert new_data['item 0'].is_unique
+        # Assert
+        pd.testing.assert_series_equal(new_data['col2'], data['col2'])
+        pd.testing.assert_series_equal(new_data['col6'], data['col6'])
+        assert new_data['col1'].is_unique
+        assert new_data['col3'].is_unique
+        assert new_data['col4'].is_unique
+        assert new_data['col5'].is_unique

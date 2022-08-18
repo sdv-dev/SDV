@@ -8,7 +8,7 @@ import pandas as pd
 import rdt
 
 from sdv.constraints import Constraint
-from sdv.metadata.utils import strings_from_regex, cast_to_iterable
+from sdv.metadata.utils import cast_to_iterable
 
 
 class DataProcessor:
@@ -92,25 +92,20 @@ class DataProcessor:
 
         return data
 
-    @classmethod
-    def _make_ids(cls, field_metadata, length):
-        field_sdtype = field_metadata.get('sdtype', 'numerical')
-        if field_sdtype == 'categorical':
-            regex = field_metadata.get('regex', '[a-zA-Z]+')
-            generator, max_size = strings_from_regex(regex)
-            if max_size < length:
-                raise ValueError((
-                    'Unable to generate {} unique values for regex {}, the '
-                    'maximum number of unique values is {}.'
-                ).format(length, regex, max_size))
-            values = [next(generator) for _ in range(length)]
+    def _get_keys(self):
+        """Return a set of all the keys."""
+        keys = {self.metadata._sequence_index}
+        keys.update(set(cast_to_iterable(self.metadata._primary_key)))
+        keys.update(set(cast_to_iterable(self.metadata._sequence_key)))
+        if self.metadata._alternate_keys:
+            for key in self.metadata._alternate_keys:
+                keys.update({key} if isinstance(key, str) else set(key))
 
-            return pd.Series(list(values)[:length])
-        else:
-            return pd.Series(np.arange(length))
+        keys.discard(None)
+        return keys
 
     def make_ids_unique(self, data):
-        """Repopulate any id fields in provided data to guarantee uniqueness.
+        """Repopulate numerical id fields in provided data to guarantee uniqueness.
 
         Args:
             data (pandas.DataFrame):
@@ -121,14 +116,14 @@ class DataProcessor:
                 Table where all id fields are unique.
         """
         data = data.copy()
-        ids = self.metadata._primary_key
-        if ids is not None:
-            for id in cast_to_iterable(ids):
-                if not data[id].is_unique:
-                    field_metadata = self.metadata._columns[id]
-                    new_ids = self._make_ids(field_metadata, len(data))
-                    new_ids.index = data.index.copy()
-                    data[id] = new_ids
+        keys = self._get_keys()
+        for key in keys:
+            if not data[key].is_unique:
+                field_metadata = self.metadata._columns[key]
+                if field_metadata['sdtype'] == 'numerical':
+                    new_keys = pd.Series(np.arange(len(data)))
+                    new_keys.index = data.index.copy()
+                    data[key] = new_keys
 
         return data
 
@@ -142,7 +137,8 @@ class DataProcessor:
         return {
             'metadata': copy.deepcopy(self.metadata.to_dict()),
             'transformers_by_sdtype': copy.deepcopy(self._transformers_by_sdtype),
-            'model_kwargs': copy.deepcopy(self._model_kwargs),
+            'constraints_to_reverse': copy.deepcopy(self._constraints_to_reverse),
+            'model_kwargs': copy.deepcopy(self._model_kwargs)
         }
 
     @classmethod
@@ -159,9 +155,11 @@ class DataProcessor:
             enforce_min_max_values=metadata_dict.get('enforce_min_max_values', True),
             model_kwargs=metadata_dict.get('model_kwargs')
         )
+        instance._constraints_to_reverse = metadata_dict.get('constraints_to_reverse', [])
         instance._transformers_by_sdtype = metadata_dict.get(
             'transformers_by_sdtype', instance._transformers_by_sdtype
         )
+
         return instance
 
     def to_json(self, path):
