@@ -144,14 +144,12 @@ class TestDataProcessor:
 
     def test__make_ids_unique_field_already_unique(self):
         """Test that id column is kept if already unique."""
-        metadata_dict = {
-            'fields': {
-                'item 0': {'type': 'id', 'subtype': 'integer'},
-                'item 1': {'type': 'boolean'}
-            },
-            'primary_key': 'item 0'
-        }
-        metadata = DataProcessor.from_dict(metadata_dict)
+        metadata = SingleTableMetadata()
+        metadata.add_column('item 0', sdtype='id')
+        metadata.add_column('item 1', sdtype='boolean')
+        metadata.set_primary_key('item 0')
+
+        metadata = DataProcessor.from_dict({'metadata': metadata})
         data = pd.DataFrame({
             'item 0': [9, 1, 8, 2, 3, 7, 5, 6],
             'item 1': [True, True, False, False, True, False, False, True]
@@ -164,14 +162,12 @@ class TestDataProcessor:
 
     def test__make_ids_unique_field_index_out_of_order(self):
         """Test that updated id column is unique even if index is out of order."""
-        metadata_dict = {
-            'fields': {
-                'item 0': {'type': 'id', 'subtype': 'integer'},
-                'item 1': {'type': 'boolean'}
-            },
-            'primary_key': 'item 0'
-        }
-        metadata = DataProcessor.from_dict(metadata_dict)
+        metadata = SingleTableMetadata()
+        metadata.add_column('item 0', sdtype='id')
+        metadata.add_column('item 1', sdtype='boolean')
+        metadata.set_primary_key('item 0')
+
+        metadata = DataProcessor.from_dict({'metadata': metadata})
         data = pd.DataFrame({
             'item 0': [0, 1, 1, 2, 3, 5, 5, 6],
             'item 1': [True, True, False, False, True, False, False, True]

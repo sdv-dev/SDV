@@ -8,7 +8,6 @@ import pandas as pd
 import rdt
 
 from sdv.constraints import Constraint
-from ..metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import strings_from_regex
 
 
@@ -137,9 +136,9 @@ class DataProcessor:
             dict:
                 dict representation of this metadata.
         """
-        # TODO: why are _transformers_by_sdtype not passed here?
         return {
-            'metadata': copy.deepcopy(SingleTableMetadata.to_dict()),
+            'metadata': copy.deepcopy(self.metadata.to_dict()),
+            'transformers_by_sdtype': copy.deepcopy(self._transformers_by_sdtype),
             'model_kwargs': copy.deepcopy(self._model_kwargs),
         }
 
@@ -167,6 +166,8 @@ class DataProcessor:
             enforce_min_max_values=metadata_dict.get('enforce_min_max_values', True),
             model_kwargs=metadata_dict.get('model_kwargs')
         )
+        instance._transformers_by_sdtype = metadata_dict.get(
+            'transformers_by_sdtype', instance._transformers_by_sdtype)
         return instance
 
     @classmethod
