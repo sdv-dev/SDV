@@ -8,7 +8,7 @@ import pandas as pd
 import rdt
 
 from sdv.constraints import Constraint
-from sdv.metadata.utils import strings_from_regex
+from sdv.metadata.utils import strings_from_regex, cast_to_iterable
 
 
 class DataProcessor:
@@ -94,8 +94,8 @@ class DataProcessor:
 
     @classmethod
     def _make_ids(cls, field_metadata, length):
-        field_subtype = field_metadata.get('subtype', 'integer')
-        if field_subtype == 'string':
+        field_sdtype = field_metadata.get('sdtype', 'numerical')
+        if field_sdtype == 'categorical':
             regex = field_metadata.get('regex', '[a-zA-Z]+')
             generator, max_size = strings_from_regex(regex)
             if max_size < length:
@@ -121,36 +121,29 @@ class DataProcessor:
                 Table where all id fields are unique.
         """
         data = data.copy()
-        for name, field_metadata in self.metadata._columns.items():
-            if field_metadata['sdtype'] == 'id' and not data[name].is_unique:
-                ids = self._make_ids(field_metadata, len(data))
-                ids.index = data.index.copy()
-                data[name] = ids
+        ids = self.metadata._primary_key
+        if ids is not None:
+            for id in cast_to_iterable(ids):
+                if not data[id].is_unique:
+                    field_metadata = self.metadata._columns[id]
+                    new_ids = self._make_ids(field_metadata, len(data))
+                    new_ids.index = data.index.copy()
+                    data[id] = new_ids
 
         return data
 
     def to_dict(self):
-        """Get a dict representation of this metadata.
+        """Get a dict representation of this DataProcessor.
 
         Returns:
             dict:
-                dict representation of this metadata.
+                Dict representation of this DataProcessor.
         """
         return {
             'metadata': copy.deepcopy(self.metadata.to_dict()),
             'transformers_by_sdtype': copy.deepcopy(self._transformers_by_sdtype),
             'model_kwargs': copy.deepcopy(self._model_kwargs),
         }
-
-    def to_json(self, path):
-        """Dump this metadata into a JSON file.
-
-        Args:
-            path (str):
-                Path of the JSON file where this metadata will be stored.
-        """
-        with open(path, 'w') as out_file:
-            json.dump(self.to_dict(), out_file, indent=4)
 
     @classmethod
     def from_dict(cls, metadata_dict):
@@ -167,12 +160,23 @@ class DataProcessor:
             model_kwargs=metadata_dict.get('model_kwargs')
         )
         instance._transformers_by_sdtype = metadata_dict.get(
-            'transformers_by_sdtype', instance._transformers_by_sdtype)
+            'transformers_by_sdtype', instance._transformers_by_sdtype
+        )
         return instance
+
+    def to_json(self, path):
+        """Dump this DataProcessor into a JSON file.
+
+        Args:
+            path (str):
+                Path of the JSON file where this metadata will be stored.
+        """
+        with open(path, 'w') as out_file:
+            json.dump(self.to_dict(), out_file, indent=4)
 
     @classmethod
     def from_json(cls, path):
-        """Load a Table from a JSON.
+        """Load a DataProcessor from a JSON.
 
         Args:
             path (str):
