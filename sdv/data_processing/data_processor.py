@@ -3,9 +3,13 @@
 import copy
 import json
 
+import numpy as np
+import pandas as pd
 import rdt
 
 from sdv.constraints import Constraint
+from ..metadata.single_table import SingleTableMetadata
+from sdv.metadata.utils import strings_from_regex
 
 
 class DataProcessor:
@@ -89,6 +93,23 @@ class DataProcessor:
 
         return data
 
+    @classmethod
+    def _make_ids(cls, field_metadata, length):
+        field_subtype = field_metadata.get('subtype', 'integer')
+        if field_subtype == 'string':
+            regex = field_metadata.get('regex', '[a-zA-Z]+')
+            generator, max_size = strings_from_regex(regex)
+            if max_size < length:
+                raise ValueError((
+                    'Unable to generate {} unique values for regex {}, the '
+                    'maximum number of unique values is {}.'
+                ).format(length, regex, max_size))
+            values = [next(generator) for _ in range(length)]
+
+            return pd.Series(list(values)[:length])
+        else:
+            return pd.Series(np.arange(length))
+
     def make_ids_unique(self, data):
         """Repopulate any id fields in provided data to guarantee uniqueness.
 
@@ -100,8 +121,9 @@ class DataProcessor:
             pandas.DataFrame:
                 Table where all id fields are unique.
         """
-        for name, field_metadata in self._fields_metadata.items():
-            if field_metadata['type'] == 'id' and not data[name].is_unique:
+        data = data.copy()
+        for name, field_metadata in self.metadata._columns.items():
+            if field_metadata['sdtype'] == 'id' and not data[name].is_unique:
                 ids = self._make_ids(field_metadata, len(data))
                 ids.index = data.index.copy()
                 data[name] = ids
@@ -115,18 +137,10 @@ class DataProcessor:
             dict:
                 dict representation of this metadata.
         """
+        # TODO: why are _transformers_by_sdtype not passed here?
         return {
-            'fields': copy.deepcopy(self._fields_metadata),
-            'constraints': [
-                constraint if isinstance(constraint, dict) else constraint.to_dict()
-                for constraint in self._constraints
-            ],
+            'metadata': copy.deepcopy(SingleTableMetadata.to_dict()),
             'model_kwargs': copy.deepcopy(self._model_kwargs),
-            'name': self.name,
-            'primary_key': self._primary_key,
-            'sequence_index': self._sequence_index,
-            'entity_columns': self._entity_columns,
-            'context_columns': self._context_columns,
         }
 
     def to_json(self, path):
@@ -140,32 +154,19 @@ class DataProcessor:
             json.dump(self.to_dict(), out_file, indent=4)
 
     @classmethod
-    def from_dict(cls, metadata_dict, dtype_transformers=None):
-        """Load a Table from a metadata dict.
+    def from_dict(cls, metadata_dict):
+        """Load a DataProcessor from a metadata dict.
 
         Args:
             metadata_dict (dict):
                 Dict metadata to load.
-            dtype_transformers (dict):
-                If passed, set the dtype_transformers on the new instance.
         """
-        metadata_dict = copy.deepcopy(metadata_dict)
-        fields = metadata_dict['fields'] or {}
         instance = cls(
-            name=metadata_dict.get('name'),
-            field_names=set(fields.keys()),
-            field_types=fields,
-            constraints=metadata_dict.get('constraints') or [],
-            model_kwargs=metadata_dict.get('model_kwargs') or {},
-            primary_key=metadata_dict.get('primary_key'),
-            sequence_index=metadata_dict.get('sequence_index'),
-            entity_columns=metadata_dict.get('entity_columns') or [],
-            context_columns=metadata_dict.get('context_columns') or [],
-            dtype_transformers=dtype_transformers,
-            enforce_min_max_values=metadata_dict.get('enforce_min_max_values', True),
+            metadata=metadata_dict['metadata'],
             learn_rounding_scheme=metadata_dict.get('learn_rounding_scheme', True),
+            enforce_min_max_values=metadata_dict.get('enforce_min_max_values', True),
+            model_kwargs=metadata_dict.get('model_kwargs')
         )
-        instance._fields_metadata = fields
         return instance
 
     @classmethod
