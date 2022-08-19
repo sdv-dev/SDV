@@ -75,9 +75,9 @@ def test_validate_errors():
         'col10': {'sdtype': 'text', 'regex_format': '[A-{6}'},
     }
     instance._constraints = [
-        {'constraint_name': 'Inequality', 'low_column_name': 'col1', 'wrong_arg': 'col2'},
+        {'constraint': 'Inequality', 'low_column_name': 'col1', 'wrong_arg': 'col2'},
         {
-            'constraint_name': 'ScalarInequality',
+            'constraint': 'ScalarInequality',
             'column_name': 'col1',
             'relation': '<',
             'value': 'string'

@@ -150,7 +150,6 @@ class SingleTableMetadata:
         Args:
             column_name (str):
                 The column name to be added.
-
             kwargs (type):
                 Any additional key word arguments for the column, where ``sdtype`` is required.
 
@@ -386,7 +385,7 @@ class SingleTableMetadata:
         # Validate constraints
         errors = []
         for constraint_dict in self._constraints:
-            constraint_name = constraint_dict.pop('constraint_name')
+            constraint_name = constraint_dict.pop('constraint')
             try:
                 self._validate_constraint(constraint_name, **constraint_dict)
             except MultipleConstraintsErrors as e:
@@ -443,12 +442,11 @@ class SingleTableMetadata:
         Args:
             constraint_name (string):
                 Name of the constraint class.
-
             **kwargs:
                 Any other arguments the constraint requires.
         """
         self._validate_constraint(constraint_name, **kwargs)
-        kwargs['constraint_name'] = constraint_name
+        kwargs['constraint'] = constraint_name
         self._constraints.append(kwargs)
 
     @classmethod
