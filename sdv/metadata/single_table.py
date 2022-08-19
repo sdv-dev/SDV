@@ -385,7 +385,7 @@ class SingleTableMetadata:
         # Validate constraints
         errors = []
         for constraint_dict in self._constraints:
-            constraint_name = constraint_dict.pop('constraint')
+            constraint_name = constraint_dict.pop('constraint_name')
             try:
                 self._validate_constraint(constraint_name, **constraint_dict)
             except MultipleConstraintsErrors as e:
@@ -446,7 +446,7 @@ class SingleTableMetadata:
                 Any other arguments the constraint requires.
         """
         self._validate_constraint(constraint_name, **kwargs)
-        kwargs['constraint'] = constraint_name
+        kwargs['constraint_name'] = constraint_name
         self._constraints.append(kwargs)
 
     @classmethod

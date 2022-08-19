@@ -1181,12 +1181,12 @@ class TestSingleTableMetadata:
         instance._columns = {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
         instance._constraints = [
             {
-                'constraint': 'Inequality',
+                'constraint_name': 'Inequality',
                 'low_column_name': 'col1',
                 'high_column_name': 'col2'
             },
             {
-                'constraint': 'ScalarInequality',
+                'constraint_name': 'ScalarInequality',
                 'column_name': 'col1',
                 'relation': '<',
                 'value': 10
@@ -1555,7 +1555,7 @@ class TestSingleTableMetadata:
         )
 
         assert metadata._constraints == [{
-            'constraint': 'Inequality',
+            'constraint_name': 'Inequality',
             'low_column_name': 'child_age',
             'high_column_name': 'start_date'
         }]

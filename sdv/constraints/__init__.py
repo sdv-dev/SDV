@@ -7,7 +7,7 @@ from sdv.constraints.tabular import (
 
 __all__ = [
     'create_custom_constraint',
-    'Constraint',
+    'constraint_name',
     'Inequality',
     'ScalarInequality',
     'FixedCombinations',

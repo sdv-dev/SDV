@@ -26,12 +26,12 @@ class TestDataProcessor:
         constraint1 = Mock()
         constraint2 = Mock()
         constraint1_dict = {
-            'constraint': 'Inequality',
+            'constraint_name': 'Inequality',
             'low_column_name': 'col1',
             'high_column_name': 'col2'
         }
         constraint2_dict = {
-            'constraint': 'ScalarInequality',
+            'constraint_name': 'ScalarInequality',
             'column_name': 'col1',
             'relation': '<',
             'value': 10
@@ -87,12 +87,12 @@ class TestDataProcessor:
         # Setup
         metadata_mock = Mock()
         constraint1_dict = {
-            'constraint': 'Inequality',
+            'constraint_name': 'Inequality',
             'low_column_name': 'col1',
             'high_column_name': 'col2'
         }
         constraint2_dict = {
-            'constraint': 'ScalarInequality',
+            'constraint_name': 'ScalarInequality',
             'column_name': 'col1',
             'relation': '<',
             'value': 10
@@ -130,6 +130,6 @@ class TestDataProcessor:
         # Assert
         assert isinstance(instance.metadata, SingleTableMetadata)
         assert instance.metadata._columns == {'col': {'sdtype': 'numerical'}}
-        assert instance.metadata._constraints == [{'constraint': 'Positive', 'column_name': 'col'}]
+        assert instance.metadata._constraints == [{'constraint_name': 'Positive', 'column_name': 'col'}]
         assert len(instance._constraints) == 1
         assert isinstance(instance._constraints[0], Positive)
