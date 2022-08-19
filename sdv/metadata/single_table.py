@@ -100,7 +100,7 @@ class SingleTableMetadata:
 
     @staticmethod
     def _validate_text(column_name, **kwargs):
-        regex = kwargs.get('regex_format')
+        regex = kwargs.get('regex_format', '')
         try:
             re.compile(regex)
         except Exception as exception:
