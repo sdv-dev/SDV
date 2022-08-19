@@ -558,7 +558,6 @@ class TestMultiTableMetadata:
         expected_error_msg = (
             "Table: accounts\nUnknown primary key values {'branches'}. "
             'Keys should be columns that exist in the table.'
-            "\nInvalid regex format string 'None' for text column 'owner'."
         )
         assert errors == ['\n', expected_error_msg]
         instance._tables['users'].validate.assert_called_once()
@@ -749,13 +748,14 @@ class TestMultiTableMetadata:
         instance._tables['users']._primary_key = None
         instance._tables['transactions']._columns['session_id']['sdtype'] = 'datetime'
         instance._tables['payments']._columns['date']['sdtype'] = 'text'
+        instance._tables['payments']._columns['date']['regex_format'] = '[A-z{'
         instance._relationships.pop(-1)
 
         # Run
         error_msg = re.escape(
             'The metadata is not valid\n'
             '\nTable: payments'
-            "\nInvalid regex format string 'None' for text column 'date'."
+            "\nInvalid regex format string '[A-z{' for text column 'date'."
             '\n\nRelationships:'
             "\nThe parent table 'users' does not have a primary key set. "
             "Please use 'set_primary_key' in order to set one."
