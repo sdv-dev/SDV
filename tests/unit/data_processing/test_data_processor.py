@@ -1,6 +1,8 @@
 from unittest.mock import Mock, call, patch
 
+from sdv.constraints.tabular import Positive
 from sdv.data_processing.data_processor import DataProcessor
+from sdv.metadata.single_table import SingleTableMetadata
 
 
 class TestDataProcessor:
@@ -107,3 +109,28 @@ class TestDataProcessor:
         assert data_processor.metadata == metadata_mock
         update_transformer_mock.assert_called_with(True, False)
         load_constraints_mock.assert_called_once()
+
+    def test___init___without_mocks(self):
+        """Test the ``__init__`` method without using mocks.
+
+        Setup:
+            - Create ``SingleTableMetadata`` instance with one column and one constraint.
+
+        Input:
+            - The ``SingleTableMetadata``.
+        """
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('col', sdtype='numerical')
+        metadata.add_constraint('Positive', column_name='col')
+
+        # Run
+        instance = DataProcessor(metadata=metadata)
+
+        # Assert
+        assert isinstance(instance.metadata, SingleTableMetadata)
+        assert instance.metadata._columns == {'col': {'sdtype': 'numerical'}}
+        assert instance.metadata._constraints == [
+            {'constraint_name': 'Positive', 'column_name': 'col'}]
+        assert len(instance._constraints) == 1
+        assert isinstance(instance._constraints[0], Positive)
