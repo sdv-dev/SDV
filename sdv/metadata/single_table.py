@@ -150,7 +150,6 @@ class SingleTableMetadata:
         Args:
             column_name (str):
                 The column name to be added.
-
             kwargs (type):
                 Any additional key word arguments for the column, where ``sdtype`` is required.
 
@@ -443,7 +442,6 @@ class SingleTableMetadata:
         Args:
             constraint_name (string):
                 Name of the constraint class.
-
             **kwargs:
                 Any other arguments the constraint requires.
         """
