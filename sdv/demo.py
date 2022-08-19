@@ -412,23 +412,23 @@ def load_tabular_demo(dataset_name='demo_single_table', table_name=None, data_pa
             },
             'constraints': [
                 {
-                    'constraint': 'FixedCombinations',
+                    'constraint_name': 'FixedCombinations',
                     'column_names': ['company', 'department'],
                 },
                 {
-                    'constraint': 'Inequality',
+                    'constraint_name': 'Inequality',
                     'low_column_name': 'age_when_joined',
                     'high_column_name': 'age'
                 },
                 {
-                    'constraint': 'ScalarInequality',
+                    'constraint_name': 'ScalarInequality',
                     'column_name': 'salary',
                     'relation': '>',
                     'value': 30000
                 },
                 {
-                    'constraint': 'Positive',
-                    'column_name': 'prior_years_experience'
+                    'constraint_name': 'Positive',
+                    'columns': 'prior_years_experience'
                 }
             ],
             'model_kwargs': {}
