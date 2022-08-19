@@ -2,11 +2,19 @@
 
 import copy
 import json
+import logging
 
+import pandas as pd
 import rdt
 
 from sdv.constraints import Constraint
+from sdv.constraints.errors import (
+    FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
+from sdv.metadata.errors import MetadataNotFittedError
 from sdv.metadata.single_table import SingleTableMetadata
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class DataProcessor:
@@ -34,6 +42,8 @@ class DataProcessor:
             This argument exists mostly to ensure that the models are fitted using the same
             arguments when the same DataProcessor is used to fit different model instances on
             different slices of the same table.
+        table_name (str):
+            Name of table this processor is for. Optional.
     """
 
     _DEFAULT_TRANSFORMERS_BY_SDTYPE = {
@@ -49,6 +59,13 @@ class DataProcessor:
             missing_value_replacement='mean',
             model_missing_values=True,
         )
+    }
+    _DTYPE_TO_SDTYPE = {
+        'i': 'numerical',
+        'f': 'numerical',
+        'O': 'categorical',
+        'b': 'boolean',
+        'M': 'datetime',
     }
 
     def _load_constraints(self):
@@ -66,13 +83,219 @@ class DataProcessor:
         self._transformers_by_sdtype.update({'numerical': custom_float_formatter})
 
     def __init__(self, metadata, learn_rounding_scheme=True, enforce_min_max_values=True,
-                 model_kwargs=None):
+                 model_kwargs=None, table_name=None):
         self.metadata = metadata
         self._model_kwargs = model_kwargs or {}
         self._constraints = self._load_constraints()
         self._constraints_to_reverse = []
         self._transformers_by_sdtype = self._DEFAULT_TRANSFORMERS_BY_SDTYPE.copy()
         self._update_numerical_transformer(learn_rounding_scheme, enforce_min_max_values)
+        self._hyper_transformer = None
+        self.table_name = table_name
+        self._dtypes = None
+
+    def get_model_kwargs(self, model_name):
+        """Return the required model kwargs for the indicated model.
+
+        Args:
+            model_name (str):
+                Qualified Name of the model for which model kwargs
+                are needed.
+
+        Returns:
+            dict:
+                Keyword arguments to use on the indicated model.
+        """
+        return copy.deepcopy(self._model_kwargs.get(model_name))
+
+    def set_model_kwargs(self, model_name, model_kwargs):
+        """Set the model kwargs used for the indicated model."""
+        self._model_kwargs[model_name] = model_kwargs
+
+    def _fit_constraints(self, data):
+        errors = []
+        for constraint in self._constraints:
+            try:
+                constraint.fit(data)
+            except Exception as e:
+                errors.append(e)
+
+        if errors:
+            raise MultipleConstraintsErrors(errors)
+
+    def _transform_constraints(self, data, is_condition=False):
+        errors = []
+        if not is_condition:
+            self._constraints_to_reverse = []
+
+        for constraint in self._constraints:
+            try:
+                data = constraint.transform(data)
+                if not is_condition:
+                    self._constraints_to_reverse.append(constraint)
+
+            except (MissingConstraintColumnError, FunctionError) as e:
+                if isinstance(e, MissingConstraintColumnError):
+                    LOGGER.info(
+                        f'{constraint.__class__.__name__} cannot be transformed because columns: '
+                        f'{e.missing_columns} were not found. Using the reject sampling approach '
+                        'instead.'
+                    )
+                else:
+                    LOGGER.info(
+                        f'Error transforming {constraint.__class__.__name__}. '
+                        'Using the reject sampling approach instead.'
+                    )
+                if is_condition:
+                    indices_to_drop = data.columns.isin(constraint.constraint_columns)
+                    columns_to_drop = data.columns.where(indices_to_drop).dropna()
+                    data = data.drop(columns_to_drop, axis=1)
+
+            except Exception as e:
+                errors.append(e)
+
+        if errors:
+            raise MultipleConstraintsErrors(errors)
+
+        return data
+
+    def _fit_transform_constraints(self, data):
+        # Fit and validate all constraints first because `transform` might change columns
+        # making the following constraints invalid
+        self._fit_constraints(data)
+        data = self._transform_constraints(data)
+
+        return data
+
+    def _create_config(self, data, columns_created_by_constraints):
+        sdtypes = {}
+        for column in data.columns:
+            column_metadata = self.metadata._columns.get(column)
+            if not column_metadata:
+                raise Exception(f'Metadata does not contain column {column}')
+            sdtypes[column] = column_metadata.get('sdtype')
+
+        transformers = {column: self._transformers_by_sdtype.get(column) for column in sdtypes}
+        for column in columns_created_by_constraints:
+            dtype_kind = data[column].dtype.kind
+            if dtype_kind in ('i', 'f'):
+                sdtypes[column] = 'numerical'
+                transformers[column] = rdt.transformers.FloatFormatter(
+                    missing_value_replacement='mean',
+                    model_missing_values=True,
+                )
+            else:
+                sdtype = self._DTYPE_TO_SDTYPE.get(dtype_kind, 'categorical')
+                sdtypes[column] = sdtype
+                transformers[column] = self._transformers_by_sdtype[sdtype]
+
+        return {'transformers': transformers, 'sdtypes': sdtypes}
+
+    def _fit_hyper_transformer(self, data, columns_created_by_constraints):
+        """Create and return a new ``rdt.HyperTransformer`` instance.
+
+        First get the ``dtypes`` and then use them to build a transformer dictionary
+        to be used by the ``HyperTransformer``.
+
+        Args:
+            data (pandas.DataFrame):
+                Data to transform.
+            columns_created_by_constraints (set):
+                Names of columns that are not in the metadata but that should also
+                be transformed. In most cases, these are the fields that were added
+                by previous transformations which the data underwent.
+
+        Returns:
+            rdt.HyperTransformer
+        """
+        self._hyper_transformer = rdt.HyperTransformer()
+        config = self._create_config(data, columns_created_by_constraints)
+        self._hyper_transformer.set_config(config)
+
+        if not data.empty:
+            self._hyper_transformer.fit(data)
+
+    def fit(self, data):
+        """Fit this metadata to the given data.
+
+        Args:
+            data (pandas.DataFrame):
+                Table to be analyzed.
+        """
+        LOGGER.info(f'Fitting table {self.table_name} metadata')
+        self._dtypes = data[list(data.columns)].dtypes
+
+        LOGGER.info(f'Fitting constraints for table {self.table_name}')
+        constrained = self._fit_transform_constraints(data)
+        columns_created_by_constraints = set(constrained.columns) - set(data.columns)
+
+        LOGGER.info(f'Fitting HyperTransformer for table {self.table_name}')
+        self._fit_hyper_transformer(constrained, columns_created_by_constraints)
+        self.fitted = True
+
+    def transform(self, data, is_condition=False):
+        """Transform the given data.
+
+        Args:
+            data (pandas.DataFrame):
+                Table data.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed data.
+        """
+        if not self.fitted:
+            raise MetadataNotFittedError()
+
+        LOGGER.debug(f'Transforming constraints for table {self.table_name}')
+        data = self._transform_constraints(data, is_condition)
+
+        LOGGER.debug(f'Transforming table {self.table_name}')
+        try:
+            return self._hyper_transformer.transform_subset(data)
+        except (rdt.errors.NotFittedError, rdt.errors.Error):
+            return data
+
+    def reverse_transform(self, data):
+        """Reverse the transformed data to the original format.
+
+        Args:
+            data (pandas.DataFrame):
+                Data to be reverse transformed.
+
+        Returns:
+            pandas.DataFrame
+        """
+        if not self.fitted:
+            raise MetadataNotFittedError()
+
+        reversible_columns = [
+            column
+            for column in self._hyper_transformer._output_columns
+            if column in data.columns
+        ]
+        reversed_data = data
+        try:
+            if not data.empty:
+                reversed_data = self._hyper_transformer.reverse_transform_subset(
+                    data[reversible_columns]
+                )
+        except rdt.errors.NotFittedError:
+            LOGGER.info(f'HyperTransformer has not been fitted for table {self.table_name}')
+
+        for constraint in reversed(self._constraints_to_reverse):
+            reversed_data = constraint.reverse_transform(reversed_data)
+
+        original_columns = list(self.metadata._columns.keys())
+        for column_name, _ in self.metadata._columns.items():
+            column_data = reversed_data[column_name]
+            if pd.api.types.is_integer_dtype(self._dtypes[column_name]):
+                column_data = column_data.round()
+
+            dtype = self._dtypes[column_name]
+            reversed_data[column_name] = column_data[column_data.notnull()].astype(dtype)
+
+        return reversed_data[original_columns]
 
     def filter_valid(self, data):
         """Filter the data using the constraints and return only the valid rows.
