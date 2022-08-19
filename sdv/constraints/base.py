@@ -344,7 +344,7 @@ class Constraint(metaclass=ConstraintMeta):
 
         Args:
             constraint_dict (dict):
-                Dict containing the keyword ``constraint`` alongside
+                Dict containing the keyword ``constraint_name`` alongside
                 any additional arguments needed to create the instance.
 
         Returns:
@@ -352,7 +352,7 @@ class Constraint(metaclass=ConstraintMeta):
                 New constraint instance.
         """
         constraint_dict = constraint_dict.copy()
-        constraint_class = constraint_dict.pop('constraint')
+        constraint_class = constraint_dict.pop('constraint_name')
         constraint_class = cls._get_class_from_dict(constraint_class)
 
         return constraint_class(**constraint_dict)
@@ -361,7 +361,7 @@ class Constraint(metaclass=ConstraintMeta):
         """Return a dict representation of this Constraint.
 
         The dictionary will contain the Qualified Name of the constraint
-        class in the key ``constraint``, as well as any other arguments
+        class in the key ``constraint_name``, as well as any other arguments
         that were passed to the constructor when the instance was created.
 
         Returns:
@@ -369,7 +369,7 @@ class Constraint(metaclass=ConstraintMeta):
                 Dict representation of this Constraint.
         """
         constraint_dict = {
-            'constraint': _get_qualified_name(self.__class__),
+            'constraint_name': _get_qualified_name(self.__class__),
         }
 
         for key, obj in copy.deepcopy(self.__kwargs__).items():

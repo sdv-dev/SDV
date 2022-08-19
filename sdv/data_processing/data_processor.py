@@ -55,6 +55,7 @@ class DataProcessor:
 
     def _load_constraints(self):
         constraints = self.metadata._constraints or []
+        print(constraints)
         loaded_constraints = [Constraint.from_dict(constraint) for constraint in constraints]
         return loaded_constraints
 
@@ -135,7 +136,7 @@ class DataProcessor:
                 Dict representation of this DataProcessor.
         """
         return {
-            'metadata': copy.deepcopy(self.metadata.to_dict()),
+            'metadata': copy.deepcopy(self.metadata),
             'transformers_by_sdtype': copy.deepcopy(self._transformers_by_sdtype),
             'constraints_to_reverse': copy.deepcopy(self._constraints_to_reverse),
             'model_kwargs': copy.deepcopy(self._model_kwargs)

@@ -404,21 +404,21 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
             },
             'constraints': [
                 {
-                    'constraint': 'FixedCombinations',
+                    'constraint_name': 'FixedCombinations',
                     'column_names': ['company', 'department'],
                 },
                 {
-                    'constraint': 'Inequality',
+                    'constraint_name': 'Inequality',
                     'low_column_name': 'age_when_joined',
                     'high_column_name': 'age'
                 },
                 {
-                    'constraint': 'ScalarInequality',
+                    'constraint_name': 'ScalarInequality',
                     'value': 30000,
                     'column_name': 'salary'
                 },
                 {
-                    'constraint': 'Positive',
+                    'constraint_name': 'Positive',
                     'columns': 'prior_years_experience'
                 }
             ],
