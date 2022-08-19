@@ -575,7 +575,7 @@ class TestConstraint():
     def test_from_dict_fqn(self):
         """Test the ``Constraint.from_dict`` method passing a FQN.
 
-        If the ``constraint`` string is a FQN, import the class
+        If the ``constraint_name`` string is a FQN, import the class
         before creating an instance of it.
 
         Input:
@@ -585,7 +585,7 @@ class TestConstraint():
         """
         # Setup
         constraint_dict = {
-            'constraint': 'sdv.constraints.tabular.FixedCombinations',
+            'constraint_name': 'sdv.constraints.tabular.FixedCombinations',
             'column_names': ['a', 'b'],
         }
 
@@ -599,7 +599,7 @@ class TestConstraint():
     def test_from_dict_subclass(self):
         """Test the ``Constraint.from_dict`` method passing a subclass name.
 
-        If the ``constraint`` string is a subclass name, take it from the
+        If the ``constraint_name`` string is a subclass name, take it from the
         Subclasses dict.
 
         Input:
@@ -609,7 +609,7 @@ class TestConstraint():
         """
         # Setup
         constraint_dict = {
-            'constraint': 'FixedCombinations',
+            'constraint_name': 'FixedCombinations',
             'column_names': ['a', 'b'],
         }
 
@@ -636,7 +636,7 @@ class TestConstraint():
 
         # Assert
         expected_dict = {
-            'constraint': 'sdv.constraints.tabular.FixedCombinations',
+            'constraint_name': 'sdv.constraints.tabular.FixedCombinations',
             'column_names': ['a', 'b'],
         }
         assert constraint_dict == expected_dict

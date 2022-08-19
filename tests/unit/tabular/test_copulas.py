@@ -62,7 +62,7 @@ class TestGaussianCopula:
             'fields': None,
             'constraints': [
                 {
-                    'constraint': 'sdv.constraints.tabular.Inequality',
+                    'constraint_name': 'sdv.constraints.tabular.Inequality',
                     'high_column_name': 'col2',
                     'low_column_name': 'col1'
                 }
