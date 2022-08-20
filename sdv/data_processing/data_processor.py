@@ -6,6 +6,7 @@ import json
 import rdt
 
 from sdv.constraints import Constraint
+from sdv.metadata.single_table import SingleTableMetadata
 
 
 class DataProcessor:
@@ -97,30 +98,30 @@ class DataProcessor:
                 Dict representation of this DataProcessor.
         """
         return {
-            'metadata': copy.deepcopy(self.metadata),
-            'transformers_by_sdtype': copy.deepcopy(self._transformers_by_sdtype),
+            'metadata': copy.deepcopy(self.metadata.to_dict()),
             'constraints_to_reverse': copy.deepcopy(self._constraints_to_reverse),
             'model_kwargs': copy.deepcopy(self._model_kwargs)
         }
 
     @classmethod
-    def from_dict(cls, metadata_dict):
+    def from_dict(cls, metadata_dict, learn_rounding_scheme=True, enforce_min_max_values=True):
         """Load a DataProcessor from a metadata dict.
 
         Args:
             metadata_dict (dict):
                 Dict metadata to load.
+            learn_rounding_scheme (bool):
+                If passed, set the ``learn_rounding_scheme`` on the new instance.
+            enforce_min_max_values (bool):
+                If passed, set the ``enforce_min_max_values`` on the new instance.
         """
         instance = cls(
-            metadata=metadata_dict['metadata'],
-            learn_rounding_scheme=metadata_dict.get('learn_rounding_scheme', True),
-            enforce_min_max_values=metadata_dict.get('enforce_min_max_values', True),
+            metadata=SingleTableMetadata.from_dict(metadata_dict['metadata']),
+            learn_rounding_scheme=learn_rounding_scheme,
+            enforce_min_max_values=enforce_min_max_values,
             model_kwargs=metadata_dict.get('model_kwargs')
         )
         instance._constraints_to_reverse = metadata_dict.get('constraints_to_reverse', [])
-        instance._transformers_by_sdtype = metadata_dict.get(
-            'transformers_by_sdtype', instance._transformers_by_sdtype
-        )
 
         return instance
 

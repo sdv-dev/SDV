@@ -465,6 +465,24 @@ class SingleTableMetadata:
         return instance
 
     @classmethod
+    def from_dict(cls, metadata):
+        """Create a ``SingleTableMetadata`` instance from a python ``dict``.
+
+        Args:
+            metadata (dict):
+                Python dictionary representing a ``SingleTableMetadata`` object.
+
+        Returns:
+            Instance of ``SingleTableMetadata``.
+        """
+        instance = cls()
+        for key in instance._KEYS:
+            value = deepcopy(metadata.get(key))
+            if value:
+                setattr(instance, f'_{key}', value)
+        return instance
+
+    @classmethod
     def load_from_json(cls, filepath):
         """Create an instance from a ``json`` file.
 
