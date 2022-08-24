@@ -63,6 +63,7 @@ development_requires = [
     # style check
     'flake8>=3.7.7,<4',
     'flake8-absolute-import>=1.0,<2',
+    'flake8-builtins>=1.5.3,<1.6',
     'flake8-docstrings>=1.5.0,<2',
     'flake8-sfs>=0.0.3,<0.1',
     'isort>=4.3.4,<5',
