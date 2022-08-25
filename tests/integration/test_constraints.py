@@ -45,7 +45,7 @@ def test_constraints(tmpdir):
 def test_constraints_with_conditions():
     # Setup
     data = pd.DataFrame(data={
-        'low_col': [i for i in range(50)],
+        'low_col': list(range(50)),
         'mid_col': [i + 1 for i in range(50)],
         'high_col': [i + 2 for i in range(50)]
     })

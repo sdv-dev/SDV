@@ -119,7 +119,7 @@ class SingleTableMetadata:
 
     def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
         expected_kwargs = self._EXPECTED_KWARGS.get(sdtype, ['pii'])
-        unexpected_kwargs = set(list(kwargs)) - set(expected_kwargs)
+        unexpected_kwargs = set(kwargs) - set(expected_kwargs)
         if unexpected_kwargs:
             unexpected_kwargs = sorted(unexpected_kwargs)
             unexpected_kwargs = ', '.join(unexpected_kwargs)

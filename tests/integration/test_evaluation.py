@@ -24,7 +24,7 @@ def test_evaluate_tables_from_demo():
 
     sampled = sdv.sample_all()
 
-    table_scores = dict()
+    table_scores = {}
     for table in new_meta.get_tables():
         table_scores[table] = evaluate(
             sampled[table], tables[table], metadata=new_meta, table_name=table)

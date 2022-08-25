@@ -98,7 +98,7 @@ class Table:
     _fields_metadata = None
     fitted = False
 
-    _ANONYMIZATION_MAPPINGS = dict()
+    _ANONYMIZATION_MAPPINGS = {}
     _TRANSFORMER_TEMPLATES = {
         'FloatFormatter': rdt.transformers.FloatFormatter(
             learn_rounding_scheme=True,
@@ -195,7 +195,7 @@ class Table:
         if isinstance(category, (tuple, list)):
             category, *args = category
         else:
-            args = tuple()
+            args = ()
 
         try:
             if args:
@@ -333,7 +333,7 @@ class Table:
             dict:
                 Dictionary that contains the field names and data types.
         """
-        dtypes = dict()
+        dtypes = {}
         for name, field_meta in self._fields_metadata.items():
             field_type = field_meta['type']
 
@@ -357,7 +357,7 @@ class Table:
             ValueError:
                 If a column from the data analyzed is an unsupported data type
         """
-        fields_metadata = dict()
+        fields_metadata = {}
         for field_name in self._field_names:
             if field_name not in data:
                 raise ValueError('Field {} not found in given data'.format(field_name))
@@ -400,7 +400,7 @@ class Table:
             dict:
                 mapping of field names and transformer instances.
         """
-        transformers = dict()
+        transformers = {}
         for name, dtype in dtypes.items():
             field_metadata = self._fields_metadata.get(name, {})
             transformer_template = field_metadata.get(

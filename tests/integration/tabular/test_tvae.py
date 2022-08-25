@@ -100,7 +100,7 @@ def test_conditional_sampling_dict():
     sampled = model.sample_conditions(conditions=conditions)
 
     assert sampled.shape == data.shape
-    assert set(sampled['column2'].unique()) == set(['b'])
+    assert set(sampled['column2'].unique()) == {'b'}
 
 
 def test_conditional_sampling_dataframe():

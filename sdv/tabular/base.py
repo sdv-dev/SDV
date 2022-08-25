@@ -594,7 +594,7 @@ class BaseTabularModel:
         grouped_conditions = conditions.groupby(condition_columns)
 
         # sample
-        all_sampled_rows = list()
+        all_sampled_rows = []
 
         for group, dataframe in grouped_conditions:
             if not isinstance(group, tuple):

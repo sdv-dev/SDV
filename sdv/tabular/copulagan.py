@@ -158,7 +158,7 @@ class CopulaGAN(CTGAN):
             learn_rounding_scheme=learn_rounding_scheme,
             enforce_min_max_values=enforce_min_max_values,
         )
-        self._field_distributions = field_distributions or dict()
+        self._field_distributions = field_distributions or {}
         self._default_distribution = default_distribution or self.DEFAULT_DISTRIBUTION
 
     def get_distributions(self):
@@ -191,7 +191,7 @@ class CopulaGAN(CTGAN):
 
             if field_name in fields and fields.get(
                 field_name,
-                dict(),
+                {},
             ).get('type') != 'categorical':
                 transformers[field] = GaussianNormalizer(
                     model_missing_values=True,
