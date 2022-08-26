@@ -162,7 +162,7 @@ class SDV:
                 Path from which to load the SDV instance.
         """
         with open(path, 'rb') as f:
-            model = pickle.load(f)
+            model = pickle.load(f)  # noqa: DUO103
             throw_version_mismatch_warning(getattr(model, '_package_versions', None))
 
             return model
