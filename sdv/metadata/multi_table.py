@@ -380,7 +380,7 @@ class MultiTableMetadata:
         table.detect_from_dataframe(data)
         self._tables[table_name] = table
 
-    def set_primary_key(self, table_name, id):
+    def set_primary_key(self, table_name, id):  # noqa
         """Set the primary key of a table.
 
         Args:
@@ -392,7 +392,7 @@ class MultiTableMetadata:
         self._validate_table_exists(table_name)
         self._tables[table_name].set_primary_key(id)
 
-    def set_sequence_key(self, table_name, id):
+    def set_sequence_key(self, table_name, id):  # noqa
         """Set the sequence key of a table.
 
         Args:

@@ -244,11 +244,11 @@ class SingleTableMetadata:
         self.detect_from_dataframe(data)
 
     @staticmethod
-    def _validate_datatype(id):
+    def _validate_datatype(id):  # noqa
         """Check whether id is a string or a tuple of strings."""
         return isinstance(id, str) or isinstance(id, tuple) and all(isinstance(i, str) for i in id)
 
-    def _validate_key(self, id, key_type):
+    def _validate_key(self, id, key_type):  # noqa
         """Validate the primary and sequence keys."""
         if id is not None:
             if not self._validate_datatype(id):
@@ -262,7 +262,7 @@ class SingleTableMetadata:
                     ' Keys should be columns that exist in the table.'
                 )
 
-    def set_primary_key(self, id):
+    def set_primary_key(self, id):  # noqa
         """Set the metadata primary key.
 
         Args:
@@ -278,7 +278,7 @@ class SingleTableMetadata:
 
         self._primary_key = id
 
-    def set_sequence_key(self, id):
+    def set_sequence_key(self, id):  # noqa
         """Set the metadata sequence key.
 
         Args:
@@ -295,14 +295,14 @@ class SingleTableMetadata:
         self._sequence_key = id
 
     def _validate_alternate_keys(self, ids):
-        if not isinstance(ids, list) or not all(self._validate_datatype(id) for id in ids):
+        if not isinstance(ids, list) or not all(self._validate_datatype(id) for id in ids):  # noqa
             raise ValueError(
                 "'alternate_keys' must be a list of strings or a list of tuples of strings."
             )
 
         keys = set()
-        for id in ids:
-            keys.update({id} if isinstance(id, str) else set(id))
+        for id in ids:  # noqa
+            keys.update({id} if isinstance(id, str) else set(id))  # noqa
 
         invalid_ids = keys - set(self._columns)
         if invalid_ids:
