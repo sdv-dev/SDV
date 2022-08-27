@@ -1,5 +1,12 @@
+import re
 from unittest.mock import Mock, call, patch
 
+import numpy as np
+import pandas as pd
+import pytest
+
+from sdv.constraints.errors import (
+    FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
 from sdv.constraints.tabular import Positive
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.metadata.single_table import SingleTableMetadata
@@ -209,3 +216,188 @@ class TestDataProcessor:
 
         for sdtype, transformer in instance._transformers_by_sdtype.items():
             assert repr(transformer) == repr(new_instance._transformers_by_sdtype[sdtype])
+    def test__fit_transform_constraints(self):
+        """Test the ``_fit_transform_constraints`` method.
+
+        The method should loop through all the constraints, fit them,
+        and then call ``transform`` for all of them.
+
+        Setup:
+            - Set the ``_constraints`` to be a list of mocked constraints.
+
+        Input:
+            - A ``pandas.DataFrame``.
+
+        Output:
+            - Same ``pandas.DataFrame``.
+
+        Side effect:
+            - Each constraint should be fit and transform the data.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        transformed_data = pd.DataFrame({'a': [4, 5, 6]})
+        dp = DataProcessor(SingleTableMetadata())
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint1.transform.return_value = transformed_data
+        constraint2.transform.return_value = data
+        dp._constraints = [constraint1, constraint2]
+
+        # Run
+        constrained_data = dp._fit_transform_constraints(data)
+
+        # Assert
+        constraint1.fit.assert_called_once_with(data)
+        constraint2.fit.assert_called_once_with(data)
+        constraint1.transform.assert_called_once_with(data)
+        constraint2.transform.assert_called_once_with(transformed_data)
+        pd.testing.assert_frame_equal(constrained_data, data)
+
+    def test__fit_transform_constraints_fit_errors(self):
+        """Test the ``_fit_transform_constraints`` method when constraints error on fit.
+
+        The method should loop through all the constraints and try to fit them. If
+        any errors are raised, they should be caught and surfaced together.
+
+        Setup:
+            - Set the ``_constraints`` to be a list of mocked constraints.
+            - Set constraint mocks to raise Exceptions when calling fit.
+
+        Input:
+            - A ``pandas.DataFrame``.
+
+        Side effect:
+            - A ``MultipleConstraintsErrors`` error should be raised.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        dp = DataProcessor(SingleTableMetadata())
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint1.fit.side_effect = Exception('error 1')
+        constraint2.fit.side_effect = Exception('error 2')
+        dp._constraints = [constraint1, constraint2]
+
+        # Run / Assert
+        error_message = re.escape('\nerror 1\n\nerror 2')
+        with pytest.raises(MultipleConstraintsErrors, match=error_message):
+            dp._fit_transform_constraints(data)
+
+    def test__fit_transform_constraints_transform_errors(self):
+        """Test the ``_fit_transform_constraints`` method when constraints error on transform.
+
+        The method should loop through all the constraints and try to fit them. Then it
+        should loop through again and try to transform. If any errors are raised, they should be
+        caught and surfaced together.
+
+        Setup:
+            - Set the ``_constraints`` to be a list of mocked constraints.
+            - Set constraint mocks to raise Exceptions when calling transform.
+
+        Input:
+            - A ``pandas.DataFrame``.
+
+        Side effect:
+            - A ``MultipleConstraintsErrors`` error should be raised.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        dp = DataProcessor(SingleTableMetadata())
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint1.transform.side_effect = Exception('error 1')
+        constraint2.transform.side_effect = Exception('error 2')
+        dp._constraints = [constraint1, constraint2]
+
+        # Run / Assert
+        error_message = re.escape('\nerror 1\n\nerror 2')
+        with pytest.raises(MultipleConstraintsErrors, match=error_message):
+            dp._fit_transform_constraints(data)
+
+        constraint1.fit.assert_called_once_with(data)
+        constraint2.fit.assert_called_once_with(data)
+
+    @patch('sdv.data_processing.data_processor.LOGGER')
+    def test__fit_transform_constraints_missing_columns_error(self, log_mock):
+        """Test the ``_fit_transform_constraints`` method when transform raises a errors.
+
+        The method should loop through all the constraints and try to fit them. Then it
+        should loop through again and try to transform. If a ``MissingConstraintColumnError`` or
+        ``FunctionError`` is raised, a warning should be raised and reject sampling should be used.
+
+        Setup:
+            - Set the ``_constraints`` to be a list of mocked constraints.
+            - Set constraint mocks to raise ``MissingConstraintColumnError`` and ``FunctionError``
+            when calling transform.
+            - Mock warnings module.
+
+        Input:
+            - A ``pandas.DataFrame``.
+
+        Side effect:
+            - ``MissingConstraintColumnError`` and ``FunctionError`` warning messages.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        dp = DataProcessor(SingleTableMetadata())
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint3 = Mock()
+        constraint1.transform.return_value = data
+        constraint2.transform.side_effect = MissingConstraintColumnError(['column'])
+        constraint3.transform.side_effect = FunctionError()
+        dp._constraints = [constraint1, constraint2, constraint3]
+
+        # Run
+        dp._fit_transform_constraints(data)
+
+        # Assert
+        constraint1.fit.assert_called_once_with(data)
+        constraint2.fit.assert_called_once_with(data)
+        constraint3.fit.assert_called_once_with(data)
+        assert log_mock.info.call_count == 2
+        message1 = (
+            "Mock cannot be transformed because columns: ['column'] were not found. Using the "
+            'reject sampling approach instead.'
+        )
+        message2 = 'Error transforming Mock. Using the reject sampling approach instead.'
+        log_mock.info.assert_has_calls([call(message1), call(message2)])
+
+    @patch('sdv.data_processing.data_processor.LOGGER')
+    def test_fit(self, log_mock):
+        """Test the ``fit`` method.
+
+        The ``fit`` method should store the dtypes, fit and transform the constraints
+        and then fit the ``HyperTransformer``.
+
+        Setup:
+            - Mock the ``_fit_transform_constraints`` method.
+            - Mock the ``_fit_hyper_transformer`` method.
+
+        Input:
+            - A ``pandas.DataFrame``.
+
+        Side effect:
+            - The ``self._dtypes`` method should be set.
+            - The ``_fit_transform_constraints`` should be called.
+            - The ``_fit_hyper_transformer`` should be called.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]}, dtype=np.int64)
+        transformed_data = pd.DataFrame({'a': [4, 5, 6], 'b': [1, 2, 3]})
+        dp = Mock()
+        dp.table_name = 'fake_table'
+        dp._fit_transform_constraints.return_value = transformed_data
+
+        # Run
+        DataProcessor.fit(dp, data)
+
+        # Assert
+        pd.testing.assert_series_equal(dp._dtypes, pd.Series([np.int64], index=['a']))
+        dp._fit_transform_constraints.assert_called_once_with(data)
+        dp._fit_hyper_transformer.assert_called_once_with(transformed_data, {'b'})
+        fitting_call = call('Fitting table fake_table metadata')
+        constraint_call = call('Fitting constraints for table fake_table')
+        transformer_call = call('Fitting HyperTransformer for table fake_table')
+        log_mock.info.assert_has_calls([fitting_call, constraint_call, transformer_call])

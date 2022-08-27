@@ -343,9 +343,6 @@ class TestTable:
         Input:
             - A ``pandas.DataFrame``.
 
-        Output:
-            - Same ``pandas.DataFrame``.
-
         Side effect:
             - Each constraint should be fit and transform the data.
         """
