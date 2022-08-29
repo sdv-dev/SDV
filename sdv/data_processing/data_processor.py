@@ -10,7 +10,7 @@ import rdt
 from sdv.constraints import Constraint
 from sdv.constraints.errors import (
     FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
-from sdv.metadata.errors import MetadataNotFittedError
+from sdv.data_processing.errors import NotFittedError
 from sdv.metadata.single_table import SingleTableMetadata
 
 
@@ -93,6 +93,7 @@ class DataProcessor:
         self._hyper_transformer = None
         self.table_name = table_name
         self._dtypes = None
+        self.fitted = False
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -169,13 +170,13 @@ class DataProcessor:
 
     def _create_config(self, data, columns_created_by_constraints):
         sdtypes = {}
-        for column in data.columns:
+        transformers = {}
+        for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata._columns.get(column)
-            if not column_metadata:
-                raise Exception(f'Metadata does not contain column {column}')
-            sdtypes[column] = column_metadata.get('sdtype')
+            sdtype = column_metadata.get('sdtype')
+            sdtypes[column] = sdtype
+            transformers[column] = self._transformers_by_sdtype.get(sdtype)
 
-        transformers = {column: self._transformers_by_sdtype.get(column) for column in sdtypes}
         for column in columns_created_by_constraints:
             dtype_kind = data[column].dtype.kind
             if dtype_kind in ('i', 'f'):
@@ -245,7 +246,7 @@ class DataProcessor:
                 Transformed data.
         """
         if not self.fitted:
-            raise MetadataNotFittedError()
+            raise NotFittedError()
 
         LOGGER.debug(f'Transforming constraints for table {self.table_name}')
         data = self._transform_constraints(data, is_condition)
@@ -267,7 +268,7 @@ class DataProcessor:
             pandas.DataFrame
         """
         if not self.fitted:
-            raise MetadataNotFittedError()
+            raise NotFittedError()
 
         reversible_columns = [
             column

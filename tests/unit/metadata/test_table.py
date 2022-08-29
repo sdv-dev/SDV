@@ -476,7 +476,7 @@ class TestTable:
         warnings_mock.warn.assert_has_calls([call(warning_message1), call(warning_message2)])
 
     def test_transform_calls__transform_constraints(self):
-        """Test that the `transform` method calls `_transform_constraints` with right parameters
+        """Test that ``transform`` method calls ``_transform_constraints`` with right parameters.
 
         The ``transform`` method is expected to call the ``_transform_constraints`` method
         with the data and correct value for ``is_condition``.

@@ -4,11 +4,14 @@ from unittest.mock import Mock, call, patch
 import numpy as np
 import pandas as pd
 import pytest
+from rdt.errors import Error
+from rdt.transformers import FloatFormatter, LabelEncoder
 
 from sdv.constraints.errors import (
     FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
 from sdv.constraints.tabular import Positive
 from sdv.data_processing.data_processor import DataProcessor
+from sdv.data_processing.errors import NotFittedError
 from sdv.metadata.single_table import SingleTableMetadata
 
 
@@ -216,6 +219,49 @@ class TestDataProcessor:
 
         for sdtype, transformer in instance._transformers_by_sdtype.items():
             assert repr(transformer) == repr(new_instance._transformers_by_sdtype[sdtype])
+
+    def test_get_model_kwargs(self):
+        """Test the ``get_model_kwargs`` method.
+
+        The method should return a copy of the ``model_kwargs``.
+
+        Input:
+            - Model name.
+
+        Output:
+            - model key word args.
+        """
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        dp._model_kwargs = {'model': {'arg1': 10, 'arg2': True}}
+
+        # Run
+        model_kwargs = dp.get_model_kwargs('model')
+
+        # Assert
+        assert model_kwargs == {'arg1': 10, 'arg2': True}
+
+    def test_set_model_kwargs(self):
+        """Test the ``set_model_kwargs`` method.
+
+        The method should set the ``model_kwargs`` for the provided model name.
+
+        Input:
+            - Model name.
+            - Model key word args.
+
+        Side effect:
+            - ``_model_kwargs`` should be set.
+        """
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+
+        # Run
+        dp.set_model_kwargs('model', {'arg1': 10, 'arg2': True})
+
+        # Assert
+        assert dp._model_kwargs == {'model': {'arg1': 10, 'arg2': True}}
+
     def test__fit_transform_constraints(self):
         """Test the ``_fit_transform_constraints`` method.
 
@@ -364,6 +410,138 @@ class TestDataProcessor:
         message2 = 'Error transforming Mock. Using the reject sampling approach instead.'
         log_mock.info.assert_has_calls([call(message1), call(message2)])
 
+    def test__create_config(self):
+        """Test the ``_create_config`` method.
+
+        The method should loop through the columns in the metadata and set the transformer
+        for each column based on the sdtype. It should then loop through the columns in the
+        ``columns_created_by_constraints`` list and either set them to use a ``FloatFormatter``
+        or other transformer depending on their sdtype.
+
+        Setup:
+            - Create data with different column types.
+            - Mock the metadata's columns.
+        Input:
+            - Data with columns both in the metadata and not.
+            - columns_created_by_constraints as a list of the column names not in the metadata.
+
+        Output:
+            - The expected ``HyperTransformer`` config.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'int': [1, 2, 3],
+            'float': [1., 2., 3.],
+            'bool': [True, False, True],
+            'categorical': ['a', 'b', 'c'],
+            'created_int': [4, 5, 6],
+            'created_float': [4., 5., 6.],
+            'created_bool': [False, True, False],
+            'created_categorical': ['d', 'e', 'f']
+        })
+        dp = DataProcessor(SingleTableMetadata())
+        dp.metadata = Mock()
+        dp.metadata._columns = {
+            'int': {'sdtype': 'numerical'},
+            'float': {'sdtype': 'numerical'},
+            'bool': {'sdtype': 'boolean'},
+            'categorical': {'sdtype': 'categorical'}
+        }
+
+        # Run
+        created_columns = {'created_int', 'created_float', 'created_bool', 'created_categorical'}
+        config = dp._create_config(data, created_columns)
+
+        # Assert
+        assert config['sdtypes'] == {
+            'int': 'numerical',
+            'float': 'numerical',
+            'bool': 'boolean',
+            'categorical': 'categorical',
+            'created_int': 'numerical',
+            'created_float': 'numerical',
+            'created_bool': 'boolean',
+            'created_categorical': 'categorical'
+        }
+        int_transformer = config['transformers']['created_int']
+        assert isinstance(int_transformer, FloatFormatter)
+        assert int_transformer.missing_value_replacement == 'mean'
+        assert int_transformer.model_missing_values is True
+        float_transformer = config['transformers']['created_float']
+        assert isinstance(float_transformer, FloatFormatter)
+        assert float_transformer.missing_value_replacement == 'mean'
+        assert float_transformer.model_missing_values is True
+        assert isinstance(config['transformers']['bool'], LabelEncoder)
+        assert isinstance(config['transformers']['created_bool'], LabelEncoder)
+        assert isinstance(config['transformers']['categorical'], LabelEncoder)
+        assert isinstance(config['transformers']['created_categorical'], LabelEncoder)
+        assert isinstance(config['transformers']['int'], FloatFormatter)
+        assert isinstance(config['transformers']['float'], FloatFormatter)
+
+    @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
+    def test__fit_hyper_transformer(self, ht_mock):
+        """Test the ``_fit_hyper_transformer`` method.
+
+        The method should create a ``HyperTransformer``, create a config from the data and
+        set the ``HyperTransformer's`` config to be what was created. Then it should fit the
+        ``HyperTransformer`` on the data.
+
+        Setup:
+            - Patch the ``HyperTransformer``.
+            - Mock the ``_create_config`` method.
+
+        Input:
+            - A dataframe.
+
+        Side effects:
+            - ``HyperTransformer`` should fit the data.
+        """
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        dp._create_config = Mock()
+        dp._create_config.return_value = {'transformers': [], 'sdtypes': []}
+        data = pd.DataFrame({'a': [1, 2, 3]})
+
+        # Run
+        dp._fit_hyper_transformer(data, [])
+
+        # Assert
+        expected_config = {'transformers': [], 'sdtypes': []}
+        ht_mock.return_value.set_config.assert_called_once_with(expected_config)
+        ht_mock.return_value.fit.assert_called_once_with(data)
+        dp._create_config.assert_called_once_with(data, [])
+
+    @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
+    def test__fit_hyper_transformer_empty_data(self, ht_mock):
+        """Test the ``_fit_hyper_transformer`` method.
+
+        If the data is empty, the ``HyperTransformer`` should not call fit.
+
+        Setup:
+            - Patch the ``HyperTransformer``.
+            - Mock the ``_create_config`` method.
+
+        Input:
+            - An empty dataframe.
+
+        Side effects:
+            - ``HyperTransformer`` should not fit the data.
+        """
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        dp._create_config = Mock()
+        dp._create_config.return_value = {'transformers': [], 'sdtypes': []}
+        data = pd.DataFrame()
+
+        # Run
+        dp._fit_hyper_transformer(data, [])
+
+        # Assert
+        expected_config = {'transformers': [], 'sdtypes': []}
+        ht_mock.return_value.set_config.assert_called_once_with(expected_config)
+        ht_mock.return_value.fit.assert_not_called()
+        dp._create_config.assert_called_once_with(data, [])
+
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_fit(self, log_mock):
         """Test the ``fit`` method.
@@ -401,3 +579,223 @@ class TestDataProcessor:
         constraint_call = call('Fitting constraints for table fake_table')
         transformer_call = call('Fitting HyperTransformer for table fake_table')
         log_mock.info.assert_has_calls([fitting_call, constraint_call, transformer_call])
+
+    @patch('sdv.data_processing.data_processor.LOGGER')
+    def test_transform(self, log_mock):
+        """Test the ``transform`` method.
+
+        The method should call the ``_transform_constraints`` and
+        ``HyperTransformer.transform_subset``.
+
+        Input:
+            - Table data.
+
+        Side Effects:
+            - Calls ``_transform_constraints``.
+            - Calls ``HyperTransformer.transform_subset``.
+            - Calls logger with right messages.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [True, True, False]
+        }, index=[0, 1, 2])
+        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp._transform_constraints = Mock()
+        dp._transform_constraints.return_value = data
+        dp._hyper_transformer = Mock()
+        dp._hyper_transformer.transform_subset.return_value = data
+        dp.fitted = True
+
+        # Run
+        dp.transform(data)
+
+        # Assert
+        expected_data = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [True, True, False]
+        }, index=[0, 1, 2])
+        constraint_mock_calls = dp._transform_constraints.mock_calls
+        ht_mock_calls = dp._hyper_transformer.transform_subset.mock_calls
+        constraint_data, is_condition = constraint_mock_calls[0][1]
+        ht_data = ht_mock_calls[0][1][0]
+        assert len(constraint_mock_calls) == 1
+        assert is_condition is False
+        pd.testing.assert_frame_equal(constraint_data, expected_data)
+        assert len(ht_mock_calls) == 1
+        pd.testing.assert_frame_equal(ht_data, expected_data)
+        constraint_call = call('Transforming constraints for table table_name')
+        transformer_call = call('Transforming table table_name')
+        log_mock.debug.assert_has_calls([constraint_call, transformer_call])
+
+    def test_transform_not_fitted(self):
+        """Test the ``transform`` method if the ``DataProcessor`` was not fitted.
+
+        The method should raise a ``NotFittedError``.
+
+        Setup:
+            - Set ``fitted`` to False.
+
+        Input:
+            - Table data.
+
+        Side Effects:
+            - Raises ``NotFittedError``.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [True, True, False]
+        }, index=[0, 1, 2])
+        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+
+        # Run
+        with pytest.raises(NotFittedError):
+            dp.transform(data)
+
+    def test_transform_hyper_transformer_errors(self):
+        """Test the ``transform`` method when ``HyperTransformer`` errors.
+
+        The method should catch the error raised by the ``HyperTransformer`` and return
+        the data unchanged.
+
+        Input:
+            - Table data.
+
+        Output:
+            - Same data.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [True, True, False]
+        }, index=[0, 1, 2])
+        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp._transform_constraints = Mock()
+        dp._transform_constraints.return_value = data
+        dp._hyper_transformer = Mock()
+        dp._hyper_transformer.transform_subset.side_effect = Error()
+        dp.fitted = True
+
+        # Run
+        transformed_data = dp.transform(data)
+
+        # Assert
+        expected_data = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [True, True, False]
+        }, index=[0, 1, 2])
+        constraint_mock_calls = dp._transform_constraints.mock_calls
+        constraint_data, is_condition = constraint_mock_calls[0][1]
+        assert len(constraint_mock_calls) == 1
+        assert is_condition is False
+        pd.testing.assert_frame_equal(constraint_data, expected_data)
+        pd.testing.assert_frame_equal(transformed_data, expected_data)
+
+    def test__transform_constraints(self):
+        """Test that ``_transform_constraints`` correctly transforms data based on constraints.
+
+        The method is expected to loop through constraints and call each constraint's ``transform``
+        method on the data.
+
+        Input:
+            - Table data.
+        Output:
+            - Transformed data.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [3, 4, 5]
+        }, index=[0, 1, 2])
+        transformed_data = pd.DataFrame({
+            'item 0': [0, 0.5, 1],
+            'item 1': [6, 8, 10]
+        }, index=[0, 1, 2])
+        first_constraint_mock = Mock()
+        second_constraint_mock = Mock()
+        first_constraint_mock.transform.return_value = transformed_data
+        second_constraint_mock.return_value = transformed_data
+        dp = DataProcessor(SingleTableMetadata())
+        dp._constraints = [first_constraint_mock, second_constraint_mock]
+
+        # Run
+        result = dp._transform_constraints(data)
+
+        # Assert
+        assert result.equals(transformed_data)
+        first_constraint_mock.transform.assert_called_once_with(data)
+        second_constraint_mock.transform.assert_called_once_with(transformed_data)
+        assert dp._constraints_to_reverse == [
+            first_constraint_mock,
+            second_constraint_mock
+        ]
+
+    def test__transform_constraints_is_condition_drops_columns(self):
+        """Test that ``_transform_constraints`` drops columns when necessary.
+
+        The method is expected to drop columns associated with a constraint when its
+        transform raises a ``MissingConstraintColumnError`` and the ``is_condition``
+        flag is True.
+
+        Input:
+            - Table data.
+            - ``is_condition`` set to True.
+        Output:
+            - Table with dropped columns.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [3, 4, 5]
+        }, index=[0, 1, 2])
+        constraint_mock = Mock()
+        constraint_mock.transform.side_effect = MissingConstraintColumnError(missing_columns=[])
+        constraint_mock.constraint_columns = ['item 0']
+        dp = DataProcessor(SingleTableMetadata())
+        dp._constraints = [constraint_mock]
+        dp._constraints_to_reverse = [constraint_mock]
+
+        # Run
+        result = dp._transform_constraints(data, True)
+
+        # Assert
+        expected_result = pd.DataFrame({
+            'item 1': [3, 4, 5]
+        }, index=[0, 1, 2])
+        assert result.equals(expected_result)
+        assert dp._constraints_to_reverse == [constraint_mock]
+
+    def test__transform_constraints_is_condition_false_returns_data(self):
+        """Test that ``_transform_constraints`` returns data unchanged when necessary.
+
+        The method is expected to return data unchanged when the constraint transform
+        raises a ``MissingConstraintColumnError`` and the ``is_condition`` flag is False.
+
+        Input:
+            - Table data.
+        Output:
+            - Table with dropped columns.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [3, 4, 5]
+        }, index=[0, 1, 2])
+        constraint_mock = Mock()
+        constraint_mock.transform.side_effect = MissingConstraintColumnError(missing_columns=[])
+        constraint_mock.constraint_columns = ['item 0']
+        dp = DataProcessor(SingleTableMetadata())
+        dp._constraints = [constraint_mock]
+        dp._constraints_to_reverse = [constraint_mock]
+
+        # Run
+        result = dp._transform_constraints(data, False)
+
+        # Assert
+        expected_result = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [3, 4, 5]
+        }, index=[0, 1, 2])
+        assert result.equals(expected_result)
+        assert dp._constraints_to_reverse == []
