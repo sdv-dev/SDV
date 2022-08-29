@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from rdt.errors import Error
+from rdt.errors import NotFittedError as RDTNotFittedError
 from rdt.transformers import FloatFormatter, LabelEncoder
 
 from sdv.constraints.errors import (
@@ -799,3 +800,174 @@ class TestDataProcessor:
         }, index=[0, 1, 2])
         assert result.equals(expected_result)
         assert dp._constraints_to_reverse == []
+
+    def test_reverse_transform(self):
+        """Test the ``reverse_transform`` method.
+
+        This method should attempt to reverse transform all the columns using the
+        ``HyperTransformer``. Then it should loop through the constraints and reverse
+        transform all of them. Finally, it should cast all the columns to their original
+        dtypes.
+
+        Setup:
+            - Mock the ``HyperTransformer``.
+            - Set the ``_constraints_to_reverse`` to contain a mock constraint.
+            - Set ``fitted`` to True.
+            - Mock the ``_dtypes``.
+
+        Input:
+            - A dataframe.
+
+        Output:
+            - The reverse transformed data.
+        """
+        # Setup
+        constraint_mock = Mock()
+        dp = DataProcessor(SingleTableMetadata())
+        dp.fitted = True
+        dp.metadata = Mock()
+        dp.metadata._columns = {'a': None, 'b': None, 'c': None}
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [True, True, False],
+            'c': ['d', 'e', 'f']
+        })
+        dp._hyper_transformer = Mock()
+        dp._constraints_to_reverse = [constraint_mock]
+        dp._hyper_transformer.reverse_transform_subset.return_value = data
+        dp._hyper_transformer._output_columns = ['a', 'b', 'c']
+        dp._dtypes = pd.Series([np.float64, np.bool_, np.object_], index=['a', 'b', 'c'])
+        constraint_mock.reverse_transform.return_value = data
+
+        # Run
+        reverse_transformed = dp.reverse_transform(data)
+
+        # Assert
+        input_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [True, True, False],
+            'c': ['d', 'e', 'f']
+        })
+        constraint_mock.reverse_transform.assert_called_once_with(data)
+        data_from_call = dp._hyper_transformer.reverse_transform_subset.mock_calls[0][1][0]
+        pd.testing.assert_frame_equal(input_data, data_from_call)
+        dp._hyper_transformer.reverse_transform_subset.assert_called_once()
+        expected_output = pd.DataFrame({
+            'a': [1., 2., 3.],
+            'b': [True, True, False],
+            'c': ['d', 'e', 'f']
+        })
+        pd.testing.assert_frame_equal(reverse_transformed, expected_output)
+
+    @patch('sdv.data_processing.data_processor.LOGGER')
+    def test_reverse_transform_hyper_Transformer_errors(self, log_mock):
+        """Test the ``reverse_transform`` method.
+
+        A message should be logged if the ``HyperTransformer`` errors.
+
+        Setup:
+            - Patch the logger.
+            - Mock the ``HyperTransformer``.
+            - Set the ``_constraints_to_reverse`` to contain a mock constraint.
+            - Set ``fitted`` to True.
+            - Mock the ``_dtypes``.
+
+        Input:
+            - A dataframe.
+
+        Output:
+            - The reverse transformed data.
+        """
+        # Setup
+        constraint_mock = Mock()
+        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp.fitted = True
+        dp.metadata = Mock()
+        dp.metadata._columns = {'a': None, 'b': None, 'c': None}
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [True, True, False],
+            'c': ['d', 'e', 'f']
+        })
+        dp._hyper_transformer = Mock()
+        dp._constraints_to_reverse = [constraint_mock]
+        dp._hyper_transformer.reverse_transform_subset.side_effect = RDTNotFittedError
+        dp._hyper_transformer._output_columns = ['a', 'b', 'c']
+        dp._dtypes = pd.Series([np.float64, np.bool_, np.object_], index=['a', 'b', 'c'])
+        constraint_mock.reverse_transform.return_value = data
+
+        # Run
+        reverse_transformed = dp.reverse_transform(data)
+
+        # Assert
+        input_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [True, True, False],
+            'c': ['d', 'e', 'f']
+        })
+        constraint_mock.reverse_transform.assert_called_once_with(data)
+        data_from_call = dp._hyper_transformer.reverse_transform_subset.mock_calls[0][1][0]
+        message = 'HyperTransformer has not been fitted for table table_name'
+        log_mock.info.assert_called_with(message)
+        pd.testing.assert_frame_equal(input_data, data_from_call)
+        expected_output = pd.DataFrame({
+            'a': [1., 2., 3.],
+            'b': [True, True, False],
+            'c': ['d', 'e', 'f']
+        })
+        pd.testing.assert_frame_equal(reverse_transformed, expected_output)
+
+    def test_reverse_transform_not_fitted(self):
+        """Test the ``reverse_transform`` method if the ``DataProcessor`` was not fitted.
+
+        The method should raise a ``NotFittedError``.
+
+        Setup:
+            - Set ``fitted`` to False.
+
+        Input:
+            - Table data.
+
+        Side Effects:
+            - Raises ``NotFittedError``.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [True, True, False]
+        }, index=[0, 1, 2])
+        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+
+        # Run
+        with pytest.raises(NotFittedError):
+            dp.reverse_transform(data)
+
+    def test_reverse_transform_integer_rounding(self):
+        """Test the ``reverse_transform`` method correctly rounds.
+
+        Expect the data to be rounded when the ``dtypes`` specifies
+        the ``'dtype'`` as ``'integer'``.
+
+        Input:
+            - A dataframe.
+        Output:
+            - The input dictionary rounded.
+        """
+        # Setup
+        data = pd.DataFrame({'bar': [0.2, 1.7, 2]})
+        dp = DataProcessor(SingleTableMetadata())
+        dp.fitted = True
+        dp._hyper_transformer = Mock()
+        dp._hyper_transformer._output_columns = []
+        dp._hyper_transformer.reverse_transform_subset.return_value = data
+        dp._constraints_to_reverse = []
+        dp._dtypes = {'bar': 'int'}
+        dp.metadata = Mock()
+        dp.metadata._columns = {'bar': None}
+
+        # Run
+        output = dp.reverse_transform(data)
+
+        # Assert
+        expected_data = pd.DataFrame({'bar': [0, 2, 2]})
+        pd.testing.assert_frame_equal(output, expected_data, check_dtype=False)
