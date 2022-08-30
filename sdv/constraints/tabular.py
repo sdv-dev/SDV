@@ -1146,7 +1146,7 @@ class FixedIncrements(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        isnan = pd.isnull(table_data[self.column_name])
+        isnan = pd.isna(table_data[self.column_name])
         is_divisible = table_data[self.column_name] % self.increment_value == 0
         return is_divisible | isnan
 
@@ -1242,8 +1242,9 @@ class OneHotEncoding(Constraint):
                 Transformed data.
         """
         one_hot_data = table_data[self._column_names]
-        transformed_data = np.zeros_like(one_hot_data.values)
-        transformed_data[np.arange(len(one_hot_data)), np.argmax(one_hot_data.values, axis=1)] = 1
+        transformed_data = np.zeros_like(one_hot_data.to_numpy())
+        max_category_indices = np.argmax(one_hot_data.to_numpy(), axis=1)
+        transformed_data[np.arange(len(one_hot_data)), max_category_indices] = 1
         table_data[self._column_names] = transformed_data
 
         return table_data

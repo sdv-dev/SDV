@@ -718,7 +718,7 @@ class Table:
             if field_metadata['type'] == 'numerical' and field_metadata['subtype'] == 'integer':
                 field_data = field_data.round()
 
-            reversed_data[name] = field_data[field_data.notnull()].astype(self._dtypes[name])
+            reversed_data[name] = field_data[field_data.notna()].astype(self._dtypes[name])
 
         return reversed_data[self._field_names]
 
