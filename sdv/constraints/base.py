@@ -465,7 +465,7 @@ class ColumnsModel:
         """
         condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
         grouped_conditions = table_data[condition_columns].groupby(condition_columns)
-        all_sampled_rows = list()
+        all_sampled_rows = []
         for group, dataframe in grouped_conditions:
             if not isinstance(group, tuple):
                 group = [group]

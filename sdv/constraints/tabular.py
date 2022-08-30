@@ -1273,13 +1273,13 @@ class Unique(Constraint):
         if isinstance(metadata._primary_key, tuple):
             keys.update(metadata._primary_key)
         else:
-            keys += metadata._primary_key
+            keys.add(metadata._primary_key)
 
         for key in metadata._alternate_keys:
             if isinstance(key, tuple):
                 keys.update(key)
         else:
-            keys += key
+            keys.add(key)
 
         if len(set(column_names) - keys) == 0:
             raise ConstraintMetadataError(
