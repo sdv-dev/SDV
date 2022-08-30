@@ -276,7 +276,7 @@ class TestCreateCustomConstraint():
         """
         # Setup
         custom_constraint = create_custom_constraint(
-            lambda _, x: list([True if x_i >= 0 else False for x_i in x['col']])
+            lambda _, x: [True if x_i >= 0 else False for x_i in x['col']]
         )('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 

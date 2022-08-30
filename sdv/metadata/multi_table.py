@@ -53,7 +53,7 @@ class MultiTableMetadata:
 
     @staticmethod
     def _validate_no_missing_tables_in_relationship(parent_table_name, child_table_name, tables):
-        missing_table_names = set([parent_table_name, child_table_name]) - set(tables)
+        missing_table_names = {parent_table_name, child_table_name} - set(tables)
         if missing_table_names:
             if len(missing_table_names) == 1:
                 raise ValueError(f'Relationship contains an unknown table {missing_table_names}.')

@@ -300,7 +300,7 @@ class GaussianCopula(BaseTabularModel):
 
         params = self._model.to_dict()
 
-        covariance = list()
+        covariance = []
         for index, row in enumerate(params['covariance'][1:]):
             covariance.append(row[:index + 1])
 
@@ -403,8 +403,8 @@ class GaussianCopula(BaseTabularModel):
             dict:
                 Model parameters ready to recreate the model.
         """
-        columns = list()
-        univariates = list()
+        columns = []
+        univariates = []
         for column, univariate in model_parameters['univariates'].items():
             columns.append(column)
             univariate['type'] = self._field_distributions[column]

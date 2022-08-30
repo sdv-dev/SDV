@@ -169,7 +169,7 @@ class TestGaussianCopula:
         """
         # Setup
         gaussian_copula = Mock(spec_set=GaussianCopula)
-        gaussian_copula._metadata.get_model_kwargs.return_value = dict()
+        gaussian_copula._metadata.get_model_kwargs.return_value = {}
         gaussian_copula._categorical_transformer = 'a_categorical_transformer_value'
         gaussian_copula._default_distribution = 'a_distribution'
         gaussian_copula.get_distributions.return_value = {
