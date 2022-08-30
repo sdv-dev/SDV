@@ -229,7 +229,7 @@ class TestMetadata(TestCase):
         mock_meta.assert_called_once_with({'some': 'meta'})
         mock_relationships.assert_called_once_with()
         assert metadata.root_path == '.'
-        assert metadata._hyper_transformers == dict()
+        assert metadata._hyper_transformers == {}
 
     def test_get_children(self):
         """Test get children"""
@@ -562,14 +562,14 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
 
         # Run
         Metadata.add_table(metadata, 'x_table')
 
         # Asserts
         expected_table_meta = {
-            'fields': dict()
+            'fields': {}
         }
 
         assert metadata._metadata['tables']['x_table'] == expected_table_meta
@@ -582,14 +582,14 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
 
         # Run
         Metadata.add_table(metadata, 'x_table', primary_key='id')
 
         # Asserts
         expected_table_meta = {
-            'fields': dict()
+            'fields': {}
         }
 
         assert metadata._metadata['tables']['x_table'] == expected_table_meta
@@ -602,14 +602,14 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
 
         # Run
         Metadata.add_table(metadata, 'x_table', parent='users')
 
         # Asserts
         expected_table_meta = {
-            'fields': dict()
+            'fields': {}
         }
 
         assert metadata._metadata['tables']['x_table'] == expected_table_meta
@@ -622,7 +622,7 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
 
         # Run
         fields_metadata = {
@@ -648,7 +648,7 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
 
         # Run
         fields = ['a_field', 'b_field']
@@ -657,7 +657,7 @@ class TestMetadata(TestCase):
 
         # Asserts
         expected_table_meta = {
-            'fields': dict()
+            'fields': {}
         }
 
         assert metadata._metadata['tables']['x_table'] == expected_table_meta
@@ -667,7 +667,7 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
         metadata._get_field_details.return_value = {
             'a_field': {'type': 'numerical', 'subtype': 'integer'},
             'b_field': {'type': 'boolean'}
@@ -697,7 +697,7 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
         metadata._get_field_details.return_value = {
             'a_field': {'type': 'numerical', 'subtype': 'integer'},
             'b_field': {'type': 'boolean'},
@@ -729,7 +729,7 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
         mock_read_csv.return_value = pd.DataFrame({
             'a_field': [0, 1],
             'b_field': [True, False],
@@ -776,7 +776,7 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
 
         # Run
         fields_metadata = {
@@ -826,7 +826,7 @@ class TestMetadata(TestCase):
         """Add relationship table no exist"""
         # Setup
         metadata = Mock(spec_set=Metadata)
-        metadata.get_tables.return_value = list()
+        metadata.get_tables.return_value = []
 
         # Run
         with pytest.raises(ValueError):
@@ -847,7 +847,7 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata.get_parents.return_value = set(['b_table'])
+        metadata.get_parents.return_value = {'b_table'}
 
         # Run
         with pytest.raises(ValueError):
@@ -870,7 +870,7 @@ class TestMetadata(TestCase):
         """Set primary key table no exist"""
         # Setup
         metadata = Mock(spec_set=Metadata)
-        metadata.get_tables.return_value = list()
+        metadata.get_tables.return_value = []
         metadata.get_fields.return_value = {'a_field': {'type': 'id', 'subtype': 'integer'}}
         metadata._metadata = {
             'tables': {
@@ -892,10 +892,10 @@ class TestMetadata(TestCase):
         """Add field table no exist"""
         # Setup
         metadata = Mock(spec_set=Metadata)
-        metadata.get_tables.return_value = list()
+        metadata.get_tables.return_value = []
         metadata._metadata = {
             'tables': {
-                'a_table': {'fields': dict()}
+                'a_table': {'fields': {}}
             }
         }
 

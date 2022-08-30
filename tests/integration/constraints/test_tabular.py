@@ -160,7 +160,7 @@ def test_ScalarRange_conditions():
     # Setup
     constraint = ScalarRange(column_name='input', low_value=49, high_value=100)
     data = pd.DataFrame({
-        'input': [_ for _ in range(50, 80)],
+        'input': list(range(50, 80)),
         'output': [np.random.rand() for _ in range(30)]
     })
     condition = Condition({'input': 88}, num_rows=10)

@@ -53,7 +53,7 @@ def test__add_nodes():
     metadata.get_fields.return_value = minimock
 
     metadata.get_primary_key.return_value = 'b_field'
-    metadata.get_parents.return_value = set(['other'])
+    metadata.get_parents.return_value = {'other'}
     metadata.get_foreign_keys.return_value = ['c_field']
 
     metadata.get_table_meta.return_value = {'path': None}
@@ -86,7 +86,7 @@ def test__add_edges():
     metadata = MagicMock(spec_set=Metadata)
 
     metadata.get_tables.return_value = ['demo', 'other']
-    metadata.get_parents.side_effect = [set(['other']), set()]
+    metadata.get_parents.side_effect = [{'other'}, {}]
 
     metadata.get_foreign_keys.return_value = ['fk']
     metadata.get_primary_key.return_value = 'pk'

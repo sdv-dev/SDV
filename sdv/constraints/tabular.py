@@ -365,7 +365,7 @@ class Inequality(Constraint):
         self._high_column_name = high_column_name
         self._diff_column_name = f'{self._low_column_name}#{self._high_column_name}'
         self._operator = np.greater if strict_boundaries else np.greater_equal
-        self.constraint_columns = tuple([low_column_name, high_column_name])
+        self.constraint_columns = (low_column_name, high_column_name)
         self._dtype = None
         self._is_datetime = None
 
@@ -386,7 +386,7 @@ class Inequality(Constraint):
         return is_datetime
 
     def _validate_columns_exist(self, table_data):
-        missing = set([self._low_column_name, self._high_column_name]) - set(table_data.columns)
+        missing = {self._low_column_name, self._high_column_name} - set(table_data.columns)
         if missing:
             raise KeyError(f'The columns {missing} were not found in table_data.')
 
@@ -549,7 +549,7 @@ class ScalarInequality(Constraint):
         self._value = cast_to_datetime64(value) if is_datetime_type(value) else value
         self._column_name = column_name
         self._diff_column_name = f'{self._column_name}#diff'
-        self.constraint_columns = tuple([column_name])
+        self.constraint_columns = (column_name)
         self._is_datetime = None
         self._datetime_format = None
         self._dtype = None
@@ -1133,7 +1133,7 @@ class FixedIncrements(Constraint):
 
         self.increment_value = increment_value
         self.column_name = column_name
-        self.constraint_columns = tuple([column_name])
+        self.constraint_columns = (column_name,)
 
     def is_valid(self, table_data):
         """Determine if the data is evenly divisible by the increment.
