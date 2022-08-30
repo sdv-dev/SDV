@@ -33,7 +33,7 @@ class MultiTableMetadata:
         table_primary_keys = set(cast_to_iterable(parent_table._primary_key))
         for key in parent_primary_key:
             if key not in table_primary_keys:
-                missing_keys.add(key)
+                missing_keys += key
 
         if missing_keys:
             raise ValueError(
@@ -43,7 +43,7 @@ class MultiTableMetadata:
 
         for key in set(cast_to_iterable(child_foreign_key)):
             if key not in child_table._columns:
-                missing_keys.add(key)
+                missing_keys += key
 
         if missing_keys:
             raise ValueError(
@@ -99,7 +99,7 @@ class MultiTableMetadata:
             if child in parents:
                 break
 
-            parents.add(child)
+            parents += child
             self._validate_circular_relationships(
                 parent,
                 children=child_map.get(child, set()),
@@ -145,7 +145,7 @@ class MultiTableMetadata:
         for relation in self._relationships:
             parent_name = relation['parent_table_name']
             child_name = relation['child_table_name']
-            child_map[parent_name].add(child_name)
+            child_map[parent_name] += child_name
 
         return child_map
 
@@ -154,7 +154,7 @@ class MultiTableMetadata:
         for relation in self._relationships:
             parent_name = relation['parent_table_name']
             child_name = relation['child_table_name']
-            parent_map[child_name].add(parent_name)
+            parent_map[child_name] += parent_name
 
         return parent_map
 
@@ -185,7 +185,7 @@ class MultiTableMetadata:
             parent_table_name, child_table_name, parent_primary_key, child_foreign_key)
 
         child_map = self._get_child_map()
-        child_map[parent_table_name].add(child_table_name)
+        child_map[parent_table_name] += child_table_name
         self._validate_child_map_circular_relationship(child_map)
 
         self._relationships.append({

@@ -140,7 +140,7 @@ def test_recreate():
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
-    assert (sampled.notnull().sum(axis=1) != 0).all()
+    assert (sampled.notna().sum(axis=1) != 0).all()
 
     # Metadata
     model_meta = GaussianCopula(table_metadata=model.get_metadata())
@@ -149,7 +149,7 @@ def test_recreate():
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
-    assert (sampled.notnull().sum(axis=1) != 0).all()
+    assert (sampled.notna().sum(axis=1) != 0).all()
 
     # Metadata dict
     model_meta_dict = GaussianCopula(table_metadata=model.get_metadata().to_dict())
@@ -158,7 +158,7 @@ def test_recreate():
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
-    assert (sampled.notnull().sum(axis=1) != 0).all()
+    assert (sampled.notna().sum(axis=1) != 0).all()
 
 
 def test_ids_only():

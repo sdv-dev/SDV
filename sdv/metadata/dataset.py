@@ -125,8 +125,8 @@ class Metadata:
                     ref = field_meta.get('ref')
                     if ref:
                         parent = ref['table']
-                        self._child_map[parent].add(table)
-                        self._parent_map[table].add(parent)
+                        self._child_map[parent] += table
+                        self._parent_map[table] += parent
 
     @staticmethod
     def _dict_metadata(metadata):
@@ -525,7 +525,7 @@ class Metadata:
             if child in parents:
                 break
 
-            parents.add(child)
+            parents += child
             self._validate_circular_relationships(
                 parent, self.get_children(child), errors, parents)
 

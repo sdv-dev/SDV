@@ -67,6 +67,7 @@ development_requires = [
     'flake8-docstrings>=1.5.0,<2',
     'flake8-sfs>=0.0.3,<0.1',
     'dlint>=0.11.0,<0.12',
+    'pandas-vet>=0.2.3,<0.3',
     'isort>=4.3.4,<5',
 
     # fix style issues

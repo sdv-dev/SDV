@@ -609,8 +609,8 @@ class TestMultiTableMetadata:
         for relation in relationships:
             parent_name = relation['parent_table_name']
             child_name = relation['child_table_name']
-            parent_map[child_name].add(parent_name)
-            child_map[parent_name].add(child_name)
+            parent_map[child_name] += parent_name
+            child_map[parent_name] += child_name
 
         # Run
         MultiTableMetadata._validate_all_tables_connected(instance, parent_map, child_map)
@@ -658,8 +658,8 @@ class TestMultiTableMetadata:
         for relation in relationships:
             parent_name = relation['parent_table_name']
             child_name = relation['child_table_name']
-            parent_map[child_name].add(parent_name)
-            child_map[parent_name].add(child_name)
+            parent_map[child_name] += parent_name
+            child_map[parent_name] += child_name
 
         # Run
         error_msg = (
@@ -713,8 +713,8 @@ class TestMultiTableMetadata:
         for relation in relationships:
             parent_name = relation['parent_table_name']
             child_name = relation['child_table_name']
-            parent_map[child_name].add(parent_name)
-            child_map[parent_name].add(child_name)
+            parent_map[child_name] += parent_name
+            child_map[parent_name] += child_name
 
         # Run
         with pytest.raises(ValueError):
