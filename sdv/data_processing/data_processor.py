@@ -97,9 +97,10 @@ class DataProcessor:
             dict:
                 Dict representation of this DataProcessor.
         """
+        constraints_to_reverse = [cnt.to_dict() for cnt in self._constraints_to_reverse]
         return {
             'metadata': copy.deepcopy(self.metadata.to_dict()),
-            'constraints_to_reverse': copy.deepcopy(self._constraints_to_reverse),
+            'constraints_to_reverse': constraints_to_reverse,
             'model_kwargs': copy.deepcopy(self._model_kwargs)
         }
 
@@ -121,7 +122,9 @@ class DataProcessor:
             enforce_min_max_values=enforce_min_max_values,
             model_kwargs=metadata_dict.get('model_kwargs')
         )
-        instance._constraints_to_reverse = metadata_dict.get('constraints_to_reverse', [])
+        instance._constraints_to_reverse = [
+            Constraint.from_dict(cnt) for cnt in metadata_dict.get('constraints_to_reverse', [])
+        ]
 
         return instance
 

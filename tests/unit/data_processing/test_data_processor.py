@@ -155,6 +155,7 @@ class TestDataProcessor:
         metadata.add_column('col', sdtype='numerical')
         metadata.add_constraint('Positive', column_name='col')
         instance = DataProcessor(metadata=metadata)
+        instance._constraints_to_reverse = [Positive('col')]
 
         # Run
         new_instance = instance.from_dict(instance.to_dict())
@@ -164,7 +165,10 @@ class TestDataProcessor:
         assert instance._model_kwargs == new_instance._model_kwargs
         assert len(new_instance._constraints) == 1
         assert instance._constraints[0].to_dict() == new_instance._constraints[0].to_dict()
-        assert instance._constraints_to_reverse == new_instance._constraints_to_reverse
+        assert len(new_instance._constraints_to_reverse) == 1
+        assert instance._constraints_to_reverse[0].to_dict() == \
+            new_instance._constraints_to_reverse[0].to_dict()
+
         for sdtype, transformer in instance._transformers_by_sdtype.items():
             assert repr(transformer) == repr(new_instance._transformers_by_sdtype[sdtype])
 
@@ -188,6 +192,7 @@ class TestDataProcessor:
         metadata.add_column('col', sdtype='numerical')
         metadata.add_constraint('Positive', column_name='col')
         instance = DataProcessor(metadata=metadata)
+        instance._constraints_to_reverse = [Positive('col')]
 
         # Run
         instance.to_json('temp.json')
@@ -198,6 +203,9 @@ class TestDataProcessor:
         assert instance._model_kwargs == new_instance._model_kwargs
         assert len(new_instance._constraints) == 1
         assert instance._constraints[0].to_dict() == new_instance._constraints[0].to_dict()
-        assert instance._constraints_to_reverse == new_instance._constraints_to_reverse
+        assert len(new_instance._constraints_to_reverse) == 1
+        assert instance._constraints_to_reverse[0].to_dict() == \
+            new_instance._constraints_to_reverse[0].to_dict()
+
         for sdtype, transformer in instance._transformers_by_sdtype.items():
             assert repr(transformer) == repr(new_instance._transformers_by_sdtype[sdtype])
