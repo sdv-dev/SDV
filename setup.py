@@ -66,6 +66,7 @@ development_requires = [
     'flake8-comprehensions>=3.6.1,<3.7',
     'flake8-docstrings>=1.5.0,<2',
     'flake8-sfs>=0.0.3,<0.1',
+    'dlint>=0.11.0,<0.12',
     'isort>=4.3.4,<5',
 
     # fix style issues
