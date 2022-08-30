@@ -193,7 +193,7 @@ class Constraint(metaclass=ConstraintMeta):
             ConstraintsNotMetError:
                 If the table data is not valid for the provided constraints.
         """
-        if set(self.constraint_columns).issubset(table_data.columns.values):
+        if set(self.constraint_columns).issubset(table_data.columns.to_numpy()):
             is_valid_data = self.is_valid(table_data)
             if not is_valid_data.all():
                 constraint_data = table_data[list(self.constraint_columns)]
@@ -323,7 +323,7 @@ class Constraint(metaclass=ConstraintMeta):
                          self.__class__.__name__, sum(~valid), len(valid))
 
         if isinstance(valid, pd.Series):
-            return table_data[valid.values]
+            return table_data[valid.to_numpy()]
 
         return table_data[valid]
 
@@ -466,13 +466,13 @@ class ColumnsModel:
         condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
         grouped_conditions = table_data[condition_columns].groupby(condition_columns)
         all_sampled_rows = []
-        for group, df in grouped_conditions:
+        for group, dataframe in grouped_conditions:
             if not isinstance(group, tuple):
                 group = [group]
 
-            transformed_condition = self._hyper_transformer.transform(df).iloc[0].to_dict()
+            transformed_condition = self._hyper_transformer.transform(dataframe).iloc[0].to_dict()
             sampled_rows = self._reject_sample(
-                num_rows=df.shape[0],
+                num_rows=dataframe.shape[0],
                 conditions=transformed_condition
             )
             all_sampled_rows.append(sampled_rows)

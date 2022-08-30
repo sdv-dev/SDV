@@ -406,7 +406,7 @@ class BaseTabularModel:
         )
 
         if len(sampled_rows) > 0:
-            sampled_rows[COND_IDX] = dataframe[COND_IDX].values[:len(sampled_rows)]
+            sampled_rows[COND_IDX] = dataframe[COND_IDX].to_numpy()[:len(sampled_rows)]
 
         else:
             # Didn't get any rows.
@@ -590,7 +590,7 @@ class BaseTabularModel:
         """
         condition_columns = list(conditions.columns)
         conditions.index.name = COND_IDX
-        conditions.reset_index(inplace=True)
+        conditions = conditions.reset_index()
         grouped_conditions = conditions.groupby(condition_columns)
 
         # sample
@@ -856,7 +856,7 @@ class BaseTabularModel:
                 using a simple dictionary.
         """
         num_rows = parameters.pop('num_rows')
-        self._num_rows = 0 if pd.isnull(num_rows) else max(0, int(round(num_rows)))
+        self._num_rows = 0 if pd.isna(num_rows) else max(0, int(round(num_rows)))
 
         if self._metadata.get_dtypes(ids=False):
             self._set_parameters(parameters)
