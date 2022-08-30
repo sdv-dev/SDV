@@ -1243,9 +1243,8 @@ class OneHotEncoding(Constraint):
         """
         one_hot_data = table_data[self._column_names]
         transformed_data = np.zeros_like(one_hot_data.to_numpy())
-        transformed_data[
-            np.arange(len(one_hot_data)), np.argmax(one_hot_data.to_numpy(), axis=1)
-        ] = 1
+        max_category_indices = np.argmax(one_hot_data.to_numpy(), axis=1)
+        transformed_data[np.arange(len(one_hot_data)), max_category_indices] = 1
         table_data[self._column_names] = transformed_data
 
         return table_data
