@@ -380,42 +380,42 @@ class MultiTableMetadata:
         table.detect_from_dataframe(data)
         self._tables[table_name] = table
 
-    def set_primary_key(self, table_name, id):
+    def set_primary_key(self, table_name, column_name):
         """Set the primary key of a table.
 
         Args:
             table_name (str):
                 Name of the table to set the primary key.
-            id (str, tulple[str]):
+            column_name (str, tulple[str]):
                 Name (or tuple of names) of the primary key column(s).
         """
         self._validate_table_exists(table_name)
-        self._tables[table_name].set_primary_key(id)
+        self._tables[table_name].set_primary_key(column_name)
 
-    def set_sequence_key(self, table_name, id):
+    def set_sequence_key(self, table_name, column_name):
         """Set the sequence key of a table.
 
         Args:
             table_name (str):
                 Name of the table to set the sequence key.
-            id (str, tulple[str]):
+            column_name (str, tulple[str]):
                 Name (or tuple of names) of the sequence key column(s).
         """
         self._validate_table_exists(table_name)
         warnings.warn('Sequential modeling is not yet supported on SDV Multi Table models.')
-        self._tables[table_name].set_sequence_key(id)
+        self._tables[table_name].set_sequence_key(column_name)
 
-    def set_alternate_keys(self, table_name, ids):
+    def set_alternate_keys(self, table_name, column_names):
         """Set the alternate keys of a table.
 
         Args:
             table_name (str):
                 Name of the table to set the sequence key.
-            ids (list[str], list[tuple]):
+            column_names (list[str], list[tuple]):
                 List of names (or tuple of names) of the alternate key columns.
         """
         self._validate_table_exists(table_name)
-        self._tables[table_name].set_alternate_keys(ids)
+        self._tables[table_name].set_alternate_keys(column_names)
 
     def set_sequence_index(self, table_name, column_name):
         """Set the sequence index of a table.
