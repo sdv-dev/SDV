@@ -232,7 +232,8 @@ class TestCreateCustomConstraint():
         # Setup
         custom_constraint = create_custom_constraint(
             lambda _, x: pd.Series([True if x_i >= 0 else False for x_i in x['col']])
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -255,7 +256,8 @@ class TestCreateCustomConstraint():
         # Setup
         custom_constraint = create_custom_constraint(
             lambda _, x: pd.Series([True, True, True])
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -277,7 +279,8 @@ class TestCreateCustomConstraint():
         # Setup
         custom_constraint = create_custom_constraint(
             lambda _, x: [True if x_i >= 0 else False for x_i in x['col']]
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -304,7 +307,8 @@ class TestCreateCustomConstraint():
             lambda _, x: pd.Series([True] * 5),
             lambda _, x: pd.DataFrame({'col': x['col'] ** 2}),
             lambda _, x: pd.DataFrame({'col': x['col'] ** 1 / 2}),
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -327,7 +331,8 @@ class TestCreateCustomConstraint():
         # Setup
         custom_constraint = create_custom_constraint(
             lambda _, x: pd.Series([True] * 5)
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -351,7 +356,8 @@ class TestCreateCustomConstraint():
             lambda _, x: pd.Series([True] * 5),
             lambda _, x: pd.DataFrame({'col': [1, 2, 3]}),
             sorted
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -375,7 +381,8 @@ class TestCreateCustomConstraint():
             lambda _, x: pd.Series([True] * 5),
             lambda _: pd.DataFrame({'col': [1, 2, 3]}),
             sorted
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -398,7 +405,8 @@ class TestCreateCustomConstraint():
             sorted,
             sorted,
             lambda _, x: pd.DataFrame({'col': x['col'] ** 2})
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -444,7 +452,8 @@ class TestCreateCustomConstraint():
             sorted,
             sorted,
             lambda _, x: pd.DataFrame({'col': [1, 2, 3]})
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run

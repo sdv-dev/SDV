@@ -108,7 +108,8 @@ class TestBaseTabularModel:
         model._metadata.transform.return_value = pd.DataFrame({}, index=[0, 1, 2])
         model._conditionally_sample_rows.return_value = pd.DataFrame({
             'a': ['a', 'a', 'a'],
-            COND_IDX: [0, 1, 2]})
+            COND_IDX: [0, 1, 2]
+        })
         model._metadata.make_ids_unique.return_value = expected
 
         # Run

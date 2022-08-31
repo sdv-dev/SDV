@@ -66,6 +66,7 @@ development_requires = [
     'flake8-comprehensions>=3.6.1,<3.7',
     'flake8-docstrings>=1.5.0,<2',
     'flake8-variables-names>=0.0.4,<0.1',
+    'flake8-multiline-containers>=0.0.18,<0.1',
     'flake8-sfs>=0.0.3,<0.1',
     'flake8-quotes>=3.3.0,<4',
     'dlint>=0.11.0,<0.12',

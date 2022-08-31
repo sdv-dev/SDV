@@ -100,9 +100,12 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
         @classmethod
         def _validate_inputs(cls, **kwargs):
             if 'column_names' not in set(kwargs):
-                errors = [ConstraintMetadataError(
-                    "Missing required values {'column_names'} in a CustomConstraint constraint."
-                )]
+                errors = [
+                    ConstraintMetadataError(
+                        "Missing required values {'column_names'} in a"
+                        ' CustomConstraint constraint.'
+                    )
+                ]
                 raise MultipleConstraintsErrors(errors)
 
         def __init__(self, column_names, **kwargs):

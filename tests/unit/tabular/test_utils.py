@@ -192,7 +192,8 @@ def test_check_num_rows_reject_sampling_error():
     max_tries_per_batch = 1
     error_msg = (
         'Unable to sample any rows for the given conditions. '
-        r'Try increasing `max_tries_per_batch` \(currently: 1\).')
+        r'Try increasing `max_tries_per_batch` \(currently: 1\).'
+    )
 
     # Run and assert
     with pytest.raises(ValueError, match=error_msg):
@@ -218,7 +219,8 @@ def test_check_num_rows_non_reject_sampling_error():
     max_tries = 1
     error_msg = (
         r'Unable to sample any rows for the given conditions. '
-        'This may be because the provided values are out-of-bounds in the current model.')
+        'This may be because the provided values are out-of-bounds in the current model.'
+    )
 
     # Run and assert
     with pytest.raises(ValueError, match=error_msg):
@@ -246,7 +248,8 @@ def test_check_num_rows_non_reject_sampling_warning(warning_mock):
     max_tries = 1
     error_msg = (
         'Unable to sample any rows for the given conditions. '
-        'Try increasing `max_tries` (currently: 1).')
+        'Try increasing `max_tries` (currently: 1).'
+    )
 
     # Run
     check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries)
