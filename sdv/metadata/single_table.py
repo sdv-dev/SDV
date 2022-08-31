@@ -244,17 +244,18 @@ class SingleTableMetadata:
         self.detect_from_dataframe(data)
 
     @staticmethod
-    def _validate_datatype(id):
-        """Check whether id is a string or a tuple of strings."""
-        return isinstance(id, str) or isinstance(id, tuple) and all(isinstance(i, str) for i in id)
+    def _validate_datatype(column_name):
+        """Check whether column_name is a string or a tuple of strings."""
+        return isinstance(column_name, str) or \
+            isinstance(column_name, tuple) and all(isinstance(i, str) for i in column_name)
 
-    def _validate_key(self, id, key_type):
+    def _validate_key(self, column_name, key_type):
         """Validate the primary and sequence keys."""
-        if id is not None:
-            if not self._validate_datatype(id):
+        if column_name is not None:
+            if not self._validate_datatype(column_name):
                 raise ValueError(f"'{key_type}_key' must be a string or tuple of strings.")
 
-            keys = {id} if isinstance(id, str) else set(id)
+            keys = {column_name} if isinstance(column_name, str) else set(column_name)
             invalid_ids = keys - set(self._columns)
             if invalid_ids:
                 raise ValueError(
@@ -262,47 +263,48 @@ class SingleTableMetadata:
                     ' Keys should be columns that exist in the table.'
                 )
 
-    def set_primary_key(self, id):
+    def set_primary_key(self, column_name):
         """Set the metadata primary key.
 
         Args:
-            id (str, tuple):
+            column_name (str, tuple):
                 Name (or tuple of names) of the primary key column(s).
         """
-        self._validate_key(id, 'primary')
+        self._validate_key(column_name, 'primary')
         if self._primary_key is not None:
             warnings.warn(
                 f"There is an existing primary key {self._primary_key}."
                 ' This key will be removed.'
             )
 
-        self._primary_key = id
+        self._primary_key = column_name
 
-    def set_sequence_key(self, id):
+    def set_sequence_key(self, column_name):
         """Set the metadata sequence key.
 
         Args:
-            id (str, tuple):
+            column_name (str, tuple):
                 Name (or tuple of names) of the sequence key column(s).
         """
-        self._validate_key(id, 'sequence')
+        self._validate_key(column_name, 'sequence')
         if self._sequence_key is not None:
             warnings.warn(
                 f"There is an existing sequence key {self._sequence_key}."
                 ' This key will be removed.'
             )
 
-        self._sequence_key = id
+        self._sequence_key = column_name
 
-    def _validate_alternate_keys(self, ids):
-        if not isinstance(ids, list) or not all(self._validate_datatype(id) for id in ids):
+    def _validate_alternate_keys(self, column_names):
+        if not isinstance(column_names, list) or \
+           not all(self._validate_datatype(column_name) for column_name in column_names):
             raise ValueError(
                 "'alternate_keys' must be a list of strings or a list of tuples of strings."
             )
 
         keys = set()
-        for id in ids:
-            keys.update({id} if isinstance(id, str) else set(id))
+        for column_name in column_names:
+            keys.update({column_name} if isinstance(column_name, str) else set(column_name))
 
         invalid_ids = keys - set(self._columns)
         if invalid_ids:
@@ -311,15 +313,15 @@ class SingleTableMetadata:
                 ' Keys should be columns that exist in the table.'
             )
 
-    def set_alternate_keys(self, ids):
+    def set_alternate_keys(self, column_names):
         """Set the metadata alternate keys.
 
         Args:
-            ids (list[str], list[tuple]):
+            column_names (list[str], list[tuple]):
                 List of names (or tuple of names) of the alternate key columns.
         """
-        self._validate_alternate_keys(ids)
-        self._alternate_keys = ids
+        self._validate_alternate_keys(column_names)
+        self._alternate_keys = column_names
 
     def _validate_sequence_index(self, column_name):
         if not isinstance(column_name, str):

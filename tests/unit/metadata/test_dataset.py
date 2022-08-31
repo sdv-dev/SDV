@@ -434,8 +434,8 @@ class TestMetadata(TestCase):
         }
         assert result.keys() == expected.keys()
 
-        for k, v in result.items():
-            pd.testing.assert_frame_equal(v, expected[k])
+        for key, value in result.items():
+            pd.testing.assert_frame_equal(value, expected[key])
 
     def test_get_fields(self):
         """Test get fields"""

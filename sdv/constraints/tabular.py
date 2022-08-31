@@ -508,14 +508,14 @@ class ScalarInequality(Constraint):
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
         column_name = kwargs.get('column_name')
         sdtype = metadata._columns.get(column_name, {}).get('sdtype')
-        val = kwargs.get('value')
+        value = kwargs.get('value')
         if sdtype == 'numerical':
-            if not isinstance(val, (int, float)):
+            if not isinstance(value, (int, float)):
                 raise ConstraintMetadataError("'value' must be an int or float.")
 
         elif sdtype == 'datetime':
             datetime_format = metadata._columns.get(column_name).get('datetime_format')
-            matches_format = matches_datetime_format(val, datetime_format)
+            matches_format = matches_datetime_format(value, datetime_format)
             if not matches_format:
                 raise ConstraintMetadataError(
                     "'value' must be a datetime string of the right format."
