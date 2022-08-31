@@ -40,9 +40,6 @@ Single Table Statistical Metrics
     KSComplement
     KSComplement.get_subclasses
     KSComplement.compute
-    KSTestExtended
-    KSTestExtended.get_subclasses
-    KSTestExtended.compute
     ContinuousKLDivergence
     ContinuousKLDivergence.get_subclasses
     ContinuousKLDivergence.compute

@@ -38,9 +38,6 @@ Multi Table Statistical Metrics
     KSComplement
     KSComplement.get_subclasses
     KSComplement.compute
-    KSTestExtended
-    KSTestExtended.get_subclasses
-    KSTestExtended.compute
 
 Multi Table Detection Metrics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
