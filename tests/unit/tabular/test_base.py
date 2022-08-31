@@ -142,9 +142,9 @@ class TestBaseTabularModel:
         # Setup
         model = Mock(spec_set=CTGAN)
         valid_sampled_data = pd.DataFrame({
-            "column1": [28, 28, 21, 1, 2],
-            "column2": [37, 37, 1, 4, 5],
-            "column3": [93, 93, 6, 4, 12],
+            'column1': [28, 28, 21, 1, 2],
+            'column2': [37, 37, 1, 4, 5],
+            'column3': [93, 93, 6, 4, 12],
         })
         model._sample_rows.side_effect = [(pd.DataFrame({}), 0), (valid_sampled_data, 5)]
 

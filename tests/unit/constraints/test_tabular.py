@@ -4357,7 +4357,7 @@ class TestFixedIncrements():
             - ``ValueError`` should be raised.
         """
         # Run / Assert
-        error_message = "The increment_value must be greater than 0."
+        error_message = 'The increment_value must be greater than 0.'
         with pytest.raises(ValueError, match=error_message):
             FixedIncrements(column_name='column', increment_value=-1)
 
@@ -4374,7 +4374,7 @@ class TestFixedIncrements():
             - ``ValueError`` should be raised.
         """
         # Run / Assert
-        error_message = "The increment_value must be a whole number."
+        error_message = 'The increment_value must be a whole number.'
         with pytest.raises(ValueError, match=error_message):
             FixedIncrements(column_name='column', increment_value=1.5)
 
