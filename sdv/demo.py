@@ -144,19 +144,25 @@ def _load_relational_dummy():
     sessions = pd.DataFrame({
         'session_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         'user_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        'device': ['mobile', 'tablet', 'tablet', 'mobile', 'mobile',
-                   'mobile', 'mobile', 'tablet', 'mobile', 'tablet'],
-        'os': ['android', 'ios', 'android', 'android', 'ios',
-               'android', 'ios', 'ios', 'ios', 'ios'],
+        'device': [
+            'mobile', 'tablet', 'tablet', 'mobile', 'mobile',
+            'mobile', 'mobile', 'tablet', 'mobile', 'tablet'
+        ],
+        'os': [
+            'android', 'ios', 'android', 'android', 'ios',
+            'android', 'ios', 'ios', 'ios', 'ios'
+        ],
         'minutes': [23, 12, 8, 13, 9, 32, 7, 21, 29, 34],
     })
     transactions = pd.DataFrame({
         'transaction_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         'session_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        'timestamp': ['2019-01-01T12:34:32', '2019-01-01T12:42:21', '2019-01-07T17:23:11',
-                      '2019-01-10T11:08:57', '2019-01-10T21:54:08', '2019-01-11T11:21:20',
-                      '2019-01-22T14:44:10', '2019-01-23T10:14:09', '2019-01-27T16:09:17',
-                      '2019-01-29T12:10:48'],
+        'timestamp': [
+            '2019-01-01T12:34:32', '2019-01-01T12:42:21', '2019-01-07T17:23:11',
+            '2019-01-10T11:08:57', '2019-01-10T21:54:08', '2019-01-11T11:21:20',
+            '2019-01-22T14:44:10', '2019-01-23T10:14:09', '2019-01-27T16:09:17',
+            '2019-01-29T12:10:48'
+        ],
         'amount': [100.0, 55.3, 79.5, 112.1, 110.0, 76.3, 89.5, 132.1, 68.0, 99.9],
         'cancelled': [False, False, False, True, True, False, False, True, False, False],
     })

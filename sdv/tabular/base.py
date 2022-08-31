@@ -411,8 +411,10 @@ class BaseTabularModel:
         else:
             # Didn't get any rows.
             if not graceful_reject_sampling:
-                user_msg = ('Unable to sample any rows for the given conditions '
-                            f'`{transformed_condition}`. ')
+                user_msg = (
+                    'Unable to sample any rows for the given conditions '
+                    f'`{transformed_condition}`. '
+                )
                 if hasattr(self, '_model') and isinstance(
                         self._model, copulas.multivariate.GaussianMultivariate):
                     user_msg = user_msg + (

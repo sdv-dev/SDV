@@ -24,7 +24,8 @@ def test_is_datetime_type_with_datetime_series():
     data = pd.Series([
         pd.to_datetime('2020-01-01'),
         pd.to_datetime('2020-01-02'),
-        pd.to_datetime('2020-01-03')],
+        pd.to_datetime('2020-01-03')
+    ],
     )
 
     # Run

@@ -95,9 +95,7 @@ def test_conditional_sampling_dict():
 
     model = CTGAN(epochs=1)
     model.fit(data)
-    conditions = [Condition({
-        'column2': 'b'
-    }, num_rows=30)]
+    conditions = [Condition({'column2': 'b'}, num_rows=30)]
     sampled = model.sample_conditions(conditions=conditions)
 
     assert sampled.shape == data.shape
@@ -130,10 +128,7 @@ def test_conditional_sampling_two_conditions():
 
     model = CTGAN(epochs=1)
     model.fit(data)
-    conditions = [Condition({
-        'column2': 'b',
-        'column3': 'f'
-    }, num_rows=5)]
+    conditions = [Condition({'column2': 'b', 'column3': 'f'}, num_rows=5)]
     samples = model.sample_conditions(conditions=conditions)
     assert list(samples.column2) == ['b'] * 5
     assert list(samples.column3) == ['f'] * 5
@@ -148,9 +143,7 @@ def test_conditional_sampling_numerical():
 
     model = CTGAN(epochs=1)
     model.fit(data)
-    conditions = [Condition({
-        'column1': 1.0,
-    }, num_rows=5)]
+    conditions = [Condition({'column1': 1.0}, num_rows=5)]
     sampled = model.sample_conditions(conditions=conditions)
 
     assert list(sampled.column1) == [1.0] * 5

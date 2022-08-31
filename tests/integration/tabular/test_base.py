@@ -70,11 +70,13 @@ def test_conditional_sampling_graceful_reject_sampling_True_dict(model):
     })
 
     model.fit(data)
-    conditions = [Condition({
-        'column1': 28,
-        'column2': 37,
-        'column3': 93
-    })]
+    conditions = [
+        Condition({
+            'column1': 28,
+            'column2': 37,
+            'column3': 93
+        })
+    ]
 
     with pytest.raises(ValueError):
         model.sample_conditions(conditions=conditions)
@@ -281,13 +283,16 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
         'age': [27, 28, 26, 21, 30]
     })
     model = GaussianCopula(constraints=[constraint], categorical_transformer='LabelEncoder')
-    sampled_numeric_data = [pd.DataFrame({
-        'city#state.value': [0, 1, 2, 0, 0],
-        'age.value': [30, 30, 30, 30, 30]
-    }), pd.DataFrame({
-        'city#state.value': [1],
-        'age.value': [30]
-    })]
+    sampled_numeric_data = [
+        pd.DataFrame({
+            'city#state.value': [0, 1, 2, 0, 0],
+            'age.value': [30, 30, 30, 30, 30]
+        }),
+        pd.DataFrame({
+            'city#state.value': [1],
+            'age.value': [30]
+        })
+    ]
     gm_mock.return_value.sample.side_effect = sampled_numeric_data
     model.fit(data)
 

@@ -131,6 +131,7 @@ class TestDataProcessor:
         assert isinstance(instance.metadata, SingleTableMetadata)
         assert instance.metadata._columns == {'col': {'sdtype': 'numerical'}}
         assert instance.metadata._constraints == [
-            {'constraint_name': 'Positive', 'column_name': 'col'}]
+            {'constraint_name': 'Positive', 'column_name': 'col'}
+        ]
         assert len(instance._constraints) == 1
         assert isinstance(instance._constraints[0], Positive)
