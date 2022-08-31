@@ -34,20 +34,34 @@ class TestSingleTableMetadata:
     ]
 
     INVALID_KWARGS = [
-        ('age', 'numerical', {'representation': 'int', 'datetime_format': None, 'pii': True},
-         re.escape("Invalid values '(datetime_format, pii)' for numerical column 'age'."),),
-        ('start_date', 'datetime', {'datetime_format': '%Y-%d', 'pii': True},
-         re.escape("Invalid values '(pii)' for datetime column 'start_date'.")),
-        ('name', 'categorical',
-         {'pii': True, 'ordering': ['a', 'b'], 'ordered': 'numerical_values'},
-         re.escape("Invalid values '(ordered, ordering, pii)' for categorical column 'name'.")),
-        ('synthetic', 'boolean', {'pii': True},
-         re.escape("Invalid values '(pii)' for boolean column 'synthetic'.")),
-        ('phrase', 'text', {'regex_format': '[A-z]', 'pii': True, 'anonymization': True},
-         re.escape("Invalid values '(anonymization, pii)' for text column 'phrase'.")),
-        ('phone', 'phone_number', {'anonymization': True, 'order_by': 'phone_number'},
-         re.escape("Invalid values '(anonymization, order_by)' for phone_number column 'phone'."))
-    ]
+        (
+            'age', 'numerical', {'representation': 'int', 'datetime_format': None, 'pii': True},
+            re.escape("Invalid values '(datetime_format, pii)' for numerical column 'age'."),
+        ),
+        (
+            'start_date', 'datetime', {'datetime_format': '%Y-%d', 'pii': True},
+            re.escape("Invalid values '(pii)' for datetime column 'start_date'.")
+        ),
+        (
+            'name', 'categorical',
+            {'pii': True, 'ordering': ['a', 'b'], 'ordered': 'numerical_values'},
+            re.escape("Invalid values '(ordered, ordering, pii)' for categorical column 'name'.")
+        ),
+        (
+            'synthetic', 'boolean', {'pii': True},
+            re.escape("Invalid values '(pii)' for boolean column 'synthetic'.")
+        ),
+        (
+            'phrase', 'text', {'regex_format': '[A-z]', 'pii': True, 'anonymization': True},
+            re.escape("Invalid values '(anonymization, pii)' for text column 'phrase'.")
+        ),
+        (
+            'phone', 'phone_number', {'anonymization': True, 'order_by': 'phone_number'},
+            re.escape(
+                "Invalid values '(anonymization, order_by)' for phone_number column 'phone'."
+            )
+        )
+    ]  # noqa: JS102
 
     def test___init__(self):
         """Test creating an instance of ``SingleTableMetadata``."""
@@ -1419,9 +1433,11 @@ class TestSingleTableMetadata:
                 }
             },
             'primary_key': 'animals',
-            'constraints': [{
-                'my_constraint': 'my_params'
-            }],
+            'constraints': [
+                {
+                    'my_constraint': 'my_params'
+                }
+            ],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
 
@@ -1554,11 +1570,13 @@ class TestSingleTableMetadata:
             high_column_name='start_date'
         )
 
-        assert metadata._constraints == [{
-            'constraint_name': 'Inequality',
-            'low_column_name': 'child_age',
-            'high_column_name': 'start_date'
-        }]
+        assert metadata._constraints == [
+            {
+                'constraint_name': 'Inequality',
+                'low_column_name': 'child_age',
+                'high_column_name': 'start_date'
+            }
+        ]
 
     def test_add_constraint_bad_constraint(self):
         """Test the ``add_constraint`` method with a non-existent constraint.

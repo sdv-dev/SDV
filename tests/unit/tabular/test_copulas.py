@@ -289,7 +289,8 @@ class TestGaussianCopula:
         # asserts
         assert out is None
         assert gaussian_copula._field_distributions == {
-            'a': 'a_distribution', 'a.value': 'a_distribution'}
+            'a': 'a_distribution', 'a.value': 'a_distribution'
+        }
         gm_mock.assert_called_once_with(
             distribution={'a': 'a_distribution', 'a.value': 'a_distribution'})
 
