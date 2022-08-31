@@ -95,7 +95,7 @@ def test_conditional_sampling_graceful_reject_sampling_True_dataframe(model):
         'column3': [93]
     })
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='a'):
         model.sample_remaining_columns(conditions)
 
 
