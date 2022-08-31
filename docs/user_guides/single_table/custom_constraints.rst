@@ -174,7 +174,7 @@ would for predefined constraints.
       bonus_divis_500
     ]
 
-    model = GaussianCopula(constraints=constraints, min_value=None, max_value=None)
+    model = GaussianCopula(constraints=constraints, enforce_min_max_values=False)
 
     model.fit(employees)
 

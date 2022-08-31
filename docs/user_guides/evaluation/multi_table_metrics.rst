@@ -153,7 +153,7 @@ report back the average score obtained.
 The list of such metrics is:
 
 * ``CSTest``: Multi Single Table metric based on the Single Table CSTest metric.
-* ``KSTest``: Multi Single Table metric based on the Single Table KSTest metric.
+* ``KSComplement``: Multi Single Table metric based on the Single Table KSComplement metric.
 * ``KSTestExtended``: Multi Single Table metric based on the Single Table KSTestExtended metric.
 * ``LogisticDetection``: Multi Single Table metric based on the Single Table LogisticDetection metric.
 * ``SVCDetection``: Multi Single Table metric based on the Single Table SVCDetection metric.

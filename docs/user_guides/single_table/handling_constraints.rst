@@ -129,8 +129,8 @@ datetime column name and value. It also expects an inequality relation that must
     )
 
 .. note::
-    All SDV tabular models have min_value and max_value parameters that you set to enforce bounds
-    on all columns. This constraint is redundant if you set these model parameters.
+    All SDV tabular models have an enforce_min_max_values parameter that you set to enforce bounds
+    on all columns. This constraint is redundant if you set this model parameter.
 
 Positive and Negative
 ~~~~~~~~~~~~~~~~~~~~~
@@ -150,8 +150,8 @@ Enforce this by creating a Positive constraint. This object accepts a numerical 
     age_positive = Positive(column_name='age')
 
 .. note::
-    All SDV tabular models have min_value and max_value parameters that you set to enforce bounds
-    on all columns. This constraint is redundant if you set these model parameters.
+    All SDV tabular models have an enforce_min_max_value parameter that you set to enforce bounds
+    on all columns. This constraint is redundant if you set this model parameter.
 
 OneHotEncoding
 ~~~~~~~~~~~~~~
@@ -250,8 +250,8 @@ ranges are strict (exclusive) or not (inclusive).
     )
 
 .. note::
-    All SDV tabular models have min_value and max_value parameters that you set to enforce bounds
-    on all columns. This constraint is redundant if you set these model parameters.
+    All SDV tabular models have an enforce_min_max_values parameter that you set to enforce bounds
+    on all columns. This constraint is redundant if you set this model parameter.
 
 Applying the Constraints
 ------------------------
@@ -272,7 +272,7 @@ to pass in the objects a list.
         age_btwn_18_100
     ]
 
-    model = GaussianCopula(constraints=constraints, min_value=None, max_value=None)
+    model = GaussianCopula(constraints=constraints, enforce_min_max_values=False)
 
 Then you can fit the model using the real data. During this process, the SDV ensures that the
 model learns the constraints.
