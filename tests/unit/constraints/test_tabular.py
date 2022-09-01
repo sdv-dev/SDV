@@ -306,11 +306,11 @@ class TestCreateCustomConstraint():
         def test_is_valid(*_):
             return pd.Series([True] * 5)
 
-        def test_transform(_, x):
-            return pd.DataFrame({'col': x['col'] ** 2})
+        def test_transform(_, data):
+            return pd.DataFrame({'col': data['col'] ** 2})
 
-        def test_reverse_transform(_, x):
-            return pd.DataFrame({'col': x['col'] ** 1 / 2})
+        def test_reverse_transform(_, data):
+            return pd.DataFrame({'col': data['col'] ** 1 / 2})
 
         custom_constraint = create_custom_constraint(
             test_is_valid, test_transform, test_reverse_transform

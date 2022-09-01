@@ -8,19 +8,19 @@ from sdv.sampling.tabular import Condition
 from sdv.tabular import GaussianCopula
 
 
-def _is_valid(_, x):
-    return pd.Series([True if x_i > 0 else False for x_i in x['col']])
+def _is_valid(_, data):
+    return pd.Series([True if data_i > 0 else False for data_i in data['col']])
 
 
-def _reverse_transform(_, x):
-    return pd.DataFrame({'col': x['col'] ** .5})
+def _reverse_transform(_, data):
+    return pd.DataFrame({'col': data['col'] ** .5})
 
 
 def test_create_custom_constraint():
     """Test the ``create_custom_constraint`` method end to end."""
     # Setup
-    def _transform(_, x):
-        return pd.DataFrame({'col': x['col'] ** 2})
+    def _transform(_, data):
+        return pd.DataFrame({'col': data['col'] ** 2})
 
     custom_constraint = create_custom_constraint(
         _is_valid, _transform, _reverse_transform
@@ -41,7 +41,7 @@ def test_invalid_create_custom_constraint():
 
     It should correctly sample the synthetic data through reject sample.
     """
-    def _bad_transform(_, x):
+    def _bad_transform(_, data):
         return pd.DataFrame({'col': [10 / 0] * 100})
 
     custom_constraint = create_custom_constraint(
