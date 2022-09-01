@@ -303,12 +303,16 @@ class TestCreateCustomConstraint():
         - pd.DataFrame of transformed values
         """
         # Setup
-        custom_constraint = create_custom_constraint(
-            lambda _, x: pd.Series([True] * 5),
-            lambda _, x: pd.DataFrame({'col': x['col'] ** 2}),
-            lambda _, x: pd.DataFrame({'col': x['col'] ** 1 / 2}),
-        )
-        custom_constraint = custom_constraint('col')
+        def f1(*_):
+            return pd.Series([True] * 5)
+
+        def f2(_, x):
+            return pd.DataFrame({'col': x['col'] ** 2})
+
+        def f3(_, x):
+            return pd.DataFrame({'col': x['col'] ** 1 / 2})
+
+        custom_constraint = create_custom_constraint(f1, f2, f3)('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run

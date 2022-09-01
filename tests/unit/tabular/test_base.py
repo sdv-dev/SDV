@@ -265,9 +265,8 @@ class TestBaseTabularModel:
         # Assert
         assert model._sample_rows.call_count == 1
         assert output == sampled_mock.head.return_value
-        assert sampled_mock.head.return_value.tail.return_value.to_csv.called_once_with(
-            call(2).tail(2).to_csv(output_file_path, index=False),
-        )
+        mock_csv = sampled_mock.head.return_value.tail.return_value.to_csv
+        assert mock_csv.called_once_with(call(2).tail(2).to_csv(output_file_path, index=False))
 
     def test__sample_in_batches(self):
         """Test the ``_sample_in_batches`` method.
@@ -1279,8 +1278,9 @@ def test__sample_with_conditions_transform_conditions_correctly():
         pd.DataFrame({'column1': condition_values}), 100, None)
 
     # Assert
-    first_condition = model._metadata.transform.mock_calls[0][1][0]['column1']
-    second_condition = model._metadata.transform.mock_calls[1][1][0]['column1']
+    mock_transform = model._metadata.transform
+    first_condition = mock_transform.mock_calls[0][1][0]['column1']
+    second_condition = mock_transform.mock_calls[1][1][0]['column1']
     pd.testing.assert_series_equal(first_condition, pd.Series([25], name='column1'))
     pd.testing.assert_series_equal(second_condition, pd.Series([30], name='column1', index=[3]))
     model._sample_batch.assert_any_call(

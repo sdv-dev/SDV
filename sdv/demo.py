@@ -184,15 +184,11 @@ def sample_relational_demo(size=30):
     countries = [faker.country_code() for _ in range(5)]
     country = np.random.choice(countries, size=size)
     gender = np.random.choice(['F', 'M', None], p=[0.5, 0.4, 0.1], size=size)
-    age = (
-        sp.stats.truncnorm.rvs(-1.2, 1.5, loc=30, scale=10, size=size).astype(int)
-        + 3 * (gender == 'M')
-        + 3 * (country == countries[0]).astype(int)
-    )
-    num_sessions = (
-        sp.stats.gamma.rvs(1, loc=0, scale=2, size=size)
-        * (0.8 + 0.2 * (gender == 'F'))
-    ).round().astype(int)
+    trunc_noise = sp.stats.truncnorm.rvs(-1.2, 1.5, loc=30, scale=10, size=size).astype(int)
+    age = trunc_noise + 3 * (gender == 'M') + 3 * (country == countries[0]).astype(int)
+    gamma_noise = sp.stats.gamma.rvs(1, loc=0, scale=2, size=size)
+    num_sessions = gamma_noise * (0.8 + 0.2 * (gender == 'F'))
+    num_sessions = num_sessions.round().astype(int)
 
     users = pd.DataFrame({
         'country': country,
@@ -219,12 +215,9 @@ def sample_relational_demo(size=30):
         for device in devices:
             os.append(pc_os if device == 'pc' else phone_os)
 
-        minutes = (
-            sp.stats.truncnorm.rvs(-3, 3, loc=30, scale=10, size=user.num_sessions)
-            * (1 + 0.1 * (user.gender == 'M'))
-            * (1 + user.age / 100)
-            * (1 + 0.1 * (devices == 'pc'))
-        )
+        noise = sp.stats.truncnorm.rvs(-3, 3, loc=30, scale=10, size=user.num_sessions)
+        prob = (1.1 * (user.gender == 'M')) * (1 + user.age / 100) * (1.1 * (devices == 'pc'))
+        minutes = noise * prob
         num_transactions = (minutes / 10) * (0.5 + (user.gender == 'F'))
 
         sessions = sessions.append(pd.DataFrame({

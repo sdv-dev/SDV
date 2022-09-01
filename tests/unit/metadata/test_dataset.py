@@ -477,7 +477,7 @@ class TestMetadata(TestCase):
     def test_get_foreign_keys(self):
         """Test get foreign key"""
         # Setup
-        metadata = Metadata({
+        metadata = {
             'tables': {
                 'parent': {
                     'fields': {
@@ -506,7 +506,8 @@ class TestMetadata(TestCase):
                     }
                 }
             }
-        })
+        }
+        metadata = Metadata(metadata)
 
         # Run
         result = Metadata.get_foreign_keys(metadata, 'parent', 'child')

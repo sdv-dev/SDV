@@ -8,15 +8,21 @@ from sdv.sampling.tabular import Condition
 from sdv.tabular import GaussianCopula
 
 
+def f1(_, x):
+    return pd.Series([True if x_i > 0 else False for x_i in x['col']])
+
+
+def f3(_, x):
+    return pd.DataFrame({'col': x['col'] ** .5})
+
+
 def test_create_custom_constraint():
     """Test the ``create_custom_constraint`` method end to end."""
     # Setup
-    custom_constraint = create_custom_constraint(
-        lambda _, x: pd.Series([True if x_i > 0 else False for x_i in x['col']]),
-        lambda _, x: pd.DataFrame({'col': x['col'] ** 2}),
-        lambda _, x: pd.DataFrame({'col': x['col'] ** .5})
-    )
-    custom_constraint = custom_constraint('col')
+    def f2(_, x):
+        return pd.DataFrame({'col': x['col'] ** 2})
+
+    custom_constraint = create_custom_constraint(f1, f2, f3)('col')
     data = pd.DataFrame({'col': np.random.randint(1, 10, size=100)})
     gc = GaussianCopula(constraints=[custom_constraint])
     gc.fit(data)
@@ -34,12 +40,19 @@ def test_invalid_create_custom_constraint():
     It should correctly sample the synthetic data through reject sample.
     """
     # Setup
+<<<<<<< HEAD
     custom_constraint = create_custom_constraint(
         lambda _, x: pd.Series([True if x_i > 0 else False for x_i in x['col']]),
         lambda _: pd.DataFrame({'col': [10 / 0] * 100}),
         lambda _, x: pd.DataFrame({'col': x['col'] ** .5})
     )
     custom_constraint = custom_constraint('col')
+=======
+    def f2(_, x):
+        return pd.DataFrame({'col': [10 / 0] * 100})
+
+    custom_constraint = create_custom_constraint(f1, f2, f3)('col')
+>>>>>>> 255dfb1b (fix flake8)
     data = pd.DataFrame({'col': np.random.randint(1, 10, size=100)})
     gc = GaussianCopula(constraints=[custom_constraint])
     gc.fit(data)
