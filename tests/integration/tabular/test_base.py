@@ -1,4 +1,3 @@
-import re
 from unittest.mock import patch
 
 import pandas as pd
@@ -79,12 +78,7 @@ def test_conditional_sampling_graceful_reject_sampling_True_dict(model):
         })
     ]
 
-    err_msg = re.escape(
-        'Unable to sample any rows for the given conditions. Try increasing '
-        '`max_tries_per_batch` (currently: 100). Note that increasing this '
-        'value will also increase the sampling time.'
-    )
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(ValueError):  # noqa: PT011
         model.sample_conditions(conditions=conditions)
 
 
@@ -103,12 +97,7 @@ def test_conditional_sampling_graceful_reject_sampling_True_dataframe(model):
         'column3': [93]
     })
 
-    err_msg = re.escape(
-        'Unable to sample any rows for the given conditions. This may be because the provided '
-        'values are out-of-bounds in the current model. \nPlease try again '
-        'with a different set of values.'
-    )
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(ValueError):  # noqa: PT011
         model.sample_remaining_columns(conditions)
 
 
