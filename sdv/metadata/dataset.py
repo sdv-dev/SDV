@@ -922,11 +922,11 @@ class Metadata:
         ]
 
         return (
-            "Metadata\n"
-            "  root_path: {}\n"
-            "  tables: {}\n"
-            "  relationships:\n"
-            "{}"
+            'Metadata\n'
+            '  root_path: {}\n'
+            '  tables: {}\n'
+            '  relationships:\n'
+            '{}'
         ).format(
             self.root_path,
             tables,

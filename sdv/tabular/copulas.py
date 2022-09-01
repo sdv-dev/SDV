@@ -296,7 +296,7 @@ class GaussianCopula(BaseTabularModel):
                 univariate = univariate._instance
 
             if univariate.PARAMETRIC == copulas.univariate.ParametricType.NON_PARAMETRIC:
-                raise NonParametricError("This GaussianCopula uses non parametric distributions")
+                raise NonParametricError('This GaussianCopula uses non parametric distributions')
 
         params = self._model.to_dict()
 

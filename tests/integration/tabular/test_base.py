@@ -120,23 +120,23 @@ def test_fit_with_unique_constraint_on_data_with_only_index_column():
     """
     # Setup
     test_df = pd.DataFrame({
-        "key": [
+        'key': [
             1,
             2,
             3,
             4,
             5,
         ],
-        "index": [
-            "A",
-            "B",
-            "C",
-            "D",
-            "E",
+        'index': [
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
         ]
     })
-    unique = Unique(column_names=["index"])
-    model = GaussianCopula(primary_key="key", constraints=[unique])
+    unique = Unique(column_names=['index'])
+    model = GaussianCopula(primary_key='key', constraints=[unique])
 
     # Run
     model.fit(test_df)
@@ -144,7 +144,7 @@ def test_fit_with_unique_constraint_on_data_with_only_index_column():
 
     # Assert
     assert len(samples) == 2
-    assert samples["index"].is_unique
+    assert samples['index'].is_unique
 
 
 def test_fit_with_unique_constraint_on_data_which_has_index_column():
@@ -167,30 +167,30 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
     """
     # Setup
     test_df = pd.DataFrame({
-        "key": [
+        'key': [
             1,
             2,
             3,
             4,
             5,
         ],
-        "index": [
-            "A",
-            "B",
-            "C",
-            "D",
-            "E",
+        'index': [
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
         ],
-        "test_column": [
-            "A1",
-            "B2",
-            "C3",
-            "D4",
-            "E5",
+        'test_column': [
+            'A1',
+            'B2',
+            'C3',
+            'D4',
+            'E5',
         ]
     })
-    unique = Unique(column_names=["test_column"])
-    model = GaussianCopula(primary_key="key", constraints=[unique])
+    unique = Unique(column_names=['test_column'])
+    model = GaussianCopula(primary_key='key', constraints=[unique])
 
     # Run
     model.fit(test_df)
@@ -198,7 +198,7 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
 
     # Assert
     assert len(samples) == 2
-    assert samples["test_column"].is_unique
+    assert samples['test_column'].is_unique
 
 
 def test_fit_with_unique_constraint_on_data_subset():
@@ -221,27 +221,27 @@ def test_fit_with_unique_constraint_on_data_subset():
     """
     # Setup
     test_df = pd.DataFrame({
-        "key": [
+        'key': [
             1,
             2,
             3,
             4,
             5,
         ],
-        "test_column": [
-            "A",
-            "B",
-            "C",
-            "D",
-            "E",
+        'test_column': [
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
         ]
     })
     unique = Unique(
-        column_names=["test_column"]
+        column_names=['test_column']
     )
 
     test_df = test_df.iloc[[1, 3, 4]]
-    model = GaussianCopula(primary_key="key", constraints=[unique])
+    model = GaussianCopula(primary_key='key', constraints=[unique])
 
     # Run
     model.fit(test_df)
@@ -249,7 +249,7 @@ def test_fit_with_unique_constraint_on_data_subset():
 
     # Assert
     assert len(samples) == 2
-    assert samples["test_column"].is_unique
+    assert samples['test_column'].is_unique
 
 
 @patch('sdv.tabular.base.isinstance')

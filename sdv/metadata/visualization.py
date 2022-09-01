@@ -124,9 +124,9 @@ def visualize(metadata, path=None, names=True, details=True):
         'Metadata',
         format=graphviz_extension,
         node_attr={
-            "shape": "Mrecord",
-            "fillcolor": "lightgoldenrod1",
-            "style": "filled"
+            'shape': 'Mrecord',
+            'fillcolor': 'lightgoldenrod1',
+            'style': 'filled'
         },
     )
 
@@ -177,9 +177,9 @@ def visualize_graph(nodes, edges, path=None):
         'Metadata',
         format=graphviz_extension,
         node_attr={
-            "shape": "Mrecord",
-            "fillcolor": "lightgoldenrod1",
-            "style": "filled"
+            'shape': 'Mrecord',
+            'fillcolor': 'lightgoldenrod1',
+            'style': 'filled'
         },
     )
 
