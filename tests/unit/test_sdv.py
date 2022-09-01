@@ -10,8 +10,8 @@ from sdv.sdv import SDV
 class TestSDV(TestCase):
 
     @patch('sdv.sdv.open')
-    @patch('sdv.sdv.pickle')
-    def test_save(self, pickle_mock, open_mock):
+    @patch('sdv.sdv.dill')
+    def test_save(self, dill_mock, open_mock):
         # Run
         sdv = SDV()
         sdv.save('save/path.pkl')
@@ -19,19 +19,19 @@ class TestSDV(TestCase):
         # Asserts
         open_mock.assert_called_once_with('save/path.pkl', 'wb')
         output = open_mock.return_value.__enter__.return_value
-        pickle_mock.dump.assert_called_once_with(sdv, output)
+        dill_mock.dump.assert_called_once_with(sdv, output)
 
     @patch('sdv.sdv.open')
-    @patch('sdv.sdv.pickle')
-    def test_load(self, pickle_mock, open_mock):
+    @patch('sdv.sdv.dill')
+    def test_load(self, dill_mock, open_mock):
         # Run
         returned = SDV.load('save/path.pkl')
 
         # Asserts
         open_mock.assert_called_once_with('save/path.pkl', 'rb')
         output = open_mock.return_value.__enter__.return_value
-        pickle_mock.load.assert_called_once_with(output)
-        assert returned is pickle_mock.load.return_value
+        dill_mock.load.assert_called_once_with(output)
+        assert returned is dill_mock.load.return_value
 
     def test____init__default(self):
         """Create default instance"""

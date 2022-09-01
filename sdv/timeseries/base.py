@@ -2,7 +2,7 @@
 
 import copy
 import logging
-import pickle
+import dill
 import uuid
 
 import pandas as pd
@@ -268,7 +268,7 @@ class BaseTimeseriesModel:
         return self._metadata.reverse_transform(sampled)
 
     def save(self, path):
-        """Save this model instance to the given path using pickle.
+        """Save this model instance to the given path using dill.
 
         Args:
             path (str):
@@ -277,7 +277,7 @@ class BaseTimeseriesModel:
         self._package_versions = get_package_versions(getattr(self, '_model', None))
 
         with open(path, 'wb') as output:
-            pickle.dump(self, output)
+            dill.dump(self, output)
 
     @classmethod
     def load(cls, path):
@@ -292,7 +292,7 @@ class BaseTimeseriesModel:
                 The loaded tabular model.
         """
         with open(path, 'rb') as f:
-            model = pickle.load(f)
+            model = dill.load(f)
             throw_version_mismatch_warning(getattr(model, '_package_versions', None))
 
             return model
