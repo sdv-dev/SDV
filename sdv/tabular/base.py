@@ -611,8 +611,9 @@ class BaseTabularModel:
                 [transformed_condition] * len(dataframe),
                 ignore_index=True
             )
-            transformed_columns = list(transformed_conditions.columns)
+            transformed_conditions.index = dataframe.index
             transformed_conditions[COND_IDX] = dataframe[COND_IDX]
+            transformed_columns = list(transformed_conditions.columns)
 
             if len(transformed_columns) == 0:
                 sampled_rows = self._conditionally_sample_rows(
