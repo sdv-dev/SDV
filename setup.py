@@ -69,6 +69,7 @@ development_requires = [
     'flake8-variables-names>=0.0.4,<0.1',
     'flake8-multiline-containers>=0.0.18,<0.1',
     'flake8-sfs>=0.0.3,<0.1',
+    'flake8-quotes>=3.3.0,<4',
     'dlint>=0.11.0,<0.12',
     'pandas-vet>=0.2.3,<0.3',
     'isort>=4.3.4,<5',

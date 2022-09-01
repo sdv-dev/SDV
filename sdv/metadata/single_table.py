@@ -273,7 +273,7 @@ class SingleTableMetadata:
         self._validate_key(column_name, 'primary')
         if self._primary_key is not None:
             warnings.warn(
-                f"There is an existing primary key {self._primary_key}."
+                f'There is an existing primary key {self._primary_key}.'
                 ' This key will be removed.'
             )
 
@@ -289,7 +289,7 @@ class SingleTableMetadata:
         self._validate_key(column_name, 'sequence')
         if self._sequence_key is not None:
             warnings.warn(
-                f"There is an existing sequence key {self._sequence_key}."
+                f'There is an existing sequence key {self._sequence_key}.'
                 ' This key will be removed.'
             )
 

@@ -65,9 +65,9 @@ def test__add_nodes():
 
     # Asserts
     expected_node_label = (
-        r"{demo|a_field : numerical - integer\lb_field : id\l"
-        r"c_field : id\l|Primary key: b_field\l"
-        r"Foreign key (other): c_field\l}"
+        r'{demo|a_field : numerical - integer\lb_field : id\l'
+        r'c_field : id\l|Primary key: b_field\l'
+        r'Foreign key (other): c_field\l}'
     )
 
     metadata.get_fields.assert_called_once_with('demo')
