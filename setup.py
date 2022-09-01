@@ -72,6 +72,7 @@ development_requires = [
     'dlint>=0.11.0,<0.12',
     'pandas-vet>=0.2.3,<0.3',
     'isort>=4.3.4,<5',
+    'pydocstyle>=6.1.1,<6.2',
 
     # fix style issues
     'autoflake>=1.1,<2',
