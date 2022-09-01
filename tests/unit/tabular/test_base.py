@@ -105,7 +105,7 @@ class TestBaseTabularModel:
         condition_dataframe = pd.DataFrame({'a': ['a', 'a', 'a']})
         model._make_condition_dfs.return_value = condition_dataframe
         model._metadata.get_fields.return_value = ['a']
-        model._metadata.transform.return_value = pd.DataFrame({}, index=[0, 1, 2])
+        model._metadata.transform.return_value = pd.DataFrame({}, index=[0])
         model._conditionally_sample_rows.return_value = pd.DataFrame({
             'a': ['a', 'a', 'a'],
             COND_IDX: [0, 1, 2]})
@@ -1202,7 +1202,7 @@ def test__sample_with_conditions_empty_transformed_conditions():
     model.fit(data)
     model._metadata = Mock()
     model._metadata.get_fields.return_value = ['column1', 'column2', 'column3']
-    model._metadata.transform.return_value = pd.DataFrame()
+    model._metadata.transform.return_value = pd.DataFrame({}, index=[0])
     model._metadata.make_ids_unique.side_effect = lambda x: x
 
     # Run
