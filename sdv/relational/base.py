@@ -2,8 +2,8 @@
 
 import itertools
 import logging
-import dill
 
+import dill
 import numpy as np
 import pandas as pd
 

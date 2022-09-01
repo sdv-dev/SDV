@@ -67,8 +67,10 @@ def _validate_inputs_custom_constraint(is_valid_fn, transform_fn=None, reverse_t
 
 def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_fn=None):
     """Create a CustomConstraint class.
+
     Creates a constraint class which uses the ``transform``, ``reverse_transform`` and
     ``is_valid`` methods given in the arguments.
+
     Args:
         transform (callable):
             Function to replace the ``transform`` method.
@@ -76,6 +78,7 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
             Function to replace the ``reverse_transform`` method.
         is_valid (callable):
             Function to replace the ``is_valid`` method.
+
     Returns:
         CustomConstraint class:
             A constraint with custom ``transform``/``reverse_transform``/``is_valid`` methods.
@@ -84,6 +87,7 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
 
     class CustomConstraint(Constraint):
         """CustomConstraint class.
+
         Args:
             transform (callable):
                 Function to replace the ``transform`` method.
@@ -100,9 +104,11 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
 
         def is_valid(self, data):
             """Check whether the column values are valid.
+
             Args:
                 table_data (pandas.DataFrame):
                     Table data.
+
             Returns:
                 pandas.Series:
                     Whether each row is valid.
@@ -122,9 +128,11 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
 
         def transform(self, data):
             """Transform the table data.
+
             Args:
                 table_data (pandas.DataFrame):
                     Table data.
+
             Returns:
                 pandas.DataFrame:
                     Transformed data.
@@ -150,9 +158,11 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
 
         def reverse_transform(self, data):
             """Reverse transform the table data.
+
             Args:
                 table_data (pandas.DataFrame):
                     Table data.
+
             Returns:
                 pandas.DataFrame:
                     Transformed data.

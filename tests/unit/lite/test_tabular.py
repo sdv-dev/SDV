@@ -1,7 +1,7 @@
 import io
-import dill
 from unittest.mock import MagicMock, Mock, mock_open, patch
 
+import dill
 import numpy as np
 import pandas as pd
 import pytest

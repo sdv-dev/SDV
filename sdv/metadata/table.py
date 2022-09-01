@@ -704,7 +704,6 @@ class Table:
             LOGGER.info('HyperTransformer has not been fitted for table %s', self.name)
 
         for constraint in reversed(self._constraints_to_reverse):
-            import ipdb; ipdb.set_trace()
             reversed_data = constraint.reverse_transform(reversed_data)
 
         for name, field_metadata in self._fields_metadata.items():

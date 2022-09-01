@@ -4,12 +4,12 @@ import functools
 import logging
 import math
 import os
-import dill
 import uuid
 from collections import defaultdict
 from copy import deepcopy
 
 import copulas
+import dill
 import numpy as np
 import pandas as pd
 import tqdm
