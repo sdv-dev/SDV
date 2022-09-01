@@ -37,12 +37,9 @@ Single Table Statistical Metrics
     CSTest
     CSTest.get_subclasses
     CSTest.compute
-    KSTest
-    KSTest.get_subclasses
-    KSTest.compute
-    KSTestExtended
-    KSTestExtended.get_subclasses
-    KSTestExtended.compute
+    KSComplement
+    KSComplement.get_subclasses
+    KSComplement.compute
     ContinuousKLDivergence
     ContinuousKLDivergence.get_subclasses
     ContinuousKLDivergence.compute

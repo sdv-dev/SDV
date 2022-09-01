@@ -82,22 +82,22 @@ class TabularPreset():
 
             dtype_transformers = {
                 'i': rdt.transformers.FloatFormatter(
-                    missing_value_replacement='mean' if self._null_column else None,
+                    missing_value_replacement='mean',
                     model_missing_values=transformer_model_missing_values,
                     enforce_min_max_values=True,
                 ),
                 'f': rdt.transformers.FloatFormatter(
-                    missing_value_replacement='mean' if self._null_column else None,
+                    missing_value_replacement='mean',
                     model_missing_values=transformer_model_missing_values,
                     enforce_min_max_values=True,
                 ),
                 'O': rdt.transformers.FrequencyEncoder(add_noise=True),
                 'b': rdt.transformers.BinaryEncoder(
-                    missing_value_replacement=-1 if self._null_column else None,
+                    missing_value_replacement=-1 if self._null_column else 'mode',
                     model_missing_values=transformer_model_missing_values,
                 ),
                 'M': rdt.transformers.UnixTimestampEncoder(
-                    missing_value_replacement='mean' if self._null_column else None,
+                    missing_value_replacement='mean' if self._null_column else 'mode',
                     model_missing_values=transformer_model_missing_values,
                 ),
             }
