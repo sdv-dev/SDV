@@ -1,8 +1,8 @@
 """Single table data processing."""
 
-import copy
 import json
 import logging
+from copy import deepcopy
 
 import pandas as pd
 import rdt
@@ -12,7 +12,6 @@ from sdv.constraints.errors import (
     FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
 from sdv.data_processing.errors import NotFittedError
 from sdv.metadata.single_table import SingleTableMetadata
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -107,10 +106,17 @@ class DataProcessor:
             dict:
                 Keyword arguments to use on the indicated model.
         """
-        return copy.deepcopy(self._model_kwargs.get(model_name))
+        return deepcopy(self._model_kwargs.get(model_name))
 
     def set_model_kwargs(self, model_name, model_kwargs):
-        """Set the model kwargs used for the indicated model."""
+        """Set the model kwargs used for the indicated model.
+
+        Args:
+            model_name (str):
+                Qualified Name of the model for which the kwargs will be set.
+            model_kwargs (dict):
+                The key word arguments for the model.
+        """
         self._model_kwargs[model_name] = model_kwargs
 
     def _fit_constraints(self, data):
@@ -135,12 +141,12 @@ class DataProcessor:
                 if not is_condition:
                     self._constraints_to_reverse.append(constraint)
 
-            except (MissingConstraintColumnError, FunctionError) as e:
-                if isinstance(e, MissingConstraintColumnError):
+            except (MissingConstraintColumnError, FunctionError) as error:
+                if isinstance(error, MissingConstraintColumnError):
                     LOGGER.info(
                         f'{constraint.__class__.__name__} cannot be transformed because columns: '
-                        f'{e.missing_columns} were not found. Using the reject sampling approach '
-                        'instead.'
+                        f'{error.missing_columns} were not found. Using the reject sampling '
+                        'approach instead.'
                     )
                 else:
                     LOGGER.info(
@@ -152,8 +158,8 @@ class DataProcessor:
                     columns_to_drop = data.columns.where(indices_to_drop).dropna()
                     data = data.drop(columns_to_drop, axis=1)
 
-            except Exception as e:
-                errors.append(e)
+            except Exception as error:
+                errors.append(error)
 
         if errors:
             raise MultipleConstraintsErrors(errors)
@@ -323,9 +329,9 @@ class DataProcessor:
         """
         constraints_to_reverse = [cnt.to_dict() for cnt in self._constraints_to_reverse]
         return {
-            'metadata': copy.deepcopy(self.metadata.to_dict()),
+            'metadata': deepcopy(self.metadata.to_dict()),
             'constraints_to_reverse': constraints_to_reverse,
-            'model_kwargs': copy.deepcopy(self._model_kwargs)
+            'model_kwargs': deepcopy(self._model_kwargs)
         }
 
     @classmethod
