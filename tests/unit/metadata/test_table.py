@@ -268,7 +268,11 @@ class TestTable:
     def test__make_ids_fail(self):
         """Test if regex fails with more requested ids than available unique values."""
         metadata = {'subtype': 'string', 'regex': '[a-d]'}
-        with pytest.raises(ValueError):
+        err_msg = re.escape(
+            'Unable to generate 20 unique values for regex [a-d], '
+            'the maximum number of unique values is 4.'
+        )
+        with pytest.raises(ValueError, match=err_msg):
             Table._make_ids(metadata, 20)
 
     def test__make_ids_unique_field_not_unique(self):
