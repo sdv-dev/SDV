@@ -116,7 +116,7 @@ class MultiTableMetadata:
         if errors:
             raise ValueError(
                 'The relationships in the dataset describe a circular dependency between '
-                f'tables {set(errors)}.'
+                f'tables {errors}.'
             )
 
     def _validate_relationship(self, parent_table_name, child_table_name,
@@ -469,7 +469,7 @@ class MultiTableMetadata:
                     queue.append(child)
 
         if not all(connected.values()):
-            disconnected_tables = {table for table, value in connected.items() if not value}
+            disconnected_tables = [table for table, value in connected.items() if not value]
             if len(disconnected_tables) > 1:
                 table_msg = (
                     f'Tables {disconnected_tables} are not connected to any of the other tables.'

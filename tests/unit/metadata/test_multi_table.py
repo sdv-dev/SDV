@@ -385,10 +385,9 @@ class TestMultiTableMetadata:
         }
 
         # Run / Assert
-        tables = {'users', 'sessions'}
         err_msg = re.escape(
             'The relationships in the dataset describe a circular dependency between tables '
-            f'{tables}.'
+            "['users', 'sessions']."
         )
         with pytest.raises(ValueError, match=err_msg):
             instance._validate_child_map_circular_relationship(child_map)
@@ -670,8 +669,8 @@ class TestMultiTableMetadata:
             child_map[parent_name].add(child_name)
 
         # Run
-        error_msg = (
-            "The relationships in the dataset are disjointed. Table {'accounts'} "
+        error_msg = re.escape(
+            "The relationships in the dataset are disjointed. Table ['accounts'] "
             'is not connected to any of the other tables.'
         )
         with pytest.raises(ValueError, match=error_msg):
@@ -725,9 +724,8 @@ class TestMultiTableMetadata:
             child_map[parent_name].add(child_name)
 
         # Run
-        tables = {'branches', 'accounts'}
         err_msg = re.escape(
-            f'The relationships in the dataset are disjointed. Tables {tables} '
+            "The relationships in the dataset are disjointed. Tables ['accounts', 'branches'] "
             'are not connected to any of the other tables.'
         )
         with pytest.raises(ValueError, match=err_msg):
@@ -774,7 +772,7 @@ class TestMultiTableMetadata:
             "Please use 'set_primary_key' in order to set one."
             "\nRelationship between tables ('sessions', 'transactions') is invalid. "
             'The primary and foreign key columns are not the same type.'
-            "\nThe relationships in the dataset are disjointed. Table {'payments'} "
+            "\nThe relationships in the dataset are disjointed. Table ['payments'] "
             'is not connected to any of the other tables.'
         )
 
