@@ -23,6 +23,7 @@ install_requires = [
     'deepecho>=0.3.0.post1,<0.4',
     'rdt>=1.2.0,<2',
     'sdmetrics>=0.6.0,<0.7',
+    'cloudpickle>=2.1.0,<3.0'
 ]
 
 pomegranate_requires = [

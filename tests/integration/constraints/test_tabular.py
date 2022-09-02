@@ -43,7 +43,10 @@ def test_create_custom_constraint(tmpdir):
     gc.save(tmpdir / 'test.pkl')
 
     # Load
-    GaussianCopula.load(tmpdir / 'test.pkl')
+    loaded = GaussianCopula.load(tmpdir / 'test.pkl')
+
+    # Sample from loaded
+    loaded.sample(100)
 
 
 def test_create_custom_constraint_transform_is_none(tmpdir):

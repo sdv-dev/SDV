@@ -85,104 +85,99 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
     """
     _validate_inputs_custom_constraint(is_valid_fn, transform_fn, reverse_transform_fn)
 
-    def constructor(self, column_names, **kwargs):
-        self.column_names = column_names
-        self.kwargs = kwargs
-        self.constraint_columns = tuple(column_names)
-
-    def is_valid(self, data):
-        """Check whether the column values are valid.
+    class CustomConstraint(Constraint):
+        """CustomConstraint class.
 
         Args:
-            table_data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            pandas.Series:
-                Whether each row is valid.
+            transform (callable):
+                Function to replace the ``transform`` method.
+            reverse_transform (callable):
+                Function to replace the ``reverse_transform`` method.
+            is_valid (callable):
+                Function to replace the ``is_valid`` method.
         """
-        valid = is_valid_fn(self.column_names, data, **self.kwargs)
-        if len(valid) != data.shape[0]:
-            raise InvalidFunctionError(
-                '`is_valid_fn` did not produce exactly 1 True/False value for each row.')
 
-        if not isinstance(valid, pd.Series):
-            raise ValueError(
-                "The custom 'is_valid' function returned an unsupported type. "
-                'The returned object must be a pandas.Series'
-            )
+        def __init__(self, column_names, **kwargs):
+            self.column_names = column_names
+            self.kwargs = kwargs
+            self.constraint_columns = tuple(column_names)
 
-        return valid
+        def is_valid(self, data):
+            """Check whether the column values are valid.
 
-    def transform(self, data):
-        """Transform the table data.
+            Args:
+                table_data (pandas.DataFrame):
+                    Table data.
 
-        Args:
-            table_data (pandas.DataFrame):
-                Table data.
+            Returns:
+                pandas.Series:
+                    Whether each row is valid.
+            """
+            valid = is_valid_fn(self.column_names, data, **self.kwargs)
+            if len(valid) != data.shape[0]:
+                raise InvalidFunctionError(
+                    '`is_valid_fn` did not produce exactly 1 True/False value for each row.')
 
-        Returns:
-            pandas.DataFrame:
-                Transformed data.
-        """
-        data = data.copy()
-        if transform_fn is None:
-            return data
+            if not isinstance(valid, pd.Series):
+                raise ValueError(
+                    "The custom 'is_valid' function returned an unsupported type. "
+                    'The returned object must be a pandas.Series'
+                )
 
-        try:
-            transformed_data = transform_fn(self.column_names, data, **self.kwargs)
+            return valid
+
+        def transform(self, data):
+            """Transform the table data.
+
+            Args:
+                table_data (pandas.DataFrame):
+                    Table data.
+
+            Returns:
+                pandas.DataFrame:
+                    Transformed data.
+            """
+            data = data.copy()
+            if transform_fn is None:
+                return data
+
+            try:
+                transformed_data = transform_fn(self.column_names, data, **self.kwargs)
+                if data.shape[0] != transformed_data.shape[0]:
+                    raise InvalidFunctionError(
+                        'Transformation did not produce the same number of rows as the original')
+
+                self.reverse_transform(transformed_data.copy())
+                return transformed_data
+
+            except InvalidFunctionError as e:
+                raise e
+
+            except Exception:
+                raise FunctionError
+
+        def reverse_transform(self, data):
+            """Reverse transform the table data.
+
+            Args:
+                table_data (pandas.DataFrame):
+                    Table data.
+
+            Returns:
+                pandas.DataFrame:
+                    Transformed data.
+            """
+            data = data.copy()
+            if reverse_transform_fn is None:
+                return data
+
+            transformed_data = reverse_transform_fn(self.column_names, data, **self.kwargs)
             if data.shape[0] != transformed_data.shape[0]:
                 raise InvalidFunctionError(
-                    'Transformation did not produce the same number of rows as the original')
+                    'Reverse transform did not produce the same number of rows as the original.'
+                )
 
-            self.reverse_transform(transformed_data.copy())
             return transformed_data
-
-        except InvalidFunctionError as e:
-            raise e
-
-        except Exception:
-            raise FunctionError
-
-    def reverse_transform(self, data):
-        """Reverse transform the table data.
-
-        Args:
-            table_data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            pandas.DataFrame:
-                Transformed data.
-        """
-        data = data.copy()
-        if reverse_transform_fn is None:
-            return data
-
-        transformed_data = reverse_transform_fn(self.column_names, data, **self.kwargs)
-        if data.shape[0] != transformed_data.shape[0]:
-            raise InvalidFunctionError(
-                'Reverse transform did not produce the same number of rows as the original.'
-            )
-
-        return transformed_data
-
-    def _reduce(self):
-        """Overwrite ``__reduce__`` function.
-
-        The ``__reduce__`` function returns a tuple with the method that creates this class,
-        and a tuple with the arguments that this function takes.
-        """
-        return (create_custom_constraint, (is_valid_fn, transform_fn, reverse_transform_fn))
-
-    # Dynamic Class Creation
-    CustomConstraint = type('CustomConstraint', (Constraint, ), {
-        '__init__': constructor,
-        '__reduce__': _reduce,
-        'is_valid': is_valid,
-        'transform': transform,
-        'reverse_transform': reverse_transform,
-    })
 
     return CustomConstraint
 

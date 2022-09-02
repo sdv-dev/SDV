@@ -1,10 +1,10 @@
 """Base class for tabular model presets."""
 
 import logging
-import pickle
 import sys
 import warnings
 
+import cloudpickle
 import numpy as np
 import rdt
 
@@ -233,7 +233,7 @@ class TabularPreset():
         return self._postprocess_sampled(sampled)
 
     def save(self, path):
-        """Save this model instance to the given path using pickle.
+        """Save this model instance to the given path using cloudpickle.
 
         Args:
             path (str):
@@ -242,7 +242,7 @@ class TabularPreset():
         self._package_versions = get_package_versions(getattr(self, '_model', None))
 
         with open(path, 'wb') as output:
-            pickle.dump(self, output)
+            cloudpickle.dump(self, output)
 
     @classmethod
     def load(cls, path):
@@ -257,7 +257,7 @@ class TabularPreset():
                 The loaded tabular model.
         """
         with open(path, 'rb') as f:
-            model = pickle.load(f)
+            model = cloudpickle.load(f)
             throw_version_mismatch_warning(getattr(model, '_package_versions', None))
 
             return model
