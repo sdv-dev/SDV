@@ -388,7 +388,7 @@ class TestMultiTableMetadata:
         tables = {'users', 'sessions'}
         err_msg = re.escape(
             'The relationships in the dataset describe a circular dependency between tables '
-            f'{set(sorted(tables))}.'
+            f'{tables}.'
         )
         with pytest.raises(ValueError, match=err_msg):
             instance._validate_child_map_circular_relationship(child_map)
@@ -727,7 +727,7 @@ class TestMultiTableMetadata:
         # Run
         tables = {'branches', 'accounts'}
         err_msg = re.escape(
-            f'The relationships in the dataset are disjointed. Tables {set(sorted(tables))} '
+            f'The relationships in the dataset are disjointed. Tables {tables} '
             'are not connected to any of the other tables.'
         )
         with pytest.raises(ValueError, match=err_msg):
