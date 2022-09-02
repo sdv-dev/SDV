@@ -1,7 +1,7 @@
 import io
 from unittest.mock import MagicMock, Mock, mock_open, patch
 
-import dill
+import cloudpickle
 import numpy as np
 import pandas as pd
 import pytest
@@ -453,8 +453,8 @@ class TestTabularPreset:
         # Assert
         assert out.getvalue().strip() == expected
 
-    @patch('sdv.lite.tabular.dill')
-    def test_save(self, dill_mock):
+    @patch('sdv.lite.tabular.cloudpickle')
+    def test_save(self, cloudpickle_mock):
         """Test the ``TabularPreset.save`` method.
 
         Expect that the model's save method is called with the expected args.
@@ -469,7 +469,7 @@ class TestTabularPreset:
         model = Mock()
         preset = Mock()
         preset._model = model
-        open_mock = mock_open(read_data=dill.dumps('test'))
+        open_mock = mock_open(read_data=cloudpickle.dumps('test'))
 
         # Run
         with patch('sdv.lite.tabular.open', open_mock):
@@ -477,10 +477,10 @@ class TestTabularPreset:
 
         # Assert
         open_mock.assert_called_once_with('test-path', 'wb')
-        dill_mock.dump.assert_called_once_with(preset, open_mock())
+        cloudpickle_mock.dump.assert_called_once_with(preset, open_mock())
 
-    @patch('sdv.lite.tabular.dill')
-    def test_load(self, dill_mock):
+    @patch('sdv.lite.tabular.cloudpickle')
+    def test_load(self, cloudpickle_mock):
         """Test the ``TabularPreset.load`` method.
 
         Expect that the model's load method is called with the expected args.
@@ -494,7 +494,7 @@ class TestTabularPreset:
         # Setup
         default_model = Mock()
         TabularPreset._default_model = default_model
-        open_mock = mock_open(read_data=dill.dumps('test'))
+        open_mock = mock_open(read_data=cloudpickle.dumps('test'))
 
         # Run
         with patch('sdv.lite.tabular.open', open_mock):
@@ -502,7 +502,7 @@ class TestTabularPreset:
 
         # Assert
         open_mock.assert_called_once_with('test-file.pkl', 'rb')
-        assert loaded == dill_mock.load.return_value
+        assert loaded == cloudpickle_mock.load.return_value
 
     def test___repr__(self):
         """Test the ``TabularPreset.__repr__`` method.

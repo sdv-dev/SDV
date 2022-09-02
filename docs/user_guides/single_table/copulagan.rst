@@ -140,7 +140,7 @@ method passing the name of the file in which you want to save the model.
 Note that the extension of the filename is not relevant, but we will be
 using the ``.pkl`` extension to highlight that the serialization
 protocol used is
-`dill <https://dill.readthedocs.io/en/latest/index.html>`__.
+`cloudpickle <https://github.com/cloudpipe/cloudpickle>`__.
 
 .. ipython:: python
     :okwarning:
