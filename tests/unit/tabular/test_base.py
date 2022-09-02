@@ -75,7 +75,7 @@ class TestBaseTabularModel:
         assert gc._metadata != table_metadata
 
     def test__sample_with_conditions_no_transformed_columns(self):
-        """Test the ``BaseTabularModel.sample`` method with no transformed columns.
+        """Test the ``_sample_with_conditions`` method with no transformed columns.
 
         When the transformed conditions DataFrame has no columns, expect that sample
         does not pass through any conditions when conditionally sampling.
@@ -105,7 +105,7 @@ class TestBaseTabularModel:
         condition_dataframe = pd.DataFrame({'a': ['a', 'a', 'a']})
         model._make_condition_dfs.return_value = condition_dataframe
         model._metadata.get_fields.return_value = ['a']
-        model._metadata.transform.return_value = pd.DataFrame({}, index=[0, 1, 2])
+        model._metadata.transform.return_value = pd.DataFrame({}, index=[0])
         model._conditionally_sample_rows.return_value = pd.DataFrame({
             'a': ['a', 'a', 'a'],
             COND_IDX: [0, 1, 2]})
@@ -125,6 +125,152 @@ class TestBaseTabularModel:
             output_file_path=None,
         )
         pd.testing.assert_frame_equal(out, expected)
+
+    def test__sample_with_conditions_empty_transformed_conditions(self):
+        """Test that None is passed to ``_sample_batch`` if transformed conditions are empty.
+
+        The ``Sample`` method is expected to:
+        - Return sampled data and pass None to ``sample_batch`` as the
+        ``transformed_conditions``.
+
+        Input:
+        - Number of rows to sample
+        - Conditions
+
+        Output:
+        - Sampled data
+        """
+        # Setup
+        model = GaussianCopula()
+        data = pd.DataFrame({
+            'column1': list(range(100)),
+            'column2': list(range(100)),
+            'column3': list(range(100))
+        })
+
+        conditions = {
+            'column1': 25
+        }
+        conditions_series = pd.Series([25], name='column1')
+        model._sample_batch = Mock()
+        sampled = pd.DataFrame({
+            'column1': [28, 28],
+            'column2': [37, 37],
+            'column3': [93, 93],
+        })
+        model._sample_batch.return_value = sampled
+        model.fit(data)
+        model._metadata = Mock()
+        model._metadata.get_fields.return_value = ['column1', 'column2', 'column3']
+        model._metadata.transform.return_value = pd.DataFrame({}, index=[0])
+        model._metadata.make_ids_unique.side_effect = lambda x: x
+
+        # Run
+        output = model._sample_with_conditions(pd.DataFrame([conditions] * 5), 100, None)
+
+        # Assert
+        expected_output = pd.DataFrame({
+            'column1': [28, 28],
+            'column2': [37, 37],
+            'column3': [93, 93],
+        })
+        _, args, _ = model._metadata.transform.mock_calls[0]
+        pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
+        model._metadata.transform.assert_called_once()
+        model._sample_batch.assert_called_with(
+            batch_size=5,
+            max_tries=100,
+            conditions=conditions,
+            transformed_conditions=None,
+            float_rtol=0.01,
+            progress_bar=None,
+            output_file_path=None
+        )
+        pd.testing.assert_frame_equal(output, expected_output)
+
+    def test__sample_with_conditions_transform_conditions_correctly(self):
+        """Test that transformed conditions are batched correctly.
+
+        The method is expected to call ``_conditionally_sample_rows`` for every unique transformed
+        condition group.
+
+        Input:
+        - Number of rows to sample
+        - Conditions
+
+        Output:
+        - Sampled data
+        """
+        # Setup
+        model = GaussianCopula()
+        data = pd.DataFrame({
+            'column1': list(range(100)),
+            'column2': list(range(100)),
+            'column3': list(range(100))
+        })
+
+        condition_values = [25, 25, 25, 30, 30]
+        model._conditionally_sample_rows = Mock()
+        expected_outputs = [
+            pd.DataFrame({
+                COND_IDX: [0, 1, 2],
+                'column1': [25, 25, 25],
+                'column2': [37, 37, 37],
+                'column3': [93, 93, 93],
+            }), pd.DataFrame({
+                COND_IDX: [3, 4],
+                'column1': [30, 30],
+                'column2': [37, 37],
+                'column3': [93, 93],
+            })
+        ]
+        model._conditionally_sample_rows.side_effect = expected_outputs
+        model.fit(data)
+        model._metadata = Mock()
+        model._metadata.get_fields.return_value = ['column1', 'column2', 'column3']
+        model._metadata.transform.side_effect = [
+            pd.DataFrame([[50]], columns=['transformed_column']),
+            pd.DataFrame([[60]], columns=['transformed_column'])
+        ]
+
+        # Run
+        model._sample_with_conditions(
+            pd.DataFrame({'column1': condition_values}), 100, None)
+
+        # Assert
+        first_condition = model._metadata.transform.mock_calls[0][1][0]['column1']
+        second_condition = model._metadata.transform.mock_calls[1][1][0]['column1']
+        expected_second_condition = pd.Series([30], name='column1', index=[3])
+        pd.testing.assert_series_equal(first_condition, pd.Series([25], name='column1'))
+        pd.testing.assert_series_equal(second_condition, expected_second_condition)
+
+        first_expected_transformed_df = pd.DataFrame({
+            'transformed_column': [50, 50, 50],
+            COND_IDX: [0, 1, 2]
+        })
+        second_expected_transformed_df = pd.DataFrame({
+            'transformed_column': [60, 60],
+            COND_IDX: [3, 4],
+        }, index=[3, 4])
+        first_call = call(
+            dataframe=DataFrameMatcher(first_expected_transformed_df),
+            condition={'column1': 25},
+            transformed_condition={'transformed_column': 50},
+            max_tries_per_batch=100,
+            batch_size=None,
+            progress_bar=None,
+            output_file_path=None
+        )
+        second_call = call(
+            dataframe=DataFrameMatcher(second_expected_transformed_df),
+            condition={'column1': 30},
+            transformed_condition={'transformed_column': 60},
+            max_tries_per_batch=100,
+            batch_size=None,
+            progress_bar=None,
+            output_file_path=None
+        )
+        model._conditionally_sample_rows.assert_has_calls([first_call, second_call])
 
     def test__sample_batch_zero_valid(self):
         """Test the `BaseTabularModel._sample_batch` method with zero valid rows.
@@ -1164,142 +1310,6 @@ def test__sample_rows_previous_rows_appended_correctly():
     })
     assert num_valid == 5
     pd.testing.assert_frame_equal(sampled, expected)
-
-
-def test__sample_with_conditions_empty_transformed_conditions():
-    """Test that None is passed to ``_sample_batch`` if transformed conditions are empty.
-
-    The ``Sample`` method is expected to:
-    - Return sampled data and pass None to ``sample_batch`` as the
-    ``transformed_conditions``.
-
-    Input:
-    - Number of rows to sample
-    - Conditions
-
-    Output:
-    - Sampled data
-    """
-    # Setup
-    model = GaussianCopula()
-    data = pd.DataFrame({
-        'column1': list(range(100)),
-        'column2': list(range(100)),
-        'column3': list(range(100))
-    })
-
-    conditions = {
-        'column1': 25
-    }
-    conditions_series = pd.Series([25], name='column1')
-    model._sample_batch = Mock()
-    sampled = pd.DataFrame({
-        'column1': [28, 28],
-        'column2': [37, 37],
-        'column3': [93, 93],
-    })
-    model._sample_batch.return_value = sampled
-    model.fit(data)
-    model._metadata = Mock()
-    model._metadata.get_fields.return_value = ['column1', 'column2', 'column3']
-    model._metadata.transform.return_value = pd.DataFrame()
-    model._metadata.make_ids_unique.side_effect = lambda x: x
-
-    # Run
-    output = model._sample_with_conditions(pd.DataFrame([conditions] * 5), 100, None)
-
-    # Assert
-    expected_output = pd.DataFrame({
-        'column1': [28, 28],
-        'column2': [37, 37],
-        'column3': [93, 93],
-    })
-    _, args, kwargs = model._metadata.transform.mock_calls[0]
-    pd.testing.assert_series_equal(args[0]['column1'], conditions_series)
-    model._metadata.transform.assert_called_once()
-    model._sample_batch.assert_called_with(
-        batch_size=5,
-        max_tries=100,
-        conditions=conditions,
-        transformed_conditions=None,
-        float_rtol=0.01,
-        progress_bar=None,
-        output_file_path=None
-    )
-    pd.testing.assert_frame_equal(output, expected_output)
-
-
-def test__sample_with_conditions_transform_conditions_correctly():
-    """Test that transformed conditions are batched correctly.
-
-    The ``Sample`` method is expected to:
-    - Return sampled data and call ``_sample_batch`` for every unique transformed
-    condition group.
-
-    Input:
-    - Number of rows to sample
-    - Conditions
-
-    Output:
-    - Sampled data
-    """
-    # Setup
-    model = GaussianCopula()
-    data = pd.DataFrame({
-        'column1': list(range(100)),
-        'column2': list(range(100)),
-        'column3': list(range(100))
-    })
-
-    condition_values = [25, 25, 25, 30, 30]
-    model._sample_batch = Mock()
-    expected_outputs = [
-        pd.DataFrame({
-            'column1': [25, 25, 25],
-            'column2': [37, 37, 37],
-            'column3': [93, 93, 93],
-        }), pd.DataFrame({
-            'column1': [30],
-            'column2': [37],
-            'column3': [93],
-        })
-    ]
-    model._sample_batch.side_effect = expected_outputs
-    model.fit(data)
-    model._metadata = Mock()
-    model._metadata.get_fields.return_value = ['column1', 'column2', 'column3']
-    model._metadata.transform.side_effect = [
-        pd.DataFrame([[50]], columns=['transformed_column']),
-        pd.DataFrame([[60]], columns=['transformed_column'])
-    ]
-
-    # Run
-    model._sample_with_conditions(
-        pd.DataFrame({'column1': condition_values}), 100, None)
-
-    # Assert
-    first_condition = model._metadata.transform.mock_calls[0][1][0]['column1']
-    second_condition = model._metadata.transform.mock_calls[1][1][0]['column1']
-    pd.testing.assert_series_equal(first_condition, pd.Series([25], name='column1'))
-    pd.testing.assert_series_equal(second_condition, pd.Series([30], name='column1', index=[3]))
-    model._sample_batch.assert_any_call(
-        batch_size=3,
-        max_tries=100,
-        conditions={'column1': 25},
-        transformed_conditions={'transformed_column': 50},
-        float_rtol=0.01,
-        progress_bar=None,
-        output_file_path=None
-    )
-    model._sample_batch.assert_any_call(
-        batch_size=2,
-        max_tries=100,
-        conditions={'column1': 30},
-        transformed_conditions={'transformed_column': 60},
-        float_rtol=0.01,
-        progress_bar=None,
-        output_file_path=None
-    )
 
 
 @pytest.mark.parametrize('model', MODELS)
