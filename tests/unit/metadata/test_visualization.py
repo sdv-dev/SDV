@@ -8,13 +8,15 @@ from sdv.metadata import Metadata, visualization
 
 def test__get_graphviz_extension_path_without_extension():
     """Raises a ValueError when the path doesn't contains an extension."""
-    with pytest.raises(ValueError):
+    err_msg = 'Path without graphviz extension.'
+    with pytest.raises(ValueError, match=err_msg):
         visualization._get_graphviz_extension('/some/path')
 
 
 def test__get_graphviz_extension_invalid_extension():
     """Raises a ValueError when the path contains an invalid extension."""
-    with pytest.raises(ValueError):
+    err_msg = '"foo" not a valid graphviz extension format.'
+    with pytest.raises(ValueError, match=err_msg):
         visualization._get_graphviz_extension('/some/path.foo')
 
 

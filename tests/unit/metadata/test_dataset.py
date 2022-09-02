@@ -1,4 +1,5 @@
 import os
+import re
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -554,7 +555,8 @@ class TestMetadata(TestCase):
         metadata.get_tables.return_value = ['a_table', 'b_table']
 
         # Run
-        with pytest.raises(ValueError):
+        err_msg = 'Table "a_table" already exists.'
+        with pytest.raises(ValueError, match=err_msg):
             Metadata.add_table(metadata, 'a_table')
 
     def test_add_table_only_name(self):
@@ -824,22 +826,20 @@ class TestMetadata(TestCase):
 
     def test_add_relationship_table_no_exist(self):
         """Add relationship table no exist"""
-        # Setup
-        metadata = Mock(spec_set=Metadata)
-        metadata.get_tables.return_value = []
-
         # Run
-        with pytest.raises(ValueError):
-            Metadata.add_relationship(metadata, 'a_table', 'b_table')
+        err_msg = 'Table "a_table" does not exist'
+        with pytest.raises(ValueError, match=err_msg):
+            Metadata.add_relationship(Metadata(), 'a_table', 'b_table')
 
     def test_add_relationship_parent_no_exist(self):
         """Add relationship table no exist"""
         # Setup
-        metadata = Mock(spec_set=Metadata)
-        metadata.get_tables.return_value = ['a_table']
+        metadata = Metadata()
+        metadata._metadata['tables'] = {'a_table': {}}
 
         # Run
-        with pytest.raises(ValueError):
+        err_msg = 'Table "b_table" does not exist'
+        with pytest.raises(ValueError, match=err_msg):
             Metadata.add_relationship(metadata, 'a_table', 'b_table')
 
     def test_add_relationship_already_exist(self):
@@ -850,7 +850,9 @@ class TestMetadata(TestCase):
         metadata.get_parents.return_value = {'b_table'}
 
         # Run
-        with pytest.raises(ValueError):
+        mock = metadata.get_primary_key()
+        err_msg = re.escape(f'Field "b_table.{mock}" already defines a relationship')
+        with pytest.raises(ValueError, match=err_msg):
             Metadata.add_relationship(metadata, 'a_table', 'b_table')
 
     def test_add_relationship_parent_no_primary_key(self):
@@ -863,7 +865,8 @@ class TestMetadata(TestCase):
         metadata.get_primary_key.return_value = None
 
         # Run
-        with pytest.raises(ValueError):
+        err_msg = 'Parent table "a_table" does not have a primary key'
+        with pytest.raises(ValueError, match=err_msg):
             Metadata.add_relationship(metadata, 'a_table', 'b_table')
 
     def test_set_primary_key(self):
