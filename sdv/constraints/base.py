@@ -315,28 +315,28 @@ class ColumnsModel:
 
     @staticmethod
     def _get_hyper_transformer_config(data_to_model):
-        dtypes = data_to_model.dtypes
         sdtypes = {}
         transformers = {}
-        for name, dtype in dtypes.items():
+        for column_name, data in data_to_model.items():
+            dtype = data.dropna().infer_objects().dtype.kind
             if dtype in ('i', 'f'):
-                sdtypes[name] = 'numerical'
+                sdtypes[column_name] = 'numerical'
                 transformers = FloatFormatter(
                     missing_value_replacement='mean',
                     model_missing_values=True,
                 )
             elif dtype == 'O':
-                sdtypes[name] = 'categorical'
-                transformers[name] = OneHotEncoder
+                sdtypes[column_name] = 'categorical'
+                transformers[column_name] = OneHotEncoder
             elif dtype == 'M':
-                sdtypes[name] = 'datetime'
-                transformers[name] = UnixTimestampEncoder(
+                sdtypes[column_name] = 'datetime'
+                transformers[column_name] = UnixTimestampEncoder(
                     missing_value_replacement='mean',
                     model_missing_values=True,
                 )
             elif dtype == 'b':
-                sdtypes[name] = 'boolean'
-                transformers[name] = BinaryEncoder(
+                sdtypes[column_name] = 'boolean'
+                transformers[column_name] = BinaryEncoder(
                     missing_value_replacement=-1,
                     model_missing_values=True
                 )

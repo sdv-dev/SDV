@@ -638,6 +638,64 @@ class TestColumnsModel:
         assert instance.constraint_columns == ['age', 'age_when_joined']
         assert instance.constraint == constraint
 
+    @patch('sdv.constraints.base.FloatFormatter')
+    @patch('sdv.constraints.base.OneHotEncoder')
+    @patch('sdv.constraints.base.UnixTimestampEncoder')
+    @patch('sdv.constraints.base.BinaryEncoder')
+    def test__get_hyper_transformer_config(self, mock_binaryencoder, mock_unixtimestampencoder,
+                                           mock_onehotencoder, mock_floatformatter):
+        """Test the ``_get_hyper_transformer_config``.
+
+        Test that the method ``_get_hyper_transformer_config`` returns the expected
+        ``sdtypes`` and ``transformers`` for a given ``data_to_model``.
+
+        Setup:
+            - Create a ``pandas.DataFrame`` named ``data_to_model`` whit multiple ``dtypes``.
+
+        Mock:
+            - ``rdt.transformers`` from ``constraints.base``.
+
+        Input:
+            - ``data_to_model`` with boolean, datetime, numerical and categorical data.
+
+        Output:
+            - A dictionary containing ``sdtypes`` and ``transformers`` that match the expected
+              to the ``sdtypes``.
+        """
+        # Setup
+        data_to_model = pd.DataFrame({
+            'age': [1, 2, 3],
+            'amount': [1, 2, None],
+            'name': [None, 'Doe', 'John Doe'],
+            'joindate': pd.to_datetime(['2021-02-05', None, '2021-12-21']),
+            'is_valid': [True, False, None],
+        })
+        age_float_formatter = Mock()
+        amount_float_formatter = Mock()
+        mock_floatformatter.side_effects = [age_float_formatter, amount_float_formatter]
+
+        # Run
+        ht_config = ColumnsModel._get_hyper_transformer_config(data_to_model)
+
+        # Assert
+        ht_config == {
+            'sdtypes': {
+                'age': 'numerical',
+                'amount': 'numerical',
+                'name': 'categorical',
+                'joindate': 'datetime',
+                'is_valid': 'boolean'
+            },
+            'transformers': {
+                'age': age_float_formatter,
+                'amount': amount_float_formatter,
+                'name': mock_onehotencoder,
+                'joindate': mock_unixtimestampencoder.return_value,
+                'is_valid': mock_binaryencoder.return_value
+            }
+
+        }
+
     @patch('sdv.constraints.base.GaussianMultivariate')
     @patch('sdv.constraints.base.HyperTransformer')
     def test_fit(self, mock_hyper_transformer, mock_gaussian_multivariate):
@@ -677,10 +735,7 @@ class TestColumnsModel:
 
         # Assert
         mock_hyper_transformer.assert_called_once_with()
-        mock_hyper_transformer.return_value.detect_initial_config.assert_called_once()
-        mock_hyper_transformer.return_value.update_transformers_by_sdtype.assert_called_once_with(
-            {'categorical': OneHotEncoder}
-        )
+        mock_hyper_transformer.return_value.set_config.assert_called_once()
         call_data = mock_hyper_transformer.return_value.fit_transform.call_args[0][0]
         pd.testing.assert_frame_equal(table_data[['age', 'age_when_joined']], call_data)
 
