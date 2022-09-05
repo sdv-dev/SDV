@@ -526,8 +526,9 @@ class Table:
 
         self._hyper_transformer = rdt.HyperTransformer()
         self._hyper_transformer.set_config(hp_config)
-        if not data.empty:
-            self._hyper_transformer.fit(data[list(dtypes)])
+        fit_columns = list(dtypes)
+        if not data[fit_columns].empty:
+            self._hyper_transformer.fit(data[fit_columns])
 
     @staticmethod
     def _get_key_subtype(field_meta):
