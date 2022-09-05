@@ -389,7 +389,7 @@ class Table:
 
         return fields_metadata
 
-    def _get_transformers(self, dtypes):
+    def _get_hypertransformer_config(self, dtypes):
         """Create the transformer instances needed to process the given dtypes.
 
         Args:
@@ -398,15 +398,19 @@ class Table:
 
         Returns:
             dict:
-                mapping of field names and transformer instances.
+                A dict containing the ``sdtypes`` and ``transformers`` config for the
+                ``rdt.HyperTransformer``.
         """
         transformers = dict()
+        sdtypes = dict()
         for name, dtype in dtypes.items():
+            dtype = np.dtype(dtype).kind
             field_metadata = self._fields_metadata.get(name, {})
             transformer_template = field_metadata.get(
-                'transformer', self._dtype_transformers[np.dtype(dtype).kind])
+                'transformer', self._dtype_transformers[dtype])
 
             if transformer_template is None:
+                sdtypes[name] = self._DTYPES_TO_TYPES.get(dtype, {}).get('type', 'categorical')
                 transformers[name] = None
                 continue
 
@@ -422,8 +426,9 @@ class Table:
             LOGGER.debug('Loading transformer %s for field %s',
                          transformer.__class__.__name__, name)
             transformers[name] = transformer
+            sdtypes[name] = self._DTYPES_TO_TYPES.get(dtype, {}).get('type', 'categorical')
 
-        return transformers
+        return {'sdtypes': sdtypes, 'transformers': transformers}
 
     def _fit_constraints(self, data):
         errors = []
@@ -510,20 +515,19 @@ class Table:
                 else:
                     dtypes[column] = dtype_kind
 
-        transformers_dict = self._get_transformers(dtypes)
+        hp_config = self._get_hypertransformer_config(dtypes)
         for column in numerical_extras:
-            transformers_dict[column] = rdt.transformers.FloatFormatter(
+            dtypes[column] = 'numerical'
+            hp_config['sdtypes'][column] = 'numerical'
+            hp_config['transformers'][column] = rdt.transformers.FloatFormatter(
                 missing_value_replacement='mean',
                 model_missing_values=True,
             )
 
         self._hyper_transformer = rdt.HyperTransformer()
-        self._hyper_transformer.detect_initial_config(data)
-        if transformers_dict:
-            self._hyper_transformer.update_transformers(transformers_dict)
-
+        self._hyper_transformer.set_config(hp_config)
         if not data.empty:
-            self._hyper_transformer.fit(data)
+            self._hyper_transformer.fit(data[list(dtypes)])
 
     @staticmethod
     def _get_key_subtype(field_meta):

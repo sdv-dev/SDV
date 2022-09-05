@@ -9,7 +9,7 @@ import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianUnivariate
 from rdt import HyperTransformer
-from rdt.transformers import OneHotEncoder
+from rdt.transformers import BinaryEncoder, FloatFormatter, OneHotEncoder, UnixTimestampEncoder
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.errors import ConstraintsNotMetError
@@ -313,6 +313,36 @@ class ColumnsModel:
 
         self.constraint = constraint
 
+    @staticmethod
+    def _get_hyper_transformer_config(data_to_model):
+        dtypes = data_to_model.dtypes
+        sdtypes = {}
+        transformers = {}
+        for name, dtype in dtypes.items():
+            if dtype in ('i', 'f'):
+                sdtypes[name] = 'numerical'
+                transformers = FloatFormatter(
+                    missing_value_replacement='mean',
+                    model_missing_values=True,
+                )
+            elif dtype == 'O':
+                sdtypes[name] = 'categorical'
+                transformers[name] = OneHotEncoder
+            elif dtype == 'M':
+                sdtypes[name] = 'datetime'
+                transformers[name] = UnixTimestampEncoder(
+                    missing_value_replacement='mean',
+                    model_missing_values=True,
+                )
+            elif dtype == 'b':
+                sdtypes[name] = 'boolean'
+                transformers[name] = BinaryEncoder(
+                    missing_value_replacement=-1,
+                    model_missing_values=True
+                )
+
+        return {'sdtypes': sdtypes, 'transformers': transformers}
+
     def fit(self, table_data):
         """Fit the ``ColumnsModel``.
 
@@ -324,10 +354,12 @@ class ColumnsModel:
                 Table data.
         """
         data_to_model = table_data[self.constraint_columns]
+        ht_config = self._get_hyper_transformer_config(data_to_model)
+
         self._hyper_transformer = HyperTransformer()
-        self._hyper_transformer.detect_initial_config(data_to_model)
-        self._hyper_transformer.update_transformers_by_sdtype({'categorical': OneHotEncoder})
+        self._hyper_transformer.set_config(ht_config)
         transformed_data = self._hyper_transformer.fit_transform(data_to_model)
+
         self._model = GaussianMultivariate(distribution=GaussianUnivariate)
         self._model.fit(transformed_data)
 

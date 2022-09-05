@@ -124,7 +124,7 @@ class CopulaGAN(CTGAN):
     DEFAULT_DISTRIBUTION = 'truncated_gaussian'
     _field_distributions = None
     _default_distribution = None
-    _ht = None
+    _hyper_transformer = None
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
@@ -171,7 +171,7 @@ class CopulaGAN(CTGAN):
         """
         return {
             transformer.column_prefix: transformer._univariate.to_dict()['type']
-            for transformer in self._ht._transformers_sequence
+            for transformer in self._hyper_transformer._transformers_sequence
             if isinstance(transformer, GaussianNormalizer)
         }
 
@@ -185,23 +185,24 @@ class CopulaGAN(CTGAN):
         distributions = self._field_distributions
         fields = self._metadata.get_fields()
 
+        sdtypes = {}
         transformers = {}
         for field in table_data:
             field_name = field.replace('.value', '')
-
-            if field_name in fields and fields.get(
-                field_name,
-                dict(),
-            ).get('type') != 'categorical':
+            field_sdtype = fields.get(field_name, {}).get('type')
+            if field_name in fields and field_sdtype != 'categorical':
+                sdtypes[field] = 'numerical'
                 transformers[field] = GaussianNormalizer(
                     model_missing_values=True,
                     distribution=distributions.get(field_name, self._default_distribution)
                 )
+            else:
+                sdtypes[field] = field_sdtype or 'categorical'
+                transformers[field] = None
 
-        self._ht = HyperTransformer()
-        self._ht.detect_initial_config(table_data)
-        self._ht.update_transformers(transformers)
-        table_data = self._ht.fit_transform(table_data)
+        self._hyper_transformer = HyperTransformer()
+        self._hyper_transformer.set_config({'transformers': transformers, 'sdtypes': sdtypes})
+        table_data = self._hyper_transformer.fit_transform(table_data[list(transformers)])
 
         super()._fit(table_data)
 
@@ -221,4 +222,4 @@ class CopulaGAN(CTGAN):
                 Sampled data.
         """
         sampled = super()._sample(num_rows, conditions)
-        return self._ht.reverse_transform(sampled)
+        return self._hyper_transformer.reverse_transform(sampled)
