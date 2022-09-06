@@ -76,6 +76,15 @@ development_requires = [
     'pydocstyle>=6.1.1,<6.2',
     'flake8-pytest-style>=1.5.0,<2',
     'pep8-naming>=0.12.1,<0.13',
+    'flake8-debugger>=4.0.0,<4.1',
+    'flake8-eradicate>=1.1.0,<1.2',
+    'flake8-mock>=0.3,<0.4',
+    'flake8-fixme>=1.1.1,<1.2',
+    'flake8-mutable>=1.2.0,<1.3',
+    'flake8-print>=4.0.0,<4.1',
+    'flake8-docstrings>=1.5.0,<2',
+    'isort>=4.3.4,<5',
+    'pylint>=2.5.3,<3',
 
     # fix style issues
     'autoflake>=1.1,<2',

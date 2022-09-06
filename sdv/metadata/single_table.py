@@ -217,8 +217,8 @@ class SingleTableMetadata:
             kind = clean_data.infer_objects().dtype.kind
             self._columns[field] = {'sdtype': self._DTYPES_TO_SDTYPES.get(kind, 'categorical')}
 
-        print('Detected metadata:')
-        print(json.dumps(self.to_dict(), indent=4))
+        print('Detected metadata:')  # noqa: T001
+        print(json.dumps(self.to_dict(), indent=4))  # noqa: T001
 
     def detect_from_csv(self, filepath, pandas_kwargs=None):
         """Detect the metadata from a ``csv`` file.
