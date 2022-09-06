@@ -9,7 +9,7 @@ import rdt
 
 from sdv.constraints import Constraint
 from sdv.constraints.errors import (
-    FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
+    FunctionError, MissingConstraintColumnError, AggregateConstraintsError)
 from sdv.data_processing.errors import NotFittedError
 from sdv.metadata.single_table import SingleTableMetadata
 
@@ -128,7 +128,7 @@ class DataProcessor:
                 errors.append(e)
 
         if errors:
-            raise MultipleConstraintsErrors(errors)
+            raise AggregateConstraintsError(errors)
 
     def _transform_constraints(self, data, is_condition=False):
         errors = []
@@ -162,7 +162,7 @@ class DataProcessor:
                 errors.append(error)
 
         if errors:
-            raise MultipleConstraintsErrors(errors)
+            raise AggregateConstraintsError(errors)
 
         return data
 
@@ -300,7 +300,7 @@ class DataProcessor:
                 column_data = column_data.round()
 
             dtype = self._dtypes[column_name]
-            reversed_data[column_name] = column_data[column_data.notnull()].astype(dtype)
+            reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
 
         return reversed_data[original_columns]
 

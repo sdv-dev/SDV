@@ -9,7 +9,7 @@ from rdt.errors import NotFittedError as RDTNotFittedError
 from rdt.transformers import FloatFormatter, LabelEncoder
 
 from sdv.constraints.errors import (
-    FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
+    FunctionError, MissingConstraintColumnError, AggregateConstraintsError)
 from sdv.constraints.tabular import Positive
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.errors import NotFittedError
@@ -316,7 +316,7 @@ class TestDataProcessor:
             - A ``pandas.DataFrame``.
 
         Side effect:
-            - A ``MultipleConstraintsErrors`` error should be raised.
+            - A ``AggregateConstraintsError`` error should be raised.
         """
         # Setup
         data = pd.DataFrame({'a': [1, 2, 3]})
@@ -329,7 +329,7 @@ class TestDataProcessor:
 
         # Run / Assert
         error_message = re.escape('\nerror 1\n\nerror 2')
-        with pytest.raises(MultipleConstraintsErrors, match=error_message):
+        with pytest.raises(AggregateConstraintsError, match=error_message):
             dp._fit_transform_constraints(data)
 
     def test__fit_transform_constraints_transform_errors(self):
@@ -347,7 +347,7 @@ class TestDataProcessor:
             - A ``pandas.DataFrame``.
 
         Side effect:
-            - A ``MultipleConstraintsErrors`` error should be raised.
+            - A ``AggregateConstraintsError`` error should be raised.
         """
         # Setup
         data = pd.DataFrame({'a': [1, 2, 3]})
@@ -360,7 +360,7 @@ class TestDataProcessor:
 
         # Run / Assert
         error_message = re.escape('\nerror 1\n\nerror 2')
-        with pytest.raises(MultipleConstraintsErrors, match=error_message):
+        with pytest.raises(AggregateConstraintsError, match=error_message):
             dp._fit_transform_constraints(data)
 
         constraint1.fit.assert_called_once_with(data)
@@ -861,7 +861,7 @@ class TestDataProcessor:
         pd.testing.assert_frame_equal(reverse_transformed, expected_output)
 
     @patch('sdv.data_processing.data_processor.LOGGER')
-    def test_reverse_transform_hyper_Transformer_errors(self, log_mock):
+    def test_reverse_transform_hyper_transformer_errors(self, log_mock):
         """Test the ``reverse_transform`` method.
 
         A message should be logged if the ``HyperTransformer`` errors.
