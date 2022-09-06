@@ -120,9 +120,6 @@ def test__add_edges():
 def test_visualize(add_nodes_mock, add_edges_mock, digraph_mock):
     """Metadata visualize digraph"""
     # Setup
-    # plot = Mock(spec_set=graphviz.Digraph)
-    # graphviz_mock.Digraph.return_value = plot
-
     metadata = MagicMock(spec_set=Metadata)
 
     # Run
