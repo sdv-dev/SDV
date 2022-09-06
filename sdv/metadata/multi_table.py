@@ -547,3 +547,69 @@ class MultiTableMetadata:
         """Pretty print the ``MultiTableMetadata``."""
         printed = json.dumps(self.to_dict(), indent=4)
         return printed
+
+    @classmethod
+    def _convert_foreign_keys(cls, old_metadata, parent, child):
+        foreign_keys = []
+        child_table = old_metadata.get('tables', {}).get(child, {})
+        for name, field in child_table.get('fields').items():
+            ref = field.get('ref')
+            if ref and ref['table'] == parent:
+                foreign_keys.append(name)
+
+    @classmethod
+    def _convert_relationships(cls, old_metadata):
+        tables = old_metadata.get('tables')
+        parents = {}
+        for table, table_meta in tables.items():
+            for field_meta in table_meta['fields'].values():
+                ref = field_meta.get('ref')
+                if ref:
+                    parent = ref['table']
+                    parents[table].add(parent)
+
+        relationships = [
+            {
+                "parent_table_name": parent,
+                "parent_primary_key": tables.get(parent).get('primary_key'),
+                "child_table_name": table,
+                "child_foreign_key": foreign_key
+            }
+            for table in tables
+            for parent in list(parents.get(table))
+            for foreign_key in cls._convert_foreign_keys(old_metadata, parent, table)
+        ]
+        return relationships
+
+    @classmethod
+    def upgrade_metadata(cls, old_filepath, new_filepath):
+        """Upgrade an old metadata file to the ``V1`` schema.
+
+        Args:
+            old_filepath (str):
+                String that represents the ``path`` to the old metadata ``json`` file.
+            new_file_path (str):
+                String that represents the ``path`` to save the upgraded metadata to.
+
+        Raises:
+            Raises a ``ValueError`` if the path already exists.
+        """
+        validate_file_does_not_exist(new_filepath)
+        old_metadata = read_json(old_filepath)
+        tables_metadata = {}
+
+        for table_name, metadata in old_metadata.get('tables'):
+            tables_metadata[table_name] = SingleTableMetadata._convert_metadata(metadata)
+
+        relationships = cls._get_relationships(old_metadata)
+        metadata_dict = {'tables': tables_metadata, 'relationships': relationships}
+        metadata = cls._load_from_dict(metadata_dict)
+        metadata.save_to_json(new_filepath)
+        try:
+            metadata.validate()
+        except InvalidMetadataError as error:
+            message = (
+                'Successfully converted the old metadata, but the metadata was not valid.'
+                f'To use this with the SDV, please fix the following errors.\n {str(error)}'
+            )
+            warnings.warn(message)

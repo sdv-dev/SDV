@@ -532,32 +532,7 @@ class SingleTableMetadata:
         return printed
 
     @classmethod
-    def upgrade_metadata(cls, old_filepath, new_filepath):
-        """Upgrade an old metadata file to the ``V1`` schema.
-
-        Args:
-            old_filepath (str):
-                String that represents the ``path`` to the old metadata ``json`` file.
-            new_file_path (str):
-                String that represents the ``path`` to save the upgraded metadata to.
-
-        Raises:
-            Raises a ``ValueError`` if the path already exists.
-        """
-        validate_file_does_not_exist(new_filepath)
-        old_metadata = read_json(old_filepath)
-
-        if 'tables' in old_metadata:
-            tables = old_metadata.get('tables')
-            if len(tables) > 1:
-                raise ValueError(
-                    'There are multiple tables specified in the JSON.'
-                    'Try using the MultiTableMetadata class to upgrade this file.'
-                )
-
-            else:
-                old_metadata = list(tables.values())[0]
-
+    def _convert_metadata(cls, old_metadata):
         new_metadata = {}
         columns = {}
         fields = old_metadata.get('fields')
@@ -606,6 +581,36 @@ class SingleTableMetadata:
             new_metadata['alternate_keys'] = alternate_keys
 
         new_metadata['SCHEMA_VERSION'] = 'SINGLE_TABLE_V1'
+
+        return new_metadata
+
+    @classmethod
+    def upgrade_metadata(cls, old_filepath, new_filepath):
+        """Upgrade an old metadata file to the ``V1`` schema.
+
+        Args:
+            old_filepath (str):
+                String that represents the ``path`` to the old metadata ``json`` file.
+            new_file_path (str):
+                String that represents the ``path`` to save the upgraded metadata to.
+
+        Raises:
+            Raises a ``ValueError`` if the path already exists.
+        """
+        validate_file_does_not_exist(new_filepath)
+        old_metadata = read_json(old_filepath)
+        if 'tables' in old_metadata:
+            tables = old_metadata.get('tables')
+            if len(tables) > 1:
+                raise ValueError(
+                    'There are multiple tables specified in the JSON.'
+                    'Try using the MultiTableMetadata class to upgrade this file.'
+                )
+
+            else:
+                old_metadata = list(tables.values())[0]
+
+        new_metadata = cls._convert_metadata(old_metadata)
         metadata = cls.from_dict(new_metadata)
         metadata.save_to_json(new_filepath)
 
