@@ -141,6 +141,7 @@ def test_handle_sampling_error():
     Expect that the error is raised at the end of the function.
 
     Input:
+        - True
         - a temp file
         - the sampling error
 
@@ -148,11 +149,64 @@ def test_handle_sampling_error():
         - the error is raised.
     """
     # Setup
+    error_msg = (
+        'Error: Sampling terminated. Partial results are stored in a temporary file: test.csv. '
+        'This file will be overridden the next time you sample. Please rename the file if you '
+        'wish to save these results.'
+        '\n'
+        'Test error'
+    )
+
+    # Run and assert
+    with pytest.raises(ValueError, match=error_msg):
+        handle_sampling_error(True, 'test.csv', ValueError('Test error'))
+
+
+def test_handle_sampling_error_false_temp_file():
+    """Test the ``handle_sampling_error`` function.
+
+    Expect that the error is raised at the end of the function.
+
+    Input:
+        - False
+        - a temp file
+        - the sampling error
+
+    Side Effects:
+        - the error is raised.
+    """
+    # Setup
+    error_msg = (
+        'Error: Sampling terminated. Partial results are stored in test.csv.'
+        '\n'
+        'Test error'
+    )
+
+    # Run and assert
+    with pytest.raises(ValueError, match=error_msg):
+        handle_sampling_error(False, 'test.csv', ValueError('Test error'))
+
+
+def test_handle_sampling_error_false_temp_file_none_output_file():
+    """Test the ``handle_sampling_error`` function.
+
+    Expect that only the passed error message is raised when ``is_tmp_file`` and
+    ``output_file_path`` are False/None.
+
+    Input:
+        - False
+        - None
+        - the sampling error
+
+    Side Effects:
+        - the samlping error is raised
+    """
+    # Setup
     error_msg = 'Test error'
 
     # Run and assert
     with pytest.raises(ValueError, match=error_msg):
-        handle_sampling_error(True, 'test.csv', ValueError(error_msg))
+        handle_sampling_error(False, 'test.csv', ValueError('Test error'))
 
 
 def test_handle_sampling_error_ignore():
