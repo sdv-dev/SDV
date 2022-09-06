@@ -259,7 +259,7 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             instance._validate_column_exists('synthetic')
 
-    @pytest.mark.parametrize('column_name, sdtype, kwargs', VALID_KWARGS)
+    @pytest.mark.parametrize(('column_name', 'sdtype', 'kwargs'), VALID_KWARGS)
     def test__validate_unexpected_kwargs_valid(self, column_name, sdtype, kwargs):
         """Test the ``_validate_unexpected_kwargs`` method.
 
@@ -277,7 +277,7 @@ class TestSingleTableMetadata:
         # Run / Assert
         instance._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
 
-    @pytest.mark.parametrize('column_name, sdtype, kwargs, error_msg', INVALID_KWARGS)
+    @pytest.mark.parametrize(('column_name', 'sdtype', 'kwargs', 'error_msg'), INVALID_KWARGS)
     def test__validate_unexpected_kwargs_invalid(self, column_name, sdtype, kwargs, error_msg):
         """Test the ``_validate_unexpected_kwargs`` method.
 

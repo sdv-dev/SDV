@@ -99,7 +99,8 @@ def test_unflatten_dict_raises_error_row_index():
         'foo__0__1': 'some value'
     }
 
-    with pytest.raises(ValueError):
+    err_msg = 'There was an error unflattening the extension.'
+    with pytest.raises(ValueError, match=err_msg):
         unflatten_dict(flat)
 
 
@@ -110,7 +111,8 @@ def test_unflatten_dict_raises_error_column_index():
         'foo__1__0': 'some value'
     }
 
-    with pytest.raises(ValueError):
+    err_msg = 'There was an error unflattening the extension.'
+    with pytest.raises(ValueError, match=err_msg):
         unflatten_dict(flat)
 
 

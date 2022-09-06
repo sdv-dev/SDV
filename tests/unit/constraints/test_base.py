@@ -391,11 +391,12 @@ class TestConstraint():
         # Setup
         instance = Constraint()
         instance._transform = Mock()
-        instance._transform.side_effect = Exception()
+        instance._transform.side_effect = Exception('Error.')
         data = pd.DataFrame({'a': [1, 2, 3]})
 
         # Run / Assert
-        with pytest.raises(Exception):
+        err_msg = 'Error.'
+        with pytest.raises(Exception, match=err_msg):
             instance.transform(data)
 
     def test_transform_columns_missing(self):

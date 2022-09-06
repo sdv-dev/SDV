@@ -69,8 +69,8 @@ class TestCreateCustomConstraint():
             "Missing required values {'column_names'} in a CustomConstraint constraint."
         )
         # Run / Assert
+        constraint = create_custom_constraint(sorted, sorted, sorted)
         with pytest.raises(MultipleConstraintsErrors, match=err_msg):
-            constraint = create_custom_constraint(sorted, sorted, sorted)
             constraint._validate_inputs(not_column_name=None, something_else=None)
 
     def test__validate_inputs_custom_constraint_is_valid_incorrect(self):
@@ -558,7 +558,8 @@ class TestFixedCombinations():
         columns = ['c']
 
         # Run and assert
-        with pytest.raises(ValueError):
+        err_msg = 'FixedCombinations requires at least two constraint columns.'
+        with pytest.raises(ValueError, match=err_msg):
             FixedCombinations(column_names=columns)
 
     def test__fit(self):
@@ -758,7 +759,7 @@ class TestFixedCombinations():
         try:
             [uuid.UUID(u) for c, u in out['b#c'].items()]
         except ValueError:
-            assert False
+            pytest.fail('ValueError')
 
     def test_transform_non_string(self):
         """Test the ``FixedCombinations.transform`` method with non strings.
@@ -795,7 +796,7 @@ class TestFixedCombinations():
         try:
             [uuid.UUID(u) for c, u in out['b#c#d'].items()]
         except ValueError:
-            assert False
+            pytest.fail('ValueError')
 
     def test_transform_not_all_columns_provided(self):
         """Test the ``FixedCombinations.transform`` method.
@@ -1067,7 +1068,8 @@ class TestInequality():
         - Raise ``ValueError`` because column names must be strings
         """
         # Run / Assert
-        with pytest.raises(ValueError):
+        err_msg = '`low_column_name` and `high_column_name` must be strings.'
+        with pytest.raises(ValueError, match=err_msg):
             Inequality._validate_init_inputs(
                 low_column_name='a', high_column_name=['b', 'c'], strict_boundaries=True
             )
@@ -1085,7 +1087,8 @@ class TestInequality():
         - Raise ``ValueError`` because ``strict_boundaries`` must be a boolean
         """
         # Run / Assert
-        with pytest.raises(ValueError):
+        err_msg = '`strict_boundaries` must be a boolean.'
+        with pytest.raises(ValueError, match=err_msg):
             Inequality._validate_init_inputs(
                 low_column_name='a', high_column_name='b', strict_boundaries=None
             )
