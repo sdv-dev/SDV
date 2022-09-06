@@ -11,7 +11,7 @@ from sdv.constraints.base import (
     ColumnsModel, Constraint, _get_qualified_name, _module_contains_callable_name, get_subclasses,
     import_object)
 from sdv.constraints.errors import (
-    ConstraintMetadataError, MissingConstraintColumnError, AggregateConstraintsError)
+    AggregateConstraintsError, ConstraintMetadataError, MissingConstraintColumnError)
 from sdv.constraints.tabular import FixedCombinations
 from sdv.errors import ConstraintsNotMetError
 

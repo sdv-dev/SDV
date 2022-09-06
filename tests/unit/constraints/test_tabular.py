@@ -11,8 +11,8 @@ import pandas as pd
 import pytest
 
 from sdv.constraints.errors import (
-    ConstraintMetadataError, FunctionError, InvalidFunctionError, MissingConstraintColumnError,
-    AggregateConstraintsError)
+    AggregateConstraintsError, ConstraintMetadataError, FunctionError, InvalidFunctionError,
+    MissingConstraintColumnError)
 from sdv.constraints.tabular import (
     FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
     ScalarInequality, ScalarRange, Unique, _validate_inputs_custom_constraint,

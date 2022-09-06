@@ -12,7 +12,7 @@ from rdt import HyperTransformer
 from rdt.transformers import OneHotEncoder
 
 from sdv.constraints.errors import (
-    ConstraintMetadataError, MissingConstraintColumnError, AggregateConstraintsError)
+    AggregateConstraintsError, ConstraintMetadataError, MissingConstraintColumnError)
 from sdv.errors import ConstraintsNotMetError
 
 LOGGER = logging.getLogger(__name__)

@@ -8,7 +8,7 @@ from faker.config import DEFAULT_LOCALE
 from rdt.transformers.numerical import FloatFormatter
 
 from sdv.constraints.errors import (
-    FunctionError, MissingConstraintColumnError, AggregateConstraintsError)
+    AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.metadata import Table
 
 

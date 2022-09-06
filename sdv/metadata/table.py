@@ -12,7 +12,7 @@ from faker import Faker
 
 from sdv.constraints import Constraint
 from sdv.constraints.errors import (
-    FunctionError, MissingConstraintColumnError, AggregateConstraintsError)
+    AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.metadata.errors import InvalidMetadataError, MetadataNotFittedError
 from sdv.metadata.utils import strings_from_regex
 
