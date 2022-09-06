@@ -9,7 +9,7 @@ import rdt
 
 from sdv.constraints import Constraint
 from sdv.constraints.errors import (
-    FunctionError, MissingConstraintColumnError, AggregateConstraintsError)
+    AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.data_processing.errors import NotFittedError
 from sdv.metadata.single_table import SingleTableMetadata
 

@@ -9,7 +9,7 @@ from rdt.errors import NotFittedError as RDTNotFittedError
 from rdt.transformers import FloatFormatter, LabelEncoder
 
 from sdv.constraints.errors import (
-    FunctionError, MissingConstraintColumnError, AggregateConstraintsError)
+    AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.constraints.tabular import Positive
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.errors import NotFittedError
