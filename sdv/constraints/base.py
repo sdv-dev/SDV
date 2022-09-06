@@ -12,7 +12,7 @@ from rdt import HyperTransformer
 from rdt.transformers import OneHotEncoder
 
 from sdv.constraints.errors import (
-    ConstraintMetadataError, MissingConstraintColumnError, MultipleConstraintsErrors)
+    ConstraintMetadataError, MissingConstraintColumnError, MultipleConstraintsError)
 from sdv.errors import ConstraintsNotMetError
 
 LOGGER = logging.getLogger(__name__)
@@ -67,14 +67,14 @@ class ConstraintMeta(type):
     This allows us to later on dump the class definition as a dict.
     """
 
-    def __init__(self, name, bases, attr):
+    def __init__(self, name, bases, attr):  # noqa: N804
         super().__init__(name, bases, attr)
 
         old__init__ = self.__init__
         signature = inspect.signature(old__init__)
         arg_names = list(signature.parameters.keys())[1:]
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs):  # noqa: N807
             class_name = self.__class__.__name__
             if name == class_name:
                 self.__kwargs__ = copy.deepcopy(kwargs)
@@ -128,7 +128,7 @@ class Constraint(metaclass=ConstraintMeta):
             ))
 
         if errors:
-            raise MultipleConstraintsErrors(errors)
+            raise MultipleConstraintsError(errors)
 
     @classmethod
     def _validate_metadata_columns(cls, metadata, **kwargs):
@@ -160,13 +160,13 @@ class Constraint(metaclass=ConstraintMeta):
                 Any required kwargs for the constraint.
 
         Raises:
-            MultipleConstraintsErrors:
+            MultipleConstraintsError:
                 All the errors from validating the metadata.
         """
         errors = []
         try:
             cls._validate_inputs(**kwargs)
-        except MultipleConstraintsErrors as mce:
+        except MultipleConstraintsError as mce:
             errors.extend(mce.errors)
 
         try:
@@ -180,7 +180,7 @@ class Constraint(metaclass=ConstraintMeta):
             errors.append(e)
 
         if errors:
-            raise MultipleConstraintsErrors(errors)
+            raise MultipleConstraintsError(errors)
 
     def _validate_data_meets_constraint(self, table_data):
         """Make sure the given data is valid for the constraint.

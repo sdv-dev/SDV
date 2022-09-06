@@ -75,6 +75,7 @@ development_requires = [
     'isort>=4.3.4,<5',
     'pydocstyle>=6.1.1,<6.2',
     'flake8-pytest-style>=1.5.0,<2',
+    'pep8-naming>=0.12.1,<0.13',
 
     # fix style issues
     'autoflake>=1.1,<2',
