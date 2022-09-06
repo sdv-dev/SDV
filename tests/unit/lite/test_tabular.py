@@ -226,7 +226,7 @@ class TestTabularPreset:
         model.fit.assert_called_once_with(DataFrameMatcher(pd.DataFrame()))
         assert preset._null_percentages is None
 
-    def test_fit_null_column_True(self):
+    def test_fit_null_column_true(self):
         """Test the ``TabularPreset.fit`` method with modeling null columns.
 
         Expect that the model's fit method is called with the expected args when

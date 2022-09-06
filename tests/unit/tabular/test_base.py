@@ -1317,18 +1317,18 @@ def test_fit_sets_num_rows(model):
         - ``_num_rows`` is set to the length of the data passed to ``fit``.
     """
     # Setup
-    _N_DATA_ROWS = 100
+    _n_data_rows = 100
     data = pd.DataFrame({
-        'column1': list(range(_N_DATA_ROWS)),
-        'column2': list(range(_N_DATA_ROWS)),
-        'column3': list(range(_N_DATA_ROWS))
+        'column1': list(range(_n_data_rows)),
+        'column2': list(range(_n_data_rows)),
+        'column3': list(range(_n_data_rows))
     })
 
     # Run
     model.fit(data)
 
     # Assert
-    assert model._num_rows == _N_DATA_ROWS
+    assert model._num_rows == _n_data_rows
 
 
 @pytest.mark.parametrize('model', MODELS)
@@ -1375,10 +1375,10 @@ def test__make_condition_dfs_specifying_num_rows(model):
         - Conditions as ``[DataFrame]``
     """
     # Setup
-    _NUM_ROWS = 10
+    _num_rows = 10
     column_values = {'column2': 'M'}
-    conditions = [Condition(column_values=column_values, num_rows=_NUM_ROWS)]
-    expected_conditions = pd.DataFrame([column_values] * _NUM_ROWS)
+    conditions = [Condition(column_values=column_values, num_rows=_num_rows)]
+    expected_conditions = pd.DataFrame([column_values] * _num_rows)
 
     # Run
     result_conditions_list = model._make_condition_dfs(conditions=conditions)
@@ -1387,7 +1387,7 @@ def test__make_condition_dfs_specifying_num_rows(model):
     assert len(result_conditions_list) == 1
     result_conditions = result_conditions_list[0]
     assert isinstance(result_conditions, pd.DataFrame)
-    assert len(result_conditions) == _NUM_ROWS
+    assert len(result_conditions) == _num_rows
     assert all(result_conditions == expected_conditions)
 
 

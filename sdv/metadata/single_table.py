@@ -10,7 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from sdv.constraints import Constraint
-from sdv.constraints.errors import MultipleConstraintsErrors
+from sdv.constraints.errors import AggregateConstraintsError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.utils import cast_to_iterable, read_json, validate_file_does_not_exist
 
@@ -390,7 +390,7 @@ class SingleTableMetadata:
             constraint_name = constraint_dict.pop('constraint_name')
             try:
                 self._validate_constraint(constraint_name, **constraint_dict)
-            except MultipleConstraintsErrors as e:
+            except AggregateConstraintsError as e:
                 reformated_errors = '\n'.join(map(str, e.errors))
                 errors.append(reformated_errors)
 

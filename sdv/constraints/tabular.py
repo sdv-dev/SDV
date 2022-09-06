@@ -38,7 +38,7 @@ import pandas as pd
 
 from sdv.constraints.base import Constraint
 from sdv.constraints.errors import (
-    ConstraintMetadataError, FunctionError, InvalidFunctionError, MultipleConstraintsErrors)
+    AggregateConstraintsError, ConstraintMetadataError, FunctionError, InvalidFunctionError)
 from sdv.constraints.utils import (
     cast_to_datetime64, get_datetime_format, is_datetime_type, logit, matches_datetime_format,
     sigmoid)
@@ -106,7 +106,7 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
                         ' CustomConstraint constraint.'
                     )
                 ]
-                raise MultipleConstraintsErrors(errors)
+                raise AggregateConstraintsError(errors)
 
         def __init__(self, column_names, **kwargs):
             self.column_names = column_names
@@ -505,7 +505,7 @@ class ScalarInequality(Constraint):
             ))
 
         if errors:
-            raise MultipleConstraintsErrors(errors)
+            raise AggregateConstraintsError(errors)
 
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
@@ -1112,7 +1112,7 @@ class FixedIncrements(Constraint):
         errors = []
         try:
             super()._validate_inputs(**kwargs)
-        except MultipleConstraintsErrors as mce:
+        except AggregateConstraintsError as mce:
             errors.extend(mce.errors)
         except Exception as e:
             errors.append(e)
@@ -1125,7 +1125,7 @@ class FixedIncrements(Constraint):
             ))
 
         if errors:
-            raise MultipleConstraintsErrors(errors)
+            raise AggregateConstraintsError(errors)
 
     def __init__(self, column_name, increment_value):
         if increment_value <= 0:

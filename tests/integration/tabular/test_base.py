@@ -62,7 +62,7 @@ def test___init___copies_metadata():
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test_conditional_sampling_graceful_reject_sampling_True_dict(model):
+def test_conditional_sampling_graceful_reject_sampling_true_dict(model):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
@@ -83,7 +83,7 @@ def test_conditional_sampling_graceful_reject_sampling_True_dict(model):
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test_conditional_sampling_graceful_reject_sampling_True_dataframe(model):
+def test_conditional_sampling_graceful_reject_sampling_true_dataframe(model):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
@@ -349,7 +349,7 @@ def test_sample_conditions_with_batch_size():
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test_sampling_with_randomize_samples_True(model):
+def test_sampling_with_randomize_samples_true(model):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
@@ -365,7 +365,7 @@ def test_sampling_with_randomize_samples_True(model):
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test_sampling_with_randomize_samples_False(model):
+def test_sampling_with_randomize_samples_false(model):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
