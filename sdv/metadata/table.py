@@ -12,7 +12,7 @@ from faker import Faker
 
 from sdv.constraints import Constraint
 from sdv.constraints.errors import (
-    FunctionError, MissingConstraintColumnError, MultipleConstraintsError)
+    FunctionError, MissingConstraintColumnError, AggregateConstraintsError)
 from sdv.metadata.errors import InvalidMetadataError, MetadataNotFittedError
 from sdv.metadata.utils import strings_from_regex
 
@@ -434,7 +434,7 @@ class Table:
                 errors.append(e)
 
         if errors:
-            raise MultipleConstraintsError(errors)
+            raise AggregateConstraintsError(errors)
 
     def _transform_constraints(self, data, is_condition=False):
         errors = []
@@ -468,7 +468,7 @@ class Table:
                 errors.append(e)
 
         if errors:
-            raise MultipleConstraintsError(errors)
+            raise AggregateConstraintsError(errors)
 
         return data
 

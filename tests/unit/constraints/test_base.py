@@ -11,7 +11,7 @@ from sdv.constraints.base import (
     ColumnsModel, Constraint, _get_qualified_name, _module_contains_callable_name, get_subclasses,
     import_object)
 from sdv.constraints.errors import (
-    ConstraintMetadataError, MissingConstraintColumnError, MultipleConstraintsError)
+    ConstraintMetadataError, MissingConstraintColumnError, AggregateConstraintsError)
 from sdv.constraints.tabular import FixedCombinations
 from sdv.errors import ConstraintsNotMetError
 
@@ -166,14 +166,14 @@ class TestConstraint():
         The method should only raise errors if the input paramaters are invalid.
 
         Raise:
-            - ``MultipleConstraintsError`` if errors were found.
+            - ``AggregateConstraintsError`` if errors were found.
         """
         # Run
         Constraint._validate_inputs(args='value', kwargs='value')
 
         # Run / Assert
         err_msg = "Invalid values {'wrong_args'} are present in a Constraint constraint."
-        with pytest.raises(MultipleConstraintsError, match=err_msg):
+        with pytest.raises(AggregateConstraintsError, match=err_msg):
             Constraint._validate_inputs(args='value', kwargs='value', wrong_args='value')
 
     @patch('sdv.constraints.base.Constraint._validate_inputs')
@@ -196,11 +196,11 @@ class TestConstraint():
             - Mock for metadata
 
         Side effect:
-            - A MultipleConstraintsError error should be raised.
+            - A AggregateConstraintsError error should be raised.
         """
         # Setup
         validate_inputs_mock.side_effect = [
-            MultipleConstraintsError(errors=[ConstraintMetadataError('input errors')])
+            AggregateConstraintsError(errors=[ConstraintMetadataError('input errors')])
         ]
         validate_metadata_columns_mock.side_effect = [ConstraintMetadataError('column errors')]
         validate_metadata_specific_to_constraint_mock.side_effect = [
@@ -209,7 +209,7 @@ class TestConstraint():
 
         # Run
         error_message = re.escape('\ninput errors\n\nconstraint specific errors\n\ncolumn errors')
-        with pytest.raises(MultipleConstraintsError, match=error_message):
+        with pytest.raises(AggregateConstraintsError, match=error_message):
             Constraint._validate_metadata(Mock())
 
     def test_fit(self):

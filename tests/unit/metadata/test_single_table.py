@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.constraints.errors import MultipleConstraintsError
+from sdv.constraints.errors import AggregateConstraintsError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
 
@@ -1210,7 +1210,7 @@ class TestSingleTableMetadata:
         instance._alternate_keys = ['col2']
         instance._sequence_key = 'col1'
         instance._sequence_index = 'col2'
-        instance._validate_constraint = Mock(side_effect=MultipleConstraintsError(['cnt_error']))
+        instance._validate_constraint = Mock(side_effect=AggregateConstraintsError(['cnt_error']))
         instance._validate_key = Mock()
         instance._validate_alternate_keys = Mock()
         instance._validate_sequence_index = Mock()

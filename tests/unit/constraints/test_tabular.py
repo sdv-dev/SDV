@@ -12,7 +12,7 @@ import pytest
 
 from sdv.constraints.errors import (
     ConstraintMetadataError, FunctionError, InvalidFunctionError, MissingConstraintColumnError,
-    MultipleConstraintsError)
+    AggregateConstraintsError)
 from sdv.constraints.tabular import (
     FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
     ScalarInequality, ScalarRange, Unique, _validate_inputs_custom_constraint,
@@ -69,13 +69,8 @@ class TestCreateCustomConstraint():
             "Missing required values {'column_names'} in a CustomConstraint constraint."
         )
         # Run / Assert
-<<<<<<< HEAD
         constraint = create_custom_constraint(sorted, sorted, sorted)
-        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
-=======
-        with pytest.raises(MultipleConstraintsError, match=err_msg):
-            constraint = create_custom_constraint(sorted, sorted, sorted)
->>>>>>> ec500ad4 (Add pep8)
+        with pytest.raises(AggregateConstraintsError, match=err_msg):
             constraint._validate_inputs(not_column_name=None, something_else=None)
 
     def test__validate_inputs_custom_constraint_is_valid_incorrect(self):
@@ -478,7 +473,7 @@ class TestFixedCombinations():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsError) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             FixedCombinations._validate_inputs(not_column_name=None, something_else=None)
 
         err_msg = (
@@ -916,7 +911,7 @@ class TestInequality():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsError) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             Inequality._validate_inputs(not_high_column=None, not_low_column=None)
 
         err_msg = (
@@ -1535,7 +1530,7 @@ class TestScalarInequality():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsError) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             ScalarInequality._validate_inputs(
                 not_high_column=None, not_low_column=None, relation='+')
 
@@ -2205,7 +2200,7 @@ class TestPositive():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsError) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             Positive._validate_inputs(not_column_name=None, something_else=None)
 
         err_msg = (
@@ -2346,7 +2341,7 @@ class TestNegative():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsError) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             Negative._validate_inputs(not_column_name=None, something_else=None)
 
         err_msg = (
@@ -2487,7 +2482,7 @@ class TestRange():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsError) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             Range._validate_inputs(not_high_column=None, not_low_column=None)
 
         err_msg = (
@@ -3093,7 +3088,7 @@ class TestScalarRange():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsError) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             ScalarRange._validate_inputs(not_high_column=None, not_low_column=None)
 
         err_msg = (
@@ -3802,7 +3797,7 @@ class TestOneHotEncoding():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsError) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             OneHotEncoding._validate_inputs(not_column_names=None, something_else=None)
 
         err_msg = (
@@ -3925,7 +3920,7 @@ class TestUnique():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsError) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             Unique._validate_inputs(not_column_names=None, something_else=None)
 
         err_msg = (
@@ -4290,7 +4285,7 @@ class TestFixedIncrements():
             ' Increments must be positive integers.'
         )
         # Run / Assert
-        with pytest.raises(MultipleConstraintsError) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             FixedIncrements._validate_inputs(
                 not_column_name=None, increment_value=-1, something_else=None)
 

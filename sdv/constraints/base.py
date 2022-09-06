@@ -12,7 +12,7 @@ from rdt import HyperTransformer
 from rdt.transformers import OneHotEncoder
 
 from sdv.constraints.errors import (
-    ConstraintMetadataError, MissingConstraintColumnError, MultipleConstraintsError)
+    ConstraintMetadataError, MissingConstraintColumnError, AggregateConstraintsError)
 from sdv.errors import ConstraintsNotMetError
 
 LOGGER = logging.getLogger(__name__)
@@ -128,7 +128,7 @@ class Constraint(metaclass=ConstraintMeta):
             ))
 
         if errors:
-            raise MultipleConstraintsError(errors)
+            raise AggregateConstraintsError(errors)
 
     @classmethod
     def _validate_metadata_columns(cls, metadata, **kwargs):
@@ -160,13 +160,13 @@ class Constraint(metaclass=ConstraintMeta):
                 Any required kwargs for the constraint.
 
         Raises:
-            MultipleConstraintsError:
+            AggregateConstraintsError:
                 All the errors from validating the metadata.
         """
         errors = []
         try:
             cls._validate_inputs(**kwargs)
-        except MultipleConstraintsError as mce:
+        except AggregateConstraintsError as mce:
             errors.extend(mce.errors)
 
         try:
@@ -180,7 +180,7 @@ class Constraint(metaclass=ConstraintMeta):
             errors.append(e)
 
         if errors:
-            raise MultipleConstraintsError(errors)
+            raise AggregateConstraintsError(errors)
 
     def _validate_data_meets_constraint(self, table_data):
         """Make sure the given data is valid for the constraint.

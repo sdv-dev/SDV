@@ -8,7 +8,7 @@ from faker.config import DEFAULT_LOCALE
 from rdt.transformers.numerical import FloatFormatter
 
 from sdv.constraints.errors import (
-    FunctionError, MissingConstraintColumnError, MultipleConstraintsError)
+    FunctionError, MissingConstraintColumnError, AggregateConstraintsError)
 from sdv.metadata import Table
 
 
@@ -386,7 +386,7 @@ class TestTable:
             - A ``pandas.DataFrame``.
 
         Side effect:
-            - A ``MultipleConstraintsError`` error should be raised.
+            - A ``AggregateConstraintsError`` error should be raised.
         """
         # Setup
         data = pd.DataFrame({'a': [1, 2, 3]})
@@ -399,7 +399,7 @@ class TestTable:
 
         # Run / Assert
         error_message = re.escape('\nerror 1\n\nerror 2')
-        with pytest.raises(MultipleConstraintsError, match=error_message):
+        with pytest.raises(AggregateConstraintsError, match=error_message):
             instance.fit(data)
 
     def test_fit_constraint_transform_errors(self):
@@ -417,7 +417,7 @@ class TestTable:
             - A ``pandas.DataFrame``.
 
         Side effect:
-            - A ``MultipleConstraintsError`` error should be raised.
+            - A ``AggregateConstraintsError`` error should be raised.
         """
         # Setup
         data = pd.DataFrame({'a': [1, 2, 3]})
@@ -430,7 +430,7 @@ class TestTable:
 
         # Run / Assert
         error_message = re.escape('\nerror 1\n\nerror 2')
-        with pytest.raises(MultipleConstraintsError, match=error_message):
+        with pytest.raises(AggregateConstraintsError, match=error_message):
             instance.fit(data)
 
         constraint1.fit.assert_called_once_with(data)
