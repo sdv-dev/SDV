@@ -5,7 +5,6 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 from copulas.univariate import GaussianUnivariate
-from rdt.transformers import OneHotEncoder
 
 from sdv.constraints.base import (
     ColumnsModel, Constraint, _get_qualified_name, _module_contains_callable_name, get_subclasses,
