@@ -460,7 +460,7 @@ class SingleTableMetadata:
 
         Args:
             filepath (str):
-                String that represent the ``path`` to the ``json`` file to be written.
+                String that represents the ``path`` to the ``json`` file to be written.
 
         Raises:
             Raises an ``Error`` if the path already exists.
@@ -530,3 +530,90 @@ class SingleTableMetadata:
         """Pretty print the ``SingleTableMetadata``."""
         printed = json.dumps(self.to_dict(), indent=4)
         return printed
+
+    @classmethod
+    def upgrade_metadata(cls, old_filepath, new_filepath):
+        """Upgrade an old metadata file to the ``V1`` schema.
+
+        Args:
+            old_filepath (str):
+                String that represents the ``path`` to the old metadata ``json`` file.
+            new_file_path (str):
+                String that represents the ``path`` to save the upgraded metadata to.
+
+        Raises:
+            Raises a ``ValueError`` if the path already exists.
+        """
+        validate_file_does_not_exist(new_filepath)
+        old_metadata = read_json(old_filepath)
+
+        if 'tables' in old_metadata:
+            tables = old_metadata.get('tables')
+            if len(tables) > 1:
+                raise ValueError(
+                    'There are multiple tables specified in the JSON.'
+                    'Try using the MultiTableMetadata class to upgrade this file.'
+                )
+
+            else:
+                old_metadata = list(tables.values())[0]
+
+        new_metadata = {}
+        columns = {}
+        fields = old_metadata.get('fields')
+        alternate_keys = []
+        for field, field_meta in fields.items():
+            column_meta = {}
+            old_type = field_meta['type']
+            subtype = field_meta.get('subtype')
+
+            if old_type == 'categorical':
+                column_meta['sdtype'] = 'categorical'
+
+            elif old_type == 'numerical':
+                column_meta['sdtype'] = 'numerical'
+                if subtype == 'float':
+                    column_meta['representation'] = 'float64'
+                elif subtype == 'integer':
+                    column_meta['representation'] = 'int64'
+
+            elif old_type == 'boolean':
+                column_meta['sdtype'] = 'boolean'
+
+            elif old_type == 'datetime':
+                column_meta['sdtype'] = 'datetime'
+                datetime_format = field_meta.get('format')
+                if datetime_format:
+                    column_meta['datetime_format'] = datetime_format
+
+            elif old_type == 'id':
+                if subtype == 'integer':
+                    column_meta['sdtype'] = 'numerical'
+
+                elif subtype == 'string':
+                    column_meta['sdtype'] = 'text'
+                    regex_format = field_meta.get('regex')
+                    if regex_format:
+                        column_meta['regex_format'] = regex_format
+
+                alternate_keys.append(field)
+
+            columns[field] = column_meta
+
+        new_metadata['columns'] = columns
+        new_metadata['primary_key'] = old_metadata.get('primary_key')
+        if alternate_keys:
+            new_metadata['alternate_keys'] = alternate_keys
+
+        new_metadata['SCHEMA_VERSION'] = 'SINGLE_TABLE_V1'
+        metadata = cls.from_dict(new_metadata)
+        metadata.save_to_json(new_filepath)
+
+        try:
+            metadata.validate()
+        except InvalidMetadataError as error:
+            message = (
+                'Successfully converted the old metadata, but the metadata was not valid.'
+                f'To use this with the SDV, please fix the following errors.\n {str(error)}'
+            )
+            warnings.warn(message)
