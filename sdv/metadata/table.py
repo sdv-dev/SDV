@@ -515,17 +515,17 @@ class Table:
                 else:
                     dtypes[column] = dtype_kind
 
-        hp_config = self._get_hypertransformer_config(dtypes)
+        ht_config = self._get_hypertransformer_config(dtypes)
         for column in numerical_extras:
             dtypes[column] = 'numerical'
-            hp_config['sdtypes'][column] = 'numerical'
-            hp_config['transformers'][column] = rdt.transformers.FloatFormatter(
+            ht_config['sdtypes'][column] = 'numerical'
+            ht_config['transformers'][column] = rdt.transformers.FloatFormatter(
                 missing_value_replacement='mean',
                 model_missing_values=True,
             )
 
         self._hyper_transformer = rdt.HyperTransformer()
-        self._hyper_transformer.set_config(hp_config)
+        self._hyper_transformer.set_config(ht_config)
         fit_columns = list(dtypes)
         if not data[fit_columns].empty:
             self._hyper_transformer.fit(data[fit_columns])
