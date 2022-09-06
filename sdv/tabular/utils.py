@@ -154,18 +154,20 @@ def handle_sampling_error(is_tmp_file, output_file_path, sampling_error):
     if 'Unable to sample any rows for the given conditions' in str(sampling_error):
         raise sampling_error
 
+    error_msg = None
     if is_tmp_file:
-        print(  # noqa: T001
+        error_msg = (
             'Error: Sampling terminated. Partial results are stored in a temporary file: '
             f'{output_file_path}. This file will be overridden the next time you sample. '
             'Please rename the file if you wish to save these results.'
         )
     elif output_file_path is not None:
-        print(  # noqa: T001
-            'Error: Sampling terminated. '
-            f'Partial results are stored in {output_file_path}.'
+        error_msg = (
+            f'Error: Sampling terminated. Partial results are stored in {output_file_path}.'
         )
 
+    if error_msg:
+        raise type(sampling_error)(error_msg + '\n' + str(sampling_error))
     raise sampling_error
 
 
