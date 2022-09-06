@@ -216,7 +216,9 @@ def sample_relational_demo(size=30):
             os.append(pc_os if device == 'pc' else phone_os)
 
         noise = sp.stats.truncnorm.rvs(-3, 3, loc=30, scale=10, size=user.num_sessions)
-        prob = (1.1 * (user.gender == 'M')) * (1 + user.age / 100) * (1.1 * (devices == 'pc'))
+        prob = (
+            (1 + .1 * (user.gender == 'M')) * (1 + user.age / 100) * (1 + .1 * (devices == 'pc'))
+        )
         minutes = noise * prob
         num_transactions = (minutes / 10) * (0.5 + (user.gender == 'F'))
 
