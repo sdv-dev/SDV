@@ -74,16 +74,16 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
     ``is_valid`` methods given in the arguments.
 
     Args:
+        is_valid (callable):
+            Function to replace the ``is_valid`` method.
         transform (callable):
             Function to replace the ``transform`` method.
         reverse_transform (callable):
             Function to replace the ``reverse_transform`` method.
-        is_valid (callable):
-            Function to replace the ``is_valid`` method.
 
     Returns:
         CustomConstraint class:
-            A constraint with custom ``transform``/``reverse_transform``/``is_valid`` methods.
+            A constraint with custom ``is_valid``/``transform``/``reverse_transform`` methods.
     """
     _validate_inputs_custom_constraint(is_valid_fn, transform_fn, reverse_transform_fn)
 

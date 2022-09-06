@@ -303,12 +303,18 @@ class TestCreateCustomConstraint():
         - pd.DataFrame of transformed values
         """
         # Setup
+        def test_is_valid(*_):
+            return pd.Series([True] * 5)
+
+        def test_transform(_, data):
+            return pd.DataFrame({'col': data['col'] ** 2})
+
+        def test_reverse_transform(_, data):
+            return pd.DataFrame({'col': data['col'] ** 1 / 2})
+
         custom_constraint = create_custom_constraint(
-            lambda _, x: pd.Series([True] * 5),
-            lambda _, x: pd.DataFrame({'col': x['col'] ** 2}),
-            lambda _, x: pd.DataFrame({'col': x['col'] ** 1 / 2}),
-        )
-        custom_constraint = custom_constraint('col')
+            test_is_valid, test_transform, test_reverse_transform
+        )('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
