@@ -63,7 +63,7 @@ class TestCopulaGAN:
         ])
         assert gct_mock.call_count == 2
 
-        assert model._ht == ht_mock.return_value
+        assert model._hyper_transformer == ht_mock.return_value
         ht_mock.return_value.fit_transform.called_once_with(DataFrameMatcher(data))
         ctgan_fit_mock.called_once_with(DataFrameMatcher(data))
 
@@ -113,6 +113,6 @@ class TestCopulaGAN:
         assert model._field_distributions == {'a': 'a_distribution'}
         gct_mock.assert_called_once_with(model_missing_values=True, distribution='a_distribution')
 
-        assert model._ht == ht_mock.return_value
+        assert model._hyper_transformer == ht_mock.return_value
         ht_mock.return_value.fit_transform.called_once_with(DataFrameMatcher(data))
         ctgan_fit_mock.called_once_with(DataFrameMatcher(data))

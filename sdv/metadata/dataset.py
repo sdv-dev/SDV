@@ -8,7 +8,6 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-from rdt import HyperTransformer
 
 from sdv.constraints import Constraint
 from sdv.metadata import visualization
@@ -72,7 +71,6 @@ class Metadata:
     """
 
     _child_map = None
-    _hyper_transformers = None
     _metadata = None
     _parent_map = None
 
@@ -181,7 +179,6 @@ class Metadata:
         else:
             self._metadata = {'tables': {}}
 
-        self._hyper_transformers = dict()
         self._analyze_relationships()
 
     def get_children(self, table_name):
@@ -400,50 +397,6 @@ class Metadata:
                     dtypes[name] = dtype
 
         return dtypes
-
-    def transform(self, table_name, data):
-        """Transform data for a given table.
-
-        If the ``HyperTransformer`` for a table is ``None`` it is created.
-
-        Args:
-            table_name (str):
-                Name of the table that is being transformer.
-            data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            pandas.DataFrame:
-                Transformed data.
-        """
-        hyper_transformer = self._hyper_transformers.get(table_name)
-        if hyper_transformer is None:
-            hyper_transformer = HyperTransformer()
-            hyper_transformer.detect_initial_config(data)
-            hyper_transformer.fit(data)
-            self._hyper_transformers[table_name] = hyper_transformer
-
-        return hyper_transformer.transform(data)
-
-    def reverse_transform(self, table_name, data):
-        """Reverse the transformed data for a given table.
-
-        Args:
-            table_name (str):
-                Name of the table to reverse transform.
-            data (pandas.DataFrame):
-                Data to be reversed.
-
-        Returns:
-            pandas.DataFrame
-        """
-        hyper_transformer = self._hyper_transformers[table_name]
-        reversed_data = hyper_transformer.reverse_transform(data)
-
-        for name, dtype in self.get_dtypes(table_name, ids=True).items():
-            reversed_data[name] = reversed_data[name].dropna().astype(dtype)
-
-        return reversed_data
 
     # ################### #
     # Metadata Validation #
