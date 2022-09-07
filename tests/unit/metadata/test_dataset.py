@@ -229,7 +229,6 @@ class TestMetadata(TestCase):
         mock_meta.assert_called_once_with({'some': 'meta'})
         mock_relationships.assert_called_once_with()
         assert metadata.root_path == '.'
-        assert metadata._hyper_transformers == dict()
 
     def test_get_children(self):
         """Test get children"""
@@ -513,39 +512,6 @@ class TestMetadata(TestCase):
 
         # Asserts
         assert result == ['parent_id', 'parent_id_2']
-
-    def test_reverse_transform(self):
-        """Test reverse transform"""
-        # Setup
-        ht_mock = Mock()
-        ht_mock.reverse_transform.return_value = {
-            'item 1': pd.Series([1.0, 2.0, None, 4.0, 5.0]),
-            'item 2': pd.Series([1.1, None, 3.3, None, 5.5]),
-            'item 3': pd.Series([None, 'bbb', 'ccc', 'ddd', None]),
-            'item 4': pd.Series([True, False, None, False, True])
-        }
-
-        metadata = Mock(spec_set=Metadata)
-        metadata._hyper_transformers = {
-            'test': ht_mock
-        }
-        metadata.get_dtypes.return_value = {
-            'item 1': 'int',
-            'item 2': 'float',
-            'item 3': 'str',
-            'item 4': 'bool',
-        }
-
-        # Run
-        data = pd.DataFrame({'foo': [0, 1]})
-        Metadata.reverse_transform(metadata, 'test', data)
-
-        # Asserts
-        expected_call = pd.DataFrame({'foo': [0, 1]})
-        pd.testing.assert_frame_equal(
-            ht_mock.reverse_transform.call_args[0][0],
-            expected_call
-        )
 
     def test_add_table_already_exist(self):
         """Try to add a new table that already exist"""
