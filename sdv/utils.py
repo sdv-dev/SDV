@@ -91,8 +91,10 @@ def throw_version_mismatch_warning(package_versions):
     Side Effects:
         A warning is thrown if there is a mismatch.
     """
-    warning_str = ('The libraries used to create the model have older versions '
-                   'than your current setup. This may cause errors when sampling.')
+    warning_str = (
+        'The libraries used to create the model have older versions '
+        'than your current setup. This may cause errors when sampling.'
+    )
 
     if package_versions is None:
         warnings.warn(warning_str)
@@ -106,8 +108,10 @@ def throw_version_mismatch_warning(package_versions):
             current_version = ''
 
         if current_version != version:
-            mismatched_details += (f'\n{lib} used version `{version}`; '
-                                   f'current version is `{current_version}`')
+            mismatched_details += (
+                f'\n{lib} used version `{version}`; '
+                f'current version is `{current_version}`'
+            )
 
     if len(mismatched_details) > 0:
         warnings.warn(f'{warning_str}{mismatched_details}')

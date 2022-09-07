@@ -83,7 +83,8 @@ def test_get_package_versions_error(get_distribution_mock):
     # Setup
     dist_mock = Mock()
     get_distribution_mock.side_effect = [
-        dist_mock, pkg_resources.ResolutionError(), dist_mock]
+        dist_mock, pkg_resources.ResolutionError(), dist_mock
+    ]
 
     expected = {
         'sdv': dist_mock.version,
