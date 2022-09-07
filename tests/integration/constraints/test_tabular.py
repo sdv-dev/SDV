@@ -8,27 +8,23 @@ from sdv.sampling.tabular import Condition
 from sdv.tabular import GaussianCopula
 
 
-def _is_valid(col, x):
-    return pd.Series([True if x_i > 0 else False for x_i in x['col']])
+def _is_valid(_, data):
+    return pd.Series([True if data_i > 0 else False for data_i in data['col']])
 
 
-def _transform(col, x):
-    return pd.DataFrame({'col': x['col'] ** 2})
-
-
-def _reverse_transform(col, x):
-    return pd.DataFrame({'col': x['col'] ** .5})
+def _reverse_transform(_, data):
+    return pd.DataFrame({'col': data['col'] ** .5})
 
 
 def test_create_custom_constraint(tmpdir):
     """Test the ``create_custom_constraint`` method end to end."""
     # Setup
-    custom_constraint = create_custom_constraint(
-        _is_valid,
-        _transform,
-        _reverse_transform
-    )('col')
+    def _transform(_, data):
+        return pd.DataFrame({'col': data['col'] ** 2})
 
+    custom_constraint = create_custom_constraint(
+        _is_valid, _transform, _reverse_transform
+    )('col')
     data = pd.DataFrame({'col': np.random.randint(1, 10, size=100)})
     gc = GaussianCopula(constraints=[custom_constraint])
     gc.fit(data)
@@ -76,13 +72,12 @@ def test_invalid_create_custom_constraint():
 
     It should correctly sample the synthetic data through reject sample.
     """
-    # Setup
-    custom_constraint = create_custom_constraint(
-        lambda _, x: pd.Series([True if x_i > 0 else False for x_i in x['col']]),
-        lambda _: pd.DataFrame({'col': [10 / 0] * 100}),
-        lambda _, x: pd.DataFrame({'col': x['col'] ** .5})
-    )('col')
+    def _bad_transform(_, data):
+        return pd.DataFrame({'col': [10 / 0] * 100})
 
+    custom_constraint = create_custom_constraint(
+        _is_valid, _bad_transform, _reverse_transform
+    )('col')
     data = pd.DataFrame({'col': np.random.randint(1, 10, size=100)})
     gc = GaussianCopula(constraints=[custom_constraint])
     gc.fit(data)
@@ -94,7 +89,7 @@ def test_invalid_create_custom_constraint():
     assert all(sampled > 0)
 
 
-def test_FixedIncrements():
+def test_fixed_increments():
     """Test the ``FixedIncrements`` constraint end to end."""
     # Setup
     values = np.random.randint(1, 10, size=20) * 5
@@ -110,7 +105,7 @@ def test_FixedIncrements():
     assert all(sampled % 5 == 0)
 
 
-def test_Inequality():
+def test_inequality():
     """Test the ``Inequality`` constraint end to end."""
     # Setup
     data = pd.DataFrame({
@@ -128,7 +123,7 @@ def test_Inequality():
     assert all(sampled['low'] <= sampled['high'])
 
 
-def test_ScalarInequality():
+def test_scalar_inequality():
     """Test the ``ScalarInequality`` constraint end to end."""
     # Setup
     data = pd.DataFrame({
@@ -145,7 +140,7 @@ def test_ScalarInequality():
     assert all(sampled['low'] < 11)
 
 
-def test_Range():
+def test_range():
     """Test the ``Range`` constraint end to end."""
     # Setup
     data = pd.DataFrame({
@@ -171,7 +166,7 @@ def test_Range():
     assert sampled.middle_column.max() <= sampled.high_column.max()
 
 
-def test_ScalarRange():
+def test_scalar_range():
     """Test the ``ScalarRange`` constraint end to end."""
     # Setup
     data = pd.DataFrame({
@@ -195,7 +190,7 @@ def test_ScalarRange():
     assert sampled.column.max() <= 11
 
 
-def test_ScalarRange_conditions():
+def test_scalar_range_conditions():
     """Test ``ScalarRange`` with conditions.
 
     This test ensures that the conditions are not altered by the constraint transformation.
@@ -203,7 +198,7 @@ def test_ScalarRange_conditions():
     # Setup
     constraint = ScalarRange(column_name='input', low_value=49, high_value=100)
     data = pd.DataFrame({
-        'input': [_ for _ in range(50, 80)],
+        'input': list(range(50, 80)),
         'output': [np.random.rand() for _ in range(30)]
     })
     condition = Condition({'input': 88}, num_rows=10)

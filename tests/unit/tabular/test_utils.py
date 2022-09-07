@@ -99,7 +99,8 @@ def test_unflatten_dict_raises_error_row_index():
         'foo__0__1': 'some value'
     }
 
-    with pytest.raises(ValueError):
+    err_msg = 'There was an error unflattening the extension.'
+    with pytest.raises(ValueError, match=err_msg):
         unflatten_dict(flat)
 
 
@@ -110,7 +111,8 @@ def test_unflatten_dict_raises_error_column_index():
         'foo__1__0': 'some value'
     }
 
-    with pytest.raises(ValueError):
+    err_msg = 'There was an error unflattening the extension.'
+    with pytest.raises(ValueError, match=err_msg):
         unflatten_dict(flat)
 
 
@@ -139,6 +141,7 @@ def test_handle_sampling_error():
     Expect that the error is raised at the end of the function.
 
     Input:
+        - True
         - a temp file
         - the sampling error
 
@@ -146,11 +149,64 @@ def test_handle_sampling_error():
         - the error is raised.
     """
     # Setup
+    error_msg = (
+        'Error: Sampling terminated. Partial results are stored in a temporary file: test.csv. '
+        'This file will be overridden the next time you sample. Please rename the file if you '
+        'wish to save these results.'
+        '\n'
+        'Test error'
+    )
+
+    # Run and assert
+    with pytest.raises(ValueError, match=error_msg):
+        handle_sampling_error(True, 'test.csv', ValueError('Test error'))
+
+
+def test_handle_sampling_error_false_temp_file():
+    """Test the ``handle_sampling_error`` function.
+
+    Expect that the error is raised at the end of the function.
+
+    Input:
+        - False
+        - a temp file
+        - the sampling error
+
+    Side Effects:
+        - the error is raised.
+    """
+    # Setup
+    error_msg = (
+        'Error: Sampling terminated. Partial results are stored in test.csv.'
+        '\n'
+        'Test error'
+    )
+
+    # Run and assert
+    with pytest.raises(ValueError, match=error_msg):
+        handle_sampling_error(False, 'test.csv', ValueError('Test error'))
+
+
+def test_handle_sampling_error_false_temp_file_none_output_file():
+    """Test the ``handle_sampling_error`` function.
+
+    Expect that only the passed error message is raised when ``is_tmp_file`` and
+    ``output_file_path`` are False/None.
+
+    Input:
+        - False
+        - None
+        - the sampling error
+
+    Side Effects:
+        - the samlping error is raised
+    """
+    # Setup
     error_msg = 'Test error'
 
     # Run and assert
     with pytest.raises(ValueError, match=error_msg):
-        handle_sampling_error(True, 'test.csv', ValueError(error_msg))
+        handle_sampling_error(False, 'test.csv', ValueError('Test error'))
 
 
 def test_handle_sampling_error_ignore():
@@ -192,7 +248,8 @@ def test_check_num_rows_reject_sampling_error():
     max_tries_per_batch = 1
     error_msg = (
         'Unable to sample any rows for the given conditions. '
-        r'Try increasing `max_tries_per_batch` \(currently: 1\).')
+        r'Try increasing `max_tries_per_batch` \(currently: 1\).'
+    )
 
     # Run and assert
     with pytest.raises(ValueError, match=error_msg):
@@ -218,7 +275,8 @@ def test_check_num_rows_non_reject_sampling_error():
     max_tries = 1
     error_msg = (
         r'Unable to sample any rows for the given conditions. '
-        'This may be because the provided values are out-of-bounds in the current model.')
+        'This may be because the provided values are out-of-bounds in the current model.'
+    )
 
     # Run and assert
     with pytest.raises(ValueError, match=error_msg):
@@ -246,7 +304,8 @@ def test_check_num_rows_non_reject_sampling_warning(warning_mock):
     max_tries = 1
     error_msg = (
         'Unable to sample any rows for the given conditions. '
-        'Try increasing `max_tries` (currently: 1).')
+        'Try increasing `max_tries` (currently: 1).'
+    )
 
     # Run
     check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries)
