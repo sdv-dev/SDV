@@ -126,13 +126,6 @@ class SingleTableMetadata:
             raise ValueError(
                 f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'.")
 
-    def _validate_column_exists(self, column_name):
-        if column_name not in self._columns:
-            raise ValueError(
-                f"Column name ('{column_name}') does not exist in the table. "
-                "Use 'add_column' to add new column."
-            )
-
     def _validate_column(self, column_name, sdtype, **kwargs):
         self._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
         if sdtype == 'categorical':
@@ -172,6 +165,13 @@ class SingleTableMetadata:
         self._validate_column(column_name, **kwargs)
         self._columns[column_name] = deepcopy(kwargs)
 
+    def _validate_column_exists(self, column_name):
+        if column_name not in self._columns:
+            raise ValueError(
+                f"Column name ('{column_name}') does not exist in the table. "
+                "Use 'add_column' to add new column."
+            )
+
     def update_column(self, column_name, **kwargs):
         """Update an existing column in the ``SingleTableMetadata``.
 
@@ -196,6 +196,35 @@ class SingleTableMetadata:
 
         self._validate_column(column_name, sdtype, **kwargs)
         self._columns[column_name] = _kwargs
+
+    def _validate_constraint(self, constraint_name, **kwargs):
+        """Validate a constraint against the single table metadata.
+
+        Args:
+            constraint_name (string):
+                Name of the constraint class.
+            **kwargs:
+                Any arguments the constraint requires.
+        """
+        try:
+            constraint_class = Constraint._get_class_from_dict(constraint_name)
+        except KeyError:
+            raise InvalidMetadataError(f"Invalid constraint ('{constraint_name}').")
+
+        constraint_class._validate_metadata(self, **kwargs)
+
+    def add_constraint(self, constraint_name, **kwargs):
+        """Add a constraint to the single table metadata.
+
+        Args:
+            constraint_name (string):
+                Name of the constraint class.
+            **kwargs:
+                Any other arguments the constraint requires.
+        """
+        self._validate_constraint(constraint_name, **kwargs)
+        kwargs['constraint_name'] = constraint_name
+        self._constraints.append(kwargs)
 
     def detect_from_dataframe(self, data):
         """Detect the metadata from a ``pd.DataFrame`` object.
@@ -355,22 +384,6 @@ class SingleTableMetadata:
                 ' These columns must be different.'
             )
 
-    def _validate_constraint(self, constraint_name, **kwargs):
-        """Validate a constraint against the single table metadata.
-
-        Args:
-            constraint_name (string):
-                Name of the constraint class.
-            **kwargs:
-                Any arguments the constraint requires.
-        """
-        try:
-            constraint_class = Constraint._get_class_from_dict(constraint_name)
-        except KeyError:
-            raise InvalidMetadataError(f"Invalid constraint ('{constraint_name}').")
-
-        constraint_class._validate_metadata(self, **kwargs)
-
     def _append_error(self, errors, method, *args, **kwargs):
         """Inplace, append the produced error to the passed ``errors`` list."""
         try:
@@ -423,49 +436,6 @@ class SingleTableMetadata:
 
         return deepcopy(metadata)
 
-    def _set_metadata_attributes(self, metadata):
-        """Set the metadata attributes to the current instance.
-
-        Args:
-            metadata (dict):
-                Python dictionary representing a ``SingleTableMetadata`` object.
-        """
-        for key in self._KEYS:
-            value = deepcopy(metadata.get(key))
-            if key == 'constraints' and value:
-                value = [Constraint.from_dict(constraint_dict) for constraint_dict in value]
-
-            if value:
-                setattr(self, f'_{key}', value)
-
-    def add_constraint(self, constraint_name, **kwargs):
-        """Add a constraint to the single table metadata.
-
-        Args:
-            constraint_name (string):
-                Name of the constraint class.
-            **kwargs:
-                Any other arguments the constraint requires.
-        """
-        self._validate_constraint(constraint_name, **kwargs)
-        kwargs['constraint_name'] = constraint_name
-        self._constraints.append(kwargs)
-
-    @classmethod
-    def _load_from_dict(cls, metadata):
-        """Create a ``SingleTableMetadata`` instance from a python ``dict``.
-
-        Args:
-            metadata (dict):
-                Python dictionary representing a ``SingleTableMetadata`` object.
-
-        Returns:
-            Instance of ``SingleTableMetadata``.
-        """
-        instance = cls()
-        instance._set_metadata_attributes(metadata)
-        return instance
-
     @classmethod
     def from_dict(cls, metadata):
         """Create a ``SingleTableMetadata`` instance from a python ``dict``.
@@ -482,6 +452,54 @@ class SingleTableMetadata:
             value = deepcopy(metadata.get(key))
             if value:
                 setattr(instance, f'_{key}', value)
+
+        return instance
+
+    def save_to_json(self, filepath):
+        """Save the current ``SingleTableMetadata`` in to a ``json`` file.
+
+        Args:
+            filepath (str):
+                String that represent the ``path`` to the ``json`` file to be written.
+
+        Raises:
+            Raises an ``Error`` if the path already exists.
+        """
+        validate_file_does_not_exist(filepath)
+        metadata = self.to_dict()
+        metadata['SCHEMA_VERSION'] = self.SCHEMA_VERSION
+        with open(filepath, 'w', encoding='utf-8') as metadata_file:
+            json.dump(metadata, metadata_file, indent=4)
+
+    def _set_metadata_attributes(self, metadata):
+        """Set the metadata attributes to the current instance.
+
+        Args:
+            metadata (dict):
+                Python dictionary representing a ``SingleTableMetadata`` object.
+        """
+        for key in self._KEYS:
+            value = deepcopy(metadata.get(key))
+            if key == 'constraints' and value:
+                value = [Constraint.from_dict(constraint_dict) for constraint_dict in value]
+
+            if value:
+                setattr(self, f'_{key}', value)
+
+    @classmethod
+    def _load_from_dict(cls, metadata):
+        """Create a ``SingleTableMetadata`` instance from a python ``dict``.
+
+        Args:
+            metadata (dict):
+                Python dictionary representing a ``SingleTableMetadata`` object.
+
+        Returns:
+            Instance of ``SingleTableMetadata``.
+        """
+        instance = cls()
+        instance._set_metadata_attributes(metadata)
+
         return instance
 
     @classmethod
@@ -507,22 +525,6 @@ class SingleTableMetadata:
             )
 
         return cls._load_from_dict(metadata)
-
-    def save_to_json(self, filepath):
-        """Save the current ``SingleTableMetadata`` in to a ``json`` file.
-
-        Args:
-            filepath (str):
-                String that represent the ``path`` to the ``json`` file to be written.
-
-        Raises:
-            Raises an ``Error`` if the path already exists.
-        """
-        validate_file_does_not_exist(filepath)
-        metadata = self.to_dict()
-        metadata['SCHEMA_VERSION'] = self.SCHEMA_VERSION
-        with open(filepath, 'w', encoding='utf-8') as metadata_file:
-            json.dump(metadata, metadata_file, indent=4)
 
     def __repr__(self):
         """Pretty print the ``SingleTableMetadata``."""
