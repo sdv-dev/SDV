@@ -537,6 +537,7 @@ class SingleTableMetadata:
         columns = {}
         fields = old_metadata.get('fields')
         alternate_keys = []
+        primary_key = old_metadata.get('primary_key')
         for field, field_meta in fields.items():
             column_meta = {}
             old_type = field_meta['type']
@@ -571,16 +572,17 @@ class SingleTableMetadata:
                     if regex_format:
                         column_meta['regex_format'] = regex_format
 
-                alternate_keys.append(field)
+                if field != primary_key:
+                    alternate_keys.append(field)
 
             columns[field] = column_meta
 
         new_metadata['columns'] = columns
-        new_metadata['primary_key'] = old_metadata.get('primary_key')
+        new_metadata['primary_key'] = primary_key
         if alternate_keys:
             new_metadata['alternate_keys'] = alternate_keys
 
-        new_metadata['SCHEMA_VERSION'] = 'SINGLE_TABLE_V1'
+        new_metadata['SCHEMA_VERSION'] = cls.SCHEMA_VERSION
 
         return new_metadata
 
