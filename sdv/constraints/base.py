@@ -166,8 +166,8 @@ class Constraint(metaclass=ConstraintMeta):
         errors = []
         try:
             cls._validate_inputs(**kwargs)
-        except AggregateConstraintsError as mce:
-            errors.extend(mce.errors)
+        except AggregateConstraintsError as agg_error:
+            errors.extend(agg_error.errors)
 
         try:
             cls._validate_metadata_columns(metadata, **kwargs)

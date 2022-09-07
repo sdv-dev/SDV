@@ -168,6 +168,7 @@ def handle_sampling_error(is_tmp_file, output_file_path, sampling_error):
 
     if error_msg:
         raise type(sampling_error)(error_msg + '\n' + str(sampling_error))
+
     raise sampling_error
 
 

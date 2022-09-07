@@ -1112,8 +1112,8 @@ class FixedIncrements(Constraint):
         errors = []
         try:
             super()._validate_inputs(**kwargs)
-        except AggregateConstraintsError as mce:
-            errors.extend(mce.errors)
+        except AggregateConstraintsError as agg_error:
+            errors.extend(agg_error.errors)
         except Exception as e:
             errors.append(e)
 
