@@ -7,7 +7,7 @@ import pytest
 from sdv.constraints import (
     FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
     ScalarInequality, ScalarRange, Unique)
-from sdv.constraints.errors import MultipleConstraintsErrors
+from sdv.constraints.errors import AggregateConstraintsError
 from sdv.constraints.tabular import create_custom_constraint
 from sdv.demo import load_tabular_demo
 from sdv.sampling import Condition
@@ -45,7 +45,7 @@ def test_constraints(tmpdir):
 def test_constraints_with_conditions():
     # Setup
     data = pd.DataFrame(data={
-        'low_col': [i for i in range(50)],
+        'low_col': list(range(50)),
         'mid_col': [i + 1 for i in range(50)],
         'high_col': [i + 2 for i in range(50)]
     })
@@ -181,5 +181,5 @@ def test_failing_constraints():
         '\n2  70.0'
     )
 
-    with pytest.raises(MultipleConstraintsErrors, match=err_msg):
+    with pytest.raises(AggregateConstraintsError, match=err_msg):
         gc.fit(data)

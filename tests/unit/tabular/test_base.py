@@ -108,7 +108,8 @@ class TestBaseTabularModel:
         model._metadata.transform.return_value = pd.DataFrame({}, index=[0])
         model._conditionally_sample_rows.return_value = pd.DataFrame({
             'a': ['a', 'a', 'a'],
-            COND_IDX: [0, 1, 2]})
+            COND_IDX: [0, 1, 2]
+        })
         model._metadata.make_ids_unique.return_value = expected
 
         # Run
@@ -288,9 +289,9 @@ class TestBaseTabularModel:
         # Setup
         model = Mock(spec_set=CTGAN)
         valid_sampled_data = pd.DataFrame({
-            "column1": [28, 28, 21, 1, 2],
-            "column2": [37, 37, 1, 4, 5],
-            "column3": [93, 93, 6, 4, 12],
+            'column1': [28, 28, 21, 1, 2],
+            'column2': [37, 37, 1, 4, 5],
+            'column3': [93, 93, 6, 4, 12],
         })
         model._sample_rows.side_effect = [(pd.DataFrame({}), 0), (valid_sampled_data, 5)]
 
@@ -410,9 +411,8 @@ class TestBaseTabularModel:
         # Assert
         assert model._sample_rows.call_count == 1
         assert output == sampled_mock.head.return_value
-        assert sampled_mock.head.return_value.tail.return_value.to_csv.called_once_with(
-            call(2).tail(2).to_csv(output_file_path, index=False),
-        )
+        mock_csv = sampled_mock.head.return_value.tail.return_value.to_csv
+        assert mock_csv.called_once_with(call(2).tail(2).to_csv(output_file_path, index=False))
 
     def test__sample_in_batches(self):
         """Test the ``_sample_in_batches`` method.
@@ -1326,18 +1326,18 @@ def test_fit_sets_num_rows(model):
         - ``_num_rows`` is set to the length of the data passed to ``fit``.
     """
     # Setup
-    _N_DATA_ROWS = 100
+    _n_data_rows = 100
     data = pd.DataFrame({
-        'column1': list(range(_N_DATA_ROWS)),
-        'column2': list(range(_N_DATA_ROWS)),
-        'column3': list(range(_N_DATA_ROWS))
+        'column1': list(range(_n_data_rows)),
+        'column2': list(range(_n_data_rows)),
+        'column3': list(range(_n_data_rows))
     })
 
     # Run
     model.fit(data)
 
     # Assert
-    assert model._num_rows == _N_DATA_ROWS
+    assert model._num_rows == _n_data_rows
 
 
 @pytest.mark.parametrize('model', MODELS)
@@ -1384,10 +1384,10 @@ def test__make_condition_dfs_specifying_num_rows(model):
         - Conditions as ``[DataFrame]``
     """
     # Setup
-    _NUM_ROWS = 10
+    _num_rows = 10
     column_values = {'column2': 'M'}
-    conditions = [Condition(column_values=column_values, num_rows=_NUM_ROWS)]
-    expected_conditions = pd.DataFrame([column_values] * _NUM_ROWS)
+    conditions = [Condition(column_values=column_values, num_rows=_num_rows)]
+    expected_conditions = pd.DataFrame([column_values] * _num_rows)
 
     # Run
     result_conditions_list = model._make_condition_dfs(conditions=conditions)
@@ -1396,7 +1396,7 @@ def test__make_condition_dfs_specifying_num_rows(model):
     assert len(result_conditions_list) == 1
     result_conditions = result_conditions_list[0]
     assert isinstance(result_conditions, pd.DataFrame)
-    assert len(result_conditions) == _NUM_ROWS
+    assert len(result_conditions) == _num_rows
     assert all(result_conditions == expected_conditions)
 
 

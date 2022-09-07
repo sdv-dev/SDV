@@ -74,7 +74,7 @@ class HMA1(BaseRelationalModel):
         """
         table_meta = self._models[child_name].get_metadata()
 
-        extension_rows = list()
+        extension_rows = []
         foreign_key_values = child_table[foreign_key].unique()
         child_table = child_table.set_index(foreign_key)
         child_primary = self.metadata.get_primary_key(child_name)
@@ -161,7 +161,7 @@ class HMA1(BaseRelationalModel):
                 extension = self._get_extension(child_name, child_table, foreign_key)
                 table = table.merge(extension, how='left', right_index=True, left_index=True)
                 num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
-                table[num_rows_key].fillna(0, inplace=True)
+                table[num_rows_key] = table[num_rows_key].fillna(0)
                 self._max_child_rows[num_rows_key] = table[num_rows_key].max()
 
         return table
@@ -200,7 +200,7 @@ class HMA1(BaseRelationalModel):
         keys = {}
         for name, field in list(fields.items()):
             if field['type'] == 'id':
-                keys[name] = table_data.pop(name).values
+                keys[name] = table_data.pop(name).to_numpy()
                 del fields[name]
 
         for column in table_data.columns:
@@ -252,7 +252,7 @@ class HMA1(BaseRelationalModel):
         self._models[table_name] = model
 
         if primary_key:
-            table.reset_index(inplace=True)
+            table = table.reset_index()
 
         for name, values in keys.items():
             table[name] = values
@@ -301,7 +301,7 @@ class HMA1(BaseRelationalModel):
             pandas.DataFrame:
                 Formatted synthesized data.
         """
-        final_data = dict()
+        final_data = {}
         for table_name, table_rows in sampled_data.items():
             parents = self.metadata.get_parents(table_name)
             if parents:
@@ -448,7 +448,7 @@ class HMA1(BaseRelationalModel):
         if (likelihoods == 0).all():
             # All rows got 0 likelihood, fallback to num_rows
             likelihoods = num_rows
-        elif pd.isnull(mean) or mean == 0:
+        elif pd.isna(mean) or mean == 0:
             # Some rows got singular matrix error and the rest were 0
             # Fallback to num_rows on the singular matrix rows and
             # keep 0s on the rest.
@@ -465,7 +465,7 @@ class HMA1(BaseRelationalModel):
             length = len(likelihoods)
             weights = np.ones(length) / length
         else:
-            weights = likelihoods.values / total
+            weights = likelihoods.to_numpy() / total
 
         return np.random.choice(likelihoods.index, p=weights)
 
@@ -486,7 +486,7 @@ class HMA1(BaseRelationalModel):
             pandas.DataFrame:
                 A DataFrame of the likelihood of each parent id.
         """
-        likelihoods = dict()
+        likelihoods = {}
         for parent_id, row in parent_rows.iterrows():
             parameters = self._extract_parameters(row, table_name, foreign_key)
             table_meta = self._models[table_name].get_metadata()
@@ -589,7 +589,7 @@ class HMA1(BaseRelationalModel):
 
             return sampled_data[table_name]
 
-        sampled_data = dict()
+        sampled_data = {}
         for table in self.metadata.get_tables():
             if not self.metadata.get_parents(table):
                 self._sample_table(table, num_rows, sampled_data=sampled_data)

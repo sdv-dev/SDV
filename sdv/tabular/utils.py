@@ -20,7 +20,7 @@ def flatten_array(nested, prefix=''):
         dict:
             Flattened array.
     """
-    result = dict()
+    result = {}
     for index in range(len(nested)):
         prefix_key = '__'.join([prefix, str(index)]) if len(prefix) else str(index)
 
@@ -53,7 +53,7 @@ def flatten_dict(nested, prefix=''):
         dict:
             Flattened dictionary.
     """
-    result = dict()
+    result = {}
 
     for key, value in nested.items():
         prefix_key = '__'.join([prefix, str(key)]) if len(prefix) else key
@@ -74,7 +74,7 @@ def flatten_dict(nested, prefix=''):
 
 
 def _key_order(key_value):
-    parts = list()
+    parts = []
     for part in key_value[0].split('__'):
         if part.isdigit():
             part = int(part)
@@ -95,7 +95,7 @@ def unflatten_dict(flat):
         dict:
             Nested dict (if corresponds)
     """
-    unflattened = dict()
+    unflattened = {}
 
     for key, value in sorted(flat.items(), key=_key_order):
         if '__' in key:
@@ -106,10 +106,10 @@ def unflatten_dict(flat):
                 column_index = int(name)
                 row_index = int(subkey)
 
-                array = unflattened.setdefault(key, list())
+                array = unflattened.setdefault(key, [])
 
                 if len(array) == row_index:
-                    row = list()
+                    row = []
                     array.append(row)
                 elif len(array) == row_index + 1:
                     row = array[row_index]
@@ -124,11 +124,11 @@ def unflatten_dict(flat):
                     raise ValueError('There was an error unflattening the extension.')
 
             else:
-                subdict = unflattened.setdefault(key, dict())
+                subdict = unflattened.setdefault(key, {})
                 if subkey.isdigit():
                     subkey = int(subkey)
 
-                inner = subdict.setdefault(subkey, dict())
+                inner = subdict.setdefault(subkey, {})
                 inner[name] = value
 
         else:
@@ -154,13 +154,20 @@ def handle_sampling_error(is_tmp_file, output_file_path, sampling_error):
     if 'Unable to sample any rows for the given conditions' in str(sampling_error):
         raise sampling_error
 
+    error_msg = None
     if is_tmp_file:
-        print('Error: Sampling terminated. Partial results are stored in a temporary file: '
-              f'{output_file_path}. This file will be overridden the next time you sample. '
-              'Please rename the file if you wish to save these results.')
+        error_msg = (
+            'Error: Sampling terminated. Partial results are stored in a temporary file: '
+            f'{output_file_path}. This file will be overridden the next time you sample. '
+            'Please rename the file if you wish to save these results.'
+        )
     elif output_file_path is not None:
-        print('Error: Sampling terminated. '
-              f'Partial results are stored in {output_file_path}.')
+        error_msg = (
+            f'Error: Sampling terminated. Partial results are stored in {output_file_path}.'
+        )
+
+    if error_msg:
+        raise type(sampling_error)(error_msg + '\n' + str(sampling_error))
 
     raise sampling_error
 
