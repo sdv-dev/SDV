@@ -62,7 +62,7 @@ def test___init___copies_metadata():
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test_conditional_sampling_graceful_reject_sampling_True_dict(model):
+def test_conditional_sampling_graceful_reject_sampling_true_dict(model):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
@@ -70,18 +70,20 @@ def test_conditional_sampling_graceful_reject_sampling_True_dict(model):
     })
 
     model.fit(data)
-    conditions = [Condition({
-        'column1': 28,
-        'column2': 37,
-        'column3': 93
-    })]
+    conditions = [
+        Condition({
+            'column1': 28,
+            'column2': 37,
+            'column3': 93
+        })
+    ]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         model.sample_conditions(conditions=conditions)
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test_conditional_sampling_graceful_reject_sampling_True_dataframe(model):
+def test_conditional_sampling_graceful_reject_sampling_true_dataframe(model):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
@@ -118,23 +120,23 @@ def test_fit_with_unique_constraint_on_data_with_only_index_column():
     """
     # Setup
     test_df = pd.DataFrame({
-        "key": [
+        'key': [
             1,
             2,
             3,
             4,
             5,
         ],
-        "index": [
-            "A",
-            "B",
-            "C",
-            "D",
-            "E",
+        'index': [
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
         ]
     })
-    unique = Unique(column_names=["index"])
-    model = GaussianCopula(primary_key="key", constraints=[unique])
+    unique = Unique(column_names=['index'])
+    model = GaussianCopula(primary_key='key', constraints=[unique])
 
     # Run
     model.fit(test_df)
@@ -142,7 +144,7 @@ def test_fit_with_unique_constraint_on_data_with_only_index_column():
 
     # Assert
     assert len(samples) == 2
-    assert samples["index"].is_unique
+    assert samples['index'].is_unique
 
 
 def test_fit_with_unique_constraint_on_data_which_has_index_column():
@@ -165,30 +167,30 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
     """
     # Setup
     test_df = pd.DataFrame({
-        "key": [
+        'key': [
             1,
             2,
             3,
             4,
             5,
         ],
-        "index": [
-            "A",
-            "B",
-            "C",
-            "D",
-            "E",
+        'index': [
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
         ],
-        "test_column": [
-            "A1",
-            "B2",
-            "C3",
-            "D4",
-            "E5",
+        'test_column': [
+            'A1',
+            'B2',
+            'C3',
+            'D4',
+            'E5',
         ]
     })
-    unique = Unique(column_names=["test_column"])
-    model = GaussianCopula(primary_key="key", constraints=[unique])
+    unique = Unique(column_names=['test_column'])
+    model = GaussianCopula(primary_key='key', constraints=[unique])
 
     # Run
     model.fit(test_df)
@@ -196,7 +198,7 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
 
     # Assert
     assert len(samples) == 2
-    assert samples["test_column"].is_unique
+    assert samples['test_column'].is_unique
 
 
 def test_fit_with_unique_constraint_on_data_subset():
@@ -219,27 +221,27 @@ def test_fit_with_unique_constraint_on_data_subset():
     """
     # Setup
     test_df = pd.DataFrame({
-        "key": [
+        'key': [
             1,
             2,
             3,
             4,
             5,
         ],
-        "test_column": [
-            "A",
-            "B",
-            "C",
-            "D",
-            "E",
+        'test_column': [
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
         ]
     })
     unique = Unique(
-        column_names=["test_column"]
+        column_names=['test_column']
     )
 
     test_df = test_df.iloc[[1, 3, 4]]
-    model = GaussianCopula(primary_key="key", constraints=[unique])
+    model = GaussianCopula(primary_key='key', constraints=[unique])
 
     # Run
     model.fit(test_df)
@@ -247,7 +249,7 @@ def test_fit_with_unique_constraint_on_data_subset():
 
     # Assert
     assert len(samples) == 2
-    assert samples["test_column"].is_unique
+    assert samples['test_column'].is_unique
 
 
 @patch('sdv.tabular.base.isinstance')
@@ -281,13 +283,16 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
         'age': [27, 28, 26, 21, 30]
     })
     model = GaussianCopula(constraints=[constraint], categorical_transformer='LabelEncoder')
-    sampled_numeric_data = [pd.DataFrame({
-        'city#state.value': [0, 1, 2, 0, 0],
-        'age.value': [30, 30, 30, 30, 30]
-    }), pd.DataFrame({
-        'city#state.value': [1],
-        'age.value': [30]
-    })]
+    sampled_numeric_data = [
+        pd.DataFrame({
+            'city#state.value': [0, 1, 2, 0, 0],
+            'age.value': [30, 30, 30, 30, 30]
+        }),
+        pd.DataFrame({
+            'city#state.value': [1],
+            'age.value': [30]
+        })
+    ]
     gm_mock.return_value.sample.side_effect = sampled_numeric_data
     model.fit(data)
 
@@ -344,7 +349,7 @@ def test_sample_conditions_with_batch_size():
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test_sampling_with_randomize_samples_True(model):
+def test_sampling_with_randomize_samples_true(model):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
@@ -360,7 +365,7 @@ def test_sampling_with_randomize_samples_True(model):
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test_sampling_with_randomize_samples_False(model):
+def test_sampling_with_randomize_samples_false(model):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),

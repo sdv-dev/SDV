@@ -11,8 +11,8 @@ import pandas as pd
 import pytest
 
 from sdv.constraints.errors import (
-    ConstraintMetadataError, FunctionError, InvalidFunctionError, MissingConstraintColumnError,
-    MultipleConstraintsErrors)
+    AggregateConstraintsError, ConstraintMetadataError, FunctionError, InvalidFunctionError,
+    MissingConstraintColumnError)
 from sdv.constraints.tabular import (
     FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
     ScalarInequality, ScalarRange, Unique, _validate_inputs_custom_constraint,
@@ -69,8 +69,8 @@ class TestCreateCustomConstraint():
             "Missing required values {'column_names'} in a CustomConstraint constraint."
         )
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
-            constraint = create_custom_constraint(sorted, sorted, sorted)
+        constraint = create_custom_constraint(sorted, sorted, sorted)
+        with pytest.raises(AggregateConstraintsError, match=err_msg):
             constraint._validate_inputs(not_column_name=None, something_else=None)
 
     def test__validate_inputs_custom_constraint_is_valid_incorrect(self):
@@ -232,7 +232,8 @@ class TestCreateCustomConstraint():
         # Setup
         custom_constraint = create_custom_constraint(
             lambda _, x: pd.Series([True if x_i >= 0 else False for x_i in x['col']])
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -255,7 +256,8 @@ class TestCreateCustomConstraint():
         # Setup
         custom_constraint = create_custom_constraint(
             lambda _, x: pd.Series([True, True, True])
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -276,8 +278,9 @@ class TestCreateCustomConstraint():
         """
         # Setup
         custom_constraint = create_custom_constraint(
-            lambda _, x: list([True if x_i >= 0 else False for x_i in x['col']])
-        )('col')
+            lambda _, x: [True if x_i >= 0 else False for x_i in x['col']]
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -300,10 +303,17 @@ class TestCreateCustomConstraint():
         - pd.DataFrame of transformed values
         """
         # Setup
+        def test_is_valid(*_):
+            return pd.Series([True] * 5)
+
+        def test_transform(dummy, data):
+            return pd.DataFrame({'col': data['col'] ** 2})
+
+        def test_reverse_transform(dummy, data):
+            return pd.DataFrame({'col': data['col'] ** 1 / 2})
+
         custom_constraint = create_custom_constraint(
-            lambda _, x: pd.Series([True] * 5),
-            lambda _, x: pd.DataFrame({'col': x['col'] ** 2}),
-            lambda _, x: pd.DataFrame({'col': x['col'] ** 1 / 2}),
+            test_is_valid, test_transform, test_reverse_transform
         )('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
@@ -327,7 +337,8 @@ class TestCreateCustomConstraint():
         # Setup
         custom_constraint = create_custom_constraint(
             lambda _, x: pd.Series([True] * 5)
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -351,7 +362,8 @@ class TestCreateCustomConstraint():
             lambda _, x: pd.Series([True] * 5),
             lambda _, x: pd.DataFrame({'col': [1, 2, 3]}),
             sorted
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -375,7 +387,8 @@ class TestCreateCustomConstraint():
             lambda _, x: pd.Series([True] * 5),
             lambda _: pd.DataFrame({'col': [1, 2, 3]}),
             sorted
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -398,7 +411,8 @@ class TestCreateCustomConstraint():
             sorted,
             sorted,
             lambda _, x: pd.DataFrame({'col': x['col'] ** 2})
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -444,7 +458,8 @@ class TestCreateCustomConstraint():
             sorted,
             sorted,
             lambda _, x: pd.DataFrame({'col': [1, 2, 3]})
-        )('col')
+        )
+        custom_constraint = custom_constraint('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -464,7 +479,7 @@ class TestFixedCombinations():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             FixedCombinations._validate_inputs(not_column_name=None, something_else=None)
 
         err_msg = (
@@ -549,7 +564,8 @@ class TestFixedCombinations():
         columns = ['c']
 
         # Run and assert
-        with pytest.raises(ValueError):
+        err_msg = 'FixedCombinations requires at least two constraint columns.'
+        with pytest.raises(ValueError, match=err_msg):
             FixedCombinations(column_names=columns)
 
     def test__fit(self):
@@ -749,7 +765,7 @@ class TestFixedCombinations():
         try:
             [uuid.UUID(u) for c, u in out['b#c'].items()]
         except ValueError:
-            assert False
+            pytest.fail('ValueError')
 
     def test_transform_non_string(self):
         """Test the ``FixedCombinations.transform`` method with non strings.
@@ -786,7 +802,7 @@ class TestFixedCombinations():
         try:
             [uuid.UUID(u) for c, u in out['b#c#d'].items()]
         except ValueError:
-            assert False
+            pytest.fail('ValueError')
 
     def test_transform_not_all_columns_provided(self):
         """Test the ``FixedCombinations.transform`` method.
@@ -901,7 +917,7 @@ class TestInequality():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             Inequality._validate_inputs(not_high_column=None, not_low_column=None)
 
         err_msg = (
@@ -1058,7 +1074,8 @@ class TestInequality():
         - Raise ``ValueError`` because column names must be strings
         """
         # Run / Assert
-        with pytest.raises(ValueError):
+        err_msg = '`low_column_name` and `high_column_name` must be strings.'
+        with pytest.raises(ValueError, match=err_msg):
             Inequality._validate_init_inputs(
                 low_column_name='a', high_column_name=['b', 'c'], strict_boundaries=True
             )
@@ -1076,7 +1093,8 @@ class TestInequality():
         - Raise ``ValueError`` because ``strict_boundaries`` must be a boolean
         """
         # Run / Assert
-        with pytest.raises(ValueError):
+        err_msg = '`strict_boundaries` must be a boolean.'
+        with pytest.raises(ValueError, match=err_msg):
             Inequality._validate_init_inputs(
                 low_column_name='a', high_column_name='b', strict_boundaries=None
             )
@@ -1269,7 +1287,7 @@ class TestInequality():
         expected_out = [True, True, False, True, True, False, True, True]
         np.testing.assert_array_equal(expected_out, out)
 
-    def test_is_valid_strict_boundaries_True(self):
+    def test_is_valid_strict_boundaries_true(self):
         """Test the ``Inequality.is_valid`` method with ``strict_boundaries = True``.
 
         The method should return True when ``high_column_name`` column is greater than
@@ -1518,7 +1536,7 @@ class TestScalarInequality():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             ScalarInequality._validate_inputs(
                 not_high_column=None, not_low_column=None, relation='+')
 
@@ -2188,7 +2206,7 @@ class TestPositive():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             Positive._validate_inputs(not_column_name=None, something_else=None)
 
         err_msg = (
@@ -2304,7 +2322,7 @@ class TestPositive():
         assert instance._column_name == 'abc'
         assert instance._operator == np.greater_equal
 
-    def test__init__strict_True(self):
+    def test__init__strict_true(self):
         """Test the ``Positive.__init__`` method.
 
         Ensure the attributes are correctly set when ``strict`` is True.
@@ -2329,7 +2347,7 @@ class TestNegative():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             Negative._validate_inputs(not_column_name=None, something_else=None)
 
         err_msg = (
@@ -2445,7 +2463,7 @@ class TestNegative():
         assert instance._column_name == 'abc'
         assert instance._operator == np.less_equal
 
-    def test__init__strict_True(self):
+    def test__init__strict_true(self):
         """Test the ``Negative.__init__`` method.
 
         Ensure the attributes are correctly set when ``strict`` is True.
@@ -2470,7 +2488,7 @@ class TestRange():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             Range._validate_inputs(not_high_column=None, not_low_column=None)
 
         err_msg = (
@@ -3076,7 +3094,7 @@ class TestScalarRange():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             ScalarRange._validate_inputs(not_high_column=None, not_low_column=None)
 
         err_msg = (
@@ -3785,7 +3803,7 @@ class TestOneHotEncoding():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             OneHotEncoding._validate_inputs(not_column_names=None, something_else=None)
 
         err_msg = (
@@ -3908,7 +3926,7 @@ class TestUnique():
         - List of ValueErrors
         """
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             Unique._validate_inputs(not_column_names=None, something_else=None)
 
         err_msg = (
@@ -4273,7 +4291,7 @@ class TestFixedIncrements():
             ' Increments must be positive integers.'
         )
         # Run / Assert
-        with pytest.raises(MultipleConstraintsErrors) as error:
+        with pytest.raises(AggregateConstraintsError) as error:
             FixedIncrements._validate_inputs(
                 not_column_name=None, increment_value=-1, something_else=None)
 
@@ -4357,7 +4375,7 @@ class TestFixedIncrements():
             - ``ValueError`` should be raised.
         """
         # Run / Assert
-        error_message = "The increment_value must be greater than 0."
+        error_message = 'The increment_value must be greater than 0.'
         with pytest.raises(ValueError, match=error_message):
             FixedIncrements(column_name='column', increment_value=-1)
 
@@ -4374,7 +4392,7 @@ class TestFixedIncrements():
             - ``ValueError`` should be raised.
         """
         # Run / Assert
-        error_message = "The increment_value must be a whole number."
+        error_message = 'The increment_value must be a whole number.'
         with pytest.raises(ValueError, match=error_message):
             FixedIncrements(column_name='column', increment_value=1.5)
 

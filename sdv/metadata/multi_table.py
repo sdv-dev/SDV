@@ -53,7 +53,7 @@ class MultiTableMetadata:
 
     @staticmethod
     def _validate_no_missing_tables_in_relationship(parent_table_name, child_table_name, tables):
-        missing_table_names = set([parent_table_name, child_table_name]) - set(tables)
+        missing_table_names = {parent_table_name, child_table_name} - set(tables)
         if missing_table_names:
             if len(missing_table_names) == 1:
                 raise ValueError(f'Relationship contains an unknown table {missing_table_names}.')
@@ -116,7 +116,7 @@ class MultiTableMetadata:
         if errors:
             raise ValueError(
                 'The relationships in the dataset describe a circular dependency between '
-                f'tables {set(errors)}.'
+                f'tables {errors}.'
             )
 
     def _validate_relationship(self, parent_table_name, child_table_name,
@@ -380,42 +380,42 @@ class MultiTableMetadata:
         table.detect_from_dataframe(data)
         self._tables[table_name] = table
 
-    def set_primary_key(self, table_name, id):
+    def set_primary_key(self, table_name, column_name):
         """Set the primary key of a table.
 
         Args:
             table_name (str):
                 Name of the table to set the primary key.
-            id (str, tulple[str]):
+            column_name (str, tulple[str]):
                 Name (or tuple of names) of the primary key column(s).
         """
         self._validate_table_exists(table_name)
-        self._tables[table_name].set_primary_key(id)
+        self._tables[table_name].set_primary_key(column_name)
 
-    def set_sequence_key(self, table_name, id):
+    def set_sequence_key(self, table_name, column_name):
         """Set the sequence key of a table.
 
         Args:
             table_name (str):
                 Name of the table to set the sequence key.
-            id (str, tulple[str]):
+            column_name (str, tulple[str]):
                 Name (or tuple of names) of the sequence key column(s).
         """
         self._validate_table_exists(table_name)
         warnings.warn('Sequential modeling is not yet supported on SDV Multi Table models.')
-        self._tables[table_name].set_sequence_key(id)
+        self._tables[table_name].set_sequence_key(column_name)
 
-    def set_alternate_keys(self, table_name, ids):
+    def set_alternate_keys(self, table_name, column_names):
         """Set the alternate keys of a table.
 
         Args:
             table_name (str):
                 Name of the table to set the sequence key.
-            ids (list[str], list[tuple]):
+            column_names (list[str], list[tuple]):
                 List of names (or tuple of names) of the alternate key columns.
         """
         self._validate_table_exists(table_name)
-        self._tables[table_name].set_alternate_keys(ids)
+        self._tables[table_name].set_alternate_keys(column_names)
 
     def set_sequence_index(self, table_name, column_name):
         """Set the sequence index of a table.
@@ -469,7 +469,7 @@ class MultiTableMetadata:
                     queue.append(child)
 
         if not all(connected.values()):
-            disconnected_tables = {table for table, value in connected.items() if not value}
+            disconnected_tables = [table for table, value in connected.items() if not value]
             if len(disconnected_tables) > 1:
                 table_msg = (
                     f'Tables {disconnected_tables} are not connected to any of the other tables.'

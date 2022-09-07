@@ -43,7 +43,7 @@ class SDV:
                 model_kwargs = self.DEFAULT_MODEL_KWARGS
 
         self._model = model
-        self._model_kwargs = (model_kwargs or dict()).copy()
+        self._model_kwargs = (model_kwargs or {}).copy()
 
     def fit(self, metadata, tables=None, root_path=None):
         """Fit this SDV instance to the dataset data.

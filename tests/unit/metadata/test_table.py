@@ -8,7 +8,7 @@ from faker.config import DEFAULT_LOCALE
 from rdt.transformers.numerical import FloatFormatter
 
 from sdv.constraints.errors import (
-    FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
+    AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.metadata import Table
 
 
@@ -268,7 +268,11 @@ class TestTable:
     def test__make_ids_fail(self):
         """Test if regex fails with more requested ids than available unique values."""
         metadata = {'subtype': 'string', 'regex': '[a-d]'}
-        with pytest.raises(ValueError):
+        err_msg = re.escape(
+            'Unable to generate 20 unique values for regex [a-d], '
+            'the maximum number of unique values is 4.'
+        )
+        with pytest.raises(ValueError, match=err_msg):
             Table._make_ids(metadata, 20)
 
     def test__make_ids_unique_field_not_unique(self):
@@ -379,7 +383,7 @@ class TestTable:
             - A ``pandas.DataFrame``.
 
         Side effect:
-            - A ``MultipleConstraintsErrors`` error should be raised.
+            - A ``AggregateConstraintsError`` error should be raised.
         """
         # Setup
         data = pd.DataFrame({'a': [1, 2, 3]})
@@ -392,7 +396,7 @@ class TestTable:
 
         # Run / Assert
         error_message = re.escape('\nerror 1\n\nerror 2')
-        with pytest.raises(MultipleConstraintsErrors, match=error_message):
+        with pytest.raises(AggregateConstraintsError, match=error_message):
             instance.fit(data)
 
     def test_fit_constraint_transform_errors(self):
@@ -410,7 +414,7 @@ class TestTable:
             - A ``pandas.DataFrame``.
 
         Side effect:
-            - A ``MultipleConstraintsErrors`` error should be raised.
+            - A ``AggregateConstraintsError`` error should be raised.
         """
         # Setup
         data = pd.DataFrame({'a': [1, 2, 3]})
@@ -423,7 +427,7 @@ class TestTable:
 
         # Run / Assert
         error_message = re.escape('\nerror 1\n\nerror 2')
-        with pytest.raises(MultipleConstraintsErrors, match=error_message):
+        with pytest.raises(AggregateConstraintsError, match=error_message):
             instance.fit(data)
 
         constraint1.fit.assert_called_once_with(data)
