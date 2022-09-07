@@ -57,8 +57,8 @@ class DeepEchoModel(BaseTimeseriesModel):
             drop_sequence_index=False
         )
 
-        data_types = list()
-        context_types = list()
+        data_types = []
+        context_types = []
         for field in self._output_columns:
             dtype = timeseries_data[field].dtype
             kind = dtype.kind
@@ -105,7 +105,7 @@ class DeepEchoModel(BaseTimeseriesModel):
 
         iterator = tqdm.tqdm(context.iterrows(), disable=not self._verbose, total=len(context))
 
-        output = list()
+        output = []
         for entity_values, context_values in iterator:
             context_values = context_values.tolist()
             sequence = self._model.sample_sequence(context_values, sequence_length)

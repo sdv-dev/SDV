@@ -10,7 +10,7 @@ from sdv.constraints.base import (
     ColumnsModel, Constraint, _get_qualified_name, _module_contains_callable_name, get_subclasses,
     import_object)
 from sdv.constraints.errors import (
-    ConstraintMetadataError, MissingConstraintColumnError, MultipleConstraintsErrors)
+    AggregateConstraintsError, ConstraintMetadataError, MissingConstraintColumnError)
 from sdv.constraints.tabular import FixedCombinations
 from sdv.errors import ConstraintsNotMetError
 
@@ -165,14 +165,14 @@ class TestConstraint():
         The method should only raise errors if the input paramaters are invalid.
 
         Raise:
-            - ``MultipleConstraintsErrors`` if errors were found.
+            - ``AggregateConstraintsError`` if errors were found.
         """
         # Run
         Constraint._validate_inputs(args='value', kwargs='value')
 
         # Run / Assert
         err_msg = "Invalid values {'wrong_args'} are present in a Constraint constraint."
-        with pytest.raises(MultipleConstraintsErrors, match=err_msg):
+        with pytest.raises(AggregateConstraintsError, match=err_msg):
             Constraint._validate_inputs(args='value', kwargs='value', wrong_args='value')
 
     @patch('sdv.constraints.base.Constraint._validate_inputs')
@@ -195,11 +195,11 @@ class TestConstraint():
             - Mock for metadata
 
         Side effect:
-            - A MultipleConstraintsErrors error should be raised.
+            - A AggregateConstraintsError error should be raised.
         """
         # Setup
         validate_inputs_mock.side_effect = [
-            MultipleConstraintsErrors(errors=[ConstraintMetadataError('input errors')])
+            AggregateConstraintsError(errors=[ConstraintMetadataError('input errors')])
         ]
         validate_metadata_columns_mock.side_effect = [ConstraintMetadataError('column errors')]
         validate_metadata_specific_to_constraint_mock.side_effect = [
@@ -208,7 +208,7 @@ class TestConstraint():
 
         # Run
         error_message = re.escape('\ninput errors\n\nconstraint specific errors\n\ncolumn errors')
-        with pytest.raises(MultipleConstraintsErrors, match=error_message):
+        with pytest.raises(AggregateConstraintsError, match=error_message):
             Constraint._validate_metadata(Mock())
 
     def test_fit(self):
@@ -390,11 +390,12 @@ class TestConstraint():
         # Setup
         instance = Constraint()
         instance._transform = Mock()
-        instance._transform.side_effect = Exception()
+        instance._transform.side_effect = Exception('Error.')
         data = pd.DataFrame({'a': [1, 2, 3]})
 
         # Run / Assert
-        with pytest.raises(Exception):
+        err_msg = 'Error.'
+        with pytest.raises(Exception, match=err_msg):
             instance.transform(data)
 
     def test_transform_columns_missing(self):
@@ -826,16 +827,14 @@ class TestColumnsModel:
         instance._model = Mock()
         transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
         instance._model.sample.side_effect = [
-            pd.DataFrame([
-                [1, 2],
-                [1, 3]
-            ], columns=['a', 'b']),
-            pd.DataFrame([
-                [1, 4],
-                [1, 5],
-                [1, 6],
-                [1, 7]
-            ], columns=['a', 'b']),
+            pd.DataFrame({
+                'a': [1, 1],
+                'b': [2, 3]
+            }),
+            pd.DataFrame({
+                'a': [1, 1, 1, 1],
+                'b': [4, 5, 6, 7]
+            })
         ]
         instance._hyper_transformer.transform.side_effect = transformed_conditions
         instance._hyper_transformer.reverse_transform = lambda x: x
@@ -844,13 +843,10 @@ class TestColumnsModel:
         transformed_data = instance._reject_sample(num_rows=5, conditions={'b': 1})
 
         # Assert
-        expected_result = pd.DataFrame([
-            [1, 2],
-            [1, 3],
-            [1, 4],
-            [1, 5],
-            [1, 6]
-        ], columns=['a', 'b'])
+        expected_result = pd.DataFrame({
+            'a': [1, 1, 1, 1, 1],
+            'b': [2, 3, 4, 5, 6]
+        })
         model_calls = instance._model.sample.mock_calls
         assert len(model_calls) == 2
         instance._model.sample.assert_any_call(num_rows=5, conditions={'b': 1})
@@ -858,13 +854,10 @@ class TestColumnsModel:
         pd.testing.assert_frame_equal(transformed_data, expected_result)
 
         expected_call_1 = pd.DataFrame({'a': [1, 1], 'b': [2, 3]})
-        expected_call_2 = pd.DataFrame([
-            [1, 4],
-            [1, 5],
-            [1, 6],
-            [1, 7]
-        ], columns=['a', 'b'])
-
+        expected_call_2 = pd.DataFrame({
+            'a': [1, 1, 1, 1],
+            'b': [4, 5, 6, 7]
+        })
         pd.testing.assert_frame_equal(expected_call_1, constraint.is_valid.call_args_list[0][0][0])
         pd.testing.assert_frame_equal(expected_call_2, constraint.is_valid.call_args_list[1][0][0])
 
@@ -897,12 +890,12 @@ class TestColumnsModel:
         instance._hyper_transformer = Mock()
         instance._model = Mock()
         transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
-        instance._model.sample.side_effect = [
-            pd.DataFrame([
-                [1, 2],
-                [1, 3]
-            ], columns=['a', 'b'])
-        ] + [pd.DataFrame()] * 100
+        instance._model.sample.side_effect = [pd.DataFrame()] * 100 + [
+            pd.DataFrame({
+                'a': [1, 1],
+                'b': [2, 3]
+            })
+        ]
         instance._hyper_transformer.transform.side_effect = transformed_conditions
         instance._hyper_transformer.reverse_transform = lambda x: x
 
@@ -910,13 +903,10 @@ class TestColumnsModel:
         transformed_data = instance._reject_sample(num_rows=5, conditions={'b': 1})
 
         # Assert
-        expected_result = pd.DataFrame([
-            [1, 2],
-            [1, 3],
-            [1, 2],
-            [1, 3],
-            [1, 2]
-        ], columns=['a', 'b'])
+        expected_result = pd.DataFrame({
+            'a': [1, 1, 1, 1, 1],
+            'b': [2, 3, 2, 3, 2]
+        })
         model_calls = instance._model.sample.mock_calls
         assert len(model_calls) == 101
         instance._model.sample.assert_any_call(num_rows=5, conditions={'b': 1})
@@ -951,12 +941,12 @@ class TestColumnsModel:
         instance._hyper_transformer = Mock()
         instance._model = Mock()
         transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
-        instance._model.sample.side_effect = [
-            pd.DataFrame([
-                [1, 2],
-                [1, 3]
-            ], columns=['a', 'b'])
-        ] + [pd.DataFrame()] * 100
+        instance._model.sample.side_effect = [pd.DataFrame()] * 100 + [
+            pd.DataFrame({
+                'a': [1, 1],
+                'b': [2, 3]
+            })
+        ]
         instance._hyper_transformer.transform.side_effect = transformed_conditions
         instance._hyper_transformer.reverse_transform = lambda x: x
 
@@ -993,13 +983,10 @@ class TestColumnsModel:
         instance._hyper_transformer.reverse_transform = lambda x: x
         instance._reject_sample = Mock()
         instance._reject_sample.side_effect = [
-            pd.DataFrame([
-                [1, 2],
-                [1, 3],
-                [1, 4],
-                [1, 5],
-                [1, 6],
-            ], columns=['a', 'b']),
+            pd.DataFrame({
+                'a': [1, 1, 1, 1, 1],
+                'b': [2, 3, 4, 5, 6]
+            })
         ]
 
         # Run
@@ -1007,12 +994,9 @@ class TestColumnsModel:
         transformed_data = instance.sample(data)
 
         # Assert
-        expected_result = pd.DataFrame([
-            [1, 2],
-            [1, 3],
-            [1, 4],
-            [1, 5],
-            [1, 6]
-        ], columns=['a', 'b'])
+        expected_result = pd.DataFrame({
+            'a': [1, 1, 1, 1, 1],
+            'b': [2, 3, 4, 5, 6]
+        })
         instance._reject_sample.assert_any_call(num_rows=5, conditions={'b': 1})
         pd.testing.assert_frame_equal(transformed_data, expected_result)

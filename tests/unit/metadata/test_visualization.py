@@ -8,13 +8,15 @@ from sdv.metadata import Metadata, visualization
 
 def test__get_graphviz_extension_path_without_extension():
     """Raises a ValueError when the path doesn't contains an extension."""
-    with pytest.raises(ValueError):
+    err_msg = 'Path without graphviz extension.'
+    with pytest.raises(ValueError, match=err_msg):
         visualization._get_graphviz_extension('/some/path')
 
 
 def test__get_graphviz_extension_invalid_extension():
     """Raises a ValueError when the path contains an invalid extension."""
-    with pytest.raises(ValueError):
+    err_msg = '"foo" not a valid graphviz extension format.'
+    with pytest.raises(ValueError, match=err_msg):
         visualization._get_graphviz_extension('/some/path.foo')
 
 
@@ -53,7 +55,7 @@ def test__add_nodes():
     metadata.get_fields.return_value = minimock
 
     metadata.get_primary_key.return_value = 'b_field'
-    metadata.get_parents.return_value = set(['other'])
+    metadata.get_parents.return_value = {'other'}
     metadata.get_foreign_keys.return_value = ['c_field']
 
     metadata.get_table_meta.return_value = {'path': None}
@@ -65,9 +67,9 @@ def test__add_nodes():
 
     # Asserts
     expected_node_label = (
-        r"{demo|a_field : numerical - integer\lb_field : id\l"
-        r"c_field : id\l|Primary key: b_field\l"
-        r"Foreign key (other): c_field\l}"
+        r'{demo|a_field : numerical - integer\lb_field : id\l'
+        r'c_field : id\l|Primary key: b_field\l'
+        r'Foreign key (other): c_field\l}'
     )
 
     metadata.get_fields.assert_called_once_with('demo')
@@ -86,7 +88,7 @@ def test__add_edges():
     metadata = MagicMock(spec_set=Metadata)
 
     metadata.get_tables.return_value = ['demo', 'other']
-    metadata.get_parents.side_effect = [set(['other']), set()]
+    metadata.get_parents.side_effect = [{'other'}, {}]
 
     metadata.get_foreign_keys.return_value = ['fk']
     metadata.get_primary_key.return_value = 'pk'
@@ -118,9 +120,6 @@ def test__add_edges():
 def test_visualize(add_nodes_mock, add_edges_mock, digraph_mock):
     """Metadata visualize digraph"""
     # Setup
-    # plot = Mock(spec_set=graphviz.Digraph)
-    # graphviz_mock.Digraph.return_value = plot
-
     metadata = MagicMock(spec_set=Metadata)
 
     # Run

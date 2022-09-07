@@ -55,20 +55,20 @@ def get_datetime_format(value):
     return _guess_datetime_format_for_array(value)
 
 
-def matches_datetime_format(value, format):
+def matches_datetime_format(value, datetime_format):
     """Check if datetime value matches the provided format.
 
     Args:
         value (str):
             The datetime value.
-        format (str):
+        datetime_format (str):
             The datetime format to check for.
 
     Return:
         True if the value matches the format. Otherwise False.
     """
     try:
-        datetime.strptime(value, format)
+        datetime.strptime(value, datetime_format)
     except Exception:
         return False
 

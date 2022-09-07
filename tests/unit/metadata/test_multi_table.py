@@ -385,8 +385,11 @@ class TestMultiTableMetadata:
         }
 
         # Run / Assert
-        # TODO fix match error message
-        with pytest.raises(ValueError):
+        err_msg = re.escape(
+            'The relationships in the dataset describe a circular dependency between tables '
+            "['users', 'sessions']."
+        )
+        with pytest.raises(ValueError, match=err_msg):
             instance._validate_child_map_circular_relationship(child_map)
 
     @patch(
@@ -434,12 +437,14 @@ class TestMultiTableMetadata:
             'users': parent_table,
             'sessions': child_table,
         }
-        instance._relationships = [{
-            'parent_table_name': 'users',
-            'child_table_name': 'sessions',
-            'parent_primary_key': 'id',
-            'child_foreign_key': 'user_id',
-        }]
+        instance._relationships = [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessions',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'user_id',
+            }
+        ]
 
         instance._validate_relationship_sdtypes = Mock()
         instance._validate_missing_relationship_keys = Mock()
@@ -509,12 +514,14 @@ class TestMultiTableMetadata:
         instance.add_relationship('users', 'sessions', 'id', 'user_id')
 
         # Assert
-        instance._relationships == [{
-            'parent_table_name': 'users',
-            'child_table_name': 'sessiosns',
-            'parent_primary_key': 'id',
-            'child_foreign_key': 'user_id',
-        }]
+        instance._relationships == [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessiosns',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'user_id',
+            }
+        ]
         instance._validate_child_map_circular_relationship.assert_called_once_with(
             {'users': {'sessions'}})
 
@@ -662,8 +669,8 @@ class TestMultiTableMetadata:
             child_map[parent_name].add(child_name)
 
         # Run
-        error_msg = (
-            "The relationships in the dataset are disjointed. Table {'accounts'} "
+        error_msg = re.escape(
+            "The relationships in the dataset are disjointed. Table ['accounts'] "
             'is not connected to any of the other tables.'
         )
         with pytest.raises(ValueError, match=error_msg):
@@ -717,7 +724,11 @@ class TestMultiTableMetadata:
             child_map[parent_name].add(child_name)
 
         # Run
-        with pytest.raises(ValueError):
+        err_msg = re.escape(
+            "The relationships in the dataset are disjointed. Tables ['accounts', 'branches'] "
+            'are not connected to any of the other tables.'
+        )
+        with pytest.raises(ValueError, match=err_msg):
             MultiTableMetadata._validate_all_tables_connected(instance, parent_map, child_map)
 
     def test_validate(self):
@@ -761,7 +772,7 @@ class TestMultiTableMetadata:
             "Please use 'set_primary_key' in order to set one."
             "\nRelationship between tables ('sessions', 'transactions') is invalid. "
             'The primary and foreign key columns are not the same type.'
-            "\nThe relationships in the dataset are disjointed. Table {'payments'} "
+            "\nThe relationships in the dataset are disjointed. Table ['payments'] "
             'is not connected to any of the other tables.'
         )
 
@@ -801,12 +812,14 @@ class TestMultiTableMetadata:
             'accounts': table_accounts,
             'branches': table_branches
         }
-        instance._relationships = [{
-            'parent_table_name': 'accounts',
-            'parent_primary_key': 'id',
-            'child_table_name': 'branches',
-            'chil_foreign_key': 'branch_id',
-        }]
+        instance._relationships = [
+            {
+                'parent_table_name': 'accounts',
+                'parent_primary_key': 'id',
+                'child_table_name': 'branches',
+                'chil_foreign_key': 'branch_id',
+            }
+        ]
 
         # Run
         result = instance.to_dict()
@@ -826,12 +839,14 @@ class TestMultiTableMetadata:
                     'name': {'sdtype': 'text'},
                 }
             },
-            'relationships': [{
-                'parent_table_name': 'accounts',
-                'parent_primary_key': 'id',
-                'child_table_name': 'branches',
-                'chil_foreign_key': 'branch_id',
-            }]
+            'relationships': [
+                {
+                    'parent_table_name': 'accounts',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'branches',
+                    'chil_foreign_key': 'branch_id',
+                }
+            ]
         }
         assert result == expected_result
 
@@ -865,12 +880,14 @@ class TestMultiTableMetadata:
                     'name': {'sdtype': 'text'},
                 }
             },
-            'relationships': [{
-                'parent_table_name': 'accounts',
-                'parent_primary_key': 'id',
-                'child_table_name': 'branches',
-                'chil_foreign_key': 'branch_id',
-            }]
+            'relationships': [
+                {
+                    'parent_table_name': 'accounts',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'branches',
+                    'chil_foreign_key': 'branch_id',
+                }
+            ]
         }
 
         single_table_accounts = object()
@@ -891,12 +908,14 @@ class TestMultiTableMetadata:
             'branches': single_table_branches
         }
 
-        assert instance._relationships == [{
-            'parent_table_name': 'accounts',
-            'parent_primary_key': 'id',
-            'child_table_name': 'branches',
-            'chil_foreign_key': 'branch_id',
-        }]
+        assert instance._relationships == [
+            {
+                'parent_table_name': 'accounts',
+                'parent_primary_key': 'id',
+                'child_table_name': 'branches',
+                'chil_foreign_key': 'branch_id',
+            }
+        ]
 
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
     def test__load_from_dict(self, mock_singletablemetadata):
@@ -932,12 +951,14 @@ class TestMultiTableMetadata:
                     'name': {'sdtype': 'text'},
                 }
             },
-            'relationships': [{
-                'parent_table_name': 'accounts',
-                'parent_primary_key': 'id',
-                'child_table_name': 'branches',
-                'child_foreign_key': 'branch_id',
-            }]
+            'relationships': [
+                {
+                    'parent_table_name': 'accounts',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'branches',
+                    'child_foreign_key': 'branch_id',
+                }
+            ]
         }
 
         single_table_accounts = object()
@@ -956,12 +977,14 @@ class TestMultiTableMetadata:
             'branches': single_table_branches
         }
 
-        assert instance._relationships == [{
-            'parent_table_name': 'accounts',
-            'parent_primary_key': 'id',
-            'child_table_name': 'branches',
-            'child_foreign_key': 'branch_id',
-        }]
+        assert instance._relationships == [
+            {
+                'parent_table_name': 'accounts',
+                'parent_primary_key': 'id',
+                'child_table_name': 'branches',
+                'child_foreign_key': 'branch_id',
+            }
+        ]
 
     @patch('sdv.metadata.multi_table.json')
     def test___repr__(self, mock_json):
@@ -1578,9 +1601,11 @@ class TestMultiTableMetadata:
                         }
                     },
                     'primary_key': 'animals',
-                    'constraints': [{
-                        'my_constraint': 'my_params'
-                    }],
+                    'constraints': [
+                        {
+                            'my_constraint': 'my_params'
+                        }
+                    ],
                     'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
                 }
             },

@@ -65,7 +65,7 @@ def test_recreate():
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
-    assert (sampled.notnull().sum(axis=1) != 0).all()
+    assert (sampled.notna().sum(axis=1) != 0).all()
 
     # Metadata
     model_meta = TVAE(epochs=1, table_metadata=model.get_metadata())
@@ -74,7 +74,7 @@ def test_recreate():
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
-    assert (sampled.notnull().sum(axis=1) != 0).all()
+    assert (sampled.notna().sum(axis=1) != 0).all()
 
     # Metadata dict
     model_meta_dict = TVAE(epochs=1, table_metadata=model.get_metadata().to_dict())
@@ -83,7 +83,7 @@ def test_recreate():
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
-    assert (sampled.notnull().sum(axis=1) != 0).all()
+    assert (sampled.notna().sum(axis=1) != 0).all()
 
 
 def test_conditional_sampling_dict():
@@ -94,13 +94,11 @@ def test_conditional_sampling_dict():
 
     model = TVAE(epochs=1)
     model.fit(data)
-    conditions = [Condition({
-        'column2': 'b'
-    }, num_rows=30)]
+    conditions = [Condition({'column2': 'b'}, num_rows=30)]
     sampled = model.sample_conditions(conditions=conditions)
 
     assert sampled.shape == data.shape
-    assert set(sampled['column2'].unique()) == set(['b'])
+    assert set(sampled['column2'].unique()) == {'b'}
 
 
 def test_conditional_sampling_dataframe():
@@ -129,10 +127,12 @@ def test_conditional_sampling_two_conditions():
 
     model = TVAE(epochs=1)
     model.fit(data)
-    conditions = [Condition({
-        'column2': 'b',
-        'column3': 'f'
-    }, num_rows=5)]
+    conditions = [
+        Condition({
+            'column2': 'b',
+            'column3': 'f'
+        }, num_rows=5)
+    ]
     samples = model.sample_conditions(conditions=conditions, max_tries_per_batch=200)
     assert list(samples.column2) == ['b'] * 5
     assert list(samples.column3) == ['f'] * 5
@@ -147,9 +147,7 @@ def test_conditional_sampling_numerical():
 
     model = TVAE(epochs=1)
     model.fit(data)
-    conditions = [Condition({
-        'column1': 1.0,
-    }, num_rows=5)]
+    conditions = [Condition({'column1': 1.0}, num_rows=5)]
     sampled = model.sample_conditions(conditions=conditions)
 
     assert list(sampled.column1) == [1.0] * 5

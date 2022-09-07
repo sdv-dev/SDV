@@ -169,7 +169,7 @@ class TestGaussianCopula:
         """
         # Setup
         gaussian_copula = Mock(spec_set=GaussianCopula)
-        gaussian_copula._metadata.get_model_kwargs.return_value = dict()
+        gaussian_copula._metadata.get_model_kwargs.return_value = {}
         gaussian_copula._categorical_transformer = 'a_categorical_transformer_value'
         gaussian_copula._default_distribution = 'a_distribution'
         gaussian_copula.get_distributions.return_value = {
@@ -288,8 +288,11 @@ class TestGaussianCopula:
 
         # asserts
         assert out is None
-        assert gaussian_copula._field_distributions == {'a': 'a_distribution'}
-        gm_mock.assert_called_once_with(distribution={'a': 'a_distribution'})
+        assert gaussian_copula._field_distributions == {
+            'a': 'a_distribution', 'a.value': 'a_distribution'
+        }
+        gm_mock.assert_called_once_with(
+            distribution={'a': 'a_distribution', 'a.value': 'a_distribution'})
 
         assert gaussian_copula._model == gm_mock.return_value
         expected_data = pd.DataFrame({
