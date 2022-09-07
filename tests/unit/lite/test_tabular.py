@@ -226,7 +226,7 @@ class TestTabularPreset:
         model.fit.assert_called_once_with(DataFrameMatcher(pd.DataFrame()))
         assert preset._null_percentages is None
 
-    def test_fit_null_column_True(self):
+    def test_fit_null_column_true(self):
         """Test the ``TabularPreset.fit`` method with modeling null columns.
 
         Expect that the model's fit method is called with the expected args when
@@ -442,10 +442,12 @@ class TestTabularPreset:
         """
         # Setup
         out = io.StringIO()
-        expected = ('Available presets:\n{\'FAST_ML\': \'Use this preset to minimize the time '
-                    'needed to create a synthetic data model.\'}\n\nSupply the desired '
-                    'preset using the `name` parameter.\n\nHave any requests for '
-                    'custom presets? Contact the SDV team to learn more an SDV Premium license.')
+        expected = (
+            "Available presets:\n{'FAST_ML': 'Use this preset to minimize the time "
+            "needed to create a synthetic data model.'}\n\nSupply the desired "
+            'preset using the `name` parameter.\n\nHave any requests for '
+            'custom presets? Contact the SDV team to learn more an SDV Premium license.'
+        )
 
         # Run
         TabularPreset.list_available_presets(out)

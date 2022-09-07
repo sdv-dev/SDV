@@ -59,14 +59,14 @@ def test_table():
     assert sampled_ssn.dtype == 'object'
     assert sampled_ssn.str.match(ssn_regex).all()
 
-    sampled_company_US = reverse_transformed['company_US']
-    assert sampled_company_US.dtype == 'object'
+    sampled_company_us = reverse_transformed['company_US']
+    assert sampled_company_us.dtype == 'object'
     # Check that all companies are sampled from the `en_US` locale
-    assert ((sampled_company_US > u'\u0000') & (sampled_company_US < u'\u007F')).all()
+    assert ((sampled_company_us > u'\u0000') & (sampled_company_us < u'\u007F')).all()
 
-    sampled_company_US_CN = reverse_transformed['company_US_CN']
-    assert sampled_company_US_CN.dtype == 'object'
+    sampled_company_us_cn = reverse_transformed['company_US_CN']
+    assert sampled_company_us_cn.dtype == 'object'
     # Check that we have sampled companies from the `en_US` locale
-    assert ((sampled_company_US_CN > u'\u0000') & (sampled_company_US_CN < u'\u007F')).any()
+    assert ((sampled_company_us_cn > u'\u0000') & (sampled_company_us_cn < u'\u007F')).any()
     # Check that we have sampled companies from the `zh_CH` locale
-    assert ((sampled_company_US_CN > u'\u4e00') & (sampled_company_US_CN < u'\u9fff')).any()
+    assert ((sampled_company_us_cn > u'\u4e00') & (sampled_company_us_cn < u'\u9fff')).any()

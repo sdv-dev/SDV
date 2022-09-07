@@ -22,7 +22,7 @@ def test_par():
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
-    assert (sampled.notnull().sum(axis=1) != 0).all()
+    assert (sampled.notna().sum(axis=1) != 0).all()
 
     # Metadata
     model_meta = PAR(
@@ -35,7 +35,7 @@ def test_par():
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
-    assert (sampled.notnull().sum(axis=1) != 0).all()
+    assert (sampled.notna().sum(axis=1) != 0).all()
 
     # Metadata dict
     model_meta_dict = PAR(
@@ -48,7 +48,7 @@ def test_par():
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
-    assert (sampled.notnull().sum(axis=1) != 0).all()
+    assert (sampled.notna().sum(axis=1) != 0).all()
 
 
 def test_column_after_date_simple():
@@ -66,7 +66,7 @@ def test_column_after_date_simple():
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
-    assert (sampled.notnull().sum(axis=1) != 0).all()
+    assert (sampled.notna().sum(axis=1) != 0).all()
 
 
 def test_column_after_date_complex():
@@ -87,4 +87,4 @@ def test_column_after_date_complex():
 
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
-    assert (sampled.notnull().sum(axis=1) != 0).all()
+    assert (sampled.notna().sum(axis=1) != 0).all()

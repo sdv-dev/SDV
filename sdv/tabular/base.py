@@ -406,13 +406,15 @@ class BaseTabularModel:
         )
 
         if len(sampled_rows) > 0:
-            sampled_rows[COND_IDX] = dataframe[COND_IDX].values[:len(sampled_rows)]
+            sampled_rows[COND_IDX] = dataframe[COND_IDX].to_numpy()[:len(sampled_rows)]
 
         else:
             # Didn't get any rows.
             if not graceful_reject_sampling:
-                user_msg = ('Unable to sample any rows for the given conditions '
-                            f'`{transformed_condition}`. ')
+                user_msg = (
+                    'Unable to sample any rows for the given conditions '
+                    f'`{transformed_condition}`. '
+                )
                 if hasattr(self, '_model') and isinstance(
                         self._model, copulas.multivariate.GaussianMultivariate):
                     user_msg = user_msg + (
@@ -590,11 +592,11 @@ class BaseTabularModel:
         """
         condition_columns = list(conditions.columns)
         conditions.index.name = COND_IDX
-        conditions.reset_index(inplace=True)
+        conditions = conditions.reset_index()
         grouped_conditions = conditions.groupby(condition_columns)
 
         # sample
-        all_sampled_rows = list()
+        all_sampled_rows = []
 
         for group, dataframe in grouped_conditions:
             if not isinstance(group, tuple):
@@ -856,7 +858,7 @@ class BaseTabularModel:
                 using a simple dictionary.
         """
         num_rows = parameters.pop('num_rows')
-        self._num_rows = 0 if pd.isnull(num_rows) else max(0, int(round(num_rows)))
+        self._num_rows = 0 if pd.isna(num_rows) else max(0, int(round(num_rows)))
 
         if self._metadata.get_dtypes(ids=False):
             self._set_parameters(parameters)
@@ -886,7 +888,7 @@ class BaseTabularModel:
                 The loaded tabular model.
         """
         with open(path, 'rb') as f:
-            model = pickle.load(f)
+            model = pickle.load(f)  # noqa: DUO103
             throw_version_mismatch_warning(getattr(model, '_package_versions', None))
 
             return model

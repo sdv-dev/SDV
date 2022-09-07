@@ -12,7 +12,7 @@ from faker import Faker
 
 from sdv.constraints import Constraint
 from sdv.constraints.errors import (
-    FunctionError, MissingConstraintColumnError, MultipleConstraintsErrors)
+    AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.metadata.errors import InvalidMetadataError, MetadataNotFittedError
 from sdv.metadata.utils import strings_from_regex
 
@@ -98,7 +98,7 @@ class Table:
     _fields_metadata = None
     fitted = False
 
-    _ANONYMIZATION_MAPPINGS = dict()
+    _ANONYMIZATION_MAPPINGS = {}
     _TRANSFORMER_TEMPLATES = {
         'FloatFormatter': rdt.transformers.FloatFormatter(
             learn_rounding_scheme=True,
@@ -195,7 +195,7 @@ class Table:
         if isinstance(category, (tuple, list)):
             category, *args = category
         else:
-            args = tuple()
+            args = ()
 
         try:
             if args:
@@ -333,7 +333,7 @@ class Table:
             dict:
                 Dictionary that contains the field names and data types.
         """
-        dtypes = dict()
+        dtypes = {}
         for name, field_meta in self._fields_metadata.items():
             field_type = field_meta['type']
 
@@ -357,7 +357,7 @@ class Table:
             ValueError:
                 If a column from the data analyzed is an unsupported data type
         """
-        fields_metadata = dict()
+        fields_metadata = {}
         for field_name in self._field_names:
             if field_name not in data:
                 raise ValueError('Field {} not found in given data'.format(field_name))
@@ -400,7 +400,7 @@ class Table:
             dict:
                 mapping of field names and transformer instances.
         """
-        transformers = dict()
+        transformers = {}
         for name, dtype in dtypes.items():
             field_metadata = self._fields_metadata.get(name, {})
             transformer_template = field_metadata.get(
@@ -434,7 +434,7 @@ class Table:
                 errors.append(e)
 
         if errors:
-            raise MultipleConstraintsErrors(errors)
+            raise AggregateConstraintsError(errors)
 
     def _transform_constraints(self, data, is_condition=False):
         errors = []
@@ -468,7 +468,7 @@ class Table:
                 errors.append(e)
 
         if errors:
-            raise MultipleConstraintsErrors(errors)
+            raise AggregateConstraintsError(errors)
 
         return data
 
@@ -718,7 +718,7 @@ class Table:
             if field_metadata['type'] == 'numerical' and field_metadata['subtype'] == 'integer':
                 field_data = field_data.round()
 
-            reversed_data[name] = field_data[field_data.notnull()].astype(self._dtypes[name])
+            reversed_data[name] = field_data[field_data.notna()].astype(self._dtypes[name])
 
         return reversed_data[self._field_names]
 

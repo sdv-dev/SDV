@@ -19,7 +19,7 @@ LOGGER = logging.getLogger(__name__)
 
 def _read_csv_dtypes(table_meta):
     """Get the dtypes specification that needs to be passed to read_csv."""
-    dtypes = dict()
+    dtypes = {}
     for name, field in table_meta['fields'].items():
         field_type = field['type']
         if field_type == 'id' and field.get('subtype', 'integer') == 'string':
@@ -152,13 +152,13 @@ class Metadata:
             }
             return new_metadata
 
-        new_tables = dict()
+        new_tables = {}
         for table in tables:
             if table.pop('use', True):
                 new_tables[table.pop('name')] = table
 
                 fields = table['fields']
-                new_fields = dict()
+                new_fields = {}
                 for field in fields:
                     new_fields[field.pop('name')] = field
 
@@ -181,7 +181,7 @@ class Metadata:
         else:
             self._metadata = {'tables': {}}
 
-        self._hyper_transformers = dict()
+        self._hyper_transformers = {}
         self._analyze_relationships()
 
     def get_children(self, table_name):
@@ -378,7 +378,7 @@ class Metadata:
                 exist in this metadata.
         """
         errors = [] if errors is None else errors
-        dtypes = dict()
+        dtypes = {}
         table_meta = self.get_table_meta(table_name)
         for name, field in table_meta['fields'].items():
             field_type = field['type']
@@ -781,7 +781,7 @@ class Metadata:
             ValueError:
                 If a column from the data analyzed is an unsupported data type or
         """
-        fields_metadata = dict()
+        fields_metadata = {}
         for field in fields:
             dtype = data[field].dtype
             field_template = self._FIELD_TEMPLATES.get(dtype.kind)
@@ -851,12 +851,12 @@ class Metadata:
             if fields_metadata:
                 fields = [field for field in fields if field not in fields_metadata]
             else:
-                fields_metadata = dict()
+                fields_metadata = {}
 
             fields_metadata.update(self._get_field_details(data, fields))
 
         elif fields_metadata is None:
-            fields_metadata = dict()
+            fields_metadata = {}
 
         table_metadata = {'fields': fields_metadata}
         if path:
@@ -922,11 +922,11 @@ class Metadata:
         ]
 
         return (
-            "Metadata\n"
-            "  root_path: {}\n"
-            "  tables: {}\n"
-            "  relationships:\n"
-            "{}"
+            'Metadata\n'
+            '  root_path: {}\n'
+            '  tables: {}\n'
+            '  relationships:\n'
+            '{}'
         ).format(
             self.root_path,
             tables,

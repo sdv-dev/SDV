@@ -38,7 +38,7 @@ import pandas as pd
 
 from sdv.constraints.base import Constraint
 from sdv.constraints.errors import (
-    ConstraintMetadataError, FunctionError, InvalidFunctionError, MultipleConstraintsErrors)
+    AggregateConstraintsError, ConstraintMetadataError, FunctionError, InvalidFunctionError)
 from sdv.constraints.utils import (
     cast_to_datetime64, get_datetime_format, is_datetime_type, logit, matches_datetime_format,
     sigmoid)
@@ -74,16 +74,16 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
     ``is_valid`` methods given in the arguments.
 
     Args:
+        is_valid (callable):
+            Function to replace the ``is_valid`` method.
         transform (callable):
             Function to replace the ``transform`` method.
         reverse_transform (callable):
             Function to replace the ``reverse_transform`` method.
-        is_valid (callable):
-            Function to replace the ``is_valid`` method.
 
     Returns:
         CustomConstraint class:
-            A constraint with custom ``transform``/``reverse_transform``/``is_valid`` methods.
+            A constraint with custom ``is_valid``/``transform``/``reverse_transform`` methods.
     """
     _validate_inputs_custom_constraint(is_valid_fn, transform_fn, reverse_transform_fn)
 
@@ -100,10 +100,13 @@ def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_f
         @classmethod
         def _validate_inputs(cls, **kwargs):
             if 'column_names' not in set(kwargs):
-                errors = [ConstraintMetadataError(
-                    "Missing required values {'column_names'} in a CustomConstraint constraint."
-                )]
-                raise MultipleConstraintsErrors(errors)
+                errors = [
+                    ConstraintMetadataError(
+                        "Missing required values {'column_names'} in a"
+                        ' CustomConstraint constraint.'
+                    )
+                ]
+                raise AggregateConstraintsError(errors)
 
         def __init__(self, column_names, **kwargs):
             self.column_names = column_names
@@ -365,7 +368,7 @@ class Inequality(Constraint):
         self._high_column_name = high_column_name
         self._diff_column_name = f'{self._low_column_name}#{self._high_column_name}'
         self._operator = np.greater if strict_boundaries else np.greater_equal
-        self.constraint_columns = tuple([low_column_name, high_column_name])
+        self.constraint_columns = (low_column_name, high_column_name)
         self._dtype = None
         self._is_datetime = None
 
@@ -386,7 +389,7 @@ class Inequality(Constraint):
         return is_datetime
 
     def _validate_columns_exist(self, table_data):
-        missing = set([self._low_column_name, self._high_column_name]) - set(table_data.columns)
+        missing = {self._low_column_name, self._high_column_name} - set(table_data.columns)
         if missing:
             raise KeyError(f'The columns {missing} were not found in table_data.')
 
@@ -502,20 +505,20 @@ class ScalarInequality(Constraint):
             ))
 
         if errors:
-            raise MultipleConstraintsErrors(errors)
+            raise AggregateConstraintsError(errors)
 
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
         column_name = kwargs.get('column_name')
         sdtype = metadata._columns.get(column_name, {}).get('sdtype')
-        val = kwargs.get('value')
+        value = kwargs.get('value')
         if sdtype == 'numerical':
-            if not isinstance(val, (int, float)):
+            if not isinstance(value, (int, float)):
                 raise ConstraintMetadataError("'value' must be an int or float.")
 
         elif sdtype == 'datetime':
             datetime_format = metadata._columns.get(column_name).get('datetime_format')
-            matches_format = matches_datetime_format(val, datetime_format)
+            matches_format = matches_datetime_format(value, datetime_format)
             if not matches_format:
                 raise ConstraintMetadataError(
                     "'value' must be a datetime string of the right format."
@@ -549,7 +552,7 @@ class ScalarInequality(Constraint):
         self._value = cast_to_datetime64(value) if is_datetime_type(value) else value
         self._column_name = column_name
         self._diff_column_name = f'{self._column_name}#diff'
-        self.constraint_columns = tuple([column_name])
+        self.constraint_columns = (column_name)
         self._is_datetime = None
         self._datetime_format = None
         self._dtype = None
@@ -1109,8 +1112,8 @@ class FixedIncrements(Constraint):
         errors = []
         try:
             super()._validate_inputs(**kwargs)
-        except MultipleConstraintsErrors as mce:
-            errors.extend(mce.errors)
+        except AggregateConstraintsError as agg_error:
+            errors.extend(agg_error.errors)
         except Exception as e:
             errors.append(e)
 
@@ -1122,7 +1125,7 @@ class FixedIncrements(Constraint):
             ))
 
         if errors:
-            raise MultipleConstraintsErrors(errors)
+            raise AggregateConstraintsError(errors)
 
     def __init__(self, column_name, increment_value):
         if increment_value <= 0:
@@ -1133,7 +1136,7 @@ class FixedIncrements(Constraint):
 
         self.increment_value = increment_value
         self.column_name = column_name
-        self.constraint_columns = tuple([column_name])
+        self.constraint_columns = (column_name,)
 
     def is_valid(self, table_data):
         """Determine if the data is evenly divisible by the increment.
@@ -1146,7 +1149,7 @@ class FixedIncrements(Constraint):
             pandas.Series:
                 Whether each row is valid.
         """
-        isnan = pd.isnull(table_data[self.column_name])
+        isnan = pd.isna(table_data[self.column_name])
         is_divisible = table_data[self.column_name] % self.increment_value == 0
         return is_divisible | isnan
 
@@ -1242,8 +1245,9 @@ class OneHotEncoding(Constraint):
                 Transformed data.
         """
         one_hot_data = table_data[self._column_names]
-        transformed_data = np.zeros_like(one_hot_data.values)
-        transformed_data[np.arange(len(one_hot_data)), np.argmax(one_hot_data.values, axis=1)] = 1
+        transformed_data = np.zeros_like(one_hot_data.to_numpy())
+        max_category_indices = np.argmax(one_hot_data.to_numpy(), axis=1)
+        transformed_data[np.arange(len(one_hot_data)), max_category_indices] = 1
         table_data[self._column_names] = transformed_data
 
         return table_data

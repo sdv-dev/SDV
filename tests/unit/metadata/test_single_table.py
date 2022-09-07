@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.constraints.errors import MultipleConstraintsErrors
+from sdv.constraints.errors import AggregateConstraintsError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
 
@@ -34,20 +34,34 @@ class TestSingleTableMetadata:
     ]
 
     INVALID_KWARGS = [
-        ('age', 'numerical', {'representation': 'int', 'datetime_format': None, 'pii': True},
-         re.escape("Invalid values '(datetime_format, pii)' for numerical column 'age'."),),
-        ('start_date', 'datetime', {'datetime_format': '%Y-%d', 'pii': True},
-         re.escape("Invalid values '(pii)' for datetime column 'start_date'.")),
-        ('name', 'categorical',
-         {'pii': True, 'ordering': ['a', 'b'], 'ordered': 'numerical_values'},
-         re.escape("Invalid values '(ordered, ordering, pii)' for categorical column 'name'.")),
-        ('synthetic', 'boolean', {'pii': True},
-         re.escape("Invalid values '(pii)' for boolean column 'synthetic'.")),
-        ('phrase', 'text', {'regex_format': '[A-z]', 'pii': True, 'anonymization': True},
-         re.escape("Invalid values '(anonymization, pii)' for text column 'phrase'.")),
-        ('phone', 'phone_number', {'anonymization': True, 'order_by': 'phone_number'},
-         re.escape("Invalid values '(anonymization, order_by)' for phone_number column 'phone'."))
-    ]
+        (
+            'age', 'numerical', {'representation': 'int', 'datetime_format': None, 'pii': True},
+            re.escape("Invalid values '(datetime_format, pii)' for numerical column 'age'."),
+        ),
+        (
+            'start_date', 'datetime', {'datetime_format': '%Y-%d', 'pii': True},
+            re.escape("Invalid values '(pii)' for datetime column 'start_date'.")
+        ),
+        (
+            'name', 'categorical',
+            {'pii': True, 'ordering': ['a', 'b'], 'ordered': 'numerical_values'},
+            re.escape("Invalid values '(ordered, ordering, pii)' for categorical column 'name'.")
+        ),
+        (
+            'synthetic', 'boolean', {'pii': True},
+            re.escape("Invalid values '(pii)' for boolean column 'synthetic'.")
+        ),
+        (
+            'phrase', 'text', {'regex_format': '[A-z]', 'pii': True, 'anonymization': True},
+            re.escape("Invalid values '(anonymization, pii)' for text column 'phrase'.")
+        ),
+        (
+            'phone', 'phone_number', {'anonymization': True, 'order_by': 'phone_number'},
+            re.escape(
+                "Invalid values '(anonymization, order_by)' for phone_number column 'phone'."
+            )
+        )
+    ]  # noqa: JS102
 
     def test___init__(self):
         """Test creating an instance of ``SingleTableMetadata``."""
@@ -245,7 +259,7 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             instance._validate_column_exists('synthetic')
 
-    @pytest.mark.parametrize('column_name, sdtype, kwargs', VALID_KWARGS)
+    @pytest.mark.parametrize(('column_name', 'sdtype', 'kwargs'), VALID_KWARGS)
     def test__validate_unexpected_kwargs_valid(self, column_name, sdtype, kwargs):
         """Test the ``_validate_unexpected_kwargs`` method.
 
@@ -263,7 +277,7 @@ class TestSingleTableMetadata:
         # Run / Assert
         instance._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
 
-    @pytest.mark.parametrize('column_name, sdtype, kwargs, error_msg', INVALID_KWARGS)
+    @pytest.mark.parametrize(('column_name', 'sdtype', 'kwargs', 'error_msg'), INVALID_KWARGS)
     def test__validate_unexpected_kwargs_invalid(self, column_name, sdtype, kwargs, error_msg):
         """Test the ``_validate_unexpected_kwargs`` method.
 
@@ -1196,7 +1210,7 @@ class TestSingleTableMetadata:
         instance._alternate_keys = ['col2']
         instance._sequence_key = 'col1'
         instance._sequence_index = 'col2'
-        instance._validate_constraint = Mock(side_effect=MultipleConstraintsErrors(['cnt_error']))
+        instance._validate_constraint = Mock(side_effect=AggregateConstraintsError(['cnt_error']))
         instance._validate_key = Mock()
         instance._validate_alternate_keys = Mock()
         instance._validate_sequence_index = Mock()
@@ -1419,9 +1433,11 @@ class TestSingleTableMetadata:
                 }
             },
             'primary_key': 'animals',
-            'constraints': [{
-                'my_constraint': 'my_params'
-            }],
+            'constraints': [
+                {
+                    'my_constraint': 'my_params'
+                }
+            ],
             'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
 
@@ -1554,11 +1570,13 @@ class TestSingleTableMetadata:
             high_column_name='start_date'
         )
 
-        assert metadata._constraints == [{
-            'constraint_name': 'Inequality',
-            'low_column_name': 'child_age',
-            'high_column_name': 'start_date'
-        }]
+        assert metadata._constraints == [
+            {
+                'constraint_name': 'Inequality',
+                'low_column_name': 'child_age',
+                'high_column_name': 'start_date'
+            }
+        ]
 
     def test_add_constraint_bad_constraint(self):
         """Test the ``add_constraint`` method with a non-existent constraint.

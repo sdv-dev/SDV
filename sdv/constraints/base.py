@@ -12,7 +12,7 @@ from rdt import HyperTransformer
 from rdt.transformers import OneHotEncoder
 
 from sdv.constraints.errors import (
-    ConstraintMetadataError, MissingConstraintColumnError, MultipleConstraintsErrors)
+    AggregateConstraintsError, ConstraintMetadataError, MissingConstraintColumnError)
 from sdv.errors import ConstraintsNotMetError
 
 LOGGER = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ def _module_contains_callable_name(obj):
 
 def get_subclasses(cls):
     """Recursively find subclasses for the current class object."""
-    subclasses = dict()
+    subclasses = {}
     for subclass in cls.__subclasses__():
         subclasses[subclass.__name__] = subclass
         subclasses.update(get_subclasses(subclass))
@@ -67,14 +67,14 @@ class ConstraintMeta(type):
     This allows us to later on dump the class definition as a dict.
     """
 
-    def __init__(self, name, bases, attr):
+    def __init__(self, name, bases, attr):  # noqa: N804
         super().__init__(name, bases, attr)
 
         old__init__ = self.__init__
         signature = inspect.signature(old__init__)
         arg_names = list(signature.parameters.keys())[1:]
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs):  # noqa: N807
             class_name = self.__class__.__name__
             if name == class_name:
                 self.__kwargs__ = copy.deepcopy(kwargs)
@@ -128,7 +128,7 @@ class Constraint(metaclass=ConstraintMeta):
             ))
 
         if errors:
-            raise MultipleConstraintsErrors(errors)
+            raise AggregateConstraintsError(errors)
 
     @classmethod
     def _validate_metadata_columns(cls, metadata, **kwargs):
@@ -160,14 +160,14 @@ class Constraint(metaclass=ConstraintMeta):
                 Any required kwargs for the constraint.
 
         Raises:
-            MultipleConstraintsErrors:
+            AggregateConstraintsError:
                 All the errors from validating the metadata.
         """
         errors = []
         try:
             cls._validate_inputs(**kwargs)
-        except MultipleConstraintsErrors as mce:
-            errors.extend(mce.errors)
+        except AggregateConstraintsError as agg_error:
+            errors.extend(agg_error.errors)
 
         try:
             cls._validate_metadata_columns(metadata, **kwargs)
@@ -180,7 +180,7 @@ class Constraint(metaclass=ConstraintMeta):
             errors.append(e)
 
         if errors:
-            raise MultipleConstraintsErrors(errors)
+            raise AggregateConstraintsError(errors)
 
     def _validate_data_meets_constraint(self, table_data):
         """Make sure the given data is valid for the constraint.
@@ -193,7 +193,7 @@ class Constraint(metaclass=ConstraintMeta):
             ConstraintsNotMetError:
                 If the table data is not valid for the provided constraints.
         """
-        if set(self.constraint_columns).issubset(table_data.columns.values):
+        if set(self.constraint_columns).issubset(table_data.columns.to_numpy()):
             is_valid_data = self.is_valid(table_data)
             if not is_valid_data.all():
                 constraint_data = table_data[list(self.constraint_columns)]
@@ -323,7 +323,7 @@ class Constraint(metaclass=ConstraintMeta):
                          self.__class__.__name__, sum(~valid), len(valid))
 
         if isinstance(valid, pd.Series):
-            return table_data[valid.values]
+            return table_data[valid.to_numpy()]
 
         return table_data[valid]
 
@@ -465,14 +465,14 @@ class ColumnsModel:
         """
         condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
         grouped_conditions = table_data[condition_columns].groupby(condition_columns)
-        all_sampled_rows = list()
-        for group, df in grouped_conditions:
+        all_sampled_rows = []
+        for group, dataframe in grouped_conditions:
             if not isinstance(group, tuple):
                 group = [group]
 
-            transformed_condition = self._hyper_transformer.transform(df).iloc[0].to_dict()
+            transformed_condition = self._hyper_transformer.transform(dataframe).iloc[0].to_dict()
             sampled_rows = self._reject_sample(
-                num_rows=df.shape[0],
+                num_rows=dataframe.shape[0],
                 conditions=transformed_condition
             )
             all_sampled_rows.append(sampled_rows)

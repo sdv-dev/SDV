@@ -37,8 +37,8 @@ class BaseRelationalModel:
         else:
             self.metadata = Metadata(metadata, root_path)
 
-        self._primary_key_generators = dict()
-        self._remaining_primary_keys = dict()
+        self._primary_key_generators = {}
+        self._remaining_primary_keys = {}
 
     def _fit(self, tables=None):
         """Fit this relational model instance to the dataset data.
@@ -65,8 +65,8 @@ class BaseRelationalModel:
 
     def _reset_primary_keys_generators(self):
         """Reset the primary key generators."""
-        self._primary_key_generators = dict()
-        self._remaining_primary_keys = dict()
+        self._primary_key_generators = {}
+        self._remaining_primary_keys = {}
 
     def _get_primary_keys(self, table_name, num_rows):
         """Return the primary key and amount of values for the requested table.
@@ -205,7 +205,7 @@ class BaseRelationalModel:
                 Path from which to load the instance.
         """
         with open(path, 'rb') as f:
-            model = pickle.load(f)
+            model = pickle.load(f)  # noqa: DUO103
             throw_version_mismatch_warning(getattr(model, '_package_versions', None))
 
             return model

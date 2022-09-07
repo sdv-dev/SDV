@@ -1,4 +1,5 @@
 import os
+import re
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -229,7 +230,7 @@ class TestMetadata(TestCase):
         mock_meta.assert_called_once_with({'some': 'meta'})
         mock_relationships.assert_called_once_with()
         assert metadata.root_path == '.'
-        assert metadata._hyper_transformers == dict()
+        assert metadata._hyper_transformers == {}
 
     def test_get_children(self):
         """Test get children"""
@@ -434,8 +435,8 @@ class TestMetadata(TestCase):
         }
         assert result.keys() == expected.keys()
 
-        for k, v in result.items():
-            pd.testing.assert_frame_equal(v, expected[k])
+        for key, value in result.items():
+            pd.testing.assert_frame_equal(value, expected[key])
 
     def test_get_fields(self):
         """Test get fields"""
@@ -477,7 +478,7 @@ class TestMetadata(TestCase):
     def test_get_foreign_keys(self):
         """Test get foreign key"""
         # Setup
-        metadata = Metadata({
+        metadata = {
             'tables': {
                 'parent': {
                     'fields': {
@@ -506,7 +507,8 @@ class TestMetadata(TestCase):
                     }
                 }
             }
-        })
+        }
+        metadata = Metadata(metadata)
 
         # Run
         result = Metadata.get_foreign_keys(metadata, 'parent', 'child')
@@ -554,7 +556,8 @@ class TestMetadata(TestCase):
         metadata.get_tables.return_value = ['a_table', 'b_table']
 
         # Run
-        with pytest.raises(ValueError):
+        err_msg = 'Table "a_table" already exists.'
+        with pytest.raises(ValueError, match=err_msg):
             Metadata.add_table(metadata, 'a_table')
 
     def test_add_table_only_name(self):
@@ -562,14 +565,14 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
 
         # Run
         Metadata.add_table(metadata, 'x_table')
 
         # Asserts
         expected_table_meta = {
-            'fields': dict()
+            'fields': {}
         }
 
         assert metadata._metadata['tables']['x_table'] == expected_table_meta
@@ -582,14 +585,14 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
 
         # Run
         Metadata.add_table(metadata, 'x_table', primary_key='id')
 
         # Asserts
         expected_table_meta = {
-            'fields': dict()
+            'fields': {}
         }
 
         assert metadata._metadata['tables']['x_table'] == expected_table_meta
@@ -602,14 +605,14 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
 
         # Run
         Metadata.add_table(metadata, 'x_table', parent='users')
 
         # Asserts
         expected_table_meta = {
-            'fields': dict()
+            'fields': {}
         }
 
         assert metadata._metadata['tables']['x_table'] == expected_table_meta
@@ -622,7 +625,7 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
 
         # Run
         fields_metadata = {
@@ -648,7 +651,7 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
 
         # Run
         fields = ['a_field', 'b_field']
@@ -657,7 +660,7 @@ class TestMetadata(TestCase):
 
         # Asserts
         expected_table_meta = {
-            'fields': dict()
+            'fields': {}
         }
 
         assert metadata._metadata['tables']['x_table'] == expected_table_meta
@@ -667,7 +670,7 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
         metadata._get_field_details.return_value = {
             'a_field': {'type': 'numerical', 'subtype': 'integer'},
             'b_field': {'type': 'boolean'}
@@ -697,7 +700,7 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
         metadata._get_field_details.return_value = {
             'a_field': {'type': 'numerical', 'subtype': 'integer'},
             'b_field': {'type': 'boolean'},
@@ -729,7 +732,7 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
         mock_read_csv.return_value = pd.DataFrame({
             'a_field': [0, 1],
             'b_field': [True, False],
@@ -776,7 +779,7 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata._metadata = {'tables': dict()}
+        metadata._metadata = {'tables': {}}
 
         # Run
         fields_metadata = {
@@ -824,22 +827,20 @@ class TestMetadata(TestCase):
 
     def test_add_relationship_table_no_exist(self):
         """Add relationship table no exist"""
-        # Setup
-        metadata = Mock(spec_set=Metadata)
-        metadata.get_tables.return_value = list()
-
         # Run
-        with pytest.raises(ValueError):
-            Metadata.add_relationship(metadata, 'a_table', 'b_table')
+        err_msg = 'Table "a_table" does not exist'
+        with pytest.raises(ValueError, match=err_msg):
+            Metadata.add_relationship(Metadata(), 'a_table', 'b_table')
 
     def test_add_relationship_parent_no_exist(self):
         """Add relationship table no exist"""
         # Setup
-        metadata = Mock(spec_set=Metadata)
-        metadata.get_tables.return_value = ['a_table']
+        metadata = Metadata()
+        metadata._metadata['tables'] = {'a_table': {}}
 
         # Run
-        with pytest.raises(ValueError):
+        err_msg = 'Table "b_table" does not exist'
+        with pytest.raises(ValueError, match=err_msg):
             Metadata.add_relationship(metadata, 'a_table', 'b_table')
 
     def test_add_relationship_already_exist(self):
@@ -847,10 +848,12 @@ class TestMetadata(TestCase):
         # Setup
         metadata = Mock(spec_set=Metadata)
         metadata.get_tables.return_value = ['a_table', 'b_table']
-        metadata.get_parents.return_value = set(['b_table'])
+        metadata.get_parents.return_value = {'b_table'}
 
         # Run
-        with pytest.raises(ValueError):
+        mock = metadata.get_primary_key()
+        err_msg = re.escape(f'Field "b_table.{mock}" already defines a relationship')
+        with pytest.raises(ValueError, match=err_msg):
             Metadata.add_relationship(metadata, 'a_table', 'b_table')
 
     def test_add_relationship_parent_no_primary_key(self):
@@ -863,14 +866,15 @@ class TestMetadata(TestCase):
         metadata.get_primary_key.return_value = None
 
         # Run
-        with pytest.raises(ValueError):
+        err_msg = 'Parent table "a_table" does not have a primary key'
+        with pytest.raises(ValueError, match=err_msg):
             Metadata.add_relationship(metadata, 'a_table', 'b_table')
 
     def test_set_primary_key(self):
         """Set primary key table no exist"""
         # Setup
         metadata = Mock(spec_set=Metadata)
-        metadata.get_tables.return_value = list()
+        metadata.get_tables.return_value = []
         metadata.get_fields.return_value = {'a_field': {'type': 'id', 'subtype': 'integer'}}
         metadata._metadata = {
             'tables': {
@@ -892,10 +896,10 @@ class TestMetadata(TestCase):
         """Add field table no exist"""
         # Setup
         metadata = Mock(spec_set=Metadata)
-        metadata.get_tables.return_value = list()
+        metadata.get_tables.return_value = []
         metadata._metadata = {
             'tables': {
-                'a_table': {'fields': dict()}
+                'a_table': {'fields': {}}
             }
         }
 

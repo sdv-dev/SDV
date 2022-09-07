@@ -24,7 +24,8 @@ def test_is_datetime_type_with_datetime_series():
     data = pd.Series([
         pd.to_datetime('2020-01-01'),
         pd.to_datetime('2020-01-02'),
-        pd.to_datetime('2020-01-03')],
+        pd.to_datetime('2020-01-03')
+    ],
     )
 
     # Run
@@ -284,7 +285,7 @@ def test_cast_to_datetime64():
     # Assert
     expected_string_output = np.datetime64('2021-02-02')
     expected_series_output = pd.Series(np.datetime64('2021-02-02'))
-    expected_list_output = np.array([np.datetime64("NaT"), '2021-02-02'], dtype='datetime64[ns]')
+    expected_list_output = np.array([np.datetime64('NaT'), '2021-02-02'], dtype='datetime64[ns]')
     np.testing.assert_array_equal(expected_list_output, list_out)
     pd.testing.assert_series_equal(expected_series_output, series_out)
     assert expected_string_output == string_out
