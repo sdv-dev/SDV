@@ -557,10 +557,12 @@ class MultiTableMetadata:
             if ref and ref['table'] == parent:
                 foreign_keys.append(name)
 
+        return foreign_keys
+
     @classmethod
     def _convert_relationships(cls, old_metadata):
         tables = old_metadata.get('tables')
-        parents = {}
+        parents = defaultdict(set)
         for table, table_meta in tables.items():
             for field_meta in table_meta['fields'].values():
                 ref = field_meta.get('ref')
@@ -576,7 +578,7 @@ class MultiTableMetadata:
                 "child_foreign_key": foreign_key
             }
             for table in tables
-            for parent in list(parents.get(table))
+            for parent in list(parents[table])
             for foreign_key in cls._convert_foreign_keys(old_metadata, parent, table)
         ]
         return relationships
@@ -598,10 +600,10 @@ class MultiTableMetadata:
         old_metadata = read_json(old_filepath)
         tables_metadata = {}
 
-        for table_name, metadata in old_metadata.get('tables'):
+        for table_name, metadata in old_metadata.get('tables', {}).items():
             tables_metadata[table_name] = SingleTableMetadata._convert_metadata(metadata)
 
-        relationships = cls._get_relationships(old_metadata)
+        relationships = cls._convert_relationships(old_metadata)
         metadata_dict = {'tables': tables_metadata, 'relationships': relationships}
         metadata = cls._load_from_dict(metadata_dict)
         metadata.save_to_json(new_filepath)

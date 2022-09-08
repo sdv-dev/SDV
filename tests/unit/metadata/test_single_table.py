@@ -1644,8 +1644,8 @@ class TestSingleTableMetadata:
     def test__convert_metadata(self):
         """Test the ``_convert_metadata`` method.
 
-        The method should take a dictionary of the old metadata format and
-        convert it to the new format.
+        The method should take a dictionary of the old metadata format and convert it to the new
+        format.
 
         Input:
             - Dictionary of single table metadata in the old schema.
@@ -1708,9 +1708,8 @@ class TestSingleTableMetadata:
     def test_upgrade_metadata(self, from_dict_mock, convert_mock, read_json_mock, validate_mock):
         """Test the ``upgrade_metadata`` method.
 
-        The method should validate that the ``new_filepath`` does not exist,
-        read the old metadata from a file, convert it and save it to the
-        ``new_filepath``.
+        The method should validate that the ``new_filepath`` does not exist, read the old metadata
+        from a file, convert it and save it to the ``new_filepath``.
 
         Setup:
             - Mock ``read_json``.
@@ -1749,8 +1748,8 @@ class TestSingleTableMetadata:
             self, from_dict_mock, convert_mock, read_json_mock, validate_mock):
         """Test the ``upgrade_metadata`` method.
 
-        If the old metadata is in the multi-table format (has 'tables'),
-        but it only contains one table, then it should still get converted.
+        If the old metadata is in the multi-table format (has 'tables'), but it only contains one
+        table, then it should still get converted.
 
         Setup:
             - Mock ``read_json`` to return a multi-table metadata dict with one table.
@@ -1790,8 +1789,8 @@ class TestSingleTableMetadata:
             self, from_dict_mock, convert_mock, read_json_mock, validate_mock):
         """Test the ``upgrade_metadata`` method.
 
-        If the old metadata is in the multi-table format (has 'tables'),
-        but contains multiple tables, then an error should be raised.
+        If the old metadata is in the multi-table format (has 'tables'), but contains multiple
+        tables, then an error should be raised.
 
         Setup:
             - Mock ``read_json`` to return a multi-table metadata dict.
@@ -1832,8 +1831,8 @@ class TestSingleTableMetadata:
             self, from_dict_mock, convert_mock, read_json_mock, validate_mock, warnings_mock):
         """Test the ``upgrade_metadata`` method.
 
-        The method should raise a warning with any validation errors after the metadata
-        is converted.
+        The method should raise a warning with any validation errors after the metadata is
+        converted.
 
         Setup:
             - Mock ``read_json``.

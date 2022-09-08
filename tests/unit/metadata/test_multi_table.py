@@ -5,7 +5,7 @@ import re
 from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import pandas as pd
 import pytest
@@ -1679,3 +1679,237 @@ class TestMultiTableMetadata:
             with open(file_name, 'rb') as multi_table_file:
                 saved_metadata = json.load(multi_table_file)
                 assert saved_metadata == instance.to_dict()
+
+    def test__convert_relationships(self):
+        """Test the ``_convert_relationships`` method.
+
+        The method should take in a metadata dictionary in the old schema and extract the
+        relationship info into a dictionary for the relationship part of the new schema.
+
+        Input:
+            - A metadata dict in the old schema.
+
+        Output:
+            - The relationships portion of the new schema.
+        """
+        # Setup
+        old_metadata = {
+            'tables': {
+                'nesreca': {
+                    'fields': {
+                        'upravna_enota': {
+                            'type': 'id',
+                            'subtype': 'integer',
+                            'ref': {
+                                'table': 'upravna_enota',
+                                'field': 'id_upravna_enota'
+                            }
+                        },
+                        'id_nesreca': {
+                            'type': 'id',
+                            'subtype': 'integer'
+                        },
+                    },
+                    'primary_key': 'id_nesreca'
+                },
+                'oseba': {
+                    'fields': {
+                        'upravna_enota': {
+                            'type': 'id',
+                            'subtype': 'integer',
+                            'ref': {
+                                'table': 'upravna_enota',
+                                'field': 'id_upravna_enota'
+                            }
+                        },
+                        'id_nesreca': {
+                            'type': 'id',
+                            'subtype': 'integer',
+                            'ref': {
+                                'table': 'nesreca',
+                                'field': 'id_nesreca'
+                            }
+                        },
+                    },
+                },
+                'upravna_enota': {
+                    'fields': {
+                        'id_upravna_enota': {
+                            'type': 'id',
+                            'subtype': 'integer'
+                        }
+                    },
+                    'primary_key': 'id_upravna_enota'
+                }
+            }
+        }
+
+        # Run
+        relationships = MultiTableMetadata._convert_relationships(old_metadata)
+
+        # Assert
+        expected = [
+            {
+                'parent_table_name': 'upravna_enota',
+                'parent_primary_key': 'id_upravna_enota',
+                'child_table_name': 'nesreca',
+                'child_foreign_key': 'upravna_enota'
+            },
+            {
+                'parent_table_name': 'nesreca',
+                'parent_primary_key': 'id_nesreca',
+                'child_table_name': 'oseba',
+                'child_foreign_key': 'id_nesreca'
+            },
+            {
+                'parent_table_name': 'upravna_enota',
+                'parent_primary_key': 'id_upravna_enota',
+                'child_table_name': 'oseba',
+                'child_foreign_key': 'upravna_enota'
+            }
+        ]
+        for relationship in expected:
+            assert relationship in relationships
+
+    @patch('sdv.metadata.multi_table.validate_file_does_not_exist')
+    @patch('sdv.metadata.multi_table.read_json')
+    @patch('sdv.metadata.multi_table.MultiTableMetadata._convert_relationships')
+    @patch('sdv.metadata.multi_table.SingleTableMetadata._convert_metadata')
+    @patch('sdv.metadata.multi_table.MultiTableMetadata._load_from_dict')
+    def test_upgrade_metadata(
+            self, from_dict_mock, convert_mock, relationships_mock, read_json_mock, validate_mock):
+        """Test the ``upgrade_metadata`` method.
+
+        The method should validate that the ``new_filepath`` does not exist, read the old metadata
+        from a file, convert it and save it to the ``new_filepath``. It should loop through every
+        table in the old metadata and convert it using ``SingleTableMetadata._convert_metadata``.
+
+        Setup:
+            - Mock ``read_json`` to return a metadata dict with a few tables.
+            - Mock ``validate_file_does_not_exist``.
+            - Mock the ``_convert_metadata`` method to return something.
+            - Mock the ``from_dict`` method to return a mock.
+            - Mock the `SingleTableMetadata._convert_metadata`` method.
+
+        Input:
+            - A fake old filepath.
+            - A fake new filepath.
+
+        Side effect:
+            - The mock should call ``save_to_json`` and ``validate``.
+        """
+        # Setup
+        validate_mock.return_value = True
+        convert_mock.side_effect = [
+            {'columns': {'column1': {'sdtype': 'numerical'}}},
+            {'columns': {'column2': {'sdtype': 'categorical'}}},
+        ]
+        new_metadata = Mock()
+        from_dict_mock.return_value = new_metadata
+        read_json_mock.return_value = {
+            'tables': {
+                'table1': {'columns': {'column1': {'type': 'numerical'}}},
+                'table2': {'columns': {'column2': {'type': 'categorical'}}}
+            }
+        }
+        relationships_mock.return_value = [
+            {
+                'parent_table_name': 'table1',
+                'parent_primary_key': 'id',
+                'child_table_name': 'table2',
+                'child_foreign_key': 'id'
+            }
+        ]
+
+        # Run
+        MultiTableMetadata.upgrade_metadata('old', 'new')
+
+        # Assert
+        validate_mock.assert_called_once_with('new')
+        read_json_mock.assert_called_once_with('old')
+        relationships_mock.assert_called_once_with({
+            'tables': {
+                'table1': {'columns': {'column1': {'type': 'numerical'}}},
+                'table2': {'columns': {'column2': {'type': 'categorical'}}}
+            }
+        })
+        convert_mock.assert_has_calls([
+            call({'columns': {'column1': {'type': 'numerical'}}}),
+            call({'columns': {'column2': {'type': 'categorical'}}})
+        ])
+        expected_new_metadata = {
+            'tables': {
+                'table1': {'columns': {'column1': {'sdtype': 'numerical'}}},
+                'table2': {'columns': {'column2': {'sdtype': 'categorical'}}}
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'table1',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'table2',
+                    'child_foreign_key': 'id'
+                }
+            ]
+        }
+        from_dict_mock.assert_called_once_with(expected_new_metadata)
+        new_metadata.save_to_json.assert_called_with('new')
+        new_metadata.validate.assert_called_once()
+
+    @patch('sdv.metadata.multi_table.warnings')
+    @patch('sdv.metadata.multi_table.validate_file_does_not_exist')
+    @patch('sdv.metadata.multi_table.read_json')
+    @patch('sdv.metadata.multi_table.MultiTableMetadata._convert_relationships')
+    @patch('sdv.metadata.multi_table.SingleTableMetadata._convert_metadata')
+    @patch('sdv.metadata.multi_table.MultiTableMetadata._load_from_dict')
+    def test_upgrade_metadata_validate_error(
+            self, from_dict_mock, convert_mock, relationships_mock, read_json_mock, validate_mock,
+            warnings_mock):
+        """Test the ``upgrade_metadata`` method.
+
+        The method should validate that the ``new_filepath`` does not exist, read the old metadata
+        from a file, convert it and save it to the ``new_filepath``. It should loop through every
+        table in the old metadata and convert it using ``SingleTableMetadata._convert_metadata``.
+        If the ``validate`` method raises an error, we should catch it and raise a warning.
+
+        Setup:
+            - Mock ``read_json`` to return a metadata dict with a few tables.
+            - Mock ``validate_file_does_not_exist``.
+            - Mock the ``_convert_metadata`` method to return something.
+            - Mock the ``from_dict`` method to return a mock.
+            - Mock the `SingleTableMetadata._convert_metadata`` method.
+            - Mock the ``validate`` method to raise an error.
+
+        Input:
+            - A fake old filepath.
+            - A fake new filepath.
+
+        Side effect:
+            - The mock should call ``save_to_json`` and ``validate``.
+        """
+        # Setup
+        validate_mock.return_value = True
+        convert_mock.return_value = {}
+        new_metadata = Mock()
+        from_dict_mock.return_value = new_metadata
+        read_json_mock.return_value = {}
+        relationships_mock.return_value = []
+        new_metadata.validate.side_effect = InvalidMetadataError('blah')
+
+        # Run
+        MultiTableMetadata.upgrade_metadata('old', 'new')
+
+        # Assert
+        validate_mock.assert_called_once_with('new')
+        read_json_mock.assert_called_once_with('old')
+        relationships_mock.assert_called_once_with({})
+        expected_new_metadata = {
+            'tables': {},
+            'relationships': []
+        }
+        from_dict_mock.assert_called_once_with(expected_new_metadata)
+        new_metadata.save_to_json.assert_called_with('new')
+        new_metadata.validate.assert_called_once()
+        warnings_mock.warn.assert_called_once_with(
+            'Successfully converted the old metadata, but the metadata was not valid.'
+            'To use this with the SDV, please fix the following errors.\n blah'
+        )
