@@ -469,6 +469,8 @@ class SingleTableMetadata:
             if value:
                 setattr(instance, f'_{key}', value)
 
+        return instance
+
     @classmethod
     def load_from_json(cls, filepath):
         """Create an instance from a ``json`` file.
