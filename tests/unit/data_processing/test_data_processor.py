@@ -1,4 +1,6 @@
 import re
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import Mock, call, patch
 
 import numpy as np
@@ -192,6 +194,7 @@ class TestDataProcessor:
 
         Setup:
             - A DataProcessor with all its attributes set.
+            - Use ``TemporaryDirectory`` to store the file.
 
         Input:
             - ``from_json`` and ``to_json`` take the same file name.
@@ -207,8 +210,10 @@ class TestDataProcessor:
         instance._constraints_to_reverse = [Positive('col')]
 
         # Run
-        instance.to_json('temp.json')
-        new_instance = instance.from_json('temp.json')
+        with TemporaryDirectory() as temp_dir:
+            file_name = Path(temp_dir) / 'temp.json'
+            instance.to_json(file_name)
+            new_instance = instance.from_json(file_name)
 
         # Assert
         assert instance.metadata.to_dict() == new_instance.metadata.to_dict()
