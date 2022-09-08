@@ -14,6 +14,8 @@ from sdv.metadata.visualization import visualize_graph
 class MultiTableMetadata:
     """Multi Table Metadata class."""
 
+    SCHEMA_VERSION = 'SINGLE_TABLE_V1'
+
     def __init__(self):
         self._tables = {}
         self._relationships = []
@@ -476,10 +478,12 @@ class MultiTableMetadata:
         """Return a python ``dict`` representation of the ``MultiTableMetadata``."""
         metadata = {'tables': {}, 'relationships': []}
         for table_name, single_table_metadata in self._tables.items():
-            metadata['tables'][table_name] = single_table_metadata.to_dict()
+            table_dict = single_table_metadata.to_dict()
+            table_dict.pop('SCHEMA_VERSION', None)
+            metadata['tables'][table_name] = table_dict
 
         metadata['relationships'] = deepcopy(self._relationships)
-
+        metadata['SCHEMA_VERSION'] = self.SCHEMA_VERSION
         return metadata
 
     def _set_metadata_dict(self, metadata):
@@ -604,7 +608,11 @@ class MultiTableMetadata:
             tables_metadata[table_name] = SingleTableMetadata._convert_metadata(metadata)
 
         relationships = cls._convert_relationships(old_metadata)
-        metadata_dict = {'tables': tables_metadata, 'relationships': relationships}
+        metadata_dict = {
+            'tables': tables_metadata,
+            'relationships': relationships,
+            'SCHEMA_VERSION': cls.SCHEMA_VERSION
+        }
         metadata = cls._load_from_dict(metadata_dict)
         metadata.save_to_json(new_filepath)
         try:

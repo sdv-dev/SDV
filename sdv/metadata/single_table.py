@@ -436,25 +436,6 @@ class SingleTableMetadata:
 
         return deepcopy(metadata)
 
-    @classmethod
-    def from_dict(cls, metadata):
-        """Create a ``SingleTableMetadata`` instance from a python ``dict``.
-
-        Args:
-            metadata (dict):
-                Python dictionary representing a ``SingleTableMetadata`` object.
-
-        Returns:
-            Instance of ``SingleTableMetadata``.
-        """
-        instance = cls()
-        for key in instance._KEYS:
-            value = deepcopy(metadata.get(key))
-            if value:
-                setattr(instance, f'_{key}', value)
-
-        return instance
-
     def save_to_json(self, filepath):
         """Save the current ``SingleTableMetadata`` in to a ``json`` file.
 
@@ -471,21 +452,6 @@ class SingleTableMetadata:
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)
 
-    def _set_metadata_attributes(self, metadata):
-        """Set the metadata attributes to the current instance.
-
-        Args:
-            metadata (dict):
-                Python dictionary representing a ``SingleTableMetadata`` object.
-        """
-        for key in self._KEYS:
-            value = deepcopy(metadata.get(key))
-            if key == 'constraints' and value:
-                value = [Constraint.from_dict(constraint_dict) for constraint_dict in value]
-
-            if value:
-                setattr(self, f'_{key}', value)
-
     @classmethod
     def _load_from_dict(cls, metadata):
         """Create a ``SingleTableMetadata`` instance from a python ``dict``.
@@ -498,9 +464,10 @@ class SingleTableMetadata:
             Instance of ``SingleTableMetadata``.
         """
         instance = cls()
-        instance._set_metadata_attributes(metadata)
-
-        return instance
+        for key in instance._KEYS:
+            value = deepcopy(metadata.get(key))
+            if value:
+                setattr(instance, f'_{key}', value)
 
     @classmethod
     def load_from_json(cls, filepath):
@@ -582,8 +549,6 @@ class SingleTableMetadata:
         if alternate_keys:
             new_metadata['alternate_keys'] = alternate_keys
 
-        new_metadata['SCHEMA_VERSION'] = cls.SCHEMA_VERSION
-
         return new_metadata
 
     @classmethod
@@ -613,7 +578,7 @@ class SingleTableMetadata:
                 old_metadata = list(tables.values())[0]
 
         new_metadata = cls._convert_metadata(old_metadata)
-        metadata = cls.from_dict(new_metadata)
+        metadata = cls._load_from_dict(new_metadata)
         metadata.save_to_json(new_filepath)
 
         try:

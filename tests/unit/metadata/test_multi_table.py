@@ -846,7 +846,8 @@ class TestMultiTableMetadata:
                     'child_table_name': 'branches',
                     'chil_foreign_key': 'branch_id',
                 }
-            ]
+            ],
+            'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
         assert result == expected_result
 
@@ -1564,11 +1565,10 @@ class TestMultiTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             MultiTableMetadata.load_from_json('filepath.json')
 
-    @patch('sdv.metadata.single_table.Constraint')
     @patch('sdv.metadata.utils.open')
     @patch('sdv.metadata.utils.Path')
     @patch('sdv.metadata.utils.json')
-    def test_load_from_json(self, mock_json, mock_path, mock_open, mock_constraint):
+    def test_load_from_json(self, mock_json, mock_path, mock_open):
         """Test the ``load_from_json`` method.
 
         Test that ``load_from_json`` function creates an instance with the contents returned by the
@@ -1578,7 +1578,6 @@ class TestMultiTableMetadata:
             - Mock the ``Path`` library in order to return ``True``.
             - Mock the ``json`` library in order to use a custom return.
             - Mock the ``open`` in order to avoid loading a binary file.
-            - Mock the ``Constraint`` to ensure that is being loaded.
 
         Input:
             - String representing a filepath.
@@ -1591,7 +1590,6 @@ class TestMultiTableMetadata:
         instance = MultiTableMetadata()
         mock_path.return_value.exists.return_value = True
         mock_path.return_value.name = 'filepath.json'
-        mock_constraint.from_dict.return_value = {'my_constraint': 'my_params'}
         mock_json.load.return_value = {
             'tables': {
                 'table1': {
@@ -1624,7 +1622,6 @@ class TestMultiTableMetadata:
         assert instance._tables['table1']._sequence_index is None
         assert instance._tables['table1']._constraints == [{'my_constraint': 'my_params'}]
         assert instance._tables['table1']._version == 'SINGLE_TABLE_V1'
-        mock_constraint.from_dict.assert_called_once()
 
     @patch('sdv.metadata.utils.Path')
     def test_save_to_json_file_exists(self, mock_path):
@@ -1849,7 +1846,8 @@ class TestMultiTableMetadata:
                     'child_table_name': 'table2',
                     'child_foreign_key': 'id'
                 }
-            ]
+            ],
+            'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
         from_dict_mock.assert_called_once_with(expected_new_metadata)
         new_metadata.save_to_json.assert_called_with('new')
@@ -1904,7 +1902,8 @@ class TestMultiTableMetadata:
         relationships_mock.assert_called_once_with({})
         expected_new_metadata = {
             'tables': {},
-            'relationships': []
+            'relationships': [],
+            'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
         }
         from_dict_mock.assert_called_once_with(expected_new_metadata)
         new_metadata.save_to_json.assert_called_with('new')
