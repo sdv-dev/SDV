@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Evaluation Framework &#8212; SDV 0.16.0 documentation</title>
+    <title>Evaluation Framework &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -283,12 +283,12 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 </ul>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
-<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">0       17372      M        43.83      47.29   Science        56.42   Comm&amp;Mgmt             True                 1               61.99   Mkt&amp;HR     52.85      NaN   False        NaT        NaT       NaN</span>
-<span class="go">1       17344      M        69.91      75.86   Science        58.41   Comm&amp;Mgmt             True                 1               91.92   Mkt&amp;HR     54.74      NaN   False        NaT        NaT       NaN</span>
-<span class="go">2       17282      F        56.69      42.56   Science        64.04      Others            False                 0               57.55   Mkt&amp;HR     53.44      NaN   False        NaT        NaT       NaN</span>
-<span class="go">3       17302      M        57.39      50.46  Commerce        62.82    Sci&amp;Tech            False                 0               81.58   Mkt&amp;HR     61.60  24800.0    True 2020-03-17 2020-05-23       4.0</span>
-<span class="go">4       17273      F        84.26      75.73      Arts        74.19   Comm&amp;Mgmt            False                 0               85.48   Mkt&amp;HR     66.81  22400.0    True 2020-01-24 2020-04-15       4.0</span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">0       17454      M        72.56      72.19  Commerce        61.21   Comm&amp;Mgmt            False                 0               79.92  Mkt&amp;Fin     59.50      NaN   False                           NaT                           NaT       NaN</span>
+<span class="go">1       17268      M        86.94      85.30  Commerce        80.96   Comm&amp;Mgmt             True                 1               75.28  Mkt&amp;Fin     72.71  29915.0    True 2020-02-01 08:20:54.987611904 2020-05-04 18:14:18.317315840       4.0</span>
+<span class="go">2       17334      M        71.89      68.97   Science        66.87   Comm&amp;Mgmt            False                 0               58.43  Mkt&amp;Fin     64.09  34178.0    True 2020-03-20 23:17:22.914916352 2020-12-10 06:10:10.901737216       8.0</span>
+<span class="go">3       17363      M        66.37      60.58   Science        66.50   Comm&amp;Mgmt             True                 1               80.97  Mkt&amp;Fin     61.68  36398.0    True 2020-02-14 05:57:07.078356480 2020-09-09 08:18:56.007480832       7.0</span>
+<span class="go">4       17450      F        58.47      38.12   Science        68.17    Sci&amp;Tech            False                 0               96.28   Mkt&amp;HR     55.82      NaN   False                           NaT                           NaT       NaN</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -303,7 +303,7 @@ the <code class="docutils literal notranslate"><span class="pre">real_data</span
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
 <span class="gp">In [10]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">)</span>
-<span class="gh">Out[10]: </span><span class="go">0.65509317051535</span>
+<span class="gh">Out[10]: </span><span class="go">0.9099350934740598</span>
 </pre></div>
 </div>
 <p>The output of this function call will be a number between 0 and 1 that
@@ -323,36 +323,9 @@ additional argument <code class="docutils literal notranslate"><span class="pre"
 of the metrics functions returned:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[11]: </span><span class="go"></span>
-<span class="go">                              metric                                     name  raw_score  normalized_score  min_value  max_value      goal                                              error</span>
-<span class="go">0                    BNLogLikelihood           BayesianNetwork Log Likelihood        NaN               NaN       -inf        0.0  MAXIMIZE  Please install pomegranate with `pip install p...</span>
-<span class="go">1                  LogisticDetection             LogisticRegression Detection   0.696987      6.969875e-01        0.0        1.0  MAXIMIZE                                               None</span>
-<span class="go">2                       SVCDetection                            SVC Detection   0.438840      4.388403e-01        0.0        1.0  MAXIMIZE                                               None</span>
-<span class="go">3       BinaryDecisionTreeClassifier                                     None        NaN               NaN        0.0        1.0  MAXIMIZE  `target` must be passed either directly or ins...</span>
-<span class="go">4           BinaryAdaBoostClassifier                                     None        NaN               NaN        0.0        1.0  MAXIMIZE  `target` must be passed either directly or ins...</span>
-<span class="go">5           BinaryLogisticRegression                                     None        NaN               NaN        0.0        1.0  MAXIMIZE  `target` must be passed either directly or ins...</span>
-<span class="go">6                BinaryMLPClassifier                                     None        NaN               NaN        0.0        1.0  MAXIMIZE  `target` must be passed either directly or ins...</span>
-<span class="go">7   MulticlassDecisionTreeClassifier                                     None        NaN               NaN        0.0        1.0  MAXIMIZE  `target` must be passed either directly or ins...</span>
-<span class="go">8            MulticlassMLPClassifier                                     None        NaN               NaN        0.0        1.0  MAXIMIZE  `target` must be passed either directly or ins...</span>
-<span class="go">9                   LinearRegression                                     None        NaN               NaN       -inf        1.0  MAXIMIZE  `target` must be passed either directly or ins...</span>
-<span class="go">10                      MLPRegressor                                     None        NaN               NaN       -inf        1.0  MAXIMIZE  `target` must be passed either directly or ins...</span>
-<span class="go">11                   GMLogLikelihood           GaussianMixture Log Likelihood -75.674166      1.364984e-33       -inf        inf  MAXIMIZE                                               None</span>
-<span class="go">12                            CSTest                              Chi-Squared   0.902098      9.020981e-01        0.0        1.0  MAXIMIZE                                               None</span>
-<span class="go">13                            KSTest  Inverted Kolmogorov-Smirnov D statistic   0.894574      8.945736e-01        0.0        1.0  MAXIMIZE                                               None</span>
-<span class="go">14                    KSTestExtended  Inverted Kolmogorov-Smirnov D statistic   0.877519      8.775194e-01        0.0        1.0  MAXIMIZE                                               None</span>
-<span class="go">15                    CategoricalCAP                           CategoricalCAP        NaN               NaN        0.0        1.0  MAXIMIZE  `key_fields` must be passed either directly or...</span>
-<span class="go">16                CategoricalZeroCAP                                     0CAP        NaN               NaN        0.0        1.0  MAXIMIZE  `key_fields` must be passed either directly or...</span>
-<span class="go">17         CategoricalGeneralizedCAP               Categorical GeneralizedCAP        NaN               NaN        0.0        1.0  MAXIMIZE  `key_fields` must be passed either directly or...</span>
-<span class="go">18                     CategoricalNB                Categorical NaiveBayesian        NaN               NaN        0.0        1.0  MAXIMIZE  `key_fields` must be passed either directly or...</span>
-<span class="go">19                    CategoricalKNN                      K-Nearest Neighbors        NaN               NaN        0.0        1.0  MAXIMIZE  `key_fields` must be passed either directly or...</span>
-<span class="go">20                     CategoricalRF                Categorical Random Forest        NaN               NaN        0.0        1.0  MAXIMIZE  `key_fields` must be passed either directly or...</span>
-<span class="go">21                    CategoricalSVM                Support Vector Classifier        NaN               NaN        0.0        1.0  MAXIMIZE  `key_fields` must be passed either directly or...</span>
-<span class="go">22               CategoricalEnsemble                                 Ensemble        NaN               NaN        0.0        1.0  MAXIMIZE  &#39;&lt;&#39; not supported between instances of &#39;float&#39;...</span>
-<span class="go">23                       NumericalLR              Numerical Linear Regression        NaN               NaN        0.0        inf  MAXIMIZE  `key_fields` must be passed either directly or...</span>
-<span class="go">24                      NumericalMLP        Multi-layer Perceptron Regression        NaN               NaN        0.0        inf  MAXIMIZE  `key_fields` must be passed either directly or...</span>
-<span class="go">25                      NumericalSVR      Numerical Support-vector Regression        NaN               NaN        0.0        inf  MAXIMIZE  `key_fields` must be passed either directly or...</span>
-<span class="go">26    NumericalRadiusNearestNeighbor        Numerical Radius Nearest Neighbor        NaN               NaN        0.0        inf  MAXIMIZE  `key_fields` must be passed either directly or...</span>
-<span class="go">27            ContinuousKLDivergence   Continuous Kullback–Leibler Divergence   0.457417      4.574174e-01        0.0        1.0  MAXIMIZE                                               None</span>
-<span class="go">28              DiscreteKLDivergence     Discrete Kullback–Leibler Divergence   0.933316      9.333157e-01        0.0        1.0  MAXIMIZE                                               None</span>
+<span class="go">         metric                                     name  raw_score  normalized_score  min_value  max_value      goal error</span>
+<span class="go">0  KSComplement  Inverted Kolmogorov-Smirnov D statistic   0.871844          0.871844        0.0        1.0  MAXIMIZE  None</span>
+<span class="go">1        CSTest                              Chi-Squared   0.948027          0.948027        0.0        1.0  MAXIMIZE  None</span>
 </pre></div>
 </div>
 </div>
@@ -362,18 +335,17 @@ of the metrics functions returned:</p>
 are included within the SDV Evaluation framework. However, the list of
 metrics that are applied can be controlled by passing a list with the
 names of the metrics that you want to apply.</p>
-<p>For example, if you were interested on obtaining only the <code class="docutils literal notranslate"><span class="pre">CSTest</span></code> and
-<code class="docutils literal notranslate"><span class="pre">KSTest</span></code> metrics you can call the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function as follows:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">,</span> <span class="s1">&#39;KSTest&#39;</span><span class="p">])</span>
-<span class="gh">Out[12]: </span><span class="go">0.8983358675829036</span>
+<p>For example, if you were interested on obtaining only the <code class="docutils literal notranslate"><span class="pre">CSTest</span></code>
+metric you can call the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function as follows:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">])</span>
+<span class="gh">Out[12]: </span><span class="go">0.9480265787384541</span>
 </pre></div>
 </div>
 <p>Or, if we want to see the scores separately:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">,</span> <span class="s1">&#39;KSTest&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[13]: </span><span class="go"></span>
-<span class="go">   metric                                     name  raw_score  normalized_score  min_value  max_value      goal error</span>
-<span class="go">0  CSTest                              Chi-Squared   0.902098          0.902098        0.0        1.0  MAXIMIZE  None</span>
-<span class="go">1  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.894574          0.894574        0.0        1.0  MAXIMIZE  None</span>
+<span class="go">   metric         name  raw_score  normalized_score  min_value  max_value      goal error</span>
+<span class="go">0  CSTest  Chi-Squared   0.948027          0.948027        0.0        1.0  MAXIMIZE  None</span>
 </pre></div>
 </div>
 <p>For more details about all the metrics that exist for the different data modalities

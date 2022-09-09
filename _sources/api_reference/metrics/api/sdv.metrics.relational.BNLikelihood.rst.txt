@@ -15,6 +15,7 @@
    
       ~BNLikelihood.__init__
       ~BNLikelihood.compute
+      ~BNLikelihood.compute_breakdown
       ~BNLikelihood.get_subclasses
       ~BNLikelihood.normalize
    

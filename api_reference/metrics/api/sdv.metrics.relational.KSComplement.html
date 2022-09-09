@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metrics.relational.KSTestExtended.get_subclasses &#8212; SDV 0.16.0 documentation</title>
+    <title>sdv.metrics.relational.KSComplement &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -42,8 +42,8 @@
     <link rel="shortcut icon" href="../../../_static/SDV.ico"/>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="sdv.metrics.relational.KSTestExtended.compute" href="sdv.metrics.relational.KSTestExtended.compute.html" />
-    <link rel="prev" title="sdv.metrics.relational.KSTestExtended" href="sdv.metrics.relational.KSTestExtended.html" />
+    <link rel="next" title="sdv.metrics.relational.KSComplement.get_subclasses" href="sdv.metrics.relational.KSComplement.get_subclasses.html" />
+    <link rel="prev" title="sdv.metrics.relational.CSTest.compute" href="sdv.metrics.relational.CSTest.compute.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
   </head>
@@ -254,28 +254,16 @@
                                         <a href="sdv.metrics.relational.CSTest.compute.html">sdv.metrics.relational.CSTest.compute</a>
                                     </li>
                                 
-                                    <li class="">
-                                        <a href="sdv.metrics.relational.KSTest.html">sdv.metrics.relational.KSTest</a>
-                                    </li>
-                                
-                                    <li class="">
-                                        <a href="sdv.metrics.relational.KSTest.get_subclasses.html">sdv.metrics.relational.KSTest.get_subclasses</a>
-                                    </li>
-                                
-                                    <li class="">
-                                        <a href="sdv.metrics.relational.KSTest.compute.html">sdv.metrics.relational.KSTest.compute</a>
-                                    </li>
-                                
-                                    <li class="">
-                                        <a href="sdv.metrics.relational.KSTestExtended.html">sdv.metrics.relational.KSTestExtended</a>
-                                    </li>
-                                
                                     <li class="active">
-                                        <a href="">sdv.metrics.relational.KSTestExtended.get_subclasses</a>
+                                        <a href="">sdv.metrics.relational.KSComplement</a>
                                     </li>
                                 
                                     <li class="">
-                                        <a href="sdv.metrics.relational.KSTestExtended.compute.html">sdv.metrics.relational.KSTestExtended.compute</a>
+                                        <a href="sdv.metrics.relational.KSComplement.get_subclasses.html">sdv.metrics.relational.KSComplement.get_subclasses</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.metrics.relational.KSComplement.compute.html">sdv.metrics.relational.KSComplement.compute</a>
                                     </li>
                                 
                                     <li class="">
@@ -409,22 +397,63 @@
               
               <div>
                 
-  <div class="section" id="sdv-metrics-relational-kstestextended-get-subclasses">
-<h1>sdv.metrics.relational.KSTestExtended.get_subclasses<a class="headerlink" href="#sdv-metrics-relational-kstestextended-get-subclasses" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="sdv-metrics-relational-kscomplement">
+<h1>sdv.metrics.relational.KSComplement<a class="headerlink" href="#sdv-metrics-relational-kscomplement" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="sdv.metrics.relational.KSComplement">
+<em class="property">class </em><code class="sig-prename descclassname">sdv.metrics.relational.</code><code class="sig-name descname">KSComplement</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">single_table_metric</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdmetrics/multi_table/multi_single_table.html#KSComplement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metrics.relational.KSComplement" title="Permalink to this definition">¶</a></dt>
+<dd><p>MultiSingleTableMetric based on SingleTable KSComplement.</p>
 <dl class="py method">
-<dt id="sdv.metrics.relational.KSTestExtended.get_subclasses">
-<em class="property">classmethod </em><code class="sig-prename descclassname">KSTestExtended.</code><code class="sig-name descname">get_subclasses</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">include_parents</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.metrics.relational.KSTestExtended.get_subclasses" title="Permalink to this definition">¶</a></dt>
-<dd><p>Recursively find subclasses of this metric.</p>
-<p>If <code class="docutils literal notranslate"><span class="pre">include_parents</span></code> is passed as <code class="docutils literal notranslate"><span class="pre">True</span></code>, intermediate child classes
-that also have subclasses will be included. Otherwise, only classes
-without subclasses will be included to ensure that they are final
-implementations and are ready to be run on data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>include_parents</strong> (<em>bool</em>) – Whether to include subclasses which are parents to
-other classes. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
-</dd>
-</dl>
+<dt id="sdv.metrics.relational.KSComplement.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">single_table_metric</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.metrics.relational.KSComplement.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metrics.relational.KSComplement.__init__" title="sdv.metrics.relational.KSComplement.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(single_table_metric)</p></td>
+<td><p>Initialize self.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.metrics.relational.KSComplement.compute.html#sdv.metrics.relational.KSComplement.compute" title="sdv.metrics.relational.KSComplement.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute</span></code></a>(real_data, synthetic_data[, metadata])</p></td>
+<td><p>Compute this metric.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_breakdown</span></code>(real_data, synthetic_data)</p></td>
+<td><p>Compute this metric broken down by tables and columns.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.metrics.relational.KSComplement.get_subclasses.html#sdv.metrics.relational.KSComplement.get_subclasses" title="sdv.metrics.relational.KSComplement.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_subclasses</span></code></a>([include_parents])</p></td>
+<td><p>Recursively find subclasses of this metric.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code>(raw_score)</p></td>
+<td><p>Return the <cite>raw_score</cite> as is, since it is already normalized.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">goal</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">max_value</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">min_value</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -435,8 +464,8 @@ other classes. Defaults to <code class="docutils literal notranslate"><span clas
               
               <div class='prev-next-bottom'>
                 
-    <a class='left-prev' id="prev-link" href="sdv.metrics.relational.KSTestExtended.html" title="previous page">sdv.metrics.relational.KSTestExtended</a>
-    <a class='right-next' id="next-link" href="sdv.metrics.relational.KSTestExtended.compute.html" title="next page">sdv.metrics.relational.KSTestExtended.compute</a>
+    <a class='left-prev' id="prev-link" href="sdv.metrics.relational.CSTest.compute.html" title="previous page">sdv.metrics.relational.CSTest.compute</a>
+    <a class='right-next' id="next-link" href="sdv.metrics.relational.KSComplement.get_subclasses.html" title="next page">sdv.metrics.relational.KSComplement.get_subclasses</a>
 
               </div>
               

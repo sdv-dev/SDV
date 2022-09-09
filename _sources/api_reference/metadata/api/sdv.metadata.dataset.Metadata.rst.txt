@@ -28,11 +28,9 @@
       ~Metadata.get_tables
       ~Metadata.load_table
       ~Metadata.load_tables
-      ~Metadata.reverse_transform
       ~Metadata.set_primary_key
       ~Metadata.to_dict
       ~Metadata.to_json
-      ~Metadata.transform
       ~Metadata.validate
       ~Metadata.visualize
    

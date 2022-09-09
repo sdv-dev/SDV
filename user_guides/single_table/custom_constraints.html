@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Custom Constraints &#8212; SDV 0.16.0 documentation</title>
+    <title>Custom Constraints &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -297,18 +297,18 @@ This includes:</p>
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
 <span class="go">     company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0       Pear          Sales            1   30               24                     6   92500.00      22000.00                       2        1.0        0.0         0.0</span>
-<span class="go">1       Pear         Design            5   47               44                     3   55272.18      10663.06                       4        0.0        0.0         1.0</span>
-<span class="go">2    Glasses             AI            1   40               35                     5   67500.00      17000.00                       2        1.0        0.0         0.0</span>
-<span class="go">3    Glasses  Search Engine            7   30               27                     3  109454.26       8614.26                       4        0.0        0.0         1.0</span>
-<span class="go">4   Cheerper        BigData            6   47               43                     4  159000.00      23500.00                       5        0.0        1.0         0.0</span>
-<span class="go">5   Cheerper        Support           11   37               33                     4   76500.00       6000.00                       5        0.0        1.0         0.0</span>
-<span class="go">6       Pear          Sales           28   42               36                     6   69000.00      18500.00                       1        1.0        0.0         0.0</span>
-<span class="go">7       Pear         Design           75   31               26                     5   30743.95       8660.86                       2        0.0        0.0         1.0</span>
-<span class="go">8    Glasses             AI           33   40               32                     8   93500.00      16000.00                       3        1.0        0.0         0.0</span>
-<span class="go">9    Glasses  Search Engine           56   36               35                     1   66558.44      20027.26                       2        0.0        0.0         1.0</span>
-<span class="go">10  Cheerper        BigData           42   46               38                     8   60500.00      24000.00                       5        0.0        1.0         0.0</span>
-<span class="go">11  Cheerper        Support           80   39               33                     6  153500.00      10500.00                       1        0.0        1.0         0.0</span>
+<span class="go">0       Pear          Sales            1   41               40                     1  102500.00      18000.00                       5        1.0        0.0         0.0</span>
+<span class="go">1       Pear         Design            5   42               39                     3  147195.32      16251.45                       2        0.0        0.0         1.0</span>
+<span class="go">2    Glasses             AI            1   32               31                     1  124000.00      19000.00                       1        1.0        0.0         0.0</span>
+<span class="go">3    Glasses  Search Engine            7   38               32                     6  152301.26      21965.28                       3        0.0        0.0         1.0</span>
+<span class="go">4   Cheerper        BigData            6   37               33                     4  137000.00      20000.00                       4        0.0        1.0         0.0</span>
+<span class="go">5   Cheerper        Support           11   33               24                     9   96500.00      12500.00                       1        0.0        1.0         0.0</span>
+<span class="go">6       Pear          Sales           28   46               45                     1   79000.00      22500.00                       1        1.0        0.0         0.0</span>
+<span class="go">7       Pear         Design           75   46               39                     7  105867.55      15093.36                       2        0.0        0.0         1.0</span>
+<span class="go">8    Glasses             AI           33   31               22                     9   32500.00      15500.00                       1        1.0        0.0         0.0</span>
+<span class="go">9    Glasses  Search Engine           56   45               41                     4  131244.80      11867.00                       3        0.0        0.0         1.0</span>
+<span class="go">10  Cheerper        BigData           42   48               42                     6   90000.00       6000.00                       3        0.0        1.0         0.0</span>
+<span class="go">11  Cheerper        Support           80   47               42                     5   99500.00      13000.00                       1        0.0        1.0         0.0</span>
 </pre></div>
 </div>
 <p>The dataset contains basic details about employees in some fictional companies. Many of the rules
@@ -368,7 +368,7 @@ salaries won’t necessarily be divisible by 500. Instead we should:</p>
     <span class="n">column_name</span> <span class="o">=</span> <span class="n">column_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="n">is_included</span> <span class="o">=</span> <span class="p">(</span><span class="n">transformed_data</span><span class="p">[</span><span class="n">exclusion_column</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="n">rounded_data</span> <span class="o">=</span> <span class="n">transformed_data</span><span class="p">[</span><span class="n">is_included</span><span class="p">][</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">rounded_data</span> <span class="o">=</span> <span class="n">transformed_data</span><span class="p">[</span><span class="n">is_included</span><span class="p">][</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">()</span>
     <span class="n">transformed_data</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">is_included</span><span class="p">,</span> <span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">rounded_data</span>
 
     <span class="n">transformed_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">*=</span> <span class="n">increment</span>
@@ -427,7 +427,7 @@ would for predefined constraints.</p>
 <span class="gp">   ...: </span><span class="p">]</span>
 <span class="gp">   ...: </span>
 
-<span class="gp">In [10]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="gp">In [10]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">enforce_min_max_values</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <span class="gp">In [11]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">employees</span><span class="p">)</span>
 </pre></div>
@@ -439,16 +439,16 @@ constraint.</p>
 <span class="gp">In [13]: </span><span class="n">synthetic_data</span>
 <span class="gh">Out[13]: </span><span class="go"></span>
 <span class="go">    company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0  Cheerper        BigData           11   45               40                     3   74575.65      19814.43                       5        0.0        1.0         1.0</span>
-<span class="go">1   Glasses             AI           21   42               39                     4  147192.93      19598.30                       4        1.0        0.0         1.0</span>
-<span class="go">2   Glasses        BigData           78   39               39                     6   60861.16      12088.23                       1        0.0        1.0         1.0</span>
-<span class="go">3   Glasses             AI           13   32               26                     2   82059.90      15814.22                       3        0.0        0.0         1.0</span>
-<span class="go">4   Glasses             AI           27   31               25                     1   96187.49       6393.85                       1        1.0        0.0         1.0</span>
-<span class="go">5   Glasses        BigData           53   43               42                     5   99031.69      13639.29                       3        0.0        0.0         1.0</span>
-<span class="go">6      Pear             AI           24   34               30                     6   41603.28      17695.37                       3        1.0        0.0         1.0</span>
-<span class="go">7   Glasses  Search Engine           35   35               36                     7   66247.75      18555.39                       3        1.0        0.0         1.0</span>
-<span class="go">8   Glasses             AI           11   30               25                     4   78590.14       6049.89                       3        1.0        0.0         1.0</span>
-<span class="go">9  Cheerper        BigData           44   41               38                     7   53353.86      11635.67                       4        0.0        0.0         1.0</span>
+<span class="go">0   Glasses  Search Engine           36   47               32                     6  132712.56       6276.27                       5        0.0        0.0         1.0</span>
+<span class="go">1   Glasses             AI            6   42               39                     3  144328.22      15838.65                       4        0.0        1.0         1.0</span>
+<span class="go">2  Cheerper        Support           78   37               31                     8   73278.89      11364.08                       1        0.0        1.0         1.0</span>
+<span class="go">3   Glasses  Search Engine           46   41               37                     6  101410.93      15566.31                       2        1.0        0.0         1.0</span>
+<span class="go">4      Pear         Design           27   43               34                     4  131933.09      13725.06                       4        0.0        0.0         1.0</span>
+<span class="go">5   Glasses             AI           15   46               37                     5  107960.20       9245.96                       4        0.0        0.0         1.0</span>
+<span class="go">6      Pear          Sales           28   44               44                     2  105116.31      20323.45                       3        1.0        0.0         1.0</span>
+<span class="go">7   Glasses        BigData           49   42               36                     7  107819.78      14187.07                       2        0.0        0.0         1.0</span>
+<span class="go">8      Pear  Search Engine           62   46               45                     4  127360.90      20188.31                       1        0.0        0.0         1.0</span>
+<span class="go">9      Pear             AI           72   47               42                     4   79414.87       8868.24                       1        0.0        0.0         1.0</span>
 </pre></div>
 </div>
 </div>

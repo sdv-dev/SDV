@@ -15,6 +15,7 @@
    
       ~MultiSingleColumnMetric.__init__
       ~MultiSingleColumnMetric.compute
+      ~MultiSingleColumnMetric.compute_breakdown
       ~MultiSingleColumnMetric.get_subclasses
       ~MultiSingleColumnMetric.normalize
    

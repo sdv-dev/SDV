@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.detection.base &#8212; SDV 0.16.0 documentation</title>
+    <title>sdmetrics.single_table.detection.base &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -171,14 +171,13 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">rdt</span> <span class="kn">import</span> <span class="n">HyperTransformer</span>
-<span class="kn">from</span> <span class="nn">rdt.transformers</span> <span class="kn">import</span> <span class="n">OneHotEncodingTransformer</span>
 <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">roc_auc_score</span>
 <span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">StratifiedKFold</span>
 
 <span class="kn">from</span> <span class="nn">sdmetrics.errors</span> <span class="kn">import</span> <span class="n">IncomputableMetricError</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.goal</span> <span class="kn">import</span> <span class="n">Goal</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.base</span> <span class="kn">import</span> <span class="n">SingleTableMetric</span>
+<span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">HyperTransformer</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -235,14 +234,14 @@
 <span class="sd">                One minus the ROC AUC Cross Validation Score obtained by the classifier.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">metadata</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
-        <span class="n">transformer</span> <span class="o">=</span> <span class="n">HyperTransformer</span><span class="p">(</span><span class="n">default_data_type_transformers</span><span class="o">=</span><span class="p">{</span>
-            <span class="s1">&#39;categorical&#39;</span><span class="p">:</span> <span class="n">OneHotEncodingTransformer</span><span class="p">(</span><span class="n">error_on_unknown</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-        <span class="p">})</span>
-        <span class="n">real_data</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">real_data</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
-        <span class="n">synthetic_data</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">HyperTransformer</span><span class="p">()</span>
+        <span class="n">transformed_real_data</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">real_data</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="n">transformed_synthetic_data</span> <span class="o">=</span> <span class="n">ht</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
 
-        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">])</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">real_data</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">))])</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">transformed_real_data</span><span class="p">,</span> <span class="n">transformed_synthetic_data</span><span class="p">])</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">transformed_real_data</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">transformed_synthetic_data</span><span class="p">))</span>
+        <span class="p">])</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
             <span class="n">X</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">])]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
 

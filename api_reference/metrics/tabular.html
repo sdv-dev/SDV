@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metrics.tabular &#8212; SDV 0.16.0 documentation</title>
+    <title>sdv.metrics.tabular &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -256,27 +256,15 @@
                                     </li>
                                 
                                     <li class="">
-                                        <a href="api/sdv.metrics.tabular.KSTest.html">sdv.metrics.tabular.KSTest</a>
+                                        <a href="api/sdv.metrics.tabular.KSComplement.html">sdv.metrics.tabular.KSComplement</a>
                                     </li>
                                 
                                     <li class="">
-                                        <a href="api/sdv.metrics.tabular.KSTest.get_subclasses.html">sdv.metrics.tabular.KSTest.get_subclasses</a>
+                                        <a href="api/sdv.metrics.tabular.KSComplement.get_subclasses.html">sdv.metrics.tabular.KSComplement.get_subclasses</a>
                                     </li>
                                 
                                     <li class="">
-                                        <a href="api/sdv.metrics.tabular.KSTest.compute.html">sdv.metrics.tabular.KSTest.compute</a>
-                                    </li>
-                                
-                                    <li class="">
-                                        <a href="api/sdv.metrics.tabular.KSTestExtended.html">sdv.metrics.tabular.KSTestExtended</a>
-                                    </li>
-                                
-                                    <li class="">
-                                        <a href="api/sdv.metrics.tabular.KSTestExtended.get_subclasses.html">sdv.metrics.tabular.KSTestExtended.get_subclasses</a>
-                                    </li>
-                                
-                                    <li class="">
-                                        <a href="api/sdv.metrics.tabular.KSTestExtended.compute.html">sdv.metrics.tabular.KSTestExtended.compute</a>
+                                        <a href="api/sdv.metrics.tabular.KSComplement.compute.html">sdv.metrics.tabular.KSComplement.compute</a>
                                     </li>
                                 
                                     <li class="">
@@ -818,40 +806,31 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.CSTest.compute.html#sdv.metrics.tabular.CSTest.compute" title="sdv.metrics.tabular.CSTest.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CSTest.compute</span></code></a>(real_data, synthetic_data[, …])</p></td>
 <td><p>Compute this metric.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.KSTest.html#sdv.metrics.tabular.KSTest" title="sdv.metrics.tabular.KSTest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KSTest</span></code></a>([single_column_metric])</p></td>
-<td><p>MultiSingleColumnMetric based on SingleColumn KSTest.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.KSComplement.html#sdv.metrics.tabular.KSComplement" title="sdv.metrics.tabular.KSComplement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KSComplement</span></code></a>([single_column_metric])</p></td>
+<td><p>MultiSingleColumnMetric based on SingleColumn KSComplement.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.KSTest.get_subclasses.html#sdv.metrics.tabular.KSTest.get_subclasses" title="sdv.metrics.tabular.KSTest.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KSTest.get_subclasses</span></code></a>([include_parents])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.KSComplement.get_subclasses.html#sdv.metrics.tabular.KSComplement.get_subclasses" title="sdv.metrics.tabular.KSComplement.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KSComplement.get_subclasses</span></code></a>([include_parents])</p></td>
 <td><p>Recursively find subclasses of this metric.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.KSTest.compute.html#sdv.metrics.tabular.KSTest.compute" title="sdv.metrics.tabular.KSTest.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KSTest.compute</span></code></a>(real_data, synthetic_data[, …])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.KSComplement.compute.html#sdv.metrics.tabular.KSComplement.compute" title="sdv.metrics.tabular.KSComplement.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KSComplement.compute</span></code></a>(real_data, synthetic_data)</p></td>
 <td><p>Compute this metric.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.KSTestExtended.html#sdv.metrics.tabular.KSTestExtended" title="sdv.metrics.tabular.KSTestExtended"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KSTestExtended</span></code></a>([single_column_metric])</p></td>
-<td><p>KSTest variation that transforms everything to numerical before comparing the tables.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.KSTestExtended.get_subclasses.html#sdv.metrics.tabular.KSTestExtended.get_subclasses" title="sdv.metrics.tabular.KSTestExtended.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KSTestExtended.get_subclasses</span></code></a>([include_parents])</p></td>
-<td><p>Recursively find subclasses of this metric.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.KSTestExtended.compute.html#sdv.metrics.tabular.KSTestExtended.compute" title="sdv.metrics.tabular.KSTestExtended.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KSTestExtended.compute</span></code></a>(real_data, synthetic_data)</p></td>
-<td><p>Compute this metric.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.ContinuousKLDivergence.html#sdv.metrics.tabular.ContinuousKLDivergence" title="sdv.metrics.tabular.ContinuousKLDivergence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ContinuousKLDivergence</span></code></a>(column_pairs_metric, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.ContinuousKLDivergence.html#sdv.metrics.tabular.ContinuousKLDivergence" title="sdv.metrics.tabular.ContinuousKLDivergence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ContinuousKLDivergence</span></code></a>(column_pairs_metric, …)</p></td>
 <td><p>MultiColumnPairsMetric based on ColumnPairs ContinuousKLDivergence.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.ContinuousKLDivergence.get_subclasses.html#sdv.metrics.tabular.ContinuousKLDivergence.get_subclasses" title="sdv.metrics.tabular.ContinuousKLDivergence.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ContinuousKLDivergence.get_subclasses</span></code></a>([…])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.ContinuousKLDivergence.get_subclasses.html#sdv.metrics.tabular.ContinuousKLDivergence.get_subclasses" title="sdv.metrics.tabular.ContinuousKLDivergence.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ContinuousKLDivergence.get_subclasses</span></code></a>([…])</p></td>
 <td><p>Recursively find subclasses of this metric.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.ContinuousKLDivergence.compute.html#sdv.metrics.tabular.ContinuousKLDivergence.compute" title="sdv.metrics.tabular.ContinuousKLDivergence.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ContinuousKLDivergence.compute</span></code></a>(real_data, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.ContinuousKLDivergence.compute.html#sdv.metrics.tabular.ContinuousKLDivergence.compute" title="sdv.metrics.tabular.ContinuousKLDivergence.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ContinuousKLDivergence.compute</span></code></a>(real_data, …)</p></td>
 <td><p>Compute this metric.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.DiscreteKLDivergence.html#sdv.metrics.tabular.DiscreteKLDivergence" title="sdv.metrics.tabular.DiscreteKLDivergence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteKLDivergence</span></code></a>(column_pairs_metric, …)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.DiscreteKLDivergence.html#sdv.metrics.tabular.DiscreteKLDivergence" title="sdv.metrics.tabular.DiscreteKLDivergence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteKLDivergence</span></code></a>(column_pairs_metric, …)</p></td>
 <td><p>MultiColumnPairsMetric based on ColumnPairs DiscreteKLDivergence.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.DiscreteKLDivergence.get_subclasses.html#sdv.metrics.tabular.DiscreteKLDivergence.get_subclasses" title="sdv.metrics.tabular.DiscreteKLDivergence.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteKLDivergence.get_subclasses</span></code></a>([…])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.DiscreteKLDivergence.get_subclasses.html#sdv.metrics.tabular.DiscreteKLDivergence.get_subclasses" title="sdv.metrics.tabular.DiscreteKLDivergence.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteKLDivergence.get_subclasses</span></code></a>([…])</p></td>
 <td><p>Recursively find subclasses of this metric.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.DiscreteKLDivergence.compute.html#sdv.metrics.tabular.DiscreteKLDivergence.compute" title="sdv.metrics.tabular.DiscreteKLDivergence.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteKLDivergence.compute</span></code></a>(real_data, …)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/sdv.metrics.tabular.DiscreteKLDivergence.compute.html#sdv.metrics.tabular.DiscreteKLDivergence.compute" title="sdv.metrics.tabular.DiscreteKLDivergence.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiscreteKLDivergence.compute</span></code></a>(real_data, …)</p></td>
 <td><p>Compute this metric.</p></td>
 </tr>
 </tbody>

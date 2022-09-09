@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.relational.hma.HMA1 &#8212; SDV 0.16.0 documentation</title>
+    <title>sdv.relational.hma.HMA1 &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -284,7 +284,7 @@ metadata is a dict, the current working directory is used.</p></li>
 <li><p><strong>model</strong> (<em>type</em>) – Class of the <code class="docutils literal notranslate"><span class="pre">copula</span></code> to use. Defaults to
 <code class="docutils literal notranslate"><span class="pre">sdv.models.copulas.GaussianCopula</span></code>.</p></li>
 <li><p><strong>model_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to the model. If the default model is used, this
-defaults to using a <code class="docutils literal notranslate"><span class="pre">gaussian</span></code> distribution and a <code class="docutils literal notranslate"><span class="pre">categorical_fuzzy</span></code>
+defaults to using a <code class="docutils literal notranslate"><span class="pre">gaussian</span></code> distribution and a <code class="docutils literal notranslate"><span class="pre">FrequencyEncoder_noised</span></code>
 transformer.</p></li>
 </ul>
 </dd>
@@ -315,7 +315,7 @@ transformer.</p></li>
 <td><p>Generate synthetic data for one table or the entire dataset.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sdv.relational.hma.HMA1.save.html#sdv.relational.hma.HMA1.save" title="sdv.relational.hma.HMA1.save"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save</span></code></a>(path)</p></td>
-<td><p>Save this instance to the given path using pickle.</p></td>
+<td><p>Save this instance to the given path using cloudpickle.</p></td>
 </tr>
 </tbody>
 </table>

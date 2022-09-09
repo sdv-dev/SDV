@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.timeseries.efficacy.base &#8212; SDV 0.16.0 documentation</title>
+    <title>sdmetrics.timeseries.efficacy.base &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -170,11 +170,11 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">rdt</span>
 <span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
 
 <span class="kn">from</span> <span class="nn">sdmetrics.goal</span> <span class="kn">import</span> <span class="n">Goal</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.timeseries.base</span> <span class="kn">import</span> <span class="n">TimeSeriesMetric</span>
+<span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">HyperTransformer</span>
 
 
 <div class="viewcode-block" id="TimeSeriesEfficacyMetric"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.timeseries.TimeSeriesEfficacyMetric.html#sdv.metrics.timeseries.TimeSeriesEfficacyMetric">[docs]</a><span class="k">class</span> <span class="nc">TimeSeriesEfficacyMetric</span><span class="p">(</span><span class="n">TimeSeriesMetric</span><span class="p">):</span>
@@ -214,13 +214,13 @@
         <span class="k">return</span> <span class="n">entity_columns</span><span class="p">,</span> <span class="n">target</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_build_xy</span><span class="p">(</span><span class="n">transformer</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">entity_columns</span><span class="p">,</span> <span class="n">target_column</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_build_xy</span><span class="p">(</span><span class="n">hypertransformer</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">entity_columns</span><span class="p">,</span> <span class="n">target_column</span><span class="p">):</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">entity_columns</span><span class="p">):</span>
             <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">({</span><span class="n">entity_id</span><span class="p">:</span> <span class="n">group</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">target_column</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]}))</span>
             <span class="n">entity_data</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">entity_columns</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">entity_data</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">entity_data</span><span class="p">)</span>
+            <span class="n">entity_data</span> <span class="o">=</span> <span class="n">hypertransformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">entity_data</span><span class="p">)</span>
             <span class="n">entity_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">({</span>
                 <span class="n">column</span><span class="p">:</span> <span class="n">entity_data</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">entity_data</span><span class="o">.</span><span class="n">columns</span>
@@ -231,14 +231,11 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_compute_score</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">entity_columns</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
-        <span class="n">transformer</span> <span class="o">=</span> <span class="n">rdt</span><span class="o">.</span><span class="n">HyperTransformer</span><span class="p">(</span><span class="n">default_data_type_transformers</span><span class="o">=</span><span class="p">{</span>
-            <span class="s1">&#39;categorical&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">OneHotEncodingTransformer</span><span class="p">(</span><span class="n">error_on_unknown</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-            <span class="s1">&#39;datetime&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">DatetimeTransformer</span><span class="p">(</span><span class="n">strip_constant</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-        <span class="p">})</span>
-        <span class="n">transformer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">real_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">entity_columns</span> <span class="o">+</span> <span class="p">[</span><span class="n">target</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">ht</span> <span class="o">=</span> <span class="n">HyperTransformer</span><span class="p">()</span>
+        <span class="n">ht</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">real_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">entity_columns</span> <span class="o">+</span> <span class="p">[</span><span class="n">target</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 
-        <span class="n">real_x</span><span class="p">,</span> <span class="n">real_y</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_build_xy</span><span class="p">(</span><span class="n">transformer</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">entity_columns</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-        <span class="n">synt_x</span><span class="p">,</span> <span class="n">synt_y</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_build_xy</span><span class="p">(</span><span class="n">transformer</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">entity_columns</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="n">real_x</span><span class="p">,</span> <span class="n">real_y</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_build_xy</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">entity_columns</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="n">synt_x</span><span class="p">,</span> <span class="n">synt_y</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_build_xy</span><span class="p">(</span><span class="n">ht</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">entity_columns</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
 
         <span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">real_x</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">real_x_train</span><span class="p">,</span> <span class="n">real_x_test</span> <span class="o">=</span> <span class="n">real_x</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">train</span><span class="p">],</span> <span class="n">real_x</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">test</span><span class="p">]</span>

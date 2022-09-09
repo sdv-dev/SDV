@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.base &#8212; SDV 0.16.0 documentation</title>
+    <title>sdv.tabular.base &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -172,11 +172,11 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">pickle</span>
 <span class="kn">import</span> <span class="nn">uuid</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 
+<span class="kn">import</span> <span class="nn">cloudpickle</span>
 <span class="kn">import</span> <span class="nn">copulas</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -219,14 +219,14 @@
 <span class="sd">            Dictinary specifying which transformers to use for each field.</span>
 <span class="sd">            Available transformers are:</span>
 
-<span class="sd">                * ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.</span>
-<span class="sd">                * ``float``: Uses a ``NumericalTransformer`` of dtype ``float``.</span>
-<span class="sd">                * ``categorical``: Uses a ``CategoricalTransformer`` without gaussian noise.</span>
-<span class="sd">                * ``categorical_fuzzy``: Uses a ``CategoricalTransformer`` adding gaussian noise.</span>
-<span class="sd">                * ``one_hot_encoding``: Uses a ``OneHotEncodingTransformer``.</span>
-<span class="sd">                * ``label_encoding``: Uses a ``LabelEncodingTransformer``.</span>
-<span class="sd">                * ``boolean``: Uses a ``BooleanTransformer``.</span>
-<span class="sd">                * ``datetime``: Uses a ``DatetimeTransformer``.</span>
+<span class="sd">                * ``FloatFormatter``: Uses a ``FloatFormatter`` for numerical data.</span>
+<span class="sd">                * ``FrequencyEncoder``: Uses a ``FrequencyEncoder`` without gaussian noise.</span>
+<span class="sd">                * ``FrequencyEncoder_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.</span>
+<span class="sd">                * ``OneHotEncoder``: Uses a ``OneHotEncoder``.</span>
+<span class="sd">                * ``LabelEncoder``: Uses a ``LabelEncoder`` without gaussian nose.</span>
+<span class="sd">                * ``LabelEncoder_noised``: Uses a ``LabelEncoder`` adding gaussian noise.</span>
+<span class="sd">                * ``BinaryEncoder``: Uses a ``BinaryEncoder``.</span>
+<span class="sd">                * ``UnixTimestampEncoder``: Uses a ``UnixTimestampEncoder``.</span>
 
 <span class="sd">        anonymize_fields (dict[str, str]):</span>
 <span class="sd">            Dict specifying which fields to anonymize and what faker</span>
@@ -241,21 +241,13 @@
 <span class="sd">            exception will be raised.</span>
 <span class="sd">            If not given at all, it will be built using the other</span>
 <span class="sd">            arguments or learned from the data.</span>
-<span class="sd">        rounding (int, str or None):</span>
-<span class="sd">            Define rounding scheme for ``NumericalTransformer``. If set to an int, values</span>
-<span class="sd">            will be rounded to that number of decimal places. If ``None``, values will not</span>
-<span class="sd">            be rounded. If set to ``&#39;auto&#39;``, the transformer will round to the maximum number</span>
-<span class="sd">            of decimal places detected in the fitted data. Defaults to ``&#39;auto&#39;``.</span>
-<span class="sd">        min_value (int, str or None):</span>
-<span class="sd">            Specify the minimum value the ``NumericalTransformer`` should use. If an integer</span>
-<span class="sd">            is given, sampled data will be greater than or equal to it. If the string ``&#39;auto&#39;``</span>
-<span class="sd">            is given, the minimum will be the minimum value seen in the fitted data. If ``None``</span>
-<span class="sd">            is given, there won&#39;t be a minimum. Defaults to ``&#39;auto&#39;``.</span>
-<span class="sd">        max_value (int, str or None):</span>
-<span class="sd">            Specify the maximum value the ``NumericalTransformer`` should use. If an integer</span>
-<span class="sd">            is given, sampled data will be less than or equal to it. If the string ``&#39;auto&#39;``</span>
-<span class="sd">            is given, the maximum will be the maximum value seen in the fitted data. If ``None``</span>
-<span class="sd">            is given, there won&#39;t be a maximum. Defaults to ``&#39;auto&#39;``.</span>
+<span class="sd">        learn_rounding_scheme (bool):</span>
+<span class="sd">            Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by</span>
+<span class="sd">            ``reverse_transform`` will be rounded to that place. Defaults to ``True``.</span>
+<span class="sd">        enforce_min_max_values (bool):</span>
+<span class="sd">            Specify whether or not to clip the data returned by ``reverse_transform`` of</span>
+<span class="sd">            the numerical transformer, ``FloatFormatter``, to the min and max values seen</span>
+<span class="sd">            during ``fit``. Defaults to ``True``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_DTYPE_TRANSFORMERS</span> <span class="o">=</span> <span class="kc">None</span>
@@ -264,7 +256,7 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">rounding</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">):</span>
+                 <span class="n">learn_rounding_scheme</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">enforce_min_max_values</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">table_metadata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span>
                 <span class="n">field_names</span><span class="o">=</span><span class="n">field_names</span><span class="p">,</span>
@@ -274,9 +266,8 @@
                 <span class="n">anonymize_fields</span><span class="o">=</span><span class="n">anonymize_fields</span><span class="p">,</span>
                 <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
                 <span class="n">dtype_transformers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_DTYPE_TRANSFORMERS</span><span class="p">,</span>
-                <span class="n">rounding</span><span class="o">=</span><span class="n">rounding</span><span class="p">,</span>
-                <span class="n">min_value</span><span class="o">=</span><span class="n">min_value</span><span class="p">,</span>
-                <span class="n">max_value</span><span class="o">=</span><span class="n">max_value</span>
+                <span class="n">learn_rounding_scheme</span><span class="o">=</span><span class="n">learn_rounding_scheme</span><span class="p">,</span>
+                <span class="n">enforce_min_max_values</span><span class="o">=</span><span class="n">enforce_min_max_values</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_fitted</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">else</span><span class="p">:</span>
@@ -784,11 +775,13 @@
             <span class="k">except</span> <span class="n">ConstraintsNotMetError</span> <span class="k">as</span> <span class="n">cnme</span><span class="p">:</span>
                 <span class="n">cnme</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;Provided conditions are not valid for the given constraints&#39;</span>
                 <span class="k">raise</span>
+
             <span class="n">transformed_conditions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
                 <span class="p">[</span><span class="n">transformed_condition</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataframe</span><span class="p">),</span>
                 <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span>
             <span class="p">)</span>
             <span class="n">transformed_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">transformed_conditions</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+            <span class="n">transformed_conditions</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">index</span>
             <span class="n">transformed_conditions</span><span class="p">[</span><span class="n">COND_IDX</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">COND_IDX</span><span class="p">]</span>
 
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">transformed_columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -1039,7 +1032,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_set_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Save this model instance to the given path using pickle.</span>
+        <span class="sd">&quot;&quot;&quot;Save this model instance to the given path using cloudpickle.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path (str):</span>
@@ -1048,7 +1041,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_package_versions</span> <span class="o">=</span> <span class="n">get_package_versions</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_model&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">output</span><span class="p">:</span>
-            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+            <span class="n">cloudpickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
@@ -1063,7 +1056,7 @@
 <span class="sd">                The loaded tabular model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">model</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">cloudpickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">throw_version_mismatch_warning</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;_package_versions&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 
             <span class="k">return</span> <span class="n">model</span>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metrics.tabular.MultiSingleColumnMetric &#8212; SDV 0.16.0 documentation</title>
+    <title>sdv.metrics.tabular.MultiSingleColumnMetric &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -256,27 +256,15 @@
                                     </li>
                                 
                                     <li class="">
-                                        <a href="sdv.metrics.tabular.KSTest.html">sdv.metrics.tabular.KSTest</a>
+                                        <a href="sdv.metrics.tabular.KSComplement.html">sdv.metrics.tabular.KSComplement</a>
                                     </li>
                                 
                                     <li class="">
-                                        <a href="sdv.metrics.tabular.KSTest.get_subclasses.html">sdv.metrics.tabular.KSTest.get_subclasses</a>
+                                        <a href="sdv.metrics.tabular.KSComplement.get_subclasses.html">sdv.metrics.tabular.KSComplement.get_subclasses</a>
                                     </li>
                                 
                                     <li class="">
-                                        <a href="sdv.metrics.tabular.KSTest.compute.html">sdv.metrics.tabular.KSTest.compute</a>
-                                    </li>
-                                
-                                    <li class="">
-                                        <a href="sdv.metrics.tabular.KSTestExtended.html">sdv.metrics.tabular.KSTestExtended</a>
-                                    </li>
-                                
-                                    <li class="">
-                                        <a href="sdv.metrics.tabular.KSTestExtended.get_subclasses.html">sdv.metrics.tabular.KSTestExtended.get_subclasses</a>
-                                    </li>
-                                
-                                    <li class="">
-                                        <a href="sdv.metrics.tabular.KSTestExtended.compute.html">sdv.metrics.tabular.KSTestExtended.compute</a>
+                                        <a href="sdv.metrics.tabular.KSComplement.compute.html">sdv.metrics.tabular.KSComplement.compute</a>
                                     </li>
                                 
                                     <li class="">
@@ -812,10 +800,13 @@ metric as an argument.</p>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute</span></code>(real_data, synthetic_data[, metadata])</p></td>
 <td><p>Compute this metric.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sdv.metrics.tabular.MultiSingleColumnMetric.get_subclasses.html#sdv.metrics.tabular.MultiSingleColumnMetric.get_subclasses" title="sdv.metrics.tabular.MultiSingleColumnMetric.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_subclasses</span></code></a>([include_parents])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_breakdown</span></code>(real_data, synthetic_data)</p></td>
+<td><p>Compute this metric broken down by column.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.metrics.tabular.MultiSingleColumnMetric.get_subclasses.html#sdv.metrics.tabular.MultiSingleColumnMetric.get_subclasses" title="sdv.metrics.tabular.MultiSingleColumnMetric.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_subclasses</span></code></a>([include_parents])</p></td>
 <td><p>Recursively find subclasses of this metric.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code>(raw_score)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code>(raw_score)</p></td>
 <td><p>Return the <cite>raw_score</cite> as is, since it is already normalized.</p></td>
 </tr>
 </tbody>

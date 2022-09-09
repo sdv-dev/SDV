@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.multi_table.multi_single_table &#8212; SDV 0.16.0 documentation</title>
+    <title>sdmetrics.multi_table.multi_single_table &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -235,22 +235,27 @@
         <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
 
-        <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">errors</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">real_table</span> <span class="ow">in</span> <span class="n">real_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">synthetic_table</span> <span class="o">=</span> <span class="n">synthetic_data</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span>
             <span class="n">table_meta</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">][</span><span class="n">table_name</span><span class="p">]</span>
 
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_table_metric</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_table</span><span class="p">,</span> <span class="n">synthetic_table</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">)</span>
-                <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
-            <span class="k">except</span> <span class="n">IncomputableMetricError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+                <span class="n">score_breakdown</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_table_metric</span><span class="o">.</span><span class="n">compute_breakdown</span><span class="p">(</span>
+                    <span class="n">real_table</span><span class="p">,</span> <span class="n">synthetic_table</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">)</span>
+                <span class="n">scores</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">score_breakdown</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_table_metric</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span>
+                    <span class="n">real_table</span><span class="p">,</span> <span class="n">synthetic_table</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">)</span>
+                <span class="n">scores</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">score</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
                 <span class="n">errors</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">error</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">values</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">scores</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">IncomputableMetricError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Encountered the following errors: </span><span class="si">{</span><span class="n">errors</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">scores</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -274,6 +279,39 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Union[float, tuple[float]]:</span>
 <span class="sd">                Metric output.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scores</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">result</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">table_scores</span> <span class="ow">in</span> <span class="n">scores</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">table_scores</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                <span class="k">if</span> <span class="s1">&#39;score&#39;</span> <span class="ow">in</span> <span class="n">result</span>
+            <span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compute_breakdown</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute this metric broken down by tables and columns.</span>
+
+<span class="sd">        This applies the underlying single table metric to all the tables</span>
+<span class="sd">        found in the dataset and then returns the breakdown of the obtained scores.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            real_data (dict[str, pandas.DataFrame]):</span>
+<span class="sd">                The tables from the real dataset.</span>
+<span class="sd">            synthetic_data (dict[str, pandas.DataFrame]):</span>
+<span class="sd">                The tables from the synthetic dataset.</span>
+<span class="sd">            metadata (dict):</span>
+<span class="sd">                Multi-table metadata dict. If not passed, it is build based on the</span>
+<span class="sd">                real_data fields and dtypes.</span>
+<span class="sd">            **kwargs:</span>
+<span class="sd">                Any additional keyword arguments will be passed down</span>
+<span class="sd">                to the single table metric</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[string -&gt; dict[string -&gt; Union[float, tuple[float]]]]:</span>
+<span class="sd">                A mapping of table name to column metric breakdowns.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -299,16 +337,52 @@
     <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">CSTest</span></div>
 
 
-<div class="viewcode-block" id="KSTest"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.KSTest.html#sdv.metrics.relational.KSTest">[docs]</a><span class="k">class</span> <span class="nc">KSTest</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable KSTest.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="KSComplement"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.KSComplement.html#sdv.metrics.relational.KSComplement">[docs]</a><span class="k">class</span> <span class="nc">KSComplement</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable KSComplement.&quot;&quot;&quot;</span>
 
-    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">KSTest</span></div>
+    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">KSComplement</span></div>
 
 
-<div class="viewcode-block" id="KSTestExtended"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.KSTestExtended.html#sdv.metrics.relational.KSTestExtended">[docs]</a><span class="k">class</span> <span class="nc">KSTestExtended</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable KSTestExtended.&quot;&quot;&quot;</span>
+<span class="k">class</span> <span class="nc">StatisticSimilarity</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable StatisticSimilarity.&quot;&quot;&quot;</span>
 
-    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">KSTestExtended</span></div>
+    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">StatisticSimilarity</span>
+
+
+<span class="k">class</span> <span class="nc">BoundaryAdherence</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable BoundaryAdherence.&quot;&quot;&quot;</span>
+
+    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">BoundaryAdherence</span>
+
+
+<span class="k">class</span> <span class="nc">MissingValueSimilarity</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable MissingValueSimilarity.&quot;&quot;&quot;</span>
+
+    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">MissingValueSimilarity</span>
+
+
+<span class="k">class</span> <span class="nc">CategoryCoverage</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable CategoryCoverage.&quot;&quot;&quot;</span>
+
+    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">CategoryCoverage</span>
+
+
+<span class="k">class</span> <span class="nc">TVComplement</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable TVComplement.&quot;&quot;&quot;</span>
+
+    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">TVComplement</span>
+
+
+<span class="k">class</span> <span class="nc">CorrelationSimilarity</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable CorrelationSimilarity.&quot;&quot;&quot;</span>
+
+    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_column_pairs</span><span class="o">.</span><span class="n">CorrelationSimilarity</span>
+
+
+<span class="k">class</span> <span class="nc">ContingencySimilarity</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable ContingencySimilarity.&quot;&quot;&quot;</span>
+
+    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_column_pairs</span><span class="o">.</span><span class="n">ContingencySimilarity</span>
 
 
 <div class="viewcode-block" id="LogisticDetection"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.LogisticDetection.html#sdv.metrics.relational.LogisticDetection">[docs]</a><span class="k">class</span> <span class="nc">LogisticDetection</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.evaluation &#8212; SDV 0.16.0 documentation</title>
+    <title>sdv.evaluation &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -179,6 +179,7 @@
 
 <span class="sd">    If ``metadata`` is an instance of dict create the ``Metadata`` object.</span>
 <span class="sd">    If ``metadata`` is ``None``, ``real_data`` has to be a ``pandas.DataFrane``.</span>
+<span class="sd">    If ``metadata`` is a dict, ``root_path`` must be passed.</span>
 
 <span class="sd">    If ``real_data`` is ``None`` load all the tables and assert that ``synthetic_data`` is</span>
 <span class="sd">    a ``dict``. Otherwise, ``real_data`` and ``synthetic_data`` must be of the same type.</span>
@@ -220,6 +221,10 @@
     <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">real_data</span><span class="p">)):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;`real_data` and `synthetic_data` must be of the same type&#39;</span><span class="p">)</span>
 
+    <span class="c1"># Get table name from metadata for single tables when table_name is not passed</span>
+    <span class="k">if</span> <span class="n">table_name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="n">synthetic_data</span> <span class="o">=</span> <span class="p">{</span><span class="n">table_name</span><span class="p">:</span> <span class="n">synthetic_data</span><span class="p">}</span>
 
@@ -248,6 +253,10 @@
         <span class="n">metric_classes</span> <span class="o">=</span> <span class="n">sdmetrics</span><span class="o">.</span><span class="n">single_table</span><span class="o">.</span><span class="n">SingleTableMetric</span><span class="o">.</span><span class="n">get_subclasses</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">metrics</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">metric_classes</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;KSComplement&#39;</span><span class="p">:</span> <span class="n">metric_classes</span><span class="p">[</span><span class="s1">&#39;KSComplement&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;CSTest&#39;</span><span class="p">:</span> <span class="n">metric_classes</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">],</span>
+        <span class="p">}</span>
         <span class="k">return</span> <span class="n">metric_classes</span><span class="p">,</span> <span class="n">modality</span>
 
     <span class="n">final_metrics</span> <span class="o">=</span> <span class="p">{}</span>
@@ -272,6 +281,7 @@
 <span class="sd">        real_data (dict[str, pandas.DataFrame] or pandas.DataFrame):</span>
 <span class="sd">            Map of names and tables of real data. When evaluating a single table,</span>
 <span class="sd">            a single ``pandas.DataFrame`` can be passed alone.</span>
+<span class="sd">            If metadata is None, this parameter must be a dataframe.</span>
 <span class="sd">        metadata (str, dict, Metadata or None):</span>
 <span class="sd">            Metadata instance or details needed to build it.</span>
 <span class="sd">        root_path (str):</span>

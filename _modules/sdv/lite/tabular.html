@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.lite.tabular &#8212; SDV 0.16.0 documentation</title>
+    <title>sdv.lite.tabular &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -169,10 +169,10 @@
 <span></span><span class="sd">&quot;&quot;&quot;Base class for tabular model presets.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">pickle</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 
+<span class="kn">import</span> <span class="nn">cloudpickle</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">rdt</span>
 
@@ -234,9 +234,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span>
                 <span class="n">table_metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
                 <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
-                <span class="n">categorical_transformer</span><span class="o">=</span><span class="s1">&#39;categorical_fuzzy&#39;</span><span class="p">,</span>
+                <span class="n">categorical_transformer</span><span class="o">=</span><span class="s1">&#39;FrequencyEncoder_noised&#39;</span><span class="p">,</span>
                 <span class="n">default_distribution</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span>
-                <span class="n">rounding</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">learn_rounding_scheme</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="p">)</span>
 
             <span class="c1"># Decide if transformers should model the null column or not.</span>
@@ -246,31 +246,27 @@
 
             <span class="c1"># If transformers should model the null column, pass None to let each transformer</span>
             <span class="c1"># decide if it&#39;s necessary or not.</span>
-            <span class="n">transformer_null_column</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_null_column</span> <span class="k">else</span> <span class="kc">False</span>
+            <span class="n">transformer_model_missing_values</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_null_column</span><span class="p">)</span>
 
             <span class="n">dtype_transformers</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">NumericalTransformer</span><span class="p">(</span>
-                    <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
-                    <span class="n">nan</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_null_column</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="n">null_column</span><span class="o">=</span><span class="n">transformer_null_column</span><span class="p">,</span>
-                    <span class="n">min_value</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
-                    <span class="n">max_value</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">FloatFormatter</span><span class="p">(</span>
+                    <span class="n">missing_value_replacement</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span>
+                    <span class="n">model_missing_values</span><span class="o">=</span><span class="n">transformer_model_missing_values</span><span class="p">,</span>
+                    <span class="n">enforce_min_max_values</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="p">),</span>
-                <span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">NumericalTransformer</span><span class="p">(</span>
-                    <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
-                    <span class="n">nan</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_null_column</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="n">null_column</span><span class="o">=</span><span class="n">transformer_null_column</span><span class="p">,</span>
-                    <span class="n">min_value</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
-                    <span class="n">max_value</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">FloatFormatter</span><span class="p">(</span>
+                    <span class="n">missing_value_replacement</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span>
+                    <span class="n">model_missing_values</span><span class="o">=</span><span class="n">transformer_model_missing_values</span><span class="p">,</span>
+                    <span class="n">enforce_min_max_values</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="p">),</span>
-                <span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">CategoricalTransformer</span><span class="p">(</span><span class="n">fuzzy</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-                <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">BooleanTransformer</span><span class="p">(</span>
-                    <span class="n">nan</span><span class="o">=-</span><span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_null_column</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="n">null_column</span><span class="o">=</span><span class="n">transformer_null_column</span><span class="p">,</span>
+                <span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">FrequencyEncoder</span><span class="p">(</span><span class="n">add_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">BinaryEncoder</span><span class="p">(</span>
+                    <span class="n">missing_value_replacement</span><span class="o">=-</span><span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_null_column</span> <span class="k">else</span> <span class="s1">&#39;mode&#39;</span><span class="p">,</span>
+                    <span class="n">model_missing_values</span><span class="o">=</span><span class="n">transformer_model_missing_values</span><span class="p">,</span>
                 <span class="p">),</span>
-                <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">DatetimeTransformer</span><span class="p">(</span>
-                    <span class="n">nan</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_null_column</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-                    <span class="n">null_column</span><span class="o">=</span><span class="n">transformer_null_column</span><span class="p">,</span>
+                <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="n">rdt</span><span class="o">.</span><span class="n">transformers</span><span class="o">.</span><span class="n">UnixTimestampEncoder</span><span class="p">(</span>
+                    <span class="n">missing_value_replacement</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_null_column</span> <span class="k">else</span> <span class="s1">&#39;mode&#39;</span><span class="p">,</span>
+                    <span class="n">model_missing_values</span><span class="o">=</span><span class="n">transformer_model_missing_values</span><span class="p">,</span>
                 <span class="p">),</span>
             <span class="p">}</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">_dtype_transformers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">dtype_transformers</span><span class="p">)</span></div>
@@ -405,7 +401,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_postprocess_sampled</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="TabularPreset.save"><a class="viewcode-back" href="../../../api_reference/lite/api/sdv.lite.tabular.TabularPreset.save.html#sdv.lite.tabular.TabularPreset.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Save this model instance to the given path using pickle.</span>
+        <span class="sd">&quot;&quot;&quot;Save this model instance to the given path using cloudpickle.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path (str):</span>
@@ -414,7 +410,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_package_versions</span> <span class="o">=</span> <span class="n">get_package_versions</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_model&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">output</span><span class="p">:</span>
-            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span></div>
+            <span class="n">cloudpickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="TabularPreset.load"><a class="viewcode-back" href="../../../api_reference/lite/api/sdv.lite.tabular.TabularPreset.load.html#sdv.lite.tabular.TabularPreset.load">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
@@ -429,7 +425,7 @@
 <span class="sd">                The loaded tabular model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">model</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">cloudpickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">throw_version_mismatch_warning</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;_package_versions&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 
             <span class="k">return</span> <span class="n">model</span></div>

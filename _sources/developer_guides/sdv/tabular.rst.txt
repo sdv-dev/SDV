@@ -58,8 +58,8 @@ A part from the previous steps, the ``BaseTabularModel`` also offers a couple of
 functionalities:
 
 * ``get_metadata``: Returns the Table metadata object that has been fitted to the data.
-* ``save``: Saves the complete Tabular Model in a file using ``pickle``.
-* ``load``: Loads a previously saved model from a ``pickle`` file.
+* ``save``: Saves the complete Tabular Model in a file using ``cloudpickle``.
+* ``load``: Loads a previously saved model from a ``cloudpickle`` file.
 
 Implementing a Tabular Model
 ----------------------------

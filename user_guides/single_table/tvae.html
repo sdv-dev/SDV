@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TVAE Model &#8212; SDV 0.16.0 documentation</title>
+    <title>TVAE Model &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -276,10 +276,6 @@
             <a href="#advanced-usage" class="nav-link">Advanced Usage</a><ul class="nav section-nav flex-column">
                 
         <li class="nav-item toc-entry toc-h3">
-            <a href="#setting-bounds-and-specifying-rounding-for-numerical-columns" class="nav-link">Setting Bounds and Specifying Rounding for Numerical Columns</a>
-        </li>
-    
-        <li class="nav-item toc-entry toc-h3">
             <a href="#how-to-modify-the-tvae-hyperparameters" class="nav-link">How to modify the TVAE Hyperparameters?</a>
         </li>
     
@@ -409,12 +405,12 @@ is a required parameter.</p>
 on, but filled with new data which resembles the original one.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
-<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">0       17287      M        72.84      65.42   Science        80.15   Comm&amp;Mgmt             True                 1               86.86  Mkt&amp;Fin     71.41  24900.0    True 2020-01-14 2020-11-21       3.0</span>
-<span class="go">1       17286      M        80.21      76.36  Commerce        67.98   Comm&amp;Mgmt            False                 0               64.97  Mkt&amp;Fin     65.71  26500.0    True 2020-07-23 2020-11-29       3.0</span>
-<span class="go">2       17452      M        63.06      52.43   Science        67.50   Comm&amp;Mgmt             True                 1               61.85  Mkt&amp;Fin     69.38  26500.0    True 2020-01-14 2020-07-09       6.0</span>
-<span class="go">3       17343      F        69.69      75.79  Commerce        65.81   Comm&amp;Mgmt            False                 0               58.62  Mkt&amp;Fin     59.90  24300.0    True 2020-01-12 2020-12-20       6.0</span>
-<span class="go">4       17328      M        79.01      70.09  Commerce        77.97   Comm&amp;Mgmt            False                 0               55.43  Mkt&amp;Fin     63.55  20800.0    True 2020-01-13 2020-04-09       3.0</span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">0       17468      M        68.07      78.05   Science        60.83   Comm&amp;Mgmt            False                 0               52.57   Mkt&amp;HR     55.96      NaN   False                           NaT                           NaT       NaN</span>
+<span class="go">1       17341      M        78.10      92.37  Commerce        66.73   Comm&amp;Mgmt            False                 0               84.58  Mkt&amp;Fin     69.72  22729.0    True 2020-01-14 07:45:18.252026368 2020-04-01 03:58:41.564422912       3.0</span>
+<span class="go">2       17377      M        59.84      57.11  Commerce        57.39   Comm&amp;Mgmt            False                 0               60.91  Mkt&amp;Fin     53.69  27170.0    True 2020-01-12 07:58:28.701466880 2020-08-08 00:02:04.443841280       6.0</span>
+<span class="go">3       17326      M        64.74      83.83  Commerce        59.25   Comm&amp;Mgmt            False                 0               51.44   Mkt&amp;HR     56.80  21557.0    True 2020-01-25 19:37:19.724475904 2020-11-03 05:48:19.993898240       3.0</span>
+<span class="go">4       17412      M        52.30      58.05  Commerce        52.81   Comm&amp;Mgmt            False                 0               65.89   Mkt&amp;HR     54.55      NaN   False                           NaT                           NaT       NaN</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -447,7 +443,7 @@ method passing the name of the file in which you want to save the model.
 Note that the extension of the filename is not relevant, but we will be
 using the <code class="docutils literal notranslate"><span class="pre">.pkl</span></code> extension to highlight that the serialization
 protocol used is
-<a class="reference external" href="https://docs.python.org/3/library/pickle.html">pickle</a>.</p>
+<a class="reference external" href="https://github.com/cloudpipe/cloudpickle">cloudpickle</a>.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;my_model.pkl&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -498,11 +494,12 @@ all of them appear at most once:</p>
 that there are some values that appear more than once:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span> <span class="o">==</span> <span class="n">new_data</span><span class="o">.</span><span class="n">student_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
 <span class="gh">Out[13]: </span><span class="go"></span>
-<span class="go">     student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">45        17478      M        80.68      71.22   Science        72.21    Sci&amp;Tech             True                 1               93.47  Mkt&amp;Fin     70.31  28700.0    True 2020-01-16 2020-11-17       3.0</span>
-<span class="go">53        17478      M        40.89      66.55  Commerce        60.99   Comm&amp;Mgmt            False                 0               61.69   Mkt&amp;HR     59.68      NaN   False        NaT        NaT       NaN</span>
-<span class="go">109       17478      M        59.84      66.64   Science        62.49   Comm&amp;Mgmt            False                 0               61.89   Mkt&amp;HR     66.87      NaN   False        NaT        NaT       NaN</span>
-<span class="go">192       17478      M        66.40      71.96   Science        72.17   Comm&amp;Mgmt             True                 0               69.79  Mkt&amp;Fin     62.86  28400.0    True 2020-01-18 2020-07-30       6.0</span>
+<span class="go">     student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">32        17478      M        59.28      62.34  Commerce        63.26   Comm&amp;Mgmt            False                 0               50.00   Mkt&amp;HR     51.26  20000.0    True 2020-01-21 03:24:15.425961728 2020-04-10 19:01:21.422886144       3.0</span>
+<span class="go">56        17478      M        55.40      76.66  Commerce        58.43   Comm&amp;Mgmt            False                 0               74.72   Mkt&amp;HR     56.91      NaN   False                           NaT                           NaT       NaN</span>
+<span class="go">93        17478      M        53.80      67.78  Commerce        66.53   Comm&amp;Mgmt            False                 0               55.65  Mkt&amp;Fin     58.58  29351.0    True 2020-01-17 14:22:58.498304256                           NaT       5.0</span>
+<span class="go">153       17478      F        59.76      75.43  Commerce        70.32   Comm&amp;Mgmt             True                 1               85.03  Mkt&amp;Fin     69.91  22094.0    True 2020-01-15 15:40:45.421852928 2020-08-04 06:27:51.752281856       6.0</span>
+<span class="go">193       17478      M        53.95      72.20  Commerce        62.07   Comm&amp;Mgmt            False                 0               58.94  Mkt&amp;Fin     62.80  28481.0    True 2020-01-16 15:01:09.428991744 2020-08-10 02:24:51.675559936       6.0</span>
 </pre></div>
 </div>
 <p>This happens because the model was not notified at any point about the
@@ -521,12 +518,12 @@ indicating the name of the column that is the index of the table.</p>
 
 <span class="gp">In [17]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[17]: </span><span class="go"></span>
-<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">0           0      M        74.84      64.38   Science        70.46   Comm&amp;Mgmt            False                 0               56.13  Mkt&amp;Fin     61.98  29200.0    True 2020-01-05 2020-10-10       3.0</span>
-<span class="go">1           1      M        51.98      83.06  Commerce        71.04   Comm&amp;Mgmt            False                 0               55.57  Mkt&amp;Fin     60.24  22500.0    True 2020-01-20 2020-12-07       3.0</span>
-<span class="go">2           2      F        72.88      74.13   Science        53.24   Comm&amp;Mgmt            False                 0               69.60   Mkt&amp;HR     65.41      NaN   False        NaT        NaT       NaN</span>
-<span class="go">3           3      M        54.49      58.55  Commerce        57.89   Comm&amp;Mgmt            False                 0               61.51   Mkt&amp;HR     51.87  23200.0    True 2020-01-04 2020-12-30       5.0</span>
-<span class="go">4           4      M        64.79      79.35  Commerce        65.34   Comm&amp;Mgmt            False                 0               55.43  Mkt&amp;Fin     59.11  25100.0    True 2020-01-26 2020-11-29       3.0</span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">0           0      M        65.27      69.58  Commerce        69.60   Comm&amp;Mgmt            False                 0               58.25  Mkt&amp;Fin     63.14  22211.0    True 2020-01-10 04:30:16.429557248 2020-12-14 13:33:44.639950080       3.0</span>
+<span class="go">1           1      M        70.43      85.67  Commerce        65.52   Comm&amp;Mgmt             True                 0               62.93  Mkt&amp;Fin     58.52  24254.0    True 2020-01-16 11:14:07.469780736 2020-08-16 11:32:40.805788160       6.0</span>
+<span class="go">2           2      M        55.09      69.61  Commerce        66.33   Comm&amp;Mgmt            False                 0               61.85   Mkt&amp;HR     53.47      NaN   False                           NaT                           NaT       NaN</span>
+<span class="go">3           3      M        69.17      61.60  Commerce        72.40   Comm&amp;Mgmt            False                 0               79.48  Mkt&amp;Fin     67.84  28762.0    True 2020-07-16 03:28:59.051368448 2020-09-28 01:22:07.738002432       3.0</span>
+<span class="go">4           4      M        67.12      72.17  Commerce        69.13   Comm&amp;Mgmt            False                 0               67.39  Mkt&amp;Fin     63.61  23589.0    True 2020-01-11 14:24:54.251224320 2020-10-05 11:26:19.041524224       3.0</span>
 </pre></div>
 </div>
 <p>As a result, the model will learn that this column must be unique and
@@ -580,12 +577,12 @@ students:</p>
 
 <span class="gp">In [24]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[24]: </span><span class="go"></span>
-<span class="go">   student_id                                        address gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">0           0  37889 Rowe Coves Apt. 292\nNew Evan, CA 53334      F        60.28      64.04  Commerce        66.57   Comm&amp;Mgmt            False                 0               86.13  Mkt&amp;Fin     62.39  29000.0    True 2020-01-21 2020-07-27       6.0</span>
-<span class="go">1           1               PSC 8236, Box 8555\nAPO AP 20954      M        67.19      67.34  Commerce        74.74   Comm&amp;Mgmt            False                 0               60.97  Mkt&amp;Fin     59.00  27800.0    True 2020-01-13 2020-10-16       3.0</span>
-<span class="go">2           2  653 Mark Forge Suite 804\nBillyview, KS 58544      M        78.48      76.06  Commerce        64.61   Comm&amp;Mgmt            False                 0               65.39   Mkt&amp;HR     59.25  25500.0    True 2020-01-24 2020-10-03       3.0</span>
-<span class="go">3           3  37889 Rowe Coves Apt. 292\nNew Evan, CA 53334      M        47.66      70.92  Commerce        73.10   Comm&amp;Mgmt            False                 0               58.08  Mkt&amp;Fin     54.22  21700.0    True 2020-01-24 2020-08-29       6.0</span>
-<span class="go">4           4  37889 Rowe Coves Apt. 292\nNew Evan, CA 53334      M        63.56      62.57  Commerce        67.45   Comm&amp;Mgmt            False                 0               50.00   Mkt&amp;HR     52.92  25700.0    True 2020-01-11 2020-12-10       3.0</span>
+<span class="go">   student_id                                            address gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">0           0         926 Martinez Unions\nAllisonstad, AK 04702      M        65.99      72.53  Commerce        52.46   Comm&amp;Mgmt            False                 0               56.01  Mkt&amp;Fin     56.03  20000.0    True 2020-01-18 15:11:35.399758336 2020-04-26 01:05:55.851837696       3.0</span>
+<span class="go">1           1  32455 Michael Row Apt. 500\nWest Timothymouth,...      M        64.64      74.44  Commerce        70.40   Comm&amp;Mgmt            False                 0               59.20  Mkt&amp;Fin     57.38  24915.0    True 2020-01-10 21:17:10.804995072 2020-07-21 14:35:30.454292736       6.0</span>
+<span class="go">2           2                   PSC 8867, Box 5493\nAPO AA 12943      M        80.93      74.62   Science        72.62   Comm&amp;Mgmt            False                 0               88.10  Mkt&amp;Fin     67.34  23164.0    True 2020-01-14 23:57:16.051990784 2020-05-01 20:49:28.113755648       3.0</span>
+<span class="go">3           3                        USCGC Stanley\nFPO AP 68120      M        60.31      64.38  Commerce        72.62   Comm&amp;Mgmt            False                 0               51.15   Mkt&amp;HR     56.74  22618.0    True 2020-01-17 02:58:23.889702400 2020-08-03 23:38:34.076321792       6.0</span>
+<span class="go">4           4  61808 Catherine Center\nEast Lonnieport, OK 54464      M        60.69      70.97  Commerce        70.04   Comm&amp;Mgmt            False                 0               63.54   Mkt&amp;HR     70.65      NaN   False                           NaT                           NaT       NaN</span>
 </pre></div>
 </div>
 <p>More specifically, we can see how all the addresses that have been generated
@@ -638,12 +635,12 @@ replaced by other fake addresses:</p>
 
 <span class="gp">In [29]: </span><span class="n">new_data_pii</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[29]: </span><span class="go"></span>
-<span class="go">   student_id                                            address gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">0           0         08813 Wagner Knolls\nNorth James, CA 89923      M        55.76      58.78  Commerce        56.72   Comm&amp;Mgmt            False                 0               52.52   Mkt&amp;HR     64.34      NaN   False        NaT        NaT       NaN</span>
-<span class="go">1           1  80693 Long Crescent Apt. 919\nChristinemouth, ...      M        75.45      77.73  Commerce        80.56   Comm&amp;Mgmt            False                 0               68.07   Mkt&amp;HR     53.74  27900.0    True 2020-01-18 2020-07-28       3.0</span>
-<span class="go">2           2     136 Nancy Ford Suite 737\nNorth Brad, DC 36439      F        84.83      65.23   Science        76.02   Comm&amp;Mgmt            False                 0               92.59   Mkt&amp;HR     60.53  23200.0    True 2020-08-06 2020-04-20       3.0</span>
-<span class="go">3           3   6186 Roberts Shoals\nEast Daniellefurt, GA 01913      M        63.42      54.68  Commerce        68.60   Comm&amp;Mgmt            False                 0               50.00   Mkt&amp;HR     57.43  22600.0    True 2020-01-16 2020-06-17       6.0</span>
-<span class="go">4           4    6578 Annette Row Apt. 814\nNorth Lisa, NE 46404      M        77.91      68.58   Science        76.26   Comm&amp;Mgmt             True                 1               81.74  Mkt&amp;Fin     63.78  30100.0    True 2020-01-17 2020-12-25      12.0</span>
+<span class="go">   student_id                                            address gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">0           0  67768 Lisa Cliff Apt. 594\nHamiltonborough, RI...      M        53.69      80.78  Commerce        69.72   Comm&amp;Mgmt            False                 0               63.66   Mkt&amp;HR     57.39  26166.0    True 2020-01-22 18:56:41.414290944 2020-04-13 04:58:28.795759872       3.0</span>
+<span class="go">1           1               635 Adam Forks\nMillerfort, ND 77275      M        72.55      54.95  Commerce        61.14   Comm&amp;Mgmt            False                 0               64.32  Mkt&amp;Fin     54.49  26838.0    True 2020-01-19 10:50:44.684510976 2020-05-12 13:04:19.222975232       3.0</span>
+<span class="go">2           2   27982 Jones Green Suite 195\nEast John, IL 82321      M        78.43      76.60  Commerce        56.44   Comm&amp;Mgmt            False                 0               98.00  Mkt&amp;Fin     69.81  22536.0    True 2020-01-28 14:55:36.035452416 2020-05-04 17:32:17.180171520       3.0</span>
+<span class="go">3           3  756 Stephanie Rapid Apt. 966\nHowellville, KY ...      M        66.51      76.56  Commerce        58.27   Comm&amp;Mgmt            False                 0               61.85   Mkt&amp;HR     59.57  27536.0    True 2020-07-06 07:10:51.487474432 2020-10-15 13:49:02.472898816       3.0</span>
+<span class="go">4           4  594 Cobb Club Suite 182\nLake Waltermouth, ME ...      M        65.48      85.07  Commerce        57.75   Comm&amp;Mgmt            False                 0               51.06  Mkt&amp;Fin     52.03  23652.0    True 2020-01-20 06:10:39.330065152 2020-11-26 20:40:52.464555776       3.0</span>
 </pre></div>
 </div>
 <p>Which means that none of the original addresses can be found in the sampled
@@ -659,53 +656,6 @@ data:</p>
 <p>Now that we have discovered the basics, let’s go over a few more
 advanced usage examples and see the different arguments that we can pass
 to our <code class="docutils literal notranslate"><span class="pre">CTGAN</span></code> Model in order to customize it to our needs.</p>
-<div class="section" id="setting-bounds-and-specifying-rounding-for-numerical-columns">
-<h3>Setting Bounds and Specifying Rounding for Numerical Columns<a class="headerlink" href="#setting-bounds-and-specifying-rounding-for-numerical-columns" title="Permalink to this headline">¶</a></h3>
-<p>By default, the model will learn the upper and lower bounds of the
-input data, and use that for sampling. This means that all sampled data
-will be between the maximum and minimum values found in the original
-dataset for each numeric column. This option can be overwritten using the
-<code class="docutils literal notranslate"><span class="pre">min_value</span></code> and <code class="docutils literal notranslate"><span class="pre">max_value</span></code> model arguments. These values can either
-be set to a numeric value, set to <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> which is the default setting,
-or set to <code class="docutils literal notranslate"><span class="pre">None</span></code> which will mean the column is boundless.</p>
-<p>The model will also learn the number of decimal places to round to by default.
-This option can be overwritten using the <code class="docutils literal notranslate"><span class="pre">rounding</span></code> parameter. The value can
-be an int specifying how many decimal places to round to, <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> which is
-the default setting, or <code class="docutils literal notranslate"><span class="pre">None</span></code> which means the data will not be rounded.</p>
-<p>Since we may want to sample values outside of the ranges in the original data,
-let’s pass the <code class="docutils literal notranslate"><span class="pre">min_value</span></code> and <code class="docutils literal notranslate"><span class="pre">max_value</span></code> arguments as <cite>None</cite> to the model.
-To keep the number of decimals consistent across columns, we can set <code class="docutils literal notranslate"><span class="pre">rounding</span></code>
-to be 2.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [31]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">TVAE</span><span class="p">(</span>
-<span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">min_value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">max_value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<span class="gp">   ....: </span>    <span class="n">rounding</span><span class="o">=</span><span class="mi">2</span>
-<span class="gp">   ....: </span><span class="p">)</span>
-<span class="gp">   ....: </span>
-
-<span class="gp">In [32]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
-<span class="gp">In [33]: </span><span class="n">unbounded_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-
-<span class="gp">In [34]: </span><span class="n">unbounded_data</span>
-<span class="gh">Out[34]: </span><span class="go"></span>
-<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc    salary  placed start_date   end_date  duration</span>
-<span class="go">0           0      F        70.43      58.81   Science        62.91    Sci&amp;Tech            False                 0               74.53   Mkt&amp;HR     59.49  22010.12    True 2020-01-10 2020-08-06      2.89</span>
-<span class="go">1           1      F        65.55      61.95   Science        69.42   Comm&amp;Mgmt            False                 0               59.40   Mkt&amp;HR     61.00  27497.06    True 2020-01-08 2020-11-18      2.90</span>
-<span class="go">2           2      M        49.62      43.78  Commerce        60.05   Comm&amp;Mgmt            False                 0               76.18   Mkt&amp;HR     54.61       NaN   False        NaT        NaT       NaN</span>
-<span class="go">3           3      M        58.57      62.36  Commerce        60.67   Comm&amp;Mgmt            False                 0               79.70   Mkt&amp;HR     62.53  28933.76    True 2020-03-07 2020-11-11      2.88</span>
-<span class="go">4           4      M        73.17      68.96   Science        76.86   Comm&amp;Mgmt            False                 0               88.62   Mkt&amp;HR     59.15  24469.47    True 2020-07-27 2020-12-11      3.00</span>
-<span class="go">5           5      M        52.25      64.67  Commerce        69.06   Comm&amp;Mgmt            False                 0               56.57   Mkt&amp;HR     60.11       NaN   False        NaT        NaT       NaN</span>
-<span class="go">6           6      M        70.15      59.63  Commerce        62.59   Comm&amp;Mgmt             True                 1               84.35  Mkt&amp;Fin     66.53  26226.21    True 2020-01-26 2020-10-29      3.01</span>
-<span class="go">7           7      M        68.11      70.79  Commerce        63.01   Comm&amp;Mgmt             True                 1               84.11  Mkt&amp;Fin     57.10  20436.84    True 2020-01-09 2020-12-04      3.09</span>
-<span class="go">8           8      M        57.02      60.88  Commerce        60.79   Comm&amp;Mgmt            False                 0               63.58   Mkt&amp;HR     52.88  28762.22    True 2020-01-12 2020-08-13      5.49</span>
-<span class="go">9           9      M        67.63      71.26  Commerce        61.28   Comm&amp;Mgmt            False                 0               79.08  Mkt&amp;Fin     57.74  23314.95    True 2020-07-03 2020-11-17      2.97</span>
-</pre></div>
-</div>
-<p>As you may notice, the sampled data may have values outside the range of
-the original data.</p>
-</div>
 <div class="section" id="how-to-modify-the-tvae-hyperparameters">
 <h3>How to modify the TVAE Hyperparameters?<a class="headerlink" href="#how-to-modify-the-tvae-hyperparameters" title="Permalink to this headline">¶</a></h3>
 <p>A part from the common Tabular Model arguments, <code class="docutils literal notranslate"><span class="pre">TVAE</span></code> has a number
@@ -753,15 +703,15 @@ additional layer to the models involved and using a smaller wright
 decay.</p>
 <p>Before we start, we will evaluate the quality of the previously
 generated data using the <code class="docutils literal notranslate"><span class="pre">sdv.evaluation.evaluate</span></code> function</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [35]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [31]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
-<span class="gp">In [36]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-<span class="gh">Out[36]: </span><span class="go">0.42712022074871303</span>
+<span class="gp">In [32]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="gh">Out[32]: </span><span class="go">0.7724128390760678</span>
 </pre></div>
 </div>
 <p>Afterwards, we create a new instance of the <code class="docutils literal notranslate"><span class="pre">TVAE</span></code> model with the
 hyperparameter values that we want to use</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [37]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">TVAE</span><span class="p">(</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [33]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">TVAE</span><span class="p">(</span>
 <span class="gp">   ....: </span>    <span class="n">primary_key</span><span class="o">=</span><span class="s1">&#39;student_id&#39;</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">epochs</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="n">compress_dims</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
@@ -771,14 +721,14 @@ hyperparameter values that we want to use</p>
 </pre></div>
 </div>
 <p>And fit to our data.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [38]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [34]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Finally, we are ready to generate new data and evaluate the results.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [39]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [35]: </span><span class="n">new_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
 
-<span class="gp">In [40]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-<span class="gh">Out[40]: </span><span class="go">0.5333010775551118</span>
+<span class="gp">In [36]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="gh">Out[36]: </span><span class="go">0.8111323527485711</span>
 </pre></div>
 </div>
 <p>As we can see, in this case these modifications changed the obtained
@@ -793,39 +743,39 @@ satisfy certain conditions. These conditional values can be passed to the <code 
 method as a list of <code class="docutils literal notranslate"><span class="pre">sdv.sampling.Condition</span></code> objects or to the <code class="docutils literal notranslate"><span class="pre">sample_remaining_columns</span></code>
 method as a dataframe.</p>
 <p>When specifying a <code class="docutils literal notranslate"><span class="pre">sdv.sampling.Condition</span></code> object, we can pass in the desired conditions as a dictionary, as well as specify the number of desired rows for that condition.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [41]: </span><span class="kn">from</span> <span class="nn">sdv.sampling</span> <span class="kn">import</span> <span class="n">Condition</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [37]: </span><span class="kn">from</span> <span class="nn">sdv.sampling</span> <span class="kn">import</span> <span class="n">Condition</span>
 
-<span class="gp">In [42]: </span><span class="n">condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">({</span>
+<span class="gp">In [38]: </span><span class="n">condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">({</span>
 <span class="gp">   ....: </span>    <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="s1">&#39;M&#39;</span>
 <span class="gp">   ....: </span><span class="p">},</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [43]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
-<span class="gh">Out[43]: </span><span class="go"></span>
-<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">0           0      M        57.77      60.05  Commerce        66.28   Comm&amp;Mgmt            False                 0               73.37  Mkt&amp;Fin     64.46  22000.0    True 2020-01-17 2020-08-13       6.0</span>
-<span class="go">1           1      M        65.15      60.28  Commerce        66.54   Comm&amp;Mgmt            False                 0               76.35  Mkt&amp;Fin     58.70  25100.0    True 2020-01-20 2020-12-15       3.0</span>
-<span class="go">2           2      M        77.68      72.38  Commerce        60.30   Comm&amp;Mgmt            False                 0               75.01  Mkt&amp;Fin     64.07  23400.0    True 2020-01-24 2020-11-03       3.0</span>
-<span class="go">3           3      M        65.98      64.85  Commerce        74.95   Comm&amp;Mgmt             True                 1               82.04  Mkt&amp;Fin     71.29  21400.0    True 2020-01-18 2021-01-17      12.0</span>
-<span class="go">4           4      M        64.81      70.10  Commerce        72.08   Comm&amp;Mgmt             True                 0               78.27  Mkt&amp;Fin     74.74  23600.0    True 2020-01-29 2020-11-28      12.0</span>
+<span class="gp">In [39]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
+<span class="gh">Out[39]: </span><span class="go"></span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">0           0      M        74.75      63.75   Science        69.36    Sci&amp;Tech             True                 1               83.68  Mkt&amp;Fin     68.19  27080.0    True 2020-01-22 01:50:38.933563392 2020-04-19 02:54:30.997658880       3.0</span>
+<span class="go">1           1      M        69.16      69.40   Science        67.43   Comm&amp;Mgmt            False                 0               62.38   Mkt&amp;HR     63.36  21687.0    True 2020-07-02 15:56:14.334803200 2020-10-02 13:45:18.653182208       3.0</span>
+<span class="go">2           2      M        74.76      63.78   Science        75.30   Comm&amp;Mgmt            False                 0               52.63  Mkt&amp;Fin     59.89  23127.0    True 2020-07-07 21:35:07.382656512 2020-10-22 09:12:51.595526656       3.0</span>
+<span class="go">3           3      M        47.83      49.99  Commerce        54.02   Comm&amp;Mgmt            False                 0               63.78   Mkt&amp;HR     64.52      NaN   False                           NaT                           NaT       NaN</span>
+<span class="go">4           4      M        71.90      63.14  Commerce        64.10   Comm&amp;Mgmt            False                 0               85.96  Mkt&amp;Fin     59.58  27194.0    True 2020-01-21 03:11:38.113317376 2020-12-28 07:23:19.222057728      12.0</span>
 </pre></div>
 </div>
 <p>It’s also possible to condition on multiple columns, such as
 <code class="docutils literal notranslate"><span class="pre">gender</span> <span class="pre">=</span> <span class="pre">M,</span> <span class="pre">'experience_years':</span> <span class="pre">0</span></code>.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [44]: </span><span class="n">condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">({</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [40]: </span><span class="n">condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">({</span>
 <span class="gp">   ....: </span>    <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span>
 <span class="gp">   ....: </span>    <span class="s1">&#39;experience_years&#39;</span><span class="p">:</span> <span class="mi">0</span>
 <span class="gp">   ....: </span><span class="p">},</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [45]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
-<span class="gh">Out[45]: </span><span class="go"></span>
-<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">0           0      M        68.43      61.03  Commerce        72.60   Comm&amp;Mgmt            False                 0               70.12   Mkt&amp;HR     58.92  25000.0    True 2020-07-12 2020-10-17       3.0</span>
-<span class="go">1           1      M        89.40      73.28   Science        67.81   Comm&amp;Mgmt            False                 0               74.93  Mkt&amp;Fin     62.00  28300.0    True 2020-07-18 2020-10-12       3.0</span>
-<span class="go">2           2      M        67.34      64.65  Commerce        66.92   Comm&amp;Mgmt            False                 0               75.43  Mkt&amp;Fin     61.56  26000.0    True 2020-01-25 2020-07-26       6.0</span>
-<span class="go">3           3      M        71.65      66.49  Commerce        69.46   Comm&amp;Mgmt            False                 0               59.78   Mkt&amp;HR     65.30      NaN   False        NaT        NaT       NaN</span>
-<span class="go">4           4      M        56.88      41.55   Science        56.23   Comm&amp;Mgmt            False                 0               59.29   Mkt&amp;HR     60.99      NaN   False        NaT        NaT       NaN</span>
+<span class="gp">In [41]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
+<span class="gh">Out[41]: </span><span class="go"></span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">0           0      M        65.21      54.29  Commerce        54.43   Comm&amp;Mgmt            False                 0               55.78   Mkt&amp;HR     59.82      NaN   False                           NaT                           NaT       NaN</span>
+<span class="go">1           1      M        62.81      68.81  Commerce        67.86   Comm&amp;Mgmt            False                 0               68.26   Mkt&amp;HR     51.38  23756.0    True 2020-01-12 11:08:12.341192192 2020-08-19 00:54:54.487886592       6.0</span>
+<span class="go">2           2      M        81.29      64.06   Science        72.81   Comm&amp;Mgmt            False                 0               62.49  Mkt&amp;Fin     74.91  22165.0    True 2020-07-18 19:55:11.588808448 2020-09-22 22:42:12.481384704       3.0</span>
+<span class="go">3           3      M        72.71      68.84  Commerce        68.23   Comm&amp;Mgmt            False                 0               78.30  Mkt&amp;Fin     64.98  21904.0    True 2020-01-21 15:53:02.519323904 2020-04-23 12:16:49.060503040       3.0</span>
+<span class="go">4           4      M        55.40      75.69  Commerce        66.52   Comm&amp;Mgmt            False                 0               70.47   Mkt&amp;HR     69.86      NaN   False                           NaT                           NaT       NaN</span>
 </pre></div>
 </div>
 <p>In the <code class="docutils literal notranslate"><span class="pre">sample_remaining_columns</span></code> method, <code class="docutils literal notranslate"><span class="pre">conditions</span></code> is
@@ -835,40 +785,40 @@ order. Since the model already knows how many samples to generate, passing
 it as a parameter is unnecessary. For example, if we want to generate three
 samples where <code class="docutils literal notranslate"><span class="pre">gender</span> <span class="pre">=</span> <span class="pre">M</span></code> and three samples with <code class="docutils literal notranslate"><span class="pre">gender</span> <span class="pre">=</span> <span class="pre">F</span></code>, we can do the
 following:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [46]: </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [42]: </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
-<span class="gp">In [47]: </span><span class="n">conditions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+<span class="gp">In [43]: </span><span class="n">conditions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
 <span class="gp">   ....: </span>    <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">],</span>
 <span class="gp">   ....: </span><span class="p">})</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [48]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_remaining_columns</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
-<span class="gh">Out[48]: </span><span class="go"></span>
-<span class="go">     student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">0.0           0      M        59.64      66.58  Commerce        64.21   Comm&amp;Mgmt            False                 0               62.16   Mkt&amp;HR     64.66  26900.0    True 2020-07-24 2020-10-22       3.0</span>
-<span class="go">1.0           1      M        59.99      55.45  Commerce        62.82   Comm&amp;Mgmt            False                 0               91.23  Mkt&amp;Fin     68.11      NaN   False        NaT        NaT       NaN</span>
-<span class="go">2.0           2      M        89.40      63.85  Commerce        72.41   Comm&amp;Mgmt            False                 0               87.24  Mkt&amp;Fin     63.48  22200.0    True 2020-01-29 2020-04-20       3.0</span>
-<span class="go">NaN           3      F        63.44      74.61  Commerce        77.30   Comm&amp;Mgmt            False                 0               58.43   Mkt&amp;HR     72.07  29900.0    True 2020-07-17 2020-10-11       3.0</span>
-<span class="go">NaN           4      F        45.56      62.42  Commerce        67.03   Comm&amp;Mgmt            False                 0               72.47   Mkt&amp;HR     66.17      NaN   False        NaT        NaT       NaN</span>
-<span class="go">NaN           5      F        77.42      77.99  Commerce        64.01   Comm&amp;Mgmt             True                 0               87.00  Mkt&amp;Fin     74.97  20000.0    True 2020-01-12 2020-04-28       3.0</span>
+<span class="gp">In [44]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_remaining_columns</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
+<span class="gh">Out[44]: </span><span class="go"></span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">0           0      M        71.56      73.26  Commerce        64.62   Comm&amp;Mgmt             True                 1               93.16  Mkt&amp;Fin     64.89  21735.0    True 2020-01-13 12:26:00.047397376 2020-12-08 22:43:17.373891584      12.0</span>
+<span class="go">1           1      M        74.88      72.03   Science        62.52   Comm&amp;Mgmt             True                 0               75.26  Mkt&amp;Fin     58.15  22888.0    True 2020-01-22 02:08:16.368400128 2020-11-29 04:21:47.303020800      12.0</span>
+<span class="go">2           2      M        70.31      67.94  Commerce        65.36   Comm&amp;Mgmt            False                 0               50.00   Mkt&amp;HR     55.49      NaN   False                           NaT                           NaT       NaN</span>
+<span class="go">3           4      F        63.15      60.67  Commerce        63.65   Comm&amp;Mgmt            False                 0               55.24   Mkt&amp;HR     74.58      NaN   False                           NaT                           NaT       NaN</span>
+<span class="go">4          13      F        72.66      59.09   Science        63.11   Comm&amp;Mgmt             True                 1               79.82  Mkt&amp;Fin     62.74      NaN   False                           NaT                           NaT       NaN</span>
+<span class="go">5          17      F        40.89      68.32  Commerce        64.08   Comm&amp;Mgmt            False                 0               61.66   Mkt&amp;HR     67.07      NaN   False                           NaT                           NaT       NaN</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">TVAE</span></code> also supports conditioning on continuous values, as long as the values
 are within the range of seen numbers. For example, if all the values of the
 dataset are within 0 and 1, <code class="docutils literal notranslate"><span class="pre">TVAE</span></code> will not be able to set this value to 1000.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [49]: </span><span class="n">condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">({</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [45]: </span><span class="n">condition</span> <span class="o">=</span> <span class="n">Condition</span><span class="p">({</span>
 <span class="gp">   ....: </span>    <span class="s1">&#39;degree_perc&#39;</span><span class="p">:</span> <span class="mf">70.0</span>
 <span class="gp">   ....: </span><span class="p">},</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [50]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
-<span class="gh">Out[50]: </span><span class="go"></span>
-<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">0           0      M        87.30      71.52   Science         70.0   Comm&amp;Mgmt             True                 1               85.41  Mkt&amp;Fin     63.85  21300.0    True 2020-01-22 2021-01-13       3.0</span>
-<span class="go">1           1      M        82.56      72.58   Science         70.0   Comm&amp;Mgmt            False                 0               90.36  Mkt&amp;Fin     66.20  33600.0    True 2020-07-30 2020-03-12       3.0</span>
-<span class="go">2           2      M        63.10      61.34  Commerce         70.0   Comm&amp;Mgmt            False                 0               63.86   Mkt&amp;HR     65.12      NaN   False        NaT        NaT       NaN</span>
-<span class="go">3           3      M        61.68      67.89  Commerce         70.0   Comm&amp;Mgmt            False                 0               59.08   Mkt&amp;HR     60.18  25300.0    True 2020-01-15 2020-08-11       6.0</span>
-<span class="go">4           4      M        69.95      59.35  Commerce         70.0   Comm&amp;Mgmt             True                 1               85.93  Mkt&amp;Fin     68.46  24000.0    True 2020-01-18 2020-12-05       3.0</span>
+<span class="gp">In [46]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample_conditions</span><span class="p">(</span><span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">condition</span><span class="p">])</span>
+<span class="gh">Out[46]: </span><span class="go"></span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed                    start_date                      end_date  duration</span>
+<span class="go">0          10      M        78.74      65.84  Commerce         70.0   Comm&amp;Mgmt             True                 1               61.05  Mkt&amp;Fin     61.02  22828.0    True 2020-01-21 02:39:03.133352704 2020-12-29 00:04:25.807913984      12.0</span>
+<span class="go">1          15      M        77.97      67.38  Commerce         70.0   Comm&amp;Mgmt            False                 0               67.00  Mkt&amp;Fin     58.41  27154.0    True 2020-01-11 01:55:33.418761984 2020-04-04 18:13:31.598051072       3.0</span>
+<span class="go">2          27      M        79.26      74.98  Commerce         70.0   Comm&amp;Mgmt             True                 1               68.19  Mkt&amp;Fin     64.48  26952.0    True 2020-01-14 17:00:54.324494848 2020-10-31 10:44:57.240294656      12.0</span>
+<span class="go">3          30      M        57.93      54.72  Commerce         70.0   Comm&amp;Mgmt            False                 0               59.00   Mkt&amp;HR     68.47      NaN   False                           NaT                           NaT       NaN</span>
+<span class="go">4          44      M        75.13      78.88  Commerce         70.0   Comm&amp;Mgmt            False                 0               84.89   Mkt&amp;HR     66.55  23288.0    True 2020-08-03 03:02:23.487965696 2020-10-23 12:23:56.524747520       3.0</span>
 </pre></div>
 </div>
 <div class="admonition note">

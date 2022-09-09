@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.multi_column_pairs &#8212; SDV 0.16.0 documentation</title>
+    <title>sdmetrics.single_table.multi_column_pairs &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -329,6 +329,56 @@
 
     <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;boolean&#39;</span><span class="p">,</span> <span class="s1">&#39;categorical&#39;</span><span class="p">)</span>
     <span class="n">column_pairs_metric</span> <span class="o">=</span> <span class="n">column_pairs</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">kl_divergence</span><span class="o">.</span><span class="n">DiscreteKLDivergence</span></div>
+
+
+<span class="k">class</span> <span class="nc">ContingencySimilarity</span><span class="p">(</span><span class="n">MultiColumnPairsMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiColumnPairsMetric based on ColumnPairs ContingencySimilarity.</span>
+
+<span class="sd">    This computes the complement of the total variation distance between</span>
+<span class="sd">    the contingency contingency tables of the real and synthetic data.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        name (str):</span>
+<span class="sd">            Name to use when reports about this metric are printed.</span>
+<span class="sd">        goal (sdmetrics.goal.Goal):</span>
+<span class="sd">            The goal of this metric.</span>
+<span class="sd">        min_value (Union[float, tuple[float]]):</span>
+<span class="sd">            Minimum value or values that this metric can take.</span>
+<span class="sd">        max_value (Union[float, tuple[float]]):</span>
+<span class="sd">            Maximum value or values that this metric can take.</span>
+<span class="sd">        column_pairs_metric (sdmetrics.column_pairs.base.ColumnPairsMetric):</span>
+<span class="sd">            ColumnPairs DiscreteKLDivergence.</span>
+<span class="sd">        field_types (dict):</span>
+<span class="sd">            Field types to which the SingleColumn metric will be applied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;boolean&#39;</span><span class="p">,</span> <span class="s1">&#39;categorical&#39;</span><span class="p">)</span>
+    <span class="n">column_pairs_metric</span> <span class="o">=</span> <span class="n">column_pairs</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">contingency_similarity</span><span class="o">.</span><span class="n">ContingencySimilarity</span>
+
+
+<span class="k">class</span> <span class="nc">CorrelationSimilarity</span><span class="p">(</span><span class="n">MultiColumnPairsMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiColumnPairsMetric based on ColumnPairs CorrelationSimilarity.</span>
+
+<span class="sd">    This computes the correlation between column pairs based on the specified coefficient,</span>
+<span class="sd">    which defaults to &#39;Pearson&#39;.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        name (str):</span>
+<span class="sd">            Name to use when reports about this metric are printed.</span>
+<span class="sd">        goal (sdmetrics.goal.Goal):</span>
+<span class="sd">            The goal of this metric.</span>
+<span class="sd">        min_value (Union[float, tuple[float]]):</span>
+<span class="sd">            Minimum value or values that this metric can take.</span>
+<span class="sd">        max_value (Union[float, tuple[float]]):</span>
+<span class="sd">            Maximum value or values that this metric can take.</span>
+<span class="sd">        column_pairs_metric (sdmetrics.column_pairs.base.ColumnPairsMetric):</span>
+<span class="sd">            ColumnPairs DiscreteKLDivergence.</span>
+<span class="sd">        field_types (dict):</span>
+<span class="sd">            Field types to which the SingleColumn metric will be applied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;datetime&#39;</span><span class="p">)</span>
+    <span class="n">column_pairs_metric</span> <span class="o">=</span> <span class="n">column_pairs</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">correlation_similarity</span><span class="o">.</span><span class="n">CorrelationSimilarity</span>
 </pre></div>
 
               </div>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PAR Model &#8212; SDV 0.16.0 documentation</title>
+    <title>PAR Model &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -448,12 +448,12 @@ of the sequences that we want to generate.</p>
 on, but filled with new synthetic data which resembles the original one.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">new_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[11]: </span><span class="go"></span>
-<span class="go">  Symbol       Date       Open       Close   Volume     MarketCap Sector Industry</span>
-<span class="go">0      a 2019-01-01 -71.884493  288.410820  6569659  5.108324e+10    NaN      NaN</span>
-<span class="go">1      a 2019-01-02  93.943953  146.852024  8035699  5.108324e+10    NaN      NaN</span>
-<span class="go">2      a 2019-01-04  59.918731  179.637401  6569659  5.108324e+10    NaN      NaN</span>
-<span class="go">3      a 2019-01-07  84.278194  104.172287  3853769  5.108324e+10    NaN      NaN</span>
-<span class="go">4      a 2019-01-07  65.236900   76.599564  4321088  5.108324e+10    NaN      NaN</span>
+<span class="go">  Symbol                          Date        Open       Close   Volume  MarketCap             Sector             Industry</span>
+<span class="go">0      a 2018-12-28 10:52:20.787112192  183.437196  317.174615  6569659        NaN  Consumer Services  Television Services</span>
+<span class="go">1      a 2019-01-04 06:43:53.684146688  140.709610  258.400970  9763748        NaN  Consumer Services  Television Services</span>
+<span class="go">2      a 2019-01-05 16:00:19.317069312  201.365369  267.590441  7615123        NaN  Consumer Services  Television Services</span>
+<span class="go">3      a 2019-01-05 16:08:06.257626624  241.166342  271.303207  1310641        NaN  Consumer Services  Television Services</span>
+<span class="go">4      a 2019-01-06 11:20:47.833560832  235.657448  261.823267  4467840        NaN  Consumer Services  Television Services</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -486,7 +486,7 @@ method passing the name of the file in which you want to save the model.
 Note that the extension of the filename is not relevant, but we will be
 using the <code class="docutils literal notranslate"><span class="pre">.pkl</span></code> extension to highlight that the serialization
 protocol used is
-<a class="reference external" href="https://docs.python.org/3/library/pickle.html">pickle</a>.</p>
+<a class="reference external" href="https://github.com/cloudpipe/cloudpickle">cloudpickle</a>.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;my_model.pkl&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -513,12 +513,12 @@ from the loaded instance:</p>
 
 <span class="gp">In [14]: </span><span class="n">loaded</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_sequences</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[14]: </span><span class="go"></span>
-<span class="go">  Symbol       Date        Open       Close   Volume     MarketCap       Sector Industry</span>
-<span class="go">0      a 2018-12-28  128.691390  167.067695 -4648538  8.075710e+10  Health Care      NaN</span>
-<span class="go">1      a 2019-01-01  151.974849  193.628866  6091985  8.075710e+10  Health Care      NaN</span>
-<span class="go">2      a 2019-01-03  148.042099  220.129512  5198613  8.075710e+10  Health Care      NaN</span>
-<span class="go">3      a 2019-01-02  145.789941  186.299063  4987714  8.075710e+10  Health Care      NaN</span>
-<span class="go">4      a 2019-01-06  161.697250  157.542294  2211275  8.075710e+10  Health Care      NaN</span>
+<span class="go">  Symbol                          Date        Open       Close    Volume     MarketCap             Sector                 Industry</span>
+<span class="go">0      a 2019-01-01 20:52:47.731926784  101.983095  183.531971  17590079  2.493571e+11  Consumer Services  Transportation Services</span>
+<span class="go">1      a 2019-01-04 00:32:21.029110272  122.889631  147.495418   4576040  2.493571e+11  Consumer Services  Transportation Services</span>
+<span class="go">2      a 2019-01-02 08:32:31.323973376  168.027169  183.531971  13787960  2.493571e+11  Consumer Services  Transportation Services</span>
+<span class="go">3      a 2019-01-03 19:54:38.618253568  206.034581  206.212016  12953279  2.493571e+11  Consumer Services  Transportation Services</span>
+<span class="go">4      a 2019-01-05 10:01:51.107045632  181.946712  194.943304   6569659  2.493571e+11  Consumer Services  Transportation Services</span>
 </pre></div>
 </div>
 <div class="admonition warning">
@@ -576,22 +576,22 @@ and Health Care sectors.</p>
 <p>And we can now see the data generated for the two companies:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [19]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">Symbol</span> <span class="o">==</span> <span class="s1">&#39;AAAA&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[19]: </span><span class="go"></span>
-<span class="go">  Symbol       Date        Open       Close    Volume     MarketCap      Sector               Industry</span>
-<span class="go">0   AAAA 2019-01-02  307.136884  329.584775   6569659  1.234500e+11  Technology  Electronic Components</span>
-<span class="go">1   AAAA 2019-01-02  287.600364  266.314908  17295459  1.234500e+11  Technology  Electronic Components</span>
-<span class="go">2   AAAA 2019-01-04  180.082566  294.810512   5573774  1.234500e+11  Technology  Electronic Components</span>
-<span class="go">3   AAAA 2019-01-07  247.106467  222.289814   3811807  1.234500e+11  Technology  Electronic Components</span>
-<span class="go">4   AAAA 2019-01-08  261.889996  285.043352   4355697  1.234500e+11  Technology  Electronic Components</span>
+<span class="go">  Symbol                          Date        Open       Close    Volume     MarketCap      Sector               Industry</span>
+<span class="go">0   AAAA 2018-12-27 07:37:04.663576576   95.676169  183.531971   8871708  1.234500e+11  Technology  Electronic Components</span>
+<span class="go">1   AAAA 2019-01-01 12:29:53.069453312  110.685134  152.257267  12223290  1.234500e+11  Technology  Electronic Components</span>
+<span class="go">2   AAAA 2019-01-01 22:45:39.039351040  160.437715  162.534455   6440082  1.234500e+11  Technology  Electronic Components</span>
+<span class="go">3   AAAA 2019-01-03 12:27:50.625817856  125.213671  157.441694   5784677  1.234500e+11  Technology  Electronic Components</span>
+<span class="go">4   AAAA 2019-01-03 13:25:58.336669184  137.199142  124.401591   6639716  1.234500e+11  Technology  Electronic Components</span>
 </pre></div>
 </div>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [20]: </span><span class="n">new_data</span><span class="p">[</span><span class="n">new_data</span><span class="o">.</span><span class="n">Symbol</span> <span class="o">==</span> <span class="s1">&#39;BBBB&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[20]: </span><span class="go"></span>
-<span class="go">    Symbol       Date        Open       Close    Volume     MarketCap       Sector                  Industry</span>
-<span class="go">252   BBBB 2019-01-02  183.437196  224.662597   6569659  4.567800e+10  Health Care  Medical/Nursing Services</span>
-<span class="go">253   BBBB 2019-01-01  194.999228  239.718958  13585819  4.567800e+10  Health Care  Medical/Nursing Services</span>
-<span class="go">254   BBBB 2019-01-04  206.219318  181.995457   7593167  4.567800e+10  Health Care  Medical/Nursing Services</span>
-<span class="go">255   BBBB 2019-01-05  183.437196  199.526551   3873297  4.567800e+10  Health Care  Medical/Nursing Services</span>
-<span class="go">256   BBBB 2019-01-07  186.309442  187.886965   2124316  4.567800e+10  Health Care  Medical/Nursing Services</span>
+<span class="go">    Symbol                          Date        Open       Close   Volume     MarketCap       Sector                  Industry</span>
+<span class="go">187   BBBB 2018-12-26 07:22:48.112182272  183.437196  158.844019  6569659  4.567800e+10  Health Care  Medical/Nursing Services</span>
+<span class="go">188   BBBB 2019-01-02 20:45:00.072264448  140.058506  161.824179  5616797  4.567800e+10  Health Care  Medical/Nursing Services</span>
+<span class="go">189   BBBB 2019-01-03 20:16:15.041301248  112.225172  161.508427  6237134  4.567800e+10  Health Care  Medical/Nursing Services</span>
+<span class="go">190   BBBB 2019-01-06 01:11:59.523999744  109.980626  127.142226  3819675  4.567800e+10  Health Care  Medical/Nursing Services</span>
+<span class="go">191   BBBB 2019-01-06 12:25:54.907654144  183.437196  105.411655  6056746  4.567800e+10  Health Care  Medical/Nursing Services</span>
 </pre></div>
 </div>
 </div>
@@ -637,12 +637,12 @@ needs to be generated using the regular expression <code class="docutils literal
 indicated.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [24]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_sequences</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[24]: </span><span class="go"></span>
-<span class="go">  Symbol       Date       Open      Close   Volume     MarketCap             Sector               Industry</span>
-<span class="go">0     AA 2019-01-02 -17.872941  76.415811  8997374  8.544824e+10  Consumer Services  Electronic Components</span>
-<span class="go">1     AA 2019-01-01 -68.648649  85.624796  9204070  8.544824e+10  Consumer Services  Electronic Components</span>
-<span class="go">2     AA 2019-01-06 -15.376359  21.809077  6569659  8.544824e+10  Consumer Services  Electronic Components</span>
-<span class="go">3     AA 2019-01-07 -21.263334   2.222860  8753115  8.544824e+10  Consumer Services  Electronic Components</span>
-<span class="go">4     AA 2019-01-07  -0.142471  -4.065077    78403  8.544824e+10  Consumer Services  Electronic Components</span>
+<span class="go">  Symbol                          Date        Open       Close   Volume     MarketCap             Sector                                 Industry</span>
+<span class="go">0     AA 2019-01-01 20:52:47.731926784   93.331267  183.531971  6569659  4.516839e+10  Consumer Services  Computer Software: Prepackaged Software</span>
+<span class="go">1     AB 2019-01-01 15:17:10.663822592  114.964768   59.197671  7384451  4.516839e+10  Consumer Services  Computer Software: Prepackaged Software</span>
+<span class="go">2     AC 2019-01-03 13:43:07.116754688   88.394830   83.991395  5615191  4.516839e+10  Consumer Services  Computer Software: Prepackaged Software</span>
+<span class="go">3     AD 2019-01-05 21:55:20.650005504  118.869590  126.146597  8895521  4.516839e+10  Consumer Services  Computer Software: Prepackaged Software</span>
+<span class="go">4     AE 2019-01-06 13:53:14.095177472  130.693352  142.469213  3158882  4.516839e+10  Consumer Services  Computer Software: Prepackaged Software</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -660,12 +660,18 @@ different length:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [25]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_sequences</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;Symbol&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
 <span class="gh">Out[25]: </span><span class="go"></span>
 <span class="go">Symbol</span>
-<span class="go">AA    237</span>
-<span class="go">AB    252</span>
-<span class="go">AC    252</span>
-<span class="go">AD    252</span>
-<span class="go">AE    252</span>
-<span class="go">dtype: int64</span>
+<span class="go">AA     1</span>
+<span class="go">AAA    1</span>
+<span class="go">AAB    1</span>
+<span class="go">AAC    1</span>
+<span class="go">AAD    1</span>
+<span class="go">      ..</span>
+<span class="go">ZV     1</span>
+<span class="go">ZW     1</span>
+<span class="go">ZX     1</span>
+<span class="go">ZY     1</span>
+<span class="go">ZZ     1</span>
+<span class="go">Length: 1052, dtype: int64</span>
 </pre></div>
 </div>
 <p>If we want to force a specific length to the generated sequences we can
@@ -673,12 +679,18 @@ pass the <code class="docutils literal notranslate"><span class="pre">sequence_l
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [26]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_sequences</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sequence_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;Symbol&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
 <span class="gh">Out[26]: </span><span class="go"></span>
 <span class="go">Symbol</span>
-<span class="go">AA    100</span>
-<span class="go">AB    100</span>
-<span class="go">AC    100</span>
-<span class="go">AD    100</span>
-<span class="go">AE    100</span>
-<span class="go">dtype: int64</span>
+<span class="go">AA    1</span>
+<span class="go">AB    1</span>
+<span class="go">AC    1</span>
+<span class="go">AD    1</span>
+<span class="go">AE    1</span>
+<span class="go">     ..</span>
+<span class="go">TB    1</span>
+<span class="go">TC    1</span>
+<span class="go">TD    1</span>
+<span class="go">TE    1</span>
+<span class="go">TF    1</span>
+<span class="go">Length: 500, dtype: int64</span>
 </pre></div>
 </div>
 </div>
@@ -715,12 +727,12 @@ conditions to them.</p>
 
 <span class="gp">In [31]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_sequences</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[31]: </span><span class="go"></span>
-<span class="go">  Symbol       Date        Open       Close    Volume</span>
-<span class="go">0     AA 2019-01-02  271.870294  183.531971  17555765</span>
-<span class="go">1     AA 2019-01-04  154.734828  165.688874   6569659</span>
-<span class="go">2     AA 2019-01-05  155.601747  152.540718   8734688</span>
-<span class="go">3     AA 2019-01-06  150.953032  183.531971  10771765</span>
-<span class="go">4     AA 2019-01-09  151.138982  140.814244   6117260</span>
+<span class="go">  Symbol                          Date        Open       Close    Volume</span>
+<span class="go">0     AA 2019-01-05 11:03:40.255254528  183.437196  358.018643  11013543</span>
+<span class="go">1     AB 2019-01-02 17:12:31.199993088  251.538501  237.911934   6204970</span>
+<span class="go">2     AC 2019-01-03 17:24:49.059457280  237.721869  254.733416  10821844</span>
+<span class="go">3     AD 2019-01-06 04:55:39.775032064  246.953502  269.544524   6804777</span>
+<span class="go">4     AE 2019-01-08 23:51:48.040142080  183.437196  238.569825   5787438</span>
 </pre></div>
 </div>
 <p>In this case, of course, we are not able to sample new sequences
@@ -734,12 +746,12 @@ that we want on the generated data by passing them in a
 
 <span class="gp">In [33]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">context</span><span class="o">=</span><span class="n">symbols</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[33]: </span><span class="go"></span>
-<span class="go">  Symbol       Date        Open       Close   Volume</span>
-<span class="go">0   TSLA 2019-01-07  210.315891  183.531971  6569659</span>
-<span class="go">1   TSLA 2019-01-03  183.437196  183.531971  9444219</span>
-<span class="go">2   TSLA 2019-01-06   43.354136   30.762127  5289528</span>
-<span class="go">3   TSLA 2019-01-04   35.306009   35.165767   457407</span>
-<span class="go">4   TSLA 2019-01-06   30.035686  183.531971  2049217</span>
+<span class="go">  Symbol                          Date        Open       Close    Volume</span>
+<span class="go">0     AA 2018-12-26 19:28:27.440899328  275.864091   85.261434  10781836</span>
+<span class="go">1     AB 2019-01-02 22:27:50.211185408  252.472345  132.683522  -9861500</span>
+<span class="go">2     AC 2019-01-04 03:28:03.820667136  201.580820  129.566796    117301</span>
+<span class="go">3     AD 2019-01-05 01:02:45.942313728  162.317879  155.343579   4200552</span>
+<span class="go">4     AE 2019-01-06 01:53:39.725900032  172.926308  174.328335   2086668</span>
 </pre></div>
 </div>
 </div>
@@ -773,18 +785,18 @@ creating our PAR instance:</p>
 
 <span class="gp">In [39]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
 <span class="gh">Out[39]: </span><span class="go"></span>
-<span class="go">          Date       Open      Close    Volume</span>
-<span class="go">0   2018-12-31  54.552286  51.873922  45715575</span>
-<span class="go">1   2018-12-31  58.558843  51.649230  78316980</span>
-<span class="go">2   2019-01-01  55.603399  55.005639  26436050</span>
-<span class="go">3   2019-01-02  55.277031  55.239350   6430053</span>
-<span class="go">4   2019-01-03  56.076203  58.568528  81543390</span>
-<span class="go">..         ...        ...        ...       ...</span>
-<span class="go">247 2019-12-13  59.431436  57.675351  58604330</span>
-<span class="go">248 2019-12-15  56.069973  57.830136  40572842</span>
-<span class="go">249 2019-12-16  59.474082  56.990021  29029974</span>
-<span class="go">250 2019-12-16  56.877771  54.898882  73402590</span>
-<span class="go">251 2019-12-19  57.661725  54.828524  62042644</span>
+<span class="go">                             Date       Open      Close    Volume</span>
+<span class="go">0   2018-12-31 00:00:00.000000000  53.367840  54.638159  51503869</span>
+<span class="go">1   2019-01-02 00:34:39.260755200  59.387118  61.114046  87367425</span>
+<span class="go">2   2019-01-03 11:26:04.975041024  59.045161  60.263347  30123541</span>
+<span class="go">3   2019-01-05 16:38:44.393157376  60.797939  58.021765  19905540</span>
+<span class="go">4   2019-01-07 02:51:55.873771776  57.841995  60.443154  52648500</span>
+<span class="go">..                            ...        ...        ...       ...</span>
+<span class="go">247 2019-12-11 08:28:11.034720256  51.739976  52.983345  48731306</span>
+<span class="go">248 2019-12-13 02:26:55.305273600  51.126784  49.718606  68807162</span>
+<span class="go">249 2019-12-13 07:10:36.286897664  50.982189  51.139762  76988570</span>
+<span class="go">250 2019-12-15 11:18:05.984455424  51.439977  52.527876  65756286</span>
+<span class="go">251 2019-12-16 15:53:44.922994432  50.980714  52.006993  57313411</span>
 
 <span class="go">[252 rows x 4 columns]</span>
 </pre></div>

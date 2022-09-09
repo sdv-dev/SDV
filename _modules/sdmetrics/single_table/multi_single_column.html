@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.multi_single_column &#8212; SDV 0.16.0 documentation</title>
+    <title>sdmetrics.single_table.multi_single_column &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -169,7 +169,6 @@
 <span></span><span class="sd">&quot;&quot;&quot;SingleTable metrics based on applying a SingleColumnMetric on all the columns.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">rdt</span> <span class="kn">import</span> <span class="n">HyperTransformer</span>
 
 <span class="kn">from</span> <span class="nn">sdmetrics</span> <span class="kn">import</span> <span class="n">single_column</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.base</span> <span class="kn">import</span> <span class="n">SingleTableMetric</span>
@@ -209,13 +208,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">single_column_metric_kwargs</span> <span class="o">=</span> <span class="n">single_column_metric_kwargs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute</span></div>
 
-    <span class="k">def</span> <span class="nf">_compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute this metric.</span>
+    <span class="k">def</span> <span class="nf">_compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">store_errors</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute this metric for all columns.</span>
 
 <span class="sd">        This is done by computing the underlying SingleColumn metric to all the</span>
 <span class="sd">        columns that are compatible with it.</span>
 
-<span class="sd">        The output is the average of the scores obtained.</span>
+<span class="sd">        The output is a mapping of column name to the score of that column.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            real_data (pandas.DataFrame):</span>
@@ -224,32 +223,42 @@
 <span class="sd">                The values from the synthetic dataset.</span>
 <span class="sd">            metadata (dict):</span>
 <span class="sd">                Table metadata dict.</span>
+<span class="sd">            store_errors (bool):</span>
+<span class="sd">                Whether or not to store any metric computation errors in the results.</span>
 <span class="sd">            **kwargs:</span>
 <span class="sd">                Any additional keyword arguments will be passed down</span>
 <span class="sd">                to the single column metric</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Union[float, tuple[float]]:</span>
-<span class="sd">                Metric output.</span>
+<span class="sd">            Dict[string -&gt; Union[float, tuple[float]]]:</span>
+<span class="sd">                A mapping of column name to metric output.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
 
         <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_select_fields</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_types</span><span class="p">)</span>
-        <span class="n">scores</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">invalid_cols</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
+
+        <span class="n">scores</span> <span class="o">=</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;score&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">}</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">invalid_cols</span><span class="p">}</span>
         <span class="k">for</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">real_column</span> <span class="ow">in</span> <span class="n">real_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
                 <span class="n">real_column</span> <span class="o">=</span> <span class="n">real_column</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
                 <span class="n">synthetic_column</span> <span class="o">=</span> <span class="n">synthetic_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
 
-                <span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_column_metric</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span>
-                    <span class="n">real_column</span><span class="p">,</span>
-                    <span class="n">synthetic_column</span><span class="p">,</span>
-                    <span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">single_column_metric_kwargs</span> <span class="ow">or</span> <span class="p">{}),</span>
-                    <span class="o">**</span><span class="n">kwargs</span>
-                <span class="p">)</span>
-                <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_column_metric</span><span class="o">.</span><span class="n">compute_breakdown</span><span class="p">(</span>
+                        <span class="n">real_column</span><span class="p">,</span>
+                        <span class="n">synthetic_column</span><span class="p">,</span>
+                        <span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">single_column_metric_kwargs</span> <span class="ow">or</span> <span class="p">{}),</span>
+                        <span class="o">**</span><span class="n">kwargs</span>
+                    <span class="p">)</span>
+                    <span class="n">scores</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">score</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">store_errors</span><span class="p">:</span>
+                        <span class="n">scores</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="n">error</span><span class="p">}</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">error</span>
 
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">scores</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -275,7 +284,35 @@
 <span class="sd">            Union[float, tuple[float]]:</span>
 <span class="sd">                Metric output.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">([</span><span class="n">breakdown</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">breakdown</span> <span class="ow">in</span> <span class="n">scores</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compute_breakdown</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute this metric broken down by column.</span>
+
+<span class="sd">        This is done by computing the underlying SingleColumn metric to all the</span>
+<span class="sd">        columns that are compatible with it.</span>
+
+<span class="sd">        The output is a mapping of column to the column&#39;s score.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            real_data (pandas.DataFrame):</span>
+<span class="sd">                The values from the real dataset.</span>
+<span class="sd">            synthetic_data (pandas.DataFrame):</span>
+<span class="sd">                The values from the synthetic dataset.</span>
+<span class="sd">            metadata (dict):</span>
+<span class="sd">                Table metadata dict.</span>
+<span class="sd">            **kwargs:</span>
+<span class="sd">                Any additional keyword arguments will be passed down</span>
+<span class="sd">                to the single column metric</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[string -&gt; Union[float, tuple[float]]]:</span>
+<span class="sd">                A mapping of column name to metric output.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_compute</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">store_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
@@ -305,60 +342,67 @@
     <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">CSTest</span></div>
 
 
-<div class="viewcode-block" id="KSTest"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.KSTest.html#sdv.metrics.tabular.KSTest">[docs]</a><span class="k">class</span> <span class="nc">KSTest</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;MultiSingleColumnMetric based on SingleColumn KSTest.</span>
+<div class="viewcode-block" id="KSComplement"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.KSComplement.html#sdv.metrics.tabular.KSComplement">[docs]</a><span class="k">class</span> <span class="nc">KSComplement</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleColumnMetric based on SingleColumn KSComplement.</span>
 
-<span class="sd">    This function applies the single column ``KSTest`` metric to all</span>
+<span class="sd">    This function applies the single column ``KSComplement`` metric to all</span>
 <span class="sd">    the numerical columns found in the table and then returns the average</span>
 <span class="sd">    of all the scores obtained.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="p">)</span>
-    <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">KSTest</span></div>
+    <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">KSComplement</span></div>
 
 
-<div class="viewcode-block" id="KSTestExtended"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.KSTestExtended.html#sdv.metrics.tabular.KSTestExtended">[docs]</a><span class="k">class</span> <span class="nc">KSTestExtended</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;KSTest variation that transforms everything to numerical before comparing the tables.</span>
+<span class="k">class</span> <span class="nc">StatisticSimilarity</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleColumnMetric based on SingleColumn StatisticSimilarity.</span>
 
-<span class="sd">    This is done by applying an ``rdt.HyperTransformer`` to the data with the</span>
-<span class="sd">    default values and afterwards applying a regular single_column ``KSTest``</span>
-<span class="sd">    metric to all the generated numerical columns.</span>
+<span class="sd">    Apply the desired statistic to compare the real and synthetic data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">KSTest</span>
-    <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;categorical&#39;</span><span class="p">,</span> <span class="s1">&#39;boolean&#39;</span><span class="p">,</span> <span class="s1">&#39;datetime&#39;</span><span class="p">)</span>
+    <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;datetime&#39;</span><span class="p">)</span>
+    <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">StatisticSimilarity</span>
 
-<div class="viewcode-block" id="KSTestExtended.compute"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.KSTestExtended.compute.html#sdv.metrics.tabular.KSTestExtended.compute">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute this metric.</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">            real_data (pandas.DataFrame):</span>
-<span class="sd">                The values from the real dataset.</span>
-<span class="sd">            synthetic_data (pandas.DataFrame):</span>
-<span class="sd">                The values from the synthetic dataset.</span>
-<span class="sd">            metadata (dict):</span>
-<span class="sd">                Table metadata dict.</span>
+<span class="k">class</span> <span class="nc">BoundaryAdherence</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleColumnMetric based on SingleColumn BoundaryAdherence.</span>
 
-<span class="sd">        Returns:</span>
-<span class="sd">            Union[float, tuple[float]]:</span>
-<span class="sd">                Metric output.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
-        <span class="n">transformer</span> <span class="o">=</span> <span class="n">HyperTransformer</span><span class="p">()</span>
-        <span class="n">fields</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_select_fields</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">field_types</span><span class="p">)</span>
-        <span class="n">real_data</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">real_data</span><span class="p">[</span><span class="n">fields</span><span class="p">])</span>
-        <span class="n">synthetic_data</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">[</span><span class="n">fields</span><span class="p">])</span>
+<span class="sd">    Compute the fraction of rows in the synthetic data that are within the min and max</span>
+<span class="sd">    bounds of the real data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-        <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">real_column</span> <span class="ow">in</span> <span class="n">real_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">real_column</span> <span class="o">=</span> <span class="n">real_column</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
-            <span class="n">synthetic_column</span> <span class="o">=</span> <span class="n">synthetic_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;datetime&#39;</span><span class="p">)</span>
+    <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">BoundaryAdherence</span>
 
-            <span class="n">score</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">single_column_metric</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_column</span><span class="p">,</span> <span class="n">synthetic_column</span><span class="p">)</span>
-            <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div></div>
+<span class="k">class</span> <span class="nc">MissingValueSimilarity</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleColumnMetric based on SingleColumn MissingValueSimilarity.</span>
+
+<span class="sd">    Compare the percentage of missing values between the real and synthetic data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;datetime&#39;</span><span class="p">)</span>
+    <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">MissingValueSimilarity</span>
+
+
+<span class="k">class</span> <span class="nc">CategoryCoverage</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleColumnMetric based on SingleColumn CategoryCoverage.</span>
+
+<span class="sd">    Compute the fraction of real data categories that are present in the synthetic data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;categorical&#39;</span><span class="p">,</span> <span class="s1">&#39;boolean&#39;</span><span class="p">)</span>
+    <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">CategoryCoverage</span>
+
+
+<span class="k">class</span> <span class="nc">TVComplement</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleColumnMetric based on SingleColumn TVComplement.</span>
+
+<span class="sd">    Compute the complement of the total variaton distance between the real and synthetic data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;categorical&#39;</span><span class="p">,</span> <span class="s1">&#39;boolean&#39;</span><span class="p">)</span>
+    <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">TVComplement</span>
 </pre></div>
 
               </div>

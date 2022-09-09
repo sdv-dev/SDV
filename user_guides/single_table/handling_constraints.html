@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Inputting Business Logic Using Constraints &#8212; SDV 0.16.0 documentation</title>
+    <title>Inputting Business Logic Using Constraints &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -315,18 +315,18 @@ about employees from several companies.</p>
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
 <span class="go">     company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0       Pear          Sales            1   39               31                     8   70000.00      10500.00                       3        1.0        0.0         0.0</span>
-<span class="go">1       Pear         Design            5   38               33                     5  152778.58      21823.01                       4        0.0        0.0         1.0</span>
-<span class="go">2    Glasses             AI            1   36               33                     3  129500.00       5000.00                       2        1.0        0.0         0.0</span>
-<span class="go">3    Glasses  Search Engine            7   41               40                     1  156026.61       5211.41                       4        0.0        0.0         1.0</span>
-<span class="go">4   Cheerper        BigData            6   47               39                     8  106500.00      20500.00                       4        0.0        1.0         0.0</span>
-<span class="go">5   Cheerper        Support           11   33               31                     2  144500.00      11500.00                       1        0.0        1.0         0.0</span>
-<span class="go">6       Pear          Sales           28   32               28                     4  134500.00      13000.00                       2        1.0        0.0         0.0</span>
-<span class="go">7       Pear         Design           75   45               39                     6  139812.51       8114.87                       4        0.0        0.0         1.0</span>
-<span class="go">8    Glasses             AI           33   46               41                     5  154000.00      22000.00                       2        1.0        0.0         0.0</span>
-<span class="go">9    Glasses  Search Engine           56   47               41                     6   54235.52      12694.51                       4        0.0        0.0         1.0</span>
-<span class="go">10  Cheerper        BigData           42   37               34                     3  133000.00      13000.00                       2        0.0        1.0         0.0</span>
-<span class="go">11  Cheerper        Support           80   39               37                     2   46500.00      16500.00                       3        0.0        1.0         0.0</span>
+<span class="go">0       Pear          Sales            1   35               26                     9   88000.00      14500.00                       3        1.0        0.0         0.0</span>
+<span class="go">1       Pear         Design            5   39               38                     1  148561.42      20415.95                       5        0.0        0.0         1.0</span>
+<span class="go">2    Glasses             AI            1   45               43                     2   39000.00      24500.00                       4        1.0        0.0         0.0</span>
+<span class="go">3    Glasses  Search Engine            7   43               39                     4   68594.34       5730.08                       5        0.0        0.0         1.0</span>
+<span class="go">4   Cheerper        BigData            6   42               36                     6  108000.00      15000.00                       2        0.0        1.0         0.0</span>
+<span class="go">5   Cheerper        Support           11   45               41                     4  140500.00       9500.00                       4        0.0        1.0         0.0</span>
+<span class="go">6       Pear          Sales           28   46               42                     4   65500.00       5000.00                       5        1.0        0.0         0.0</span>
+<span class="go">7       Pear         Design           75   49               46                     3  156438.00      22497.89                       2        0.0        0.0         1.0</span>
+<span class="go">8    Glasses             AI           33   46               42                     4  128000.00      22000.00                       5        1.0        0.0         0.0</span>
+<span class="go">9    Glasses  Search Engine           56   30               23                     7   77195.47      17090.69                       1        0.0        0.0         1.0</span>
+<span class="go">10  Cheerper        BigData           42   37               32                     5   62500.00      19000.00                       4        0.0        1.0         0.0</span>
+<span class="go">11  Cheerper        Support           80   43               34                     9   46500.00      14000.00                       5        0.0        1.0         0.0</span>
 </pre></div>
 </div>
 <p>This table contains a few rules that can be written as predefined constraints. We’ll use it as an
@@ -411,8 +411,8 @@ datetime column name and value. It also expects an inequality relation that must
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>All SDV tabular models have min_value and max_value parameters that you set to enforce bounds
-on all columns. This constraint is redundant if you set these model parameters.</p>
+<p>All SDV tabular models have an enforce_min_max_values parameter that you set to enforce bounds
+on all columns. This constraint is redundant if you set this model parameter.</p>
 </div>
 </div>
 <div class="section" id="positive-and-negative">
@@ -429,8 +429,8 @@ the column’s values must be &gt;0 or &lt;0.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>All SDV tabular models have min_value and max_value parameters that you set to enforce bounds
-on all columns. This constraint is redundant if you set these model parameters.</p>
+<p>All SDV tabular models have an enforce_min_max_value parameter that you set to enforce bounds
+on all columns. This constraint is redundant if you set this model parameter.</p>
 </div>
 </div>
 <div class="section" id="onehotencoding">
@@ -519,8 +519,8 @@ ranges are strict (exclusive) or not (inclusive).</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>All SDV tabular models have min_value and max_value parameters that you set to enforce bounds
-on all columns. This constraint is redundant if you set these model parameters.</p>
+<p>All SDV tabular models have an enforce_min_max_values parameter that you set to enforce bounds
+on all columns. This constraint is redundant if you set this model parameter.</p>
 </div>
 </div>
 </div>
@@ -540,7 +540,7 @@ to pass in the objects a list.</p>
 <span class="gp">   ....: </span><span class="p">]</span>
 <span class="gp">   ....: </span>
 
-<span class="gp">In [24]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="gp">In [24]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">enforce_min_max_values</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Then you can fit the model using the real data. During this process, the SDV ensures that the
@@ -560,17 +560,17 @@ the constraints.</p>
 
 <span class="gp">In [27]: </span><span class="n">synthetic_data</span>
 <span class="gh">Out[27]: </span><span class="go"></span>
-<span class="go">    company department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0  Cheerper    Support           22   35               33                     2  115107.16       6087.14                       1        0.0        1.0         0.0</span>
-<span class="go">1      Pear     Design           40   31               28                     4  112972.07      13747.58                       2        0.0        1.0         0.0</span>
-<span class="go">2      Pear     Design           31   38               36                     2  152145.49      17330.33                       2        1.0        0.0         0.0</span>
-<span class="go">3      Pear      Sales           35   37               31                     7  118845.78      15376.37                       2        1.0        0.0         0.0</span>
-<span class="go">4  Cheerper    BigData           56   45               41                     5  103151.56      20939.63                       2        0.0        1.0         0.0</span>
-<span class="go">5  Cheerper    Support           55   41               39                     2  145784.11      17917.95                       3        0.0        1.0         0.0</span>
-<span class="go">6      Pear     Design           15   42               35                     7   90751.13      14892.49                       2        1.0        0.0         0.0</span>
-<span class="go">7      Pear     Design           54   42               39                     3  130089.52      15604.91                       4        0.0        0.0         1.0</span>
-<span class="go">8  Cheerper    BigData           33   33               32                     1  129824.18       7191.94                       4        0.0        1.0         0.0</span>
-<span class="go">9      Pear     Design           62   45               40                     5  123198.87      18835.54                       3        1.0        0.0         0.0</span>
+<span class="go">    company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
+<span class="go">0  Cheerper        Support           12   36               33                     3   90267.11      24467.79                       1        0.0        1.0         0.0</span>
+<span class="go">1      Pear          Sales           29   48               45                     3  154194.00      11674.92                       1        0.0        0.0         1.0</span>
+<span class="go">2   Glasses             AI            4   46               43                     3  115700.91      23539.14                       3        1.0        0.0         0.0</span>
+<span class="go">3      Pear         Design           23   46               38                     8  132734.12       9859.24                       2        1.0        0.0         0.0</span>
+<span class="go">4      Pear          Sales            5   43               41                     2  130304.20      12845.34                       3        0.0        0.0         1.0</span>
+<span class="go">5   Glasses  Search Engine           37   43               35                     9   76579.46       7476.02                       4        1.0        0.0         0.0</span>
+<span class="go">6      Pear          Sales            9   35               34                     1  138885.85      19682.11                       2        0.0        0.0         1.0</span>
+<span class="go">7   Glasses             AI           23   37               32                     5   99753.38       9798.93                       4        0.0        0.0         1.0</span>
+<span class="go">8      Pear         Design           15   39               33                     6   75736.91       6743.59                       5        1.0        0.0         0.0</span>
+<span class="go">9   Glasses             AI           42   32               25                     7   94323.30       8170.55                       2        0.0        1.0         0.0</span>
 </pre></div>
 </div>
 </div>

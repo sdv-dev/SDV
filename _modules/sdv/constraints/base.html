@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.base &#8212; SDV 0.16.0 documentation</title>
+    <title>sdv.constraints.base &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -177,6 +177,7 @@
 <span class="kn">from</span> <span class="nn">copulas.multivariate.gaussian</span> <span class="kn">import</span> <span class="n">GaussianMultivariate</span>
 <span class="kn">from</span> <span class="nn">copulas.univariate</span> <span class="kn">import</span> <span class="n">GaussianUnivariate</span>
 <span class="kn">from</span> <span class="nn">rdt</span> <span class="kn">import</span> <span class="n">HyperTransformer</span>
+<span class="kn">from</span> <span class="nn">rdt.transformers</span> <span class="kn">import</span> <span class="n">BinaryEncoder</span><span class="p">,</span> <span class="n">FloatFormatter</span><span class="p">,</span> <span class="n">OneHotEncoder</span><span class="p">,</span> <span class="n">UnixTimestampEncoder</span>
 
 <span class="kn">from</span> <span class="nn">sdv.constraints.errors</span> <span class="kn">import</span> <span class="n">MissingConstraintColumnError</span>
 <span class="kn">from</span> <span class="nn">sdv.errors</span> <span class="kn">import</span> <span class="n">ConstraintsNotMetError</span>
@@ -480,6 +481,36 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">constraint</span> <span class="o">=</span> <span class="n">constraint</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_hyper_transformer_config</span><span class="p">(</span><span class="n">data_to_model</span><span class="p">):</span>
+        <span class="n">sdtypes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">transformers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_to_model</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">infer_objects</span><span class="p">()</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span>
+            <span class="k">if</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">):</span>
+                <span class="n">sdtypes</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;numerical&#39;</span>
+                <span class="n">transformers</span> <span class="o">=</span> <span class="n">FloatFormatter</span><span class="p">(</span>
+                    <span class="n">missing_value_replacement</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span>
+                    <span class="n">model_missing_values</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;O&#39;</span><span class="p">:</span>
+                <span class="n">sdtypes</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;categorical&#39;</span>
+                <span class="n">transformers</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">OneHotEncoder</span>
+            <span class="k">elif</span> <span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;M&#39;</span><span class="p">:</span>
+                <span class="n">sdtypes</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;datetime&#39;</span>
+                <span class="n">transformers</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">UnixTimestampEncoder</span><span class="p">(</span>
+                    <span class="n">missing_value_replacement</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span>
+                    <span class="n">model_missing_values</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span>
+                <span class="n">sdtypes</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;boolean&#39;</span>
+                <span class="n">transformers</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">BinaryEncoder</span><span class="p">(</span>
+                    <span class="n">missing_value_replacement</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="n">model_missing_values</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;sdtypes&#39;</span><span class="p">:</span> <span class="n">sdtypes</span><span class="p">,</span> <span class="s1">&#39;transformers&#39;</span><span class="p">:</span> <span class="n">transformers</span><span class="p">}</span>
+
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Fit the ``ColumnsModel``.</span>
 
@@ -491,10 +522,12 @@
 <span class="sd">                Table data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">data_to_model</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span> <span class="o">=</span> <span class="n">HyperTransformer</span><span class="p">(</span>
-            <span class="n">default_data_type_transformers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;categorical&#39;</span><span class="p">:</span> <span class="s1">&#39;OneHotEncodingTransformer&#39;</span><span class="p">}</span>
-        <span class="p">)</span>
+        <span class="n">ht_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_hyper_transformer_config</span><span class="p">(</span><span class="n">data_to_model</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span> <span class="o">=</span> <span class="n">HyperTransformer</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="n">ht_config</span><span class="p">)</span>
         <span class="n">transformed_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data_to_model</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">GaussianMultivariate</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">GaussianUnivariate</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">transformed_data</span><span class="p">)</span>
 

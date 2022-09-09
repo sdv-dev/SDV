@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Multi Table Metrics &#8212; SDV 0.16.0 documentation</title>
+    <title>Multi Table Metrics &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -382,17 +382,16 @@ report back the average score obtained.</p>
 <p>The list of such metrics is:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">CSTest</span></code>: Multi Single Table metric based on the Single Table CSTest metric.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">KSTest</span></code>: Multi Single Table metric based on the Single Table KSTest metric.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">KSTestExtended</span></code>: Multi Single Table metric based on the Single Table KSTestExtended metric.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">KSComplement</span></code>: Multi Single Table metric based on the Single Table KSComplement metric.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">LogisticDetection</span></code>: Multi Single Table metric based on the Single Table LogisticDetection metric.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SVCDetection</span></code>: Multi Single Table metric based on the Single Table SVCDetection metric.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BNLikelihood</span></code>: Multi Single Table metric based on the Single Table BNLikelihood metric.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BNLogLikelihood</span></code>: Multi Single Table metric based on the Single Table BNLogLikelihood metric.</p></li>
 </ul>
-<p>Let’s try to use the <code class="docutils literal notranslate"><span class="pre">KSTestExtended</span></code> metric:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.relational</span> <span class="kn">import</span> <span class="n">KSTestExtended</span>
+<p>Let’s try to use the <code class="docutils literal notranslate"><span class="pre">KSComplement</span></code> metric:</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.relational</span> <span class="kn">import</span> <span class="n">KSComplement</span>
 
-<span class="gp">In [7]: </span><span class="n">KSTestExtended</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
+<span class="gp">In [7]: </span><span class="n">KSComplement</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
 <span class="gh">Out[7]: </span><span class="go">0.8194444444444443</span>
 </pre></div>
 </div>

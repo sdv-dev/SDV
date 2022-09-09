@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.evaluation.evaluate &#8212; SDV 0.16.0 documentation</title>
+    <title>sdv.evaluation.evaluate &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -257,7 +257,8 @@
 <li><p><strong>synthetic_data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>] or </em><em>pandas.DataFrame</em>) – Map of names and tables of synthesized data. When evaluating a single table,
 a single <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> can be passed alone.</p></li>
 <li><p><strong>real_data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>pandas.DataFrame</em><em>] or </em><em>pandas.DataFrame</em>) – Map of names and tables of real data. When evaluating a single table,
-a single <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> can be passed alone.</p></li>
+a single <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> can be passed alone.
+If metadata is None, this parameter must be a dataframe.</p></li>
 <li><p><strong>metadata</strong> (<em>str</em><em>, </em><em>dict</em><em>, </em><a class="reference internal" href="../metadata/api/sdv.metadata.dataset.Metadata.html#sdv.metadata.dataset.Metadata" title="sdv.metadata.dataset.Metadata"><em>Metadata</em></a><em> or </em><em>None</em>) – Metadata instance or details needed to build it.</p></li>
 <li><p><strong>root_path</strong> (<em>str</em>) – Relative path to find the metadata.json file when needed.</p></li>
 <li><p><strong>metrics</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – List of metric names to apply.</p></li>

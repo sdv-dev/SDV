@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.tabular &#8212; SDV 0.16.0 documentation</title>
+    <title>sdv.constraints.tabular &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -850,7 +850,7 @@
         <span class="sd">&quot;&quot;&quot;Fit the constraint.</span>
 
 <span class="sd">        The fit process consists in generating the ``transformed_column`` name and determine</span>
-<span class="sd">        whether or not the data is ``datetime``.</span>
+<span class="sd">        whether or not the data is ``UnixTimestampEncoder``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -1013,7 +1013,7 @@
         <span class="k">return</span> <span class="n">is_datetime</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Learn whether or not the ``column_name`` is ``datetime``.</span>
+        <span class="sd">&quot;&quot;&quot;Learn whether or not the ``column_name`` is ``UnixTimestampEncoder``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Single Table Metrics &#8212; SDV 0.16.0 documentation</title>
+    <title>Single Table Metrics &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -371,7 +371,7 @@ with the corresponding column from the synthetic table, and at the end report th
 outcome from the test.</p>
 <p>Such metrics are:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.KSTest</span></code>: This metric uses the two-sample Kolmogorov–Smirnov test
+<li><p><code class="docutils literal notranslate"><span class="pre">sdv.metrics.tabular.KSComplement</span></code>: This metric uses the two-sample Kolmogorov–Smirnov test
 to compare the distributions of continuous columns using the empirical CDF.
 The output for each column is 1 minus the KS Test D statistic, which indicates the maximum
 distance between the expected CDF and the observed CDF values.</p></li>
@@ -381,17 +381,17 @@ which indicates the probability of the two columns having been sampled from the 
 distribution.</p></li>
 </ul>
 <p>Let us execute these two metrics on the loaded data:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.tabular</span> <span class="kn">import</span> <span class="n">CSTest</span><span class="p">,</span> <span class="n">KSTest</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [6]: </span><span class="kn">from</span> <span class="nn">sdv.metrics.tabular</span> <span class="kn">import</span> <span class="n">CSTest</span><span class="p">,</span> <span class="n">KSComplement</span>
 
 <span class="gp">In [7]: </span><span class="n">CSTest</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
 <span class="gh">Out[7]: </span><span class="go">0.8078084931103922</span>
 
-<span class="gp">In [8]: </span><span class="n">KSTest</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
+<span class="gp">In [8]: </span><span class="n">KSComplement</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">)</span>
 <span class="gh">Out[8]: </span><span class="go">0.6372093023255814</span>
 </pre></div>
 </div>
 <p>In each case, the statistical test will be executed on all the compatible column (so, categorical
-or boolean columns for <code class="docutils literal notranslate"><span class="pre">CSTest</span></code> and numerical columns for <code class="docutils literal notranslate"><span class="pre">KSTest</span></code>), and report the average
+or boolean columns for <code class="docutils literal notranslate"><span class="pre">CSTest</span></code> and numerical columns for <code class="docutils literal notranslate"><span class="pre">KSComplement</span></code>), and report the average
 score obtained.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -402,11 +402,11 @@ either metric will be <code class="docutils literal notranslate"><span class="pr
 metric classes or their names:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
 
-<span class="gp">In [10]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">,</span> <span class="s1">&#39;KSTest&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">In [10]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">,</span> <span class="s1">&#39;KSComplement&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[10]: </span><span class="go"></span>
 <span class="go">   metric                                     name  raw_score  normalized_score  min_value  max_value      goal</span>
 <span class="go">0  CSTest                              Chi-Squared   0.807808          0.807808        0.0        1.0  MAXIMIZE</span>
-<span class="go">1  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.637209          0.637209        0.0        1.0  MAXIMIZE</span>
+<span class="go">1  KSComplement  Inverted Kolmogorov-Smirnov D statistic   0.637209          0.637209        0.0        1.0  MAXIMIZE</span>
 </pre></div>
 </div>
 </div>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metrics.tabular.KSTestExtended.compute &#8212; SDV 0.16.0 documentation</title>
+    <title>sdv.metrics.tabular.KSComplement &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -42,8 +42,8 @@
     <link rel="shortcut icon" href="../../../_static/SDV.ico"/>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="sdv.metrics.tabular.ContinuousKLDivergence" href="sdv.metrics.tabular.ContinuousKLDivergence.html" />
-    <link rel="prev" title="sdv.metrics.tabular.KSTestExtended.get_subclasses" href="sdv.metrics.tabular.KSTestExtended.get_subclasses.html" />
+    <link rel="next" title="sdv.metrics.tabular.KSComplement.get_subclasses" href="sdv.metrics.tabular.KSComplement.get_subclasses.html" />
+    <link rel="prev" title="sdv.metrics.tabular.CSTest.compute" href="sdv.metrics.tabular.CSTest.compute.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
   </head>
@@ -255,28 +255,16 @@
                                         <a href="sdv.metrics.tabular.CSTest.compute.html">sdv.metrics.tabular.CSTest.compute</a>
                                     </li>
                                 
-                                    <li class="">
-                                        <a href="sdv.metrics.tabular.KSTest.html">sdv.metrics.tabular.KSTest</a>
-                                    </li>
-                                
-                                    <li class="">
-                                        <a href="sdv.metrics.tabular.KSTest.get_subclasses.html">sdv.metrics.tabular.KSTest.get_subclasses</a>
-                                    </li>
-                                
-                                    <li class="">
-                                        <a href="sdv.metrics.tabular.KSTest.compute.html">sdv.metrics.tabular.KSTest.compute</a>
-                                    </li>
-                                
-                                    <li class="">
-                                        <a href="sdv.metrics.tabular.KSTestExtended.html">sdv.metrics.tabular.KSTestExtended</a>
-                                    </li>
-                                
-                                    <li class="">
-                                        <a href="sdv.metrics.tabular.KSTestExtended.get_subclasses.html">sdv.metrics.tabular.KSTestExtended.get_subclasses</a>
-                                    </li>
-                                
                                     <li class="active">
-                                        <a href="">sdv.metrics.tabular.KSTestExtended.compute</a>
+                                        <a href="">sdv.metrics.tabular.KSComplement</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.metrics.tabular.KSComplement.get_subclasses.html">sdv.metrics.tabular.KSComplement.get_subclasses</a>
+                                    </li>
+                                
+                                    <li class="">
+                                        <a href="sdv.metrics.tabular.KSComplement.compute.html">sdv.metrics.tabular.KSComplement.compute</a>
                                     </li>
                                 
                                     <li class="">
@@ -717,27 +705,72 @@
               
               <div>
                 
-  <div class="section" id="sdv-metrics-tabular-kstestextended-compute">
-<h1>sdv.metrics.tabular.KSTestExtended.compute<a class="headerlink" href="#sdv-metrics-tabular-kstestextended-compute" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="sdv-metrics-tabular-kscomplement">
+<h1>sdv.metrics.tabular.KSComplement<a class="headerlink" href="#sdv-metrics-tabular-kscomplement" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="sdv.metrics.tabular.KSComplement">
+<em class="property">class </em><code class="sig-prename descclassname">sdv.metrics.tabular.</code><code class="sig-name descname">KSComplement</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">single_column_metric</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">single_column_metric_kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdmetrics/single_table/multi_single_column.html#KSComplement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metrics.tabular.KSComplement" title="Permalink to this definition">¶</a></dt>
+<dd><p>MultiSingleColumnMetric based on SingleColumn KSComplement.</p>
+<p>This function applies the single column <code class="docutils literal notranslate"><span class="pre">KSComplement</span></code> metric to all
+the numerical columns found in the table and then returns the average
+of all the scores obtained.</p>
 <dl class="py method">
-<dt id="sdv.metrics.tabular.KSTestExtended.compute">
-<em class="property">classmethod </em><code class="sig-prename descclassname">KSTestExtended.</code><code class="sig-name descname">compute</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">real_data</span></em>, <em class="sig-param"><span class="n">synthetic_data</span></em>, <em class="sig-param"><span class="n">metadata</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/sdmetrics/single_table/multi_single_column.html#KSTestExtended.compute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metrics.tabular.KSTestExtended.compute" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute this metric.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>real_data</strong> (<em>pandas.DataFrame</em>) – The values from the real dataset.</p></li>
-<li><p><strong>synthetic_data</strong> (<em>pandas.DataFrame</em>) – The values from the synthetic dataset.</p></li>
-<li><p><strong>metadata</strong> (<em>dict</em>) – Table metadata dict.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Metric output.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Union[float, tuple[float]]</p>
-</dd>
-</dl>
+<dt id="sdv.metrics.tabular.KSComplement.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">single_column_metric</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">single_column_metric_kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.metrics.tabular.KSComplement.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sdv.metrics.tabular.KSComplement.__init__" title="sdv.metrics.tabular.KSComplement.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([single_column_metric])</p></td>
+<td><p>Initialize self.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.metrics.tabular.KSComplement.compute.html#sdv.metrics.tabular.KSComplement.compute" title="sdv.metrics.tabular.KSComplement.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute</span></code></a>(real_data, synthetic_data[, metadata])</p></td>
+<td><p>Compute this metric.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_breakdown</span></code>(real_data, synthetic_data)</p></td>
+<td><p>Compute this metric broken down by column.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sdv.metrics.tabular.KSComplement.get_subclasses.html#sdv.metrics.tabular.KSComplement.get_subclasses" title="sdv.metrics.tabular.KSComplement.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_subclasses</span></code></a>([include_parents])</p></td>
+<td><p>Recursively find subclasses of this metric.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code>(raw_score)</p></td>
+<td><p>Return the <cite>raw_score</cite> as is, since it is already normalized.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">field_types</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">goal</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">max_value</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">min_value</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">single_column_metric_kwargs</span></code></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -748,8 +781,8 @@
               
               <div class='prev-next-bottom'>
                 
-    <a class='left-prev' id="prev-link" href="sdv.metrics.tabular.KSTestExtended.get_subclasses.html" title="previous page">sdv.metrics.tabular.KSTestExtended.get_subclasses</a>
-    <a class='right-next' id="next-link" href="sdv.metrics.tabular.ContinuousKLDivergence.html" title="next page">sdv.metrics.tabular.ContinuousKLDivergence</a>
+    <a class='left-prev' id="prev-link" href="sdv.metrics.tabular.CSTest.compute.html" title="previous page">sdv.metrics.tabular.CSTest.compute</a>
+    <a class='right-next' id="next-link" href="sdv.metrics.tabular.KSComplement.get_subclasses.html" title="next page">sdv.metrics.tabular.KSComplement.get_subclasses</a>
 
               </div>
               

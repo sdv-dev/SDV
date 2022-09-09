@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.SDV &#8212; SDV 0.16.0 documentation</title>
+    <title>sdv.SDV &#8212; SDV 0.17.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -293,7 +293,7 @@
 <li><p><strong>model</strong> (<em>type</em>) – Class of the model to use. Defaults to <code class="docutils literal notranslate"><span class="pre">sdv.relational.HMA1</span></code>.</p></li>
 <li><p><strong>model_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to the model. If no <code class="docutils literal notranslate"><span class="pre">model</span></code> is given,
 this defaults to using a <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> with <code class="docutils literal notranslate"><span class="pre">gaussian</span></code> distribution
-and <code class="docutils literal notranslate"><span class="pre">categorical_fuzzy</span></code> categorical transformer.</p></li>
+and <code class="docutils literal notranslate"><span class="pre">FrequencyEncoder_noised</span></code> categorical transformer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -326,7 +326,7 @@ and <code class="docutils literal notranslate"><span class="pre">categorical_fuz
 <td><p>Sample the entire dataset.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sdv.SDV.save.html#sdv.SDV.save" title="sdv.SDV.save"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save</span></code></a>(path)</p></td>
-<td><p>Save this SDV instance to the given path using pickle.</p></td>
+<td><p>Save this SDV instance to the given path using cloudpickle.</p></td>
 </tr>
 </tbody>
 </table>
