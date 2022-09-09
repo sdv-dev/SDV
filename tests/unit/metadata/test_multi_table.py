@@ -847,7 +847,7 @@ class TestMultiTableMetadata:
                     'chil_foreign_key': 'branch_id',
                 }
             ],
-            'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
+            'SCHEMA_VERSION': 'MULTI_TABLE_V1'
         }
         assert result == expected_result
 
@@ -1847,7 +1847,7 @@ class TestMultiTableMetadata:
                     'child_foreign_key': 'id'
                 }
             ],
-            'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
+            'SCHEMA_VERSION': 'MULTI_TABLE_V1'
         }
         from_dict_mock.assert_called_once_with(expected_new_metadata)
         new_metadata.save_to_json.assert_called_with('new')
@@ -1903,7 +1903,7 @@ class TestMultiTableMetadata:
         expected_new_metadata = {
             'tables': {},
             'relationships': [],
-            'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
+            'SCHEMA_VERSION': 'MULTI_TABLE_V1'
         }
         from_dict_mock.assert_called_once_with(expected_new_metadata)
         new_metadata.save_to_json.assert_called_with('new')

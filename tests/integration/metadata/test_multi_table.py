@@ -20,7 +20,7 @@ def test_multi_table_metadata():
     assert result == {
         'tables': {},
         'relationships': [],
-        'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
+        'SCHEMA_VERSION': 'MULTI_TABLE_V1'
     }
     assert instance._tables == {}
     assert instance._relationships == []
@@ -135,7 +135,7 @@ def test_upgrade_metadata():
                 'child_foreign_key': 'id_nesreca'
             }
         ],
-        'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
+        'SCHEMA_VERSION': 'MULTI_TABLE_V1'
     }
     assert new_metadata['SCHEMA_VERSION'] == expected_metadata['SCHEMA_VERSION']
     assert new_metadata['tables'] == expected_metadata['tables']

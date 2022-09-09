@@ -511,22 +511,15 @@ class SingleTableMetadata:
             column_meta = {}
             old_type = field_meta['type']
             subtype = field_meta.get('subtype')
+            column_meta['sdtype'] = old_type
 
-            if old_type == 'categorical':
-                column_meta['sdtype'] = 'categorical'
-
-            elif old_type == 'numerical':
-                column_meta['sdtype'] = 'numerical'
+            if old_type == 'numerical':
                 if subtype == 'float':
                     column_meta['representation'] = 'float64'
                 elif subtype == 'integer':
                     column_meta['representation'] = 'int64'
 
-            elif old_type == 'boolean':
-                column_meta['sdtype'] = 'boolean'
-
             elif old_type == 'datetime':
-                column_meta['sdtype'] = 'datetime'
                 datetime_format = field_meta.get('format')
                 if datetime_format:
                     column_meta['datetime_format'] = datetime_format

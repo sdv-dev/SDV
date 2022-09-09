@@ -14,7 +14,7 @@ from sdv.metadata.visualization import visualize_graph
 class MultiTableMetadata:
     """Multi Table Metadata class."""
 
-    SCHEMA_VERSION = 'SINGLE_TABLE_V1'
+    SCHEMA_VERSION = 'MULTI_TABLE_V1'
 
     def __init__(self):
         self._tables = {}
