@@ -136,7 +136,7 @@ outcome from the test.
 
 Such metrics are:
 
-* ``sdv.metrics.tabular.KSTest``: This metric uses the two-sample Kolmogorov–Smirnov test
+* ``sdv.metrics.tabular.KSComplement``: This metric uses the two-sample Kolmogorov–Smirnov test
   to compare the distributions of continuous columns using the empirical CDF.
   The output for each column is 1 minus the KS Test D statistic, which indicates the maximum
   distance between the expected CDF and the observed CDF values.
@@ -150,16 +150,16 @@ Let us execute these two metrics on the loaded data:
 .. ipython::
     :verbatim:
 
-    In [6]: from sdv.metrics.tabular import CSTest, KSTest
+    In [6]: from sdv.metrics.tabular import CSTest, KSComplement
 
     In [7]: CSTest.compute(real_data, synthetic_data)
     Out[7]: 0.8078084931103922
 
-    In [8]: KSTest.compute(real_data, synthetic_data)
+    In [8]: KSComplement.compute(real_data, synthetic_data)
     Out[8]: 0.6372093023255814
 
 In each case, the statistical test will be executed on all the compatible column (so, categorical
-or boolean columns for ``CSTest`` and numerical columns for ``KSTest``), and report the average
+or boolean columns for ``CSTest`` and numerical columns for ``KSComplement``), and report the average
 score obtained.
 
 .. note:: If your table does not contain any column of the compatible type, the output of
@@ -173,11 +173,11 @@ metric classes or their names:
 
     In [9]: from sdv.evaluation import evaluate
 
-    In [10]: evaluate(synthetic_data, real_data, metrics=['CSTest', 'KSTest'], aggregate=False)
+    In [10]: evaluate(synthetic_data, real_data, metrics=['CSTest', 'KSComplement'], aggregate=False)
     Out[10]:
        metric                                     name  raw_score  normalized_score  min_value  max_value      goal
     0  CSTest                              Chi-Squared   0.807808          0.807808        0.0        1.0  MAXIMIZE
-    1  KSTest  Inverted Kolmogorov-Smirnov D statistic   0.637209          0.637209        0.0        1.0  MAXIMIZE
+    1  KSComplement  Inverted Kolmogorov-Smirnov D statistic   0.637209          0.637209        0.0        1.0  MAXIMIZE
 
 
 Likelihood Metrics

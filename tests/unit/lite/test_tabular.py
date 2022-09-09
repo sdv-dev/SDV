@@ -1,7 +1,7 @@
 import io
-import pickle
 from unittest.mock import MagicMock, Mock, mock_open, patch
 
+import cloudpickle
 import numpy as np
 import pandas as pd
 import pytest
@@ -60,29 +60,31 @@ class TestTabularPreset:
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=None,
             constraints=None,
-            categorical_transformer='categorical_fuzzy',
+            categorical_transformer='FrequencyEncoder_noised',
             default_distribution='gaussian',
-            rounding=None,
+            learn_rounding_scheme=False,
         )
         metadata = gaussian_copula_mock.return_value._metadata
         metadata._dtype_transformers.update.assert_called_once_with({
-            'i': transformers_mock.NumericalTransformer(
-                dtype=np.int64,
-                nan=None,
-                null_column=False,
-                min_value='auto',
-                max_value='auto',
+            'i': transformers_mock.FloatFormatter(
+                missing_value_replacement=None,
+                model_missing_values=False,
+                enforce_min_max_values=True,
             ),
-            'f': transformers_mock.NumericalTransformer(
-                dtype=np.float64,
-                nan=None,
-                null_column=False,
-                min_value='auto',
-                max_value='auto',
+            'f': transformers_mock.FloatFormatter(
+                missing_value_replacement=None,
+                model_missing_values=False,
+                enforce_min_max_values=True,
             ),
-            'O': transformers_mock.CategoricalTransformer(fuzzy=True),
-            'b': transformers_mock.BooleanTransformer(nan=None, null_column=False),
-            'M': transformers_mock.DatetimeTransformer(nan=None, null_column=False),
+            'O': transformers_mock.FrequencyEncoder(add_noise=True),
+            'b': transformers_mock.BinaryEncoder(
+                missing_value_replacement=None,
+                model_missing_values=False
+            ),
+            'M': transformers_mock.UnixTimestampEncoder(
+                missing_value_replacement=None,
+                model_missing_values=False
+            )
         })
 
     @patch('sdv.lite.tabular.GaussianCopula', spec_set=GaussianCopula)
@@ -106,9 +108,9 @@ class TestTabularPreset:
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=metadata.to_dict(),
             constraints=None,
-            categorical_transformer='categorical_fuzzy',
+            categorical_transformer='FrequencyEncoder_noised',
             default_distribution='gaussian',
-            rounding=None,
+            learn_rounding_scheme=False,
         )
 
     @patch('sdv.lite.tabular.rdt.transformers')
@@ -134,29 +136,31 @@ class TestTabularPreset:
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=None,
             constraints=[constraint],
-            categorical_transformer='categorical_fuzzy',
+            categorical_transformer='FrequencyEncoder_noised',
             default_distribution='gaussian',
-            rounding=None,
+            learn_rounding_scheme=False,
         )
         metadata = gaussian_copula_mock.return_value._metadata
         metadata._dtype_transformers.update.assert_called_once_with({
-            'i': transformers_mock.NumericalTransformer(
-                dtype=np.int64,
-                nan='mean',
-                null_column=None,
-                min_value='auto',
-                max_value='auto',
+            'i': transformers_mock.FloatFormatter(
+                missing_value_replacement='mean',
+                model_missing_values=False,
+                enforce_min_max_values=True,
             ),
-            'f': transformers_mock.NumericalTransformer(
-                dtype=np.float64,
-                nan='mean',
-                null_column=None,
-                min_value='auto',
-                max_value='auto',
+            'f': transformers_mock.FloatFormatter(
+                missing_value_replacement='mean',
+                model_missing_values=False,
+                enforce_min_max_values=True,
             ),
-            'O': transformers_mock.CategoricalTransformer(fuzzy=True),
-            'b': transformers_mock.BooleanTransformer(nan=-1, null_column=None),
-            'M': transformers_mock.DatetimeTransformer(nan='mean', null_column=None),
+            'O': transformers_mock.FrequencyEncoder(add_noise=True),
+            'b': transformers_mock.BinaryEncoder(
+                missing_value_replacement=-1,
+                model_missing_values=False
+            ),
+            'M': transformers_mock.UnixTimestampEncoder(
+                missing_value_replacement='mean',
+                model_missing_values=False
+            )
         })
         assert preset._null_column is True
 
@@ -187,9 +191,9 @@ class TestTabularPreset:
         gaussian_copula_mock.assert_called_once_with(
             table_metadata=expected_metadata,
             constraints=None,
-            categorical_transformer='categorical_fuzzy',
+            categorical_transformer='FrequencyEncoder_noised',
             default_distribution='gaussian',
-            rounding=None,
+            learn_rounding_scheme=False,
         )
         metadata = gaussian_copula_mock.return_value._metadata
         assert metadata._dtype_transformers.update.call_count == 1
@@ -449,8 +453,8 @@ class TestTabularPreset:
         # Assert
         assert out.getvalue().strip() == expected
 
-    @patch('sdv.lite.tabular.pickle')
-    def test_save(self, pickle_mock):
+    @patch('sdv.lite.tabular.cloudpickle')
+    def test_save(self, cloudpickle_mock):
         """Test the ``TabularPreset.save`` method.
 
         Expect that the model's save method is called with the expected args.
@@ -465,7 +469,7 @@ class TestTabularPreset:
         model = Mock()
         preset = Mock()
         preset._model = model
-        open_mock = mock_open(read_data=pickle.dumps('test'))
+        open_mock = mock_open(read_data=cloudpickle.dumps('test'))
 
         # Run
         with patch('sdv.lite.tabular.open', open_mock):
@@ -473,10 +477,10 @@ class TestTabularPreset:
 
         # Assert
         open_mock.assert_called_once_with('test-path', 'wb')
-        pickle_mock.dump.assert_called_once_with(preset, open_mock())
+        cloudpickle_mock.dump.assert_called_once_with(preset, open_mock())
 
-    @patch('sdv.lite.tabular.pickle')
-    def test_load(self, pickle_mock):
+    @patch('sdv.lite.tabular.cloudpickle')
+    def test_load(self, cloudpickle_mock):
         """Test the ``TabularPreset.load`` method.
 
         Expect that the model's load method is called with the expected args.
@@ -490,7 +494,7 @@ class TestTabularPreset:
         # Setup
         default_model = Mock()
         TabularPreset._default_model = default_model
-        open_mock = mock_open(read_data=pickle.dumps('test'))
+        open_mock = mock_open(read_data=cloudpickle.dumps('test'))
 
         # Run
         with patch('sdv.lite.tabular.open', open_mock):
@@ -498,7 +502,7 @@ class TestTabularPreset:
 
         # Assert
         open_mock.assert_called_once_with('test-file.pkl', 'rb')
-        assert loaded == pickle_mock.load.return_value
+        assert loaded == cloudpickle_mock.load.return_value
 
     def test___repr__(self):
         """Test the ``TabularPreset.__repr__`` method.

@@ -44,14 +44,13 @@ class Table:
             Dictinary specifying which transformers to use for each field.
             Available transformers are:
 
-                * ``integer``: Uses a ``NumericalTransformer`` of dtype ``int``.
-                * ``float``: Uses a ``NumericalTransformer`` of dtype ``float``.
-                * ``categorical``: Uses a ``CategoricalTransformer`` without gaussian noise.
-                * ``categorical_fuzzy``: Uses a ``CategoricalTransformer`` adding gaussian noise.
-                * ``one_hot_encoding``: Uses a ``OneHotEncodingTransformer``.
-                * ``label_encoding``: Uses a ``LabelEncodingTransformer``.
-                * ``boolean``: Uses a ``BooleanTransformer``.
-                * ``datetime``: Uses a ``DatetimeTransformer``.
+                * ``FloatFormatter``: Uses a ``FloatFormatter`` for numerical data.
+                * ``FrequencyEncoder``: Uses a ``FrequencyEncoder`` without gaussian noise.
+                * ``FrequencyEncoder_noised``: Uses a ``FrequencyEncoder`` adding gaussian noise.
+                * ``OneHotEncoder``: Uses a ``OneHotEncoder``.
+                * ``LabelEncoder``: Uses a ``LabelEncoder``.
+                * ``BinaryEncoder``: Uses a ``BinaryEncoder``.
+                * ``UnixTimestampEncoder``: Uses a ``UnixTimestampEncoder``.
 
         anonymize_fields (dict[str, str]):
             Dict specifying which fields to anonymize and what faker
@@ -86,21 +85,13 @@ class Table:
             The columns in the dataframe which are constant within each
             group/entity. These columns will be provided at sampling time
             (i.e. the samples will be conditioned on the context variables).
-        rounding (int, str or None):
-            Define rounding scheme for ``NumericalTransformer``. If set to an int, values
-            will be rounded to that number of decimal places. If ``None``, values will not
-            be rounded. If set to ``'auto'``, the transformer will round to the maximum number
-            of decimal places detected in the fitted data. Defaults to ``'auto'``.
-        min_value (int, str or None):
-            Specify the minimum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be greater than or equal to it. If the string ``'auto'``
-            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
-            is given, there won't be a minimum. Defaults to ``'auto'``.
-        max_value (int, str or None):
-            Specify the maximum value the ``NumericalTransformer`` should use. If an integer
-            is given, sampled data will be less than or equal to it. If the string ``'auto'``
-            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
-            is given, there won't be a maximum. Defaults to ``'auto'``.
+        learn_rounding_scheme (bool):
+            Define rounding scheme for ``FloatFormatter``. If ``True``, the data returned by
+            ``reverse_transform`` will be rounded to that place. Defaults to ``True``.
+        enforce_min_max_values (bool):
+            Specify whether or not to clip the data returned by ``reverse_transform`` of
+            the numerical transformer, ``FloatFormatter``, to the min and max values seen
+            during ``fit``. Defaults to ``True``.
     """
 
     _hyper_transformer = None
@@ -109,21 +100,32 @@ class Table:
 
     _ANONYMIZATION_MAPPINGS = dict()
     _TRANSFORMER_TEMPLATES = {
-        'integer': rdt.transformers.NumericalTransformer(dtype=int),
-        'float': rdt.transformers.NumericalTransformer(dtype=float),
-        'categorical': rdt.transformers.CategoricalTransformer,
-        'categorical_fuzzy': rdt.transformers.CategoricalTransformer(fuzzy=True),
-        'one_hot_encoding': rdt.transformers.OneHotEncodingTransformer,
-        'label_encoding': rdt.transformers.LabelEncodingTransformer,
-        'boolean': rdt.transformers.BooleanTransformer,
-        'datetime': rdt.transformers.DatetimeTransformer(strip_constant=True),
+        'FloatFormatter': rdt.transformers.FloatFormatter(
+            learn_rounding_scheme=True,
+            enforce_min_max_values=True,
+            missing_value_replacement='mean',
+            model_missing_values=True,
+        ),
+        'FrequencyEncoder': rdt.transformers.FrequencyEncoder,
+        'FrequencyEncoder_noised': rdt.transformers.FrequencyEncoder(add_noise=True),
+        'OneHotEncoder': rdt.transformers.OneHotEncoder,
+        'LabelEncoder': rdt.transformers.LabelEncoder,
+        'LabelEncoder_noised': rdt.transformers.LabelEncoder(add_noise=True),
+        'BinaryEncoder': rdt.transformers.BinaryEncoder(
+            missing_value_replacement=-1,
+            model_missing_values=True
+        ),
+        'UnixTimestampEncoder': rdt.transformers.UnixTimestampEncoder(
+            missing_value_replacement='mean',
+            model_missing_values=True,
+        )
     }
     _DTYPE_TRANSFORMERS = {
-        'i': 'integer',
-        'f': 'float',
-        'O': 'one_hot_encoding',
-        'b': 'boolean',
-        'M': 'datetime',
+        'i': 'FloatFormatter',
+        'f': 'FloatFormatter',
+        'O': 'OneHotEncoder',
+        'b': 'BinaryEncoder',
+        'M': 'UnixTimestampEncoder',
     }
     _DTYPES_TO_TYPES = {
         'i': {
@@ -230,19 +232,16 @@ class Table:
             for _ in range(num_values)
         )
 
-    def _update_transformer_templates(self, rounding, min_value, max_value):
-        default_numerical_transformer = self._TRANSFORMER_TEMPLATES['integer']
-        if (rounding != default_numerical_transformer.rounding
-                or min_value != default_numerical_transformer.min_value
-                or max_value != default_numerical_transformer.max_value):
-            custom_int = rdt.transformers.NumericalTransformer(
-                dtype=int, rounding=rounding, min_value=min_value, max_value=max_value)
-            custom_float = rdt.transformers.NumericalTransformer(
-                dtype=float, rounding=rounding, min_value=min_value, max_value=max_value)
-            self._transformer_templates.update({
-                'integer': custom_int,
-                'float': custom_float
-            })
+    def _update_transformer_templates(self, learn_rounding_scheme, enforce_min_max_values):
+        custom_float_formatter = rdt.transformers.FloatFormatter(
+            missing_value_replacement='mean',
+            model_missing_values=True,
+            learn_rounding_scheme=learn_rounding_scheme,
+            enforce_min_max_values=enforce_min_max_values
+        )
+        self._transformer_templates.update({
+            'FloatFormatter': custom_float_formatter,
+        })
 
     @staticmethod
     def _load_constraints(constraints):
@@ -259,8 +258,8 @@ class Table:
     def __init__(self, name=None, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None,
                  dtype_transformers=None, model_kwargs=None, sequence_index=None,
-                 entity_columns=None, context_columns=None, rounding=None, min_value=None,
-                 max_value=None):
+                 entity_columns=None, context_columns=None,
+                 learn_rounding_scheme=True, enforce_min_max_values=True):
         self.name = name
         self._field_names = field_names
         self._field_types = field_types or {}
@@ -276,7 +275,8 @@ class Table:
         self._constraints_to_reverse = []
         self._dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         self._transformer_templates = self._TRANSFORMER_TEMPLATES.copy()
-        self._update_transformer_templates(rounding, min_value, max_value)
+        self._update_transformer_templates(learn_rounding_scheme, enforce_min_max_values)
+
         if dtype_transformers:
             self._dtype_transformers.update(dtype_transformers)
 
@@ -389,7 +389,7 @@ class Table:
 
         return fields_metadata
 
-    def _get_transformers(self, dtypes):
+    def _get_hypertransformer_config(self, dtypes):
         """Create the transformer instances needed to process the given dtypes.
 
         Args:
@@ -398,20 +398,23 @@ class Table:
 
         Returns:
             dict:
-                mapping of field names and transformer instances.
+                A dict containing the ``sdtypes`` and ``transformers`` config for the
+                ``rdt.HyperTransformer``.
         """
         transformers = dict()
+        sdtypes = dict()
         for name, dtype in dtypes.items():
+            dtype = np.dtype(dtype).kind
             field_metadata = self._fields_metadata.get(name, {})
-            transformer_template = field_metadata.get('transformer')
+            transformer_template = field_metadata.get(
+                'transformer', self._dtype_transformers[dtype])
+
             if transformer_template is None:
-                transformer_template = self._dtype_transformers[np.dtype(dtype).kind]
-                if transformer_template is None:
-                    # Skip this dtype
-                    continue
+                sdtypes[name] = self._DTYPES_TO_TYPES.get(dtype, {}).get('type', 'categorical')
+                transformers[name] = None
+                continue
 
-                field_metadata['transformer'] = transformer_template
-
+            field_metadata['transformer'] = transformer_template
             if isinstance(transformer_template, str):
                 transformer_template = self._transformer_templates[transformer_template]
 
@@ -423,8 +426,9 @@ class Table:
             LOGGER.debug('Loading transformer %s for field %s',
                          transformer.__class__.__name__, name)
             transformers[name] = transformer
+            sdtypes[name] = self._DTYPES_TO_TYPES.get(dtype, {}).get('type', 'categorical')
 
-        return transformers
+        return {'sdtypes': sdtypes, 'transformers': transformers}
 
     def _fit_constraints(self, data):
         errors = []
@@ -511,12 +515,20 @@ class Table:
                 else:
                     dtypes[column] = dtype_kind
 
-        transformers_dict = self._get_transformers(dtypes)
+        ht_config = self._get_hypertransformer_config(dtypes)
         for column in numerical_extras:
-            transformers_dict[column] = rdt.transformers.NumericalTransformer()
+            dtypes[column] = 'numerical'
+            ht_config['sdtypes'][column] = 'numerical'
+            ht_config['transformers'][column] = rdt.transformers.FloatFormatter(
+                missing_value_replacement='mean',
+                model_missing_values=True,
+            )
 
-        self._hyper_transformer = rdt.HyperTransformer(field_transformers=transformers_dict)
-        self._hyper_transformer.fit(data[list(transformers_dict.keys())])
+        self._hyper_transformer = rdt.HyperTransformer()
+        self._hyper_transformer.set_config(ht_config)
+        fit_columns = list(dtypes)
+        if not data[fit_columns].empty:
+            self._hyper_transformer.fit(data[fit_columns])
 
     @staticmethod
     def _get_key_subtype(field_meta):
@@ -648,8 +660,8 @@ class Table:
 
         LOGGER.debug('Transforming table %s', self.name)
         try:
-            return self._hyper_transformer.transform(data)
-        except rdt.errors.NotFittedError:
+            return self._hyper_transformer.transform_subset(data)
+        except (rdt.errors.NotFittedError, rdt.errors.Error):
             return data
 
     @classmethod
@@ -682,10 +694,19 @@ class Table:
         if not self.fitted:
             raise MetadataNotFittedError()
 
+        reversible_columns = [
+            column
+            for column in self._hyper_transformer._output_columns
+            if column in data.columns
+        ]
+        reversed_data = data
         try:
-            reversed_data = self._hyper_transformer.reverse_transform(data)
+            if not data.empty:
+                reversed_data = self._hyper_transformer.reverse_transform_subset(
+                    data[reversible_columns]
+                )
         except rdt.errors.NotFittedError:
-            reversed_data = data
+            LOGGER.info('HyperTransformer has not been fitted for table %s', self.name)
 
         for constraint in reversed(self._constraints_to_reverse):
             reversed_data = constraint.reverse_transform(reversed_data)
@@ -799,9 +820,8 @@ class Table:
             entity_columns=metadata_dict.get('entity_columns') or [],
             context_columns=metadata_dict.get('context_columns') or [],
             dtype_transformers=dtype_transformers,
-            min_value=metadata_dict.get('min_value', 'auto'),
-            max_value=metadata_dict.get('max_value', 'auto'),
-            rounding=metadata_dict.get('rounding', 'auto'),
+            enforce_min_max_values=metadata_dict.get('enforce_min_max_values', True),
+            learn_rounding_scheme=metadata_dict.get('learn_rounding_scheme', True),
         )
         instance._fields_metadata = fields
         return instance

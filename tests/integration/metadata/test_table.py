@@ -46,7 +46,7 @@ def test_table():
     metadata.fit(data)
 
     transformed = metadata.transform(data)
-    assert transformed.dtypes.isin([np.dtype('int32'), np.dtype('int64')]).all()
+    assert transformed.dtypes.isin([np.dtype('int32'), np.dtype('int64'), np.dtype('float')]).all()
 
     reverse_transformed = metadata.reverse_transform(transformed)
 

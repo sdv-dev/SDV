@@ -106,7 +106,7 @@ salaries won't necessarily be divisible by 500. Instead we should:
         column_name = column_names[0]
   
         is_included = (transformed_data[exclusion_column] == 0)
-        rounded_data = transformed_data[is_included][column_name].round(2)
+        rounded_data = transformed_data[is_included][column_name].round()
         transformed_data.at[is_included, column_name] = rounded_data
 
         transformed_data[column_name] *= increment
@@ -174,7 +174,7 @@ would for predefined constraints.
       bonus_divis_500
     ]
 
-    model = GaussianCopula(constraints=constraints, min_value=None, max_value=None)
+    model = GaussianCopula(constraints=constraints, enforce_min_max_values=False)
 
     model.fit(employees)
 

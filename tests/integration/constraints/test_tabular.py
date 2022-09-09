@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from rdt.transformers import FloatFormatter
 
 from sdv.constraints import (
     FixedIncrements, Inequality, Range, ScalarInequality, ScalarRange, create_custom_constraint)
@@ -7,13 +8,25 @@ from sdv.sampling.tabular import Condition
 from sdv.tabular import GaussianCopula
 
 
-def test_create_custom_constraint():
+def _is_valid(col, x):
+    return pd.Series([True if x_i > 0 else False for x_i in x['col']])
+
+
+def _transform(col, x):
+    return pd.DataFrame({'col': x['col'] ** 2})
+
+
+def _reverse_transform(col, x):
+    return pd.DataFrame({'col': x['col'] ** .5})
+
+
+def test_create_custom_constraint(tmpdir):
     """Test the ``create_custom_constraint`` method end to end."""
     # Setup
     custom_constraint = create_custom_constraint(
-        lambda _, x: pd.Series([True if x_i > 0 else False for x_i in x['col']]),
-        lambda _, x: pd.DataFrame({'col': x['col'] ** 2}),
-        lambda _, x: pd.DataFrame({'col': x['col'] ** .5})
+        _is_valid,
+        _transform,
+        _reverse_transform
     )('col')
 
     data = pd.DataFrame({'col': np.random.randint(1, 10, size=100)})
@@ -25,6 +38,37 @@ def test_create_custom_constraint():
 
     # Assert
     assert all(sampled > 0)
+
+    # Save
+    gc.save(tmpdir / 'test.pkl')
+
+    # Load
+    loaded = GaussianCopula.load(tmpdir / 'test.pkl')
+
+    # Sample from loaded
+    loaded.sample(100)
+
+
+def test_create_custom_constraint_transform_is_none(tmpdir):
+    """Test the ``create_custom_constraint`` method end to end."""
+    # Setup
+    custom_constraint = create_custom_constraint(_is_valid)('col')
+
+    data = pd.DataFrame({'col': np.random.randint(1, 10, size=100)})
+    gc = GaussianCopula(constraints=[custom_constraint])
+    gc.fit(data)
+
+    # Run
+    sampled = gc.sample(100)
+
+    # Assert
+    assert all(sampled > 0)
+
+    # Save
+    gc.save(tmpdir / 'test.pkl')
+
+    # Load
+    GaussianCopula.load(tmpdir / 'test.pkl')
 
 
 def test_invalid_create_custom_constraint():
@@ -165,7 +209,10 @@ def test_ScalarRange_conditions():
     condition = Condition({'input': 88}, num_rows=10)
     model = GaussianCopula(
         field_names=['input', 'output'],
-        field_transformers={'input': 'integer', 'output': 'float'},
+        field_transformers={
+            'input': FloatFormatter,
+            'output': FloatFormatter
+        },
         constraints=[constraint],
     )
 

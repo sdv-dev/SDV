@@ -2,8 +2,9 @@
 
 """Main SDV module."""
 
-import pickle
 import warnings
+
+import cloudpickle
 
 from sdv.errors import NotFittedError
 from sdv.relational.hma import HMA1
@@ -22,7 +23,7 @@ class SDV:
         model_kwargs (dict):
             Keyword arguments to pass to the model. If no ``model`` is given,
             this defaults to using a ``GaussianCopula`` with ``gaussian`` distribution
-            and ``categorical_fuzzy`` categorical transformer.
+            and ``FrequencyEncoder_noised`` categorical transformer.
     """
 
     _model_instance = None
@@ -31,7 +32,7 @@ class SDV:
         'model': GaussianCopula,
         'model_kwargs': {
             'default_distribution': 'gaussian',
-            'categorical_transformer': 'categorical_fuzzy',
+            'categorical_transformer': 'FrequencyEncoder_noised',
         }
     }
 
@@ -142,7 +143,7 @@ class SDV:
         return self.sample(num_rows=num_rows, reset_primary_keys=reset_primary_keys)
 
     def save(self, path):
-        """Save this SDV instance to the given path using pickle.
+        """Save this SDV instance to the given path using cloudpickle.
 
         Args:
             path (str):
@@ -151,7 +152,7 @@ class SDV:
         self._package_versions = get_package_versions(getattr(self, '_model', None))
 
         with open(path, 'wb') as output:
-            pickle.dump(self, output)
+            cloudpickle.dump(self, output)
 
     @classmethod
     def load(cls, path):
@@ -162,7 +163,7 @@ class SDV:
                 Path from which to load the SDV instance.
         """
         with open(path, 'rb') as f:
-            model = pickle.load(f)
+            model = cloudpickle.load(f)
             throw_version_mismatch_warning(getattr(model, '_package_versions', None))
 
             return model

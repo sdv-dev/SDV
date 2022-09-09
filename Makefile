@@ -134,7 +134,7 @@ test-tutorials: ## run the tutorial notebooks
 	invoke tutorials
 
 .PHONY: test
-test: test-unit test-readme test-tutorials ## test everything that needs test dependencies
+test: test-unit test-integration test-readme test-tutorials ## test everything that needs test dependencies
 
 .PHONY: test-all
 test-all: ## run tests on every Python version with tox

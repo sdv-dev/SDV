@@ -8,7 +8,6 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-from rdt import HyperTransformer, transformers
 
 from sdv.constraints import Constraint
 from sdv.metadata import visualization
@@ -72,7 +71,6 @@ class Metadata:
     """
 
     _child_map = None
-    _hyper_transformers = None
     _metadata = None
     _parent_map = None
 
@@ -181,7 +179,6 @@ class Metadata:
         else:
             self._metadata = {'tables': {}}
 
-        self._hyper_transformers = dict()
         self._analyze_relationships()
 
     def get_children(self, table_name):
@@ -400,129 +397,6 @@ class Metadata:
                     dtypes[name] = dtype
 
         return dtypes
-
-    def _get_pii_fields(self, table_name):
-        """Get the ``pii_category`` for each field of the table that contains PII.
-
-        Args:
-            table_name (str):
-                Table name for which to get the pii fields.
-
-        Returns:
-            dict:
-                pii field names and categories.
-        """
-        pii_fields = dict()
-        for name, field in self.get_table_meta(table_name)['fields'].items():
-            if field['type'] == 'categorical' and field.get('pii', False):
-                pii_fields[name] = field['pii_category']
-
-        return pii_fields
-
-    @staticmethod
-    def _get_transformers(dtypes, pii_fields):
-        """Create the transformer instances needed to process the given dtypes.
-
-        Temporary drop-in replacement of ``HyperTransformer._analyze`` method,
-        before RDT catches up.
-
-        Args:
-            dtypes (dict):
-                mapping of field names and dtypes.
-            pii_fields (dict):
-                mapping of pii field names and categories.
-
-        Returns:
-            dict:
-                mapping of field names and transformer instances.
-        """
-        transformers_dict = dict()
-        for name, dtype in dtypes.items():
-            dtype = np.dtype(dtype)
-            if dtype.kind == 'i':
-                transformer = transformers.NumericalTransformer(dtype=int)
-            elif dtype.kind == 'f':
-                transformer = transformers.NumericalTransformer(dtype=float)
-            elif dtype.kind == 'O':
-                anonymize = pii_fields.get(name)
-                transformer = transformers.CategoricalTransformer(anonymize=anonymize)
-            elif dtype.kind == 'b':
-                transformer = transformers.BooleanTransformer()
-            elif dtype.kind == 'M':
-                transformer = transformers.DatetimeTransformer()
-            else:
-                raise ValueError('Unsupported dtype: {}'.format(dtype))
-
-            LOGGER.info('Loading transformer %s for field %s',
-                        transformer.__class__.__name__, name)
-            transformers_dict[name] = transformer
-
-        return transformers_dict
-
-    def _load_hyper_transformer(self, table_name):
-        """Create and return a new ``rdt.HyperTransformer`` instance for a table.
-
-        First get the ``dtypes`` and ``pii fields`` from a given table, then use
-        those to build a transformer dictionary to be used by the ``HyperTransformer``.
-
-        Args:
-            table_name (str):
-                Table name for which to load the HyperTransformer.
-
-        Returns:
-            rdt.HyperTransformer:
-                Instance of ``rdt.HyperTransformer`` for the given table.
-        """
-        dtypes = self.get_dtypes(table_name)
-        pii_fields = self._get_pii_fields(table_name)
-        transformers_dict = self._get_transformers(dtypes, pii_fields)
-        return HyperTransformer(field_transformers=transformers_dict)
-
-    def transform(self, table_name, data):
-        """Transform data for a given table.
-
-        If the ``HyperTransformer`` for a table is ``None`` it is created.
-
-        Args:
-            table_name (str):
-                Name of the table that is being transformer.
-            data (pandas.DataFrame):
-                Table data.
-
-        Returns:
-            pandas.DataFrame:
-                Transformed data.
-        """
-        hyper_transformer = self._hyper_transformers.get(table_name)
-        if hyper_transformer is None:
-            hyper_transformer = self._load_hyper_transformer(table_name)
-            fields = list(hyper_transformer.transformers.keys())
-            hyper_transformer.fit(data[fields])
-            self._hyper_transformers[table_name] = hyper_transformer
-
-        hyper_transformer = self._hyper_transformers.get(table_name)
-        fields = list(hyper_transformer.transformers.keys())
-        return hyper_transformer.transform(data[fields])
-
-    def reverse_transform(self, table_name, data):
-        """Reverse the transformed data for a given table.
-
-        Args:
-            table_name (str):
-                Name of the table to reverse transform.
-            data (pandas.DataFrame):
-                Data to be reversed.
-
-        Returns:
-            pandas.DataFrame
-        """
-        hyper_transformer = self._hyper_transformers[table_name]
-        reversed_data = hyper_transformer.reverse_transform(data)
-
-        for name, dtype in self.get_dtypes(table_name, ids=True).items():
-            reversed_data[name] = reversed_data[name].dropna().astype(dtype)
-
-        return reversed_data
 
     # ################### #
     # Metadata Validation #

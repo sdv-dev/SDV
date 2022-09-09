@@ -153,21 +153,20 @@ report back the average score obtained.
 The list of such metrics is:
 
 * ``CSTest``: Multi Single Table metric based on the Single Table CSTest metric.
-* ``KSTest``: Multi Single Table metric based on the Single Table KSTest metric.
-* ``KSTestExtended``: Multi Single Table metric based on the Single Table KSTestExtended metric.
+* ``KSComplement``: Multi Single Table metric based on the Single Table KSComplement metric.
 * ``LogisticDetection``: Multi Single Table metric based on the Single Table LogisticDetection metric.
 * ``SVCDetection``: Multi Single Table metric based on the Single Table SVCDetection metric.
 * ``BNLikelihood``: Multi Single Table metric based on the Single Table BNLikelihood metric.
 * ``BNLogLikelihood``: Multi Single Table metric based on the Single Table BNLogLikelihood metric.
 
-Let's try to use the ``KSTestExtended`` metric:
+Let's try to use the ``KSComplement`` metric:
 
 .. ipython::
     :verbatim:
 
-    In [6]: from sdv.metrics.relational import KSTestExtended
+    In [6]: from sdv.metrics.relational import KSComplement
 
-    In [7]: KSTestExtended.compute(real_data, synthetic_data)
+    In [7]: KSComplement.compute(real_data, synthetic_data)
     Out[7]: 0.8194444444444443
 
 Parent Child Detection Metrics

@@ -72,22 +72,22 @@ def test_gaussian_copula():
         'user_id': {
             'type': 'id',
             'subtype': 'integer',
-            'transformer': 'integer',
+            'transformer': 'FloatFormatter',
         },
         'country': {
             'type': 'categorical',
             'pii': True,
             'pii_category': 'country_code',
-            'transformer': 'categorical_fuzzy',
+            'transformer': 'FrequencyEncoder_noised',
         },
         'gender': {
             'type': 'categorical',
-            'transformer': 'categorical_fuzzy',
+            'transformer': 'FrequencyEncoder_noised',
         },
         'age': {
             'type': 'numerical',
             'subtype': 'integer',
-            'transformer': 'integer',
+            'transformer': 'FloatFormatter',
         }
     }
 
@@ -108,7 +108,7 @@ def test_integer_categoricals():
             'type': 'categorical',
         },
     }
-    gc = GaussianCopula(field_types=field_types, categorical_transformer='categorical')
+    gc = GaussianCopula(field_types=field_types, categorical_transformer='FrequencyEncoder')
     gc.fit(users)
 
     sampled = gc.sample(len(users))
@@ -121,13 +121,13 @@ def test_parameters():
     gc = GaussianCopula(
         field_distributions={'foo': 'beta'},
         default_distribution='gaussian_kde',
-        categorical_transformer='label_encoding'
+        categorical_transformer='LabelEncoder'
     )
     new_gc = GaussianCopula(
         table_metadata=gc.get_metadata().to_dict()
     )
 
-    assert new_gc._metadata._dtype_transformers['O'] == 'label_encoding'
+    assert new_gc._metadata._dtype_transformers['O'] == 'LabelEncoder'
 
 
 def test_recreate():

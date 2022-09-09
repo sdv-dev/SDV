@@ -98,13 +98,13 @@ are included within the SDV Evaluation framework. However, the list of
 metrics that are applied can be controlled by passing a list with the
 names of the metrics that you want to apply.
 
-For example, if you were interested on obtaining only the ``CSTest`` and
-``KSTest`` metrics you can call the ``evaluate`` function as follows:
+For example, if you were interested on obtaining only the ``CSTest``
+metric you can call the ``evaluate`` function as follows:
 
 .. ipython:: python
     :okwarning:
 
-    evaluate(synthetic_data, real_data, metrics=['CSTest', 'KSTest'])
+    evaluate(synthetic_data, real_data, metrics=['CSTest'])
 
 
 Or, if we want to see the scores separately:
@@ -112,7 +112,7 @@ Or, if we want to see the scores separately:
 .. ipython:: python
     :okwarning:
 
-    evaluate(synthetic_data, real_data, metrics=['CSTest', 'KSTest'], aggregate=False)
+    evaluate(synthetic_data, real_data, metrics=['CSTest'], aggregate=False)
 
 
 For more details about all the metrics that exist for the different data modalities

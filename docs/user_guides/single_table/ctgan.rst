@@ -141,7 +141,7 @@ method passing the name of the file in which you want to save the model.
 Note that the extension of the filename is not relevant, but we will be
 using the ``.pkl`` extension to highlight that the serialization
 protocol used is
-`pickle <https://docs.python.org/3/library/pickle.html>`__.
+`cloudpickle <https://github.com/cloudpipe/cloudpickle>`__.
 
 .. ipython:: python
     :okwarning:
@@ -344,44 +344,6 @@ Advanced Usage
 Now that we have discovered the basics, let's go over a few more
 advanced usage examples and see the different arguments that we can pass
 to our ``CTGAN`` Model in order to customize it to our needs.
-
-Setting Bounds and Specifying Rounding for Numerical Columns
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-By default, the model will learn the upper and lower bounds of the
-input data, and use that for sampling. This means that all sampled data
-will be between the maximum and minimum values found in the original
-dataset for each numeric column. This option can be overwritten using the
-``min_value`` and ``max_value`` model arguments. These values can either
-be set to a numeric value, set to ``'auto'`` which is the default setting,
-or set to ``None`` which will mean the column is boundless.
-
-The model will also learn the number of decimal places to round to by default.
-This option can be overwritten using the ``rounding`` parameter. The value can
-be an int specifying how many decimal places to round to, ``'auto'`` which is
-the default setting, or ``None`` which means the data will not be rounded.
-
-Since we may want to sample values outside of the ranges in the original data,
-let's pass the ``min_value`` and ``max_value`` arguments as `None` to the model.
-To keep the number of decimals consistent across columns, we can set ``rounding``
-to be 2.
-
-.. ipython:: python
-    :okwarning:
-
-    model = CTGAN(
-        primary_key='student_id',
-        min_value=None,
-        max_value=None,
-        rounding=2
-    )
-    model.fit(data)
-
-    unbounded_data = model.sample(10)
-    unbounded_data
-
-As you may notice, the sampled data may have values outside the range of
-the original data.
 
 How to modify the CTGAN Hyperparameters?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

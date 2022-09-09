@@ -9,6 +9,7 @@ import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianUnivariate
 from rdt import HyperTransformer
+from rdt.transformers import BinaryEncoder, FloatFormatter, OneHotEncoder, UnixTimestampEncoder
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.errors import ConstraintsNotMetError
@@ -312,6 +313,36 @@ class ColumnsModel:
 
         self.constraint = constraint
 
+    @staticmethod
+    def _get_hyper_transformer_config(data_to_model):
+        sdtypes = {}
+        transformers = {}
+        for column_name, data in data_to_model.items():
+            dtype = data.dropna().infer_objects().dtype.kind
+            if dtype in ('i', 'f'):
+                sdtypes[column_name] = 'numerical'
+                transformers = FloatFormatter(
+                    missing_value_replacement='mean',
+                    model_missing_values=True,
+                )
+            elif dtype == 'O':
+                sdtypes[column_name] = 'categorical'
+                transformers[column_name] = OneHotEncoder
+            elif dtype == 'M':
+                sdtypes[column_name] = 'datetime'
+                transformers[column_name] = UnixTimestampEncoder(
+                    missing_value_replacement='mean',
+                    model_missing_values=True,
+                )
+            elif dtype == 'b':
+                sdtypes[column_name] = 'boolean'
+                transformers[column_name] = BinaryEncoder(
+                    missing_value_replacement=-1,
+                    model_missing_values=True
+                )
+
+        return {'sdtypes': sdtypes, 'transformers': transformers}
+
     def fit(self, table_data):
         """Fit the ``ColumnsModel``.
 
@@ -323,10 +354,12 @@ class ColumnsModel:
                 Table data.
         """
         data_to_model = table_data[self.constraint_columns]
-        self._hyper_transformer = HyperTransformer(
-            default_data_type_transformers={'categorical': 'OneHotEncodingTransformer'}
-        )
+        ht_config = self._get_hyper_transformer_config(data_to_model)
+
+        self._hyper_transformer = HyperTransformer()
+        self._hyper_transformer.set_config(ht_config)
         transformed_data = self._hyper_transformer.fit_transform(data_to_model)
+
         self._model = GaussianMultivariate(distribution=GaussianUnivariate)
         self._model.fit(transformed_data)
 
