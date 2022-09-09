@@ -576,10 +576,10 @@ class MultiTableMetadata:
 
         relationships = [
             {
-                "parent_table_name": parent,
-                "parent_primary_key": tables.get(parent).get('primary_key'),
-                "child_table_name": table,
-                "child_foreign_key": foreign_key
+                'parent_table_name': parent,
+                'parent_primary_key': tables.get(parent).get('primary_key'),
+                'child_table_name': table,
+                'child_foreign_key': foreign_key
             }
             for table in tables
             for parent in list(parents[table])
