@@ -2,9 +2,9 @@
 
 ## 0.17.0 - 2022-09-09
 
-This release updates the the code to use RDT version 1.2.0 and greater, so that those new features are now available in SDV. This changes the transformers that are available in SDV models to be those that are in RDT version 1.2.0. As a result, some arguments for initializing models have changed.
+This release updates the code to use RDT version 1.2.0 and greater, so that those new features are now available in SDV. This changes the transformers that are available in SDV models to be those that are in RDT version 1.2.0. As a result, some arguments for initializing models have changed.
 
-Additionally, this release fixes bugs related to loading models with custom constraints. It also fixes a bug that added NaNs to the index of sampled data when using `sample_remaining_columns`.
+Additionally, this release fixes bugs related to loading models with custom constraints. It also fixes a bug that added `NaNs` to the index of sampled data when using `sample_remaining_columns`.
 
 ### Bugs Fixed
 
