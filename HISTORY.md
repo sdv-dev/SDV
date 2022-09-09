@@ -1,5 +1,28 @@
 # Release Notes
 
+## 0.17.0 - 2022-09-09
+
+This release updates the the code to use RDT version 1.2.0 and greater, so that those new features are now available in SDV. This changes the transformers that are available in SDV models to be those that are in RDT version 1.2.0. As a result, some arguments for initializing models have changed.
+
+Additionally, this release fixes bugs related to loading models with custom constraints. It also fixes a bug that added NaNs to the index of sampled data when using `sample_remaining_columns`.
+
+### Bugs Fixed
+
+* Incorrect rounding in Custom Constraint example - Issue [#941](https://github.com/sdv-dev/SDV/issues/941) by @amontanez24
+* Can't save the model if use the custom constraint - Issue [#928](https://github.com/sdv-dev/SDV/issues/928) by @pvk-developer
+* User Guide code fixes - Issue [#983](https://github.com/sdv-dev/SDV/issues/983) by @amontanez24
+* Index contains NaNs when using sample_remaining_columns - Issue [#985](https://github.com/sdv-dev/SDV/issues/985) by @amontanez24
+* Cannot sample after loading a model with custom constraints: TypeError - Issue [#984](https://github.com/sdv-dev/SDV/issues/984) by @pvk-developer
+* Set HyperTransformer config manually, based on Metadata if given - Issue [#982](https://github.com/sdv-dev/SDV/issues/982) by @pvk-developer
+
+### New Features
+
+* Change default metrics for evaluate - Issue [#949](https://github.com/sdv-dev/SDV/issues/949) by @fealho
+
+### Maintenance
+
+* Update the RDT version to 1.0 - Issue [#897](https://github.com/sdv-dev/SDV/issues/897) by @pvk-developer
+
 ## 0.16.0 - 2022-07-21
 
 This release brings user friendly improvements and bug fixes on the `SDV` constraints, to help
