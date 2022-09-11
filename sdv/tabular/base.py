@@ -107,7 +107,7 @@ class BaseTabularModel:
             for arg in (field_names, primary_key, field_types, anonymize_fields, constraints):
                 if arg:
                     raise ValueError(
-                        'If table_metadata is given {} must be None'.format(arg.__name__))
+                        f'If table_metadata is given {arg.__name__} must be None')
 
             if isinstance(table_metadata, dict):
                 table_metadata = Table.from_dict(table_metadata)
