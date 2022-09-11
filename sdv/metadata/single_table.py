@@ -278,6 +278,16 @@ class SingleTableMetadata:
         return isinstance(column_name, str) or \
             isinstance(column_name, tuple) and all(isinstance(i, str) for i in column_name)
 
+    def _validate_keys_sdtype(self, keys, key_type):
+        """Validate that no key is of type 'categorical'."""
+        categorical_keys = sorted(
+            {key for key in keys if self._columns[key]['sdtype'] == 'categorical'}
+        )
+        if categorical_keys:
+            raise ValueError(
+                f"The {key_type}_keys {categorical_keys} cannot be type 'categorical'."
+            )
+
     def _validate_key(self, column_name, key_type):
         """Validate the primary and sequence keys."""
         if column_name is not None:
@@ -291,6 +301,8 @@ class SingleTableMetadata:
                     f'Unknown {key_type} key values {invalid_ids}.'
                     ' Keys should be columns that exist in the table.'
                 )
+
+            self._validate_keys_sdtype(keys, key_type)
 
     def set_primary_key(self, column_name):
         """Set the metadata primary key.
@@ -341,6 +353,8 @@ class SingleTableMetadata:
                 f'Unknown alternate key values {invalid_ids}.'
                 ' Keys should be columns that exist in the table.'
             )
+
+        self._validate_keys_sdtype(keys, 'alternate')
 
     def set_alternate_keys(self, column_names):
         """Set the metadata alternate keys.

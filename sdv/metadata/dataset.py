@@ -631,10 +631,7 @@ class Metadata:
         """Get the appropriate key subtype."""
         field_type = field_meta['type']
 
-        if field_type == 'categorical':
-            field_subtype = 'string'
-
-        elif field_type in ('numerical', 'id'):
+        if field_type in ('numerical', 'id'):
             field_subtype = field_meta['subtype']
             if field_subtype not in ('integer', 'string'):
                 raise ValueError(
@@ -651,7 +648,7 @@ class Metadata:
     def set_primary_key(self, table, field):
         """Set the primary key field of the indicated table.
 
-        The field must exist and either be an integer or categorical field.
+        The field must exist and be an integer.
 
         Args:
             table (str):
