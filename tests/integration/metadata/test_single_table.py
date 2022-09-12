@@ -1,6 +1,9 @@
 """Integration tests for Single Table Metadata."""
 
+import json
 import re
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 
@@ -113,3 +116,102 @@ def test_validate_errors():
     # Run / Assert
     with pytest.raises(InvalidMetadataError, match=err_msg):
         instance.validate()
+
+
+def test_upgrade_metadata():
+    """Test the ``upgrade_metadata`` method."""
+    # Setup
+    old_metadata = {
+        'fields': {
+            'start_date': {
+                'type': 'datetime',
+                'format': '%Y-%m-%d'
+            },
+            'end_date': {
+                'type': 'datetime',
+                'format': '%Y-%m-%d'
+            },
+            'salary': {
+                'type': 'numerical',
+                'subtype': 'integer'
+            },
+            'duration': {
+                'type': 'categorical'
+            },
+            'student_id': {
+                'type': 'id',
+                'subtype': 'integer'
+            },
+            'high_perc': {
+                'type': 'numerical',
+                'subtype': 'float'
+            },
+            'placed': {
+                'type': 'boolean'
+            },
+            'ssn': {
+                'type': 'id',
+                'subtype': 'integer'
+            },
+            'drivers_license': {
+                'type': 'id',
+                'subtype': 'string',
+                'regex': 'regex'
+            }
+        },
+        'primary_key': 'student_id'
+    }
+
+    # Run
+    with TemporaryDirectory() as temp_dir:
+        old_path = Path(temp_dir) / 'old.json'
+        new_path = Path(temp_dir) / 'new.json'
+        old_metadata_file = open(old_path, 'w')
+        json.dump(old_metadata, old_metadata_file)
+        old_metadata_file.close()
+        SingleTableMetadata.upgrade_metadata(old_filepath=old_path, new_filepath=new_path)
+        new_metadata_file = open(new_path,)
+        new_metadata = json.load(new_metadata_file)
+        new_metadata_file.close()
+
+    # Assert
+    expected_metadata = {
+        'columns': {
+            'start_date': {
+                'sdtype': 'datetime',
+                'datetime_format': '%Y-%m-%d'
+            },
+            'end_date': {
+                'sdtype': 'datetime',
+                'datetime_format': '%Y-%m-%d'
+            },
+            'salary': {
+                'sdtype': 'numerical',
+                'representation': 'int64'
+            },
+            'duration': {
+                'sdtype': 'categorical'
+            },
+            'student_id': {
+                'sdtype': 'numerical'
+            },
+            'high_perc': {
+                'sdtype': 'numerical',
+                'representation': 'float64'
+            },
+            'placed': {
+                'sdtype': 'boolean'
+            },
+            'ssn': {
+                'sdtype': 'numerical'
+            },
+            'drivers_license': {
+                'sdtype': 'text',
+                'regex_format': 'regex'
+            }
+        },
+        'primary_key': 'student_id',
+        'alternate_keys': ['ssn', 'drivers_license'],
+        'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
+    }
+    assert new_metadata == expected_metadata
