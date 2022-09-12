@@ -436,8 +436,24 @@ class SingleTableMetadata:
 
         return deepcopy(metadata)
 
+    def save_to_json(self, filepath):
+        """Save the current ``SingleTableMetadata`` in to a ``json`` file.
+
+        Args:
+            filepath (str):
+                String that represents the ``path`` to the ``json`` file to be written.
+
+        Raises:
+            Raises an ``Error`` if the path already exists.
+        """
+        validate_file_does_not_exist(filepath)
+        metadata = self.to_dict()
+        metadata['SCHEMA_VERSION'] = self.SCHEMA_VERSION
+        with open(filepath, 'w', encoding='utf-8') as metadata_file:
+            json.dump(metadata, metadata_file, indent=4)
+
     @classmethod
-    def from_dict(cls, metadata):
+    def _load_from_dict(cls, metadata):
         """Create a ``SingleTableMetadata`` instance from a python ``dict``.
 
         Args:
@@ -452,53 +468,6 @@ class SingleTableMetadata:
             value = deepcopy(metadata.get(key))
             if value:
                 setattr(instance, f'_{key}', value)
-
-        return instance
-
-    def save_to_json(self, filepath):
-        """Save the current ``SingleTableMetadata`` in to a ``json`` file.
-
-        Args:
-            filepath (str):
-                String that represent the ``path`` to the ``json`` file to be written.
-
-        Raises:
-            Raises an ``Error`` if the path already exists.
-        """
-        validate_file_does_not_exist(filepath)
-        metadata = self.to_dict()
-        metadata['SCHEMA_VERSION'] = self.SCHEMA_VERSION
-        with open(filepath, 'w', encoding='utf-8') as metadata_file:
-            json.dump(metadata, metadata_file, indent=4)
-
-    def _set_metadata_attributes(self, metadata):
-        """Set the metadata attributes to the current instance.
-
-        Args:
-            metadata (dict):
-                Python dictionary representing a ``SingleTableMetadata`` object.
-        """
-        for key in self._KEYS:
-            value = deepcopy(metadata.get(key))
-            if key == 'constraints' and value:
-                value = [Constraint.from_dict(constraint_dict) for constraint_dict in value]
-
-            if value:
-                setattr(self, f'_{key}', value)
-
-    @classmethod
-    def _load_from_dict(cls, metadata):
-        """Create a ``SingleTableMetadata`` instance from a python ``dict``.
-
-        Args:
-            metadata (dict):
-                Python dictionary representing a ``SingleTableMetadata`` object.
-
-        Returns:
-            Instance of ``SingleTableMetadata``.
-        """
-        instance = cls()
-        instance._set_metadata_attributes(metadata)
 
         return instance
 
@@ -530,3 +499,88 @@ class SingleTableMetadata:
         """Pretty print the ``SingleTableMetadata``."""
         printed = json.dumps(self.to_dict(), indent=4)
         return printed
+
+    @classmethod
+    def _convert_metadata(cls, old_metadata):
+        new_metadata = {}
+        columns = {}
+        fields = old_metadata.get('fields')
+        alternate_keys = []
+        primary_key = old_metadata.get('primary_key')
+        for field, field_meta in fields.items():
+            column_meta = {}
+            old_type = field_meta['type']
+            subtype = field_meta.get('subtype')
+            column_meta['sdtype'] = old_type
+
+            if old_type == 'numerical':
+                if subtype == 'float':
+                    column_meta['representation'] = 'float64'
+                elif subtype == 'integer':
+                    column_meta['representation'] = 'int64'
+
+            elif old_type == 'datetime':
+                datetime_format = field_meta.get('format')
+                if datetime_format:
+                    column_meta['datetime_format'] = datetime_format
+
+            elif old_type == 'id':
+                if subtype == 'integer':
+                    column_meta['sdtype'] = 'numerical'
+
+                elif subtype == 'string':
+                    column_meta['sdtype'] = 'text'
+                    regex_format = field_meta.get('regex', '[A-Za-z]{5}')
+                    if regex_format:
+                        column_meta['regex_format'] = regex_format
+
+                if field != primary_key:
+                    alternate_keys.append(field)
+
+            columns[field] = column_meta
+
+        new_metadata['columns'] = columns
+        new_metadata['primary_key'] = primary_key
+        if alternate_keys:
+            new_metadata['alternate_keys'] = alternate_keys
+
+        return new_metadata
+
+    @classmethod
+    def upgrade_metadata(cls, old_filepath, new_filepath):
+        """Upgrade an old metadata file to the ``V1`` schema.
+
+        Args:
+            old_filepath (str):
+                String that represents the ``path`` to the old metadata ``json`` file.
+            new_file_path (str):
+                String that represents the ``path`` to save the upgraded metadata to.
+
+        Raises:
+            Raises a ``ValueError`` if the path already exists.
+        """
+        validate_file_does_not_exist(new_filepath)
+        old_metadata = read_json(old_filepath)
+        if 'tables' in old_metadata:
+            tables = old_metadata.get('tables')
+            if len(tables) > 1:
+                raise ValueError(
+                    'There are multiple tables specified in the JSON. '
+                    'Try using the MultiTableMetadata class to upgrade this file.'
+                )
+
+            else:
+                old_metadata = list(tables.values())[0]
+
+        new_metadata = cls._convert_metadata(old_metadata)
+        metadata = cls._load_from_dict(new_metadata)
+        metadata.save_to_json(new_filepath)
+
+        try:
+            metadata.validate()
+        except InvalidMetadataError as error:
+            message = (
+                'Successfully converted the old metadata, but the metadata was not valid. '
+                f'To use this with the SDV, please fix the following errors.\n {str(error)}'
+            )
+            warnings.warn(message)
