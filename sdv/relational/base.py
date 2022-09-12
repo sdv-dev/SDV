@@ -119,8 +119,8 @@ class BaseRelationalModel:
 
         if remaining < num_rows:
             raise ValueError(
-                'Not enough unique values for primary key of table {}'
-                ' to generate {} samples.'.format(table_name, num_rows)
+                f'Not enough unique values for primary key of table {table_name}'
+                f' to generate {num_rows} samples.'
             )
 
         self._remaining_primary_keys[table_name] -= num_rows
