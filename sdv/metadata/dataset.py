@@ -227,7 +227,7 @@ class Metadata:
         """
         table = self._metadata['tables'].get(table_name)
         if table is None:
-            raise ValueError('Table "{}" does not exist'.format(table_name))
+            raise ValueError(f'Table "{table_name}" does not exist')
 
         return copy.deepcopy(table)
 
@@ -259,8 +259,7 @@ class Metadata:
         """
         field_meta = self.get_fields(table_name).get(field_name)
         if field_meta is None:
-            raise ValueError(
-                'Table "{}" does not contain a field name "{}"'.format(table_name, field_name))
+            raise ValueError(f'Table "{table_name}" does not contain a field name "{field_name}"')
 
         return copy.deepcopy(field_meta)
 
@@ -386,8 +385,8 @@ class Metadata:
             dtype = self._DTYPES.get((field_type, field_subtype))
             if not dtype:
                 errors.append(
-                    'Invalid type and subtype combination for field {}: ({}, {})'.format(
-                        name, field_type, field_subtype)
+                    'Invalid type and subtype combination for field '
+                    f'{name}: ({field_type}, {field_subtype})'
                 )
             else:
                 if ids and field_type == 'id':
@@ -497,18 +496,18 @@ class Metadata:
                     dtype = dtypes.pop(column)
                     table_data[column].dropna().astype(dtype)
                 except KeyError:
-                    message = 'Unexpected column in table `{}`: `{}`'.format(table_name, column)
+                    message = f'Unexpected column in table `{table_name}`: `{column}`'
                     errors.append(message)
                 except ValueError as ve:
-                    message = 'Invalid values found in column `{}` of table `{}`: `{}`'.format(
-                        column, table_name, ve)
+                    message = (
+                        f'Invalid values found in column `{column}` '
+                        f'of table `{table_name}`: `{ve}`'
+                    )
                     errors.append(message)
 
             # assert all dtypes are in data
             if dtypes:
-                errors.append(
-                    'Missing columns on table {}: {}.'.format(table_name, list(dtypes.keys()))
-                )
+                errors.append(f'Missing columns on table {table_name}: {list(dtypes.keys())}.')
 
     def _validate_circular_relationships(self, parent, children=None, errors=None, parents=None):
         """Validate that there is no circular relatioship in the metadata."""
@@ -518,7 +517,7 @@ class Metadata:
             children = self.get_children(parent)
 
         if parent in children:
-            error = 'Circular relationship found for table "{}"'.format(parent)
+            error = f'Circular relationship found for table "{parent}"'
             errors.append(error)
 
         for child in children:
@@ -566,7 +565,7 @@ class Metadata:
             if tables:
                 table = tables.get(table_name)
                 if table is None:
-                    errors.append('Table `{}` not found in tables'.format(table_name))
+                    errors.append(f'Table `{table_name}` not found in tables')
 
             else:
                 table = None
@@ -582,10 +581,10 @@ class Metadata:
         """Validate the existance of the table and existance (or not) of field."""
         table_fields = self.get_fields(table)
         if exists and (field not in table_fields):
-            raise ValueError('Field "{}" does not exist in table "{}"'.format(field, table))
+            raise ValueError(f'Field "{field}" does not exist in table "{table}"')
 
         if not exists and (field in table_fields):
-            raise ValueError('Field "{}" already exists in table "{}"'.format(field, table))
+            raise ValueError(f'Field "{field}" already exists in table "{table}"')
 
     # ################# #
     # Metadata Creation #
@@ -637,14 +636,10 @@ class Metadata:
         elif field_type in ('numerical', 'id'):
             field_subtype = field_meta['subtype']
             if field_subtype not in ('integer', 'string'):
-                raise ValueError(
-                    'Invalid field "subtype" for key field: "{}"'.format(field_subtype)
-                )
+                raise ValueError(f'Invalid field "subtype" for key field: "{field_subtype}"')
 
         else:
-            raise ValueError(
-                'Invalid field "type" for key field: "{}"'.format(field_type)
-            )
+            raise ValueError(f'Invalid field "type" for key field: "{field_type}"')
 
         return field_subtype
 
@@ -714,7 +709,7 @@ class Metadata:
         # Validate field names
         primary_key = self.get_primary_key(parent)
         if not primary_key:
-            raise ValueError('Parent table "{}" does not have a primary key'.format(parent))
+            raise ValueError(f'Parent table "{parent}" does not have a primary key')
 
         if foreign_key is None:
             foreign_key = primary_key
@@ -725,8 +720,7 @@ class Metadata:
         # Validate relationships
         child_ref = child_key_meta.get('ref')
         if child_ref:
-            raise ValueError(
-                'Field "{}.{}" already defines a relationship'.format(child, foreign_key))
+            raise ValueError(f'Field "{child}.{foreign_key}" already defines a relationship')
 
         # Make sure that the parent key is an id
         if parent_key_meta['type'] != 'id':
@@ -786,7 +780,7 @@ class Metadata:
             dtype = data[field].dtype
             field_template = self._FIELD_TEMPLATES.get(dtype.kind)
             if not field_template:
-                raise ValueError('Unsupported dtype {} in column {}'.format(dtype, field))
+                raise ValueError(f'Unsupported dtype {dtype} in column {field}')
 
             field_details = copy.deepcopy(field_template)
             fields_metadata[field] = field_details
@@ -836,7 +830,7 @@ class Metadata:
                 fields need to be built from it.
         """
         if name in self.get_tables():
-            raise ValueError('Table "{}" already exists.'.format(name))
+            raise ValueError(f'Table "{name}" already exists.')
 
         path = None
         if data is not None:
@@ -912,25 +906,19 @@ class Metadata:
     def __repr__(self):
         tables = self.get_tables()
         relationships = [
-            '    {}.{} -> {}.{}'.format(
-                table, foreign_key,
-                parent, self.get_primary_key(parent)
-            )
+            f'    {table}.{foreign_key} -> {parent}.{self.get_primary_key(parent)}'
             for table in tables
             for parent in list(self.get_parents(table))
             for foreign_key in self.get_foreign_keys(parent, table)
         ]
 
+        joined_relationships = '\n'.join(relationships)
         return (
             'Metadata\n'
-            '  root_path: {}\n'
-            '  tables: {}\n'
+            f'  root_path: {self.root_path}\n'
+            f'  tables: {tables}\n'
             '  relationships:\n'
-            '{}'
-        ).format(
-            self.root_path,
-            tables,
-            '\n'.join(relationships)
+            f'{joined_relationships}'
         )
 
     def visualize(self, path=None, names=True, details=True):

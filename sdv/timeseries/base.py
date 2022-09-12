@@ -112,8 +112,7 @@ class BaseTimeseriesModel:
             )
             for arg in null_args:
                 if arg:
-                    raise ValueError(
-                        'If table_metadata is given {} must be None'.format(arg.__name__))
+                    raise ValueError(f'If table_metadata is given {arg.__name__} must be None')
 
             if isinstance(table_metadata, dict):
                 table_metadata = Table.from_dict(

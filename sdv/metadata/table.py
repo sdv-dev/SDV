@@ -208,7 +208,7 @@ class Table:
 
             return _faker
         except AttributeError:
-            raise ValueError('Category "{}" couldn\'t be found on faker'.format(category))
+            raise ValueError(f'Category "{category}" couldn\'t be found on faker')
 
     @staticmethod
     def _get_fake_values(field_metadata, num_values):
@@ -281,7 +281,7 @@ class Table:
             self._dtype_transformers.update(dtype_transformers)
 
     def __repr__(self):
-        return 'Table(name={}, field_names={})'.format(self.name, self._field_names)
+        return f'Table(name={self.name}, field_names={self._field_names})'
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -307,8 +307,8 @@ class Table:
         dtype = self._TYPES_TO_DTYPES.get((field_type, field_subtype))
         if not dtype:
             raise InvalidMetadataError(
-                'Invalid type and subtype combination for field {}: ({}, {})'.format(
-                    field_name, field_type, field_subtype)
+                'Invalid type and subtype combination for field '
+                f'{field_name}: ({field_type}, {field_subtype})'
             )
 
         return dtype
@@ -360,7 +360,7 @@ class Table:
         fields_metadata = {}
         for field_name in self._field_names:
             if field_name not in data:
-                raise ValueError('Field {} not found in given data'.format(field_name))
+                raise ValueError(f'Field {field_name} not found in given data')
 
             field_meta = self._field_types.get(field_name)
             if field_meta:
@@ -369,8 +369,7 @@ class Table:
                 dtype = data[field_name].dtype
                 field_template = self._DTYPES_TO_TYPES.get(dtype.kind)
                 if field_template is None:
-                    msg = 'Unsupported dtype {} in column {}'.format(dtype, field_name)
-                    raise ValueError(msg)
+                    raise ValueError(f'Unsupported dtype {dtype} in column {field_name}')
 
                 field_meta = copy.deepcopy(field_template)
 
@@ -536,14 +535,10 @@ class Table:
         elif field_type in ('numerical', 'id'):
             field_subtype = field_meta['subtype']
             if field_subtype not in ('integer', 'string'):
-                raise ValueError(
-                    'Invalid field "subtype" for key field: "{}"'.format(field_subtype)
-                )
+                raise ValueError(f'Invalid field "subtype" for key field: "{field_subtype}"')
 
         else:
-            raise ValueError(
-                'Invalid field "type" for key field: "{}"'.format(field_type)
-            )
+            raise ValueError('Invalid field "type" for key field: "{field_type}"')
 
         return field_subtype
 
@@ -565,7 +560,7 @@ class Table:
             fields = primary_key if isinstance(primary_key, list) else [primary_key]
             for field_name in fields:
                 if field_name not in self._fields_metadata:
-                    raise ValueError('Field "{}" does not exist in this table'.format(field_name))
+                    raise ValueError(f'Field "{field_name}" does not exist in this table')
 
                 field_metadata = self._fields_metadata[field_name]
                 if field_metadata['type'] != 'id':
@@ -667,9 +662,9 @@ class Table:
             generator, max_size = strings_from_regex(regex)
             if max_size < length:
                 raise ValueError((
-                    'Unable to generate {} unique values for regex {}, the '
-                    'maximum number of unique values is {}.'
-                ).format(length, regex, max_size))
+                    f'Unable to generate {length} unique values for regex {regex}, the '
+                    f'maximum number of unique values is {max_size}.'
+                ))
             values = [next(generator) for _ in range(length)]
 
             return pd.Series(list(values)[:length])
