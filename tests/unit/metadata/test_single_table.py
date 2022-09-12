@@ -1277,35 +1277,6 @@ class TestSingleTableMetadata:
         result['columns']['my_column'] = 1
         assert instance._columns['my_column'] == 'value'
 
-    def test__set_metadata_attributes(self):
-        """Test the ``_set_metadata_attributes`` to a instance.
-
-        Setup:
-            - Instance of ``SingleTableMetadata``.
-            - Dictionary representing ``SingleTableMetadata``.
-
-        Output:
-            - ``SingleTableMetadata`` instance with the dictionary represented values.
-        """
-        # Setup
-        instance = SingleTableMetadata()
-        metadata = {
-            'columns': {'my_column': 'value'},
-            'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
-        }
-
-        # Run
-        instance._set_metadata_attributes(metadata)
-
-        # Assert
-        assert instance._columns == {'my_column': 'value'}
-        assert instance._primary_key is None
-        assert instance._sequence_key is None
-        assert instance._alternate_keys == []
-        assert instance._sequence_index is None
-        assert instance._constraints == []
-        assert instance._version == 'SINGLE_TABLE_V1'
-
     def test__load_from_dict(self):
         """Test that ``_load_from_dict`` returns a instance with the ``dict`` updated objects."""
         # Setup
@@ -1398,11 +1369,10 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             SingleTableMetadata.load_from_json('filepath.json')
 
-    @patch('sdv.metadata.single_table.Constraint')
     @patch('sdv.metadata.utils.open')
     @patch('sdv.metadata.utils.Path')
     @patch('sdv.metadata.utils.json')
-    def test_load_from_json(self, mock_json, mock_path, mock_open, mock_constraint):
+    def test_load_from_json(self, mock_json, mock_path, mock_open):
         """Test the ``load_from_json`` method.
 
         Test that ``load_from_json`` function creates an instance with the contents returned by the
@@ -1412,7 +1382,6 @@ class TestSingleTableMetadata:
             - Mock the ``Path`` library in order to return ``True``.
             - Mock the ``json`` library in order to use a custom return.
             - Mock the ``open`` in order to avoid loading a binary file.
-            - Mock the ``Constraint`` to ensure that is being loaded.
 
         Input:
             - String representing a filepath.
@@ -1425,7 +1394,6 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         mock_path.return_value.exists.return_value = True
         mock_path.return_value.name = 'filepath.json'
-        mock_constraint.from_dict.return_value = {'my_constraint': 'my_params'}
         mock_json.load.return_value = {
             'columns': {
                 'animals': {
@@ -1452,7 +1420,6 @@ class TestSingleTableMetadata:
         assert instance._sequence_index is None
         assert instance._constraints == [{'my_constraint': 'my_params'}]
         assert instance._version == 'SINGLE_TABLE_V1'
-        mock_constraint.from_dict.assert_called_once()
 
     @patch('sdv.metadata.utils.Path')
     def test_save_to_json_file_exists(self, mock_path):
@@ -1596,3 +1563,273 @@ class TestSingleTableMetadata:
         error_message = re.escape("Invalid constraint ('fake_constraint').")
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.add_constraint(constraint_name='fake_constraint')
+
+    def get_old_metadata(self):
+        old_metadata = {
+            'fields': {
+                'start_date': {
+                    'type': 'datetime',
+                    'format': '%Y-%m-%d'
+                },
+                'end_date': {
+                    'type': 'datetime',
+                    'format': '%Y-%m-%d'
+                },
+                'salary': {
+                    'type': 'numerical',
+                    'subtype': 'integer'
+                },
+                'duration': {
+                    'type': 'categorical'
+                },
+                'student_id': {
+                    'type': 'id',
+                    'subtype': 'integer'
+                },
+                'high_perc': {
+                    'type': 'numerical',
+                    'subtype': 'float'
+                },
+                'placed': {
+                    'type': 'boolean'
+                },
+                'ssn': {
+                    'type': 'id',
+                    'subtype': 'integer'
+                },
+                'drivers_license': {
+                    'type': 'id',
+                    'subtype': 'string',
+                    'regex': 'regex'
+                }
+            },
+            'primary_key': 'student_id'
+        }
+
+        return old_metadata
+
+    def test__convert_metadata(self):
+        """Test the ``_convert_metadata`` method.
+
+        The method should take a dictionary of the old metadata format and convert it to the new
+        format.
+
+        Input:
+            - Dictionary of single table metadata in the old schema.
+
+        Output:
+            - Dictionary of the same metadata with the new schema.
+        """
+        # Setup
+        old_metadata = self.get_old_metadata()
+
+        # Run
+        new_metadata = SingleTableMetadata._convert_metadata(old_metadata)
+
+        # Assert
+        expected_metadata = {
+            'columns': {
+                'start_date': {
+                    'sdtype': 'datetime',
+                    'datetime_format': '%Y-%m-%d'
+                },
+                'end_date': {
+                    'sdtype': 'datetime',
+                    'datetime_format': '%Y-%m-%d'
+                },
+                'salary': {
+                    'sdtype': 'numerical',
+                    'representation': 'int64'
+                },
+                'duration': {
+                    'sdtype': 'categorical'
+                },
+                'student_id': {
+                    'sdtype': 'numerical'
+                },
+                'high_perc': {
+                    'sdtype': 'numerical',
+                    'representation': 'float64'
+                },
+                'placed': {
+                    'sdtype': 'boolean'
+                },
+                'ssn': {
+                    'sdtype': 'numerical'
+                },
+                'drivers_license': {
+                    'sdtype': 'text',
+                    'regex_format': 'regex'
+                }
+            },
+            'primary_key': 'student_id',
+            'alternate_keys': ['ssn', 'drivers_license']
+        }
+        assert new_metadata == expected_metadata
+
+    @patch('sdv.metadata.single_table.validate_file_does_not_exist')
+    @patch('sdv.metadata.single_table.read_json')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._convert_metadata')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._load_from_dict')
+    def test_upgrade_metadata(self, from_dict_mock, convert_mock, read_json_mock, validate_mock):
+        """Test the ``upgrade_metadata`` method.
+
+        The method should validate that the ``new_filepath`` does not exist, read the old metadata
+        from a file, convert it and save it to the ``new_filepath``.
+
+        Setup:
+            - Mock ``read_json``.
+            - Mock ``validate_file_does_not_exist``.
+            - Mock the ``_convert_metadata`` method to return something.
+            - Mock the ``from_dict`` method to return a mock.
+
+        Input:
+            - A fake old filepath.
+            - A fake new filepath.
+
+        Side effect:
+            - The mock should call ``save_to_json`` and ``validate``.
+        """
+        # Setup
+        validate_mock.return_value = True
+        convert_mock.return_value = {}
+        new_metadata = Mock()
+        from_dict_mock.return_value = new_metadata
+
+        # Run
+        SingleTableMetadata.upgrade_metadata('old', 'new')
+
+        # Assert
+        convert_mock.assert_called_once()
+        validate_mock.assert_called_once_with('new')
+        read_json_mock.assert_called_once_with('old')
+        new_metadata.save_to_json.assert_called_once()
+        new_metadata.validate.assert_called_once()
+
+    @patch('sdv.metadata.single_table.validate_file_does_not_exist')
+    @patch('sdv.metadata.single_table.read_json')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._convert_metadata')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._load_from_dict')
+    def test_upgrade_metadata_multiple_tables(
+            self, from_dict_mock, convert_mock, read_json_mock, validate_mock):
+        """Test the ``upgrade_metadata`` method.
+
+        If the old metadata is in the multi-table format (has 'tables'), but it only contains one
+        table, then it should still get converted.
+
+        Setup:
+            - Mock ``read_json`` to return a multi-table metadata dict with one table.
+            - Mock ``validate_file_does_not_exist``.
+            - Mock the ``_convert_metadata`` method to return something.
+            - Mock the ``from_dict`` method to return a mock.
+
+        Input:
+            - A fake old filepath.
+            - A fake new filepath.
+
+        Side effect:
+            - The conversion should be done on the nested table.
+        """
+        # Setup
+        validate_mock.return_value = True
+        convert_mock.return_value = {}
+        new_metadata = Mock()
+        from_dict_mock.return_value = new_metadata
+        read_json_mock.return_value = {
+            'tables': {'table': {'columns': {}}}
+        }
+
+        # Run
+        SingleTableMetadata.upgrade_metadata('old', 'new')
+
+        # Assert
+        convert_mock.assert_called_once_with({'columns': {}})
+        new_metadata.save_to_json.assert_called_once()
+        new_metadata.validate.assert_called_once()
+
+    @patch('sdv.metadata.single_table.validate_file_does_not_exist')
+    @patch('sdv.metadata.single_table.read_json')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._convert_metadata')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._load_from_dict')
+    def test_upgrade_metadata_multiple_tables_fails(
+            self, from_dict_mock, convert_mock, read_json_mock, validate_mock):
+        """Test the ``upgrade_metadata`` method.
+
+        If the old metadata is in the multi-table format (has 'tables'), but contains multiple
+        tables, then an error should be raised.
+
+        Setup:
+            - Mock ``read_json`` to return a multi-table metadata dict.
+            - Mock ``validate_file_does_not_exist``.
+            - Mock the ``_convert_metadata`` method to return something.
+            - Mock the ``from_dict`` method to return a mock.
+
+        Input:
+            - A fake old filepath.
+            - A fake new filepath.
+
+        Side effect:
+            - A ``ValueError`` should be raised.
+        """
+        # Setup
+        validate_mock.return_value = True
+        convert_mock.return_value = {}
+        new_metadata = Mock()
+        from_dict_mock.return_value = new_metadata
+        read_json_mock.return_value = {
+            'tables': {'table1': {'columns': {}}, 'table2': {}}
+        }
+
+        # Run
+        message = (
+            'There are multiple tables specified in the JSON. '
+            'Try using the MultiTableMetadata class to upgrade this file.'
+        )
+        with pytest.raises(ValueError, match=message):
+            SingleTableMetadata.upgrade_metadata('old', 'new')
+
+    @patch('sdv.metadata.single_table.warnings')
+    @patch('sdv.metadata.single_table.validate_file_does_not_exist')
+    @patch('sdv.metadata.single_table.read_json')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._convert_metadata')
+    @patch('sdv.metadata.single_table.SingleTableMetadata._load_from_dict')
+    def test_upgrade_metadata_validate_error(
+            self, from_dict_mock, convert_mock, read_json_mock, validate_mock, warnings_mock):
+        """Test the ``upgrade_metadata`` method.
+
+        The method should raise a warning with any validation errors after the metadata is
+        converted.
+
+        Setup:
+            - Mock ``read_json``.
+            - Mock ``validate_file_does_not_exist``.
+            - Mock the ``_convert_metadata`` method to return something.
+            - Mock the ``from_dict`` method to return a mock.
+
+        Input:
+            - A fake old filepath.
+            - A fake new filepath.
+
+        Side effect:
+            - The mock should call ``save_to_json`` and ``validate``.
+        """
+        # Setup
+        validate_mock.return_value = True
+        convert_mock.return_value = {}
+        new_metadata = Mock()
+        from_dict_mock.return_value = new_metadata
+        new_metadata.validate.side_effect = InvalidMetadataError('blah')
+
+        # Run
+        SingleTableMetadata.upgrade_metadata('old', 'new')
+
+        # Assert
+        convert_mock.assert_called_once()
+        validate_mock.assert_called_once_with('new')
+        read_json_mock.assert_called_once_with('old')
+        new_metadata.save_to_json.assert_called_once()
+        new_metadata.validate.assert_called_once()
+        warnings_mock.warn.assert_called_once_with(
+            'Successfully converted the old metadata, but the metadata was not valid. '
+            'To use this with the SDV, please fix the following errors.\n blah'
+        )
