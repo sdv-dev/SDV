@@ -530,7 +530,7 @@ class SingleTableMetadata:
 
                 elif subtype == 'string':
                     column_meta['sdtype'] = 'text'
-                    regex_format = field_meta.get('regex')
+                    regex_format = field_meta.get('regex', '[A-Za-z]{5}')
                     if regex_format:
                         column_meta['regex_format'] = regex_format
 
@@ -565,7 +565,7 @@ class SingleTableMetadata:
             tables = old_metadata.get('tables')
             if len(tables) > 1:
                 raise ValueError(
-                    'There are multiple tables specified in the JSON.'
+                    'There are multiple tables specified in the JSON. '
                     'Try using the MultiTableMetadata class to upgrade this file.'
                 )
 
@@ -580,7 +580,7 @@ class SingleTableMetadata:
             metadata.validate()
         except InvalidMetadataError as error:
             message = (
-                'Successfully converted the old metadata, but the metadata was not valid.'
+                'Successfully converted the old metadata, but the metadata was not valid. '
                 f'To use this with the SDV, please fix the following errors.\n {str(error)}'
             )
             warnings.warn(message)

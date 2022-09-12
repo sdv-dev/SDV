@@ -1782,7 +1782,7 @@ class TestSingleTableMetadata:
 
         # Run
         message = (
-            'There are multiple tables specified in the JSON.'
+            'There are multiple tables specified in the JSON. '
             'Try using the MultiTableMetadata class to upgrade this file.'
         )
         with pytest.raises(ValueError, match=message):
@@ -1830,6 +1830,6 @@ class TestSingleTableMetadata:
         new_metadata.save_to_json.assert_called_once()
         new_metadata.validate.assert_called_once()
         warnings_mock.warn.assert_called_once_with(
-            'Successfully converted the old metadata, but the metadata was not valid.'
+            'Successfully converted the old metadata, but the metadata was not valid. '
             'To use this with the SDV, please fix the following errors.\n blah'
         )
