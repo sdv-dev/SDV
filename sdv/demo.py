@@ -115,11 +115,11 @@ def _dtypes64(table):
 def _download(dataset_name, data_path):
     url = DATA_URL.format(dataset_name)
 
-    LOGGER.info('Downloading dataset {} from {}'.format(dataset_name, url))
+    LOGGER.info(f'Downloading dataset {dataset_name} from {url}')
     response = urllib.request.urlopen(url)
     bytes_io = io.BytesIO(response.read())
 
-    LOGGER.info('Extracting dataset into {}'.format(data_path))
+    LOGGER.info(f'Extracting dataset into {data_path}')
     with ZipFile(bytes_io) as zf:
         zf.extractall(data_path)
 
