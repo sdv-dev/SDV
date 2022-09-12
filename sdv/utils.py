@@ -27,20 +27,17 @@ def display_tables(tables, max_rows=10, datetime_fmt='%Y-%m-%d %H:%M:%S', row=Tr
             if column_data.dtype.kind == 'M':
                 table[column] = column_data.dt.strftime(datetime_fmt)
 
-        names.append('<td style="text-align:left"><b>{}</b></td>'.format(name))
-        data.append('<td>{}</td>'.format(table.head(max_rows).to_html(index=False)))
+        names.append(f'<td style="text-align:left"><b>{name}</b></td>')
+        data.append(f'<td>{table.head(max_rows).to_html(index=False)}</td>')
 
     if row:
-        html = '<table><tr>{}</tr><tr>{}</tr></table>'.format(
-            ''.join(names),
-            ''.join(data),
-        )
+        html = f"<table><tr>{''.join(names)}</tr><tr>{''.join(data)}</tr></table>"
     else:
         rows = [
-            '<tr>{}</tr><tr>{}</tr>'.format(name, table)
+            f'<tr>{name}</tr><tr>{table}</tr>'
             for name, table in zip(names, data)
         ]
-        html = '<table>{}</table>'.format(''.join(rows))
+        html = f"<table>{''.join(rows)}</table>"
 
     return HTML(html)
 

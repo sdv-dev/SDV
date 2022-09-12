@@ -130,7 +130,7 @@ class GaussianCopula(BaseTabularModel):
             copulas.get_instance(distribution)
             return distribution
         except (ValueError, ImportError):
-            error_message = 'Invalid distribution specification {}'.format(distribution)
+            error_message = f'Invalid distribution specification {distribution}'
             raise ValueError(error_message) from None
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
