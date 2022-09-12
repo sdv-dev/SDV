@@ -14,9 +14,7 @@ def _get_graphviz_extension(path):
         graphviz_extension = path_splitted[-1]
 
         if graphviz_extension not in graphviz.FORMATS:
-            raise ValueError(
-                '"{}" not a valid graphviz extension format.'.format(graphviz_extension)
-            )
+            raise ValueError(f'"{graphviz_extension}" not a valid graphviz extension format.')
 
         return '.'.join(path_splitted[:-1]), graphviz_extension
 
@@ -43,9 +41,9 @@ def _add_nodes(metadata, digraph, names, details):
 
             for name, value in metadata.get_fields(table).items():
                 if value.get('subtype') is not None:
-                    fields.append('{} : {} - {}'.format(name, value['type'], value['subtype']))
+                    fields.append(f"{name} : {value['type']} - {value['subtype']}")
                 else:
-                    fields.append('{} : {}'.format(name, value['type']))
+                    fields.append(f"{name} : {value['type']}")
 
             fields = r'\l'.join(fields)
 
@@ -54,24 +52,24 @@ def _add_nodes(metadata, digraph, names, details):
 
             primary_key = metadata.get_primary_key(table)
             if primary_key is not None:
-                extras.append('Primary key: {}'.format(primary_key))
+                extras.append(f'Primary key: {primary_key}')
 
             parents = metadata.get_parents(table)
             for parent in parents:
                 for foreign_key in metadata.get_foreign_keys(parent, table):
-                    extras.append('Foreign key ({}): {}'.format(parent, foreign_key))
+                    extras.append(f'Foreign key ({parent}): {foreign_key}')
 
             path = metadata.get_table_meta(table).get('path')
             if path is not None:
-                extras.append('Data path: {}'.format(path))
+                extras.append(f'Data path: {path}')
 
             extras = r'\l'.join(extras)
 
             # Add table node
-            title = r'{{{}|{}\l|{}\l}}'.format(table, fields, extras)
+            title = rf'{{{table}|{fields}\l|{extras}\l}}'
         else:
             # Add table node only
-            title = r'{{{}}}'.format(table)
+            title = rf'{{{table}}}'
 
         digraph.node(table, label=title)
 
@@ -88,10 +86,7 @@ def _add_edges(metadata, digraph, names, details):
         for parent in list(metadata.get_parents(table)):
             if names and details:
                 label = '\n'.join([
-                    '   {}.{} > {}.{}'.format(
-                        table, foreign_key,
-                        parent, metadata.get_primary_key(parent)
-                    )
+                    f'   {table}.{foreign_key} > {parent}.{metadata.get_primary_key(parent)}'
                     for foreign_key in metadata.get_foreign_keys(parent, table)
                 ])
                 digraph.edge(
