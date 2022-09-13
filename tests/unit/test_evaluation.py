@@ -39,15 +39,17 @@ class TestSDV(TestCase):
             'KSComplement': sdmetrics.single_table.multi_single_column.KSComplement,
             'CSTest': sdmetrics.single_table.multi_single_column.CSTest
         }
-        metadata = {'fields': {
-            'col1': {'type': 'numerical', 'subtype': 'integer'},
-            'col2': {'type': 'numerical', 'subtype': 'integer'}
-        }}
+        metadata = {
+            'fields': {
+                'col1': {'type': 'numerical', 'subtype': 'integer'},
+                'col2': {'type': 'numerical', 'subtype': 'integer'}
+            }
+        }
         sdmetrics.compute_metrics.assert_called_once_with(metrics, data, data, metadata=metadata)
         assert score == 1
 
     def test_evaluate_multi_table(self):
-        """Test the ``evaluate`` method for mutlti tables.
+        """Test the ``evaluate`` method for multi tables.
 
         Ensure the default metrics are called when no metrics are passed.
 
@@ -80,20 +82,22 @@ class TestSDV(TestCase):
             'KSComplement': sdmetrics.multi_table.multi_single_table.KSComplement,
             'CSTest': sdmetrics.multi_table.multi_single_table.CSTest
         }
-        metadata = {'tables': {
-            'table1': {
-                'fields': {
-                    'col1': {'type': 'numerical', 'subtype': 'integer'},
-                    'col2': {'type': 'numerical', 'subtype': 'integer'}
-                }
-            },
-            'table2': {
-                'fields': {
-                    'col1': {'type': 'numerical', 'subtype': 'integer'},
-                    'col2': {'type': 'numerical', 'subtype': 'integer'}
+        metadata = {
+            'tables': {
+                'table1': {
+                    'fields': {
+                        'col1': {'type': 'numerical', 'subtype': 'integer'},
+                        'col2': {'type': 'numerical', 'subtype': 'integer'}
+                    }
+                },
+                'table2': {
+                    'fields': {
+                        'col1': {'type': 'numerical', 'subtype': 'integer'},
+                        'col2': {'type': 'numerical', 'subtype': 'integer'}
+                    }
                 }
             }
-        }}
+        }
         sdmetrics.compute_metrics.assert_called_once_with(metrics, data, data, metadata=metadata)
         assert score == 1
 
@@ -127,9 +131,11 @@ class TestSDV(TestCase):
             'KSComplement': sdmetrics.single_table.multi_single_column.KSComplement,
             'CSTest': sdmetrics.single_table.multi_single_column.CSTest
         }
-        metadata = {'fields': {
-            'col1': {'type': 'numerical', 'subtype': 'integer'},
-            'col2': {'type': 'numerical', 'subtype': 'integer'}
-        }}
+        metadata = {
+            'fields': {
+                'col1': {'type': 'numerical', 'subtype': 'integer'},
+                'col2': {'type': 'numerical', 'subtype': 'integer'}
+            }
+        }
         sdmetrics.compute_metrics.assert_called_once_with(metrics, data, data, metadata=metadata)
         assert score == 1

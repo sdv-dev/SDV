@@ -239,8 +239,9 @@ class TestBaseTabularModel:
             pd.DataFrame({'column1': condition_values}), 100, None)
 
         # Assert
-        first_condition = model._metadata.transform.mock_calls[0][1][0]['column1']
-        second_condition = model._metadata.transform.mock_calls[1][1][0]['column1']
+        transform_mock_calls = model._metadata.transform.mock_calls
+        first_condition = transform_mock_calls[0][1][0]['column1']
+        second_condition = transform_mock_calls[1][1][0]['column1']
         expected_second_condition = pd.Series([30], name='column1', index=[3])
         pd.testing.assert_series_equal(first_condition, pd.Series([25], name='column1'))
         pd.testing.assert_series_equal(second_condition, expected_second_condition)
