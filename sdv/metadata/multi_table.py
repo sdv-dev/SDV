@@ -6,6 +6,7 @@ from collections import defaultdict
 from copy import deepcopy
 
 from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import cast_to_iterable, read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import visualize_graph
@@ -605,7 +606,7 @@ class MultiTableMetadata:
         tables_metadata = {}
 
         for table_name, metadata in old_metadata.get('tables', {}).items():
-            tables_metadata[table_name] = SingleTableMetadata._convert_metadata(metadata)
+            tables_metadata[table_name] = convert_metadata(metadata)
 
         relationships = cls._convert_relationships(old_metadata)
         metadata_dict = {

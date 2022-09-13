@@ -266,8 +266,8 @@ def _upgrade_constraint(old_constraint):
 
     else:
         warnings.warn(
-            f'{constraint_name} is not a constraint supported by SDV. Please check the metadata '
-            'to make sure the name is correct.'
+            f'Unable to upgrade the {constraint_name} constraint. Please add in the constraint '
+            'using the new Constraints API.'
         )
 
     return new_constraints

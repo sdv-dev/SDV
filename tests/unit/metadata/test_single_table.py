@@ -1739,7 +1739,7 @@ class TestSingleTableMetadata:
 
     @patch('sdv.metadata.single_table.validate_file_does_not_exist')
     @patch('sdv.metadata.single_table.read_json')
-    @patch('sdv.metadata.single_table.SingleTableMetadata._convert_metadata')
+    @patch('sdv.metadata.single_table.convert_metadata')
     @patch('sdv.metadata.single_table.SingleTableMetadata._load_from_dict')
     def test_upgrade_metadata(self, from_dict_mock, convert_mock, read_json_mock, validate_mock):
         """Test the ``upgrade_metadata`` method.
@@ -1750,7 +1750,7 @@ class TestSingleTableMetadata:
         Setup:
             - Mock ``read_json``.
             - Mock ``validate_file_does_not_exist``.
-            - Mock the ``_convert_metadata`` method to return something.
+            - Mock the ``convert_metadata`` method to return something.
             - Mock the ``from_dict`` method to return a mock.
 
         Input:
@@ -1778,7 +1778,7 @@ class TestSingleTableMetadata:
 
     @patch('sdv.metadata.single_table.validate_file_does_not_exist')
     @patch('sdv.metadata.single_table.read_json')
-    @patch('sdv.metadata.single_table.SingleTableMetadata._convert_metadata')
+    @patch('sdv.metadata.single_table.convert_metadata')
     @patch('sdv.metadata.single_table.SingleTableMetadata._load_from_dict')
     def test_upgrade_metadata_multiple_tables(
             self, from_dict_mock, convert_mock, read_json_mock, validate_mock):
@@ -1790,7 +1790,7 @@ class TestSingleTableMetadata:
         Setup:
             - Mock ``read_json`` to return a multi-table metadata dict with one table.
             - Mock ``validate_file_does_not_exist``.
-            - Mock the ``_convert_metadata`` method to return something.
+            - Mock the ``convert_metadata`` method to return something.
             - Mock the ``from_dict`` method to return a mock.
 
         Input:
@@ -1819,7 +1819,7 @@ class TestSingleTableMetadata:
 
     @patch('sdv.metadata.single_table.validate_file_does_not_exist')
     @patch('sdv.metadata.single_table.read_json')
-    @patch('sdv.metadata.single_table.SingleTableMetadata._convert_metadata')
+    @patch('sdv.metadata.single_table.convert_metadata')
     @patch('sdv.metadata.single_table.SingleTableMetadata._load_from_dict')
     def test_upgrade_metadata_multiple_tables_fails(
             self, from_dict_mock, convert_mock, read_json_mock, validate_mock):
@@ -1831,7 +1831,7 @@ class TestSingleTableMetadata:
         Setup:
             - Mock ``read_json`` to return a multi-table metadata dict.
             - Mock ``validate_file_does_not_exist``.
-            - Mock the ``_convert_metadata`` method to return something.
+            - Mock the ``convert_metadata`` method to return something.
             - Mock the ``from_dict`` method to return a mock.
 
         Input:
@@ -1861,7 +1861,7 @@ class TestSingleTableMetadata:
     @patch('sdv.metadata.single_table.warnings')
     @patch('sdv.metadata.single_table.validate_file_does_not_exist')
     @patch('sdv.metadata.single_table.read_json')
-    @patch('sdv.metadata.single_table.SingleTableMetadata._convert_metadata')
+    @patch('sdv.metadata.single_table.convert_metadata')
     @patch('sdv.metadata.single_table.SingleTableMetadata._load_from_dict')
     def test_upgrade_metadata_validate_error(
             self, from_dict_mock, convert_mock, read_json_mock, validate_mock, warnings_mock):
@@ -1873,7 +1873,7 @@ class TestSingleTableMetadata:
         Setup:
             - Mock ``read_json``.
             - Mock ``validate_file_does_not_exist``.
-            - Mock the ``_convert_metadata`` method to return something.
+            - Mock the ``convert_metadata`` method to return something.
             - Mock the ``from_dict`` method to return a mock.
 
         Input:
