@@ -914,11 +914,33 @@ class TestSingleTableMetadata:
             instance.set_primary_key(('a', 'b', 'd'))
             # NOTE: used to be ('a', 'b', 'd', 'c')
 
+    def test_set_primary_key_validation_categorical(self):
+        """Test that ``set_primary_key`` crashes when its sdtype is categorical.
+
+        Input:
+            - A tuple of keys, some of which have sdtype categorical.
+
+        Side Effect:
+            - A ``ValueError`` should be raised.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance.add_column('column1', sdtype='categorical')
+        instance.add_column('column2', sdtype='categorical')
+        instance.add_column('column3', sdtype='numerical')
+
+        err_msg = re.escape(
+            "The primary_keys ['column1', 'column2'] cannot be type 'categorical'."
+        )
+        # Run / Assert
+        with pytest.raises(ValueError, match=err_msg):
+            instance.set_primary_key(('column1', 'column2', 'column3'))
+
     def test_set_primary_key(self):
         """Test that ``set_primary_key`` sets the ``_primary_key`` value."""
         # Setup
         instance = SingleTableMetadata()
-        instance._columns = {'column'}
+        instance._columns = {'column': {'sdtype': 'numerical'}}
 
         # Run
         instance.set_primary_key('column')
@@ -930,13 +952,13 @@ class TestSingleTableMetadata:
         """Test that ``set_primary_key`` sets the ``_primary_key`` value for tuples."""
         # Setup
         instance = SingleTableMetadata()
-        instance._columns = {'column1', 'column2'}
+        instance._columns = {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
 
         # Run
-        instance.set_primary_key(('column1', 'column2'))
+        instance.set_primary_key(('col1', 'col2'))
 
         # Assert
-        assert instance._primary_key == ('column1', 'column2')
+        assert instance._primary_key == ('col1', 'col2')
 
     @patch('sdv.tabular.utils.warnings')
     def test_set_primary_key_warning(self, warning_mock):
@@ -953,7 +975,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
-        instance._columns = {'column1'}
+        instance._columns = {'column1': {'sdtype': 'numerical'}}
         instance._primary_key = 'column0'
 
         # Run
@@ -1006,11 +1028,33 @@ class TestSingleTableMetadata:
             instance.set_sequence_key(('a', 'b', 'd'))
             # NOTE: used to be ('a', 'b', 'd', 'c')
 
+    def test_set_sequence_key_validation_categorical(self):
+        """Test that ``set_sequence_key`` crashes when its sdtype is categorical.
+
+        Input:
+            - A tuple of keys, some of which have sdtype categorical.
+
+        Side Effect:
+            - A ``ValueError`` should be raised.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance.add_column('column1', sdtype='categorical')
+        instance.add_column('column2', sdtype='categorical')
+        instance.add_column('column3', sdtype='numerical')
+
+        err_msg = re.escape(
+            "The sequence_keys ['column1', 'column2'] cannot be type 'categorical'."
+        )
+        # Run / Assert
+        with pytest.raises(ValueError, match=err_msg):
+            instance.set_sequence_key(('column1', 'column2', 'column3'))
+
     def test_set_sequence_key(self):
         """Test that ``set_sequence_key`` sets the ``_sequence_key`` value."""
         # Setup
         instance = SingleTableMetadata()
-        instance._columns = {'column'}
+        instance._columns = {'column': {'sdtype': 'numerical'}}
 
         # Run
         instance.set_sequence_key('column')
@@ -1022,13 +1066,13 @@ class TestSingleTableMetadata:
         """Test that ``set_sequence_key`` sets ``_sequence_key`` for tuples."""
         # Setup
         instance = SingleTableMetadata()
-        instance._columns = {'column1', 'column2'}
+        instance._columns = {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
 
         # Run
-        instance.set_sequence_key(('column1', 'column2'))
+        instance.set_sequence_key(('col1', 'col2'))
 
         # Assert
-        assert instance._sequence_key == ('column1', 'column2')
+        assert instance._sequence_key == ('col1', 'col2')
 
     @patch('sdv.tabular.utils.warnings')
     def test_set_sequence_key_warning(self, warning_mock):
@@ -1045,7 +1089,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
-        instance._columns = {'column1'}
+        instance._columns = {'column1': {'sdtype': 'numerical'}}
         instance._sequence_key = 'column0'
 
         # Run
@@ -1098,11 +1142,37 @@ class TestSingleTableMetadata:
             instance.set_alternate_keys(['abc', ('123', '213', '312')])
             # NOTE: used to be ['abc', ('123', '213', '312'), 'bca']
 
+    def test_set_alternate_keys_validation_categorical(self):
+        """Test that ``set_alternate_keys`` crashes when its sdtype is categorical.
+
+        Input:
+            - A list of keys, some of which have sdtype categorical.
+
+        Side Effect:
+            - A ``ValueError`` should be raised.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance.add_column('column1', sdtype='categorical')
+        instance.add_column('column2', sdtype='categorical')
+        instance.add_column('column3', sdtype='numerical')
+
+        err_msg = re.escape(
+            "The alternate_keys ['column1', 'column2'] cannot be type 'categorical'."
+        )
+        # Run / Assert
+        with pytest.raises(ValueError, match=err_msg):
+            instance.set_alternate_keys([('column1', 'column2'), 'column3'])
+
     def test_set_alternate_keys(self):
         """Test that ``set_alternate_keys`` sets the ``_alternate_keys`` value."""
         # Setup
         instance = SingleTableMetadata()
-        instance._columns = {'column1', 'column2', 'column3'}
+        instance._columns = {
+            'column1': {'sdtype': 'numerical'},
+            'column2': {'sdtype': 'numerical'},
+            'column3': {'sdtype': 'numerical'}
+        }
 
         # Run
         instance.set_alternate_keys(['column1', ('column2', 'column3')])
