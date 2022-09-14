@@ -57,7 +57,7 @@ def _upgrade_positive_negative(old_constraint):
     new_constraints = []
     strict = old_constraint.get('strict')
     old_name = old_constraint.get('constraint')
-    is_positive = old_name == 'Positive'
+    is_positive = old_name == 'sdv.constraints.tabular.Positive'
     constraint_name = Positive.__name__ if is_positive else Negative.__name__
     columns = old_constraint.get('columns')
     if not isinstance(columns, list):
@@ -79,6 +79,7 @@ def _upgrade_positive_negative(old_constraint):
                 'relation': relation,
                 'value': 0
             }
+            new_constraints.append(new_constraint)
 
     return new_constraints
 
@@ -100,6 +101,7 @@ def _upgrade_greater_than(old_constraint):
     low_is_string = isinstance(low, str)
     strict = old_constraint.get('strict', False)
     new_constraints = []
+
     if scalar is None:
         high_is_list_len_one = isinstance(high, list) and len(high) == 1
         low_is_list_len_one = isinstance(low, list) and len(low) == 1
@@ -115,8 +117,8 @@ def _upgrade_greater_than(old_constraint):
 
         new_constraint = {
             'constraint_name': Inequality.__name__,
-            'high_column_name': high if high_is_string else high[0],
-            'low_column_name': low if low_is_string else low[0],
+            'high_column_name': high,
+            'low_column_name': low,
             'strict_boundaries': strict
         }
         new_constraints.append(new_constraint)
@@ -228,37 +230,37 @@ def _upgrade_unique(old_constraint):
 def _upgrade_constraint(old_constraint):
     new_constraints = []
     constraint_name = old_constraint.get('constraint')
-    if constraint_name in ('Positive', 'Negative'):
+    if constraint_name in ('sdv.constraints.tabular.Positive', 'sdv.constraints.tabular.Negative'):
         new_constraints = _upgrade_positive_negative(old_constraint)
 
-    elif constraint_name == 'UniqueCombinations':
+    elif constraint_name == 'sdv.constraints.tabular.UniqueCombinations':
         new_constraints = _upgrade_unique_combinations(old_constraint)
 
-    elif constraint_name == 'GreaterThan':
+    elif constraint_name == 'sdv.constraints.tabular.GreaterThan':
         new_constraints = _upgrade_greater_than(old_constraint)
 
-    elif constraint_name == 'Between':
+    elif constraint_name == 'sdv.constraints.tabular.Between':
         new_constraints = _upgrade_between(old_constraint)
 
-    elif constraint_name == 'Rounding':
+    elif constraint_name == 'sdv.constraints.tabular.Rounding':
         warnings.warn(
             "The SDV no longer supports the 'Rounding' constraint. Most models automatically "
             'round to the same number of decimal digits as the original data.'
         )
 
-    elif constraint_name == 'OneHotEncoding':
+    elif constraint_name == 'sdv.constraints.tabular.OneHotEncoding':
         new_constraints = _upgrade_one_hot_encoding(old_constraint)
 
-    elif constraint_name == 'Unique':
+    elif constraint_name == 'sdv.constraints.tabular.Unique':
         new_constraints = _upgrade_unique(old_constraint)
 
-    elif constraint_name == 'ColumnFormula':
+    elif constraint_name == 'sdv.constraints.tabular.ColumnFormula':
         warnings.warn(
             'This method does not upgrade ColumnFormula constraints. Please convert your '
             'logic using the new CustomConstraint API.'
         )
 
-    elif constraint_name == 'CustomConstraint':
+    elif constraint_name == 'sdv.constraints.tabular.CustomConstraint':
         warnings.warn(
             'This method does not upgrade CustomConstraint objects. Please convert '
             'your logic using the new CustomConstraint API.'
