@@ -342,7 +342,9 @@ class DataProcessor:
         for constraint in reversed(self._constraints_to_reverse):
             reversed_data = constraint.reverse_transform(reversed_data)
 
-        anonymized_columns = list(set(data.columns) - set(reversed_data.columns))
+        anonymized_columns = list(
+            set(self._hyper_transformer._input_columns) - set(reversed_data.columns))
+
         anonymized_data = self._hyper_transformer.create_anonymized_columns(
             num_rows=len(reversed_data),
             column_names=anonymized_columns
