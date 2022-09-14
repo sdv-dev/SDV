@@ -79,6 +79,20 @@ def test__upgrade_constraints_greater_than():
         },
         {
             'constraint': 'sdv.constraints.tabular.GreaterThan',
+            'scalar': None,
+            'high': ['c'],
+            'low': 'd',
+            'strict': True
+        },
+        {
+            'constraint': 'sdv.constraints.tabular.GreaterThan',
+            'scalar': None,
+            'high': 'e',
+            'low': ['f'],
+            'strict': True
+        },
+        {
+            'constraint': 'sdv.constraints.tabular.GreaterThan',
             'scalar': 'low',
             'high': 'a',
             'low': 10
@@ -113,6 +127,18 @@ def test__upgrade_constraints_greater_than():
             'constraint_name': 'Inequality',
             'high_column_name': 'a',
             'low_column_name': 'b',
+            'strict_boundaries': True
+        },
+        {
+            'constraint_name': 'Inequality',
+            'high_column_name': 'c',
+            'low_column_name': 'd',
+            'strict_boundaries': True
+        },
+        {
+            'constraint_name': 'Inequality',
+            'high_column_name': 'e',
+            'low_column_name': 'f',
             'strict_boundaries': True
         },
         {
@@ -164,7 +190,7 @@ def test__upgrade_constraints_greater_than_error(warnings_mock):
 
     Input:
         - Old metadata dict with the following constraints:
-        - ``GreaterThan`` with one of high or low not being a string or list of length one.
+        - ``GreaterThan`` with one of high or low being a list of multiple strings.
 
     Ouput:
         - Empty list.
@@ -176,16 +202,16 @@ def test__upgrade_constraints_greater_than_error(warnings_mock):
     old_constraints = [
         {
             'constraint': 'sdv.constraints.tabular.GreaterThan',
-            'scalar': 'high',
-            'high': [1, 2],
-            'low': 'b',
+            'scalar': None,
+            'high': ['a', 'b'],
+            'low': 'c',
             'strict': True
         },
         {
             'constraint': 'sdv.constraints.tabular.GreaterThan',
-            'scalar': 'low',
+            'scalar': None,
             'high': 'a',
-            'low': [1, 2],
+            'low': ['b', 'c'],
             'strict': True
         }
     ]
@@ -196,6 +222,16 @@ def test__upgrade_constraints_greater_than_error(warnings_mock):
 
     # Assert
     assert new_constraints == []
+    warnings_mock.warn.assert_has_calls([
+        call(
+            "Unable to upgrade the GreaterThan constraint specified for 'high' ['a', 'b'] "
+            "and 'low' 'c'. Manually add Inequality constraints to capture this logic."
+        ),
+        call(
+            "Unable to upgrade the GreaterThan constraint specified for 'high' 'a' "
+            "and 'low' ['b', 'c']. Manually add Inequality constraints to capture this logic."
+        )
+    ])
 
 
 def test__upgrade_constraints_between():

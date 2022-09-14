@@ -103,22 +103,22 @@ def _upgrade_greater_than(old_constraint):
     new_constraints = []
 
     if scalar is None:
-        high_is_list_len_one = isinstance(high, list) and len(high) == 1
-        low_is_list_len_one = isinstance(low, list) and len(low) == 1
-        both_string = high_is_string and low_is_string
-        both_lists = high_is_list_len_one and low_is_list_len_one
-        if not (both_lists or both_string):
+        high_has_multiple = isinstance(high, list) and len(high) != 1
+        low_has_multiple = isinstance(low, list) and len(low) != 1
+        high_column_name = f"'{high}'" if high_is_string else high
+        low_column_name = f"'{low}'" if low_is_string else low
+        if high_has_multiple or low_has_multiple:
             warnings.warn(
-                f"Unable to upgrade the GreaterThan constraint specified for 'high' {high} "
-                f"and 'low' {low}. Manually add {Inequality.__name__} constraints to capture this "
-                'logic.'
+                f"Unable to upgrade the GreaterThan constraint specified for 'high' "
+                f"{high_column_name} and 'low' {low_column_name}. Manually add "
+                f'{Inequality.__name__} constraints to capture this logic.'
             )
             return []
 
         new_constraint = {
             'constraint_name': Inequality.__name__,
-            'high_column_name': high,
-            'low_column_name': low,
+            'high_column_name': high if high_is_string else high[0],
+            'low_column_name': low if low_is_string else low[0],
             'strict_boundaries': strict
         }
         new_constraints.append(new_constraint)
