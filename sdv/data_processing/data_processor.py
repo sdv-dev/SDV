@@ -10,6 +10,7 @@ import rdt
 from sdv.constraints import Constraint
 from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
+from sdv.data_processing.anonymization import get_anonymized_transformer
 from sdv.data_processing.errors import NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.metadata.single_table import SingleTableMetadata
@@ -178,14 +179,41 @@ class DataProcessor:
 
         return data
 
+    def create_anonymized_transformer(self, sdtype, column_metadata):
+        """Create an instance of an ``AnonymizedFaker``.
+
+        Read the extra keyword arguments from the ``column_metadata`` and use them to create
+        an instance of an ``AnonymizedFaker`` transformer.
+
+        Args:
+            sdtype (str):
+                Sematic data type or a ``Faker`` function name.
+            column_metadata (dict):
+                A dictionary representing the rest of the metadata for the given ``sdtype``.
+
+        Returns:
+            Instance of ``rdt.transformers.pii.AnonymizedFaker``.
+        """
+        kwargs = {}
+        for key, value in column_metadata.items():
+            if key not in ['pii', 'sdtype']:
+                kwargs[key] = value
+
+        return get_anonymized_transformer(sdtype, kwargs)
+
     def _create_config(self, data, columns_created_by_constraints):
         sdtypes = {}
         transformers = {}
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata._columns.get(column)
             sdtype = column_metadata.get('sdtype')
-            sdtypes[column] = sdtype
-            transformers[column] = self._transformers_by_sdtype.get(sdtype)
+            if column_metadata.get('pii'):
+                transformers[column] = self.create_anonymized_transformer(sdtype, column_metadata)
+                sdtypes[column] = 'pii'
+
+            else:
+                sdtypes[column] = sdtype
+                transformers[column] = self._transformers_by_sdtype.get(sdtype)
 
         for column in columns_created_by_constraints:
             dtype_kind = data[column].dtype.kind
@@ -314,13 +342,24 @@ class DataProcessor:
         for constraint in reversed(self._constraints_to_reverse):
             reversed_data = constraint.reverse_transform(reversed_data)
 
+        anonymized_columns = list(set(data.columns) - set(reversed_data.columns))
+        anonymized_data = self._hyper_transformer.create_anonymized_columns(
+            num_rows=len(reversed_data),
+            column_names=anonymized_columns
+        )
+
         original_columns = list(self.metadata._columns.keys())
+
         for column_name in original_columns:
-            column_data = reversed_data[column_name]
-            if pd.api.types.is_integer_dtype(self._dtypes[column_name]):
-                column_data = column_data.round()
+            if column_name in anonymized_data.columns:
+                column_data = anonymized_data[column_name]
+            else:
+                column_data = reversed_data[column_name]
 
             dtype = self._dtypes[column_name]
+            if pd.api.types.is_integer_dtype(dtype):
+                column_data = column_data.round()
+
             reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
 
         # reformat numerical columns using the NumericalFormatter
