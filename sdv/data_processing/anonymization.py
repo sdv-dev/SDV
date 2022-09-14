@@ -3,8 +3,7 @@
 import inspect
 
 from faker import Faker
-from rdt.transformers import AnonymizedFaker, get_default_transformers
-
+from rdt.transformers import AnonymizedFaker
 
 SDTYPE_ANONYMIZERS = {
     'phisical_address': {
