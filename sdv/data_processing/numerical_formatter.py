@@ -84,6 +84,7 @@ class NumericalFormatter:
         Returns:
             numpy.ndarray containing the formatted data.
         """
+        column = column.copy()
         if self.enforce_min_max_values:
             column = column.clip(self._min_value, self._max_value)
         elif self.computer_representation != 'Float':

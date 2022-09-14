@@ -583,9 +583,11 @@ class TestDataProcessor:
         dp._fit_transform_constraints.assert_called_once_with(data)
         dp._fit_hyper_transformer.assert_called_once_with(transformed_data, {'b'})
         fitting_call = call('Fitting table fake_table metadata')
+        formatter_call = call('Fitting numerical formatters for table fake_table')
         constraint_call = call('Fitting constraints for table fake_table')
         transformer_call = call('Fitting HyperTransformer for table fake_table')
-        log_mock.info.assert_has_calls([fitting_call, constraint_call, transformer_call])
+        log_mock.info.assert_has_calls(
+            [fitting_call, formatter_call, constraint_call, transformer_call])
 
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_transform(self, log_mock):

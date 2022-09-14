@@ -11,6 +11,7 @@ from sdv.constraints import Constraint
 from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.data_processing.errors import NotFittedError
+from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.metadata.single_table import SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
@@ -84,6 +85,8 @@ class DataProcessor:
     def __init__(self, metadata, learn_rounding_scheme=True, enforce_min_max_values=True,
                  model_kwargs=None, table_name=None):
         self.metadata = metadata
+        self._learn_rounding_scheme = learn_rounding_scheme
+        self._enforce_min_max_values = enforce_min_max_values
         self._model_kwargs = model_kwargs or {}
         self._constraints = self._load_constraints()
         self._constraints_to_reverse = []
@@ -93,6 +96,7 @@ class DataProcessor:
         self.table_name = table_name
         self._dtypes = None
         self.fitted = False
+        self.formatters = {}
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -222,6 +226,20 @@ class DataProcessor:
         if not data.empty:
             self._hyper_transformer.fit(data)
 
+    def _fit_numerical_formatters(self, data):
+        """Fit a ``NumericalFormatter`` for each column in the data."""
+        self.formatters = {}
+        for column_name in data:
+            column_metadata = self.metadata._columns.get(column_name)
+            if column_metadata.get('sdtype') == 'numerical':
+                computer_representation = column_metadata.get('computer_representation', 'Float')
+                self.formatters[column_name] = NumericalFormatter(
+                    learn_rounding_scheme=self._learn_rounding_scheme,
+                    enforce_min_max_values=self._enforce_min_max_values,
+                    computer_representation=computer_representation
+                )
+                self.formatters[column_name].learn_format(data[column_name])
+
     def fit(self, data):
         """Fit this metadata to the given data.
 
@@ -231,6 +249,9 @@ class DataProcessor:
         """
         LOGGER.info(f'Fitting table {self.table_name} metadata')
         self._dtypes = data[list(data.columns)].dtypes
+
+        LOGGER.info(f'Fitting numerical formatters for table {self.table_name}')
+        self._fit_numerical_formatters(data)
 
         LOGGER.info(f'Fitting constraints for table {self.table_name}')
         constrained = self._fit_transform_constraints(data)
@@ -301,6 +322,11 @@ class DataProcessor:
 
             dtype = self._dtypes[column_name]
             reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
+
+        # reformat numerical columns using the NumericalFormatter
+        for column in original_columns:
+            if column in self.formatters:
+                reversed_data[column] = self.formatters[column].format_data(reversed_data[column])
 
         return reversed_data[original_columns]
 
