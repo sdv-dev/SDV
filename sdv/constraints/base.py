@@ -107,13 +107,15 @@ class Constraint(metaclass=ConstraintMeta):
     @classmethod
     def _validate_inputs(cls, **kwargs):
         errors = []
+        required_args = []
         args = []
         params = inspect.signature(cls).parameters
         for arg_name, value in params.items():
+            args.append(arg_name)
             if value.default is inspect._empty:
-                args.append(arg_name)
+                required_args.append(arg_name)
 
-        missing_values = set(args) - set(kwargs)
+        missing_values = set(required_args) - set(kwargs)
         constraint = cls.__name__
         article = 'an' if constraint == 'Inequality' else 'a'
         if missing_values:

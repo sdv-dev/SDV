@@ -4,6 +4,7 @@ import json
 import re
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 import pytest
 
@@ -215,3 +216,139 @@ def test_upgrade_metadata():
         'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
     }
     assert new_metadata == expected_metadata
+
+
+@patch('sdv.metadata.single_table.warnings')
+def test_upgrade_metadata_with_constraints(warnings_mock):
+    """Test the ``upgrade_metadata`` method with constraints."""
+    # Setup
+    old_metadata = {
+        'fields': {
+            'start_date': {
+                'type': 'datetime',
+                'format': '%Y-%m-%d'
+            },
+            'end_date': {
+                'type': 'datetime',
+                'format': '%Y-%m-%d'
+            },
+            'salary': {
+                'type': 'numerical',
+                'subtype': 'integer'
+            },
+            'duration': {
+                'type': 'numerical',
+                'subtype': 'integer'
+            },
+            'student_id': {
+                'type': 'id',
+                'subtype': 'integer'
+            },
+            'high_perc': {
+                'type': 'numerical',
+                'subtype': 'float'
+            },
+            'perc': {
+                'type': 'numerical',
+                'subtype': 'float'
+            },
+            'placed': {
+                'type': 'boolean'
+            },
+            'ssn': {
+                'type': 'id',
+                'subtype': 'integer'
+            },
+            'drivers_license': {
+                'type': 'id',
+                'subtype': 'string',
+                'regex': 'regex'
+            },
+            'city': {
+                'type': 'categorical'
+            },
+            'state': {
+                'type': 'categorical'
+            }
+        },
+        'primary_key': 'student_id',
+        'constraints': [
+            {
+                'constraint': 'sdv.constraints.tabular.GreaterThan',
+                'scalar': None,
+                'high': 'end_date',
+                'low': 'start_date',
+                'strict': False
+            },
+            {
+                'constraint': 'sdv.constraints.tabular.Positive',
+                'columns': ['salary', 'duration'],
+                'strict': True
+            },
+            {
+                'constraint': 'sdv.constraints.tabular.UniqueCombinations',
+                'columns': ['city', 'state']
+            },
+            {
+                'constraint': 'sdv.constraints.tabular.Between',
+                'constraint_column': 'perc',
+                'high_is_scalar': False,
+                'low_is_scalar': True,
+                'low': 0,
+                'high': 'high_perc'
+            }
+        ]
+    }
+
+    # Run
+    with TemporaryDirectory() as temp_dir:
+        old_path = Path(temp_dir) / 'old.json'
+        new_path = Path(temp_dir) / 'new.json'
+        old_metadata_file = open(old_path, 'w')
+        json.dump(old_metadata, old_metadata_file)
+        old_metadata_file.close()
+        SingleTableMetadata.upgrade_metadata(old_filepath=old_path, new_filepath=new_path)
+        new_metadata_file = open(new_path,)
+        new_metadata = json.load(new_metadata_file)
+        new_metadata_file.close()
+
+    # Assert
+    expected_constraints = [
+        {
+            'constraint_name': 'Inequality',
+            'high_column_name': 'end_date',
+            'low_column_name': 'start_date',
+            'strict_boundaries': False
+        },
+        {
+            'constraint_name': 'Positive',
+            'column_name': 'salary'
+        },
+        {
+            'constraint_name': 'Positive',
+            'column_name': 'duration'
+        },
+        {
+            'constraint_name': 'FixedCombinations',
+            'column_names': ['city', 'state']
+        },
+        {
+            'constraint_name': 'Inequality',
+            'low_column_name': 'perc',
+            'high_column_name': 'high_perc',
+            'strict_boundaries': False
+        },
+        {
+            'constraint_name': 'ScalarInequality',
+            'column_name': 'perc',
+            'relation': '>=',
+            'value': 0
+        }
+    ]
+
+    constraints = new_metadata['constraints']
+    assert len(expected_constraints) == len(constraints)
+    for constraint in expected_constraints:
+        assert constraint in constraints
+
+    warnings_mock.warn.assert_not_called()
