@@ -232,11 +232,11 @@ class DataProcessor:
         for column_name in data:
             column_metadata = self.metadata._columns.get(column_name)
             if column_metadata.get('sdtype') == 'numerical':
-                computer_representation = column_metadata.get('computer_representation', 'Float')
+                representation = column_metadata.get('representation', 'Float')
                 self.formatters[column_name] = NumericalFormatter(
                     learn_rounding_scheme=self._learn_rounding_scheme,
                     enforce_min_max_values=self._enforce_min_max_values,
-                    computer_representation=computer_representation
+                    representation=representation
                 )
                 self.formatters[column_name].learn_format(data[column_name])
 
@@ -326,7 +326,8 @@ class DataProcessor:
         # reformat numerical columns using the NumericalFormatter
         for column in original_columns:
             if column in self.formatters:
-                reversed_data[column] = self.formatters[column].format_data(reversed_data[column])
+                data_to_format = reversed_data[column].to_numpy()
+                reversed_data[column] = self.formatters[column].format_data(data_to_format)
 
         return reversed_data[original_columns]
 
