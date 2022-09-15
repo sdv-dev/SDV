@@ -671,7 +671,7 @@ class Positive(ScalarInequality):
     Args:
         column_name (str):
             The name of the column that is constrained to be positive.
-        strict (bool):
+        strict_boundaries (bool):
             Whether the comparison of the values should be strict; disclude
             zero ``>`` or include it ``>=``.
     """
@@ -686,8 +686,9 @@ class Positive(ScalarInequality):
                 f"'{column_name}'. This constraint is only defined for numerical columns."
             )
 
-    def __init__(self, column_name, strict=False):
-        super().__init__(column_name=column_name, relation='>' if strict else '>=', value=0)
+    def __init__(self, column_name, strict_boundaries=False):
+        relation = '>' if strict_boundaries else '>='
+        super().__init__(column_name=column_name, relation=relation, value=0)
 
 
 class Negative(ScalarInequality):
@@ -699,7 +700,7 @@ class Negative(ScalarInequality):
     Args:
         column_name (str):
             The name of the column that is constrained to be negative.
-        strict (bool):
+        strict_boundaries (bool):
             Whether the comparison of the values should be strict, disclude
             zero ``<`` or include it ``<=``.
     """
@@ -714,8 +715,9 @@ class Negative(ScalarInequality):
                 f"'{column_name}'. This constraint is only defined for numerical columns."
             )
 
-    def __init__(self, column_name, strict=False):
-        super().__init__(column_name=column_name, relation='<' if strict else '<=', value=0)
+    def __init__(self, column_name, strict_boundaries=False):
+        relation = '<' if strict_boundaries else '<='
+        super().__init__(column_name=column_name, relation=relation, value=0)
 
 
 class Range(Constraint):
