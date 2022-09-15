@@ -12,6 +12,7 @@ import pandas as pd
 from sdv.constraints import Constraint
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import cast_to_iterable, read_json, validate_file_does_not_exist
 
 
@@ -586,7 +587,7 @@ class SingleTableMetadata:
             else:
                 old_metadata = list(tables.values())[0]
 
-        new_metadata = cls._convert_metadata(old_metadata)
+        new_metadata = convert_metadata(old_metadata)
         metadata = cls._load_from_dict(new_metadata)
         metadata.save_to_json(new_filepath)
 

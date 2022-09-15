@@ -2325,10 +2325,10 @@ class TestPositive():
     def test__init__strict_true(self):
         """Test the ``Positive.__init__`` method.
 
-        Ensure the attributes are correctly set when ``strict`` is True.
+        Ensure the attributes are correctly set when ``strict_boundaries`` is True.
         """
         # Run
-        instance = Positive(column_name='abc', strict=True)
+        instance = Positive(column_name='abc', strict_boundaries=True)
 
         # Asserts
         assert instance._value == 0
@@ -2466,10 +2466,10 @@ class TestNegative():
     def test__init__strict_true(self):
         """Test the ``Negative.__init__`` method.
 
-        Ensure the attributes are correctly set when ``strict`` is True.
+        Ensure the attributes are correctly set when ``strict_boundaries`` is True.
         """
         # Run
-        instance = Negative(column_name='abc', strict=True)
+        instance = Negative(column_name='abc', strict_boundaries=True)
 
         # Asserts
         assert instance._value == 0
