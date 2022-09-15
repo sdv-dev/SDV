@@ -550,7 +550,8 @@ class TestDataProcessor:
         ht_mock.return_value.fit.assert_not_called()
         dp._create_config.assert_called_once_with(data, [])
 
-    def test__fit_numerical_formatters(self):
+    @patch('sdv.data_processing.numerical_formatter.NumericalFormatter.learn_format')
+    def test__fit_numerical_formatters(self, learn_format_mock):
         """Test the ``_fit_numerical_formatters`` method.
 
         Runs the methods through three columns: a non-numerical column, which should
@@ -568,7 +569,6 @@ class TestDataProcessor:
         metadata.add_column('col2', sdtype='numerical')
         metadata.add_column('col3', sdtype='numerical', representation='Int8')
         dp = DataProcessor(metadata, learn_rounding_scheme=False, enforce_min_max_values=False)
-        NumericalFormatter.learn_format = Mock()
 
         # Run
         dp._fit_numerical_formatters(data)
@@ -586,7 +586,7 @@ class TestDataProcessor:
         assert dp.formatters['col3'].enforce_min_max_values is False
         assert dp.formatters['col3'].representation == 'Int8'
 
-        NumericalFormatter.learn_format.assert_has_calls([call(data['col2']), call(data['col3'])])
+        learn_format_mock.assert_has_calls([call(data['col2']), call(data['col3'])])
 
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_fit(self, log_mock):
