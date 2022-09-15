@@ -78,7 +78,7 @@ class NumericalFormatter:
         """Format a column according to the learned format.
 
         Args:
-            column (pd.Series):
+            column (pd.ndarray):
                 Data to format.
 
         Returns:
