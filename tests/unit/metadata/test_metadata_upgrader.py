@@ -48,7 +48,7 @@ def test__upgrade_constraints_no_upgrade_needed():
     new_constraints = _upgrade_constraints(old_metadata)
 
     # Assert
-    old_constraints == new_constraints
+    assert old_constraints == new_constraints
 
 
 def test__upgrade_constraints_greater_than():
@@ -412,64 +412,64 @@ def test__upgrade_constraints_positive_and_negative():
     expected_constraints = [
         {
             'constraint_name': 'Positive',
-            'column_name': 'a'
+            'column_name': 'a',
+            'strict_boundaries': True
         },
         {
             'constraint_name': 'Positive',
-            'column_name': 'b'
+            'column_name': 'b',
+            'strict_boundaries': True
         },
         {
             'constraint_name': 'Positive',
-            'column_name': 'c'
+            'column_name': 'c',
+            'strict_boundaries': True
         },
         {
-            'constraint_name': 'ScalarInequality',
+            'constraint_name': 'Positive',
             'column_name': 'd',
-            'relation': '>=',
-            'value': 0
+            'strict_boundaries': False
         },
         {
-            'constraint_name': 'ScalarInequality',
+            'constraint_name': 'Positive',
             'column_name': 'e',
-            'relation': '>=',
-            'value': 0
+            'strict_boundaries': False
         },
         {
-            'constraint_name': 'ScalarInequality',
+            'constraint_name': 'Positive',
             'column_name': 'f',
-            'relation': '>=',
-            'value': 0
+            'strict_boundaries': False
         },
         {
             'constraint_name': 'Negative',
-            'column_name': 'a'
+            'column_name': 'a',
+            'strict_boundaries': True
         },
         {
             'constraint_name': 'Negative',
-            'column_name': 'b'
+            'column_name': 'b',
+            'strict_boundaries': True
         },
         {
             'constraint_name': 'Negative',
-            'column_name': 'c'
+            'column_name': 'c',
+            'strict_boundaries': True
         },
         {
-            'constraint_name': 'ScalarInequality',
+            'constraint_name': 'Negative',
             'column_name': 'd',
-            'relation': '<=',
-            'value': 0
+            'strict_boundaries': False
         },
         {
-            'constraint_name': 'ScalarInequality',
+            'constraint_name': 'Negative',
             'column_name': 'e',
-            'relation': '<=',
-            'value': 0
+            'strict_boundaries': False
         },
         {
-            'constraint_name': 'ScalarInequality',
+            'constraint_name': 'Negative',
             'column_name': 'f',
-            'relation': '<=',
-            'value': 0
-        },
+            'strict_boundaries': False
+        }
     ]
     assert len(expected_constraints) == len(new_constraints)
     for constraint in expected_constraints:
@@ -532,7 +532,7 @@ def test__upgrade_constraints_simple_constraints():
 
 @patch('sdv.metadata.metadata_upgrader.warnings')
 def test__upgrade_constraints_constraint_has_no_upgrade(warnings_mock):
-    """Test the ``_upfgrade_constraints`` method with constraints that can't be upgraded.
+    """Test the ``_upgrade_constraints`` method with constraints that can't be upgraded.
 
     Setup:
         - Patch warnings.
@@ -572,6 +572,7 @@ def test__upgrade_constraints_constraint_has_no_upgrade(warnings_mock):
 
     # Assert
     assert new_constraints == []
+    assert len(warnings_mock.warn.mock_calls) == 4
     warnings_mock.warn.assert_has_calls([
         call(
             "The SDV no longer supports the 'Rounding' constraint. Most models automatically "

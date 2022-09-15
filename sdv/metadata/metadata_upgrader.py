@@ -64,22 +64,12 @@ def _upgrade_positive_negative(old_constraint):
         columns = [columns]
 
     for column in columns:
-        if strict:
-            new_constraint = {
-                'constraint_name': constraint_name,
-                'column_name': column
-            }
-            new_constraints.append(new_constraint)
-
-        else:
-            relation = '>=' if is_positive else '<='
-            new_constraint = {
-                'constraint_name': ScalarInequality.__name__,
-                'column_name': column,
-                'relation': relation,
-                'value': 0
-            }
-            new_constraints.append(new_constraint)
+        new_constraint = {
+            'constraint_name': constraint_name,
+            'column_name': column,
+            'strict_boundaries': strict
+        }
+        new_constraints.append(new_constraint)
 
     return new_constraints
 

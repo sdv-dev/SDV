@@ -322,11 +322,13 @@ def test_upgrade_metadata_with_constraints(warnings_mock):
         },
         {
             'constraint_name': 'Positive',
-            'column_name': 'salary'
+            'column_name': 'salary',
+            'strict_boundaries': True
         },
         {
             'constraint_name': 'Positive',
-            'column_name': 'duration'
+            'column_name': 'duration',
+            'strict_boundaries': True
         },
         {
             'constraint_name': 'FixedCombinations',
