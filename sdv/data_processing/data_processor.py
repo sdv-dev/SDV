@@ -315,7 +315,7 @@ class DataProcessor:
             reversed_data = constraint.reverse_transform(reversed_data)
 
         original_columns = list(self.metadata._columns.keys())
-        for column_name, _ in self.metadata._columns.items():
+        for column_name in original_columns:
             column_data = reversed_data[column_name]
             if pd.api.types.is_integer_dtype(self._dtypes[column_name]):
                 column_data = column_data.round()
