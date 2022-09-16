@@ -51,9 +51,5 @@ def test_data_processor_with_anonymized_columns(tmpdir):
     reverse_transformed = dp.reverse_transform(transformed)
 
     # Assert
-    data_unique_occupations = data['occupation'].unique()
-    reverse_transformed_unique_occupations = reverse_transformed['occupation'].unique()
-    substracted = set(reverse_transformed_unique_occupations) - set(data_unique_occupations)
-
-    assert len(reverse_transformed_unique_occupations) == len(substracted)
+    assert reverse_transformed.occupation.isin(data.occupation).sum() == 0
     assert 'occupation' not in transformed.columns
