@@ -78,13 +78,13 @@ class NumericalFormatter:
         """Format a column according to the learned format.
 
         Args:
-            column (pd.ndarray):
+            column (pd.Series):
                 Data to format.
 
         Returns:
             numpy.ndarray containing the formatted data.
         """
-        column = column.copy()
+        column = column.copy().to_numpy()
         if self.enforce_min_max_values:
             column = column.clip(self._min_value, self._max_value)
         elif self.representation != 'Float':

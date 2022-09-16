@@ -274,13 +274,13 @@ class TestNumericalFormatter:
         The data should not be rounded at all.
 
         Input:
-            - random array of floats between 0 and 1
+            - random Series of floats between 0 and 1
 
         Output:
             - input array
         """
         # Setup
-        data = np.random.random(10)
+        data = pd.Series(np.random.random(10))
         formatter = NumericalFormatter(learn_rounding_scheme=False)
         formatter._rounding_digits = None
 
@@ -297,13 +297,13 @@ class TestNumericalFormatter:
         is ``np.int64`` even if ``_rounding_digits`` is ``None``.
 
         Input:
-            - array of multiple float values with decimals
+            - Series of multiple float values with decimals
 
         Output:
             - input array rounded an converted to integers
         """
         # Setup
-        data = np.array([0., 1.2, 3.45, 6.789])
+        data = pd.Series([0., 1.2, 3.45, 6.789])
         formatter = NumericalFormatter()
         formatter._rounding_digits = None
         formatter._dtype = np.int64
@@ -322,13 +322,13 @@ class TestNumericalFormatter:
         set in the ``_rounding_digits`` value.
 
         Input:
-            - array with decimals
+            - Series with decimals
 
         Output:
             - same array rounded to the provided number of decimal places
         """
         # Setup
-        data = np.array([1.1111, 2.2222, 3.3333, 4.44444, 5.555555])
+        data = pd.Series([1.1111, 2.2222, 3.3333, 4.44444, 5.555555])
         formatter = NumericalFormatter()
         formatter.learn_rounding_scheme = True
         formatter._rounding_digits = 2
@@ -347,14 +347,14 @@ class TestNumericalFormatter:
         attribute and remain ints.
 
         Input:
-            - array with with floats above 100
+            - Series with with floats above 100
 
         Output:
             - same array rounded to the provided number of 0s
             - array should be of type int
         """
         # Setup
-        data = np.array([2000.0, 120.0, 3100.0, 40100.0])
+        data = pd.Series([2000.0, 120.0, 3100.0, 40100.0])
         formatter = NumericalFormatter()
         formatter._dtype = int
         formatter.learn_rounding_scheme = True
@@ -375,14 +375,14 @@ class TestNumericalFormatter:
         attribute and remain floats.
 
         Input:
-            - array with with larger numbers
+            - Series with with larger numbers
 
         Output:
             - same array rounded to the provided number of 0s
             - array should be of type float
         """
         # Setup
-        data = np.array([2000.0, 120.0, 3100.0, 40100.0])
+        data = pd.Series([2000.0, 120.0, 3100.0, 40100.0])
         formatter = NumericalFormatter()
         formatter.learn_rounding_scheme = True
         formatter._rounding_digits = -3
@@ -401,13 +401,13 @@ class TestNumericalFormatter:
         The data should round to the number set in the ``_rounding_digits`` attribute.
 
         Input:
-            - array with with larger numbers
+            - Series with with larger numbers
 
         Output:
             - same array rounded to the 0s place
         """
         # Setup
-        data = np.array([2000.554, 120.2, 3101, 4010])
+        data = pd.Series([2000.554, 120.2, 3101, 4010])
         formatter = NumericalFormatter()
         formatter.learn_rounding_scheme = True
         formatter._rounding_digits = 0
@@ -426,13 +426,13 @@ class TestNumericalFormatter:
         the ``max_value`` and any values below the ``min_value``.
 
         Input:
-            - array with values above the max and below the min
+            - Series with values above the max and below the min
 
         Output:
             - array with out of bound values clipped to min and max
         """
         # Setup
-        data = np.array([-np.inf, -5000, -301, -250, 0, 125, 401, np.inf])
+        data = pd.Series([-np.inf, -5000, -301, -250, 0, 125, 401, np.inf])
         formatter = NumericalFormatter()
         formatter.enforce_min_max_values = True
         formatter._max_value = 400
@@ -450,13 +450,13 @@ class TestNumericalFormatter:
         The ``format_data`` method should clip any values out of bounds.
 
         Input:
-            - array with values above the max and below the min
+            - Series with values above the max and below the min
 
         Output:
             - array with out of bound values clipped to min and max
         """
         # Setup
-        data = np.array([-np.inf, np.nan, -5000, -301, -100, 0, 125, 401, np.inf])
+        data = pd.Series([-np.inf, np.nan, -5000, -301, -100, 0, 125, 401, np.inf])
         formatter = NumericalFormatter(representation='Int8')
 
         # Run

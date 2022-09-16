@@ -326,7 +326,7 @@ class DataProcessor:
         # reformat numerical columns using the NumericalFormatter
         for column in original_columns:
             if column in self.formatters:
-                data_to_format = reversed_data[column].to_numpy()
+                data_to_format = reversed_data[column]
                 reversed_data[column] = self.formatters[column].format_data(data_to_format)
 
         return reversed_data[original_columns]

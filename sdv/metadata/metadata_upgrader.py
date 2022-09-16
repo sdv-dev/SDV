@@ -21,9 +21,9 @@ def _upgrade_columns_and_keys(old_metadata):
 
         if old_type == 'numerical':
             if subtype == 'float':
-                column_meta['representation'] = 'float64'
+                column_meta['representation'] = 'Float'
             elif subtype == 'integer':
-                column_meta['representation'] = 'int64'
+                column_meta['representation'] = 'Int64'
 
         elif old_type == 'datetime':
             datetime_format = field_meta.get('format')
