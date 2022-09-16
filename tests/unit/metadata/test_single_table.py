@@ -20,7 +20,7 @@ class TestSingleTableMetadata:
 
     VALID_KWARGS = [
         ('age', 'numerical', {}),
-        ('age', 'numerical', {'representation': 'int'}),
+        ('age', 'numerical', {'representation': 'Int8'}),
         ('start_date', 'datetime', {}),
         ('start_date', 'datetime', {'datetime_format': '%Y-%d'}),
         ('name', 'categorical', {}),
@@ -35,7 +35,7 @@ class TestSingleTableMetadata:
 
     INVALID_KWARGS = [
         (
-            'age', 'numerical', {'representation': 'int', 'datetime_format': None, 'pii': True},
+            'age', 'numerical', {'representation': 'Int8', 'datetime_format': None, 'pii': True},
             re.escape("Invalid values '(datetime_format, pii)' for numerical column 'age'."),
         ),
         (
@@ -325,11 +325,11 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        instance._validate_column('age', 'numerical', representation='int')
+        instance._validate_column('age', 'numerical', representation='Int8')
 
         # Assert
-        mock__validate_kwargs.assert_called_once_with('age', 'numerical', representation='int')
-        mock__validate_numerical.assert_called_once_with('age', representation='int')
+        mock__validate_kwargs.assert_called_once_with('age', 'numerical', representation='Int8')
+        mock__validate_numerical.assert_called_once_with('age', representation='Int8')
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_categorical')
@@ -526,10 +526,10 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        instance.add_column('age', sdtype='numerical', representation='int')
+        instance.add_column('age', sdtype='numerical', representation='Int8')
 
         # Assert
-        assert instance._columns['age'] == {'sdtype': 'numerical', 'representation': 'int'}
+        assert instance._columns['age'] == {'sdtype': 'numerical', 'representation': 'Int8'}
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column')
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_exists')
@@ -591,15 +591,15 @@ class TestSingleTableMetadata:
         instance._columns = {'age': {'sdtype': 'numerical'}}
 
         # Run
-        instance.update_column('age', representation='float')
+        instance.update_column('age', representation='Float')
 
         # Assert
         assert instance._columns['age'] == {
             'sdtype': 'numerical',
-            'representation': 'float'
+            'representation': 'Float'
         }
         mock__validate_column_exists.assert_called_once_with('age')
-        mock__validate_column.assert_called_once_with('age', 'numerical', representation='float')
+        mock__validate_column.assert_called_once_with('age', 'numerical', representation='Float')
 
     def test_detect_from_dataframe_raises_value_error(self):
         """Test the ``detect_from_dataframe`` method.
@@ -1633,6 +1633,109 @@ class TestSingleTableMetadata:
         error_message = re.escape("Invalid constraint ('fake_constraint').")
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.add_constraint(constraint_name='fake_constraint')
+
+    def get_old_metadata(self):
+        old_metadata = {
+            'fields': {
+                'start_date': {
+                    'type': 'datetime',
+                    'format': '%Y-%m-%d'
+                },
+                'end_date': {
+                    'type': 'datetime',
+                    'format': '%Y-%m-%d'
+                },
+                'salary': {
+                    'type': 'numerical',
+                    'subtype': 'integer'
+                },
+                'duration': {
+                    'type': 'categorical'
+                },
+                'student_id': {
+                    'type': 'id',
+                    'subtype': 'integer'
+                },
+                'high_perc': {
+                    'type': 'numerical',
+                    'subtype': 'float'
+                },
+                'placed': {
+                    'type': 'boolean'
+                },
+                'ssn': {
+                    'type': 'id',
+                    'subtype': 'integer'
+                },
+                'drivers_license': {
+                    'type': 'id',
+                    'subtype': 'string',
+                    'regex': 'regex'
+                }
+            },
+            'primary_key': 'student_id'
+        }
+
+        return old_metadata
+
+    def test__convert_metadata(self):
+        """Test the ``_convert_metadata`` method.
+
+        The method should take a dictionary of the old metadata format and convert it to the new
+        format.
+
+        Input:
+            - Dictionary of single table metadata in the old schema.
+
+        Output:
+            - Dictionary of the same metadata with the new schema.
+        """
+        # Setup
+        old_metadata = self.get_old_metadata()
+
+        # Run
+        new_metadata = SingleTableMetadata._convert_metadata(old_metadata)
+
+        # Assert
+        expected_metadata = {
+            'columns': {
+                'start_date': {
+                    'sdtype': 'datetime',
+                    'datetime_format': '%Y-%m-%d'
+                },
+                'end_date': {
+                    'sdtype': 'datetime',
+                    'datetime_format': '%Y-%m-%d'
+                },
+                'salary': {
+                    'sdtype': 'numerical',
+                    'representation': 'Int64'
+                },
+                'duration': {
+                    'sdtype': 'categorical'
+                },
+                'student_id': {
+                    'sdtype': 'numerical'
+                },
+                'high_perc': {
+                    'sdtype': 'numerical',
+                    'representation': 'Float'
+                },
+                'placed': {
+                    'sdtype': 'boolean'
+                },
+                'ssn': {
+                    'sdtype': 'numerical'
+                },
+                'drivers_license': {
+                    'sdtype': 'text',
+                    'regex_format': 'regex'
+                }
+            },
+            'primary_key': 'student_id',
+            'alternate_keys': ['ssn', 'drivers_license']
+        }
+        assert new_metadata == expected_metadata
 
     @patch('sdv.metadata.single_table.validate_file_does_not_exist')
     @patch('sdv.metadata.single_table.read_json')

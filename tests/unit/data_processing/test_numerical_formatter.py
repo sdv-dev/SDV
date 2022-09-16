@@ -14,13 +14,13 @@ class TestNumericalFormatter:
         formatter = NumericalFormatter(
             learn_rounding_scheme=True,
             enforce_min_max_values=True,
-            computer_representation='Int8'
+            representation='Int8'
         )
 
         # Assert
         assert formatter.learn_rounding_scheme is True
         assert formatter.enforce_min_max_values is True
-        assert formatter.computer_representation == 'Int8'
+        assert formatter.representation == 'Int8'
 
     def test__learn_rounding_digits_more_than_15_decimals(self):
         """Test the ``_learn_rounding_digits`` method with more than 15 decimals.
@@ -444,8 +444,8 @@ class TestNumericalFormatter:
         # Asserts
         np.testing.assert_array_equal(result, np.array([-300, -300, -300, -250, 0, 125, 400, 400]))
 
-    def test_format_data_enforce_computer_representation(self):
-        """Test ``format_data`` with ``computer_representation`` set to ``Int8``.
+    def test_format_data_enforce_representation(self):
+        """Test ``format_data`` with ``representation`` set to ``Int8``.
 
         The ``format_data`` method should clip any values out of bounds.
 
@@ -457,7 +457,7 @@ class TestNumericalFormatter:
         """
         # Setup
         data = np.array([-np.inf, np.nan, -5000, -301, -100, 0, 125, 401, np.inf])
-        formatter = NumericalFormatter(computer_representation='Int8')
+        formatter = NumericalFormatter(representation='Int8')
 
         # Run
         result = formatter.format_data(data)

@@ -548,15 +548,33 @@ class TestDataProcessor:
         ht_mock.return_value.set_config.assert_called_once_with(expected_config)
         ht_mock.return_value.fit.assert_not_called()
         dp._create_config.assert_called_once_with(data, [])
+    
+    def test__fit_numerical_formatters(self):
+        """Test the ``_fit_numerical_formatters`` method.
+        """
+        # Setup
+        data = pd.DataFrame({'col1': ['abc', 'def'], 'col2': [1, 2], 'col3': [3, 4]})
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='non_numerical')
+        metadata.add_column('col2', sdtype='numerical')
+        metadata.add_column('col3', sdtype='numerical', representation='Int8')
+        dp = DataProcessor(metadata, learn_rounding_scheme=False, enforce_min_max_values=False)
+    
+        # Run
+        dp._fit_numerical_formatters(data)
+
+        # Assert
+        dp.formatters.keys() == ['col2', 'col3']
 
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_fit(self, log_mock):
         """Test the ``fit`` method.
 
-        The ``fit`` method should store the dtypes, fit and transform the constraints
-        and then fit the ``HyperTransformer``.
+        The ``fit`` method should store the dtypes, learn the formatters for each column,
+        fit and transform the constraints and then fit the ``HyperTransformer``.
 
         Setup:
+            - Mock the ``_fit_numerical_formatters`` method.
             - Mock the ``_fit_transform_constraints`` method.
             - Mock the ``_fit_hyper_transformer`` method.
 
@@ -565,6 +583,7 @@ class TestDataProcessor:
 
         Side effect:
             - The ``self._dtypes`` method should be set.
+            - The ``_fit_numerical_formatters`` should be called.
             - The ``_fit_transform_constraints`` should be called.
             - The ``_fit_hyper_transformer`` should be called.
         """
@@ -581,6 +600,7 @@ class TestDataProcessor:
         # Assert
         pd.testing.assert_series_equal(dp._dtypes, pd.Series([np.int64], index=['a']))
         dp._fit_transform_constraints.assert_called_once_with(data)
+        dp._fit_numerical_formatters.assert_called_once_with(data)
         dp._fit_hyper_transformer.assert_called_once_with(transformed_data, {'b'})
         fitting_call = call('Fitting table fake_table metadata')
         formatter_call = call('Fitting numerical formatters for table fake_table')
