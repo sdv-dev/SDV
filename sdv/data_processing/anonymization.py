@@ -6,7 +6,7 @@ from faker import Faker
 from rdt.transformers import AnonymizedFaker
 
 SDTYPE_ANONYMIZERS = {
-    'phisical_address': {
+    'physical_address': {
         'provider_name': 'address',
         'function_name': 'address'
     },
