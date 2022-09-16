@@ -20,7 +20,7 @@ class TestSingleTableMetadata:
 
     VALID_KWARGS = [
         ('age', 'numerical', {}),
-        ('age', 'numerical', {'representation': 'int'}),
+        ('age', 'numerical', {'representation': 'Int8'}),
         ('start_date', 'datetime', {}),
         ('start_date', 'datetime', {'datetime_format': '%Y-%d'}),
         ('name', 'categorical', {}),
@@ -35,7 +35,7 @@ class TestSingleTableMetadata:
 
     INVALID_KWARGS = [
         (
-            'age', 'numerical', {'representation': 'int', 'datetime_format': None, 'pii': True},
+            'age', 'numerical', {'representation': 'Int8', 'datetime_format': None, 'pii': True},
             re.escape("Invalid values '(datetime_format, pii)' for numerical column 'age'."),
         ),
         (
@@ -325,11 +325,11 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        instance._validate_column('age', 'numerical', representation='int')
+        instance._validate_column('age', 'numerical', representation='Int8')
 
         # Assert
-        mock__validate_kwargs.assert_called_once_with('age', 'numerical', representation='int')
-        mock__validate_numerical.assert_called_once_with('age', representation='int')
+        mock__validate_kwargs.assert_called_once_with('age', 'numerical', representation='Int8')
+        mock__validate_numerical.assert_called_once_with('age', representation='Int8')
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_categorical')
@@ -526,10 +526,10 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        instance.add_column('age', sdtype='numerical', representation='int')
+        instance.add_column('age', sdtype='numerical', representation='Int8')
 
         # Assert
-        assert instance._columns['age'] == {'sdtype': 'numerical', 'representation': 'int'}
+        assert instance._columns['age'] == {'sdtype': 'numerical', 'representation': 'Int8'}
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column')
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_exists')
@@ -591,15 +591,15 @@ class TestSingleTableMetadata:
         instance._columns = {'age': {'sdtype': 'numerical'}}
 
         # Run
-        instance.update_column('age', representation='float')
+        instance.update_column('age', representation='Float')
 
         # Assert
         assert instance._columns['age'] == {
             'sdtype': 'numerical',
-            'representation': 'float'
+            'representation': 'Float'
         }
         mock__validate_column_exists.assert_called_once_with('age')
-        mock__validate_column.assert_called_once_with('age', 'numerical', representation='float')
+        mock__validate_column.assert_called_once_with('age', 'numerical', representation='Float')
 
     def test_detect_from_dataframe_raises_value_error(self):
         """Test the ``detect_from_dataframe`` method.
