@@ -36,9 +36,8 @@ class SingleTableMetadata:
     }
 
     _NUMERICAL_REPRESENTATIONS = frozenset([
-        'int', 'int64', 'int32', 'int16', 'int8',
-        'uint', 'uint64', 'uint32', 'uint16', 'uint8',
-        'float', 'float64', 'float32', 'float16', 'float8',
+        'Float', 'Int64', 'Int32', 'Int16', 'Int8',
+        'UInt64', 'UInt32', 'UInt16', 'UInt8',
     ])
     _KEYS = frozenset([
         'columns',
@@ -530,9 +529,9 @@ class SingleTableMetadata:
 
             if old_type == 'numerical':
                 if subtype == 'float':
-                    column_meta['representation'] = 'float64'
+                    column_meta['representation'] = 'Float'
                 elif subtype == 'integer':
-                    column_meta['representation'] = 'int64'
+                    column_meta['representation'] = 'Int64'
 
             elif old_type == 'datetime':
                 datetime_format = field_meta.get('format')
