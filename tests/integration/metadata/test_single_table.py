@@ -188,7 +188,7 @@ def test_upgrade_metadata():
             },
             'salary': {
                 'sdtype': 'numerical',
-                'representation': 'int64'
+                'representation': 'Int64'
             },
             'duration': {
                 'sdtype': 'categorical'
@@ -198,7 +198,7 @@ def test_upgrade_metadata():
             },
             'high_perc': {
                 'sdtype': 'numerical',
-                'representation': 'float64'
+                'representation': 'Float'
             },
             'placed': {
                 'sdtype': 'boolean'

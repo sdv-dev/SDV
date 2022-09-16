@@ -15,6 +15,7 @@ from sdv.constraints.errors import (
 from sdv.constraints.tabular import Positive
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.errors import NotFittedError
+from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.metadata.single_table import SingleTableMetadata
 
 
@@ -549,14 +550,53 @@ class TestDataProcessor:
         ht_mock.return_value.fit.assert_not_called()
         dp._create_config.assert_called_once_with(data, [])
 
+    @patch('sdv.data_processing.numerical_formatter.NumericalFormatter.learn_format')
+    def test__fit_numerical_formatters(self, learn_format_mock):
+        """Test the ``_fit_numerical_formatters`` method.
+
+        Runs the methods through three columns: a non-numerical column, which should
+        be skipped by the method, and two numerical ones (with different values for
+        ``representation``), which should create and learn a ``NumericalFormatter``.
+
+        Setup:
+            - ``SingleTableMetadata`` describing the three columns.
+            - A mock of ``NumericalFormatter.learn_format``.
+        """
+        # Setup
+        data = pd.DataFrame({'col1': ['abc', 'def'], 'col2': [1, 2], 'col3': [3, 4]})
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='non_numerical')
+        metadata.add_column('col2', sdtype='numerical')
+        metadata.add_column('col3', sdtype='numerical', representation='Int8')
+        dp = DataProcessor(metadata, learn_rounding_scheme=False, enforce_min_max_values=False)
+
+        # Run
+        dp._fit_numerical_formatters(data)
+
+        # Assert
+        assert list(dp.formatters.keys()) == ['col2', 'col3']
+
+        assert isinstance(dp.formatters['col2'], NumericalFormatter)
+        assert dp.formatters['col2'].learn_rounding_scheme is False
+        assert dp.formatters['col2'].enforce_min_max_values is False
+        assert dp.formatters['col2'].representation == 'Float'
+
+        assert isinstance(dp.formatters['col3'], NumericalFormatter)
+        assert dp.formatters['col3'].learn_rounding_scheme is False
+        assert dp.formatters['col3'].enforce_min_max_values is False
+        assert dp.formatters['col3'].representation == 'Int8'
+
+        learn_format_mock.assert_has_calls([call(data['col2']), call(data['col3'])])
+
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_fit(self, log_mock):
         """Test the ``fit`` method.
 
-        The ``fit`` method should store the dtypes, fit and transform the constraints
-        and then fit the ``HyperTransformer``.
+        The ``fit`` method should store the dtypes, learn the formatters for each column,
+        fit and transform the constraints and then fit the ``HyperTransformer``.
 
         Setup:
+            - Mock the ``_fit_numerical_formatters`` method.
             - Mock the ``_fit_transform_constraints`` method.
             - Mock the ``_fit_hyper_transformer`` method.
 
@@ -565,6 +605,7 @@ class TestDataProcessor:
 
         Side effect:
             - The ``self._dtypes`` method should be set.
+            - The ``_fit_numerical_formatters`` should be called.
             - The ``_fit_transform_constraints`` should be called.
             - The ``_fit_hyper_transformer`` should be called.
         """
@@ -581,11 +622,14 @@ class TestDataProcessor:
         # Assert
         pd.testing.assert_series_equal(dp._dtypes, pd.Series([np.int64], index=['a']))
         dp._fit_transform_constraints.assert_called_once_with(data)
+        dp._fit_numerical_formatters.assert_called_once_with(data)
         dp._fit_hyper_transformer.assert_called_once_with(transformed_data, {'b'})
         fitting_call = call('Fitting table fake_table metadata')
+        formatter_call = call('Fitting numerical formatters for table fake_table')
         constraint_call = call('Fitting constraints for table fake_table')
         transformer_call = call('Fitting HyperTransformer for table fake_table')
-        log_mock.info.assert_has_calls([fitting_call, constraint_call, transformer_call])
+        log_mock.info.assert_has_calls(
+            [fitting_call, formatter_call, constraint_call, transformer_call])
 
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_transform(self, log_mock):
@@ -977,3 +1021,53 @@ class TestDataProcessor:
         # Assert
         expected_data = pd.DataFrame({'bar': [0, 2, 2]})
         pd.testing.assert_frame_equal(output, expected_data, check_dtype=False)
+
+    @patch('sdv.data_processing.numerical_formatter.NumericalFormatter')
+    @patch('sdv.data_processing.numerical_formatter.NumericalFormatter')
+    def test_reverse_transform_numerical_formatter(self, formatter_mock1, formatter_mock2):
+        """Test the ``reverse_transform`` correctly applies the ``NumericalFormatter``.
+
+        Runs the method through three columns: a non-numerical column, which should
+        be skipped by the method, and two numerical ones which should call the
+        ``NumericalFormatter.format_data`` method with a column each and return them
+        unchanged.
+
+        Setup:
+            - ``SingleTableMetadata`` describing the three columns.
+            - Two mocks of ``NumericalFormatter``, one for each numerical column,
+            with the appropriate return value for the ``format_data`` method.
+            - ``formatters`` attribute should have a dict of the two numerical columns
+            mapped to the two mocked ``NumericalFormatters``.
+        """
+        # Setup
+        data = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4], 'col3': ['abc', 'def']})
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='numerical')
+        metadata.add_column('col2', sdtype='numerical')
+        metadata.add_column('col3', sdtype='non_numerical')
+
+        dp = DataProcessor(metadata)
+        dp.formatters = {'col1': formatter_mock1, 'col2': formatter_mock2}
+        formatter_mock1.format_data.return_value = np.array([1, 2])
+        formatter_mock2.format_data.return_value = np.array([3, 4])
+
+        # Unrelated setup, required so the method doesn't crash
+        dp._hyper_transformer = Mock()
+        dp._hyper_transformer._output_columns = []
+        dp._hyper_transformer.reverse_transform_subset.return_value = data
+        dp._dtypes = {'col1': 'int', 'col2': 'int', 'col3': 'str'}
+        dp.fitted = True
+
+        # Run
+        output = dp.reverse_transform(data)
+
+        # Assert
+        formatter_mock1.format_data.assert_called_once()
+        np.testing.assert_array_equal(
+            formatter_mock1.format_data.call_args[0][0], data['col1'].to_numpy())
+
+        formatter_mock2.format_data.assert_called_once()
+        np.testing.assert_array_equal(
+            formatter_mock2.format_data.call_args[0][0], data['col2'].to_numpy())
+
+        pd.testing.assert_frame_equal(output, data)
