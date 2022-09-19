@@ -11,6 +11,7 @@ with open('README.md', encoding='utf-8') as readme_file:
 with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
+
 install_requires = [
     'Faker>=10,<15',
     'graphviz>=0.13.2,<1',
