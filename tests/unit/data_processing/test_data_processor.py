@@ -444,7 +444,7 @@ class TestDataProcessor:
         }
 
         # Run
-        output = DataProcessor.create_anonymized_transformer(Mock(), sdtype, column_metadata)
+        output = DataProcessor.create_anonymized_transformer(sdtype, column_metadata)
 
         # Assert
         assert output == mock_get_anonymized_transformer.return_value

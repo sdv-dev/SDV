@@ -100,6 +100,7 @@ class DataProcessor:
         self.fitted = False
         self.formatters = {}
         self._anonymized_columns = []
+        self._primary_keys = []
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -412,7 +413,7 @@ class DataProcessor:
         if self._primary_keys:
             primary_keys_data = data[self._primary_keys]
 
-        reversed_data = data.copy()
+        reversed_data = data
         try:
             if not data.empty:
                 reversed_data = self._hyper_transformer.reverse_transform_subset(
