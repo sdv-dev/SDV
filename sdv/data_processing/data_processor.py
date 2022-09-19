@@ -14,6 +14,7 @@ from sdv.data_processing.anonymization import get_anonymized_transformer
 from sdv.data_processing.errors import NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata.utils import cast_to_iterable
 
 LOGGER = logging.getLogger(__name__)
 
@@ -180,7 +181,47 @@ class DataProcessor:
 
         return data
 
-    def create_anonymized_transformer(self, sdtype, column_metadata):
+    @staticmethod
+    def create_primary_key_transformer(sdtype, column_metadata):
+        """Create an instance for the primary key.
+
+        Read the keyword arguments from the ``column_metadata`` and use them to create
+        an instance of an ``RegexGenerator`` or ``AnonymizedFaker`` transformer with
+        ``enforce_uniqueness`` set to ``True``.
+
+        Args:
+            sdtype (str):
+                Sematic data type or a ``Faker`` function name.
+            column_metadata (dict):
+                A dictionary representing the rest of the metadata for the given ``sdtype``.
+
+        Returns:
+            transformer:
+                Instance of ``rdt.transformers.text.RegexGenerator`` or
+                ``rdt.transformers.pii.AnonymizedFaker`` with ``enforce_uniqueness`` set to
+                ``True``.
+        """
+        regex_format = column_metadata.get('regex_format')
+        if regex_format:
+            transformer = rdt.transformers.RegexGenerator(
+                regex_format=regex_format,
+                enforce_uniqueness=True
+            )
+
+        else:
+            kwargs = {}
+            for key, value in column_metadata.items():
+                if key not in ['pii', 'sdtype']:
+                    kwargs[key] = value
+
+            # Enforce uniqueness for primary keys
+            kwargs['enforce_uniqueness'] = True
+            transformer = get_anonymized_transformer(sdtype, kwargs)
+
+        return transformer
+
+    @staticmethod
+    def create_anonymized_transformer(sdtype, column_metadata):
         """Create an instance of an ``AnonymizedFaker``.
 
         Read the extra keyword arguments from the ``column_metadata`` and use them to create
@@ -206,16 +247,24 @@ class DataProcessor:
         sdtypes = {}
         transformers = {}
         self._anonymized_columns = []
+
+        self._primary_keys = []
+        if self.metadata._primary_key:
+            self._primary_keys = cast_to_iterable(self.metadata._primary_key)
+
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata._columns.get(column)
             sdtype = column_metadata.get('sdtype')
+            sdtypes[column] = sdtype
             if column_metadata.get('pii'):
                 transformers[column] = self.create_anonymized_transformer(sdtype, column_metadata)
                 sdtypes[column] = 'pii'
                 self._anonymized_columns.append(column)
 
+            elif column in self._primary_keys:
+                transformers[column] = self.create_primary_key_transformer(sdtype, column_metadata)
+
             else:
-                sdtypes[column] = sdtype
                 transformers[column] = self._transformers_by_sdtype.get(sdtype)
 
         for column in columns_created_by_constraints:
@@ -292,6 +341,22 @@ class DataProcessor:
         self._fit_hyper_transformer(constrained, columns_created_by_constraints)
         self.fitted = True
 
+    def generate_primary_keys(self, num_rows):
+        """Generate the columns that are identified as ``primary keys``.
+
+        Args:
+            num_rows (int):
+                Number of rows to be created. Must be an integer greater than 0.
+
+        Returns:
+            pandas.DataFrame:
+                A data frame with the newly generated primary keys of the size ``num_rows``.
+        """
+        return self._hyper_transformer.create_anonymized_columns(
+            num_rows=num_rows,
+            column_names=self._primary_keys
+        )
+
     def transform(self, data, is_condition=False):
         """Transform the given data.
 
@@ -306,14 +371,25 @@ class DataProcessor:
         if not self.fitted:
             raise NotFittedError()
 
+        primary_keys = None
+
         LOGGER.debug(f'Transforming constraints for table {self.table_name}')
         data = self._transform_constraints(data, is_condition)
 
         LOGGER.debug(f'Transforming table {self.table_name}')
+        if self._primary_keys and not is_condition:
+            LOGGER.debug(f'Generating primary keys for table {self.table_name}')
+            primary_keys = self.generate_primary_keys(len(data))
+
         try:
-            return self._hyper_transformer.transform_subset(data)
+            transformed = self._hyper_transformer.transform_subset(data)
         except (rdt.errors.NotFittedError, rdt.errors.Error):
-            return data
+            transformed = data
+
+        if primary_keys is not None:
+            return pd.concat([primary_keys, transformed], axis=1)
+
+        return transformed
 
     def reverse_transform(self, data):
         """Reverse the transformed data to the original format.
@@ -333,7 +409,10 @@ class DataProcessor:
             for column in self._hyper_transformer._output_columns
             if column in data.columns
         ]
-        reversed_data = data
+        if self._primary_keys:
+            primary_keys_data = data[self._primary_keys]
+
+        reversed_data = data.copy()
         try:
             if not data.empty:
                 reversed_data = self._hyper_transformer.reverse_transform_subset(
@@ -355,6 +434,8 @@ class DataProcessor:
         for column_name in original_columns:
             if column_name in self._anonymized_columns:
                 column_data = anonymized_data[column_name]
+            elif column_name in self._primary_keys:
+                column_data = primary_keys_data[column_name]
             else:
                 column_data = reversed_data[column_name]
 
