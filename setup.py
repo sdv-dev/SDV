@@ -11,6 +11,7 @@ with open('README.md', encoding='utf-8') as readme_file:
 with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
+
 install_requires = [
     'Faker>=10,<15',
     'graphviz>=0.13.2,<1',
@@ -21,7 +22,7 @@ install_requires = [
     'copulas>=0.7.0,<0.8',
     'ctgan>=0.5.2,<0.6',
     'deepecho>=0.3.0.post1,<0.4',
-    'rdt>=1.2.0,<1.3.0',
+    'rdt>=1.3.0.dev0,<2.0',
     'sdmetrics>=0.8.0,<0.9',
     'cloudpickle>=2.1.0,<3.0'
 ]
