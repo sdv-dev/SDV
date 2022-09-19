@@ -418,6 +418,38 @@ class TestDataProcessor:
         message2 = 'Error transforming Mock. Using the reject sampling approach instead.'
         log_mock.info.assert_has_calls([call(message1), call(message2)])
 
+    @patch('sdv.data_processing.data_processor.get_anonymized_transformer')
+    def test_create_anonymized_transformer(self, mock_get_anonymized_transformer):
+        """Test the ``create_anonymized_transformer`` method.
+
+        Test that when given an ``sdtype`` of and ``column_metadata`` this calls the
+        ``get_anonymized_transformer`` with filtering the ``pii`` and ``sdtype`` keyword args.
+
+        Input:
+            - String representing an ``sdtype``.
+            - Dictionary with ``column_metadata`` that contains ``sdtype`` and ``pii``.
+
+        Mock:
+            - Mock the ``get_anonymized_transformer``.
+
+        Output:
+            - The return value of ``get_anonymized_transformer``.
+        """
+        # Setup
+        sdtype = 'email'
+        column_metadata = {
+            'sdtype': 'email',
+            'pii': True,
+            'domain': 'gmail.com'
+        }
+
+        # Run
+        output = DataProcessor.create_anonymized_transformer(Mock(), sdtype, column_metadata)
+
+        # Assert
+        assert output == mock_get_anonymized_transformer.return_value
+        mock_get_anonymized_transformer.assert_called_once_with('email', {'domain': 'gmail.com'})
+
     def test__create_config(self):
         """Test the ``_create_config`` method.
 
@@ -445,15 +477,19 @@ class TestDataProcessor:
             'created_int': [4, 5, 6],
             'created_float': [4., 5., 6.],
             'created_bool': [False, True, False],
-            'created_categorical': ['d', 'e', 'f']
+            'created_categorical': ['d', 'e', 'f'],
+            'email': ['a@aol.com', 'b@gmail.com', 'c@gmx.com']
         })
         dp = DataProcessor(SingleTableMetadata())
         dp.metadata = Mock()
+        dp.create_anonymized_transformer = Mock()
+        dp.create_anonymized_transformer.return_value = 'AnonymizedFaker'
         dp.metadata._columns = {
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
             'bool': {'sdtype': 'boolean'},
-            'categorical': {'sdtype': 'categorical'}
+            'categorical': {'sdtype': 'categorical'},
+            'email': {'sdtype': 'email', 'pii': True}
         }
 
         # Run
@@ -469,7 +505,8 @@ class TestDataProcessor:
             'created_int': 'numerical',
             'created_float': 'numerical',
             'created_bool': 'boolean',
-            'created_categorical': 'categorical'
+            'created_categorical': 'categorical',
+            'email': 'pii',
         }
         int_transformer = config['transformers']['created_int']
         assert isinstance(int_transformer, FloatFormatter)
@@ -485,6 +522,11 @@ class TestDataProcessor:
         assert isinstance(config['transformers']['created_categorical'], LabelEncoder)
         assert isinstance(config['transformers']['int'], FloatFormatter)
         assert isinstance(config['transformers']['float'], FloatFormatter)
+        anonymized_transformer = config['transformers']['email']
+        assert anonymized_transformer == 'AnonymizedFaker'
+        assert dp._anonymized_columns == ['email']
+        dp.create_anonymized_transformer.assert_called_once_with(
+            'email', {'sdtype': 'email', 'pii': True})
 
     @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
     def test__fit_hyper_transformer(self, ht_mock):
@@ -874,19 +916,24 @@ class TestDataProcessor:
         # Setup
         constraint_mock = Mock()
         dp = DataProcessor(SingleTableMetadata())
+        dp._anonymized_columns = ['d']
         dp.fitted = True
         dp.metadata = Mock()
-        dp.metadata._columns = {'a': None, 'b': None, 'c': None}
+        dp.metadata._columns = {'a': None, 'b': None, 'c': None, 'd': None}
         data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [True, True, False],
-            'c': ['d', 'e', 'f']
+            'c': ['d', 'e', 'f'],
         })
         dp._hyper_transformer = Mock()
+        dp._hyper_transformer.create_anonymized_columns.return_value = pd.DataFrame({
+            'd': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com']
+        })
         dp._constraints_to_reverse = [constraint_mock]
         dp._hyper_transformer.reverse_transform_subset.return_value = data
         dp._hyper_transformer._output_columns = ['a', 'b', 'c']
-        dp._dtypes = pd.Series([np.float64, np.bool_, np.object_], index=['a', 'b', 'c'])
+        dp._dtypes = pd.Series(
+            [np.float64, np.bool_, np.object_, np.object_], index=['a', 'b', 'c', 'd'])
         constraint_mock.reverse_transform.return_value = data
 
         # Run
@@ -905,8 +952,13 @@ class TestDataProcessor:
         expected_output = pd.DataFrame({
             'a': [1., 2., 3.],
             'b': [True, True, False],
-            'c': ['d', 'e', 'f']
+            'c': ['d', 'e', 'f'],
+            'd': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com']
         })
+        dp._hyper_transformer.create_anonymized_columns.assert_called_once_with(
+            num_rows=3,
+            column_names=['d']
+        )
         pd.testing.assert_frame_equal(reverse_transformed, expected_output)
 
     @patch('sdv.data_processing.data_processor.LOGGER')
