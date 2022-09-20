@@ -183,7 +183,29 @@ class DataProcessor:
         return data
 
     @staticmethod
-    def create_primary_key_transformer(sdtype, column_metadata):
+    def create_anonymized_transformer(sdtype, column_metadata):
+        """Create an instance of an ``AnonymizedFaker``.
+
+        Read the extra keyword arguments from the ``column_metadata`` and use them to create
+        an instance of an ``AnonymizedFaker`` transformer.
+
+        Args:
+            sdtype (str):
+                Sematic data type or a ``Faker`` function name.
+            column_metadata (dict):
+                A dictionary representing the rest of the metadata for the given ``sdtype``.
+
+        Returns:
+            Instance of ``rdt.transformers.pii.AnonymizedFaker``.
+        """
+        kwargs = {}
+        for key, value in column_metadata.items():
+            if key not in ['pii', 'sdtype']:
+                kwargs[key] = value
+
+        return get_anonymized_transformer(sdtype, kwargs)
+
+    def create_primary_key_transformer(self, sdtype, column_metadata):
         """Create an instance for the primary key.
 
         Read the keyword arguments from the ``column_metadata`` and use them to create
@@ -210,39 +232,10 @@ class DataProcessor:
             )
 
         else:
-            kwargs = {}
-            for key, value in column_metadata.items():
-                if key not in ['pii', 'sdtype']:
-                    kwargs[key] = value
-
-            # Enforce uniqueness for primary keys
-            kwargs['enforce_uniqueness'] = True
-            transformer = get_anonymized_transformer(sdtype, kwargs)
+            column_metadata['enforce_uniqueness'] = True
+            transformer = self.create_anonymized_transformer(sdtype, column_metadata)
 
         return transformer
-
-    @staticmethod
-    def create_anonymized_transformer(sdtype, column_metadata):
-        """Create an instance of an ``AnonymizedFaker``.
-
-        Read the extra keyword arguments from the ``column_metadata`` and use them to create
-        an instance of an ``AnonymizedFaker`` transformer.
-
-        Args:
-            sdtype (str):
-                Sematic data type or a ``Faker`` function name.
-            column_metadata (dict):
-                A dictionary representing the rest of the metadata for the given ``sdtype``.
-
-        Returns:
-            Instance of ``rdt.transformers.pii.AnonymizedFaker``.
-        """
-        kwargs = {}
-        for key, value in column_metadata.items():
-            if key not in ['pii', 'sdtype']:
-                kwargs[key] = value
-
-        return get_anonymized_transformer(sdtype, kwargs)
 
     def _create_config(self, data, columns_created_by_constraints):
         sdtypes = {}
