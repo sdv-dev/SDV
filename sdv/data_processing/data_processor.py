@@ -251,12 +251,14 @@ class DataProcessor:
             sdtype = column_metadata.get('sdtype')
             sdtypes[column] = sdtype
             if column_metadata.get('pii'):
-                transformers[column] = self.create_anonymized_transformer(sdtype, column_metadata)
                 sdtypes[column] = 'pii'
-                self._anonymized_columns.append(column)
 
-            elif column in self._primary_keys:
+            if column in self._primary_keys:
                 transformers[column] = self.create_primary_key_transformer(sdtype, column_metadata)
+
+            elif column_metadata.get('pii'):
+                transformers[column] = self.create_anonymized_transformer(sdtype, column_metadata)
+                self._anonymized_columns.append(column)
 
             else:
                 transformers[column] = self._transformers_by_sdtype.get(sdtype)
