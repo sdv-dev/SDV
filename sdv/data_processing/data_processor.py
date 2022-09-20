@@ -244,7 +244,7 @@ class DataProcessor:
 
         self._primary_keys = []
         if self.metadata._primary_key:
-            self._primary_keys = cast_to_iterable(self.metadata._primary_key)
+            self._primary_keys = list(cast_to_iterable(self.metadata._primary_key))
 
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata._columns.get(column)
