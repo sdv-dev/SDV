@@ -37,7 +37,7 @@ class TestBaseSynthesizer:
 
     @patch('sdv.single_table.base.DataProcessor')
     def test_get_parameters(self, mock_data_processor):
-        """Test that returns every ``init`` parameter without the ``metadata``."""
+        """Test that it returns every ``init`` parameter without the ``metadata``."""
         # Setup
         metadata = Mock()
         instance = BaseSynthesizer(metadata, enforce_min_max_values=False, enforce_rounding=False)
@@ -51,7 +51,7 @@ class TestBaseSynthesizer:
 
     @patch('sdv.single_table.base.DataProcessor')
     def test_get_metadata(self, mock_data_processor):
-        """Test that returns the ``metadata`` object."""
+        """Test that it returns the ``metadata`` object."""
         # Setup
         metadata = Mock()
         instance = BaseSynthesizer(metadata, enforce_min_max_values=False, enforce_rounding=False)
