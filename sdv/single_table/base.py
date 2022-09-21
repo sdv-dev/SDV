@@ -33,9 +33,9 @@ class BaseSynthesizer:
         """Return the parameters used to instantiate the synthesizer."""
         parameters = inspect.signature(self.__init__).parameters
         instantiated_parameters = {}
-        for parameter_name, value in parameters.items():
+        for parameter_name in parameters:
             if parameter_name != 'metadata':
-                instantiated_parameters[parameter_name] = value
+                instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
 
         return instantiated_parameters
 
