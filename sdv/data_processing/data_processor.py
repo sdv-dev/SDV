@@ -224,16 +224,17 @@ class DataProcessor:
                 ``rdt.transformers.pii.AnonymizedFaker`` with ``enforce_uniqueness`` set to
                 ``True``.
         """
-        regex_format = column_metadata.get('regex_format')
-        if regex_format:
+        if sdtype == 'text':
+            regex_format = column_metadata.get('regex_format', '[A-Za-z]{5}')
             transformer = rdt.transformers.RegexGenerator(
                 regex_format=regex_format,
                 enforce_uniqueness=True
             )
 
         else:
-            column_metadata['enforce_uniqueness'] = True
-            transformer = self.create_anonymized_transformer(sdtype, column_metadata)
+            kwargs = deepcopy(column_metadata)
+            kwargs['enforce_uniqueness'] = True
+            transformer = self.create_anonymized_transformer(sdtype, kwargs)
 
         return transformer
 
@@ -249,9 +250,7 @@ class DataProcessor:
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata._columns.get(column)
             sdtype = column_metadata.get('sdtype')
-            sdtypes[column] = sdtype
-            if column_metadata.get('pii'):
-                sdtypes[column] = 'pii'
+            sdtypes[column] = 'pii' if column_metadata.get('pii') else sdtype
 
             if column in self._primary_keys:
                 transformers[column] = self.create_primary_key_transformer(sdtype, column_metadata)
