@@ -4,6 +4,7 @@ import json
 import logging
 from copy import deepcopy
 
+import numpy as np
 import pandas as pd
 import rdt
 
@@ -14,7 +15,6 @@ from sdv.data_processing.anonymization import get_anonymized_transformer
 from sdv.data_processing.errors import NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.metadata.utils import cast_to_iterable
 
 LOGGER = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ class DataProcessor:
         self.fitted = False
         self.formatters = {}
         self._anonymized_columns = []
-        self._primary_keys = []
+        self._primary_key = None
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -224,6 +224,9 @@ class DataProcessor:
                 ``rdt.transformers.pii.AnonymizedFaker`` with ``enforce_uniqueness`` set to
                 ``True``.
         """
+        if sdtype == 'numerical':
+            return None
+
         if sdtype == 'text':
             regex_format = column_metadata.get('regex_format', '[A-Za-z]{5}')
             transformer = rdt.transformers.RegexGenerator(
@@ -242,17 +245,14 @@ class DataProcessor:
         sdtypes = {}
         transformers = {}
         self._anonymized_columns = []
-
-        self._primary_keys = []
-        if self.metadata._primary_key:
-            self._primary_keys = list(cast_to_iterable(self.metadata._primary_key))
+        self._primary_key = self.metadata._primary_key
 
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata._columns.get(column)
             sdtype = column_metadata.get('sdtype')
             sdtypes[column] = 'pii' if column_metadata.get('pii') else sdtype
 
-            if column in self._primary_keys:
+            if column == self._primary_key:
                 transformers[column] = self.create_primary_key_transformer(sdtype, column_metadata)
 
             elif column_metadata.get('pii'):
@@ -347,9 +347,12 @@ class DataProcessor:
             pandas.DataFrame:
                 A data frame with the newly generated primary keys of the size ``num_rows``.
         """
+        if self._hyper_transformer.field_transformers.get(self._primary_key) is None:
+            return pd.DataFrame({self._primary_key: np.arange(num_rows)})
+
         return self._hyper_transformer.create_anonymized_columns(
             num_rows=num_rows,
-            column_names=self._primary_keys
+            column_names=[self._primary_key]
         )
 
     def transform(self, data, is_condition=False):
@@ -363,6 +366,7 @@ class DataProcessor:
             pandas.DataFrame:
                 Transformed data.
         """
+        data = data.copy()
         if not self.fitted:
             raise NotFittedError()
 
@@ -372,8 +376,11 @@ class DataProcessor:
         data = self._transform_constraints(data, is_condition)
 
         LOGGER.debug(f'Transforming table {self.table_name}')
-        if self._primary_keys and not is_condition:
+        if self._primary_key and not is_condition:
             LOGGER.debug(f'Generating primary keys for table {self.table_name}')
+            if self._primary_key in data:
+                data.pop(self._primary_key)  # Remove the column if it exists in the data.
+
             primary_keys = self.generate_primary_keys(len(data))
 
         try:
@@ -404,8 +411,8 @@ class DataProcessor:
             for column in self._hyper_transformer._output_columns
             if column in data.columns
         ]
-        if self._primary_keys:
-            primary_keys_data = data[self._primary_keys]
+        if self._primary_key:
+            primary_keys_data = pd.DataFrame({self._primary_key: data[self._primary_key]})
 
         reversed_data = data
         try:
@@ -429,7 +436,7 @@ class DataProcessor:
         for column_name in original_columns:
             if column_name in self._anonymized_columns:
                 column_data = anonymized_data[column_name]
-            elif column_name in self._primary_keys:
+            elif column_name == self._primary_key:
                 column_data = primary_keys_data[column_name]
             else:
                 column_data = reversed_data[column_name]

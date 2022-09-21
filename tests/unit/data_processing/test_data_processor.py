@@ -606,7 +606,7 @@ class TestDataProcessor:
         dp.create_primary_key_transformer.assert_called_once_with(
             'text', {'sdtype': 'text', 'regex_format': 'ID_\\d{3}[0-9]'})
 
-        assert dp._primary_keys == ['id']
+        assert dp._primary_key == 'id'
 
     @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
     def test__fit_hyper_transformer(self, ht_mock):
@@ -825,7 +825,10 @@ class TestDataProcessor:
         """
         # Setup
         instance = Mock()
-        instance._primary_keys = ['a', 'b']
+        instance._primary_key = 'a'
+        instance._hyper_transformer.field_transformers = {
+            'a': object()
+        }
 
         # Run
         result = DataProcessor.generate_primary_keys(instance, 10)
@@ -833,7 +836,7 @@ class TestDataProcessor:
         # Assert
         instance._hyper_transformer.create_anonymized_columns.assert_called_once_with(
             num_rows=10,
-            column_names=['a', 'b']
+            column_names=['a']
         )
 
         assert result == instance._hyper_transformer.create_anonymized_columns.return_value
@@ -863,9 +866,10 @@ class TestDataProcessor:
         dp._transform_constraints.return_value = data
         dp._hyper_transformer = Mock()
         dp._hyper_transformer.transform_subset.return_value = data
+        dp._hyper_transformer.field_transformers = {}
 
         dp.fitted = True
-        dp._primary_keys = ['id']
+        dp._primary_key = 'id'
 
         primary_key_data = pd.DataFrame({'id': ['a', 'b', 'c']})
         dp._hyper_transformer.create_anonymized_columns.return_value = primary_key_data
@@ -875,7 +879,7 @@ class TestDataProcessor:
 
         # Assert
         expected_data = pd.DataFrame({
-            'id': ['a', 'b', 'c'],
+            'id': [0, 1, 2],
             'item 0': [0, 1, 2],
             'item 1': [True, True, False]
         }, index=[0, 1, 2])
