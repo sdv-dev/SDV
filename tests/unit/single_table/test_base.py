@@ -15,8 +15,8 @@ class TestBaseSynthesizer:
         instance = BaseSynthesizer(metadata)
 
         # Assert
-        assert instance.enforce_min_max_values
-        assert instance.enforce_rounding
+        assert instance.enforce_min_max_values is True
+        assert instance.enforce_rounding is True
         assert instance._data_processor == mock_data_processor.return_value
         mock_data_processor.assert_called_once_with(metadata)
 
