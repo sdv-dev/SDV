@@ -121,6 +121,7 @@ def test_data_processor_with_anonymized_columns_and_primary_key(tmpdir):
     assert transformed.id.isin(data.id).sum() == 0
     assert len(transformed.id.unique()) == size
 
+
 def test_data_processor_with_primary_key_numerical(tmpdir):
     """Test the ``DataProcessor``.
 
@@ -171,7 +172,7 @@ def test_data_processor_with_primary_key_numerical(tmpdir):
     transformed = dp.transform(data)
 
     # Reverse Transform
-    reverse_transformed = dp.reverse_transform(transformed)
+    dp.reverse_transform(transformed)
 
     # Assert
     assert transformed.id.isin(data.id).sum() == size
