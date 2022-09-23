@@ -930,7 +930,7 @@ class TestSingleTableMetadata:
         instance.add_column('column3', sdtype='numerical')
 
         err_msg = re.escape(
-            "The primary_keys ['column1', 'column2'] cannot be type 'categorical' or 'boolean'."
+            "The primary_keys ['column1', 'column2'] cannot be type 'categorical'."
         )
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
@@ -1044,7 +1044,7 @@ class TestSingleTableMetadata:
         instance.add_column('column3', sdtype='numerical')
 
         err_msg = re.escape(
-            "The sequence_keys ['column1', 'column2'] cannot be type 'categorical' or 'boolean'."
+            "The sequence_keys ['column1', 'column2'] cannot be type 'categorical'."
         )
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
@@ -1158,7 +1158,7 @@ class TestSingleTableMetadata:
         instance.add_column('column3', sdtype='numerical')
 
         err_msg = re.escape(
-            "The alternate_keys ['column1', 'column2'] cannot be type 'categorical' or 'boolean'."
+            "The alternate_keys ['column1', 'column2'] cannot be type 'categorical'."
         )
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
