@@ -168,7 +168,7 @@ class SingleTableMetadata:
             pii = column_kwargs.get('pii', True)
             column_kwargs['pii'] = pii
 
-        self._columns[column_name] = deepcopy(kwargs)
+        self._columns[column_name] = column_kwargs
 
     def _validate_column_exists(self, column_name):
         if column_name not in self._columns:

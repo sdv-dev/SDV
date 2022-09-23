@@ -531,6 +531,24 @@ class TestSingleTableMetadata:
         # Assert
         assert instance._columns['age'] == {'sdtype': 'numerical', 'representation': 'Int8'}
 
+    def test_add_column_other_sdtype(self):
+        """Test ``add_column`` with an ``sdtype`` that isn't in our base ``sdtypes``..
+
+        If the column is an ``sdtype`` outside of our base ones, it should have the ``pii``
+        attribute set to True.
+
+        Run:
+            Pass a column with an ``sdtype`` of ``phone_number``.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run
+        instance.add_column('number', sdtype='phone_number')
+
+        # Assert
+        assert instance._columns['number'] == {'sdtype': 'phone_number', 'pii': True}
+
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column')
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_exists')
     def test_upate_column_sdtype_in_kwargs(self,
@@ -1312,6 +1330,8 @@ class TestSingleTableMetadata:
         instance._validate_alternate_keys.assert_called_once_with(instance._alternate_keys)
         instance._validate_sequence_index.assert_called_once_with(instance._sequence_index)
         instance._validate_sequence_index_not_in_sequence_key.assert_called_once()
+        for constraint in instance._constraints:
+            assert 'constraint_name' in constraint
 
     def test_to_dict(self):
         """Test the ``to_dict`` method from ``SingleTableMetadata``.
