@@ -29,7 +29,7 @@ class NumericalFormatter:
             Whether or not to clip the data returned by ``reverse_transform`` to the min and
             max values seen during ``fit``.
             Defaults to ``False``.
-        representation (dtype):
+        computer_representation (dtype):
             Accepts ``'Int8'``, ``'Int16'``, ``'Int32'``, ``'Int64'``, ``'UInt8'``, ``'UInt16'``,
             ``'UInt32'``, ``'UInt64'``, ``'Float'``.
             Defaults to ``'Float'``.
@@ -41,10 +41,10 @@ class NumericalFormatter:
     _rounding_digits = None
 
     def __init__(self, learn_rounding_scheme=False, enforce_min_max_values=False,
-                 representation='Float'):
+                 computer_representation='Float'):
         self.learn_rounding_scheme = learn_rounding_scheme
         self.enforce_min_max_values = enforce_min_max_values
-        self.representation = representation
+        self.computer_representation = computer_representation
 
     @staticmethod
     def _learn_rounding_digits(data):
@@ -87,8 +87,8 @@ class NumericalFormatter:
         column = column.copy().to_numpy()
         if self.enforce_min_max_values:
             column = column.clip(self._min_value, self._max_value)
-        elif self.representation != 'Float':
-            min_bound, max_bound = INTEGER_BOUNDS[self.representation]
+        elif self.computer_representation != 'Float':
+            min_bound, max_bound = INTEGER_BOUNDS[self.computer_representation]
             column = column.clip(min_bound, max_bound)
 
         is_integer = np.dtype(self._dtype).kind == 'i'

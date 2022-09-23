@@ -74,7 +74,7 @@ def test_validate_errors():
         'col5': {'sdtype': 'categorical', 'order': ''},
         'col6': {'sdtype': 'categorical', 'order_by': ''},
         'col7': {'sdtype': 'categorical', 'order': '', 'order_by': ''},
-        'col8': {'sdtype': 'numerical', 'representation': 'value'},
+        'col8': {'sdtype': 'numerical', 'computer_representation': 'value'},
         'col9': {'sdtype': 'datetime', 'datetime_format': '%1-%Y-%m-%d-%'},
         'col10': {'sdtype': 'text', 'regex_format': '[A-{6}'},
     }
@@ -110,7 +110,7 @@ def test_validate_errors():
         " Ordering method must be 'numerical_value' or 'alphabetical'."
         "\nCategorical column 'col7' has both an 'order' and 'order_by' attribute."
         ' Only 1 is allowed.'
-        "\nInvalid value for 'representation' 'value' for column 'col8'."
+        "\nInvalid value for 'computer_representation' 'value' for column 'col8'."
         "\nInvalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'col9'."
         "\nInvalid regex format string '[A-{6}' for text column 'col10'."
     )
@@ -188,7 +188,7 @@ def test_upgrade_metadata():
             },
             'salary': {
                 'sdtype': 'numerical',
-                'representation': 'Int64'
+                'computer_representation': 'Int64'
             },
             'duration': {
                 'sdtype': 'categorical'
@@ -198,7 +198,7 @@ def test_upgrade_metadata():
             },
             'high_perc': {
                 'sdtype': 'numerical',
-                'representation': 'Float'
+                'computer_representation': 'Float'
             },
             'placed': {
                 'sdtype': 'boolean'
