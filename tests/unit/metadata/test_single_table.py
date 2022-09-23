@@ -35,7 +35,13 @@ class TestSingleTableMetadata:
 
     INVALID_KWARGS = [
         (
-            'age', 'numerical', {'computer_representation': 'Int8', 'datetime_format': None, 'pii': True},
+            'age',
+            'numerical',
+            {
+                'computer_representation': 'Int8',
+                'datetime_format': None,
+                'pii': True
+            },
             re.escape("Invalid values '(datetime_format, pii)' for numerical column 'age'."),
         ),
         (
@@ -82,16 +88,17 @@ class TestSingleTableMetadata:
 
         Setup:
             - instance of ``SingleTableMetadata``
-            - list of accepted representations.
+            - list of accepted computer representations.
 
         Input:
             - Column name.
             - sdtype numerical
-            - representation
+            - computer representation
 
         Side Effects:
-            - Passes when no ``representation`` is provided
-            - ``ValueError`` is raised stating that the ``representation`` is not supported.
+            - Passes when no ``computer_representation`` is provided
+            - ``ValueError`` is raised stating that the ``computer_representation`` is not
+            supported.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -101,30 +108,31 @@ class TestSingleTableMetadata:
 
         error_msg = re.escape("Invalid value for 'computer_representation' '36' for column 'age'.")
         with pytest.raises(ValueError, match=error_msg):
-            instance._validate_numerical('age', representation=36)
+            instance._validate_numerical('age', computer_representation=36)
 
-    @pytest.mark.parametrize('computer_representation', SingleTableMetadata._NUMERICAL_REPRESENTATIONS)
-    def test__validate_numerical_representations(self, representation):
+    @pytest.mark.parametrize(
+        'computer_representation', SingleTableMetadata._NUMERICAL_REPRESENTATIONS)
+    def test__validate_numerical_computer_representations(self, computer_representation):
         """Test the ``_validate_numerical`` method.
 
         Setup:
             - instance of ``SingleTableMetadata``
-            - list of accepted representations.
+            - list of accepted computer representations.
 
         Input:
             - Column name.
             - sdtype numerical
-            - representation
+            - computer representation
 
         Side Effects:
-            - Passes with the correct ``representation``
-            - ``ValueError`` is raised stating that the ``representation`` is wrong.
+            - Passes with the correct ``computer_representation``
+            - ``ValueError`` is raised stating that the ``computer_representation`` is wrong.
         """
         # Setup
         instance = SingleTableMetadata()
 
         # Run / Assert
-        instance._validate_numerical('age', representation=representation)
+        instance._validate_numerical('age', computer_representation=computer_representation)
 
     def test__validate_datetime(self):
         """Test the ``_validate_datetime`` method.
@@ -325,11 +333,12 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        instance._validate_column('age', 'numerical', representation='Int8')
+        instance._validate_column('age', 'numerical', computer_representation='Int8')
 
         # Assert
-        mock__validate_kwargs.assert_called_once_with('age', 'numerical', representation='Int8')
-        mock__validate_numerical.assert_called_once_with('age', representation='Int8')
+        mock__validate_kwargs.assert_called_once_with(
+            'age', 'numerical', computer_representation='Int8')
+        mock__validate_numerical.assert_called_once_with('age', computer_representation='Int8')
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_categorical')
@@ -526,10 +535,13 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        instance.add_column('age', sdtype='numerical', representation='Int8')
+        instance.add_column('age', sdtype='numerical', computer_representation='Int8')
 
         # Assert
-        assert instance._columns['age'] == {'sdtype': 'numerical', 'computer_representation': 'Int8'}
+        assert instance._columns['age'] == {
+            'sdtype': 'numerical',
+            'computer_representation': 'Int8'
+        }
 
     def test_add_column_other_sdtype(self):
         """Test ``add_column`` with an ``sdtype`` that isn't in our base ``sdtypes``..
@@ -609,7 +621,7 @@ class TestSingleTableMetadata:
         instance._columns = {'age': {'sdtype': 'numerical'}}
 
         # Run
-        instance.update_column('age', representation='Float')
+        instance.update_column('age', computer_representation='Float')
 
         # Assert
         assert instance._columns['age'] == {
@@ -617,7 +629,8 @@ class TestSingleTableMetadata:
             'computer_representation': 'Float'
         }
         mock__validate_column_exists.assert_called_once_with('age')
-        mock__validate_column.assert_called_once_with('age', 'numerical', representation='Float')
+        mock__validate_column.assert_called_once_with(
+            'age', 'numerical', computer_representation='Float')
 
     def test_detect_from_dataframe_raises_value_error(self):
         """Test the ``detect_from_dataframe`` method.
