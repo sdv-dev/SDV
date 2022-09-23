@@ -163,6 +163,11 @@ class SingleTableMetadata:
             raise ValueError(f"Please provide a 'sdtype' for column '{column_name}'.")
 
         self._validate_column(column_name, **kwargs)
+        column_kwargs = deepcopy(kwargs)
+        if sdtype not in self._EXPECTED_KWARGS:
+            pii = column_kwargs.get('pii', True)
+            column_kwargs['pii'] = pii
+
         self._columns[column_name] = deepcopy(kwargs)
 
     def _validate_column_exists(self, column_name):
@@ -280,12 +285,14 @@ class SingleTableMetadata:
 
     def _validate_keys_sdtype(self, keys, key_type):
         """Validate that no key is of type 'categorical'."""
+        bad_sdtypes = ('boolean', 'categorical')
         categorical_keys = sorted(
-            {key for key in keys if self._columns[key]['sdtype'] == 'categorical'}
+            {key for key in keys if self._columns[key]['sdtype'] in bad_sdtypes}
         )
         if categorical_keys:
             raise ValueError(
-                f"The {key_type}_keys {categorical_keys} cannot be type 'categorical'."
+                f"The {key_type}_keys {categorical_keys} cannot be type 'categorical' or "
+                "'boolean'."
             )
 
     def _validate_key(self, column_name, key_type):
@@ -414,6 +421,7 @@ class SingleTableMetadata:
         # Validate constraints
         errors = []
         for constraint_dict in self._constraints:
+            constraint_dict = deepcopy(constraint_dict)
             constraint_name = constraint_dict.pop('constraint_name')
             try:
                 self._validate_constraint(constraint_name, **constraint_dict)
