@@ -6,13 +6,21 @@ from faker import Faker
 from rdt.transformers import AnonymizedFaker
 
 SDTYPE_ANONYMIZERS = {
-    'address': {
+    'physical_address': {
         'provider_name': 'address',
         'function_name': 'address'
     },
     'email': {
         'provider_name': 'internet',
         'function_name': 'email'
+    },
+    'latitude': {
+        'provider_name': 'geo',
+        'function_name': 'latitude'
+    },
+    'longitude': {
+        'provider_name': 'geo',
+        'function_name': 'longitude'
     },
     'ipv4_address': {
         'provider_name': 'internet',
