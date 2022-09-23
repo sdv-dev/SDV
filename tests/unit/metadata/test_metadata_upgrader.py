@@ -663,7 +663,7 @@ def test_convert_metadata():
             },
             'salary': {
                 'sdtype': 'numerical',
-                'representation': 'Int64'
+                'computer_representation': 'Int64'
             },
             'duration': {
                 'sdtype': 'categorical'
@@ -673,7 +673,7 @@ def test_convert_metadata():
             },
             'high_perc': {
                 'sdtype': 'numerical',
-                'representation': 'Float'
+                'computer_representation': 'Float'
             },
             'placed': {
                 'sdtype': 'boolean'
@@ -752,7 +752,7 @@ def test_convert_metadata_with_constraints(upgrade_constraints_mock):
         'columns': {
             'salary': {
                 'sdtype': 'numerical',
-                'representation': 'Int64'
+                'computer_representation': 'Int64'
             },
             'student_id': {
                 'sdtype': 'numerical'
