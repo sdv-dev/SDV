@@ -866,7 +866,7 @@ class TestDataProcessor:
         dp._transform_constraints.return_value = data
         dp._hyper_transformer = Mock()
         dp._hyper_transformer.transform_subset.return_value = data
-        dp._hyper_transformer.field_transformers = {}
+        dp._hyper_transformer.field_transformers = {'id': object()}
 
         dp.fitted = True
         dp._primary_key = 'id'
@@ -879,7 +879,7 @@ class TestDataProcessor:
 
         # Assert
         expected_data = pd.DataFrame({
-            'id': [0, 1, 2],
+            'id': ['a', 'b', 'c'],
             'item 0': [0, 1, 2],
             'item 1': [True, True, False]
         }, index=[0, 1, 2])
