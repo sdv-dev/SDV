@@ -598,7 +598,7 @@ class TestDataProcessor:
 
         Runs the methods through three columns: a non-numerical column, which should
         be skipped by the method, and two numerical ones (with different values for
-        ``representation``), which should create and learn a ``NumericalFormatter``.
+        ``computer_representation``), which should create and learn a ``NumericalFormatter``.
 
         Setup:
             - ``SingleTableMetadata`` describing the three columns.
@@ -609,7 +609,7 @@ class TestDataProcessor:
         metadata = SingleTableMetadata()
         metadata.add_column('col1', sdtype='non_numerical')
         metadata.add_column('col2', sdtype='numerical')
-        metadata.add_column('col3', sdtype='numerical', representation='Int8')
+        metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
         dp = DataProcessor(metadata, learn_rounding_scheme=False, enforce_min_max_values=False)
 
         # Run
@@ -621,12 +621,12 @@ class TestDataProcessor:
         assert isinstance(dp.formatters['col2'], NumericalFormatter)
         assert dp.formatters['col2'].learn_rounding_scheme is False
         assert dp.formatters['col2'].enforce_min_max_values is False
-        assert dp.formatters['col2'].representation == 'Float'
+        assert dp.formatters['col2'].computer_representation == 'Float'
 
         assert isinstance(dp.formatters['col3'], NumericalFormatter)
         assert dp.formatters['col3'].learn_rounding_scheme is False
         assert dp.formatters['col3'].enforce_min_max_values is False
-        assert dp.formatters['col3'].representation == 'Int8'
+        assert dp.formatters['col3'].computer_representation == 'Int8'
 
         learn_format_mock.assert_has_calls([call(data['col2']), call(data['col3'])])
 
