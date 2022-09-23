@@ -89,14 +89,35 @@ class BaseSynthesizer:
         try:
             # TODO: this can't cast None values.
             # Also, it converts integers and the string 10-10-10-10...
-            pd.to_datetime(value).to_datetime64().astype('datetime64[ns]')
+            if value is not None:
+                pd.to_datetime(value).to_datetime64().astype('datetime64[ns]')
             return True
         except:
             return False
-        
+    
+    @staticmethod
+    def _key_to_set(key):
+        if isinstance(key, list):
+            keys = set()
+            for k in key:
+                keys.update({k} if isinstance(k, str) else set(k)) 
+            return keys
+
+        return {key} if isinstance(key, str) else set(key)
+
     def validate(self, data):
         """Validate stuff."""
         errors = []
+        
+        primary_keys = self._key_to_set(self.metadata._primary_key)
+        alternate_keys = self._key_to_set(self.metadata._alternate_keys)
+        sequence_keys = self._key_to_set(self.metadata._sequence_key)
+        keys = set(set().union(*[primary_keys, alternate_keys, sequence_keys]))
+        
+        for key in keys:
+            if key in data.columns and pd.isna(data[key]).any():
+                errors.append(f"Key column '{key}' contains missing values.")
+
         for column in data:
             sdtype = self.metadata._columns[column]['sdtype']
             if sdtype == 'numerical':
@@ -106,7 +127,7 @@ class BaseSynthesizer:
                 if invalid_values:
                     invalid_values = self._update_invalid_values(invalid_values)
                     errors.append(
-                        f"Invalid values found for numerical column '{column}': {invalid_values}"
+                        f"Invalid values found for numerical column '{column}': {invalid_values}."
                     )
             
             if sdtype == 'datetime':
@@ -115,16 +136,22 @@ class BaseSynthesizer:
                 if invalid_values:
                     invalid_values = self._update_invalid_values(invalid_values)
                     errors.append(
-                        f"Invalid values found for datetime column '{column}': {invalid_values}"
+                        f"Invalid values found for datetime column '{column}': {invalid_values}."
                     )
-
+            
+            if sdtype == 'boolean':
+                valid = data[column].apply(lambda x: True if pd.isna(x) | (x is True) | (x is False) else False)
+                invalid_values = list(set(data[column][~valid]))
+                if invalid_values:
+                    invalid_values = self._update_invalid_values(invalid_values)
+                    errors.append(
+                        f"Invalid values found for boolean column '{column}': {invalid_values}."
+                    )
+            
+        
         if errors:
             print(errors)
             raise ValueError
-
-
-
-        # boolean is True, False, None: Invalid values found for boolean column 'is_subscribed': (0.0, 30.0, 4.4, +more)
 
         # pk, fk, alternat_key, sequence_key cant have missing: Key column 'user_id' contains missing values
 

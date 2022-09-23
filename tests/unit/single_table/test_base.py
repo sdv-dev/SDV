@@ -109,35 +109,81 @@ class TestBaseSynthesizer:
         instance.preprocess.assert_called_once_with(processed_data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
     
-    def test_validate(self):
-        """Test it doesn't crash."""
-        # Setup
+    def test_validate_keys(self):
         data = pd.DataFrame({
-            'numerical_col': [-1, 0, 1.54, np.nan, None],
-            'date_col': ['2021-02-10', '2021-05-10', '2021-08-11', np.nan, float('nan')]
+            'pk_col': [0,1,2,3,4,5],
+            'sk_col': [0,1,2,3,4,5],
+            'ak_col': [0,1,2,3,4,5],
+
         })
         metadata = SingleTableMetadata()
-        metadata.add_column('numerical_col', sdtype='numerical')
-        metadata.add_column('date_col', sdtype='datetime')
+        metadata.add_column('pk_col', sdtype='numerical')
+        metadata.add_column('sk_col', sdtype='numerical')
+        metadata.add_column('ak_col', sdtype='numerical')
+        metadata.set_primary_key('pk_col')
+        metadata.set_sequence_key('sk_col')
+        metadata.set_alternate_keys(['ak_col'])
         instance = BaseSynthesizer(metadata)
 
         # Run
         instance.validate(data)
+
+    def test_validate_keys_with_missing_values(self):
+        data = pd.DataFrame({
+            'pk_col': [0,1,2,3,4,np.nan],
+            'sk_col': [0,1,2,3,4,np.nan],
+            'ak_col': [0,1,2,3,4,np.nan],
+
+        })
+        metadata = SingleTableMetadata()
+        metadata.add_column('pk_col', sdtype='numerical')
+        metadata.add_column('sk_col', sdtype='numerical')
+        metadata.add_column('ak_col', sdtype='numerical')
+        metadata.set_primary_key('pk_col')
+        metadata.set_sequence_key('sk_col')
+        metadata.set_alternate_keys(['ak_col'])
+        instance = BaseSynthesizer(metadata)
+
+        # Run and Assert
+        instance.validate(data)
+        
+
+    
+    def test_validate(self):
+        """Test it doesn't crash."""
+        # Setup
+        data = pd.DataFrame({
+            'numerical_col': [np.nan, None, float('nan'), -1, 0, 1.54],
+            'date_col': [np.nan, None, float('nan'), '2021-02-10', '2021-05-10', '2021-08-11'],
+            'bool_col': [np.nan, None, float('nan'), True, False, True],
+
+        })
+        metadata = SingleTableMetadata()
+        metadata.add_column('numerical_col', sdtype='numerical')
+        metadata.add_column('date_col', sdtype='datetime')
+        metadata.add_column('bool_col', sdtype='boolean')
+        instance = BaseSynthesizer(metadata)
+
+        # Run
+        instance.validate(data)
+    
+    def test_validate_all_together(self):
+        ...
     
     def test_validate_raises(self):
         """Test it crashes with right error."""
         # Setup
         data = pd.DataFrame({
             'numerical_col': ['a', 1, '10', 5, True, 'b'],
-            'date_col': ['10', 10, True, '2021-05-10', '10-10-10-10', 'Bla']
+            'date_col': ['10', 10, True, '2021-05-10', '10-10-10-10', 'Bla'],
+            'bool_col': ['a', 1, '10', 5, True, 'b'],
         })
         metadata = SingleTableMetadata()
         metadata.add_column('numerical_col', sdtype='numerical')
         metadata.add_column('date_col', sdtype='datetime')
+        metadata.add_column('bool_col', sdtype='boolean')
         instance = BaseSynthesizer(metadata)
 
         # Run and Assert
-        with pytest.raises(ValueError):
-            instance.validate(data)
+        instance.validate(data)
         
-        assert 1 == 2
