@@ -20,7 +20,7 @@ class SingleTableMetadata:
     """Single Table Metadata class."""
 
     _EXPECTED_KWARGS = {
-        'numerical': frozenset(['representation']),
+        'numerical': frozenset(['computer_representation']),
         'datetime': frozenset(['datetime_format']),
         'categorical': frozenset(['order', 'order_by']),
         'boolean': frozenset([]),
@@ -51,10 +51,10 @@ class SingleTableMetadata:
     SCHEMA_VERSION = 'SINGLE_TABLE_V1'
 
     def _validate_numerical(self, column_name, **kwargs):
-        representation = kwargs.get('representation')
+        representation = kwargs.get('computer_representation')
         if representation and representation not in self._NUMERICAL_REPRESENTATIONS:
             raise ValueError(
-                f"Invalid value for 'representation' '{representation}'"
+                f"Invalid value for 'computer_representation' '{representation}'"
                 f" for column '{column_name}'."
             )
 
@@ -537,9 +537,9 @@ class SingleTableMetadata:
 
             if old_type == 'numerical':
                 if subtype == 'float':
-                    column_meta['representation'] = 'Float'
+                    column_meta['computer_representation'] = 'Float'
                 elif subtype == 'integer':
-                    column_meta['representation'] = 'Int64'
+                    column_meta['computer_representation'] = 'Int64'
 
             elif old_type == 'datetime':
                 datetime_format = field_meta.get('format')

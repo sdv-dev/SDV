@@ -20,7 +20,7 @@ class TestSingleTableMetadata:
 
     VALID_KWARGS = [
         ('age', 'numerical', {}),
-        ('age', 'numerical', {'representation': 'Int8'}),
+        ('age', 'numerical', {'computer_representation': 'Int8'}),
         ('start_date', 'datetime', {}),
         ('start_date', 'datetime', {'datetime_format': '%Y-%d'}),
         ('name', 'categorical', {}),
@@ -35,7 +35,7 @@ class TestSingleTableMetadata:
 
     INVALID_KWARGS = [
         (
-            'age', 'numerical', {'representation': 'Int8', 'datetime_format': None, 'pii': True},
+            'age', 'numerical', {'computer_representation': 'Int8', 'datetime_format': None, 'pii': True},
             re.escape("Invalid values '(datetime_format, pii)' for numerical column 'age'."),
         ),
         (
@@ -99,11 +99,11 @@ class TestSingleTableMetadata:
         # Run / Assert
         instance._validate_numerical('age')
 
-        error_msg = re.escape("Invalid value for 'representation' '36' for column 'age'.")
+        error_msg = re.escape("Invalid value for 'computer_representation' '36' for column 'age'.")
         with pytest.raises(ValueError, match=error_msg):
             instance._validate_numerical('age', representation=36)
 
-    @pytest.mark.parametrize('representation', SingleTableMetadata._NUMERICAL_REPRESENTATIONS)
+    @pytest.mark.parametrize('computer_representation', SingleTableMetadata._NUMERICAL_REPRESENTATIONS)
     def test__validate_numerical_representations(self, representation):
         """Test the ``_validate_numerical`` method.
 
@@ -529,7 +529,7 @@ class TestSingleTableMetadata:
         instance.add_column('age', sdtype='numerical', representation='Int8')
 
         # Assert
-        assert instance._columns['age'] == {'sdtype': 'numerical', 'representation': 'Int8'}
+        assert instance._columns['age'] == {'sdtype': 'numerical', 'computer_representation': 'Int8'}
 
     def test_add_column_other_sdtype(self):
         """Test ``add_column`` with an ``sdtype`` that isn't in our base ``sdtypes``..
@@ -614,7 +614,7 @@ class TestSingleTableMetadata:
         # Assert
         assert instance._columns['age'] == {
             'sdtype': 'numerical',
-            'representation': 'Float'
+            'computer_representation': 'Float'
         }
         mock__validate_column_exists.assert_called_once_with('age')
         mock__validate_column.assert_called_once_with('age', 'numerical', representation='Float')
