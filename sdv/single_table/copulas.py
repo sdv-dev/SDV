@@ -1,8 +1,5 @@
 """Wrappers around copulas models."""
 
-import logging
-import warnings
-
 import copulas
 import copulas.multivariate
 import copulas.univariate
@@ -84,12 +81,14 @@ class GaussianCopulaSynthesizer(BaseSynthesizer):
         if numerical_distributions and not isinstance(numerical_distributions, dict):
             raise TypeError('numerical_distributions can only be None or a dict instance')
 
+        self.numerical_distributions = numerical_distributions or {}
         self._numerical_distributions = {
             field: self._validate_distribution(distribution)
             for field, distribution in (numerical_distributions or {}).items()
         }
 
-        self._default_distribution = self._validate_distribution(default_distribution or beta)
+        self.default_distribution = default_distribution or 'beta'
+        self._default_distribution = self._validate_distribution(self.default_distribution)
         self._model = copulas.multivariate.GaussianMultivariate(
             distribution=self._numerical_distributions
         )
