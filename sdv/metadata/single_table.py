@@ -319,6 +319,12 @@ class SingleTableMetadata:
                 Name (or tuple of names) of the primary key column(s).
         """
         self._validate_key(column_name, 'primary')
+        if column_name in self._alternate_keys:
+            warnings.warn(
+                f'{column_name} is currently set as an alternate key and will be removed from '
+                'that list.')
+            self._alternate_keys.remove(column_name)
+
         if self._primary_key is not None:
             warnings.warn(
                 f'There is an existing primary key {self._primary_key}.'
@@ -361,9 +367,15 @@ class SingleTableMetadata:
                 ' Keys should be columns that exist in the table.'
             )
 
+        if self._primary_key in column_names:
+            raise ValueError(
+                f"Invalid alternate key '{self._primary_key}'. The key is "
+                'already specified as a primary key.'
+            )
+
         self._validate_keys_sdtype(keys, 'alternate')
 
-    def set_alternate_keys(self, column_names):
+    def add_alternate_keys(self, column_names):
         """Set the metadata alternate keys.
 
         Args:
@@ -371,7 +383,7 @@ class SingleTableMetadata:
                 List of names (or tuple of names) of the alternate key columns.
         """
         self._validate_alternate_keys(column_names)
-        self._alternate_keys = column_names
+        self._alternate_keys += column_names
 
     def _validate_sequence_index(self, column_name):
         if not isinstance(column_name, str):

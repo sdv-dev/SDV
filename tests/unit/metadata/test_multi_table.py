@@ -1435,11 +1435,11 @@ class TestMultiTableMetadata:
         metadata._validate_table_exists.assert_called_once_with('table1')
         metadata._tables['table1'].set_sequence_key.assert_called_once_with('col')
 
-    def test_set_alternate_keys(self):
-        """Test ``set_alternate_keys``.
+    def test_add_alternate_keys(self):
+        """Test ``add_alternate_keys``.
 
         The method should validate the table exists and call
-        ``SingleTableMetadata.set_alternate_keys``.
+        ``SingleTableMetadata.add_alternate_keys``.
 
         Setup:
             - Instantiate ``MultiTableMetadata`` with some ``_tables``.
@@ -1455,11 +1455,11 @@ class TestMultiTableMetadata:
         metadata._validate_table_exists = Mock()
 
         # Run
-        metadata.set_alternate_keys('table1', ['col1', 'col2'])
+        metadata.add_alternate_keys('table1', ['col1', 'col2'])
 
         # Assert
         metadata._validate_table_exists.assert_called_once_with('table1')
-        metadata._tables['table1'].set_alternate_keys.assert_called_once_with(['col1', 'col2'])
+        metadata._tables['table1'].add_alternate_keys.assert_called_once_with(['col1', 'col2'])
 
     def test_set_sequence_index(self):
         """Test ``set_sequence_index``.
