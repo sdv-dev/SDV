@@ -322,7 +322,8 @@ class SingleTableMetadata:
         if column_name in self._alternate_keys:
             warnings.warn(
                 f'{column_name} is currently set as an alternate key and will be removed from '
-                'that list.')
+                'that list.'
+            )
             self._alternate_keys.remove(column_name)
 
         if self._primary_key is not None:
@@ -383,7 +384,11 @@ class SingleTableMetadata:
                 List of names (or tuple of names) of the alternate key columns.
         """
         self._validate_alternate_keys(column_names)
-        self._alternate_keys += column_names
+        for column in column_names:
+            if column in self._alternate_keys:
+                warnings.warn(f'{column} is already an alternate key.')
+            else:
+                self._alternate_keys.append(column)
 
     def _validate_sequence_index(self, column_name):
         if not isinstance(column_name, str):

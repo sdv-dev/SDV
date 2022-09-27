@@ -1238,7 +1238,7 @@ class TestSingleTableMetadata:
             instance.add_alternate_keys(['column1'])
 
     def test_add_alternate_keys(self):
-        """Test that ``add_alternate_keys`` sets the ``_alternate_keys`` value."""
+        """Test that ``add_alternate_keys`` adds the columns to the ``_alternate_keys``."""
         # Setup
         instance = SingleTableMetadata()
         instance._columns = {
@@ -1252,6 +1252,26 @@ class TestSingleTableMetadata:
 
         # Assert
         assert instance._alternate_keys == ['column1', ('column2', 'column3')]
+
+    @patch('sdv.metadata.single_table.warnings')
+    def test_add_alternate_keys_duplicate(self, warnings_mock):
+        """Test that the method does not add columns that are already in ``_alternate_keys``."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance._columns = {
+            'column1': {'sdtype': 'numerical'},
+            'column2': {'sdtype': 'numerical'},
+            'column3': {'sdtype': 'numerical'}
+        }
+        instance._alternate_keys = ['column3']
+
+        # Run
+        instance.add_alternate_keys(['column1', 'column2', 'column3'])
+
+        # Assert
+        assert instance._alternate_keys == ['column3', 'column1', 'column2']
+        message = 'column3 is already an alternate key.'
+        warnings_mock.warn.assert_called_once_with(message)
 
     def test_set_sequence_index_validation(self):
         """Test that ``set_sequence_index`` crashes for invalid arguments.
