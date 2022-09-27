@@ -318,6 +318,35 @@ class TestMultiTableMetadata:
                 child_foreign_key
             )
 
+    def test__validate_relationship_does_not_exist(self):
+        """Test the method raises an error if an existing relationship is added."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._relationships = [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessions',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'user_id',
+            },
+            {
+                'parent_table_name': 'sessions',
+                'child_table_name': 'transactions',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'session_id',
+            }
+        ]
+
+        # Run / Assert
+        error_msg = 'This relationship has already been added.'
+        with pytest.raises(ValueError, match=error_msg):
+            metadata._validate_relationship_does_not_exist(
+                parent_table_name='sessions',
+                parent_primary_key='id',
+                child_table_name='transactions',
+                child_foreign_key='session_id'
+            )
+
     def test__validate_circular_relationships(self):
         """Test the ``_validate_circular_relationships`` method of ``MultiTableMetadata``.
 
@@ -489,6 +518,7 @@ class TestMultiTableMetadata:
         # Setup
         instance = MultiTableMetadata()
         instance._validate_child_map_circular_relationship = Mock()
+        instance._validate_relationship_does_not_exist = Mock()
         parent_table = Mock()
         parent_table._primary_key = 'id'
         parent_table._columns = {
@@ -517,13 +547,16 @@ class TestMultiTableMetadata:
         instance._relationships == [
             {
                 'parent_table_name': 'users',
-                'child_table_name': 'sessiosns',
+                'child_table_name': 'sessions',
                 'parent_primary_key': 'id',
                 'child_foreign_key': 'user_id',
             }
         ]
         instance._validate_child_map_circular_relationship.assert_called_once_with(
             {'users': {'sessions'}})
+        instance._validate_relationship_does_not_exist.assert_called_once_with(
+            'users', 'id', 'sessions', 'user_id'
+        )
 
     def test__validate_single_table(self):
         """Test ``_validate_single_table``.
