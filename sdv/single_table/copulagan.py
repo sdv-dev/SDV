@@ -1,7 +1,9 @@
 """Combination of GaussianCopula transformation and GANs."""
 
-from sdv.tabular.copulas import GaussianCopulaSynthesizer
-from sdv.tabular.ctgan import CTGANSynthesizer
+import rdt
+
+from sdv.single_table.copulas import GaussianCopulaSynthesizer
+from sdv.single_table.ctgan import CTGANSynthesizer
 
 
 class CopulaGANSynthesizer(CTGANSynthesizer):
@@ -109,7 +111,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
                  generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
                  discriminator_decay=1e-6, batch_size=500, discriminator_steps=1,
-                 log_frequency=True, verbose=False, epochs=300, cuda=True,
+                 log_frequency=True, verbose=False, epochs=300, pac=10, cuda=True,
                  numerical_distributions=None, default_distribution=None):
 
         super().__init__(
@@ -128,6 +130,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             log_frequency=log_frequency,
             verbose=verbose,
             epochs=epochs,
+            pac=pac,
             cuda=cuda,
         )
 
@@ -141,3 +144,4 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             field: GaussianCopulaSynthesizer._validate_distribution(distribution)
             for field, distribution in (numerical_distributions or {}).items()
         }
+        self._hyper_transformer = rdt.HyperTransformer()
