@@ -383,7 +383,7 @@ class SingleTableMetadata:
                 f'Unknown sequence index value {column_name}.'
                 ' Keys should be columns that exist in the table.'
             )
-        
+
         sdtype = self._columns.get(column_name).get('sdtype')
         if sdtype not in ['datetime', 'numerical']:
             raise ValueError("The sequence_index must be of type 'datetime' or 'numerical'.")
