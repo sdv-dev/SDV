@@ -1252,11 +1252,25 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=err_msg):
             instance.set_sequence_index('column')
 
+    def test_set_sequence_index_validation_columns(self):
+        """Test that the method errors if the column is not numerical or datetime."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance._columns = {
+            'a': {'sdtype': 'numerical'}, 
+            'd': {'sdtype': 'categorical'}
+        }
+
+        # Run / Assert
+        error_message = "The sequence_index must be of type 'datetime' or 'numerical'."
+        with pytest.raises(ValueError, match=error_message):
+            instance.set_sequence_index('d')
+
     def test_set_sequence_index(self):
         """Test that ``set_sequence_index`` sets the ``_sequence_index`` value."""
         # Setup
         instance = SingleTableMetadata()
-        instance._columns = {'column'}
+        instance._columns = {'column': {'sdtype': 'numerical'}}
 
         # Run
         instance.set_sequence_index('column')
