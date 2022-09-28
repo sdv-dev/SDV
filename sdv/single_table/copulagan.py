@@ -40,9 +40,9 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
     Distributions can be passed as a ``copulas`` univariate instance or as one
     of the following string values:
 
-    * ``gaussian``: Use a Gaussian distribution.
+    * ``norm``: Use a norm distribution.
     * ``beta``: Use a Beta distribution.
-    * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
+    * ``truncnorm``: Use a truncnorm distribution.
     * ``uniform``: Use a uniform distribution.
     * ``gamma``: Use a Gamma distribution.
     * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
@@ -84,9 +84,9 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             the distribution that needs to be used. The distributions can be passed as either
             a ``copulas.univariate`` instance or as one of the following values:
 
-                * ``gaussian``: Use a Gaussian distribution.
+                * ``norm``: Use a norm distribution.
                 * ``beta``: Use a Beta distribution.
-                * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
+                * ``truncnorm``: Use a truncnorm distribution.
                 * ``uniform``: Use a uniform distribution.
                 * ``gamma``: Use a Gamma distribution.
                 * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
@@ -95,9 +95,9 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         default_distribution (copulas.univariate.Univariate or str):
             Copulas univariate distribution to use by default. Valid options are:
 
-                * ``gaussian``: Use a Gaussian distribution.
+                * ``norm``: Use a norm distribution.
                 * ``beta``: Use a Beta distribution.
-                * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
+                * ``truncnorm``: Use a truncnorm distribution.
                 * ``uniform``: Use a uniform distribution.
                 * ``gamma``: Use a Gamma distribution.
                 * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
