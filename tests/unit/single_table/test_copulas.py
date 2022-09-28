@@ -26,7 +26,7 @@ class TestGaussianCopulaSynthesizer:
         distribution = 'student'
 
         # Run and Assert
-        with pytest.raises(ValueError, match='Invalid distribution specification student.'):
+        with pytest.raises(ValueError, match="Invalid distribution specification 'student'."):
             GaussianCopulaSynthesizer._validate_distribution(distribution)
 
     @patch('copulas.multivariate')

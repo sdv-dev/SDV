@@ -102,7 +102,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
                 * ``gamma``: Use a Gamma distribution.
                 * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
                   so using this will make ``get_parameters`` unusable.
-         Defaults to ``beta``.
+             Defaults to ``beta``.
     """
 
     _gaussian_normalizer_hyper_transformer = None

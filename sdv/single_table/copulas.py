@@ -43,7 +43,7 @@ class GaussianCopulaSynthesizer(BaseSynthesizer):
                 * ``gamma``: Use a Gamma distribution.
                 * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
                   so using this will make ``get_parameters`` unusable.
-         Defaults to ``beta``.
+             Defaults to ``beta``.
     """
 
     _DISTRIBUTIONS = {
@@ -60,7 +60,7 @@ class GaussianCopulaSynthesizer(BaseSynthesizer):
     @classmethod
     def _validate_distribution(cls, distribution):
         if not isinstance(distribution, str) or distribution not in cls._DISTRIBUTIONS:
-            error_message = f'Invalid distribution specification {distribution}.'
+            error_message = f"Invalid distribution specification '{distribution}'."
             raise ValueError(error_message)
 
         return cls._DISTRIBUTIONS[distribution]
