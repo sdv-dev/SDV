@@ -992,7 +992,7 @@ class TestSingleTableMetadata:
         assert instance._primary_key == ('col1', 'col2')
 
     @patch('sdv.tabular.utils.warnings')
-    def test_set_primary_key_warning(self, warning_mock):
+    def test_set_primary_key_already_exists_warning(self, warning_mock):
         """Test that ``set_primary_key`` raises a warning when a primary key already exists.
 
         Setup:
@@ -1016,6 +1016,30 @@ class TestSingleTableMetadata:
         warning_msg = "There is an existing primary key 'column0'. This key will be removed."
         assert warning_mock.warn.called_once_with(warning_msg)
         assert instance._primary_key == 'column1'
+
+    @patch('sdv.tabular.utils.warnings')
+    def test_set_primary_key_in_alternate_keys_warning(self, warning_mock):
+        """Test that ``set_primary_key`` raises a warning the key is in ``self._alternate_keys``.
+
+        Setup:
+            Set the ``self._alternate_keys`` list to contain the key being added.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance._columns = {'column1': {'sdtype': 'numerical'}}
+        instance._primary_key = 'column0'
+        instance._alternate_keys = ['column1', 'column2']
+
+        # Run
+        instance.set_primary_key('column1')
+
+        # Assert
+        warning_msg = (
+            'column1 is currently set as an alternate key and will be removed from that list.'
+        )
+        assert warning_mock.warn.called_once_with(warning_msg)
+        assert instance._primary_key == 'column1'
+        assert instance._alternate_keys == ['column2']
 
     def test_set_sequence_key_validation_dtype(self):
         """Test that ``set_sequence_key`` crashes for invalid arguments.
@@ -1131,8 +1155,8 @@ class TestSingleTableMetadata:
         assert warning_mock.warn.called_once_with(warning_msg)
         assert instance._sequence_key == 'column1'
 
-    def test_set_alternate_keys_validation_dtype(self):
-        """Test that ``set_alternate_keys`` crashes for invalid arguments.
+    def test_add_alternate_keys_validation_dtype(self):
+        """Test that ``add_alternate_keys`` crashes for invalid arguments.
 
         Input:
             - A list with tuples with non-string values.
@@ -1146,10 +1170,10 @@ class TestSingleTableMetadata:
         err_msg = "'alternate_keys' must be a list of strings or a list of tuples of strings."
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
-            instance.set_alternate_keys(['col1', ('1', 2, '3'), 'col3'])
+            instance.add_alternate_keys(['col1', ('1', 2, '3'), 'col3'])
 
-    def test_set_alternate_keys_validation_columns(self):
-        """Test that ``set_alternate_keys`` crashes for invalid arguments.
+    def test_add_alternate_keys_validation_columns(self):
+        """Test that ``add_alternate_keys`` crashes for invalid arguments.
 
         Setup:
             - A ``SingleTableMetadata`` instance with ``_columns`` set.
@@ -1170,11 +1194,11 @@ class TestSingleTableMetadata:
         )
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
-            instance.set_alternate_keys(['abc', ('123', '213', '312')])
+            instance.add_alternate_keys(['abc', ('123', '213', '312')])
             # NOTE: used to be ['abc', ('123', '213', '312'), 'bca']
 
-    def test_set_alternate_keys_validation_categorical(self):
-        """Test that ``set_alternate_keys`` crashes when its sdtype is categorical.
+    def test_add_alternate_keys_validation_categorical(self):
+        """Test that ``add_alternate_keys`` crashes when its sdtype is categorical.
 
         Input:
             - A list of keys, some of which have sdtype categorical.
@@ -1193,10 +1217,28 @@ class TestSingleTableMetadata:
         )
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
-            instance.set_alternate_keys([('column1', 'column2'), 'column3'])
+            instance.add_alternate_keys([('column1', 'column2'), 'column3'])
 
-    def test_set_alternate_keys(self):
-        """Test that ``set_alternate_keys`` sets the ``_alternate_keys`` value."""
+    def test_add_alternate_keys_validation_primary_key(self):
+        """Test that ``add_alternate_keys`` crashes when the key is a primary key.
+
+        If the ``_primary_key`` is set to be the same as the key being added, a ``ValueError``
+        should be raised.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance._columns = {'column1': {'sdtype': 'numerical'}}
+        instance._primary_key = 'column1'
+
+        err_msg = re.escape(
+            "Invalid alternate key 'column1'. The key is already specified as a primary key."
+        )
+        # Run / Assert
+        with pytest.raises(ValueError, match=err_msg):
+            instance.add_alternate_keys(['column1'])
+
+    def test_add_alternate_keys(self):
+        """Test that ``add_alternate_keys`` adds the columns to the ``_alternate_keys``."""
         # Setup
         instance = SingleTableMetadata()
         instance._columns = {
@@ -1206,10 +1248,30 @@ class TestSingleTableMetadata:
         }
 
         # Run
-        instance.set_alternate_keys(['column1', ('column2', 'column3')])
+        instance.add_alternate_keys(['column1', ('column2', 'column3')])
 
         # Assert
         assert instance._alternate_keys == ['column1', ('column2', 'column3')]
+
+    @patch('sdv.metadata.single_table.warnings')
+    def test_add_alternate_keys_duplicate(self, warnings_mock):
+        """Test that the method does not add columns that are already in ``_alternate_keys``."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance._columns = {
+            'column1': {'sdtype': 'numerical'},
+            'column2': {'sdtype': 'numerical'},
+            'column3': {'sdtype': 'numerical'}
+        }
+        instance._alternate_keys = ['column3']
+
+        # Run
+        instance.add_alternate_keys(['column1', 'column2', 'column3'])
+
+        # Assert
+        assert instance._alternate_keys == ['column3', 'column1', 'column2']
+        message = 'column3 is already an alternate key.'
+        warnings_mock.warn.assert_called_once_with(message)
 
     def test_set_sequence_index_validation(self):
         """Test that ``set_sequence_index`` crashes for invalid arguments.
