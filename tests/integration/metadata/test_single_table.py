@@ -55,7 +55,7 @@ def test_validate():
         value=10
     )
     instance.set_primary_key('col1')
-    instance.set_alternate_keys([('col1', 'col2')])
+    instance.add_alternate_keys([('col1', 'col2')])
     instance.set_sequence_index('col1')
     instance.set_sequence_key('col2')
 
