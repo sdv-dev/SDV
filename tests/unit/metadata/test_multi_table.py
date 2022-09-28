@@ -1248,32 +1248,42 @@ class TestMultiTableMetadata:
         with pytest.raises(ValueError, match=error_message):
             metadata.update_column('table', 'column', sdtype='numerical', pii=False)
 
+    @patch('sdv.metadata.multi_table.print')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    def test_detect_table_from_csv(self, single_table_mock):
+    def test_detect_table_from_csv(self, single_table_mock, print_mock):
         """Test the ``detect_table_from_csv`` method.
 
         If the table does not already exist, a ``SingleTableMetadata`` instance
         should be created and call the ``detect_from_csv`` method.
 
         Setup:
-            - Mock the ``SingleTableMetadata`` class.
+            - Mock the ``SingleTableMetadata`` class and the print function.
 
-        Input:
-            - Table name.
-            - Path.
-
-        Side effect:
+        Assert:
             - Table should be added to ``self._tables``.
         """
         # Setup
         metadata = MultiTableMetadata()
+        fake_data = Mock()
+        single_table_mock.return_value._load_data_from_csv.return_value = fake_data
+        single_table_mock.return_value.to_dict.return_value = {
+            'columns': {'a': {'sdtype': 'numerical'}}
+        }
 
         # Run
         metadata.detect_table_from_csv('table', 'path.csv')
 
         # Assert
-        single_table_mock.return_value.detect_from_csv.assert_called_once_with('path.csv')
+        single_table_mock.return_value._load_data_from_csv.assert_called_once_with('path.csv')
+        single_table_mock.return_value._detect_columns.assert_called_once_with(fake_data)
         assert metadata._tables == {'table': single_table_mock.return_value}
+        print_mock.assert_has_calls([
+            call('Detected metadata:'),
+            call(
+                '{\n    "columns": {\n        "a": {\n            "sdtype": "numerical"\n'
+                '        }\n    }\n}'
+            )
+        ])
 
     def test_detect_table_from_csv_table_already_exists(self):
         """Test the ``detect_table_from_csv`` method.
@@ -1302,33 +1312,40 @@ class TestMultiTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.detect_table_from_csv('table', 'path.csv')
 
+    @patch('sdv.metadata.multi_table.print')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    def test_detect_table_from_dataframe(self, single_table_mock):
+    def test_detect_table_from_dataframe(self, single_table_mock, print_mock):
         """Test the ``detect_table_from_dataframe`` method.
 
         If the table does not already exist, a ``SingleTableMetadata`` instance
         should be created and call the ``detect_from_dataframe`` method.
 
         Setup:
-            - Mock the ``SingleTableMetadata`` class.
+            - Mock the ``SingleTableMetadata`` class and print function.
 
-        Input:
-            - Table name.
-            - Dataframe.
-
-        Side effect:
+        Assert:
             - Table should be added to ``self._tables``.
         """
         # Setup
         metadata = MultiTableMetadata()
         data = pd.DataFrame()
+        single_table_mock.return_value.to_dict.return_value = {
+            'columns': {'a': {'sdtype': 'numerical'}}
+        }
 
         # Run
         metadata.detect_table_from_dataframe('table', data)
 
         # Assert
-        single_table_mock.return_value.detect_from_dataframe.assert_called_once_with(data)
+        single_table_mock.return_value._detect_columns.assert_called_once_with(data)
         assert metadata._tables == {'table': single_table_mock.return_value}
+        print_mock.assert_has_calls([
+            call('Detected metadata:'),
+            call(
+                '{\n    "columns": {\n        "a": {\n            "sdtype": "numerical"\n'
+                '        }\n    }\n}'
+            )
+        ])
 
     def test_detect_table_from_dataframe_table_already_exists(self):
         """Test the ``detect_table_from_dataframe`` method.

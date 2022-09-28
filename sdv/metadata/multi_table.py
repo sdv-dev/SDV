@@ -258,6 +258,13 @@ class MultiTableMetadata:
                 'create a new MultiTableMetadata object for other data sources.'
             )
 
+    @staticmethod
+    def _print_detected_table(single_table_metadata):
+        print('Detected metadata:')  # noqa: T001
+        table_dict = single_table_metadata.to_dict()
+        table_dict.pop('SCHEMA_VERSION', None)
+        print(json.dumps(table_dict, indent=4))  # noqa: T001
+
     def detect_table_from_dataframe(self, table_name, data):
         """Detect the metadata for a table from a dataframe.
 
@@ -269,8 +276,9 @@ class MultiTableMetadata:
         """
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
-        table.detect_from_dataframe(data)
+        table._detect_columns(data)
         self._tables[table_name] = table
+        self._print_detected_table(table)
 
     def detect_table_from_csv(self, table_name, filepath):
         """Detect the metadata for a table from a csv file.
@@ -283,8 +291,10 @@ class MultiTableMetadata:
         """
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
-        table.detect_from_csv(filepath)
+        data = table._load_data_from_csv(filepath)
+        table._detect_columns(data)
         self._tables[table_name] = table
+        self._print_detected_table(table)
 
     def set_primary_key(self, table_name, column_name):
         """Set the primary key of a table.
