@@ -311,7 +311,7 @@ class MultiTableMetadata:
         warnings.warn('Sequential modeling is not yet supported on SDV Multi Table models.')
         self._tables[table_name].set_sequence_key(column_name)
 
-    def set_alternate_keys(self, table_name, column_names):
+    def add_alternate_keys(self, table_name, column_names):
         """Set the alternate keys of a table.
 
         Args:
@@ -321,7 +321,7 @@ class MultiTableMetadata:
                 List of names (or tuple of names) of the alternate key columns.
         """
         self._validate_table_exists(table_name)
-        self._tables[table_name].set_alternate_keys(column_names)
+        self._tables[table_name].add_alternate_keys(column_names)
 
     def set_sequence_index(self, table_name, column_name):
         """Set the sequence index of a table.
