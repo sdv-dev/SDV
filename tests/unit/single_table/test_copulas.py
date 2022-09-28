@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import pytest
 from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariate
 
 from sdv.metadata.single_table import SingleTableMetadata
@@ -19,27 +20,14 @@ class TestGaussianCopulaSynthesizer:
         # Assert
         assert result == BetaUnivariate
 
-    def test__validate_distribution_object(self):
-        """Test that when an instance is passed tihs is returned."""
-        # Setup
-        distribution = BetaUnivariate()
-
-        # Run
-        result = GaussianCopulaSynthesizer._validate_distribution(distribution)
-
-        # Assert
-        assert result == distribution
-
     def test__validate_distribution_not_in_distributions(self):
-        """Test that when an instance is passed tihs is returned."""
+        """Test that ``ValueError`` is raised when the given distribution is not supported."""
         # Setup
-        distribution = 'copulas.univariate.StudentTUnivariate'
+        distribution = 'student'
 
-        # Run
-        result = GaussianCopulaSynthesizer._validate_distribution(distribution)
-
-        # Assert
-        assert result == distribution
+        # Run and Assert
+        with pytest.raises(ValueError, match='Invalid distribution specification student.'):
+            GaussianCopulaSynthesizer._validate_distribution(distribution)
 
     @patch('copulas.multivariate')
     def test___init__(self, mock_copulas_multivariate):
@@ -104,7 +92,7 @@ class TestGaussianCopulaSynthesizer:
         assert instance._model == mock_copulas_multivariate.GaussianMultivariate.return_value
 
     def test_get_params(self):
-        """Test that the inherit method ``get_params`` returns all the specific init parameters."""
+        """Test that inherited method ``get_params`` returns all the specific init parameters."""
         # Setup
         metadata = SingleTableMetadata()
         instance = GaussianCopulaSynthesizer(metadata)

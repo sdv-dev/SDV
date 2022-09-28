@@ -105,7 +105,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
          Defaults to ``beta``.
     """
 
-    _hyper_transformer = None
+    _gaussian_normalizer_hyper_transformer = None
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
@@ -144,4 +144,4 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             field: GaussianCopulaSynthesizer._validate_distribution(distribution)
             for field, distribution in (numerical_distributions or {}).items()
         }
-        self._hyper_transformer = rdt.HyperTransformer()
+        self._gaussian_normalizer_hyper_transformer = rdt.HyperTransformer()

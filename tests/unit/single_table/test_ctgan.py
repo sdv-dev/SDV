@@ -97,7 +97,7 @@ class TestCTGANSynthesizer:
         assert instance.cuda is False
 
     def test_get_params(self):
-        """Test that the inherit method ``get_params`` returns all the specific init parameters."""
+        """Test that inherited method ``get_params`` returns all the specific init parameters."""
         # Setup
         metadata = SingleTableMetadata()
         instance = CTGANSynthesizer(metadata)
@@ -197,7 +197,7 @@ class TestTVAESynthesizer:
         assert instance.cuda is False
 
     def test_get_params(self):
-        """Test that the inherit method ``get_params`` returns all the specific init parameters."""
+        """Test that inherited method ``get_params`` returns all the specific init parameters."""
         # Setup
         metadata = SingleTableMetadata()
         instance = TVAESynthesizer(metadata)

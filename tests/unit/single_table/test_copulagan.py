@@ -24,6 +24,8 @@ class TestCopulaGANSynthesizer:
         )
 
         # Assert
+        expected_transformer = mock_rdt.HyperTransformer.return_value
+
         assert instance.enforce_min_max_values is True
         assert instance.enforce_rounding is True
         assert instance.embedding_dim == 128
@@ -44,7 +46,7 @@ class TestCopulaGANSynthesizer:
         assert instance.default_distribution == 'beta'
         assert instance._numerical_distributions == {}
         assert instance._default_distribution == BetaUnivariate
-        assert instance._hyper_transformer == mock_rdt.HyperTransformer.return_value
+        assert instance._gaussian_normalizer_hyper_transformer == expected_transformer
         mock_rdt.HyperTransformer.assert_called_once()
 
     @patch('sdv.single_table.copulagan.rdt')
@@ -95,6 +97,8 @@ class TestCopulaGANSynthesizer:
         )
 
         # Assert
+        expected_transformer = mock_rdt.HyperTransformer.return_value
+
         assert instance.enforce_min_max_values is False
         assert instance.enforce_rounding is False
         assert instance.embedding_dim == embedding_dim
@@ -115,11 +119,11 @@ class TestCopulaGANSynthesizer:
         assert instance._numerical_distributions == {'field': GammaUnivariate}
         assert instance.default_distribution == 'uniform'
         assert instance._default_distribution == UniformUnivariate
-        assert instance._hyper_transformer == mock_rdt.HyperTransformer.return_value
+        assert instance._gaussian_normalizer_hyper_transformer == expected_transformer
         mock_rdt.HyperTransformer.assert_called_once()
 
     def test_get_params(self):
-        """Test that the inherit method ``get_params`` returns all the specific init parameters."""
+        """Test that inherited method ``get_params`` returns all the specific init parameters."""
         # Setup
         metadata = SingleTableMetadata()
         instance = CopulaGANSynthesizer(metadata)

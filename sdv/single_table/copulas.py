@@ -59,17 +59,11 @@ class GaussianCopulaSynthesizer(BaseSynthesizer):
 
     @classmethod
     def _validate_distribution(cls, distribution):
-        if not isinstance(distribution, str):
-            return distribution
-        if distribution in cls._DISTRIBUTIONS:
-            return cls._DISTRIBUTIONS[distribution]
+        if not isinstance(distribution, str) or distribution not in cls._DISTRIBUTIONS:
+            error_message = f'Invalid distribution specification {distribution}.'
+            raise ValueError(error_message)
 
-        try:
-            copulas.get_instance(distribution)
-            return distribution
-        except (ValueError, ImportError):
-            error_message = f'Invalid distribution specification {distribution}'
-            raise ValueError(error_message) from None
+        return cls._DISTRIBUTIONS[distribution]
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
                  numerical_distributions=None, default_distribution=None):
