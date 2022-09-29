@@ -170,42 +170,44 @@ class BaseSynthesizer:
     def _is_numerical(value):
         return pd.isna(value) | pd.api.types.is_float(value) | pd.api.types.is_integer(value)
 
-    def _validate_column(self, data, column):
+    @staticmethod
+    def _is_boolean(value):
+        return True if pd.isna(value) | (value is True) | (value is False) else False
+
+    def _validate_column(self, column):
         """Validate values of the column satisfy its sdtype properties."""
         errors = []
-        sdtype = self.metadata._columns[column]['sdtype']
+        sdtype = self.metadata._columns[column.name]['sdtype']
 
         # boolean values must be True/False, None or missing values
         # int/str are not allowed
         if sdtype == 'boolean':
-            valid = data[column].apply(
-                lambda x: True if pd.isna(x) | (
-                    x is True) | (
-                    x is False) else False)
-            invalid_values = list(set(data[column][~valid]))
+            valid = column.apply(self._is_boolean)
+            invalid_values = set(column[~valid])
             if invalid_values:
                 invalid_values = self._update_invalid_values(invalid_values)
                 errors.append(
-                    f"Invalid values found for boolean column '{column}': {invalid_values}.")
+                    f"Invalid values found for boolean column '{column.name}': {invalid_values}.")
 
         # numerical values must be int/float, None or missing values
         # str/bool are not allowed
         if sdtype == 'numerical':
-            valid = data[column].apply(self._is_numerical)
-            invalid_values = list(set(data[column][~valid]))
+            valid = column.apply(self._is_numerical)
+            invalid_values = set(column[~valid])
             if invalid_values:
                 invalid_values = self._update_invalid_values(invalid_values)
                 errors.append(
-                    f"Invalid values found for numerical column '{column}': {invalid_values}.")
+                    f"Invalid values found for numerical column '{column.name}': {invalid_values}."
+                )
 
         # datetime values must be castable to datetime, None or missing values
         if sdtype == 'datetime':
-            valid = data[column].apply(lambda x: pd.isna(x) | is_datetime_type(x))
-            invalid_values = list(set(data[column][~valid]))
+            valid = column.apply(lambda x: pd.isna(x) | is_datetime_type(x))
+            invalid_values = set(column[~valid])
             if invalid_values:
                 invalid_values = self._update_invalid_values(invalid_values)
                 errors.append(
-                    f"Invalid values found for datetime column '{column}': {invalid_values}.")
+                    f"Invalid values found for datetime column '{column.name}': {invalid_values}.")
 
         return errors
 
@@ -226,7 +228,6 @@ class BaseSynthesizer:
                     * primary or alternate keys are not unique
                     * context columns vary for a sequence key
                     * values of a column don't satisfy their sdtype
-                    * values of a column don't satisfy their kwargs
         """
         if not isinstance(data, pd.DataFrame):
             raise ValueError(f'Data must be a DataFrame, not a {type(data)}.')
@@ -246,7 +247,7 @@ class BaseSynthesizer:
 
         # Every column must satisfy the properties of their sdtypes
         for column in data:
-            errors += self._validate_column(data, column)
+            errors += self._validate_column(data[column])
 
         if errors:
             raise InvalidDataError(errors)

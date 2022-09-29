@@ -8,4 +8,7 @@ class InvalidDataError(Exception):
         self.errors = errors
 
     def __str__(self):
-        return '\n' + '\n\n'.join(map(str, self.errors))
+        return (
+            'The provided data does not match the metadata:\n' +
+            '\n\n'.join(map(str, self.errors))
+        )

@@ -138,7 +138,10 @@ class TestBaseSynthesizer:
         instance = BaseSynthesizer(metadata)
 
         # Run and Assert
-        err_msg = re.escape("\nThe columns ['col1', 'col2'] are not present in the metadata.")
+        err_msg = re.escape(
+            'The provided data does not match the metadata:'
+            "\nThe columns ['col1', 'col2'] are not present in the metadata."
+        )
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
 
@@ -158,6 +161,7 @@ class TestBaseSynthesizer:
 
         # Run and Assert
         err_msg = re.escape(
+            'The provided data does not match the metadata:'
             "\nThe columns ['col2', 'col3'] are not present in the metadata."
             '\n'
             "\nThe metadata columns ['col4', 'col5'] are not present in the data."
@@ -193,11 +197,12 @@ class TestBaseSynthesizer:
         metadata.add_column('ak_col3', sdtype='numerical')
         metadata.set_primary_key('pk_col')
         metadata.set_sequence_key(('sk_col1', 'sk_col2', 'sk_col3'))
-        metadata.set_alternate_keys(['ak_col1', 'ak_col2', 'ak_col3'])
+        metadata.add_alternate_keys(['ak_col1', 'ak_col2', 'ak_col3'])
         instance = BaseSynthesizer(metadata)
 
         # Run and Assert
         err_msg = re.escape(
+            'The provided data does not match the metadata:'
             "\nKey column 'ak_col1' contains missing values."
             '\n'
             "\nKey column 'ak_col2' contains missing values."
@@ -228,7 +233,10 @@ class TestBaseSynthesizer:
         instance = BaseSynthesizer(metadata)
 
         # Run and Assert
-        err_msg = re.escape("\nKey column 'sk_col' contains missing values.")
+        err_msg = re.escape(
+            'The provided data does not match the metadata:'
+            "\nKey column 'sk_col' contains missing values."
+        )
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
 
@@ -246,11 +254,12 @@ class TestBaseSynthesizer:
         metadata.add_column('ak_col2', sdtype='numerical')
         metadata.add_column('ak_col3', sdtype='numerical')
         metadata.set_primary_key('pk_col')
-        metadata.set_alternate_keys(['ak_col1', 'ak_col2', 'ak_col3'])
+        metadata.add_alternate_keys(['ak_col1', 'ak_col2', 'ak_col3'])
         instance = BaseSynthesizer(metadata)
 
         # Run and Assert
         err_msg = re.escape(
+            'The provided data does not match the metadata:'
             "\nKey column 'ak_col1' contains repeating values: [0, 3]"
             '\n'
             "\nKey column 'ak_col2' contains repeating values: [2]"
@@ -287,6 +296,7 @@ class TestBaseSynthesizer:
 
         # Run and Assert
         err_msg = re.escape(
+            'The provided data does not match the metadata:'
             "\nContext column(s) {'ct_col1': {1, 2}} are changing inside the "
             "sequence keys (['sk_col1', 'sk_col2']: (1, 1))."
             '\n'
@@ -319,7 +329,7 @@ class TestBaseSynthesizer:
         metadata.add_column('ak_col', sdtype='numerical')
         metadata.set_primary_key('pk_col')
         metadata.set_sequence_key('sk_col')
-        metadata.set_alternate_keys(['ak_col'])
+        metadata.add_alternate_keys(['ak_col'])
         instance = BaseSynthesizer(metadata)
 
         # Run
@@ -378,6 +388,7 @@ class TestBaseSynthesizer:
 
         # Run and Assert
         err_msg = re.escape(
+            'The provided data does not match the metadata:'
             "\nInvalid values found for datetime column 'date1': ['10', True, 'b', '+ 1 more']."
             '\n'
             "\nInvalid values found for datetime column 'date2': ['2020-1-33']."
@@ -423,7 +434,7 @@ class TestBaseSynthesizer:
         metadata.add_column('bool_col', sdtype='boolean')
         metadata.set_primary_key('pk_col')
         metadata.set_sequence_key(('sk_col1', 'sk_col2'))
-        metadata.set_alternate_keys(['ak_col1', 'ak_col2'])
+        metadata.add_alternate_keys(['ak_col1', 'ak_col2'])
         instance = BaseSynthesizer(metadata)
 
         # Run
