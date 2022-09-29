@@ -149,9 +149,9 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         columns = self.metadata._columns
         transformers = {}
         sdtypes = {}
-        for column in processed_data:
+        for column in processed_data.columns:
             column_name = column.replace('.value', '')
-            sdtype = columns.get(column, {}).get('sdtype')
+            sdtype = columns.get(column_name, {}).get('sdtype')
             if column_name in columns and sdtype != 'categorical':
                 sdtypes[column] = 'numerical'
                 distribution = self._numerical_distributions.get(
@@ -178,12 +178,9 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
                 Data to be learned.
         """
         gaussian_normalizer_config = self._create_gaussian_normalizer_config(processed_data)
-        fit_columns = list(gaussian_normalizer_config['transformers'])
 
         self._gaussian_normalizer_hyper_transformer = rdt.HyperTransformer()
         self._gaussian_normalizer_hyper_transformer.set_config(gaussian_normalizer_config)
-        processed_data = self._gaussian_normalizer_hyper_transformer.fit_transform(
-            processed_data[fit_columns]
-        )
+        processed_data = self._gaussian_normalizer_hyper_transformer.fit_transform(processed_data)
 
         super()._fit(processed_data)

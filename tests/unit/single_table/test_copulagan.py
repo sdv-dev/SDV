@@ -1,3 +1,7 @@
+from unittest.mock import Mock, call, patch
+
+import numpy as np
+import pandas as pd
 from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariate
 
 from sdv.metadata.single_table import SingleTableMetadata
@@ -140,3 +144,90 @@ class TestCopulaGANSynthesizer:
             'numerical_distributions': {},
             'default_distribution': 'beta',
         }
+
+    @patch('sdv.single_table.copulagan.rdt')
+    def test__create_gaussian_normalizer_config(self, mock_rdt):
+        """Test that a configuration for the numerical data has been created.
+
+        A configuration for the ``rdt.HyperTransformer`` has to be created with
+        ``GaussianNormalizer`` the only transformer for the ``numerical`` sdtypes.
+        The rest of columns will be treated as ``categorical`` and the transformers set to
+        ``None`` which is not to transform the data.
+        """
+        # Setup
+        numerical_distributions = {'age': 'gamma'}
+        metadata = SingleTableMetadata()
+        metadata._columns = {
+            'name': {
+                'sdtype': 'categorical',
+            },
+            'age': {
+                'sdtype': 'numerical',
+            },
+            'account': {
+                'sdtype': 'numerical',
+            },
+
+        }
+
+        instance = CopulaGANSynthesizer(metadata, numerical_distributions=numerical_distributions)
+        processed_data = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe', 'John Doe Doe'],
+            'age': np.arange(4),
+            'account.value': np.arange(4),
+            'name#age': np.arange(4),
+        })
+
+        # Run
+        config = instance._create_gaussian_normalizer_config(processed_data)
+
+        # Assert
+        expected_calls = [
+            call(model_missing_values=True, distribution=GammaUnivariate),
+            call(model_missing_values=True, distribution=BetaUnivariate),
+        ]
+        expected_config = {
+            'transformers': {
+                'name': None,
+                'age': mock_rdt.transformers.GaussianNormalizer.return_value,
+                'account.value': mock_rdt.transformers.GaussianNormalizer.return_value,
+                'name#age': None
+            },
+            'sdtypes': {
+                'name': 'categorical',
+                'age': 'numerical',
+                'account.value': 'numerical',
+                'name#age': 'categorical'
+            }
+
+        }
+        assert config == expected_config
+        assert mock_rdt.transformers.GaussianNormalizer.call_args_list == expected_calls
+
+    @patch('sdv.single_table.copulagan.CTGANSynthesizer._fit')
+    @patch('sdv.single_table.copulagan.rdt')
+    def test__fit(self, mock_rdt, mock_ctgansynthesizer__fit):
+        """Test the ``_fit`` method for ``CopulaGANSynthesizer``.
+
+        Test that when we call ``_fit`` a new instance of ``rdt.HyperTransformer`` is
+        created, that only transforms numerical data using ``GaussianNormalizer`` transformer with
+        one of the ``copulas`` distributions.
+        """
+        # Setup
+        metadata = SingleTableMetadata()
+        instance = CopulaGANSynthesizer(metadata)
+        instance._create_gaussian_normalizer_config = Mock()
+        processed_data = Mock()
+
+        # Run
+        instance._fit(processed_data)
+
+        # Assert
+        hypertransformer = instance._gaussian_normalizer_hyper_transformer
+        assert hypertransformer == mock_rdt.HyperTransformer.return_value
+        hypertransformer.set_config.assert_called_once_with(
+            instance._create_gaussian_normalizer_config.return_value)
+
+        hypertransformer.fit_transform.assert_called_once_with(processed_data)
+        mock_ctgansynthesizer__fit.assert_called_once_with(
+            hypertransformer.fit_transform.return_value)
