@@ -260,10 +260,10 @@ class MultiTableMetadata:
 
     @staticmethod
     def _print_detected_table(single_table_metadata):
-        print('Detected metadata:')  # noqa: T001
         table_dict = single_table_metadata.to_dict()
         table_dict.pop('SCHEMA_VERSION', None)
-        print(json.dumps(table_dict, indent=4))  # noqa: T001
+        table_json = json.dumps(table_dict, indent=4)
+        print(f'Detected metadata:\n{table_json}')  # noqa: T001
 
     def detect_table_from_dataframe(self, table_name, data):
         """Detect the metadata for a table from a dataframe.

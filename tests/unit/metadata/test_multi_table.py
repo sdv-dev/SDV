@@ -1277,13 +1277,16 @@ class TestMultiTableMetadata:
         single_table_mock.return_value._load_data_from_csv.assert_called_once_with('path.csv')
         single_table_mock.return_value._detect_columns.assert_called_once_with(fake_data)
         assert metadata._tables == {'table': single_table_mock.return_value}
-        print_mock.assert_has_calls([
-            call('Detected metadata:'),
-            call(
-                '{\n    "columns": {\n        "a": {\n            "sdtype": "numerical"\n'
-                '        }\n    }\n}'
-            )
-        ])
+        print_mock.assert_called_once_with((
+            'Detected metadata:\n'
+            '{\n'
+            '    "columns": {\n'
+            '        "a": {\n'
+            '            "sdtype": "numerical"\n'
+            '        }\n'
+            '    }'
+            '\n}'
+        ))
 
     def test_detect_table_from_csv_table_already_exists(self):
         """Test the ``detect_table_from_csv`` method.
@@ -1339,13 +1342,16 @@ class TestMultiTableMetadata:
         # Assert
         single_table_mock.return_value._detect_columns.assert_called_once_with(data)
         assert metadata._tables == {'table': single_table_mock.return_value}
-        print_mock.assert_has_calls([
-            call('Detected metadata:'),
-            call(
-                '{\n    "columns": {\n        "a": {\n            "sdtype": "numerical"\n'
-                '        }\n    }\n}'
-            )
-        ])
+        print_mock.assert_called_once_with((
+            'Detected metadata:\n'
+            '{\n'
+            '    "columns": {\n'
+            '        "a": {\n'
+            '            "sdtype": "numerical"\n'
+            '        }\n'
+            '    }'
+            '\n}'
+        ))
 
     def test_detect_table_from_dataframe_table_already_exists(self):
         """Test the ``detect_table_from_dataframe`` method.
