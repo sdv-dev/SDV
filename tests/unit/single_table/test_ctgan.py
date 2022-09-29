@@ -1,3 +1,5 @@
+from unittest.mock import Mock, patch
+
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer
 
@@ -125,6 +127,48 @@ class TestCTGANSynthesizer:
             'cuda': True,
         }
 
+    @patch('sdv.single_table.ctgan.CTGAN')
+    @patch('sdv.single_table.ctgan.detect_discrete_columns')
+    def test__fit(self, mock_detect_discrete_columns, mock_ctgan):
+        """Test the ``_fit`` from ``CTGANSynthesizer``.
+
+        Test that when we call ``_fit`` a new instance of ``CTGAN`` is created as a model
+        with the previously set parameters. Then this is being fitted with the ``discrete_columns``
+        that have been detected by the utility function.
+        """
+        # Setup
+        metadata = SingleTableMetadata()
+        instance = CTGANSynthesizer(metadata)
+        processed_data = Mock()
+
+        # Run
+        instance._fit(processed_data)
+
+        # Assert
+        mock_detect_discrete_columns.assert_called_once_with(metadata, processed_data)
+        mock_ctgan.assert_called_once_with(
+            batch_size=500,
+            cuda=True,
+            discriminator_decay=1e-6,
+            discriminator_dim=(256, 256),
+            discriminator_lr=2e-4,
+            discriminator_steps=1,
+            embedding_dim=128,
+            epochs=300,
+            generator_decay=1e-6,
+            generator_dim=(256, 256),
+            generator_lr=2e-4,
+            log_frequency=True,
+            pac=10,
+            verbose=False,
+        )
+
+        assert instance._model == mock_ctgan.return_value
+        instance._model.fit.assert_called_once_with(
+            processed_data,
+            discrete_columns=mock_detect_discrete_columns.return_value
+        )
+
 
 class TestTVAESynthesizer:
 
@@ -218,3 +262,39 @@ class TestTVAESynthesizer:
             'loss_factor': 2,
             'cuda': True,
         }
+
+    @patch('sdv.single_table.ctgan.TVAE')
+    @patch('sdv.single_table.ctgan.detect_discrete_columns')
+    def test__fit(self, mock_detect_discrete_columns, mock_tvae):
+        """Test the ``_fit`` from ``TVAESynthesizer``.
+
+        Test that when we call ``_fit`` a new instance of ``TVAE`` is created as a model
+        with the previously set parameters. Then this is being fitted with the ``discrete_columns``
+        that have been detected by the utility function.
+        """
+        # Setup
+        metadata = SingleTableMetadata()
+        instance = TVAESynthesizer(metadata)
+        processed_data = Mock()
+
+        # Run
+        instance._fit(processed_data)
+
+        # Assert
+        mock_detect_discrete_columns.assert_called_once_with(metadata, processed_data)
+        mock_tvae.assert_called_once_with(
+            batch_size=500,
+            compress_dims=(128, 128),
+            cuda=True,
+            decompress_dims=(128, 128),
+            embedding_dim=128,
+            epochs=300,
+            l2scale=1e-5,
+            loss_factor=2,
+        )
+
+        assert instance._model == mock_tvae.return_value
+        instance._model.fit.assert_called_once_with(
+            processed_data,
+            discrete_columns=mock_detect_discrete_columns.return_value
+        )
