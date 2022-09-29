@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariate
 
 from sdv.metadata.single_table import SingleTableMetadata
