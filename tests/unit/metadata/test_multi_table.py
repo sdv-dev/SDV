@@ -337,7 +337,7 @@ class TestMultiTableMetadata:
             }
         ]
 
-        # Run / Assert
+        # Run and Assert
         error_msg = 'This relationship has already been added.'
         with pytest.raises(ValueError, match=error_msg):
             metadata._validate_relationship_does_not_exist(
