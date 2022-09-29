@@ -29,8 +29,7 @@ class TestGaussianCopulaSynthesizer:
         with pytest.raises(ValueError, match="Invalid distribution specification 'student'."):
             GaussianCopulaSynthesizer._validate_distribution(distribution)
 
-    @patch('copulas.multivariate')
-    def test___init__(self, mock_copulas_multivariate):
+    def test___init__(self):
         """Test creating an instance of ``GaussianCopulaSynthesizer``."""
         # Setup
         metadata = SingleTableMetadata()
@@ -55,13 +54,8 @@ class TestGaussianCopulaSynthesizer:
         assert instance.default_distribution == 'beta'
         assert instance._default_distribution == BetaUnivariate
         assert instance._numerical_distributions == {}
-        mock_copulas_multivariate.GaussianMultivariate.called_once_with(
-            distribution={}
-        )
-        assert instance._model == mock_copulas_multivariate.GaussianMultivariate.return_value
 
-    @patch('copulas.multivariate')
-    def test___init__custom(self, mock_copulas_multivariate):
+    def test___init__custom(self):
         """Test creating an instance of ``GaussianCopulaSynthesizer`` with custom parameters."""
         # Setup
         metadata = SingleTableMetadata()
@@ -86,10 +80,6 @@ class TestGaussianCopulaSynthesizer:
         assert instance.default_distribution == 'uniform'
         assert instance._default_distribution == UniformUnivariate
         assert instance._numerical_distributions == {'field': GammaUnivariate}
-        mock_copulas_multivariate.GaussianMultivariate.called_once_with(
-            distribution={'field': GammaUnivariate}
-        )
-        assert instance._model == mock_copulas_multivariate.GaussianMultivariate.return_value
 
     def test_get_params(self):
         """Test that inherited method ``get_params`` returns all the specific init parameters."""
