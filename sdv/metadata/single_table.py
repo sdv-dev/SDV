@@ -401,6 +401,10 @@ class SingleTableMetadata:
                 ' Keys should be columns that exist in the table.'
             )
 
+        sdtype = self._columns[column_name].get('sdtype')
+        if sdtype not in ['datetime', 'numerical']:
+            raise ValueError("The sequence_index must be of type 'datetime' or 'numerical'.")
+
     def set_sequence_index(self, column_name):
         """Set the metadata sequence index.
 
