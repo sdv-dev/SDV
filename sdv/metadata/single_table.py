@@ -231,6 +231,12 @@ class SingleTableMetadata:
         kwargs['constraint_name'] = constraint_name
         self._constraints.append(kwargs)
 
+    def _detect_columns(self, data):
+        for field in data:
+            clean_data = data[field].dropna()
+            kind = clean_data.infer_objects().dtype.kind
+            self._columns[field] = {'sdtype': self._DTYPES_TO_SDTYPES.get(kind, 'categorical')}
+
     def detect_from_dataframe(self, data):
         """Detect the metadata from a ``pd.DataFrame`` object.
 
@@ -246,13 +252,16 @@ class SingleTableMetadata:
                 'object to detect from other data sources.'
             )
 
-        for field in data:
-            clean_data = data[field].dropna()
-            kind = clean_data.infer_objects().dtype.kind
-            self._columns[field] = {'sdtype': self._DTYPES_TO_SDTYPES.get(kind, 'categorical')}
+        self._detect_columns(data)
 
         print('Detected metadata:')  # noqa: T001
         print(json.dumps(self.to_dict(), indent=4))  # noqa: T001
+
+    def _load_data_from_csv(self, filepath, pandas_kwargs):
+        filepath = Path(filepath)
+        pandas_kwargs = pandas_kwargs or {}
+        data = pd.read_csv(filepath, **pandas_kwargs)
+        return data
 
     def detect_from_csv(self, filepath, pandas_kwargs=None):
         """Detect the metadata from a ``csv`` file.
@@ -272,9 +281,7 @@ class SingleTableMetadata:
                 'object to detect from other data sources.'
             )
 
-        filepath = Path(filepath)
-        pandas_kwargs = pandas_kwargs or {}
-        data = pd.read_csv(filepath, **pandas_kwargs)
+        data = self._load_data_from_csv(filepath, pandas_kwargs)
         self.detect_from_dataframe(data)
 
     @staticmethod
