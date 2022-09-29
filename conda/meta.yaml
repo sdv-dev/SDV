@@ -1,5 +1,5 @@
 {% set name = 'sdv' %}
-{% set version = '0.17.0' %}
+{% set version = '0.17.1.dev1' %}
 
 package:
   name: "{{ name|lower }}"
@@ -28,7 +28,7 @@ requirements:
     - ctgan >=0.5.2,<0.6
     - deepecho >=0.3.0.post1,<0.4
     - rdt >=1.2.0,<2
-    - sdmetrics >=0.6.0,<0.7
+    - sdmetrics >=0.7.0,<0.8
   run:
     - graphviz
     - python >=3.6,<3.10
@@ -41,7 +41,7 @@ requirements:
     - ctgan >=0.5.2,<0.6
     - deepecho >=0.3.0.post1,<0.4
     - rdt >=1.2.0,<2
-    - sdmetrics >=0.6.0,<0.7
+    - sdmetrics >=0.7.0,<0.8
 
 about:
   home: "https://sdv.dev"
