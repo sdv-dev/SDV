@@ -1,3 +1,7 @@
+from unittest.mock import patch
+
+import numpy as np
+import pandas as pd
 import pytest
 from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariate
 
@@ -95,3 +99,44 @@ class TestGaussianCopulaSynthesizer:
             'numerical_distributions': {},
             'default_distribution': 'beta'
         }
+
+    @patch('sdv.single_table.copulas.warnings')
+    @patch('sdv.single_table.copulas.copulas.multivariate')
+    def test__fit(self, mock_multivariate, mock_warnings):
+        """Test the ``_fit``.
+
+        Test that when fitting, numerical distributions are being generated for any missing column
+        or new one that be generated from the ``preprocess`` step. The model should be created with
+        the ``numerical_distributions``.
+        """
+        # Setup
+        metadata = SingleTableMetadata()
+        numerical_distributions = {'name': 'uniform', 'user.id': 'gamma'}
+
+        processed_data = pd.DataFrame({
+            'name.value': np.arange(10),
+            'user.id': np.arange(10),
+            'account_balance': np.arange(10)
+        })
+        instance = GaussianCopulaSynthesizer(
+            metadata,
+            numerical_distributions=numerical_distributions
+        )
+
+        # Run
+        instance._fit(processed_data)
+
+        # Assert
+        expected_numerical_distributions = {
+            'name': UniformUnivariate,
+            'name.value': UniformUnivariate,
+            'user.id': GammaUnivariate,
+            'account_balance': BetaUnivariate,
+        }
+
+        mock_multivariate.GaussianMultivariate.assert_called_once_with(
+            distribution=expected_numerical_distributions
+        )
+        instance._model.fit.assert_called_once_with(processed_data)
+        mock_warnings.filterwarnings.assert_called_once_with('ignore', module='scipy')
+        mock_warnings.catch_warnings.assert_called_once()
