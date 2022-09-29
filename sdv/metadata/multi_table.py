@@ -122,6 +122,18 @@ class MultiTableMetadata:
                 f'tables {errors}.'
             )
 
+    def _validate_relationship_does_not_exist(self, parent_table_name, parent_primary_key,
+                                              child_table_name, child_foreign_key):
+        for relationship in self._relationships:
+            already_exists = (
+                relationship['parent_table_name'] == parent_table_name and
+                relationship['parent_primary_key'] == parent_primary_key and
+                relationship['child_table_name'] == child_table_name and
+                relationship['child_foreign_key'] == child_foreign_key
+            )
+            if already_exists:
+                raise ValueError('This relationship has already been added.')
+
     def _validate_relationship(self, parent_table_name, child_table_name,
                                parent_primary_key, child_foreign_key):
         self._validate_no_missing_tables_in_relationship(
@@ -134,7 +146,11 @@ class MultiTableMetadata:
             child_foreign_key
         )
         self._validate_relationship_key_length(
-            parent_table_name, parent_primary_key, child_table_name, child_foreign_key)
+            parent_table_name,
+            parent_primary_key,
+            child_table_name,
+            child_foreign_key
+        )
 
         self._validate_relationship_sdtypes(
             parent_table_name,
@@ -180,6 +196,12 @@ class MultiTableMetadata:
 
         child_map = self._get_child_map()
         child_map[parent_table_name].add(child_table_name)
+        self._validate_relationship_does_not_exist(
+            parent_table_name,
+            parent_primary_key,
+            child_table_name,
+            child_foreign_key
+        )
         self._validate_child_map_circular_relationship(child_map)
 
         self._relationships.append({
