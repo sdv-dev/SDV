@@ -116,7 +116,7 @@ class TestBaseSynthesizer:
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
 
     def test_validate_type(self):
-        """When data is not of type ``pd.DataFrame``, an error should be raised."""
+        """Test error is raised if data is not ``pd.DataFrame``."""
         # Setup
         data = np.ndarray([])
         metadata = SingleTableMetadata()
@@ -128,7 +128,7 @@ class TestBaseSynthesizer:
             instance.validate(data)
 
     def test_validate_data_columns_in_empty_metadata(self):
-        """When data is passed and metadata is empty, an error should be raised."""
+        """Test error is raised if data is passed and metadata is empty."""
         # Setup
         data = pd.DataFrame({
             'col1': [1, 2, 3],
@@ -146,7 +146,7 @@ class TestBaseSynthesizer:
             instance.validate(data)
 
     def test_validate_data_columns_in_metadata(self):
-        """When data columns don't match metadata columns, an error should be raised."""
+        """Test error is raised if data columns don't match metadata columns."""
         # Setup
         data = pd.DataFrame({
             'col1': [1, 2, 3],
@@ -170,7 +170,7 @@ class TestBaseSynthesizer:
             instance.validate(data)
 
     def test_validate_keys_with_missing_values(self):
-        """When keys contain missing values, an error should be raised.
+        """Test error is raised if keys contain missing values.
 
         Setup:
             A ``SingleTableMetadata`` instance with one primary key and multiple sequence
@@ -217,7 +217,7 @@ class TestBaseSynthesizer:
             instance.validate(data)
 
     def test_validate_keys_with_missing2(self):
-        """When keys contain missing values, an error should be raised.
+        """Test error is raised if keys contain missing values.
 
         Test the case with a single sequence key.
         """
@@ -241,7 +241,7 @@ class TestBaseSynthesizer:
             instance.validate(data)
 
     def test_validate_keys_not_unique(self):
-        """When primary or alternate keys are not unique, an error should be raised."""
+        """Test error is raised if primary or alternate keys are not unique."""
         data = pd.DataFrame({
             'pk_col': [0, 1, 1, 0, 2],
             'ak_col1': [0, 1, 0, 3, 3],
@@ -270,7 +270,7 @@ class TestBaseSynthesizer:
             instance.validate(data)
 
     def test_validate_context_columns_unique_per_sequence_key(self):
-        """If context column values are not the same for each tuple of sequence keys, crash.
+        """Test error is raised if context column values vary for each tuple of sequence keys.
 
         Setup:
             A ``SingleTableMetadata`` instance where the context columns vary for different
@@ -307,7 +307,7 @@ class TestBaseSynthesizer:
             instance.validate(data)
 
     def test_validate_empty(self):
-        """When data is empty, it should pass.
+        """Test method doesn't raise when data is empty.
 
         Setup:
             ``SingleTableMetadata`` with one column for each sdtype and for each key.
@@ -336,7 +336,7 @@ class TestBaseSynthesizer:
         instance.validate(data)
 
     def test_validate_no_keys(self):
-        """It should pass even if no keys are passed."""
+        """Test method passes even if no keys are passed."""
         data = pd.DataFrame({
             'bool_col': [1, 2, 3],
             'num_col': [1, 2, 3],
@@ -352,7 +352,7 @@ class TestBaseSynthesizer:
         instance.validate(data)
 
     def test_validate_empty_dataframe(self):
-        """An empty DataFrame should be acceptable as input."""
+        """Test method doesn't raise when data is an empty dataframe."""
         data = pd.DataFrame()
         metadata = SingleTableMetadata()
         instance = BaseSynthesizer(metadata)
@@ -361,7 +361,7 @@ class TestBaseSynthesizer:
         instance.validate(data)
 
     def test_validate_sdtypes(self):
-        """When column values don't satistfy their sdtype, raise an error.
+        """Test error is raised if column values don't satistfy their sdtype.
 
         Setup:
             A ``SingleTableMetadata`` instance with two columns of each sdtype: numerical,
@@ -406,7 +406,7 @@ class TestBaseSynthesizer:
             instance.validate(data)
 
     def test_validate(self):
-        """Test the method doesn't crash when the passed data is vaild
+        """Test the method doesn't crash when the passed data is vaild.
 
         Setup:
             ``SingleTableMetadata`` describing at least one valid column of each key and sdtype.

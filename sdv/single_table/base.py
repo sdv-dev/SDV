@@ -4,9 +4,9 @@ import inspect
 
 import pandas as pd
 
-from sdv.constraints.utils import is_datetime_type
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.single_table.errors import InvalidDataError
+from sdv.utils import is_datetime_type
 
 
 class BaseSynthesizer:
@@ -82,16 +82,16 @@ class BaseSynthesizer:
     
     def _validate_metadata_matches_data(self, columns):
         errors = []
-        metadata_columns = self.metadata._columns if self.metadata._columns else []
-        invalid_data_columns = set(columns).difference(metadata_columns)
-        if invalid_data_columns:
+        metadata_columns = self.metadata._columns or []
+        missing_data_columns = set(columns).difference(metadata_columns)
+        if missing_data_columns:
             errors.append(
-                f'The columns {sorted(invalid_data_columns)} are not present in the metadata.')
+                f'The columns {sorted(missing_data_columns)} are not present in the metadata.')
 
-        invalid_metadata_columns = set(metadata_columns).difference(columns)
-        if invalid_metadata_columns:
+        missing_metadata_columns = set(metadata_columns).difference(columns)
+        if missing_metadata_columns:
             errors.append(
-                f'The metadata columns {sorted(invalid_metadata_columns)} '
+                f'The metadata columns {sorted(missing_metadata_columns)} '
                 'are not present in the data.'
             )
 
@@ -99,16 +99,13 @@ class BaseSynthesizer:
             raise InvalidDataError(errors)
 
     def _get_primary_plus_alternate_keys(self):
-        keys = set()
+        keys = set(self.metadata._alternate_keys)
         if self.metadata._primary_key:
-            keys = {self.metadata._primary_key}
-
-        if self.metadata._alternate_keys:
-            keys.update(set(self.metadata._alternate_keys))
+            keys.update({self.metadata._primary_key})
 
         return keys
 
-    def _get_sequence_keys(self):
+    def _get_set_of_sequence_keys(self):
         if isinstance(self.metadata._sequence_key, tuple):
             return set(self.metadata._sequence_key)
 
@@ -120,7 +117,7 @@ class BaseSynthesizer:
     def _validate_keys_dont_have_missing_values(self, data):
         errors = []
         keys = self._get_primary_plus_alternate_keys()
-        keys.update(self._get_sequence_keys())
+        keys.update(self._get_set_of_sequence_keys())
         for key in sorted(keys):
             if pd.isna(data[key]).any():
                 errors.append(f"Key column '{key}' contains missing values.")
@@ -128,7 +125,7 @@ class BaseSynthesizer:
         return errors
 
     @staticmethod
-    def _update_invalid_values(invalid_values):
+    def _format_invalid_values_string(invalid_values):
         invalid_values = sorted(invalid_values, key=lambda x: str(x))
         if len(invalid_values) > 3:
             return invalid_values[:3] + [f'+ {len(invalid_values) - 3} more']
@@ -141,7 +138,7 @@ class BaseSynthesizer:
         for key in sorted(keys):
             repeated_values = set(data[key][data[key].duplicated()])
             if repeated_values:
-                repeated_values = self._update_invalid_values(repeated_values)
+                repeated_values = self._format_invalid_values_string(repeated_values)
                 errors.append(f"Key column '{key}' contains repeating values: {repeated_values}")
 
         return errors
@@ -150,7 +147,7 @@ class BaseSynthesizer:
         errors = []
         context_column_names = self._data_processor._model_kwargs.get('context_columns')
         if context_column_names:
-            sequence_key_names = sorted(self._get_sequence_keys())
+            sequence_key_names = sorted(self._get_set_of_sequence_keys())
             for sequence_key, group in data.groupby(sequence_key_names):
                 if len(group.groupby(context_column_names)) != 1:
                     invalid_context_cols = {}
@@ -174,6 +171,15 @@ class BaseSynthesizer:
     def _is_boolean(value):
         return True if pd.isna(value) | (value is True) | (value is False) else False
 
+    def _validate_sdtype(self, sdtype, column, validation):
+        valid = column.apply(validation)
+        invalid_values = set(column[~valid])
+        if invalid_values:
+            invalid_values = self._format_invalid_values_string(invalid_values)
+            return [f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."]
+
+        return []
+
     def _validate_column(self, column):
         """Validate values of the column satisfy its sdtype properties."""
         errors = []
@@ -182,32 +188,17 @@ class BaseSynthesizer:
         # boolean values must be True/False, None or missing values
         # int/str are not allowed
         if sdtype == 'boolean':
-            valid = column.apply(self._is_boolean)
-            invalid_values = set(column[~valid])
-            if invalid_values:
-                invalid_values = self._update_invalid_values(invalid_values)
-                errors.append(
-                    f"Invalid values found for boolean column '{column.name}': {invalid_values}.")
+            errors += self._validate_sdtype(sdtype, column, self._is_boolean)
 
         # numerical values must be int/float, None or missing values
         # str/bool are not allowed
         if sdtype == 'numerical':
-            valid = column.apply(self._is_numerical)
-            invalid_values = set(column[~valid])
-            if invalid_values:
-                invalid_values = self._update_invalid_values(invalid_values)
-                errors.append(
-                    f"Invalid values found for numerical column '{column.name}': {invalid_values}."
-                )
+            errors += self._validate_sdtype(sdtype, column, self._is_numerical)
 
         # datetime values must be castable to datetime, None or missing values
         if sdtype == 'datetime':
-            valid = column.apply(lambda x: pd.isna(x) | is_datetime_type(x))
-            invalid_values = set(column[~valid])
-            if invalid_values:
-                invalid_values = self._update_invalid_values(invalid_values)
-                errors.append(
-                    f"Invalid values found for datetime column '{column.name}': {invalid_values}.")
+            errors += self._validate_sdtype(
+                sdtype, column, lambda x: pd.isna(x) | is_datetime_type(x))
 
         return errors
 
