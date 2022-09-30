@@ -175,5 +175,6 @@ def test_data_processor_with_primary_key_numerical(tmpdir):
 
     # Assert
     assert transformed.index.name == 'id'
+    assert 'id' not in transformed.columns
     assert reverse_transformed.index.isin(data.id).sum() == size
     assert len(reverse_transformed.id.unique()) == size
