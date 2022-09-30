@@ -829,6 +829,7 @@ class TestDataProcessor:
         instance._hyper_transformer.field_transformers = {
             'a': object()
         }
+        instance._primary_key_generator = None
 
         # Run
         result = DataProcessor.generate_primary_keys(instance, 10)
@@ -836,7 +837,8 @@ class TestDataProcessor:
         # Assert
         instance._hyper_transformer.create_anonymized_columns.assert_called_once_with(
             num_rows=10,
-            column_names=['a']
+            column_names=['a'],
+            reset_generator=False,
         )
 
         assert result == instance._hyper_transformer.create_anonymized_columns.return_value
@@ -858,8 +860,9 @@ class TestDataProcessor:
         """
         # Setup
         data = pd.DataFrame({
+            'id': ['a', 'b', 'c'],
             'item 0': [0, 1, 2],
-            'item 1': [True, True, False]
+            'item 1': [True, True, False],
         }, index=[0, 1, 2])
         dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
         dp._transform_constraints = Mock()
@@ -893,10 +896,9 @@ class TestDataProcessor:
 
         constraint_call = call('Transforming constraints for table table_name')
         transformer_call = call('Transforming table table_name')
-        primary_key_call = call('Generating primary keys for table table_name')
-        log_mock.debug.assert_has_calls([constraint_call, transformer_call, primary_key_call])
+        log_mock.debug.assert_has_calls([constraint_call, transformer_call])
 
-        pd.testing.assert_frame_equal(constraint_data, expected_data[['item 0', 'item 1']])
+        pd.testing.assert_frame_equal(constraint_data, data)
         pd.testing.assert_frame_equal(transformed, expected_data)
 
     def test_transform_not_fitted(self):

@@ -1,10 +1,10 @@
 """Single table data processing."""
 
+import itertools
 import json
 import logging
 from copy import deepcopy
 
-import numpy as np
 import pandas as pd
 import rdt
 
@@ -101,6 +101,7 @@ class DataProcessor:
         self.formatters = {}
         self._anonymized_columns = []
         self._primary_key = None
+        self._primary_key_generator = None
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -225,6 +226,7 @@ class DataProcessor:
                 ``True``.
         """
         if sdtype == 'numerical':
+            self._primary_key_generator = itertools.count()
             return None
 
         if sdtype == 'text':
@@ -307,11 +309,11 @@ class DataProcessor:
         for column_name in data:
             column_metadata = self.metadata._columns.get(column_name)
             if column_metadata.get('sdtype') == 'numerical':
-                computer_representation = column_metadata.get('computer_representation', 'Float')
+                representation = column_metadata.get('computer_representation', 'Float')
                 self.formatters[column_name] = NumericalFormatter(
                     learn_rounding_scheme=self._learn_rounding_scheme,
                     enforce_min_max_values=self._enforce_min_max_values,
-                    computer_representation=computer_representation
+                    computer_representation=representation
                 )
                 self.formatters[column_name].learn_format(data[column_name])
 
@@ -336,23 +338,30 @@ class DataProcessor:
         self._fit_hyper_transformer(constrained, columns_created_by_constraints)
         self.fitted = True
 
-    def generate_primary_keys(self, num_rows):
+    def generate_primary_keys(self, num_rows, reset_primary_key=False):
         """Generate the columns that are identified as ``primary keys``.
 
         Args:
             num_rows (int):
                 Number of rows to be created. Must be an integer greater than 0.
+            reset_primary_key (bool):
+                Whether or not reset the primary keys generators. Defaults to ``False``.
 
         Returns:
             pandas.DataFrame:
                 A data frame with the newly generated primary keys of the size ``num_rows``.
         """
         if self._hyper_transformer.field_transformers.get(self._primary_key) is None:
-            return pd.DataFrame({self._primary_key: np.arange(num_rows)})
+            if reset_primary_key:
+                self._primary_key_generator = itertools.count()
+
+            return pd.DataFrame({
+                self._primary_key: [next(self._primary_key_generator) for _ in range(num_rows)]
+            })
 
         return self._hyper_transformer.create_anonymized_columns(
             num_rows=num_rows,
-            column_names=[self._primary_key]
+            column_names=[self._primary_key],
         )
 
     def transform(self, data, is_condition=False):
@@ -370,35 +379,30 @@ class DataProcessor:
         if not self.fitted:
             raise NotFittedError()
 
-        primary_keys = None
-
         LOGGER.debug(f'Transforming constraints for table {self.table_name}')
         data = self._transform_constraints(data, is_condition)
 
         LOGGER.debug(f'Transforming table {self.table_name}')
         if self._primary_key and not is_condition:
-            LOGGER.debug(f'Generating primary keys for table {self.table_name}')
-            if self._primary_key in data:
-                data.pop(self._primary_key)  # Remove the column if it exists in the data.
-
-            primary_keys = self.generate_primary_keys(len(data))
+            # If it's numerical we have to drop it, else it's dropped by the hyper transformer
+            drop_primary_key = bool(self._primary_key_generator)
+            data.set_index(self._primary_key, drop=drop_primary_key, inplace=True)
 
         try:
             transformed = self._hyper_transformer.transform_subset(data)
         except (rdt.errors.NotFittedError, rdt.errors.Error):
             transformed = data
 
-        if primary_keys is not None:
-            return pd.concat([primary_keys, transformed], axis=1)
-
         return transformed
 
-    def reverse_transform(self, data):
+    def reverse_transform(self, data, reset_primary_key=False):
         """Reverse the transformed data to the original format.
 
         Args:
             data (pandas.DataFrame):
                 Data to be reverse transformed.
+            reset_primary_key (bool):
+                Whether or not reset the primary keys generators. Defaults to ``False``.
 
         Returns:
             pandas.DataFrame
@@ -411,8 +415,6 @@ class DataProcessor:
             for column in self._hyper_transformer._output_columns
             if column in data.columns
         ]
-        if self._primary_key:
-            primary_keys_data = pd.DataFrame({self._primary_key: data[self._primary_key]})
 
         reversed_data = data
         try:
@@ -426,18 +428,21 @@ class DataProcessor:
         for constraint in reversed(self._constraints_to_reverse):
             reversed_data = constraint.reverse_transform(reversed_data)
 
+        num_rows = len(reversed_data)
         if self._anonymized_columns:
             anonymized_data = self._hyper_transformer.create_anonymized_columns(
-                num_rows=len(reversed_data),
+                num_rows=num_rows,
                 column_names=self._anonymized_columns,
             )
+        if self._primary_key:
+            primary_keys = self.generate_primary_keys(num_rows, reset_primary_key)
 
         original_columns = list(self.metadata._columns.keys())
         for column_name in original_columns:
             if column_name in self._anonymized_columns:
                 column_data = anonymized_data[column_name]
             elif column_name == self._primary_key:
-                column_data = primary_keys_data[column_name]
+                column_data = primary_keys[column_name]
             else:
                 column_data = reversed_data[column_name]
 

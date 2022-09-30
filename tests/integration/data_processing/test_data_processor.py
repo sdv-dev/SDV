@@ -1,4 +1,5 @@
 """Integration tests for the ``DataProcessor``."""
+import itertools
 
 import numpy as np
 
@@ -115,10 +116,12 @@ def test_data_processor_with_anonymized_columns_and_primary_key(tmpdir):
     reverse_transformed = dp.reverse_transform(transformed)
 
     # Assert
+    assert transformed.index.name == 'id'
     assert reverse_transformed.occupation.isin(data.occupation).sum() == 0
     assert 'occupation' not in transformed.columns
-    assert transformed.id.isin(data.id).sum() == 0
-    assert len(transformed.id.unique()) == size
+    assert 'id' not in transformed.columns
+    assert reverse_transformed.id.isin(data.id).sum() == 0
+    assert len(reverse_transformed.id.unique()) == size
 
 
 def test_data_processor_with_primary_key_numerical(tmpdir):
@@ -154,7 +157,9 @@ def test_data_processor_with_primary_key_numerical(tmpdir):
 
     # Add id
     size = len(data)
-    data['id'] = np.arange(0, size)
+    id_generator = itertools.count()
+    ids = [next(id_generator) for _ in range(size)]
+    data['id'] = ids
 
     # Instance ``DataProcessor``
     dp = DataProcessor(adult_metadata)
@@ -166,8 +171,9 @@ def test_data_processor_with_primary_key_numerical(tmpdir):
     transformed = dp.transform(data)
 
     # Reverse Transform
-    dp.reverse_transform(transformed)
+    reverse_transformed = dp.reverse_transform(transformed)
 
     # Assert
-    assert transformed.id.isin(data.id).sum() == size
-    assert len(transformed.id.unique()) == size
+    assert transformed.index.name == 'id'
+    assert reverse_transformed.index.isin(data.id).sum() == size
+    assert len(reverse_transformed.id.unique()) == size
