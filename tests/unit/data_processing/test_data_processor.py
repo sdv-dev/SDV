@@ -838,7 +838,6 @@ class TestDataProcessor:
         instance._hyper_transformer.create_anonymized_columns.assert_called_once_with(
             num_rows=10,
             column_names=['a'],
-            reset_generator=False,
         )
 
         assert result == instance._hyper_transformer.create_anonymized_columns.return_value
