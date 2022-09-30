@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.multi_single_column &#8212; SDV 0.17.0 documentation</title>
+    <title>sdmetrics.single_table.multi_single_column &#8212; SDV 0.17.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -233,7 +233,8 @@
 <span class="sd">            Dict[string -&gt; Union[float, tuple[float]]]:</span>
 <span class="sd">                A mapping of column name to metric output.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+        <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span>
+            <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
 
         <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_select_fields</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_types</span><span class="p">)</span>
         <span class="n">invalid_cols</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
@@ -312,7 +313,7 @@
 <span class="sd">                A mapping of column name to metric output.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_compute</span><span class="p">(</span>
-            <span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">store_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">store_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
@@ -350,7 +351,7 @@
 <span class="sd">    of all the scores obtained.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="p">)</span>
+    <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;datetime&#39;</span><span class="p">)</span>
     <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">KSComplement</span></div>
 
 
@@ -403,6 +404,16 @@
 
     <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;categorical&#39;</span><span class="p">,</span> <span class="s1">&#39;boolean&#39;</span><span class="p">)</span>
     <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">TVComplement</span>
+
+
+<span class="k">class</span> <span class="nc">RangeCoverage</span><span class="p">(</span><span class="n">MultiSingleColumnMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleColumnMetric based on SingleColumn RangeCoverage.</span>
+
+<span class="sd">    Compute the complement of the total variaton distance between the real and synthetic data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">field_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;numerical&#39;</span><span class="p">,</span> <span class="s1">&#39;datetime&#39;</span><span class="p">)</span>
+    <span class="n">single_column_metric</span> <span class="o">=</span> <span class="n">single_column</span><span class="o">.</span><span class="n">statistical</span><span class="o">.</span><span class="n">RangeCoverage</span>
 </pre></div>
 
               </div>

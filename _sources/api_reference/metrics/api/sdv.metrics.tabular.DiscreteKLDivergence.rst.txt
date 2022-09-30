@@ -15,6 +15,7 @@
    
       ~DiscreteKLDivergence.__init__
       ~DiscreteKLDivergence.compute
+      ~DiscreteKLDivergence.compute_breakdown
       ~DiscreteKLDivergence.get_subclasses
       ~DiscreteKLDivergence.normalize
    

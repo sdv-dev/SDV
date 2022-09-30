@@ -15,6 +15,7 @@
    
       ~ContinuousKLDivergence.__init__
       ~ContinuousKLDivergence.compute
+      ~ContinuousKLDivergence.compute_breakdown
       ~ContinuousKLDivergence.get_subclasses
       ~ContinuousKLDivergence.normalize
    

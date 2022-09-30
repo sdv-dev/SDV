@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.detection.sklearn &#8212; SDV 0.17.0 documentation</title>
+    <title>sdmetrics.single_table.detection.sklearn &#8212; SDV 0.17.1 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -194,7 +194,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_fit_predict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit a pipeline to train data and then use it to make prediction on test data.&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;Fit a pipeline to the training data and then use it to make prediction on test data.&quot;&quot;&quot;</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">([</span>
             <span class="p">(</span><span class="s1">&#39;imputer&#39;</span><span class="p">,</span> <span class="n">SimpleImputer</span><span class="p">()),</span>
             <span class="p">(</span><span class="s1">&#39;scalar&#39;</span><span class="p">,</span> <span class="n">RobustScaler</span><span class="p">()),</span>

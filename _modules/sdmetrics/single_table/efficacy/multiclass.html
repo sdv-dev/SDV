@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.efficacy.multiclass &#8212; SDV 0.17.0 documentation</title>
+    <title>sdmetrics.single_table.efficacy.multiclass &#8212; SDV 0.17.1 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -176,9 +176,9 @@
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.efficacy.base</span> <span class="kn">import</span> <span class="n">MLEfficacyMetric</span>
 
 
-<span class="k">def</span> <span class="nf">f1_macro</span><span class="p">(</span><span class="n">real_target</span><span class="p">,</span> <span class="n">predictions</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">f1_macro</span><span class="p">(</span><span class="n">test_target</span><span class="p">,</span> <span class="n">predictions</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return the `f1_score` of the passed data.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">f1_score</span><span class="p">(</span><span class="n">real_target</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s1">&#39;macro&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">f1_score</span><span class="p">(</span><span class="n">test_target</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s1">&#39;macro&#39;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="MulticlassEfficacyMetric"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.MulticlassEfficacyMetric.html#sdv.metrics.tabular.MulticlassEfficacyMetric">[docs]</a><span class="k">class</span> <span class="nc">MulticlassEfficacyMetric</span><span class="p">(</span><span class="n">MLEfficacyMetric</span><span class="p">):</span>
@@ -208,8 +208,8 @@
 <div class="viewcode-block" id="MulticlassDecisionTreeClassifier"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.MulticlassDecisionTreeClassifier.html#sdv.metrics.tabular.MulticlassDecisionTreeClassifier">[docs]</a><span class="k">class</span> <span class="nc">MulticlassDecisionTreeClassifier</span><span class="p">(</span><span class="n">MulticlassEfficacyMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Multiclass DecisionTreeClassifier Efficacy based metric.</span>
 
-<span class="sd">    This fits a DecisionTreeClassifier to the synthetic data and</span>
-<span class="sd">    then evaluates it making predictions on the real data.</span>
+<span class="sd">    This fits a DecisionTreeClassifier to the training data and</span>
+<span class="sd">    then evaluates it making predictions on the test data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">DecisionTreeClassifier</span>
@@ -222,8 +222,8 @@
 <div class="viewcode-block" id="MulticlassMLPClassifier"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.MulticlassMLPClassifier.html#sdv.metrics.tabular.MulticlassMLPClassifier">[docs]</a><span class="k">class</span> <span class="nc">MulticlassMLPClassifier</span><span class="p">(</span><span class="n">MulticlassEfficacyMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Multiclass MLPClassifier Efficacy based metric.</span>
 
-<span class="sd">    This fits a MLPClassifier to the synthetic data and</span>
-<span class="sd">    then evaluates it making predictions on the real data.</span>
+<span class="sd">    This fits a MLPClassifier to the training data and</span>
+<span class="sd">    then evaluates it making predictions on the test data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">MLPClassifier</span>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.efficacy.regression &#8212; SDV 0.17.0 documentation</title>
+    <title>sdmetrics.single_table.efficacy.regression &#8212; SDV 0.17.1 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -203,8 +203,8 @@
 <div class="viewcode-block" id="LinearRegression"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.LinearRegression.html#sdv.metrics.tabular.LinearRegression">[docs]</a><span class="k">class</span> <span class="nc">LinearRegression</span><span class="p">(</span><span class="n">RegressionEfficacyMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;LinearRegression Efficacy based metric.</span>
 
-<span class="sd">    This fits a LinearRegression to the synthetic data and</span>
-<span class="sd">    then evaluates it making predictions on the real data.</span>
+<span class="sd">    This fits a LinearRegression to the training data and</span>
+<span class="sd">    then evaluates it making predictions on the test data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">linear_model</span><span class="o">.</span><span class="n">LinearRegression</span></div>
@@ -213,8 +213,8 @@
 <div class="viewcode-block" id="MLPRegressor"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.MLPRegressor.html#sdv.metrics.tabular.MLPRegressor">[docs]</a><span class="k">class</span> <span class="nc">MLPRegressor</span><span class="p">(</span><span class="n">RegressionEfficacyMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MLPRegressor Efficacy based metric.</span>
 
-<span class="sd">    This fits a MLPRegressor to the synthetic data and</span>
-<span class="sd">    then evaluates it making predictions on the real data.</span>
+<span class="sd">    This fits a MLPRegressor to the training data and</span>
+<span class="sd">    then evaluates it making predictions on the test data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">neural_network</span><span class="o">.</span><span class="n">MLPRegressor</span>

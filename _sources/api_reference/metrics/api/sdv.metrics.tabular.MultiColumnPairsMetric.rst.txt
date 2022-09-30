@@ -15,6 +15,7 @@
    
       ~MultiColumnPairsMetric.__init__
       ~MultiColumnPairsMetric.compute
+      ~MultiColumnPairsMetric.compute_breakdown
       ~MultiColumnPairsMetric.get_subclasses
       ~MultiColumnPairsMetric.normalize
    

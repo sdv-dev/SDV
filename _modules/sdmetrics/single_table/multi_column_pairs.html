@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.multi_column_pairs &#8212; SDV 0.17.0 documentation</title>
+    <title>sdmetrics.single_table.multi_column_pairs &#8212; SDV 0.17.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -231,7 +231,8 @@
 <span class="sd">            Union[float, tuple[float]]:</span>
 <span class="sd">                Metric output.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+        <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span>
+            <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
 
         <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_select_fields</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_types</span><span class="p">)</span>
 
@@ -263,6 +264,40 @@
 <span class="sd">                Metric output.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compute_breakdown</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute the breakdown of this metric.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            real_data (Union[numpy.ndarray, pandas.DataFrame]):</span>
+<span class="sd">                The values from the real dataset.</span>
+<span class="sd">            synthetic_data (Union[numpy.ndarray, pandas.DataFrame]):</span>
+<span class="sd">                The values from the synthetic dataset.</span>
+<span class="sd">            metadata (dict):</span>
+<span class="sd">                Table metadata dict.</span>
+<span class="sd">            **kwargs:</span>
+<span class="sd">                Any additional keyword arguments will be passed down</span>
+<span class="sd">                to the column pairs metric</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict:</span>
+<span class="sd">                Metric output.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span>
+            <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+
+        <span class="n">fields</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_select_fields</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">field_types</span><span class="p">)</span>
+
+        <span class="n">breakdown</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">columns</span> <span class="ow">in</span> <span class="n">combinations</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+            <span class="n">sorted_columns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">columns</span><span class="p">))</span>
+            <span class="n">real</span> <span class="o">=</span> <span class="n">real_data</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">sorted_columns</span><span class="p">)]</span>
+            <span class="n">synthetic</span> <span class="o">=</span> <span class="n">synthetic_data</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">sorted_columns</span><span class="p">)]</span>
+            <span class="n">breakdown</span><span class="p">[</span><span class="n">sorted_columns</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">column_pairs_metric</span><span class="o">.</span><span class="n">compute_breakdown</span><span class="p">(</span>
+                <span class="n">real</span><span class="p">,</span> <span class="n">synthetic</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">breakdown</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>

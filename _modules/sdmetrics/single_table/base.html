@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.base &#8212; SDV 0.17.0 documentation</title>
+    <title>sdmetrics.single_table.base &#8212; SDV 0.17.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -168,7 +168,10 @@
   <h1>Source code for sdmetrics.single_table.base</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Base Single Table metric class.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">attrgetter</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="kn">from</span> <span class="nn">sdmetrics.base</span> <span class="kn">import</span> <span class="n">BaseMetric</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.errors</span> <span class="kn">import</span> <span class="n">IncomputableMetricError</span>
@@ -251,12 +254,29 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_validate_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate the inputs and return a valid metadata.</span>
+        <span class="sd">&quot;&quot;&quot;Validate the inputs and return the validated data and metadata.</span>
 
 <span class="sd">        If a metadata is passed, the data is validated against it.</span>
 
 <span class="sd">        If no metadata is passed, one is built based on the ``real_data`` values.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            real_data (pandas.DataFrame):</span>
+<span class="sd">                The real data.</span>
+<span class="sd">            synthetic_data(pandas.DataFrame):</span>
+<span class="sd">                The synthetic data.</span>
+<span class="sd">            metadata (dict or Metadata or None):</span>
+<span class="sd">                The metadata, if any.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (pandas.DataFrame, pandas.DataFrame, dict):</span>
+<span class="sd">                The validated data and metadata.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">real_data</span> <span class="o">=</span> <span class="n">real_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">synthetic_data</span> <span class="o">=</span> <span class="n">synthetic_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">real_data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;`real_data` and `synthetic_data` must have the same columns&#39;</span><span class="p">)</span>
 
@@ -269,14 +289,25 @@
                 <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Column </span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s1"> not found in metadata&#39;</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">field_meta</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">real_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Field </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s1"> not found in data&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">field_meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;datetime&#39;</span> <span class="ow">and</span>
+                    <span class="s1">&#39;format&#39;</span> <span class="ow">in</span> <span class="n">field_meta</span> <span class="ow">and</span>
+                    <span class="n">real_data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;O&#39;</span>
+                <span class="p">):</span>
+                    <span class="n">real_data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span>
+                        <span class="n">real_data</span><span class="p">[</span><span class="n">field</span><span class="p">],</span> <span class="nb">format</span><span class="o">=</span><span class="n">field_meta</span><span class="p">[</span><span class="s1">&#39;format&#39;</span><span class="p">])</span>
+                    <span class="n">synthetic_data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span>
+                        <span class="n">synthetic_data</span><span class="p">[</span><span class="n">field</span><span class="p">],</span> <span class="nb">format</span><span class="o">=</span><span class="n">field_meta</span><span class="p">[</span><span class="s1">&#39;format&#39;</span><span class="p">])</span>
 
-            <span class="k">return</span> <span class="n">metadata</span>
+            <span class="k">return</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span>
 
         <span class="n">dtype_kinds</span> <span class="o">=</span> <span class="n">real_data</span><span class="o">.</span><span class="n">dtypes</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">attrgetter</span><span class="p">(</span><span class="s1">&#39;kind&#39;</span><span class="p">))</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="n">dtype_kinds</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_DTYPES_TO_TYPES</span><span class="o">.</span><span class="n">get</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()}</span>
+        <span class="k">return</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="n">dtype_kinds</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_DTYPES_TO_TYPES</span><span class="o">.</span><span class="n">get</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
+        <span class="p">}</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>

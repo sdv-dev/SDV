@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.privacy.base &#8212; SDV 0.17.0 documentation</title>
+    <title>sdmetrics.single_table.privacy.base &#8212; SDV 0.17.1 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -230,7 +230,8 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_validate_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">key_fields</span><span class="p">,</span> <span class="n">sensitive_fields</span><span class="p">):</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+        <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span>
+            <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
         <span class="k">if</span> <span class="s1">&#39;key_fields&#39;</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">:</span>
             <span class="n">key_fields</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;key_fields&#39;</span><span class="p">]</span>
         <span class="k">elif</span> <span class="n">key_fields</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -376,7 +377,8 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_validate_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">key_fields</span><span class="p">,</span> <span class="n">sensitive_fields</span><span class="p">):</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+        <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">(</span>
+            <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
         <span class="k">if</span> <span class="s1">&#39;key_fields&#39;</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">:</span>
             <span class="n">key_fields</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;key_fields&#39;</span><span class="p">]</span>
         <span class="k">elif</span> <span class="n">key_fields</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>

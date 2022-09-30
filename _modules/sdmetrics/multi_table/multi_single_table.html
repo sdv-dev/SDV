@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.multi_table.multi_single_table &#8212; SDV 0.17.0 documentation</title>
+    <title>sdmetrics.multi_table.multi_single_table &#8212; SDV 0.17.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -373,6 +373,12 @@
     <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">TVComplement</span>
 
 
+<span class="k">class</span> <span class="nc">RangeCoverage</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable RangeCoverage.&quot;&quot;&quot;</span>
+
+    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">multi_single_column</span><span class="o">.</span><span class="n">RangeCoverage</span>
+
+
 <span class="k">class</span> <span class="nc">CorrelationSimilarity</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable CorrelationSimilarity.&quot;&quot;&quot;</span>
 
@@ -401,6 +407,12 @@
     <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable BNLikelihood.&quot;&quot;&quot;</span>
 
     <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">bayesian_network</span><span class="o">.</span><span class="n">BNLikelihood</span></div>
+
+
+<span class="k">class</span> <span class="nc">NewRowSynthesis</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;MultiSingleTableMetric based on SingleTable NewRowSynthesis.&quot;&quot;&quot;</span>
+
+    <span class="n">single_table_metric</span> <span class="o">=</span> <span class="n">single_table</span><span class="o">.</span><span class="n">new_row_synthesis</span><span class="o">.</span><span class="n">NewRowSynthesis</span>
 
 
 <div class="viewcode-block" id="BNLogLikelihood"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.relational.BNLogLikelihood.html#sdv.metrics.relational.BNLogLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLogLikelihood</span><span class="p">(</span><span class="n">MultiSingleTableMetric</span><span class="p">):</span>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metrics.tabular.MLPRegressor.compute &#8212; SDV 0.17.0 documentation</title>
+    <title>sdv.metrics.tabular.MLPRegressor.compute &#8212; SDV 0.17.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -709,10 +709,10 @@
 <h1>sdv.metrics.tabular.MLPRegressor.compute<a class="headerlink" href="#sdv-metrics-tabular-mlpregressor-compute" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
 <dt id="sdv.metrics.tabular.MLPRegressor.compute">
-<em class="property">classmethod </em><code class="sig-prename descclassname">MLPRegressor.</code><code class="sig-name descname">compute</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">real_data</span></em>, <em class="sig-param"><span class="n">synthetic_data</span></em>, <em class="sig-param"><span class="n">metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">target</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scorer</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.metrics.tabular.MLPRegressor.compute" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="sig-prename descclassname">MLPRegressor.</code><code class="sig-name descname">compute</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_data</span></em>, <em class="sig-param"><span class="n">train_data</span></em>, <em class="sig-param"><span class="n">metadata</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">target</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scorer</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sdv.metrics.tabular.MLPRegressor.compute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute this metric.</p>
-<p>This fits a Machine Learning model on the synthetic data and
-then evaluates it making predictions on the real data.</p>
+<p>This fits a Machine Learning model on the training data and
+then evaluates it making predictions on the test data.</p>
 <p>A <code class="docutils literal notranslate"><span class="pre">target</span></code> column name must be given, either directly or as a first level
 entry in the <code class="docutils literal notranslate"><span class="pre">metadata</span></code> dict, which will be used as the target column for the
 Machine Learning prediction.</p>
@@ -721,15 +721,15 @@ one for the type of problem is used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>real_data</strong> (<em>Union</em><em>[</em><em>numpy.ndarray</em><em>, </em><em>pandas.DataFrame</em><em>]</em>) – The values from the real dataset.</p></li>
-<li><p><strong>synthetic_data</strong> (<em>Union</em><em>[</em><em>numpy.ndarray</em><em>, </em><em>pandas.DataFrame</em><em>]</em>) – The values from the synthetic dataset.</p></li>
+<li><p><strong>test_data</strong> (<em>Union</em><em>[</em><em>numpy.ndarray</em><em>, </em><em>pandas.DataFrame</em><em>]</em>) – The values from the test dataset.</p></li>
+<li><p><strong>train_data</strong> (<em>Union</em><em>[</em><em>numpy.ndarray</em><em>, </em><em>pandas.DataFrame</em><em>]</em>) – The values from the training dataset.</p></li>
 <li><p><strong>target</strong> (<em>str</em>) – Name of the column to use as the target.</p></li>
 <li><p><strong>scorer</strong> (<em>Union</em><em>[</em><em>callable</em><em>, </em><em>list</em><em>[</em><em>callable</em><em>]</em><em>, </em><em>NoneType</em><em>]</em>) – Scorer (or list of scorers) to apply. If not passed, use the default
 one for the type of metric.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Scores obtained by the models when evaluated on the real data.</p>
+<dd class="field-even"><p>Scores obtained by the models when evaluated on the test data.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>union[float, tuple[float]]</p>

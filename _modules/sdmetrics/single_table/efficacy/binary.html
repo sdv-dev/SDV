@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.efficacy.binary &#8212; SDV 0.17.0 documentation</title>
+    <title>sdmetrics.single_table.efficacy.binary &#8212; SDV 0.17.1 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -188,21 +188,21 @@
     <span class="n">SCORER</span> <span class="o">=</span> <span class="n">f1_score</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_score</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">scorer</span><span class="p">,</span> <span class="n">real_target</span><span class="p">,</span> <span class="n">predictions</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">real_target</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;object&#39;</span><span class="p">:</span>
-            <span class="n">first_label</span> <span class="o">=</span> <span class="n">real_target</span><span class="o">.</span><span class="n">unique</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">real_target</span> <span class="o">=</span> <span class="n">real_target</span> <span class="o">==</span> <span class="n">first_label</span>
+    <span class="k">def</span> <span class="nf">_score</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">scorer</span><span class="p">,</span> <span class="n">test_target</span><span class="p">,</span> <span class="n">predictions</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">test_target</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;object&#39;</span><span class="p">:</span>
+            <span class="n">first_label</span> <span class="o">=</span> <span class="n">test_target</span><span class="o">.</span><span class="n">unique</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">test_target</span> <span class="o">=</span> <span class="n">test_target</span> <span class="o">==</span> <span class="n">first_label</span>
             <span class="k">if</span> <span class="n">predictions</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;object&#39;</span><span class="p">:</span>
                 <span class="n">predictions</span> <span class="o">=</span> <span class="n">predictions</span> <span class="o">==</span> <span class="n">first_label</span>
 
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_score</span><span class="p">(</span><span class="n">scorer</span><span class="p">,</span> <span class="n">real_target</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_score</span><span class="p">(</span><span class="n">scorer</span><span class="p">,</span> <span class="n">test_target</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_fit_predict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">synthetic_target</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">real_target</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">real_target</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;object&#39;</span><span class="p">:</span>
-            <span class="n">synthetic_target</span> <span class="o">=</span> <span class="n">synthetic_target</span> <span class="o">==</span> <span class="n">real_target</span><span class="o">.</span><span class="n">unique</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">_fit_predict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">train_data</span><span class="p">,</span> <span class="n">train_target</span><span class="p">,</span> <span class="n">test_data</span><span class="p">,</span> <span class="n">test_target</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">test_target</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;object&#39;</span><span class="p">:</span>
+            <span class="n">train_target</span> <span class="o">=</span> <span class="n">train_target</span> <span class="o">==</span> <span class="n">test_target</span><span class="o">.</span><span class="n">unique</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
 
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_fit_predict</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">synthetic_target</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">real_target</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_fit_predict</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">train_target</span><span class="p">,</span> <span class="n">test_data</span><span class="p">,</span> <span class="n">test_target</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
@@ -222,8 +222,8 @@
 <div class="viewcode-block" id="BinaryDecisionTreeClassifier"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.BinaryDecisionTreeClassifier.html#sdv.metrics.tabular.BinaryDecisionTreeClassifier">[docs]</a><span class="k">class</span> <span class="nc">BinaryDecisionTreeClassifier</span><span class="p">(</span><span class="n">BinaryEfficacyMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Binary DecisionTreeClassifier Efficacy based metric.</span>
 
-<span class="sd">    This fits a DecisionTreeClassifier to the synthetic data and</span>
-<span class="sd">    then evaluates it making predictions on the real data.</span>
+<span class="sd">    This fits a DecisionTreeClassifier to the training data and</span>
+<span class="sd">    then evaluates it making predictions on the test data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">DecisionTreeClassifier</span>
@@ -236,8 +236,8 @@
 <div class="viewcode-block" id="BinaryAdaBoostClassifier"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.BinaryAdaBoostClassifier.html#sdv.metrics.tabular.BinaryAdaBoostClassifier">[docs]</a><span class="k">class</span> <span class="nc">BinaryAdaBoostClassifier</span><span class="p">(</span><span class="n">BinaryEfficacyMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Binary AdaBoostClassifier Efficacy based metric.</span>
 
-<span class="sd">    This fits an AdaBoostClassifier to the synthetic data and</span>
-<span class="sd">    then evaluates it making predictions on the real data.</span>
+<span class="sd">    This fits an AdaBoostClassifier to the training data and</span>
+<span class="sd">    then evaluates it making predictions on the test data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">AdaBoostClassifier</span></div>
@@ -246,8 +246,8 @@
 <div class="viewcode-block" id="BinaryLogisticRegression"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.BinaryLogisticRegression.html#sdv.metrics.tabular.BinaryLogisticRegression">[docs]</a><span class="k">class</span> <span class="nc">BinaryLogisticRegression</span><span class="p">(</span><span class="n">BinaryEfficacyMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Binary LogisticRegression Efficacy based metric.</span>
 
-<span class="sd">    This fits a LogisticRegression to the synthetic data and</span>
-<span class="sd">    then evaluates it making predictions on the real data.</span>
+<span class="sd">    This fits a LogisticRegression to the training data and</span>
+<span class="sd">    then evaluates it making predictions on the test data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">LogisticRegression</span>
@@ -262,8 +262,8 @@
 <div class="viewcode-block" id="BinaryMLPClassifier"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.BinaryMLPClassifier.html#sdv.metrics.tabular.BinaryMLPClassifier">[docs]</a><span class="k">class</span> <span class="nc">BinaryMLPClassifier</span><span class="p">(</span><span class="n">BinaryEfficacyMetric</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Binary MLPClassifier Efficacy based metric.</span>
 
-<span class="sd">    This fits a MLPClassifier to the synthetic data and</span>
-<span class="sd">    then evaluates it making predictions on the real data.</span>
+<span class="sd">    This fits a MLPClassifier to the training data and</span>
+<span class="sd">    then evaluates it making predictions on the test data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">MLPClassifier</span>

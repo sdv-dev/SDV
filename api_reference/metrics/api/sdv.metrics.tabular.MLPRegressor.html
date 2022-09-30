@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metrics.tabular.MLPRegressor &#8212; SDV 0.17.0 documentation</title>
+    <title>sdv.metrics.tabular.MLPRegressor &#8212; SDV 0.17.1 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -711,8 +711,8 @@
 <dt id="sdv.metrics.tabular.MLPRegressor">
 <em class="property">class </em><code class="sig-prename descclassname">sdv.metrics.tabular.</code><code class="sig-name descname">MLPRegressor</code><a class="reference internal" href="../../../_modules/sdmetrics/single_table/efficacy/regression.html#MLPRegressor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdv.metrics.tabular.MLPRegressor" title="Permalink to this definition">¶</a></dt>
 <dd><p>MLPRegressor Efficacy based metric.</p>
-<p>This fits a MLPRegressor to the synthetic data and
-then evaluates it making predictions on the real data.</p>
+<p>This fits a MLPRegressor to the training data and
+then evaluates it making predictions on the test data.</p>
 <dl class="py method">
 <dt id="sdv.metrics.tabular.MLPRegressor.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sdv.metrics.tabular.MLPRegressor.__init__" title="Permalink to this definition">¶</a></dt>
@@ -732,7 +732,7 @@ then evaluates it making predictions on the real data.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#sdv.metrics.tabular.MLPRegressor.__init__" title="sdv.metrics.tabular.MLPRegressor.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>()</p></td>
 <td><p>Initialize self.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sdv.metrics.tabular.MLPRegressor.compute.html#sdv.metrics.tabular.MLPRegressor.compute" title="sdv.metrics.tabular.MLPRegressor.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute</span></code></a>(real_data, synthetic_data[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sdv.metrics.tabular.MLPRegressor.compute.html#sdv.metrics.tabular.MLPRegressor.compute" title="sdv.metrics.tabular.MLPRegressor.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute</span></code></a>(test_data, train_data[, metadata, …])</p></td>
 <td><p>Compute this metric.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sdv.metrics.tabular.MLPRegressor.get_subclasses.html#sdv.metrics.tabular.MLPRegressor.get_subclasses" title="sdv.metrics.tabular.MLPRegressor.get_subclasses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_subclasses</span></code></a>([include_parents])</p></td>
