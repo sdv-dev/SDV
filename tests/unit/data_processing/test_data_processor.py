@@ -607,7 +607,7 @@ class TestDataProcessor:
         # Setup
         data = pd.DataFrame({'col1': ['abc', 'def'], 'col2': [1, 2], 'col3': [3, 4]})
         metadata = SingleTableMetadata()
-        metadata.add_column('col1', sdtype='non_numerical')
+        metadata.add_column('col1', sdtype='categorical')
         metadata.add_column('col2', sdtype='numerical')
         metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
         dp = DataProcessor(metadata, learn_rounding_scheme=False, enforce_min_max_values=False)
@@ -1096,7 +1096,7 @@ class TestDataProcessor:
         metadata = SingleTableMetadata()
         metadata.add_column('col1', sdtype='numerical')
         metadata.add_column('col2', sdtype='numerical')
-        metadata.add_column('col3', sdtype='non_numerical')
+        metadata.add_column('col3', sdtype='categorical')
 
         dp = DataProcessor(metadata)
         dp.formatters = {'col1': formatter_mock1, 'col2': formatter_mock2}

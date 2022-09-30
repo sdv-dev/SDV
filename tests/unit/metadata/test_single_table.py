@@ -307,6 +307,23 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             instance._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
 
+    def test__validate_column_invalid_sdtype(self):
+        """Test the method with an invalid sdtype.
+
+        If the sdtype isn't one of the supported types, anonymized types or Faker functions,
+        then an error should be raised.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run / Assert
+        error_msg = re.escape(
+            "Invalid sdtype : 'fake_type' is not recognized. Please use one of the "
+            'supported SDV sdtypes.'
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            instance._validate_column('column', 'fake_type')
+
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_numerical')
     def test__validate_column_numerical(self, mock__validate_numerical, mock__validate_kwargs):
@@ -514,6 +531,23 @@ class TestSingleTableMetadata:
         error_msg = re.escape("Please provide a 'sdtype' for column 'synthetic'.")
         with pytest.raises(ValueError, match=error_msg):
             instance.add_column('synthetic')
+
+    def test_add_column_invalid_sdtype(self):
+        """Test the method with an invalid sdtype.
+
+        If the sdtype isn't one of the supported types, anonymized types or Faker functions,
+        then an error should be raised.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run / Assert
+        error_msg = re.escape(
+            "Invalid sdtype : 'fake_type' is not recognized. Please use one of the "
+            'supported SDV sdtypes.'
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            instance.add_column('column', sdtype='fake_type')
 
     def test_add_column(self):
         """Test ``add_column`` method.

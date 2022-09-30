@@ -11,7 +11,7 @@ import pandas as pd
 
 from sdv.constraints import Constraint
 from sdv.constraints.errors import AggregateConstraintsError
-from sdv.data_processing.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
+from sdv.metadata.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import cast_to_iterable, read_json, validate_file_does_not_exist
@@ -137,8 +137,8 @@ class SingleTableMetadata:
             )
 
     def _validate_column(self, column_name, sdtype, **kwargs):
-        self._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
         self._validate_sdtype(sdtype)
+        self._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
         if sdtype == 'categorical':
             self._validate_categorical(column_name, **kwargs)
         elif sdtype == 'numerical':
