@@ -386,7 +386,7 @@ class DataProcessor:
         if self._primary_key and not is_condition:
             # If it's numerical we have to drop it, else it's dropped by the hyper transformer
             drop_primary_key = bool(self._primary_key_generator)
-            data.set_index(self._primary_key, drop=drop_primary_key, inplace=True)
+            data = data.set_index(self._primary_key, drop=drop_primary_key)
 
         try:
             transformed = self._hyper_transformer.transform_subset(data)
