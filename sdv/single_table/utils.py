@@ -1,7 +1,5 @@
 """Utility functions for tabular models."""
 
-import numpy as np
-
 
 def detect_discrete_columns(metadata, data):
     """Detect th discrete columns in a dataset.
@@ -21,18 +19,17 @@ def detect_discrete_columns(metadata, data):
 
     for column in data.columns:
         if column in metadata._columns:
-            if metadata._columns[column]['sdtype'] == 'categorical':
+            if metadata._columns[column]['sdtype'] not in ['numerical', 'datetime']:
                 discrete_columns.append(column)
 
         else:
             column_data = data[column].dropna()
-            dtype = column_data.infer_objects().dtype
             try:
-                kind = np.dtype(dtype).kind
-            except TypeError:
-                kind = 'O'
+                dtype = column_data.infer_objects().dtype.kind
+                if dtype in ['O', 'b']:
+                    discrete_columns.append(column)
 
-            if kind in ['O', 'b']:
+            except Exception:
                 discrete_columns.append(column)
 
     return discrete_columns
