@@ -152,7 +152,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         for column in processed_data.columns:
             column_name = column.replace('.value', '')
             sdtype = columns.get(column_name, {}).get('sdtype')
-            if column_name in columns and sdtype != 'categorical':
+            if column_name in columns and sdtype not in ['categorical', 'boolean']:
                 sdtypes[column] = 'numerical'
                 distribution = self._numerical_distributions.get(
                     column_name,
