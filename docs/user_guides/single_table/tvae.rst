@@ -16,7 +16,7 @@ What is TVAE?
 --------------
 
 The ``sdv.tabular.TVAE`` model is based on the VAE-based Deep Learning
-data synthesizer which was presented at the NeurIPS 2020 conference by
+data synthesizer which was presented at the NeurIPS 2019 conference by
 the paper titled `Modeling Tabular data using Conditional
 GAN <https://arxiv.org/abs/1907.00503>`__.
 
