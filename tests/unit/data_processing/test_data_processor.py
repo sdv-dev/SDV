@@ -1,3 +1,4 @@
+import itertools
 import re
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -841,6 +842,25 @@ class TestDataProcessor:
         )
 
         assert result == instance._hyper_transformer.create_anonymized_columns.return_value
+
+    def test_generate_primary_keys_reset_primary_key(self):
+        """Test that a new ``counter`` is created when ``reset_primary_key`` is ``True``."""
+        # Setup
+        instance = Mock()
+        instance._primary_key = 'a'
+        instance._hyper_transformer.field_transformers = {}
+        counter = itertools.count(start=10)
+
+        # Run
+        result = DataProcessor.generate_primary_keys(instance, 10, reset_primary_key=True)
+
+        # Assert
+        expected_result = pd.DataFrame({
+            'a': np.arange(10)
+        })
+
+        pd.testing.assert_frame_equal(result, expected_result)
+        assert instance._primary_key_generator != counter
 
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_transform_primary_key(self, log_mock):
