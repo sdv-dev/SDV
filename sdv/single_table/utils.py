@@ -2,7 +2,7 @@
 
 
 def detect_discrete_columns(metadata, data):
-    """Detect th discrete columns in a dataset.
+    """Detect the discrete columns in a dataset.
 
     Args:
         metadata (sdv.metadata.SingleTableMetadata):
@@ -24,6 +24,9 @@ def detect_discrete_columns(metadata, data):
 
         else:
             column_data = data[column].dropna()
+            if set(column_data.unique()) == {0.0, 1.0}:
+                column_data = column_data.astype(bool)
+
             try:
                 dtype = column_data.infer_objects().dtype.kind
                 if dtype in ['O', 'b']:
