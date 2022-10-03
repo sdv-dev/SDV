@@ -56,7 +56,7 @@ class DataProcessor:
             model_missing_values=True,
         ),
         'categorical': rdt.transformers.LabelEncoder(add_noise=True),
-        'boolean': rdt.transformers.LabelEncoder(add_noise=True),
+        'boolean': rdt.transformers.BinaryEncoder(),
         'datetime': rdt.transformers.UnixTimestampEncoder(
             missing_value_replacement='mean',
             model_missing_values=True,
