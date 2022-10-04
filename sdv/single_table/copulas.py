@@ -1,4 +1,6 @@
 """Wrappers around copulas models."""
+import warnings
+from copy import deepcopy
 
 import copulas
 import copulas.multivariate
@@ -84,6 +86,25 @@ class GaussianCopulaSynthesizer(BaseSynthesizer):
             for field, distribution in (numerical_distributions or {}).items()
         }
 
+    def _fit(self, processed_data):
+        """Fit the model to the table.
+
+        Args:
+            processed_data (pandas.DataFrame):
+                Data to be learned.
+        """
+        numerical_distributions = deepcopy(self._numerical_distributions)
+
+        for column in processed_data.columns:
+            if column not in numerical_distributions:
+                column_name = column.replace('.value', '')
+                numerical_distributions[column] = self._numerical_distributions.get(
+                    column_name, self._default_distribution)
+
         self._model = copulas.multivariate.GaussianMultivariate(
-            distribution=self._numerical_distributions
+            distribution=numerical_distributions
         )
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', module='scipy')
+            self._model.fit(processed_data)
