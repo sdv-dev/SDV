@@ -856,7 +856,7 @@ class TestDataProcessor:
 
         # Assert
         expected_result = pd.DataFrame({
-            'a': np.arange(10)
+            'a': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         })
 
         pd.testing.assert_frame_equal(result, expected_result)
