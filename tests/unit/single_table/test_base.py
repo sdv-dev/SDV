@@ -620,3 +620,149 @@ class TestBaseSynthesizer:
         assert len(field_transformers) == 2
         assert isinstance(field_transformers['col1'], GaussianNormalizer)
         assert isinstance(field_transformers['col2'], GaussianNormalizer)
+
+    @patch('sdv.single_table.base.DataProcessor')
+    def test__set_random_state(self, mock_data_processor):
+        """Test that error is raised when this is not implemented."""
+        # Setup
+        rng_seed = Mock()
+        metadata = Mock()
+        instance = BaseSynthesizer(metadata)
+
+        # Run and Assert
+        with pytest.raises(NotImplementedError, match=''):
+            instance._set_random_state(rng_seed)
+
+    def test__filter_conditions(self):
+        """Test that we filter over the sampled data with the given conditions."""
+        # Setup
+        sampled = pd.DataFrame({
+            'position': [
+                'Software Engineer',
+                'Data Scientist',
+                'Statistician',
+                'Computer Systems Analyst',
+                'Software Engineer',
+            ],
+            'salary': [80., 90., 50., 60., 82.]
+        })
+        conditions = {'position': 'Software Engineer', 'salary': 80.}
+        float_rtol = 0.01
+
+        # Run
+        filtered_data = BaseSynthesizer._filter_conditions(sampled, conditions, float_rtol)
+
+        # Assert
+        expected_data = pd.DataFrame({'position': ['Software Engineer'], 'salary': [80.]})
+        pd.testing.assert_frame_equal(filtered_data, expected_data)
+
+    def test__sample_rows_without_conditions(self):
+        """Test that sample rows calls ``_sample`` when conditions is ``None``."""
+        # Setup
+        data = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe']
+        })
+        instance = Mock()
+        instance._data_processor._dtypes = pd.Series()
+        instance._data_processor.filter_valid.return_value = data
+
+        # Run
+        sampled, num_valid = BaseSynthesizer._sample_rows(instance, 3)
+
+        # Assert
+        assert num_valid == 3
+        pd.testing.assert_frame_equal(sampled, data)
+
+    def test__sample_rows_with_conditions(self):
+        """Test that sample rows calls with the transformed conditions the ``_sample``."""
+        # Setup
+        data = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe'],
+            'salary': [90.0, 100.0, 80.0]
+        })
+        instance = Mock()
+        instance._data_processor._dtypes = pd.Series()
+        instance._filter_conditions.return_value = data[data.name == 'John Doe']
+        conditions = {'salary': 80.}
+        transformed_conditions = {'salary.value': 80.0}
+
+        # Run
+        sampled, num_valid = BaseSynthesizer._sample_rows(
+            instance,
+            3,
+            conditions=conditions,
+            transformed_conditions=transformed_conditions
+        )
+
+        # Assert
+        assert num_valid == 1
+        pd.testing.assert_frame_equal(sampled, data[data.name == 'John Doe'])
+
+    def test__sample_rows_with_previous_rows(self):
+        """Test that when calling sample rows with previous rows those are being concatenated."""
+        # Setup
+        previous_rows = pd.DataFrame({
+            'name': ['John Doe', 'John Doe', 'John Doe'],
+            'salary': [80.0, 80.0, 80.0]
+        })
+        data = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe'],
+            'salary': [90.0, 100.0, 80.0]
+        })
+
+        instance = Mock()
+        instance._data_processor._dtypes = pd.Series()
+        instance._data_processor.filter_valid = lambda x: x
+        instance._data_processor.reverse_transform.return_value = data
+
+        # Run
+        sampled, num_valid = BaseSynthesizer._sample_rows(instance, 3, previous_rows=previous_rows)
+
+        # Assert
+        expected_data = pd.DataFrame({
+            'name': ['John Doe', 'John Doe', 'John Doe', 'John', 'Doe', 'John Doe'],
+            'salary': [80.0, 80.0, 80.0, 90.0, 100.0, 80.0]
+        })
+        assert num_valid == 6
+        pd.testing.assert_frame_equal(sampled, expected_data)
+
+    def test__sample_rows_type_error(self):
+        """Test when ``_sample`` does not accept ``transformed_conditions``."""
+        # Setup
+        data = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe'],
+            'salary': [90.0, 100.0, 80.0]
+        })
+        instance = Mock()
+        instance._data_processor._dtypes = pd.Series()
+        instance._filter_conditions.return_value = data[data.name == 'John Doe']
+        conditions = {'salary': 80.}
+        transformed_conditions = {'salary.value': 80.0}
+        instance._sample.side_effect = [TypeError, None]
+
+        # Run
+        sampled, num_valid = BaseSynthesizer._sample_rows(
+            instance,
+            3,
+            conditions=conditions,
+            transformed_conditions=transformed_conditions
+        )
+
+        # Assert
+        assert num_valid == 1
+        pd.testing.assert_frame_equal(sampled, data[data.name == 'John Doe'])
+        assert instance._sample.call_args_list == [call(3, {'salary.value': 80.0}), call(3)]
+
+    def test__sample_rows_dtypes_is_none(self):
+        """Test when ``_data_processor._dtypes`` is ``None``."""
+        # Setup
+        instance = Mock()
+        instance._data_processor._dtypes = None
+        instance._data_processor.reverse_transform = lambda x: x
+
+        # Run
+        sampled, num_rows = BaseSynthesizer._sample_rows(instance, 10)
+
+        # Assert
+        assert num_rows == 10
+        pd.testing.assert_frame_equal(sampled, pd.DataFrame(index=range(10)))

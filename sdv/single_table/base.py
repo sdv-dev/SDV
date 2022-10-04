@@ -387,7 +387,7 @@ class BaseSynthesizer:
             else:
                 try:
                     sampled = self._sample(num_rows, transformed_conditions)
-                except NotImplementedError:
+                except TypeError:
                     sampled = self._sample(num_rows)
 
             sampled = self._data_processor.reverse_transform(sampled)
@@ -483,6 +483,7 @@ class BaseSynthesizer:
                         index=False,
                         **append_kwargs,
                     )
+
                 if progress_bar is not None:
                     progress_bar.update(num_increase)
 
@@ -493,6 +494,7 @@ class BaseSynthesizer:
             if remaining > 0:
                 LOGGER.info(
                     f'{remaining} valid rows remaining. Resampling {num_rows_to_sample} rows')
+
             counter += 1
 
         return sampled.head(min(len(sampled), batch_size))
