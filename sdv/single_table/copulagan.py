@@ -184,3 +184,21 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         processed_data = self._gaussian_normalizer_hyper_transformer.fit_transform(processed_data)
 
         super()._fit(processed_data)
+
+    def _sample(self, num_rows, conditions=None):
+        """Sample the indicated number of rows from the model.
+
+        Args:
+            num_rows (int):
+                Amount of rows to sample.
+            conditions (dict):
+                If specified, this dictionary maps column names to the column
+                value. Then, this method generates `num_rows` samples, all of
+                which are conditioned on the given variables.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+        """
+        sampled = super()._sample(num_rows, conditions)
+        return self._gaussian_normalizer_hyper_transformer.reverse_transform(sampled)

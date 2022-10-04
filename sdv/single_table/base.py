@@ -313,6 +313,10 @@ class BaseSynthesizer:
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
 
+    def _set_random_state(self, rng_seed):
+        """Set a random state to the ``model``."""
+        raise NotImplementedError()
+
     @staticmethod
     def _filter_conditions(sampled, conditions, float_rtol):
         """Filter the sampled rows that match the conditions.
@@ -616,6 +620,11 @@ class BaseSynthesizer:
         """
         if self._model is None:
             return
+
+        if randomize_samples:
+            self._set_random_state(None)
+        else:
+            self._set_random_state(FIXED_RNG_SEED)
 
     def _sample_with_progress_bar(self, num_rows, randomize_samples=True, max_tries_per_batch=100,
                                   batch_size=None, output_file_path=None, conditions=None,
