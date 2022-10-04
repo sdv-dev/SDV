@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+import numpy as np
+import pandas as pd
 import pytest
 from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariate
 
@@ -29,8 +31,7 @@ class TestGaussianCopulaSynthesizer:
         with pytest.raises(ValueError, match="Invalid distribution specification 'student'."):
             GaussianCopulaSynthesizer._validate_distribution(distribution)
 
-    @patch('copulas.multivariate')
-    def test___init__(self, mock_copulas_multivariate):
+    def test___init__(self):
         """Test creating an instance of ``GaussianCopulaSynthesizer``."""
         # Setup
         metadata = SingleTableMetadata()
@@ -55,13 +56,8 @@ class TestGaussianCopulaSynthesizer:
         assert instance.default_distribution == 'beta'
         assert instance._default_distribution == BetaUnivariate
         assert instance._numerical_distributions == {}
-        mock_copulas_multivariate.GaussianMultivariate.called_once_with(
-            distribution={}
-        )
-        assert instance._model == mock_copulas_multivariate.GaussianMultivariate.return_value
 
-    @patch('copulas.multivariate')
-    def test___init__custom(self, mock_copulas_multivariate):
+    def test___init__custom(self):
         """Test creating an instance of ``GaussianCopulaSynthesizer`` with custom parameters."""
         # Setup
         metadata = SingleTableMetadata()
@@ -86,10 +82,6 @@ class TestGaussianCopulaSynthesizer:
         assert instance.default_distribution == 'uniform'
         assert instance._default_distribution == UniformUnivariate
         assert instance._numerical_distributions == {'field': GammaUnivariate}
-        mock_copulas_multivariate.GaussianMultivariate.called_once_with(
-            distribution={'field': GammaUnivariate}
-        )
-        assert instance._model == mock_copulas_multivariate.GaussianMultivariate.return_value
 
     def test_get_params(self):
         """Test that inherited method ``get_params`` returns all the specific init parameters."""
@@ -107,3 +99,44 @@ class TestGaussianCopulaSynthesizer:
             'numerical_distributions': {},
             'default_distribution': 'beta'
         }
+
+    @patch('sdv.single_table.copulas.warnings')
+    @patch('sdv.single_table.copulas.copulas.multivariate')
+    def test__fit(self, mock_multivariate, mock_warnings):
+        """Test the ``_fit``.
+
+        Test that when fitting, numerical distributions are being generated for any missing column
+        or new one that be generated from the ``preprocess`` step. The model should be created with
+        the ``numerical_distributions``.
+        """
+        # Setup
+        metadata = SingleTableMetadata()
+        numerical_distributions = {'name': 'uniform', 'user.id': 'gamma'}
+
+        processed_data = pd.DataFrame({
+            'name.value': np.arange(10),
+            'user.id': np.arange(10),
+            'account_balance': np.arange(10)
+        })
+        instance = GaussianCopulaSynthesizer(
+            metadata,
+            numerical_distributions=numerical_distributions
+        )
+
+        # Run
+        instance._fit(processed_data)
+
+        # Assert
+        expected_numerical_distributions = {
+            'name': UniformUnivariate,
+            'name.value': UniformUnivariate,
+            'user.id': GammaUnivariate,
+            'account_balance': BetaUnivariate,
+        }
+
+        mock_multivariate.GaussianMultivariate.assert_called_once_with(
+            distribution=expected_numerical_distributions
+        )
+        instance._model.fit.assert_called_once_with(processed_data)
+        mock_warnings.filterwarnings.assert_called_once_with('ignore', module='scipy')
+        mock_warnings.catch_warnings.assert_called_once()
