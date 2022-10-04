@@ -316,7 +316,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
 
-        # Run / Assert
+        # Run and Assert
         error_msg = re.escape(
             "Invalid sdtype : 'fake_type' is not recognized. Please use one of the "
             'supported SDV sdtypes.'
@@ -541,7 +541,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
 
-        # Run / Assert
+        # Run and Assert
         error_msg = re.escape(
             "Invalid sdtype : 'fake_type' is not recognized. Please use one of the "
             'supported SDV sdtypes.'
