@@ -155,8 +155,8 @@ class TestDataProcessor:
         """Test that we are calling the ``filter_valid`` of each constraint over the data."""
         # Setup
         data = pd.DataFrame({
-            'numbers': np.arange(10),
-            'range': np.arange(0, 100, 10)
+            'numbers': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            'range': [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
         })
         instance = Mock()
         scalar_range = ScalarRange('range', low_value=0, high_value=90, strict_boundaries=True)
