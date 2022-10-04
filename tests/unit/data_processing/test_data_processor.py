@@ -13,7 +13,7 @@ from rdt.transformers import FloatFormatter, LabelEncoder
 
 from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
-from sdv.constraints.tabular import Positive
+from sdv.constraints.tabular import Positive, ScalarRange
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.errors import NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
@@ -150,6 +150,28 @@ class TestDataProcessor:
         ]
         assert len(instance._constraints) == 1
         assert isinstance(instance._constraints[0], Positive)
+
+    def test_filter_valid(self):
+        """Test that we are calling the ``filter_valid`` of each constraint over the data."""
+        # Setup
+        data = pd.DataFrame({
+            'numbers': np.arange(10),
+            'range': np.arange(0, 100, 10)
+        })
+        instance = Mock()
+        scalar_range = ScalarRange('range', low_value=0, high_value=90, strict_boundaries=True)
+        positive = Positive('numbers')
+        instance._constraints = [scalar_range, positive]
+
+        # Run
+        data = DataProcessor.filter_valid(instance, data)
+
+        # Assert
+        expected_data = pd.DataFrame({
+            'numbers': [1, 2, 3, 4, 5, 6, 7, 8],
+            'range': [10, 20, 30, 40, 50, 60, 70, 80]
+        }, index=[1, 2, 3, 4, 5, 6, 7, 8])
+        pd.testing.assert_frame_equal(expected_data, data)
 
     def test_to_dict_from_dict(self):
         """Test that ``to_dict`` and ``from_dict`` methods are inverse to each other.
