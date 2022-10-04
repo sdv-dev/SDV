@@ -45,6 +45,24 @@ SDTYPE_ANONYMIZERS = {
 }
 
 
+def is_faker_function(function_name):
+    """Return whether or not the function name is a valid Faker function.
+
+    Args:
+        function_name (str):
+            String representing predefined ``sdtype`` or a ``faker`` function.
+
+    Returns:
+        True if the ``function_name`` is know to ``Faker``, otherwise False.
+    """
+    try:
+        getattr(Faker(), function_name)
+    except AttributeError:
+        return False
+
+    return True
+
+
 def _detect_provider_name(function_name):
     function_name = getattr(Faker(), function_name)
     module = inspect.getmodule(function_name).__name__

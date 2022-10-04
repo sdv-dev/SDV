@@ -11,9 +11,9 @@ import rdt
 from sdv.constraints import Constraint
 from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
-from sdv.data_processing.anonymization import get_anonymized_transformer
 from sdv.data_processing.errors import NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
+from sdv.metadata.anonymization import get_anonymized_transformer
 from sdv.metadata.single_table import SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
