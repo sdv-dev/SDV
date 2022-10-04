@@ -11,6 +11,7 @@ import pandas as pd
 
 from sdv.constraints import Constraint
 from sdv.constraints.errors import AggregateConstraintsError
+from sdv.metadata.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import cast_to_iterable, read_json, validate_file_does_not_exist
@@ -19,7 +20,7 @@ from sdv.metadata.utils import cast_to_iterable, read_json, validate_file_does_n
 class SingleTableMetadata:
     """Single Table Metadata class."""
 
-    _EXPECTED_KWARGS = {
+    _SDTYPE_KWARGS = {
         'numerical': frozenset(['computer_representation']),
         'datetime': frozenset(['datetime_format']),
         'categorical': frozenset(['order', 'order_by']),
@@ -118,7 +119,7 @@ class SingleTableMetadata:
         self._version = self.SCHEMA_VERSION
 
     def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
-        expected_kwargs = self._EXPECTED_KWARGS.get(sdtype, ['pii'])
+        expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii'])
         unexpected_kwargs = set(kwargs) - set(expected_kwargs)
         if unexpected_kwargs:
             unexpected_kwargs = sorted(unexpected_kwargs)
@@ -126,7 +127,17 @@ class SingleTableMetadata:
             raise ValueError(
                 f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'.")
 
+    def _validate_sdtype(self, sdtype):
+        is_default_sdtype = sdtype in self._SDTYPE_KWARGS
+        is_anonymized_type = sdtype in SDTYPE_ANONYMIZERS
+        if not (is_default_sdtype or is_anonymized_type or is_faker_function(sdtype)):
+            raise ValueError(
+                f"Invalid sdtype : '{sdtype}' is not recognized. Please use one of the "
+                'supported SDV sdtypes.'
+            )
+
     def _validate_column(self, column_name, sdtype, **kwargs):
+        self._validate_sdtype(sdtype)
         self._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
         if sdtype == 'categorical':
             self._validate_categorical(column_name, **kwargs)
@@ -164,7 +175,7 @@ class SingleTableMetadata:
 
         self._validate_column(column_name, **kwargs)
         column_kwargs = deepcopy(kwargs)
-        if sdtype not in self._EXPECTED_KWARGS:
+        if sdtype not in self._SDTYPE_KWARGS:
             pii = column_kwargs.get('pii', True)
             column_kwargs['pii'] = pii
 
