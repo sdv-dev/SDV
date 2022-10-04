@@ -1,6 +1,7 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-from sdv.data_processing.anonymization import _detect_provider_name, get_anonymized_transformer
+from sdv.metadata.anonymization import (
+    _detect_provider_name, get_anonymized_transformer, is_faker_function)
 
 
 class TestAnonimization:
@@ -24,7 +25,7 @@ class TestAnonimization:
         assert email_provider == 'internet'
         assert lexify_provider == 'BaseProvider'
 
-    @patch('sdv.data_processing.anonymization.AnonymizedFaker')
+    @patch('sdv.metadata.anonymization.AnonymizedFaker')
     def test_get_anonymized_transformer_with_existing_sdtype(self, mock_anonymized_faker):
         """Test the ``get_anonymized_transformer`` method.
 
@@ -54,7 +55,7 @@ class TestAnonimization:
             domain='@gmail.com'
         )
 
-    @patch('sdv.data_processing.anonymization.AnonymizedFaker')
+    @patch('sdv.metadata.anonymization.AnonymizedFaker')
     def test_get_anonymized_transformer_with_custom_sdtype(self, mock_anonymized_faker):
         """Test the ``get_anonymized_transformer`` method.
 
@@ -83,3 +84,35 @@ class TestAnonimization:
             function_name='color',
             hue='red'
         )
+
+    @patch('sdv.metadata.anonymization.Faker')
+    def test_is_faker_function(self, faker_mock):
+        """Test that the method returns True if the ``function_name`` is a valid faker function.
+
+        This test mocks the ``Faker`` method to make sure that the ``function_name`` is an
+        attribute it has.
+        """
+        # Setup
+        faker_mock.return_value = Mock(spec=['address'])
+
+        # Run
+        result = is_faker_function('address')
+
+        # Assert
+        assert result is True
+
+    @patch('sdv.metadata.anonymization.Faker')
+    def test_is_faker_function_error(self, faker_mock):
+        """Test that the method returns False if ``function_name`` is not a valid faker function.
+
+        If the ``function_name`` is not an attribute of ``Faker()`` then we should return false.
+        This test mocks ``Faker`` to not have the attribute that is passed as ``function_name``.
+        """
+        # Setup
+        faker_mock.return_value = Mock(spec=[])
+
+        # Run
+        result = is_faker_function('blah')
+
+        # Assert
+        assert result is False
