@@ -1,5 +1,7 @@
 from unittest.mock import Mock, patch
 
+import pytest
+
 from sdv.single_table.base import BaseSynthesizer
 
 
@@ -61,3 +63,44 @@ class TestBaseSynthesizer:
 
         # Assert
         assert result == metadata
+
+    @patch('sdv.single_table.base.DataProcessor')
+    def test__fit(self, mock_data_processor):
+        """Test that ``NotImplementedError`` is being raised."""
+        # Setup
+        metadata = Mock()
+        data = Mock()
+        instance = BaseSynthesizer(metadata)
+
+        # Run and Assert
+        with pytest.raises(NotImplementedError, match=''):
+            instance._fit(data)
+
+    def test_fit_processed_data(self):
+        """Test that ``fit_processed_data`` calls the ``_fit``."""
+        # Setup
+        instance = Mock()
+        processed_data = Mock()
+
+        # Run
+        BaseSynthesizer.fit_processed_data(instance, processed_data)
+
+        # Assert
+        instance._fit.assert_called_once_with(processed_data)
+
+    def test_fit(self):
+        """Test that ``fit`` calls ``preprocess`` and the ``fit_processed_data``.
+
+        When fitting, the synthsizer has to ``preprocess`` the data and with the output
+        of this method, call the ``fit_processed_data``
+        """
+        # Setup
+        instance = Mock()
+        processed_data = Mock()
+
+        # Run
+        BaseSynthesizer.fit(instance, processed_data)
+
+        # Assert
+        instance.preprocess.assert_called_once_with(processed_data)
+        instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)

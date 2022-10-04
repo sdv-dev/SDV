@@ -144,4 +144,43 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             field: GaussianCopulaSynthesizer._validate_distribution(distribution)
             for field, distribution in (numerical_distributions or {}).items()
         }
+
+    def _create_gaussian_normalizer_config(self, processed_data):
+        columns = self.metadata._columns
+        transformers = {}
+        sdtypes = {}
+        for column in processed_data.columns:
+            column_name = column.replace('.value', '')
+            sdtype = columns.get(column_name, {}).get('sdtype')
+            if column_name in columns and sdtype not in ['categorical', 'boolean']:
+                sdtypes[column] = 'numerical'
+                distribution = self._numerical_distributions.get(
+                    column_name,
+                    self._default_distribution
+                )
+
+                transformers[column] = rdt.transformers.GaussianNormalizer(
+                    model_missing_values=True,
+                    distribution=distribution,
+                )
+
+            else:
+                sdtypes[column] = sdtype or 'categorical'
+                transformers[column] = None
+
+        return {'transformers': transformers, 'sdtypes': sdtypes}
+
+    def _fit(self, processed_data):
+        """Fit the model to the table.
+
+        Args:
+            processed_data (pandas.DataFrame):
+                Data to be learned.
+        """
+        gaussian_normalizer_config = self._create_gaussian_normalizer_config(processed_data)
+
         self._gaussian_normalizer_hyper_transformer = rdt.HyperTransformer()
+        self._gaussian_normalizer_hyper_transformer.set_config(gaussian_normalizer_config)
+        processed_data = self._gaussian_normalizer_hyper_transformer.fit_transform(processed_data)
+
+        super()._fit(processed_data)
