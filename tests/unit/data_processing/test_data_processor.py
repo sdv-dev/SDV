@@ -1,3 +1,4 @@
+import itertools
 import re
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -12,7 +13,7 @@ from rdt.transformers import FloatFormatter, LabelEncoder
 
 from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
-from sdv.constraints.tabular import Positive
+from sdv.constraints.tabular import Positive, ScalarRange
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.errors import NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
@@ -149,6 +150,28 @@ class TestDataProcessor:
         ]
         assert len(instance._constraints) == 1
         assert isinstance(instance._constraints[0], Positive)
+
+    def test_filter_valid(self):
+        """Test that we are calling the ``filter_valid`` of each constraint over the data."""
+        # Setup
+        data = pd.DataFrame({
+            'numbers': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            'range': [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+        })
+        instance = Mock()
+        scalar_range = ScalarRange('range', low_value=0, high_value=90, strict_boundaries=True)
+        positive = Positive('numbers')
+        instance._constraints = [scalar_range, positive]
+
+        # Run
+        data = DataProcessor.filter_valid(instance, data)
+
+        # Assert
+        expected_data = pd.DataFrame({
+            'numbers': [1, 2, 3, 4, 5, 6, 7, 8],
+            'range': [10, 20, 30, 40, 50, 60, 70, 80]
+        }, index=[1, 2, 3, 4, 5, 6, 7, 8])
+        pd.testing.assert_frame_equal(expected_data, data)
 
     def test_to_dict_from_dict(self):
         """Test that ``to_dict`` and ``from_dict`` methods are inverse to each other.
@@ -418,11 +441,79 @@ class TestDataProcessor:
         message2 = 'Error transforming Mock. Using the reject sampling approach instead.'
         log_mock.info.assert_has_calls([call(message1), call(message2)])
 
+    @patch('sdv.data_processing.data_processor.rdt')
+    def test_create_primary_key_transformer_regex_generator(self, mock_rdt):
+        """Test the ``create_primary_key_transformer`` method.
+
+        Test that when given an ``sdtype`` and ``column_metadata`` that contains ``regex_format``
+        this creates and returns an instance of ``RegexGenerator``.
+
+        Input:
+            - String representing an ``sdtype``.
+            - Dictionary with ``column_metadata`` that contains ``sdtype`` and ``regex_format``.
+
+        Mock:
+            - Mock ``rdt``.
+
+        Output:
+            - The return value of ``rdt.transformers.RegexGenerator``.
+        """
+        # Setup
+        sdtype = 'text'
+        column_metadata = {
+            'sdtype': 'text',
+            'regex_format': 'ID_00',
+        }
+
+        # Run
+        output = DataProcessor.create_primary_key_transformer(Mock(), sdtype, column_metadata)
+
+        # Assert
+        assert output == mock_rdt.transformers.RegexGenerator.return_value
+        mock_rdt.transformers.RegexGenerator.assert_called_once_with(
+            regex_format='ID_00',
+            enforce_uniqueness=True
+        )
+
+    def test_create_primary_key_transformer_anonymized_faker(self):
+        """Test the ``create_primary_key_transformer`` method.
+
+        Test that when given an ``sdtype`` and ``column_metadata`` that does not contain a
+        ``regex_format`` this calls ``create_anonymized_transformer`` with ``enforce_uniqueness``
+        set to ``True``.
+
+        Input:
+            - String representing an ``sdtype``.
+            - Dictionary with ``column_metadata`` that contains ``sdtype``.
+
+        Mock:
+            - Mock the ``create_anonymized_transformer``.
+
+        Output:
+            - The return value of ``create_anonymized_transformer``.
+        """
+        # Setup
+        sdtype = 'ssn'
+        column_metadata = {
+            'sdtype': 'ssn',
+        }
+        instance = Mock()
+
+        # Run
+        output = DataProcessor.create_primary_key_transformer(instance, sdtype, column_metadata)
+
+        # Assert
+        assert output == instance.create_anonymized_transformer.return_value
+        instance.create_anonymized_transformer.assert_called_once_with(
+            'ssn',
+            {'sdtype': 'ssn', 'enforce_uniqueness': True}
+        )
+
     @patch('sdv.data_processing.data_processor.get_anonymized_transformer')
     def test_create_anonymized_transformer(self, mock_get_anonymized_transformer):
         """Test the ``create_anonymized_transformer`` method.
 
-        Test that when given an ``sdtype`` of and ``column_metadata`` this calls the
+        Test that when given an ``sdtype`` and ``column_metadata`` this calls the
         ``get_anonymized_transformer`` with filtering the ``pii`` and ``sdtype`` keyword args.
 
         Input:
@@ -444,7 +535,7 @@ class TestDataProcessor:
         }
 
         # Run
-        output = DataProcessor.create_anonymized_transformer(Mock(), sdtype, column_metadata)
+        output = DataProcessor.create_anonymized_transformer(sdtype, column_metadata)
 
         # Assert
         assert output == mock_get_anonymized_transformer.return_value
@@ -478,18 +569,23 @@ class TestDataProcessor:
             'created_float': [4., 5., 6.],
             'created_bool': [False, True, False],
             'created_categorical': ['d', 'e', 'f'],
-            'email': ['a@aol.com', 'b@gmail.com', 'c@gmx.com']
+            'email': ['a@aol.com', 'b@gmail.com', 'c@gmx.com'],
+            'id': ['ID_001', 'ID_002', 'ID_003']
         })
         dp = DataProcessor(SingleTableMetadata())
         dp.metadata = Mock()
         dp.create_anonymized_transformer = Mock()
+        dp.create_primary_key_transformer = Mock()
         dp.create_anonymized_transformer.return_value = 'AnonymizedFaker'
+        dp.create_primary_key_transformer.return_value = 'RegexGenerator'
+        dp.metadata._primary_key = 'id'
         dp.metadata._columns = {
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
             'bool': {'sdtype': 'boolean'},
             'categorical': {'sdtype': 'categorical'},
-            'email': {'sdtype': 'email', 'pii': True}
+            'email': {'sdtype': 'email', 'pii': True},
+            'id': {'sdtype': 'text', 'regex_format': 'ID_\\d{3}[0-9]'}
         }
 
         # Run
@@ -507,6 +603,7 @@ class TestDataProcessor:
             'created_bool': 'boolean',
             'created_categorical': 'categorical',
             'email': 'pii',
+            'id': 'text',
         }
         int_transformer = config['transformers']['created_int']
         assert isinstance(int_transformer, FloatFormatter)
@@ -523,10 +620,16 @@ class TestDataProcessor:
         assert isinstance(config['transformers']['int'], FloatFormatter)
         assert isinstance(config['transformers']['float'], FloatFormatter)
         anonymized_transformer = config['transformers']['email']
+        primary_key_transformer = config['transformers']['id']
         assert anonymized_transformer == 'AnonymizedFaker'
+        assert primary_key_transformer == 'RegexGenerator'
         assert dp._anonymized_columns == ['email']
         dp.create_anonymized_transformer.assert_called_once_with(
             'email', {'sdtype': 'email', 'pii': True})
+        dp.create_primary_key_transformer.assert_called_once_with(
+            'text', {'sdtype': 'text', 'regex_format': 'ID_\\d{3}[0-9]'})
+
+        assert dp._primary_key == 'id'
 
     @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
     def test__fit_hyper_transformer(self, ht_mock):
@@ -720,6 +823,124 @@ class TestDataProcessor:
         constraint_call = call('Transforming constraints for table table_name')
         transformer_call = call('Transforming table table_name')
         log_mock.debug.assert_has_calls([constraint_call, transformer_call])
+
+    def test_generate_primary_keys(self):
+        """Test the ``genereate_primary_keys``.
+
+        Test that when calling this function this calls the ``instance._hyper_transformer``'s
+        ``create_anonymized_columns`` method with the ``num_rows`` and the
+        ``instance._primary_keys``.
+
+        Setup:
+            - Mock the instance of ``DataProcessor``.
+            - Set some ``_primary_keys``.
+
+        Input:
+            - ``num_rows``
+
+        Side Effects:
+            - ``instance._hyper_transformer.create_anonymized_columns`` has been called with the
+              input number and ``column_names`` same as the ``instance._primary_keys``.
+
+        Output:
+            - The output should be the return value of the
+              ``instance._hyper_transformer.create_anonymized_columns``.
+        """
+        # Setup
+        instance = Mock()
+        instance._primary_key = 'a'
+        instance._hyper_transformer.field_transformers = {
+            'a': object()
+        }
+        instance._primary_key_generator = None
+
+        # Run
+        result = DataProcessor.generate_primary_keys(instance, 10)
+
+        # Assert
+        instance._hyper_transformer.create_anonymized_columns.assert_called_once_with(
+            num_rows=10,
+            column_names=['a'],
+        )
+
+        assert result == instance._hyper_transformer.create_anonymized_columns.return_value
+
+    def test_generate_primary_keys_reset_primary_key(self):
+        """Test that a new ``counter`` is created when ``reset_primary_key`` is ``True``."""
+        # Setup
+        instance = Mock()
+        instance._primary_key = 'a'
+        instance._hyper_transformer.field_transformers = {}
+        counter = itertools.count(start=10)
+
+        # Run
+        result = DataProcessor.generate_primary_keys(instance, 10, reset_primary_key=True)
+
+        # Assert
+        expected_result = pd.DataFrame({
+            'a': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        })
+
+        pd.testing.assert_frame_equal(result, expected_result)
+        assert instance._primary_key_generator != counter
+
+    @patch('sdv.data_processing.data_processor.LOGGER')
+    def test_transform_primary_key(self, log_mock):
+        """Test the ``transform`` method.
+
+        The method should call the ``_transform_constraints`` and
+        ``HyperTransformer.transform_subset``.
+
+        Input:
+            - Table data.
+
+        Side Effects:
+            - Calls ``_transform_constraints``.
+            - Calls ``HyperTransformer.transform_subset``.
+            - Calls logger with right messages.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'id': ['a', 'b', 'c'],
+            'item 0': [0, 1, 2],
+            'item 1': [True, True, False],
+        }, index=[0, 1, 2])
+        dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
+        dp._transform_constraints = Mock()
+        dp._transform_constraints.return_value = data
+        dp._hyper_transformer = Mock()
+        dp._hyper_transformer.transform_subset.return_value = data
+        dp._hyper_transformer.field_transformers = {'id': object()}
+
+        dp.fitted = True
+        dp._primary_key = 'id'
+
+        primary_key_data = pd.DataFrame({'id': ['a', 'b', 'c']})
+        dp._hyper_transformer.create_anonymized_columns.return_value = primary_key_data
+
+        # Run
+        transformed = dp.transform(data)
+
+        # Assert
+        expected_data = pd.DataFrame({
+            'id': ['a', 'b', 'c'],
+            'item 0': [0, 1, 2],
+            'item 1': [True, True, False]
+        }, index=[0, 1, 2])
+
+        constraint_mock_calls = dp._transform_constraints.mock_calls
+        ht_mock_calls = dp._hyper_transformer.transform_subset.mock_calls
+        constraint_data, is_condition = constraint_mock_calls[0][1]
+        assert len(constraint_mock_calls) == 1
+        assert is_condition is False
+        assert len(ht_mock_calls) == 1
+
+        constraint_call = call('Transforming constraints for table table_name')
+        transformer_call = call('Transforming table table_name')
+        log_mock.debug.assert_has_calls([constraint_call, transformer_call])
+
+        pd.testing.assert_frame_equal(constraint_data, data)
+        pd.testing.assert_frame_equal(transformed, expected_data)
 
     def test_transform_not_fitted(self):
         """Test the ``transform`` method if the ``DataProcessor`` was not fitted.
