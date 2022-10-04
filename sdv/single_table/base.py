@@ -6,7 +6,7 @@ import pandas as pd
 
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.single_table.errors import InvalidDataError
-from sdv.utils import is_datetime_type
+from sdv.utils import is_boolean_type, is_datetime_type, is_numerical_type
 
 
 class BaseSynthesizer:
@@ -98,7 +98,7 @@ class BaseSynthesizer:
         if errors:
             raise InvalidDataError(errors)
 
-    def _get_primary_plus_alternate_keys(self):
+    def _get_primary_and_alternate_keys(self):
         keys = set(self.metadata._alternate_keys)
         if self.metadata._primary_key:
             keys.update({self.metadata._primary_key})
@@ -116,7 +116,7 @@ class BaseSynthesizer:
 
     def _validate_keys_dont_have_missing_values(self, data):
         errors = []
-        keys = self._get_primary_plus_alternate_keys()
+        keys = self._get_primary_and_alternate_keys()
         keys.update(self._get_set_of_sequence_keys())
         for key in sorted(keys):
             if pd.isna(data[key]).any():
@@ -134,7 +134,7 @@ class BaseSynthesizer:
 
     def _validate_key_values_are_unique(self, data):
         errors = []
-        keys = self._get_primary_plus_alternate_keys()
+        keys = self._get_primary_and_alternate_keys()
         for key in sorted(keys):
             repeated_values = set(data[key][data[key].duplicated()])
             if repeated_values:
@@ -163,14 +163,6 @@ class BaseSynthesizer:
 
         return errors
 
-    @staticmethod
-    def _is_numerical(value):
-        return pd.isna(value) | pd.api.types.is_float(value) | pd.api.types.is_integer(value)
-
-    @staticmethod
-    def _is_boolean(value):
-        return True if pd.isna(value) | (value is True) | (value is False) else False
-
     def _validate_sdtype(self, sdtype, column, validation):
         valid = column.apply(validation)
         invalid_values = set(column[~valid])
@@ -188,12 +180,12 @@ class BaseSynthesizer:
         # boolean values must be True/False, None or missing values
         # int/str are not allowed
         if sdtype == 'boolean':
-            errors += self._validate_sdtype(sdtype, column, self._is_boolean)
+            errors += self._validate_sdtype(sdtype, column, is_boolean_type)
 
         # numerical values must be int/float, None or missing values
         # str/bool are not allowed
         if sdtype == 'numerical':
-            errors += self._validate_sdtype(sdtype, column, self._is_numerical)
+            errors += self._validate_sdtype(sdtype, column, is_numerical_type)
 
         # datetime values must be castable to datetime, None or missing values
         if sdtype == 'datetime':

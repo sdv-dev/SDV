@@ -161,3 +161,31 @@ def is_datetime_type(value):
         or isinstance(value, datetime)
         or bool(get_datetime_format([value]))
     )
+
+
+def is_numerical_type(value):
+    """Determine if the input is numerical or not.
+
+    Args:
+        value (int, str, datetime, bool):
+            Input to evaluate.
+
+    Returns:
+        bool:
+            True if the input is numerical, False if not.
+    """
+    return pd.isna(value) | pd.api.types.is_float(value) | pd.api.types.is_integer(value)
+
+
+def is_boolean_type(value):
+    """Determine if the input is a boolean or not.
+
+    Args:
+        value (int, str, datetime, bool):
+            Input to evaluate.
+
+    Returns:
+        bool:
+            True if the input is a boolean, False if not.
+    """
+    return True if pd.isna(value) | (value is True) | (value is False) else False

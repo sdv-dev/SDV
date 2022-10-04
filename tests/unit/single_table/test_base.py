@@ -361,7 +361,7 @@ class TestBaseSynthesizer:
         instance.validate(data)
 
     def test_validate_sdtypes(self):
-        """Test error is raised if column values don't satistfy their sdtype.
+        """Test error is raised if column values don't satisfy their sdtype.
 
         Setup:
             A ``SingleTableMetadata`` instance with two columns of each sdtype: numerical,
@@ -406,7 +406,7 @@ class TestBaseSynthesizer:
             instance.validate(data)
 
     def test_validate(self):
-        """Test the method doesn't crash when the passed data is vaild.
+        """Test the method doesn't crash when the passed data is valid.
 
         Setup:
             ``SingleTableMetadata`` describing at least one valid column of each key and sdtype.
