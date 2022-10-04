@@ -28,6 +28,7 @@ class BaseSynthesizer:
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self._data_processor = DataProcessor(metadata)
+        self._fitted = False
 
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
@@ -42,3 +43,35 @@ class BaseSynthesizer:
     def get_metadata(self):
         """Return the ``SingleTableMetadata`` for this synthesizer."""
         return self.metadata
+
+    def preprocess(self, data):
+        """Transform the raw data to numerical space."""
+        pass
+
+    def _fit(self, processed_data):
+        """Fit the model to the table.
+
+        Args:
+            processed_data (pandas.DataFrame):
+                Data to be learned.
+        """
+        raise NotImplementedError()
+
+    def fit_processed_data(self, processed_data):
+        """Fit this model to the transformed data.
+
+        Args:
+            processed_data (pandas.DataFrame):
+                The transformed data used to fit the model to.
+        """
+        self._fit(processed_data)
+
+    def fit(self, data):
+        """Fit this model to the original data.
+
+        Args:
+            data (pandas.DataFrame):
+                The raw data (before any transformations) to fit the model to.
+        """
+        processed_data = self.preprocess(data)
+        self.fit_processed_data(processed_data)

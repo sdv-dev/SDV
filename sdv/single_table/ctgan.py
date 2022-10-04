@@ -3,6 +3,7 @@
 from ctgan import CTGAN, TVAE
 
 from sdv.single_table.base import BaseSynthesizer
+from sdv.single_table.utils import detect_discrete_columns
 
 
 class CTGANSynthesizer(BaseSynthesizer):
@@ -55,8 +56,6 @@ class CTGANSynthesizer(BaseSynthesizer):
             If ``False``, do not use cuda at all.
     """
 
-    _MODEL_CLASS = CTGAN
-
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
                  generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
@@ -101,6 +100,17 @@ class CTGANSynthesizer(BaseSynthesizer):
             'cuda': cuda
         }
 
+    def _fit(self, processed_data):
+        """Fit the model to the table.
+
+        Args:
+            processed_data (pandas.DataFrame):
+                Data to be learned.
+        """
+        discrete_columns = detect_discrete_columns(self.get_metadata(), processed_data)
+        self._model = CTGAN(**self._model_kwargs)
+        self._model.fit(processed_data, discrete_columns=discrete_columns)
+
 
 class TVAESynthesizer(BaseSynthesizer):
     """Model wrapping ``TVAE`` model.
@@ -134,8 +144,6 @@ class TVAESynthesizer(BaseSynthesizer):
             If ``False``, do not use cuda at all.
     """
 
-    _MODEL_CLASS = TVAE
-
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
                  embedding_dim=128, compress_dims=(128, 128), decompress_dims=(128, 128),
                  l2scale=1e-5, batch_size=500, epochs=300, loss_factor=2, cuda=True):
@@ -164,3 +172,14 @@ class TVAESynthesizer(BaseSynthesizer):
             'loss_factor': loss_factor,
             'cuda': cuda
         }
+
+    def _fit(self, processed_data):
+        """Fit the model to the table.
+
+        Args:
+            processed_data (pandas.DataFrame):
+                Data to be learned.
+        """
+        discrete_columns = detect_discrete_columns(self.get_metadata(), processed_data)
+        self._model = TVAE(**self._model_kwargs)
+        self._model.fit(processed_data, discrete_columns=discrete_columns)
