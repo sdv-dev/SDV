@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.utils import (
-    _cast_to_type, cast_to_datetime64, get_datetime_format, is_datetime_type, logit,
-    matches_datetime_format, sigmoid)
+    _cast_to_type, cast_to_datetime64, logit, matches_datetime_format, sigmoid)
+from sdv.utils import get_datetime_format, is_datetime_type
 
 
 def test_is_datetime_type_with_datetime_series():
