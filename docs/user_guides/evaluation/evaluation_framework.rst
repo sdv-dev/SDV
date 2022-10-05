@@ -3,13 +3,14 @@
 Evaluation Framework
 ====================
 
-The `SDMetrics library <https://docs.sdv.dev/sdmetrics/>` includes reports, metrics and
+The `SDMetrics library <https://docs.sdv.dev/sdmetrics/>`__ includes reports, metrics and
 visualizations that you can use to evaluate your synthetic data.
 
 Required Information
 --------------------
 
 To use the SDMetrics library, you'll need:
+
 1. Real data, loaded as a pandas DataFrame
 2. Synthetic data, loaded as a pandas DataFrame
 3. Metadata, represented as a dictionary format
@@ -30,6 +31,7 @@ We can get started using the demo data
     synthetic_data = model.sample(num_rows=real_data.shape[0])
 
 After the previous steps, we will have two tables
+
 - ``real_data``, containing data about student placements
 
 .. ipython:: python
@@ -84,13 +86,13 @@ In the detailed view, you can see the quality score for each column of the table
 type, different metrics may be used for the computation.
 
 For more information about the Quality Report, see the `SDMetrics Docs 
-<https://docs.sdv.dev/sdmetrics/reports/quality-report>`.
+<https://docs.sdv.dev/sdmetrics/reports/quality-report>`__.
 
 Can I apply different metrics?
 ------------------------------
 
 Outside of reports, the SDMetrics library contains a variety of metrics that you can apply
-manually. For example the `NewRowSynthesis metric <https://docs.sdv.dev/sdmetrics/metrics/metrics-glossary/newrowsynthesis>`
+manually. For example the `NewRowSynthesis metric <https://docs.sdv.dev/sdmetrics/metrics/metrics-glossary/newrowsynthesis>`__
 measures whether each row in the synthetic data is novel or whether it exactly matches a row in
 the real data.
 
@@ -101,5 +103,5 @@ the real data.
 
     NewRowSynthesis.compute(real_data, synthetic_data, metadata_dict)
 
-See the `SDMetrics Glossary <https://docs.sdv.dev/sdmetrics/metrics/metrics-glossary>` for a full
+See the `SDMetrics Glossary <https://docs.sdv.dev/sdmetrics/metrics/metrics-glossary>`__ for a full
 list of metrics that you can apply.
