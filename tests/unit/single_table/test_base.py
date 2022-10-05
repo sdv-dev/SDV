@@ -10,10 +10,9 @@ from rdt.transformers import (
 
 from sdv.errors import Error
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.single_table import GaussianCopulaSynthesizer
+from sdv.single_table import (
+    CopulaGANSynthesizer, CTGANSynthesizer, GaussianCopulaSynthesizer, TVAESynthesizer)
 from sdv.single_table.base import BaseSynthesizer
-from sdv.single_table.copulagan import CopulaGANSynthesizer
-from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer
 from sdv.single_table.errors import InvalidDataError
 
 
