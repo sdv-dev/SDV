@@ -1,10 +1,12 @@
 """Base Synthesizer class."""
 
 import inspect
+import warnings
 
 import pandas as pd
 
 from sdv.data_processing.data_processor import DataProcessor
+from sdv.errors import Error
 from sdv.single_table.errors import InvalidDataError
 from sdv.utils import is_boolean_type, is_datetime_type, is_numerical_type
 
@@ -234,3 +236,50 @@ class BaseSynthesizer:
 
         if errors:
             raise InvalidDataError(errors)
+
+    def _validate_transformers(self, column_name_to_transformer):
+        keys = self._get_primary_and_alternate_keys() | self._get_set_of_sequence_keys()
+        for column, transformer in column_name_to_transformer.items():
+            transformer_name = type(transformer).__name__
+            sdtype = self.metadata._columns[column]['sdtype']
+            if sdtype != transformer.get_input_sdtype():
+                raise Error(
+                    f"Column '{column}' is a {sdtype} column, which is incompatible "
+                    f"with the '{transformer_name}' transformer."
+                )
+
+            if column in keys and transformer_name not in {'AnonymizedFaker', 'RegexGenerator'}:
+                raise Error(
+                    f"Column '{column}' is a key. It cannot be preprocessed using "
+                    f"the '{transformer_name}' transformer."
+                )
+
+            # If columns were set, the transformer was fitted
+            if transformer.columns:
+                raise Error(f"Transformer for column '{column}' has already been fit on data.")
+
+    def _warn(self, column_name_to_transformer):
+        """Raise warnings of a model.
+
+        Args:
+            column_name_to_transformer (dict):
+                Dict mapping column names to transformers to be used for that column.
+        """
+        for column in column_name_to_transformer:
+            sdtype = self.metadata._columns[column]['sdtype']
+            if sdtype in {'categorical', 'boolean'}:
+                warnings.warn(
+                    f"Replacing the default transformer for column '{column}' "
+                    'might impact the quality of your synthetic data.'
+                )
+
+    def update_transformers(self, column_name_to_transformer):
+        """Update any of the transformers assigned to each of the column names.
+
+        Args:
+            column_name_to_transformer (dict):
+                Dict mapping column names to transformers to be used for that column.
+        """
+        self._validate_transformers(column_name_to_transformer)
+        self._warn(column_name_to_transformer)
+        self._data_processor.update_transformers(column_name_to_transformer)

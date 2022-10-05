@@ -108,3 +108,18 @@ class GaussianCopulaSynthesizer(BaseSynthesizer):
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', module='scipy')
             self._model.fit(processed_data)
+
+    def _warn(self, column_name_to_transformer):
+        """Raise warnings of a model.
+
+        Args:
+            column_name_to_transformer (dict):
+                Dict mapping column names to transformers to be used for that column.
+        """
+        for column in column_name_to_transformer:
+            sdtype = self.metadata._columns[column]['sdtype']
+            if sdtype == 'categorical':
+                warnings.warn(
+                    f"Using a OneHotEncoder transformer for column '{column}' "
+                    'may slow down the preprocessing and modeling times.'
+                )
