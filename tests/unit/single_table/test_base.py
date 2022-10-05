@@ -1,16 +1,17 @@
+import re
 from datetime import datetime
-
 from unittest.mock import Mock, patch
 
 import pytest
 
 from sdv.single_table.base import BaseSynthesizer
 from sdv.metadata.single_table import SingleTableMetadata
+import numpy as np
 import pandas as pd
 import pytest
-import re
-import numpy as np
 
+from sdv.metadata.single_table import SingleTableMetadata
+from sdv.single_table.base import BaseSynthesizer
 from sdv.single_table.errors import InvalidDataError
 
 
@@ -113,12 +114,6 @@ class TestBaseSynthesizer:
         # Assert
         instance.preprocess.assert_called_once_with(processed_data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
-    
-    def test_validate_keys(self):
-        data = pd.DataFrame({
-            'pk_col': [0,1,2,3,4,5],
-            'sk_col': [0,1,2,3,4,5],
-            'ak_col': [0,1,2,3,4,5],
 
     def test_validate_type(self):
         """When data is not of type ``pd.DataFrame``, an error should be raised."""
@@ -131,13 +126,13 @@ class TestBaseSynthesizer:
         err_msg = "Data must be a DataFrame, not a <class 'numpy.ndarray'>."
         with pytest.raises(ValueError, match=err_msg):
             instance.validate(data)
-    
+
     def test_validate_data_columns_in_empty_metadata(self):
         """When data is passed and metadata is empty, an error should be raised."""
         # Setup
         data = pd.DataFrame({
-            'col1': [1,2,3],
-            'col2': [4,5,6],
+            'col1': [1, 2, 3],
+            'col2': [4, 5, 6],
         })
         metadata = SingleTableMetadata()
         instance = BaseSynthesizer(metadata)
@@ -146,14 +141,14 @@ class TestBaseSynthesizer:
         err_msg = re.escape("\nThe columns ['col1', 'col2'] are not present in the metadata.")
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
-    
+
     def test_validate_data_columns_in_metadata(self):
         """When data columns don't match metadata columns, an error should be raised."""
         # Setup
         data = pd.DataFrame({
-            'col1': [1,2,3],
-            'col2': [4,5,6],
-            'col3': [7,8,9],
+            'col1': [1, 2, 3],
+            'col2': [4, 5, 6],
+            'col3': [7, 8, 9],
         })
         metadata = SingleTableMetadata()
         metadata.add_column('col1', sdtype='numerical')
@@ -169,10 +164,10 @@ class TestBaseSynthesizer:
         )
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
-    
+
     def test_validate_keys_with_missing_values(self):
         """When keys contain missing values, an error should be raised.
-        
+
         Setup:
             A ``SingleTableMetadata`` instance with one primary key and multiple sequence
             and alternate keys. All the columns contain missing values except for one
@@ -180,13 +175,13 @@ class TestBaseSynthesizer:
             in the error message.
         """
         data = pd.DataFrame({
-            'pk_col': [0,1,np.nan],
-            'sk_col1': [0,1,None],
-            'sk_col2': [0,1,np.nan],
-            'sk_col3': [0,1,2],
-            'ak_col1': [0,1,None],
-            'ak_col2': [0,1,np.nan],
-            'ak_col3': [0,1,2]
+            'pk_col': [0, 1, np.nan],
+            'sk_col1': [0, 1, None],
+            'sk_col2': [0, 1, np.nan],
+            'sk_col3': [0, 1, 2],
+            'ak_col1': [0, 1, None],
+            'ak_col2': [0, 1, np.nan],
+            'ak_col3': [0, 1, 2]
         })
         metadata = SingleTableMetadata()
         metadata.add_column('pk_col', sdtype='numerical')
@@ -215,10 +210,10 @@ class TestBaseSynthesizer:
         )
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
-    
+
     def test_validate_keys_with_missing2(self):
         """When keys contain missing values, an error should be raised.
-        
+
         Test the case with a single sequence key.
         """
         data = pd.DataFrame({
@@ -236,14 +231,14 @@ class TestBaseSynthesizer:
         err_msg = re.escape("\nKey column 'sk_col' contains missing values.")
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
-    
+
     def test_validate_keys_not_unique(self):
         """When primary or alternate keys are not unique, an error should be raised."""
         data = pd.DataFrame({
-            'pk_col': [0,1,1,0,2],
-            'ak_col1': [0,1,0,3,3],
-            'ak_col2': [2,2,2,2,2],
-            'ak_col3': [0,1,2,3,4]
+            'pk_col': [0, 1, 1, 0, 2],
+            'ak_col1': [0, 1, 0, 3, 3],
+            'ak_col2': [2, 2, 2, 2, 2],
+            'ak_col3': [0, 1, 2, 3, 4]
         })
         metadata = SingleTableMetadata()
         metadata.add_column('pk_col', sdtype='numerical')
@@ -264,20 +259,20 @@ class TestBaseSynthesizer:
         )
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
-    
+
     def test_validate_context_columns_unique_per_sequence_key(self):
         """If context column values are not the same for each tuple of sequence keys, crash.
-        
+
         Setup:
             A ``SingleTableMetadata`` instance where the context columns vary for different
-            combinations of values of the sequence keys. 
+            combinations of values of the sequence keys.
         """
         # Setup
         data = pd.DataFrame({
-            'sk_col1': [1,1,2,2,2],
-            'sk_col2': [1,1,2,2,3],
-            'ct_col1': [1,2,2,3,2],
-            'ct_col2': [3,3,4,3,2],
+            'sk_col1': [1, 1, 2, 2, 2],
+            'sk_col2': [1, 1, 2, 2, 3],
+            'ct_col1': [1, 2, 2, 3, 2],
+            'ct_col2': [3, 3, 4, 3, 2],
         })
         metadata = SingleTableMetadata()
         metadata.add_column('sk_col1', sdtype='numerical')
@@ -287,7 +282,8 @@ class TestBaseSynthesizer:
         metadata.set_sequence_key(('sk_col1', 'sk_col2'))
         instance = BaseSynthesizer(metadata)
         instance._data_processor._model_kwargs = {
-            'context_columns': ['ct_col1', 'ct_col2']}  # NOTE
+            'context_columns': ['ct_col1', 'ct_col2']  # NOTE: change to actual value
+        }
 
         # Run and Assert
         err_msg = re.escape(
@@ -299,10 +295,10 @@ class TestBaseSynthesizer:
         )
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
-    
+
     def test_validate_empty(self):
         """When data is empty, it should pass.
-        
+
         Setup:
             ``SingleTableMetadata`` with one column for each sdtype and for each key.
         """
@@ -332,9 +328,9 @@ class TestBaseSynthesizer:
     def test_validate_no_keys(self):
         """It should pass even if no keys are passed."""
         data = pd.DataFrame({
-            'bool_col': [1,2,3],
-            'num_col': [1,2,3],
-            'date_col': [1,2,3],
+            'bool_col': [1, 2, 3],
+            'num_col': [1, 2, 3],
+            'date_col': [1, 2, 3],
         })
         metadata = SingleTableMetadata()
         metadata.add_column('bool_col', sdtype='numerical')
@@ -344,7 +340,7 @@ class TestBaseSynthesizer:
 
         # Run
         instance.validate(data)
-    
+
     def test_validate_empty_dataframe(self):
         """An empty DataFrame should be acceptable as input."""
         data = pd.DataFrame()
@@ -356,7 +352,7 @@ class TestBaseSynthesizer:
 
     def test_validate_sdtypes(self):
         """When column values don't satistfy their sdtype, raise an error.
-        
+
         Setup:
             A ``SingleTableMetadata`` instance with two columns of each sdtype: numerical,
             boolean and datetime. The first column of each will have 4 invalid values,
@@ -365,11 +361,11 @@ class TestBaseSynthesizer:
         # Setup
         data = pd.DataFrame({
             'date1': ['10', True, 'b', 'bla', None],
-            'date2': ['2021-10-10', '05-10-2021', pd.Timestamp(1), datetime(1,1,1), '2020-1-33'],
+            'date2': ['2021-10-10', '05-10-2021', pd.Timestamp(1), datetime(1, 1, 1), '2020-1-33'],
             'bool1': ['a', 0, '10', True, 'b'],
             'bool2': ['True', False, np.nan, float('nan'), None],
             'num1': ['a', 0, '10', True, False],
-            'num2': [-1.2, datetime(1,1,1), np.nan, float('nan'), None],
+            'num2': [-1.2, datetime(1, 1, 1), np.nan, float('nan'), None],
         })
         metadata = SingleTableMetadata()
         metadata.add_column('date1', sdtype='datetime')
@@ -392,24 +388,25 @@ class TestBaseSynthesizer:
             '\n'
             "\nInvalid values found for numerical column 'num1': ['10', False, True, '+ 1 more']."
             '\n'
-            "\nInvalid values found for numerical column 'num2': [datetime.datetime(1, 1, 1, 0, 0)]."
+            "\nInvalid values found for numerical column 'num2': "
+            '[datetime.datetime(1, 1, 1, 0, 0)].'
         )
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
 
     def test_validate(self):
         """Test the method doesn't crash when the passed data is vaild
-        
+
         Setup:
             ``SingleTableMetadata`` describing at least one valid column of each key and sdtype.
         """
         # Setup
         data = pd.DataFrame({
-            'pk_col': [0,1,2],
-            'sk_col1': [0,1,2],
-            'sk_col2': [0,1,2],
-            'ak_col1': [0,1,2],
-            'ak_col2': [0,1,2],
+            'pk_col': [0, 1, 2],
+            'sk_col1': [0, 1, 2],
+            'sk_col2': [0, 1, 2],
+            'ak_col1': [0, 1, 2],
+            'ak_col2': [0, 1, 2],
             'numerical_col': [np.nan, -1, 1.54],
             'date_col': [np.nan, '2021-02-10', '2021-05-10'],
             'bool_col': [np.nan, True, False],

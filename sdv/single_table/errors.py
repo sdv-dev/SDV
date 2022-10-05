@@ -3,6 +3,7 @@
 
 class InvalidDataError(Exception):
     """Error to raise when data is not valid."""
+
     def __init__(self, errors):
         self.errors = errors
 
