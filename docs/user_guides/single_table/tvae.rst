@@ -544,11 +544,9 @@ the :ref:`single_table_constraints` guide.
 Can I evaluate the Synthetic Data?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A very common question when someone starts using **SDV** to generate
-synthetic data is: *"How good is the data that I just generated?"*
+After creating synthetic data, you may be wondering how you can evaluate
+it against the original data. You can use the `SDMetrics library 
+<https://github.com/sdv-dev/SDMetrics>`__ to get more insights, generate
+reports and visualize the data. This library is automatically installed with SDV.
 
-In order to answer this question, **SDV** has a collection of metrics
-and tools that allow you to compare the *real* that you provided and the
-*synthetic* data that you generated using **SDV** or any other tool.
-
-You can read more about this in the :ref:`evaluation` guide.
+To get started, visit: https://docs.sdv.dev/sdmetrics/

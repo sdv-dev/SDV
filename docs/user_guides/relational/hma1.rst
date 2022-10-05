@@ -227,3 +227,13 @@ producing any rows for the tables ``sessions`` and ``transactions``.
 
    In this case, since we are only producing a single table, the output
    is given directly as a ``pandas.DataFrame`` instead of a dictionary.
+
+Can I evaluate the Synthetic Data?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After creating synthetic data, you may be wondering how you can evaluate
+it against the original data. You can use the `SDMetrics library 
+<https://github.com/sdv-dev/SDMetrics>`__ to get more insights, generate
+reports and visualize the data. This library is automatically installed with SDV.
+
+To get started, visit: https://docs.sdv.dev/sdmetrics/
