@@ -144,6 +144,7 @@ class BaseSynthesizer:
         return errors
 
     def _validate_context_columns(self, data):
+        # NOTE: move method to PARSynthesizer when it has been implemented
         errors = []
         context_column_names = self._data_processor._model_kwargs.get('context_columns')
         if context_column_names:
