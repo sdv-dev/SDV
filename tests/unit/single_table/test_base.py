@@ -3,6 +3,10 @@ from unittest.mock import Mock, patch
 import pytest
 
 from sdv.single_table.base import BaseSynthesizer
+from sdv.metadata.single_table import SingleTableMetadata
+import pandas as pd
+import pytest
+import numpy as np
 
 
 class TestBaseSynthesizer:
@@ -104,3 +108,36 @@ class TestBaseSynthesizer:
         # Assert
         instance.preprocess.assert_called_once_with(processed_data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
+    
+    def test_validate(self):
+        """Test it doesn't crash."""
+        # Setup
+        data = pd.DataFrame({
+            'numerical_col': [-1, 0, 1.54, np.nan, None],
+            'date_col': ['2021-02-10', '2021-05-10', '2021-08-11', np.nan, float('nan')]
+        })
+        metadata = SingleTableMetadata()
+        metadata.add_column('numerical_col', sdtype='numerical')
+        metadata.add_column('date_col', sdtype='datetime')
+        instance = BaseSynthesizer(metadata)
+
+        # Run
+        instance.validate(data)
+    
+    def test_validate_raises(self):
+        """Test it crashes with right error."""
+        # Setup
+        data = pd.DataFrame({
+            'numerical_col': ['a', 1, '10', 5, True, 'b'],
+            'date_col': ['10', 10, True, '2021-05-10', '10-10-10-10', 'Bla']
+        })
+        metadata = SingleTableMetadata()
+        metadata.add_column('numerical_col', sdtype='numerical')
+        metadata.add_column('date_col', sdtype='datetime')
+        instance = BaseSynthesizer(metadata)
+
+        # Run and Assert
+        with pytest.raises(ValueError):
+            instance.validate(data)
+        
+        assert 1 == 2

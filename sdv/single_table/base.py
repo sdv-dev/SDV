@@ -1,6 +1,8 @@
 """Base Synthesizer class."""
 
 import inspect
+import pandas as pd
+from sdv.constraints.utils import cast_to_datetime64
 
 from sdv.data_processing.data_processor import DataProcessor
 
@@ -75,3 +77,57 @@ class BaseSynthesizer:
         """
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
+    
+    @staticmethod
+    def _update_invalid_values(invalid_values):
+        if len(invalid_values) > 3:
+            return invalid_values[:3] + [f'+ {len(invalid_values) - 3} more']
+        return invalid_values
+    
+    @staticmethod
+    def _castable_to_datetime(value):
+        try:
+            # TODO: this can't cast None values.
+            # Also, it converts integers and the string 10-10-10-10...
+            pd.to_datetime(value).to_datetime64().astype('datetime64[ns]')
+            return True
+        except:
+            return False
+        
+    def validate(self, data):
+        """Validate stuff."""
+        errors = []
+        for column in data:
+            sdtype = self.metadata._columns[column]['sdtype']
+            if sdtype == 'numerical':
+                # What do we mean by number? Are booleans number? Is a string of a number? Is None a missing value?
+                valid = data[column].apply(lambda x: pd.isna(x) | pd.api.types.is_float(x) | pd.api.types.is_integer(x))
+                invalid_values = list(set(data[column][~valid]))
+                if invalid_values:
+                    invalid_values = self._update_invalid_values(invalid_values)
+                    errors.append(
+                        f"Invalid values found for numerical column '{column}': {invalid_values}"
+                    )
+            
+            if sdtype == 'datetime':
+                valid = data[column].apply(self._castable_to_datetime)
+                invalid_values = list(set(data[column][~valid]))
+                if invalid_values:
+                    invalid_values = self._update_invalid_values(invalid_values)
+                    errors.append(
+                        f"Invalid values found for datetime column '{column}': {invalid_values}"
+                    )
+
+        if errors:
+            print(errors)
+            raise ValueError
+
+
+
+        # boolean is True, False, None: Invalid values found for boolean column 'is_subscribed': (0.0, 30.0, 4.4, +more)
+
+        # pk, fk, alternat_key, sequence_key cant have missing: Key column 'user_id' contains missing values
+
+        # pk, alternate_key should have unique values: Primary key column 'user_id' contains repeating values: ('UID_000', 'UID_001', 'UID_002', +more)
+
+        # Context column 'patient_address' is changing inside sequence ('Patient_ID'='ID_004').
