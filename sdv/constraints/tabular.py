@@ -39,9 +39,8 @@ import pandas as pd
 from sdv.constraints.base import Constraint
 from sdv.constraints.errors import (
     AggregateConstraintsError, ConstraintMetadataError, FunctionError, InvalidFunctionError)
-from sdv.constraints.utils import (
-    cast_to_datetime64, get_datetime_format, is_datetime_type, logit, matches_datetime_format,
-    sigmoid)
+from sdv.constraints.utils import cast_to_datetime64, logit, matches_datetime_format, sigmoid
+from sdv.utils import get_datetime_format, is_datetime_type
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,
