@@ -2,10 +2,6 @@ import re
 from datetime import datetime
 from unittest.mock import Mock, patch
 
-import pytest
-
-from sdv.single_table.base import BaseSynthesizer
-from sdv.metadata.single_table import SingleTableMetadata
 import numpy as np
 import pandas as pd
 import pytest

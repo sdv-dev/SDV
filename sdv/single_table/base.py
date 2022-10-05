@@ -50,7 +50,6 @@ class BaseSynthesizer:
 
     def preprocess(self, data):
         """Transform the raw data to numerical space."""
-        pass
 
     def _fit(self, processed_data):
         """Fit the model to the table.
@@ -79,7 +78,7 @@ class BaseSynthesizer:
         """
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
-    
+
     def _validate_metadata_matches_data(self, columns):
         errors = []
         metadata_columns = self.metadata._columns or []
