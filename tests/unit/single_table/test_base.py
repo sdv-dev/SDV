@@ -672,6 +672,13 @@ class TestBaseSynthesizer:
         # Assert
         assert num_valid == 3
         pd.testing.assert_frame_equal(sampled, data)
+        instance._sample.assert_called_once_with(3)
+        instance._data_processor.reverse_transform.assert_called_once_with(
+            instance._sample.return_value
+        )
+        instance._data_processor.filter_valid.assert_called_once_with(
+            instance._data_processor.reverse_transform.return_value
+        )
 
     def test__sample_rows_with_conditions(self):
         """Test that sample rows calls with the transformed conditions the ``_sample``."""
@@ -697,6 +704,13 @@ class TestBaseSynthesizer:
         # Assert
         assert num_valid == 1
         pd.testing.assert_frame_equal(sampled, data[data.name == 'John Doe'])
+        instance._sample.assert_called_once_with(3, {'salary.value': 80.0})
+        instance._data_processor.reverse_transform.assert_called_once_with(
+            instance._sample.return_value
+        )
+        instance._data_processor.filter_valid.assert_called_once_with(
+            instance._data_processor.reverse_transform.return_value
+        )
 
     def test__sample_rows_with_previous_rows(self):
         """Test that when calling sample rows with previous rows those are being concatenated."""
@@ -725,6 +739,10 @@ class TestBaseSynthesizer:
         })
         assert num_valid == 6
         pd.testing.assert_frame_equal(sampled, expected_data)
+        instance._sample.assert_called_once_with(3)
+        instance._data_processor.reverse_transform.assert_called_once_with(
+            instance._sample.return_value
+        )
 
     def test__sample_rows_type_error(self):
         """Test when ``_sample`` does not accept ``transformed_conditions``."""
@@ -766,3 +784,130 @@ class TestBaseSynthesizer:
         # Assert
         assert num_rows == 10
         pd.testing.assert_frame_equal(sampled, pd.DataFrame(index=range(10)))
+
+    def test__sample_batch_without_saving_to_file(self):
+        # Setup
+        sampled_data = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe'],
+            'salary': [80., 60., 100.]
+        })
+        instance = Mock()
+        instance._sample_rows.return_value = (sampled_data, 3)
+
+        # Run
+        result = BaseSynthesizer._sample_batch(
+            instance,
+            batch_size=3,
+            max_tries=100,
+            conditions=None,
+            transformed_conditions=None,
+            float_rtol=0.01,
+            progress_bar=None,
+            output_file_path=None,
+        )
+
+        # Assert
+        pd.testing.assert_frame_equal(result, sampled_data)
+        rows, conditions, trans_cond, float_rtol, sampled = instance._sample_rows.call_args[0]
+        assert rows == 3
+        assert conditions is None
+        assert trans_cond is None
+        assert float_rtol == 0.01
+        pd.testing.assert_frame_equal(sampled, pd.DataFrame())
+
+    def test__sample_batch_with_sampled_data_bigger_than_batch_size(self):
+        """Test ``sampled_data`` is bigger than the batch size.
+
+        If the sampled data is bigger than the batch size, the returned data frame must be the
+        ``batch_size`` size.
+        """
+        # Setup
+        sampled_data = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe', 'John Doe John'],
+            'salary': [80., 60., 100., 300.]
+        })
+        instance = Mock()
+        instance._sample_rows.return_value = (sampled_data, 3)
+
+        # Run
+        result = BaseSynthesizer._sample_batch(
+            instance,
+            batch_size=3,
+            max_tries=100,
+            conditions=None,
+            transformed_conditions=None,
+            float_rtol=0.01,
+            progress_bar=None,
+            output_file_path=None,
+        )
+
+        # Assert
+        pd.testing.assert_frame_equal(result, sampled_data.head(3))
+        rows, conditions, trans_cond, float_rtol, sampled = instance._sample_rows.call_args[0]
+        assert rows == 3
+        assert conditions is None
+        assert trans_cond is None
+        assert float_rtol == 0.01
+        pd.testing.assert_frame_equal(sampled, pd.DataFrame())
+
+    def test__sample_batch_storing_output_file(self, tmpdir):
+        """Test that an output file is properly stored while sampling and progress bar updated."""
+        # Setup
+        sampled_data = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe', 'John Doe John'],
+            'salary': [80., 60., 100., 300.]
+        })
+        instance = Mock()
+        instance._sample_rows.side_effect = [
+            (sampled_data, 4),
+            (sampled_data, 5),
+            (sampled_data, 10),
+        ]
+        mock_progress_bar = Mock()
+
+        path = tmpdir / 'file.csv'
+        # Create an empty csv file
+        open(path, mode='a').close()
+
+        # Run
+        result = BaseSynthesizer._sample_batch(
+            instance,
+            batch_size=10,
+            max_tries=100,
+            conditions=None,
+            transformed_conditions=None,
+            float_rtol=0.01,
+            progress_bar=mock_progress_bar,
+            output_file_path=path,
+        )
+
+        # Assert
+        pd.testing.assert_frame_equal(result, sampled_data)
+        assert instance._sample_rows.call_count == 3
+        expected_stored_data = pd.DataFrame({
+            'name': [
+                'John',
+                'Doe',
+                'John Doe',
+                'John Doe John',
+                'John Doe John',
+                'John',
+                'Doe',
+                'John Doe',
+                'John Doe John',
+            ],
+            'salary': [
+                80.,
+                60.,
+                100.,
+                300.,
+                300.,
+                80.,
+                60.,
+                100.,
+                300.,
+            ]
+        })
+        data = pd.read_csv(path)
+        pd.testing.assert_frame_equal(expected_stored_data, data)
+        mock_progress_bar.update.call_count == 3

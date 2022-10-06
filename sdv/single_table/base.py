@@ -409,7 +409,7 @@ class BaseSynthesizer:
             sampled = self._data_processor.reverse_transform(sampled)
             return sampled, num_rows
 
-    def _sample_batch(self, batch_size=None, max_tries=100,
+    def _sample_batch(self, batch_size, max_tries=100,
                       conditions=None, transformed_conditions=None, float_rtol=0.01,
                       progress_bar=None, output_file_path=None):
         """Sample a batch of rows with the given conditions.
@@ -469,16 +469,21 @@ class BaseSynthesizer:
 
             prev_num_valid = num_valid
             sampled, num_valid = self._sample_rows(
-                num_rows_to_sample, conditions, transformed_conditions, float_rtol, sampled,
+                num_rows_to_sample,
+                conditions,
+                transformed_conditions,
+                float_rtol,
+                sampled
             )
 
             num_new_valid_rows = num_valid - prev_num_valid
             num_increase = min(num_new_valid_rows, remaining)
+            num_sampled = min(len(sampled), batch_size)
             if num_increase > 0:
                 if output_file_path:
-                    append_kwargs = {'mode': 'a', 'header': False} if os.path.getsize(
-                        output_file_path) > 0 else {}
-                    sampled.head(min(len(sampled), batch_size)).tail(num_increase).to_csv(
+                    append_kwargs = {'mode': 'a', 'header': False}
+                    append_kwargs = append_kwargs if os.path.getsize(output_file_path) > 0 else {}
+                    sampled.head(num_sampled).tail(num_increase).to_csv(
                         output_file_path,
                         index=False,
                         **append_kwargs,
