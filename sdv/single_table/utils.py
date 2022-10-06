@@ -1,6 +1,10 @@
 """Utility functions for tabular models."""
 
+import os
 import warnings
+
+TMP_FILE_NAME = '.sample.csv.temp'
+DISABLE_TMP_FILE = 'disable'
 
 
 def detect_discrete_columns(metadata, data):
@@ -119,3 +123,29 @@ def check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries_pe
                 'will also increase the sampling time.'
             )
             warnings.warn(user_msg)
+
+
+@staticmethod
+def validate_file_path(output_file_path):
+    """Validate the user-passed output file arg, and create the file."""
+    output_path = None
+    if output_file_path == DISABLE_TMP_FILE:
+        # Temporary way of disabling the output file feature, used by HMA1.
+        return output_path
+
+    elif output_file_path:
+        output_path = os.path.abspath(output_file_path)
+        if os.path.exists(output_path):
+            raise AssertionError(f'{output_path} already exists.')
+
+    else:
+        if os.path.exists(TMP_FILE_NAME):
+            os.remove(TMP_FILE_NAME)
+
+        output_path = TMP_FILE_NAME
+
+    # Create the file.
+    with open(output_path, 'w+'):
+        pass
+
+    return output_path

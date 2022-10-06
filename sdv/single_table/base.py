@@ -17,7 +17,7 @@ import tqdm
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import InvalidPreprocessingError
 from sdv.single_table.errors import ConstraintsNotMetError, InvalidDataError
-from sdv.single_table.utils import check_num_rows, handle_sampling_error
+from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 from sdv.utils import is_boolean_type, is_datetime_type, is_numerical_type
 
 LOGGER = logging.getLogger(__name__)
@@ -504,7 +504,8 @@ class BaseSynthesizer:
 
         return sampled.head(min(len(sampled), batch_size))
 
-    def _make_condition_dfs(self, conditions):
+    @staticmethod
+    def _make_condition_dfs(conditions):
         """Transform `conditions` into a list of dataframes.
 
         Args:
@@ -591,30 +592,6 @@ class BaseSynthesizer:
 
         return sampled_rows
 
-    def _validate_file_path(self, output_file_path):
-        """Validate the user-passed output file arg, and create the file."""
-        output_path = None
-        if output_file_path == DISABLE_TMP_FILE:
-            # Temporary way of disabling the output file feature, used by HMA1.
-            return output_path
-
-        elif output_file_path:
-            output_path = os.path.abspath(output_file_path)
-            if os.path.exists(output_path):
-                raise AssertionError(f'{output_path} already exists.')
-
-        else:
-            if os.path.exists(TMP_FILE_NAME):
-                os.remove(TMP_FILE_NAME)
-
-            output_path = TMP_FILE_NAME
-
-        # Create the file.
-        with open(output_path, 'w+'):
-            pass
-
-        return output_path
-
     def _randomize_samples(self, randomize_samples):
         """Randomize the samples according to user input.
 
@@ -649,9 +626,7 @@ class BaseSynthesizer:
             return pd.DataFrame()
 
         self._randomize_samples(randomize_samples)
-
-        output_file_path = self._validate_file_path(output_file_path)
-
+        output_file_path = validate_file_path(output_file_path)
         batch_size = min(batch_size, num_rows) if batch_size else num_rows
 
         try:
@@ -822,7 +797,7 @@ class BaseSynthesizer:
     def _sample_conditions(self, conditions, max_tries_per_batch, batch_size, randomize_samples,
                            output_file_path):
         """Sample rows from this table with the given conditions."""
-        output_file_path = self._validate_file_path(output_file_path)
+        output_file_path = validate_file_path(output_file_path)
 
         num_rows = functools.reduce(
             lambda num_rows, condition: condition.get_num_rows() + num_rows, conditions, 0)
@@ -903,7 +878,7 @@ class BaseSynthesizer:
     def _sample_remaining_columns(self, known_columns, max_tries_per_batch, batch_size,
                                   randomize_samples, output_file_path):
         """Sample the remaining columns of a given DataFrame."""
-        output_file_path = self._validate_file_path(output_file_path)
+        output_file_path = validate_file_path(output_file_path)
 
         self._randomize_samples(randomize_samples)
 

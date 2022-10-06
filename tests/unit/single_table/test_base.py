@@ -5,14 +5,16 @@ from unittest.mock import Mock, call, patch
 import numpy as np
 import pandas as pd
 import pytest
+from copulas.multivariate import GaussianMultivariate
 from rdt.transformers import (
     BinaryEncoder, FloatFormatter, GaussianNormalizer, OneHotEncoder, RegexGenerator)
 
 from sdv.errors import InvalidPreprocessingError
 from sdv.metadata.single_table import SingleTableMetadata
+from sdv.sampling.tabular import Condition
 from sdv.single_table import (
     CopulaGANSynthesizer, CTGANSynthesizer, GaussianCopulaSynthesizer, TVAESynthesizer)
-from sdv.single_table.base import BaseSynthesizer
+from sdv.single_table.base import COND_IDX, BaseSynthesizer
 from sdv.single_table.errors import InvalidDataError
 
 
@@ -850,6 +852,33 @@ class TestBaseSynthesizer:
         assert float_rtol == 0.01
         pd.testing.assert_frame_equal(sampled, pd.DataFrame())
 
+    def test__sample_batch_max_tries_reached(self):
+        """Test that when ``max_tries`` is reached, a break occurs."""
+        # Setup
+        sampled_data = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe', 'John Doe John'],
+            'salary': [80., 60., 100., 300.]
+        })
+        instance = Mock()
+        instance._sample_rows.return_value = (sampled_data, 3)
+
+        # Run
+        result = BaseSynthesizer._sample_batch(
+            instance,
+            batch_size=10,
+            max_tries=2,
+            conditions=None,
+            transformed_conditions=None,
+            float_rtol=0.01,
+            progress_bar=None,
+            output_file_path=None,
+        )
+
+        # Assert
+        pd.testing.assert_frame_equal(result, sampled_data)
+        rows, conditions, trans_cond, float_rtol, sampled = instance._sample_rows.call_args[0]
+        assert instance._sample_rows.call_count == 2
+
     def test__sample_batch_storing_output_file(self, tmpdir):
         """Test that an output file is properly stored while sampling and progress bar updated."""
         # Setup
@@ -911,3 +940,266 @@ class TestBaseSynthesizer:
         data = pd.read_csv(path)
         pd.testing.assert_frame_equal(expected_stored_data, data)
         mock_progress_bar.update.call_count == 3
+
+    def test__make_condition_dfs(self):
+        """Test that the condition dfs are being created as expected."""
+        # Setup
+        condition_a = Condition({'name': 'John Doe'})
+        condition_b = Condition({'salary': 80.})
+
+        # Run
+        result = BaseSynthesizer._make_condition_dfs([condition_a, condition_b])
+
+        # Assert
+        expected_result = [
+            pd.DataFrame({'name': ['John Doe']}),
+            pd.DataFrame({'salary': [80.]}),
+        ]
+
+        for res, exp in zip(result, expected_result):
+            pd.testing.assert_frame_equal(res, exp)
+
+    def test__sample_in_batches(self):
+        """Test that this method calls and concatenates the output of ``_sample_batch``."""
+        # Setup
+        first_data = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe'],
+            'salary': [60., 70., 80.]
+        })
+        second_data = pd.DataFrame({
+            'name': ['Johana', 'Doe', 'Johana Doe'],
+            'salary': [65., 75., 85.]
+        })
+        instance = Mock()
+        instance._sample_batch.side_effect = [first_data, second_data]
+
+        # Run
+        result = BaseSynthesizer._sample_in_batches(
+            instance,
+            num_rows=6,
+            batch_size=3,
+            max_tries_per_batch=100,
+            conditions='conditions',
+            transformed_conditions='transformed_conditions',
+            float_rtol=0.02,
+            progress_bar='progress_bar',
+            output_file_path='output_file_path',
+        )
+
+        # Assert
+        expected_result = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe', 'Johana', 'Doe', 'Johana Doe'],
+            'salary': [60., 70., 80., 65., 75., 85.]
+        })
+        pd.testing.assert_frame_equal(result, expected_result)
+        assert instance._sample_batch.call_count == 2
+        expected_call = call(
+            batch_size=3,
+            max_tries=100,
+            conditions='conditions',
+            transformed_conditions='transformed_conditions',
+            float_rtol=0.02,
+            progress_bar='progress_bar',
+            output_file_path='output_file_path',
+        )
+        assert expected_call == instance._sample_batch.call_args_list[0]
+        assert expected_call == instance._sample_batch.call_args_list[1]
+
+    def test__conditionally_sample_rows(self):
+        """Test when sampled rows is bigger than 0."""
+        # Setup
+        transformed_data = pd.DataFrame({
+            COND_IDX: [0, 1, 2],
+            'salary.value': [65., 75., 85.]
+        })
+        data = pd.DataFrame({
+            'name': ['Johana', 'Doe', 'Johana Doe'],
+            'salary': [65., 75., 85.],
+        })
+        instance = Mock()
+        instance._sample_in_batches.return_value = data
+        condition = Mock()
+        transformed_condition = Mock()
+
+        # Run
+        result = BaseSynthesizer._conditionally_sample_rows(
+            instance,
+            transformed_data,
+            condition,
+            transformed_condition,
+        )
+
+        # Assert
+        expected_data = pd.DataFrame({
+            'name': ['Johana', 'Doe', 'Johana Doe'],
+            'salary': [65., 75., 85.],
+            COND_IDX: [0, 1, 2]
+        })
+        pd.testing.assert_frame_equal(expected_data, result)
+        instance._sample_in_batches.assert_called_once_with(
+            num_rows=3,
+            batch_size=3,
+            max_tries_per_batch=None,
+            conditions=condition,
+            transformed_conditions=transformed_condition,
+            float_rtol=0.01,
+            progress_bar=None,
+            output_file_path=None
+        )
+
+    def test__conditionally_sample_rows_raises_value_error(self):
+        """Test when sampled rows is lower or 0."""
+        # Setup
+        transformed_data = pd.DataFrame({
+            COND_IDX: [0, 1, 2],
+            'salary.value': [65., 75., 85.]
+        })
+        instance = Mock()
+        instance._sample_in_batches.return_value = []
+        condition = Mock()
+        transformed_condition = 'fancy_condition'
+
+        # Run and Assert
+        expected_message = re.escape(
+            'Unable to sample any rows for the given conditions '
+            '`fancy_condition`. Try increasing `max_tries_per_batch` (currently: None) '
+            'or increasing `batch_size` (currently: 3). Note that '
+            'increasing these values will also increase the sampling time.'
+        )
+        with pytest.raises(ValueError, match=expected_message):
+            BaseSynthesizer._conditionally_sample_rows(
+                instance,
+                transformed_data,
+                condition,
+                transformed_condition,
+                graceful_reject_sampling=False,
+            )
+
+    def test__conditionally_sample_rows_raises_value_error_model_is_gm(self):
+        """Test when sampled rows is lower or 0 and model is ``GaussianMultivariate``."""
+        # Setup
+        transformed_data = pd.DataFrame({
+            COND_IDX: [0, 1, 2],
+            'salary.value': [65., 75., 85.]
+        })
+        instance = Mock()
+        instance._sample_in_batches.return_value = []
+        condition = Mock()
+        transformed_condition = 'fancy_condition'
+        instance._model = GaussianMultivariate()
+
+        # Run and Assert
+        expected_message = re.escape(
+            'Unable to sample any rows for the given conditions '
+            '`fancy_condition`. This may be because the provided values are out-of-bounds in the '
+            'current model. \nPlease try again with a different set of values.'
+        )
+        with pytest.raises(ValueError, match=expected_message):
+            BaseSynthesizer._conditionally_sample_rows(
+                instance,
+                transformed_data,
+                condition,
+                transformed_condition,
+                graceful_reject_sampling=False,
+            )
+
+    def test__conditionally_sample_rows_without_grafecul_reject_sampling(self):
+        """Test when sampled rows is lower or 0 but ``graceful_reject_sampling`` is ``True``."""
+        # Setup
+        transformed_data = pd.DataFrame({
+            COND_IDX: [0, 1, 2],
+            'salary.value': [65., 75., 85.]
+        })
+        instance = Mock()
+        instance._sample_in_batches.return_value = []
+        condition = Mock()
+        transformed_condition = 'fancy_condition'
+        instance._model = GaussianMultivariate()
+
+        # Run
+        result = BaseSynthesizer._conditionally_sample_rows(
+            instance,
+            transformed_data,
+            condition,
+            transformed_condition,
+            graceful_reject_sampling=True,
+        )
+
+        # Assert
+        assert result == []
+
+    def test__randomize_samples_false(self):
+        """Test when the ``randomize_samples`` parameter is ``False``."""
+        # Setup
+        instance = Mock()
+
+        # Run
+        BaseSynthesizer._randomize_samples(instance, False)
+
+        # Assert
+        instance._set_random_state.assert_called_once_with(73251)
+
+    def test__randomize_samples_none(self):
+        """Test when the ``randomize_samples`` parameter is ``True``."""
+        # Setup
+        instance = Mock()
+
+        # Run
+        BaseSynthesizer._randomize_samples(instance, True)
+
+        # Assert
+        instance._set_random_state.assert_called_once_with(None)
+
+    def test__randomize_samples_model_is_none(self):
+        """Test when the ``instance._model`` is ``None``."""
+        # Setup
+        instance = Mock()
+        instance._model = None
+
+        # Run
+        result = BaseSynthesizer._randomize_samples(instance, True)
+
+        # Assert
+        assert result is None
+        instance._set_random_state.assert_not_called()
+
+    def test__sample_with_progress_bar_with_conditions(self):
+        """Test that a ``TypeError`` is raised when there are conditions."""
+        # Setup
+        instance = Mock()
+        conditions = [Mock(), Mock()]
+
+        # Run and Assert
+        expected_message = re.escape(
+            'This method does not support the conditions parameter. '
+            'Please create `sdv.sampling.Condition` objects and pass them '
+            'into the `sample_conditions` method. '
+            'See User Guide or API for more details.'
+        )
+        with pytest.raises(TypeError, match=expected_message):
+            BaseSynthesizer._sample_with_progress_bar(instance, 3, conditions=conditions)
+
+    def test__sample_with_progress_bar_num_rows_is_none(self):
+        """Test that a ``ValueError`` is raised when ``num_rows`` is ``None``."""
+        # Setup
+        instance = Mock()
+        num_rows = None
+
+        # Run and Assert
+        expected_message = re.escape(
+            'You must specify the number of rows to sample (e.g. num_rows=100).'
+        )
+        with pytest.raises(ValueError, match=expected_message):
+            BaseSynthesizer._sample_with_progress_bar(instance, num_rows)
+
+    def test__sample_with_progress_bar_num_rows_is_zero(self):
+        """Test that an empty dataframe is returned when ``num_rows`` is 0."""
+        # Setup
+        instance = Mock()
+        num_rows = 0
+
+        # Run
+        result = BaseSynthesizer._sample_with_progress_bar(instance, num_rows)
+
+        # Assert
+        pd.testing.assert_frame_equal(result, pd.DataFrame())
