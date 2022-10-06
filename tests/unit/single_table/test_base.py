@@ -533,9 +533,10 @@ class TestBaseSynthesizer:
         assert isinstance(field_transformers['col2'], FloatFormatter)
 
     def test_update_transformers_warns_models(self):
-        """Test warnings if transformer is added for a column that is auto-assigned to None.
+        """Test warning is raised for some models.
 
-        NOTE: improve description after figuring out what this is supposed to be testing :)
+        A warning should be raised if a transformer is assigned to boolean/categorical columns for
+        the CTGANSynthesizer, CopulaGANSynthesizer, TVAESynthesizer and PARSynthesizer models.
         """
         # Setup
         column_name_to_transformer = {

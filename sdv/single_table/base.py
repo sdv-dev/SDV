@@ -242,7 +242,7 @@ class BaseSynthesizer:
         for column, transformer in column_name_to_transformer.items():
             transformer_name = type(transformer).__name__
             sdtype = self.metadata._columns[column]['sdtype']
-            if sdtype != transformer.get_input_sdtype():
+            if sdtype not in transformer.get_supported_sdtypes():
                 raise Error(
                     f"Column '{column}' is a {sdtype} column, which is incompatible "
                     f"with the '{transformer_name}' transformer."
@@ -258,8 +258,8 @@ class BaseSynthesizer:
             if transformer.columns:
                 raise Error(f"Transformer for column '{column}' has already been fit on data.")
 
-    def _warn(self, column_name_to_transformer):
-        """Raise warnings of a model.
+    def _warn_for_update_transformers(self, column_name_to_transformer):
+        """Raise warnings for update_transformers.
 
         Args:
             column_name_to_transformer (dict):
@@ -281,5 +281,5 @@ class BaseSynthesizer:
                 Dict mapping column names to transformers to be used for that column.
         """
         self._validate_transformers(column_name_to_transformer)
-        self._warn(column_name_to_transformer)
+        self._warn_for_update_transformers(column_name_to_transformer)
         self._data_processor.update_transformers(column_name_to_transformer)

@@ -109,8 +109,8 @@ class GaussianCopulaSynthesizer(BaseSynthesizer):
             warnings.filterwarnings('ignore', module='scipy')
             self._model.fit(processed_data)
 
-    def _warn(self, column_name_to_transformer):
-        """Raise warnings of a model.
+    def _warn_for_update_transformers(self, column_name_to_transformer):
+        """Raise warnings for update_transformers.
 
         Args:
             column_name_to_transformer (dict):
