@@ -6,7 +6,7 @@ import warnings
 import pandas as pd
 
 from sdv.data_processing.data_processor import DataProcessor
-from sdv.errors import Error
+from sdv.errors import InvalidPreprocessingError
 from sdv.single_table.errors import InvalidDataError
 from sdv.utils import is_boolean_type, is_datetime_type, is_numerical_type
 
@@ -240,23 +240,16 @@ class BaseSynthesizer:
     def _validate_transformers(self, column_name_to_transformer):
         keys = self._get_primary_and_alternate_keys() | self._get_set_of_sequence_keys()
         for column, transformer in column_name_to_transformer.items():
-            transformer_name = type(transformer).__name__
-            sdtype = self.metadata._columns[column]['sdtype']
-            if sdtype not in transformer.get_supported_sdtypes():
-                raise Error(
-                    f"Column '{column}' is a {sdtype} column, which is incompatible "
-                    f"with the '{transformer_name}' transformer."
-                )
-
-            if column in keys and transformer_name not in {'AnonymizedFaker', 'RegexGenerator'}:
-                raise Error(
+            if column in keys and not transformer.is_generator():
+                raise InvalidPreprocessingError(
                     f"Column '{column}' is a key. It cannot be preprocessed using "
-                    f"the '{transformer_name}' transformer."
+                    f"the '{type(transformer).__name__}' transformer."
                 )
 
             # If columns were set, the transformer was fitted
             if transformer.columns:
-                raise Error(f"Transformer for column '{column}' has already been fit on data.")
+                raise InvalidPreprocessingError(
+                    f"Transformer for column '{column}' has already been fit on data.")
 
     def _warn_for_update_transformers(self, column_name_to_transformer):
         """Raise warnings for update_transformers.

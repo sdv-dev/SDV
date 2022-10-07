@@ -8,7 +8,7 @@ import pytest
 from rdt.transformers import (
     BinaryEncoder, FloatFormatter, GaussianNormalizer, OneHotEncoder, RegexGenerator)
 
-from sdv.errors import Error
+from sdv.errors import InvalidPreprocessingError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table import (
     CopulaGANSynthesizer, CTGANSynthesizer, GaussianCopulaSynthesizer, TVAESynthesizer)
@@ -441,26 +441,6 @@ class TestBaseSynthesizer:
         # Run
         instance.validate(data)
 
-    def test_update_transformers_invalid_sdtype(self):
-        """Test error is raised if transformer doesn't match column sdtype."""
-        # Setup
-        column_name_to_transformer = {
-            'col1': BinaryEncoder(),
-            'col2': FloatFormatter()
-        }
-        metadata = SingleTableMetadata()
-        metadata.add_column('col1', sdtype='boolean')
-        metadata.add_column('col2', sdtype='categorical')
-        instance = BaseSynthesizer(metadata)
-
-        # Run and Assert
-        err_msg = re.escape(
-            "Column 'col2' is a categorical column, which is incompatible "
-            "with the 'FloatFormatter' transformer."
-        )
-        with pytest.raises(Error, match=err_msg):
-            instance.update_transformers(column_name_to_transformer)
-
     def test_update_transformers_invalid_keys(self):
         """Test error is raised if passed transformer doesn't match key column.
 
@@ -484,7 +464,7 @@ class TestBaseSynthesizer:
             "Column 'col3' is a key. It cannot be preprocessed using "
             "the 'FloatFormatter' transformer."
         )
-        with pytest.raises(Error, match=err_msg):
+        with pytest.raises(InvalidPreprocessingError, match=err_msg):
             instance.update_transformers(column_name_to_transformer)
 
     def test_update_transformers_already_fitted(self):
@@ -503,7 +483,7 @@ class TestBaseSynthesizer:
 
         # Run and Assert
         err_msg = "Transformer for column 'col2' has already been fit on data."
-        with pytest.raises(Error, match=err_msg):
+        with pytest.raises(InvalidPreprocessingError, match=err_msg):
             instance.update_transformers(column_name_to_transformer)
 
     def test_update_transformers_warns_gaussian_copula(self):

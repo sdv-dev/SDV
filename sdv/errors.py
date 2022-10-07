@@ -13,5 +13,5 @@ class ConstraintsNotMetError(ValueError):
         super().__init__(self.message)
 
 
-class Error(Exception):
-    """Error to raise when a controlled error message is produced."""
+class InvalidPreprocessingError(Exception):
+    """Error raised during an invalid preprocessing step."""
