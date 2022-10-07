@@ -387,7 +387,7 @@ class BaseSynthesizer:
             else:
                 try:
                     sampled = self._sample(num_rows, transformed_conditions)
-                except TypeError:
+                except NotImplementedError:
                     sampled = self._sample(num_rows)
 
             sampled = self._data_processor.reverse_transform(sampled)

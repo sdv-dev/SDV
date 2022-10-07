@@ -758,7 +758,7 @@ class TestBaseSynthesizer:
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.}
         transformed_conditions = {'salary.value': 80.0}
-        instance._sample.side_effect = [TypeError, None]
+        instance._sample.side_effect = [NotImplementedError, None]
 
         # Run
         sampled, num_valid = BaseSynthesizer._sample_rows(
