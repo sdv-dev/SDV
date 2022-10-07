@@ -242,6 +242,16 @@ class SingleTableMetadata:
         kwargs['constraint_name'] = constraint_name
         self._constraints.append(kwargs)
 
+    def to_dict(self):
+        """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
+        metadata = {}
+        for key in self._KEYS:
+            value = getattr(self, f'_{key}') if key != 'SCHEMA_VERSION' else self._version
+            if value:
+                metadata[key] = value
+
+        return deepcopy(metadata)
+
     def _detect_columns(self, data):
         for field in data:
             clean_data = data[field].dropna()
@@ -486,16 +496,6 @@ class SingleTableMetadata:
                 'The following errors were found in the metadata:\n\n'
                 + '\n'.join([str(e) for e in errors])
             )
-
-    def to_dict(self):
-        """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
-        metadata = {}
-        for key in self._KEYS:
-            value = getattr(self, f'_{key}') if key != 'SCHEMA_VERSION' else self._version
-            if value:
-                metadata[key] = value
-
-        return deepcopy(metadata)
 
     def save_to_json(self, filepath):
         """Save the current ``SingleTableMetadata`` in to a ``json`` file.

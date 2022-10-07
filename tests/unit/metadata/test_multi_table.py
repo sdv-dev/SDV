@@ -585,9 +585,11 @@ class TestMultiTableMetadata:
         })
 
         instance = Mock()
+        users_mock = Mock()
+        users_mock._columns = {}
         instance._tables = {
             'accounts': table_accounts,
-            'users': Mock()
+            'users': users_mock
         }
         errors = []
 
@@ -599,7 +601,10 @@ class TestMultiTableMetadata:
             "Table: accounts\nUnknown primary key values {'branches'}. "
             'Keys should be columns that exist in the table.'
         )
-        assert errors == ['\n', expected_error_msg]
+        empty_table_error_message = (
+            "Table 'users' has 0 columns. Use 'add_column' to specify its columns."
+        )
+        assert errors == ['\n', expected_error_msg, empty_table_error_message]
         instance._tables['users'].validate.assert_called_once()
 
     def test__validate_all_tables_connected_connected(self):
@@ -812,6 +817,56 @@ class TestMultiTableMetadata:
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.validate()
+
+    @patch('sdv.metadata.multi_table.SingleTableMetadata')
+    def test_add_table(self, table_metadata_mock):
+        """Test that the method adds the table name to ``instance._tables``."""
+        # Setup
+        instance = MultiTableMetadata()
+
+        # Run
+        instance.add_table('users')
+
+        # Assert
+        assert instance._tables == {'users': table_metadata_mock.return_value}
+
+    def test_add_table_empty_string(self):
+        """Test that the method raises an error if the table name is an empty string."""
+        # Setup
+        instance = MultiTableMetadata()
+
+        # Run and Assert
+        error_message = re.escape(
+            "Invalid table name (''). The table name must be a non-empty string."
+        )
+        with pytest.raises(ValueError, match=error_message):
+            instance.add_table('')
+
+    def test_add_table_not_string(self):
+        """Test that the method raises an error if the table name is not a string."""
+        # Setup
+        instance = MultiTableMetadata()
+
+        # Run and Assert
+        error_message = re.escape(
+            "Invalid table name (''). The table name must be a non-empty string."
+        )
+        with pytest.raises(ValueError, match=error_message):
+            instance.add_table(Mock())
+
+    def test_add_table_table_already_exists(self):
+        """Test that the method raises an error if the table already exists."""
+        # Setup
+        instance = MultiTableMetadata()
+        instance._tables = {'users': Mock()}
+
+        # Run and Assert
+        error_message = re.escape(
+            "Cannot add a table named 'users' because it already exists in the metadata. Please "
+            'choose a different name.'
+        )
+        with pytest.raises(ValueError, match=error_message):
+            instance.add_table('users')
 
     def test_to_dict(self):
         """Test the ``to_dict`` method of ``MultiTableMetadata``.

@@ -370,6 +370,11 @@ class MultiTableMetadata:
 
     def _validate_single_table(self, errors):
         for table_name, table in self._tables.items():
+            if len(table._columns) == 0:
+                error_message = (
+                    f"Table '{table_name}' has 0 columns. Use 'add_column' to specify its columns."
+                )
+                errors.append(error_message)
             try:
                 table.validate()
             except Exception as error:
@@ -445,6 +450,29 @@ class MultiTableMetadata:
             raise InvalidMetadataError(
                 'The metadata is not valid' + '\n'.join(str(e) for e in errors)
             )
+
+    def add_table(self, table_name):
+        """Add a table to the metadata.
+
+        Args:
+            table_name (str):
+                The name of the table to add to the metadata.
+
+        Raises:
+            Raises ``ValueError`` if ``table_name`` is not valid.
+        """
+        if not isinstance(table_name, str) or table_name == '':
+            raise ValueError(
+                "Invalid table name (''). The table name must be a non-empty string."
+            )
+
+        if table_name in self._tables:
+            raise ValueError(
+                f"Cannot add a table named '{table_name}' because it already exists in the "
+                'metadata. Please choose a different name.'
+            )
+
+        self._tables[table_name] = SingleTableMetadata()
 
     def visualize(self, show_table_details=True, show_relationship_labels=True,
                   output_filepath=None):
@@ -555,7 +583,7 @@ class MultiTableMetadata:
                 String that represent the ``path`` to the ``json`` file to be written.
 
         Raises:
-            Raises an ``Error`` if the path already exists.
+            Raises a ``ValueError`` if the path already exists.
         """
         validate_file_does_not_exist(filepath)
         metadata = self.to_dict()
