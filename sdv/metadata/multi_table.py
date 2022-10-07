@@ -461,7 +461,7 @@ class MultiTableMetadata:
         Raises:
             Raises ``ValueError`` if ``table_name`` is not valid.
         """
-        if not table_name:
+        if not isinstance(table_name, str) or table_name == '':
             raise ValueError(
                 "Invalid table name (''). The table name must be a non-empty string."
             )
