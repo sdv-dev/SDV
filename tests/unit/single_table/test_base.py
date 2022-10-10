@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from unittest.mock import Mock, call, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -1203,3 +1203,167 @@ class TestBaseSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame())
+
+    @patch('sdv.single_table.base.tqdm')
+    @patch('sdv.single_table.base.validate_file_path')
+    def test__sample_with_progress_bar_returns_sampled_data(self,
+                                                            mock_validate_file_path, mock_tqdm):
+        """Test that ``_sample_in_batches`` is being called and it's output is returned."""
+        # Setup
+        progress_bar = MagicMock()
+        mock_tqdm.tqdm.return_value = progress_bar
+        instance = Mock()
+        instance._sample_in_batches.return_value = pd.DataFrame({
+            'name': ['John', 'Johanna', 'Doe']
+        })
+
+        # Run
+        result = BaseSynthesizer._sample_with_progress_bar(instance, 10)
+
+        # Assert
+        expected_result = pd.DataFrame({'name': ['John', 'Johanna', 'Doe']})
+        pd.testing.assert_frame_equal(result, expected_result)
+        mock_tqdm.tqdm.assert_called_once_with(total=10, disable=False)
+        progress_bar.__enter__.return_value.set_description.assert_called_once_with(
+            'Sampling rows'
+        )
+        instance._sample_in_batches.assert_called_once_with(
+            num_rows=10,
+            batch_size=10,
+            max_tries_per_batch=100,
+            progress_bar=progress_bar.__enter__.return_value,
+            output_file_path=mock_validate_file_path.return_value,
+        )
+
+    @patch('sdv.single_table.base.handle_sampling_error')
+    @patch('sdv.single_table.base.tqdm')
+    @patch('sdv.single_table.base.validate_file_path')
+    def test__sample_with_progress_bar_handle_sampling_error(
+        self, mock_validate_file_path, mock_tqdm, mock_handle_sampling_error
+    ):
+        """Test the error handling when we are using ``_sample_in_batches``."""
+        # Setup
+        progress_bar = MagicMock()
+        mock_tqdm.tqdm.return_value = progress_bar
+        instance = Mock()
+        instance._sample_in_batches.side_effect = [KeyboardInterrupt]
+        mock_validate_file_path.return_value = 'temp_file'
+
+        # Run
+        result = BaseSynthesizer._sample_with_progress_bar(instance, 10)
+
+        # Assert
+        expected_result = pd.DataFrame()
+        pd.testing.assert_frame_equal(result, expected_result)
+        mock_tqdm.tqdm.assert_called_once_with(total=10, disable=False)
+        progress_bar.__enter__.return_value.set_description.assert_called_once_with(
+            'Sampling rows'
+        )
+        instance._sample_in_batches.assert_called_once_with(
+            num_rows=10,
+            batch_size=10,
+            max_tries_per_batch=100,
+            progress_bar=progress_bar.__enter__.return_value,
+            output_file_path=mock_validate_file_path.return_value,
+        )
+        mock_handle_sampling_error(False, 'temp_file', KeyboardInterrupt())
+
+    @patch('sdv.single_table.base.os')
+    @patch('sdv.single_table.base.tqdm')
+    @patch('sdv.single_table.base.validate_file_path')
+    def test__sample_with_progress_bar_removing_temp_file(
+        self, mock_validate_file_path, mock_tqdm, mock_os
+    ):
+        """Test that the temporary file is removed after sampling."""
+        # Setup
+        progress_bar = MagicMock()
+        mock_tqdm.tqdm.return_value = progress_bar
+        instance = Mock()
+        instance._sample_in_batches.return_value = pd.DataFrame()
+        mock_validate_file_path.return_value = '.sample.csv.temp'
+
+        # Run
+        result = BaseSynthesizer._sample_with_progress_bar(instance, 10)
+
+        # Assert
+        expected_result = pd.DataFrame()
+        pd.testing.assert_frame_equal(result, expected_result)
+        mock_tqdm.tqdm.assert_called_once_with(total=10, disable=False)
+        progress_bar.__enter__.return_value.set_description.assert_called_once_with(
+            'Sampling rows'
+        )
+        instance._sample_in_batches.assert_called_once_with(
+            num_rows=10,
+            batch_size=10,
+            max_tries_per_batch=100,
+            progress_bar=progress_bar.__enter__.return_value,
+            output_file_path=mock_validate_file_path.return_value,
+        )
+        mock_os.remove.assert_called_once_with('.sample.csv.temp')
+        mock_os.path.exists.assert_called_once_with('.sample.csv.temp')
+
+    def test_sample(self):
+        """Test that we use ``_sample_with_progress_bar`` in this method."""
+        # Setup
+        num_rows = 10
+        randomize_samples = False
+        max_tries_per_batch = 50
+        batch_size = 5
+        output_file_path = 'temp.csv'
+        conditions = None
+        instance = Mock()
+        instance.get_metadata.return_value._constraints = False
+
+        # Run
+        result = BaseSynthesizer.sample(
+            instance,
+            num_rows,
+            randomize_samples,
+            max_tries_per_batch,
+            batch_size,
+            output_file_path,
+            conditions,
+        )
+
+        # Assert
+        instance._sample_with_progress_bar.assert_called_once_with(
+            10,
+            False,
+            50,
+            5,
+            'temp.csv',
+            None,
+            show_progress_bar=True
+        )
+
+    def test__validate_conditions(self):
+        """Test that conditions are within the ``data_processor`` fields."""
+        # Setup
+        instance = Mock()
+        instance._data_processor.get_fields.return_value = ['name', 'surname']
+        conditions = pd.DataFrame({'name': ['Johanna'], 'surname': ['Doe']})
+
+        # Run
+        BaseSynthesizer._validate_conditions(instance, conditions)
+
+        # Assert
+        instance._data_processor.get_fields.assert_called()
+
+    def test__validate_conditions_raises_error(self):
+        """Test that conditions are not in the ``data_processor`` fields."""
+        # Setup
+        instance = Mock()
+        instance._data_processor.get_fields.return_value = ['name', 'surname']
+        conditions = pd.DataFrame({'name.value': ['Johanna'], 'surname.value': ['Doe']})
+
+        # Run and Assert
+        error_msg = re.escape(
+            'Unexpected column name `name.value`. Use a column name that was present in the '
+            'original data.'
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            BaseSynthesizer._validate_conditions(instance, conditions)
+
+    def test__sample_with_conditions(self):
+        """Test sampling with conditions."""
+        pass

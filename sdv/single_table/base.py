@@ -622,8 +622,9 @@ class BaseSynthesizer:
         if num_rows is None:
             raise ValueError('You must specify the number of rows to sample (e.g. num_rows=100).')
 
+        sampled = pd.DataFrame()
         if num_rows == 0:
-            return pd.DataFrame()
+            return sampled
 
         self._randomize_samples(randomize_samples)
         output_file_path = validate_file_path(output_file_path)
