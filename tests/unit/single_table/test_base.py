@@ -9,7 +9,7 @@ from copulas.multivariate import GaussianMultivariate
 from rdt.transformers import (
     BinaryEncoder, FloatFormatter, GaussianNormalizer, OneHotEncoder, RegexGenerator)
 
-from sdv.errors import InvalidPreprocessingError
+from sdv.errors import ConstraintsNotMetError, InvalidPreprocessingError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
 from sdv.single_table import (
@@ -1335,6 +1335,7 @@ class TestBaseSynthesizer:
             None,
             show_progress_bar=True
         )
+        assert result == instance._sample_with_progress_bar.return_value
 
     def test__validate_conditions(self):
         """Test that conditions are within the ``data_processor`` fields."""
@@ -1364,6 +1365,127 @@ class TestBaseSynthesizer:
         with pytest.raises(ValueError, match=error_msg):
             BaseSynthesizer._validate_conditions(instance, conditions)
 
-    def test__sample_with_conditions(self):
-        """Test sampling with conditions."""
+    def test__sample_with_conditions_constraints_not_met(self):
+        """Test when conditions are not met."""
+        # Setup
+        conditions = pd.DataFrame({
+            'name': ['Johanna', 'Doe'],
+            'salary': [100., 90.]
+        })
+        instance = Mock()
+        instance._data_processor.transform.side_effect = [ConstraintsNotMetError]
+
+        # Run and Assert
+        error_msg = 'Provided conditions are not valid for the given constraints'
+        with pytest.raises(ConstraintsNotMetError, match=error_msg):
+            BaseSynthesizer._sample_with_conditions(
+                instance,
+                conditions,
+                10,
+                10,
+            )
+
+    def test__sample_with_conditions_transformed_whith_transformed_data(self):
+        """Test when the condition is transformed, this is being used to conditionally sample."""
+        # Setup
+        conditions = pd.DataFrame({'name': ['Johanna', 'Doe']})
+        instance = Mock()
+        instance._data_processor.transform.side_effect = [
+            pd.DataFrame({'name.value': [0.25]}),
+            pd.DataFrame({'name.value': [0.90]}),
+        ]
+        instance._conditionally_sample_rows.side_effect = [
+            pd.DataFrame({'name': ['Johanna'], COND_IDX: [1]}),
+            pd.DataFrame({'name': ['Doe'], COND_IDX: [0]}),
+        ]
+
+        # Run
+        result = BaseSynthesizer._sample_with_conditions(
+            instance,
+            conditions,
+            10,
+            10,
+        )
+
+        # Assert
+        sample_calls = instance._conditionally_sample_rows.call_args_list
+        first_call_kwargs = sample_calls[0].kwargs
+        second_call_kwargs = sample_calls[1].kwargs
+        first_df = first_call_kwargs.pop('dataframe')
+        second_df = second_call_kwargs.pop('dataframe')
+
+        pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['Doe', 'Johanna']}))
+
+        pd.testing.assert_frame_equal(
+            first_df,
+            pd.DataFrame({'name.value': [0.25], COND_IDX: [1]}, index=[1])
+        )
+        pd.testing.assert_frame_equal(
+            second_df,
+            pd.DataFrame({'name.value': [0.90], COND_IDX: [0]})
+        )
+        assert first_call_kwargs == {
+            'condition': {
+                'name': 'Doe'
+            },
+            'transformed_condition': {
+                'name.value': 0.25
+            },
+            'max_tries_per_batch': 10,
+            'batch_size': 10,
+            'progress_bar': None,
+            'output_file_path': None,
+        }
+        assert second_call_kwargs == {
+            'condition': {
+                'name': 'Johanna'
+            },
+            'transformed_condition': {
+                'name.value': 0.90
+            },
+            'max_tries_per_batch': 10,
+            'batch_size': 10,
+            'progress_bar': None,
+            'output_file_path': None,
+        }
+
+    def test__sample_with_conditions_transformed_whith_no_transformed_data(self):
+        """Test when there is no transformed, this still conditionally sample."""
+        # Setup
+        conditions = pd.DataFrame({'name': ['Johanna']})
+        instance = Mock()
+        instance._data_processor.transform.side_effect = [
+            pd.DataFrame(),
+            pd.DataFrame(),
+        ]
+        instance._conditionally_sample_rows.return_value = pd.DataFrame()
+
+        # Run
+        result = BaseSynthesizer._sample_with_conditions(
+            instance,
+            conditions,
+            10,
+            10,
+        )
+
+        # Assert
+        pd.testing.assert_frame_equal(result, pd.DataFrame())
+        sample_call = instance._conditionally_sample_rows.call_args_list[0].kwargs
+        call_dataframe = sample_call.pop('dataframe')
+        pd.testing.assert_frame_equal(
+            call_dataframe,
+            pd.DataFrame({COND_IDX: [0], 'name': ['Johanna']})
+        )
+        assert sample_call == {
+            'condition': {
+                'name': 'Johanna'
+            },
+            'transformed_condition': None,
+            'max_tries_per_batch': 10,
+            'batch_size': 10,
+            'progress_bar': None,
+            'output_file_path': None,
+        }
+
+    def test__sample_conditions(self):
         pass

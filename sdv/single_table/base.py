@@ -744,9 +744,10 @@ class BaseSynthesizer:
                     condition_df,
                     is_condition=True
                 )
-            except ConstraintsNotMetError as cnme:
-                cnme.message = 'Provided conditions are not valid for the given constraints'
-                raise
+            except ConstraintsNotMetError as error:
+                raise ConstraintsNotMetError(
+                    'Provided conditions are not valid for the given constraints'
+                ) from error
 
             transformed_conditions = pd.concat(
                 [transformed_condition] * len(dataframe),
