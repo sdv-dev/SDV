@@ -1409,8 +1409,8 @@ class TestBaseSynthesizer:
 
         # Assert
         sample_calls = instance._conditionally_sample_rows.call_args_list
-        first_call_kwargs = sample_calls[0].kwargs
-        second_call_kwargs = sample_calls[1].kwargs
+        first_call_kwargs = sample_calls[0][1]
+        second_call_kwargs = sample_calls[1][1]
         first_df = first_call_kwargs.pop('dataframe')
         second_df = second_call_kwargs.pop('dataframe')
 
@@ -1449,7 +1449,7 @@ class TestBaseSynthesizer:
             'output_file_path': None,
         }
 
-    def test__sample_with_conditions_transformed_whith_no_transformed_data(self):
+    def test__sample_with_conditions_no_transformed_conditions(self):
         """Test when there is no transformed, this still conditionally sample."""
         # Setup
         conditions = pd.DataFrame({'name': ['Johanna']})
@@ -1470,7 +1470,7 @@ class TestBaseSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame())
-        sample_call = instance._conditionally_sample_rows.call_args_list[0].kwargs
+        sample_call = instance._conditionally_sample_rows.call_args_list[0][1]
         call_dataframe = sample_call.pop('dataframe')
         pd.testing.assert_frame_equal(
             call_dataframe,
