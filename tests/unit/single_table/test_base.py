@@ -1487,5 +1487,91 @@ class TestBaseSynthesizer:
             'output_file_path': None,
         }
 
-    def test__sample_conditions(self):
-        pass
+    @patch('sdv.single_table.base.check_num_rows')
+    @patch('sdv.single_table.base.DataProcessor')
+    @patch('sdv.single_table.base.tqdm')
+    @patch('sdv.single_table.base.validate_file_path')
+    def test__sample_conditions(self, mock_validate_file_path,
+                                mock_tqdm, mock_data_processor, mock_check_num_rows):
+        """Test sample conditions with sampled data and reject sampling.
+
+        An instance of ``BaseSynthesizer`` is created and it's utility functions are being mocked
+        to reach the point of calling ```_sample_with_conditions``.
+        """
+        # Setup
+        instance = BaseSynthesizer('metadata')
+        conditions = [Condition({'name': 'John Doe'})]
+
+        instance._validate_conditions = Mock()
+        instance._sample_with_conditions = Mock()
+        instance._randomize_samples = Mock()
+        instance._model = GaussianMultivariate()
+        instance._sample_with_conditions.return_value = pd.DataFrame({'name': ['John Doe']})
+
+        progress_bar = MagicMock()
+        mock_tqdm.tqdm.return_value = progress_bar
+
+        # Run
+        result = instance._sample_conditions(conditions, 10, 10, False, '.sample.csv.temp',)
+
+        # Assert
+        pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
+
+    def test_sample_conditions(self):
+        """Test that this method calls ``_sample_with_conditions``."""
+        # Setup
+        instance = Mock()
+
+        # Run
+        result = BaseSynthesizer.sample_conditions(instance, ['conditions'])
+
+        # Assert
+        assert result == instance._sample_conditions.return_value
+        instance._sample_conditions.assert_called_once_with(
+            ['conditions'],
+            100,
+            None,
+            True,
+            None
+        )
+
+    @patch('sdv.single_table.base.check_num_rows')
+    @patch('sdv.single_table.base.DataProcessor')
+    @patch('sdv.single_table.base.tqdm')
+    @patch('sdv.single_table.base.validate_file_path')
+    def test__sample_remaining_columns(self, mock_validate_file_path, mock_tqdm,
+                                       mock_data_processor, mock_check_num_rows):
+        """Test the sample remaining."""
+        # Setup
+        instance = BaseSynthesizer('metadata')
+        known_columns = pd.DataFrame({'name': ['Johanna Doe']})
+
+        instance._validate_conditions = Mock()
+        instance._sample_with_conditions = Mock()
+        instance._randomize_samples = Mock()
+        instance._model = GaussianMultivariate()
+        instance._sample_with_conditions.return_value = pd.DataFrame({'name': ['John Doe']})
+
+        progress_bar = MagicMock()
+        mock_tqdm.tqdm.return_value = progress_bar
+
+        # Run
+        result = instance._sample_conditions(known_columns, 10, 10, False, '.sample.csv.temp')
+
+        # Assert
+        pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
+
+    def test_sample_remaining_columns(self):
+        # Setup
+        instance = Mock()
+        known_columns = pd.DataFrame({'name': ['Johanna']})
+        instance._validate_conditions = Mock()
+        instance._sample_with_conditions = Mock()
+        instance._randomize_samples = Mock()
+
+        # Run
+        result = BaseSynthesizer.sample_remaining_columns(instance, known_columns)
+
+        # Assert
+        assert result == instance._sample_remaining_columns.return_value
+        instance._sample_remaining_columns.assert_called_once()
