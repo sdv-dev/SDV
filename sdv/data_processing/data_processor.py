@@ -279,6 +279,19 @@ class DataProcessor:
 
         return {'transformers': transformers, 'sdtypes': sdtypes}
 
+    def update_transformers(self, column_name_to_transformer):
+        """Update any of the transformers assigned to each of the column names.
+
+        Args:
+            column_name_to_transformer (dict):
+                Dict mapping column names to transformers to be used for that column.
+        """
+        if not self._hyper_transformer:
+            raise NotFittedError(
+                'The DataProcessor must be fitted before the transformers can be updated.')
+
+        self._hyper_transformer.update_transformers(column_name_to_transformer)
+
     def _fit_hyper_transformer(self, data, columns_created_by_constraints):
         """Create and return a new ``rdt.HyperTransformer`` instance.
 
