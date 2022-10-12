@@ -1465,7 +1465,11 @@ class TestBaseSynthesizer:
         }
 
     def test__sample_with_conditions_no_transformed_conditions(self):
-        """Test when there is no transformed, this still conditionally sample."""
+        """Test when the conditions are not being transformed.
+
+        Test that when the conditions are not transformable, this calls the conditional
+        sampling with the expected values and makes the ``transformed_condition`` to be ``None``.
+        """
         # Setup
         conditions = pd.DataFrame({'name': ['Johanna']})
         instance = Mock()
