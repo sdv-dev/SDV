@@ -636,7 +636,7 @@ class TestBaseSynthesizer:
             instance._set_random_state(rng_seed)
 
     def test__filter_conditions(self):
-        """Test that we filter over the sampled data with the given conditions."""
+        """Test that the method filters out data that doesn't meet the conditions."""
         # Setup
         sampled = pd.DataFrame({
             'position': [
@@ -715,7 +715,7 @@ class TestBaseSynthesizer:
         )
 
     def test__sample_rows_with_previous_rows(self):
-        """Test that when calling sample rows with previous rows those are being concatenated."""
+        """Test that previous rows are being concatenated when provided to ``_sample``."""
         # Setup
         previous_rows = pd.DataFrame({
             'name': ['John Doe', 'John Doe', 'John Doe'],
@@ -746,8 +746,8 @@ class TestBaseSynthesizer:
             instance._sample.return_value
         )
 
-    def test__sample_rows_type_error(self):
-        """Test when ``_sample`` does not accept ``transformed_conditions``."""
+    def test__sample_rows_notimplementederror(self):
+        """Test when the model does not support conditional sampling and raises an error."""
         # Setup
         data = pd.DataFrame({
             'name': ['John', 'Doe', 'John Doe'],
@@ -788,6 +788,7 @@ class TestBaseSynthesizer:
         pd.testing.assert_frame_equal(sampled, pd.DataFrame(index=range(10)))
 
     def test__sample_batch_without_saving_to_file(self):
+        """Test the ``_sample_batch`` without storing the samples in a file."""
         # Setup
         sampled_data = pd.DataFrame({
             'name': ['John', 'Doe', 'John Doe'],
@@ -880,7 +881,10 @@ class TestBaseSynthesizer:
         assert instance._sample_rows.call_count == 2
 
     def test__sample_batch_storing_output_file(self, tmpdir):
-        """Test that an output file is properly stored while sampling and progress bar updated."""
+        """Test that an output file is properly stored while sampling.
+
+        Test that an output file is properly stored as well as that the progress bar is updated.
+        """
         # Setup
         sampled_data = pd.DataFrame({
             'name': ['John', 'Doe', 'John Doe', 'John Doe John'],
@@ -1047,8 +1051,8 @@ class TestBaseSynthesizer:
             output_file_path=None
         )
 
-    def test__conditionally_sample_rows_raises_value_error(self):
-        """Test when sampled rows is lower or 0."""
+    def test__conditionally_sample_rows_no_rows_sampled_error(self):
+        """Test that an error is raised when no rows are sampled."""
         # Setup
         transformed_data = pd.DataFrame({
             COND_IDX: [0, 1, 2],
@@ -1103,7 +1107,7 @@ class TestBaseSynthesizer:
                 graceful_reject_sampling=False,
             )
 
-    def test__conditionally_sample_rows_without_grafecul_reject_sampling(self):
+    def test__conditionally_sample_rows_with_graceful_reject_sampling(self):
         """Test when sampled rows is lower or 0 but ``graceful_reject_sampling`` is ``True``."""
         # Setup
         transformed_data = pd.DataFrame({
@@ -1129,7 +1133,11 @@ class TestBaseSynthesizer:
         assert result == []
 
     def test__randomize_samples_false(self):
-        """Test when the ``randomize_samples`` parameter is ``False``."""
+        """Test when the ``randomize_samples`` parameter is ``False``.
+
+        When ``randomize_samples`` is ``False`` this calls the method ` `_set_random_state``
+        with a fixed number (73251).
+        """
         # Setup
         instance = Mock()
 
@@ -1140,7 +1148,11 @@ class TestBaseSynthesizer:
         instance._set_random_state.assert_called_once_with(73251)
 
     def test__randomize_samples_none(self):
-        """Test when the ``randomize_samples`` parameter is ``True``."""
+        """Test when the ``randomize_samples`` parameter is ``True``.
+
+        When ``randomize_samples`` is ``True`` this calls the method ` `_set_random_state``
+        with ``None`` which resets the state.
+        """
         # Setup
         instance = Mock()
 
@@ -1541,7 +1553,7 @@ class TestBaseSynthesizer:
     @patch('sdv.single_table.base.validate_file_path')
     def test__sample_remaining_columns(self, mock_validate_file_path, mock_tqdm,
                                        mock_data_processor, mock_check_num_rows):
-        """Test the sample remaining."""
+        """Test the this method calls ``_sample_with_conditions`` with the ``known_column."""
         # Setup
         instance = BaseSynthesizer('metadata')
         known_columns = pd.DataFrame({'name': ['Johanna Doe']})
@@ -1556,12 +1568,19 @@ class TestBaseSynthesizer:
         mock_tqdm.tqdm.return_value = progress_bar
 
         # Run
-        result = instance._sample_conditions(known_columns, 10, 10, False, '.sample.csv.temp')
+        result = instance._sample_remaining_columns(
+            known_columns,
+            10,
+            10,
+            False,
+            '.sample.csv.temp'
+        )
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
 
     def test_sample_remaining_columns(self):
+        """Test that this method calls the ``_sample_remaining_columns``."""
         # Setup
         instance = Mock()
         known_columns = pd.DataFrame({'name': ['Johanna']})

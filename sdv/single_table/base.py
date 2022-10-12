@@ -893,11 +893,13 @@ class BaseSynthesizer:
                 sampled = self._sample_with_conditions(
                     known_columns, max_tries_per_batch, batch_size, progress_bar, output_file_path)
 
+            is_reject_sampling = (hasattr(self, '_model') and not isinstance(
+                self._model, copulas.multivariate.GaussianMultivariate))
+
             check_num_rows(
                 num_rows=len(sampled),
                 expected_num_rows=len(known_columns),
-                is_reject_sampling=(hasattr(self, '_model') and isinstance(
-                    self._model, copulas.multivariate.GaussianMultivariate)),
+                is_reject_sampling=is_reject_sampling,
                 max_tries_per_batch=max_tries_per_batch
             )
 
