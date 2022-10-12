@@ -113,15 +113,6 @@ class CTGANSynthesizer(BaseSynthesizer):
         self._model = CTGAN(**self._model_kwargs)
         self._model.fit(processed_data, discrete_columns=discrete_columns)
 
-    def _set_random_state(self, random_state):
-        """Set the random state of the model's random number generator.
-
-        Args:
-            random_state (int, tuple[np.random.RandomState, torch.Generator], or None):
-                Seed or tuple of random states to use.
-        """
-        self._model.set_random_state(random_state)
-
     def _sample(self, num_rows, conditions=None):
         """Sample the indicated number of rows from the model.
 
@@ -216,15 +207,6 @@ class TVAESynthesizer(BaseSynthesizer):
         discrete_columns = detect_discrete_columns(self.get_metadata(), processed_data)
         self._model = TVAE(**self._model_kwargs)
         self._model.fit(processed_data, discrete_columns=discrete_columns)
-
-    def _set_random_state(self, random_state):
-        """Set the random state of the model's random number generator.
-
-        Args:
-            random_state (int, tuple[np.random.RandomState, torch.Generator], or None):
-                Seed or tuple of random states to use.
-        """
-        self._model.set_random_state(random_state)
 
     def _sample(self, num_rows, conditions=None):
         """Sample the indicated number of rows from the model.

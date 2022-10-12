@@ -125,15 +125,6 @@ class GaussianCopulaSynthesizer(BaseSynthesizer):
                     'may slow down the preprocessing and modeling times.'
                 )
 
-    def _set_random_state(self, random_state):
-        """Set the random state of the model's random number generator.
-
-        Args:
-            random_state (int, np.random.RandomState, or None):
-                Seed or RandomState to use.
-        """
-        self._model.set_random_state(random_state)
-
     def _sample(self, num_rows, conditions=None):
         """Sample the indicated number of rows from the model.
 

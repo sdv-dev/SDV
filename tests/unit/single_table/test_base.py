@@ -630,10 +630,13 @@ class TestBaseSynthesizer:
         rng_seed = Mock()
         metadata = Mock()
         instance = BaseSynthesizer(metadata)
+        instance._model = Mock()
 
-        # Run and Assert
-        with pytest.raises(NotImplementedError, match=''):
-            instance._set_random_state(rng_seed)
+        # Run
+        instance._set_random_state(rng_seed)
+
+        # Assert
+        instance._model.set_random_state.assert_called_once_with(rng_seed)
 
     def test__filter_conditions(self):
         """Test that the method filters out data that doesn't meet the conditions."""
