@@ -5,8 +5,13 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from rdt.transformers import (
+    BinaryEncoder, FloatFormatter, GaussianNormalizer, OneHotEncoder, RegexGenerator)
 
+from sdv.errors import InvalidPreprocessingError
 from sdv.metadata.single_table import SingleTableMetadata
+from sdv.single_table import (
+    CopulaGANSynthesizer, CTGANSynthesizer, GaussianCopulaSynthesizer, TVAESynthesizer)
 from sdv.single_table.base import BaseSynthesizer
 from sdv.single_table.errors import InvalidDataError
 
@@ -435,3 +440,124 @@ class TestBaseSynthesizer:
 
         # Run
         instance.validate(data)
+
+    def test_update_transformers_invalid_keys(self):
+        """Test error is raised if passed transformer doesn't match key column.
+
+        The transformers of a key column must be either AnonymizedFaker or RegexGenerator.
+        Raise an error if any other transformer is passed.
+        """
+        # Setup
+        column_name_to_transformer = {
+            'col2': RegexGenerator(),
+            'col3': FloatFormatter()
+        }
+        metadata = SingleTableMetadata()
+        metadata.add_column('col2', sdtype='text')
+        metadata.add_column('col3', sdtype='numerical')
+        metadata.set_sequence_key(('col2'))
+        metadata.add_alternate_keys(['col3'])
+        instance = BaseSynthesizer(metadata)
+
+        # Run and Assert
+        err_msg = re.escape(
+            "Column 'col3' is a key. It cannot be preprocessed using "
+            "the 'FloatFormatter' transformer."
+        )
+        with pytest.raises(InvalidPreprocessingError, match=err_msg):
+            instance.update_transformers(column_name_to_transformer)
+
+    def test_update_transformers_already_fitted(self):
+        """Test error is raised if passed transformer was already fitted."""
+        # Setup
+        fitted_transformer = FloatFormatter()
+        fitted_transformer.fit(pd.DataFrame({'col': [1]}), 'col')
+        column_name_to_transformer = {
+            'col1': BinaryEncoder(),
+            'col2': fitted_transformer
+        }
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='boolean')
+        metadata.add_column('col2', sdtype='numerical')
+        instance = BaseSynthesizer(metadata)
+
+        # Run and Assert
+        err_msg = "Transformer for column 'col2' has already been fit on data."
+        with pytest.raises(InvalidPreprocessingError, match=err_msg):
+            instance.update_transformers(column_name_to_transformer)
+
+    def test_update_transformers_warns_gaussian_copula(self):
+        """Test warning is raised when ohe is used for categorical column in the GaussianCopula."""
+        # Setup
+        column_name_to_transformer = {
+            'col1': OneHotEncoder(),
+            'col2': FloatFormatter()
+        }
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='categorical')
+        metadata.add_column('col2', sdtype='numerical')
+        instance = GaussianCopulaSynthesizer(metadata)
+        instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
+
+        # Run and Assert
+        warning = re.escape(
+            "Using a OneHotEncoder transformer for column 'col1' "
+            'may slow down the preprocessing and modeling times.'
+        )
+        with pytest.warns(UserWarning, match=warning):
+            instance.update_transformers(column_name_to_transformer)
+
+        field_transformers = instance._data_processor._hyper_transformer.field_transformers
+        assert len(field_transformers) == 2
+        assert isinstance(field_transformers['col1'], OneHotEncoder)
+        assert isinstance(field_transformers['col2'], FloatFormatter)
+
+    def test_update_transformers_warns_models(self):
+        """Test warning is raised for some models.
+
+        A warning should be raised if a transformer is assigned to boolean/categorical columns for
+        the CTGANSynthesizer, CopulaGANSynthesizer, TVAESynthesizer and PARSynthesizer models.
+        """
+        # Setup
+        column_name_to_transformer = {
+            'col1': OneHotEncoder(),
+            'col2': FloatFormatter()
+        }
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='categorical')
+        metadata.add_column('col2', sdtype='numerical')
+
+        # NOTE: when PARSynthesizer is implemented, add it here as well
+        for model in [CTGANSynthesizer, CopulaGANSynthesizer, TVAESynthesizer]:
+            instance = model(metadata)
+            instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
+
+            # Run and Assert
+            warning = re.escape(
+                "Replacing the default transformer for column 'col1' might "
+                'impact the quality of your synthetic data.'
+            )
+            with pytest.warns(UserWarning, match=warning):
+                instance.update_transformers(column_name_to_transformer)
+
+    def test_update_transformers(self):
+        """Test method correctly updates the transformers in the HyperTransformer."""
+        # Setup
+        column_name_to_transformer = {
+            'col1': GaussianNormalizer(),
+            'col2': GaussianNormalizer()
+        }
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='numerical')
+        metadata.add_column('col2', sdtype='numerical')
+        instance = BaseSynthesizer(metadata)
+        instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
+
+        # Run
+        instance.update_transformers(column_name_to_transformer)
+
+        # Assert
+        field_transformers = instance._data_processor._hyper_transformer.field_transformers
+        assert len(field_transformers) == 2
+        assert isinstance(field_transformers['col1'], GaussianNormalizer)
+        assert isinstance(field_transformers['col2'], GaussianNormalizer)
