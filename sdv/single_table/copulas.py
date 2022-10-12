@@ -5,6 +5,7 @@ from copy import deepcopy
 import copulas
 import copulas.multivariate
 import copulas.univariate
+from rdt.transformers import OneHotEncoder
 
 from sdv.single_table.base import BaseSynthesizer
 
@@ -108,3 +109,18 @@ class GaussianCopulaSynthesizer(BaseSynthesizer):
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', module='scipy')
             self._model.fit(processed_data)
+
+    def _warn_for_update_transformers(self, column_name_to_transformer):
+        """Raise warnings for update_transformers.
+
+        Args:
+            column_name_to_transformer (dict):
+                Dict mapping column names to transformers to be used for that column.
+        """
+        for column, transformer in column_name_to_transformer.items():
+            sdtype = self.metadata._columns[column]['sdtype']
+            if sdtype == 'categorical' and isinstance(transformer, OneHotEncoder):
+                warnings.warn(
+                    f"Using a OneHotEncoder transformer for column '{column}' "
+                    'may slow down the preprocessing and modeling times.'
+                )
