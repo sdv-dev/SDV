@@ -777,7 +777,11 @@ class TestBaseSynthesizer:
         assert instance._sample.call_args_list == [call(3, {'salary.value': 80.0}), call(3)]
 
     def test__sample_rows_dtypes_is_none(self):
-        """Test when ``_data_processor._dtypes`` is ``None``."""
+        """Test when ``_data_processor._dtypes`` is ``None``.
+
+        This test is when ``_data_processor._dtypes`` is ``None``, wich by the legacy
+        code was when only ``ids`` or ``primary_keys`` where sampled.
+        """
         # Setup
         instance = Mock()
         instance._data_processor._dtypes = None
@@ -1083,7 +1087,11 @@ class TestBaseSynthesizer:
             )
 
     def test__conditionally_sample_rows_raises_value_error_model_is_gm(self):
-        """Test when sampled rows is lower or 0 and model is ``GaussianMultivariate``."""
+        """Test when there are no sampled rows and the model is ``GaussianMultivariate``.
+
+        When no ``graceful_reject_sampling`` is used and the model is ``GaussianMultivariate``
+        the sampling raises a ``ValueError`` with a specific message for this model.
+        """
         # Setup
         transformed_data = pd.DataFrame({
             COND_IDX: [0, 1, 2],
@@ -1111,7 +1119,7 @@ class TestBaseSynthesizer:
             )
 
     def test__conditionally_sample_rows_with_graceful_reject_sampling(self):
-        """Test when sampled rows is lower or 0 but ``graceful_reject_sampling`` is ``True``."""
+        """Test when no rows are sampled but ``graceful_reject_sampling`` is ``True``."""
         # Setup
         transformed_data = pd.DataFrame({
             COND_IDX: [0, 1, 2],
