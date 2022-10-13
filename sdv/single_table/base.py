@@ -15,8 +15,8 @@ import pandas as pd
 import tqdm
 
 from sdv.data_processing.data_processor import DataProcessor
-from sdv.errors import InvalidPreprocessingError
-from sdv.single_table.errors import ConstraintsNotMetError, InvalidDataError
+from sdv.errors import ConstraintsNotMetError, InvalidPreprocessingError
+from sdv.single_table.errors import InvalidDataError
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 from sdv.utils import is_boolean_type, is_datetime_type, is_numerical_type
 
