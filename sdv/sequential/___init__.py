@@ -1,0 +1,1 @@
+"""Synthesizers for sequential data."""
