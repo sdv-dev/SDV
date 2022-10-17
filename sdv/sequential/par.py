@@ -1,7 +1,11 @@
 """PAR Synthesizer class."""
 
+import inspect
+
 from sdv.data_processing import DataProcessor
+from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
+
 
 class PARSynthesizer:
     """Synthesizer for sequential data.
@@ -22,17 +26,6 @@ class PARSynthesizer:
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
         context_columns (list[str]):
             A list of strings, representing the columns that do not vary in a sequence.
-        context_synthesizer (sdv.single_table.BaseSynthesizer):
-            A string with the name of the model to use for the context columns. Available options
-            are:
-            - ``GaussianCopulaSynthesizer``
-            - ``CTGANSynthesizer``
-            - ``CopulaGANSynthesizer``
-            - ``TVAESynthesizer``
-            Defaults to ``GaussianCopulaSynthesizer`.
-        context_synthesizer_parameters (dict):
-            A dictionary that maps each parameter name to a parameter values. Refer to the context
-            synthesizer for the parameters that are allowed.
         segment_size (int):
             If specified, cut each training sequence in several segments of
             the indicated size. The size can be passed as an integer
@@ -53,11 +46,13 @@ class PARSynthesizer:
     """
 
     def _get_context_metadata(self):
-        self.metadata._c
+        full_metadata_dict = self.metadata.to_dict()
+        all_columns = full_metadata_dict.get('columns', {})
+        context_dict = {'columns': {column: info for column, info in all_columns.items()}}
+        return SingleTableMetadata._load_from_dict(context_dict)
 
     def __init__(self, metadata, enforce_min_max_values, enforce_rounding, context_columns,
-                 context_synthesizer=None, context_synthesizer_parameters=None, segment_size=None,
-                 epochs=128, sample_size=1, cuda=True, verbose=False):
+                 segment_size=None, epochs=128, sample_size=1, cuda=True, verbose=False):
         self.metadata = metadata
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
@@ -72,10 +67,22 @@ class PARSynthesizer:
         }
         self._verbose = verbose
         context_metadata = self._get_context_metadata()
-        if context_synthesizer is None:
-            self._context_synthesizer = GaussianCopulaSynthesizer(
-                metadata=context_metadata,
-                enforce_min_max_values=enforce_min_max_values,
-                enforce_rounding=enforce_rounding,
-                **context_synthesizer_parameters
-            )
+        self._context_synthesizer = GaussianCopulaSynthesizer(
+            metadata=context_metadata,
+            enforce_min_max_values=enforce_min_max_values,
+            enforce_rounding=enforce_rounding
+        )
+
+    def get_parameters(self):
+        """Return the parameters used to instantiate the synthesizer."""
+        parameters = inspect.signature(self.__init__).parameters
+        instantiated_parameters = {}
+        for parameter_name in parameters:
+            if parameter_name != 'metadata':
+                instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
+
+        return instantiated_parameters
+
+    def get_metadata(self):
+        """Return the ``SingleTableMetadata`` for this synthesizer."""
+        return self.metadata
