@@ -46,19 +46,22 @@ class PARSynthesizer:
     """
 
     def _get_context_metadata(self):
-        full_metadata_dict = self.metadata.to_dict()
-        all_columns = full_metadata_dict.get('columns', {})
-        context_dict = {'columns': {column: info for column, info in all_columns.items()}}
-        return SingleTableMetadata._load_from_dict(context_dict)
+        context_columns_dict = {}
+        context_columns = self.context_columns or []
+        for column in context_columns:
+            context_columns_dict[column] = self.metadata._columns[column]
 
-    def __init__(self, metadata, enforce_min_max_values, enforce_rounding, context_columns,
+        context_metadata_dict = {'columns': context_columns_dict}
+        return SingleTableMetadata._load_from_dict(context_metadata_dict)
+
+    def __init__(self, metadata, enforce_min_max_values, enforce_rounding, context_columns=None,
                  segment_size=None, epochs=128, sample_size=1, cuda=True, verbose=False):
         self.metadata = metadata
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self._data_processor = DataProcessor(metadata)
-        self._context_columns = context_columns
-        self._segment_size = segment_size
+        self.context_columns = context_columns
+        self.segment_size = segment_size
         self._model_kwargs = {
             'epochs': epochs,
             'sample_size': sample_size,
@@ -80,6 +83,9 @@ class PARSynthesizer:
         for parameter_name in parameters:
             if parameter_name != 'metadata':
                 instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
+
+        for parameter_name, value in self._model_kwargs.items():
+            instantiated_parameters[parameter_name] = value
 
         return instantiated_parameters
 
