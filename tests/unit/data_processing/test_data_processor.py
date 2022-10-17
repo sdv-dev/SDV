@@ -441,6 +441,26 @@ class TestDataProcessor:
         message2 = 'Error transforming Mock. Using the reject sampling approach instead.'
         log_mock.info.assert_has_calls([call(message1), call(message2)])
 
+    def test__update_transformers_by_sdtypes(self):
+        """Test that we update the ``_transformers_by_sdtype`` of the current instance."""
+        # Setup
+        instance = Mock()
+        instance._transformers_by_sdtype = {
+            'categorical': 'labelencoder',
+            'numerical': 'float',
+            'boolean': None
+        }
+
+        # Run
+        DataProcessor._update_transformers_by_sdtypes(instance, 'categorical', None)
+
+        # Assert
+        instance._transformers_by_sdtype == {
+            'categorical': None,
+            'numerical': 'float',
+            'boolean': None
+        }
+
     @patch('sdv.data_processing.data_processor.rdt')
     def test_create_primary_key_transformer_regex_generator(self, mock_rdt):
         """Test the ``create_primary_key_transformer`` method.
@@ -653,6 +673,7 @@ class TestDataProcessor:
         dp = DataProcessor(SingleTableMetadata())
         dp._create_config = Mock()
         dp._create_config.return_value = {'transformers': [], 'sdtypes': []}
+        ht_mock.return_value._fitted = False
         data = pd.DataFrame({'a': [1, 2, 3]})
 
         # Run
@@ -682,6 +703,7 @@ class TestDataProcessor:
         """
         # Setup
         dp = DataProcessor(SingleTableMetadata())
+        ht_mock.return_value._fitted = False
         dp._create_config = Mock()
         dp._create_config.return_value = {'transformers': [], 'sdtypes': []}
         data = pd.DataFrame()
@@ -694,6 +716,28 @@ class TestDataProcessor:
         ht_mock.return_value.set_config.assert_called_once_with(expected_config)
         ht_mock.return_value.fit.assert_not_called()
         dp._create_config.assert_called_once_with(data, [])
+
+    @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
+    def test__fit_hyper_transformer_hyper_transformer_is_fitted(self, ht_mock):
+        """Test when ``self._hyper_transformer`` is not ``None``.
+
+        This should not re-fit or re-create the ``self._hyper_transformer``.
+        """
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        dp._hyper_transformer = Mock()
+        dp._hyper_transformer._fitted = True
+        dp._create_config = Mock()
+        data = pd.DataFrame({'name': ['John Doe']})
+
+        # Run
+        dp._fit_hyper_transformer(data, [])
+
+        # Assert
+        ht_mock.assert_not_called()
+        ht_mock.return_value.set_config.assert_not_called()
+        ht_mock.return_value.fit.assert_not_called()
+        dp._create_config.assert_not_called()
 
     @patch('sdv.data_processing.numerical_formatter.NumericalFormatter.learn_format')
     def test__fit_numerical_formatters(self, learn_format_mock):
