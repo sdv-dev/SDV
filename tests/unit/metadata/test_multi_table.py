@@ -1968,7 +1968,7 @@ class TestMultiTableMetadata:
     @patch('sdv.metadata.multi_table.validate_file_does_not_exist')
     @patch('sdv.metadata.multi_table.read_json')
     @patch('sdv.metadata.multi_table.MultiTableMetadata._convert_relationships')
-    @patch('sdv.metadata.multi_table.SingleTableMetadata._convert_metadata')
+    @patch('sdv.metadata.multi_table.convert_metadata')
     @patch('sdv.metadata.multi_table.MultiTableMetadata._load_from_dict')
     def test_upgrade_metadata_validate_error(
             self, from_dict_mock, convert_mock, relationships_mock, read_json_mock, validate_mock,
@@ -1977,13 +1977,13 @@ class TestMultiTableMetadata:
 
         The method should validate that the ``new_filepath`` does not exist, read the old metadata
         from a file, convert it and save it to the ``new_filepath``. It should loop through every
-        table in the old metadata and convert it using ``SingleTableMetadata._convert_metadata``.
-        If the ``validate`` method raises an error, we should catch it and raise a warning.
+        table in the old metadata and convert it using ``convert_metadata``. If the ``validate``
+        method raises an error, we should catch it and raise a warning.
 
         Setup:
             - Mock ``read_json`` to return a metadata dict with a few tables.
             - Mock ``validate_file_does_not_exist``.
-            - Mock the ``_convert_metadata`` method to return something.
+            - Mock the ``convert_metadata`` method to return something.
             - Mock the ``from_dict`` method to return a mock.
             - Mock the `SingleTableMetadata._convert_metadata`` method.
             - Mock the ``validate`` method to raise an error.
