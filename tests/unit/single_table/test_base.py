@@ -625,7 +625,11 @@ class TestBaseSynthesizer:
 
     @patch('sdv.single_table.base.DataProcessor')
     def test__set_random_state(self, mock_data_processor):
-        """Test that error is raised when this is not implemented."""
+        """Test that ``_model.set_random_state`` is being called with the input value.
+
+        When passing a random state to the method ``_set_random_state``, this calls the
+        instance's model ``set_random_state`` method in order to assign it to it.
+        """
         # Setup
         rng_seed = Mock()
         metadata = Mock()
@@ -648,8 +652,11 @@ class TestBaseSynthesizer:
                 'Statistician',
                 'Computer Systems Analyst',
                 'Software Engineer',
+                'Software Engineer',
+                'Computer Systems Analyst',
+                'Software Engineer',
             ],
-            'salary': [80., 90., 50., 60., 82.]
+            'salary': [80., 90., 50., 60., 82., 80., 80., 81.]
         })
         conditions = {'position': 'Software Engineer', 'salary': 80.}
         float_rtol = 0.01
@@ -658,7 +665,10 @@ class TestBaseSynthesizer:
         filtered_data = BaseSynthesizer._filter_conditions(sampled, conditions, float_rtol)
 
         # Assert
-        expected_data = pd.DataFrame({'position': ['Software Engineer'], 'salary': [80.]})
+        expected_data = pd.DataFrame({
+            'position': ['Software Engineer', 'Software Engineer'],
+            'salary': [80., 80.]
+        }, index=[0, 5])
         pd.testing.assert_frame_equal(filtered_data, expected_data)
 
     def test__sample_rows_without_conditions(self):
@@ -779,8 +789,8 @@ class TestBaseSynthesizer:
     def test__sample_rows_dtypes_is_none(self):
         """Test when ``_data_processor._dtypes`` is ``None``.
 
-        This test is when ``_data_processor._dtypes`` is ``None``, wich by the legacy
-        code was when only ``ids`` or ``primary_keys`` where sampled.
+        This test is when ``_data_processor._dtypes`` is ``None``, which by the legacy
+        code was when only ``ids`` or ``primary_keys`` were sampled.
         """
         # Setup
         instance = Mock()
@@ -1195,8 +1205,8 @@ class TestBaseSynthesizer:
         # Run and Assert
         expected_message = re.escape(
             'This method does not support the conditions parameter. '
-            'Please create `sdv.sampling.Condition` objects and pass them '
-            'into the `sample_conditions` method. '
+            "Please create 'sdv.sampling.Condition' objects and pass them "
+            "into the 'sample_conditions' method. "
             'See User Guide or API for more details.'
         )
         with pytest.raises(TypeError, match=expected_message):
@@ -1269,7 +1279,8 @@ class TestBaseSynthesizer:
         progress_bar = MagicMock()
         mock_tqdm.tqdm.return_value = progress_bar
         instance = Mock()
-        instance._sample_in_batches.side_effect = [KeyboardInterrupt]
+        keyboard_error = KeyboardInterrupt()
+        instance._sample_in_batches.side_effect = [keyboard_error]
         mock_validate_file_path.return_value = 'temp_file'
 
         # Run
@@ -1289,7 +1300,7 @@ class TestBaseSynthesizer:
             progress_bar=progress_bar.__enter__.return_value,
             output_file_path=mock_validate_file_path.return_value,
         )
-        mock_handle_sampling_error(False, 'temp_file', KeyboardInterrupt())
+        mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
 
     @patch('sdv.single_table.base.os')
     @patch('sdv.single_table.base.tqdm')
@@ -1382,7 +1393,7 @@ class TestBaseSynthesizer:
 
         # Run and Assert
         error_msg = re.escape(
-            'Unexpected column name `name.value`. Use a column name that was present in the '
+            "Unexpected column name 'name.value'. Use a column name that was present in the "
             'original data.'
         )
         with pytest.raises(ValueError, match=error_msg):
@@ -1399,7 +1410,7 @@ class TestBaseSynthesizer:
         instance._data_processor.transform.side_effect = [ConstraintsNotMetError]
 
         # Run and Assert
-        error_msg = 'Provided conditions are not valid for the given constraints'
+        error_msg = 'Provided conditions are not valid for the given constraints.'
         with pytest.raises(ConstraintsNotMetError, match=error_msg):
             BaseSynthesizer._sample_with_conditions(
                 instance,

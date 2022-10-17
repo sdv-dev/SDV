@@ -468,10 +468,7 @@ class BaseSynthesizer:
         remaining = batch_size
         sampled = pd.DataFrame()
 
-        while num_valid < batch_size:
-            if counter >= max_tries:
-                break
-
+        while num_valid < batch_size and counter < max_tries:
             prev_num_valid = num_valid
             sampled, num_valid = self._sample_rows(
                 num_rows_to_sample,
@@ -573,27 +570,25 @@ class BaseSynthesizer:
         if len(sampled_rows) > 0:
             sampled_rows[COND_IDX] = dataframe[COND_IDX].to_numpy()[:len(sampled_rows)]
 
-        else:
-            # Didn't get any rows.
-            if not graceful_reject_sampling:
-                user_msg = (
-                    'Unable to sample any rows for the given conditions '
-                    f'`{transformed_condition}`. '
+        elif not graceful_reject_sampling:
+            user_msg = (
+                'Unable to sample any rows for the given conditions '
+                f'`{transformed_condition}`. '
+            )
+            if hasattr(self, '_model') and isinstance(
+                    self._model, copulas.multivariate.GaussianMultivariate):
+                user_msg = user_msg + (
+                    'This may be because the provided values are out-of-bounds in the '
+                    'current model. \nPlease try again with a different set of values.'
                 )
-                if hasattr(self, '_model') and isinstance(
-                        self._model, copulas.multivariate.GaussianMultivariate):
-                    user_msg = user_msg + (
-                        'This may be because the provided values are out-of-bounds in the '
-                        'current model. \nPlease try again with a different set of values.'
-                    )
-                else:
-                    user_msg = user_msg + (
-                        f'Try increasing `max_tries_per_batch` (currently: {max_tries_per_batch}) '
-                        f'or increasing `batch_size` (currently: {batch_size}). Note that '
-                        'increasing these values will also increase the sampling time.'
-                    )
+            else:
+                user_msg = user_msg + (
+                    f'Try increasing `max_tries_per_batch` (currently: {max_tries_per_batch}) '
+                    f'or increasing `batch_size` (currently: {batch_size}). Note that '
+                    'increasing these values will also increase the sampling time.'
+                )
 
-                raise ValueError(user_msg)
+            raise ValueError(user_msg)
 
         return sampled_rows
 
@@ -620,8 +615,8 @@ class BaseSynthesizer:
                                   show_progress_bar=True):
         if conditions is not None:
             raise TypeError('This method does not support the conditions parameter. '
-                            'Please create `sdv.sampling.Condition` objects and pass them '
-                            'into the `sample_conditions` method. '
+                            "Please create 'sdv.sampling.Condition' objects and pass them "
+                            "into the 'sample_conditions' method. "
                             'See User Guide or API for more details.')
 
         if num_rows is None:
@@ -698,7 +693,7 @@ class BaseSynthesizer:
         """Validate the user-passed conditions."""
         for column in conditions.columns:
             if column not in self._data_processor.get_fields():
-                raise ValueError(f'Unexpected column name `{column}`. '
+                raise ValueError(f"Unexpected column name '{column}'. "
                                  f'Use a column name that was present in the original data.')
 
     def _sample_with_conditions(self, conditions, max_tries_per_batch, batch_size,
@@ -751,7 +746,7 @@ class BaseSynthesizer:
                 )
             except ConstraintsNotMetError as error:
                 raise ConstraintsNotMetError(
-                    'Provided conditions are not valid for the given constraints'
+                    'Provided conditions are not valid for the given constraints.'
                 ) from error
 
             transformed_conditions = pd.concat(
@@ -920,7 +915,7 @@ class BaseSynthesizer:
 
     def sample_remaining_columns(self, known_columns, max_tries_per_batch=100, batch_size=None,
                                  randomize_samples=True, output_file_path=None):
-        """Sample rows from this table.
+        """Sample remaining rows from already known columns.
 
         Args:
             known_columns (pandas.DataFrame):
