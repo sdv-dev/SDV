@@ -11,7 +11,7 @@
 
 ========================
 
-**Date**: |today| **Version**: |version|
+**Date**: |today| **Version**: 0.17.1
 
 Overview
 --------

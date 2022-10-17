@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Synthetic Data Evaluation &#8212; SDV 0.17.1 documentation</title>
+    <title>Synthetic Data Evaluation &#8212; SDV 0.17.2.dev0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -218,22 +218,14 @@
                 
   <div class="section" id="synthetic-data-evaluation">
 <span id="evaluation"></span><h1>Synthetic Data Evaluation<a class="headerlink" href="#synthetic-data-evaluation" title="Permalink to this headline">¶</a></h1>
-<p>A very common question when someone starts using <strong>SDV</strong> to generate
-synthetic data is: <em>“How good is the data that I just generated?”</em></p>
-<p>In order to answer this question, <strong>SDV</strong> has a collection of metrics
-and tools that allow you to compare the <em>real</em> that you provided and the
-<em>synthetic</em> data that you generated using <strong>SDV</strong> or any other tool.</p>
-<p>In the followin guides we will show you how to perform this evaluation and
-how to explore the different metrics that exist.</p>
+<p>After creating synthetic data, you may be wondering how you can evaluate
+it against the original data. You can use the <a class="reference external" href="https://github.com/sdv-dev/SDMetrics">SDMetrics library</a> to get more insights, generate
+reports and visualize the data. This library is automatically installed with SDV.</p>
+<p>To get started, visit: <a class="reference external" href="https://docs.sdv.dev/sdmetrics/">https://docs.sdv.dev/sdmetrics/</a></p>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="evaluation_framework.html">Evaluation Framework</a></li>
-<li class="toctree-l1"><a class="reference internal" href="synthetic_data_metrics.html">Synthetic Data Metrics</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="single_table_metrics.html">Single Table Metrics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="multi_table_metrics.html">Multi Table Metrics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="timeseries_metrics.html">Time Series Metrics</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="synthetic_data_metrics.html">Synthetic Data Metrics</a></li>
 </ul>
 </div>
 </div>

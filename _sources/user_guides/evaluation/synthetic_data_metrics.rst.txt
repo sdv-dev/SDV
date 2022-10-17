@@ -3,9 +3,4 @@
 Synthetic Data Metrics
 ======================
 
-.. toctree::
-    :titlesonly:
-
-    single_table_metrics
-    multi_table_metrics
-    timeseries_metrics
+See the `SDMetrics library <https://docs.sdv.dev/sdmetrics/>`__ for more information about the different metrics available for synthetic data.

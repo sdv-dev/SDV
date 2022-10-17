@@ -19,9 +19,6 @@ Time Series Detection Metrics
 
     TimeSeriesDetectionMetric
     TimeSeriesDetectionMetric.get_subclasses
-    TSFCDetection
-    TSFCDetection.get_subclasses
-    TSFCDetection.compute
     LSTMDetection
     LSTMDetection.get_subclasses
     LSTMDetection.compute
@@ -34,9 +31,6 @@ Time Series Efficacy Metrics
 
     TimeSeriesEfficacyMetric
     TimeSeriesEfficacyMetric.get_subclasses
-    TSFClassifierEfficacy
-    TSFClassifierEfficacy.get_subclasses
-    TSFClassifierEfficacy.compute
     LSTMClassifierEfficacy
     LSTMClassifierEfficacy.get_subclasses
     LSTMClassifierEfficacy.compute

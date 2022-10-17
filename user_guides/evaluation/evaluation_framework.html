@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Evaluation Framework &#8212; SDV 0.17.1 documentation</title>
+    <title>Evaluation Framework &#8212; SDV 0.17.2.dev0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -207,21 +207,19 @@
     <ul class="nav section-nav flex-column">
     
         <li class="nav-item toc-entry toc-h2">
-            <a href="#using-the-sdv-evaluation-framework" class="nav-link">Using the SDV Evaluation Framework</a><ul class="nav section-nav flex-column">
-                
-        <li class="nav-item toc-entry toc-h3">
+            <a href="#required-information" class="nav-link">Required Information</a>
+        </li>
+    
+        <li class="nav-item toc-entry toc-h2">
             <a href="#computing-an-overall-score" class="nav-link">Computing an overall score</a>
         </li>
     
-        <li class="nav-item toc-entry toc-h3">
+        <li class="nav-item toc-entry toc-h2">
             <a href="#how-was-the-obtained-score-computed" class="nav-link">How was the obtained score computed?</a>
         </li>
     
-        <li class="nav-item toc-entry toc-h3">
-            <a href="#can-i-control-which-metrics-are-applied" class="nav-link">Can I control which metrics are applied?</a>
-        </li>
-    
-            </ul>
+        <li class="nav-item toc-entry toc-h2">
+            <a href="#can-i-apply-different-metrics" class="nav-link">Can I apply different metrics?</a>
         </li>
     
     </ul>
@@ -239,32 +237,33 @@
                 
   <div class="section" id="evaluation-framework">
 <span id="id1"></span><h1>Evaluation Framework<a class="headerlink" href="#evaluation-framework" title="Permalink to this headline">¶</a></h1>
-<p><strong>SDV</strong> contains a <em>Synthetic Data Evaluation Framework</em> that facilitates
-the task of evaluating the quality of your <em>Synthetic Dataset</em> by
-applying multiple <em>Synthetic Data Metrics</em> on it and reporting results
-in a comprehensive way.</p>
-<div class="section" id="using-the-sdv-evaluation-framework">
-<h2>Using the SDV Evaluation Framework<a class="headerlink" href="#using-the-sdv-evaluation-framework" title="Permalink to this headline">¶</a></h2>
-<p>To evaluate the quality of synthetic data we essentially need two things:
-<em>real</em> data and <em>synthetic</em> data that pretends to resemble it.</p>
-<p>Let us start by loading a demo table and generate a synthetic replica of
-it using the <code class="docutils literal notranslate"><span class="pre">GaussianCopula</span></code> model.</p>
+<p>The <a class="reference external" href="https://docs.sdv.dev/sdmetrics/">SDMetrics library</a> includes reports, metrics and
+visualizations that you can use to evaluate your synthetic data.</p>
+<div class="section" id="required-information">
+<h2>Required Information<a class="headerlink" href="#required-information" title="Permalink to this headline">¶</a></h2>
+<p>To use the SDMetrics library, you’ll need:</p>
+<ol class="arabic simple">
+<li><p>Real data, loaded as a pandas DataFrame</p></li>
+<li><p>Synthetic data, loaded as a pandas DataFrame</p></li>
+<li><p>Metadata, represented as a dictionary format</p></li>
+</ol>
+<p>We can get started using the demo data</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sdv.demo</span> <span class="kn">import</span> <span class="n">load_tabular_demo</span>
 
-<span class="gp">In [2]: </span><span class="kn">from</span> <span class="nn">sdv.tabular</span> <span class="kn">import</span> <span class="n">GaussianCopula</span>
+<span class="gp">In [2]: </span><span class="kn">from</span> <span class="nn">sdv.lite</span> <span class="kn">import</span> <span class="n">TabularPreset</span>
 
-<span class="gp">In [3]: </span><span class="n">real_data</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">(</span><span class="s1">&#39;student_placements&#39;</span><span class="p">)</span>
+<span class="gp">In [3]: </span><span class="n">metadata_obj</span><span class="p">,</span> <span class="n">real_data</span> <span class="o">=</span> <span class="n">load_tabular_demo</span><span class="p">(</span><span class="s1">&#39;student_placements&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="gp">In [4]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">()</span>
+<span class="gp">In [4]: </span><span class="n">model</span> <span class="o">=</span> <span class="n">TabularPreset</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="n">metadata_obj</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;FAST_ML&#39;</span><span class="p">)</span>
 
 <span class="gp">In [5]: </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">real_data</span><span class="p">)</span>
 
-<span class="gp">In [6]: </span><span class="n">synthetic_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">real_data</span><span class="p">))</span>
+<span class="gp">In [6]: </span><span class="n">synthetic_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="o">=</span><span class="n">real_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>After the previous steps we will have two tables:</p>
+<p>After the previous steps, we will have two tables</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">real_data</span></code>: A table containing data about student placements</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">real_data</span></code>, containing data about student placements</p></li>
 </ul>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [7]: </span><span class="n">real_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[7]: </span><span class="go"></span>
@@ -277,80 +276,87 @@ it using the <code class="docutils literal notranslate"><span class="pre">Gaussi
 </pre></div>
 </div>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">synthetic_data</span></code>: A synthetically generated table that contains
-data in the same format and with similar statistical properties as
-the <code class="docutils literal notranslate"><span class="pre">real_data</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">synthetic_data</span></code>, containing synthesized students with the same format and mathematical
+properties as the original</p></li>
 </ul>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
-<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec  mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">0       17288      M        71.57      55.20  Commerce        66.78    Sci&amp;Tech            False                 0               59.88   Mkt&amp;HR     61.29      NaN   False        NaT        NaT       NaN</span>
-<span class="go">1       17468      M        84.76      81.30   Science        68.00   Comm&amp;Mgmt             True                 1               85.57  Mkt&amp;Fin     63.03  22933.0    True 2020-05-09 2020-10-10       4.0</span>
-<span class="go">2       17345      M        47.82      57.90   Science        53.58    Sci&amp;Tech            False                 0               67.05   Mkt&amp;HR     56.71      NaN   False        NaT        NaT       NaN</span>
-<span class="go">3       17444      F        54.02      50.36   Science        56.50    Sci&amp;Tech             True                 1               58.67   Mkt&amp;HR     68.72      NaN   False        NaT        NaT       NaN</span>
-<span class="go">4       17340      F        74.73      67.84  Commerce        73.25    Sci&amp;Tech             True                 1               50.72  Mkt&amp;Fin     67.25  28592.0    True 2020-06-15 2020-07-30       3.0</span>
+<span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc   salary  placed start_date   end_date  duration</span>
+<span class="go">0           0      F    77.487128  57.932776   Science    78.028255    Sci&amp;Tech             True                 1           81.148276  Mkt&amp;Fin  69.308095      NaN    True 2020-02-23        NaT       6.0</span>
+<span class="go">1           1      M    81.609629  78.783169  Commerce    65.744272   Comm&amp;Mgmt             True                 1           81.271126  Mkt&amp;Fin  73.828662  32927.0    True 2020-04-07        NaT       3.0</span>
+<span class="go">2           2      F    55.166896  49.682462  Commerce    61.025728   Comm&amp;Mgmt             True                 0           50.000000  Mkt&amp;Fin  63.529795      NaN   False 2019-11-26        NaT       NaN</span>
+<span class="go">3           3      M    71.121584  63.531684  Commerce    63.005546   Comm&amp;Mgmt            False                 0           77.362262  Mkt&amp;Fin  62.138298      NaN    True        NaT        NaT       NaN</span>
+<span class="go">4           4      F    68.223312  71.531212  Commerce    64.041999   Comm&amp;Mgmt            False                 0           86.025541   Mkt&amp;HR  68.472993  20579.0   False        NaT 2020-07-02      12.0</span>
 </pre></div>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>For more details about this process, please visit the <a class="reference internal" href="../single_table/gaussian_copula.html#gaussian-copula"><span class="std std-ref">GaussianCopula Model</span></a> guide.</p>
+<p>We can also convert metadata to a Python dictionary by calling the <code class="docutils literal notranslate"><span class="pre">to_dict</span></code> method</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="n">metadata_dict</span> <span class="o">=</span> <span class="n">metadata_obj</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="computing-an-overall-score">
-<h3>Computing an overall score<a class="headerlink" href="#computing-an-overall-score" title="Permalink to this headline">¶</a></h3>
-<p>The simplest way to see how similar the two tables are is to import the
-<code class="docutils literal notranslate"><span class="pre">sdv.evaluation.evaluate</span></code> function and run it passing both the
-<code class="docutils literal notranslate"><span class="pre">synthetic_data</span></code> and the <code class="docutils literal notranslate"><span class="pre">real_data</span></code> tables.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="kn">from</span> <span class="nn">sdv.evaluation</span> <span class="kn">import</span> <span class="n">evaluate</span>
+<h2>Computing an overall score<a class="headerlink" href="#computing-an-overall-score" title="Permalink to this headline">¶</a></h2>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">sdmetrics</span></code> library to generate a Quality Report. This report evaluates the shapes
+of the columns (marginal distributions) and the pairwise trends between the columns (correlations).</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="kn">from</span> <span class="nn">sdmetrics.reports.single_table</span> <span class="kn">import</span> <span class="n">QualityReport</span>
 
-<span class="gp">In [10]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">)</span>
-<span class="gh">Out[10]: </span><span class="go">0.8529126388813215</span>
+<span class="gp">In [11]: </span><span class="n">report</span> <span class="o">=</span> <span class="n">QualityReport</span><span class="p">()</span>
+
+<span class="gp">In [12]: </span><span class="n">report</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata_dict</span><span class="p">)</span>
+
+<span class="go">Overall Quality Score: 87.99%</span>
+
+<span class="go">Properties:</span>
+<span class="go">Column Shapes: 89.08%</span>
+<span class="go">Column Pair Trends: 86.9%</span>
 </pre></div>
 </div>
-<p>The output of this function call will be a number between 0 and 1 that
-will indicate how similar the two tables are, being 0 the worst and 1
-the best possible score.</p>
+<p>The report uses information in the metadata to select which metrics to apply to your data. The
+final score is a number between 0 and 1, where 0 indicates the lowest quality and 1 indicates
+the highest.</p>
 </div>
 <div class="section" id="how-was-the-obtained-score-computed">
-<h3>How was the obtained score computed?<a class="headerlink" href="#how-was-the-obtained-score-computed" title="Permalink to this headline">¶</a></h3>
-<p>The <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function applies a collection of pre-configured metric
-functions and returns the average of the scores that the data obtained
-on each one of them. In most scenarios this can be enough to get an idea
-about the similarity of the two tables, but you might want to explore
-the metrics in more detail.</p>
-<p>In order to see the different metrics that were applied you can pass and
-additional argument <code class="docutils literal notranslate"><span class="pre">aggregate=False</span></code>, which will make the
-<code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function return a dictionary with the scores that each one
-of the metrics functions returned:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [11]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="gh">Out[11]: </span><span class="go"></span>
-<span class="go">         metric                                     name  raw_score  normalized_score  min_value  max_value      goal error</span>
-<span class="go">0  KSComplement  Inverted Kolmogorov-Smirnov D statistic   0.823603          0.823603        0.0        1.0  MAXIMIZE  None</span>
-<span class="go">1        CSTest                              Chi-Squared   0.882222          0.882222        0.0        1.0  MAXIMIZE  None</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="can-i-control-which-metrics-are-applied">
-<h3>Can I control which metrics are applied?<a class="headerlink" href="#can-i-control-which-metrics-are-applied" title="Permalink to this headline">¶</a></h3>
-<p>By default, the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function will apply all the metrics that
-are included within the SDV Evaluation framework. However, the list of
-metrics that are applied can be controlled by passing a list with the
-names of the metrics that you want to apply.</p>
-<p>For example, if you were interested on obtaining only the <code class="docutils literal notranslate"><span class="pre">CSTest</span></code>
-metric you can call the <code class="docutils literal notranslate"><span class="pre">evaluate</span></code> function as follows:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">])</span>
-<span class="gh">Out[12]: </span><span class="go">0.8822221930128061</span>
-</pre></div>
-</div>
-<p>Or, if we want to see the scores separately:</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">evaluate</span><span class="p">(</span><span class="n">synthetic_data</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CSTest&#39;</span><span class="p">],</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<h2>How was the obtained score computed?<a class="headerlink" href="#how-was-the-obtained-score-computed" title="Permalink to this headline">¶</a></h2>
+<p>The report includes a breakdown for every property that it computed.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">report</span><span class="o">.</span><span class="n">get_details</span><span class="p">(</span><span class="n">property_name</span><span class="o">=</span><span class="s1">&#39;Column Shapes&#39;</span><span class="p">)</span>
 <span class="gh">Out[13]: </span><span class="go"></span>
-<span class="go">   metric         name  raw_score  normalized_score  min_value  max_value      goal error</span>
-<span class="go">0  CSTest  Chi-Squared   0.882222          0.882222        0.0        1.0  MAXIMIZE  None</span>
+<span class="go">                Column        Metric  Quality Score</span>
+<span class="go">0          second_perc  KSComplement       0.883721</span>
+<span class="go">1            high_perc  KSComplement       0.897674</span>
+<span class="go">2          degree_perc  KSComplement       0.916279</span>
+<span class="go">3     experience_years  KSComplement       0.920930</span>
+<span class="go">4   employability_perc  KSComplement       0.851163</span>
+<span class="go">5             mba_perc  KSComplement       0.902326</span>
+<span class="go">6               salary  KSComplement       0.803868</span>
+<span class="go">7           start_date  KSComplement       0.660962</span>
+<span class="go">8             end_date  KSComplement       0.692124</span>
+<span class="go">9               gender  TVComplement       0.925581</span>
+<span class="go">10           high_spec  TVComplement       0.930233</span>
+<span class="go">11         degree_type  TVComplement       0.920930</span>
+<span class="go">12     work_experience  TVComplement       0.981395</span>
+<span class="go">13            mba_spec  TVComplement       0.925581</span>
+<span class="go">14              placed  TVComplement       0.958140</span>
+<span class="go">15            duration  TVComplement       0.973938</span>
 </pre></div>
 </div>
-<p>For more details about all the metrics that exist for the different data modalities
-please check the corresponding guides.</p>
+<p>In the detailed view, you can see the quality score for each column of the table. Based on the data
+type, different metrics may be used for the computation.</p>
+<p>For more information about the Quality Report, see the <a class="reference external" href="https://docs.sdv.dev/sdmetrics/reports/quality-report">SDMetrics Docs</a>.</p>
 </div>
+<div class="section" id="can-i-apply-different-metrics">
+<h2>Can I apply different metrics?<a class="headerlink" href="#can-i-apply-different-metrics" title="Permalink to this headline">¶</a></h2>
+<p>Outside of reports, the SDMetrics library contains a variety of metrics that you can apply
+manually. For example the <a class="reference external" href="https://docs.sdv.dev/sdmetrics/metrics/metrics-glossary/newrowsynthesis">NewRowSynthesis metric</a>
+measures whether each row in the synthetic data is novel or whether it exactly matches a row in
+the real data.</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [14]: </span><span class="kn">from</span> <span class="nn">sdmetrics.single_table</span> <span class="kn">import</span> <span class="n">NewRowSynthesis</span>
+
+<span class="gp">In [15]: </span><span class="n">NewRowSynthesis</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata_dict</span><span class="p">)</span>
+<span class="gh">Out[15]: </span><span class="go">1.0</span>
+</pre></div>
+</div>
+<p>See the <a class="reference external" href="https://docs.sdv.dev/sdmetrics/metrics/metrics-glossary">SDMetrics Glossary</a> for a full
+list of metrics that you can apply.</p>
 </div>
 </div>
 
