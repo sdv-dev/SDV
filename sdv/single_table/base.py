@@ -253,7 +253,7 @@ class BaseSynthesizer:
         self.validate(data)
         if self._fitted:
             warnings.warn(
-                'This model has already been fit. To use the new preprocessed data, '
+                'This model has already been fitted. To use the new preprocessed data, '
                 'please refit the model using `fit` or `fit_processed_data`.'
             )
 

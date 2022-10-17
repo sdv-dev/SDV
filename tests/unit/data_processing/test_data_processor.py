@@ -651,6 +651,16 @@ class TestDataProcessor:
 
         assert dp._primary_key == 'id'
 
+    def test_update_transformers_not_fitted(self):
+        """Test when ``self._hyper_transformer`` is ``None`` raises a ``NotFittedError``."""
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+
+        # Run and Assert
+        error_msg = 'The DataProcessor must be fitted before the transformers can be updated.'
+        with pytest.raises(NotFittedError, match=error_msg):
+            dp.update_transformers({'column': None})
+
     @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
     def test__fit_hyper_transformer(self, ht_mock):
         """Test the ``_fit_hyper_transformer`` method.

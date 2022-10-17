@@ -75,6 +75,46 @@ class TestBaseSynthesizer:
         # Assert
         assert result == metadata
 
+    @patch('sdv.single_table.base.warnings')
+    def test_preprocess(self, mock_warnings):
+        """Test that ``preprocess`` calls the ``validate`` then fits and returns transformed data.
+
+        Before the preprocessing is occurs we check that the synthesizer has
+        ``_model_sdtype_transformers``, if it has, we iterate over the dictionary and set for
+        each ``sdtype`` the specified value or ``transformer``.
+        """
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        instance._model_sdtype_trnasformers = {
+            'categorical': None
+        }
+        data = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe']
+        })
+
+        # Run
+        result = BaseSynthesizer.preprocess(instance, data)
+
+        # Assert
+        expected_warning = (
+            'This model has already been fitted. To use the new preprocessed data, please '
+            'refit the model using `fit` or `fit_processed_data`.'
+        )
+        mock_warnings.warn.assert_called_once_with(expected_warning)
+        assert result == instance._data_processor.transform.return_value
+        instance._data_processor.fit.assert_called_once()
+        pd.testing.assert_frame_equal(
+            data,
+            instance._data_processor.fit.call_args_list[0][0][0]
+        )
+        instance._data_processor._update_transformers_by_sdtypes.assert_called_once_with(
+            'categorical', None)
+        pd.testing.assert_frame_equal(
+            data,
+            instance._data_processor.transform.call_args_list[0][0][0]
+        )
+
     @patch('sdv.single_table.base.DataProcessor')
     def test__fit(self, mock_data_processor):
         """Test that ``NotImplementedError`` is being raised."""
