@@ -34,7 +34,7 @@ def _upgrade_columns_and_keys(old_metadata):
             if subtype == 'integer':
                 column_meta['sdtype'] = 'numerical'
 
-            elif subtype == 'string':
+            else:
                 column_meta['sdtype'] = 'text'
                 regex_format = field_meta.get('regex', '[A-Za-z]{5}')
                 if regex_format:

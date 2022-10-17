@@ -562,52 +562,6 @@ class SingleTableMetadata:
         return printed
 
     @classmethod
-    def _convert_metadata(cls, old_metadata):
-        new_metadata = {}
-        columns = {}
-        fields = old_metadata.get('fields')
-        alternate_keys = []
-        primary_key = old_metadata.get('primary_key')
-        for field, field_meta in fields.items():
-            column_meta = {}
-            old_type = field_meta['type']
-            subtype = field_meta.get('subtype')
-            column_meta['sdtype'] = old_type
-
-            if old_type == 'numerical':
-                if subtype == 'float':
-                    column_meta['computer_representation'] = 'Float'
-                elif subtype == 'integer':
-                    column_meta['computer_representation'] = 'Int64'
-
-            elif old_type == 'datetime':
-                datetime_format = field_meta.get('format')
-                if datetime_format:
-                    column_meta['datetime_format'] = datetime_format
-
-            elif old_type == 'id':
-                if subtype == 'integer':
-                    column_meta['sdtype'] = 'numerical'
-
-                elif subtype == 'string':
-                    column_meta['sdtype'] = 'text'
-                    regex_format = field_meta.get('regex', '[A-Za-z]{5}')
-                    if regex_format:
-                        column_meta['regex_format'] = regex_format
-
-                if field != primary_key:
-                    alternate_keys.append(field)
-
-            columns[field] = column_meta
-
-        new_metadata['columns'] = columns
-        new_metadata['primary_key'] = primary_key
-        if alternate_keys:
-            new_metadata['alternate_keys'] = alternate_keys
-
-        return new_metadata
-
-    @classmethod
     def upgrade_metadata(cls, old_filepath, new_filepath):
         """Upgrade an old metadata file to the ``V1`` schema.
 
