@@ -56,6 +56,8 @@ class CTGANSynthesizer(BaseSynthesizer):
             If ``False``, do not use cuda at all.
     """
 
+    _model_sdtype_trnasformers = {'categorical': None}
+
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
                  generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
@@ -143,6 +145,8 @@ class TVAESynthesizer(BaseSynthesizer):
             If ``True``, use CUDA. If a ``str``, use the indicated device.
             If ``False``, do not use cuda at all.
     """
+
+    _model_sdtype_trnasformers = {'categorical': None}
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
                  embedding_dim=128, compress_dims=(128, 128), decompress_dims=(128, 128),
