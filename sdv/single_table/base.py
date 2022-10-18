@@ -367,6 +367,9 @@ class BaseSynthesizer:
         If the model does not have any data columns, the result of this call
         is a dataframe of the requested length with no columns in it.
 
+        If there are no columns other than the ``primary_key``, this will proceed to sample
+        only the ``primary_key`` using the ``DataProcessor``.
+
         Args:
             num_rows (int):
                 Number of rows to sample.
@@ -386,7 +389,7 @@ class BaseSynthesizer:
                 * int:
                     Number of rows that are considered valid.
         """
-        if self._data_processor._dtypes is not None:
+        if self._data_processor.get_sdtypes(primary_keys=False):
             if conditions is None:
                 sampled = self._sample(num_rows)
             else:

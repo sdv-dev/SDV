@@ -128,6 +128,26 @@ class DataProcessor:
         """
         self._model_kwargs[model_name] = model_kwargs
 
+    def get_sdtypes(self, primary_keys=False):
+        """Get a ``dict`` with the ``sdtypes`` for each column of the table.
+
+        Args:
+            primary_keys (bool):
+                Whether or not to include the primary key fields. Defaults to ``False``.
+
+        Returns:
+            dict:
+                Dictionary that contains the column names and ``sdtypes``.
+        """
+        sdtypes = {}
+        for name, column_metadata in self.metadata._columns.items():
+            sdtype = column_metadata['sdtype']
+
+            if primary_keys or (name != self._primary_key):
+                sdtypes[name] = self._DTYPE_TO_SDTYPE.get(sdtype, 'categorical')
+
+        return sdtypes
+
     def _fit_constraints(self, data):
         errors = []
         for constraint in self._constraints:

@@ -153,6 +153,7 @@ class TestBaseSynthesizer:
         # Setup
         instance = Mock()
         processed_data = Mock()
+        processed_data.empty = False
 
         # Run
         BaseSynthesizer.fit_processed_data(instance, processed_data)
@@ -786,16 +787,16 @@ class TestBaseSynthesizer:
         pd.testing.assert_frame_equal(sampled, data[data.name == 'John Doe'])
         assert instance._sample.call_args_list == [call(3, {'salary.value': 80.0}), call(3)]
 
-    def test__sample_rows_dtypes_is_none(self):
-        """Test when ``_data_processor._dtypes`` is ``None``.
+    def test__sample_rows_sdtypes_is_empty(self):
+        """Test when ``_data_processor.get_sdtypes`` with ``primary_keys=False`` is empty.
 
-        This test is when ``_data_processor._dtypes`` is ``None``, which by the legacy
-        code was when only ``ids`` or ``primary_keys`` were sampled.
+        This test is when ``_data_processor.get_sdtypes`` returns an empty dictionary, which leads
+        to only sampling using ``_data_processor.reverse_transform``.
         """
         # Setup
         instance = Mock()
-        instance._data_processor._dtypes = None
-        instance._data_processor.reverse_transform = lambda x: x
+        instance._data_processor.get_sdtypes.return_value = {}
+        instance._data_processor.reverse_transform.side_effect = lambda x: x
 
         # Run
         sampled, num_rows = BaseSynthesizer._sample_rows(instance, 10)
@@ -803,6 +804,7 @@ class TestBaseSynthesizer:
         # Assert
         assert num_rows == 10
         pd.testing.assert_frame_equal(sampled, pd.DataFrame(index=range(10)))
+        instance._data_processor.reverse_transform.assert_called_once()
 
     def test__sample_batch_without_saving_to_file(self):
         """Test the ``_sample_batch`` without storing the samples in a file."""

@@ -125,7 +125,6 @@ def check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries_pe
             warnings.warn(user_msg)
 
 
-@staticmethod
 def validate_file_path(output_file_path):
     """Validate the user-passed output file arg, and create the file."""
     output_path = None
