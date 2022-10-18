@@ -1527,20 +1527,23 @@ class TestBaseSynthesizer:
             'output_file_path': None,
         }
 
+    @patch('sdv.single_table.base.os')
     @patch('sdv.single_table.base.check_num_rows')
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
     def test__sample_conditions(self, mock_validate_file_path,
-                                mock_tqdm, mock_data_processor, mock_check_num_rows):
+                                mock_tqdm, mock_data_processor, mock_check_num_rows, mock_os):
         """Test sample conditions with sampled data and reject sampling.
 
         An instance of ``BaseSynthesizer`` is created and it's utility functions are being mocked
-        to reach the point of calling ```_sample_with_conditions``.
+        to reach the point of calling ```_sample_with_conditions``. After the sampling is done,
+        when the ``temp_file`` is the ``.sample.csv.temp``, this is being removed.
         """
         # Setup
         instance = BaseSynthesizer('metadata')
         conditions = [Condition({'name': 'John Doe'})]
+        mock_validate_file_path.return_value = '.sample.csv.temp'
 
         instance._validate_conditions = Mock()
         instance._sample_with_conditions = Mock()
@@ -1552,10 +1555,47 @@ class TestBaseSynthesizer:
         mock_tqdm.tqdm.return_value = progress_bar
 
         # Run
-        result = instance._sample_conditions(conditions, 10, 10, False, '.sample.csv.temp',)
+        result = instance._sample_conditions(conditions, 10, 10, False, '.sample.csv.temp')
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
+        mock_os.remove.assert_called_once_with('.sample.csv.temp')
+        mock_os.path.exists.assert_called_once_with('.sample.csv.temp')
+
+    @patch('sdv.single_table.base.handle_sampling_error')
+    @patch('sdv.single_table.base.tqdm')
+    @patch('sdv.single_table.base.validate_file_path')
+    def test__sample_conditions_handle_sampling_error(self, mock_validate_file_path,
+                                                      mock_tqdm, mock_handle_sampling_error):
+        """Test the error handling when we are using ``_sample_conditions``."""
+        # Setup
+        progress_bar = MagicMock()
+        mock_tqdm.tqdm.return_value = progress_bar
+        instance = Mock()
+        instance._make_condition_dfs.side_effect = lambda x: x
+        conditions = [Condition({'name': 'John Doe'})]
+        keyboard_error = KeyboardInterrupt()
+        instance._sample_with_conditions.side_effect = [keyboard_error]
+        mock_validate_file_path.return_value = 'temp_file'
+
+        # Run
+        result = BaseSynthesizer._sample_conditions(
+            instance,
+            conditions,
+            10,
+            10,
+            False,
+            '.sample.csv.temp'
+        )
+
+        # Assert
+        expected_result = pd.DataFrame()
+        pd.testing.assert_frame_equal(result, expected_result)
+        mock_tqdm.tqdm.assert_called_once_with(total=1)
+        progress_bar.__enter__.return_value.set_description.assert_called_once_with(
+            'Sampling conditions'
+        )
+        mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
 
     def test_sample_conditions(self):
         """Test that this method calls ``_sample_with_conditions``."""
@@ -1575,12 +1615,13 @@ class TestBaseSynthesizer:
             None
         )
 
+    @patch('sdv.single_table.base.os')
     @patch('sdv.single_table.base.check_num_rows')
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
     def test__sample_remaining_columns(self, mock_validate_file_path, mock_tqdm,
-                                       mock_data_processor, mock_check_num_rows):
+                                       mock_data_processor, mock_check_num_rows, mock_os):
         """Test the this method calls ``_sample_with_conditions`` with the ``known_column."""
         # Setup
         instance = BaseSynthesizer('metadata')
@@ -1591,6 +1632,7 @@ class TestBaseSynthesizer:
         instance._randomize_samples = Mock()
         instance._model = GaussianMultivariate()
         instance._sample_with_conditions.return_value = pd.DataFrame({'name': ['John Doe']})
+        mock_validate_file_path.return_value = '.sample.csv.temp'
 
         progress_bar = MagicMock()
         mock_tqdm.tqdm.return_value = progress_bar
@@ -1606,6 +1648,49 @@ class TestBaseSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
+        mock_os.remove.assert_called_once_with('.sample.csv.temp')
+        mock_os.path.exists.assert_called_once_with('.sample.csv.temp')
+
+    @patch('sdv.single_table.base.handle_sampling_error')
+    @patch('sdv.single_table.base.check_num_rows')
+    @patch('sdv.single_table.base.DataProcessor')
+    @patch('sdv.single_table.base.tqdm')
+    @patch('sdv.single_table.base.validate_file_path')
+    def test__sample_remaining_columns_handles_sampling_error(
+        self, mock_validate_file_path, mock_tqdm, mock_data_processor,
+        mock_check_num_rows, mock_handle_sampling_error
+    ):
+        """Test when sample remaining is being interrupted.
+
+        This should properly handle the errors with the ``handle_sampling_error`` function.
+        """
+        # Setup
+        instance = BaseSynthesizer('metadata')
+        known_columns = pd.DataFrame({'name': ['Johanna Doe']})
+
+        instance._validate_conditions = Mock()
+        instance._sample_with_conditions = Mock()
+        instance._randomize_samples = Mock()
+        instance._model = GaussianMultivariate()
+        keyboard_error = KeyboardInterrupt()
+        instance._sample_with_conditions.side_effect = [keyboard_error]
+        mock_validate_file_path.return_value = 'temp_file'
+
+        progress_bar = MagicMock()
+        mock_tqdm.tqdm.return_value = progress_bar
+
+        # Run
+        result = instance._sample_remaining_columns(
+            known_columns,
+            10,
+            10,
+            False,
+            'temp_file'
+        )
+
+        # Assert
+        pd.testing.assert_frame_equal(result, pd.DataFrame())
+        mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
 
     def test_sample_remaining_columns(self):
         """Test that this method calls the ``_sample_remaining_columns``."""
