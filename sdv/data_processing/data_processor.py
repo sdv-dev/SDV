@@ -100,7 +100,7 @@ class DataProcessor:
         self.fitted = False
         self.formatters = {}
         self._anonymized_columns = []
-        self._primary_key = None
+        self._primary_key = self.metadata._primary_key
         self._primary_key_generator = None
 
     def get_model_kwargs(self, model_name):
@@ -144,7 +144,7 @@ class DataProcessor:
             sdtype = column_metadata['sdtype']
 
             if primary_keys or (name != self._primary_key):
-                sdtypes[name] = self._DTYPE_TO_SDTYPE.get(sdtype, 'categorical')
+                sdtypes[name] = sdtype
 
         return sdtypes
 
@@ -270,7 +270,6 @@ class DataProcessor:
         sdtypes = {}
         transformers = {}
         self._anonymized_columns = []
-        self._primary_key = self.metadata._primary_key
 
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata._columns.get(column)
