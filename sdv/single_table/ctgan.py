@@ -121,7 +121,7 @@ class CTGANSynthesizer(BaseSynthesizer):
                 Amount of rows to sample.
             conditions (dict):
                 If specified, this dictionary maps column names to the column
-                value. Then, this method generates `num_rows` samples, all of
+                value. Then, this method generates ``num_rows`` samples, all of
                 which are conditioned on the given variables.
 
         Returns:
@@ -216,7 +216,7 @@ class TVAESynthesizer(BaseSynthesizer):
                 Amount of rows to sample.
             conditions (dict):
                 If specified, this dictionary maps column names to the column
-                value. Then, this method generates `num_rows` samples, all of
+                value. Then, this method generates ``num_rows`` samples, all of
                 which are conditioned on the given variables.
 
         Returns:

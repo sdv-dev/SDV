@@ -294,7 +294,7 @@ class TestDataProcessor:
         assert dp._model_kwargs == {'model': {'arg1': 10, 'arg2': True}}
 
     def test_get_sdtypes(self):
-        """Test that this returns a mapping of column names and it's sdtypes.
+        """Test that this returns a mapping of column names and its sdtypes.
 
         This test ensures that a dictionary is returned with column name as key and
         ``sdtype`` as value. When ``primary_keys`` is ``False`` this should not be included.

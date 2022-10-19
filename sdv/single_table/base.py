@@ -423,7 +423,7 @@ class BaseSynthesizer:
         """Sample a batch of rows with the given conditions.
 
         This will enter a reject-sampling loop in which rows will be sampled until
-        all of them are valid and match the requested conditions. If `max_tries`
+        all of them are valid and match the requested conditions. If ``max_tries``
         is exceeded, it will return as many rows as it has sampled, which may be less
         than the target number of rows.
 
@@ -511,17 +511,17 @@ class BaseSynthesizer:
 
     @staticmethod
     def _make_condition_dfs(conditions):
-        """Transform `conditions` into a list of dataframes.
+        """Transform ``conditions`` into a list of dataframes.
 
         Args:
             conditions (list[sdv.sampling.Condition]):
-                A list of `sdv.sampling.Condition`, where each `Condition` object
+                A list of ``sdv.sampling.Condition``, where each ``Condition`` object
                 represents a desired column value mapping and the number of rows
                 to generate for that condition.
 
         Returns:
             list[pandas.DataFrame]:
-                A list of `conditions` as dataframes.
+                A list of ``conditions`` as dataframes.
         """
         condition_dataframes = defaultdict(list)
         for condition in conditions:
@@ -576,7 +576,7 @@ class BaseSynthesizer:
         elif not graceful_reject_sampling:
             user_msg = (
                 'Unable to sample any rows for the given conditions '
-                f'`{transformed_condition}`. '
+                f"'{transformed_condition}'. "
             )
             if hasattr(self, '_model') and isinstance(
                     self._model, copulas.multivariate.GaussianMultivariate):
@@ -586,8 +586,8 @@ class BaseSynthesizer:
                 )
             else:
                 user_msg = user_msg + (
-                    f'Try increasing `max_tries_per_batch` (currently: {max_tries_per_batch}) '
-                    f'or increasing `batch_size` (currently: {batch_size}). Note that '
+                    f"Try increasing 'max_tries_per_batch' (currently: {max_tries_per_batch}) "
+                    f"or increasing 'batch_size' (currently: {batch_size}). Note that "
                     'increasing these values will also increase the sampling time.'
                 )
 
@@ -666,13 +666,13 @@ class BaseSynthesizer:
             max_tries_per_batch (int):
                 Number of times to retry sampling until the batch size is met. Defaults to 100.
             batch_size (int or None):
-                The batch size to sample. Defaults to `num_rows`, if None.
+                The batch size to sample. Defaults to ``num_rows``, if None.
             output_file_path (str or None):
                 The file to periodically write sampled rows to. If None, does not
                 write rows anywhere.
             conditions:
-                Deprecated argument. Use the `sample_conditions` method with
-                `sdv.sampling.Condition` objects instead.
+                Deprecated argument. Use the ``sample_conditions`` method with
+                ``sdv.sampling.Condition`` objects instead.
 
         Returns:
             pandas.DataFrame:

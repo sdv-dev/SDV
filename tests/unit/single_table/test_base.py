@@ -1085,8 +1085,8 @@ class TestBaseSynthesizer:
         # Run and Assert
         expected_message = re.escape(
             'Unable to sample any rows for the given conditions '
-            '`fancy_condition`. Try increasing `max_tries_per_batch` (currently: None) '
-            'or increasing `batch_size` (currently: 3). Note that '
+            "'fancy_condition'. Try increasing 'max_tries_per_batch' (currently: None) "
+            "or increasing 'batch_size' (currently: 3). Note that "
             'increasing these values will also increase the sampling time.'
         )
         with pytest.raises(ValueError, match=expected_message):
@@ -1118,7 +1118,7 @@ class TestBaseSynthesizer:
         # Run and Assert
         expected_message = re.escape(
             'Unable to sample any rows for the given conditions '
-            '`fancy_condition`. This may be because the provided values are out-of-bounds in the '
+            "'fancy_condition'. This may be because the provided values are out-of-bounds in the "
             'current model. \nPlease try again with a different set of values.'
         )
         with pytest.raises(ValueError, match=expected_message):
