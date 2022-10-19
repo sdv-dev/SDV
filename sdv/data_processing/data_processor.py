@@ -183,6 +183,9 @@ class DataProcessor:
 
         return data
 
+    def _update_transformers_by_sdtypes(self, sdtype, transformer):
+        self._transformers_by_sdtype[sdtype] = transformer
+
     @staticmethod
     def create_anonymized_transformer(sdtype, column_metadata):
         """Create an instance of an ``AnonymizedFaker``.
@@ -309,12 +312,15 @@ class DataProcessor:
         Returns:
             rdt.HyperTransformer
         """
-        self._hyper_transformer = rdt.HyperTransformer()
-        config = self._create_config(data, columns_created_by_constraints)
-        self._hyper_transformer.set_config(config)
+        if self._hyper_transformer is None:
+            self._hyper_transformer = rdt.HyperTransformer()
 
-        if not data.empty:
-            self._hyper_transformer.fit(data)
+        if not self._hyper_transformer._fitted:
+            config = self._create_config(data, columns_created_by_constraints)
+            self._hyper_transformer.set_config(config)
+
+            if not data.empty:
+                self._hyper_transformer.fit(data)
 
     def _fit_numerical_formatters(self, data):
         """Fit a ``NumericalFormatter`` for each column in the data."""

@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -17,6 +17,26 @@ from sdv.single_table.errors import InvalidDataError
 
 
 class TestBaseSynthesizer:
+
+    def test__update_default_transformers(self):
+        """Test that ``instance._data_processor._update_transformers_by_sdtypes`` is called.
+
+        Test when there are ``_model_sdtype_transformers`` set, this method will call
+        the data processor and update the default ones.
+        """
+        # Setup
+        instance = Mock()
+        instance._model_sdtype_transformers = {
+            'categorical': None,
+            'numerical': 'FloatTransformer'
+        }
+
+        # Run
+        BaseSynthesizer._update_default_transformers(instance)
+
+        # Assert
+        call_list = instance._data_processor._update_transformers_by_sdtypes.call_args_list
+        assert call_list == [call('categorical', None), call('numerical', 'FloatTransformer')]
 
     @patch('sdv.single_table.base.DataProcessor')
     def test___init__(self, mock_data_processor):
@@ -74,6 +94,45 @@ class TestBaseSynthesizer:
 
         # Assert
         assert result == metadata
+
+    @patch('sdv.single_table.base.warnings')
+    def test_preprocess(self, mock_warnings):
+        """Test the preprocess method.
+
+        The preprocess method calls the ``validate`` function with the data, then fits the
+        ``instance._data_processor`` and returns the output of the transformation.
+        """
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        data = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe']
+        })
+
+        # Run
+        result = BaseSynthesizer.preprocess(instance, data)
+
+        # Assert
+        expected_warning = (
+            'This model has already been fitted. To use the new preprocessed data, please '
+            "refit the model using 'fit' or 'fit_processed_data'."
+        )
+        instance.validate.assert_called_once()
+        pd.testing.assert_frame_equal(
+            instance.validate.call_args_list[0][0][0],
+            data
+        )
+        mock_warnings.warn.assert_called_once_with(expected_warning)
+        assert result == instance._data_processor.transform.return_value
+        instance._data_processor.fit.assert_called_once()
+        pd.testing.assert_frame_equal(
+            data,
+            instance._data_processor.fit.call_args_list[0][0][0]
+        )
+        pd.testing.assert_frame_equal(
+            data,
+            instance._data_processor.transform.call_args_list[0][0][0]
+        )
 
     @patch('sdv.single_table.base.DataProcessor')
     def test__fit(self, mock_data_processor):
