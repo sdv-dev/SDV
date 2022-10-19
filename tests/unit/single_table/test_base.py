@@ -94,11 +94,10 @@ class TestBaseSynthesizer:
 
     @patch('sdv.single_table.base.warnings')
     def test_preprocess(self, mock_warnings):
-        """Test that ``preprocess`` calls the ``validate`` then fits and returns transformed data.
+        """Test the preprocess method.
 
-        Before the preprocessing is occurs we check that the synthesizer has
-        ``_model_sdtype_transformers``, if it has, we iterate over the dictionary and set for
-        each ``sdtype`` the specified value or ``transformer``.
+        The preprocess method calls the ``validate`` function with the data, then fits the
+        ``instance._data_processor`` and returns the output of the transformation.
         """
         # Setup
         instance = Mock()
@@ -114,6 +113,11 @@ class TestBaseSynthesizer:
         expected_warning = (
             'This model has already been fitted. To use the new preprocessed data, please '
             "refit the model using 'fit' or 'fit_processed_data'."
+        )
+        instance.validate.assert_called_once()
+        pd.testing.assert_frame_equal(
+            instance.validate.call_args_list[0][0][0],
+            data
         )
         mock_warnings.warn.assert_called_once_with(expected_warning)
         assert result == instance._data_processor.transform.return_value

@@ -455,7 +455,7 @@ class TestDataProcessor:
         DataProcessor._update_transformers_by_sdtypes(instance, 'categorical', None)
 
         # Assert
-        instance._transformers_by_sdtype == {
+        assert instance._transformers_by_sdtype == {
             'categorical': None,
             'numerical': 'float',
             'boolean': None
