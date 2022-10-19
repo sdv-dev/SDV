@@ -29,57 +29,20 @@ class BaseSynthesizer:
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
     """
 
+    _model_sdtype_transformers = None
+
+    def _update_default_transformers(self):
+        if self._model_sdtype_transformers is not None:
+            for sdtype, transformer in self._model_sdtype_transformers.items():
+                self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
+
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True):
         self.metadata = metadata
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self._data_processor = DataProcessor(metadata)
+        self._update_default_transformers()
         self._fitted = False
-
-    def get_parameters(self):
-        """Return the parameters used to instantiate the synthesizer."""
-        parameters = inspect.signature(self.__init__).parameters
-        instantiated_parameters = {}
-        for parameter_name in parameters:
-            if parameter_name != 'metadata':
-                instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
-
-        return instantiated_parameters
-
-    def get_metadata(self):
-        """Return the ``SingleTableMetadata`` for this synthesizer."""
-        return self.metadata
-
-    def preprocess(self, data):
-        """Transform the raw data to numerical space."""
-
-    def _fit(self, processed_data):
-        """Fit the model to the table.
-
-        Args:
-            processed_data (pandas.DataFrame):
-                Data to be learned.
-        """
-        raise NotImplementedError()
-
-    def fit_processed_data(self, processed_data):
-        """Fit this model to the transformed data.
-
-        Args:
-            processed_data (pandas.DataFrame):
-                The transformed data used to fit the model to.
-        """
-        self._fit(processed_data)
-
-    def fit(self, data):
-        """Fit this model to the original data.
-
-        Args:
-            data (pandas.DataFrame):
-                The raw data (before any transformations) to fit the model to.
-        """
-        processed_data = self.preprocess(data)
-        self.fit_processed_data(processed_data)
 
     def _validate_metadata_matches_data(self, columns):
         errors = []
@@ -276,3 +239,60 @@ class BaseSynthesizer:
         self._validate_transformers(column_name_to_transformer)
         self._warn_for_update_transformers(column_name_to_transformer)
         self._data_processor.update_transformers(column_name_to_transformer)
+
+    def get_parameters(self):
+        """Return the parameters used to instantiate the synthesizer."""
+        parameters = inspect.signature(self.__init__).parameters
+        instantiated_parameters = {}
+        for parameter_name in parameters:
+            if parameter_name != 'metadata':
+                instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
+
+        return instantiated_parameters
+
+    def get_metadata(self):
+        """Return the ``SingleTableMetadata`` for this synthesizer."""
+        return self.metadata
+
+    def preprocess(self, data):
+        """Transform the raw data to numerical space."""
+        self.validate(data)
+        if self._fitted:
+            warnings.warn(
+                'This model has already been fitted. To use the new preprocessed data, '
+                "please refit the model using 'fit' or 'fit_processed_data'."
+            )
+
+        self._data_processor.fit(data)
+        return self._data_processor.transform(data)
+
+    def _fit(self, processed_data):
+        """Fit the model to the table.
+
+        Args:
+            processed_data (pandas.DataFrame):
+                Data to be learned.
+        """
+        raise NotImplementedError()
+
+    def fit_processed_data(self, processed_data):
+        """Fit this model to the transformed data.
+
+        Args:
+            processed_data (pandas.DataFrame):
+                The transformed data used to fit the model to.
+        """
+        # Reset fit status
+        self._fitted = False
+        self._fit(processed_data)
+        self._fitted = True
+
+    def fit(self, data):
+        """Fit this model to the original data.
+
+        Args:
+            data (pandas.DataFrame):
+                The raw data (before any transformations) to fit the model to.
+        """
+        processed_data = self.preprocess(data)
+        self.fit_processed_data(processed_data)
