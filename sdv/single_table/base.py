@@ -29,13 +29,19 @@ class BaseSynthesizer:
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
     """
 
-    _model_sdtype_trnasformers = None
+    _model_sdtype_transformers = None
+
+    def _update_default_transformers(self):
+        if self._model_sdtype_transformers is not None:
+            for sdtype, transformer in self._model_sdtype_transformers.items():
+                self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True):
         self.metadata = metadata
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self._data_processor = DataProcessor(metadata)
+        self._update_default_transformers()
         self._fitted = False
 
     def _validate_metadata_matches_data(self, columns):
@@ -254,12 +260,8 @@ class BaseSynthesizer:
         if self._fitted:
             warnings.warn(
                 'This model has already been fitted. To use the new preprocessed data, '
-                'please refit the model using `fit` or `fit_processed_data`.'
+                "please refit the model using 'fit' or 'fit_processed_data'."
             )
-
-        if self._model_sdtype_trnasformers is not None:
-            for sdtype, transformer in self._model_sdtype_trnasformers.items():
-                self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
 
         self._data_processor.fit(data)
         return self._data_processor.transform(data)

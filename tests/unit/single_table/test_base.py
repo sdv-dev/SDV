@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -17,6 +17,23 @@ from sdv.single_table.errors import InvalidDataError
 
 
 class TestBaseSynthesizer:
+
+    def test__update_default_transformers(self):
+        """
+        """
+        # Setup
+        instance = Mock()
+        instance._model_sdtype_transformers = {
+            'categorical': None,
+            'numerical': 'FloatTransformer'
+        }
+
+        # Run
+        BaseSynthesizer._update_default_transformers(instance)
+
+        # Assert
+        call_list = instance._data_processor._update_transformers_by_sdtypes.call_args_list
+        assert call_list == [call('categorical', None), call('numerical', 'FloatTransformer')]
 
     @patch('sdv.single_table.base.DataProcessor')
     def test___init__(self, mock_data_processor):
@@ -86,9 +103,6 @@ class TestBaseSynthesizer:
         # Setup
         instance = Mock()
         instance._fitted = True
-        instance._model_sdtype_trnasformers = {
-            'categorical': None
-        }
         data = pd.DataFrame({
             'name': ['John', 'Doe', 'John Doe']
         })
@@ -99,7 +113,7 @@ class TestBaseSynthesizer:
         # Assert
         expected_warning = (
             'This model has already been fitted. To use the new preprocessed data, please '
-            'refit the model using `fit` or `fit_processed_data`.'
+            "refit the model using 'fit' or 'fit_processed_data'."
         )
         mock_warnings.warn.assert_called_once_with(expected_warning)
         assert result == instance._data_processor.transform.return_value
@@ -108,8 +122,6 @@ class TestBaseSynthesizer:
             data,
             instance._data_processor.fit.call_args_list[0][0][0]
         )
-        instance._data_processor._update_transformers_by_sdtypes.assert_called_once_with(
-            'categorical', None)
         pd.testing.assert_frame_equal(
             data,
             instance._data_processor.transform.call_args_list[0][0][0]
