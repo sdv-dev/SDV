@@ -36,7 +36,6 @@ class TestPARSynthesizer:
         assert synthesizer.context_columns == ['gender', 'name']
         assert synthesizer.enforce_min_max_values is True
         assert synthesizer.enforce_rounding is True
-        assert synthesizer._verbose is False
         assert synthesizer.segment_size == 10
         assert synthesizer._model_kwargs == {
             'epochs': 10,

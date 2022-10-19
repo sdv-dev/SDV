@@ -68,7 +68,6 @@ class PARSynthesizer:
             'cuda': cuda,
             'verbose': verbose,
         }
-        self._verbose = verbose
         context_metadata = self._get_context_metadata()
         self._context_synthesizer = GaussianCopulaSynthesizer(
             metadata=context_metadata,
