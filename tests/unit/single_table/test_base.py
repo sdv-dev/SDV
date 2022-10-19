@@ -19,7 +19,10 @@ from sdv.single_table.errors import InvalidDataError
 class TestBaseSynthesizer:
 
     def test__update_default_transformers(self):
-        """
+        """Test that ``instance._data_processor._update_transformers_by_sdtypes`` is called.
+
+        Test when there are ``_model_sdtype_transformers`` set, this method will call
+        the data processor and update the default ones.
         """
         # Setup
         instance = Mock()
