@@ -1,4 +1,4 @@
-"""Models for Single Table data."""
+"""Synthesizers for Single Table data."""
 
 from sdv.single_table.copulagan import CopulaGANSynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
