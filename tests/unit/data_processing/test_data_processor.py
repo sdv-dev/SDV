@@ -293,6 +293,53 @@ class TestDataProcessor:
         # Assert
         assert dp._model_kwargs == {'model': {'arg1': 10, 'arg2': True}}
 
+    def test_get_sdtypes(self):
+        """Test that this returns a mapping of column names and its sdtypes.
+
+        This test ensures that a dictionary is returned with column name as key and
+        ``sdtype`` as value. When ``primary_keys`` is ``False`` this should not be included.
+        """
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='categorical')
+        metadata.add_column('col2', sdtype='numerical')
+        metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
+        metadata.set_primary_key('col2')
+        dp = DataProcessor(metadata)
+
+        # Run
+        sdtypes = dp.get_sdtypes()
+
+        # Assert
+        assert sdtypes == {
+            'col1': 'categorical',
+            'col3': 'numerical'
+        }
+
+    def test_get_sdtypes_with_primary_keys(self):
+        """Test that this returns a mapping of column names and it's sdtypes.
+
+        This test ensures that a dictionary is returned with column name as key and
+        ``sdtype`` as value. When ``primary_keys`` is ``True`` this should be included.
+        """
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='categorical')
+        metadata.add_column('col2', sdtype='numerical')
+        metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
+        metadata.set_primary_key('col2')
+        dp = DataProcessor(metadata)
+
+        # Run
+        sdtypes = dp.get_sdtypes(primary_keys=True)
+
+        # Assert
+        assert sdtypes == {
+            'col1': 'categorical',
+            'col2': 'numerical',
+            'col3': 'numerical'
+        }
+
     def test__fit_transform_constraints(self):
         """Test the ``_fit_transform_constraints`` method.
 
@@ -599,6 +646,7 @@ class TestDataProcessor:
         dp.create_anonymized_transformer.return_value = 'AnonymizedFaker'
         dp.create_primary_key_transformer.return_value = 'RegexGenerator'
         dp.metadata._primary_key = 'id'
+        dp._primary_key = 'id'
         dp.metadata._columns = {
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
