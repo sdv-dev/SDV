@@ -100,7 +100,7 @@ class DataProcessor:
         self.fitted = False
         self.formatters = {}
         self._anonymized_columns = []
-        self._primary_key = None
+        self._primary_key = self.metadata._primary_key
         self._primary_key_generator = None
 
     def get_model_kwargs(self, model_name):
@@ -127,6 +127,26 @@ class DataProcessor:
                 The key word arguments for the model.
         """
         self._model_kwargs[model_name] = model_kwargs
+
+    def get_sdtypes(self, primary_keys=False):
+        """Get a ``dict`` with the ``sdtypes`` for each column of the table.
+
+        Args:
+            primary_keys (bool):
+                Whether or not to include the primary key fields. Defaults to ``False``.
+
+        Returns:
+            dict:
+                Dictionary that contains the column names and ``sdtypes``.
+        """
+        sdtypes = {}
+        for name, column_metadata in self.metadata._columns.items():
+            sdtype = column_metadata['sdtype']
+
+            if primary_keys or (name != self._primary_key):
+                sdtypes[name] = sdtype
+
+        return sdtypes
 
     def _fit_constraints(self, data):
         errors = []
@@ -250,7 +270,6 @@ class DataProcessor:
         sdtypes = {}
         transformers = {}
         self._anonymized_columns = []
-        self._primary_key = self.metadata._primary_key
 
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata._columns.get(column)
