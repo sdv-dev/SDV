@@ -113,6 +113,26 @@ class CTGANSynthesizer(BaseSynthesizer):
         self._model = CTGAN(**self._model_kwargs)
         self._model.fit(processed_data, discrete_columns=discrete_columns)
 
+    def _sample(self, num_rows, conditions=None):
+        """Sample the indicated number of rows from the model.
+
+        Args:
+            num_rows (int):
+                Amount of rows to sample.
+            conditions (dict):
+                If specified, this dictionary maps column names to the column
+                value. Then, this method generates ``num_rows`` samples, all of
+                which are conditioned on the given variables.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+        """
+        if conditions is None:
+            return self._model.sample(num_rows)
+
+        raise NotImplementedError("CTGANSynthesizer doesn't support conditional sampling.")
+
 
 class TVAESynthesizer(BaseSynthesizer):
     """Model wrapping ``TVAE`` model.
@@ -187,3 +207,23 @@ class TVAESynthesizer(BaseSynthesizer):
         discrete_columns = detect_discrete_columns(self.get_metadata(), processed_data)
         self._model = TVAE(**self._model_kwargs)
         self._model.fit(processed_data, discrete_columns=discrete_columns)
+
+    def _sample(self, num_rows, conditions=None):
+        """Sample the indicated number of rows from the model.
+
+        Args:
+            num_rows (int):
+                Amount of rows to sample.
+            conditions (dict):
+                If specified, this dictionary maps column names to the column
+                value. Then, this method generates ``num_rows`` samples, all of
+                which are conditioned on the given variables.
+
+        Returns:
+            pandas.DataFrame:
+                Sampled data.
+        """
+        if conditions is None:
+            return self._model.sample(num_rows)
+
+        raise NotImplementedError("TVAESynthesizer doesn't support conditional sampling.")
