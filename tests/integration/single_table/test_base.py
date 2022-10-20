@@ -4,25 +4,23 @@ import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
-from sdv.constraints import FixedCombinations, Unique
-from sdv.demo import load_tabular_demo
-from sdv.sampling import Condition
 from sdv.metadata import SingleTableMetadata
+from sdv.sampling import Condition
 from sdv.single_table.copulagan import CopulaGANSynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer
 
 METADATA = SingleTableMetadata._load_from_dict({
-    "SCHEMA_VERSION": "SINGLE_TABLE_V1",
-    "columns": {
-        "column1": {
-            "sdtype": "numerical"
+    'SCHEMA_VERSION': 'SINGLE_TABLE_V1',
+    'columns': {
+        'column1': {
+            'sdtype': 'numerical'
         },
-        "column2": {
-            "sdtype": "numerical"
+        'column2': {
+            'sdtype': 'numerical'
         },
-        "column3": {
-            "sdtype": "numerical"
+        'column3': {
+            'sdtype': 'numerical'
         }
     }
 })
@@ -42,44 +40,44 @@ def _isinstance_side_effect(*args, **kwargs):
         return isinstance(args[0], args[1])
 
 
-# @pytest.mark.parametrize('model', MODELS)
-# def test_conditional_sampling_graceful_reject_sampling_true_dict(model):
-#     data = pd.DataFrame({
-#         'column1': list(range(100)),
-#         'column2': list(range(100)),
-#         'column3': list(range(100))
-#     })
-# 
-#     model.fit(data)
-#     conditions = [
-#         Condition({
-#             'column1': 28,
-#             'column2': 37,
-#             'column3': 93
-#         })
-#     ]
-# 
-#     with pytest.raises(ValueError):  # noqa: PT011
-#         model.sample_conditions(conditions=conditions)
-# 
-# 
-# @pytest.mark.parametrize('model', MODELS)
-# def test_conditional_sampling_graceful_reject_sampling_true_dataframe(model):
-#     data = pd.DataFrame({
-#         'column1': list(range(100)),
-#         'column2': list(range(100)),
-#         'column3': list(range(100))
-#     })
-# 
-#     model.fit(data)
-#     conditions = pd.DataFrame({
-#         'column1': [28],
-#         'column2': [37],
-#         'column3': [93]
-#     })
-# 
-#     with pytest.raises(ValueError, match='a'):
-#         model.sample_remaining_columns(conditions)
+@pytest.mark.parametrize('model', MODELS)
+def test_conditional_sampling_graceful_reject_sampling_true_dict(model):
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+
+    model.fit(data)
+    conditions = [
+        Condition({
+            'column1': 28,
+            'column2': 37,
+            'column3': 93
+        })
+    ]
+
+    with pytest.raises(ValueError):  # noqa: PT011
+        model.sample_conditions(conditions=conditions)
+
+
+@pytest.mark.parametrize('model', MODELS)
+def test_conditional_sampling_graceful_reject_sampling_true_dataframe(model):
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+
+    model.fit(data)
+    conditions = pd.DataFrame({
+        'column1': [28],
+        'column2': [37],
+        'column3': [93]
+    })
+
+    with pytest.raises(ValueError, match='a'):
+        model.sample_remaining_columns(conditions)
 
 
 def test_fit_with_unique_constraint_on_data_with_only_index_column():
@@ -273,7 +271,6 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     """
     # Setup
     isinstance_mock.side_effect = _isinstance_side_effect
-    constraint = FixedCombinations(column_names=['city', 'state'])
     data = pd.DataFrame({
         'city': ['LA', 'SF', 'CHI', 'LA', 'LA'],
         'state': ['CA', 'CA', 'IL', 'CA', 'CA'],
