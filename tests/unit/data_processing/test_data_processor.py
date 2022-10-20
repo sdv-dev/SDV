@@ -710,6 +710,19 @@ class TestDataProcessor:
             dp.update_transformers({'column': None})
 
     @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
+    def test__create_hyper_transformer_instance(self, mock_hyper_transformer):
+        """Test that this create a hyper transformer if this is ``None``."""
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+
+        # Run
+        dp._create_hyper_transformer_instance()
+
+        # Assert
+        mock_hyper_transformer.assert_called_once()
+        assert dp._hyper_transformer == mock_hyper_transformer.return_value
+
+    @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
     def test__fit_hyper_transformer(self, ht_mock):
         """Test the ``_fit_hyper_transformer`` method.
 
@@ -732,6 +745,7 @@ class TestDataProcessor:
         dp._create_config = Mock()
         dp._create_config.return_value = {'transformers': [], 'sdtypes': []}
         ht_mock.return_value._fitted = False
+        ht_mock.return_value.field_transformers = {}
         data = pd.DataFrame({'a': [1, 2, 3]})
 
         # Run
@@ -762,6 +776,7 @@ class TestDataProcessor:
         # Setup
         dp = DataProcessor(SingleTableMetadata())
         ht_mock.return_value._fitted = False
+        ht_mock.return_value.field_transformers = {}
         dp._create_config = Mock()
         dp._create_config.return_value = {'transformers': [], 'sdtypes': []}
         data = pd.DataFrame()

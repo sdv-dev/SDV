@@ -97,6 +97,72 @@ class TestBaseSynthesizer:
         # Assert
         assert result == metadata
 
+    def test_auto_assign_transformers(self):
+        """Test that the hyper transformer is properly being set.
+
+        Automatically this function will fit-transform the constraints and then generate
+        the proper config for the output columns.
+        """
+        # Setup
+        instance = Mock()
+        data = pd.DataFrame({
+            'name': ['John', 'Doe', 'Johanna'],
+            'salary': [80., 90., 120.]
+        })
+        transformed_constraints = pd.DataFrame({
+            'name': ['John', 'Doe', 'Johanna'],
+            'salary': [80., 90., 120.],
+            'salary#80#120': [0.25, 0.5, 1.],
+        })
+        instance._data_processor._fit_transform_constraints.return_value = transformed_constraints
+
+        # Run
+        BaseSynthesizer.auto_assign_transformers(instance, data)
+
+        # Assert
+        instance._data_processor._create_hyper_transformer_instance.assert_called_once_with()
+        instance._data_processor._hyper_transformer.set_config.assert_called_once_with(
+            instance._data_processor._create_config.return_value
+        )
+        config_call = instance._data_processor._create_config.call_args_list
+        pd.testing.assert_frame_equal(
+            config_call[0][0][0],
+            transformed_constraints
+        )
+        assert config_call[0][0][1] == {'salary#80#120'}
+
+    def test_get_transformers(self):
+        """Test that this returns the field transformers from the ``HyperTransformer``."""
+        # Setup
+        instance = Mock()
+        instance._data_processor._hyper_transformer.field_transformers = {
+            'name': 'FrequencyEncoder',
+            'salary': 'FloatFormatter'
+        }
+
+        # Run
+        result = BaseSynthesizer.get_transformers(instance)
+
+        # Assert
+        assert result == {
+            'name': 'FrequencyEncoder',
+            'salary': 'FloatFormatter'
+        }
+
+    def test_get_transformers_raises_an_error(self):
+        """Test that this raises an error when there are no field transformers."""
+        # Setup
+        instance = Mock()
+        instance._data_processor._hyper_transformer.field_transformers = {}
+
+        # Run and Assert
+        error_msg = re.escape(
+            "No transformers were returned in 'get_transformers'. Use "
+            "'auto_assign_transformers' or 'fit' to create them."
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            BaseSynthesizer.get_transformers(instance)
+
     @patch('sdv.single_table.base.warnings')
     def test_preprocess(self, mock_warnings):
         """Test the preprocess method.

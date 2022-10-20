@@ -270,6 +270,44 @@ class BaseSynthesizer:
         """Return the ``SingleTableMetadata`` for this synthesizer."""
         return self.metadata
 
+    def auto_assign_transformers(self, data):
+        """Automatically assign the required transformers for the given data and constraints.
+
+        This method will automatically set a configuration to the ``rdt.HyperTransformer``
+        with the exact amount of transformers required for it to work.
+
+        Args:
+            data (pandas.DataFrame):
+                The raw data (before any transformations) that will be used to fit the model.
+        """
+        constrained = self._data_processor._fit_transform_constraints(data)
+        columns_created_by_constraints = set(constrained.columns) - set(data.columns)
+        config = self._data_processor._create_config(constrained, columns_created_by_constraints)
+        self._data_processor._create_hyper_transformer_instance()
+        self._data_processor._hyper_transformer.set_config(config)
+
+    def get_transformers(self):
+        """Get a dictionary mapping of ``column_name``  and ``rdt.transformers``.
+
+        A dictionary representing the column names and the transformers that will be used
+        to transform the data.
+
+        Returns:
+            dict:
+                A dictionary mapping with column names and transformers.
+        """
+        field_transformers = {}
+        if self._data_processor._hyper_transformer is not None:
+            field_transformers = self._data_processor._hyper_transformer.field_transformers
+
+        if field_transformers == {}:
+            raise ValueError(
+                "No transformers were returned in 'get_transformers'. "
+                "Use 'auto_assign_transformers' or 'fit' to create them."
+            )
+
+        return field_transformers
+
     def preprocess(self, data):
         """Transform the raw data to numerical space."""
         self.validate(data)

@@ -314,6 +314,10 @@ class DataProcessor:
 
         self._hyper_transformer.update_transformers(column_name_to_transformer)
 
+    def _create_hyper_transformer_instance(self):
+        if self._hyper_transformer is None:
+            self._hyper_transformer = rdt.HyperTransformer()
+
     def _fit_hyper_transformer(self, data, columns_created_by_constraints):
         """Create and return a new ``rdt.HyperTransformer`` instance.
 
@@ -331,13 +335,12 @@ class DataProcessor:
         Returns:
             rdt.HyperTransformer
         """
-        if self._hyper_transformer is None:
-            self._hyper_transformer = rdt.HyperTransformer()
-
-        if not self._hyper_transformer._fitted:
+        self._create_hyper_transformer_instance()
+        if self._hyper_transformer.field_transformers == {}:
             config = self._create_config(data, columns_created_by_constraints)
             self._hyper_transformer.set_config(config)
 
+        if not self._hyper_transformer._fitted:
             if not data.empty:
                 self._hyper_transformer.fit(data)
 
