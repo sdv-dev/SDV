@@ -695,7 +695,7 @@ class BaseSynthesizer:
     def _validate_conditions(self, conditions):
         """Validate the user-passed conditions."""
         for column in conditions.columns:
-            if column not in self._data_processor.get_fields():
+            if column not in self._data_processor.get_sdtypes():
                 raise ValueError(f"Unexpected column name '{column}'. "
                                  f'Use a column name that was present in the original data.')
 
