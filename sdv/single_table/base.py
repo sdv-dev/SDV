@@ -13,6 +13,7 @@ import copulas
 import numpy as np
 import pandas as pd
 import tqdm
+from copulas.multivariate import GaussianMultivariate
 
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, InvalidPreprocessingError
@@ -578,8 +579,7 @@ class BaseSynthesizer:
                 'Unable to sample any rows for the given conditions '
                 f"'{transformed_condition}'. "
             )
-            if hasattr(self, '_model') and isinstance(
-                    self._model, copulas.multivariate.GaussianMultivariate):
+            if hasattr(self, '_model') and isinstance(self._model, GaussianMultivariate):
                 user_msg = user_msg + (
                     'This may be because the provided values are out-of-bounds in the '
                     'current model. \nPlease try again with a different set of values.'
@@ -695,7 +695,7 @@ class BaseSynthesizer:
     def _validate_conditions(self, conditions):
         """Validate the user-passed conditions."""
         for column in conditions.columns:
-            if column not in self._data_processor.get_fields():
+            if column not in self._data_processor.get_sdtypes():
                 raise ValueError(f"Unexpected column name '{column}'. "
                                  f'Use a column name that was present in the original data.')
 
@@ -828,8 +828,8 @@ class BaseSynthesizer:
                     )
                     sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
 
-            is_reject_sampling = (hasattr(self, '_model') and not isinstance(
-                self._model, copulas.multivariate.GaussianMultivariate))
+            is_reject_sampling = bool(
+                hasattr(self, '_model') and not isinstance(self._model, GaussianMultivariate))
             check_num_rows(
                 num_rows=len(sampled),
                 expected_num_rows=num_rows,
