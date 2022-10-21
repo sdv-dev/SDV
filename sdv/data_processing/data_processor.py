@@ -417,8 +417,13 @@ class DataProcessor:
         if not self.fitted:
             raise NotFittedError()
 
+        # Filter columns that can be transformed
+        columns = [
+            column for column in self.get_sdtypes(primary_keys=not is_condition)
+            if column in data.columns
+        ]
         LOGGER.debug(f'Transforming constraints for table {self.table_name}')
-        data = self._transform_constraints(data, is_condition)
+        data = self._transform_constraints(data[columns], is_condition)
 
         LOGGER.debug(f'Transforming table {self.table_name}')
         if self._primary_key and not is_condition:
