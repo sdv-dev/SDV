@@ -1377,20 +1377,26 @@ class TestBaseSynthesizer:
         """Test that conditions are within the ``data_processor`` fields."""
         # Setup
         instance = Mock()
-        instance._data_processor.get_fields.return_value = ['name', 'surname']
+        instance._data_processor.get_sdtypes.return_value = {
+            'name': 'categorical',
+            'surname': 'categorical',
+        }
         conditions = pd.DataFrame({'name': ['Johanna'], 'surname': ['Doe']})
 
         # Run
         BaseSynthesizer._validate_conditions(instance, conditions)
 
         # Assert
-        instance._data_processor.get_fields.assert_called()
+        instance._data_processor.get_sdtypes.assert_called()
 
     def test__validate_conditions_raises_error(self):
         """Test that conditions are not in the ``data_processor`` fields."""
         # Setup
         instance = Mock()
-        instance._data_processor.get_fields.return_value = ['name', 'surname']
+        instance._data_processor.get_sdtypes.return_value = {
+            'name': 'categorical',
+            'surname': 'categorical',
+        }
         conditions = pd.DataFrame({'name.value': ['Johanna'], 'surname.value': ['Doe']})
 
         # Run and Assert

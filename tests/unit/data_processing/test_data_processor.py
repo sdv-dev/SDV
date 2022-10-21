@@ -902,6 +902,11 @@ class TestDataProcessor:
         dp._transform_constraints = Mock()
         dp._transform_constraints.return_value = data
         dp._hyper_transformer = Mock()
+        dp.get_sdtypes = Mock()
+        dp.get_sdtypes.return_value = {
+            'item 0': 'numerical',
+            'item 1': 'boolean'
+        }
         dp._hyper_transformer.transform_subset.return_value = data
         dp.fitted = True
 
@@ -1013,6 +1018,12 @@ class TestDataProcessor:
         dp._hyper_transformer = Mock()
         dp._hyper_transformer.transform_subset.return_value = data
         dp._hyper_transformer.field_transformers = {'id': object()}
+        dp.get_sdtypes = Mock()
+        dp.get_sdtypes.return_value = {
+            'id': 'categorical',
+            'item 0': 'numerical',
+            'item 1': 'boolean'
+        }
 
         dp.fitted = True
         dp._primary_key = 'id'
@@ -1091,6 +1102,11 @@ class TestDataProcessor:
         dp._transform_constraints.return_value = data
         dp._hyper_transformer = Mock()
         dp._hyper_transformer.transform_subset.side_effect = Error()
+        dp.get_sdtypes = Mock()
+        dp.get_sdtypes.return_value = {
+            'item 0': 'numerical',
+            'item 1': 'boolean'
+        }
         dp.fitted = True
 
         # Run
