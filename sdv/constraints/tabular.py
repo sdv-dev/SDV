@@ -1282,8 +1282,8 @@ class Unique(Constraint):
         for key in metadata._alternate_keys:
             if isinstance(key, tuple):
                 keys.update(key)
-        else:
-            keys.add(key)
+            else:
+                keys.add(key)
 
         if len(set(column_names) - keys) == 0:
             raise ConstraintMetadataError(
