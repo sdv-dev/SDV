@@ -1,11 +1,14 @@
 """Tests for the sdv.utils module."""
 
+from pathlib import Path
 from unittest.mock import Mock, call, patch
 
+import pandas as pd
 import pkg_resources
 
 from sdv.tabular import GaussianCopula
-from sdv.utils import cast_to_iterable, get_package_versions, throw_version_mismatch_warning
+from sdv.utils import (cast_to_iterable, get_package_versions, load_data_from_csv,
+    throw_version_mismatch_warning)
 
 
 def test_cast_to_iterable():
@@ -232,3 +235,22 @@ def test_generate_version_mismatch_warning_no_package_versions(warnings_mock):
 
     # Assert
     assert warnings_mock.warn.called_once_with(expected_str)
+
+
+@patch('sdv.utils.pd.read_csv')
+def test_load_data_from_csv(read_csv_mock):
+    """Test that the data is loaded from the path.
+
+    This function should create a filepath from the provided string and pass along any key-word
+    args to ``pandas.read_csv`` in order to load the data.
+    """
+    # Setup
+    expected_data = pd.DataFrame({'number': [1., 2., 3.], 'text': ['1', '2', '3']})
+    read_csv_mock.return_value = expected_data
+
+    # Run
+    loaded_data = load_data_from_csv('data.csv', pandas_kwargs={'dtype': {'number': 'float'}})
+
+    # Assert
+    pd.testing.assert_frame_equal(loaded_data, expected_data)
+    read_csv_mock.assert_called_once_with(Path('data.csv'), dtype={'number': 'float'})
