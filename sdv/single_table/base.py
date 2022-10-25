@@ -296,10 +296,7 @@ class BaseSynthesizer:
             dict:
                 A dictionary mapping with column names and transformers.
         """
-        field_transformers = {}
-        if self._data_processor._hyper_transformer is not None:
-            field_transformers = self._data_processor._hyper_transformer.field_transformers
-
+        field_transformers = self._data_processor._hyper_transformer.field_transformers
         if field_transformers == {}:
             raise ValueError(
                 "No transformers were returned in 'get_transformers'. "
