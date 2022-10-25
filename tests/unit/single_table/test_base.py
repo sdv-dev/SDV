@@ -120,7 +120,6 @@ class TestBaseSynthesizer:
         BaseSynthesizer.auto_assign_transformers(instance, data)
 
         # Assert
-        instance._data_processor._create_hyper_transformer_instance.assert_called_once_with()
         instance._data_processor._hyper_transformer.set_config.assert_called_once_with(
             instance._data_processor._create_config.return_value
         )
@@ -130,6 +129,7 @@ class TestBaseSynthesizer:
             transformed_constraints
         )
         assert config_call[0][0][1] == {'salary#80#120'}
+        instance._data_processor._fit_numerical_formatters.assert_called_once()
 
     def test_get_transformers(self):
         """Test that this returns the field transformers from the ``HyperTransformer``."""

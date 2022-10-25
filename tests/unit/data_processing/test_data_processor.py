@@ -86,9 +86,10 @@ class TestDataProcessor:
         assert transformer.learn_rounding_scheme is False
         assert transformer.enforce_min_max_values is False
 
+    @patch('sdv.data_processing.data_processor.rdt')
     @patch('sdv.data_processing.data_processor.DataProcessor._load_constraints')
     @patch('sdv.data_processing.data_processor.DataProcessor._update_numerical_transformer')
-    def test___init__(self, update_transformer_mock, load_constraints_mock):
+    def test___init__(self, update_transformer_mock, load_constraints_mock, mock_rdt):
         """Test the ``__init__`` method.
 
         Setup:
@@ -124,6 +125,7 @@ class TestDataProcessor:
         assert data_processor.metadata == metadata_mock
         update_transformer_mock.assert_called_with(True, False)
         load_constraints_mock.assert_called_once()
+        assert data_processor._hyper_transformer == mock_rdt.HyperTransformer.return_value
 
     def test___init___without_mocks(self):
         """Test the ``__init__`` method without using mocks.
@@ -710,19 +712,6 @@ class TestDataProcessor:
             dp.update_transformers({'column': None})
 
     @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
-    def test__create_hyper_transformer_instance(self, mock_hyper_transformer):
-        """Test that this create a hyper transformer if this is ``None``."""
-        # Setup
-        dp = DataProcessor(SingleTableMetadata())
-
-        # Run
-        dp._create_hyper_transformer_instance()
-
-        # Assert
-        mock_hyper_transformer.assert_called_once()
-        assert dp._hyper_transformer == mock_hyper_transformer.return_value
-
-    @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
     def test__fit_hyper_transformer(self, ht_mock):
         """Test the ``_fit_hyper_transformer`` method.
 
@@ -799,6 +788,7 @@ class TestDataProcessor:
         # Setup
         dp = DataProcessor(SingleTableMetadata())
         dp._hyper_transformer = Mock()
+        dp._hyper_transformer.field_transformers = {'name': 'categorical'}
         dp._hyper_transformer._fitted = True
         dp._create_config = Mock()
         data = pd.DataFrame({'name': ['John Doe']})
@@ -807,7 +797,6 @@ class TestDataProcessor:
         dp._fit_hyper_transformer(data, [])
 
         # Assert
-        ht_mock.assert_not_called()
         ht_mock.return_value.set_config.assert_not_called()
         ht_mock.return_value.fit.assert_not_called()
         dp._create_config.assert_not_called()
