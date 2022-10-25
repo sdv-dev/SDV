@@ -274,7 +274,7 @@ class BaseSynthesizer:
         """Automatically assign the required transformers for the given data and constraints.
 
         This method will automatically set a configuration to the ``rdt.HyperTransformer``
-        with the exact amount of transformers required for it to work.
+        with the required transformers for the current data.
 
         Args:
             data (pandas.DataFrame):
