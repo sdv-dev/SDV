@@ -282,8 +282,8 @@ class BaseSynthesizer:
         """
         constrained = self._data_processor._fit_transform_constraints(data)
         columns_created_by_constraints = set(constrained.columns) - set(data.columns)
+        self._data_processor._fit_numerical_formatters(data)
         config = self._data_processor._create_config(constrained, columns_created_by_constraints)
-        self._data_processor._create_hyper_transformer_instance()
         self._data_processor._hyper_transformer.set_config(config)
 
     def get_transformers(self):
