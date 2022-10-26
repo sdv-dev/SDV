@@ -200,7 +200,7 @@ def is_boolean_type(value):
     return True if pd.isna(value) | (value is True) | (value is False) else False
 
 
-def load_data_from_csv(filepath, pandas_kwargs):
+def load_data_from_csv(filepath, pandas_kwargs=None):
     """Load DataFrame from a filepath.
 
     Args:

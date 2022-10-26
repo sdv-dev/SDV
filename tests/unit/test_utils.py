@@ -249,6 +249,25 @@ def test_load_data_from_csv(read_csv_mock):
     read_csv_mock.return_value = expected_data
 
     # Run
+    loaded_data = load_data_from_csv('data.csv')
+
+    # Assert
+    pd.testing.assert_frame_equal(loaded_data, expected_data)
+    read_csv_mock.assert_called_once_with(Path('data.csv'))
+
+
+@patch('sdv.utils.pd.read_csv')
+def test_load_data_from_csv_with_pandas_kwargs(read_csv_mock):
+    """Test that the data is loaded from the path.
+
+    This function should create a filepath from the provided string and pass along any key-word
+    args to ``pandas.read_csv`` in order to load the data.
+    """
+    # Setup
+    expected_data = pd.DataFrame({'number': [1., 2., 3.], 'text': ['1', '2', '3']})
+    read_csv_mock.return_value = expected_data
+
+    # Run
     loaded_data = load_data_from_csv('data.csv', pandas_kwargs={'dtype': {'number': 'float'}})
 
     # Assert
