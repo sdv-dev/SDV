@@ -314,7 +314,7 @@ class DataProcessor:
 
         self._hyper_transformer.update_transformers(column_name_to_transformer)
 
-    def _fit_hyper_transformer(self, data, columns_created_by_constraints):
+    def _fit_hyper_transformer(self, data):
         """Create and return a new ``rdt.HyperTransformer`` instance.
 
         First get the ``dtypes`` and then use them to build a transformer dictionary
@@ -331,10 +331,6 @@ class DataProcessor:
         Returns:
             rdt.HyperTransformer
         """
-        if self._hyper_transformer.field_transformers == {}:
-            config = self._create_config(data, columns_created_by_constraints)
-            self._hyper_transformer.set_config(config)
-
         if not self._hyper_transformer._fitted:
             if not data.empty:
                 self._hyper_transformer.fit(data)
@@ -353,13 +349,7 @@ class DataProcessor:
                 )
                 self.formatters[column_name].learn_format(data[column_name])
 
-    def fit(self, data):
-        """Fit this metadata to the given data.
-
-        Args:
-            data (pandas.DataFrame):
-                Table to be analyzed.
-        """
+    def _prepare_fitting(self, data):
         LOGGER.info(f'Fitting table {self.table_name} metadata')
         self._dtypes = data[list(data.columns)].dtypes
 
@@ -369,9 +359,23 @@ class DataProcessor:
         LOGGER.info(f'Fitting constraints for table {self.table_name}')
         constrained = self._fit_transform_constraints(data)
         columns_created_by_constraints = set(constrained.columns) - set(data.columns)
+        LOGGER.info(
+            f'Setting the configuration for the ``HyperTransformer`` for table {self.table_name}')
+        if self._hyper_transformer.field_transformers == {}:
+            config = self._create_config(data, columns_created_by_constraints)
+            self._hyper_transformer.set_config(config)
 
+    def fit(self, data):
+        """Fit this metadata to the given data.
+
+        Args:
+            data (pandas.DataFrame):
+                Table to be analyzed.
+        """
+        self._prepare_fitting(data)
+        constrained = self._transform_constraints(data)
         LOGGER.info(f'Fitting HyperTransformer for table {self.table_name}')
-        self._fit_hyper_transformer(constrained, columns_created_by_constraints)
+        self._fit_hyper_transformer(constrained)
         self.fitted = True
 
     def generate_primary_keys(self, num_rows, reset_primary_key=False):

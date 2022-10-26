@@ -731,20 +731,14 @@ class TestDataProcessor:
         """
         # Setup
         dp = DataProcessor(SingleTableMetadata())
-        dp._create_config = Mock()
-        dp._create_config.return_value = {'transformers': [], 'sdtypes': []}
         ht_mock.return_value._fitted = False
-        ht_mock.return_value.field_transformers = {}
         data = pd.DataFrame({'a': [1, 2, 3]})
 
         # Run
-        dp._fit_hyper_transformer(data, [])
+        dp._fit_hyper_transformer(data)
 
         # Assert
-        expected_config = {'transformers': [], 'sdtypes': []}
-        ht_mock.return_value.set_config.assert_called_once_with(expected_config)
         ht_mock.return_value.fit.assert_called_once_with(data)
-        dp._create_config.assert_called_once_with(data, [])
 
     @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
     def test__fit_hyper_transformer_empty_data(self, ht_mock):
@@ -766,18 +760,13 @@ class TestDataProcessor:
         dp = DataProcessor(SingleTableMetadata())
         ht_mock.return_value._fitted = False
         ht_mock.return_value.field_transformers = {}
-        dp._create_config = Mock()
-        dp._create_config.return_value = {'transformers': [], 'sdtypes': []}
         data = pd.DataFrame()
 
         # Run
-        dp._fit_hyper_transformer(data, [])
+        dp._fit_hyper_transformer(data)
 
         # Assert
-        expected_config = {'transformers': [], 'sdtypes': []}
-        ht_mock.return_value.set_config.assert_called_once_with(expected_config)
         ht_mock.return_value.fit.assert_not_called()
-        dp._create_config.assert_called_once_with(data, [])
 
     @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
     def test__fit_hyper_transformer_hyper_transformer_is_fitted(self, ht_mock):
@@ -794,7 +783,7 @@ class TestDataProcessor:
         data = pd.DataFrame({'name': ['John Doe']})
 
         # Run
-        dp._fit_hyper_transformer(data, [])
+        dp._fit_hyper_transformer(data)
 
         # Assert
         ht_mock.return_value.set_config.assert_not_called()
@@ -840,6 +829,35 @@ class TestDataProcessor:
         learn_format_mock.assert_has_calls([call(data['col2']), call(data['col3'])])
 
     @patch('sdv.data_processing.data_processor.LOGGER')
+    def test__prepare_fitting(self, log_mock):
+        """Test the preparation before the fitting.
+
+        Test that ``dtypes``, numerical formatters and constraints are being fitted before
+        creating the configuration for the ``rdt.HyperTransformer``.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]}, dtype=np.int64)
+        transformed_data = pd.DataFrame({'a': [4, 5, 6], 'b': [1, 2, 3]})
+        dp = Mock()
+        dp.table_name = 'fake_table'
+        dp._fit_transform_constraints.return_value = transformed_data
+
+        # Run
+        DataProcessor._prepare_fitting(dp, data)
+
+        # Assert
+        pd.testing.assert_series_equal(dp._dtypes, pd.Series([np.int64], index=['a']))
+        dp._fit_transform_constraints.assert_called_once_with(data)
+        dp._fit_numerical_formatters.assert_called_once_with(data)
+        fitting_call = call('Fitting table fake_table metadata')
+        formatter_call = call('Fitting numerical formatters for table fake_table')
+        constraint_call = call('Fitting constraints for table fake_table')
+        setting_config_call = call(
+            'Setting the configuration for the ``HyperTransformer`` for table fake_table')
+        log_mock.info.assert_has_calls(
+            [fitting_call, formatter_call, constraint_call, setting_config_call])
+
+    @patch('sdv.data_processing.data_processor.LOGGER')
     def test_fit(self, log_mock):
         """Test the ``fit`` method.
 
@@ -865,22 +883,16 @@ class TestDataProcessor:
         transformed_data = pd.DataFrame({'a': [4, 5, 6], 'b': [1, 2, 3]})
         dp = Mock()
         dp.table_name = 'fake_table'
-        dp._fit_transform_constraints.return_value = transformed_data
+        dp._transform_constraints.return_value = transformed_data
 
         # Run
         DataProcessor.fit(dp, data)
 
         # Assert
-        pd.testing.assert_series_equal(dp._dtypes, pd.Series([np.int64], index=['a']))
-        dp._fit_transform_constraints.assert_called_once_with(data)
-        dp._fit_numerical_formatters.assert_called_once_with(data)
-        dp._fit_hyper_transformer.assert_called_once_with(transformed_data, {'b'})
-        fitting_call = call('Fitting table fake_table metadata')
-        formatter_call = call('Fitting numerical formatters for table fake_table')
-        constraint_call = call('Fitting constraints for table fake_table')
-        transformer_call = call('Fitting HyperTransformer for table fake_table')
-        log_mock.info.assert_has_calls(
-            [fitting_call, formatter_call, constraint_call, transformer_call])
+        dp._prepare_fitting.assert_called_once_with(data)
+        dp._transform_constraints.assert_called_once_with(data)
+        dp._fit_hyper_transformer.assert_called_once_with(transformed_data)
+        log_mock.info.assert_called_once_with('Fitting HyperTransformer for table fake_table')
 
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_transform(self, log_mock):

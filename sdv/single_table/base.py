@@ -280,11 +280,7 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) that will be used to fit the model.
         """
-        constrained = self._data_processor._fit_transform_constraints(data)
-        columns_created_by_constraints = set(constrained.columns) - set(data.columns)
-        self._data_processor._fit_numerical_formatters(data)
-        config = self._data_processor._create_config(constrained, columns_created_by_constraints)
-        self._data_processor._hyper_transformer.set_config(config)
+        self._data_processor._prepare_fitting(data)
 
     def get_transformers(self):
         """Get a dictionary mapping of ``column_name``  and ``rdt.transformers``.
