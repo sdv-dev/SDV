@@ -829,8 +829,8 @@ class TestDataProcessor:
         learn_format_mock.assert_has_calls([call(data['col2']), call(data['col3'])])
 
     @patch('sdv.data_processing.data_processor.LOGGER')
-    def test__prepare_fitting(self, log_mock):
-        """Test the preparation before the fitting.
+    def test_prepare_for_fitting(self, log_mock):
+        """Test the steps before fitting.
 
         Test that ``dtypes``, numerical formatters and constraints are being fitted before
         creating the configuration for the ``rdt.HyperTransformer``.
@@ -844,7 +844,7 @@ class TestDataProcessor:
         dp._hyper_transformer.field_transformers = {}
 
         # Run
-        DataProcessor._prepare_fitting(dp, data)
+        DataProcessor.prepare_for_fitting(dp, data)
 
         # Assert
         pd.testing.assert_series_equal(dp._dtypes, pd.Series([np.int64], index=['a']))
@@ -866,17 +866,12 @@ class TestDataProcessor:
         fit and transform the constraints and then fit the ``HyperTransformer``.
 
         Setup:
-            - Mock the ``_fit_numerical_formatters`` method.
-            - Mock the ``_fit_transform_constraints`` method.
-            - Mock the ``_fit_hyper_transformer`` method.
+            - Mock the ``prepare_for_fitting`` method.
 
         Input:
             - A ``pandas.DataFrame``.
 
         Side effect:
-            - The ``self._dtypes`` method should be set.
-            - The ``_fit_numerical_formatters`` should be called.
-            - The ``_fit_transform_constraints`` should be called.
             - The ``_fit_hyper_transformer`` should be called.
         """
         # Setup
@@ -890,7 +885,7 @@ class TestDataProcessor:
         DataProcessor.fit(dp, data)
 
         # Assert
-        dp._prepare_fitting.assert_called_once_with(data)
+        dp.prepare_for_fitting.assert_called_once_with(data)
         dp._transform_constraints.assert_called_once_with(data)
         dp._fit_hyper_transformer.assert_called_once_with(transformed_data)
         log_mock.info.assert_called_once_with('Fitting HyperTransformer for table fake_table')

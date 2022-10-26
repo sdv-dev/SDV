@@ -349,7 +349,18 @@ class DataProcessor:
                 )
                 self.formatters[column_name].learn_format(data[column_name])
 
-    def _prepare_fitting(self, data):
+    def prepare_for_fitting(self, data):
+        """Prepare the ``DataProcessor`` for fitting.
+
+        This method will learn the ``dtypes`` of the data, fit the numerical formatters,
+        fit the constraints and create the configuration for the ``rdt.HyperTransformer``.
+        If the ``rdt.HyperTransformer`` has already been updated, this will not perform the
+        actions again.
+
+        Args:
+            data (pandas.DataFrame):
+                Table data to be learnt.
+        """
         if self._hyper_transformer.field_transformers == {}:
             LOGGER.info(f'Fitting table {self.table_name} metadata')
             self._dtypes = data[list(data.columns)].dtypes
@@ -374,7 +385,7 @@ class DataProcessor:
             data (pandas.DataFrame):
                 Table to be analyzed.
         """
-        self._prepare_fitting(data)
+        self.prepare_for_fitting(data)
         constrained = self._transform_constraints(data)
         LOGGER.info(f'Fitting HyperTransformer for table {self.table_name}')
         self._fit_hyper_transformer(constrained)

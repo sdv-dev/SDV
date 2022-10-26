@@ -98,7 +98,7 @@ class TestBaseSynthesizer:
         assert result == metadata
 
     def test_auto_assign_transformers(self):
-        """Test that the ``DataProcessor._prepare_fitting`` is being called."""
+        """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""
         # Setup
         instance = Mock()
         data = pd.DataFrame({
@@ -110,7 +110,7 @@ class TestBaseSynthesizer:
         BaseSynthesizer.auto_assign_transformers(instance, data)
 
         # Assert
-        instance._data_processor._prepare_fitting.assert_called_once_with(data)
+        instance._data_processor.prepare_for_fitting.assert_called_once_with(data)
 
     def test_get_transformers(self):
         """Test that this returns the field transformers from the ``HyperTransformer``."""
