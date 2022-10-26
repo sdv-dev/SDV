@@ -841,6 +841,7 @@ class TestDataProcessor:
         dp = Mock()
         dp.table_name = 'fake_table'
         dp._fit_transform_constraints.return_value = transformed_data
+        dp._hyper_transformer.field_transformers = {}
 
         # Run
         DataProcessor._prepare_fitting(dp, data)

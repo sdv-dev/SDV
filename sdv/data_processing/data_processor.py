@@ -350,18 +350,20 @@ class DataProcessor:
                 self.formatters[column_name].learn_format(data[column_name])
 
     def _prepare_fitting(self, data):
-        LOGGER.info(f'Fitting table {self.table_name} metadata')
-        self._dtypes = data[list(data.columns)].dtypes
-
-        LOGGER.info(f'Fitting numerical formatters for table {self.table_name}')
-        self._fit_numerical_formatters(data)
-
-        LOGGER.info(f'Fitting constraints for table {self.table_name}')
-        constrained = self._fit_transform_constraints(data)
-        columns_created_by_constraints = set(constrained.columns) - set(data.columns)
-        LOGGER.info(
-            f'Setting the configuration for the ``HyperTransformer`` for table {self.table_name}')
         if self._hyper_transformer.field_transformers == {}:
+            LOGGER.info(f'Fitting table {self.table_name} metadata')
+            self._dtypes = data[list(data.columns)].dtypes
+
+            LOGGER.info(f'Fitting numerical formatters for table {self.table_name}')
+            self._fit_numerical_formatters(data)
+
+            LOGGER.info(f'Fitting constraints for table {self.table_name}')
+            constrained = self._fit_transform_constraints(data)
+            columns_created_by_constraints = set(constrained.columns) - set(data.columns)
+            LOGGER.info((
+                'Setting the configuration for the ``HyperTransformer`` '
+                f'for table {self.table_name}'
+            ))
             config = self._create_config(data, columns_created_by_constraints)
             self._hyper_transformer.set_config(config)
 
