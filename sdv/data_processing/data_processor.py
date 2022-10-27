@@ -94,7 +94,7 @@ class DataProcessor:
         self._constraints_to_reverse = []
         self._transformers_by_sdtype = self._DEFAULT_TRANSFORMERS_BY_SDTYPE.copy()
         self._update_numerical_transformer(learn_rounding_scheme, enforce_min_max_values)
-        self._hyper_transformer = None
+        self._hyper_transformer = rdt.HyperTransformer()
         self.table_name = table_name
         self._dtypes = None
         self.fitted = False
@@ -308,13 +308,13 @@ class DataProcessor:
             column_name_to_transformer (dict):
                 Dict mapping column names to transformers to be used for that column.
         """
-        if not self._hyper_transformer:
+        if not self._hyper_transformer._fitted:
             raise NotFittedError(
                 'The DataProcessor must be fitted before the transformers can be updated.')
 
         self._hyper_transformer.update_transformers(column_name_to_transformer)
 
-    def _fit_hyper_transformer(self, data, columns_created_by_constraints):
+    def _fit_hyper_transformer(self, data):
         """Create and return a new ``rdt.HyperTransformer`` instance.
 
         First get the ``dtypes`` and then use them to build a transformer dictionary
@@ -331,13 +331,7 @@ class DataProcessor:
         Returns:
             rdt.HyperTransformer
         """
-        if self._hyper_transformer is None:
-            self._hyper_transformer = rdt.HyperTransformer()
-
         if not self._hyper_transformer._fitted:
-            config = self._create_config(data, columns_created_by_constraints)
-            self._hyper_transformer.set_config(config)
-
             if not data.empty:
                 self._hyper_transformer.fit(data)
 
@@ -355,6 +349,35 @@ class DataProcessor:
                 )
                 self.formatters[column_name].learn_format(data[column_name])
 
+    def prepare_for_fitting(self, data):
+        """Prepare the ``DataProcessor`` for fitting.
+
+        This method will learn the ``dtypes`` of the data, fit the numerical formatters,
+        fit the constraints and create the configuration for the ``rdt.HyperTransformer``.
+        If the ``rdt.HyperTransformer`` has already been updated, this will not perform the
+        actions again.
+
+        Args:
+            data (pandas.DataFrame):
+                Table data to be learnt.
+        """
+        if self._hyper_transformer.field_transformers == {}:
+            LOGGER.info(f'Fitting table {self.table_name} metadata')
+            self._dtypes = data[list(data.columns)].dtypes
+
+            LOGGER.info(f'Fitting numerical formatters for table {self.table_name}')
+            self._fit_numerical_formatters(data)
+
+            LOGGER.info(f'Fitting constraints for table {self.table_name}')
+            constrained = self._fit_transform_constraints(data)
+            columns_created_by_constraints = set(constrained.columns) - set(data.columns)
+            LOGGER.info((
+                'Setting the configuration for the ``HyperTransformer`` '
+                f'for table {self.table_name}'
+            ))
+            config = self._create_config(data, columns_created_by_constraints)
+            self._hyper_transformer.set_config(config)
+
     def fit(self, data):
         """Fit this metadata to the given data.
 
@@ -362,18 +385,10 @@ class DataProcessor:
             data (pandas.DataFrame):
                 Table to be analyzed.
         """
-        LOGGER.info(f'Fitting table {self.table_name} metadata')
-        self._dtypes = data[list(data.columns)].dtypes
-
-        LOGGER.info(f'Fitting numerical formatters for table {self.table_name}')
-        self._fit_numerical_formatters(data)
-
-        LOGGER.info(f'Fitting constraints for table {self.table_name}')
-        constrained = self._fit_transform_constraints(data)
-        columns_created_by_constraints = set(constrained.columns) - set(data.columns)
-
+        self.prepare_for_fitting(data)
+        constrained = self._transform_constraints(data)
         LOGGER.info(f'Fitting HyperTransformer for table {self.table_name}')
-        self._fit_hyper_transformer(constrained, columns_created_by_constraints)
+        self._fit_hyper_transformer(constrained)
         self.fitted = True
 
     def generate_primary_keys(self, num_rows, reset_primary_key=False):
