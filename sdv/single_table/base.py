@@ -345,6 +345,14 @@ class BaseSynthesizer:
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
 
+
+class BaseSingleTableSynthesizer(BaseSynthesizer):
+    """Base class for all single-table ``Synthesizers``.
+
+    The ``BaseSingleTableSynthesizer`` class defines the common sampling methods
+    for all single-table synthesizers.
+    """
+
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.
 

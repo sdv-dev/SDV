@@ -14,7 +14,8 @@ from sdv.constraints.errors import AggregateConstraintsError
 from sdv.metadata.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
-from sdv.metadata.utils import cast_to_iterable, read_json, validate_file_does_not_exist
+from sdv.metadata.utils import read_json, validate_file_does_not_exist
+from sdv.utils import cast_to_iterable
 
 
 class SingleTableMetadata:
