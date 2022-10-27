@@ -551,7 +551,7 @@ class ScalarInequality(Constraint):
         self._value = cast_to_datetime64(value) if is_datetime_type(value) else value
         self._column_name = column_name
         self._diff_column_name = f'{self._column_name}#diff'
-        self.constraint_columns = (column_name)
+        self.constraint_columns = (column_name,)
         self._is_datetime = None
         self._datetime_format = None
         self._dtype = None
