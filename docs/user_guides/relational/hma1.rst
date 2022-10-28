@@ -4,6 +4,21 @@ HMA1 Class
 In this guide we will go through a series of steps that will let you
 discover functionalities of the ``HMA1`` class.
 
+.. note::
+
+    **Is the HMA1 algorithm suited for my dataset?**
+    The HMA1 algorithm can be used on various multi-table dataset schemas.
+    Make sure you do not have any cyclical dependencies or missing references.
+
+    The HMA1 is designed to capture correlations between different tables with high quality.
+    The algorithm is optimized for datasets with around 5 tables and 2 levels of depth
+    (eg. a parent and its child table). You may find the modeling time will increase if you
+    have multiple levels of tables and more columns.
+
+    In most uses, we’ve found that a small set of tables and columns are ideal for successfully
+    deploying a synthetic data application. If you are looking for solutions with a larger schema,
+    please contact us at info@sdv.dev.
+
 What is HMA1?
 -------------
 
