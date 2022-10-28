@@ -5,6 +5,7 @@ from copy import deepcopy
 
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
+
 class BaseMultiTableSynthesizer:
     """Base class for multi table synthesizers.
 
@@ -22,7 +23,10 @@ class BaseMultiTableSynthesizer:
     def _initialize_models(self):
         for table_name, table_metadata in self.metadata._tables.items():
             synthesizer_parameters = self._table_parameters.get(table_name, {})
-            self._table_synthesizers[table_name] = self._synthesizer(**synthesizer_parameters)
+            self._table_synthesizers[table_name] = self._synthesizer(
+                metadata=table_metadata,
+                **synthesizer_parameters
+            )
 
     def __init__(self, metadata):
         self.metadata = metadata
@@ -70,7 +74,10 @@ class BaseMultiTableSynthesizer:
                 the table's synthesizer.
         """
         self._table_parameters[table_name].update(deepcopy(table_parameters))
-        self._table_synthesizers[table_name] = self._synthesizer(**table_parameters)
+        self._table_synthesizers[table_name] = self._synthesizer(
+            metadata=self.metadata._tables[table_name],
+            **table_parameters
+        )
 
     def get_metadata(self):
         """Return the ``MultiTableMetadata`` for this synthesizer."""
