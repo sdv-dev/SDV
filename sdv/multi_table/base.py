@@ -3,6 +3,7 @@
 from collections import defaultdict
 from copy import deepcopy
 
+from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 class BaseMultiTableSynthesizer:
     """Base class for multi table synthesizers.
@@ -16,11 +17,19 @@ class BaseMultiTableSynthesizer:
             for.
     """
 
+    _synthesizer = GaussianCopulaSynthesizer
+
+    def _initialize_models(self):
+        for table_name, table_metadata in self.metadata._tables.items():
+            synthesizer_parameters = self._table_parameters.get(table_name, {})
+            self._table_synthesizers[table_name] = self._synthesizer(**synthesizer_parameters)
+
     def __init__(self, metadata):
         self.metadata = metadata
         self.metadata.validate()
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
+        self._initialize_models()
 
     def get_table_parameters(self, table_name):
         """Return the parameters that will be used to instantiate the table's synthesizer.
@@ -61,6 +70,7 @@ class BaseMultiTableSynthesizer:
                 the table's synthesizer.
         """
         self._table_parameters[table_name].update(deepcopy(table_parameters))
+        self._table_synthesizers[table_name] = self._synthesizer(**table_parameters)
 
     def get_metadata(self):
         """Return the ``MultiTableMetadata`` for this synthesizer."""
