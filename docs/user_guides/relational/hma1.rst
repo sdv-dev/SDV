@@ -7,6 +7,7 @@ discover functionalities of the ``HMA1`` class.
 .. note::
 
     **Is the HMA1 algorithm suited for my dataset?**
+
     The HMA1 algorithm can be used on various multi-table dataset schemas.
     Make sure you do not have any cyclical dependencies or missing references.
 
