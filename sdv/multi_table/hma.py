@@ -13,7 +13,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
     """
 
     DEFAULT_SYNTHESIZER_KWARGS = {
-        'default_distribution': 'gaussian',
+        'default_distribution': 'norm',
     }
     _synthesizer = GaussianCopulaSynthesizer
 
