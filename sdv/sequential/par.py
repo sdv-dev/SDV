@@ -8,7 +8,6 @@ import numpy as np
 from deepecho import PARModel
 from deepecho.sequences import assemble_sequences
 
-from sdv.data_processing import DataProcessor
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
@@ -63,21 +62,29 @@ class PARSynthesizer(BaseSynthesizer):
 
     def _get_context_metadata(self):
         context_columns_dict = {}
-        context_columns = self.context_columns or []
+        context_columns = self.context_columns.copy() if self.context_columns else []
+        if self._sequence_key:
+            context_columns += self._sequence_key
+
         for column in context_columns:
             context_columns_dict[column] = self.metadata._columns[column]
 
         context_metadata_dict = {'columns': context_columns_dict}
         return SingleTableMetadata._load_from_dict(context_metadata_dict)
 
-    def __init__(self, metadata, enforce_min_max_values, enforce_rounding, context_columns=None,
-                 segment_size=None, epochs=128, sample_size=1, cuda=True, verbose=False):
-        self.metadata = metadata
-        self._sequence_key = list(cast_to_iterable(self.metadata._sequence_key))
+    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=False,
+                 context_columns=None, segment_size=None, epochs=128, sample_size=1, cuda=True,
+                 verbose=False):
+        super().__init__(
+            metadata=metadata,
+            enforce_min_max_values=enforce_min_max_values,
+            enforce_rounding=enforce_rounding,
+        )
+        sequence_key = self.metadata._sequence_key
+        self._sequence_key = list(cast_to_iterable(sequence_key)) if sequence_key else None
         self._sequence_index = self.metadata._sequence_index
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
-        self._data_processor = DataProcessor(metadata)
         self.context_columns = context_columns
         self.segment_size = segment_size
         self._model_kwargs = {
@@ -112,6 +119,9 @@ class PARSynthesizer(BaseSynthesizer):
         For PAR, none of the sequence keys are transformed.
         """
         sequence_key_transformers = {sequence_key: None for sequence_key in self._sequence_key}
+        if self._data_processor._hyper_transformer.field_transformers == {}:
+            self.auto_assign_transformers(data)
+
         self.update_transformers(sequence_key_transformers)
         return super().preprocess(data)
 

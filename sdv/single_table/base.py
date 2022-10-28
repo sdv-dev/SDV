@@ -220,6 +220,9 @@ class BaseSynthesizer:
     def _validate_transformers(self, column_name_to_transformer):
         keys = self._get_primary_and_alternate_keys() | self._get_set_of_sequence_keys()
         for column, transformer in column_name_to_transformer.items():
+            if transformer is None:
+                continue
+
             if column in keys and not transformer.is_generator():
                 raise InvalidPreprocessingError(
                     f"Column '{column}' is a key. It cannot be preprocessed using "
