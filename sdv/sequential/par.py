@@ -201,7 +201,7 @@ class PARSynthesizer(BaseSynthesizer):
         """Fit this model to the data.
 
         Args:
-            timseries_data (pandas.DataFrame):
+            processed_data (pandas.DataFrame):
                 pandas.DataFrame containing both the sequences,
                 the entity columns and the context columns.
         """

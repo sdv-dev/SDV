@@ -1,5 +1,6 @@
+from unittest.mock import Mock, patch
+
 import pandas as pd
-from unittest.mock import patch, Mock
 
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.metadata.single_table import SingleTableMetadata
@@ -9,13 +10,15 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 class TestPARSynthesizer:
 
-    def get_metadata(self):
+    def get_metadata(self, add_sequence_key=True):
         metadata = SingleTableMetadata()
         metadata.add_column('time', sdtype='datetime')
         metadata.add_column('gender', sdtype='categorical')
         metadata.add_column('name', sdtype='text')
         metadata.add_column('measurement', sdtype='numerical')
-        metadata.set_sequence_key('name')
+        if add_sequence_key:
+            metadata.set_sequence_key('name')
+
         return metadata
 
     def get_data(self):
@@ -197,7 +200,94 @@ class TestPARSynthesizer:
         # Assert
         fitted_data = par._context_synthesizer.fit.mock_calls[0][1][0]
         expected_fitted_data = pd.DataFrame({
-            'name': [ 'Doe','Jane', 'John'],
+            'name': ['Doe', 'Jane', 'John'],
             'gender': ['M', 'F', 'M']
         })
         pd.testing.assert_frame_equal(fitted_data.sort_values(by='name'), expected_fitted_data)
+
+    @patch('sdv.sequential.par.uuid')
+    def test__fit_context_model_without_context_columns(self, uuid_mock):
+        """Test that the method fits a synthesizer to a constant column.
+
+        If there are no context columns, the method should create a constant column and
+        group that by the sequence key. Then a synthesizer should be fit to this new data.
+        """
+        # Setup
+        metadata = self.get_metadata()
+        data = self.get_data()
+        par = PARSynthesizer(metadata)
+        par._context_synthesizer = Mock()
+        uuid_mock.uuid4.return_value = 'abc'
+
+        # Run
+        par._fit_context_model(data)
+
+        # Assert
+        fitted_data = par._context_synthesizer.fit.mock_calls[0][1][0]
+        expected_fitted_data = pd.DataFrame({
+            'name': ['Doe', 'Jane', 'John'],
+            'abc': [0, 0, 0]
+        })
+        pd.testing.assert_frame_equal(fitted_data.sort_values(by='name'), expected_fitted_data)
+
+    @patch('sdv.sequential.par.PARModel')
+    def test__build_model(self, par_model_mock):
+        """Test that themethod returns a ``PARModel`` with the right parameters"""
+        # Setup
+        par = PARSynthesizer(
+            metadata=self.get_metadata(),
+            epochs=10,
+            sample_size=5,
+            cuda=True,
+            verbose=True
+        )
+
+        # Run
+        par._build_model()
+
+        # Assert
+        par_model_mock.assert_called_once_with(
+            epochs=10,
+            sample_size=5,
+            cuda=True,
+            verbose=True
+        )
+
+    def test__fit_with_sequence_key(self):
+        """Test that the method fits the context columns if there is a sequence key.
+
+        When a sequence key is present, the context columns should be fitted before the rest of
+        the columns.
+        """
+        # Setup
+        metadata = self.get_metadata()
+        par = PARSynthesizer(metadata=metadata)
+        data = self.get_data()
+        par._fit_context_model = Mock()
+        par._fit_sequence_columns = Mock()
+
+        # Run
+        par._fit(data)
+
+        # Assert
+        par._fit_context_model.assert_called_once_with(data)
+        par._fit_sequence_columns.assert_called_once_with(data)
+
+    def test__fit_without_sequence_key(self):
+        """Test that the method doesn't fit the context synthesizer if there are no sequence keys.
+
+        If there are no sequence keys, then only the ``PARModel`` needs to be fit.
+        """
+        # Setup
+        metadata = self.get_metadata(add_sequence_key=False)
+        par = PARSynthesizer(metadata=metadata)
+        data = self.get_data()
+        par._fit_context_model = Mock()
+        par._fit_sequence_columns = Mock()
+
+        # Run
+        par._fit(data)
+
+        # Assert
+        par._fit_context_model.assert_not_called()
+        par._fit_sequence_columns.assert_called_once_with(data)
