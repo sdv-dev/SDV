@@ -277,6 +277,19 @@
 <h1>HMA1 Class<a class="headerlink" href="#hma1-class" title="Permalink to this headline">¶</a></h1>
 <p>In this guide we will go through a series of steps that will let you
 discover functionalities of the <code class="docutils literal notranslate"><span class="pre">HMA1</span></code> class.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Is the HMA1 algorithm suited for my dataset?</strong></p>
+<p>The HMA1 algorithm can be used on various multi-table dataset schemas.
+Make sure you do not have any cyclical dependencies or missing references.</p>
+<p>The HMA1 is designed to capture correlations between different tables with high quality.
+The algorithm is optimized for datasets with around 5 tables and 2 levels of depth
+(eg. a parent and its child table). You may find the modeling time will increase if you
+have multiple levels of tables and more columns.</p>
+<p>In most uses, we’ve found that a small set of tables and columns are ideal for successfully
+deploying a synthetic data application. If you are looking for solutions with a larger schema,
+please contact us at <a class="reference external" href="mailto:info&#37;&#52;&#48;sdv&#46;dev">info<span>&#64;</span>sdv<span>&#46;</span>dev</a>.</p>
+</div>
 <div class="section" id="what-is-hma1">
 <h2>What is HMA1?<a class="headerlink" href="#what-is-hma1" title="Permalink to this headline">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">sdv.relational.HMA1</span></code> class implements what is called a
@@ -393,38 +406,38 @@ original one.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">new_data</span>
 <span class="gh">Out[10]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0        0      ES    NaN   47</span>
-<span class="go"> 1        1      ES    NaN   47</span>
-<span class="go"> 2        2      ES      M   43</span>
-<span class="go"> 3        3      UK      F   22</span>
-<span class="go"> 4        4      DE      F   26</span>
-<span class="go"> 5        5      US    NaN   53</span>
-<span class="go"> 6        6      US      M   39</span>
-<span class="go"> 7        7      FR      F   41</span>
-<span class="go"> 8        8      UK    NaN   57</span>
-<span class="go"> 9        9      UK      M   48,</span>
+<span class="go"> 0        0      UK      F   40</span>
+<span class="go"> 1        1      FR      M   50</span>
+<span class="go"> 2        2      DE    NaN   49</span>
+<span class="go"> 3        3      US      M   38</span>
+<span class="go"> 4        4      ES    NaN   37</span>
+<span class="go"> 5        5      FR      F   57</span>
+<span class="go"> 6        6      ES      M   49</span>
+<span class="go"> 7        7      FR      F   38</span>
+<span class="go"> 8        8      US    NaN   45</span>
+<span class="go"> 9        9      FR      M   28,</span>
 <span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os  minutes</span>
-<span class="go"> 0           0        0  tablet  android       33</span>
-<span class="go"> 1           1        1  tablet      ios       16</span>
-<span class="go"> 2           2        2  mobile      ios       26</span>
-<span class="go"> 3           3        3  tablet      ios       13</span>
-<span class="go"> 4           4        4  mobile      ios       22</span>
-<span class="go"> 5           5        5  tablet  android       12</span>
-<span class="go"> 6           6        6  tablet  android       18</span>
-<span class="go"> 7           7        7  mobile  android       16</span>
-<span class="go"> 8           8        8  mobile      ios        8</span>
-<span class="go"> 9           9        9  tablet  android        7,</span>
+<span class="go"> 0           0        0  mobile  android       13</span>
+<span class="go"> 1           1        1  tablet  android       22</span>
+<span class="go"> 2           2        2  tablet  android       24</span>
+<span class="go"> 3           3        3  tablet      ios       15</span>
+<span class="go"> 4           4        4  mobile  android       34</span>
+<span class="go"> 5           5        5  mobile  android       30</span>
+<span class="go"> 6           6        6  mobile  android       15</span>
+<span class="go"> 7           7        7  mobile  android       14</span>
+<span class="go"> 8           8        8  tablet      ios       26</span>
+<span class="go"> 9           9        9  mobile      ios       34,</span>
 <span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp  amount  cancelled</span>
-<span class="go"> 0               0           0 2019-01-25 00:01:31    78.2      False</span>
-<span class="go"> 1               1           1 2019-01-09 21:08:43   125.1       True</span>
-<span class="go"> 2               2           2 2019-01-20 08:25:13   118.7       True</span>
-<span class="go"> 3               3           3 2019-01-13 03:24:15   103.2       True</span>
-<span class="go"> 4               4           4 2019-01-19 20:28:25    75.3      False</span>
-<span class="go"> 5               5           5 2019-01-07 15:19:53   115.6       True</span>
-<span class="go"> 6               6           6 2019-01-11 17:04:07   100.4      False</span>
-<span class="go"> 7               7           7 2019-01-23 16:55:14    81.4      False</span>
-<span class="go"> 8               8           8 2019-01-12 18:15:08   132.1       True</span>
-<span class="go"> 9               9           9 2019-01-01 12:34:32   111.2       True}</span>
+<span class="go"> 0               0           0 2019-01-02 05:57:44    89.4      False</span>
+<span class="go"> 1               1           1 2019-01-17 12:01:50    85.9      False</span>
+<span class="go"> 2               2           2 2019-01-08 04:47:09   126.2      False</span>
+<span class="go"> 3               3           3 2019-01-22 17:01:04   120.1       True</span>
+<span class="go"> 4               4           4 2019-01-20 07:39:39    99.5      False</span>
+<span class="go"> 5               5           5 2019-01-12 04:30:51    55.3      False</span>
+<span class="go"> 6               6           6 2019-01-13 15:34:10   123.1       True</span>
+<span class="go"> 7               7           7 2019-01-01 16:30:53    55.3      False</span>
+<span class="go"> 8               8           8 2019-01-27 11:14:19   113.8      False</span>
+<span class="go"> 9               9           9 2019-01-29 12:10:48    55.3      False}</span>
 </pre></div>
 </div>
 </div>
@@ -496,23 +509,23 @@ original dataset.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [15]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="gh">Out[15]: </span><span class="go"></span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0       10      ES    NaN   49</span>
-<span class="go"> 1       11      ES      M   41</span>
-<span class="go"> 2       12      ES      M   44</span>
-<span class="go"> 3       13      DE      F   46</span>
-<span class="go"> 4       14      ES      M   57,</span>
+<span class="go"> 0       10      DE    NaN   25</span>
+<span class="go"> 1       11      ES      M   46</span>
+<span class="go"> 2       12      FR      M   57</span>
+<span class="go"> 3       13      BG      M   57</span>
+<span class="go"> 4       14      FR      M   56,</span>
 <span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os  minutes</span>
-<span class="go"> 0          10       10  tablet      ios       23</span>
-<span class="go"> 1          11       11  tablet  android        7</span>
-<span class="go"> 2          12       12  mobile      ios       12</span>
-<span class="go"> 3          13       13  tablet      ios        7</span>
-<span class="go"> 4          14       14  tablet      ios       25,</span>
+<span class="go"> 0          10       10  mobile  android       21</span>
+<span class="go"> 1          11       11  mobile  android       23</span>
+<span class="go"> 2          12       12  mobile  android       24</span>
+<span class="go"> 3          13       13  mobile      ios       27</span>
+<span class="go"> 4          14       14  mobile      ios       26,</span>
 <span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp  amount  cancelled</span>
-<span class="go"> 0              10          10 2019-01-22 13:21:46   127.4       True</span>
-<span class="go"> 1              11          11 2019-01-09 07:35:32   109.8       True</span>
-<span class="go"> 2              12          12 2019-01-19 22:46:16   120.8       True</span>
-<span class="go"> 3              13          13 2019-01-20 06:35:03    95.0      False</span>
-<span class="go"> 4              14          14 2019-01-14 08:19:30    84.8      False}</span>
+<span class="go"> 0              10          10 2019-01-25 02:41:22    99.4      False</span>
+<span class="go"> 1              11          11 2019-01-09 17:52:48    93.5      False</span>
+<span class="go"> 2              12          12 2019-01-20 03:01:16    70.0      False</span>
+<span class="go"> 3              13          13 2019-01-25 13:15:36   116.2       True</span>
+<span class="go"> 4              14          14 2019-01-29 12:10:48   104.8      False}</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -536,18 +549,18 @@ model will only generate data for the <code class="docutils literal notranslate"
 table, <code class="docutils literal notranslate"><span class="pre">transactions</span></code>.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [16]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s1">&#39;sessions&#39;</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="gh">Out[16]: </span><span class="go"></span>
-<span class="go">{&#39;sessions&#39;:    session_id  user_id  device   os  minutes</span>
-<span class="go"> 0          15       15  tablet  ios       16</span>
-<span class="go"> 1          16       15  tablet  ios        9</span>
-<span class="go"> 2          17       19  mobile  ios       19</span>
-<span class="go"> 3          18       18  tablet  ios       18</span>
-<span class="go"> 4          19       19  tablet  ios       25,</span>
+<span class="go">{&#39;sessions&#39;:    session_id  user_id  device       os  minutes</span>
+<span class="go"> 0          15       19  mobile  android       11</span>
+<span class="go"> 1          16       15  mobile      ios        7</span>
+<span class="go"> 2          17       19  mobile      ios       17</span>
+<span class="go"> 3          18       16  mobile      ios        7</span>
+<span class="go"> 4          19       15  mobile  android       26,</span>
 <span class="go"> &#39;transactions&#39;:    transaction_id  session_id           timestamp  amount  cancelled</span>
-<span class="go"> 0              15          15 2019-01-15 15:27:49    81.2      False</span>
-<span class="go"> 1              16          16 2019-01-12 14:31:53    56.9      False</span>
-<span class="go"> 2              17          17 2019-01-11 23:17:16   112.2       True</span>
-<span class="go"> 3              18          18 2019-01-19 01:22:26    70.8      False</span>
-<span class="go"> 4              19          19 2019-01-20 10:52:06    96.2      False}</span>
+<span class="go"> 0              15          15 2019-01-01 12:34:32    55.3      False</span>
+<span class="go"> 1              16          16 2019-01-05 15:27:27   107.7       True</span>
+<span class="go"> 2              17          17 2019-01-03 17:33:51    55.3      False</span>
+<span class="go"> 3              18          18 2019-01-21 11:31:15   127.9       True</span>
+<span class="go"> 4              19          19 2019-01-20 11:16:07   122.0      False}</span>
 </pre></div>
 </div>
 <p>If you want to further restrict the sampling process to only one table
@@ -558,11 +571,11 @@ producing any rows for the tables <code class="docutils literal notranslate"><sp
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [17]: </span><span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s1">&#39;users&#39;</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gh">Out[17]: </span><span class="go"></span>
 <span class="go">   user_id country gender  age</span>
-<span class="go">0       20      US      F   22</span>
-<span class="go">1       21      UK      F   22</span>
-<span class="go">2       22      US    NaN   22</span>
-<span class="go">3       23      ES      F   24</span>
-<span class="go">4       24      US    NaN   22</span>
+<span class="go">0       20      UK      F   28</span>
+<span class="go">1       21      UK      F   25</span>
+<span class="go">2       22      BG      F   42</span>
+<span class="go">3       23      UK      F   22</span>
+<span class="go">4       24      DE      F   57</span>
 </pre></div>
 </div>
 <div class="admonition note">
