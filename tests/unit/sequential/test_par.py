@@ -1,6 +1,9 @@
+import re
 from unittest.mock import Mock, patch
 
+import numpy as np
 import pandas as pd
+import pytest
 
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.metadata.single_table import SingleTableMetadata
@@ -252,6 +255,130 @@ class TestPARSynthesizer:
             cuda=True,
             verbose=True
         )
+
+    @patch('sdv.sequential.par.assemble_sequences')
+    def test__fit_sequence_columns(self, assemble_sequences_mock):
+        """Test that the method assembles sequences properly and fits the ``PARModel`` to them.
+
+        The method should use the ``assemble_sequences`` method to create a list of sequences
+        that the model can fit to. It also needs to extract the data types for the context
+        and non-context columns.
+        """
+        # Setup
+        data = self.get_data()
+        metadata = self.get_metadata()
+        par = PARSynthesizer(
+            metadata=metadata,
+            context_columns=['gender']
+        )
+        model_mock = Mock()
+        par._build_model = Mock()
+        par._build_model.return_value = model_mock
+        sequences = [
+            {'context': np.array(['M'], dtype=object), 'data': [[3], [65]]},
+            {'context': np.array(['F'], dtype=object), 'data': [[1], [55]]},
+            {'context': np.array(['M'], dtype=object), 'data': [[2], [60]]}
+        ]
+        assemble_sequences_mock.return_value = sequences
+
+        # Run
+        par._fit_sequence_columns(data)
+
+        # Assert
+        assemble_sequences_mock.assert_called_once_with(
+            data,
+            ['name'],
+            ['gender'],
+            None,
+            None,
+            drop_sequence_index=False
+        )
+        model_mock.fit_sequences.assert_called_once_with(
+            sequences,
+            ['categorical'],
+            ['continuous', 'continuous']
+        )
+
+    @patch('sdv.sequential.par.assemble_sequences')
+    def test__fit_sequence_columns_with_sequence_index(self, assemble_sequences_mock):
+        """Test the method when a sequence_index is present.
+
+        If there is a sequence_index, the method should transform it by taking the sequence index
+        and turning into to columns: one that is a list of diffs between each consecutive value in
+        the sequence index, and another that is the starting value for the sequence index.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'time': [1, 2, 3, 5, 8],
+            'gender': ['F', 'F', 'M', 'M', 'M'],
+            'name': ['Jane', 'Jane', 'John', 'John', 'John'],
+            'measurement': [55, 60, 65, 65, 70]
+        })
+        metadata = self.get_metadata()
+        metadata.set_sequence_index('time')
+        par = PARSynthesizer(
+            metadata=metadata,
+            context_columns=['gender']
+        )
+        model_mock = Mock()
+        par._build_model = Mock()
+        par._build_model.return_value = model_mock
+        sequences = [
+            {'context': np.array(['F'], dtype=object), 'data': [[1, 2], [55, 60]]},
+            {'context': np.array(['M'], dtype=object), 'data': [[3, 5, 8], [65, 65, 70]]},
+        ]
+        assemble_sequences_mock.return_value = sequences
+
+        # Run
+        par._fit_sequence_columns(data)
+
+        # Assert
+        assemble_sequences_mock.assert_called_once_with(
+            data,
+            ['name'],
+            ['gender'],
+            None,
+            'time',
+            drop_sequence_index=False
+        )
+        expected_sequences = [
+            {'context': np.array(['F'], dtype=object), 'data': [[1, 1], [55, 60], [1, 1]]},
+            {
+                'context': np.array(['M'], dtype=object),
+                'data': [[2, 2, 3], [65, 65, 70], [3, 3, 3]]
+            }
+        ]
+        model_mock.fit_sequences.assert_called_once_with(
+            expected_sequences,
+            ['categorical'],
+            ['continuous', 'continuous', 'continuous']
+        )
+
+    @patch('sdv.sequential.par.assemble_sequences')
+    def test__fit_sequence_columns_bad_dtype(self, assemble_sequences_mock):
+        """Test the method when a column has an unsupported dtype."""
+        # Setup
+        datetime = pd.Series(
+            [pd.to_datetime('1/1/1999'), pd.to_datetime('1/2/1999'), '1/3/1999'],
+            dtype='<M8[ns]')
+        data = pd.DataFrame({
+            'time': datetime,
+            'gender': ['F', 'M', 'M'],
+            'name': ['Jane', 'John', 'Doe'],
+            'measurement': [55, 60, 65]
+        })
+        metadata = self.get_metadata()
+        par = PARSynthesizer(
+            metadata=metadata,
+            context_columns=['gender']
+        )
+        model_mock = Mock()
+        par._build_model = Mock()
+        par._build_model.return_value = model_mock
+
+        # Run and Assert
+        with pytest.raises(ValueError, match=re.escape('Unsupported dtype datetime64[ns]')):
+            par._fit_sequence_columns(data)
 
     def test__fit_with_sequence_key(self):
         """Test that the method fits the context columns if there is a sequence key.

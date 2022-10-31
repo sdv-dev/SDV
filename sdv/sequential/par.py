@@ -152,10 +152,13 @@ class PARSynthesizer(BaseSynthesizer):
     def _fit_sequence_columns(self, timeseries_data):
         self._model = self._build_model()
 
+        # handle output name from rdt
         if self._sequence_index:
-            timeseries_data = timeseries_data.rename(columns={
-                self._sequence_index + '.value': self._sequence_index
-            })
+            modified_name = self._sequence_index + '.value'
+            if modified_name in timeseries_data.columns:
+                timeseries_data = timeseries_data.rename(columns={
+                    modified_name: self._sequence_index
+                })
 
         self._output_columns = list(timeseries_data.columns)
         self._data_columns = [
@@ -172,7 +175,6 @@ class PARSynthesizer(BaseSynthesizer):
             self._sequence_index,
             drop_sequence_index=False
         )
-
         data_types = []
         context_types = []
         for field in self._output_columns:
