@@ -375,7 +375,7 @@ class DataProcessor:
                 'Setting the configuration for the ``HyperTransformer`` '
                 f'for table {self.table_name}'
             ))
-            config = self._create_config(data, columns_created_by_constraints)
+            config = self._create_config(constrained, columns_created_by_constraints)
             self._hyper_transformer.set_config(config)
 
     def fit(self, data):
