@@ -2,7 +2,6 @@
 
 from sdv.multi_table.hma import HMASynthesizer
 
-
 __all__ = (
     'HMASynthesizer',
 )

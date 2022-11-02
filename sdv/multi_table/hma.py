@@ -1,7 +1,6 @@
 """Hierarchical Modeling Algorithms."""
 
 from sdv.multi_table.base import BaseMultiTableSynthesizer
-from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 
 class HMASynthesizer(BaseMultiTableSynthesizer):
