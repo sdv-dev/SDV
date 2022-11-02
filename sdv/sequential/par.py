@@ -117,6 +117,14 @@ class PARSynthesizer(BaseSynthesizer):
         """Transform the raw data to numerical space.
 
         For PAR, none of the sequence keys are transformed.
+
+        Args:
+            data (pandas.DataFrame):
+                The raw data to be transformed.
+
+        Returns:
+            pandas.DataFrame:
+                The preprocessed data.
         """
         sequence_key_transformers = {sequence_key: None for sequence_key in self._sequence_key}
         if self._data_processor._hyper_transformer.field_transformers == {}:
@@ -137,9 +145,6 @@ class PARSynthesizer(BaseSynthesizer):
         context = context.groupby(self._sequence_key).first().reset_index()
         self._context_synthesizer.fit(context)
 
-    def _build_model(self):
-        return PARModel(**self._model_kwargs)
-
     def _transform_sequence_index(self, sequences):
         sequence_index_idx = self._data_columns.index(self._sequence_index)
         for sequence in sequences:
@@ -150,7 +155,7 @@ class PARSynthesizer(BaseSynthesizer):
             data.append(sequence_index[0:1] * len(sequence_index))
 
     def _fit_sequence_columns(self, timeseries_data):
-        self._model = self._build_model()
+        self._model = PARModel(**self._model_kwargs)
 
         # handle output name from rdt
         if self._sequence_index:

@@ -306,7 +306,16 @@ class BaseSynthesizer:
         return field_transformers
 
     def preprocess(self, data):
-        """Transform the raw data to numerical space."""
+        """Transform the raw data to numerical space.
+
+        Args:
+            data (pandas.DataFrame):
+                The raw data to be transformed.
+
+        Returns:
+            pandas.DataFrame:
+                The preprocessed data.
+        """
         self.validate(data)
         if self._fitted:
             warnings.warn(

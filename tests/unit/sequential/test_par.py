@@ -234,30 +234,8 @@ class TestPARSynthesizer:
         pd.testing.assert_frame_equal(fitted_data.sort_values(by='name'), expected_fitted_data)
 
     @patch('sdv.sequential.par.PARModel')
-    def test__build_model(self, par_model_mock):
-        """Test that themethod returns a ``PARModel`` with the right parameters"""
-        # Setup
-        par = PARSynthesizer(
-            metadata=self.get_metadata(),
-            epochs=10,
-            sample_size=5,
-            cuda=True,
-            verbose=True
-        )
-
-        # Run
-        par._build_model()
-
-        # Assert
-        par_model_mock.assert_called_once_with(
-            epochs=10,
-            sample_size=5,
-            cuda=True,
-            verbose=True
-        )
-
     @patch('sdv.sequential.par.assemble_sequences')
-    def test__fit_sequence_columns(self, assemble_sequences_mock):
+    def test__fit_sequence_columns(self, assemble_sequences_mock, model_mock):
         """Test that the method assembles sequences properly and fits the ``PARModel`` to them.
 
         The method should use the ``assemble_sequences`` method to create a list of sequences
@@ -271,9 +249,6 @@ class TestPARSynthesizer:
             metadata=metadata,
             context_columns=['gender']
         )
-        model_mock = Mock()
-        par._build_model = Mock()
-        par._build_model.return_value = model_mock
         sequences = [
             {'context': np.array(['M'], dtype=object), 'data': [[3], [65]]},
             {'context': np.array(['F'], dtype=object), 'data': [[1], [55]]},
@@ -293,14 +268,16 @@ class TestPARSynthesizer:
             None,
             drop_sequence_index=False
         )
-        model_mock.fit_sequences.assert_called_once_with(
+        model_mock.assert_called_once_with(epochs=128, sample_size=1, cuda=True, verbose=False)
+        model_mock.return_value.fit_sequences.assert_called_once_with(
             sequences,
             ['categorical'],
             ['continuous', 'continuous']
         )
 
+    @patch('sdv.sequential.par.PARModel')
     @patch('sdv.sequential.par.assemble_sequences')
-    def test__fit_sequence_columns_with_sequence_index(self, assemble_sequences_mock):
+    def test__fit_sequence_columns_with_sequence_index(self, assemble_sequences_mock, model_mock):
         """Test the method when a sequence_index is present.
 
         If there is a sequence_index, the method should transform it by taking the sequence index
@@ -320,9 +297,6 @@ class TestPARSynthesizer:
             metadata=metadata,
             context_columns=['gender']
         )
-        model_mock = Mock()
-        par._build_model = Mock()
-        par._build_model.return_value = model_mock
         sequences = [
             {'context': np.array(['F'], dtype=object), 'data': [[1, 2], [55, 60]]},
             {'context': np.array(['M'], dtype=object), 'data': [[3, 5, 8], [65, 65, 70]]},
@@ -348,14 +322,16 @@ class TestPARSynthesizer:
                 'data': [[2, 2, 3], [65, 65, 70], [3, 3, 3]]
             }
         ]
-        model_mock.fit_sequences.assert_called_once_with(
+        model_mock.assert_called_once_with(epochs=128, sample_size=1, cuda=True, verbose=False)
+        model_mock.return_value.fit_sequences.assert_called_once_with(
             expected_sequences,
             ['categorical'],
             ['continuous', 'continuous', 'continuous']
         )
 
+    @patch('sdv.sequential.par.PARModel')
     @patch('sdv.sequential.par.assemble_sequences')
-    def test__fit_sequence_columns_bad_dtype(self, assemble_sequences_mock):
+    def test__fit_sequence_columns_bad_dtype(self, assemble_sequences_mock, model_mock):
         """Test the method when a column has an unsupported dtype."""
         # Setup
         datetime = pd.Series(
@@ -372,9 +348,6 @@ class TestPARSynthesizer:
             metadata=metadata,
             context_columns=['gender']
         )
-        model_mock = Mock()
-        par._build_model = Mock()
-        par._build_model.return_value = model_mock
 
         # Run and Assert
         with pytest.raises(ValueError, match=re.escape('Unsupported dtype datetime64[ns]')):
