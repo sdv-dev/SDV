@@ -15,7 +15,6 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
     DEFAULT_SYNTHESIZER_KWARGS = {
         'default_distribution': 'norm',
     }
-    _synthesizer = GaussianCopulaSynthesizer
 
     def __init__(self, metadata, synthesizer_kwargs=None):
         super().__init__(metadata)

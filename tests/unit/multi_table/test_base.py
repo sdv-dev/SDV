@@ -48,6 +48,7 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         metadata.validate = Mock()
+
         # Run
         instance = BaseMultiTableSynthesizer(metadata)
 
