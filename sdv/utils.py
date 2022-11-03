@@ -8,6 +8,14 @@ import pkg_resources
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
 
+def cast_to_iterable(value):
+    """Return a ``list`` if the input object is not a ``list`` or ``tuple``."""
+    if isinstance(value, (list, tuple)):
+        return value
+
+    return [value]
+
+
 def display_tables(tables, max_rows=10, datetime_fmt='%Y-%m-%d %H:%M:%S', row=True):
     """Display mutiple tables side by side on a Jupyter Notebook.
 
