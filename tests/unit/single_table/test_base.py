@@ -14,11 +14,11 @@ from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
 from sdv.single_table import (
     CopulaGANSynthesizer, CTGANSynthesizer, GaussianCopulaSynthesizer, TVAESynthesizer)
-from sdv.single_table.base import COND_IDX, BaseSynthesizer
+from sdv.single_table.base import COND_IDX, BaseSingleTableSynthesizer
 from sdv.single_table.errors import InvalidDataError
 
 
-class TestBaseSynthesizer:
+class TestBaseSingleTableSynthesizer:
 
     def test__update_default_transformers(self):
         """Test that ``instance._data_processor._update_transformers_by_sdtypes`` is called.
@@ -34,7 +34,7 @@ class TestBaseSynthesizer:
         }
 
         # Run
-        BaseSynthesizer._update_default_transformers(instance)
+        BaseSingleTableSynthesizer._update_default_transformers(instance)
 
         # Assert
         call_list = instance._data_processor._update_transformers_by_sdtypes.call_args_list
@@ -47,7 +47,7 @@ class TestBaseSynthesizer:
         metadata = Mock()
 
         # Run
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Assert
         assert instance.enforce_min_max_values is True
@@ -62,7 +62,11 @@ class TestBaseSynthesizer:
         metadata = Mock()
 
         # Run
-        instance = BaseSynthesizer(metadata, enforce_min_max_values=False, enforce_rounding=False)
+        instance = BaseSingleTableSynthesizer(
+            metadata,
+            enforce_min_max_values=False,
+            enforce_rounding=False
+        )
 
         # Assert
         assert instance.enforce_min_max_values is False
@@ -75,7 +79,11 @@ class TestBaseSynthesizer:
         """Test that it returns every ``init`` parameter without the ``metadata``."""
         # Setup
         metadata = Mock()
-        instance = BaseSynthesizer(metadata, enforce_min_max_values=False, enforce_rounding=False)
+        instance = BaseSingleTableSynthesizer(
+            metadata,
+            enforce_min_max_values=False,
+            enforce_rounding=False
+        )
 
         # Run
         parameters = instance.get_parameters()
@@ -89,7 +97,11 @@ class TestBaseSynthesizer:
         """Test that it returns the ``metadata`` object."""
         # Setup
         metadata = Mock()
-        instance = BaseSynthesizer(metadata, enforce_min_max_values=False, enforce_rounding=False)
+        instance = BaseSingleTableSynthesizer(
+            metadata,
+            enforce_min_max_values=False,
+            enforce_rounding=False
+        )
 
         # Run
         result = instance.get_metadata()
@@ -107,7 +119,7 @@ class TestBaseSynthesizer:
         })
 
         # Run
-        BaseSynthesizer.auto_assign_transformers(instance, data)
+        BaseSingleTableSynthesizer.auto_assign_transformers(instance, data)
 
         # Assert
         instance._data_processor.prepare_for_fitting.assert_called_once_with(data)
@@ -122,7 +134,7 @@ class TestBaseSynthesizer:
         }
 
         # Run
-        result = BaseSynthesizer.get_transformers(instance)
+        result = BaseSingleTableSynthesizer.get_transformers(instance)
 
         # Assert
         assert result == {
@@ -142,7 +154,7 @@ class TestBaseSynthesizer:
             "'auto_assign_transformers' or 'fit' to create them."
         )
         with pytest.raises(ValueError, match=error_msg):
-            BaseSynthesizer.get_transformers(instance)
+            BaseSingleTableSynthesizer.get_transformers(instance)
 
     @patch('sdv.single_table.base.warnings')
     def test_preprocess(self, mock_warnings):
@@ -159,7 +171,7 @@ class TestBaseSynthesizer:
         })
 
         # Run
-        result = BaseSynthesizer.preprocess(instance, data)
+        result = BaseSingleTableSynthesizer.preprocess(instance, data)
 
         # Assert
         expected_warning = (
@@ -189,7 +201,7 @@ class TestBaseSynthesizer:
         # Setup
         metadata = Mock()
         data = Mock()
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
         with pytest.raises(NotImplementedError, match=''):
@@ -203,7 +215,7 @@ class TestBaseSynthesizer:
         processed_data.empty = False
 
         # Run
-        BaseSynthesizer.fit_processed_data(instance, processed_data)
+        BaseSingleTableSynthesizer.fit_processed_data(instance, processed_data)
 
         # Assert
         instance._fit.assert_called_once_with(processed_data)
@@ -219,7 +231,7 @@ class TestBaseSynthesizer:
         processed_data = Mock()
 
         # Run
-        BaseSynthesizer.fit(instance, processed_data)
+        BaseSingleTableSynthesizer.fit(instance, processed_data)
 
         # Assert
         instance.preprocess.assert_called_once_with(processed_data)
@@ -230,7 +242,7 @@ class TestBaseSynthesizer:
         # Setup
         data = np.ndarray([])
         metadata = SingleTableMetadata()
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
         err_msg = "Data must be a DataFrame, not a <class 'numpy.ndarray'>."
@@ -245,7 +257,7 @@ class TestBaseSynthesizer:
             'col2': [4, 5, 6],
         })
         metadata = SingleTableMetadata()
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
         err_msg = re.escape(
@@ -267,7 +279,7 @@ class TestBaseSynthesizer:
         metadata.add_column('col1', sdtype='numerical')
         metadata.add_column('col4', sdtype='numerical')
         metadata.add_column('col5', sdtype='numerical')
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
         err_msg = re.escape(
@@ -308,7 +320,7 @@ class TestBaseSynthesizer:
         metadata.set_primary_key('pk_col')
         metadata.set_sequence_key(('sk_col1', 'sk_col2', 'sk_col3'))
         metadata.add_alternate_keys(['ak_col1', 'ak_col2', 'ak_col3'])
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
         err_msg = re.escape(
@@ -340,7 +352,7 @@ class TestBaseSynthesizer:
         metadata.add_column('sk_col', sdtype='numerical')
         metadata.set_primary_key('pk_col')
         metadata.set_sequence_key('sk_col')
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
         err_msg = re.escape(
@@ -365,7 +377,7 @@ class TestBaseSynthesizer:
         metadata.add_column('ak_col3', sdtype='numerical')
         metadata.set_primary_key('pk_col')
         metadata.add_alternate_keys(['ak_col1', 'ak_col2', 'ak_col3'])
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
         err_msg = re.escape(
@@ -399,7 +411,7 @@ class TestBaseSynthesizer:
         metadata.add_column('ct_col1', sdtype='numerical')
         metadata.add_column('ct_col2', sdtype='numerical')
         metadata.set_sequence_key(('sk_col1', 'sk_col2'))
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
         instance._data_processor._model_kwargs = {
             'context_columns': ['ct_col1', 'ct_col2']  # NOTE: change to actual value
         }
@@ -440,7 +452,7 @@ class TestBaseSynthesizer:
         metadata.set_primary_key('pk_col')
         metadata.set_sequence_key('sk_col')
         metadata.add_alternate_keys(['ak_col'])
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run
         instance.validate(data)
@@ -456,7 +468,7 @@ class TestBaseSynthesizer:
         metadata.add_column('bool_col', sdtype='numerical')
         metadata.add_column('num_col', sdtype='numerical')
         metadata.add_column('date_col', sdtype='numerical')
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run
         instance.validate(data)
@@ -465,7 +477,7 @@ class TestBaseSynthesizer:
         """Test method doesn't raise when data is an empty dataframe."""
         data = pd.DataFrame()
         metadata = SingleTableMetadata()
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run
         instance.validate(data)
@@ -494,7 +506,7 @@ class TestBaseSynthesizer:
         metadata.add_column('bool2', sdtype='boolean')
         metadata.add_column('num1', sdtype='numerical')
         metadata.add_column('num2', sdtype='numerical')
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
         err_msg = re.escape(
@@ -545,7 +557,7 @@ class TestBaseSynthesizer:
         metadata.set_primary_key('pk_col')
         metadata.set_sequence_key(('sk_col1', 'sk_col2'))
         metadata.add_alternate_keys(['ak_col1', 'ak_col2'])
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run
         instance.validate(data)
@@ -566,7 +578,7 @@ class TestBaseSynthesizer:
         metadata.add_column('col3', sdtype='numerical')
         metadata.set_sequence_key(('col2'))
         metadata.add_alternate_keys(['col3'])
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
         err_msg = re.escape(
@@ -588,7 +600,7 @@ class TestBaseSynthesizer:
         metadata = SingleTableMetadata()
         metadata.add_column('col1', sdtype='boolean')
         metadata.add_column('col2', sdtype='numerical')
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
         err_msg = "Transformer for column 'col2' has already been fit on data."
@@ -659,7 +671,7 @@ class TestBaseSynthesizer:
         metadata = SingleTableMetadata()
         metadata.add_column('col1', sdtype='numerical')
         metadata.add_column('col2', sdtype='numerical')
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
         instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
 
         # Run
@@ -681,7 +693,7 @@ class TestBaseSynthesizer:
         # Setup
         rng_seed = Mock()
         metadata = Mock()
-        instance = BaseSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(metadata)
         instance._model = Mock()
 
         # Run
@@ -710,7 +722,8 @@ class TestBaseSynthesizer:
         float_rtol = 0.01
 
         # Run
-        filtered_data = BaseSynthesizer._filter_conditions(sampled, conditions, float_rtol)
+        filtered_data = BaseSingleTableSynthesizer._filter_conditions(
+            sampled, conditions, float_rtol)
 
         # Assert
         expected_data = pd.DataFrame({
@@ -730,7 +743,7 @@ class TestBaseSynthesizer:
         instance._data_processor.filter_valid.return_value = data
 
         # Run
-        sampled, num_valid = BaseSynthesizer._sample_rows(instance, 3)
+        sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(instance, 3)
 
         # Assert
         assert num_valid == 3
@@ -757,7 +770,7 @@ class TestBaseSynthesizer:
         transformed_conditions = {'salary.value': 80.0}
 
         # Run
-        sampled, num_valid = BaseSynthesizer._sample_rows(
+        sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
             instance,
             3,
             conditions=conditions,
@@ -793,7 +806,8 @@ class TestBaseSynthesizer:
         instance._data_processor.reverse_transform.return_value = data
 
         # Run
-        sampled, num_valid = BaseSynthesizer._sample_rows(instance, 3, previous_rows=previous_rows)
+        sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
+            instance, 3, previous_rows=previous_rows)
 
         # Assert
         expected_data = pd.DataFrame({
@@ -822,7 +836,7 @@ class TestBaseSynthesizer:
         instance._sample.side_effect = [NotImplementedError, None]
 
         # Run
-        sampled, num_valid = BaseSynthesizer._sample_rows(
+        sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
             instance,
             3,
             conditions=conditions,
@@ -846,7 +860,7 @@ class TestBaseSynthesizer:
         instance._data_processor.reverse_transform.side_effect = lambda x: x
 
         # Run
-        sampled, num_rows = BaseSynthesizer._sample_rows(instance, 10)
+        sampled, num_rows = BaseSingleTableSynthesizer._sample_rows(instance, 10)
 
         # Assert
         assert num_rows == 10
@@ -864,7 +878,7 @@ class TestBaseSynthesizer:
         instance._sample_rows.return_value = (sampled_data, 3)
 
         # Run
-        result = BaseSynthesizer._sample_batch(
+        result = BaseSingleTableSynthesizer._sample_batch(
             instance,
             batch_size=3,
             max_tries=100,
@@ -899,7 +913,7 @@ class TestBaseSynthesizer:
         instance._sample_rows.return_value = (sampled_data, 3)
 
         # Run
-        result = BaseSynthesizer._sample_batch(
+        result = BaseSingleTableSynthesizer._sample_batch(
             instance,
             batch_size=3,
             max_tries=100,
@@ -930,7 +944,7 @@ class TestBaseSynthesizer:
         instance._sample_rows.return_value = (sampled_data, 3)
 
         # Run
-        result = BaseSynthesizer._sample_batch(
+        result = BaseSingleTableSynthesizer._sample_batch(
             instance,
             batch_size=10,
             max_tries=2,
@@ -969,7 +983,7 @@ class TestBaseSynthesizer:
         open(path, mode='a').close()
 
         # Run
-        result = BaseSynthesizer._sample_batch(
+        result = BaseSingleTableSynthesizer._sample_batch(
             instance,
             batch_size=10,
             max_tries=100,
@@ -1018,7 +1032,7 @@ class TestBaseSynthesizer:
         condition_b = Condition({'salary': 80.})
 
         # Run
-        result = BaseSynthesizer._make_condition_dfs([condition_a, condition_b])
+        result = BaseSingleTableSynthesizer._make_condition_dfs([condition_a, condition_b])
 
         # Assert
         expected_result = [
@@ -1044,7 +1058,7 @@ class TestBaseSynthesizer:
         instance._sample_batch.side_effect = [first_data, second_data]
 
         # Run
-        result = BaseSynthesizer._sample_in_batches(
+        result = BaseSingleTableSynthesizer._sample_in_batches(
             instance,
             num_rows=6,
             batch_size=3,
@@ -1092,7 +1106,7 @@ class TestBaseSynthesizer:
         transformed_condition = Mock()
 
         # Run
-        result = BaseSynthesizer._conditionally_sample_rows(
+        result = BaseSingleTableSynthesizer._conditionally_sample_rows(
             instance,
             transformed_data,
             condition,
@@ -1137,7 +1151,7 @@ class TestBaseSynthesizer:
             'increasing these values will also increase the sampling time.'
         )
         with pytest.raises(ValueError, match=expected_message):
-            BaseSynthesizer._conditionally_sample_rows(
+            BaseSingleTableSynthesizer._conditionally_sample_rows(
                 instance,
                 transformed_data,
                 condition,
@@ -1169,7 +1183,7 @@ class TestBaseSynthesizer:
             'current model. \nPlease try again with a different set of values.'
         )
         with pytest.raises(ValueError, match=expected_message):
-            BaseSynthesizer._conditionally_sample_rows(
+            BaseSingleTableSynthesizer._conditionally_sample_rows(
                 instance,
                 transformed_data,
                 condition,
@@ -1191,7 +1205,7 @@ class TestBaseSynthesizer:
         instance._model = GaussianMultivariate()
 
         # Run
-        result = BaseSynthesizer._conditionally_sample_rows(
+        result = BaseSingleTableSynthesizer._conditionally_sample_rows(
             instance,
             transformed_data,
             condition,
@@ -1212,7 +1226,7 @@ class TestBaseSynthesizer:
         instance = Mock()
 
         # Run
-        BaseSynthesizer._randomize_samples(instance, False)
+        BaseSingleTableSynthesizer._randomize_samples(instance, False)
 
         # Assert
         instance._set_random_state.assert_called_once_with(73251)
@@ -1227,7 +1241,7 @@ class TestBaseSynthesizer:
         instance = Mock()
 
         # Run
-        BaseSynthesizer._randomize_samples(instance, True)
+        BaseSingleTableSynthesizer._randomize_samples(instance, True)
 
         # Assert
         instance._set_random_state.assert_called_once_with(None)
@@ -1239,7 +1253,7 @@ class TestBaseSynthesizer:
         instance._model = None
 
         # Run
-        result = BaseSynthesizer._randomize_samples(instance, True)
+        result = BaseSingleTableSynthesizer._randomize_samples(instance, True)
 
         # Assert
         assert result is None
@@ -1259,7 +1273,8 @@ class TestBaseSynthesizer:
             'See User Guide or API for more details.'
         )
         with pytest.raises(TypeError, match=expected_message):
-            BaseSynthesizer._sample_with_progress_bar(instance, 3, conditions=conditions)
+            BaseSingleTableSynthesizer._sample_with_progress_bar(
+                instance, 3, conditions=conditions)
 
     def test__sample_with_progress_bar_num_rows_is_none(self):
         """Test that a ``ValueError`` is raised when ``num_rows`` is ``None``."""
@@ -1272,7 +1287,7 @@ class TestBaseSynthesizer:
             'You must specify the number of rows to sample (e.g. num_rows=100).'
         )
         with pytest.raises(ValueError, match=expected_message):
-            BaseSynthesizer._sample_with_progress_bar(instance, num_rows)
+            BaseSingleTableSynthesizer._sample_with_progress_bar(instance, num_rows)
 
     def test__sample_with_progress_bar_num_rows_is_zero(self):
         """Test that an empty dataframe is returned when ``num_rows`` is 0."""
@@ -1281,7 +1296,7 @@ class TestBaseSynthesizer:
         num_rows = 0
 
         # Run
-        result = BaseSynthesizer._sample_with_progress_bar(instance, num_rows)
+        result = BaseSingleTableSynthesizer._sample_with_progress_bar(instance, num_rows)
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame())
@@ -1300,7 +1315,7 @@ class TestBaseSynthesizer:
         })
 
         # Run
-        result = BaseSynthesizer._sample_with_progress_bar(instance, 10)
+        result = BaseSingleTableSynthesizer._sample_with_progress_bar(instance, 10)
 
         # Assert
         expected_result = pd.DataFrame({'name': ['John', 'Johanna', 'Doe']})
@@ -1333,7 +1348,7 @@ class TestBaseSynthesizer:
         mock_validate_file_path.return_value = 'temp_file'
 
         # Run
-        result = BaseSynthesizer._sample_with_progress_bar(instance, 10)
+        result = BaseSingleTableSynthesizer._sample_with_progress_bar(instance, 10)
 
         # Assert
         expected_result = pd.DataFrame()
@@ -1366,7 +1381,7 @@ class TestBaseSynthesizer:
         mock_validate_file_path.return_value = '.sample.csv.temp'
 
         # Run
-        result = BaseSynthesizer._sample_with_progress_bar(instance, 10)
+        result = BaseSingleTableSynthesizer._sample_with_progress_bar(instance, 10)
 
         # Assert
         expected_result = pd.DataFrame()
@@ -1398,7 +1413,7 @@ class TestBaseSynthesizer:
         instance.get_metadata.return_value._constraints = False
 
         # Run
-        result = BaseSynthesizer.sample(
+        result = BaseSingleTableSynthesizer.sample(
             instance,
             num_rows,
             randomize_samples,
@@ -1431,7 +1446,7 @@ class TestBaseSynthesizer:
         conditions = pd.DataFrame({'name': ['Johanna'], 'surname': ['Doe']})
 
         # Run
-        BaseSynthesizer._validate_conditions(instance, conditions)
+        BaseSingleTableSynthesizer._validate_conditions(instance, conditions)
 
         # Assert
         instance._data_processor.get_sdtypes.assert_called()
@@ -1452,7 +1467,7 @@ class TestBaseSynthesizer:
             'original data.'
         )
         with pytest.raises(ValueError, match=error_msg):
-            BaseSynthesizer._validate_conditions(instance, conditions)
+            BaseSingleTableSynthesizer._validate_conditions(instance, conditions)
 
     def test__sample_with_conditions_constraints_not_met(self):
         """Test when conditions are not met."""
@@ -1467,7 +1482,7 @@ class TestBaseSynthesizer:
         # Run and Assert
         error_msg = 'Provided conditions are not valid for the given constraints.'
         with pytest.raises(ConstraintsNotMetError, match=error_msg):
-            BaseSynthesizer._sample_with_conditions(
+            BaseSingleTableSynthesizer._sample_with_conditions(
                 instance,
                 conditions,
                 10,
@@ -1489,7 +1504,7 @@ class TestBaseSynthesizer:
         ]
 
         # Run
-        result = BaseSynthesizer._sample_with_conditions(
+        result = BaseSingleTableSynthesizer._sample_with_conditions(
             instance,
             conditions,
             10,
@@ -1554,7 +1569,7 @@ class TestBaseSynthesizer:
         instance._conditionally_sample_rows.return_value = pd.DataFrame()
 
         # Run
-        result = BaseSynthesizer._sample_with_conditions(
+        result = BaseSingleTableSynthesizer._sample_with_conditions(
             instance,
             conditions,
             10,
@@ -1589,12 +1604,13 @@ class TestBaseSynthesizer:
                                 mock_tqdm, mock_data_processor, mock_check_num_rows, mock_os):
         """Test sample conditions with sampled data and reject sampling.
 
-        An instance of ``BaseSynthesizer`` is created and it's utility functions are being mocked
-        to reach the point of calling ```_sample_with_conditions``. After the sampling is done,
-        when the ``temp_file`` is the ``.sample.csv.temp``, this is being removed.
+        An instance of ``BaseSingleTableSynthesizer`` is created and it's utility functions are
+        being mocked to reach the point of calling ```_sample_with_conditions``. After the
+        sampling is done, when the ``temp_file`` is the ``.sample.csv.temp``, this is being
+        removed.
         """
         # Setup
-        instance = BaseSynthesizer('metadata')
+        instance = BaseSingleTableSynthesizer('metadata')
         conditions = [Condition({'name': 'John Doe'})]
         mock_validate_file_path.return_value = '.sample.csv.temp'
 
@@ -1632,7 +1648,7 @@ class TestBaseSynthesizer:
         mock_validate_file_path.return_value = 'temp_file'
 
         # Run
-        result = BaseSynthesizer._sample_conditions(
+        result = BaseSingleTableSynthesizer._sample_conditions(
             instance,
             conditions,
             10,
@@ -1656,7 +1672,7 @@ class TestBaseSynthesizer:
         instance = Mock()
 
         # Run
-        result = BaseSynthesizer.sample_conditions(instance, ['conditions'])
+        result = BaseSingleTableSynthesizer.sample_conditions(instance, ['conditions'])
 
         # Assert
         assert result == instance._sample_conditions.return_value
@@ -1677,7 +1693,7 @@ class TestBaseSynthesizer:
                                        mock_data_processor, mock_check_num_rows, mock_os):
         """Test the this method calls ``_sample_with_conditions`` with the ``known_column."""
         # Setup
-        instance = BaseSynthesizer('metadata')
+        instance = BaseSingleTableSynthesizer('metadata')
         known_columns = pd.DataFrame({'name': ['Johanna Doe']})
 
         instance._validate_conditions = Mock()
@@ -1718,7 +1734,7 @@ class TestBaseSynthesizer:
         This should properly handle the errors with the ``handle_sampling_error`` function.
         """
         # Setup
-        instance = BaseSynthesizer('metadata')
+        instance = BaseSingleTableSynthesizer('metadata')
         known_columns = pd.DataFrame({'name': ['Johanna Doe']})
 
         instance._validate_conditions = Mock()
@@ -1755,7 +1771,7 @@ class TestBaseSynthesizer:
         instance._randomize_samples = Mock()
 
         # Run
-        result = BaseSynthesizer.sample_remaining_columns(instance, known_columns)
+        result = BaseSingleTableSynthesizer.sample_remaining_columns(instance, known_columns)
 
         # Assert
         assert result == instance._sample_remaining_columns.return_value
