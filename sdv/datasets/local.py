@@ -13,7 +13,7 @@ def load_csvs(folder_name):
         folder_name (str):
             The full path of the folder with the data to be loaded.
     """
-    dirpath, _, filenames = list(walk('Accidents_v1'))[0]
+    dirpath, _, filenames = list(walk(folder_name))[0]
     csvs = {}
     other_files = []
     for filename in filenames:
@@ -26,7 +26,7 @@ def load_csvs(folder_name):
 
     if other_files:
         warnings.warn(
-            f"Warning: Ignoring incompatible files {other_files} in folder '{folder_name}'."
+            f"Ignoring incompatible files {other_files} in folder '{folder_name}'."
         )
 
     if not csvs:
