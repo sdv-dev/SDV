@@ -1,23 +1,4 @@
-from sdv.metadata.utils import cast_to_iterable, strings_from_regex
-
-
-def test_cast_to_iterable():
-    """Test ``cast_to_iterable``.
-
-    Test that ``cast_to_iterable`` converts a signle object into a ``list`` but does not convert
-    a ``list`` into a list inside a list.
-    """
-    # Setup
-    value = 'abc'
-    list_value = ['ab']
-
-    # Run
-    value = cast_to_iterable(value)
-    list_value = cast_to_iterable(list_value)
-
-    # Assert
-    assert value == ['abc']
-    assert list_value == ['ab']
+from sdv.metadata.utils import strings_from_regex
 
 
 def test_strings_from_regex_literal():

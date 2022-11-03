@@ -5,7 +5,26 @@ from unittest.mock import Mock, call, patch
 import pkg_resources
 
 from sdv.tabular import GaussianCopula
-from sdv.utils import get_package_versions, throw_version_mismatch_warning
+from sdv.utils import cast_to_iterable, get_package_versions, throw_version_mismatch_warning
+
+
+def test_cast_to_iterable():
+    """Test ``cast_to_iterable``.
+
+    Test that ``cast_to_iterable`` converts a signle object into a ``list`` but does not convert
+    a ``list`` into a list inside a list.
+    """
+    # Setup
+    value = 'abc'
+    list_value = ['ab']
+
+    # Run
+    value = cast_to_iterable(value)
+    list_value = cast_to_iterable(list_value)
+
+    # Assert
+    assert value == ['abc']
+    assert list_value == ['ab']
 
 
 @patch('sdv.utils.pkg_resources.get_distribution')

@@ -2,11 +2,11 @@
 
 from ctgan import CTGAN, TVAE
 
-from sdv.single_table.base import BaseSynthesizer
+from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.single_table.utils import detect_discrete_columns
 
 
-class CTGANSynthesizer(BaseSynthesizer):
+class CTGANSynthesizer(BaseSingleTableSynthesizer):
     """Model wrapping ``CTGAN`` model.
 
     Args:
@@ -134,7 +134,7 @@ class CTGANSynthesizer(BaseSynthesizer):
         raise NotImplementedError("CTGANSynthesizer doesn't support conditional sampling.")
 
 
-class TVAESynthesizer(BaseSynthesizer):
+class TVAESynthesizer(BaseSingleTableSynthesizer):
     """Model wrapping ``TVAE`` model.
 
     Args:
