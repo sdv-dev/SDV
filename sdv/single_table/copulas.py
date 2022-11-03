@@ -7,10 +7,10 @@ import copulas.multivariate
 import copulas.univariate
 from rdt.transformers import OneHotEncoder
 
-from sdv.single_table.base import BaseSynthesizer
+from sdv.single_table.base import BaseSingleTableSynthesizer
 
 
-class GaussianCopulaSynthesizer(BaseSynthesizer):
+class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
     """Model wrapping ``copulas.multivariate.GaussianMultivariate`` copula.
 
     Args:

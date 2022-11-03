@@ -308,9 +308,11 @@ class DataProcessor:
             column_name_to_transformer (dict):
                 Dict mapping column names to transformers to be used for that column.
         """
-        if not self._hyper_transformer._fitted:
+        if self._hyper_transformer.field_transformers == {}:
             raise NotFittedError(
-                'The DataProcessor must be fitted before the transformers can be updated.')
+                'The DataProcessor must be prepared for fitting before the transformers can be '
+                'updated.'
+            )
 
         self._hyper_transformer.update_transformers(column_name_to_transformer)
 

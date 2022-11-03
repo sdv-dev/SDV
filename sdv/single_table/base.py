@@ -220,6 +220,9 @@ class BaseSynthesizer:
     def _validate_transformers(self, column_name_to_transformer):
         keys = self._get_primary_and_alternate_keys() | self._get_set_of_sequence_keys()
         for column, transformer in column_name_to_transformer.items():
+            if transformer is None:
+                continue
+
             if column in keys and not transformer.is_generator():
                 raise InvalidPreprocessingError(
                     f"Column '{column}' is a key. It cannot be preprocessed using "
@@ -303,7 +306,16 @@ class BaseSynthesizer:
         return field_transformers
 
     def preprocess(self, data):
-        """Transform the raw data to numerical space."""
+        """Transform the raw data to numerical space.
+
+        Args:
+            data (pandas.DataFrame):
+                The raw data to be transformed.
+
+        Returns:
+            pandas.DataFrame:
+                The preprocessed data.
+        """
         self.validate(data)
         if self._fitted:
             warnings.warn(
@@ -344,6 +356,14 @@ class BaseSynthesizer:
         """
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
+
+
+class BaseSingleTableSynthesizer(BaseSynthesizer):
+    """Base class for all single-table ``Synthesizers``.
+
+    The ``BaseSingleTableSynthesizer`` class defines the common sampling methods
+    for all single-table synthesizers.
+    """
 
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.

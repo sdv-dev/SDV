@@ -8,8 +8,9 @@ from copy import deepcopy
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.metadata.utils import cast_to_iterable, read_json, validate_file_does_not_exist
+from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import visualize_graph
+from sdv.utils import cast_to_iterable
 
 
 class MultiTableMetadata:
