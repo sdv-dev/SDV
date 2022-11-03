@@ -7,8 +7,8 @@ import pandas as pd
 import pkg_resources
 
 from sdv.tabular import GaussianCopula
-from sdv.utils import (cast_to_iterable, get_package_versions, load_data_from_csv,
-    throw_version_mismatch_warning)
+from sdv.utils import (
+    cast_to_iterable, get_package_versions, load_data_from_csv, throw_version_mismatch_warning)
 
 
 def test_cast_to_iterable():
