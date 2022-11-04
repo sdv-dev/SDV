@@ -56,8 +56,8 @@ def test_load_csvs(load_mock, warnings_mock):
         'users': users_mock
     }
     load_mock.assert_has_calls([
-        call(f'{temp_dir}/orders.csv'),
-        call(f'{temp_dir}/users.csv')
+        call(op.join(temp_dir, 'orders.csv')),
+        call(op.join(temp_dir, 'users.csv'))
     ])
     warnings_mock.warn.assert_called_once_with(
         f"Ignoring incompatible files ['fake.json'] in folder '{temp_dir}'.")
