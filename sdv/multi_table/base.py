@@ -92,14 +92,15 @@ class BaseMultiTableSynthesizer:
             child_row = child_table[relation['child_foreign_key']]
             parent_row = parent_table[relation['parent_primary_key']]
             missing_values = child_row[~child_row.isin(parent_row)].unique()
-            if missing_values:
+            if any(missing_values):
+                message = ', '.join(missing_values[:5].astype(str))
                 if len(missing_values) > 5:
-                    message = f'({value for value in missing_values[:5]}, + more).'
+                    message = f'({message}, + more).'
                 else:
-                    message = f'({value for value in missing_values}).'
+                    message = f'({message}).'
 
                 errors.append(
-                    f"Error: foreign key column {relation['child_foreign_key']} contains "
+                    f"Error: foreign key column '{relation['child_foreign_key']}' contains "
                     f'unknown references: {message}'
                 )
 
@@ -125,6 +126,16 @@ class BaseMultiTableSynthesizer:
                     * values of a column don't satisfy their sdtype
         """
         errors = []
+        missing_tables = set(self.metadata._tables) - set(data)
+        if missing_tables:
+            if len(missing_tables) > 1:
+                raise InvalidDataError([
+                    f'The provided data is missing the tables {missing_tables}.'
+                ])
+            else:
+                raise InvalidDataError([
+                    f'The provided data is missing the table {missing_tables}.'])
+
         for table_name, table_data in data.items():
             try:
                 self._table_synthesizers[table_name].validate(table_data)
@@ -135,13 +146,11 @@ class BaseMultiTableSynthesizer:
                     'The provided data does not match the metadata:',
                     f"The provided data for table '{table_name}' does not match the metadata:"
                 )
-                errors.append(str(error_msg))
+                errors.append(error_msg)
 
         if errors:
-            error_msg = '\n'.join(errors)
             raise InvalidDataError(errors)
 
-        foreign_key_errors = self._validate_foreign_keys(data)
-        if foreign_key_errors:
-            error_msg = '\n'.join(foreign_key_errors)
-            raise InvalidDataError(error_msg)
+        errors.extend(self._validate_foreign_keys(data))
+        if errors:
+            raise InvalidDataError(errors)
