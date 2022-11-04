@@ -129,15 +129,19 @@ class BaseMultiTableSynthesizer:
             try:
                 self._table_synthesizers[table_name].validate(table_data)
 
-            except (InvalidDataError, ValueError) as e:
-                errors.append(e)
+            except (InvalidDataError, ValueError) as error:
+                error_msg = str(error)
+                error_msg = error_msg.replace(
+                    'The provided data does not match the metadata:',
+                    f"The provided data for table '{table_name}' does not match the metadata:"
+                )
+                errors.append(str(error_msg))
 
         if errors:
             error_msg = '\n'.join(errors)
-            raise InvalidDataError(error_msg)
+            raise InvalidDataError(errors)
 
         foreign_key_errors = self._validate_foreign_keys(data)
-
         if foreign_key_errors:
             error_msg = '\n'.join(foreign_key_errors)
             raise InvalidDataError(error_msg)
