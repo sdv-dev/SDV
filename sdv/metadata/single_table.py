@@ -5,9 +5,6 @@ import re
 import warnings
 from copy import deepcopy
 from datetime import datetime
-from pathlib import Path
-
-import pandas as pd
 
 from sdv.constraints import Constraint
 from sdv.constraints.errors import AggregateConstraintsError
@@ -15,7 +12,7 @@ from sdv.metadata.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
-from sdv.utils import cast_to_iterable
+from sdv.utils import cast_to_iterable, load_data_from_csv
 
 
 class SingleTableMetadata:
@@ -279,12 +276,6 @@ class SingleTableMetadata:
         print('Detected metadata:')  # noqa: T001
         print(json.dumps(self.to_dict(), indent=4))  # noqa: T001
 
-    def _load_data_from_csv(self, filepath, pandas_kwargs):
-        filepath = Path(filepath)
-        pandas_kwargs = pandas_kwargs or {}
-        data = pd.read_csv(filepath, **pandas_kwargs)
-        return data
-
     def detect_from_csv(self, filepath, pandas_kwargs=None):
         """Detect the metadata from a ``csv`` file.
 
@@ -303,7 +294,7 @@ class SingleTableMetadata:
                 'object to detect from other data sources.'
             )
 
-        data = self._load_data_from_csv(filepath, pandas_kwargs)
+        data = load_data_from_csv(filepath, pandas_kwargs)
         self.detect_from_dataframe(data)
 
     @staticmethod
