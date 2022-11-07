@@ -1,6 +1,7 @@
 """Miscellaneous utility functions."""
 import warnings
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -197,3 +198,19 @@ def is_boolean_type(value):
             True if the input is a boolean, False if not.
     """
     return True if pd.isna(value) | (value is True) | (value is False) else False
+
+
+def load_data_from_csv(filepath, pandas_kwargs=None):
+    """Load DataFrame from a filepath.
+
+    Args:
+        filepath (str):
+            String that represents the ``path`` to the ``csv`` file.
+        pandas_kwargs (dict):
+            A python dictionary of with string and value accepted by ``pandas.read_csv``
+            function. Defaults to ``None``.
+    """
+    filepath = Path(filepath)
+    pandas_kwargs = pandas_kwargs or {}
+    data = pd.read_csv(filepath, **pandas_kwargs)
+    return data
