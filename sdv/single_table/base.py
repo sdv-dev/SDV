@@ -357,6 +357,24 @@ class BaseSynthesizer:
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
 
+    def _randomize_samples(self, randomize_samples):
+        """Randomize the samples according to user input.
+
+        If ``randomize_samples`` is false, fix the seed that the random number generator
+        uses in the underlying models.
+
+        Args:
+            randomize_samples (bool):
+                Whether or not to randomize the generated samples.
+        """
+        if self._model is None:
+            return
+
+        if randomize_samples:
+            self._set_random_state(None)
+        else:
+            self._set_random_state(FIXED_RNG_SEED)
+
 
 class BaseSingleTableSynthesizer(BaseSynthesizer):
     """Base class for all single-table ``Synthesizers``.
@@ -645,24 +663,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             raise ValueError(user_msg)
 
         return sampled_rows
-
-    def _randomize_samples(self, randomize_samples):
-        """Randomize the samples according to user input.
-
-        If ``randomize_samples`` is false, fix the seed that the random number generator
-        uses in the underlying models.
-
-        Args:
-            randomize_samples (bool):
-                Whether or not to randomize the generated samples.
-        """
-        if self._model is None:
-            return
-
-        if randomize_samples:
-            self._set_random_state(None)
-        else:
-            self._set_random_state(FIXED_RNG_SEED)
 
     def _sample_with_progress_bar(self, num_rows, randomize_samples=True, max_tries_per_batch=100,
                                   batch_size=None, output_file_path=None, conditions=None,
