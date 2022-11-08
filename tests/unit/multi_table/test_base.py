@@ -166,7 +166,7 @@ class TestBaseMultiTableSynthesizer:
         result = instance._validate_foreign_keys(data)
 
         # Assert
-        assert result == []
+        assert result == None
 
     def test__validate_foreign_keys_missing_keys(self):
         """Test that errors are being returned.
@@ -196,13 +196,12 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         missing_upravna_enota = (
+            'Relationships:\n'
             "Error: foreign key column 'upravna_enota' contains unknown references: "
-            '(10, 11, 12, 13, 14, + more).'
+            '(10, 11, 12, 13, 14, + more).\n'
+            "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9)."
         )
-        assert result == [
-            missing_upravna_enota,
-            "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9).",
-        ]
+        assert result == missing_upravna_enota
 
     def test_validate(self):
         """Test that no error is being raised when the data is valid."""
@@ -248,32 +247,8 @@ class TestBaseMultiTableSynthesizer:
         instance = BaseMultiTableSynthesizer(metadata)
 
         # Run and Assert
-        error_msg = "The provided data is missing the table {'nesreca'}."
+        error_msg = "The provided data is missing the tables {'nesreca'}."
         with pytest.raises(InvalidDataError, match=error_msg):
-            instance.validate(data)
-
-    def test_validate_missing_multiple_tables(self):
-        """Test that an error is being raised when there are multiple tables missing."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        data = {
-            'table1': pd.DataFrame({
-                'id_nesreca': np.arange(10),
-                'upravna_enota': np.arange(10),
-            }),
-            'table2': pd.DataFrame({
-                'upravna_enota': np.arange(10),
-                'id_nesreca': np.arange(10),
-            }),
-            'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': np.arange(10),
-            }),
-        }
-
-        instance = BaseMultiTableSynthesizer(metadata)
-
-        # Run and Assert
-        with pytest.raises(InvalidDataError):
             instance.validate(data)
 
     def test_validate_data_is_not_dataframe(self):
@@ -324,19 +299,19 @@ class TestBaseMultiTableSynthesizer:
         # Run and Assert
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
-            "The provided data for table 'nesreca' does not match the metadata:\n"
+            "Table: 'nesreca'\n"
             "Invalid values found for numerical column 'id_nesreca': ['0', '1', '2', '+ 7 more']."
-            "\n\nThe provided data for table 'oseba' does not match the metadata:\n"
+            "\n\nTable: 'oseba'\n"
             "Invalid values found for numerical column 'upravna_enota': ['0', '1', '2', "
             "'+ 7 more']."
-            "\n\nThe provided data for table 'upravna_enota' does not match the metadata:\n"
+            "\n\nTable: 'upravna_enota'\n"
             "Invalid values found for numerical column 'id_upravna_enota': ['0', '1', '2', "
             "'+ 7 more']."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)
 
-    def test_validae_missing_foreign_keys(self):
+    def test_validate_missing_foreign_keys(self):
         """Test that errors are being raised when there are missing foreign keys."""
         # Setup
         metadata = get_multi_table_metadata()
@@ -358,6 +333,7 @@ class TestBaseMultiTableSynthesizer:
         # Run and Assert
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
+            'Relationships:\n'
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9)."
         )
         with pytest.raises(InvalidDataError, match=error_msg):

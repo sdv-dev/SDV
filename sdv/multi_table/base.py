@@ -3,6 +3,8 @@
 from collections import defaultdict
 from copy import deepcopy
 
+import pandas as pd
+
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.errors import InvalidDataError
 
@@ -85,26 +87,31 @@ class BaseMultiTableSynthesizer:
         return self.metadata
 
     def _validate_foreign_keys(self, data):
+        error_msg = None
         errors = []
         for relation in self.metadata._relationships:
-            child_table = data[relation['child_table_name']]
-            parent_table = data[relation['parent_table_name']]
-            child_row = child_table[relation['child_foreign_key']]
-            parent_row = parent_table[relation['parent_primary_key']]
-            missing_values = child_row[~child_row.isin(parent_row)].unique()
-            if any(missing_values):
-                message = ', '.join(missing_values[:5].astype(str))
-                if len(missing_values) > 5:
-                    message = f'({message}, + more).'
-                else:
-                    message = f'({message}).'
+            child_table = data.get(relation['child_table_name'])
+            parent_table = data.get(relation['parent_table_name'])
+            if isinstance(child_table, pd.DataFrame) and isinstance(parent_table, pd.DataFrame):
+                child_column = child_table[relation['child_foreign_key']]
+                parent_column = parent_table[relation['parent_primary_key']]
+                missing_values = child_column[~child_column.isin(parent_column)].unique()
+                if any(missing_values):
+                    message = ', '.join(missing_values[:5].astype(str))
+                    if len(missing_values) > 5:
+                        message = f'({message}, + more).'
+                    else:
+                        message = f'({message}).'
 
-                errors.append(
-                    f"Error: foreign key column '{relation['child_foreign_key']}' contains "
-                    f'unknown references: {message}'
-                )
+                    errors.append(
+                        f"Error: foreign key column '{relation['child_foreign_key']}' contains "
+                        f'unknown references: {message}'
+                    )
+            if errors:
+                error_msg = 'Relationships:\n'
+                error_msg += '\n'.join(errors)
 
-        return errors
+        return error_msg
 
     def validate(self, data):
         """Validate data.
@@ -128,13 +135,7 @@ class BaseMultiTableSynthesizer:
         errors = []
         missing_tables = set(self.metadata._tables) - set(data)
         if missing_tables:
-            if len(missing_tables) > 1:
-                raise InvalidDataError([
-                    f'The provided data is missing the tables {missing_tables}.'
-                ])
-            else:
-                raise InvalidDataError([
-                    f'The provided data is missing the table {missing_tables}.'])
+            errors.append(f'The provided data is missing the tables {missing_tables}.')
 
         for table_name, table_data in data.items():
             try:
@@ -144,13 +145,15 @@ class BaseMultiTableSynthesizer:
                 error_msg = str(error)
                 error_msg = error_msg.replace(
                     'The provided data does not match the metadata:',
-                    f"The provided data for table '{table_name}' does not match the metadata:"
+                    f"Table: '{table_name}'"
                 )
                 errors.append(error_msg)
+            except KeyError:
+                continue
 
-        if errors:
-            raise InvalidDataError(errors)
+        foreign_key_errors = self._validate_foreign_keys(data)
+        if foreign_key_errors:
+            errors.append(foreign_key_errors)
 
-        errors.extend(self._validate_foreign_keys(data))
         if errors:
             raise InvalidDataError(errors)
