@@ -105,7 +105,8 @@ class BaseMultiTableSynthesizer:
 
                     errors.append(
                         f"Error: foreign key column '{relation['child_foreign_key']}' contains "
-                        f'unknown references: {message}'
+                        f'unknown references: {message} All the values in this column must '
+                        'reference a primary key.'
                     )
             if errors:
                 error_msg = 'Relationships:\n'
@@ -142,12 +143,16 @@ class BaseMultiTableSynthesizer:
                 self._table_synthesizers[table_name].validate(table_data)
 
             except (InvalidDataError, ValueError) as error:
-                error_msg = str(error)
-                error_msg = error_msg.replace(
-                    'The provided data does not match the metadata:',
-                    f"Table: '{table_name}'"
-                )
+                if isinstance(error, InvalidDataError):
+                    error_msg = f"Table: '{table_name}'"
+                    for _error in error.errors:
+                        error_msg += f'\nError: {_error}'
+
+                else:
+                    error_msg = str(error)
+
                 errors.append(error_msg)
+
             except KeyError:
                 continue
 

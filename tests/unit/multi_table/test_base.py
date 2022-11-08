@@ -166,7 +166,7 @@ class TestBaseMultiTableSynthesizer:
         result = instance._validate_foreign_keys(data)
 
         # Assert
-        assert result == None
+        assert result is None
 
     def test__validate_foreign_keys_missing_keys(self):
         """Test that errors are being returned.
@@ -198,8 +198,10 @@ class TestBaseMultiTableSynthesizer:
         missing_upravna_enota = (
             'Relationships:\n'
             "Error: foreign key column 'upravna_enota' contains unknown references: "
-            '(10, 11, 12, 13, 14, + more).\n'
+            '(10, 11, 12, 13, 14, + more). '
+            'All the values in this column must reference a primary key.\n'
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9)."
+            ' All the values in this column must reference a primary key.'
         )
         assert result == missing_upravna_enota
 
@@ -300,12 +302,13 @@ class TestBaseMultiTableSynthesizer:
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
             "Table: 'nesreca'\n"
-            "Invalid values found for numerical column 'id_nesreca': ['0', '1', '2', '+ 7 more']."
+            "Error: Invalid values found for numerical column 'id_nesreca': ['0', '1', '2', "
+            "'+ 7 more']."
             "\n\nTable: 'oseba'\n"
-            "Invalid values found for numerical column 'upravna_enota': ['0', '1', '2', "
+            "Error: Invalid values found for numerical column 'upravna_enota': ['0', '1', '2', "
             "'+ 7 more']."
             "\n\nTable: 'upravna_enota'\n"
-            "Invalid values found for numerical column 'id_upravna_enota': ['0', '1', '2', "
+            "Error: Invalid values found for numerical column 'id_upravna_enota': ['0', '1', '2', "
             "'+ 7 more']."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
@@ -334,7 +337,8 @@ class TestBaseMultiTableSynthesizer:
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
             'Relationships:\n'
-            "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9)."
+            "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
+            'All the values in this column must reference a primary key.'
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)
