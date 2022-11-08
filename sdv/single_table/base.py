@@ -357,6 +357,15 @@ class BaseSynthesizer:
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
 
+    def _set_random_state(self, random_state):
+        """Set the random state of the model's random number generator.
+
+        Args:
+            random_state (int, tuple[np.random.RandomState, torch.Generator], or None):
+                Seed or tuple of random states to use.
+        """
+        self._model.set_random_state(random_state)
+
     def _randomize_samples(self, randomize_samples):
         """Randomize the samples according to user input.
 
@@ -382,15 +391,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     The ``BaseSingleTableSynthesizer`` class defines the common sampling methods
     for all single-table synthesizers.
     """
-
-    def _set_random_state(self, random_state):
-        """Set the random state of the model's random number generator.
-
-        Args:
-            random_state (int, tuple[np.random.RandomState, torch.Generator], or None):
-                Seed or tuple of random states to use.
-        """
-        self._model.set_random_state(random_state)
 
     @staticmethod
     def _filter_conditions(sampled, conditions, float_rtol):

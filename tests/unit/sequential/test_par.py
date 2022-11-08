@@ -391,3 +391,133 @@ class TestPARSynthesizer:
         # Assert
         par._fit_context_model.assert_not_called()
         par._fit_sequence_columns.assert_called_once_with(data)
+
+    @patch('sdv.sequential.par.tqdm')
+    def test__sample_from_par(self, tqdm_mock):
+        """Test that the method properly samples from the underlying ``PAR`` model.
+
+        This method should sample from ``PAR``, set any context columns to be what was
+        provided, set the sequence key to be what was provided and return the sampled
+        sequences in a ``pandas.DataFrame``.
+        """
+        # Setup
+        metadata = self.get_metadata(add_sequence_key=False)
+        par = PARSynthesizer(
+            metadata=metadata,
+            context_columns=['gender']
+        )
+        model_mock = Mock()
+        par._model = model_mock
+        par._data_columns = ['time', 'name', 'measurement']
+        par._output_columns = ['time', 'gender', 'name', 'measurement']
+        model_mock.sample_sequence.return_value = [
+            [18000, 20000, 22000],
+            [.4, .7, .1],
+            [55, 60, 65]
+        ]
+        context_columns = pd.DataFrame({'gender': ['M']})
+        tqdm_mock.tqdm.return_value = context_columns.iterrows()
+
+        # Run
+        sampled = par._sample_from_par(context_columns, 3)
+
+        # Assert
+        arg_list, kwargs = tqdm_mock.tqdm.call_args
+        called_context_iterator_list = list(arg_list[0])
+        assert kwargs['disable'] is True
+        assert kwargs['total'] == 1
+        for i, row in enumerate(context_columns.iterrows()):
+            called_row = called_context_iterator_list[i]
+            pd.testing.assert_series_equal(row[1], called_row[1])
+
+        expected_output = pd.DataFrame({
+            'time': [18000, 20000, 22000],
+            'gender': ['M', 'M', 'M'],
+            'name': [.4, .7, .1],
+            'measurement': [55, 60, 65]
+        })
+        pd.testing.assert_frame_equal(sampled, expected_output)
+
+    @patch('sdv.sequential.par.tqdm')
+    def test__sample_from_par_with_sequence_key(self, tqdm_mock):
+        """Test that the method handles the sequence key properly.
+
+        If there are sequence keys, this method should set them as the index for the context
+        columns. Both sequence keys and context columns should still be added back to the final
+        returned data.
+        """
+        # Setup
+        metadata = self.get_metadata()
+        par = PARSynthesizer(
+            metadata=metadata,
+            context_columns=['gender']
+        )
+        model_mock = Mock()
+        par._model = model_mock
+        par._data_columns = ['time', 'measurement']
+        par._output_columns = ['time', 'gender', 'name', 'measurement']
+        model_mock.sample_sequence.return_value = [
+            [18000, 20000, 22000],
+            [55, 60, 65]
+        ]
+        context_columns = pd.DataFrame({'name': ['John'], 'gender': ['M']})
+        tqdm_mock.tqdm.return_value = context_columns.set_index('name').iterrows()
+
+        # Run
+        sampled = par._sample_from_par(context_columns, 3)
+
+        # Assert
+        arg_list, kwargs = tqdm_mock.tqdm.call_args
+        called_context_iterator_list = list(arg_list[0])
+        assert kwargs['disable'] is True
+        assert kwargs['total'] == 1
+        for i, row in enumerate(context_columns.set_index('name').iterrows()):
+            called_row = called_context_iterator_list[i]
+            pd.testing.assert_series_equal(row[1], called_row[1])
+
+        expected_output = pd.DataFrame({
+            'time': [18000, 20000, 22000],
+            'gender': ['M', 'M', 'M'],
+            'name': ['John', 'John', 'John'],
+            'measurement': [55, 60, 65]
+        })
+        pd.testing.assert_frame_equal(sampled, expected_output)
+
+    @patch('sdv.sequential.par.tqdm')
+    def test__sample_from_par_with_sequence_index(self, tqdm_mock):
+        """Test that the method handles the sequence index properly.
+
+        If there is a sequence index, then this method should recreate it from the
+        sampled sequence. To do this, we have to mock the underlying model to return
+        an extra column for the starting point of the sequence index.
+        """
+        # Setup
+        metadata = self.get_metadata()
+        metadata.set_sequence_index('time')
+        par = PARSynthesizer(
+            metadata=metadata,
+            context_columns=['gender']
+        )
+        model_mock = Mock()
+        par._model = model_mock
+        par._data_columns = ['time', 'measurement']
+        par._output_columns = ['time', 'gender', 'name', 'measurement']
+        model_mock.sample_sequence.return_value = [
+            [1000, 2000, 2000],
+            [55, 60, 65],
+            [18000, 18000, 18000]
+        ]
+        context_columns = pd.DataFrame({'name': ['John'], 'gender': ['M']})
+        tqdm_mock.tqdm.return_value = context_columns.set_index('name').iterrows()
+
+        # Run
+        sampled = par._sample_from_par(context_columns, 3)
+
+        # Assert
+        expected_output = pd.DataFrame({
+            'time.value': [18000, 20000, 22000],
+            'gender': ['M', 'M', 'M'],
+            'name': ['John', 'John', 'John'],
+            'measurement': [55, 60, 65]
+        })
+        pd.testing.assert_frame_equal(sampled, expected_output, check_dtype=False)

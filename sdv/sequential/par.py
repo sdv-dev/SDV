@@ -220,16 +220,14 @@ class PARSynthesizer(BaseSynthesizer):
         LOGGER.debug(f'Fitting {self.__class__.__name__} model to table')
         self._fit_sequence_columns(processed_data)
 
-    def _sample_from_par(self, context=None, sequence_length=None):
+    def _sample_from_par(self, context, sequence_length=None):
         """Sample new sequences.
 
         Args:
             context (pandas.DataFrame):
                 Context values to use when generating the sequences.
-                If not passed, the context values will be sampled
-                using the specified tabular model.
             sequence_length (int):
-                If passed, sample sequences of this length. If not
+                Length of each sequence to sample. If not
                 given, the sequence length will be sampled from
                 the model.
 
@@ -238,16 +236,18 @@ class PARSynthesizer(BaseSynthesizer):
                 Table containing the sampled sequences in the same
                 format as that he training data had.
         """
-        # Set the entity_columns as index to properly iterate over them
+        # Set the sequence_key as index to properly iterate over them
         if self._sequence_key:
             context = context.set_index(self._sequence_key)
 
-        iterator = tqdm.tqdm(context.iterrows(), disable=not self._verbose, total=len(context))
+        should_disable = not self._model_kwargs['verbose']
+        iterator = tqdm.tqdm(context.iterrows(), disable=should_disable, total=len(context))
 
         output = []
-        for entity_values, context_values in iterator:
+        for sequence_key_values, context_values in iterator:
             context_values = context_values.tolist()
             sequence = self._model.sample_sequence(context_values, sequence_length)
+
             if self._sequence_index:
                 sequence_index_idx = self._data_columns.index(self._sequence_index)
                 diffs = sequence[sequence_index_idx]
@@ -255,19 +255,15 @@ class PARSynthesizer(BaseSynthesizer):
                 sequence[sequence_index_idx] = np.cumsum(diffs) - diffs[0] + start
 
             # Reformat as a DataFrame
-            group = pd.DataFrame(
+            sequence_df = pd.DataFrame(
                 dict(zip(self._data_columns, sequence)),
                 columns=self._data_columns
             )
-            group[self._sequence_key] = entity_values
+            sequence_df[self._sequence_key] = sequence_key_values
             for column, value in zip(self.context_columns, context_values):
-                if column == self._sequence_index:
-                    sequence_index = group[column]
-                    group[column] = sequence_index.cumsum() - sequence_index.iloc[0] + value
-                else:
-                    group[column] = value
+                sequence_df[column] = value
 
-            output.append(group)
+            output.append(sequence_df)
 
         output = pd.concat(output)
         output = output[self._output_columns].reset_index(drop=True)
@@ -279,7 +275,6 @@ class PARSynthesizer(BaseSynthesizer):
         return output
 
     def _sample(self, context_columns, sequence_length=None, randomize_samples=False):
-        self._randomize_samples(randomize_samples)
         sampled = self._sample_from_par(context_columns, sequence_length)
         return self._data_processor.reverse_transform(sampled)
 
