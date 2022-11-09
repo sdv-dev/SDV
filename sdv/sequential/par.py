@@ -87,7 +87,7 @@ class PARSynthesizer(BaseSynthesizer):
         self._sequence_index = self.metadata._sequence_index
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
-        self.context_columns = context_columns
+        self.context_columns = context_columns or []
         self.segment_size = segment_size
         self._model_kwargs = {
             'epochs': epochs,
@@ -142,7 +142,9 @@ class PARSynthesizer(BaseSynthesizer):
         else:
             context = transformed[self._sequence_key].copy()
             # Add constant column to allow modeling
-            context[str(uuid.uuid4())] = 0
+            constant_column = str(uuid.uuid4())
+            context[constant_column] = 0
+            self._context_synthesizer.metadata.add_column(constant_column, sdtype='numerical')
 
         context = context.groupby(self._sequence_key).first().reset_index()
         self._context_synthesizer.fit(context)
@@ -239,6 +241,8 @@ class PARSynthesizer(BaseSynthesizer):
         # Set the sequence_key as index to properly iterate over them
         if self._sequence_key:
             context = context.set_index(self._sequence_key)
+            # reorder context columns
+            context = context[self.context_columns]
 
         should_disable = not self._model_kwargs['verbose']
         iterator = tqdm.tqdm(context.iterrows(), disable=should_disable, total=len(context))
@@ -247,7 +251,6 @@ class PARSynthesizer(BaseSynthesizer):
         for sequence_key_values, context_values in iterator:
             context_values = context_values.tolist()
             sequence = self._model.sample_sequence(context_values, sequence_length)
-
             if self._sequence_index:
                 sequence_index_idx = self._data_columns.index(self._sequence_index)
                 diffs = sequence[sequence_index_idx]
@@ -325,7 +328,5 @@ class PARSynthesizer(BaseSynthesizer):
                 'Cannot sample based on context columns if there is no sequence key. Please use '
                 'PARSynthesizer.sample method instead.'
             )
-        # reorder context columns
-        context_columns = context_columns[self.context_columns]
 
         return self._sample(context_columns, sequence_length, randomize_samples)

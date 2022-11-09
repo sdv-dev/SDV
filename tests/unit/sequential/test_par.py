@@ -99,7 +99,7 @@ class TestPARSynthesizer:
         assert parameters == {
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'context_columns': None,
+            'context_columns': [],
             'segment_size': 10,
             'epochs': 10,
             'sample_size': 5,
