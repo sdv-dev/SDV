@@ -521,3 +521,112 @@ class TestPARSynthesizer:
             'measurement': [55, 60, 65]
         })
         pd.testing.assert_frame_equal(sampled, expected_output, check_dtype=False)
+
+    def test__sample(self):
+        """This method should sample from par and reverse transform the data."""
+        # Setup
+        par = PARSynthesizer(metadata=self.get_metadata())
+        par._sample_from_par = Mock()
+        fake_sampled = pd.DataFrame()
+        par._sample_from_par.return_value = fake_sampled
+        par._data_processor = Mock()
+        context_columns = pd.DataFrame({'gender': ['M']})
+
+        # Run
+        par._sample(context_columns=context_columns, sequence_length=5)
+
+        # Assert
+        par._sample_from_par.assert_called_once_with(context_columns, 5)
+        par._data_processor.reverse_transform.assert_called_once_with(fake_sampled)
+
+    def test_sample(self):
+        """Test that the method samples the context columns and uses them to sample from PAR."""
+        # Setup
+        metadata = self.get_metadata()
+        par = PARSynthesizer(
+            metadata=metadata,
+            context_columns=['gender']
+        )
+        par._context_synthesizer = Mock()
+        context_columns = pd.DataFrame({
+            'name': ['John', 'John', 'Jane'],
+            'gender': ['M', 'M', 'F']
+        })
+        par._context_synthesizer._sample_with_progress_bar.return_value = context_columns
+        par._sample = Mock()
+
+        # Run
+        par.sample(3, 2)
+
+        # Assert
+        par._context_synthesizer._sample_with_progress_bar.assert_called_once_with(
+            3, output_file_path='disable', show_progress_bar=False)
+        par._sample.assert_called_once_with(context_columns, 2, False)
+
+    def test_sample_sequence_key_needs_to_be_filled_in(self):
+        """Test that the method adds the sequence key to the context columns if necessary."""
+        # Setup
+        metadata = self.get_metadata()
+        par = PARSynthesizer(
+            metadata=metadata,
+            context_columns=['gender']
+        )
+        par._context_synthesizer = Mock()
+        context_columns = pd.DataFrame({
+            'gender': ['M', 'M', 'F']
+        })
+        par._context_synthesizer._sample_with_progress_bar.return_value = context_columns
+        par._sample = Mock()
+
+        # Run
+        par.sample(3, 2)
+
+        # Assert
+        par._context_synthesizer._sample_with_progress_bar.assert_called_once_with(
+            3, output_file_path='disable', show_progress_bar=False)
+        par._sample.assert_called_once_with(context_columns, 2, False)
+        expected_context_columns = pd.DataFrame({
+            'gender': ['M', 'M', 'F'],
+            'name': [0, 1, 2]
+        })
+        pd.testing.assert_frame_equal(context_columns, expected_context_columns, check_dtype=False)
+
+    def test_sample_sequential_columns(self):
+        """Test that the method uses the provided context columns to sample."""
+        # Setup
+        par = PARSynthesizer(
+            metadata=self.get_metadata(),
+            context_columns=['gender']
+        )
+        par._sample = Mock()
+        context_columns = pd.DataFrame({
+            'gender': ['M', 'M', 'F']
+        })
+
+        # Run
+        par.sample_sequential_columns(context_columns, 5)
+
+        # Assert
+        call_args, _ = par._sample.call_args
+        pd.testing.assert_frame_equal(call_args[0], context_columns)
+        assert call_args[1] == 5
+
+    def test_sample_sequential_columns_no_sequence_key(self):
+        """Test that the method raises an error if there is no sequence key."""
+        # Setup
+        par = PARSynthesizer(
+            metadata=self.get_metadata(add_sequence_key=False),
+            context_columns=['gender']
+        )
+        par._sample = Mock()
+        context_columns = pd.DataFrame({
+            'gender': ['M', 'M', 'F']
+        })
+
+        # Run and Assert
+        error_message = (
+            'Cannot sample based on context columns if there is no sequence key. Please use '
+            'PARSynthesizer.sample method instead.'
+        )
+        with pytest.raises(TypeError, match=error_message):
+            par.sample_sequential_columns(context_columns, 5)
