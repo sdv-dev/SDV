@@ -99,13 +99,13 @@ class BaseMultiTableSynthesizer:
                 if any(missing_values):
                     message = ', '.join(missing_values[:5].astype(str))
                     if len(missing_values) > 5:
-                        message = f'({message}, + more).'
+                        message = f'({message}, + more)'
                     else:
-                        message = f'({message}).'
+                        message = f'({message})'
 
                     errors.append(
                         f"Error: foreign key column '{relation['child_foreign_key']}' contains "
-                        f'unknown references: {message} All the values in this column must '
+                        f'unknown references: {message}. All the values in this column must '
                         'reference a primary key.'
                     )
             if errors:
@@ -142,16 +142,15 @@ class BaseMultiTableSynthesizer:
             try:
                 self._table_synthesizers[table_name].validate(table_data)
 
-            except (InvalidDataError, ValueError) as error:
-                if isinstance(error, InvalidDataError):
-                    error_msg = f"Table: '{table_name}'"
-                    for _error in error.errors:
-                        error_msg += f'\nError: {_error}'
-
-                else:
-                    error_msg = str(error)
+            except InvalidDataError as error:
+                error_msg = f"Table: '{table_name}'"
+                for _error in error.errors:
+                    error_msg += f'\nError: {_error}'
 
                 errors.append(error_msg)
+
+            except ValueError as error:
+                errors.append(str(error))
 
             except KeyError:
                 continue
