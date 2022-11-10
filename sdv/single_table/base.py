@@ -357,6 +357,14 @@ class BaseSynthesizer:
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
 
+
+class BaseSingleTableSynthesizer(BaseSynthesizer):
+    """Base class for all single-table ``Synthesizers``.
+
+    The ``BaseSingleTableSynthesizer`` class defines the common sampling methods
+    for all single-table synthesizers.
+    """
+
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.
 
@@ -383,14 +391,6 @@ class BaseSynthesizer:
             self._set_random_state(None)
         else:
             self._set_random_state(FIXED_RNG_SEED)
-
-
-class BaseSingleTableSynthesizer(BaseSynthesizer):
-    """Base class for all single-table ``Synthesizers``.
-
-    The ``BaseSingleTableSynthesizer`` class defines the common sampling methods
-    for all single-table synthesizers.
-    """
 
     @staticmethod
     def _filter_conditions(sampled, conditions, float_rtol):

@@ -561,7 +561,7 @@ class TestPARSynthesizer:
         # Assert
         par._context_synthesizer._sample_with_progress_bar.assert_called_once_with(
             3, output_file_path='disable', show_progress_bar=False)
-        par._sample.assert_called_once_with(context_columns, 2, False)
+        par._sample.assert_called_once_with(context_columns, 2)
 
     def test_sample_sequence_key_needs_to_be_filled_in(self):
         """Test that the method adds the sequence key to the context columns if necessary."""
@@ -584,7 +584,7 @@ class TestPARSynthesizer:
         # Assert
         par._context_synthesizer._sample_with_progress_bar.assert_called_once_with(
             3, output_file_path='disable', show_progress_bar=False)
-        par._sample.assert_called_once_with(context_columns, 2, False)
+        par._sample.assert_called_once_with(context_columns, 2)
         expected_context_columns = pd.DataFrame({
             'gender': ['M', 'M', 'F'],
             'name': [0, 1, 2]

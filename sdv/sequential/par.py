@@ -277,11 +277,11 @@ class PARSynthesizer(BaseSynthesizer):
 
         return output
 
-    def _sample(self, context_columns, sequence_length=None, randomize_samples=False):
+    def _sample(self, context_columns, sequence_length=None):
         sampled = self._sample_from_par(context_columns, sequence_length)
         return self._data_processor.reverse_transform(sampled)
 
-    def sample(self, num_sequences, sequence_length=None, randomize_samples=False):
+    def sample(self, num_sequences, sequence_length=None):
         """Sample new sequences.
 
         Args:
@@ -290,8 +290,6 @@ class PARSynthesizer(BaseSynthesizer):
             sequence_length (int):
                 If passed, sample sequences of this length. If ``None``, the sequence length will
                 be sampled from the model.
-            randomize_samples (bool):
-                Whether or not to use a fixed seed when sampling. Defaults to False.
 
         Returns:
             pandas.DataFrame:
@@ -304,10 +302,9 @@ class PARSynthesizer(BaseSynthesizer):
             if column not in context_columns:
                 context_columns[column] = range(len(context_columns))
 
-        return self._sample(context_columns, sequence_length, randomize_samples)
+        return self._sample(context_columns, sequence_length)
 
-    def sample_sequential_columns(self, context_columns, sequence_length=None,
-                                  randomize_samples=False):
+    def sample_sequential_columns(self, context_columns, sequence_length=None):
         """Sample the sequential columns based ont he provided context columns.
 
         Args:
@@ -316,8 +313,6 @@ class PARSynthesizer(BaseSynthesizer):
             sequence_length (int):
                 If passed, sample sequences of this length. If ``None``, the sequence length will
                 be sampled from the model.
-            randomize_samples (bool):
-                Whether or not to use a fixed seed when sampling. Defaults to False.
 
         Returns:
             pandas.DataFrame:
@@ -329,4 +324,4 @@ class PARSynthesizer(BaseSynthesizer):
                 'PARSynthesizer.sample method instead.'
             )
 
-        return self._sample(context_columns, sequence_length, randomize_samples)
+        return self._sample(context_columns, sequence_length)
