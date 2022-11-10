@@ -296,7 +296,10 @@ class PARSynthesizer(BaseSynthesizer):
                 Table containing the sampled sequences in the same format as the fitted data.
         """
         context_columns = self._context_synthesizer._sample_with_progress_bar(
-            num_sequences, output_file_path='disable', show_progress_bar=False)
+            num_sequences,
+            output_file_path='disable',
+            show_progress_bar=False
+        )
 
         for column in self._sequence_key or []:
             if column not in context_columns:
