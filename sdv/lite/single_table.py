@@ -53,8 +53,7 @@ class SingleTablePreset():
             # Decide if transformers should model the null column or not.
             self._null_column = len(metadata.to_dict().get('constraints', [])) > 0
 
-            # If transformers should model the null column, pass None to let each transformer
-            # decide if it's necessary or not.
+            # Update transformers to model missing values if necessary
             transformer_model_missing_values = bool(self._null_column)
 
             sdtype_transformers = {
