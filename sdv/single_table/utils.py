@@ -3,8 +3,12 @@
 import os
 import warnings
 
+import numpy as np
+import scipy
+
 TMP_FILE_NAME = '.sample.csv.temp'
 DISABLE_TMP_FILE = 'disable'
+IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
 
 
 def detect_discrete_columns(metadata, data):
@@ -148,3 +152,216 @@ def validate_file_path(output_file_path):
         pass
 
     return output_path
+
+
+def get_nearest_correlation_matrix(matrix):
+    """Find the nearest correlation matrix.
+
+    If the given matrix is not Positive Semi-definite, which means
+    that any of its eigenvalues is negative, find the nearest PSD matrix
+    by setting the negative eigenvalues to 0 and rebuilding the matrix
+    from the same eigenvectors and the modified eigenvalues.
+
+    After this, the matrix will be PSD but may not have 1s in the diagonal,
+    so the diagonal is replaced by 1s and then the PSD condition of the
+    matrix is validated again, repeating the process until the built matrix
+    contains 1s in all the diagonal and is PSD.
+
+    After 10 iterations, the last step is skipped and the current PSD matrix
+    is returned even if it does not have all 1s in the diagonal.
+
+    Insipired by: https://stackoverflow.com/a/63131250
+    """
+    eigenvalues, eigenvectors = scipy.linalg.eigh(matrix)
+    negative = eigenvalues < 0
+    identity = np.identity(len(matrix))
+
+    iterations = 0
+    while np.any(negative):
+        eigenvalues[negative] = 0
+        matrix = eigenvectors.dot(np.diag(eigenvalues)).dot(eigenvectors.T)
+        if iterations >= 10:
+            break
+
+        matrix = matrix - matrix * identity + identity
+
+        max_value = np.abs(np.abs(matrix).max())
+        if max_value > 1:
+            matrix /= max_value
+
+        eigenvalues, eigenvectors = scipy.linalg.eigh(matrix)
+        negative = eigenvalues < 0
+        iterations += 1
+
+    return matrix
+
+
+def rebuild_correlation_matrix(triangular_covariance):
+    """Rebuild a valid correlation matrix from its lower half triangle.
+
+    The input of this function is a list of lists of floats of size 1, 2, 3...n-1:
+
+       [[c_{2,1}], [c_{3,1}, c_{3,2}], ..., [c_{n,1},...,c_{n,n-1}]]
+
+    Corresponding to the values from the lower half of the original correlation matrix,
+    **excluding** the diagonal.
+
+    The output is the complete correlation matrix reconstructed using the given values
+    and scaled to the :math:`[-1, 1]` range if necessary.
+
+    Args:
+        triangle_covariange (list[list[float]]):
+            A list that contains lists of floats of size 1, 2, 3... up to ``n-1``,
+            where ``n`` is the size of the target covariance matrix.
+
+    Returns:
+        numpy.ndarray:
+            rebuilt correlation matrix.
+    """
+    zero = [0.0]
+    size = len(triangular_covariance) + 1
+    left = np.zeros((size, size))
+    right = np.zeros((size, size))
+    for idx, values in enumerate(triangular_covariance):
+        values = values + zero * (size - idx - 1)
+        left[idx + 1, :] = values
+        right[:, idx + 1] = values
+
+    correlation = left + right
+    max_value = np.abs(correlation).max()
+    if max_value > 1:
+        correlation /= max_value
+
+    correlation += np.identity(size)
+
+    return get_nearest_correlation_matrix(correlation).tolist()
+
+
+def flatten_array(nested, prefix=''):
+    """Flatten an array as a dict.
+
+    Args:
+        nested (list, numpy.array):
+            Iterable to flatten.
+        prefix (str):
+            Name to append to the array indices. Defaults to ``''``.
+
+    Returns:
+        dict:
+            Flattened array.
+    """
+    result = {}
+    for index in range(len(nested)):
+        prefix_key = '__'.join([prefix, str(index)]) if len(prefix) else str(index)
+
+        value = nested[index]
+        if isinstance(value, (list, np.ndarray)):
+            result.update(flatten_array(value, prefix=prefix_key))
+
+        elif isinstance(value, dict):
+            result.update(flatten_dict(value, prefix=prefix_key))
+
+        else:
+            result[prefix_key] = value
+
+    return result
+
+
+def flatten_dict(nested, prefix=''):
+    """Flatten a dictionary.
+
+    This method returns a flatten version of a dictionary, concatenating key names with
+    double underscores.
+
+    Args:
+        nested (dict):
+            Original dictionary to flatten.
+        prefix (str):
+            Prefix to append to key name. Defaults to ``''``.
+
+    Returns:
+        dict:
+            Flattened dictionary.
+    """
+    result = {}
+
+    for key, value in nested.items():
+        prefix_key = '__'.join([prefix, str(key)]) if len(prefix) else key
+
+        if key in IGNORED_DICT_KEYS and not isinstance(value, (dict, list)):
+            continue
+
+        elif isinstance(value, dict):
+            result.update(flatten_dict(value, prefix_key))
+
+        elif isinstance(value, (np.ndarray, list)):
+            result.update(flatten_array(value, prefix_key))
+
+        else:
+            result[prefix_key] = value
+
+    return result
+
+
+def _key_order(key_value):
+    parts = []
+    for part in key_value[0].split('__'):
+        if part.isdigit():
+            part = int(part)
+
+        parts.append(part)
+
+    return parts
+
+
+def unflatten_dict(flat):
+    """Transform a flattened dict into its original form.
+
+    Args:
+        flat (dict):
+            Flattened dict.
+
+    Returns:
+        dict:
+            Nested dict (if corresponds)
+    """
+    unflattened = {}
+
+    for key, value in sorted(flat.items(), key=_key_order):
+        if '__' in key:
+            key, subkey = key.split('__', 1)
+            subkey, name = subkey.rsplit('__', 1)
+
+            if name.isdigit():
+                column_index = int(name)
+                row_index = int(subkey)
+
+                array = unflattened.setdefault(key, [])
+
+                if len(array) == row_index:
+                    row = []
+                    array.append(row)
+                elif len(array) == row_index + 1:
+                    row = array[row_index]
+                else:
+                    # This should never happen
+                    raise ValueError('There was an error unflattening the extension.')
+
+                if len(row) == column_index:
+                    row.append(value)
+                else:
+                    # This should never happen
+                    raise ValueError('There was an error unflattening the extension.')
+
+            else:
+                subdict = unflattened.setdefault(key, {})
+                if subkey.isdigit():
+                    subkey = int(subkey)
+
+                inner = subdict.setdefault(subkey, {})
+                inner[name] = value
+
+        else:
+            unflattened[key] = value
+
+    return unflattened

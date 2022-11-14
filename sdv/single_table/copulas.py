@@ -7,7 +7,9 @@ import copulas.multivariate
 import copulas.univariate
 from rdt.transformers import OneHotEncoder
 
+from sdv.errors import NonParametricError
 from sdv.single_table.base import BaseSingleTableSynthesizer
+from sdv.single_table.utils import flatten_dict, rebuild_correlation_matrix, unflatten_dict
 
 
 class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
@@ -86,6 +88,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             field: self._validate_distribution(distribution)
             for field, distribution in (numerical_distributions or {}).items()
         }
+        self._num_rows = None
 
     def _fit(self, processed_data):
         """Fit the model to the table.
@@ -141,3 +144,81 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
                 Sampled data.
         """
         return self._model.sample(num_rows, conditions=conditions)
+
+    def _get_parameters(self):
+        """Get copula model parameters.
+
+        Compute model ``covariance`` and ``distribution.std``
+        before it returns the flatten dict.
+
+        Returns:
+            dict:
+                Copula parameters.
+
+        Raises:
+            NonParametricError:
+                If a non-parametric distribution has been used.
+        """
+        for univariate in self._model.univariates:
+            univariate_type = type(univariate)
+            if univariate_type is copulas.univariate.Univariate:
+                univariate = univariate._instance
+
+            if univariate.PARAMETRIC == copulas.univariate.ParametricType.NON_PARAMETRIC:
+                raise NonParametricError('This GaussianCopula uses non parametric distributions')
+
+        params = self._model.to_dict()
+
+        covariance = []
+        for index, row in enumerate(params['covariance'][1:]):
+            covariance.append(row[:index + 1])
+
+        params['covariance'] = covariance
+        params['univariates'] = dict(zip(params.pop('columns'), params['univariates']))
+        params['num_rows'] = self._num_rows
+
+        return flatten_dict(params)
+
+    def _rebuild_gaussian_copula(self, model_parameters):
+        """Rebuild the model params to recreate a Gaussian Multivariate instance.
+
+        Args:
+            model_parameters (dict):
+                Sampled and reestructured model parameters.
+
+        Returns:
+            dict:
+                Model parameters ready to recreate the model.
+        """
+        columns = []
+        univariates = []
+        for column, univariate in model_parameters['univariates'].items():
+            columns.append(column)
+            univariate['type'] = self._field_distributions[column]
+            if 'scale' in univariate:
+                univariate['scale'] = max(0, univariate['scale'])
+
+            univariates.append(univariate)
+
+        model_parameters['univariates'] = univariates
+        model_parameters['columns'] = columns
+
+        covariance = model_parameters.get('covariance')
+        if covariance:
+            model_parameters['covariance'] = rebuild_correlation_matrix(covariance)
+        else:
+            model_parameters['covariance'] = [[1.0]]
+
+        return model_parameters
+
+    def _set_parameters(self, parameters):
+        """Set copula model parameters.
+
+        Args:
+            dict:
+                Copula flatten parameters.
+        """
+        parameters = unflatten_dict(parameters)
+        parameters = self._rebuild_gaussian_copula(parameters)
+
+        self._model = copulas.multivariate.GaussianMultivariate.from_dict(parameters)
