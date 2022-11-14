@@ -60,8 +60,8 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         for foreign_key_value in foreign_key_values:
             child_rows = child_table.loc[[foreign_key_value]]
             try:
-                model = self._model(table_metadata=table_meta)
-                model.fit_preprocessed_data(child_rows.reset_index(drop=True))
+                model = self._synthesizer(table_meta, **self._synthesizer_kwargs)
+                model.fit_processed_data(child_rows.reset_index(drop=True))
                 row = model._get_parameters()
                 row = pd.Series(row)
                 row.index = f'__{child_name}__{foreign_key}__' + row.index
@@ -89,15 +89,15 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         for relation in self.metadata._relationships:
             if table_name == relation['parent_table_name'] and\
                child_name == relation['child_table_name']:
-                foreign_keys.append(deepcopy(relation['cihld_foreign_key']))
+                foreign_keys.append(deepcopy(relation['child_foreign_key']))
 
         return foreign_keys
 
     def _get_all_foreign_keys(self, table_name):
         foreign_keys = []
         for relation in self.metadata._relationships:
-            if table_name == relation['parent_table_name']:
-                foreign_keys.append(deepcopy(relation['cihld_foreign_key']))
+            if table_name == relation['child_table_name']:
+                foreign_keys.append(deepcopy(relation['child_foreign_key']))
 
         return foreign_keys
 
@@ -120,10 +120,9 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                 The extended table.
         """
         LOGGER.info('Computing extensions for table %s', table_name)
-        for child_name in self.metadata.get_children(table_name):
+        for child_name in self.metadata._get_child_map()[table_name]:
             if child_name not in self._modeled_tables:
                 child_table = self._model_table(child_name, tables)
-                self._modeled_tables.append(child_name)
             else:
                 child_table = tables[child_name]
 
@@ -137,7 +136,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
         return table
 
-    def _prepare_for_modeling(self, table_data):
+    def _prepare_for_modeling(self, table_data, table_name):
         """Prepare the given table for modeling.
 
         In preparation for modeling a given table, we ensure that there are no missing
@@ -147,10 +146,10 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             table_data (pandas.DataFrame):
                 The data of the desired table.
         """
-        foreign_keys = self._get_all_foreign_keys()
+        foreign_keys = self._get_all_foreign_keys(table_name)
         keys = {}
         for fk in foreign_keys:
-            keys[fk] = table_data.pop(fk).to_array()
+            keys[fk] = table_data.pop(fk).to_numpy()
 
         for column in table_data.columns:
             column_data = table_data[column]
@@ -178,8 +177,8 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         self._table_sizes[table_name] = len(table)
 
         table = self._extend_table(table, tables, table_name)
-        keys = self._prepare_for_modeling(table)
-        LOGGER.info('Fitting %s for table %s; shape: %s', self._model.__name__,
+        keys = self._prepare_for_modeling(table, table_name)
+        LOGGER.info('Fitting %s for table %s; shape: %s', self._synthesizer.__name__,
                     table_name, table.shape)
 
         self._table_synthesizers[table_name].fit_processed_data(table)
@@ -188,6 +187,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             table[name] = values
 
         tables[table_name] = table
+        self._modeled_tables.append(table_name)
 
         return table
 
@@ -199,8 +199,9 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
         """
         self._modeled_tables = []
+        parent_map = self.metadata._get_parent_map()
         for table_name in processed_data:
-            if not self.metadata._parent_map.get(table_name):
+            if not parent_map.get(table_name):
                 self._model_table(table_name, processed_data)
 
         LOGGER.info('Modeling Complete')
