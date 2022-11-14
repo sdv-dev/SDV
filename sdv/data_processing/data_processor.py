@@ -60,7 +60,8 @@ class DataProcessor:
         'datetime': rdt.transformers.UnixTimestampEncoder(
             missing_value_replacement='mean',
             model_missing_values=True,
-        )
+        ),
+        'text': rdt.transformers.RegexGenerator()
     }
     _DTYPE_TO_SDTYPE = {
         'i': 'numerical',
@@ -284,7 +285,7 @@ class DataProcessor:
                 self._anonymized_columns.append(column)
 
             else:
-                transformers[column] = self._transformers_by_sdtype.get(sdtype)
+                transformers[column] = deepcopy(self._transformers_by_sdtype.get(sdtype))
 
         for column in columns_created_by_constraints:
             dtype_kind = data[column].dtype.kind
