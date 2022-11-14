@@ -5,7 +5,7 @@ import sys
 
 import cloudpickle
 import numpy as np
-from rdt.transformers import BinaryEncoder, FloatFormatter, FrequencyEncoder, UnixTimestampEncoder
+import rdt.transformers
 
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.utils import get_package_versions, throw_version_mismatch_warning
@@ -19,7 +19,7 @@ PRESETS = {
 
 
 class SingleTablePreset():
-    """Class for all tabular model presets.
+    """Class for all single table synthesizer presets.
 
     Args:
         metadata (sdv.metadata.SingleTableMetadata):
@@ -39,45 +39,36 @@ class SingleTablePreset():
 
         self.name = name
 
-        metadata = metadata.to_dict()
-
-        if metadata is not None and constraints is not None:
-            metadata['constraints'] = []
-            for constraint in constraints:
-                metadata['constraints'].append(constraint.to_dict())
-
-            constraints = None
-
         if name == FAST_ML_PRESET:
             self._synthesizer = GaussianCopulaSynthesizer(
                 metadata=metadata,
-                default_distribution='gaussian',
-                learn_rounding_scheme=False
+                default_distribution='norm',
+                enforce_rounding=False
             )
             self._synthesizer._data_processor._update_transformers_by_sdtypes(
                 'categorical',
-                FrequencyEncoder(add_noise=True)
+                rdt.transformers.FrequencyEncoder(add_noise=True)
             )
 
             # Decide if transformers should model the null column or not.
-            self._null_column = len(metadata.get('constraints', [])) > 0
+            self._null_column = len(metadata.to_dict().get('constraints', [])) > 0
 
             # If transformers should model the null column, pass None to let each transformer
             # decide if it's necessary or not.
             transformer_model_missing_values = bool(self._null_column)
 
             sdtype_transformers = {
-                'numerical': FloatFormatter(
+                'numerical': rdt.transformers.FloatFormatter(
                     missing_value_replacement='mean',
                     model_missing_values=transformer_model_missing_values,
                     enforce_min_max_values=True,
                 ),
-                'categorical': FrequencyEncoder(add_noise=True),
-                'boolean': BinaryEncoder(
+                'categorical': rdt.transformers.FrequencyEncoder(add_noise=True),
+                'boolean': rdt.transformers.BinaryEncoder(
                     missing_value_replacement=-1 if self._null_column else 'mode',
                     model_missing_values=transformer_model_missing_values,
                 ),
-                'datetime': UnixTimestampEncoder(
+                'datetime': rdt.transformers.UnixTimestampEncoder(
                     missing_value_replacement='mean' if self._null_column else 'mode',
                     model_missing_values=transformer_model_missing_values,
                 ),
@@ -220,22 +211,22 @@ class SingleTablePreset():
             path (str):
                 Path where the SDV instance will be serialized.
         """
-        self._package_versions = get_package_versions(getattr(self, '_model', None))
+        self._package_versions = get_package_versions(getattr(self, '_synthesizer', None))
 
         with open(path, 'wb') as output:
             cloudpickle.dump(self, output)
 
     @classmethod
     def load(cls, path):
-        """Load a TabularModel instance from a given path.
+        """Load a SingleTableSynthesizer instance from a given path.
 
         Args:
             path (str):
                 Path from which to load the instance.
 
         Returns:
-            TabularModel:
-                The loaded tabular model.
+            SingleTableSynthesizer:
+                The loaded synthesizer.
         """
         with open(path, 'rb') as f:
             model = cloudpickle.load(f)
@@ -252,9 +243,9 @@ class SingleTablePreset():
                   'more an SDV Premium license.\n')
 
     def __repr__(self):
-        """Represent tabular preset instance as text.
+        """Represent single table preset instance as text.
 
         Returns:
             str
         """
-        return f'TabularPreset(name={self.name})'
+        return f'SingleTablePreset(name={self.name})'
