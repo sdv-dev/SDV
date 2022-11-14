@@ -5,6 +5,8 @@ import logging
 import uuid
 
 import numpy as np
+import pandas as pd
+import tqdm
 from deepecho import PARModel
 from deepecho.sequences import assemble_sequences
 
@@ -85,7 +87,7 @@ class PARSynthesizer(BaseSynthesizer):
         self._sequence_index = self.metadata._sequence_index
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
-        self.context_columns = context_columns
+        self.context_columns = context_columns or []
         self.segment_size = segment_size
         self._model_kwargs = {
             'epochs': epochs,
@@ -140,7 +142,9 @@ class PARSynthesizer(BaseSynthesizer):
         else:
             context = transformed[self._sequence_key].copy()
             # Add constant column to allow modeling
-            context[str(uuid.uuid4())] = 0
+            constant_column = str(uuid.uuid4())
+            context[constant_column] = 0
+            self._context_synthesizer.metadata.add_column(constant_column, sdtype='numerical')
 
         context = context.groupby(self._sequence_key).first().reset_index()
         self._context_synthesizer.fit(context)
@@ -217,3 +221,110 @@ class PARSynthesizer(BaseSynthesizer):
 
         LOGGER.debug(f'Fitting {self.__class__.__name__} model to table')
         self._fit_sequence_columns(processed_data)
+
+    def _sample_from_par(self, context, sequence_length=None):
+        """Sample new sequences.
+
+        Args:
+            context (pandas.DataFrame):
+                Context values to use when generating the sequences.
+            sequence_length (int):
+                Length of each sequence to sample. If not
+                given, the sequence length will be sampled from
+                the model.
+
+        Returns:
+            pandas.DataFrame:
+                Table containing the sampled sequences in the same
+                format as that he training data had.
+        """
+        # Set the sequence_key as index to properly iterate over them
+        if self._sequence_key:
+            context = context.set_index(self._sequence_key)
+            # reorder context columns
+            context = context[self.context_columns]
+
+        should_disable = not self._model_kwargs['verbose']
+        iterator = tqdm.tqdm(context.iterrows(), disable=should_disable, total=len(context))
+
+        output = []
+        for sequence_key_values, context_values in iterator:
+            context_values = context_values.tolist()
+            sequence = self._model.sample_sequence(context_values, sequence_length)
+            if self._sequence_index:
+                sequence_index_idx = self._data_columns.index(self._sequence_index)
+                diffs = sequence[sequence_index_idx]
+                start = sequence.pop(-1)
+                sequence[sequence_index_idx] = np.cumsum(diffs) - diffs[0] + start
+
+            # Reformat as a DataFrame
+            sequence_df = pd.DataFrame(
+                dict(zip(self._data_columns, sequence)),
+                columns=self._data_columns
+            )
+            sequence_df[self._sequence_key] = sequence_key_values
+            for column, value in zip(self.context_columns, context_values):
+                sequence_df[column] = value
+
+            output.append(sequence_df)
+
+        output = pd.concat(output)
+        output = output[self._output_columns].reset_index(drop=True)
+        if self._sequence_index:
+            output = output.rename(columns={
+                self._sequence_index: self._sequence_index + '.value'
+            })
+
+        return output
+
+    def _sample(self, context_columns, sequence_length=None):
+        sampled = self._sample_from_par(context_columns, sequence_length)
+        return self._data_processor.reverse_transform(sampled)
+
+    def sample(self, num_sequences, sequence_length=None):
+        """Sample new sequences.
+
+        Args:
+            num_sequences (int):
+                Number of sequences to sample.
+            sequence_length (int):
+                If passed, sample sequences of this length. If ``None``, the sequence length will
+                be sampled from the model.
+
+        Returns:
+            pandas.DataFrame:
+                Table containing the sampled sequences in the same format as the fitted data.
+        """
+        context_columns = self._context_synthesizer._sample_with_progress_bar(
+            num_sequences,
+            output_file_path='disable',
+            show_progress_bar=False
+        )
+
+        for column in self._sequence_key or []:
+            if column not in context_columns:
+                context_columns[column] = range(len(context_columns))
+
+        return self._sample(context_columns, sequence_length)
+
+    def sample_sequential_columns(self, context_columns, sequence_length=None):
+        """Sample the sequential columns based ont he provided context columns.
+
+        Args:
+            context_columns (pandas.DataFrame):
+                Context values to use when generating the sequences.
+            sequence_length (int):
+                If passed, sample sequences of this length. If ``None``, the sequence length will
+                be sampled from the model.
+
+        Returns:
+            pandas.DataFrame:
+                Table containing the sampled sequences based on the provided context columns.
+        """
+        if not self._sequence_key:
+            raise TypeError(
+                'Cannot sample based on context columns if there is no sequence key. Please use '
+                'PARSynthesizer.sample method instead.'
+            )
+
+        return self._sample(context_columns, sequence_length)
