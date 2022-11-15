@@ -13,6 +13,7 @@ from deepecho.sequences import assemble_sequences
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
+from sdv.single_table.errors import InvalidDataError
 from sdv.utils import cast_to_iterable
 
 LOGGER = logging.getLogger(__name__)
@@ -114,6 +115,41 @@ class PARSynthesizer(BaseSynthesizer):
             instantiated_parameters[parameter_name] = value
 
         return instantiated_parameters
+
+    def validate(self, data):
+        """Validate data.
+
+        Args:
+            data (pd.DataFrame):
+                The data to validate.
+
+        Raises:
+            ValueError:
+                Raised when data is not of type pd.DataFrame.
+            InvalidDataError:
+                Raised if:
+                    * data columns don't match metadata
+                    * keys have missing values
+                    * primary or alternate keys are not unique
+                    * context columns vary for a sequence key
+                    * values of a column don't satisfy their sdtype
+                    * context columns vary for one sequence
+        """
+        if self._sequence_key:
+            errors = []
+            for sequence_key_value, data_values in data.groupby(self._sequence_key):
+                for context_column in self.context_columns:
+                    if len(data_values[context_column].unique()) > 1:
+                        errors.append((
+                            f"Context column '{context_column}' is changing inside sequence "
+                            f"('{self._sequence_key}'='{sequence_key_value}')."
+                        ))
+
+        try:
+            super().validate(data)
+        except InvalidDataError as error:
+            error.errors += errors
+            raise error
 
     def preprocess(self, data):
         """Transform the raw data to numerical space.
