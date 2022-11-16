@@ -21,7 +21,7 @@ class TestTabularPreset:
         If the name isn't one of the expected presets, a ``ValueError`` should be thrown.
         """
         # Run and Assert
-        with pytest.raises(ValueError, match=r'`name` must be one of *'):
+        with pytest.raises(ValueError, match=r"'name' must be one of *"):
             SingleTablePreset(metadata=SingleTableMetadata(), name='invalid')
 
     @patch('sdv.lite.single_table.rdt.transformers')
@@ -33,8 +33,6 @@ class TestTabularPreset:
         """
         # Setup
         metadata_mock = MagicMock(spec_set=SingleTableMetadata)
-        processor_mock = Mock()
-        gaussian_copula_mock.return_value._data_processor = processor_mock
 
         # Run
         SingleTablePreset(metadata=metadata_mock, name='FAST_ML')
@@ -45,61 +43,6 @@ class TestTabularPreset:
             default_distribution='norm',
             enforce_rounding=False,
         )
-        processor_mock._transformers_by_sdtype.update.assert_called_once_with({
-            'numerical': transformers_mock.FloatFormatter(
-                missing_value_replacement=None,
-                model_missing_values=False,
-                enforce_min_max_values=True,
-            ),
-            'categorical': transformers_mock.FrequencyEncoder(add_noise=True),
-            'boolean': transformers_mock.BinaryEncoder(
-                missing_value_replacement=None,
-                model_missing_values=False
-            ),
-            'datetime': transformers_mock.UnixTimestampEncoder(
-                missing_value_replacement=None,
-                model_missing_values=False
-            )
-        })
-
-    @patch('sdv.lite.single_table.rdt.transformers')
-    @patch('sdv.lite.single_table.GaussianCopulaSynthesizer')
-    def test__init__with_constraints(self, gaussian_copula_mock, transformers_mock):
-        """Tests the method with constraints."""
-        # Setup
-        constraints = [Mock()]
-        metadata = Mock()
-        processor_mock = Mock()
-        gaussian_copula_mock.return_value._data_processor = processor_mock
-        metadata_dict = {'constraints': constraints}
-        metadata.to_dict.return_value = metadata_dict
-
-        # Run
-        preset = SingleTablePreset(metadata=metadata, name='FAST_ML')
-
-        # Assert
-        gaussian_copula_mock.assert_called_once_with(
-            metadata=metadata,
-            default_distribution='norm',
-            enforce_rounding=False,
-        )
-        processor_mock._transformers_by_sdtype.update.assert_called_once_with({
-            'numerical': transformers_mock.FloatFormatter(
-                missing_value_replacement='mean',
-                model_missing_values=False,
-                enforce_min_max_values=True,
-            ),
-            'categorical': transformers_mock.FrequencyEncoder(add_noise=True),
-            'boolean': transformers_mock.BinaryEncoder(
-                missing_value_replacement=-1,
-                model_missing_values=False
-            ),
-            'datetime': transformers_mock.UnixTimestampEncoder(
-                missing_value_replacement='mean',
-                model_missing_values=False
-            )
-        })
-        assert preset._null_column is True
 
     def test_fit(self):
         """Test that the synthesizer's fit method is called with the expected args."""
@@ -110,14 +53,12 @@ class TestTabularPreset:
         synthesizer._metadata = metadata
         preset = Mock()
         preset._synthesizer = synthesizer
-        preset._null_percentages = None
 
         # Run
         SingleTablePreset.fit(preset, pd.DataFrame())
 
         # Assert
         synthesizer.fit.assert_called_once_with(DataFrameMatcher(pd.DataFrame()))
-        assert preset._null_percentages is None
 
     def test_fit_null_column_true(self):
         """Test the method with modeling null columns.
@@ -132,15 +73,12 @@ class TestTabularPreset:
         synthesizer._metadata = metadata
         preset = Mock()
         preset._synthesizer = synthesizer
-        preset._null_column = True
-        preset._null_percentages = None
 
         # Run
         SingleTablePreset.fit(preset, pd.DataFrame())
 
         # Assert
         synthesizer.fit.assert_called_once_with(DataFrameMatcher(pd.DataFrame()))
-        assert preset._null_percentages is None
 
     def test_fit_with_null_values(self):
         """Test the method with null values.
@@ -155,8 +93,6 @@ class TestTabularPreset:
         synthesizer._metadata = metadata
         preset = Mock()
         preset._synthesizer = synthesizer
-        preset._null_column = False
-        preset._null_percentages = None
 
         data = {'a': [1, 2, np.nan]}
 
@@ -165,24 +101,6 @@ class TestTabularPreset:
 
         # Assert
         synthesizer.fit.assert_called_once_with(DataFrameMatcher(pd.DataFrame(data)))
-        assert preset._null_percentages == {'a': 1.0 / 3}
-
-    def test__postprocess_sampled_with_null_values(self):
-        """Test the method with null percentages.
-
-        Expect that null values are inserted back into the sampled data..
-        """
-        # Setup
-        sampled = pd.DataFrame({'a': [1, 2, 3, 4, 5]})
-        preset = Mock()
-        # Convoluted example - 100% percent chance of nulls to make test deterministic.
-        preset._null_percentages = {'a': 1}
-
-        # Run
-        sampled_with_nulls = SingleTablePreset._postprocess_sampled(preset, sampled)
-
-        # Assert
-        assert sampled_with_nulls['a'].isna().sum() == 5
 
     def test_sample(self):
         """Test that the synthesizer's sample method is called with the expected args."""
@@ -190,7 +108,6 @@ class TestTabularPreset:
         synthesizer = Mock()
         preset = Mock()
         preset._synthesizer = synthesizer
-        preset._null_percentages = None
 
         # Run
         SingleTablePreset.sample(preset, 5)
@@ -204,7 +121,6 @@ class TestTabularPreset:
         synthesizer = Mock()
         preset = Mock()
         preset._synthesizer = synthesizer
-        preset._null_percentages = None
         conditions = [Mock()]
 
         # Run
@@ -222,7 +138,6 @@ class TestTabularPreset:
         synthesizer = MagicMock(spec=GaussianCopulaSynthesizer)
         preset = Mock()
         preset._synthesizer = synthesizer
-        preset._null_percentages = None
         conditions = [Mock()]
 
         # Run
@@ -242,7 +157,6 @@ class TestTabularPreset:
         synthesizer = Mock()
         preset = Mock()
         preset._synthesizer = synthesizer
-        preset._null_percentages = None
         conditions = pd.DataFrame({'a': [1, 2, 3]})
 
         # Run
@@ -262,7 +176,6 @@ class TestTabularPreset:
         synthesizer = MagicMock(spec=GaussianCopulaSynthesizer)
         preset = Mock()
         preset._synthesizer = synthesizer
-        preset._null_percentages = None
         conditions = pd.DataFrame({'a': [1, 2, 3]})
 
         # Run

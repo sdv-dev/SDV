@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from sdv.lite import SingleTablePreset
@@ -7,7 +8,7 @@ from sdv.metadata import SingleTableMetadata
 def test_sample():
     """Test sampling for the ``SingleTablePreset``."""
     # Setup
-    data = pd.DataFrame({'a': [1, 2, 3]})
+    data = pd.DataFrame({'a': [1, 2, 3, np.nan]})
 
     # Run
     metadata = SingleTableMetadata()
@@ -21,7 +22,7 @@ def test_sample():
     )
 
     # Assert
-    assert samples['a'].all() in [1, 2, 3]
+    assert samples['a'].all() in [1, 2, 3, np.nan]
     assert len(samples) == 10
 
 
