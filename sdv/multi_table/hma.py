@@ -19,7 +19,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
     """
 
     DEFAULT_SYNTHESIZER_KWARGS = {
-        'default_distribution': 'norm',
+        'default_distribution': 'beta',
     }
 
     def __init__(self, metadata, synthesizer_kwargs=None):
@@ -136,27 +136,32 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
         return table
 
-    def _prepare_for_modeling(self, table_data, table_name):
-        """Prepare the given table for modeling.
-
-        In preparation for modeling a given table, we ensure that there are no missing
-        values.
+    def _pop_foreign_keys(self, table_data, table_name):
+        """Remove foreign keys from the ``table_data``.
 
         Args:
-            table_data (pandas.DataFrame):
-                The data of the desired table.
+            table_data (pd.DataFrame):
+                The table that contains the ``foreign_keys``.
+            table_name (str):
+                The name representing the table.
+
+        Returns:
+            keyes (dict):
+                A dictionary mapping with the foreign key and it's values within the table.
         """
         foreign_keys = self._get_all_foreign_keys(table_name)
         keys = {}
         for fk in foreign_keys:
             keys[fk] = table_data.pop(fk).to_numpy()
 
+        return keys
+
+    @staticmethod
+    def _clear_nans(table_data):
         for column in table_data.columns:
             column_data = table_data[column]
             fill_value = 0 if column_data.isna().all() else column_data.mean()
             table_data[column] = table_data[column].fillna(fill_value)
-
-        return keys
 
     def _model_table(self, table_name, tables):
         """Model the indicated table and its children.
@@ -177,7 +182,8 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         self._table_sizes[table_name] = len(table)
 
         table = self._extend_table(table, tables, table_name)
-        keys = self._prepare_for_modeling(table, table_name)
+        keys = self._pop_foreign_keys(table, table_name)
+        self._clear_nans(table)
         LOGGER.info('Fitting %s for table %s; shape: %s', self._synthesizer.__name__,
                     table_name, table.shape)
 

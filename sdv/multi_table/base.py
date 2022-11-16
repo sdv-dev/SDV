@@ -264,7 +264,6 @@ class BaseMultiTableSynthesizer:
             processed_data (dict):
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
         """
-        self._fitted = False
         self._fit(processed_data)
         self._fitted = True
 
@@ -276,5 +275,6 @@ class BaseMultiTableSynthesizer:
                 Dictionary mapping each table name to a ``pandas.DataFrame`` in the raw format
                 (before any transformations).
         """
+        self._fitted = False
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)

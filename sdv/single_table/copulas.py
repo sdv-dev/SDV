@@ -97,6 +97,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
+        self._num_rows = len(processed_data)
         numerical_distributions = deepcopy(self._numerical_distributions)
 
         for column in processed_data.columns:
