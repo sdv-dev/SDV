@@ -161,3 +161,64 @@ class BaseMultiTableSynthesizer:
 
         if errors:
             raise InvalidDataError(errors)
+
+    def auto_assign_transformers(self, data):
+        """Automatically assign the required transformers for the given data and constraints.
+
+        This method will automatically set a configuration to the ``rdt.HyperTransformer``
+        with the required transformers for the current data.
+
+        Args:
+            data (dict):
+                Mapping of table name to pandas.DataFrame.
+
+        Raises:
+            InvalidDataError:
+                If a table of the data is not present in the metadata.
+        """
+        for table_name, table_data in data.items():
+            if table_name not in self._table_synthesizers:
+                raise InvalidDataError([f"Table '{table_name}' is not present in the metadata."])
+
+            self._table_synthesizers[table_name].auto_assign_transformers(table_data)
+
+    def get_transformers(self, table_name):
+        """Get a dictionary mapping of ``column_name`` and ``rdt.transformers``.
+
+        A dictionary representing the column names and the transformers that will be used
+        to transform the data.
+
+        Args:
+            table_name (string):
+                The name of the table of which to get the transformers.
+
+        Returns:
+            dict:
+                A dictionary mapping with column names and transformers.
+
+        Raises:
+            ValueError:
+                If ``table_name`` is not present in the metadata.
+        """
+        if table_name not in self._table_synthesizers:
+            raise ValueError(f"Table '{table_name}' is not present in the metadata.")
+
+        return self._table_synthesizers[table_name].get_transformers()
+
+    def update_transformers(self, table_name, column_name_to_transformer):
+        """Update any of the transformers assigned to each of the column names.
+
+        Args:
+            table_name (string):
+                The name of the table of which to update the transformers.
+            column_name_to_transformer (dict):
+                Dict mapping column names to transformers to be used for that column.
+
+        Raises:
+            ValueError:
+                If ``table_name`` is not present in the metadata.
+        """
+        if table_name not in self._table_synthesizers:
+            raise ValueError(f"Table '{table_name}' is not present in the metadata.")
+
+        self._table_synthesizers[table_name].update_transformers(column_name_to_transformer)
