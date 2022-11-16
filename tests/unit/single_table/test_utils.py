@@ -4,13 +4,11 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 import pytest
-import scipy
 
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.utils import (
     _key_order, check_num_rows, detect_discrete_columns, flatten_array, flatten_dict,
-    get_nearest_correlation_matrix, handle_sampling_error, rebuild_correlation_matrix,
-    unflatten_dict)
+    handle_sampling_error, unflatten_dict)
 
 
 def test_detect_discrete_columns():
@@ -379,121 +377,3 @@ def test_check_num_rows_valid(warning_mock):
 
     # Assert
     assert warning_mock.warn.call_count == 0
-
-
-def test_get_nearest_correlation_matrix_valid():
-    """Test ``get_nearest_correlation_matrix`` with a psd input.
-
-    If the matrix is positive semi-definite, do nothing.
-
-    Input:
-        - matrix which is positive semi-definite.
-
-    Expected Output:
-        - the input, unmodified.
-    """
-    # Run
-    correlation_matrix = np.array([
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1],
-    ])
-    output = get_nearest_correlation_matrix(correlation_matrix)
-
-    # Assert
-    expected = [
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1],
-    ]
-    assert expected == output.tolist()
-    assert output is correlation_matrix
-
-
-def test_get_nearest_correlation_matrix_invalid():
-    """Test ``get_nearest_correlation_matrix`` with a non psd input.
-
-    If the matrix is not positive semi-definite, modify it to make it PSD.
-
-    Input:
-        - matrix which is not positive semi-definite.
-
-    Expected Output:
-        - modified matrix which is positive semi-definite.
-    """
-    # Run
-    not_psd_matrix = np.array([
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, -1],
-    ])
-    output = get_nearest_correlation_matrix(not_psd_matrix)
-
-    # Assert
-    expected = [
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1],
-    ]
-    assert expected == output.tolist()
-
-    not_psd_eigenvalues = scipy.linalg.eigh(not_psd_matrix)[0]
-    output_eigenvalues = scipy.linalg.eigh(output)[0]
-    assert (not_psd_eigenvalues < 0).any()
-    assert (output_eigenvalues >= 0).all()
-
-
-def test_rebuild_correlation_matrix_valid():
-    """Test ``rebuild_correlation_matrix`` with a valid correlation input.
-
-    If the input contains values between -1 and 1, the method is expected
-    to simply rebuild the square matrix with the same values.
-
-    Input:
-        - list of lists with values between -1 and 1
-
-    Expected Output:
-        - numpy array with the square correlation matrix
-    """
-    # Run
-    triangular_covariance = [
-        [0.1],
-        [0.2, 0.3]
-    ]
-    correlation = rebuild_correlation_matrix(triangular_covariance)
-
-    # Assert
-    expected = [
-        [1.0, 0.1, 0.2],
-        [0.1, 1.0, 0.3],
-        [0.2, 0.3, 1.0]
-    ]
-    assert expected == correlation
-
-
-def test_rebuild_correlation_matrix_outside():
-    """Test ``_rebuild_correlation_matrix`` with an invalid correlation input.
-
-    If the input contains values outside -1 and 1, the method is expected
-    to scale them down to the valid range.
-
-    Input:
-        - list of lists with values outside of -1 and 1
-
-    Expected Output:
-        - numpy array with the square correlation matrix
-    """
-    # Run
-    triangular_covariance = [
-        [1.0],
-        [2.0, 1.0]
-    ]
-    correlation = rebuild_correlation_matrix(triangular_covariance)
-
-    # Assert
-    expected = [
-        [1.0, 0.5, 1.0],
-        [0.5, 1.0, 0.5],
-        [1.0, 0.5, 1.0]
-    ]
-    assert expected == correlation

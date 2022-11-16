@@ -5,11 +5,13 @@ from copy import deepcopy
 import copulas
 import copulas.multivariate
 import copulas.univariate
+import numpy as np
+import scipy
 from rdt.transformers import OneHotEncoder
 
 from sdv.errors import NonParametricError
 from sdv.single_table.base import BaseSingleTableSynthesizer
-from sdv.single_table.utils import flatten_dict, rebuild_correlation_matrix, unflatten_dict
+from sdv.single_table.utils import flatten_dict, unflatten_dict
 
 
 class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
@@ -180,6 +182,89 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         return flatten_dict(params)
 
+    @staticmethod
+    def _get_nearest_correlation_matrix(matrix):
+        """Find the nearest correlation matrix.
+
+        If the given matrix is not Positive Semi-definite, which means
+        that any of its eigenvalues is negative, find the nearest PSD matrix
+        by setting the negative eigenvalues to 0 and rebuilding the matrix
+        from the same eigenvectors and the modified eigenvalues.
+
+        After this, the matrix will be PSD but may not have 1s in the diagonal,
+        so the diagonal is replaced by 1s and then the PSD condition of the
+        matrix is validated again, repeating the process until the built matrix
+        contains 1s in all the diagonal and is PSD.
+
+        After 10 iterations, the last step is skipped and the current PSD matrix
+        is returned even if it does not have all 1s in the diagonal.
+
+        Insipired by: https://stackoverflow.com/a/63131250
+        """
+        eigenvalues, eigenvectors = scipy.linalg.eigh(matrix)
+        negative = eigenvalues < 0
+        identity = np.identity(len(matrix))
+
+        iterations = 0
+        while np.any(negative):
+            eigenvalues[negative] = 0
+            matrix = eigenvectors.dot(np.diag(eigenvalues)).dot(eigenvectors.T)
+            if iterations >= 10:
+                break
+
+            matrix = matrix - matrix * identity + identity
+
+            max_value = np.abs(np.abs(matrix).max())
+            if max_value > 1:
+                matrix /= max_value
+
+            eigenvalues, eigenvectors = scipy.linalg.eigh(matrix)
+            negative = eigenvalues < 0
+            iterations += 1
+
+        return matrix
+
+    @classmethod
+    def _rebuild_correlation_matrix(cls, triangular_covariance):
+        """Rebuild a valid correlation matrix from its lower half triangle.
+
+        The input of this function is a list of lists of floats of size 1, 2, 3...n-1:
+
+           [[c_{2,1}], [c_{3,1}, c_{3,2}], ..., [c_{n,1},...,c_{n,n-1}]]
+
+        Corresponding to the values from the lower half of the original correlation matrix,
+        **excluding** the diagonal.
+
+        The output is the complete correlation matrix reconstructed using the given values
+        and scaled to the :math:`[-1, 1]` range if necessary.
+
+        Args:
+            triangle_covariange (list[list[float]]):
+                A list that contains lists of floats of size 1, 2, 3... up to ``n-1``,
+                where ``n`` is the size of the target covariance matrix.
+
+        Returns:
+            numpy.ndarray:
+                rebuilt correlation matrix.
+        """
+        zero = [0.0]
+        size = len(triangular_covariance) + 1
+        left = np.zeros((size, size))
+        right = np.zeros((size, size))
+        for idx, values in enumerate(triangular_covariance):
+            values = values + zero * (size - idx - 1)
+            left[idx + 1, :] = values
+            right[:, idx + 1] = values
+
+        correlation = left + right
+        max_value = np.abs(correlation).max()
+        if max_value > 1:
+            correlation /= max_value
+
+        correlation += np.identity(size)
+
+        return cls._get_nearest_correlation_matrix(correlation).tolist()
+
     def _rebuild_gaussian_copula(self, model_parameters):
         """Rebuild the model params to recreate a Gaussian Multivariate instance.
 
@@ -195,7 +280,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         univariates = []
         for column, univariate in model_parameters['univariates'].items():
             columns.append(column)
-            univariate['type'] = self._field_distributions[column]
+            univariate['type'] = self._numerical_distributions.get(column, 'beta')
             if 'scale' in univariate:
                 univariate['scale'] = max(0, univariate['scale'])
 
@@ -206,7 +291,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         covariance = model_parameters.get('covariance')
         if covariance:
-            model_parameters['covariance'] = rebuild_correlation_matrix(covariance)
+            model_parameters['covariance'] = self._rebuild_correlation_matrix(covariance)
         else:
             model_parameters['covariance'] = [[1.0]]
 

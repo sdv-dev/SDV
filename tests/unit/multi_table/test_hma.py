@@ -19,8 +19,8 @@ class TestHMASynthesizer:
         assert isinstance(instance._table_synthesizers['oseba'], GaussianCopulaSynthesizer)
         assert isinstance(instance._table_synthesizers['upravna_enota'], GaussianCopulaSynthesizer)
         assert instance._table_parameters == {
-            'nesreca': {'default_distribution': 'norm'},
-            'oseba': {'default_distribution': 'norm'},
-            'upravna_enota': {'default_distribution': 'norm'},
+            'nesreca': {'default_distribution': 'beta'},
+            'oseba': {'default_distribution': 'beta'},
+            'upravna_enota': {'default_distribution': 'beta'},
         }
         instance.metadata.validate.assert_called_once_with()
