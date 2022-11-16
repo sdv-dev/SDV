@@ -57,6 +57,7 @@ class TestGaussianCopulaSynthesizer:
         assert instance.default_distribution == 'beta'
         assert instance._default_distribution == BetaUnivariate
         assert instance._numerical_distributions == {}
+        assert instance._num_rows is None
 
     def test___init__custom(self):
         """Test creating an instance of ``GaussianCopulaSynthesizer`` with custom parameters."""
@@ -84,8 +85,8 @@ class TestGaussianCopulaSynthesizer:
         assert instance._default_distribution == UniformUnivariate
         assert instance._numerical_distributions == {'field': GammaUnivariate}
 
-    def test_get_params(self):
-        """Test that inherited method ``get_params`` returns all the specific init parameters."""
+    def test_get_parameters(self):
+        """Test that inherited method ``get_parameters`` returns the specified init parameters."""
         # Setup
         metadata = SingleTableMetadata()
         instance = GaussianCopulaSynthesizer(metadata)
@@ -141,6 +142,7 @@ class TestGaussianCopulaSynthesizer:
         instance._model.fit.assert_called_once_with(processed_data)
         mock_warnings.filterwarnings.assert_called_once_with('ignore', module='scipy')
         mock_warnings.catch_warnings.assert_called_once()
+        instance._num_rows == 10
 
     def test__get_nearest_correlation_matrix_valid(self):
         """Test ``_get_nearest_correlation_matrix`` with a psd input.

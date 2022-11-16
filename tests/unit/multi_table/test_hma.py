@@ -8,6 +8,7 @@ from tests.utils import get_multi_table_metadata
 class TestHMASynthesizer:
 
     def test___init__(self):
+        """Test the default initialization of the ``HMASynthesizer``."""
         # Run
         metadata = get_multi_table_metadata()
         metadata.validate = Mock()
