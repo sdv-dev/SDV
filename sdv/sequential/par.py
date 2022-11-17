@@ -3,6 +3,8 @@
 import inspect
 import logging
 import uuid
+import warnings
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -10,6 +12,7 @@ import tqdm
 from deepecho import PARModel
 from deepecho.sequences import assemble_sequences
 
+from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
@@ -78,6 +81,14 @@ class PARSynthesizer(BaseSynthesizer):
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=False,
                  context_columns=None, segment_size=None, epochs=128, sample_size=1, cuda=True,
                  verbose=False):
+        if metadata._constraints:
+            warnings.warn(
+                'The PARSynthesizer does not yet support constraints. This model will ignore any '
+                'constraints in the metadata.'
+            )
+            metadata = deepcopy(metadata)
+            metadata._constraints = []
+
         super().__init__(
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,
@@ -85,6 +96,12 @@ class PARSynthesizer(BaseSynthesizer):
         )
         sequence_key = self.metadata._sequence_key
         self._sequence_key = list(cast_to_iterable(sequence_key)) if sequence_key else None
+        if context_columns and not self._sequence_key:
+            raise SynthesizerInputError(
+                'No sequence_keys are specified in the metadata. The PARSynthesizer cannot '
+                'model context_columns in this case.'
+            )
+
         self._sequence_index = self.metadata._sequence_index
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
@@ -357,8 +374,14 @@ class PARSynthesizer(BaseSynthesizer):
             pandas.DataFrame:
                 Table containing the sampled sequences based on the provided context columns.
         """
+        if not self.context_columns:
+            raise SamplingError(
+                "This synthesizer does not have any context columns. Please use 'sample()' "
+                'to sample new sequences.'
+            )
+
         if not self._sequence_key:
-            raise TypeError(
+            raise SamplingError(
                 'Cannot sample based on context columns if there is no sequence key. Please use '
                 'PARSynthesizer.sample method instead.'
             )
