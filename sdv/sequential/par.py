@@ -4,7 +4,6 @@ import inspect
 import logging
 import uuid
 import warnings
-from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -16,7 +15,6 @@ from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
-from sdv.single_table.errors import InvalidDataError
 from sdv.utils import cast_to_iterable
 
 LOGGER = logging.getLogger(__name__)
@@ -81,19 +79,18 @@ class PARSynthesizer(BaseSynthesizer):
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=False,
                  context_columns=None, segment_size=None, epochs=128, sample_size=1, cuda=True,
                  verbose=False):
-        if metadata._constraints:
-            warnings.warn(
-                'The PARSynthesizer does not yet support constraints. This model will ignore any '
-                'constraints in the metadata.'
-            )
-            metadata = deepcopy(metadata)
-            metadata._constraints = []
-
         super().__init__(
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
         )
+        if metadata._constraints:
+            warnings.warn(
+                'The PARSynthesizer does not yet support constraints. This model will ignore any '
+                'constraints in the metadata.'
+            )
+            self._data_processor._constraints = []
+
         sequence_key = self.metadata._sequence_key
         self._sequence_key = list(cast_to_iterable(sequence_key)) if sequence_key else None
         if context_columns and not self._sequence_key:
@@ -133,40 +130,22 @@ class PARSynthesizer(BaseSynthesizer):
 
         return instantiated_parameters
 
-    def validate(self, data):
-        """Validate data.
-
-        Args:
-            data (pd.DataFrame):
-                The data to validate.
-
-        Raises:
-            ValueError:
-                Raised when data is not of type pd.DataFrame.
-            InvalidDataError:
-                Raised if:
-                    * data columns don't match metadata
-                    * keys have missing values
-                    * primary or alternate keys are not unique
-                    * context columns vary for a sequence key
-                    * values of a column don't satisfy their sdtype
-                    * context columns vary for one sequence
-        """
-        if self._sequence_key:
+    def _validate_context_columns(self, data):
+        errors = []
+        if self.context_columns:
             errors = []
             for sequence_key_value, data_values in data.groupby(self._sequence_key):
                 for context_column in self.context_columns:
                     if len(data_values[context_column].unique()) > 1:
                         errors.append((
                             f"Context column '{context_column}' is changing inside sequence "
-                            f"('{self._sequence_key}'='{sequence_key_value}')."
+                            f'({self._sequence_key}={sequence_key_value}).'
                         ))
 
-        try:
-            super().validate(data)
-        except InvalidDataError as error:
-            error.errors += errors
-            raise error
+        return errors
+
+    def _validate_synthesizer_specific_rules(self, data):
+        return self._validate_context_columns(data)
 
     def preprocess(self, data):
         """Transform the raw data to numerical space.
@@ -348,11 +327,15 @@ class PARSynthesizer(BaseSynthesizer):
             pandas.DataFrame:
                 Table containing the sampled sequences in the same format as the fitted data.
         """
-        context_columns = self._context_synthesizer._sample_with_progress_bar(
-            num_sequences,
-            output_file_path='disable',
-            show_progress_bar=False
-        )
+        if self._sequence_key:
+            context_columns = self._context_synthesizer._sample_with_progress_bar(
+                num_sequences,
+                output_file_path='disable',
+                show_progress_bar=False
+            )
+
+        else:
+            context_columns = pd.DataFrame(index=range(num_sequences or 1))
 
         for column in self._sequence_key or []:
             if column not in context_columns:
@@ -378,12 +361,6 @@ class PARSynthesizer(BaseSynthesizer):
             raise SamplingError(
                 "This synthesizer does not have any context columns. Please use 'sample()' "
                 'to sample new sequences.'
-            )
-
-        if not self._sequence_key:
-            raise SamplingError(
-                'Cannot sample based on context columns if there is no sequence key. Please use '
-                'PARSynthesizer.sample method instead.'
             )
 
         return self._sample(context_columns, sequence_length)

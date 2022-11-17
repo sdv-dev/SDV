@@ -6,9 +6,12 @@ import pandas as pd
 import pytest
 
 from sdv.data_processing.data_processor import DataProcessor
+from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sequential.par import PARSynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
+from sdv.single_table.errors import InvalidDataError
+from tests.utils import DataFrameMatcher
 
 
 class TestPARSynthesizer:
@@ -75,6 +78,69 @@ class TestPARSynthesizer:
             'name': {'sdtype': 'text'}
         }
 
+    @patch('sdv.sequential.par.warnings')
+    def test___init___constraints(self, warnings_mock):
+        """Test that if the metadata has constraints, a warning is raised.
+
+        If the metadata containts constraints, a warning should be raised saying that constraints
+        are not supported in PAR. The data processor should have constraints removed.
+        """
+        # Setup
+        metadata = self.get_metadata()
+        metadata._constraints.append({
+            'constraint_name': 'ScalarInequality',
+            'value': 50,
+            'relation': '>',
+            'column_name': 'measurement'
+        })
+
+        # Run
+        synthesizer = PARSynthesizer(
+            metadata=metadata,
+            enforce_min_max_values=True,
+            enforce_rounding=True,
+            context_columns=['gender'],
+            segment_size=10,
+            epochs=10,
+            sample_size=5,
+            cuda=False,
+            verbose=False
+        )
+
+        # Assert
+        warning_message = (
+            'The PARSynthesizer does not yet support constraints. This model will ignore any '
+            'constraints in the metadata.'
+        )
+        warnings_mock.warn.assert_called_once_with(warning_message)
+        assert synthesizer._data_processor._constraints == []
+
+    def test___init___context_columns_no_sequence_key(self):
+        """Test when there are context columns but no sequence keys.
+
+        If there are context columns and no sequence keys then an error should be raised.
+        """
+        # Setup
+        metadata = self.get_metadata(add_sequence_key=False)
+
+        # Run and Assert
+        error_message = (
+            'No sequence_keys are specified in the metadata. The PARSynthesizer cannot '
+            'model context_columns in this case.'
+        )
+        with pytest.raises(SynthesizerInputError, match=error_message):
+            PARSynthesizer(
+                metadata=metadata,
+                enforce_min_max_values=True,
+                enforce_rounding=True,
+                context_columns=['gender'],
+                segment_size=10,
+                epochs=10,
+                sample_size=5,
+                cuda=False,
+                verbose=False
+            )
+
     def test_get_parameters(self):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
         # Setup
@@ -128,6 +194,46 @@ class TestPARSynthesizer:
 
         # Assert
         assert result == metadata
+
+    def test_validate_context_columns_unique_per_sequence_key(self):
+        """Test error is raised if context column values vary for each tuple of sequence keys.
+
+        Setup:
+            A ``SingleTableMetadata`` instance where the context columns vary for different
+            combinations of values of the sequence keys.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'sk_col1': [1, 1, 2, 2, 2],
+            'sk_col2': [1, 1, 2, 2, 3],
+            'ct_col1': [1, 2, 2, 3, 2],
+            'ct_col2': [3, 3, 4, 3, 2],
+        })
+        metadata = SingleTableMetadata()
+        metadata.add_column('sk_col1', sdtype='numerical')
+        metadata.add_column('sk_col2', sdtype='numerical')
+        metadata.add_column('ct_col1', sdtype='numerical')
+        metadata.add_column('ct_col2', sdtype='numerical')
+        metadata.set_sequence_key(('sk_col1', 'sk_col2'))
+        instance = PARSynthesizer(
+            metadata=metadata,
+            context_columns=['ct_col1', 'ct_col2']
+        )
+
+        # Run and Assert
+        err_msg = re.escape(
+            'The provided data does not match the metadata:'
+            "\nContext column 'ct_col1' is changing inside "
+            "sequence (['sk_col1', 'sk_col2']=(1, 1))."
+            '\n'
+            "\nContext column 'ct_col1' is changing inside "
+            "sequence (['sk_col1', 'sk_col2']=(2, 2))."
+            '\n'
+            "\nContext column 'ct_col2' is changing inside "
+            "sequence (['sk_col1', 'sk_col2']=(2, 2))."
+        )
+        with pytest.raises(InvalidDataError, match=err_msg):
+            instance.validate(data)
 
     @patch('sdv.sequential.par.BaseSynthesizer.preprocess')
     def test_preprocess_transformers_not_assigned(self, base_preprocess_mock):
@@ -402,20 +508,18 @@ class TestPARSynthesizer:
         """
         # Setup
         metadata = self.get_metadata(add_sequence_key=False)
-        par = PARSynthesizer(
-            metadata=metadata,
-            context_columns=['gender']
-        )
+        par = PARSynthesizer(metadata=metadata)
         model_mock = Mock()
         par._model = model_mock
-        par._data_columns = ['time', 'name', 'measurement']
+        par._data_columns = ['time', 'gender', 'name', 'measurement']
         par._output_columns = ['time', 'gender', 'name', 'measurement']
         model_mock.sample_sequence.return_value = [
             [18000, 20000, 22000],
+            [1, 1, 1],
             [.4, .7, .1],
             [55, 60, 65]
         ]
-        context_columns = pd.DataFrame({'gender': ['M']})
+        context_columns = pd.DataFrame(index=range(1))
         tqdm_mock.tqdm.return_value = context_columns.iterrows()
 
         # Run
@@ -432,7 +536,7 @@ class TestPARSynthesizer:
 
         expected_output = pd.DataFrame({
             'time': [18000, 20000, 22000],
-            'gender': ['M', 'M', 'M'],
+            'gender': [1, 1, 1],
             'name': [.4, .7, .1],
             'measurement': [55, 60, 65]
         })
@@ -591,6 +695,22 @@ class TestPARSynthesizer:
         })
         pd.testing.assert_frame_equal(context_columns, expected_context_columns, check_dtype=False)
 
+    def test_sample_no_sequence_key(self):
+        """Test that if there is no sequence key, a column is made to substitute context."""
+        # Setup
+        metadata = self.get_metadata(add_sequence_key=False)
+        par = PARSynthesizer(
+            metadata=metadata
+        )
+        par._context_synthesizer = Mock()
+        par._sample = Mock()
+
+        # Run
+        par.sample(3, 2)
+
+        # Assert
+        par._sample.assert_called_once_with(DataFrameMatcher(pd.DataFrame(index=range(3))), 2)
+
     def test_sample_sequential_columns(self):
         """Test that the method uses the provided context columns to sample."""
         # Setup
@@ -611,22 +731,23 @@ class TestPARSynthesizer:
         pd.testing.assert_frame_equal(call_args[0], context_columns)
         assert call_args[1] == 5
 
-    def test_sample_sequential_columns_no_sequence_key(self):
-        """Test that the method raises an error if there is no sequence key."""
+    def test_sample_sequential_columns_no_context_columns(self):
+        """Test that the method raises an error if the synthesizer has no context columns.
+
+        If the synthesizer was not initialized with context columns, then this method cannot be
+        used.
+        """
         # Setup
-        par = PARSynthesizer(
-            metadata=self.get_metadata(add_sequence_key=False),
-            context_columns=['gender']
-        )
+        par = PARSynthesizer(metadata=self.get_metadata(add_sequence_key=False))
         par._sample = Mock()
         context_columns = pd.DataFrame({
             'gender': ['M', 'M', 'F']
         })
 
         # Run and Assert
-        error_message = (
-            'Cannot sample based on context columns if there is no sequence key. Please use '
-            'PARSynthesizer.sample method instead.'
+        error_message = re.escape(
+            "This synthesizer does not have any context columns. Please use 'sample()' "
+            'to sample new sequences.'
         )
-        with pytest.raises(TypeError, match=error_message):
+        with pytest.raises(SamplingError, match=error_message):
             par.sample_sequential_columns(context_columns, 5)
