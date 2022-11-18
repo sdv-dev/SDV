@@ -124,27 +124,6 @@ class BaseSynthesizer:
 
         return errors
 
-    def _validate_context_columns(self, data):
-        # NOTE: move method to PARSynthesizer when it has been implemented
-        errors = []
-        context_column_names = self._data_processor._model_kwargs.get('context_columns')
-        if context_column_names:
-            sequence_key_names = sorted(self._get_set_of_sequence_keys())
-            for sequence_key, group in data.groupby(sequence_key_names):
-                if len(group.groupby(context_column_names)) != 1:
-                    invalid_context_cols = {}
-                    for context_column_name in context_column_names:
-                        values = set(group[context_column_name])
-                        if len(values) != 1:
-                            invalid_context_cols[context_column_name] = values
-
-                    errors.append(
-                        f'Context column(s) {invalid_context_cols} are changing '
-                        f'inside the sequence keys ({sequence_key_names}: {sequence_key}).'
-                    )
-
-        return errors
-
     def _validate_sdtype(self, sdtype, column, validation):
         valid = column.apply(validation)
         invalid_values = set(column[~valid])
@@ -175,6 +154,13 @@ class BaseSynthesizer:
                 sdtype, column, lambda x: pd.isna(x) | is_datetime_type(x))
 
         return errors
+
+    def _validate(self, data):
+        """Validate any rules that only apply to specific synthesizers.
+
+        This method should be overridden by subclasses.
+        """
+        return []
 
     def validate(self, data):
         """Validate data.
@@ -207,8 +193,8 @@ class BaseSynthesizer:
         # Primary and alternate key values must be unique
         errors += self._validate_key_values_are_unique(data)
 
-        # Context column values must be the same for each tuple of sequence keys
-        errors += self._validate_context_columns(data)
+        # Any other rules that must be met
+        errors += self._validate(data)
 
         # Every column must satisfy the properties of their sdtypes
         for column in data:
