@@ -391,43 +391,6 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
 
-    def test_validate_context_columns_unique_per_sequence_key(self):
-        """Test error is raised if context column values vary for each tuple of sequence keys.
-
-        Setup:
-            A ``SingleTableMetadata`` instance where the context columns vary for different
-            combinations of values of the sequence keys.
-        """
-        # Setup
-        data = pd.DataFrame({
-            'sk_col1': [1, 1, 2, 2, 2],
-            'sk_col2': [1, 1, 2, 2, 3],
-            'ct_col1': [1, 2, 2, 3, 2],
-            'ct_col2': [3, 3, 4, 3, 2],
-        })
-        metadata = SingleTableMetadata()
-        metadata.add_column('sk_col1', sdtype='numerical')
-        metadata.add_column('sk_col2', sdtype='numerical')
-        metadata.add_column('ct_col1', sdtype='numerical')
-        metadata.add_column('ct_col2', sdtype='numerical')
-        metadata.set_sequence_key(('sk_col1', 'sk_col2'))
-        instance = BaseSingleTableSynthesizer(metadata)
-        instance._data_processor._model_kwargs = {
-            'context_columns': ['ct_col1', 'ct_col2']  # NOTE: change to actual value
-        }
-
-        # Run and Assert
-        err_msg = re.escape(
-            'The provided data does not match the metadata:'
-            "\nContext column(s) {'ct_col1': {1, 2}} are changing inside the "
-            "sequence keys (['sk_col1', 'sk_col2']: (1, 1))."
-            '\n'
-            "\nContext column(s) {'ct_col1': {2, 3}, 'ct_col2': {3, 4}} are changing inside the "
-            "sequence keys (['sk_col1', 'sk_col2']: (2, 2))."
-        )
-        with pytest.raises(InvalidDataError, match=err_msg):
-            instance.validate(data)
-
     def test_validate_empty(self):
         """Test method doesn't raise when data is empty.
 
