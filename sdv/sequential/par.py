@@ -95,8 +95,8 @@ class PARSynthesizer(BaseSynthesizer):
         self._sequence_key = list(cast_to_iterable(sequence_key)) if sequence_key else None
         if context_columns and not self._sequence_key:
             raise SynthesizerInputError(
-                'No sequence_keys are specified in the metadata. The PARSynthesizer cannot '
-                'model context_columns in this case.'
+                "No 'sequence_keys' are specified in the metadata. The PARSynthesizer cannot "
+                "model 'context_columns' in this case."
             )
 
         self._sequence_index = self.metadata._sequence_index
@@ -144,7 +144,7 @@ class PARSynthesizer(BaseSynthesizer):
 
         return errors
 
-    def _validate_synthesizer_specific_rules(self, data):
+    def _validate(self, data):
         return self._validate_context_columns(data)
 
     def preprocess(self, data):

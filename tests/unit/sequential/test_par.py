@@ -125,8 +125,8 @@ class TestPARSynthesizer:
 
         # Run and Assert
         error_message = (
-            'No sequence_keys are specified in the metadata. The PARSynthesizer cannot '
-            'model context_columns in this case.'
+            "No 'sequence_keys' are specified in the metadata. The PARSynthesizer cannot "
+            "model 'context_columns' in this case."
         )
         with pytest.raises(SynthesizerInputError, match=error_message):
             PARSynthesizer(

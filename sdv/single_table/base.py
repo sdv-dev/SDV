@@ -155,7 +155,7 @@ class BaseSynthesizer:
 
         return errors
 
-    def _validate_synthesizer_specific_rules(self, data):
+    def _validate(self, data):
         """Validate any rules that only apply to specific synthesizers.
 
         This method should be overridden by subclasses.
@@ -194,7 +194,7 @@ class BaseSynthesizer:
         errors += self._validate_key_values_are_unique(data)
 
         # Any other rules that must be met
-        errors += self._validate_synthesizer_specific_rules(data)
+        errors += self._validate(data)
 
         # Every column must satisfy the properties of their sdtypes
         for column in data:
