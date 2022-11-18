@@ -17,7 +17,7 @@ PRESETS = {
 }
 
 
-class SingleTablePreset():
+class SingleTablePreset:
     """Class for all single table synthesizer presets.
 
     Args:
