@@ -95,18 +95,18 @@ class TestHMASynthesizer:
 
         data = {
             'nesreca': pd.DataFrame({
-                'id_nesreca': np.arange(4),
-                'upravna_enota': np.arange(4),
-                'value': np.arange(4),
+                'id_nesreca': [0, 1, 2, 3],
+                'upravna_enota': [0, 1, 2, 3],
+                'value': [0, 1, 2, 3],
             }),
             'oseba': pd.DataFrame({
-                'upravna_enota': np.arange(4),
-                'id_nesreca': np.arange(4),
-                'oseba_value': np.arange(4)
+                'upravna_enota': [0, 1, 2, 3],
+                'id_nesreca': [0, 1, 2, 3],
+                'oseba_value': [0, 1, 2, 3]
 
             }),
             'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': np.arange(4),
+                'id_upravna_enota': [0, 1, 2, 3],
             }),
         }
 
@@ -231,18 +231,18 @@ class TestHMASynthesizer:
         instance._model_table = Mock()
         data = {
             'nesreca': pd.DataFrame({
-                'id_nesreca': np.arange(4),
-                'upravna_enota': np.arange(4),
-                'value': np.arange(4),
+                'id_nesreca': [0, 1, 2, 3],
+                'upravna_enota': [0, 1, 2, 3],
+                'value': [0, 1, 2, 3],
             }),
             'oseba': pd.DataFrame({
-                'upravna_enota': np.arange(4),
-                'id_nesreca': np.arange(4),
-                'oseba_value': np.arange(4)
+                'upravna_enota': [0, 1, 2, 3],
+                'id_nesreca': [0, 1, 2, 3],
+                'oseba_value': [0, 1, 2, 3]
 
             }),
             'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': np.arange(4),
+                'id_upravna_enota': [0, 1, 2, 3],
             }),
         }
 
