@@ -107,19 +107,17 @@ class TestHMASynthesizer:
             }),
             'upravna_enota': pd.DataFrame({
                 'id_upravna_enota': np.arange(4),
-                'name': ['John', 'Doe', 'Johanna', 'Dr. Doe']
             }),
         }
-        data = instance.preprocess(data)
 
         # Run
         result = instance._extend_table(data['nesreca'], data, 'nesreca')
 
         # Assert
         expected_result = pd.DataFrame({
-            'id_nesreca': [0., 1., 2., 3.],
-            'upravna_enota': [0., 1., 2., 3.],
-            'value': [0., 1., 2., 3.],
+            'id_nesreca': [0, 1, 2, 3],
+            'upravna_enota': [0, 1, 2, 3],
+            'value': [0, 1, 2, 3],
             '__oseba__id_nesreca__covariance__0__0': [0.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__b': [1.] * 4,
@@ -131,7 +129,7 @@ class TestHMASynthesizer:
             '__oseba__id_nesreca__univariates__upravna_enota__scale': [np.nan] * 4,
             '__oseba__id_nesreca__num_rows': [1.] * 4,
         })
-        expected_result = expected_result.set_index('id_nesreca')
+
         pd.testing.assert_frame_equal(expected_result, result)
         assert instance._modeled_tables == ['oseba']
         assert instance._max_child_rows['__oseba__id_nesreca__num_rows'] == 1
