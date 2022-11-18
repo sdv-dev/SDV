@@ -80,3 +80,176 @@ class TestHMASynthesizer:
 
         # Assert
         assert result == ['upravna_enota']
+
+    def test__extend_table(self):
+        """Test that ``extend_table`` extends the current table with extra columns.
+
+        This also updates ``self._modeled_tables`` and ``self._max_child_rows``.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = HMASynthesizer(metadata)
+        metadata.add_column('nesreca', 'value', sdtype='numerical')
+        metadata.add_column('oseba', 'oseba_value', sdtype='numerical')
+        metadata.add_column('upravna_enota', 'name', sdtype='categorical')
+
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(4),
+                'upravna_enota': np.arange(4),
+                'value': np.arange(4),
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(4),
+                'id_nesreca': np.arange(4),
+                'oseba_value': np.arange(4)
+
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(4),
+                'name': ['John', 'Doe', 'Johanna', 'Dr. Doe']
+            }),
+        }
+        data = instance.preprocess(data)
+
+        # Run
+        result = instance._extend_table(data['nesreca'], data, 'nesreca')
+
+        # Assert
+        expected_result = pd.DataFrame({
+            'id_nesreca': [0., 1., 2., 3.],
+            'upravna_enota': [0., 1., 2., 3.],
+            'value': [0., 1., 2., 3.],
+            '__oseba__id_nesreca__covariance__0__0': [0.] * 4,
+            '__oseba__id_nesreca__univariates__oseba_value__a': [1.] * 4,
+            '__oseba__id_nesreca__univariates__oseba_value__b': [1.] * 4,
+            '__oseba__id_nesreca__univariates__oseba_value__loc': [0., 1., 2., 3.],
+            '__oseba__id_nesreca__univariates__oseba_value__scale': [np.nan] * 4,
+            '__oseba__id_nesreca__univariates__upravna_enota__a': [1.] * 4,
+            '__oseba__id_nesreca__univariates__upravna_enota__b': [1.] * 4,
+            '__oseba__id_nesreca__univariates__upravna_enota__loc': [0., 1., 2., 3.],
+            '__oseba__id_nesreca__univariates__upravna_enota__scale': [np.nan] * 4,
+            '__oseba__id_nesreca__num_rows': [1.] * 4,
+        })
+        expected_result = expected_result.set_index('id_nesreca')
+        pd.testing.assert_frame_equal(expected_result, result)
+        assert instance._modeled_tables == ['oseba']
+        assert instance._max_child_rows['__oseba__id_nesreca__num_rows'] == 1
+
+    def test__pop_foreign_keys(self):
+        """Remove the foreign keys from the ``table_data``."""
+        # Setup
+        instance = Mock()
+        instance._get_all_foreign_keys.return_value = ['a', 'b']
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [2, 3, 4],
+            'c': ['John', 'Doe', 'Johanna']
+        })
+
+        # Run
+        result = HMASynthesizer._pop_foreign_keys(instance, table_data, 'table_name')
+
+        # Assert
+        pd.testing.assert_frame_equal(pd.DataFrame({'c': ['John', 'Doe', 'Johanna']}), table_data)
+        np.testing.assert_array_equal(result['a'], [1, 2, 3])
+        np.testing.assert_array_equal(result['b'], [2, 3, 4])
+
+    def test__clear_nans(self):
+        """Test that this method clears all the nans and substitutes them with expected values."""
+        # Setup
+        data = pd.DataFrame({
+            'numerical': [0, 1, 2, 3, np.nan, np.nan],
+            'categorical': ['John', np.nan, 'Johanna', 'John', np.nan, 'Doe'],
+        })
+
+        # Run
+        HMASynthesizer._clear_nans(data)
+
+        # Assert
+        expected_data = pd.DataFrame({
+            'numerical': [0, 1, 2, 3, 1.5, 1.5],
+            'categorical': ['John', 'John', 'Johanna', 'John', 'John', 'Doe']
+        })
+        pd.testing.assert_frame_equal(expected_data, data)
+
+    def test__model_table(self):
+        """Test that ``_model_table`` performs the modeling.
+
+        Modeling consists in getting the table for the given table name,
+        learn the size of this, remove the foreign keys and clear any null values
+        by using the ``_clear_nans`` method. Then, fit the table model calling the
+        ``fit_processed_data``, add again the foreign keys, update the ``tables`` and
+        mark the table name as modeled within the ``instance._modeled_tables``.
+        """
+        # Setup
+        nesreca_model = Mock()
+        instance = Mock()
+        instance._synthesizer = GaussianCopulaSynthesizer
+
+        instance._modeled_tables = []
+        instance._table_sizes = {}
+        instance._table_synthesizers = {'nesreca': nesreca_model}
+        instance._pop_foreign_keys.return_value = {'fk': [1, 2, 3]}
+        data = pd.DataFrame({
+            'id_nesreca': [0, 1, 2],
+            'upravna_enota': [0, 1, 2]
+        })
+        extended_data = pd.DataFrame({
+            'id_nesreca': [0, 1, 2],
+            'upravna_enota': [0, 1, 2],
+            'extended': ['a', 'b', 'c']
+        })
+
+        instance._extend_table.return_value = extended_data
+
+        tables = {'nesreca': data}
+
+        # Run
+        result = HMASynthesizer._model_table(instance, 'nesreca', tables)
+
+        # Assert
+        expected_result = pd.DataFrame({
+            'id_nesreca': [0, 1, 2],
+            'upravna_enota': [0, 1, 2],
+            'extended': ['a', 'b', 'c'],
+            'fk': [1, 2, 3]
+        })
+        pd.testing.assert_frame_equal(expected_result, result)
+
+        instance._extend_table.assert_called_once_with(data, tables, 'nesreca')
+        instance._pop_foreign_keys.assert_called_once_with(extended_data, 'nesreca')
+        instance._clear_nans(extended_data)
+        nesreca_model.fit_processed_data.assert_called_once_with(extended_data)
+
+        assert instance._modeled_tables == ['nesreca']
+        assert instance._table_sizes == {'nesreca': 3}
+
+    def test__fit(self):
+        """Test that ``_fit`` calls ``_model_table`` only if the table has no parents."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = HMASynthesizer(metadata)
+        instance._model_table = Mock()
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(4),
+                'upravna_enota': np.arange(4),
+                'value': np.arange(4),
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(4),
+                'id_nesreca': np.arange(4),
+                'oseba_value': np.arange(4)
+
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(4),
+            }),
+        }
+
+        # Run
+        instance._fit(data)
+
+        # Assert
+        instance._model_table.assert_called_once_with('upravna_enota', data)

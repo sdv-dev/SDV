@@ -3,6 +3,7 @@
 import logging
 from copy import deepcopy
 
+import numpy as np
 import pandas as pd
 
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -160,7 +161,11 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
     def _clear_nans(table_data):
         for column in table_data.columns:
             column_data = table_data[column]
-            fill_value = 0 if column_data.isna().all() else column_data.mean()
+            if column_data.dtype in (np.int, np.float):
+                fill_value = 0 if column_data.isna().all() else column_data.mean()
+            else:
+                fill_value = column_data.mode()[0]
+
             table_data[column] = table_data[column].fillna(fill_value)
 
     def _model_table(self, table_name, tables):
