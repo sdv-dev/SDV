@@ -225,7 +225,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         return matrix
 
     @classmethod
-    def _rebuild_correlation_matrix(cls, triangular_covariance):
+    def _rebuild_correlation_matrix(cls, triangular_correlation):
         """Rebuild a valid correlation matrix from its lower half triangle.
 
         The input of this function is a list of lists of floats of size 1, 2, 3...n-1:
@@ -239,19 +239,19 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         and scaled to the :math:`[-1, 1]` range if necessary.
 
         Args:
-            triangle_covariange (list[list[float]]):
+            triangle_correlation (list[list[float]]):
                 A list that contains lists of floats of size 1, 2, 3... up to ``n-1``,
-                where ``n`` is the size of the target covariance matrix.
+                where ``n`` is the size of the target correlation matrix.
 
         Returns:
             numpy.ndarray:
                 rebuilt correlation matrix.
         """
         zero = [0.0]
-        size = len(triangular_covariance) + 1
+        size = len(triangular_correlation) + 1
         left = np.zeros((size, size))
         right = np.zeros((size, size))
-        for idx, values in enumerate(triangular_covariance):
+        for idx, values in enumerate(triangular_correlation):
             values = values + zero * (size - idx - 1)
             left[idx + 1, :] = values
             right[:, idx + 1] = values

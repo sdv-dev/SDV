@@ -9,7 +9,7 @@ import pytest
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.errors import InvalidDataError
-from tests.utils import get_multi_table_metadata
+from tests.utils import get_multi_table_data, get_multi_table_metadata
 
 
 class TestBaseMultiTableSynthesizer:
@@ -147,20 +147,8 @@ class TestBaseMultiTableSynthesizer:
         """Test that when the data matches as expected there are no errors."""
         # Setup
         metadata = get_multi_table_metadata()
-        data = {
-            'nesreca': pd.DataFrame({
-                'id_nesreca': np.arange(10),
-                'upravna_enota': np.arange(10),
-            }),
-            'oseba': pd.DataFrame({
-                'upravna_enota': np.arange(10),
-                'id_nesreca': np.arange(10),
-            }),
-            'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': np.arange(10),
-            }),
-        }
         instance = BaseMultiTableSynthesizer(metadata)
+        data = get_multi_table_data()
 
         # Run
         result = instance._validate_foreign_keys(data)
@@ -209,20 +197,7 @@ class TestBaseMultiTableSynthesizer:
         """Test that no error is being raised when the data is valid."""
         # Setup
         metadata = get_multi_table_metadata()
-        data = {
-            'nesreca': pd.DataFrame({
-                'id_nesreca': np.arange(10),
-                'upravna_enota': np.arange(10),
-            }),
-            'oseba': pd.DataFrame({
-                'upravna_enota': np.arange(10),
-                'id_nesreca': np.arange(10),
-            }),
-            'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': np.arange(10),
-            }),
-        }
-
+        data = get_multi_table_data()
         instance = BaseMultiTableSynthesizer(metadata)
 
         # Run and Assert
@@ -232,19 +207,8 @@ class TestBaseMultiTableSynthesizer:
         """Test that an error is being raised when there is a missing table in the dictionary."""
         # Setup
         metadata = get_multi_table_metadata()
-        data = {
-            'nesrecas': pd.DataFrame({
-                'id_nesreca': np.arange(10),
-                'upravna_enota': np.arange(10),
-            }),
-            'oseba': pd.DataFrame({
-                'upravna_enota': np.arange(10),
-                'id_nesreca': np.arange(10),
-            }),
-            'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': np.arange(10),
-            }),
-        }
+        data = get_multi_table_data()
+        data.pop('nesreca')
 
         instance = BaseMultiTableSynthesizer(metadata)
 
@@ -257,19 +221,11 @@ class TestBaseMultiTableSynthesizer:
         """Test that an error is being raised when the data is not a dataframe."""
         # Setup
         metadata = get_multi_table_metadata()
-        data = {
-            'nesreca': pd.Series({
-                'id_nesreca': np.arange(10),
-                'upravna_enota': np.arange(10),
-            }),
-            'oseba': pd.DataFrame({
-                'upravna_enota': np.arange(10),
-                'id_nesreca': np.arange(10),
-            }),
-            'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': np.arange(10),
-            }),
-        }
+        data = get_multi_table_data()
+        data['nesreca'] = pd.Series({
+            'id_nesreca': np.arange(10),
+            'upravna_enota': np.arange(10),
+        })
 
         instance = BaseMultiTableSynthesizer(metadata)
 

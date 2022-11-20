@@ -5,7 +5,7 @@ import pandas as pd
 
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from tests.utils import get_multi_table_metadata
+from tests.utils import get_multi_table_data, get_multi_table_metadata
 
 
 class TestHMASynthesizer:
@@ -93,22 +93,9 @@ class TestHMASynthesizer:
         metadata.add_column('oseba', 'oseba_value', sdtype='numerical')
         metadata.add_column('upravna_enota', 'name', sdtype='categorical')
 
-        data = {
-            'nesreca': pd.DataFrame({
-                'id_nesreca': [0, 1, 2, 3],
-                'upravna_enota': [0, 1, 2, 3],
-                'value': [0, 1, 2, 3],
-            }),
-            'oseba': pd.DataFrame({
-                'upravna_enota': [0, 1, 2, 3],
-                'id_nesreca': [0, 1, 2, 3],
-                'oseba_value': [0, 1, 2, 3]
-
-            }),
-            'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': [0, 1, 2, 3],
-            }),
-        }
+        data = get_multi_table_data()
+        data['nesreca']['value'] = [0, 1, 2, 3]
+        data['oseba']['oseba_value'] = [0, 1, 2, 3]
 
         # Run
         result = instance._extend_table(data['nesreca'], data, 'nesreca')
@@ -135,7 +122,7 @@ class TestHMASynthesizer:
         assert instance._max_child_rows['__oseba__id_nesreca__num_rows'] == 1
 
     def test__pop_foreign_keys(self):
-        """Remove the foreign keys from the ``table_data``."""
+        """Test that this method removes the foreign keys from the ``table_data``."""
         # Setup
         instance = Mock()
         instance._get_all_foreign_keys.return_value = ['a', 'b']
@@ -174,11 +161,11 @@ class TestHMASynthesizer:
     def test__model_table(self):
         """Test that ``_model_table`` performs the modeling.
 
-        Modeling consists in getting the table for the given table name,
-        learn the size of this, remove the foreign keys and clear any null values
-        by using the ``_clear_nans`` method. Then, fit the table model calling the
-        ``fit_processed_data``, add again the foreign keys, update the ``tables`` and
-        mark the table name as modeled within the ``instance._modeled_tables``.
+        Modeling consists of getting the table for the given table name,
+        learning the size of this table, removing the foreign keys and clearing
+        any null values by using the ``_clear_nans`` method. Then, fitting the table model by
+        calling ``fit_processed_data``,  adding back the foreign keys, updating the ``tables`` and
+        marking the table name as modeled within the ``instance._modeled_tables``.
         """
         # Setup
         nesreca_model = Mock()
@@ -229,22 +216,9 @@ class TestHMASynthesizer:
         metadata = get_multi_table_metadata()
         instance = HMASynthesizer(metadata)
         instance._model_table = Mock()
-        data = {
-            'nesreca': pd.DataFrame({
-                'id_nesreca': [0, 1, 2, 3],
-                'upravna_enota': [0, 1, 2, 3],
-                'value': [0, 1, 2, 3],
-            }),
-            'oseba': pd.DataFrame({
-                'upravna_enota': [0, 1, 2, 3],
-                'id_nesreca': [0, 1, 2, 3],
-                'oseba_value': [0, 1, 2, 3]
-
-            }),
-            'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': [0, 1, 2, 3],
-            }),
-        }
+        data = get_multi_table_data()
+        data['nesreca']['value'] = [0, 1, 2, 3]
+        data['oseba']['oseba_value'] = [0, 1, 2, 3]
 
         # Run
         instance._fit(data)

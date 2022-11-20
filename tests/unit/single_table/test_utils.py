@@ -174,19 +174,8 @@ def test_unflatten_dict():
 
 
 def test_handle_sampling_error():
-    """Test the ``handle_sampling_error`` function.
-
-    Expect that the error is raised at the end of the function.
-
-    Input:
-        - True
-        - a temp file
-        - the sampling error
-
-    Side Effects:
-        - the error is raised.
-    """
-    # Setup
+    """Test when an error is raised at the end of the function when temp dir is ``True``."""
+    # Run and Assert
     error_msg = (
         'Error: Sampling terminated. Partial results are stored in a temporary file: test.csv. '
         'This file will be overridden the next time you sample. Please rename the file if you '
@@ -194,33 +183,18 @@ def test_handle_sampling_error():
         '\n'
         'Test error'
     )
-
-    # Run and assert
     with pytest.raises(ValueError, match=error_msg):
         handle_sampling_error(True, 'test.csv', ValueError('Test error'))
 
 
 def test_handle_sampling_error_false_temp_file():
-    """Test the ``handle_sampling_error`` function.
-
-    Expect that the error is raised at the end of the function.
-
-    Input:
-        - False
-        - a temp file
-        - the sampling error
-
-    Side Effects:
-        - the error is raised.
-    """
-    # Setup
+    """Test that an error is raised when temp dir is ``False``."""
+    # Run and Assert
     error_msg = (
         'Error: Sampling terminated. Partial results are stored in test.csv.'
         '\n'
         'Test error'
     )
-
-    # Run and assert
     with pytest.raises(ValueError, match=error_msg):
         handle_sampling_error(False, 'test.csv', ValueError('Test error'))
 
@@ -229,83 +203,41 @@ def test_handle_sampling_error_false_temp_file_none_output_file():
     """Test the ``handle_sampling_error`` function.
 
     Expect that only the passed error message is raised when ``is_tmp_file`` and
-    ``output_file_path`` are False/None.
-
-    Input:
-        - False
-        - None
-        - the sampling error
-
-    Side Effects:
-        - the samlping error is raised
+    ``output_file_path`` are ``False`` or ``None``.
     """
-    # Setup
+    # Run and Assert
     error_msg = 'Test error'
-
-    # Run and assert
     with pytest.raises(ValueError, match=error_msg):
         handle_sampling_error(False, 'test.csv', ValueError('Test error'))
 
 
 def test_handle_sampling_error_ignore():
-    """Test the ``handle_sampling_error`` function.
-
-    Expect that the error is raised if the error is the no rows error.
-
-    Input:
-        - a temp file
-        - the sampling error
-
-    Side Effects:
-        - the error is raised.
-    """
-    # Setup
-    error_msg = 'Unable to sample any rows for the given conditions.'
-
+    """Test that the error is raised if the error is the no rows error."""
     # Run and assert
+    error_msg = 'Unable to sample any rows for the given conditions.'
     with pytest.raises(ValueError, match=error_msg):
         handle_sampling_error(True, 'test.csv', ValueError(error_msg))
 
 
 def test_check_num_rows_reject_sampling_error():
-    """Test the ``check_num_rows`` function.
-
-    Expect that the error for reject sampling is raised if there are no sampled rows.
-
-    Input:
-        - no sampled rows
-        - is_reject_sampling is True
-
-    Side Effects:
-        - the error is raised.
-    """
+    """Test that the error for reject sampling is raised if there are no sampled rows."""
     # Setup
     num_rows = 0
     expected_num_rows = 5
     is_reject_sampling = True
     max_tries_per_batch = 1
+
+    # Run and Assert
     error_msg = (
         'Unable to sample any rows for the given conditions. '
         r'Try increasing `max_tries_per_batch` \(currently: 1\).'
     )
-
-    # Run and assert
     with pytest.raises(ValueError, match=error_msg):
         check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries_per_batch)
 
 
 def test_check_num_rows_non_reject_sampling_error():
-    """Test the ``check_num_rows`` function.
-
-    Expect that the error for non reject sampling is raised if there are no sampled rows.
-
-    Input:
-        - no sampled rows
-        - is_reject_sampling is False
-
-    Side Effects:
-        - the error is raised.
-    """
+    """Test that the error for non reject sampling is raised if there are no sampled rows."""
     # Setup
     num_rows = 0
     expected_num_rows = 5
@@ -327,13 +259,6 @@ def test_check_num_rows_non_reject_sampling_warning(warning_mock):
 
     Expect that no error is raised if there are valid sampled rows.
     Expect that a warning is raised if there are fewer than the expected number of rows.
-
-    Input:
-        - no sampled rows
-        - is_reject_sampling is False
-
-    Side Effects:
-        - the error is raised.
     """
     # Setup
     num_rows = 2
@@ -354,18 +279,7 @@ def test_check_num_rows_non_reject_sampling_warning(warning_mock):
 
 @patch('sdv.tabular.utils.warnings')
 def test_check_num_rows_valid(warning_mock):
-    """Test the ``check_num_rows`` function.
-
-    Expect that no error is raised if there are valid sampled rows.
-    Expect that a warning is raised if there are fewer than the expected number of rows.
-
-    Input:
-        - no sampled rows
-        - is_reject_sampling is False
-
-    Side Effects:
-        - the error is raised.
-    """
+    """Test the ``check_num_rows`` passes withnout calling warnings."""
     # Setup
     num_rows = 5
     expected_num_rows = 5
