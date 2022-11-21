@@ -342,3 +342,99 @@ class TestBaseMultiTableSynthesizer:
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)
+
+    def test_auto_assign_transformers(self):
+        """Test that each table of the data calls its single table auto assign method."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        table1 = pd.DataFrame({'col1': [1, 2]})
+        table2 = pd.DataFrame({'col2': [1, 2]})
+        data = {
+            'nesreca': table1,
+            'oseba': table2
+        }
+        instance._table_synthesizers['nesreca'] = Mock()
+        instance._table_synthesizers['oseba'] = Mock()
+
+        # Run
+        instance.auto_assign_transformers(data)
+
+        # Assert
+        instance._table_synthesizers['nesreca'].auto_assign_transformers.assert_called_once_with(
+            table1)
+        instance._table_synthesizers['oseba'].auto_assign_transformers.assert_called_once_with(
+            table2)
+
+    def test_auto_assign_transformers_missing_table(self):
+        """Test it errors out when the passed table was not seen in the metadata."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        data = {'not_seen': pd.DataFrame({'col': [1, 2]})}
+
+        # Run and Assert
+        err_msg = re.escape(
+            'The provided data does not match the metadata:'
+            "\nTable 'not_seen' is not present in the metadata"
+        )
+        with pytest.raises(InvalidDataError, match=err_msg):
+            instance.auto_assign_transformers(data)
+
+    def test_get_transformers(self):
+        """Test that each table of the data calls its single table get_transformers method."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._table_synthesizers['nesreca'] = Mock()
+        instance._table_synthesizers['oseba'] = Mock()
+
+        # Run
+        instance.get_transformers('oseba')
+
+        # Assert
+        instance._table_synthesizers['nesreca'].get_transformers.assert_not_called()
+        instance._table_synthesizers['oseba'].get_transformers.assert_called_once()
+
+    def test_get_transformers_missing_table(self):
+        """Test it errors out when the passed table name was not seen in the metadata."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        err_msg = re.escape(
+            'The provided data does not match the metadata:'
+            "\nTable 'not_seen' is not present in the metadata."
+        )
+        with pytest.raises(InvalidDataError, match=err_msg):
+            instance.get_transformers('not_seen')
+
+    def test_update_transformers(self):
+        """Test that each table of the data calls its single table update_transformers method."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._table_synthesizers['nesreca'] = Mock()
+        instance._table_synthesizers['oseba'] = Mock()
+
+        # Run
+        instance.update_transformers('oseba', {})
+
+        # Assert
+        instance._table_synthesizers['nesreca'].update_transformers.assert_not_called()
+        instance._table_synthesizers['oseba'].update_transformers.assert_called_once_with({})
+
+    def test_update_transformers_missing_table(self):
+        """Test it errors out when the passed table name was not seen in the metadata."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        err_msg = re.escape(
+            'The provided data does not match the metadata:'
+            "\nTable 'not_seen' is not present in the metadata."
+        )
+        with pytest.raises(InvalidDataError, match=err_msg):
+            instance.update_transformers('not_seen', {})
