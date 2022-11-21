@@ -222,7 +222,7 @@ class BaseMultiTableSynthesizer:
         """
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].update_transformers(column_name_to_transformer)
-        
+
     def _fit(self, processed_data):
         """Fit the model to the tables.
 
