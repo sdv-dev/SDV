@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -9,7 +9,7 @@ import pytest
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.errors import InvalidDataError
-from tests.utils import get_multi_table_metadata
+from tests.utils import get_multi_table_data, get_multi_table_metadata
 
 
 class TestBaseMultiTableSynthesizer:
@@ -147,20 +147,8 @@ class TestBaseMultiTableSynthesizer:
         """Test that when the data matches as expected there are no errors."""
         # Setup
         metadata = get_multi_table_metadata()
-        data = {
-            'nesreca': pd.DataFrame({
-                'id_nesreca': np.arange(10),
-                'upravna_enota': np.arange(10),
-            }),
-            'oseba': pd.DataFrame({
-                'upravna_enota': np.arange(10),
-                'id_nesreca': np.arange(10),
-            }),
-            'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': np.arange(10),
-            }),
-        }
         instance = BaseMultiTableSynthesizer(metadata)
+        data = get_multi_table_data()
 
         # Run
         result = instance._validate_foreign_keys(data)
@@ -209,20 +197,7 @@ class TestBaseMultiTableSynthesizer:
         """Test that no error is being raised when the data is valid."""
         # Setup
         metadata = get_multi_table_metadata()
-        data = {
-            'nesreca': pd.DataFrame({
-                'id_nesreca': np.arange(10),
-                'upravna_enota': np.arange(10),
-            }),
-            'oseba': pd.DataFrame({
-                'upravna_enota': np.arange(10),
-                'id_nesreca': np.arange(10),
-            }),
-            'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': np.arange(10),
-            }),
-        }
-
+        data = get_multi_table_data()
         instance = BaseMultiTableSynthesizer(metadata)
 
         # Run and Assert
@@ -232,19 +207,8 @@ class TestBaseMultiTableSynthesizer:
         """Test that an error is being raised when there is a missing table in the dictionary."""
         # Setup
         metadata = get_multi_table_metadata()
-        data = {
-            'nesrecas': pd.DataFrame({
-                'id_nesreca': np.arange(10),
-                'upravna_enota': np.arange(10),
-            }),
-            'oseba': pd.DataFrame({
-                'upravna_enota': np.arange(10),
-                'id_nesreca': np.arange(10),
-            }),
-            'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': np.arange(10),
-            }),
-        }
+        data = get_multi_table_data()
+        data.pop('nesreca')
 
         instance = BaseMultiTableSynthesizer(metadata)
 
@@ -257,19 +221,11 @@ class TestBaseMultiTableSynthesizer:
         """Test that an error is being raised when the data is not a dataframe."""
         # Setup
         metadata = get_multi_table_metadata()
-        data = {
-            'nesreca': pd.Series({
-                'id_nesreca': np.arange(10),
-                'upravna_enota': np.arange(10),
-            }),
-            'oseba': pd.DataFrame({
-                'upravna_enota': np.arange(10),
-                'id_nesreca': np.arange(10),
-            }),
-            'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': np.arange(10),
-            }),
-        }
+        data = get_multi_table_data()
+        data['nesreca'] = pd.Series({
+            'id_nesreca': np.arange(10),
+            'upravna_enota': np.arange(10),
+        })
 
         instance = BaseMultiTableSynthesizer(metadata)
 
@@ -438,3 +394,149 @@ class TestBaseMultiTableSynthesizer:
         )
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.update_transformers('not_seen', {})
+
+    def test__fit(self):
+        """Test that ``_fit`` raises a ``NotImplementedError``."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(0, 20, 2),
+                'upravna_enota': np.arange(10),
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(10),
+                'id_nesreca': np.arange(10),
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(10),
+            }),
+        }
+
+        # Run and Assert
+        with pytest.raises(NotImplementedError, match=''):
+            instance._fit(data)
+
+    def test_preprocess(self):
+        """Test that ``preprocess`` iterates over the ``data`` and preprocess it.
+
+        This method should call ``instance.validate`` to validate the data, then
+        iterate over the ``data`` dictionary and transform it using the ``synthesizer``
+        ``preprocess`` method.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance.validate = Mock()
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(0, 20, 2),
+                'upravna_enota': np.arange(10),
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(10),
+                'id_nesreca': np.arange(10),
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(10),
+            }),
+        }
+
+        synth_nesreca = Mock()
+        synth_oseba = Mock()
+        synth_upravna_enota = Mock()
+        instance._table_synthesizers = {
+            'nesreca': synth_nesreca,
+            'oseba': synth_oseba,
+            'upravna_enota': synth_upravna_enota
+        }
+
+        # Run
+        result = instance.preprocess(data)
+
+        # Assert
+        assert result == {
+            'nesreca': synth_nesreca.preprocess.return_value,
+            'oseba': synth_oseba.preprocess.return_value,
+            'upravna_enota': synth_upravna_enota.preprocess.return_value
+        }
+        instance.validate.assert_called_once_with(data)
+        synth_nesreca.preprocess.assert_called_once_with(data['nesreca'])
+        synth_oseba.preprocess.assert_called_once_with(data['oseba'])
+        synth_upravna_enota.preprocess.assert_called_once_with(data['upravna_enota'])
+
+    @patch('sdv.multi_table.base.warnings')
+    def test_preprocess_warning(self, mock_warnings):
+        """Test that ``preprocess`` warns the user if the model has already been fitted."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance.validate = Mock()
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(0, 20, 2),
+                'upravna_enota': np.arange(10),
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(10),
+                'id_nesreca': np.arange(10),
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(10),
+            }),
+        }
+
+        synth_nesreca = Mock()
+        synth_oseba = Mock()
+        synth_upravna_enota = Mock()
+        instance._table_synthesizers = {
+            'nesreca': synth_nesreca,
+            'oseba': synth_oseba,
+            'upravna_enota': synth_upravna_enota
+        }
+        instance._fitted = True
+
+        # Run
+        result = instance.preprocess(data)
+
+        # Assert
+        assert result == {
+            'nesreca': synth_nesreca.preprocess.return_value,
+            'oseba': synth_oseba.preprocess.return_value,
+            'upravna_enota': synth_upravna_enota.preprocess.return_value
+        }
+        instance.validate.assert_called_once_with(data)
+        synth_nesreca.preprocess.assert_called_once_with(data['nesreca'])
+        synth_oseba.preprocess.assert_called_once_with(data['oseba'])
+        synth_upravna_enota.preprocess.assert_called_once_with(data['upravna_enota'])
+        mock_warnings.warn.assert_called_once_with(
+            'This model has already been fitted. To use the new preprocessed data, '
+            "please refit the model using 'fit' or 'fit_processed_data'."
+        )
+
+    def test_fit_processed_data(self):
+        """Test that fit processed data calls ``_fit`` and sets ``_fitted`` to ``True``."""
+        # Setup
+        instance = Mock()
+        data = Mock()
+
+        # Run
+        BaseMultiTableSynthesizer.fit_processed_data(instance, data)
+
+        # Assert
+        instance._fit.assert_called_once_with(data)
+        assert instance._fitted
+
+    def test_fit(self):
+        """Test that ``fit`` calls ``preprocess`` and then ``fit_processed_data``."""
+        # Setup
+        instance = Mock()
+        data = Mock()
+
+        # Run
+        BaseMultiTableSynthesizer.fit(instance, data)
+
+        # Assert
+        instance.preprocess.assert_called_once_with(data)
+        instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
