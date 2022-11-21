@@ -63,3 +63,22 @@ def get_multi_table_metadata():
     }
 
     return MultiTableMetadata._load_from_dict(dict_metadata)
+
+
+def get_multi_table_data():
+    """Return a dictioonary containing some data for multi table."""
+    data = {
+        'nesreca': pd.DataFrame({
+            'id_nesreca': list(range(4)),
+            'upravna_enota': list(range(4)),
+        }),
+        'oseba': pd.DataFrame({
+            'upravna_enota': list(range(4)),
+            'id_nesreca': list(range(4)),
+        }),
+        'upravna_enota': pd.DataFrame({
+            'id_upravna_enota': list(range(4)),
+        }),
+    }
+
+    return data

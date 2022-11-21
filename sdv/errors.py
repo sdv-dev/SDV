@@ -23,3 +23,7 @@ class SynthesizerInputError(Exception):
 
 class SamplingError(Exception):
     """Error to raise when sampling gets a bad input or can't be used."""
+
+
+class NonParametricError(Exception):
+    """Exception to indicate that a model is not parametric."""
