@@ -543,7 +543,7 @@ class TestBaseMultiTableSynthesizer:
 
     def test__sample(self):
         """Test that ``_sample`` raises a ``NotImplementedError``."""
-        # Setup
+        # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
 

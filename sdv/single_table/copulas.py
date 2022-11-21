@@ -280,7 +280,9 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         univariates = []
         for column, univariate in model_parameters['univariates'].items():
             columns.append(column)
-            univariate['type'] = self._numerical_distributions.get(column, 'beta')
+            univariate['type'] = self._validate_distribution(
+                self._numerical_distributions.get(column, 'beta')
+            )
             if 'scale' in univariate:
                 univariate['scale'] = max(0, univariate['scale'])
 
@@ -308,3 +310,4 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         parameters = self._rebuild_gaussian_copula(parameters)
 
         self._model = copulas.multivariate.GaussianMultivariate.from_dict(parameters)
+        self._num_rows = 1
