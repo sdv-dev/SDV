@@ -366,7 +366,7 @@ class TestBaseMultiTableSynthesizer:
         instance._table_synthesizers['oseba'].auto_assign_transformers.assert_called_once_with(
             table2)
 
-    def test_auto_assign_transformers_error(self):
+    def test_auto_assign_transformers_missing_table(self):
         """Test it errors out when the passed table was not seen in the metadata."""
         # Setup
         metadata = get_multi_table_metadata()
@@ -396,15 +396,18 @@ class TestBaseMultiTableSynthesizer:
         instance._table_synthesizers['nesreca'].get_transformers.assert_not_called()
         instance._table_synthesizers['oseba'].get_transformers.assert_called_once()
 
-    def test_get_transformers_error(self):
+    def test_get_transformers_missing_table(self):
         """Test it errors out when the passed table name was not seen in the metadata."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
 
         # Run and Assert
-        err_msg = "Table 'not_seen' is not present in the metadata."
-        with pytest.raises(ValueError, match=err_msg):
+        err_msg = re.escape(
+            'The provided data does not match the metadata:'
+            "\nTable 'not_seen' is not present in the metadata."
+        )
+        with pytest.raises(InvalidDataError, match=err_msg):
             instance.get_transformers('not_seen')
 
     def test_update_transformers(self):
@@ -422,13 +425,16 @@ class TestBaseMultiTableSynthesizer:
         instance._table_synthesizers['nesreca'].update_transformers.assert_not_called()
         instance._table_synthesizers['oseba'].update_transformers.assert_called_once_with({})
 
-    def test_update_transformers_error(self):
+    def test_update_transformers_missing_table(self):
         """Test it errors out when the passed table name was not seen in the metadata."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
 
         # Run and Assert
-        err_msg = "Table 'not_seen' is not present in the metadata."
-        with pytest.raises(ValueError, match=err_msg):
+        err_msg = re.escape(
+            'The provided data does not match the metadata:'
+            "\nTable 'not_seen' is not present in the metadata."
+        )
+        with pytest.raises(InvalidDataError, match=err_msg):
             instance.update_transformers('not_seen', {})

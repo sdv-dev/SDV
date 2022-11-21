@@ -162,6 +162,10 @@ class BaseMultiTableSynthesizer:
         if errors:
             raise InvalidDataError(errors)
 
+    def _validate_table_name(self, table_name):
+        if table_name not in self._table_synthesizers:
+            raise InvalidDataError([f"Table '{table_name}' is not present in the metadata."])
+
     def auto_assign_transformers(self, data):
         """Automatically assign the required transformers for the given data and constraints.
 
@@ -177,9 +181,7 @@ class BaseMultiTableSynthesizer:
                 If a table of the data is not present in the metadata.
         """
         for table_name, table_data in data.items():
-            if table_name not in self._table_synthesizers:
-                raise InvalidDataError([f"Table '{table_name}' is not present in the metadata."])
-
+            self._validate_table_name(table_name)
             self._table_synthesizers[table_name].auto_assign_transformers(table_data)
 
     def get_transformers(self, table_name):
@@ -200,9 +202,7 @@ class BaseMultiTableSynthesizer:
             ValueError:
                 If ``table_name`` is not present in the metadata.
         """
-        if table_name not in self._table_synthesizers:
-            raise ValueError(f"Table '{table_name}' is not present in the metadata.")
-
+        self._validate_table_name(table_name)
         return self._table_synthesizers[table_name].get_transformers()
 
     def update_transformers(self, table_name, column_name_to_transformer):
@@ -218,7 +218,5 @@ class BaseMultiTableSynthesizer:
             ValueError:
                 If ``table_name`` is not present in the metadata.
         """
-        if table_name not in self._table_synthesizers:
-            raise ValueError(f"Table '{table_name}' is not present in the metadata.")
-
+        self._validate_table_name(table_name)
         self._table_synthesizers[table_name].update_transformers(column_name_to_transformer)
