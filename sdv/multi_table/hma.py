@@ -293,17 +293,14 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                 Sampled rows, shape (, num_rows)
         """
         num_rows = num_rows or model._num_rows
-        if model._data_processor.fitted is False:
-            sampled = model._sample(num_rows)
-            sampled = self._table_synthesizers[table_name]._data_processor.reverse_transform(
-                sampled
-            )
-        else:
-            sampled = model._sample_with_progress_bar(
-                num_rows,
-                output_file_path='disable',
-                show_progress_bar=False
-            )
+        sampled_rows = model._sample(num_rows)
+
+        data_processor = self._table_synthesizers[table_name]._data_processor
+        sampled = data_processor.reverse_transform(sampled_rows)
+
+        model_columns = list(set(sampled_rows.columns) - set(sampled.columns))
+        if model_columns:
+            sampled = pd.concat([sampled, sampled_rows[model_columns]], axis=1)
 
         return sampled
 

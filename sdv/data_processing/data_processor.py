@@ -490,17 +490,23 @@ class DataProcessor:
             reversed_data = constraint.reverse_transform(reversed_data)
 
         num_rows = len(reversed_data)
+        sampled_columns = list(reversed_data.columns)
         if self._anonymized_columns:
             anonymized_data = self._hyper_transformer.create_anonymized_columns(
                 num_rows=num_rows,
                 column_names=self._anonymized_columns,
             )
+            sampled_columns.extend(self._anonymized_columns)
+
         if self._primary_key:
             primary_keys = self.generate_primary_keys(num_rows, reset_primary_key)
+            sampled_columns.append(self._primary_key)
 
-        original_columns = list(self.metadata._columns.keys())
+        original_columns = [
+            column for column in self.metadata._columns.keys()
+            if column in sampled_columns
+        ]
         for column_name in original_columns:
-            column_data = None
             if column_name in self._anonymized_columns:
                 column_data = anonymized_data[column_name]
             elif column_name == self._primary_key:
@@ -508,25 +514,19 @@ class DataProcessor:
             elif column_name in reversed_data:
                 column_data = reversed_data[column_name]
 
-            if column_data is not None:
-                dtype = self._dtypes[column_name]
-                if pd.api.types.is_integer_dtype(dtype):
-                    column_data = column_data.round()
+            dtype = self._dtypes[column_name]
+            if pd.api.types.is_integer_dtype(dtype):
+                column_data = column_data.round()
 
-                reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
+            reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
 
         # reformat numerical columns using the NumericalFormatter
         for column in original_columns:
-            if column in self.formatters and column in reversed_data:
+            if column in self.formatters:
                 data_to_format = reversed_data[column]
                 reversed_data[column] = self.formatters[column].format_data(data_to_format)
 
-        sampled_columns = [column for column in original_columns if column in reversed_data]
-        relational_columns = set(data.columns) - set(sampled_columns)
-        if relational_columns:
-            return pd.concat([reversed_data[sampled_columns], data[relational_columns]], axis=1)
-
-        return reversed_data[sampled_columns]
+        return reversed_data[original_columns]
 
     def filter_valid(self, data):
         """Filter the data using the constraints and return only the valid rows.
