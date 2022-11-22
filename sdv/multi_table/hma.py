@@ -241,7 +241,11 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                     for foreign_key in foreign_keys:
                         if foreign_key not in table_rows:
                             parent_ids = self._find_parent_ids(
-                                table_name, parent_name, foreign_key, sampled_data)
+                                table_name,
+                                parent_name,
+                                foreign_key,
+                                sampled_data
+                            )
                             table_rows[foreign_key] = parent_ids
 
             synthesizer = self._table_synthesizers.get(table_name)
@@ -268,7 +272,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         prefix = f'__{table_name}__{foreign_key}__'
         keys = [key for key in parent_row.keys() if key.startswith(prefix)]
         new_keys = {key: key[len(prefix):] for key in keys}
-        flat_parameters = parent_row[keys]
+        flat_parameters = parent_row[keys].fillna(0)
 
         num_rows_key = f'{prefix}num_rows'
         if num_rows_key in flat_parameters:
