@@ -304,17 +304,17 @@ class TestGaussianCopulaSynthesizer:
                 {
                     'scale': 0.0,
                     'loc': 0.0,
-                    'type': 'beta'
+                    'type': BetaUnivariate
                 },
                 {
                     'scale': 1.0,
                     'loc': 1.0,
-                    'type': 'beta'
+                    'type': BetaUnivariate
                 },
                 {
                     'scale': 2.0,
                     'loc': 2.0,
-                    'type': 'beta'
+                    'type': BetaUnivariate
                 },
             ],
             'covariance': [

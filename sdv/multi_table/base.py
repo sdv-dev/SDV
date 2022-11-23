@@ -278,3 +278,24 @@ class BaseMultiTableSynthesizer:
         self._fitted = False
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
+
+    def _sample(self, scale, randomize_samples):
+        raise NotImplementedError()
+
+    def sample(self, scale=1.0, randomize_samples=False):
+        """Generate synthetic data for the entire dataset.
+
+        Args:
+            scale (float):
+                A float representing how much to scale the data by. If scale is set to ``1.0``,
+                this does not scale the sizes of the tables. If ``scale`` is greater than ``1.0``
+                create more rows than the original data by a factor of ``scale``.
+                If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
+                than the original tables. Defaults to ``1.0``.
+            randomize_samples (bool):
+                Whether or not to the data should change on each sample call. If ``True``
+                every time ``sample`` is called, different data will be generated, if ``False``
+                every time ``sample`` is called, the same data will be generated. Defaults to
+                ``False``.
+        """
+        return self._sample(scale=scale, randomize_samples=randomize_samples)

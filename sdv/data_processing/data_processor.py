@@ -351,7 +351,7 @@ class DataProcessor:
         self.formatters = {}
         for column_name in data:
             column_metadata = self.metadata._columns.get(column_name)
-            if column_metadata.get('sdtype') == 'numerical':
+            if column_metadata.get('sdtype') == 'numerical' and column_name != self._primary_key:
                 representation = column_metadata.get('computer_representation', 'Float')
                 self.formatters[column_name] = NumericalFormatter(
                     enforce_rounding=self._enforce_rounding,
@@ -525,6 +525,7 @@ class DataProcessor:
             reversed_data = constraint.reverse_transform(reversed_data)
 
         num_rows = len(reversed_data)
+        sampled_columns = list(reversed_data.columns)
         if self._anonymized_columns:
             anonymized_data = self._hyper_transformer.create_anonymized_columns(
                 num_rows=num_rows,
@@ -534,13 +535,16 @@ class DataProcessor:
         if self._keys:
             generated_keys = self.generate_keys(num_rows, reset_keys)
 
-        original_columns = list(self.metadata._columns.keys())
+        original_columns = [
+            column for column in self.metadata._columns.keys()
+            if column in sampled_columns
+        ]
         for column_name in original_columns:
             if column_name in self._anonymized_columns:
                 column_data = anonymized_data[column_name]
             elif column_name in self._keys:
                 column_data = generated_keys[column_name]
-            else:
+            elif column_name in reversed_data:
                 column_data = reversed_data[column_name]
 
             dtype = self._dtypes[column_name]
