@@ -544,7 +544,7 @@ class DataProcessor:
                 column_data = anonymized_data[column_name]
             elif column_name in self._keys:
                 column_data = generated_keys[column_name]
-            elif column_name in reversed_data:
+            else:
                 column_data = reversed_data[column_name]
 
             dtype = self._dtypes[column_name]
