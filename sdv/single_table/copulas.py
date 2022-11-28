@@ -6,6 +6,7 @@ import copulas
 import copulas.multivariate
 import copulas.univariate
 import numpy as np
+import pandas as pd
 import scipy
 from rdt.transformers import OneHotEncoder
 
@@ -281,7 +282,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         for column, univariate in model_parameters['univariates'].items():
             columns.append(column)
             univariate['type'] = self._validate_distribution(
-                self._numerical_distributions.get(column, 'beta')
+                self._numerical_distributions.get(column, self.default_distribution)
             )
             if 'scale' in univariate:
                 univariate['scale'] = max(0, univariate['scale'])
@@ -310,4 +311,5 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         parameters = self._rebuild_gaussian_copula(parameters)
 
         self._model = copulas.multivariate.GaussianMultivariate.from_dict(parameters)
-        self._num_rows = 1
+        num_rows = parameters.get('num_rows')
+        self._num_rows = 0 if pd.isna(num_rows) else max(0, int(round(num_rows)))
