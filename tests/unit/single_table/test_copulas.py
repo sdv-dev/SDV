@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -326,3 +326,66 @@ class TestGaussianCopulaSynthesizer:
             'columns': ['foo', 'bar', 'baz'],
         }
         assert result == expected
+
+    @patch('sdv.single_table.copulas.copulas')
+    @patch('sdv.single_table.copulas.unflatten_dict')
+    def test___set_parameters(self, mock_unflatten_dict, mock_copulas):
+        """Test that parameters are properly set and that number of rows is set properly."""
+        # Setup
+        parameters = {
+            'covariance': [
+                [0.0],
+                [0.0, 0.0]
+            ],
+            'num_rows': 4.59,
+            'univariates': {
+                'amount': {
+                    'loc': 85.62233142690933,
+                    'scale': 0.0
+                },
+                'cancelled': {
+                    'loc': 0.48772424778255064,
+                    'scale': 0.0
+                },
+                'timestamp': {
+                    'loc': 1.5475359249730097e+18,
+                    'scale': 0.0
+                }
+            }
+        }
+        instance = Mock()
+        mock_unflatten_dict.return_value = parameters
+
+        # Run
+        GaussianCopulaSynthesizer._set_parameters(instance, parameters)
+
+        # Assert
+        mock_unflatten_dict.assert_called_once_with(parameters)
+        expected_parameters = {
+            'covariance': [
+                [0.0],
+                [0.0, 0.0]
+            ],
+            'univariates': {
+                'amount': {
+                    'loc': 85.62233142690933,
+                    'scale': 0.0
+                },
+                'cancelled': {
+                    'loc': 0.48772424778255064,
+                    'scale': 0.0
+                },
+                'timestamp': {
+                    'loc': 1.5475359249730097e+18,
+                    'scale': 0.0
+                }
+            }
+        }
+
+        instance._rebuild_gaussian_copula.assert_called_once_with(expected_parameters)
+        model = mock_copulas.multivariate.GaussianMultivariate.from_dict.return_value
+        assert instance._model == model
+        assert instance._num_rows == 5
+        mock_copulas.multivariate.GaussianMultivariate.from_dict.assert_called_once_with(
+            instance._rebuild_gaussian_copula.return_value
+        )

@@ -308,8 +308,9 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
                 Copula flatten parameters.
         """
         parameters = unflatten_dict(parameters)
-        parameters = self._rebuild_gaussian_copula(parameters)
+        if 'num_rows' in parameters:
+            num_rows = parameters.pop('num_rows')
 
+        parameters = self._rebuild_gaussian_copula(parameters)
         self._model = copulas.multivariate.GaussianMultivariate.from_dict(parameters)
-        num_rows = parameters.get('num_rows')
         self._num_rows = 0 if pd.isna(num_rows) else max(0, int(round(num_rows)))
