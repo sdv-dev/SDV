@@ -9,6 +9,7 @@ import uuid
 import warnings
 from collections import defaultdict
 
+import cloudpickle
 import copulas
 import numpy as np
 import pandas as pd
@@ -19,7 +20,9 @@ from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, InvalidPreprocessingError
 from sdv.single_table.errors import InvalidDataError
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
-from sdv.utils import is_boolean_type, is_datetime_type, is_numerical_type
+from sdv.utils import (
+    get_package_versions, is_boolean_type, is_datetime_type, is_numerical_type,
+    throw_version_mismatch_warning)
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
@@ -55,6 +58,7 @@ class BaseSynthesizer:
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True):
         self.metadata = metadata
+        self.metadata.validate()
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self._data_processor = DataProcessor(metadata)
@@ -992,3 +996,33 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             randomize_samples,
             output_file_path
         )
+
+    def save(self, path):
+        """Save this model instance to the given path using cloudpickle.
+
+        Args:
+            path (str):
+                Path where the synthesizer instance will be serialized.
+        """
+        self._package_versions = get_package_versions(getattr(self, '_model', None))
+
+        with open(path, 'wb') as output:
+            cloudpickle.dump(self, output)
+
+    @classmethod
+    def load(cls, path):
+        """Load a TabularModel instance from a given path.
+
+        Args:
+            path (str):
+                Path from which to load the serialized synthesizer.
+
+        Returns:
+            SingleTableSynthesizer:
+                The loaded synthesizer.
+        """
+        with open(path, 'rb') as f:
+            model = cloudpickle.load(f)
+            throw_version_mismatch_warning(getattr(model, '_package_versions', None))
+
+            return model
