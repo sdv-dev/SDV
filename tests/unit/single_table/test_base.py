@@ -1,5 +1,7 @@
 import re
 from datetime import datetime
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, Mock, call, patch
 
 import numpy as np
@@ -54,6 +56,7 @@ class TestBaseSingleTableSynthesizer:
         assert instance.enforce_rounding is True
         assert instance._data_processor == mock_data_processor.return_value
         mock_data_processor.assert_called_once_with(metadata)
+        metadata.validate.assert_called_once_with()
 
     @patch('sdv.single_table.base.DataProcessor')
     def test___init__custom(self, mock_data_processor):
@@ -1573,7 +1576,8 @@ class TestBaseSingleTableSynthesizer:
         removed.
         """
         # Setup
-        instance = BaseSingleTableSynthesizer('metadata')
+        metadata = Mock()
+        instance = BaseSingleTableSynthesizer(metadata)
         conditions = [Condition({'name': 'John Doe'})]
         mock_validate_file_path.return_value = '.sample.csv.temp'
 
@@ -1656,7 +1660,8 @@ class TestBaseSingleTableSynthesizer:
                                        mock_data_processor, mock_check_num_rows, mock_os):
         """Test the this method calls ``_sample_with_conditions`` with the ``known_column."""
         # Setup
-        instance = BaseSingleTableSynthesizer('metadata')
+        metadata = Mock()
+        instance = BaseSingleTableSynthesizer(metadata)
         known_columns = pd.DataFrame({'name': ['Johanna Doe']})
 
         instance._validate_conditions = Mock()
@@ -1697,7 +1702,8 @@ class TestBaseSingleTableSynthesizer:
         This should properly handle the errors with the ``handle_sampling_error`` function.
         """
         # Setup
-        instance = BaseSingleTableSynthesizer('metadata')
+        metadata = Mock()
+        instance = BaseSingleTableSynthesizer(metadata)
         known_columns = pd.DataFrame({'name': ['Johanna Doe']})
 
         instance._validate_conditions = Mock()
@@ -1739,3 +1745,41 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         assert result == instance._sample_remaining_columns.return_value
         instance._sample_remaining_columns.assert_called_once()
+
+    def test_save(self):
+        """Test that ``save`` stores the current model."""
+        # Setup
+        metadata = SingleTableMetadata()
+        instance = BaseSingleTableSynthesizer(metadata)
+        temp_dir = TemporaryDirectory()
+        model_path = Path(temp_dir.name) / 'model.pkl'
+
+        # Run
+        instance.save(model_path)
+
+        # Assert
+        assert model_path.exists()
+        assert model_path.is_file()
+        BaseSingleTableSynthesizer.load(model_path)
+
+    def test_load(self):
+        """Test that the ``load`` method loads a stored model."""
+        # Setup
+        metadata = SingleTableMetadata()
+        instance = BaseSingleTableSynthesizer(metadata)
+        temp_dir = TemporaryDirectory()
+        model_path = Path(temp_dir.name) / 'model.pkl'
+        instance.save(model_path)
+
+        # Run
+        loaded_instance = BaseSingleTableSynthesizer.load(model_path)
+
+        # Assert
+        assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
+        assert instance.metadata._columns == {}
+        assert instance.metadata._constraints == []
+        assert instance.metadata._primary_key is None
+        assert instance.metadata._alternate_keys == []
+        assert instance.metadata._sequence_key is None
+        assert instance.metadata._sequence_index is None
+        assert instance.metadata._version == 'SINGLE_TABLE_V1'
