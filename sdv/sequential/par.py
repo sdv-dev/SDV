@@ -167,6 +167,23 @@ class PARSynthesizer(BaseSynthesizer):
         self.update_transformers(sequence_key_transformers)
         return super().preprocess(data)
 
+    def update_transformers(self, column_name_to_transformer):
+        """Update any of the transformers assigned to each of the column names.
+
+        Args:
+            column_name_to_transformer (dict):
+                Dict mapping column names to transformers to be used for that column.
+
+        Raises:
+            ValueError:
+                Raise when the transformer of a context column is passed.
+        """
+        if set(column_name_to_transformer).intersection(set(self.context_columns)):
+            raise SynthesizerInputError(
+                'Transformers for context columns are not allowed to be updated.')
+
+        super().update_transformers(column_name_to_transformer)
+
     def _fit_context_model(self, transformed):
         LOGGER.debug(f'Fitting context synthesizer {self._context_synthesizer.__class__.__name__}')
         if self.context_columns:

@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from rdt.transformers import FloatFormatter
 
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import SamplingError, SynthesizerInputError
@@ -289,6 +290,35 @@ class TestPARSynthesizer:
         par.auto_assign_transformers.assert_not_called()
         par.update_transformers.assert_called_once_with(expected_transformers)
         base_preprocess_mock.assert_called_once_with(data)
+
+    def test_update_transformers(self):
+        """Test that it updates the transfomer correctly."""
+        # Setup
+        metadata = self.get_metadata()
+        data = self.get_data()
+        instance = PARSynthesizer(metadata)
+        transformer = FloatFormatter()
+        column_name_to_transformer = {'time': transformer}
+
+        # Run
+        instance.auto_assign_transformers(data)
+        instance.update_transformers(column_name_to_transformer)
+
+        # Assert
+        assert instance.get_transformers()['time'] == transformer
+
+    def test_update_transformers_context_column(self):
+        """Test it errors out when a column name is a context column."""
+        # Setup
+        metadata = self.get_metadata()
+        data = self.get_data()
+        instance = PARSynthesizer(metadata, context_columns=['time'])
+
+        # Run and Assert
+        instance.auto_assign_transformers(data)
+        err_msg = 'Transformers for context columns are not allowed to be updated.'
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            instance.update_transformers({'time': FloatFormatter()})
 
     def test__fit_context_model_with_context_columns(self):
         """Test that the method fits a synthesizer to the context columns.
