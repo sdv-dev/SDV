@@ -32,10 +32,10 @@ class SingleTablePreset:
 
     def _setup_fast_preset(self, metadata):
         self._synthesizer = GaussianCopulaSynthesizer(
-                metadata=metadata,
-                default_distribution='norm',
-                enforce_rounding=False
-            )
+            metadata=metadata,
+            default_distribution='norm',
+            enforce_rounding=False
+        )
         self._synthesizer._data_processor._update_transformers_by_sdtypes(
             'categorical',
             rdt.transformers.FrequencyEncoder(add_noise=True)
