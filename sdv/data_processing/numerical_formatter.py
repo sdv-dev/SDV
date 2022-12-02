@@ -48,16 +48,22 @@ class NumericalFormatter:
 
     @staticmethod
     def _learn_rounding_digits(data):
-        # check if data has any decimals
+        """Check if data has any decimals."""
         data = np.array(data)
         roundable_data = data[~(np.isinf(data) | pd.isna(data))]
-        if ((roundable_data % 1) != 0).any():
-            if (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
-                for decimal in range(MAX_DECIMALS + 1):
-                    if (roundable_data == roundable_data.round(decimal)).all():
-                        return decimal
 
-        return None
+        # Doesn't contain decimal digits
+        if ((roundable_data % 1) == 0).all():
+            return None
+
+        # Try to round to fewer digits
+        if (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
+            for decimal in range(MAX_DECIMALS + 1):
+                if (roundable_data == roundable_data.round(decimal)).all():
+                    return decimal
+
+        # Can't round, not equal after MAX_DECIMALS digits of precision
+        return MAX_DECIMALS
 
     def learn_format(self, column):
         """Learn the format of a column.
