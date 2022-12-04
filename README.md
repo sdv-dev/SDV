@@ -46,7 +46,7 @@ hierarchical generative modeling and recursive sampling techniques.
 | :computer: **[Website]**                      | Check out the SDV Website for more information about the project.    |
 | :orange_book: **[SDV Blog]**                  | Regular publshing of useful content about Synthetic Data Generation. |
 | :book: **[Documentation]**                    | Quickstarts, User and Development Guides, and API Reference.         |
-| :octocat: **[Repository]**                    | The link to the Github Repository of this library.                   |
+| :octocat: **[Repository]**                    | The link to the GitHub Repository of this library.                   |
 | :scroll: **[License]**                        | The entire ecosystem is published under the MIT License.             |
 | :keyboard: **[Development Status]**           | This software is in its Pre-Alpha stage.                             |
 | [![][Slack Logo] **Community**][Community]    | Join our Slack Workspace for announcements and discussions.          |
@@ -249,7 +249,7 @@ https://github.com/sdv-dev/SDMetrics) library.
    if you have a usage example that you would want to share with the community.
 2. Please have a look at the [Contributing Guide](https://sdv.dev/SDV/developer_guides/contributing.html)
    to see how you can contribute to the project.
-3. If you have any doubts, feature requests or detect an error, please [open an issue on github](
+3. If you have any doubts, feature requests or detect an error, please [open an issue on GitHub](
    https://github.com/sdv-dev/SDV/issues) or [join our Slack Workspace](
    https://bit.ly/sdv-slack-invite)
 4. Also, do not forget to check the [project documentation site](https://sdv.dev/SDV/)!
