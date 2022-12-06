@@ -10,7 +10,7 @@ def test_load_tabular_demo_default():
     demo_dataset = load_tabular_demo(dataset_name='demo_single_table')
 
     expected_columns = [
-        'company', 
+        'company',
         'department',
         'employee_id',
         'age',
