@@ -278,7 +278,7 @@ def _load_demo_dataset(dataset_name, data_path):
     return meta, tables
 
 
-def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
+def load_demo(dataset_name='demo_multi_table', data_path=DATA_PATH, metadata=False):
     """Load relational demo data.
 
     If a dataset name is given, it is downloaded from the sdv-datasets S3 bucket.
@@ -295,7 +295,8 @@ def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
 
     Args:
         dataset_name (str):
-            Dataset name to be downloaded, if ``None`` use default demo data. Defaults to ``None``.
+            Dataset name to be downloaded. Defaults to ``'demo_multi_table'``, which is the name of
+            the multi table demo dataset.
         data_path (str):
             Data path to save the dataset files, only used if dataset_name is provided.
             Defaults to ``DATA_PATH``.
@@ -307,10 +308,11 @@ def load_demo(dataset_name=None, data_path=DATA_PATH, metadata=False):
             If ``metadata`` is ``False`` return a ``dict`` with the tables data.
             If ``metadata`` is ``True`` return a ``tuple`` with Metadata and tables data.
     """
-    if dataset_name:
-        meta, tables = _load_demo_dataset(dataset_name, data_path)
-    else:
+    dataset_name = dataset_name or 'demo_multi_table'
+    if dataset_name == 'demo_multi_table':
         meta, tables = _load_relational_dummy()
+    else:
+        meta, tables = _load_demo_dataset(dataset_name, data_path)
 
     if metadata:
         return meta, tables
@@ -347,7 +349,8 @@ def _load_tabular_dummy():
     })
 
 
-def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, metadata=False):
+def load_tabular_demo(dataset_name='demo_single_table', table_name=None, data_path=DATA_PATH,
+                      metadata=False):
     """Load a tabular demo.
 
     If a dataset name is given, it is downloaded from the sdv-datasets S3 bucket.
@@ -360,7 +363,8 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
 
     Args:
         dataset_name (str):
-            Dataset name to be downloaded, if ``None`` use default demo data. Defaults to ``None``.
+            Dataset name to be downloaded. Defaults to ``'demo_single_table'``, which  is the name
+            of the single table demo dataset.
         table_name (str):
             If a table name is given, return this table from the indicated dataset.
             Otherwise, return the first one.
@@ -375,7 +379,8 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
             If ``metadata`` is ``False`` return a ``pandas.DataFrame`` with the tables data.
             If ``metadata`` is ``True`` return a ``tuple`` with a Table and the data.
     """
-    if dataset_name:
+    dataset_name = dataset_name or 'demo_single_table'
+    if dataset_name != 'demo_single_table':
         meta, tables = _load_demo_dataset(dataset_name, data_path)
 
         if table_name is None:
