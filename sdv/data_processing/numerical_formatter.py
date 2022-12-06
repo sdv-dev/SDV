@@ -52,9 +52,13 @@ class NumericalFormatter:
         data = np.array(data)
         roundable_data = data[~(np.isinf(data) | pd.isna(data))]
 
+        # Doesn't contain numbers
+        if len(roundable_data) == 0:
+            return None
+
         # Doesn't contain decimal digits
         if ((roundable_data % 1) == 0).all():
-            return None
+            return 0
 
         # Try to round to fewer digits
         if (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
@@ -63,7 +67,7 @@ class NumericalFormatter:
                     return decimal
 
         # Can't round, not equal after MAX_DECIMALS digits of precision
-        return MAX_DECIMALS
+        return None
 
     def learn_format(self, column):
         """Learn the format of a column.
@@ -98,8 +102,10 @@ class NumericalFormatter:
             column = column.clip(min_bound, max_bound)
 
         is_integer = np.dtype(self._dtype).kind == 'i'
-        if self.learn_rounding_scheme or is_integer:
-            column = column.round(self._rounding_digits or 0)
+        if self.learn_rounding_scheme and self._rounding_digits is not None:
+            column = column.round(self._rounding_digits)
+        elif is_integer:
+            column = column.round(0)
 
         if pd.isna(column).any() and is_integer:
             return column

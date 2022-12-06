@@ -25,13 +25,13 @@ class TestNumericalFormatter:
     def test__learn_rounding_digits_more_than_15_decimals(self):
         """Test the ``_learn_rounding_digits`` method with more than 15 decimals.
 
-        If the data has more than 15 decimals, 14 should be returned.
+        If the data has more than 15 decimals, return None.
 
         Input:
             - an array that contains floats with more than 15 decimals.
 
         Output:
-            -14
+            - None
         """
         # Setup
         data = np.random.random(size=10).round(20)
@@ -40,7 +40,7 @@ class TestNumericalFormatter:
         output = NumericalFormatter._learn_rounding_digits(data)
 
         # Assert
-        assert output == 14
+        assert output is None
 
     def test__learn_rounding_digits_less_than_15_decimals(self):
         """Test the ``_learn_rounding_digits`` method with less than 15 decimals.
@@ -69,9 +69,6 @@ class TestNumericalFormatter:
 
         Input:
             - an array that contains floats that are multiples of 10, 100 and 1000 and a NaN.
-
-        Output:
-            - None
         """
         # Setup
         data = np.array([1230., 12300., 123000., np.nan])
@@ -80,7 +77,7 @@ class TestNumericalFormatter:
         output = NumericalFormatter._learn_rounding_digits(data)
 
         # Assert
-        assert output is None
+        assert output == 0
 
     def test__learn_rounding_digits_negative_decimals_integer(self):
         """Test the ``_learn_rounding_digits`` method with integers multiples of powers of 10.
@@ -89,9 +86,6 @@ class TestNumericalFormatter:
 
         Input:
             - an array that contains integers that are multiples of 10, 100 and 1000 and a NaN.
-
-        Output:
-            - None
         """
         # Setup
         data = np.array([1230, 12300, 123000, np.nan])
@@ -100,18 +94,15 @@ class TestNumericalFormatter:
         output = NumericalFormatter._learn_rounding_digits(data)
 
         # Assert
-        assert output is None
+        assert output == 0
 
     def test__learn_rounding_digits_all_nans(self):
         """Test the ``_learn_rounding_digits`` method with data that is all NaNs.
 
-        If the data is all NaNs, expect that the output is None.
+        If the data is all NaNs, expect that the output is 0.
 
         Input:
             - an array of NaN.
-
-        Output:
-            - None
         """
         # Setup
         data = np.array([np.nan, np.nan, np.nan, np.nan])
@@ -185,9 +176,6 @@ class TestNumericalFormatter:
 
         Input:
             - Series with a value that has 15 decimals
-
-        Side Effect:
-            - ``_rounding_digits`` is set to 14
         """
         # Setup
         data = pd.Series([0.000000000000001])
@@ -197,7 +185,7 @@ class TestNumericalFormatter:
         formatter.learn_format(data)
 
         # Asserts
-        assert formatter._rounding_digits == 14
+        assert formatter._rounding_digits is None
 
     def test_learn_format_learn_rounding_scheme_true_inf(self):
         """Test ``learn_format`` with ``learn_rounding_scheme`` set to ``True``.
@@ -221,7 +209,7 @@ class TestNumericalFormatter:
         formatter.learn_format(data)
 
         # Asserts
-        assert formatter._rounding_digits is None
+        assert formatter._rounding_digits == 0
 
     def test_learn_format_learn_rounding_scheme_true_max_zero(self):
         """Test ``learn_format`` with ``learn_rounding_scheme`` set to ``True``.
@@ -243,7 +231,7 @@ class TestNumericalFormatter:
         formatter.learn_format(data)
 
         # Asserts
-        assert formatter._rounding_digits is None
+        assert formatter._rounding_digits == 0
 
     def test_learn_format_enforce_min_max_values_true(self):
         """Test ``_fit`` with ``enforce_min_max_values`` set to ``True``.
