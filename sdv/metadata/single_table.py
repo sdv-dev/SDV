@@ -1,6 +1,7 @@
 """Single Table Metadata."""
 
 import json
+import logging
 import re
 import warnings
 from copy import deepcopy
@@ -13,6 +14,8 @@ from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.utils import cast_to_iterable, load_data_from_csv
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SingleTableMetadata:
@@ -273,8 +276,8 @@ class SingleTableMetadata:
 
         self._detect_columns(data)
 
-        print('Detected metadata:')  # noqa: T001
-        print(json.dumps(self.to_dict(), indent=4))  # noqa: T001
+        LOGGER.info('Detected metadata:')
+        LOGGER.info(json.dumps(self.to_dict(), indent=4))
 
     def detect_from_csv(self, filepath, pandas_kwargs=None):
         """Detect the metadata from a ``csv`` file.
