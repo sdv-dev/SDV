@@ -414,12 +414,13 @@ def load_tabular_demo(dataset_name=None, table_name=None, data_path=DATA_PATH, m
                 },
                 {
                     'constraint': 'ScalarInequality',
-                    'value': 30000,
-                    'column_name': 'salary'
+                    'column_name': 'salary',
+                    'relation': '>',
+                    'value': 30000
                 },
                 {
                     'constraint': 'Positive',
-                    'columns': 'prior_years_experience'
+                    'column_name': 'prior_years_experience'
                 }
             ],
             'model_kwargs': {}
