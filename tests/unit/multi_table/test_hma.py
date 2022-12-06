@@ -250,30 +250,30 @@ class TestHMASynthesizer:
                 'name': ['John', 'Doe', 'Johanna'],
                 'additional_column': [0.1, 0.2, 0.3],
                 'another_additional_column': [0.1, 0.2, 0.5]
-            }),
+            }, dtype=np.int64),
             'sessions': pd.DataFrame({
                 'user_id': [1, 2, 1],
                 'session_id': ['a', 'b', 'c'],
                 'os': ['linux', 'mac', 'win'],
                 'country': ['us', 'us', 'es']
-            }),
+            }, dtype=np.int64),
             'transactions': pd.DataFrame({
                 'transaction_id': [1, 2, 3],
-            })
+            }, dtype=np.int64),
         }
 
         users_synth = Mock()
-        users_synth._data_processor._dtypes = {'user_id': int, 'name': str}
+        users_synth._data_processor._dtypes = {'user_id': np.int64, 'name': str}
         sessions_synth = Mock()
         sessions_synth._data_processor._dtypes = {
-            'user_id': int,
+            'user_id': np.int64,
             'session_id': str,
             'os': str,
             'country': str
         }
         transactions_synth = Mock()
         transactions_synth._data_processor._dtypes = {
-            'transaction_id': int,
+            'transaction_id': np.int64,
             'session_id': str
         }
 
@@ -291,17 +291,17 @@ class TestHMASynthesizer:
             'users': pd.DataFrame({
                 'user_id': [0, 1, 2],
                 'name': ['John', 'Doe', 'Johanna'],
-            }),
+            }, dtype=np.int64),
             'sessions': pd.DataFrame({
                 'user_id': [1, 2, 1],
                 'session_id': ['a', 'b', 'c'],
                 'os': ['linux', 'mac', 'win'],
                 'country': ['us', 'us', 'es'],
-            }),
+            }, dtype=np.int64),
             'transactions': pd.DataFrame({
                 'transaction_id': [1, 2, 3],
                 'session_id': ['a', 'a', 'b']
-            })
+            }, dtype=np.int64),
         }
         for result_frame, expected_frame in zip(result.values(), expected_result.values()):
             pd.testing.assert_frame_equal(result_frame, expected_frame)
