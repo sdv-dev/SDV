@@ -1336,9 +1336,9 @@ class TestMultiTableMetadata:
         with pytest.raises(ValueError, match=error_message):
             metadata.update_column('table', 'column', sdtype='numerical', pii=False)
 
-    @patch('sdv.metadata.multi_table.print')
+    @patch('sdv.metadata.multi_table.LOGGER')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    def test_detect_table_from_csv(self, single_table_mock, print_mock):
+    def test_detect_table_from_csv(self, single_table_mock, log_mock):
         """Test the ``detect_table_from_csv`` method.
 
         If the table does not already exist, a ``SingleTableMetadata`` instance
@@ -1365,7 +1365,8 @@ class TestMultiTableMetadata:
         single_table_mock.return_value._load_data_from_csv.assert_called_once_with('path.csv')
         single_table_mock.return_value._detect_columns.assert_called_once_with(fake_data)
         assert metadata._tables == {'table': single_table_mock.return_value}
-        print_mock.assert_called_once_with((
+
+        expected_log_calls = call(
             'Detected metadata:\n'
             '{\n'
             '    "columns": {\n'
@@ -1374,7 +1375,8 @@ class TestMultiTableMetadata:
             '        }\n'
             '    }'
             '\n}'
-        ))
+        )
+        log_mock.info.assert_has_calls([expected_log_calls])
 
     def test_detect_table_from_csv_table_already_exists(self):
         """Test the ``detect_table_from_csv`` method.
@@ -1403,9 +1405,9 @@ class TestMultiTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.detect_table_from_csv('table', 'path.csv')
 
-    @patch('sdv.metadata.multi_table.print')
+    @patch('sdv.metadata.multi_table.LOGGER')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    def test_detect_table_from_dataframe(self, single_table_mock, print_mock):
+    def test_detect_table_from_dataframe(self, single_table_mock, log_mock):
         """Test the ``detect_table_from_dataframe`` method.
 
         If the table does not already exist, a ``SingleTableMetadata`` instance
@@ -1430,7 +1432,8 @@ class TestMultiTableMetadata:
         # Assert
         single_table_mock.return_value._detect_columns.assert_called_once_with(data)
         assert metadata._tables == {'table': single_table_mock.return_value}
-        print_mock.assert_called_once_with((
+
+        expected_log_calls = call(
             'Detected metadata:\n'
             '{\n'
             '    "columns": {\n'
@@ -1439,7 +1442,8 @@ class TestMultiTableMetadata:
             '        }\n'
             '    }'
             '\n}'
-        ))
+        )
+        log_mock.info.assert_has_calls([expected_log_calls])
 
     def test_detect_table_from_dataframe_table_already_exists(self):
         """Test the ``detect_table_from_dataframe`` method.
