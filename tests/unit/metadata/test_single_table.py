@@ -691,8 +691,8 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=err_msg):
             instance.detect_from_dataframe('dataframe')
 
-    @patch('sdv.metadata.single_table.print')
-    def test_detect_from_dataframe(self, mock_print):
+    @patch('sdv.metadata.single_table.LOGGER')
+    def test_detect_from_dataframe(self, mock_log):
         """Test the ``dectect_from_dataframe`` method.
 
         Test that when given a ``pandas.DataFrame``, the current instance of
@@ -731,11 +731,11 @@ class TestSingleTableMetadata:
             'bool': {'sdtype': 'boolean'}
         }
 
-        expected_print_calls = [
+        expected_log_calls = [
             call('Detected metadata:'),
             call(json.dumps(instance.to_dict(), indent=4))
         ]
-        assert mock_print.call_args_list == expected_print_calls
+        mock_log.info.assert_has_calls(expected_log_calls)
 
     def test_detect_from_csv_raises_value_error(self):
         """Test the ``detect_from_csv`` method.
@@ -762,8 +762,8 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=err_msg):
             instance.detect_from_csv('filepath')
 
-    @patch('sdv.metadata.single_table.print')
-    def test_detect_from_csv(self, mock_print):
+    @patch('sdv.metadata.single_table.LOGGER')
+    def test_detect_from_csv(self, mock_log):
         """Test the ``dectect_from_csv`` method.
 
         Test that when given a file path to a ``csv`` file, the current instance of
@@ -806,14 +806,14 @@ class TestSingleTableMetadata:
             'bool': {'sdtype': 'boolean'}
         }
 
-        expected_print_calls = [
+        expected_log_calls = [
             call('Detected metadata:'),
             call(json.dumps(instance.to_dict(), indent=4))
         ]
-        assert mock_print.call_args_list == expected_print_calls
+        mock_log.info.assert_has_calls(expected_log_calls)
 
-    @patch('sdv.metadata.single_table.print')
-    def test_detect_from_csv_with_kwargs(self, mock_print):
+    @patch('sdv.metadata.single_table.LOGGER')
+    def test_detect_from_csv_with_kwargs(self, mock_log):
         """Test the ``dectect_from_csv`` method.
 
         Test that when given a file path to a ``csv`` file, the current instance of
@@ -857,11 +857,11 @@ class TestSingleTableMetadata:
             'bool': {'sdtype': 'boolean'}
         }
 
-        expected_print_calls = [
+        expected_log_calls = [
             call('Detected metadata:'),
             call(json.dumps(instance.to_dict(), indent=4))
         ]
-        assert mock_print.call_args_list == expected_print_calls
+        mock_log.info.assert_has_calls(expected_log_calls)
 
     def test__validate_dataype_strings(self):
         """Test ``_validate_dataype`` for strings.

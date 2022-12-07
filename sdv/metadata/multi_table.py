@@ -1,6 +1,7 @@
 """Multi Table Metadata."""
 
 import json
+import logging
 import warnings
 from collections import defaultdict
 from copy import deepcopy
@@ -11,6 +12,8 @@ from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import visualize_graph
 from sdv.utils import cast_to_iterable
+
+LOGGER = logging.getLogger(__name__)
 
 
 class MultiTableMetadata:
@@ -282,11 +285,11 @@ class MultiTableMetadata:
             )
 
     @staticmethod
-    def _print_detected_table(single_table_metadata):
+    def _log_detected_table(single_table_metadata):
         table_dict = single_table_metadata.to_dict()
         table_dict.pop('SCHEMA_VERSION', None)
         table_json = json.dumps(table_dict, indent=4)
-        print(f'Detected metadata:\n{table_json}')  # noqa: T001
+        LOGGER.info(f'Detected metadata:\n{table_json}')
 
     def detect_table_from_dataframe(self, table_name, data):
         """Detect the metadata for a table from a dataframe.
@@ -301,7 +304,7 @@ class MultiTableMetadata:
         table = SingleTableMetadata()
         table._detect_columns(data)
         self._tables[table_name] = table
-        self._print_detected_table(table)
+        self._log_detected_table(table)
 
     def detect_table_from_csv(self, table_name, filepath):
         """Detect the metadata for a table from a csv file.
@@ -317,7 +320,7 @@ class MultiTableMetadata:
         data = table._load_data_from_csv(filepath)
         table._detect_columns(data)
         self._tables[table_name] = table
-        self._print_detected_table(table)
+        self._log_detected_table(table)
 
     def set_primary_key(self, table_name, column_name):
         """Set the primary key of a table.
