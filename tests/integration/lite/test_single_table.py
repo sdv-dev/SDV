@@ -26,9 +26,6 @@ def test_sample():
     assert len(samples) == 10
 
 
-test_sample()
-
-
 def test_sample_with_constraints():
     """Test sampling for the ``SingleTablePreset``."""
     # Setup
