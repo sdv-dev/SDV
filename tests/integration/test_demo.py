@@ -1,12 +1,12 @@
 import pandas as pd
+import pytest
 
 from sdv.demo import load_demo, load_tabular_demo
 
 
 def test_load_tabular_demo_default():
-    """Test that the default dataset can be accessed in 3 different ways."""
+    """Test that the default dataset can be accessed in 2 different ways."""
     default_dataset = load_tabular_demo()
-    none_dataset = load_tabular_demo(dataset_name=None)
     demo_dataset = load_tabular_demo(dataset_name='demo_single_table')
 
     expected_columns = [
@@ -39,9 +39,8 @@ def test_load_tabular_demo_default():
     expected_part_time = pd.Series([0.0, 0.0, 0.0, 0.0, 1.0, 1.0] * 2, name='part_time')
 
     assert expected_columns == list(default_dataset.columns)
-    assert expected_columns == list(none_dataset.columns)
     assert expected_columns == list(demo_dataset.columns)
-    for dataset in [default_dataset, demo_dataset, none_dataset]:
+    for dataset in [default_dataset, demo_dataset]:
         pd.testing.assert_series_equal(dataset['company'], expected_company)
         pd.testing.assert_series_equal(dataset['department'], expected_department)
         pd.testing.assert_series_equal(dataset['employee_id'], expected_employee_id)
@@ -49,12 +48,24 @@ def test_load_tabular_demo_default():
         pd.testing.assert_series_equal(dataset['part_time'], expected_part_time)
 
 
+def test_load_tabular_demo_none():
+    """Test that an error is rasied if None is passed as the ``dataset_name``."""
+    error_message = "'dataset_name' cannot be None."
+    with pytest.raises(ValueError, match=error_message):
+        load_tabular_demo(dataset_name=None)
+
+
 def test_load_demo_default():
-    """Test that the default datasets can be accessed in 3 different ways."""
+    """Test that the default datasets can be accessed in 2 different ways."""
     default_datasets = load_demo()
-    none_datasets = load_demo(dataset_name=None)
     demo_datasets = load_demo(dataset_name='demo_multi_table')
 
     for table_name in default_datasets:
         pd.testing.assert_frame_equal(default_datasets[table_name], demo_datasets[table_name])
-        pd.testing.assert_frame_equal(default_datasets[table_name], none_datasets[table_name])
+
+
+def test_load_demo_none():
+    """Test that an error is rasied if None is passed as the ``dataset_name``."""
+    error_message = "'dataset_name' cannot be None."
+    with pytest.raises(ValueError, match=error_message):
+        load_demo(dataset_name=None)

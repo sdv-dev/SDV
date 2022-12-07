@@ -308,8 +308,9 @@ def load_demo(dataset_name='demo_multi_table', data_path=DATA_PATH, metadata=Fal
             If ``metadata`` is ``False`` return a ``dict`` with the tables data.
             If ``metadata`` is ``True`` return a ``tuple`` with Metadata and tables data.
     """
-    dataset_name = dataset_name or 'demo_multi_table'
-    if dataset_name == 'demo_multi_table':
+    if dataset_name is None:
+        raise ValueError("'dataset_name' cannot be None.")
+    elif dataset_name == 'demo_multi_table':
         meta, tables = _load_relational_dummy()
     else:
         meta, tables = _load_demo_dataset(dataset_name, data_path)
@@ -379,7 +380,9 @@ def load_tabular_demo(dataset_name='demo_single_table', table_name=None, data_pa
             If ``metadata`` is ``False`` return a ``pandas.DataFrame`` with the tables data.
             If ``metadata`` is ``True`` return a ``tuple`` with a Table and the data.
     """
-    dataset_name = dataset_name or 'demo_single_table'
+    if dataset_name is None:
+        raise ValueError("'dataset_name' cannot be None.")
+
     if dataset_name != 'demo_single_table':
         meta, tables = _load_demo_dataset(dataset_name, data_path)
 
