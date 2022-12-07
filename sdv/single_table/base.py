@@ -59,9 +59,11 @@ class BaseSynthesizer:
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True):
         self.metadata = metadata
         self.metadata.validate()
-        self.enforce_min_max_values = enforce_min_max_values
-        self.enforce_rounding = enforce_rounding
-        self._data_processor = DataProcessor(metadata)
+        self._data_processor = DataProcessor(
+            metadata=metadata,
+            learn_rounding_scheme=enforce_rounding,
+            enforce_min_max_values=enforce_min_max_values
+        )
         self._update_default_transformers()
         self._fitted = False
 
