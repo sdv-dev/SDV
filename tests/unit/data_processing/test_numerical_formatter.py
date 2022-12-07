@@ -2,6 +2,7 @@ from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 
@@ -25,21 +26,18 @@ class TestNumericalFormatter:
     def test__learn_rounding_digits_more_than_15_decimals(self):
         """Test the ``_learn_rounding_digits`` method with more than 15 decimals.
 
-        If the data has more than 15 decimals, return None.
-
-        Input:
-            - an array that contains floats with more than 15 decimals.
-
-        Output:
-            - None
+        If the data has more than 15 decimals, return None and raise warning.
         """
         # Setup
-        data = np.random.random(size=10).round(20)
+        data = pd.Series(np.random.random(size=10).round(20), name='col')
 
-        # Run
-        output = NumericalFormatter._learn_rounding_digits(data)
+        # Run and Assert
+        warn_msg = (
+            "No rounding scheme detected for column 'col'. Synthetic data will not be rounded."
+        )
+        with pytest.warns(UserWarning, match=warn_msg):
+            output = NumericalFormatter._learn_rounding_digits(data)
 
-        # Assert
         assert output is None
 
     def test__learn_rounding_digits_less_than_15_decimals(self):
@@ -54,7 +52,7 @@ class TestNumericalFormatter:
             - 3
         """
         # Setup
-        data = np.array([10, 0., 0.1, 0.12, 0.123, np.nan])
+        data = pd.Series(np.array([10, 0., 0.1, 0.12, 0.123, np.nan]))
 
         # Run
         output = NumericalFormatter._learn_rounding_digits(data)
@@ -71,7 +69,7 @@ class TestNumericalFormatter:
             - an array that contains floats that are multiples of 10, 100 and 1000 and a NaN.
         """
         # Setup
-        data = np.array([1230., 12300., 123000., np.nan])
+        data = pd.Series(np.array([1230., 12300., 123000., np.nan]))
 
         # Run
         output = NumericalFormatter._learn_rounding_digits(data)
@@ -88,7 +86,7 @@ class TestNumericalFormatter:
             - an array that contains integers that are multiples of 10, 100 and 1000 and a NaN.
         """
         # Setup
-        data = np.array([1230, 12300, 123000, np.nan])
+        data = pd.Series(np.array([1230, 12300, 123000, np.nan]))
 
         # Run
         output = NumericalFormatter._learn_rounding_digits(data)
@@ -105,7 +103,7 @@ class TestNumericalFormatter:
             - an array of NaN.
         """
         # Setup
-        data = np.array([np.nan, np.nan, np.nan, np.nan])
+        data = pd.Series(np.array([np.nan, np.nan, np.nan, np.nan]))
 
         # Run
         output = NumericalFormatter._learn_rounding_digits(data)

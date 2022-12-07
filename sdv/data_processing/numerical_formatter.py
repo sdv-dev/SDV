@@ -1,5 +1,6 @@
 """Formatter for numerical data."""
 import sys
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -49,6 +50,7 @@ class NumericalFormatter:
     @staticmethod
     def _learn_rounding_digits(data):
         """Check if data has any decimals."""
+        name = data.name
         data = np.array(data)
         roundable_data = data[~(np.isinf(data) | pd.isna(data))]
 
@@ -67,6 +69,10 @@ class NumericalFormatter:
                     return decimal
 
         # Can't round, not equal after MAX_DECIMALS digits of precision
+        warnings.warn(
+            f"No rounding scheme detected for column '{name}'."
+            ' Synthetic data will not be rounded.'
+        )
         return None
 
     def learn_format(self, column):
