@@ -63,7 +63,7 @@ class BaseSynthesizer:
         self.enforce_rounding = enforce_rounding
         self._data_processor = DataProcessor(
             metadata=metadata,
-            learn_rounding_scheme=enforce_rounding,
+            enforce_rounding=enforce_rounding,
             enforce_min_max_values=enforce_min_max_values
         )
         self._update_default_transformers()

@@ -12,13 +12,13 @@ class TestNumericalFormatter:
         """Test ``__init__`` attributes properly set."""
         # Run
         formatter = NumericalFormatter(
-            learn_rounding_scheme=True,
+            enforce_rounding=True,
             enforce_min_max_values=True,
             computer_representation='Int8'
         )
 
         # Assert
-        assert formatter.learn_rounding_scheme is True
+        assert formatter.enforce_rounding is True
         assert formatter.enforce_min_max_values is True
         assert formatter.computer_representation == 'Int8'
 
@@ -126,7 +126,7 @@ class TestNumericalFormatter:
         """Test that ``learn_format`` method.
 
         Ensure attributes are correct when ``enforce_min_max_values`` and
-        ``learn_rounding_scheme`` are False.
+        ``enforce_rounding`` are False.
 
         Setup:
             - a NumericalFormatter with ``_validate_values_within_bounds`` mocked.
@@ -139,7 +139,7 @@ class TestNumericalFormatter:
         """
         # Setup
         data = pd.Series([1.5, None, 2.5])
-        formatter = NumericalFormatter(enforce_min_max_values=False, learn_rounding_scheme=False)
+        formatter = NumericalFormatter(enforce_min_max_values=False, enforce_rounding=False)
         formatter._validate_values_within_bounds = Mock()
 
         # Run
@@ -152,9 +152,9 @@ class TestNumericalFormatter:
         assert formatter._rounding_digits is None
 
     def test_learn_format_rounding_scheme_true(self):
-        """Test ``learn_format`` with ``learn_rounding_scheme`` set to ``True``.
+        """Test ``learn_format`` with ``enforce_rounding`` set to ``True``.
 
-        If ``learn_rounding_scheme`` is set to ``True``, the ``learn_format`` method
+        If ``enforce_rounding`` is set to ``True``, the ``learn_format`` method
         should set its ``_rounding_digits`` instance variable to what is learned
         in the data.
 
@@ -166,7 +166,7 @@ class TestNumericalFormatter:
         """
         # Setup
         data = pd.Series([1, 2.1, 3.12, 4.123, 5.1234, 6.123, 7.12, 8.1, 9, None])
-        formatter = NumericalFormatter(learn_rounding_scheme=True)
+        formatter = NumericalFormatter(enforce_rounding=True)
 
         # Run
         formatter.learn_format(data)
@@ -174,10 +174,10 @@ class TestNumericalFormatter:
         # Asserts
         assert formatter._rounding_digits == 4
 
-    def test__fit_learn_rounding_scheme_true_max_decimals(self):
-        """Test ``learn_format`` with ``learn_rounding_scheme`` set to ``True``.
+    def test__fit_enforce_rounding_true_max_decimals(self):
+        """Test ``learn_format`` with ``enforce_rounding`` set to ``True``.
 
-        If the ``learn_rounding_scheme`` parameter is set to ``True``, ``learn_format`` should
+        If the ``enforce_rounding`` parameter is set to ``True``, ``learn_format`` should
         learn the ``_rounding_digits`` to be the max number of decimal places seen in the data.
         The max amount of decimals that floats can be accurately compared with is 15.
         If the input data has values with more than 14 decimals, we will not be able to
@@ -191,7 +191,7 @@ class TestNumericalFormatter:
         """
         # Setup
         data = pd.Series([0.000000000000001])
-        formatter = NumericalFormatter(learn_rounding_scheme=True)
+        formatter = NumericalFormatter(enforce_rounding=True)
 
         # Run
         formatter.learn_format(data)
@@ -199,10 +199,10 @@ class TestNumericalFormatter:
         # Asserts
         assert formatter._rounding_digits is None
 
-    def test_learn_format_learn_rounding_scheme_true_inf(self):
-        """Test ``learn_format`` with ``learn_rounding_scheme`` set to ``True``.
+    def test_learn_format_enforce_rounding_true_inf(self):
+        """Test ``learn_format`` with ``enforce_rounding`` set to ``True``.
 
-        If the ``learn_rounding_scheme`` parameter is set to ``True``, and the data
+        If the ``enforce_rounding`` parameter is set to ``True``, and the data
         contains only integers or infinite values, ``learn_format`` should learn
         ``_rounding_digits`` to be None.
 
@@ -215,7 +215,7 @@ class TestNumericalFormatter:
         """
         # Setup
         data = pd.Series([15000, 4000, 60000, np.inf])
-        formatter = NumericalFormatter(learn_rounding_scheme=True)
+        formatter = NumericalFormatter(enforce_rounding=True)
 
         # Run
         formatter.learn_format(data)
@@ -223,10 +223,10 @@ class TestNumericalFormatter:
         # Asserts
         assert formatter._rounding_digits is None
 
-    def test_learn_format_learn_rounding_scheme_true_max_zero(self):
-        """Test ``learn_format`` with ``learn_rounding_scheme`` set to ``True``.
+    def test_learn_format_enforce_rounding_true_max_zero(self):
+        """Test ``learn_format`` with ``enforce_rounding`` set to ``True``.
 
-        If the ``learn_rounding_scheme`` parameter is set to ``True``, and the max
+        If the ``enforce_rounding`` parameter is set to ``True``, and the max
         in the data is 0, ``learn_format`` should learn the ``_rounding_digits`` to be None.
 
         Input:
@@ -237,7 +237,7 @@ class TestNumericalFormatter:
         """
         # Setup
         data = pd.Series([0, 0, 0])
-        formatter = NumericalFormatter(learn_rounding_scheme=True)
+        formatter = NumericalFormatter(enforce_rounding=True)
 
         # Run
         formatter.learn_format(data)
@@ -268,8 +268,8 @@ class TestNumericalFormatter:
         assert formatter._min_value == -5000
         assert formatter._max_value == 4000
 
-    def test_format_data_learn_rounding_scheme_false(self):
-        """Test ``format_data`` when ``learn_rounding_scheme`` is ``False``.
+    def test_format_data_enforce_rounding_false(self):
+        """Test ``format_data`` when ``enforce_rounding`` is ``False``.
 
         The data should not be rounded at all.
 
@@ -281,7 +281,7 @@ class TestNumericalFormatter:
         """
         # Setup
         data = pd.Series(np.random.random(10))
-        formatter = NumericalFormatter(learn_rounding_scheme=False)
+        formatter = NumericalFormatter(enforce_rounding=False)
         formatter._rounding_digits = None
 
         # Run
@@ -330,7 +330,7 @@ class TestNumericalFormatter:
         # Setup
         data = pd.Series([1.1111, 2.2222, 3.3333, 4.44444, 5.555555])
         formatter = NumericalFormatter()
-        formatter.learn_rounding_scheme = True
+        formatter.enforce_rounding = True
         formatter._rounding_digits = 2
 
         # Run
@@ -357,7 +357,7 @@ class TestNumericalFormatter:
         data = pd.Series([2000.0, 120.0, 3100.0, 40100.0])
         formatter = NumericalFormatter()
         formatter._dtype = int
-        formatter.learn_rounding_scheme = True
+        formatter.enforce_rounding = True
         formatter._rounding_digits = -3
 
         # Run
@@ -384,7 +384,7 @@ class TestNumericalFormatter:
         # Setup
         data = pd.Series([2000.0, 120.0, 3100.0, 40100.0])
         formatter = NumericalFormatter()
-        formatter.learn_rounding_scheme = True
+        formatter.enforce_rounding = True
         formatter._rounding_digits = -3
 
         # Run
@@ -409,7 +409,7 @@ class TestNumericalFormatter:
         # Setup
         data = pd.Series([2000.554, 120.2, 3101, 4010])
         formatter = NumericalFormatter()
-        formatter.learn_rounding_scheme = True
+        formatter.enforce_rounding = True
         formatter._rounding_digits = 0
 
         # Run

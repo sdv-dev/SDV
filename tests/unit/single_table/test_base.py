@@ -57,7 +57,7 @@ class TestBaseSingleTableSynthesizer:
         assert instance._data_processor == mock_data_processor.return_value
         mock_data_processor.assert_called_once_with(
             metadata=metadata,
-            learn_rounding_scheme=instance.enforce_rounding,
+            enforce_rounding=instance.enforce_rounding,
             enforce_min_max_values=instance.enforce_min_max_values
         )
         metadata.validate.assert_called_once_with()
@@ -81,7 +81,7 @@ class TestBaseSingleTableSynthesizer:
         assert instance._data_processor == mock_data_processor.return_value
         mock_data_processor.assert_called_once_with(
             metadata=metadata,
-            learn_rounding_scheme=instance.enforce_rounding,
+            enforce_rounding=instance.enforce_rounding,
             enforce_min_max_values=instance.enforce_min_max_values
         )
         metadata.validate.assert_called_once_with()
