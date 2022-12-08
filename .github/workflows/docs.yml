@@ -3,6 +3,7 @@ name: Generate Docs
 on:
   push:
     branches: [ stable ]
+  workflow_dispatch:
 
 jobs:
   docs:

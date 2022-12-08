@@ -22,7 +22,7 @@ install_requires = [
     'ctgan>=0.5.2,<0.6',
     'deepecho>=0.3.0.post1,<0.4',
     'rdt>=1.2.0,<1.3.0',
-    'sdmetrics>=0.7.0.dev0,<0.8',
+    'sdmetrics>=0.8.0,<0.9',
     'cloudpickle>=2.1.0,<3.0'
 ]
 
@@ -115,6 +115,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.17.1',
+    version='0.17.2.dev1',
     zip_safe=False,
 )
