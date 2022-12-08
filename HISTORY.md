@@ -1,5 +1,21 @@
 # Release Notes
 
+## 0.17.2 - 2022-12-08
+
+This release fixes a bug in the demo module related to loading the demo data with constraints. It also adds a name to the demo datasets. Finally, it bumps the version of `SDMetrics` used.
+
+### Maintenance
+
+* Upgrade SDMetrics requirement to 0.8.0 - Issue [#1125](https://github.com/sdv-dev/SDV/issues/1125) by @katxiao
+
+### New Features
+
+* Provide a name for the default demo datasets - Issue [#1124](https://github.com/sdv-dev/SDV/issues/1124) by @amontanez24
+
+### Bugs Fixed
+
+* Cannot load_tabular_demo with metadata - Issue [#1123](https://github.com/sdv-dev/SDV/issues/1123) by @amontanez24
+
 ## 0.17.1 - 2022-09-29
 
 This release bumps the dependency requirements to use the latest version of `SDMetrics`.
