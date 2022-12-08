@@ -1,5 +1,5 @@
 {% set name = 'sdv' %}
-{% set version = '0.17.2' %}
+{% set version = '0.17.3.dev0' %}
 
 package:
   name: "{{ name|lower }}"
