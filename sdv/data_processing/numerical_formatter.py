@@ -1,5 +1,6 @@
 """Formatter for numerical data."""
 import sys
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -48,15 +49,30 @@ class NumericalFormatter:
 
     @staticmethod
     def _learn_rounding_digits(data):
-        # check if data has any decimals
+        """Check if data has any decimals."""
+        name = data.name
         data = np.array(data)
         roundable_data = data[~(np.isinf(data) | pd.isna(data))]
-        if ((roundable_data % 1) != 0).any():
-            if (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
-                for decimal in range(MAX_DECIMALS + 1):
-                    if (roundable_data == roundable_data.round(decimal)).all():
-                        return decimal
 
+        # Doesn't contain numbers
+        if len(roundable_data) == 0:
+            return None
+
+        # Doesn't contain decimal digits
+        if ((roundable_data % 1) == 0).all():
+            return 0
+
+        # Try to round to fewer digits
+        if (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
+            for decimal in range(MAX_DECIMALS + 1):
+                if (roundable_data == roundable_data.round(decimal)).all():
+                    return decimal
+
+        # Can't round, not equal after MAX_DECIMALS digits of precision
+        warnings.warn(
+            f"No rounding scheme detected for column '{name}'."
+            ' Synthetic data will not be rounded.'
+        )
         return None
 
     def learn_format(self, column):
@@ -92,8 +108,10 @@ class NumericalFormatter:
             column = column.clip(min_bound, max_bound)
 
         is_integer = np.dtype(self._dtype).kind == 'i'
-        if self.enforce_rounding or is_integer:
-            column = column.round(self._rounding_digits or 0)
+        if self.enforce_rounding and self._rounding_digits is not None:
+            column = column.round(self._rounding_digits)
+        elif is_integer:
+            column = column.round(0)
 
         if pd.isna(column).any() and is_integer:
             return column
