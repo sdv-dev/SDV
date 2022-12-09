@@ -15,6 +15,7 @@
    
       ~CategoricalCAP.__init__
       ~CategoricalCAP.compute
+      ~CategoricalCAP.compute_breakdown
       ~CategoricalCAP.get_subclasses
       ~CategoricalCAP.normalize
    

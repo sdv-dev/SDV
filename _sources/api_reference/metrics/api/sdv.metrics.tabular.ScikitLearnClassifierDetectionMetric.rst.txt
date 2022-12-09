@@ -15,6 +15,7 @@
    
       ~ScikitLearnClassifierDetectionMetric.__init__
       ~ScikitLearnClassifierDetectionMetric.compute
+      ~ScikitLearnClassifierDetectionMetric.compute_breakdown
       ~ScikitLearnClassifierDetectionMetric.get_subclasses
       ~ScikitLearnClassifierDetectionMetric.normalize
    

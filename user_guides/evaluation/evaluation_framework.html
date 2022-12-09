@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Evaluation Framework &#8212; SDV 0.17.2.dev0 documentation</title>
+    <title>Evaluation Framework &#8212; SDV 0.17.2 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -282,11 +282,11 @@ properties as the original</p></li>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span><span class="go"></span>
 <span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">0           0      F    77.804240  89.590779  Commerce    73.580316   Comm&amp;Mgmt             True                 1           51.044248  Mkt&amp;Fin  68.310939  20000.0    True        NaT        NaT       3.0</span>
-<span class="go">1           1      F    81.100762  73.310850  Commerce    64.835107   Comm&amp;Mgmt             True                 1           69.049133  Mkt&amp;Fin  63.356339      NaN    True        NaT        NaT       3.0</span>
-<span class="go">2           2      M    69.579115  72.880687  Commerce    69.976234   Comm&amp;Mgmt             True                 1           77.837113  Mkt&amp;Fin  59.034499  25346.0    True        NaT 2020-10-10      12.0</span>
-<span class="go">3           3      F    70.708199  65.083878   Science    60.169305   Comm&amp;Mgmt             True                 2           50.000000   Mkt&amp;HR  67.754057  20000.0    True        NaT        NaT      12.0</span>
-<span class="go">4           4      M    67.336427  67.108045  Commerce    63.060561   Comm&amp;Mgmt             True                 1           88.074447  Mkt&amp;Fin  71.138535      NaN   False 2019-10-31 2020-05-04      12.0</span>
+<span class="go">0           0      M    82.813805  69.828298  Commerce    86.194284   Comm&amp;Mgmt            False                 0           75.792682   Mkt&amp;HR  65.329587  26980.0    True        NaT        NaT       6.0</span>
+<span class="go">1           1      M    73.439887  66.212389      Arts    67.251114      Others            False                 1           67.787882  Mkt&amp;Fin  62.130431      NaN    True 2020-07-02        NaT       3.0</span>
+<span class="go">2           2      M    63.546155  67.241909   Science    68.234436   Comm&amp;Mgmt            False                 1           52.284697   Mkt&amp;HR  60.833369      NaN    True        NaT        NaT       NaN</span>
+<span class="go">3           3      M    66.817315  78.595907  Commerce    66.651343   Comm&amp;Mgmt            False                 0           82.421767  Mkt&amp;Fin  62.268076  20000.0    True        NaT        NaT       3.0</span>
+<span class="go">4           4      F    56.172749  66.175530  Commerce    61.869305   Comm&amp;Mgmt            False                 0           61.387961   Mkt&amp;HR  64.849863  33094.0   False 2020-02-01 2020-03-02       NaN</span>
 </pre></div>
 </div>
 <p>We can also convert metadata to a Python dictionary by calling the <code class="docutils literal notranslate"><span class="pre">to_dict</span></code> method</p>
@@ -304,11 +304,11 @@ of the columns (marginal distributions) and the pairwise trends between the colu
 
 <span class="gp">In [12]: </span><span class="n">report</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata_dict</span><span class="p">)</span>
 
-<span class="go">Overall Quality Score: 87.2%</span>
+<span class="go">Overall Quality Score: 87.63%</span>
 
 <span class="go">Properties:</span>
-<span class="go">Column Shapes: 88.95%</span>
-<span class="go">Column Pair Trends: 85.45%</span>
+<span class="go">Column Shapes: 89.2%</span>
+<span class="go">Column Pair Trends: 86.07%</span>
 </pre></div>
 </div>
 <p>The report uses information in the metadata to select which metrics to apply to your data. The
@@ -321,22 +321,22 @@ the highest.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">report</span><span class="o">.</span><span class="n">get_details</span><span class="p">(</span><span class="n">property_name</span><span class="o">=</span><span class="s1">&#39;Column Shapes&#39;</span><span class="p">)</span>
 <span class="gh">Out[13]: </span><span class="go"></span>
 <span class="go">                Column        Metric  Quality Score</span>
-<span class="go">0          second_perc  KSComplement       0.944186</span>
-<span class="go">1            high_perc  KSComplement       0.860465</span>
-<span class="go">2          degree_perc  KSComplement       0.911628</span>
-<span class="go">3     experience_years  KSComplement       0.906977</span>
-<span class="go">4   employability_perc  KSComplement       0.897674</span>
-<span class="go">5             mba_perc  KSComplement       0.934884</span>
-<span class="go">6               salary  KSComplement       0.747084</span>
-<span class="go">7           start_date  KSComplement       0.638622</span>
-<span class="go">8             end_date  KSComplement       0.852560</span>
-<span class="go">9               gender  TVComplement       0.911628</span>
-<span class="go">10           high_spec  TVComplement       0.939535</span>
-<span class="go">11         degree_type  TVComplement       0.869767</span>
-<span class="go">12     work_experience  TVComplement       0.972093</span>
-<span class="go">13            mba_spec  TVComplement       0.934884</span>
-<span class="go">14              placed  TVComplement       0.944186</span>
-<span class="go">15            duration  TVComplement       0.896396</span>
+<span class="go">0          second_perc  KSComplement       0.934884</span>
+<span class="go">1            high_perc  KSComplement       0.916279</span>
+<span class="go">2          degree_perc  KSComplement       0.883721</span>
+<span class="go">3     experience_years  KSComplement       0.902326</span>
+<span class="go">4   employability_perc  KSComplement       0.865116</span>
+<span class="go">5             mba_perc  KSComplement       0.939535</span>
+<span class="go">6               salary  KSComplement       0.791041</span>
+<span class="go">7           start_date  KSComplement       0.620626</span>
+<span class="go">8             end_date  KSComplement       0.768632</span>
+<span class="go">9               gender  TVComplement       0.879070</span>
+<span class="go">10           high_spec  TVComplement       0.953488</span>
+<span class="go">11         degree_type  TVComplement       0.925581</span>
+<span class="go">12     work_experience  TVComplement       0.953488</span>
+<span class="go">13            mba_spec  TVComplement       0.986047</span>
+<span class="go">14              placed  TVComplement       0.934884</span>
+<span class="go">15            duration  TVComplement       0.927008</span>
 </pre></div>
 </div>
 <p>In the detailed view, you can see the quality score for each column of the table. Based on the data

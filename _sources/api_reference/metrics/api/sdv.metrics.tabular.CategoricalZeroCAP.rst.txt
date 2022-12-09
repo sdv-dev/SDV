@@ -15,6 +15,7 @@
    
       ~CategoricalZeroCAP.__init__
       ~CategoricalZeroCAP.compute
+      ~CategoricalZeroCAP.compute_breakdown
       ~CategoricalZeroCAP.get_subclasses
       ~CategoricalZeroCAP.normalize
    

@@ -15,6 +15,7 @@
    
       ~NumericalPrivacyMetric.__init__
       ~NumericalPrivacyMetric.compute
+      ~NumericalPrivacyMetric.compute_breakdown
       ~NumericalPrivacyMetric.get_subclasses
       ~NumericalPrivacyMetric.normalize
    

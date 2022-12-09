@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.privacy.base &#8212; SDV 0.17.2.dev0 documentation</title>
+    <title>sdmetrics.single_table.privacy.base &#8212; SDV 0.17.2 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -174,6 +174,7 @@
 <span class="kn">from</span> <span class="nn">sdmetrics.goal</span> <span class="kn">import</span> <span class="n">Goal</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.base</span> <span class="kn">import</span> <span class="n">SingleTableMetric</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.privacy.loss</span> <span class="kn">import</span> <span class="n">InverseCDFDistance</span>
+<span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">get_columns_from_metadata</span>
 
 
 <span class="k">class</span> <span class="nc">CategoricalType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
@@ -293,7 +294,7 @@
         <span class="p">)</span>
 
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">key_fields</span> <span class="o">+</span> <span class="n">sensitive_fields</span><span class="p">:</span>
-            <span class="n">data_type</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">][</span><span class="n">col</span><span class="p">]</span>
+            <span class="n">data_type</span> <span class="o">=</span> <span class="n">get_columns_from_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">)[</span><span class="n">col</span><span class="p">]</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">data_type</span> <span class="o">!=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DTYPES_TO_TYPES</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
                <span class="ow">and</span> <span class="n">data_type</span> <span class="o">!=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DTYPES_TO_TYPES</span><span class="p">[</span><span class="s1">&#39;O&#39;</span><span class="p">]</span>
                <span class="ow">and</span> <span class="n">data_type</span> <span class="o">!=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DTYPES_TO_TYPES</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]):</span>  <span class="c1"># check data type</span>
@@ -442,7 +443,7 @@
         <span class="p">)</span>
 
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">key_fields</span> <span class="o">+</span> <span class="n">sensitive_fields</span><span class="p">:</span>
-            <span class="n">data_type</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">][</span><span class="n">col</span><span class="p">]</span>
+            <span class="n">data_type</span> <span class="o">=</span> <span class="n">get_columns_from_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">)[</span><span class="n">col</span><span class="p">]</span>
 
             <span class="c1"># check data type</span>
             <span class="k">if</span> <span class="n">data_type</span> <span class="o">!=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DTYPES_TO_TYPES</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">data_type</span> <span class="o">!=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_DTYPES_TO_TYPES</span><span class="p">[</span><span class="s1">&#39;f&#39;</span><span class="p">]:</span>

@@ -16,6 +16,7 @@
       ~RegressionEfficacyMetric.SCORER
       ~RegressionEfficacyMetric.__init__
       ~RegressionEfficacyMetric.compute
+      ~RegressionEfficacyMetric.compute_breakdown
       ~RegressionEfficacyMetric.get_subclasses
       ~RegressionEfficacyMetric.normalize
    

@@ -15,6 +15,7 @@
    
       ~MLEfficacyMetric.__init__
       ~MLEfficacyMetric.compute
+      ~MLEfficacyMetric.compute_breakdown
       ~MLEfficacyMetric.get_subclasses
       ~MLEfficacyMetric.normalize
    

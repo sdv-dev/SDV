@@ -15,6 +15,7 @@
    
       ~NumericalLR.__init__
       ~NumericalLR.compute
+      ~NumericalLR.compute_breakdown
       ~NumericalLR.get_subclasses
       ~NumericalLR.normalize
    

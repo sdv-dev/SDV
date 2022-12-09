@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.bayesian_network &#8212; SDV 0.17.2.dev0 documentation</title>
+    <title>sdmetrics.single_table.bayesian_network &#8212; SDV 0.17.2 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -179,29 +179,8 @@
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="BNLikelihood"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.BNLikelihood.html#sdv.metrics.tabular.BNLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLikelihood</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;BayesianNetwork Likelihood Single Table metric.</span>
-
-<span class="sd">    This metric fits a BayesianNetwork to the real data and then evaluates how</span>
-<span class="sd">    likely it is that the synthetic data belongs to the same distribution.</span>
-
-<span class="sd">    The output is the average probability across all the synthetic rows.</span>
-
-<span class="sd">    Attributes:</span>
-<span class="sd">        name (str):</span>
-<span class="sd">            Name to use when reports about this metric are printed.</span>
-<span class="sd">        goal (sdmetrics.goal.Goal):</span>
-<span class="sd">            The goal of this metric.</span>
-<span class="sd">        min_value (Union[float, tuple[float]]):</span>
-<span class="sd">            Minimum value or values that this metric can take.</span>
-<span class="sd">        max_value (Union[float, tuple[float]]):</span>
-<span class="sd">            Maximum value or values that this metric can take.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;BayesianNetwork Likelihood&#39;</span>
-    <span class="n">goal</span> <span class="o">=</span> <span class="n">Goal</span><span class="o">.</span><span class="n">MAXIMIZE</span>
-    <span class="n">min_value</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">max_value</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="k">class</span> <span class="nc">BNLikelihoodBase</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;BayesianNetwork Likelihood Single Table base metric.&quot;&quot;&quot;</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_likelihoods</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -236,6 +215,31 @@
                 <span class="n">probabilities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">probabilities</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="BNLikelihood"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.BNLikelihood.html#sdv.metrics.tabular.BNLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLikelihood</span><span class="p">(</span><span class="n">BNLikelihoodBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;BayesianNetwork Likelihood Single Table metric.</span>
+
+<span class="sd">    This metric fits a BayesianNetwork to the real data and then evaluates how</span>
+<span class="sd">    likely it is that the synthetic data belongs to the same distribution.</span>
+
+<span class="sd">    The output is the average probability across all the synthetic rows.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        name (str):</span>
+<span class="sd">            Name to use when reports about this metric are printed.</span>
+<span class="sd">        goal (sdmetrics.goal.Goal):</span>
+<span class="sd">            The goal of this metric.</span>
+<span class="sd">        min_value (Union[float, tuple[float]]):</span>
+<span class="sd">            Minimum value or values that this metric can take.</span>
+<span class="sd">        max_value (Union[float, tuple[float]]):</span>
+<span class="sd">            Maximum value or values that this metric can take.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;BayesianNetwork Likelihood&#39;</span>
+    <span class="n">goal</span> <span class="o">=</span> <span class="n">Goal</span><span class="o">.</span><span class="n">MAXIMIZE</span>
+    <span class="n">min_value</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">max_value</span> <span class="o">=</span> <span class="mf">1.0</span>
 
 <div class="viewcode-block" id="BNLikelihood.compute"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.BNLikelihood.compute.html#sdv.metrics.tabular.BNLikelihood.compute">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -285,7 +289,7 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_likelihoods</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">structure</span><span class="p">))</span></div></div>
 
 
-<div class="viewcode-block" id="BNLogLikelihood"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.BNLogLikelihood.html#sdv.metrics.tabular.BNLogLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLogLikelihood</span><span class="p">(</span><span class="n">BNLikelihood</span><span class="p">):</span>
+<div class="viewcode-block" id="BNLogLikelihood"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.BNLogLikelihood.html#sdv.metrics.tabular.BNLogLikelihood">[docs]</a><span class="k">class</span> <span class="nc">BNLogLikelihood</span><span class="p">(</span><span class="n">BNLikelihoodBase</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;BayesianNetwork Log Likelihood Single Table metric.</span>
 
 <span class="sd">    This metric fits a BayesianNetwork to the real data and then evaluates how</span>

@@ -16,6 +16,7 @@
       ~MLPRegressor.SCORER
       ~MLPRegressor.__init__
       ~MLPRegressor.compute
+      ~MLPRegressor.compute_breakdown
       ~MLPRegressor.get_subclasses
       ~MLPRegressor.normalize
    

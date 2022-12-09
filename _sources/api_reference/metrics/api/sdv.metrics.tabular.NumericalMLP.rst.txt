@@ -15,6 +15,7 @@
    
       ~NumericalMLP.__init__
       ~NumericalMLP.compute
+      ~NumericalMLP.compute_breakdown
       ~NumericalMLP.get_subclasses
       ~NumericalMLP.normalize
    

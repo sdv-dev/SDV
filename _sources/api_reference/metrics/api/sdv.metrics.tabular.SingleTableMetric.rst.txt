@@ -15,6 +15,7 @@
    
       ~SingleTableMetric.__init__
       ~SingleTableMetric.compute
+      ~SingleTableMetric.compute_breakdown
       ~SingleTableMetric.get_subclasses
       ~SingleTableMetric.normalize
    

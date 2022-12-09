@@ -15,6 +15,7 @@
    
       ~CategoricalRF.__init__
       ~CategoricalRF.compute
+      ~CategoricalRF.compute_breakdown
       ~CategoricalRF.get_subclasses
       ~CategoricalRF.normalize
    

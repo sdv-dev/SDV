@@ -16,6 +16,7 @@
       ~BinaryAdaBoostClassifier.SCORER
       ~BinaryAdaBoostClassifier.__init__
       ~BinaryAdaBoostClassifier.compute
+      ~BinaryAdaBoostClassifier.compute_breakdown
       ~BinaryAdaBoostClassifier.get_subclasses
       ~BinaryAdaBoostClassifier.normalize
    

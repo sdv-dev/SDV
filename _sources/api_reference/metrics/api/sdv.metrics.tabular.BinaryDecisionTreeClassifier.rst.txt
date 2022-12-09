@@ -16,6 +16,7 @@
       ~BinaryDecisionTreeClassifier.SCORER
       ~BinaryDecisionTreeClassifier.__init__
       ~BinaryDecisionTreeClassifier.compute
+      ~BinaryDecisionTreeClassifier.compute_breakdown
       ~BinaryDecisionTreeClassifier.get_subclasses
       ~BinaryDecisionTreeClassifier.normalize
    

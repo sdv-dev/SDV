@@ -15,6 +15,7 @@
    
       ~CategoricalEnsemble.__init__
       ~CategoricalEnsemble.compute
+      ~CategoricalEnsemble.compute_breakdown
       ~CategoricalEnsemble.get_subclasses
       ~CategoricalEnsemble.normalize
    

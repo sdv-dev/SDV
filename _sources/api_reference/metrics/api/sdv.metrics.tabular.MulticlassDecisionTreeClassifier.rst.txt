@@ -16,6 +16,7 @@
       ~MulticlassDecisionTreeClassifier.SCORER
       ~MulticlassDecisionTreeClassifier.__init__
       ~MulticlassDecisionTreeClassifier.compute
+      ~MulticlassDecisionTreeClassifier.compute_breakdown
       ~MulticlassDecisionTreeClassifier.get_subclasses
       ~MulticlassDecisionTreeClassifier.normalize
    

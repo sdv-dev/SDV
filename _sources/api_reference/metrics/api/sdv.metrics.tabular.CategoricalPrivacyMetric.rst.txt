@@ -15,6 +15,7 @@
    
       ~CategoricalPrivacyMetric.__init__
       ~CategoricalPrivacyMetric.compute
+      ~CategoricalPrivacyMetric.compute_breakdown
       ~CategoricalPrivacyMetric.get_subclasses
       ~CategoricalPrivacyMetric.normalize
    

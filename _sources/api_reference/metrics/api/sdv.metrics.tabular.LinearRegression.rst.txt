@@ -16,6 +16,7 @@
       ~LinearRegression.SCORER
       ~LinearRegression.__init__
       ~LinearRegression.compute
+      ~LinearRegression.compute_breakdown
       ~LinearRegression.get_subclasses
       ~LinearRegression.normalize
    

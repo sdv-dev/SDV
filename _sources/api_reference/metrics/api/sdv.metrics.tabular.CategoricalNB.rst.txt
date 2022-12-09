@@ -15,6 +15,7 @@
    
       ~CategoricalNB.__init__
       ~CategoricalNB.compute
+      ~CategoricalNB.compute_breakdown
       ~CategoricalNB.get_subclasses
       ~CategoricalNB.normalize
    

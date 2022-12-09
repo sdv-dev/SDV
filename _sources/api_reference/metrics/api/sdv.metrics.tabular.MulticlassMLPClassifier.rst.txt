@@ -16,6 +16,7 @@
       ~MulticlassMLPClassifier.SCORER
       ~MulticlassMLPClassifier.__init__
       ~MulticlassMLPClassifier.compute
+      ~MulticlassMLPClassifier.compute_breakdown
       ~MulticlassMLPClassifier.get_subclasses
       ~MulticlassMLPClassifier.normalize
    

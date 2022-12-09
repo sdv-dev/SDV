@@ -16,6 +16,7 @@
       ~BinaryLogisticRegression.SCORER
       ~BinaryLogisticRegression.__init__
       ~BinaryLogisticRegression.compute
+      ~BinaryLogisticRegression.compute_breakdown
       ~BinaryLogisticRegression.get_subclasses
       ~BinaryLogisticRegression.normalize
    

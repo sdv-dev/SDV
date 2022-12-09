@@ -15,6 +15,7 @@
    
       ~NumericalSVR.__init__
       ~NumericalSVR.compute
+      ~NumericalSVR.compute_breakdown
       ~NumericalSVR.get_subclasses
       ~NumericalSVR.normalize
    

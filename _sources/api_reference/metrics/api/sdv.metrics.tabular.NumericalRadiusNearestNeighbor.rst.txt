@@ -15,6 +15,7 @@
    
       ~NumericalRadiusNearestNeighbor.__init__
       ~NumericalRadiusNearestNeighbor.compute
+      ~NumericalRadiusNearestNeighbor.compute_breakdown
       ~NumericalRadiusNearestNeighbor.get_subclasses
       ~NumericalRadiusNearestNeighbor.normalize
    

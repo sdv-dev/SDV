@@ -15,6 +15,7 @@
    
       ~CategoricalSVM.__init__
       ~CategoricalSVM.compute
+      ~CategoricalSVM.compute_breakdown
       ~CategoricalSVM.get_subclasses
       ~CategoricalSVM.normalize
    

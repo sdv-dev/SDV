@@ -15,6 +15,7 @@
    
       ~CategoricalKNN.__init__
       ~CategoricalKNN.compute
+      ~CategoricalKNN.compute_breakdown
       ~CategoricalKNN.get_subclasses
       ~CategoricalKNN.normalize
    

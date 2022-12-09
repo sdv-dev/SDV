@@ -15,6 +15,7 @@
    
       ~DetectionMetric.__init__
       ~DetectionMetric.compute
+      ~DetectionMetric.compute_breakdown
       ~DetectionMetric.get_subclasses
       ~DetectionMetric.normalize
    

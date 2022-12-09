@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Inputting Business Logic Using Constraints &#8212; SDV 0.17.2.dev0 documentation</title>
+    <title>Inputting Business Logic Using Constraints &#8212; SDV 0.17.2 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -315,18 +315,18 @@ about employees from several companies.</p>
 <span class="gp">In [3]: </span><span class="n">employees</span>
 <span class="gh">Out[3]: </span><span class="go"></span>
 <span class="go">     company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0       Pear          Sales            1   44               40                     4  157000.00       8500.00                       1        1.0        0.0         0.0</span>
-<span class="go">1       Pear         Design            5   46               39                     7   99922.78       8187.43                       2        0.0        0.0         1.0</span>
-<span class="go">2    Glasses             AI            1   44               41                     3   46000.00      19000.00                       1        1.0        0.0         0.0</span>
-<span class="go">3    Glasses  Search Engine            7   36               30                     6   93859.75      23479.83                       3        0.0        0.0         1.0</span>
-<span class="go">4   Cheerper        BigData            6   34               30                     4   84500.00      22000.00                       4        0.0        1.0         0.0</span>
-<span class="go">5   Cheerper        Support           11   38               29                     9  140000.00      14000.00                       2        0.0        1.0         0.0</span>
-<span class="go">6       Pear          Sales           28   42               33                     9  127500.00      15500.00                       5        1.0        0.0         0.0</span>
-<span class="go">7       Pear         Design           75   36               35                     1  102819.98      13044.93                       1        0.0        0.0         1.0</span>
-<span class="go">8    Glasses             AI           33   34               32                     2  121500.00       6500.00                       1        1.0        0.0         0.0</span>
-<span class="go">9    Glasses  Search Engine           56   48               45                     3  121048.62      17242.98                       5        0.0        0.0         1.0</span>
-<span class="go">10  Cheerper        BigData           42   32               28                     4   71000.00       8500.00                       5        0.0        1.0         0.0</span>
-<span class="go">11  Cheerper        Support           80   48               39                     9   32500.00      15000.00                       5        0.0        1.0         0.0</span>
+<span class="go">0       Pear          Sales            1   46               38                     8   47500.00      16000.00                       4        1.0        0.0         0.0</span>
+<span class="go">1       Pear         Design            5   44               42                     2   47212.75      21596.76                       5        0.0        0.0         1.0</span>
+<span class="go">2    Glasses             AI            1   37               35                     2   87000.00      10500.00                       2        1.0        0.0         0.0</span>
+<span class="go">3    Glasses  Search Engine            7   45               42                     3   71594.03       6792.89                       4        0.0        0.0         1.0</span>
+<span class="go">4   Cheerper        BigData            6   36               29                     7  129000.00      12500.00                       2        0.0        1.0         0.0</span>
+<span class="go">5   Cheerper        Support           11   37               36                     1  115000.00      24000.00                       4        0.0        1.0         0.0</span>
+<span class="go">6       Pear          Sales           28   45               37                     8  105500.00      16500.00                       5        1.0        0.0         0.0</span>
+<span class="go">7       Pear         Design           75   44               39                     5  131388.39      21380.94                       1        0.0        0.0         1.0</span>
+<span class="go">8    Glasses             AI           33   39               34                     5   63000.00      11500.00                       2        1.0        0.0         0.0</span>
+<span class="go">9    Glasses  Search Engine           56   37               28                     9   39812.04      22064.36                       3        0.0        0.0         1.0</span>
+<span class="go">10  Cheerper        BigData           42   30               26                     4   54500.00      11500.00                       2        0.0        1.0         0.0</span>
+<span class="go">11  Cheerper        Support           80   30               22                     8  158500.00      24500.00                       1        0.0        1.0         0.0</span>
 </pre></div>
 </div>
 <p>This table contains a few rules that can be written as predefined constraints. We’ll use it as an
@@ -560,17 +560,17 @@ the constraints.</p>
 
 <span class="gp">In [27]: </span><span class="n">synthetic_data</span>
 <span class="gh">Out[27]: </span><span class="go"></span>
-<span class="go">    company     department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
-<span class="go">0      Pear         Design            7   30               28                     2  138288.53      13760.33                       2        1.0        0.0         0.0</span>
-<span class="go">1  Cheerper        BigData           54   42               34                     8   56533.72      14649.08                       4        1.0        0.0         0.0</span>
-<span class="go">2   Glasses  Search Engine           21   41               38                     3   73930.87      14313.96                       3        1.0        0.0         0.0</span>
-<span class="go">3      Pear          Sales            4   31               29                     2  112134.04      12518.74                       1        1.0        0.0         0.0</span>
-<span class="go">4   Glasses  Search Engine           22   39               30                     9   96812.95      16629.63                       5        1.0        0.0         0.0</span>
-<span class="go">5  Cheerper        BigData           35   42               34                     8   78989.60      10539.48                       2        1.0        0.0         0.0</span>
-<span class="go">6   Glasses  Search Engine           37   39               36                     3   74568.04       9465.79                       2        0.0        0.0         1.0</span>
-<span class="go">7   Glasses             AI            9   42               39                     3  121196.43      22518.88                       3        0.0        0.0         1.0</span>
-<span class="go">8  Cheerper        BigData           38   40               36                     5  108572.76      21520.80                       2        0.0        1.0         0.0</span>
-<span class="go">9  Cheerper        BigData           37   42               35                     8   79930.04      17756.40                       4        0.0        1.0         0.0</span>
+<span class="go">    company department  employee_id  age  age_when_joined  years_in_the_company     salary  annual_bonus  prior_years_experience  full_time  part_time  contractor</span>
+<span class="go">0  Cheerper    BigData            4   42               41                     2   61193.41       9898.35                       4        0.0        1.0         0.0</span>
+<span class="go">1   Glasses         AI           37   45               40                     5   61496.59      11011.14                       4        0.0        0.0         1.0</span>
+<span class="go">2  Cheerper    BigData           37   36               33                     3  113712.44      11324.38                       2        0.0        1.0         0.0</span>
+<span class="go">3      Pear     Design           12   39               31                     8   60161.29      13041.23                       3        1.0        0.0         0.0</span>
+<span class="go">4   Glasses         AI           28   42               40                     3   68189.14      18010.48                       4        0.0        0.0         1.0</span>
+<span class="go">5      Pear      Sales            3   47               42                     6   43895.99       8336.55                       4        0.0        0.0         1.0</span>
+<span class="go">6  Cheerper    Support           80   29               22                     7  150893.27      24321.37                       1        0.0        1.0         0.0</span>
+<span class="go">7      Pear      Sales            4   47               41                     6   45821.68       8939.67                       5        1.0        0.0         0.0</span>
+<span class="go">8      Pear     Design           36   46               42                     5  101162.10      14348.36                       5        0.0        0.0         1.0</span>
+<span class="go">9      Pear     Design           16   45               37                     8   42771.14      15393.38                       5        0.0        1.0         0.0</span>
 </pre></div>
 </div>
 </div>

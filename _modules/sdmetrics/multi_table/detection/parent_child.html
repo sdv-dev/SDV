@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.multi_table.detection.parent_child &#8212; SDV 0.17.2.dev0 documentation</title>
+    <title>sdmetrics.multi_table.detection.parent_child &#8212; SDV 0.17.2 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -172,7 +172,7 @@
 
 <span class="kn">from</span> <span class="nn">sdmetrics.multi_table.detection.base</span> <span class="kn">import</span> <span class="n">DetectionMetric</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.single_table.detection</span> <span class="kn">import</span> <span class="n">LogisticDetection</span><span class="p">,</span> <span class="n">SVCDetection</span>
-<span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">nested_attrs_meta</span>
+<span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">get_columns_from_metadata</span><span class="p">,</span> <span class="n">nested_attrs_meta</span>
 
 
 <div class="viewcode-block" id="ParentChildDetectionMetric"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.relational.ParentChildDetectionMetric.html#sdv.metrics.relational.ParentChildDetectionMetric">[docs]</a><span class="k">class</span> <span class="nc">ParentChildDetectionMetric</span><span class="p">(</span><span class="n">DetectionMetric</span><span class="p">,</span>
@@ -209,7 +209,7 @@
 
         <span class="n">foreign_keys</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">child_table</span><span class="p">,</span> <span class="n">child_meta</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">child_key</span><span class="p">,</span> <span class="n">field_meta</span> <span class="ow">in</span> <span class="n">child_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">child_key</span><span class="p">,</span> <span class="n">field_meta</span> <span class="ow">in</span> <span class="n">get_columns_from_metadata</span><span class="p">(</span><span class="n">child_meta</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="n">ref</span> <span class="o">=</span> <span class="n">field_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ref&#39;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">ref</span><span class="p">:</span>
                     <span class="n">foreign_keys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ref</span><span class="p">[</span><span class="s1">&#39;table&#39;</span><span class="p">],</span> <span class="n">ref</span><span class="p">[</span><span class="s1">&#39;field&#39;</span><span class="p">],</span> <span class="n">child_table</span><span class="p">,</span> <span class="n">child_key</span><span class="p">))</span>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.demos &#8212; SDV 0.17.2.dev0 documentation</title>
+    <title>sdmetrics.demos &#8212; SDV 0.17.2 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -172,7 +172,7 @@
 <span class="kn">import</span> <span class="nn">pickle</span>
 
 
-<span class="k">def</span> <span class="nf">load_demo</span><span class="p">(</span><span class="n">modality</span><span class="o">=</span><span class="s1">&#39;multi_table&#39;</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">load_demo</span><span class="p">(</span><span class="n">modality</span><span class="o">=</span><span class="s1">&#39;multi_table&#39;</span><span class="p">,</span> <span class="n">new_metadata</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Load demo data of the indicated data modality.</span>
 
 <span class="sd">    By default, multi_table demo is loaded.</span>
@@ -183,6 +183,8 @@
 <span class="sd">        modality (str):</span>
 <span class="sd">            Data modality to load. It can be multi_table, single_table</span>
 <span class="sd">            or timeseries.</span>
+<span class="sd">        new_metadata (bool):</span>
+<span class="sd">            Whether or not to return the new metadata.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        tuple:</span>
@@ -190,7 +192,9 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">demo_path</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s1">&#39;demos&#39;</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">modality</span><span class="si">}</span><span class="s1">.pkl&#39;</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">demo_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">demo_file</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">demo_file</span><span class="p">)</span>
+        <span class="c1"># Return the new metadata if requested.</span>
+        <span class="n">last_index</span> <span class="o">=</span> <span class="mi">4</span> <span class="k">if</span> <span class="n">new_metadata</span> <span class="k">else</span> <span class="mi">3</span>
+        <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">demo_file</span><span class="p">)[:</span><span class="n">last_index</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="load_multi_table_demo"><a class="viewcode-back" href="../../api_reference/metrics/api/sdv.metrics.demos.load_multi_table_demo.html#sdv.metrics.demos.load_multi_table_demo">[docs]</a><span class="k">def</span> <span class="nf">load_multi_table_demo</span><span class="p">():</span>
