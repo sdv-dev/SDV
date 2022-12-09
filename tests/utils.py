@@ -59,7 +59,7 @@ def get_multi_table_metadata():
                 'child_foreign_key': 'id_nesreca'
             }
         ],
-        'SCHEMA_VERSION': 'MULTI_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
     }
 
     return MultiTableMetadata._load_from_dict(dict_metadata)

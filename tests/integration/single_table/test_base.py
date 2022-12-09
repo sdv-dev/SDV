@@ -11,7 +11,7 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer
 
 METADATA = SingleTableMetadata._load_from_dict({
-    'SCHEMA_VERSION': 'SINGLE_TABLE_V1',
+    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
     'columns': {
         'column1': {
             'sdtype': 'numerical'
