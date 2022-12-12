@@ -68,10 +68,10 @@ class TestDataProcessor:
         """Test the ``_update_numerical_transformer`` method.
 
         The ``_transformers_by_sdtype`` dict should be updated based on the
-        ``learn_rounding_scheme`` and ``enforce_min_max_values`` parameters.
+        ``enforce_rounding`` and ``enforce_min_max_values`` parameters.
 
         Input:
-            - learn_rounding_scheme set to False.
+            - enforce_rounding set to False.
             - enforce_min_max_values set to False.
         """
         # Setup
@@ -97,7 +97,7 @@ class TestDataProcessor:
 
         Input:
             - A mock for metadata.
-            - learn_rounding_scheme set to True.
+            - enforce_rounding set to True.
             - enforce_min_max_values set to False.
         """
         # Setup
@@ -118,7 +118,7 @@ class TestDataProcessor:
         # Run
         data_processor = DataProcessor(
             metadata=metadata_mock,
-            learn_rounding_scheme=True,
+            enforce_rounding=True,
             enforce_min_max_values=False)
 
         # Assert
@@ -811,7 +811,7 @@ class TestDataProcessor:
         metadata.add_column('col1', sdtype='categorical')
         metadata.add_column('col2', sdtype='numerical')
         metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
-        dp = DataProcessor(metadata, learn_rounding_scheme=False, enforce_min_max_values=False)
+        dp = DataProcessor(metadata, enforce_rounding=False, enforce_min_max_values=False)
 
         # Run
         dp._fit_numerical_formatters(data)
@@ -820,12 +820,12 @@ class TestDataProcessor:
         assert list(dp.formatters.keys()) == ['col2', 'col3']
 
         assert isinstance(dp.formatters['col2'], NumericalFormatter)
-        assert dp.formatters['col2'].learn_rounding_scheme is False
+        assert dp.formatters['col2'].enforce_rounding is False
         assert dp.formatters['col2'].enforce_min_max_values is False
         assert dp.formatters['col2'].computer_representation == 'Float'
 
         assert isinstance(dp.formatters['col3'], NumericalFormatter)
-        assert dp.formatters['col3'].learn_rounding_scheme is False
+        assert dp.formatters['col3'].enforce_rounding is False
         assert dp.formatters['col3'].enforce_min_max_values is False
         assert dp.formatters['col3'].computer_representation == 'Int8'
 
