@@ -100,8 +100,6 @@ class PARSynthesizer(BaseSynthesizer):
             )
 
         self._sequence_index = self.metadata._sequence_index
-        self.enforce_min_max_values = enforce_min_max_values
-        self.enforce_rounding = enforce_rounding
         self.context_columns = context_columns or []
         self.segment_size = segment_size
         self._model_kwargs = {

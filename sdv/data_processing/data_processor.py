@@ -30,7 +30,7 @@ class DataProcessor:
         metadata (metadata.SingleTableMetadata):
             The single table metadata instance that will be used to apply constraints and
             transformations to the data.
-        learn_rounding_scheme (bool):
+        enforce_rounding (bool):
             Define rounding scheme for FloatFormatter. If True, the data returned by
             reverse_transform will be rounded to that place. Defaults to True.
         enforce_min_max_values (bool):
@@ -76,25 +76,25 @@ class DataProcessor:
         loaded_constraints = [Constraint.from_dict(constraint) for constraint in constraints]
         return loaded_constraints
 
-    def _update_numerical_transformer(self, learn_rounding_scheme, enforce_min_max_values):
+    def _update_numerical_transformer(self, enforce_rounding, enforce_min_max_values):
         custom_float_formatter = rdt.transformers.FloatFormatter(
             missing_value_replacement='mean',
             model_missing_values=True,
-            learn_rounding_scheme=learn_rounding_scheme,
+            learn_rounding_scheme=enforce_rounding,
             enforce_min_max_values=enforce_min_max_values
         )
         self._transformers_by_sdtype.update({'numerical': custom_float_formatter})
 
-    def __init__(self, metadata, learn_rounding_scheme=True, enforce_min_max_values=True,
+    def __init__(self, metadata, enforce_rounding=True, enforce_min_max_values=True,
                  model_kwargs=None, table_name=None):
         self.metadata = metadata
-        self._learn_rounding_scheme = learn_rounding_scheme
+        self._enforce_rounding = enforce_rounding
         self._enforce_min_max_values = enforce_min_max_values
         self._model_kwargs = model_kwargs or {}
         self._constraints = self._load_constraints()
         self._constraints_to_reverse = []
         self._transformers_by_sdtype = self._DEFAULT_TRANSFORMERS_BY_SDTYPE.copy()
-        self._update_numerical_transformer(learn_rounding_scheme, enforce_min_max_values)
+        self._update_numerical_transformer(enforce_rounding, enforce_min_max_values)
         self._hyper_transformer = rdt.HyperTransformer()
         self.table_name = table_name
         self._dtypes = None
@@ -350,7 +350,7 @@ class DataProcessor:
             if column_metadata.get('sdtype') == 'numerical':
                 representation = column_metadata.get('computer_representation', 'Float')
                 self.formatters[column_name] = NumericalFormatter(
-                    learn_rounding_scheme=self._learn_rounding_scheme,
+                    enforce_rounding=self._enforce_rounding,
                     enforce_min_max_values=self._enforce_min_max_values,
                     computer_representation=representation
                 )
@@ -556,20 +556,20 @@ class DataProcessor:
         }
 
     @classmethod
-    def from_dict(cls, metadata_dict, learn_rounding_scheme=True, enforce_min_max_values=True):
+    def from_dict(cls, metadata_dict, enforce_rounding=True, enforce_min_max_values=True):
         """Load a DataProcessor from a metadata dict.
 
         Args:
             metadata_dict (dict):
                 Dict metadata to load.
-            learn_rounding_scheme (bool):
-                If passed, set the ``learn_rounding_scheme`` on the new instance.
+            enforce_rounding (bool):
+                If passed, set the ``enforce_rounding`` on the new instance.
             enforce_min_max_values (bool):
                 If passed, set the ``enforce_min_max_values`` on the new instance.
         """
         instance = cls(
             metadata=SingleTableMetadata._load_from_dict(metadata_dict['metadata']),
-            learn_rounding_scheme=learn_rounding_scheme,
+            enforce_rounding=enforce_rounding,
             enforce_min_max_values=enforce_min_max_values,
             model_kwargs=metadata_dict.get('model_kwargs')
         )
