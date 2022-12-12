@@ -22,7 +22,7 @@ class NumericalFormatter:
     """Formatter for numerical data.
 
     Args:
-        learn_rounding_scheme (bool):
+        enforce_rounding (bool):
             Whether or not to learn what place to round to based on the data seen during ``fit``.
             If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
             Defaults to ``False``.
@@ -41,9 +41,9 @@ class NumericalFormatter:
     _max_value = None
     _rounding_digits = None
 
-    def __init__(self, learn_rounding_scheme=False, enforce_min_max_values=False,
+    def __init__(self, enforce_rounding=False, enforce_min_max_values=False,
                  computer_representation='Float'):
-        self.learn_rounding_scheme = learn_rounding_scheme
+        self.enforce_rounding = enforce_rounding
         self.enforce_min_max_values = enforce_min_max_values
         self.computer_representation = computer_representation
 
@@ -87,7 +87,7 @@ class NumericalFormatter:
             self._min_value = column.min()
             self._max_value = column.max()
 
-        if self.learn_rounding_scheme:
+        if self.enforce_rounding:
             self._rounding_digits = self._learn_rounding_digits(column)
 
     def format_data(self, column):
@@ -108,7 +108,7 @@ class NumericalFormatter:
             column = column.clip(min_bound, max_bound)
 
         is_integer = np.dtype(self._dtype).kind == 'i'
-        if self.learn_rounding_scheme and self._rounding_digits is not None:
+        if self.enforce_rounding and self._rounding_digits is not None:
             column = column.round(self._rounding_digits)
         elif is_integer:
             column = column.round(0)

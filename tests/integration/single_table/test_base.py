@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
+from rdt.transformers import AnonymizedFaker, FloatFormatter, LabelEncoder, RegexGenerator
 
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
@@ -406,3 +407,45 @@ def test_sampling_with_randomize_samples_alternating(model):
     assert not sampled_random1.equals(sampled_fixed1)
     assert not sampled_random1.equals(sampled_random2)
     assert not sampled_random2.equals(sampled_fixed1)
+
+
+def test_transformers_correctly_auto_assigned():
+    """Ensure the correct transformers and parameters are auto assigned to the data."""
+    # Setup
+    data = pd.DataFrame({
+        'primary_key': ['user-000', 'user-001', 'user-002'],
+        'pii_col': ['223 Williams Rd', '75 Waltham St', '77 Mass Ave'],
+        'numerical_col': [1, 2, 3],
+        'categorical_col': ['a', 'b', 'a'],
+    })
+
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+    metadata.update_column(column_name='primary_key', sdtype='text', regex_format='user-[0-9]{3}')
+    metadata.set_primary_key('primary_key')
+    metadata.update_column(column_name='pii_col', sdtype='address', pii=True)
+    synthesizer = GaussianCopulaSynthesizer(
+        metadata, enforce_min_max_values=False, enforce_rounding=False)
+
+    # Run
+    synthesizer.auto_assign_transformers(data)
+    transformers = synthesizer.get_transformers()
+
+    # Assert
+    assert isinstance(transformers['numerical_col'], FloatFormatter)
+    assert isinstance(transformers['pii_col'], AnonymizedFaker)
+    assert isinstance(transformers['primary_key'], RegexGenerator)
+    assert isinstance(transformers['categorical_col'], LabelEncoder)
+
+    assert transformers['numerical_col'].missing_value_replacement == 'mean'
+    assert transformers['numerical_col'].model_missing_values is True
+    assert transformers['numerical_col'].learn_rounding_scheme is False
+    assert transformers['numerical_col'].enforce_min_max_values is False
+
+    assert transformers['pii_col'].provider_name == 'address'
+    assert transformers['pii_col'].function_name == 'address'
+
+    assert transformers['primary_key'].regex_format == 'user-[0-9]{3}'
+    assert transformers['primary_key'].enforce_uniqueness is True
+
+    assert transformers['categorical_col'].add_noise is True

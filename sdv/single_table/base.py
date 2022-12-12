@@ -61,7 +61,11 @@ class BaseSynthesizer:
         self.metadata.validate()
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
-        self._data_processor = DataProcessor(metadata)
+        self._data_processor = DataProcessor(
+            metadata=metadata,
+            enforce_rounding=enforce_rounding,
+            enforce_min_max_values=enforce_min_max_values
+        )
         self._update_default_transformers()
         self._fitted = False
 
