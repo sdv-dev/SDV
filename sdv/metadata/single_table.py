@@ -48,9 +48,9 @@ class SingleTableMetadata:
         'alternate_keys',
         'sequence_key',
         'sequence_index',
-        'SCHEMA_VERSION'
+        'METADATA_SPEC_VERSION'
     ])
-    SCHEMA_VERSION = 'SINGLE_TABLE_V1'
+    METADATA_SPEC_VERSION = 'SINGLE_TABLE_V1'
 
     def _validate_numerical(self, column_name, **kwargs):
         representation = kwargs.get('computer_representation')
@@ -117,7 +117,7 @@ class SingleTableMetadata:
         self._alternate_keys = []
         self._sequence_key = None
         self._sequence_index = None
-        self._version = self.SCHEMA_VERSION
+        self._version = self.METADATA_SPEC_VERSION
 
     def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
         expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii'])
@@ -247,7 +247,7 @@ class SingleTableMetadata:
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
         metadata = {}
         for key in self._KEYS:
-            value = getattr(self, f'_{key}') if key != 'SCHEMA_VERSION' else self._version
+            value = getattr(self, f'_{key}') if key != 'METADATA_SPEC_VERSION' else self._version
             if value:
                 metadata[key] = value
 
@@ -504,7 +504,7 @@ class SingleTableMetadata:
         """
         validate_file_does_not_exist(filepath)
         metadata = self.to_dict()
-        metadata['SCHEMA_VERSION'] = self.SCHEMA_VERSION
+        metadata['METADATA_SPEC_VERSION'] = self.METADATA_SPEC_VERSION
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)
 
@@ -537,13 +537,13 @@ class SingleTableMetadata:
 
         Raises:
             - An ``Error`` if the path does not exist.
-            - An ``Error`` if the ``json`` file does not contain the ``SCHEMA_VERSION``.
+            - An ``Error`` if the ``json`` file does not contain the ``METADATA_SPEC_VERSION``.
 
         Returns:
             A ``SingleTableMetadata`` instance.
         """
         metadata = read_json(filepath)
-        if 'SCHEMA_VERSION' not in metadata:
+        if 'METADATA_SPEC_VERSION' not in metadata:
             raise ValueError(
                 'This metadata file is incompatible with the ``SingleTableMetadata`` '
                 'class and version.'

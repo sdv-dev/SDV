@@ -1483,7 +1483,7 @@ class TestSingleTableMetadata:
                 {'column': 'value', 'scalar': 1},
                 {'column': 'value', 'increment_value': 20}
             ],
-            'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
         }
 
         # Ensure that the output object does not alterate the inside object
@@ -1500,7 +1500,7 @@ class TestSingleTableMetadata:
             'sequence_key': None,
             'sequence_index': None,
             'constraints': [],
-            'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
         }
 
         # Run
@@ -1548,7 +1548,7 @@ class TestSingleTableMetadata:
         """Test the ``load_from_json`` method.
 
         Test that the method raises a ``ValueError`` when the specified ``json`` file does
-        not contain a ``SCHEMA_VERSION`` in it.
+        not contain a ``METADATA_SPEC_VERSION`` in it.
 
         Mock:
             - Mock the ``Path`` library in order to return ``True``, so the file exists.
@@ -1619,7 +1619,7 @@ class TestSingleTableMetadata:
                     'my_constraint': 'my_params'
                 }
             ],
-            'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
         }
 
         # Run
