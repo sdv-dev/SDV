@@ -159,11 +159,10 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(ValueError, match=error_msg):
             BaseSingleTableSynthesizer.get_transformers(instance)
 
-    @patch('sdv.single_table.base.warnings')
-    def test_preprocess(self, mock_warnings):
-        """Test the preprocess method.
+    def test__preprocess(self):
+        """Test the method preprocesses the data.
 
-        The preprocess method calls the ``validate`` function with the data, then fits the
+        The method calls the ``validate`` function with the data, then fits the
         ``instance._data_processor`` and returns the output of the transformation.
         """
         # Setup
@@ -174,19 +173,14 @@ class TestBaseSingleTableSynthesizer:
         })
 
         # Run
-        result = BaseSingleTableSynthesizer.preprocess(instance, data)
+        result = BaseSingleTableSynthesizer._preprocess(instance, data)
 
         # Assert
-        expected_warning = (
-            'This model has already been fitted. To use the new preprocessed data, please '
-            "refit the model using 'fit' or 'fit_processed_data'."
-        )
         instance.validate.assert_called_once()
         pd.testing.assert_frame_equal(
             instance.validate.call_args_list[0][0][0],
             data
         )
-        mock_warnings.warn.assert_called_once_with(expected_warning)
         assert result == instance._data_processor.transform.return_value
         instance._data_processor.fit.assert_called_once()
         pd.testing.assert_frame_equal(
@@ -197,6 +191,31 @@ class TestBaseSingleTableSynthesizer:
             data,
             instance._data_processor.transform.call_args_list[0][0][0]
         )
+
+    @patch('sdv.single_table.base.warnings')
+    def test_preprocess(self, mock_warnings):
+        """Test the preprocess method.
+
+        The preprocess method raises a warning if it was already fitted and then calls
+        ``_preprocess``.
+        """
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        data = pd.DataFrame({
+            'name': ['John', 'Doe', 'John Doe']
+        })
+
+        # Run
+        BaseSingleTableSynthesizer.preprocess(instance, data)
+
+        # Assert
+        expected_warning = (
+            'This model has already been fitted. To use the new preprocessed data, please '
+            "refit the model using 'fit' or 'fit_processed_data'."
+        )
+        mock_warnings.warn.assert_called_once_with(expected_warning)
+        instance._preprocess.assert_called_once_with(data)
 
     @patch('sdv.single_table.base.DataProcessor')
     def test__fit(self, mock_data_processor):
@@ -237,8 +256,8 @@ class TestBaseSingleTableSynthesizer:
         BaseSingleTableSynthesizer.fit(instance, processed_data)
 
         # Assert
-        instance.preprocess.assert_called_once_with(processed_data)
-        instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
+        instance._preprocess.assert_called_once_with(processed_data)
+        instance.fit_processed_data.assert_called_once_with(instance._preprocess.return_value)
 
     def test_validate_type(self):
         """Test error is raised if data is not ``pd.DataFrame``."""

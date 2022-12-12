@@ -236,7 +236,7 @@ class TestPARSynthesizer:
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
 
-    @patch('sdv.sequential.par.BaseSynthesizer.preprocess')
+    @patch('sdv.sequential.par.BaseSynthesizer._preprocess')
     def test_preprocess_transformers_not_assigned(self, base_preprocess_mock):
         """Test that the method auto assigns the transformers if not already done.
 
@@ -261,11 +261,11 @@ class TestPARSynthesizer:
         par.update_transformers.assert_called_once_with(expected_transformers)
         base_preprocess_mock.assert_called_once_with(data)
 
-    @patch('sdv.sequential.par.BaseSynthesizer.preprocess')
+    @patch('sdv.sequential.par.BaseSynthesizer._preprocess')
     def test_preprocess(self, base_preprocess_mock):
         """Test that the method does not auto assign the transformers if it's already been done.
 
-        To test this, we set the hyper transformer to have its ``field_transformers`` set.
+        To test this, we set the hyper transformer's ``_prepared_for_fitting`` to True.
         """
         # Setup
         metadata = self.get_metadata()
@@ -274,12 +274,7 @@ class TestPARSynthesizer:
         )
         par.auto_assign_transformers = Mock()
         par.update_transformers = Mock()
-        par._data_processor._hyper_transformer.field_transformers = {
-            'time': None,
-            'gender': None,
-            'name': None,
-            'measurement': None
-        }
+        par._data_processor._prepared_for_fitting = True
         data = self.get_data()
 
         # Run

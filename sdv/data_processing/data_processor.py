@@ -103,6 +103,7 @@ class DataProcessor:
         self._anonymized_columns = []
         self._primary_key = self.metadata._primary_key
         self._primary_key_generator = None
+        self._prepared_for_fitting = False
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -364,7 +365,7 @@ class DataProcessor:
             data (pandas.DataFrame):
                 Table data to be learnt.
         """
-        if self._hyper_transformer.field_transformers == {}:
+        if not self._prepared_for_fitting:
             LOGGER.info(f'Fitting table {self.table_name} metadata')
             self._dtypes = data[list(data.columns)].dtypes
 
@@ -374,12 +375,16 @@ class DataProcessor:
             LOGGER.info(f'Fitting constraints for table {self.table_name}')
             constrained = self._fit_transform_constraints(data)
             columns_created_by_constraints = set(constrained.columns) - set(data.columns)
-            LOGGER.info((
-                'Setting the configuration for the ``HyperTransformer`` '
-                f'for table {self.table_name}'
-            ))
-            config = self._create_config(constrained, columns_created_by_constraints)
-            self._hyper_transformer.set_config(config)
+
+            if not self._hyper_transformer.get_config().get('sdtypes'):
+                LOGGER.info((
+                    'Setting the configuration for the ``HyperTransformer`` '
+                    f'for table {self.table_name}'
+                ))
+                config = self._create_config(constrained, columns_created_by_constraints)
+                self._hyper_transformer.set_config(config)
+
+            self._prepared_for_fitting = True
 
     def fit(self, data):
         """Fit this metadata to the given data.
@@ -388,6 +393,7 @@ class DataProcessor:
             data (pandas.DataFrame):
                 Table to be analyzed.
         """
+        self._prepared_for_fitting = False
         self.prepare_for_fitting(data)
         constrained = self._transform_constraints(data)
         LOGGER.info(f'Fitting HyperTransformer for table {self.table_name}')

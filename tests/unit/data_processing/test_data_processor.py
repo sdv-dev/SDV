@@ -844,7 +844,8 @@ class TestDataProcessor:
         dp = Mock()
         dp.table_name = 'fake_table'
         dp._fit_transform_constraints.return_value = transformed_data
-        dp._hyper_transformer.field_transformers = {}
+        dp._prepared_for_fitting = False
+        dp._hyper_transformer.get_config.return_value = {'sdtypes': {}, 'transformers': {}}
 
         # Run
         DataProcessor.prepare_for_fitting(dp, data)
@@ -853,6 +854,7 @@ class TestDataProcessor:
         pd.testing.assert_series_equal(dp._dtypes, pd.Series([np.int64], index=['a']))
         dp._fit_transform_constraints.assert_called_once_with(data)
         dp._fit_numerical_formatters.assert_called_once_with(data)
+        dp._hyper_transformer.set_config.assert_called_with(dp._create_config.return_value)
         fitting_call = call('Fitting table fake_table metadata')
         formatter_call = call('Fitting numerical formatters for table fake_table')
         constraint_call = call('Fitting constraints for table fake_table')
@@ -860,6 +862,54 @@ class TestDataProcessor:
             'Setting the configuration for the ``HyperTransformer`` for table fake_table')
         log_mock.info.assert_has_calls(
             [fitting_call, formatter_call, constraint_call, setting_config_call])
+
+    @patch('sdv.data_processing.data_processor.LOGGER')
+    def test_prepare_for_fitting_config_already_exists(self, log_mock):
+        """Test the steps before fitting.
+
+        Test that ``dtypes``, numerical formatters and constraints are being fitted. If the config
+        already exists, it doesn't need to be created again.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]}, dtype=np.int64)
+        transformed_data = pd.DataFrame({'a': [4, 5, 6], 'b': [1, 2, 3]})
+        dp = Mock()
+        dp.table_name = 'fake_table'
+        dp._fit_transform_constraints.return_value = transformed_data
+        dp._prepared_for_fitting = False
+        dp._hyper_transformer.get_config.return_value = {
+            'sdtypes': {'column': 'numerical'},
+            'transformers': {'column': Mock()}
+        }
+
+        # Run
+        DataProcessor.prepare_for_fitting(dp, data)
+
+        # Assert
+        pd.testing.assert_series_equal(dp._dtypes, pd.Series([np.int64], index=['a']))
+        dp._fit_transform_constraints.assert_called_once_with(data)
+        dp._fit_numerical_formatters.assert_called_once_with(data)
+        dp._hyper_transformer.set_config.assert_not_called()
+        fitting_call = call('Fitting table fake_table metadata')
+        formatter_call = call('Fitting numerical formatters for table fake_table')
+        constraint_call = call('Fitting constraints for table fake_table')
+        log_mock.info.assert_has_calls([fitting_call, formatter_call, constraint_call])
+
+    @patch('sdv.data_processing.data_processor.LOGGER')
+    def test_prepare_for_fitting_already_prepared(self, log_mock):
+        """Test that if the preparation has already been done, it doesn't do it again."""
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]}, dtype=np.int64)
+        dp = Mock()
+        dp._prepared_for_fitting = True
+
+        # Run
+        DataProcessor.prepare_for_fitting(dp, data)
+
+        # Assert
+        dp._fit_transform_constraints.assert_not_called()
+        dp._fit_numerical_formatters.assert_not_called()
+        log_mock.info.assert_not_called()
 
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_fit(self, log_mock):

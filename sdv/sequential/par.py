@@ -147,7 +147,7 @@ class PARSynthesizer(BaseSynthesizer):
     def _validate(self, data):
         return self._validate_context_columns(data)
 
-    def preprocess(self, data):
+    def _preprocess(self, data):
         """Transform the raw data to numerical space.
 
         For PAR, none of the sequence keys are transformed.
@@ -161,11 +161,11 @@ class PARSynthesizer(BaseSynthesizer):
                 The preprocessed data.
         """
         sequence_key_transformers = {sequence_key: None for sequence_key in self._sequence_key}
-        if self._data_processor._hyper_transformer.field_transformers == {}:
+        if not self._data_processor._prepared_for_fitting:
             self.auto_assign_transformers(data)
 
         self.update_transformers(sequence_key_transformers)
-        return super().preprocess(data)
+        return super()._preprocess(data)
 
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
