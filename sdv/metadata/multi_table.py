@@ -19,7 +19,7 @@ LOGGER = logging.getLogger(__name__)
 class MultiTableMetadata:
     """Multi Table Metadata class."""
 
-    SCHEMA_VERSION = 'MULTI_TABLE_V1'
+    METADATA_SPEC_VERSION = 'MULTI_TABLE_V1'
 
     def __init__(self):
         self._tables = {}
@@ -287,7 +287,7 @@ class MultiTableMetadata:
     @staticmethod
     def _log_detected_table(single_table_metadata):
         table_dict = single_table_metadata.to_dict()
-        table_dict.pop('SCHEMA_VERSION', None)
+        table_dict.pop('METADATA_SPEC_VERSION', None)
         table_json = json.dumps(table_dict, indent=4)
         LOGGER.info(f'Detected metadata:\n{table_json}')
 
@@ -544,11 +544,11 @@ class MultiTableMetadata:
         metadata = {'tables': {}, 'relationships': []}
         for table_name, single_table_metadata in self._tables.items():
             table_dict = single_table_metadata.to_dict()
-            table_dict.pop('SCHEMA_VERSION', None)
+            table_dict.pop('METADATA_SPEC_VERSION', None)
             metadata['tables'][table_name] = table_dict
 
         metadata['relationships'] = deepcopy(self._relationships)
-        metadata['SCHEMA_VERSION'] = self.SCHEMA_VERSION
+        metadata['METADATA_SPEC_VERSION'] = self.METADATA_SPEC_VERSION
         return metadata
 
     def _set_metadata_dict(self, metadata):
@@ -604,7 +604,7 @@ class MultiTableMetadata:
 
         Raises:
             - An ``Error`` if the path does not exist.
-            - An ``Error`` if the ``json`` file does not contain the ``SCHEMA_VERSION``.
+            - An ``Error`` if the ``json`` file does not contain the ``METADATA_SPEC_VERSION``.
 
         Returns:
             A ``MultiTableMetadata`` instance.
@@ -676,7 +676,7 @@ class MultiTableMetadata:
         metadata_dict = {
             'tables': tables_metadata,
             'relationships': relationships,
-            'SCHEMA_VERSION': cls.SCHEMA_VERSION
+            'METADATA_SPEC_VERSION': cls.METADATA_SPEC_VERSION
         }
         metadata = cls._load_from_dict(metadata_dict)
         metadata.save_to_json(new_filepath)

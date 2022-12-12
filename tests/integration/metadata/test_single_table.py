@@ -23,7 +23,7 @@ def test_single_table_metadata():
 
     # Assert
     assert result == {
-        'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
     }
     assert instance._columns == {}
     assert instance._constraints == []
@@ -213,7 +213,7 @@ def test_upgrade_metadata():
         },
         'primary_key': 'student_id',
         'alternate_keys': ['ssn', 'drivers_license'],
-        'SCHEMA_VERSION': 'SINGLE_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
     }
     assert new_metadata == expected_metadata
 
