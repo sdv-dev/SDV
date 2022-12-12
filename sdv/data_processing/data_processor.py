@@ -102,8 +102,11 @@ class DataProcessor:
         self.formatters = {}
         self._anonymized_columns = []
         self._primary_key = self.metadata._primary_key
-        self._primary_key_generator = None
         self._prepared_for_fitting = False
+        self._keys = self.metadata._alternate_keys
+        self._keys_generators = {}
+        if self._primary_key:
+            self._keys.append(self._primary_key)
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -145,7 +148,7 @@ class DataProcessor:
         for name, column_metadata in self.metadata._columns.items():
             sdtype = column_metadata['sdtype']
 
-            if primary_keys or (name != self._primary_key):
+            if primary_keys or (name not in self._keys):
                 sdtypes[name] = sdtype
 
         return sdtypes
@@ -231,8 +234,8 @@ class DataProcessor:
 
         return get_anonymized_transformer(sdtype, kwargs)
 
-    def create_primary_key_transformer(self, sdtype, column_metadata):
-        """Create an instance for the primary key.
+    def create_key_transformer(self, column_name, sdtype, column_metadata):
+        """Create an instance for the primary key or alternate key transformer.
 
         Read the keyword arguments from the ``column_metadata`` and use them to create
         an instance of an ``RegexGenerator`` or ``AnonymizedFaker`` transformer with
@@ -251,7 +254,7 @@ class DataProcessor:
                 ``True``.
         """
         if sdtype == 'numerical':
-            self._primary_key_generator = itertools.count()
+            self._keys_generators[column_name] = itertools.count()
             return None
 
         if sdtype == 'text':
@@ -278,8 +281,8 @@ class DataProcessor:
             sdtype = column_metadata.get('sdtype')
             sdtypes[column] = 'pii' if column_metadata.get('pii') else sdtype
 
-            if column == self._primary_key:
-                transformers[column] = self.create_primary_key_transformer(sdtype, column_metadata)
+            if column in self._keys:
+                transformers[column] = self.create_key_transformer(column, sdtype, column_metadata)
 
             elif column_metadata.get('pii'):
                 transformers[column] = self.create_anonymized_transformer(sdtype, column_metadata)
@@ -404,31 +407,42 @@ class DataProcessor:
         self._fit_hyper_transformer(constrained)
         self.fitted = True
 
-    def generate_primary_keys(self, num_rows, reset_primary_key=False):
-        """Generate the columns that are identified as ``primary keys``.
+    def generate_keys(self, num_rows, reset_primary_key=False):
+        """Generate the columns that are identified as ``keys``.
 
         Args:
             num_rows (int):
                 Number of rows to be created. Must be an integer greater than 0.
             reset_primary_key (bool):
-                Whether or not reset the primary keys generators. Defaults to ``False``.
+                Whether or not reset the keys generators. Defaults to ``False``.
 
         Returns:
             pandas.DataFrame:
                 A data frame with the newly generated primary keys of the size ``num_rows``.
         """
-        if self._hyper_transformer.field_transformers.get(self._primary_key) is None:
-            if reset_primary_key:
-                self._primary_key_generator = itertools.count()
+        anonymized_keys = []
+        dataframes = {}
+        for key in self._keys:
+            if self._hyper_transformer.field_transformers.get(key) is None:
+                if reset_primary_key:
+                    self._keys_generators[key] = itertools.count()
 
-            return pd.DataFrame({
-                self._primary_key: [next(self._primary_key_generator) for _ in range(num_rows)]
-            })
+                dataframes[key] = pd.DataFrame({
+                    key: [next(self._keys_generators[key]) for _ in range(num_rows)]
+                })
 
-        return self._hyper_transformer.create_anonymized_columns(
-            num_rows=num_rows,
-            column_names=[self._primary_key],
-        )
+            else:
+                anonymized_keys.append(key)
+
+        if anonymized_keys:
+            anonymized_dataframe = self._hyper_transformer.create_anonymized_columns(
+                num_rows=num_rows,
+                column_names=anonymized_keys,
+            )
+
+            return pd.concat(list(dataframes.values()) + [anonymized_dataframe], axis=1)
+
+        return pd.concat(dataframes.values(), axis=1)
 
     def transform(self, data, is_condition=False):
         """Transform the given data.
@@ -505,15 +519,16 @@ class DataProcessor:
                 num_rows=num_rows,
                 column_names=self._anonymized_columns,
             )
-        if self._primary_key:
-            primary_keys = self.generate_primary_keys(num_rows, reset_primary_key)
+
+        if self._keys:
+            generated_keys = self.generate_keys(num_rows, reset_primary_key)
 
         original_columns = list(self.metadata._columns.keys())
         for column_name in original_columns:
             if column_name in self._anonymized_columns:
                 column_data = anonymized_data[column_name]
-            elif column_name == self._primary_key:
-                column_data = primary_keys[column_name]
+            elif column_name in self._keys:
+                column_data = generated_keys[column_name]
             else:
                 column_data = reversed_data[column_name]
 
