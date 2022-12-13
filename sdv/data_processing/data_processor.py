@@ -439,8 +439,10 @@ class DataProcessor:
                 num_rows=num_rows,
                 column_names=anonymized_keys,
             )
+            if dataframes:
+                return pd.concat(list(dataframes.values()) + [anonymized_dataframe], axis=1)
 
-            return pd.concat(list(dataframes.values()) + [anonymized_dataframe], axis=1)
+            return anonymized_dataframe
 
         return pd.concat(dataframes.values(), axis=1)
 
@@ -468,10 +470,18 @@ class DataProcessor:
         data = self._transform_constraints(data[columns], is_condition)
 
         LOGGER.debug(f'Transforming table {self.table_name}')
-        if self._primary_key and not is_condition:
-            # If it's numerical we have to drop it, else it's dropped by the hyper transformer
-            drop_primary_key = bool(self._primary_key_generator)
-            data = data.set_index(self._primary_key, drop=drop_primary_key)
+        if self._keys and not is_condition:
+            keys_to_drop = []
+            for key in self._keys:
+                if key == self._primary_key:
+                    drop_primary_key = bool(self._keys_generators.get(key))
+                    data = data.set_index(self._primary_key, drop=drop_primary_key)
+
+                elif self._keys_generators.get(key):
+                    keys_to_drop.append(key)
+
+            if keys_to_drop:
+                data = data.drop(keys_to_drop, axis=1)
 
         try:
             transformed = self._hyper_transformer.transform_subset(data)
