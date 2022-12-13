@@ -33,10 +33,7 @@ def test_load_csvs(load_mock, warnings_mock):
     users_mock = Mock()
     orders_mock = Mock()
 
-    load_mock.side_effect = [
-        orders_mock,
-        users_mock
-    ]
+    load_mock.side_effect = lambda file: orders_mock if 'orders.csv' in file else users_mock
 
     # Run
     with TemporaryDirectory() as temp_dir:
