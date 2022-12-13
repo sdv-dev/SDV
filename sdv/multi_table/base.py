@@ -293,7 +293,7 @@ class BaseMultiTableSynthesizer:
                 If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
                 than the original tables. Defaults to ``1.0``.
             randomize_samples (bool):
-                Whether or not to the data should change on each sample call. If ``True``
+                Whether or not the data should change on each sample call. If ``True``
                 every time ``sample`` is called, different data will be generated, if ``False``
                 every time ``sample`` is called, the same data will be generated. Defaults to
                 ``False``.

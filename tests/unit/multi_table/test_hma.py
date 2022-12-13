@@ -229,7 +229,7 @@ class TestHMASynthesizer:
     def test__finalize(self):
         """Test that the finalize method applies the final touches to the generated data.
 
-        The process consists on applying the propper data types to each table, and find missing
+        The process consists of applying the propper data types to each table, and finding
         foreign keys if those are not present in the current sampled data.
         """
         # Setup
@@ -376,6 +376,33 @@ class TestHMASynthesizer:
         expected_result = expected_result.reindex(sorted(expected_result.columns), axis=1)
         pd.testing.assert_frame_equal(result, expected_result)
 
+    def test__get_child_synthesizer(self):
+        """Test that this method returns a synthesizer for the given child table."""
+        # Setup
+        instance = Mock()
+        parent_row = 'row'
+        table_name = 'users'
+        foreign_key = 'session_id'
+        table_meta =  Mock()
+        instance.metadata._tables = {'users': table_meta}
+        instance._synthesizer_kwargs = {'a': 1}
+
+        # Run
+        synthesizer = HMASynthesizer._get_child_synthesizer(
+            instance,
+            parent_row,
+            table_name,
+            foreign_key
+        )
+
+        # Assert
+        assert synthesizer == instance._synthesizer.return_value
+        instance._synthesizer.assert_called_once_with(table_meta, a=1)
+        synthesizer._set_parameters.assert_called_once_with(
+            instance._extract_parameters.return_value
+        )
+        instance._extract_parameters.assert_called_once_with(parent_row, table_name, foreign_key)
+
     def test__sample_child_rows(self):
         """Test the sampling of child rows when sampled data is empty."""
         # Setup
@@ -481,6 +508,7 @@ class TestHMASynthesizer:
         pd.testing.assert_frame_equal(sampled_data['sessions'], expected_result)
 
     def test__sample_children(self):
+        """Test that child tables are being sampled recursively."""
         # Setup
         def update_sampled_data(child_name, table_name, row, sampled_data):
             sampled_data['sessions'] = pd.DataFrame({
@@ -505,7 +533,7 @@ class TestHMASynthesizer:
         HMASynthesizer._sample_children(instance, 'users', sampled_data, table_rows)
 
         # Assert
-        instance._sample_child_rows.call_count == 3
+        assert instance._sample_child_rows.call_count == 3
         sample_calls = instance._sample_child_rows.call_args_list
         pd.testing.assert_series_equal(
             sample_calls[0][0][2],
@@ -521,9 +549,10 @@ class TestHMASynthesizer:
         )
 
     def test__sample_table(self):
-        """Test the sample table.
+        """Test sampling a table.
 
-        The sample table will call sample children and return the sampled data dictionary.
+        The ``sample_table`` method will call sample children and return the sampled data
+        dictionary.
         """
         # Setup
         def sample_children(table_name, sampled_data, table_rows):
