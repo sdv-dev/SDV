@@ -383,7 +383,7 @@ class TestHMASynthesizer:
         parent_row = 'row'
         table_name = 'users'
         foreign_key = 'session_id'
-        table_meta =  Mock()
+        table_meta = Mock()
         instance.metadata._tables = {'users': table_meta}
         instance._synthesizer_kwargs = {'a': 1}
 
