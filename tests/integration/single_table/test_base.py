@@ -409,6 +409,26 @@ def test_sampling_with_randomize_samples_alternating(model):
     assert not sampled_random2.equals(sampled_fixed1)
 
 
+def test_config_creation_doesnt_raise_error():
+    """Test https://github.com/sdv-dev/SDV/issues/1110."""
+    # Setup
+    test_data = pd.DataFrame({
+        'address_col': ['223 Williams Rd', '75 Waltham St', '77 Mass Ave'],
+        'numerical_col': [1, 2, 3],
+    })
+    test_metadata = SingleTableMetadata()
+
+    # Run
+    test_metadata.detect_from_dataframe(test_data)
+    test_metadata.update_column(
+        column_name='address_col',
+        sdtype='address',
+        pii=False)
+
+    synthesizer = GaussianCopulaSynthesizer(test_metadata)
+    synthesizer.fit(test_data)
+
+
 def test_transformers_correctly_auto_assigned():
     """Ensure the correct transformers and parameters are auto assigned to the data."""
     # Setup

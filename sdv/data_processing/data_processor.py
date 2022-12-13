@@ -284,8 +284,12 @@ class DataProcessor:
                 transformers[column] = self.create_anonymized_transformer(sdtype, column_metadata)
                 self._anonymized_columns.append(column)
 
+            elif sdtype in self._transformers_by_sdtype:
+                transformers[column] = deepcopy(self._transformers_by_sdtype[sdtype])
+
             else:
-                transformers[column] = deepcopy(self._transformers_by_sdtype.get(sdtype))
+                sdtypes[column] = 'categorical'
+                transformers[column] = deepcopy(self._transformers_by_sdtype['categorical'])
 
         for column in columns_created_by_constraints:
             dtype_kind = data[column].dtype.kind
