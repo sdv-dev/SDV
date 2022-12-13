@@ -355,6 +355,38 @@ def test_sample_conditions_with_batch_size():
     pd.testing.assert_series_equal(sampled_data['column1'], expected)
 
 
+def test_multiple_fits():
+    """Test the synthesizer refits correctly on new data.
+
+    The synthesizer should refit the formatters and constraints.
+    """
+    # Setup
+    data_1 = pd.DataFrame({
+        'city': ['LA', 'SF', 'CHI', 'LA', 'LA'],
+        'state': ['CA', 'CA', 'IL', 'CA', 'CA'],
+        'measurement': [27.123, 28.756, 26.908, 21.002, 30.987]
+    })
+    data_2 = pd.DataFrame({
+        'city': ['LA', 'LA', 'CHI', 'LA', 'LA'],
+        'state': ['CA', 'CA', 'IL', 'CA', 'CA'],
+        'measurement': [27.1, 28.7, 26.9, 21.2, 30.9]
+    })
+    metadata = SingleTableMetadata()
+    metadata.add_column('city', sdtype='categorical')
+    metadata.add_column('state', sdtype='categorical')
+    metadata.add_column('measurement', sdtype='numerical')
+    metadata.add_constraint('FixedCombinations', column_names=['city', 'state'])
+
+    # Run
+    model = GaussianCopulaSynthesizer(metadata)
+    model.fit(data_1)
+    model.fit(data_2)
+
+    # Assert
+    assert ('SF', 'CA') not in model._data_processor._constraints[0]._combinations_to_uuids
+    assert model._data_processor.formatters['measurement']._rounding_digits == 1
+
+
 @pytest.mark.parametrize('model', MODELS)
 def test_sampling_with_randomize_samples_true(model):
     data = pd.DataFrame({
