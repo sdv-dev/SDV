@@ -407,14 +407,14 @@ class DataProcessor:
         self._fit_hyper_transformer(constrained)
         self.fitted = True
 
-    def generate_keys(self, num_rows, reset_primary_key=False):
+    def generate_keys(self, num_rows, reset_keys=False):
         """Generate the columns that are identified as ``keys``.
 
         Args:
             num_rows (int):
                 Number of rows to be created. Must be an integer greater than 0.
-            reset_primary_key (bool):
-                Whether or not reset the keys generators. Defaults to ``False``.
+            reset_keys (bool):
+                Whether or not to reset the keys generators. Defaults to ``False``.
 
         Returns:
             pandas.DataFrame:
@@ -424,7 +424,7 @@ class DataProcessor:
         dataframes = {}
         for key in self._keys:
             if self._hyper_transformer.field_transformers.get(key) is None:
-                if reset_primary_key:
+                if reset_keys:
                     self._keys_generators[key] = itertools.count()
 
                 dataframes[key] = pd.DataFrame({
@@ -434,6 +434,7 @@ class DataProcessor:
             else:
                 anonymized_keys.append(key)
 
+        # Add ``reset_keys`` for RDT once the version is updated.
         if anonymized_keys:
             anonymized_dataframe = self._hyper_transformer.create_anonymized_columns(
                 num_rows=num_rows,
@@ -490,14 +491,14 @@ class DataProcessor:
 
         return transformed
 
-    def reverse_transform(self, data, reset_primary_key=False):
+    def reverse_transform(self, data, reset_keys=False):
         """Reverse the transformed data to the original format.
 
         Args:
             data (pandas.DataFrame):
                 Data to be reverse transformed.
-            reset_primary_key (bool):
-                Whether or not reset the primary keys generators. Defaults to ``False``.
+            reset_keys (bool):
+                Whether or not to reset the keys generators. Defaults to ``False``.
 
         Returns:
             pandas.DataFrame
@@ -531,7 +532,7 @@ class DataProcessor:
             )
 
         if self._keys:
-            generated_keys = self.generate_keys(num_rows, reset_primary_key)
+            generated_keys = self.generate_keys(num_rows, reset_keys)
 
         original_columns = list(self.metadata._columns.keys())
         for column_name in original_columns:
