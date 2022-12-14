@@ -57,30 +57,147 @@ def test_download_demo_dataset_of_incorrect_modality():
     with pytest.raises(InvalidArgumentError, match=err_msg):
         download_demo('multi_table', 'credit')
 
-def test_download_demo_doesnt_raise():
-    download_demo('single_table', 'credit')
-
-def test_download_demo_single_table():
+def test_download_demo_single_table(tmpdir):
     """Test it can download a single table dataset."""
     # Run
-    metadata, table = download_demo('single_table', 'credit')
+    table, metadata = download_demo('single_table', 'ring', tmpdir / 'test_folder')
 
     # Assert
     expected_table = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
     pd.testing.assert_frame_equal(table.head(2), expected_table)
 
     expected_metadata_dict = {
-        "columns": {
-            "0": {
-                "sdtype": "numerical", 
-                "computer_representation": "Int64"
+        'columns': {
+            '0': {
+                'sdtype': 'numerical', 
+                'computer_representation': 'Int64'
             }, 
-            "1": {
-                "sdtype": "numerical", 
-                "computer_representation": "Int64"
+            '1': {
+                'sdtype': 'numerical', 
+                'computer_representation': 'Int64'
             }
         }, 
-        "SCHEMA_VERSION": "SINGLE_TABLE_V1"
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
     }
     assert metadata.to_dict() == expected_metadata_dict
 
+def test_download_demo_single_table_no_output_folder():
+    """Test it can download a single table dataset when no output folder is passed."""
+    # Run
+    table, metadata = download_demo('single_table', 'ring')
+
+    # Assert
+    expected_table = pd.DataFrame({'0': [0, 0], '1': [0, 0]})
+    pd.testing.assert_frame_equal(table.head(2), expected_table)
+
+    expected_metadata_dict = {
+        'columns': {
+            '0': {
+                'sdtype': 'numerical', 
+                'computer_representation': 'Int64'
+            }, 
+            '1': {
+                'sdtype': 'numerical', 
+                'computer_representation': 'Int64'
+            }
+        }, 
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+    }
+    assert metadata.to_dict() == expected_metadata_dict
+
+def test_download_demo_multi_table(tmpdir):
+    """Test it can download a multi table dataset."""
+    # Run
+    tables, metadata = download_demo('multi_table', 'got_families', tmpdir / 'test_folder')
+
+    # Assert
+    expected_families = pd.DataFrame({
+        'family_id': [1, 2],
+        'name': ['Stark', 'Tully'],
+    })
+    pd.testing.assert_frame_equal(tables['families'].head(2), expected_families)
+
+    expected_character_families = pd.DataFrame({
+        'character_id': [1, 1],
+        'family_id': [1, 4],
+        'generation': [8, 5],
+        'type': ['father', 'mother']
+    })
+    pd.testing.assert_frame_equal(
+        tables['character_families'].head(2), expected_character_families)
+
+    expected_characters = pd.DataFrame({
+        'age': [20, 16],
+        'character_id': [1, 2],
+        'name': ['Jon', 'Arya']
+    })
+    pd.testing.assert_frame_equal(tables['characters'].head(2), expected_characters)
+
+    expected_metadata_dict = {
+        'tables': {
+            'characters': {
+                'columns': {
+                    'character_id': {
+                        'sdtype': 'text',
+                        'regex_format': '^[1-9]{1,2}$'
+                    },
+                    'name': {
+                        'sdtype': 'categorical'
+                    },
+                    'age': {
+                        'sdtype': 'numerical',
+                        'computer_representation': 'Int64'
+                    }
+                },
+                'primary_key': 'character_id'
+            },
+            'families': {
+                'columns': {
+                    'family_id': {
+                        'sdtype': 'text',
+                        'regex_format': '^[1-9]$'
+                    }, 
+                    'name': {
+                        'sdtype': 'categorical'
+                    }
+                },
+                'primary_key': 'family_id'
+            },
+            'character_families': {
+                'columns': {
+                    'character_id': {
+                        'sdtype': 'text',
+                        'regex_format': '[A-Za-z]{5}'
+                    },
+                    'family_id': {
+                        'sdtype': 'text', 
+                        'regex_format': '[A-Za-z]{5}'
+                    }, 
+                    'type': {
+                        'sdtype': 'categorical'
+                    },
+                    'generation': {
+                        'sdtype': 'numerical', 
+                        'computer_representation': 'Int64'
+                    }, 
+                    'alternate_keys': ['character_id', 'family_id']
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'families',
+                    'parent_primary_key': 'family_id',
+                    'child_table_name': 'character_families',
+                    'child_foreign_key': 'family_id'
+                },
+                {
+                    'parent_table_name': 'characters',
+                    'parent_primary_key': 'character_id',
+                    'child_table_name': 'character_families',
+                    'child_foreign_key': 'character_id'
+                }
+            ],
+            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+        }
+    }
+    assert metadata.to_dict() == expected_metadata_dict

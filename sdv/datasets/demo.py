@@ -2,7 +2,9 @@
 
 import io
 import logging
+import tempfile
 import os
+import shutil
 from zipfile import ZipFile
 import urllib.request
 import requests
@@ -12,6 +14,9 @@ from botocore import UNSIGNED
 from botocore.client import Config
 from sdv.datasets.errors import InvalidArgumentError
 from sdv.metadata.dataset import Metadata
+from sdv.metadata.multi_table import MultiTableMetadata
+from sdv.metadata.single_table import SingleTableMetadata
+import pandas as pd
 
 
 LOGGER = logging.getLogger(__name__)
@@ -21,29 +26,11 @@ BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
 BUCKET_NAME = 'sdv-demo-datasets'
 
 
-def boto_solution(dataset_name):
-    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))
-    try:
-        metadata = s3.head_object(Bucket=BUCKET_NAME, Key=dataset_name + '.zip')
-        print(metadata)
-    except ClientError as error:
-        if error.response['ResponseMetadata']['HTTPStatusCode'] == 404:
-            raise ValueError(
-                f"Invalid dataset name '{dataset_name}'. Use 'list_available_demos' "
-                'to get a list of demo datasets.'
-            )
-        print(error)
-
-
-
-
-
-
 def _validate_args_download_demo(modality, dataset_name, output_folder_name):
     possible_modalities = ['single_table', 'multi_table', 'sequential']
     if modality not in possible_modalities:
         raise InvalidArgumentError(f"'modality' must be in {possible_modalities}.")
-    
+
     if output_folder_name and os.path.exists(output_folder_name):
         raise InvalidArgumentError(
             f"Folder '{output_folder_name}' already exists. Please specify a different name "
@@ -68,6 +55,7 @@ def _validate_args_download_demo(modality, dataset_name, output_folder_name):
             "Use 'list_available_demos' to get a list of demo datasets."
         )
 
+
 def _download(modality, dataset_name, output_folder_name):
     url = f'{BUCKET_URL}/{modality.upper()}/{dataset_name}.zip'
 
@@ -77,30 +65,31 @@ def _download(modality, dataset_name, output_folder_name):
 
     LOGGER.info(f'Extracting dataset into {output_folder_name}')
     with ZipFile(bytes_io) as zf:
+        os.makedirs(output_folder_name, exist_ok=True)
         zf.extractall(output_folder_name)
+        os.remove(os.path.join(output_folder_name, 'metadata_v0.json'))
+        os.rename(os.path.join(output_folder_name, 'metadata_v1.json'), os.path .join(output_folder_name, 'metadata.json'))
 
-def _get_dataset_path(dataset_name, modality, output_folder_name):
-    os.makedirs(output_folder_name)
-    _download(dataset_name, modality, output_folder_name)
-    return os.path.join(output_folder_name, dataset_name)
 
-def _dtypes64(table):
-    for name, column in table.items():
-        if column.dtype == np.int32:
-            table[name] = column.astype('int64')
-        elif column.dtype == np.float32:
-            table[name] = column.astype('float64')
+def _get_data(modality, output_folder_name):
+    data = {}
+    for filename in os.listdir(output_folder_name):
+        if filename != 'metadata.json':
+            data_path = os.path.join(output_folder_name, filename)
+            data[filename] = pd.read_csv(data_path)
 
-    return table
+    if modality != 'multi_table':
+        data = data.popitem()[1]
 
-def _load_demo_dataset(modality, dataset_name, output_folder_name):
-    dataset_path = _get_dataset_path(modality, dataset_name, output_folder_name)
-    meta = Metadata(metadata=os.path.join(dataset_path, 'metadata.json'))
-    tables = {
-        name: _dtypes64(table)
-        for name, table in meta.load_tables().items()
-    }
-    return meta, tables
+    return data
+
+
+def _get_metadata(modality, output_folder_name):
+    metadata_path = os.path.join(output_folder_name, 'metadata.json')
+    metadata = MultiTableMetadata() if modality == 'multi_table' else SingleTableMetadata()
+    metadata = metadata.load_from_json(metadata_path)
+
+    return metadata
 
 
 def download_demo(modality, dataset_name, output_folder_name=None):
@@ -111,7 +100,7 @@ def download_demo(modality, dataset_name, output_folder_name=None):
             The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
         dataset_name (str):
             Name of the dataset to be downloaded from the sdv-datasets S3 bucket.
-        output_folder_name (str):
+        output_folder_name (str or None):
             The name of the local folder where the metadata and data should be stored.
             If ``None`` the data is not saved locally and is loaded as a Python object.
             Defaults to ``None``.
@@ -131,5 +120,17 @@ def download_demo(modality, dataset_name, output_folder_name=None):
             * If ``modality`` is not one of ``'single_table'``, ``'multi_table'``, ``'sequential'``.
     """
     _validate_args_download_demo(modality, dataset_name, output_folder_name)
-    return _load_demo_dataset(modality, dataset_name, output_folder_name)
 
+    use_temp_dir = False
+    if output_folder_name is None:
+        use_temp_dir = True
+        output_folder_name = tempfile.mkdtemp()
+
+    _download(modality, dataset_name, output_folder_name)
+    data = _get_data(modality, output_folder_name)
+    metadata = _get_metadata(modality, output_folder_name)
+
+    if use_temp_dir:
+        shutil.rmtree(output_folder_name)
+
+    return data, metadata
