@@ -41,7 +41,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
                 * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
                   so using this will make ``get_parameters`` unusable.
 
-        default_distribution (copulas.univariate.Univariate or str):
+        default_distribution (str):
             Copulas univariate distribution to use by default. Valid options are:
 
                 * ``norm``: Use a norm distribution.
@@ -66,7 +66,17 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
     _model = None
 
     @classmethod
-    def _validate_distribution(cls, distribution):
+    def get_distribution_class(cls, distribution):
+        """Return the corresponding distribution class from ``copulas.univariate``.
+
+        Args:
+            distribution (str):
+                A string representing a copulas univariate distribution.
+
+        Returns:
+            copulas.univariate:
+                A copulas univariate class that corresponds to the distribution.
+        """
         if not isinstance(distribution, str) or distribution not in cls._DISTRIBUTIONS:
             error_message = f"Invalid distribution specification '{distribution}'."
             raise ValueError(error_message)
@@ -86,9 +96,9 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         self.default_distribution = default_distribution or 'beta'
         self.numerical_distributions = numerical_distributions or {}
 
-        self._default_distribution = self._validate_distribution(self.default_distribution)
+        self._default_distribution = self.get_distribution_class(self.default_distribution)
         self._numerical_distributions = {
-            field: self._validate_distribution(distribution)
+            field: self.get_distribution_class(distribution)
             for field, distribution in (numerical_distributions or {}).items()
         }
         self._num_rows = None
@@ -281,7 +291,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         univariates = []
         for column, univariate in model_parameters['univariates'].items():
             columns.append(column)
-            univariate['type'] = self._validate_distribution(
+            univariate['type'] = self.get_distribution_class(
                 self._numerical_distributions.get(column, self.default_distribution)
             )
             if 'scale' in univariate:

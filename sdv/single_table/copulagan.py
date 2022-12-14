@@ -92,7 +92,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
                 * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
                   so using this will make ``get_parameters`` unusable.
 
-        default_distribution (copulas.univariate.Univariate or str):
+        default_distribution (str):
             Copulas univariate distribution to use by default. Valid options are:
 
                 * ``norm``: Use a norm distribution.
@@ -137,11 +137,11 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         self.numerical_distributions = numerical_distributions or {}
         self.default_distribution = default_distribution or 'beta'
 
-        self._default_distribution = GaussianCopulaSynthesizer._validate_distribution(
+        self._default_distribution = GaussianCopulaSynthesizer.get_distribution_class(
             default_distribution or 'beta'
         )
         self._numerical_distributions = {
-            field: GaussianCopulaSynthesizer._validate_distribution(distribution)
+            field: GaussianCopulaSynthesizer.get_distribution_class(distribution)
             for field, distribution in (numerical_distributions or {}).items()
         }
 

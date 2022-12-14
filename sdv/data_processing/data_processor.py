@@ -535,11 +535,14 @@ class DataProcessor:
         if self._keys:
             generated_keys = self.generate_keys(num_rows, reset_keys)
 
-        original_columns = [
+        # Sort the sampled columns in the order of the metadata
+        # In multitable there may be missing columns in the sample
+        # Thats why column has to be in sampled_columns
+        sampled_columns = [
             column for column in self.metadata._columns.keys()
             if column in sampled_columns
         ]
-        for column_name in original_columns:
+        for column_name in sampled_columns:
             if column_name in self._anonymized_columns:
                 column_data = anonymized_data[column_name]
             elif column_name in self._keys:
@@ -554,12 +557,12 @@ class DataProcessor:
             reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
 
         # reformat numerical columns using the NumericalFormatter
-        for column in original_columns:
+        for column in sampled_columns:
             if column in self.formatters:
                 data_to_format = reversed_data[column]
                 reversed_data[column] = self.formatters[column].format_data(data_to_format)
 
-        return reversed_data[original_columns]
+        return reversed_data[sampled_columns]
 
     def filter_valid(self, data):
         """Filter the data using the constraints and return only the valid rows.
