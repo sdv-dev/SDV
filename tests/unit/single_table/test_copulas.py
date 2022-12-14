@@ -12,25 +12,25 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 class TestGaussianCopulaSynthesizer:
 
-    def test__validate_distribution_str(self):
+    def test_get_distribution_class_str(self):
         """Test that when a ``str`` is passed, the class from the ``DISTRIBUTIONS`` is returned."""
         # Setup
         distribution = 'beta'
 
         # Run
-        result = GaussianCopulaSynthesizer._validate_distribution(distribution)
+        result = GaussianCopulaSynthesizer.get_distribution_class(distribution)
 
         # Assert
         assert result == BetaUnivariate
 
-    def test__validate_distribution_not_in_distributions(self):
+    def test_get_distribution_class_not_in_distributions(self):
         """Test that ``ValueError`` is raised when the given distribution is not supported."""
         # Setup
         distribution = 'student'
 
         # Run and Assert
         with pytest.raises(ValueError, match="Invalid distribution specification 'student'."):
-            GaussianCopulaSynthesizer._validate_distribution(distribution)
+            GaussianCopulaSynthesizer.get_distribution_class(distribution)
 
     def test___init__(self):
         """Test creating an instance of ``GaussianCopulaSynthesizer``."""

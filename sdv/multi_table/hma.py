@@ -281,6 +281,22 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
         return flat_parameters.rename(new_keys).to_dict()
 
+    def _process_samples(self, table_name, sampled_rows):
+        """Process the ``sampled_rows`` for the given ``table_name``.
+
+        Process the raw samples and convert them to the original space by reverse transforming
+        them. Also, when there are synthesizer columns (columns used to recreate an instance
+        of a synthesizer), those will be returned together.
+        """
+        data_processor = self._table_synthesizers[table_name]._data_processor
+        sampled = data_processor.reverse_transform(sampled_rows)
+
+        synthesizer_columns = list(set(sampled_rows.columns) - set(sampled.columns))
+        if synthesizer_columns:
+            sampled = pd.concat([sampled, sampled_rows[synthesizer_columns]], axis=1)
+
+        return sampled
+
     def _sample_rows(self, synthesizer, table_name, num_rows=None):
         """Sample ``num_rows`` from ``synthesizer``.
 
@@ -298,15 +314,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         """
         num_rows = num_rows or synthesizer._num_rows
         sampled_rows = synthesizer._sample(num_rows)
-
-        data_processor = self._table_synthesizers[table_name]._data_processor
-        sampled = data_processor.reverse_transform(sampled_rows)
-
-        model_columns = list(set(sampled_rows.columns) - set(sampled.columns))
-        if model_columns:
-            sampled = pd.concat([sampled, sampled_rows[model_columns]], axis=1)
-
-        return sampled
+        return self._process_samples(table_name, sampled_rows)
 
     def _get_child_synthesizer(self, parent_row, table_name, foreign_key):
         parameters = self._extract_parameters(parent_row, table_name, foreign_key)

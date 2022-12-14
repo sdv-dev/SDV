@@ -333,15 +333,14 @@ class TestHMASynthesizer:
 
         assert result == expected_result
 
-    def test__sample_rows(self):
-        """Test sample rows.
+    def test__process_samples(self):
+        """Test the ``_process_samples``.
 
-        Test that sampling rows will return the reverse transformed data with the extension columns
-        sampled by the model.
+        Test that the method retrieves the ``data_processor`` from the fitted ``table_synthesizer``
+        and performs a ``reverse_transform`` and returns the data in the real space.
         """
         # Setup
-        model = Mock()
-        model._sample.return_value = pd.DataFrame({
+        sampled_rows = pd.DataFrame({
             'name': [0.1, 0.25, 0.35],
             'a': [1.0, 0.25, 0.5],
             'b': [0.2, 0.6, 0.9],
@@ -355,12 +354,10 @@ class TestHMASynthesizer:
             'user_id': [0, 1, 2],
             'name': ['John', 'Doe', 'Johanna']
         })
-        instance._table_synthesizers = {
-            'users': users_synthesizer
-        }
+        instance._table_synthesizers = {'users': users_synthesizer}
 
         # Run
-        result = HMASynthesizer._sample_rows(instance, model, 'users', 10)
+        result = HMASynthesizer._process_samples(instance, 'users', sampled_rows)
 
         # Assert
         expected_result = pd.DataFrame({
@@ -375,6 +372,27 @@ class TestHMASynthesizer:
         result = result.reindex(sorted(result.columns), axis=1)
         expected_result = expected_result.reindex(sorted(expected_result.columns), axis=1)
         pd.testing.assert_frame_equal(result, expected_result)
+
+    def test__sample_rows(self):
+        """Test sample rows.
+
+        Test that sampling rows will return the reverse transformed data with the extension columns
+        sampled by the model.
+        """
+        # Setup
+        synthesizer = Mock()
+        instance = Mock()
+
+        # Run
+        result = HMASynthesizer._sample_rows(instance, synthesizer, 'users', 10)
+
+        # Assert
+        assert result == instance._process_samples.return_value
+        instance._process_samples.assert_called_once_with(
+            'users',
+            synthesizer._sample.return_value
+        )
+        synthesizer._sample.assert_called_once_with(10)
 
     def test__get_child_synthesizer(self):
         """Test that this method returns a synthesizer for the given child table."""
