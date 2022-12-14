@@ -12,15 +12,15 @@ Additional Use Grant: You may make use of the Licensed Work, and derivatives of 
                       the Licensed Work, for a Synthetic Data Service.
 
                       A "Synthetic Data Service" is a commercial offering
-                     	that allows third parties (other than your employees and
-                     	contractors) to access the functionality of the Licensed
+                      that allows third parties (other than your employees and
+                      contractors) to access the functionality of the Licensed
                       Work so that such third parties directly benefit from the data
                       specification, data transformation, machine learning, or
                       synthetic data creation features of the Licensed Work.
 
 Change Date:          Change date is four years from release date.
-Please see https://github.com/sdv-dev/SDV/releases
-	for exact dates.
+                      Please see https://github.com/sdv-dev/SDV/releases
+	                  for exact dates.
 
 Change License:       MIT License
 
