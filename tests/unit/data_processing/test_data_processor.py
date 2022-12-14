@@ -1049,7 +1049,7 @@ class TestDataProcessor:
         instance._keys_generators = {'a': counter}
 
         # Run
-        result = DataProcessor.generate_keys(instance, 10, reset_primary_key=True)
+        result = DataProcessor.generate_keys(instance, 10, reset_keys=True)
 
         # Assert
         expected_result = pd.DataFrame({
