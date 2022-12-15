@@ -47,7 +47,6 @@ hierarchical generative modeling and recursive sampling techniques.
 | :orange_book: **[SDV Blog]**                  | Regular publshing of useful content about Synthetic Data Generation. |
 | :book: **[Documentation]**                    | Quickstarts, User and Development Guides, and API Reference.         |
 | :octocat: **[Repository]**                    | The link to the Github Repository of this library.                   |
-| :scroll: **[License]**                        | The entire ecosystem is published under the MIT License.             |
 | :keyboard: **[Development Status]**           | This software is in its Pre-Alpha stage.                             |
 | [![][Slack Logo] **Community**][Community]    | Join our Slack Workspace for announcements and discussions.          |
 | [![][MyBinder Logo] **Tutorials**][Tutorials] | Run the SDV Tutorials in a Binder environment.                       |
