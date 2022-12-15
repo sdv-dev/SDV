@@ -233,7 +233,3 @@ def test_download_demo_multi_table(tmpdir):
         'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
     }
     assert metadata.to_dict() == expected_metadata_dict
-
-
-def test_download_demo():
-    download_demo('multi_table', 'got_families', 'test_folder')
