@@ -9,7 +9,6 @@ import urllib.request
 from zipfile import ZipFile
 
 import pandas as pd
-import requests
 
 from sdv.datasets.errors import InvalidArgumentError
 from sdv.metadata.multi_table import MultiTableMetadata
@@ -34,21 +33,24 @@ def _validate_args_download_demo(modality, dataset_name, output_folder_name):
             "or use 'load_csvs' to load from an existing folder."
         )
 
-    # If the dataset exists in the wrong modality, raise that error.
-    # If the dataset doesn't exist at all, raise different error.
     dataset_url = _get_dataset_url(modality, dataset_name)
-    response = requests.head(dataset_url)
-    if response.status_code != 200:
+    try:
+        urllib.request.urlopen(dataset_url)
+    except urllib.error.HTTPError:
+        # If the dataset exists in the wrong modality, raise an error
         other_modalities = set(possible_modalities) - {modality}
         for other_modality in other_modalities:
             dataset_url = _get_dataset_url(other_modality, dataset_name)
-            response = requests.head(dataset_url)
-            if response.status_code == 200:
+            try:
+                urllib.request.urlopen(dataset_url)
                 raise InvalidArgumentError(
                     f"Dataset name '{dataset_name}' is a '{other_modality}' dataset. "
                     f"Use 'load_{other_modality}_demo' to load this dataset."
                 )
+            except urllib.error.HTTPError:
+                pass
 
+        # If the dataset doesn't exist at all, raise different error
         raise InvalidArgumentError(
             f"Invalid dataset name '{dataset_name}'. "
             "Use 'list_available_demos' to get a list of demo datasets."
