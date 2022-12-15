@@ -3,8 +3,8 @@ import itertools
 
 import numpy as np
 
-from sdv import load_demo
 from sdv.data_processing import DataProcessor
+from sdv.demo import load_tabular_demo
 from sdv.metadata import SingleTableMetadata
 
 
@@ -31,8 +31,8 @@ def test_data_processor_with_anonymized_columns(tmpdir):
           ``AnonymizedFaker`` instance.
     """
     # Load metadata and data
-    metadata, data = load_demo('adult', metadata=True)
-    data = data['adult']
+    metadata, data = load_tabular_demo('adult', metadata=True)
+    data = data
     metadata.to_json(tmpdir / 'adult_old.json')
     SingleTableMetadata.upgrade_metadata(tmpdir / 'adult_old.json', tmpdir / 'adult_new.json')
 
@@ -85,8 +85,8 @@ def test_data_processor_with_anonymized_columns_and_primary_key(tmpdir):
         - The column ``id`` has been created in ``transform`` with a unique length of the data.
     """
     # Load metadata and data
-    metadata, data = load_demo('adult', metadata=True)
-    data = data['adult']
+    metadata, data = load_tabular_demo('adult', metadata=True)
+    data = data
     metadata.to_json(tmpdir / 'adult_old.json')
     SingleTableMetadata.upgrade_metadata(tmpdir / 'adult_old.json', tmpdir / 'adult_new.json')
 
@@ -147,7 +147,7 @@ def test_data_processor_with_primary_key_numerical(tmpdir):
           matching the original numerical ``id`` column.
     """
     # Load metadata and data
-    data = load_demo('adult')['adult']
+    data = load_tabular_demo('adult')
     adult_metadata = SingleTableMetadata()
     adult_metadata.detect_from_dataframe(data=data)
 
@@ -178,3 +178,52 @@ def test_data_processor_with_primary_key_numerical(tmpdir):
     assert 'id' not in transformed.columns
     assert reverse_transformed.index.isin(data.id).sum() == size
     assert len(reverse_transformed.id.unique()) == size
+
+
+def test_data_processor_with_alternate_keys(tmpdir):
+    """Test that alternate keys are being generated in a unique way.
+
+    Test that the alternate keys are being generated and dropped the same way
+    as with the ``primary_key``.
+    """
+    # Load metadata and data
+    data = load_tabular_demo('adult')
+    data['fnlwgt'] = data['fnlwgt'].astype(str)
+    adult_metadata = SingleTableMetadata()
+    adult_metadata.detect_from_dataframe(data=data)
+
+    # Add primary key field
+    adult_metadata.add_column('id', sdtype='numerical')
+    adult_metadata.set_primary_key('id')
+
+    adult_metadata.add_column('secondary_id', sdtype='numerical')
+    adult_metadata.update_column('fnlwgt', sdtype='text', regex_format='ID_\\d{4}[0-9]')
+
+    adult_metadata.add_alternate_keys(['secondary_id', 'fnlwgt'])
+
+    # Add id
+    size = len(data)
+    id_generator = itertools.count()
+    ids = [next(id_generator) for _ in range(size)]
+    data['id'] = ids
+    data['secondary_id'] = ids
+
+    # Instance ``DataProcessor``
+    dp = DataProcessor(adult_metadata)
+
+    # Fit
+    dp.fit(data)
+
+    # Transform
+    transformed = dp.transform(data)
+
+    # Reverse Transform
+    reverse_transformed = dp.reverse_transform(transformed)
+
+    # Assert
+    assert 'id' not in transformed.columns
+    assert 'secondary_id' not in transformed.columns
+    assert 'fnlwgt' not in transformed.columns
+    assert len(reverse_transformed.id.unique()) == size
+    assert len(reverse_transformed.secondary_id.unique()) == size
+    assert len(reverse_transformed.fnlwgt.unique()) == size
