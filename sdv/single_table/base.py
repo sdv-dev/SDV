@@ -299,6 +299,11 @@ class BaseSynthesizer:
 
         return field_transformers
 
+    def _preprocess(self, data):
+        self.validate(data)
+        self._data_processor.fit(data)
+        return self._data_processor.transform(data)
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -310,15 +315,13 @@ class BaseSynthesizer:
             pandas.DataFrame:
                 The preprocessed data.
         """
-        self.validate(data)
         if self._fitted:
             warnings.warn(
                 'This model has already been fitted. To use the new preprocessed data, '
                 "please refit the model using 'fit' or 'fit_processed_data'."
             )
 
-        self._data_processor.fit(data)
-        return self._data_processor.transform(data)
+        return self._preprocess(data)
 
     def _fit(self, processed_data):
         """Fit the model to the table.
@@ -348,7 +351,7 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) to fit the model to.
         """
-        processed_data = self.preprocess(data)
+        processed_data = self._preprocess(data)
         self.fit_processed_data(processed_data)
 
 
