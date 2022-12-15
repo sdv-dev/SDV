@@ -306,7 +306,7 @@ class DataProcessor:
             else:
                 sdtype = self._DTYPE_TO_SDTYPE.get(dtype_kind, 'categorical')
                 sdtypes[column] = sdtype
-                transformers[column] = self._transformers_by_sdtype[sdtype]
+                transformers[column] = deepcopy(self._transformers_by_sdtype[sdtype])
 
         return {'transformers': transformers, 'sdtypes': sdtypes}
 
@@ -536,8 +536,9 @@ class DataProcessor:
             generated_keys = self.generate_keys(num_rows, reset_keys)
 
         # Sort the sampled columns in the order of the metadata
-        # In multitable there may be missing columns in the sample
-        # Thats why column has to be in sampled_columns
+        # In multitable there may be missing columns in the sample such as foreign keys
+        # And alternate keys. Thats the reason of ensuring that the metadata column is within
+        # The sampled columns.
         sampled_columns = [
             column for column in self.metadata._columns.keys()
             if column in sampled_columns
