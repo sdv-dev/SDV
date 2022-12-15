@@ -2,28 +2,25 @@
 
 import io
 import logging
-import tempfile
 import os
 import shutil
-from zipfile import ZipFile
+import tempfile
 import urllib.request
+from zipfile import ZipFile
+
+import pandas as pd
 import requests
-import boto3
-from botocore.errorfactory import ClientError
-from botocore import UNSIGNED
-from botocore.client import Config
+
 from sdv.datasets.errors import InvalidArgumentError
-from sdv.metadata.dataset import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
-import pandas as pd
-
 
 LOGGER = logging.getLogger(__name__)
-
-DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
-BUCKET_NAME = 'sdv-demo-datasets'
+
+
+def _get_dataset_url(modality, dataset_name):
+    return os.path.join(BUCKET_URL, modality.upper(), dataset_name + '.zip')
 
 
 def _validate_args_download_demo(modality, dataset_name, output_folder_name):
@@ -37,14 +34,16 @@ def _validate_args_download_demo(modality, dataset_name, output_folder_name):
             "or use 'load_csvs' to load from an existing folder."
         )
 
-    url = f'{BUCKET_URL}/{modality.upper()}/{dataset_name}.zip'
-    res = requests.head(url)
-    if res.status_code != 200:
-        other_modalities = set(possible_modalities) - set([modality])
+    # If the dataset exists in the wrong modality, raise that error.
+    # If the dataset doesn't exist at all, raise different error.
+    dataset_url = _get_dataset_url(modality, dataset_name)
+    response = requests.head(dataset_url)
+    if response.status_code != 200:
+        other_modalities = set(possible_modalities) - {modality}
         for other_modality in other_modalities:
-            url = f'{BUCKET_URL}/{other_modality.upper()}/{dataset_name}.zip'
-            res = requests.head(url)
-            if res.status_code == 200:
+            dataset_url = _get_dataset_url(other_modality, dataset_name)
+            response = requests.head(dataset_url)
+            if response.status_code == 200:
                 raise InvalidArgumentError(
                     f"Dataset name '{dataset_name}' is a '{other_modality}' dataset. "
                     f"Use 'load_{other_modality}_demo' to load this dataset."
@@ -57,10 +56,10 @@ def _validate_args_download_demo(modality, dataset_name, output_folder_name):
 
 
 def _download(modality, dataset_name, output_folder_name):
-    url = f'{BUCKET_URL}/{modality.upper()}/{dataset_name}.zip'
+    dataset_url = _get_dataset_url(modality, dataset_name)
 
-    LOGGER.info(f'Downloading dataset {dataset_name} from {url}')
-    response = urllib.request.urlopen(url)
+    LOGGER.info(f'Downloading dataset {dataset_name} from {dataset_url}')
+    response = urllib.request.urlopen(dataset_url)
     bytes_io = io.BytesIO(response.read())
 
     LOGGER.info(f'Extracting dataset into {output_folder_name}')
@@ -68,7 +67,10 @@ def _download(modality, dataset_name, output_folder_name):
         os.makedirs(output_folder_name, exist_ok=True)
         zf.extractall(output_folder_name)
         os.remove(os.path.join(output_folder_name, 'metadata_v0.json'))
-        os.rename(os.path.join(output_folder_name, 'metadata_v1.json'), os.path .join(output_folder_name, 'metadata.json'))
+        os.rename(
+            os.path.join(output_folder_name, 'metadata_v1.json'),
+            os.path.join(output_folder_name, 'metadata.json')
+        )
 
 
 def _get_data(modality, output_folder_name):
@@ -93,7 +95,7 @@ def _get_metadata(modality, output_folder_name):
 
 
 def download_demo(modality, dataset_name, output_folder_name=None):
-    """Download demo datasets.
+    """Download a demo dataset.
 
     Args:
         modality (str):
@@ -105,7 +107,7 @@ def download_demo(modality, dataset_name, output_folder_name=None):
             If ``None`` the data is not saved locally and is loaded as a Python object.
             Defaults to ``None``.
 
-    Returns: 
+    Returns:
         tuple (data, metadata):
             If ``data`` is single table or sequential, it is a DataFrame.
             If ``data`` is multi table, it is a dictionary mapping table name to DataFrame.
@@ -117,7 +119,7 @@ def download_demo(modality, dataset_name, output_folder_name=None):
             * If the ``dataset_name`` exists in the bucket but under a different modality.
             * If the ``dataset_name`` doesn't exist in the bucket.
             * If there is already a folder named ``output_folder_name``.
-            * If ``modality`` is not one of ``'single_table'``, ``'multi_table'``, ``'sequential'``.
+            * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
     """
     _validate_args_download_demo(modality, dataset_name, output_folder_name)
 
