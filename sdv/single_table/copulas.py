@@ -115,9 +115,8 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         for column in processed_data.columns:
             if column not in numerical_distributions:
-                column_name = column.replace('.value', '')
                 numerical_distributions[column] = self._numerical_distributions.get(
-                    column_name, self._default_distribution)
+                    column, self._default_distribution)
 
         self._model = copulas.multivariate.GaussianMultivariate(
             distribution=numerical_distributions

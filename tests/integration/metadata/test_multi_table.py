@@ -97,14 +97,12 @@ def test_upgrade_metadata():
         'tables': {
             'nesreca': {
                 'primary_key': 'id_nesreca',
-                'alternate_keys': ['upravna_enota'],
                 'columns': {
                     'upravna_enota': {'sdtype': 'numerical'},
                     'id_nesreca': {'sdtype': 'numerical'}
                 }
             },
             'oseba': {
-                'alternate_keys': ['upravna_enota', 'id_nesreca'],
                 'columns': {
                     'upravna_enota': {'sdtype': 'numerical'},
                     'id_nesreca': {'sdtype': 'numerical'}

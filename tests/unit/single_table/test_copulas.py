@@ -116,7 +116,7 @@ class TestGaussianCopulaSynthesizer:
         numerical_distributions = {'name': 'uniform', 'user.id': 'gamma'}
 
         processed_data = pd.DataFrame({
-            'name.value': np.arange(10),
+            'name': np.arange(10),
             'user.id': np.arange(10),
             'account_balance': np.arange(10)
         })
@@ -131,7 +131,7 @@ class TestGaussianCopulaSynthesizer:
         # Assert
         expected_numerical_distributions = {
             'name': UniformUnivariate,
-            'name.value': UniformUnivariate,
+            'name': UniformUnivariate,
             'user.id': GammaUnivariate,
             'account_balance': BetaUnivariate,
         }

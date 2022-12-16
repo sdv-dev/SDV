@@ -35,15 +35,15 @@ def test_detect_discrete_columns():
         'subscribed': [None, True, False, np.nan],
         'join_date': ['2021-02-02', '2022-03-04', '2015-05-06', '2018-09-30'],
         'uses_synthetic': [np.nan, True, False, False],
-        'surname.value': [object(), object(), object(), object()],
-        'bool.value': [0., 0., 1., np.nan]
+        'surname': [object(), object(), object(), object()],
+        'bool': [0., 0., 1., np.nan]
     })
 
     # Run
     result = detect_discrete_columns(metadata, data)
 
     # Assert
-    assert result == ['name', 'subscribed', 'uses_synthetic', 'surname.value', 'bool.value']
+    assert result == ['name', 'subscribed', 'uses_synthetic', 'surname', 'bool']
 
 
 def test_flatten_array_default():

@@ -188,13 +188,12 @@ class CopulaGAN(CTGAN):
         sdtypes = {}
         transformers = {}
         for field in table_data:
-            field_name = field.replace('.value', '')
-            field_sdtype = fields.get(field_name, {}).get('type')
-            if field_name in fields and field_sdtype != 'categorical':
+            field_sdtype = fields.get(field, {}).get('type')
+            if field in fields and field_sdtype != 'categorical':
                 sdtypes[field] = 'numerical'
                 transformers[field] = GaussianNormalizer(
                     model_missing_values=True,
-                    distribution=distributions.get(field_name, self._default_distribution)
+                    distribution=distributions.get(field, self._default_distribution)
                 )
             else:
                 sdtypes[field] = field_sdtype or 'categorical'
