@@ -426,7 +426,7 @@ class TestGaussianCopulaSynthesizer:
                 'learned_parameters': {
                     'a': 1.0,
                     'b': 1.0,
-                    'loc': 0.0,
+                    'loc': 1.0,
                     'scale': 0.0
                 }
             }
