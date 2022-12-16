@@ -1,7 +1,9 @@
+import re
 from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
+import pytest
 from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariate
 
 from sdv.metadata.single_table import SingleTableMetadata
@@ -231,3 +233,66 @@ class TestCopulaGANSynthesizer:
         hypertransformer.fit_transform.assert_called_once_with(processed_data)
         mock_ctgansynthesizer__fit.assert_called_once_with(
             hypertransformer.fit_transform.return_value)
+
+    def test_get_learned_distributions(self):
+        """Test that ``get_learned_distributions`` returns a dict.
+
+        Test that it returns a dictionary with the name of the columns and the learned
+        distribution and it's parameters.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'zero': [0, 0, 0],
+            'one': [1, 1, 1]
+        })
+        stm = SingleTableMetadata()
+        stm.detect_from_dataframe(data)
+        cgs = CopulaGANSynthesizer(stm)
+        cgs.fit(data)
+
+        # Run
+        result = cgs.get_learned_distributions()
+
+        # Assert
+        assert result == {
+            'zero': {
+                'distribution': 'beta',
+                'learned_parameters': {
+                    'a': 1.0,
+                    'b': 1.0,
+                    'loc': 0.0,
+                    'scale': 0.0
+                }
+            },
+            'one': {
+                'distribution': 'beta',
+                'learned_parameters': {
+                    'a': 1.0,
+                    'b': 1.0,
+                    'loc': 1.0,
+                    'scale': 0.0
+                }
+            }
+        }
+
+    def test_get_learned_distributions_raises_an_error(self):
+        """Test that ``get_learned_distributions`` returns a dict.
+
+        Test that it returns a dictionary with the name of the columns and the learned
+        distribution and it's parameters.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'zero': [0, 0, 0],
+            'one': [1, 1, 1]
+        })
+        stm = SingleTableMetadata()
+        stm.detect_from_dataframe(data)
+        cgs = CopulaGANSynthesizer(stm)
+
+        # Run and Assert
+        error_msg = re.escape(
+            "Distributions have not been learned yet. Please fit your model first using 'fit'."
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            cgs.get_learned_distributions()

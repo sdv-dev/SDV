@@ -214,7 +214,8 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         """
         if not self._fitted:
             raise ValueError(
-                "Distributions have not been learned yet. Please fit your model first using 'fit'")
+                "Distributions have not been learned yet. Please fit your model first using 'fit'."
+            )
 
         field_transformers = self._gaussian_normalizer_hyper_transformer.field_transformers
 

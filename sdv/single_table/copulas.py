@@ -169,7 +169,8 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         """
         if not self._fitted:
             raise ValueError(
-                "Distributions have not been learned yet. Please fit your model first using 'fit'")
+                "Distributions have not been learned yet. Please fit your model first using 'fit'."
+            )
 
         parameters = self._model.to_dict()
         columns = parameters['columns']
@@ -177,6 +178,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         learned_distributions = {}
         for column, learned_params in zip(columns, univariates):
             distribution = self.numerical_distributions.get(column, self.default_distribution)
+            learned_params.pop('type')
             learned_distributions[column] = {
                 'distribution': distribution,
                 'learned_parameters': learned_params
