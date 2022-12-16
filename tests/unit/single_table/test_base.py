@@ -761,7 +761,7 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor._dtypes = pd.Series()
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.}
-        transformed_conditions = {'salary.value': 80.0}
+        transformed_conditions = {'salary': 80.0}
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
@@ -774,7 +774,7 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         assert num_valid == 1
         pd.testing.assert_frame_equal(sampled, data[data.name == 'John Doe'])
-        instance._sample.assert_called_once_with(3, {'salary.value': 80.0})
+        instance._sample.assert_called_once_with(3, {'salary': 80.0})
         instance._data_processor.reverse_transform.assert_called_once_with(
             instance._sample.return_value
         )
@@ -826,7 +826,7 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor._dtypes = pd.Series()
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.}
-        transformed_conditions = {'salary.value': 80.0}
+        transformed_conditions = {'salary': 80.0}
         instance._sample.side_effect = [NotImplementedError, None]
 
         # Run
@@ -840,7 +840,7 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         assert num_valid == 1
         pd.testing.assert_frame_equal(sampled, data[data.name == 'John Doe'])
-        assert instance._sample.call_args_list == [call(3, {'salary.value': 80.0}), call(3)]
+        assert instance._sample.call_args_list == [call(3, {'salary': 80.0}), call(3)]
 
     def test__sample_rows_sdtypes_is_empty(self):
         """Test when ``_data_processor.get_sdtypes`` with ``primary_keys=False`` is empty.
@@ -1088,7 +1088,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         transformed_data = pd.DataFrame({
             COND_IDX: [0, 1, 2],
-            'salary.value': [65., 75., 85.]
+            'salary': [65., 75., 85.]
         })
         data = pd.DataFrame({
             'name': ['Johana', 'Doe', 'Johana Doe'],
@@ -1130,7 +1130,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         transformed_data = pd.DataFrame({
             COND_IDX: [0, 1, 2],
-            'salary.value': [65., 75., 85.]
+            'salary': [65., 75., 85.]
         })
         instance = Mock()
         instance._sample_in_batches.return_value = []
@@ -1162,7 +1162,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         transformed_data = pd.DataFrame({
             COND_IDX: [0, 1, 2],
-            'salary.value': [65., 75., 85.]
+            'salary': [65., 75., 85.]
         })
         instance = Mock()
         instance._sample_in_batches.return_value = []
@@ -1190,7 +1190,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         transformed_data = pd.DataFrame({
             COND_IDX: [0, 1, 2],
-            'salary.value': [65., 75., 85.]
+            'salary': [65., 75., 85.]
         })
         instance = Mock()
         instance._sample_in_batches.return_value = []
@@ -1453,11 +1453,11 @@ class TestBaseSingleTableSynthesizer:
             'name': 'categorical',
             'surname': 'categorical',
         }
-        conditions = pd.DataFrame({'name.value': ['Johanna'], 'surname.value': ['Doe']})
+        conditions = pd.DataFrame({'names': ['Johanna'], 'surname': ['Doe']})
 
         # Run and Assert
         error_msg = re.escape(
-            "Unexpected column name 'name.value'. Use a column name that was present in the "
+            "Unexpected column name 'names'. Use a column name that was present in the "
             'original data.'
         )
         with pytest.raises(ValueError, match=error_msg):
@@ -1489,8 +1489,8 @@ class TestBaseSingleTableSynthesizer:
         conditions = pd.DataFrame({'name': ['Johanna', 'Doe']})
         instance = Mock()
         instance._data_processor.transform.side_effect = [
-            pd.DataFrame({'name.value': [0.25]}),
-            pd.DataFrame({'name.value': [0.90]}),
+            pd.DataFrame({'name': [0.25]}),
+            pd.DataFrame({'name': [0.90]}),
         ]
         instance._conditionally_sample_rows.side_effect = [
             pd.DataFrame({'name': ['Johanna'], COND_IDX: [1]}),
@@ -1516,18 +1516,18 @@ class TestBaseSingleTableSynthesizer:
 
         pd.testing.assert_frame_equal(
             first_df,
-            pd.DataFrame({'name.value': [0.25], COND_IDX: [1]}, index=[1])
+            pd.DataFrame({'name': [0.25], COND_IDX: [1]}, index=[1])
         )
         pd.testing.assert_frame_equal(
             second_df,
-            pd.DataFrame({'name.value': [0.90], COND_IDX: [0]})
+            pd.DataFrame({'name': [0.90], COND_IDX: [0]})
         )
         assert first_call_kwargs == {
             'condition': {
                 'name': 'Doe'
             },
             'transformed_condition': {
-                'name.value': 0.25
+                'name': 0.25
             },
             'max_tries_per_batch': 10,
             'batch_size': 10,
@@ -1539,7 +1539,7 @@ class TestBaseSingleTableSynthesizer:
                 'name': 'Johanna'
             },
             'transformed_condition': {
-                'name.value': 0.90
+                'name': 0.90
             },
             'max_tries_per_batch': 10,
             'batch_size': 10,

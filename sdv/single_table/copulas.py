@@ -6,6 +6,7 @@ import copulas
 import copulas.multivariate
 import copulas.univariate
 import numpy as np
+import pandas as pd
 import scipy
 from rdt.transformers import OneHotEncoder
 
@@ -40,7 +41,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
                 * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
                   so using this will make ``get_parameters`` unusable.
 
-        default_distribution (copulas.univariate.Univariate or str):
+        default_distribution (str):
             Copulas univariate distribution to use by default. Valid options are:
 
                 * ``norm``: Use a norm distribution.
@@ -65,7 +66,17 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
     _model = None
 
     @classmethod
-    def _validate_distribution(cls, distribution):
+    def get_distribution_class(cls, distribution):
+        """Return the corresponding distribution class from ``copulas.univariate``.
+
+        Args:
+            distribution (str):
+                A string representing a copulas univariate distribution.
+
+        Returns:
+            copulas.univariate:
+                A copulas univariate class that corresponds to the distribution.
+        """
         if not isinstance(distribution, str) or distribution not in cls._DISTRIBUTIONS:
             error_message = f"Invalid distribution specification '{distribution}'."
             raise ValueError(error_message)
@@ -85,9 +96,9 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         self.default_distribution = default_distribution or 'beta'
         self.numerical_distributions = numerical_distributions or {}
 
-        self._default_distribution = self._validate_distribution(self.default_distribution)
+        self._default_distribution = self.get_distribution_class(self.default_distribution)
         self._numerical_distributions = {
-            field: self._validate_distribution(distribution)
+            field: self.get_distribution_class(distribution)
             for field, distribution in (numerical_distributions or {}).items()
         }
         self._num_rows = None
@@ -104,9 +115,8 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         for column in processed_data.columns:
             if column not in numerical_distributions:
-                column_name = column.replace('.value', '')
                 numerical_distributions[column] = self._numerical_distributions.get(
-                    column_name, self._default_distribution)
+                    column, self._default_distribution)
 
         self._model = copulas.multivariate.GaussianMultivariate(
             distribution=numerical_distributions
@@ -280,7 +290,9 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         univariates = []
         for column, univariate in model_parameters['univariates'].items():
             columns.append(column)
-            univariate['type'] = self._numerical_distributions.get(column, 'beta')
+            univariate['type'] = self.get_distribution_class(
+                self._numerical_distributions.get(column, self.default_distribution)
+            )
             if 'scale' in univariate:
                 univariate['scale'] = max(0, univariate['scale'])
 
@@ -305,6 +317,9 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
                 Copula flatten parameters.
         """
         parameters = unflatten_dict(parameters)
-        parameters = self._rebuild_gaussian_copula(parameters)
+        if 'num_rows' in parameters:
+            num_rows = parameters.pop('num_rows')
 
+        parameters = self._rebuild_gaussian_copula(parameters)
         self._model = copulas.multivariate.GaussianMultivariate.from_dict(parameters)
+        self._num_rows = 0 if pd.isna(num_rows) else max(0, int(round(num_rows)))

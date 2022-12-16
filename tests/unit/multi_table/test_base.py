@@ -540,3 +540,26 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
+
+    def test__sample(self):
+        """Test that ``_sample`` raises a ``NotImplementedError``."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        with pytest.raises(NotImplementedError, match=''):
+            instance._sample(scale=1.0, randomize_samples=False)
+
+    def test_sample(self):
+        """Test that ``sample`` calls the ``_sample`` with the given arguments."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._sample = Mock()
+
+        # Run
+        instance.sample(scale=1.5, randomize_samples=True)
+
+        # Assert
+        instance._sample.assert_called_once_with(scale=1.5, randomize_samples=True)

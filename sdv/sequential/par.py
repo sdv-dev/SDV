@@ -208,14 +208,6 @@ class PARSynthesizer(BaseSynthesizer):
     def _fit_sequence_columns(self, timeseries_data):
         self._model = PARModel(**self._model_kwargs)
 
-        # handle output name from rdt
-        if self._sequence_index:
-            modified_name = self._sequence_index + '.value'
-            if modified_name in timeseries_data.columns:
-                timeseries_data = timeseries_data.rename(columns={
-                    modified_name: self._sequence_index
-                })
-
         self._output_columns = list(timeseries_data.columns)
         self._data_columns = [
             column
@@ -317,10 +309,6 @@ class PARSynthesizer(BaseSynthesizer):
 
         output = pd.concat(output)
         output = output[self._output_columns].reset_index(drop=True)
-        if self._sequence_index:
-            output = output.rename(columns={
-                self._sequence_index: self._sequence_index + '.value'
-            })
 
         return output
 

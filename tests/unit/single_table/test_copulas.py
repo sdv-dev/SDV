@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -12,25 +12,25 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 class TestGaussianCopulaSynthesizer:
 
-    def test__validate_distribution_str(self):
+    def test_get_distribution_class_str(self):
         """Test that when a ``str`` is passed, the class from the ``DISTRIBUTIONS`` is returned."""
         # Setup
         distribution = 'beta'
 
         # Run
-        result = GaussianCopulaSynthesizer._validate_distribution(distribution)
+        result = GaussianCopulaSynthesizer.get_distribution_class(distribution)
 
         # Assert
         assert result == BetaUnivariate
 
-    def test__validate_distribution_not_in_distributions(self):
+    def test_get_distribution_class_not_in_distributions(self):
         """Test that ``ValueError`` is raised when the given distribution is not supported."""
         # Setup
         distribution = 'student'
 
         # Run and Assert
         with pytest.raises(ValueError, match="Invalid distribution specification 'student'."):
-            GaussianCopulaSynthesizer._validate_distribution(distribution)
+            GaussianCopulaSynthesizer.get_distribution_class(distribution)
 
     def test___init__(self):
         """Test creating an instance of ``GaussianCopulaSynthesizer``."""
@@ -116,7 +116,7 @@ class TestGaussianCopulaSynthesizer:
         numerical_distributions = {'name': 'uniform', 'user.id': 'gamma'}
 
         processed_data = pd.DataFrame({
-            'name.value': np.arange(10),
+            'name': np.arange(10),
             'user.id': np.arange(10),
             'account_balance': np.arange(10)
         })
@@ -131,7 +131,7 @@ class TestGaussianCopulaSynthesizer:
         # Assert
         expected_numerical_distributions = {
             'name': UniformUnivariate,
-            'name.value': UniformUnivariate,
+            'name': UniformUnivariate,
             'user.id': GammaUnivariate,
             'account_balance': BetaUnivariate,
         }
@@ -304,17 +304,17 @@ class TestGaussianCopulaSynthesizer:
                 {
                     'scale': 0.0,
                     'loc': 0.0,
-                    'type': 'beta'
+                    'type': BetaUnivariate
                 },
                 {
                     'scale': 1.0,
                     'loc': 1.0,
-                    'type': 'beta'
+                    'type': BetaUnivariate
                 },
                 {
                     'scale': 2.0,
                     'loc': 2.0,
-                    'type': 'beta'
+                    'type': BetaUnivariate
                 },
             ],
             'covariance': [
@@ -326,3 +326,66 @@ class TestGaussianCopulaSynthesizer:
             'columns': ['foo', 'bar', 'baz'],
         }
         assert result == expected
+
+    @patch('sdv.single_table.copulas.copulas')
+    @patch('sdv.single_table.copulas.unflatten_dict')
+    def test___set_parameters(self, mock_unflatten_dict, mock_copulas):
+        """Test that parameters are properly set and that number of rows is set properly."""
+        # Setup
+        parameters = {
+            'covariance': [
+                [0.0],
+                [0.0, 0.0]
+            ],
+            'num_rows': 4.59,
+            'univariates': {
+                'amount': {
+                    'loc': 85.62233142690933,
+                    'scale': 0.0
+                },
+                'cancelled': {
+                    'loc': 0.48772424778255064,
+                    'scale': 0.0
+                },
+                'timestamp': {
+                    'loc': 1.5475359249730097e+18,
+                    'scale': 0.0
+                }
+            }
+        }
+        instance = Mock()
+        mock_unflatten_dict.return_value = parameters
+
+        # Run
+        GaussianCopulaSynthesizer._set_parameters(instance, parameters)
+
+        # Assert
+        mock_unflatten_dict.assert_called_once_with(parameters)
+        expected_parameters = {
+            'covariance': [
+                [0.0],
+                [0.0, 0.0]
+            ],
+            'univariates': {
+                'amount': {
+                    'loc': 85.62233142690933,
+                    'scale': 0.0
+                },
+                'cancelled': {
+                    'loc': 0.48772424778255064,
+                    'scale': 0.0
+                },
+                'timestamp': {
+                    'loc': 1.5475359249730097e+18,
+                    'scale': 0.0
+                }
+            }
+        }
+
+        instance._rebuild_gaussian_copula.assert_called_once_with(expected_parameters)
+        model = mock_copulas.multivariate.GaussianMultivariate.from_dict.return_value
+        assert instance._model == model
+        assert instance._num_rows == 5
+        mock_copulas.multivariate.GaussianMultivariate.from_dict.assert_called_once_with(
+            instance._rebuild_gaussian_copula.return_value
+        )
