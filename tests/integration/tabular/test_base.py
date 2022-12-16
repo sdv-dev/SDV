@@ -285,12 +285,12 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     model = GaussianCopula(constraints=[constraint], categorical_transformer='LabelEncoder')
     sampled_numeric_data = [
         pd.DataFrame({
-            'city#state.value': [0, 1, 2, 0, 0],
-            'age.value': [30, 30, 30, 30, 30]
+            'city#state': [0, 1, 2, 0, 0],
+            'age': [30, 30, 30, 30, 30]
         }),
         pd.DataFrame({
-            'city#state.value': [1],
-            'age.value': [30]
+            'city#state': [1],
+            'age': [30]
         })
     ]
     gm_mock.return_value.sample.side_effect = sampled_numeric_data
