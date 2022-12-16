@@ -306,7 +306,7 @@ class DataProcessor:
             else:
                 sdtype = self._DTYPE_TO_SDTYPE.get(dtype_kind, 'categorical')
                 sdtypes[column] = sdtype
-                transformers[column] = self._transformers_by_sdtype[sdtype]
+                transformers[column] = deepcopy(self._transformers_by_sdtype[sdtype])
 
         return {'transformers': transformers, 'sdtypes': sdtypes}
 
@@ -351,7 +351,7 @@ class DataProcessor:
         self.formatters = {}
         for column_name in data:
             column_metadata = self.metadata._columns.get(column_name)
-            if column_metadata.get('sdtype') == 'numerical':
+            if column_metadata.get('sdtype') == 'numerical' and column_name != self._primary_key:
                 representation = column_metadata.get('computer_representation', 'Float')
                 self.formatters[column_name] = NumericalFormatter(
                     enforce_rounding=self._enforce_rounding,
@@ -525,17 +525,27 @@ class DataProcessor:
             reversed_data = constraint.reverse_transform(reversed_data)
 
         num_rows = len(reversed_data)
+        sampled_columns = list(reversed_data.columns)
         if self._anonymized_columns:
             anonymized_data = self._hyper_transformer.create_anonymized_columns(
                 num_rows=num_rows,
                 column_names=self._anonymized_columns,
             )
+            sampled_columns.extend(self._anonymized_columns)
 
         if self._keys:
             generated_keys = self.generate_keys(num_rows, reset_keys)
+            sampled_columns.extend(self._keys)
 
-        original_columns = list(self.metadata._columns.keys())
-        for column_name in original_columns:
+        # Sort the sampled columns in the order of the metadata
+        # In multitable there may be missing columns in the sample such as foreign keys
+        # And alternate keys. Thats the reason of ensuring that the metadata column is within
+        # The sampled columns.
+        sampled_columns = [
+            column for column in self.metadata._columns.keys()
+            if column in sampled_columns
+        ]
+        for column_name in sampled_columns:
             if column_name in self._anonymized_columns:
                 column_data = anonymized_data[column_name]
             elif column_name in self._keys:
@@ -550,12 +560,12 @@ class DataProcessor:
             reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
 
         # reformat numerical columns using the NumericalFormatter
-        for column in original_columns:
+        for column in sampled_columns:
             if column in self.formatters:
                 data_to_format = reversed_data[column]
                 reversed_data[column] = self.formatters[column].format_data(data_to_format)
 
-        return reversed_data[original_columns]
+        return reversed_data[sampled_columns]
 
     def filter_valid(self, data):
         """Filter the data using the constraints and return only the valid rows.

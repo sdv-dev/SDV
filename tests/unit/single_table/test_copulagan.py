@@ -174,7 +174,7 @@ class TestCopulaGANSynthesizer:
         processed_data = pd.DataFrame({
             'name': ['John', 'Doe', 'John Doe', 'John Doe Doe'],
             'age': np.arange(4),
-            'account.value': np.arange(4),
+            'account': np.arange(4),
             'name#age': np.arange(4),
         })
 
@@ -190,13 +190,13 @@ class TestCopulaGANSynthesizer:
             'transformers': {
                 'name': None,
                 'age': mock_rdt.transformers.GaussianNormalizer.return_value,
-                'account.value': mock_rdt.transformers.GaussianNormalizer.return_value,
+                'account': mock_rdt.transformers.GaussianNormalizer.return_value,
                 'name#age': None
             },
             'sdtypes': {
                 'name': 'categorical',
                 'age': 'numerical',
-                'account.value': 'numerical',
+                'account': 'numerical',
                 'name#age': 'categorical'
             }
 

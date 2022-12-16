@@ -104,7 +104,7 @@ class TestCopulaGAN:
 
         # Run
         data = pd.DataFrame({
-            'a.value': [1, 2, 3]
+            'a': [1, 2, 3]
         })
         out = CopulaGAN._fit(model, data)
 
