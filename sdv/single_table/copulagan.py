@@ -1,4 +1,5 @@
 """Combination of GaussianCopula transformation and GANs."""
+from copy import deepcopy
 
 import rdt
 
@@ -201,3 +202,34 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         """
         sampled = super()._sample(num_rows, conditions)
         return self._gaussian_normalizer_hyper_transformer.reverse_transform(sampled)
+
+    def get_learned_distributions(self):
+        """Get the marginal distributions used by the ``CTGANSynthesizer``.
+        Return a dictionary mapping the column names with the distribution name and the learned
+        parameters for those.
+        Returns:
+            dict:
+                Dictionary containing the distributions used or detected for each column and the
+                learned parameters for those.
+        """
+        if not self._fitted:
+            raise ValueError(
+                "Distributions have not been learned yet. Please fit your model first using 'fit'")
+
+        field_transformers = self._gaussian_normalizer_hyper_transformer.field_transformers
+
+        learned_distributions = {}
+        for column_name, transformer in field_transformers.items():
+            if isinstance(transformer, rdt.transformers.GaussianNormalizer):
+                learned_params = deepcopy(transformer._univariate.to_dict())
+                learned_params.pop('type')
+                distribution = self.numerical_distributions.get(
+                    column_name,
+                    self.default_distribution
+                )
+                learned_distributions[column_name] = {
+                    'distribution': distribution,
+                    'learned_parameters': learned_params
+                }
+
+        return learned_distributions
