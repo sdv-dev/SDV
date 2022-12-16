@@ -43,7 +43,7 @@ class DeepEchoModel(BaseTimeseriesModel):
 
         if self._sequence_index:
             timeseries_data = timeseries_data.rename(columns={
-                self._sequence_index + '.value': self._sequence_index
+                self._sequence_index: self._sequence_index
             })
 
         self._output_columns = list(timeseries_data.columns)
@@ -139,7 +139,7 @@ class DeepEchoModel(BaseTimeseriesModel):
         output = output[self._output_columns].reset_index(drop=True)
         if self._sequence_index:
             output = output.rename(columns={
-                self._sequence_index: self._sequence_index + '.value'
+                self._sequence_index: self._sequence_index
             })
 
         return output

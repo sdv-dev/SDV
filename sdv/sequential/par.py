@@ -210,7 +210,7 @@ class PARSynthesizer(BaseSynthesizer):
 
         # handle output name from rdt
         if self._sequence_index:
-            modified_name = self._sequence_index + '.value'
+            modified_name = self._sequence_index
             if modified_name in timeseries_data.columns:
                 timeseries_data = timeseries_data.rename(columns={
                     modified_name: self._sequence_index
@@ -319,7 +319,7 @@ class PARSynthesizer(BaseSynthesizer):
         output = output[self._output_columns].reset_index(drop=True)
         if self._sequence_index:
             output = output.rename(columns={
-                self._sequence_index: self._sequence_index + '.value'
+                self._sequence_index: self._sequence_index
             })
 
         return output
