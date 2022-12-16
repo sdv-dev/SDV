@@ -205,8 +205,10 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
 
     def get_learned_distributions(self):
         """Get the marginal distributions used by the ``CTGANSynthesizer``.
+
         Return a dictionary mapping the column names with the distribution name and the learned
         parameters for those.
+
         Returns:
             dict:
                 Dictionary containing the distributions used or detected for each column and the

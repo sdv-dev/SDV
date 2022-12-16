@@ -1,10 +1,10 @@
+import re
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 import scipy
-import re
 from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariate
 
 from sdv.metadata.single_table import SingleTableMetadata
