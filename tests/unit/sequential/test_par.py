@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
-from rdt.transformers import FloatFormatter
+from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import SamplingError, SynthesizerInputError
@@ -292,7 +292,7 @@ class TestPARSynthesizer:
         metadata = self.get_metadata()
         data = self.get_data()
         instance = PARSynthesizer(metadata)
-        transformer = FloatFormatter()
+        transformer = UnixTimestampEncoder()
         column_name_to_transformer = {'time': transformer}
 
         # Run
@@ -438,14 +438,13 @@ class TestPARSynthesizer:
         par._fit_sequence_columns(data)
 
         # Assert
-        assemble_sequences_mock.assert_called_once_with(
-            data,
-            ['name'],
-            ['gender'],
-            None,
-            'time',
-            drop_sequence_index=False
-        )
+        assemble_call_args_list = assemble_sequences_mock.call_args_list
+        pd.testing.assert_frame_equal(assemble_call_args_list[0][0][0], data)
+        assert assemble_call_args_list[0][0][1] == ['name']
+        assert assemble_call_args_list[0][0][2] == ['gender']
+        assert assemble_call_args_list[0][0][3] is None
+        assert assemble_call_args_list[0][0][4] == 'time'
+        assert assemble_call_args_list[0][1] == {'drop_sequence_index': False}
         expected_sequences = [
             {'context': np.array(['F'], dtype=object), 'data': [[1, 1], [55, 60], [1, 1]]},
             {
@@ -644,7 +643,7 @@ class TestPARSynthesizer:
 
         # Assert
         expected_output = pd.DataFrame({
-            'time.value': [18000, 20000, 22000],
+            'time': [18000, 20000, 22000],
             'gender': ['M', 'M', 'M'],
             'name': ['John', 'John', 'John'],
             'measurement': [55, 60, 65]

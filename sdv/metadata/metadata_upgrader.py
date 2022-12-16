@@ -40,7 +40,7 @@ def _upgrade_columns_and_keys(old_metadata):
                 if regex_format:
                     column_meta['regex_format'] = regex_format
 
-            if field != primary_key:
+            if field != primary_key and field_meta.get('ref') is None:
                 alternate_keys.append(field)
 
         columns[field] = column_meta
