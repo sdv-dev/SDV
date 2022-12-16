@@ -531,9 +531,11 @@ class DataProcessor:
                 num_rows=num_rows,
                 column_names=self._anonymized_columns,
             )
+            sampled_columns.extend(self._anonymized_columns)
 
         if self._keys:
             generated_keys = self.generate_keys(num_rows, reset_keys)
+            sampled_columns.extend(self._keys)
 
         # Sort the sampled columns in the order of the metadata
         # In multitable there may be missing columns in the sample such as foreign keys
