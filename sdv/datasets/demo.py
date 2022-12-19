@@ -129,3 +129,26 @@ def download_demo(modality, dataset_name, output_folder_name=None):
     metadata = _get_metadata(modality, output_folder_name, in_memory_directory)
 
     return data, metadata
+
+
+def get_avalible_demos(modality):
+    """Download a demo dataset.
+
+    Args:
+        modality (str):
+            The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
+
+    Returns:
+        pandas.DataFrame:
+            A table with three columns:
+                ``dataset_name``: The name of the dataset.
+                ``size_MB``: The unzipped folder size in MB.
+                ``num_tables``: The number of tables in the dataset.
+
+    Raises:
+        Error:
+            * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
+    """
+    possible_modalities = ['single_table', 'multi_table', 'sequential']
+    if modality not in possible_modalities:
+        raise ValueError(f"'modality' must be in {possible_modalities}.")
