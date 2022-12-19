@@ -4,14 +4,13 @@ import pandas as pd
 import pytest
 
 from sdv.datasets.demo import download_demo
-from sdv.datasets.errors import InvalidArgumentError
 
 
 def test_download_demo_invalid_modality():
     """Test it crashes when an invalid modality is passed."""
     # Run and Assert
     err_msg = re.escape("'modality' must be in ['single_table', 'multi_table', 'sequential'].")
-    with pytest.raises(InvalidArgumentError, match=err_msg):
+    with pytest.raises(ValueError, match=err_msg):
         download_demo('invalid_modality', 'dataset_name')
 
 
@@ -22,7 +21,7 @@ def test_download_demo_folder_already_exists(tmpdir):
         f"Folder '{tmpdir}' already exists. Please specify a different name "
         "or use 'load_csvs' to load from an existing folder."
     )
-    with pytest.raises(InvalidArgumentError, match=err_msg):
+    with pytest.raises(ValueError, match=err_msg):
         download_demo('single_table', 'dataset_name', tmpdir)
 
 
@@ -33,19 +32,8 @@ def test_download_demo_dataset_doesnt_exist():
         "Invalid dataset name 'invalid_dataset'. "
         "Use 'list_available_demos' to get a list of demo datasets."
     )
-    with pytest.raises(InvalidArgumentError, match=err_msg):
+    with pytest.raises(ValueError, match=err_msg):
         download_demo('single_table', 'invalid_dataset')
-
-
-def test_download_demo_dataset_of_incorrect_modality():
-    """Test it crashes when ``modality`` doesn't match the ``dataset_name``."""
-    # Run and Assert
-    err_msg = re.escape(
-        "Dataset name 'credit' is a 'single_table' dataset. "
-        "Use 'load_single_table_demo' to load this dataset."
-    )
-    with pytest.raises(InvalidArgumentError, match=err_msg):
-        download_demo('multi_table', 'credit')
 
 
 def test_download_demo_single_table(tmpdir):

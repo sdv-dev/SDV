@@ -10,61 +10,43 @@ from zipfile import ZipFile
 
 import pandas as pd
 
-from sdv.datasets.errors import InvalidArgumentError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
 BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
+METADATA_FILENAME = 'metadata.json'
 
 
 def _get_dataset_url(modality, dataset_name):
     return os.path.join(BUCKET_URL, modality.upper(), dataset_name + '.zip')
 
 
-def _validate_args_download_demo(modality, dataset_name, output_folder_name):
+def _validate_args_download_demo(modality, output_folder_name):
     possible_modalities = ['single_table', 'multi_table', 'sequential']
     if modality not in possible_modalities:
-        raise InvalidArgumentError(f"'modality' must be in {possible_modalities}.")
+        raise ValueError(f"'modality' must be in {possible_modalities}.")
 
     if output_folder_name and os.path.exists(output_folder_name):
-        raise InvalidArgumentError(
+        raise ValueError(
             f"Folder '{output_folder_name}' already exists. Please specify a different name "
             "or use 'load_csvs' to load from an existing folder."
-        )
-
-    dataset_url = _get_dataset_url(modality, dataset_name)
-    try:
-        urllib.request.urlopen(dataset_url)
-    except urllib.error.HTTPError:
-        # If the dataset exists in the wrong modality, raise an error
-        other_modalities = set(possible_modalities) - {modality}
-        for other_modality in other_modalities:
-            dataset_url = _get_dataset_url(other_modality, dataset_name)
-            try:
-                urllib.request.urlopen(dataset_url)
-                raise InvalidArgumentError(
-                    f"Dataset name '{dataset_name}' is a '{other_modality}' dataset. "
-                    f"Use 'load_{other_modality}_demo' to load this dataset."
-                )
-            except urllib.error.HTTPError:
-                pass
-
-        # If the dataset doesn't exist at all, raise different error
-        raise InvalidArgumentError(
-            f"Invalid dataset name '{dataset_name}'. "
-            "Use 'list_available_demos' to get a list of demo datasets."
         )
 
 
 def _download(modality, dataset_name, output_folder_name):
     dataset_url = _get_dataset_url(modality, dataset_name)
-
     LOGGER.info(f'Downloading dataset {dataset_name} from {dataset_url}')
-    response = urllib.request.urlopen(dataset_url)
-    bytes_io = io.BytesIO(response.read())
+    try:
+        response = urllib.request.urlopen(dataset_url)
+    except urllib.error.HTTPError:
+        raise ValueError(
+            f"Invalid dataset name '{dataset_name}'. "
+            "Use 'list_available_demos' to get a list of demo datasets."
+        )
 
     LOGGER.info(f'Extracting dataset into {output_folder_name}')
+    bytes_io = io.BytesIO(response.read())
     with ZipFile(bytes_io) as zf:
         os.makedirs(output_folder_name, exist_ok=True)
         zf.extractall(output_folder_name)
@@ -78,7 +60,7 @@ def _download(modality, dataset_name, output_folder_name):
 def _get_data(modality, output_folder_name):
     data = {}
     for filename in os.listdir(output_folder_name):
-        if filename != 'metadata.json':
+        if filename != METADATA_FILENAME:
             data_path = os.path.join(output_folder_name, filename)
             data[filename] = pd.read_csv(data_path)
 
@@ -89,7 +71,7 @@ def _get_data(modality, output_folder_name):
 
 
 def _get_metadata(modality, output_folder_name):
-    metadata_path = os.path.join(output_folder_name, 'metadata.json')
+    metadata_path = os.path.join(output_folder_name, METADATA_FILENAME)
     metadata = MultiTableMetadata() if modality == 'multi_table' else SingleTableMetadata()
     metadata = metadata.load_from_json(metadata_path)
 
@@ -123,7 +105,7 @@ def download_demo(modality, dataset_name, output_folder_name=None):
             * If there is already a folder named ``output_folder_name``.
             * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
     """
-    _validate_args_download_demo(modality, dataset_name, output_folder_name)
+    _validate_args_download_demo(modality, output_folder_name)
 
     use_temp_dir = False
     if output_folder_name is None:
