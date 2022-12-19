@@ -30,7 +30,8 @@ def test_download_demo_dataset_doesnt_exist():
     # Run and Assert
     err_msg = re.escape(
         "Invalid dataset name 'invalid_dataset'. "
-        "Use 'list_available_demos' to get a list of demo datasets."
+        'Make sure you have the correct modality for the dataset name or '
+        "use 'get_available_demos' to get a list of demo datasets."
     )
     with pytest.raises(ValueError, match=err_msg):
         download_demo('single_table', 'invalid_dataset')

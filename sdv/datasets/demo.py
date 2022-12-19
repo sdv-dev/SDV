@@ -42,7 +42,8 @@ def _download(modality, dataset_name, output_folder_name):
     except urllib.error.HTTPError:
         raise ValueError(
             f"Invalid dataset name '{dataset_name}'. "
-            "Use 'list_available_demos' to get a list of demo datasets."
+            'Make sure you have the correct modality for the dataset name or '
+            "use 'get_available_demos' to get a list of demo datasets."
         )
 
     LOGGER.info(f'Extracting dataset into {output_folder_name}')
@@ -53,7 +54,7 @@ def _download(modality, dataset_name, output_folder_name):
         os.remove(os.path.join(output_folder_name, 'metadata_v0.json'))
         os.rename(
             os.path.join(output_folder_name, 'metadata_v1.json'),
-            os.path.join(output_folder_name, 'metadata.json')
+            os.path.join(output_folder_name, METADATA_FILENAME)
         )
 
 
