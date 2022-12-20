@@ -18,10 +18,6 @@ BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
 METADATA_FILENAME = 'metadata.json'
 
 
-def _get_dataset_url(modality, dataset_name):
-    return os.path.join(BUCKET_URL, modality.upper(), dataset_name + '.zip')
-
-
 def _validate_args_download_demo(modality, output_folder_name):
     possible_modalities = ['single_table', 'multi_table', 'sequential']
     if modality not in possible_modalities:
@@ -35,7 +31,7 @@ def _validate_args_download_demo(modality, output_folder_name):
 
 
 def _download(modality, dataset_name, output_folder_name):
-    dataset_url = _get_dataset_url(modality, dataset_name)
+    dataset_url = BUCKET_URL + '/' + modality.upper() + '/' + dataset_name + '.zip'
     LOGGER.info(f'Downloading dataset {dataset_name} from {dataset_url}')
     try:
         response = urllib.request.urlopen(dataset_url)
