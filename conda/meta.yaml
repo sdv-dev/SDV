@@ -45,8 +45,7 @@ requirements:
 
 about:
   home: "https://sdv.dev"
-  license: MIT
-  license_family: MIT
+  license: BUSL-1.1
   license_file: "LICENSE"
   summary: "Synthetic Data Generation for tabular, relational and time series data."
   doc_url: "https://sdv.dev/SDV"
