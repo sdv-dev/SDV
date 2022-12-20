@@ -1,7 +1,9 @@
+import re
 from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -638,3 +640,68 @@ class TestHMASynthesizer:
         assert result == instance._finalize.return_value
         instance._sample_table.assert_called_once_with('users', scale=1, sampled_data={})
         instance._finalize.assert_called_once_with({})
+
+    def test_get_learned_distributions(self):
+        """Test that ``get_learned_distributions`` returns a dict.
+
+        Test that it returns a dictionary with the name of the columns and the learned
+        distribution and it's parameters. In this case we ensure that the columns generated
+        by the ``rdt.transformers`` are returned as well (``a_value.is_null``) but the extended
+        columns are not being returned. Can't ensure the ``a_value.is_null`` distribution thats
+        why no validation is being done to check the values of it.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        metadata.add_column('nesreca', 'value', sdtype='numerical')
+        metadata.add_column('oseba', 'value', sdtype='numerical')
+        metadata.add_column('upravna_enota', 'a_value', sdtype='numerical')
+        instance = HMASynthesizer(metadata)
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(10),
+                'upravna_enota': np.arange(10),
+                'value': np.arange(10),
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(10),
+                'id_nesreca': np.arange(10),
+                'value': np.arange(10),
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(10),
+                'a_value': np.random.choice([10, np.nan], 10),
+            }),
+        }
+
+        instance.fit(data)
+
+        # Run
+        result = instance.get_learned_distributions('upravna_enota')
+
+        # Assert
+        assert list(result) == ['a_value', 'a_value.is_null']
+        assert result['a_value'] == {
+            'distribution': 'beta',
+            'learned_parameters': {
+                'a': 1.0,
+                'b': 1.0,
+                'loc': 10.0,
+                'scale': 0.0
+            }
+        }
+
+    def test_get_learned_distributions_raises_an_error(self):
+        """Test that ``get_learned_distributions`` raises an error."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        metadata.add_column('nesreca', 'value', sdtype='numerical')
+        metadata.add_column('oseba', 'value', sdtype='numerical')
+        metadata.add_column('upravna_enota', 'a_value', sdtype='numerical')
+        instance = HMASynthesizer(metadata)
+
+        # Run and Assert
+        error_msg = re.escape(
+            "Distributions have not been learned yet. Please fit your model first using 'fit'."
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            instance.get_learned_distributions('upravna_enota')

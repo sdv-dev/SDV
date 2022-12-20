@@ -404,7 +404,7 @@ class TestGaussianCopulaSynthesizer:
         })
         stm = SingleTableMetadata()
         stm.detect_from_dataframe(data)
-        gcs = GaussianCopulaSynthesizer(stm)
+        gcs = GaussianCopulaSynthesizer(stm, numerical_distributions={'one': 'uniform'})
         gcs.fit(data)
 
         # Run
@@ -422,10 +422,8 @@ class TestGaussianCopulaSynthesizer:
                 }
             },
             'one': {
-                'distribution': 'beta',
+                'distribution': 'uniform',
                 'learned_parameters': {
-                    'a': 1.0,
-                    'b': 1.0,
                     'loc': 1.0,
                     'scale': 0.0
                 }

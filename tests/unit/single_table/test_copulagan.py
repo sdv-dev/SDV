@@ -276,11 +276,7 @@ class TestCopulaGANSynthesizer:
         }
 
     def test_get_learned_distributions_raises_an_error(self):
-        """Test that ``get_learned_distributions`` returns a dict.
-
-        Test that it returns a dictionary with the name of the columns and the learned
-        distribution and it's parameters.
-        """
+        """Test that ``get_learned_distributions`` raises an error."""
         # Setup
         data = pd.DataFrame({
             'zero': [0, 0, 0],
