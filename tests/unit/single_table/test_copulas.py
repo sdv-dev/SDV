@@ -1,3 +1,4 @@
+import re
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -389,3 +390,81 @@ class TestGaussianCopulaSynthesizer:
         mock_copulas.multivariate.GaussianMultivariate.from_dict.assert_called_once_with(
             instance._rebuild_gaussian_copula.return_value
         )
+
+    def test__get_valid_columns_from_metadata(self):
+        """Test that it returns a list with columns that are from the metadata."""
+        # Seutp
+        instance = Mock()
+        instance.metadata._columns = {
+            'a_value': object(),
+            'n_value': object(),
+            'b_value': object()
+        }
+        columns = ['a', 'a_value.is_null', '__b_value', '__a_value__b_value', 'n_value']
+
+        # Run
+        result = GaussianCopulaSynthesizer._get_valid_columns_from_metadata(instance, columns)
+
+        # Assert
+        assert result == ['a_value.is_null', 'n_value']
+
+    def test_get_learned_distributions(self):
+        """Test that ``get_learned_distributions`` returns a dict.
+
+        Test that it returns a dictionary with the name of the columns and the learned
+        distribution and it's parameters.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'zero': [0, 0, 0],
+            'one': [1, 1, 1]
+        })
+        stm = SingleTableMetadata()
+        stm.detect_from_dataframe(data)
+        gcs = GaussianCopulaSynthesizer(stm, numerical_distributions={'one': 'uniform'})
+        gcs.fit(data)
+
+        # Run
+        result = gcs.get_learned_distributions()
+
+        # Assert
+        assert result == {
+            'zero': {
+                'distribution': 'beta',
+                'learned_parameters': {
+                    'a': 1.0,
+                    'b': 1.0,
+                    'loc': 0.0,
+                    'scale': 0.0
+                }
+            },
+            'one': {
+                'distribution': 'uniform',
+                'learned_parameters': {
+                    'loc': 1.0,
+                    'scale': 0.0
+                }
+            }
+        }
+
+    def test_get_learned_distributions_raises_an_error(self):
+        """Test that ``get_learned_distributions`` returns a dict.
+
+        Test that it returns a dictionary with the name of the columns and the learned
+        distribution and it's parameters.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'zero': [0, 0, 0],
+            'one': [1, 1, 1]
+        })
+        stm = SingleTableMetadata()
+        stm.detect_from_dataframe(data)
+        gcs = GaussianCopulaSynthesizer(stm)
+
+        # Run and Assert
+        error_msg = re.escape(
+            "Distributions have not been learned yet. Please fit your model first using 'fit'."
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            gcs.get_learned_distributions()
