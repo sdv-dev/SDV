@@ -158,6 +158,16 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         """
         return self._model.sample(num_rows, conditions=conditions)
 
+    def _get_valid_columns_from_metadata(self, columns):
+        valid_columns = []
+        for column in columns:
+            for valid_column in self.metadata._columns:
+                if column.startswith(valid_column):
+                    valid_columns.append(column)
+                    break
+
+        return valid_columns
+
     def get_learned_distributions(self):
         """Get the marginal distributions used by the ``GaussianCopula``.
 
@@ -178,21 +188,15 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         columns = parameters['columns']
         univariates = deepcopy(parameters['univariates'])
         learned_distributions = {}
-        metadata_columns = list(self.metadata._columns)
+        valid_columns = self._get_valid_columns_from_metadata(columns)
         for column, learned_params in zip(columns, univariates):
-            for valid_column in metadata_columns:
-                if column.startswith(valid_column):
-                    distribution = self.numerical_distributions.get(
-                        column,
-                        self.default_distribution
-                    )
-                    learned_params.pop('type')
-                    learned_distributions[column] = {
-                        'distribution': distribution,
-                        'learned_parameters': learned_params
-                    }
-
-                    break
+            if column in valid_columns:
+                distribution = self.numerical_distributions.get(column, self.default_distribution)
+                learned_params.pop('type')
+                learned_distributions[column] = {
+                    'distribution': distribution,
+                    'learned_parameters': learned_params
+                }
 
         return learned_distributions
 
