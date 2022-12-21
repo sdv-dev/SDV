@@ -3,7 +3,7 @@ import re
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import download_demo, abc
+from sdv.datasets.demo import download_demo
 
 
 def test_download_demo_invalid_modality():
