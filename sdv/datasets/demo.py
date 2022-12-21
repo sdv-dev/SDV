@@ -1,6 +1,7 @@
 """Methods to load datasets."""
 
 import io
+import json
 import logging
 import os
 import shutil
@@ -42,24 +43,37 @@ def _download(modality, dataset_name, output_folder_name):
             "use 'get_available_demos' to get a list of demo datasets."
         )
 
-    LOGGER.info(f'Extracting dataset into {output_folder_name}')
-    bytes_io = io.BytesIO(response.read())
+    return io.BytesIO(response.read())
+
+
+def _extract_data(bytes_io, output_folder_name):
     with ZipFile(bytes_io) as zf:
-        os.makedirs(output_folder_name, exist_ok=True)
-        zf.extractall(output_folder_name)
-        os.remove(os.path.join(output_folder_name, 'metadata_v0.json'))
-        os.rename(
-            os.path.join(output_folder_name, 'metadata_v1.json'),
-            os.path.join(output_folder_name, METADATA_FILENAME)
-        )
+        if output_folder_name:
+            os.makedirs(output_folder_name, exist_ok=True)
+            zf.extractall(output_folder_name)
+            os.remove(os.path.join(output_folder_name, 'metadata_v0.json'))
+            os.rename(
+                os.path.join(output_folder_name, 'metadata_v1.json'),
+                os.path.join(output_folder_name, METADATA_FILENAME)
+            )
+        else:
+            in_memory_dir = {}
+            for name in zf.namelist():
+                in_memory_dir[name] = zf.read(name)
 
+            return in_memory_dir
 
-def _get_data(modality, output_folder_name):
+def _get_data(modality, output_folder_name, in_memory_dir):
     data = {}
-    for filename in os.listdir(output_folder_name):
-        if filename != METADATA_FILENAME:
-            data_path = os.path.join(output_folder_name, filename)
-            data[filename] = pd.read_csv(data_path)
+    if output_folder_name:
+        for filename in os.listdir(output_folder_name):
+            if file.endswith('.csv'):
+                data_path = os.path.join(output_folder_name, filename)
+                data[filename] = pd.read_csv(data_path)
+    else:
+        for filename, file in in_memory_dir.items():
+            if filename.endswith('.csv'):
+                data[filename] = pd.read_csv(io.StringIO(file.decode()))
 
     if modality != 'multi_table':
         data = data.popitem()[1]
@@ -67,10 +81,14 @@ def _get_data(modality, output_folder_name):
     return data
 
 
-def _get_metadata(modality, output_folder_name):
-    metadata_path = os.path.join(output_folder_name, METADATA_FILENAME)
+def _get_metadata(modality, output_folder_name, in_memory_dir):
     metadata = MultiTableMetadata() if modality == 'multi_table' else SingleTableMetadata()
-    metadata = metadata.load_from_json(metadata_path)
+    if output_folder_name:
+        metadata_path = os.path.join(output_folder_name, METADATA_FILENAME)
+        metadata = metadata.load_from_json(metadata_path)
+    else:
+        metadict = json.loads(in_memory_dir["metadata_v1.json"])
+        metadata = metadata._load_from_dict(metadict) # If this fails, print metadict and compare to the metadata object at "(1 <- check here)" in the other file
 
     return metadata
 
@@ -103,17 +121,41 @@ def download_demo(modality, dataset_name, output_folder_name=None):
             * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
     """
     _validate_args_download_demo(modality, output_folder_name)
+    bytes_io = _download(modality, dataset_name, output_folder_name)
+    in_memory_dir = _extract_data(bytes_io, output_folder_name)
+    data = _get_data(modality, output_folder_name, in_memory_dir)
+    metadata = _get_metadata(modality, output_folder_name, in_memory_dir)
 
-    use_temp_dir = False
-    if output_folder_name is None:
-        use_temp_dir = True
-        output_folder_name = tempfile.mkdtemp()
+    return data, metadata
 
-    _download(modality, dataset_name, output_folder_name)
-    data = _get_data(modality, output_folder_name)
-    metadata = _get_metadata(modality, output_folder_name)
+def abc(modality, dataset_name):
+    dataset_url = BUCKET_URL + '/' + modality.upper() + '/' + dataset_name + '.zip'
+    LOGGER.info(f'Downloading dataset {dataset_name} from {dataset_url}')
+    try:
+        response = urllib.request.urlopen(dataset_url)
+    except urllib.error.HTTPError:
+        raise ValueError(
+            f"Invalid dataset name '{dataset_name}'. "
+            'Make sure you have the correct modality for the dataset name or '
+            "use 'get_available_demos' to get a list of demo datasets."
+        )
 
-    if use_temp_dir:
-        shutil.rmtree(output_folder_name)
+    bytes_io = io.BytesIO(response.read())
+    in_memory_dir = {}
+    with ZipFile(bytes_io) as zf:
+        for name in zf.namelist():
+            in_memory_dir[name] = zf.read(name)
+
+    data = {}
+    for file in in_memory_dir:
+        if file.endswith('.csv'):
+            data[file] = pd.read_csv(io.StringIO(in_memory_dir[file].decode()))
+
+    if modality != 'multi_table':
+        data = data.popitem()[1]
+
+    metadata = MultiTableMetadata() if modality == 'multi_table' else SingleTableMetadata()
+    metadict = json.loads(in_memory_dir["metadata_v1.json"])
+    metadata = metadata._load_from_dict(metadict) # If this fails, print metadict and compare to the metadata object at "(1 <- check here)" in the other file
 
     return data, metadata
