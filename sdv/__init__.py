@@ -4,8 +4,8 @@
 
 """Top-level package for SDV."""
 
-__author__ = """MIT Data To AI Lab"""
-__email__ = 'dailabmit@gmail.com'
+__author__ = 'DataCebo, Inc.'
+__email__ = 'info@sdv.dev'
 __version__ = '0.17.3.dev0'
 
 from sdv import constraints, evaluation, metadata, relational, tabular
