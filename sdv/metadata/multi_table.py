@@ -610,7 +610,7 @@ class MultiTableMetadata:
             A ``MultiTableMetadata`` instance.
         """
         metadata = read_json(filepath)
-        return cls._load_from_dict(metadata)  # (1 <- check here)
+        return cls._load_from_dict(metadata)
 
     def __repr__(self):
         """Pretty print the ``MultiTableMetadata``."""
