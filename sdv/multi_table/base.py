@@ -299,3 +299,21 @@ class BaseMultiTableSynthesizer:
                 ``False``.
         """
         return self._sample(scale=scale, randomize_samples=randomize_samples)
+
+    def get_learned_distributions(self, table_name):
+        """Get the marginal distributions used by the ``GaussianCopula`` for a table.
+
+        Return a dictionary mapping the column names with the distribution name and the learned
+        parameters for those.
+
+        Args:
+            table_name (str):
+                Table name for which the parameters should be retrieved.
+
+        Returns:
+            dict:
+                Dictionary containing the distributions used or detected for each column and the
+                learned parameters for those.
+        """
+        synthesizer = self._table_synthesizers[table_name]
+        return synthesizer.get_learned_distributions()

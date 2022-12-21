@@ -158,6 +158,48 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         """
         return self._model.sample(num_rows, conditions=conditions)
 
+    def _get_valid_columns_from_metadata(self, columns):
+        valid_columns = []
+        for column in columns:
+            for valid_column in self.metadata._columns:
+                if column.startswith(valid_column):
+                    valid_columns.append(column)
+                    break
+
+        return valid_columns
+
+    def get_learned_distributions(self):
+        """Get the marginal distributions used by the ``GaussianCopula``.
+
+        Return a dictionary mapping the column names with the distribution name and the learned
+        parameters for those.
+
+        Returns:
+            dict:
+                Dictionary containing the distributions used or detected for each column and the
+                learned parameters for those.
+        """
+        if not self._fitted:
+            raise ValueError(
+                "Distributions have not been learned yet. Please fit your model first using 'fit'."
+            )
+
+        parameters = self._model.to_dict()
+        columns = parameters['columns']
+        univariates = deepcopy(parameters['univariates'])
+        learned_distributions = {}
+        valid_columns = self._get_valid_columns_from_metadata(columns)
+        for column, learned_params in zip(columns, univariates):
+            if column in valid_columns:
+                distribution = self.numerical_distributions.get(column, self.default_distribution)
+                learned_params.pop('type')
+                learned_distributions[column] = {
+                    'distribution': distribution,
+                    'learned_parameters': learned_params
+                }
+
+        return learned_distributions
+
     def _get_parameters(self):
         """Get copula model parameters.
 

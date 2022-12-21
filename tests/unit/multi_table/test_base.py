@@ -563,3 +563,16 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         instance._sample.assert_called_once_with(scale=1.5, randomize_samples=True)
+
+    def test_get_learned_distributions_raises_an_error(self):
+        """Test that ``get_learned_distributions`` raises an error."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        error_msg = re.escape(
+            "Distributions have not been learned yet. Please fit your model first using 'fit'."
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            instance.get_learned_distributions('nesreca')
