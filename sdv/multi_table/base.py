@@ -1,9 +1,10 @@
 """Base Multi Table Synthesizer class."""
-
+import contextlib
 import warnings
 from collections import defaultdict
 from copy import deepcopy
 
+import numpy as np
 import pandas as pd
 
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -23,6 +24,21 @@ class BaseMultiTableSynthesizer:
     """
 
     _synthesizer = GaussianCopulaSynthesizer
+    _numpy_seed = 73251
+
+    @contextlib.contextmanager
+    def _temporary_numpy_seed(self):
+        initial_state = np.random.get_state()
+        if self._numpy_seed == 73251:
+            np.random.seed(self._numpy_seed)
+        else:
+            np.random.set_state(self._numpy_seed)
+
+        try:
+            yield
+        finally:
+            self._numpy_seed = np.random.get_state()
+            np.random.set_state(initial_state)
 
     def _initialize_models(self):
         for table_name, table_metadata in self.metadata._tables.items():
@@ -279,10 +295,16 @@ class BaseMultiTableSynthesizer:
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
 
-    def _sample(self, scale, randomize_samples):
+    def reset_sampling(self):
+        """Reset the sampling and start over again."""
+        self._numpy_seed = 73251
+        for synthesizer in self._table_synthesizers.values():
+            synthesizer.reset_sampling()
+
+    def _sample(self, scale):
         raise NotImplementedError()
 
-    def sample(self, scale=1.0, randomize_samples=False):
+    def sample(self, scale=1.0):
         """Generate synthetic data for the entire dataset.
 
         Args:
@@ -292,13 +314,11 @@ class BaseMultiTableSynthesizer:
                 create more rows than the original data by a factor of ``scale``.
                 If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
                 than the original tables. Defaults to ``1.0``.
-            randomize_samples (bool):
-                Whether or not the data should change on each sample call. If ``True``
-                every time ``sample`` is called, different data will be generated, if ``False``
-                every time ``sample`` is called, the same data will be generated. Defaults to
-                ``False``.
         """
-        return self._sample(scale=scale, randomize_samples=randomize_samples)
+        with self._temporary_numpy_seed():
+            sampled_data = self._sample(scale=scale)
+
+        return sampled_data
 
     def get_learned_distributions(self, table_name):
         """Get the marginal distributions used by the ``GaussianCopula`` for a table.

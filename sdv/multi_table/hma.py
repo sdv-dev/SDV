@@ -502,7 +502,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
         return sampled_data
 
-    def _sample(self, scale=1.0, randomize_samples=False):
+    def _sample(self, scale=1.0):
         """Sample the entire dataset.
 
         Returns a dictionary with all the tables of the dataset. The amount of rows sampled will
@@ -517,11 +517,6 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                 create more rows than the original data by a factor of ``scale``.
                 If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
                 than the original tables. Defaults to ``1.0``.
-            randomize_samples (bool):
-                Whether or not the data should change on each sample call. If ``True``
-                every time ``sample`` is called, different data will be generated, if ``False``
-                every time ``sample`` is called, the same data will be generated. Defaults to
-                ``False``.
 
         Returns:
             dict:

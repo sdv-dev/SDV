@@ -399,9 +399,20 @@ def test_sampling(model):
     model.fit(data)
 
     sampled1 = model.sample(10)
+    model.reset_sampling()
     sampled2 = model.sample(10)
 
-    # pd.testing.assert_frame_equal(sampled1, sampled2)
+    pd.testing.assert_frame_equal(sampled1, sampled2)
+
+
+@pytest.mark.parametrize('model', MODELS)
+def test_sampling_samples_differ(model):
+    """Test that samples are different ``reset_sampling`` is not called."""
+    sample_1 = model.sample(10)
+    sample_2 = model.sample(10)
+
+    with pytest.raises(AssertionError):
+        pd.testing.assert_frame_equal(sample_1, sample_2)
 
 
 def test_config_creation_doesnt_raise_error():

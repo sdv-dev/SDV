@@ -549,7 +549,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Run and Assert
         with pytest.raises(NotImplementedError, match=''):
-            instance._sample(scale=1.0, randomize_samples=False)
+            instance._sample(scale=1.0)
 
     def test_sample(self):
         """Test that ``sample`` calls the ``_sample`` with the given arguments."""
@@ -559,10 +559,10 @@ class TestBaseMultiTableSynthesizer:
         instance._sample = Mock()
 
         # Run
-        instance.sample(scale=1.5, randomize_samples=True)
+        instance.sample(scale=1.5)
 
         # Assert
-        instance._sample.assert_called_once_with(scale=1.5, randomize_samples=True)
+        instance._sample.assert_called_once_with(scale=1.5)
 
     def test_get_learned_distributions_raises_an_error(self):
         """Test that ``get_learned_distributions`` raises an error."""
