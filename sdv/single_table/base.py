@@ -371,23 +371,23 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         """
         self._model.set_random_state(random_state)
 
-    def _randomize_samples(self, randomize_samples):
-        """Randomize the samples according to user input.
+    # def _randomize_samples(self, randomize_samples):
+    #     """Randomize the samples according to user input.
 
-        If ``randomize_samples`` is false, fix the seed that the random number generator
-        uses in the underlying models.
+    #     If ``randomize_samples`` is false, fix the seed that the random number generator
+    #     uses in the underlying models.
 
-        Args:
-            randomize_samples (bool):
-                Whether or not to randomize the generated samples.
-        """
-        if self._model is None:
-            return
+    #     Args:
+    #         randomize_samples (bool):
+    #             Whether or not to randomize the generated samples.
+    #     """
+    #     if self._model is None:
+    #         return
 
-        if randomize_samples:
-            self._set_random_state(None)
-        else:
-            self._set_random_state(FIXED_RNG_SEED)
+    #     if randomize_samples:
+    #         self._set_random_state(None)
+    #     else:
+    #         self._set_random_state(FIXED_RNG_SEED)
 
     @staticmethod
     def _filter_conditions(sampled, conditions, float_rtol):
@@ -661,9 +661,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return sampled_rows
 
-    def _sample_with_progress_bar(self, num_rows, randomize_samples=True, max_tries_per_batch=100,
-                                  batch_size=None, output_file_path=None, conditions=None,
-                                  show_progress_bar=True):
+    def _sample_with_progress_bar(self, num_rows, max_tries_per_batch=100, batch_size=None,
+                                  output_file_path=None, conditions=None, show_progress_bar=True):
         if conditions is not None:
             raise TypeError('This method does not support the conditions parameter. '
                             "Please create 'sdv.sampling.Condition' objects and pass them "
@@ -677,7 +676,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         if num_rows == 0:
             return sampled
 
-        self._randomize_samples(randomize_samples)
         output_file_path = validate_file_path(output_file_path)
         batch_size = min(batch_size, num_rows) if batch_size else num_rows
 
@@ -701,16 +699,13 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return sampled
 
-    def sample(self, num_rows, randomize_samples=True, max_tries_per_batch=100, batch_size=None,
+    def sample(self, num_rows, max_tries_per_batch=100, batch_size=None,
                output_file_path=None, conditions=None):
         """Sample rows from this table.
 
         Args:
             num_rows (int):
                 Number of rows to sample. This parameter is required.
-            randomize_samples (bool):
-                Whether or not to use a fixed seed when sampling. Defaults
-                to True.
             max_tries_per_batch (int):
                 Number of times to retry sampling until the batch size is met. Defaults to 100.
             batch_size (int or None):
@@ -732,7 +727,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return self._sample_with_progress_bar(
             num_rows,
-            randomize_samples,
             max_tries_per_batch,
             batch_size,
             output_file_path,
@@ -848,8 +842,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return all_sampled_rows
 
-    def _sample_conditions(self, conditions, max_tries_per_batch, batch_size, randomize_samples,
-                           output_file_path):
+    def _sample_conditions(self, conditions, max_tries_per_batch, batch_size, output_file_path):
         """Sample rows from this table with the given conditions."""
         output_file_path = validate_file_path(output_file_path)
 
@@ -859,8 +852,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         conditions = self._make_condition_dfs(conditions)
         for condition_dataframe in conditions:
             self._validate_conditions(condition_dataframe)
-
-        self._randomize_samples(randomize_samples)
 
         sampled = pd.DataFrame()
         try:
@@ -894,8 +885,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return sampled
 
-    def sample_conditions(self, conditions, max_tries_per_batch=100, batch_size=None,
-                          randomize_samples=True, output_file_path=None):
+    def sample_conditions(self, conditions, max_tries_per_batch=100,
+                          batch_size=None, output_file_path=None):
         """Sample rows from this table with the given conditions.
 
         Args:
@@ -907,9 +898,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Number of times to retry sampling until the batch size is met. Defaults to 100.
             batch_size (int):
                 The batch size to use per sampling call.
-            randomize_samples (bool):
-                Whether or not to use a fixed seed when sampling. Defaults
-                to True.
             output_file_path (str or None):
                 The file to periodically write sampled rows to. Defaults to
                 a temporary file, if None.
@@ -927,14 +915,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     * no rows could be generated.
         """
         return self._sample_conditions(
-            conditions, max_tries_per_batch, batch_size, randomize_samples, output_file_path)
+            conditions, max_tries_per_batch, batch_size, output_file_path)
 
-    def _sample_remaining_columns(self, known_columns, max_tries_per_batch, batch_size,
-                                  randomize_samples, output_file_path):
+    def _sample_remaining_columns(self, known_columns, max_tries_per_batch,
+                                  batch_size, output_file_path):
         """Sample the remaining columns of a given DataFrame."""
         output_file_path = validate_file_path(output_file_path)
-
-        self._randomize_samples(randomize_samples)
 
         known_columns = known_columns.copy()
         self._validate_conditions(known_columns)
@@ -964,8 +950,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return sampled
 
-    def sample_remaining_columns(self, known_columns, max_tries_per_batch=100, batch_size=None,
-                                 randomize_samples=True, output_file_path=None):
+    def sample_remaining_columns(self, known_columns, max_tries_per_batch=100,
+                                 batch_size=None, output_file_path=None):
         """Sample remaining rows from already known columns.
 
         Args:
@@ -977,9 +963,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Number of times to retry sampling until the batch size is met. Defaults to 100.
             batch_size (int):
                 The batch size to use per sampling call.
-            randomize_samples (bool):
-                Whether or not to use a fixed seed when sampling. Defaults
-                to True.
             output_file_path (str or None):
                 The file to periodically write sampled rows to. Defaults to
                 a temporary file, if None.
@@ -1000,7 +983,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             known_columns,
             max_tries_per_batch,
             batch_size,
-            randomize_samples,
             output_file_path
         )
 
