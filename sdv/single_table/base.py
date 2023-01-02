@@ -377,8 +377,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
     def reset_sampling(self):
         """Reset the sampling and start over again."""
-        self._random_state_set = False
         self._data_processor.reset_sampling()
+        self._random_state_set = False
 
     @staticmethod
     def _filter_conditions(sampled, conditions, float_rtol):

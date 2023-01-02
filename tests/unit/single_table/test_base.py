@@ -43,6 +43,34 @@ class TestBaseSingleTableSynthesizer:
         assert call_list == [call('categorical', None), call('numerical', 'FloatTransformer')]
 
     @patch('sdv.single_table.base.DataProcessor')
+    def test__initialize_synthesizer(self, mock_data_processor):
+        """Test the ``_initialize_synthesizer``
+
+        Test that the ``_initialize_synthesizer`` creates a new instance of the ``DataProcessor``,
+        calls the ``_update_default_transformers`` and sets the ``_fitted`` state to ``False`` and
+        the ``_random_state_set`` to ``False``.
+        """
+        # Setup
+        instance = Mock()
+        metadata = Mock()
+        instance.enforce_rounding = True
+        instance.enforce_min_max_values = True
+        instance.metadata = metadata
+
+        # Run
+        BaseSingleTableSynthesizer._initialize_synthesizer(instance)
+
+        # Assert
+        assert instance._fitted is False
+        assert instance._random_state_set is False
+        instance._update_default_transformers.assert_called_once_with()
+        mock_data_processor.assert_called_once_with(
+            metadata=metadata,
+            enforce_rounding=True,
+            enforce_min_max_values=True
+        )
+
+    @patch('sdv.single_table.base.DataProcessor')
     def test___init__(self, mock_data_processor):
         """Test instantiating with default values."""
         # Setup
@@ -55,6 +83,7 @@ class TestBaseSingleTableSynthesizer:
         assert instance.enforce_min_max_values is True
         assert instance.enforce_rounding is True
         assert instance._data_processor == mock_data_processor.return_value
+        assert instance._random_state_set is False
         mock_data_processor.assert_called_once_with(
             metadata=metadata,
             enforce_rounding=instance.enforce_rounding,
@@ -369,7 +398,7 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
 
-    def test_validate_keys_with_missing2(self):
+    def test_validate_keys_with_missing_with_single_sequence_key(self):
         """Test error is raised if keys contain missing values.
 
         Test the case with a single sequence key.
@@ -695,6 +724,24 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         instance._model.set_random_state.assert_called_once_with(rng_seed)
+        assert instance._random_state_set is True
+
+    def test_reset_sampling(self):
+        """Test the ``reset_sampling`` method.
+
+        Ensure that the ``reset_sampling`` sets the ``instance._random_state_set`` is set to
+        ``False`` and the ``instance._data_processor.reset_sampling`` is being called.
+        """
+        # Setup
+        instance = Mock()
+        instance._random_state_set = True
+
+        # Run
+        BaseSingleTableSynthesizer.reset_sampling(instance)
+
+        # Assert
+        assert instance._random_state_set is False
+        instance._data_processor.reset_sampling.assert_called_once_with()
 
     def test__filter_conditions(self):
         """Test that the method filters out data that doesn't meet the conditions."""
@@ -727,12 +774,17 @@ class TestBaseSingleTableSynthesizer:
         pd.testing.assert_frame_equal(filtered_data, expected_data)
 
     def test__sample_rows_without_conditions(self):
-        """Test that sample rows calls ``_sample`` when conditions is ``None``."""
+        """Test that sample rows calls ``_sample`` when conditions is ``None``.
+
+        Also ensure that when ``_random_state_set`` is ``False`` this calls
+        ``_set_random_state`` with the ``FIXED_RNG_SEED`` which is ``73251``.
+        """
         # Setup
         data = pd.DataFrame({
             'name': ['John', 'Doe', 'John Doe']
         })
         instance = Mock()
+        instance._random_state_set = False
         instance._data_processor._dtypes = pd.Series()
         instance._data_processor.filter_valid.return_value = data
 
@@ -749,6 +801,7 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.filter_valid.assert_called_once_with(
             instance._data_processor.reverse_transform.return_value
         )
+        instance._set_random_state.assert_called_once_with(73251)
 
     def test__sample_rows_with_conditions(self):
         """Test that sample rows calls with the transformed conditions the ``_sample``."""

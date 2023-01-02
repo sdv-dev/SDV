@@ -217,6 +217,17 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)
 
+    def test_validate_key_error(self):
+        """Test that if a ``KeyError`` is raised this will continue."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._table_synthesizers.popitem()
+
+        # Run and Assert
+        instance.validate(data)
+
     def test_validate_data_is_not_dataframe(self):
         """Test that an error is being raised when the data is not a dataframe."""
         # Setup
@@ -540,6 +551,29 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
+
+    def test_reset_sampling(self):
+        """Test that ``resset_sampling`` resets the numpy seed and the synthesizers."""
+        # Setup
+        instance = Mock()
+        instance._numpy_seed = object()
+        users_mock = Mock()
+        sessions_mock = Mock()
+        transactions_mock = Mock()
+        instance._table_synthesizers = {
+            'users': users_mock,
+            'sessions': sessions_mock,
+            'transactions': transactions_mock,
+        }
+
+        # Run
+        BaseMultiTableSynthesizer.reset_sampling(instance)
+
+        # Assert
+        assert instance._numpy_seed == 73251
+        users_mock.reset_sampling.assert_called_once_with()
+        sessions_mock.reset_sampling.assert_called_once_with()
+        transactions_mock.reset_sampling.assert_called_once_with()
 
     def test__sample(self):
         """Test that ``_sample`` raises a ``NotImplementedError``."""

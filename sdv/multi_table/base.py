@@ -29,7 +29,7 @@ class BaseMultiTableSynthesizer:
     @contextlib.contextmanager
     def _temporary_numpy_seed(self):
         initial_state = np.random.get_state()
-        if self._numpy_seed == 73251:
+        if isinstance(self._numpy_seed, int):
             np.random.seed(self._numpy_seed)
         else:
             np.random.set_state(self._numpy_seed)
@@ -296,7 +296,10 @@ class BaseMultiTableSynthesizer:
         self.fit_processed_data(processed_data)
 
     def reset_sampling(self):
-        """Reset the sampling and start over again."""
+        """Reset sampling seed and state.
+
+        Reset the numpy seed to the starting value and reset the ``synthesizer`` transformers.
+        """
         self._numpy_seed = 73251
         for synthesizer in self._table_synthesizers.values():
             synthesizer.reset_sampling()
