@@ -669,7 +669,7 @@ class TestHMASynthesizer:
             }),
             'upravna_enota': pd.DataFrame({
                 'id_upravna_enota': np.arange(10),
-                'a_value': np.random.choice([10, np.nan], 10),
+                'a_value': [10, np.nan] * 5,
             }),
         }
 
