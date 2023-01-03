@@ -553,7 +553,7 @@ class TestBaseMultiTableSynthesizer:
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
 
     def test_reset_sampling(self):
-        """Test that ``resset_sampling`` resets the numpy seed and the synthesizers."""
+        """Test that ``reset_sampling`` resets the numpy seed and the synthesizers."""
         # Setup
         instance = Mock()
         instance._numpy_seed = object()

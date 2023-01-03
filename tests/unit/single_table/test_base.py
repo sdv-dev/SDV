@@ -294,6 +294,7 @@ class TestBaseSingleTableSynthesizer:
         BaseSingleTableSynthesizer.fit(instance, processed_data)
 
         # Assert
+        instance._initialize_synthesizer.assert_called_once_with()
         instance._preprocess.assert_called_once_with(processed_data)
         instance.fit_processed_data.assert_called_once_with(instance._preprocess.return_value)
 

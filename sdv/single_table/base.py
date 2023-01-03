@@ -376,7 +376,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         self._random_state_set = True
 
     def reset_sampling(self):
-        """Reset the sampling and start over again."""
+        """Reset the sampling to the state that was left right after fitting."""
         self._data_processor.reset_sampling()
         self._random_state_set = False
 

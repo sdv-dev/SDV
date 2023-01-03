@@ -390,6 +390,17 @@ def test_multiple_fits():
 
 @pytest.mark.parametrize('model', MODELS)
 def test_sampling(model):
+    """Test that samples are different when ``reset_sampling`` is not called."""
+    sample_1 = model.sample(10)
+    sample_2 = model.sample(10)
+
+    with pytest.raises(AssertionError):
+        pd.testing.assert_frame_equal(sample_1, sample_2)
+
+
+@pytest.mark.parametrize('model', MODELS)
+def test_sampling_reset_sampling(model):
+    """Test ``sample`` method for each model using ``reset_sampling``."""
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
@@ -403,16 +414,6 @@ def test_sampling(model):
     sampled2 = model.sample(10)
 
     pd.testing.assert_frame_equal(sampled1, sampled2)
-
-
-@pytest.mark.parametrize('model', MODELS)
-def test_sampling_samples_differ(model):
-    """Test that samples are different ``reset_sampling`` is not called."""
-    sample_1 = model.sample(10)
-    sample_2 = model.sample(10)
-
-    with pytest.raises(AssertionError):
-        pd.testing.assert_frame_equal(sample_1, sample_2)
 
 
 def test_config_creation_doesnt_raise_error():

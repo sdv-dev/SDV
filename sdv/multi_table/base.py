@@ -296,10 +296,7 @@ class BaseMultiTableSynthesizer:
         self.fit_processed_data(processed_data)
 
     def reset_sampling(self):
-        """Reset sampling seed and state.
-
-        Reset the numpy seed to the starting value and reset the ``synthesizer`` transformers.
-        """
+        """Reset the sampling to the state that was left right after fitting."""
         self._numpy_seed = 73251
         for synthesizer in self._table_synthesizers.values():
             synthesizer.reset_sampling()
