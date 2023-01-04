@@ -1077,6 +1077,22 @@ class TestBaseTabularModel:
                 'Use a column name that was present in the original data.')):
             BaseTabularModel._validate_conditions(model, conditions)
 
+    def test__filter_conditions_with_negative_float_value(self):
+        # Setup
+        conditions = {'cola': -1.0}
+        sampled = pd.DataFrame.from_records([
+            {'cola': -1.09, 'colb': 1},  # within allowed tolerance
+            {'cola': -2.0, 'colb': 2},  # should be filtered out
+        ])
+        expected = pd.DataFrame({'cola': [-1.0], 'colb': [1]})
+
+        # Run
+        filtered = BaseTabularModel._filter_conditions(sampled, conditions, float_rtol=0.1)
+
+        # Assert
+        assert len(filtered) == 1
+        pd.testing.assert_frame_equal(filtered, expected)
+
     @patch('sdv.tabular.base.os.path')
     def test__validate_file_path(self, path_mock):
         """Test the `BaseTabularModel._validate_file_path` method.

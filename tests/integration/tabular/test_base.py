@@ -394,3 +394,22 @@ def test_sampling_with_randomize_samples_alternating(model):
     assert not sampled_random1.equals(sampled_fixed1)
     assert not sampled_random1.equals(sampled_random2)
     assert not sampled_random2.equals(sampled_fixed1)
+
+
+def test_sampling_with_negative_float_values():
+    """
+    Test that the conditional sampling works for float columns, when condition value is a negative
+    float.
+    """
+    data = pd.DataFrame({
+        'column1': [-float(x) for x in list(range(100))],
+        'column2': list(range(100))
+    })
+
+    model = GaussianCopula()
+    model.fit(data)
+
+    sampled = model.sample_conditions([Condition({'column1': -50.0})])
+
+    assert len(sampled) == 1
+    assert sampled.loc[0, 'column1'] == -50.0

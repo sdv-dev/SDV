@@ -187,7 +187,7 @@ class BaseTabularModel:
         for column, value in conditions.items():
             column_values = sampled[column]
             if column_values.dtype.kind == 'f':
-                distance = value * float_rtol
+                distance = abs(value * float_rtol)
                 sampled = sampled[np.abs(column_values - value) <= distance]
                 sampled[column] = value
             else:
