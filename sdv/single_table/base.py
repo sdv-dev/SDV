@@ -56,22 +56,19 @@ class BaseSynthesizer:
             for sdtype, transformer in self._model_sdtype_transformers.items():
                 self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
 
-    def _initialize_synthesizer(self):
-        self._data_processor = DataProcessor(
-            metadata=self.metadata,
-            enforce_rounding=self.enforce_rounding,
-            enforce_min_max_values=self.enforce_min_max_values
-        )
-        self._update_default_transformers()
-        self._fitted = False
-        self._random_state_set = False
-
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True):
         self.metadata = metadata
         self.metadata.validate()
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
-        self._initialize_synthesizer()
+        self._data_processor = DataProcessor(
+            metadata=self.metadata,
+            enforce_rounding=self.enforce_rounding,
+            enforce_min_max_values=self.enforce_min_max_values
+        )
+        self._fitted = False
+        self._random_state_set = False
+        self._update_default_transformers()
 
     def _validate_metadata_matches_data(self, columns):
         errors = []
@@ -353,7 +350,8 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) to fit the model to.
         """
-        self._initialize_synthesizer()
+        self._fitted = False
+        self._random_state_set = False
         processed_data = self._preprocess(data)
         self.fit_processed_data(processed_data)
 

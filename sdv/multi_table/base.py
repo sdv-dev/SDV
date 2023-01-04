@@ -27,7 +27,7 @@ class BaseMultiTableSynthesizer:
     _numpy_seed = 73251
 
     @contextlib.contextmanager
-    def _temporary_numpy_seed(self):
+    def _set_temp_numpy_seed(self):
         initial_state = np.random.get_state()
         if isinstance(self._numpy_seed, int):
             np.random.seed(self._numpy_seed)
@@ -315,7 +315,7 @@ class BaseMultiTableSynthesizer:
                 If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
                 than the original tables. Defaults to ``1.0``.
         """
-        with self._temporary_numpy_seed():
+        with self._set_temp_numpy_seed():
             sampled_data = self._sample(scale=scale)
 
         return sampled_data

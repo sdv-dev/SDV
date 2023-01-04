@@ -43,34 +43,6 @@ class TestBaseSingleTableSynthesizer:
         assert call_list == [call('categorical', None), call('numerical', 'FloatTransformer')]
 
     @patch('sdv.single_table.base.DataProcessor')
-    def test__initialize_synthesizer(self, mock_data_processor):
-        """Test the ``_initialize_synthesizer``
-
-        Test that the ``_initialize_synthesizer`` creates a new instance of the ``DataProcessor``,
-        calls the ``_update_default_transformers`` and sets the ``_fitted`` state to ``False`` and
-        the ``_random_state_set`` to ``False``.
-        """
-        # Setup
-        instance = Mock()
-        metadata = Mock()
-        instance.enforce_rounding = True
-        instance.enforce_min_max_values = True
-        instance.metadata = metadata
-
-        # Run
-        BaseSingleTableSynthesizer._initialize_synthesizer(instance)
-
-        # Assert
-        assert instance._fitted is False
-        assert instance._random_state_set is False
-        instance._update_default_transformers.assert_called_once_with()
-        mock_data_processor.assert_called_once_with(
-            metadata=metadata,
-            enforce_rounding=True,
-            enforce_min_max_values=True
-        )
-
-    @patch('sdv.single_table.base.DataProcessor')
     def test___init__(self, mock_data_processor):
         """Test instantiating with default values."""
         # Setup
@@ -84,6 +56,7 @@ class TestBaseSingleTableSynthesizer:
         assert instance.enforce_rounding is True
         assert instance._data_processor == mock_data_processor.return_value
         assert instance._random_state_set is False
+        assert instance._fitted is False
         mock_data_processor.assert_called_once_with(
             metadata=metadata,
             enforce_rounding=instance.enforce_rounding,
@@ -289,12 +262,14 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         instance = Mock()
         processed_data = Mock()
+        instance._random_state_set = True
+        instance._fitted = True
 
         # Run
         BaseSingleTableSynthesizer.fit(instance, processed_data)
 
         # Assert
-        instance._initialize_synthesizer.assert_called_once_with()
+        assert instance._random_state_set is False
         instance._preprocess.assert_called_once_with(processed_data)
         instance.fit_processed_data.assert_called_once_with(instance._preprocess.return_value)
 
