@@ -401,12 +401,32 @@ def test_sampling(model):
 @pytest.mark.parametrize('model', MODELS)
 def test_sampling_reset_sampling(model):
     """Test ``sample`` method for each model using ``reset_sampling``."""
+    metadata = SingleTableMetadata._load_from_dict({
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'columns': {
+            'column1': {
+                'sdtype': 'numerical'
+            },
+            'column2': {
+                'sdtype': 'address'
+            },
+            'column3': {
+                'sdtype': 'email'
+            },
+            'column4': {
+                'sdtype': 'ssn',
+                'pii': True
+            }
+        }
+    })
     data = pd.DataFrame({
         'column1': list(range(100)),
-        'column2': list(range(100)),
-        'column3': list(range(100))
+        'column2': [str(i) for i in (range(100))],
+        'column3': [str(i) for i in (range(100))],
+        'column4': [str(i) for i in (range(100))],
     })
 
+    model = model.__class__(metadata)
     model.fit(data)
 
     sampled1 = model.sample(10)
@@ -430,7 +450,8 @@ def test_config_creation_doesnt_raise_error():
     test_metadata.update_column(
         column_name='address_col',
         sdtype='address',
-        pii=False)
+        pii=False
+    )
 
     synthesizer = GaussianCopulaSynthesizer(test_metadata)
     synthesizer.fit(test_data)

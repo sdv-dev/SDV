@@ -218,7 +218,7 @@ class TestBaseMultiTableSynthesizer:
             instance.validate(data)
 
     def test_validate_key_error(self):
-        """Test that if a ``KeyError`` is raised this will continue."""
+        """Test that if a ``KeyError`` is raised the code will continue without erroring."""
         # Setup
         metadata = get_multi_table_metadata()
         data = get_multi_table_data()
