@@ -1,5 +1,5 @@
-import pytest
 import pandas as pd
+import pytest
 from faker import Faker
 
 from sdv import load_demo
