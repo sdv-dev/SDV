@@ -143,6 +143,18 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         assert metadata == result
 
+    def test__get_all_foreign_keys(self):
+        """Test that this method returns all the foreign keys for a given table name."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run
+        result = instance._get_all_foreign_keys('nesreca')
+
+        # Assert
+        assert result == ['upravna_enota']
+
     def test__validate_foreign_keys(self):
         """Test that when the data matches as expected there are no errors."""
         # Setup
@@ -440,6 +452,7 @@ class TestBaseMultiTableSynthesizer:
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
         instance.validate = Mock()
+        instance._get_all_foreign_keys = Mock(return_value=['a', 'b'])
         data = {
             'nesreca': pd.DataFrame({
                 'id_nesreca': np.arange(0, 20, 2),
@@ -473,9 +486,23 @@ class TestBaseMultiTableSynthesizer:
             'upravna_enota': synth_upravna_enota.preprocess.return_value
         }
         instance.validate.assert_called_once_with(data)
+        assert instance._get_all_foreign_keys.call_args_list == [
+            call('nesreca'),
+            call('oseba'),
+            call('upravna_enota')
+        ]
+
+        synth_nesreca.auto_assign_transformers.assert_called_once_with(data['nesreca'])
         synth_nesreca.preprocess.assert_called_once_with(data['nesreca'])
+        synth_nesreca.update_transformers.assert_called_once_with({'a': None, 'b': None})
+
         synth_oseba.preprocess.assert_called_once_with(data['oseba'])
+        synth_oseba.preprocess.assert_called_once_with(data['oseba'])
+        synth_oseba.update_transformers.assert_called_once_with({'a': None, 'b': None})
+
         synth_upravna_enota.preprocess.assert_called_once_with(data['upravna_enota'])
+        synth_upravna_enota.preprocess.assert_called_once_with(data['upravna_enota'])
+        synth_upravna_enota.update_transformers.assert_called_once_with({'a': None, 'b': None})
 
     @patch('sdv.multi_table.base.warnings')
     def test_preprocess_warning(self, mock_warnings):

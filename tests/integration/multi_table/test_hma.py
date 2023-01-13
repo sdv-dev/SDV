@@ -2,8 +2,7 @@ import pandas as pd
 import pytest
 from faker import Faker
 
-from sdv import load_demo
-from sdv.metadata import MultiTableMetadata
+from sdv.datasets.demo import download_demo
 from sdv.multi_table import HMASynthesizer
 
 
@@ -12,24 +11,20 @@ def test_hma(tmpdir):
 
     The test consist on loading the demo data, convert the old metadata to the new format
     and then fit a ``HMASynthesizer``. After fitting two samples are being generated, one with
-    a 1.0 scale and one with 2.5 scale.
+    a 0.5 scale and one with 1.5 scale.
     """
     # Setup
-    metadata, data = load_demo(metadata=True)
-    metadata.to_json(tmpdir / 'old.json')
-    MultiTableMetadata.upgrade_metadata(tmpdir / 'old.json', tmpdir / 'new.json')
-    metadata = MultiTableMetadata.load_from_json(tmpdir / 'new.json')
-
+    data, metadata = download_demo('multi_table', 'got_families')
     hmasynthesizer = HMASynthesizer(metadata)
 
     # Run
     hmasynthesizer.fit(data)
-    normal_sample = hmasynthesizer.sample()
-    increased_sample = hmasynthesizer.sample(2.5)
+    normal_sample = hmasynthesizer.sample(0.5)
+    increased_sample = hmasynthesizer.sample(1.5)
 
     # Assert
-    assert list(normal_sample) == ['users', 'sessions', 'transactions']
-    assert list(increased_sample) == ['users', 'sessions', 'transactions']
+    assert list(normal_sample) == ['characters', 'character_families', 'families']
+    assert list(increased_sample) == ['characters', 'character_families', 'families']
     for table_name, table in normal_sample.items():
         assert all(table.columns == data[table_name].columns)
 
@@ -45,16 +40,15 @@ def test_hma_reset_sampling(tmpdir):
     """
     # Setup
     faker = Faker()
-    metadata, data = load_demo(metadata=True)
-    metadata.to_json(tmpdir / 'old.json')
-    MultiTableMetadata.upgrade_metadata(tmpdir / 'old.json', tmpdir / 'new.json')
-    metadata = MultiTableMetadata.load_from_json(tmpdir / 'new.json')
+    data, metadata = download_demo('multi_table', 'got_families')
     metadata.add_column(
-        'transactions',
+        'characters',
         'ssn',
         sdtype='ssn',
     )
-    data['transactions']['ssn'] = [faker.lexify() for _ in range(len(data['transactions']))]
+    data['characters']['ssn'] = [faker.lexify() for _ in range(len(data['characters']))]
+    for table in metadata._tables.values():
+        table._alternate_keys = []
 
     hmasynthesizer = HMASynthesizer(metadata)
 
