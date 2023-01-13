@@ -409,11 +409,7 @@ class DataProcessor:
 
     def reset_sampling(self):
         """Reset the sampling state for the anonymized columns and primary keys."""
-        # Resetting the transformers manually until fixed on RDT
-        for transformer in self._hyper_transformer.field_transformers.values():
-            if transformer is not None:
-                transformer.reset_randomization()
-
+        self._hyper_transformer.reset_randomization()
         self._keys_generators = {
             key: itertools.count()
             for key in self._keys_generators
@@ -566,7 +562,7 @@ class DataProcessor:
                 column_data = reversed_data[column_name]
 
             dtype = self._dtypes[column_name]
-            if pd.api.types.is_integer_dtype(dtype):
+            if pd.api.types.is_integer_dtype(dtype) and column_data.dtype == dtype:
                 column_data = column_data.round()
 
             reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
