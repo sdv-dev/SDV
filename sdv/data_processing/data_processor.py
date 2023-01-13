@@ -494,7 +494,7 @@ class DataProcessor:
 
         try:
             transformed = self._hyper_transformer.transform_subset(data)
-        except (rdt.errors.NotFittedError, rdt.errors.Error):
+        except (rdt.errors.NotFittedError, rdt.errors.TransformerProcessingError):
             transformed = data
 
         return transformed
@@ -562,7 +562,7 @@ class DataProcessor:
                 column_data = reversed_data[column_name]
 
             dtype = self._dtypes[column_name]
-            if pd.api.types.is_integer_dtype(dtype) and column_data.dtype == dtype:
+            if pd.api.types.is_integer_dtype(dtype) and column_data.dtype != 'O':
                 column_data = column_data.round()
 
             reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)

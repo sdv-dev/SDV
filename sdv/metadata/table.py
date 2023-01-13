@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import rdt
 from faker import Faker
+from rdt.errors import ConfigNotSetError, NotFittedError, TransformerProcessingError
 
 from sdv.constraints import Constraint
 from sdv.constraints.errors import (
@@ -656,7 +657,7 @@ class Table:
         LOGGER.debug('Transforming table %s', self.name)
         try:
             return self._hyper_transformer.transform_subset(data)
-        except (rdt.errors.NotFittedError, rdt.errors.Error):
+        except (NotFittedError, TransformerProcessingError, ConfigNotSetError):
             return data
 
     @classmethod
