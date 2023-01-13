@@ -104,16 +104,26 @@ class BaseMultiTableSynthesizer:
         """Return the ``MultiTableMetadata`` for this synthesizer."""
         return self.metadata
 
+    def _get_all_foreign_keys(self, table_name):
+        foreign_keys = []
+        for relation in self.metadata._relationships:
+            if table_name == relation['child_table_name']:
+                foreign_keys.append(deepcopy(relation['child_foreign_key']))
+
+        return foreign_keys
+
     def _validate_foreign_keys(self, data):
         error_msg = None
         errors = []
         for relation in self.metadata._relationships:
             child_table = data.get(relation['child_table_name'])
             parent_table = data.get(relation['parent_table_name'])
+
             if isinstance(child_table, pd.DataFrame) and isinstance(parent_table, pd.DataFrame):
                 child_column = child_table[relation['child_foreign_key']]
                 parent_column = parent_table[relation['parent_primary_key']]
                 missing_values = child_column[~child_column.isin(parent_column)].unique()
+
                 if any(missing_values):
                     message = ', '.join(missing_values[:5].astype(str))
                     if len(missing_values) > 5:
@@ -126,6 +136,7 @@ class BaseMultiTableSynthesizer:
                         f'unknown references: {message}. All the values in this column must '
                         'reference a primary key.'
                     )
+
             if errors:
                 error_msg = 'Relationships:\n'
                 error_msg += '\n'.join(errors)
@@ -269,6 +280,13 @@ class BaseMultiTableSynthesizer:
         processed_data = {}
         for table_name, table_data in data.items():
             synthesizer = self._table_synthesizers[table_name]
+            synthesizer.auto_assign_transformers(table_data)
+            foreign_key_columns = self._get_all_foreign_keys(table_name)
+            column_name_to_transformers = {
+                column_name: None
+                for column_name in foreign_key_columns
+            }
+            synthesizer.update_transformers(column_name_to_transformers)
             processed_data[table_name] = synthesizer.preprocess(table_data)
 
         return processed_data
