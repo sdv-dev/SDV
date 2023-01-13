@@ -7,8 +7,8 @@ from unittest.mock import Mock, call, patch
 import numpy as np
 import pandas as pd
 import pytest
-from rdt.errors import NotFittedError as RDTNotFittedError
 from rdt.errors import Error
+from rdt.errors import NotFittedError as RDTNotFittedError
 from rdt.transformers import FloatFormatter, LabelEncoder
 
 from sdv.constraints.errors import (
