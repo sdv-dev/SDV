@@ -441,6 +441,28 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(NotImplementedError, match=''):
             instance._fit(data)
 
+    def test__skip_foreign_key_transformations(self):
+        """Test the ``_skip_foreign_key_transformations`` method.
+
+        Test that the function creates a dictionary mapping with the columns returned from
+        ``_get_all_foreign_keys`` and maps them to the value ``None`` to avoid being transformed.
+        Then calls ``update_transformers`` for the given ``synthesizer``.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance.validate = Mock()
+        instance._get_all_foreign_keys = Mock(return_value=['a', 'b'])
+        synthesizer = Mock()
+        table_data = Mock()
+
+        # Run
+        instance._skip_foreign_key_transformations(synthesizer, 'oseba', table_data)
+
+        # Assert
+        synthesizer.auto_assign_transformers.assert_called_once_with(table_data)
+        synthesizer.update_transformers.assert_called_once_with({'a': None, 'b': None})
+
     def test_preprocess(self):
         """Test that ``preprocess`` iterates over the ``data`` and preprocess it.
 
