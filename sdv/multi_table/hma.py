@@ -1,6 +1,7 @@
 """Hierarchical Modeling Algorithms."""
 
 import logging
+import math
 from copy import deepcopy
 
 import numpy as np
@@ -90,14 +91,6 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         for relation in self.metadata._relationships:
             if table_name == relation['parent_table_name'] and\
                child_name == relation['child_table_name']:
-                foreign_keys.append(deepcopy(relation['child_foreign_key']))
-
-        return foreign_keys
-
-    def _get_all_foreign_keys(self, table_name):
-        foreign_keys = []
-        for relation in self.metadata._relationships:
-            if table_name == relation['child_table_name']:
                 foreign_keys.append(deepcopy(relation['child_foreign_key']))
 
         return foreign_keys
@@ -277,7 +270,10 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         num_rows_key = f'{prefix}num_rows'
         if num_rows_key in flat_parameters:
             num_rows = flat_parameters[num_rows_key]
-            flat_parameters[num_rows_key] = min(self._max_child_rows[num_rows_key], num_rows)
+            flat_parameters[num_rows_key] = min(
+                self._max_child_rows[num_rows_key],
+                math.ceil(num_rows)
+            )
 
         return flat_parameters.rename(new_keys).to_dict()
 
