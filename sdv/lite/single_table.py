@@ -58,16 +58,13 @@ class SingleTablePreset:
         """
         self._synthesizer.fit(data)
 
-    def sample(self, num_rows, randomize_samples=True, max_tries_per_batch=100,
-               batch_size=None, output_file_path=None, conditions=None):
+    def sample(self, num_rows, max_tries_per_batch=100, batch_size=None,
+               output_file_path=None, conditions=None):
         """Sample rows from this table.
 
         Args:
             num_rows (int):
                 Number of rows to sample. This parameter is required.
-            randomize_samples (bool):
-                Whether or not to use a fixed seed when sampling. Defaults
-                to True.
             max_tries_per_batch (int):
                 Number of times to try sampling discarded rows. Defaults to 100.
             batch_size (int or None):
@@ -84,14 +81,17 @@ class SingleTablePreset:
                 Sampled data.
         """
         sampled = self._synthesizer.sample(
-            num_rows, randomize_samples, max_tries_per_batch,
-            batch_size, output_file_path, conditions
+            num_rows,
+            max_tries_per_batch,
+            batch_size,
+            output_file_path,
+            conditions
         )
 
         return sampled
 
-    def sample_conditions(self, conditions, max_tries_per_batch=100, batch_size=None,
-                          randomize_samples=True, output_file_path=None):
+    def sample_conditions(self, conditions, max_tries_per_batch=100,
+                          batch_size=None, output_file_path=None):
         """Sample rows from this table with the given conditions.
 
         Args:
@@ -104,9 +104,6 @@ class SingleTablePreset:
             batch_size (int):
                 The batch size to use per attempt at sampling. Defaults to 10 times
                 the number of rows.
-            randomize_samples (bool):
-                Whether or not to use a fixed seed when sampling. Defaults
-                to True.
             output_file_path (str or None):
                 The file to periodically write sampled rows to. Defaults to
                 a temporary file, if None.
@@ -116,12 +113,16 @@ class SingleTablePreset:
                 Sampled data.
         """
         sampled = self._synthesizer.sample_conditions(
-            conditions, max_tries_per_batch, batch_size, randomize_samples, output_file_path)
+            conditions,
+            max_tries_per_batch,
+            batch_size,
+            output_file_path
+        )
 
         return sampled
 
-    def sample_remaining_columns(self, known_columns, max_tries_per_batch=100, batch_size=None,
-                                 randomize_samples=True, output_file_path=None):
+    def sample_remaining_columns(self, known_columns, max_tries_per_batch=100,
+                                 batch_size=None, output_file_path=None):
         """Sample rows from this table.
 
         Args:
@@ -134,9 +135,6 @@ class SingleTablePreset:
             batch_size (int):
                 The batch size to use per attempt at sampling. Defaults to 10 times
                 the number of rows.
-            randomize_samples (bool):
-                Whether or not to use a fixed seed when sampling. Defaults
-                to True.
             output_file_path (str or None):
                 The file to periodically write sampled rows to. Defaults to
                 a temporary file, if None.
@@ -146,7 +144,11 @@ class SingleTablePreset:
                 Sampled data.
         """
         sampled = self._synthesizer.sample_remaining_columns(
-            known_columns, max_tries_per_batch, batch_size, randomize_samples, output_file_path)
+            known_columns,
+            max_tries_per_batch,
+            batch_size,
+            output_file_path
+        )
 
         return sampled
 

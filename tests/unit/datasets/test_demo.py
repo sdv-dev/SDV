@@ -136,7 +136,7 @@ def test_download_demo_multi_table(tmpdir):
         'family_id': [1, 2],
         'name': ['Stark', 'Tully'],
     })
-    pd.testing.assert_frame_equal(tables['families.csv'].head(2), expected_families)
+    pd.testing.assert_frame_equal(tables['families'].head(2), expected_families)
 
     expected_character_families = pd.DataFrame({
         'character_id': [1, 1],
@@ -145,14 +145,14 @@ def test_download_demo_multi_table(tmpdir):
         'type': ['father', 'mother']
     })
     pd.testing.assert_frame_equal(
-        tables['character_families.csv'].head(2), expected_character_families)
+        tables['character_families'].head(2), expected_character_families)
 
     expected_characters = pd.DataFrame({
         'age': [20, 16],
         'character_id': [1, 2],
         'name': ['Jon', 'Arya']
     })
-    pd.testing.assert_frame_equal(tables['characters.csv'].head(2), expected_characters)
+    pd.testing.assert_frame_equal(tables['characters'].head(2), expected_characters)
 
     expected_metadata_dict = {
         'tables': {
@@ -202,7 +202,6 @@ def test_download_demo_multi_table(tmpdir):
                         'computer_representation': 'Int64'
                     },
                 },
-                'alternate_keys': ['character_id', 'family_id']
             },
         },
         'relationships': [

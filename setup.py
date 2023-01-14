@@ -22,7 +22,7 @@ install_requires = [
     'copulas>=0.7.0,<0.8',
     'ctgan>=0.5.3.dev0,<0.6',
     'deepecho>=0.3.0.post1,<0.4',
-    'rdt>=1.3.0.dev0,<2.0',
+    'rdt>=1.3.0.dev0,<1.3.0.dev1',
     'sdmetrics>=0.8.0,<0.9',
     'cloudpickle>=2.1.0,<3.0'
 ]

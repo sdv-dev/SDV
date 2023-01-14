@@ -389,56 +389,51 @@ def test_multiple_fits():
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test_sampling_with_randomize_samples_true(model):
-    data = pd.DataFrame({
-        'column1': list(range(100)),
-        'column2': list(range(100)),
-        'column3': list(range(100))
-    })
+def test_sampling(model):
+    """Test that samples are different when ``reset_sampling`` is not called."""
+    sample_1 = model.sample(10)
+    sample_2 = model.sample(10)
 
-    model.fit(data)
-
-    sampled1 = model.sample(10, randomize_samples=True)
-    sampled2 = model.sample(10, randomize_samples=True)
-
-    assert not sampled1.equals(sampled2)
+    with pytest.raises(AssertionError):
+        pd.testing.assert_frame_equal(sample_1, sample_2)
 
 
 @pytest.mark.parametrize('model', MODELS)
-def test_sampling_with_randomize_samples_false(model):
+def test_sampling_reset_sampling(model):
+    """Test ``sample`` method for each model using ``reset_sampling``."""
+    metadata = SingleTableMetadata._load_from_dict({
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'columns': {
+            'column1': {
+                'sdtype': 'numerical'
+            },
+            'column2': {
+                'sdtype': 'address'
+            },
+            'column3': {
+                'sdtype': 'email'
+            },
+            'column4': {
+                'sdtype': 'ssn',
+                'pii': True
+            }
+        }
+    })
     data = pd.DataFrame({
         'column1': list(range(100)),
-        'column2': list(range(100)),
-        'column3': list(range(100))
+        'column2': [str(i) for i in (range(100))],
+        'column3': [str(i) for i in (range(100))],
+        'column4': [str(i) for i in (range(100))],
     })
 
+    model = model.__class__(metadata)
     model.fit(data)
 
-    sampled1 = model.sample(10, randomize_samples=False)
-    sampled2 = model.sample(10, randomize_samples=False)
+    sampled1 = model.sample(10)
+    model.reset_sampling()
+    sampled2 = model.sample(10)
 
     pd.testing.assert_frame_equal(sampled1, sampled2)
-
-
-@pytest.mark.parametrize('model', MODELS)
-def test_sampling_with_randomize_samples_alternating(model):
-    data = pd.DataFrame({
-        'column1': list(range(100)),
-        'column2': list(range(100)),
-        'column3': list(range(100))
-    })
-
-    model.fit(data)
-
-    sampled_fixed1 = model.sample(10, randomize_samples=False)
-    sampled_random1 = model.sample(10, randomize_samples=True)
-    sampled_fixed2 = model.sample(10, randomize_samples=False)
-    sampled_random2 = model.sample(10, randomize_samples=True)
-
-    pd.testing.assert_frame_equal(sampled_fixed1, sampled_fixed2)
-    assert not sampled_random1.equals(sampled_fixed1)
-    assert not sampled_random1.equals(sampled_random2)
-    assert not sampled_random2.equals(sampled_fixed1)
 
 
 def test_config_creation_doesnt_raise_error():
@@ -455,7 +450,8 @@ def test_config_creation_doesnt_raise_error():
     test_metadata.update_column(
         column_name='address_col',
         sdtype='address',
-        pii=False)
+        pii=False
+    )
 
     synthesizer = GaussianCopulaSynthesizer(test_metadata)
     synthesizer.fit(test_data)
