@@ -55,6 +55,8 @@ class TestBaseSingleTableSynthesizer:
         assert instance.enforce_min_max_values is True
         assert instance.enforce_rounding is True
         assert instance._data_processor == mock_data_processor.return_value
+        assert instance._random_state_set is False
+        assert instance._fitted is False
         mock_data_processor.assert_called_once_with(
             metadata=metadata,
             enforce_rounding=instance.enforce_rounding,
@@ -260,11 +262,14 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         instance = Mock()
         processed_data = Mock()
+        instance._random_state_set = True
+        instance._fitted = True
 
         # Run
         BaseSingleTableSynthesizer.fit(instance, processed_data)
 
         # Assert
+        assert instance._random_state_set is False
         instance._preprocess.assert_called_once_with(processed_data)
         instance.fit_processed_data.assert_called_once_with(instance._preprocess.return_value)
 
@@ -369,7 +374,7 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
 
-    def test_validate_keys_with_missing2(self):
+    def test_validate_keys_with_missing_with_single_sequence_key(self):
         """Test error is raised if keys contain missing values.
 
         Test the case with a single sequence key.
@@ -695,6 +700,24 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         instance._model.set_random_state.assert_called_once_with(rng_seed)
+        assert instance._random_state_set is True
+
+    def test_reset_sampling(self):
+        """Test the ``reset_sampling`` method.
+
+        Ensure that the ``reset_sampling`` sets the ``instance._random_state_set`` is set to
+        ``False`` and the ``instance._data_processor.reset_sampling`` is being called.
+        """
+        # Setup
+        instance = Mock()
+        instance._random_state_set = True
+
+        # Run
+        BaseSingleTableSynthesizer.reset_sampling(instance)
+
+        # Assert
+        assert instance._random_state_set is False
+        instance._data_processor.reset_sampling.assert_called_once_with()
 
     def test__filter_conditions(self):
         """Test that the method filters out data that doesn't meet the conditions."""
@@ -727,12 +750,17 @@ class TestBaseSingleTableSynthesizer:
         pd.testing.assert_frame_equal(filtered_data, expected_data)
 
     def test__sample_rows_without_conditions(self):
-        """Test that sample rows calls ``_sample`` when conditions is ``None``."""
+        """Test that sample rows calls ``_sample`` when conditions is ``None``.
+
+        Also ensure that when ``_random_state_set`` is ``False`` this calls
+        ``_set_random_state`` with the ``FIXED_RNG_SEED`` which is ``73251``.
+        """
         # Setup
         data = pd.DataFrame({
             'name': ['John', 'Doe', 'John Doe']
         })
         instance = Mock()
+        instance._random_state_set = False
         instance._data_processor._dtypes = pd.Series()
         instance._data_processor.filter_valid.return_value = data
 
@@ -749,6 +777,7 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.filter_valid.assert_called_once_with(
             instance._data_processor.reverse_transform.return_value
         )
+        instance._set_random_state.assert_called_once_with(73251)
 
     def test__sample_rows_with_conditions(self):
         """Test that sample rows calls with the transformed conditions the ``_sample``."""
@@ -1210,49 +1239,6 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         assert result == []
 
-    def test__randomize_samples_false(self):
-        """Test when the ``randomize_samples`` parameter is ``False``.
-
-        When ``randomize_samples`` is ``False`` this calls the method ` `_set_random_state``
-        with a fixed number (73251).
-        """
-        # Setup
-        instance = Mock()
-
-        # Run
-        BaseSingleTableSynthesizer._randomize_samples(instance, False)
-
-        # Assert
-        instance._set_random_state.assert_called_once_with(73251)
-
-    def test__randomize_samples_none(self):
-        """Test when the ``randomize_samples`` parameter is ``True``.
-
-        When ``randomize_samples`` is ``True`` this calls the method ` `_set_random_state``
-        with ``None`` which resets the state.
-        """
-        # Setup
-        instance = Mock()
-
-        # Run
-        BaseSingleTableSynthesizer._randomize_samples(instance, True)
-
-        # Assert
-        instance._set_random_state.assert_called_once_with(None)
-
-    def test__randomize_samples_model_is_none(self):
-        """Test when the ``instance._model`` is ``None``."""
-        # Setup
-        instance = Mock()
-        instance._model = None
-
-        # Run
-        result = BaseSingleTableSynthesizer._randomize_samples(instance, True)
-
-        # Assert
-        assert result is None
-        instance._set_random_state.assert_not_called()
-
     def test__sample_with_progress_bar_with_conditions(self):
         """Test that a ``TypeError`` is raised when there are conditions."""
         # Setup
@@ -1398,7 +1384,6 @@ class TestBaseSingleTableSynthesizer:
         """Test that we use ``_sample_with_progress_bar`` in this method."""
         # Setup
         num_rows = 10
-        randomize_samples = False
         max_tries_per_batch = 50
         batch_size = 5
         output_file_path = 'temp.csv'
@@ -1410,7 +1395,6 @@ class TestBaseSingleTableSynthesizer:
         result = BaseSingleTableSynthesizer.sample(
             instance,
             num_rows,
-            randomize_samples,
             max_tries_per_batch,
             batch_size,
             output_file_path,
@@ -1420,7 +1404,6 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         instance._sample_with_progress_bar.assert_called_once_with(
             10,
-            False,
             50,
             5,
             'temp.csv',
@@ -1611,7 +1594,6 @@ class TestBaseSingleTableSynthesizer:
 
         instance._validate_conditions = Mock()
         instance._sample_with_conditions = Mock()
-        instance._randomize_samples = Mock()
         instance._model = GaussianMultivariate()
         instance._sample_with_conditions.return_value = pd.DataFrame({'name': ['John Doe']})
 
@@ -1619,7 +1601,7 @@ class TestBaseSingleTableSynthesizer:
         mock_tqdm.tqdm.return_value = progress_bar
 
         # Run
-        result = instance._sample_conditions(conditions, 10, 10, False, '.sample.csv.temp')
+        result = instance._sample_conditions(conditions, 10, 10, '.sample.csv.temp')
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
@@ -1648,7 +1630,6 @@ class TestBaseSingleTableSynthesizer:
             conditions,
             10,
             10,
-            False,
             '.sample.csv.temp'
         )
 
@@ -1675,7 +1656,6 @@ class TestBaseSingleTableSynthesizer:
             ['conditions'],
             100,
             None,
-            True,
             None
         )
 
@@ -1694,7 +1674,6 @@ class TestBaseSingleTableSynthesizer:
 
         instance._validate_conditions = Mock()
         instance._sample_with_conditions = Mock()
-        instance._randomize_samples = Mock()
         instance._model = GaussianMultivariate()
         instance._sample_with_conditions.return_value = pd.DataFrame({'name': ['John Doe']})
         mock_validate_file_path.return_value = '.sample.csv.temp'
@@ -1707,7 +1686,6 @@ class TestBaseSingleTableSynthesizer:
             known_columns,
             10,
             10,
-            False,
             '.sample.csv.temp'
         )
 
@@ -1736,7 +1714,6 @@ class TestBaseSingleTableSynthesizer:
 
         instance._validate_conditions = Mock()
         instance._sample_with_conditions = Mock()
-        instance._randomize_samples = Mock()
         instance._model = GaussianMultivariate()
         keyboard_error = KeyboardInterrupt()
         instance._sample_with_conditions.side_effect = [keyboard_error]
@@ -1750,7 +1727,6 @@ class TestBaseSingleTableSynthesizer:
             known_columns,
             10,
             10,
-            False,
             'temp_file'
         )
 
@@ -1765,7 +1741,6 @@ class TestBaseSingleTableSynthesizer:
         known_columns = pd.DataFrame({'name': ['Johanna']})
         instance._validate_conditions = Mock()
         instance._sample_with_conditions = Mock()
-        instance._randomize_samples = Mock()
 
         # Run
         result = BaseSingleTableSynthesizer.sample_remaining_columns(instance, known_columns)

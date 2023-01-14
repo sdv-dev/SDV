@@ -1,9 +1,10 @@
 """Base Multi Table Synthesizer class."""
-
+import contextlib
 import warnings
 from collections import defaultdict
 from copy import deepcopy
 
+import numpy as np
 import pandas as pd
 
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -23,6 +24,21 @@ class BaseMultiTableSynthesizer:
     """
 
     _synthesizer = GaussianCopulaSynthesizer
+    _numpy_seed = 73251
+
+    @contextlib.contextmanager
+    def _set_temp_numpy_seed(self):
+        initial_state = np.random.get_state()
+        if isinstance(self._numpy_seed, int):
+            np.random.seed(self._numpy_seed)
+        else:
+            np.random.set_state(self._numpy_seed)
+
+        try:
+            yield
+        finally:
+            self._numpy_seed = np.random.get_state()
+            np.random.set_state(initial_state)
 
     def _initialize_models(self):
         for table_name, table_metadata in self.metadata._tables.items():
@@ -88,16 +104,26 @@ class BaseMultiTableSynthesizer:
         """Return the ``MultiTableMetadata`` for this synthesizer."""
         return self.metadata
 
+    def _get_all_foreign_keys(self, table_name):
+        foreign_keys = []
+        for relation in self.metadata._relationships:
+            if table_name == relation['child_table_name']:
+                foreign_keys.append(deepcopy(relation['child_foreign_key']))
+
+        return foreign_keys
+
     def _validate_foreign_keys(self, data):
         error_msg = None
         errors = []
         for relation in self.metadata._relationships:
             child_table = data.get(relation['child_table_name'])
             parent_table = data.get(relation['parent_table_name'])
+
             if isinstance(child_table, pd.DataFrame) and isinstance(parent_table, pd.DataFrame):
                 child_column = child_table[relation['child_foreign_key']]
                 parent_column = parent_table[relation['parent_primary_key']]
                 missing_values = child_column[~child_column.isin(parent_column)].unique()
+
                 if any(missing_values):
                     message = ', '.join(missing_values[:5].astype(str))
                     if len(missing_values) > 5:
@@ -110,6 +136,7 @@ class BaseMultiTableSynthesizer:
                         f'unknown references: {message}. All the values in this column must '
                         'reference a primary key.'
                     )
+
             if errors:
                 error_msg = 'Relationships:\n'
                 error_msg += '\n'.join(errors)
@@ -232,6 +259,16 @@ class BaseMultiTableSynthesizer:
         """
         raise NotImplementedError()
 
+    def _skip_foreign_key_transformations(self, synthesizer, table_name, table_data):
+        """Update the ``synthesizer`` to ignore the foreign keys while preprocessing the data."""
+        synthesizer.auto_assign_transformers(table_data)
+        foreign_key_columns = self._get_all_foreign_keys(table_name)
+        column_name_to_transformers = {
+            column_name: None
+            for column_name in foreign_key_columns
+        }
+        synthesizer.update_transformers(column_name_to_transformers)
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -253,6 +290,7 @@ class BaseMultiTableSynthesizer:
         processed_data = {}
         for table_name, table_data in data.items():
             synthesizer = self._table_synthesizers[table_name]
+            self._skip_foreign_key_transformations(synthesizer, table_name, table_data)
             processed_data[table_name] = synthesizer.preprocess(table_data)
 
         return processed_data
@@ -279,10 +317,16 @@ class BaseMultiTableSynthesizer:
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
 
-    def _sample(self, scale, randomize_samples):
+    def reset_sampling(self):
+        """Reset the sampling to the state that was left right after fitting."""
+        self._numpy_seed = 73251
+        for synthesizer in self._table_synthesizers.values():
+            synthesizer.reset_sampling()
+
+    def _sample(self, scale):
         raise NotImplementedError()
 
-    def sample(self, scale=1.0, randomize_samples=False):
+    def sample(self, scale=1.0):
         """Generate synthetic data for the entire dataset.
 
         Args:
@@ -292,13 +336,11 @@ class BaseMultiTableSynthesizer:
                 create more rows than the original data by a factor of ``scale``.
                 If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
                 than the original tables. Defaults to ``1.0``.
-            randomize_samples (bool):
-                Whether or not the data should change on each sample call. If ``True``
-                every time ``sample`` is called, different data will be generated, if ``False``
-                every time ``sample`` is called, the same data will be generated. Defaults to
-                ``False``.
         """
-        return self._sample(scale=scale, randomize_samples=randomize_samples)
+        with self._set_temp_numpy_seed():
+            sampled_data = self._sample(scale=scale)
+
+        return sampled_data
 
     def get_learned_distributions(self, table_name):
         """Get the marginal distributions used by the ``GaussianCopula`` for a table.

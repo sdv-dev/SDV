@@ -113,7 +113,7 @@ class TestTabularPreset:
         SingleTablePreset.sample(preset, 5)
 
         # Assert
-        synthesizer.sample.assert_called_once_with(5, True, 100, None, None, None)
+        synthesizer.sample.assert_called_once_with(5, 100, None, None, None)
 
     def test_sample_conditions(self):
         """Test that the synthesizer's ``sample_conditions`` is called with the expected args."""
@@ -127,7 +127,7 @@ class TestTabularPreset:
         SingleTablePreset.sample_conditions(preset, conditions)
 
         # Assert
-        synthesizer.sample_conditions.assert_called_once_with(conditions, 100, None, True, None)
+        synthesizer.sample_conditions.assert_called_once_with(conditions, 100, None, None)
 
     def test_sample_conditions_with_max_tries(self):
         """Test the method with max tries.
@@ -149,7 +149,7 @@ class TestTabularPreset:
         )
 
         # Assert
-        synthesizer.sample_conditions.assert_called_once_with(conditions, 2, 5, True, None)
+        synthesizer.sample_conditions.assert_called_once_with(conditions, 2, 5, None)
 
     def test_sample_remaining_columns(self):
         """Test the synthesizer's ``sample_remaining_columns`` is called with expected args."""
@@ -163,8 +163,7 @@ class TestTabularPreset:
         SingleTablePreset.sample_remaining_columns(preset, conditions)
 
         # Assert
-        synthesizer.sample_remaining_columns.assert_called_once_with(
-            conditions, 100, None, True, None)
+        synthesizer.sample_remaining_columns.assert_called_once_with(conditions, 100, None, None)
 
     def test_sample_remaining_columns_with_max_tries(self):
         """Test the method with max tries.
@@ -183,7 +182,7 @@ class TestTabularPreset:
             preset, conditions, max_tries_per_batch=2, batch_size=5)
 
         # Assert
-        synthesizer.sample_remaining_columns.assert_called_once_with(conditions, 2, 5, True, None)
+        synthesizer.sample_remaining_columns.assert_called_once_with(conditions, 2, 5, None)
 
     def test_list_available_presets(self):
         """Tests that the method prints all the available presets."""

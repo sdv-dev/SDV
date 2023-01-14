@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import urllib.request
+from pathlib import Path
 from zipfile import ZipFile
 
 import pandas as pd
@@ -68,13 +69,15 @@ def _get_data(modality, output_folder_name, in_memory_directory):
     if output_folder_name:
         for filename in os.listdir(output_folder_name):
             if filename.endswith('.csv'):
+                table_name = Path(filename).stem
                 data_path = os.path.join(output_folder_name, filename)
-                data[filename] = pd.read_csv(data_path)
+                data[table_name] = pd.read_csv(data_path)
 
     else:
         for filename, file_ in in_memory_directory.items():
             if filename.endswith('.csv'):
-                data[filename] = pd.read_csv(io.StringIO(file_.decode()))
+                table_name = Path(filename).stem
+                data[table_name] = pd.read_csv(io.StringIO(file_.decode()))
 
     if modality != 'multi_table':
         data = data.popitem()[1]
