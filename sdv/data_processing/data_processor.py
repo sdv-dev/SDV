@@ -407,6 +407,18 @@ class DataProcessor:
         self._fit_hyper_transformer(constrained)
         self.fitted = True
 
+    def reset_sampling(self):
+        """Reset the sampling state for the anonymized columns and primary keys."""
+        # Resetting the transformers manually until fixed on RDT
+        for transformer in self._hyper_transformer.field_transformers.values():
+            if transformer is not None:
+                transformer.reset_randomization()
+
+        self._keys_generators = {
+            key: itertools.count()
+            for key in self._keys_generators
+        }
+
     def generate_keys(self, num_rows, reset_keys=False):
         """Generate the columns that are identified as ``keys``.
 
@@ -554,7 +566,7 @@ class DataProcessor:
                 column_data = reversed_data[column_name]
 
             dtype = self._dtypes[column_name]
-            if pd.api.types.is_integer_dtype(dtype):
+            if pd.api.types.is_integer_dtype(dtype) and column_data.dtype != 'O':
                 column_data = column_data.round()
 
             reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)

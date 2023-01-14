@@ -143,6 +143,18 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         assert metadata == result
 
+    def test__get_all_foreign_keys(self):
+        """Test that this method returns all the foreign keys for a given table name."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run
+        result = instance._get_all_foreign_keys('nesreca')
+
+        # Assert
+        assert result == ['upravna_enota']
+
     def test__validate_foreign_keys(self):
         """Test that when the data matches as expected there are no errors."""
         # Setup
@@ -216,6 +228,17 @@ class TestBaseMultiTableSynthesizer:
         error_msg = "The provided data is missing the tables {'nesreca'}."
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)
+
+    def test_validate_key_error(self):
+        """Test that if a ``KeyError`` is raised the code will continue without erroring."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._table_synthesizers.popitem()
+
+        # Run and Assert
+        instance.validate(data)
 
     def test_validate_data_is_not_dataframe(self):
         """Test that an error is being raised when the data is not a dataframe."""
@@ -418,6 +441,28 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(NotImplementedError, match=''):
             instance._fit(data)
 
+    def test__skip_foreign_key_transformations(self):
+        """Test the ``_skip_foreign_key_transformations`` method.
+
+        Test that the function creates a dictionary mapping with the columns returned from
+        ``_get_all_foreign_keys`` and maps them to the value ``None`` to avoid being transformed.
+        Then calls ``update_transformers`` for the given ``synthesizer``.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance.validate = Mock()
+        instance._get_all_foreign_keys = Mock(return_value=['a', 'b'])
+        synthesizer = Mock()
+        table_data = Mock()
+
+        # Run
+        instance._skip_foreign_key_transformations(synthesizer, 'oseba', table_data)
+
+        # Assert
+        synthesizer.auto_assign_transformers.assert_called_once_with(table_data)
+        synthesizer.update_transformers.assert_called_once_with({'a': None, 'b': None})
+
     def test_preprocess(self):
         """Test that ``preprocess`` iterates over the ``data`` and preprocess it.
 
@@ -429,6 +474,7 @@ class TestBaseMultiTableSynthesizer:
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
         instance.validate = Mock()
+        instance._get_all_foreign_keys = Mock(return_value=['a', 'b'])
         data = {
             'nesreca': pd.DataFrame({
                 'id_nesreca': np.arange(0, 20, 2),
@@ -462,9 +508,23 @@ class TestBaseMultiTableSynthesizer:
             'upravna_enota': synth_upravna_enota.preprocess.return_value
         }
         instance.validate.assert_called_once_with(data)
+        assert instance._get_all_foreign_keys.call_args_list == [
+            call('nesreca'),
+            call('oseba'),
+            call('upravna_enota')
+        ]
+
+        synth_nesreca.auto_assign_transformers.assert_called_once_with(data['nesreca'])
         synth_nesreca.preprocess.assert_called_once_with(data['nesreca'])
+        synth_nesreca.update_transformers.assert_called_once_with({'a': None, 'b': None})
+
         synth_oseba.preprocess.assert_called_once_with(data['oseba'])
+        synth_oseba.preprocess.assert_called_once_with(data['oseba'])
+        synth_oseba.update_transformers.assert_called_once_with({'a': None, 'b': None})
+
         synth_upravna_enota.preprocess.assert_called_once_with(data['upravna_enota'])
+        synth_upravna_enota.preprocess.assert_called_once_with(data['upravna_enota'])
+        synth_upravna_enota.update_transformers.assert_called_once_with({'a': None, 'b': None})
 
     @patch('sdv.multi_table.base.warnings')
     def test_preprocess_warning(self, mock_warnings):
@@ -541,6 +601,29 @@ class TestBaseMultiTableSynthesizer:
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
 
+    def test_reset_sampling(self):
+        """Test that ``reset_sampling`` resets the numpy seed and the synthesizers."""
+        # Setup
+        instance = Mock()
+        instance._numpy_seed = object()
+        users_mock = Mock()
+        sessions_mock = Mock()
+        transactions_mock = Mock()
+        instance._table_synthesizers = {
+            'users': users_mock,
+            'sessions': sessions_mock,
+            'transactions': transactions_mock,
+        }
+
+        # Run
+        BaseMultiTableSynthesizer.reset_sampling(instance)
+
+        # Assert
+        assert instance._numpy_seed == 73251
+        users_mock.reset_sampling.assert_called_once_with()
+        sessions_mock.reset_sampling.assert_called_once_with()
+        transactions_mock.reset_sampling.assert_called_once_with()
+
     def test__sample(self):
         """Test that ``_sample`` raises a ``NotImplementedError``."""
         # Setup
@@ -549,7 +632,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Run and Assert
         with pytest.raises(NotImplementedError, match=''):
-            instance._sample(scale=1.0, randomize_samples=False)
+            instance._sample(scale=1.0)
 
     def test_sample(self):
         """Test that ``sample`` calls the ``_sample`` with the given arguments."""
@@ -559,10 +642,10 @@ class TestBaseMultiTableSynthesizer:
         instance._sample = Mock()
 
         # Run
-        instance.sample(scale=1.5, randomize_samples=True)
+        instance.sample(scale=1.5)
 
         # Assert
-        instance._sample.assert_called_once_with(scale=1.5, randomize_samples=True)
+        instance._sample.assert_called_once_with(scale=1.5)
 
     def test_get_learned_distributions_raises_an_error(self):
         """Test that ``get_learned_distributions`` raises an error."""
