@@ -1,5 +1,6 @@
 """Base Synthesizer class."""
 
+import copy
 import functools
 import inspect
 import logging
@@ -977,6 +978,15 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             batch_size,
             output_file_path
         )
+
+    def get_constraints(self):
+        """Get list of constraints added to the synthesizer.
+
+        Returns:
+            list:
+                List of dictionaries describing the constraints of the synthesizer.
+        """
+        return copy.deepcopy(self.metadata._constraints)
 
     def save(self, path):
         """Save this model instance to the given path using cloudpickle.

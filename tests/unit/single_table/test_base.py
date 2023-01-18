@@ -1749,6 +1749,41 @@ class TestBaseSingleTableSynthesizer:
         assert result == instance._sample_remaining_columns.return_value
         instance._sample_remaining_columns.assert_called_once()
 
+    def test_get_constraints_empty(self):
+        """Test no constraints are returned when none were set."""
+        #  Setupy
+        metadata = SingleTableMetadata()
+        instance = BaseSingleTableSynthesizer(metadata)
+
+        # Run
+        constraints = instance.get_constraints()
+
+        # Assert
+        assert constraints == []
+
+    def test_get_constraints(self):
+        """Test the constraints passed to the metadata are returned."""
+        #  Setupy
+        metadata = SingleTableMetadata()
+        metadata.add_column('age', sdtype='numerical')
+        metadata.add_column('time', sdtype='numerical')
+        metadata.add_constraint('Positive', column_name='age', strict_boundaries=True)
+        metadata.add_constraint('Negative', column_name='time', strict_boundaries=False)
+        instance = BaseSingleTableSynthesizer(metadata)
+
+        # Run
+        constraints = instance.get_constraints()
+
+        # Assert
+        constraint1, constraint2 = constraints
+        assert constraint1['constraint_name'] == 'Positive'
+        assert constraint1['column_name'] == 'age'
+        assert constraint1['strict_boundaries'] is True
+
+        assert constraint2['constraint_name'] == 'Negative'
+        assert constraint2['column_name'] == 'time'
+        assert constraint2['strict_boundaries'] is False
+
     def test_save(self):
         """Test that ``save`` stores the current model."""
         # Setup
