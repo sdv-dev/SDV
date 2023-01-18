@@ -162,17 +162,13 @@ def get_available_demos(modality):
     """
     _validate_modalities(modality)
     client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
-    paginator = client.get_paginator('list_objects_v2')
-    page_iterator = paginator.paginate(Bucket=BUCKET)
     tables_info = defaultdict(list)
-    for page in page_iterator:
-        if page['KeyCount'] > 0:
-            for item in page.get('Contents', []):
-                dataset_modality, dataset = item['Key'].split('/', 1)
-                if dataset_modality == modality.upper():
-                    tables_info['dataset_name'].append(dataset)
-                    headers = client.head_object(Bucket=BUCKET, Key=item['Key'])['Metadata']
-                    tables_info['size_MB'].append(headers['size-mb'])
-                    tables_info['num_tables'].append(headers['num-tables'])
+    for item in client.list_objects(Bucket=BUCKET)['Contents']:
+        dataset_modality, dataset = item['Key'].split('/', 1)
+        if dataset_modality == modality.upper():
+            tables_info['dataset_name'].append(dataset)
+            headers = client.head_object(Bucket=BUCKET, Key=item['Key'])['Metadata']
+            tables_info['size_MB'].append(headers['size-mb'])
+            tables_info['num_tables'].append(headers['num-tables'])
 
     return pd.DataFrame(tables_info)

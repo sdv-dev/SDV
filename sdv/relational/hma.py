@@ -211,7 +211,7 @@ class HMA1(BaseRelationalModel):
                 }
 
                 column_data = table_data[column]
-                if column_data.dtype in (np.int, np.float):
+                if column_data.dtype in (int, float):
                     fill_value = 0 if column_data.isna().all() else column_data.mean()
                 else:
                     fill_value = column_data.mode()[0]
