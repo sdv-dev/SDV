@@ -354,10 +354,10 @@ class Constraint(metaclass=ConstraintMeta):
                 New constraint instance.
         """
         constraint_dict = constraint_dict.copy()
-        constraint_class = constraint_dict.pop('constraint_name')
+        constraint_class = constraint_dict.get('constraint_class')
         constraint_class = cls._get_class_from_dict(constraint_class)
 
-        return constraint_class(**constraint_dict)
+        return constraint_class(**constraint_dict.get('constraint_parameters', {}))
 
     def to_dict(self):
         """Return a dict representation of this Constraint.
