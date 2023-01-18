@@ -86,7 +86,7 @@ class DataProcessor:
         self._enforce_rounding = enforce_rounding
         self._enforce_min_max_values = enforce_min_max_values
         self._model_kwargs = model_kwargs or {}
-        self._constraint_list = []
+        self._constraints_list = []
         self._constraints = []
         self._constraints_to_reverse = []
         self._transformers_by_sdtype = self._DEFAULT_TRANSFORMERS_BY_SDTYPE.copy()
@@ -149,19 +149,21 @@ class DataProcessor:
 
         return sdtypes
 
-    def _validate_constraint(self, constraint_class, constraint_parameters):
+    def _validate_constraint_dict(self, constraint_dict):
         """Validate a constraint against the single table metadata.
 
         Args:
-            constraint_class (string):
-                Name of the constraint class.
-            constraint_parameters:
-                Dictionary describing any arguments the constraint requires.
+            constraint_dict (dict):
+                A dictionary containing:
+                    * ``constraint_class``: Name of the constraint to apply.
+                    * ``constraint_parameters``: A dictionary with the constraint parameters.
         """
+        constraint_class = constraint_dict['constraint_class']
+        constraint_parameters = constraint_dict.get('constraint_parameters', {})
         try:
             constraint_class = Constraint._get_class_from_dict(constraint_class)
         except KeyError:
-            raise InvalidMetadataError(f"Invalid constraint ('{constraint_class}').")
+            raise InvalidConstraintsError(f"Invalid constraint class ('{constraint_class}').")
 
         constraint_class._validate_metadata(self.metadata, **constraint_parameters)
 
@@ -179,23 +181,20 @@ class DataProcessor:
         for constraint_dict in constraints:
             constraint_dict = deepcopy(constraint_dict)
             try:
-                self._validate_constraint(
-                    constraint_dict['constraint_class'],
-                    constraint_dict.get('constraint_parameters', {})
-                )
+                self._validate_constraint_dict(constraint_dict)
                 validated_constraints.append(constraint_dict)
-            except AggregateConstraintsError as e:
+            except (AggregateConstraintsError, InvalidConstraintsError) as e:
                 reformated_errors = '\n'.join(map(str, e.errors))
                 errors.append(reformated_errors)
 
         if errors:
             raise InvalidConstraintsError(errors)
 
-        self._constraint_list.extend(validated_constraints)
+        self._constraints_list.extend(validated_constraints)
 
     def get_constraints(self):
         """Return a list of the current constraints that will be used."""
-        return deepcopy(self._constraint_list)
+        return deepcopy(self._constraints_list)
 
     def _fit_constraints(self, data):
         errors = []
@@ -440,7 +439,7 @@ class DataProcessor:
     def _load_constraints(self):
         loaded_constraints = [
             Constraint.from_dict(constraint)
-            for constraint in self._constraint_list
+            for constraint in self._constraints_list
         ]
         return loaded_constraints
 
@@ -657,6 +656,7 @@ class DataProcessor:
         constraints_to_reverse = [cnt.to_dict() for cnt in self._constraints_to_reverse]
         return {
             'metadata': deepcopy(self.metadata.to_dict()),
+            'constraints_list': deepcopy(self._constraints_list),
             'constraints_to_reverse': constraints_to_reverse,
             'model_kwargs': deepcopy(self._model_kwargs)
         }
@@ -679,9 +679,11 @@ class DataProcessor:
             enforce_min_max_values=enforce_min_max_values,
             model_kwargs=metadata_dict.get('model_kwargs')
         )
+
         instance._constraints_to_reverse = [
             Constraint.from_dict(cnt) for cnt in metadata_dict.get('constraints_to_reverse', [])
         ]
+        instance._constraints_list = metadata_dict.get('constraints_list', [])
 
         return instance
 

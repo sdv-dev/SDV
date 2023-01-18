@@ -271,7 +271,7 @@ class BaseSynthesizer:
         return self.metadata
 
     def add_constraints(self, constraints):
-        """Add constraints to the data processor.
+        """Add constraints to the synthesizer.
 
         Args:
             constraints (list):
@@ -279,7 +279,6 @@ class BaseSynthesizer:
                     * ``constraint_class``: Name of the constraint to apply.
                     * ``constraint_parameters``: A dictionary with the constraint parameters.
         """
-
         if self._fitted:
             warnings.warn(
                 "For these constraints to take effect, please refit the synthesizer using 'fit'."
