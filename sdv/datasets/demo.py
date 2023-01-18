@@ -5,19 +5,20 @@ import json
 import logging
 import os
 import urllib.request
-from pathlib import Path
-import xml.etree.ElementTree as ET
 from collections import defaultdict
+from pathlib import Path
 from zipfile import ZipFile
-import boto3
 
+import boto3
 import pandas as pd
-import requests
+from botocore import UNSIGNED
+from botocore.client import Config
 
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
+BUCKET = 'sdv-demo-datasets'
 BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
 METADATA_FILENAME = 'metadata.json'
 
@@ -160,27 +161,18 @@ def get_available_demos(modality):
             * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
     """
     _validate_modalities(modality)
-    from botocore import UNSIGNED
-    from botocore.client import Config
     client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
     paginator = client.get_paginator('list_objects_v2')
-    page_iterator = paginator.paginate(Bucket='sdv-demo-datasets')
+    page_iterator = paginator.paginate(Bucket=BUCKET)
+    tables_info = defaultdict(list)
     for page in page_iterator:
         if page['KeyCount'] > 0:
-            for item in page['Contents']:
-                print(item)
-
-    """
-    tables_info = defaultdict(list)
-    response = requests.get(BUCKET_URL)
-    root = ET.fromstring(response.text)
-    keys = root.findall('.//')
-    for key in keys:
-        if 'Key' in key.tag and key.text.startswith(modality.upper()):
-            response = requests.head(BUCKET_URL + '/' + key.text)
-            tables_info['dataset_name'].append(key.text.split('/', 1)[1])
-            tables_info['size_MB'].append(response.headers['x-amz-meta-size-mb'])
-            tables_info['num_tables'].append(response.headers['x-amz-meta-num-tables'])
+            for item in page.get('Contents', []):
+                dataset_modality, dataset = item['Key'].split('/', 1)
+                if dataset_modality == modality.upper():
+                    tables_info['dataset_name'].append(dataset)
+                    headers = client.head_object(Bucket=BUCKET, Key=item['Key'])['Metadata']
+                    tables_info['size_MB'].append(headers['size-mb'])
+                    tables_info['num_tables'].append(headers['num-tables'])
 
     return pd.DataFrame(tables_info)
-    """
