@@ -69,6 +69,7 @@ class BaseSynthesizer:
         self._fitted = False
         self._random_state_set = False
         self._update_default_transformers()
+        self._constraints = []
 
     def _validate_metadata_matches_data(self, columns):
         errors = []
@@ -268,6 +269,27 @@ class BaseSynthesizer:
     def get_metadata(self):
         """Return the ``SingleTableMetadata`` for this synthesizer."""
         return self.metadata
+
+    def add_constraints(self, constraints):
+        """Add constraints to the data processor.
+
+        Args:
+            constraints (list):
+                List of constraints described as dictionaries in the following format:
+                    * ``constraint_class``: Name of the constraint to apply.
+                    * ``constraint_parameters``: A dictionary with the constraint parameters.
+        """
+
+        if self._fitted:
+            warnings.warn(
+                "For these constraints to take effect, please refit the synthesizer using 'fit'."
+            )
+
+        self._data_processor.add_constraints(constraints)
+
+    def get_constraints(self):
+        """Return a list of the current constraints that will be used."""
+        return self._data_processor.get_constraints()
 
     def auto_assign_transformers(self, data):
         """Automatically assign the required transformers for the given data and constraints.
@@ -713,7 +735,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             pandas.DataFrame:
                 Sampled data.
         """
-        has_constraints = bool(self.get_metadata()._constraints)
+        has_constraints = bool(self._data_processor._constraints)
         has_batches = batch_size is not None and batch_size != num_rows
         show_progress_bar = has_constraints or has_batches
 
