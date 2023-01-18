@@ -656,7 +656,7 @@ class Table:
         LOGGER.debug('Transforming table %s', self.name)
         try:
             return self._hyper_transformer.transform_subset(data)
-        except (rdt.errors.NotFittedError, rdt.errors.ConfigNotSetError):
+        except (rdt.errors.NotFittedError, rdt.errors.Error):
             return data
 
     @classmethod

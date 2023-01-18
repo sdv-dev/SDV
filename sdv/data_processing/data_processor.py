@@ -498,7 +498,7 @@ class DataProcessor:
 
         try:
             transformed = self._hyper_transformer.transform_subset(data)
-        except (rdt.errors.NotFittedError, rdt.errors.ConfigNotSetError):
+        except (rdt.errors.NotFittedError, rdt.errors.Error):
             transformed = data
 
         return transformed

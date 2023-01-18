@@ -7,7 +7,7 @@ from unittest.mock import Mock, call, patch
 import numpy as np
 import pandas as pd
 import pytest
-from rdt.errors import ConfigNotSetError
+from rdt.errors import Error
 from rdt.errors import NotFittedError as RDTNotFittedError
 from rdt.transformers import FloatFormatter, LabelEncoder
 
@@ -1169,7 +1169,7 @@ class TestDataProcessor:
         dp._transform_constraints = Mock()
         dp._transform_constraints.return_value = data
         dp._hyper_transformer = Mock()
-        dp._hyper_transformer.transform_subset.side_effect = ConfigNotSetError()
+        dp._hyper_transformer.transform_subset.side_effect = Error()
         dp.get_sdtypes = Mock()
         dp.get_sdtypes.return_value = {
             'item 0': 'numerical',
