@@ -9,6 +9,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from zipfile import ZipFile
+import boto3
 
 import pandas as pd
 import requests
@@ -159,6 +160,17 @@ def get_available_demos(modality):
             * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
     """
     _validate_modalities(modality)
+    from botocore import UNSIGNED
+    from botocore.client import Config
+    client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
+    paginator = client.get_paginator('list_objects_v2')
+    page_iterator = paginator.paginate(Bucket='sdv-demo-datasets')
+    for page in page_iterator:
+        if page['KeyCount'] > 0:
+            for item in page['Contents']:
+                print(item)
+
+    """
     tables_info = defaultdict(list)
     response = requests.get(BUCKET_URL)
     root = ET.fromstring(response.text)
@@ -171,3 +183,4 @@ def get_available_demos(modality):
             tables_info['num_tables'].append(response.headers['x-amz-meta-num-tables'])
 
     return pd.DataFrame(tables_info)
+    """
