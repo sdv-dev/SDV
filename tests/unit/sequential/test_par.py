@@ -110,17 +110,6 @@ class TestPARSynthesizer:
         """Test that if constraints are being added, a warning is raised."""
         # Setup
         metadata = self.get_metadata()
-        constraints = [
-            {
-                'constraint_class': 'ScalarInequality',
-                'constraint_parameters': {
-                    'value': 50,
-                    'relation': '>',
-                    'column_name': 'measurement'
-                }
-            }
-        ]
-
         synthesizer = PARSynthesizer(metadata=metadata)
 
         # Run

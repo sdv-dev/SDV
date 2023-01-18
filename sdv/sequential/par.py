@@ -123,6 +123,7 @@ class PARSynthesizer(BaseSynthesizer):
         return instantiated_parameters
 
     def add_constraints(self, constraints):
+        """Warn the user that constraints can't be added to the ``PARSynthesizer``."""
         warnings.warn(
             'The PARSynthesizer does not yet support constraints. This model will ignore any '
             'constraints in the metadata.'
