@@ -1714,11 +1714,6 @@ class TestMultiTableMetadata:
                         }
                     },
                     'primary_key': 'animals',
-                    'constraints': [
-                        {
-                            'my_constraint': 'my_params'
-                        }
-                    ],
                     'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
                 }
             },
@@ -1735,7 +1730,6 @@ class TestMultiTableMetadata:
         assert instance._tables['table1']._sequence_key is None
         assert instance._tables['table1']._alternate_keys == []
         assert instance._tables['table1']._sequence_index is None
-        assert instance._tables['table1']._constraints == [{'my_constraint': 'my_params'}]
         assert instance._tables['table1']._version == 'SINGLE_TABLE_V1'
 
     @patch('sdv.metadata.utils.Path')

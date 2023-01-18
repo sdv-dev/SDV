@@ -84,12 +84,6 @@ class PARSynthesizer(BaseSynthesizer):
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
         )
-        if metadata._constraints:
-            warnings.warn(
-                'The PARSynthesizer does not yet support constraints. This model will ignore any '
-                'constraints in the metadata.'
-            )
-            self._data_processor._constraints = []
 
         sequence_key = self.metadata._sequence_key
         self._sequence_key = list(cast_to_iterable(sequence_key)) if sequence_key else None
@@ -127,6 +121,14 @@ class PARSynthesizer(BaseSynthesizer):
             instantiated_parameters[parameter_name] = value
 
         return instantiated_parameters
+
+    def add_constraints(self, constraints):
+        warnings.warn(
+            'The PARSynthesizer does not yet support constraints. This model will ignore any '
+            'constraints in the metadata.'
+        )
+        self._data_processor._constraints = []
+        self._data_processor._constraints_list = []
 
     def _validate_context_columns(self, data):
         errors = []

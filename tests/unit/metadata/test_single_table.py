@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.constraints.errors import AggregateConstraintsError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
 
@@ -80,7 +79,6 @@ class TestSingleTableMetadata:
         assert instance._sequence_key is None
         assert instance._alternate_keys == []
         assert instance._sequence_index is None
-        assert instance._constraints == []
         assert instance._version == 'SINGLE_TABLE_V1'
 
     def test__validate_numerical_default_and_invalid(self):
@@ -1396,7 +1394,7 @@ class TestSingleTableMetadata:
 
         Setup:
             - A ``SingleTableMetadata`` instance with:
-                - ``_columns``, ``_constraints``, ``_primary_key``, ``_alternate_keys``,
+                - ``_columns``, ``_primary_key``, ``_alternate_keys``,
                   ``_sequence_key`` and ``_sequence_index`` defined.
                 - ``_validate_key``, ``_validate_alternate_keys``, ``_validate_sequence_index``
                   and ``_validate_sequence_index_not_in_sequence_key`` mocked.
@@ -1404,24 +1402,10 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         instance._columns = {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
-        instance._constraints = [
-            {
-                'constraint_name': 'Inequality',
-                'low_column_name': 'col1',
-                'high_column_name': 'col2'
-            },
-            {
-                'constraint_name': 'ScalarInequality',
-                'column_name': 'col1',
-                'relation': '<',
-                'value': 10
-            }
-        ]
         instance._primary_key = 'col1'
         instance._alternate_keys = ['col2']
         instance._sequence_key = 'col1'
         instance._sequence_index = 'col2'
-        instance._validate_constraint = Mock(side_effect=AggregateConstraintsError(['cnt_error']))
         instance._validate_key = Mock()
         instance._validate_alternate_keys = Mock()
         instance._validate_sequence_index = Mock()
@@ -1430,9 +1414,7 @@ class TestSingleTableMetadata:
 
         err_msg = re.escape(
             'The following errors were found in the metadata:'
-            '\n\ncnt_error'
-            '\ncnt_error'
-            '\ncolumn_error'
+            '\n\ncolumn_error'
             '\ncolumn_error'
         )
         # Run
@@ -1440,10 +1422,6 @@ class TestSingleTableMetadata:
             instance.validate()
 
         # Assert
-        instance._validate_constraint.assert_has_calls([
-            call('Inequality', low_column_name='col1', high_column_name='col2'),
-            call('ScalarInequality', column_name='col1', relation='<', value=10)
-        ])
         instance._validate_key.assert_has_calls(
             [call(instance._primary_key, 'primary'), call(instance._sequence_key, 'sequence')]
         )
@@ -1453,8 +1431,6 @@ class TestSingleTableMetadata:
         instance._validate_alternate_keys.assert_called_once_with(instance._alternate_keys)
         instance._validate_sequence_index.assert_called_once_with(instance._sequence_index)
         instance._validate_sequence_index_not_in_sequence_key.assert_called_once()
-        for constraint in instance._constraints:
-            assert 'constraint_name' in constraint
 
     def test_to_dict(self):
         """Test the ``to_dict`` method from ``SingleTableMetadata``.
@@ -1469,9 +1445,6 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         instance._columns['my_column'] = 'value'
-        dict_constraint1 = {'column': 'value', 'scalar': 1}
-        dict_constraint2 = {'column': 'value', 'increment_value': 20}
-        instance._constraints.extend([dict_constraint1, dict_constraint2])
 
         # Run
         result = instance.to_dict()
@@ -1479,10 +1452,6 @@ class TestSingleTableMetadata:
         # Assert
         assert result == {
             'columns': {'my_column': 'value'},
-            'constraints': [
-                {'column': 'value', 'scalar': 1},
-                {'column': 'value', 'increment_value': 20}
-            ],
             'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
         }
 
@@ -1499,7 +1468,6 @@ class TestSingleTableMetadata:
             'alternate_keys': [],
             'sequence_key': None,
             'sequence_index': None,
-            'constraints': [],
             'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
         }
 
@@ -1512,7 +1480,6 @@ class TestSingleTableMetadata:
         assert instance._sequence_key is None
         assert instance._alternate_keys == []
         assert instance._sequence_index is None
-        assert instance._constraints == []
         assert instance._version == 'SINGLE_TABLE_V1'
 
     @patch('sdv.metadata.utils.Path')
@@ -1614,11 +1581,6 @@ class TestSingleTableMetadata:
                 }
             },
             'primary_key': 'animals',
-            'constraints': [
-                {
-                    'my_constraint': 'my_params'
-                }
-            ],
             'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
         }
 
@@ -1631,7 +1593,6 @@ class TestSingleTableMetadata:
         assert instance._sequence_key is None
         assert instance._alternate_keys == []
         assert instance._sequence_index is None
-        assert instance._constraints == [{'my_constraint': 'my_params'}]
         assert instance._version == 'SINGLE_TABLE_V1'
 
     @patch('sdv.metadata.utils.Path')
@@ -1712,70 +1673,6 @@ class TestSingleTableMetadata:
         # Assert
         mock_json.dumps.assert_called_once_with(instance.to_dict(), indent=4)
         assert res == mock_json.dumps.return_value
-
-    @patch('sdv.metadata.single_table.Constraint')
-    def test_add_constraint(self, constraint_mock):
-        """Test the ``add_constraint`` method.
-
-        The method should create an instance of the specified constraint, validate it
-        against the rest of the metadata and add ``{constraint_name: kwargs}`` to the
-        ``self._constraints`` list.
-
-        Setup:
-            - Mock ``Constraint``
-
-        Input:
-            - Inequality constraint
-
-        Side effect:
-            - Constraint instance added to list of constraints
-        """
-        # Setup
-        metadata = SingleTableMetadata()
-        dummy_constraint_class = Mock()
-        constraint_mock._get_class_from_dict.return_value = dummy_constraint_class
-
-        # Run
-        metadata.add_constraint(
-            constraint_name='Inequality',
-            low_column_name='child_age',
-            high_column_name='start_date'
-        )
-
-        # Assert
-        constraint_mock._get_class_from_dict.assert_called_once_with('Inequality')
-        dummy_constraint_class._validate_metadata.assert_called_once_with(
-            metadata,
-            low_column_name='child_age',
-            high_column_name='start_date'
-        )
-
-        assert metadata._constraints == [
-            {
-                'constraint_name': 'Inequality',
-                'low_column_name': 'child_age',
-                'high_column_name': 'start_date'
-            }
-        ]
-
-    def test_add_constraint_bad_constraint(self):
-        """Test the ``add_constraint`` method with a non-existent constraint.
-
-        If the constraint_name passed doesn't exist, an error should be raised.
-
-        Input:
-            - Fakse constraint name
-
-        Side effect:
-            - InvalidMetadataError should be raised
-        """
-        # Setup
-        metadata = SingleTableMetadata()
-
-        # Run
-        error_message = re.escape("Invalid constraint ('fake_constraint').")
-        with pytest.raises(InvalidMetadataError, match=error_message):
-            metadata.add_constraint(constraint_name='fake_constraint')
 
     @patch('sdv.metadata.single_table.validate_file_does_not_exist')
     @patch('sdv.metadata.single_table.read_json')
