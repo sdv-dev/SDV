@@ -370,16 +370,16 @@ class Constraint(metaclass=ConstraintMeta):
             dict:
                 Dict representation of this Constraint.
         """
-        constraint_dict = {
-            'constraint_name': _get_qualified_name(self.__class__),
-        }
+        constraint_dict = {'constraint_class': _get_qualified_name(self.__class__)}
 
+        constraint_parameters = {}
         for key, obj in copy.deepcopy(self.__kwargs__).items():
             if callable(obj) and _module_contains_callable_name(obj):
-                constraint_dict[key] = _get_qualified_name(obj)
+                constraint_parameters[key] = _get_qualified_name(obj)
             else:
-                constraint_dict[key] = obj
+                constraint_parameters[key] = obj
 
+        constraint_dict['constraint_parameters'] = constraint_parameters
         return constraint_dict
 
 
