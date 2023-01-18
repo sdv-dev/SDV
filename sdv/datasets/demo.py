@@ -6,9 +6,12 @@ import logging
 import os
 import urllib.request
 from pathlib import Path
+import xml.etree.ElementTree as ET
+from collections import defaultdict
 from zipfile import ZipFile
 
 import pandas as pd
+import requests
 
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -18,11 +21,13 @@ BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
 METADATA_FILENAME = 'metadata.json'
 
 
-def _validate_args_download_demo(modality, output_folder_name):
+def _validate_modalities(modality):
     possible_modalities = ['single_table', 'multi_table', 'sequential']
     if modality not in possible_modalities:
         raise ValueError(f"'modality' must be in {possible_modalities}.")
 
+
+def _validate_output_folder(output_folder_name):
     if output_folder_name and os.path.exists(output_folder_name):
         raise ValueError(
             f"Folder '{output_folder_name}' already exists. Please specify a different name "
@@ -125,10 +130,44 @@ def download_demo(modality, dataset_name, output_folder_name=None):
             * If there is already a folder named ``output_folder_name``.
             * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
     """
-    _validate_args_download_demo(modality, output_folder_name)
+    _validate_modalities(modality)
+    _validate_output_folder(output_folder_name)
     bytes_io = _download(modality, dataset_name)
     in_memory_directory = _extract_data(bytes_io, output_folder_name)
     data = _get_data(modality, output_folder_name, in_memory_directory)
     metadata = _get_metadata(modality, output_folder_name, in_memory_directory)
 
     return data, metadata
+
+
+def get_available_demos(modality):
+    """Get demo datasets available for a ``modality``.
+
+    Args:
+        modality (str):
+            The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
+
+    Returns:
+        pandas.DataFrame:
+            A table with three columns:
+                ``dataset_name``: The name of the dataset.
+                ``size_MB``: The unzipped folder size in MB.
+                ``num_tables``: The number of tables in the dataset.
+
+    Raises:
+        Error:
+            * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
+    """
+    _validate_modalities(modality)
+    tables_info = defaultdict(list)
+    response = requests.get(BUCKET_URL)
+    root = ET.fromstring(response.text)
+    keys = root.findall('.//')
+    for key in keys:
+        if 'Key' in key.tag and key.text.startswith(modality.upper()):
+            response = requests.head(BUCKET_URL + '/' + key.text)
+            tables_info['dataset_name'].append(key.text.split('/', 1)[1])
+            tables_info['size_MB'].append(response.headers['x-amz-meta-size-mb'])
+            tables_info['num_tables'].append(response.headers['x-amz-meta-num-tables'])
+
+    return pd.DataFrame(tables_info)
