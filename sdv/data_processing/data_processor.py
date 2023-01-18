@@ -11,7 +11,7 @@ import rdt
 from sdv.constraints import Constraint
 from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
-from sdv.data_processing.errors import NotFittedError
+from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.metadata.anonymization import get_anonymized_transformer
 from sdv.metadata.single_table import SingleTableMetadata
@@ -71,11 +71,6 @@ class DataProcessor:
         'M': 'datetime',
     }
 
-    def _load_constraints(self):
-        constraints = self.metadata._constraints or []
-        loaded_constraints = [Constraint.from_dict(constraint) for constraint in constraints]
-        return loaded_constraints
-
     def _update_numerical_transformer(self, enforce_rounding, enforce_min_max_values):
         custom_float_formatter = rdt.transformers.FloatFormatter(
             missing_value_replacement='mean',
@@ -91,7 +86,8 @@ class DataProcessor:
         self._enforce_rounding = enforce_rounding
         self._enforce_min_max_values = enforce_min_max_values
         self._model_kwargs = model_kwargs or {}
-        self._constraints = self._load_constraints()
+        self._constraint_list = []
+        self._constraints = []
         self._constraints_to_reverse = []
         self._transformers_by_sdtype = self._DEFAULT_TRANSFORMERS_BY_SDTYPE.copy()
         self._update_numerical_transformer(enforce_rounding, enforce_min_max_values)
@@ -152,6 +148,54 @@ class DataProcessor:
                 sdtypes[name] = sdtype
 
         return sdtypes
+
+    def _validate_constraint(self, constraint_class, constraint_parameters):
+        """Validate a constraint against the single table metadata.
+
+        Args:
+            constraint_class (string):
+                Name of the constraint class.
+            constraint_parameters:
+                Dictionary describing any arguments the constraint requires.
+        """
+        try:
+            constraint_class = Constraint._get_class_from_dict(constraint_class)
+        except KeyError:
+            raise InvalidMetadataError(f"Invalid constraint ('{constraint_class}').")
+
+        constraint_class._validate_metadata(self.metadata, **constraint_parameters)
+
+    def add_constraints(self, constraints):
+        """Add constraints to the data processor.
+
+        Args:
+            constraints (list):
+                List of constraints described as dictionaries in the following format:
+                    * ``constraint_class``: Name of the constraint to apply.
+                    * ``constraint_parameters``: A dictionary with the constraint parameters.
+        """
+        errors = []
+        validated_constraints = []
+        for constraint_dict in constraints:
+            constraint_dict = deepcopy(constraint_dict)
+            try:
+                self._validate_constraint(
+                    constraint_dict['constraint_class'],
+                    constraint_dict.get('constraint_parameters', {})
+                )
+                validated_constraints.append(constraint_dict)
+            except AggregateConstraintsError as e:
+                reformated_errors = '\n'.join(map(str, e.errors))
+                errors.append(reformated_errors)
+
+        if errors:
+            raise InvalidConstraintsError(errors)
+
+        self._constraint_list.extend(validated_constraints)
+
+    def get_constraints(self):
+        """Return a list of the current constraints that will be used."""
+        return deepcopy(self._constraint_list)
 
     def _fit_constraints(self, data):
         errors = []
@@ -393,6 +437,13 @@ class DataProcessor:
 
             self._prepared_for_fitting = True
 
+    def _load_constraints(self):
+        loaded_constraints = [
+            Constraint.from_dict(constraint)
+            for constraint in self._constraint_list
+        ]
+        return loaded_constraints
+
     def fit(self, data):
         """Fit this metadata to the given data.
 
@@ -401,6 +452,7 @@ class DataProcessor:
                 Table to be analyzed.
         """
         self._prepared_for_fitting = False
+        self._constraints = self._load_constraints()
         self.prepare_for_fitting(data)
         constrained = self._transform_constraints(data)
         LOGGER.info(f'Fitting HyperTransformer for table {self.table_name}')
