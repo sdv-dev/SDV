@@ -758,7 +758,6 @@ def test_convert_metadata_with_constraints(upgrade_constraints_mock):
                 'sdtype': 'numerical'
             }
         },
-        'primary_key': 'student_id',
-        'constraints': new_constraints
+        'primary_key': 'student_id'
     }
     assert new_metadata == expected_metadata
