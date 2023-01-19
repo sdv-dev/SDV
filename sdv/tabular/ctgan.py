@@ -1,7 +1,7 @@
 """Wrapper around CTGAN model."""
 
 import numpy as np
-from ctgan import CTGANSynthesizer, TVAESynthesizer
+from ctgan import CTGAN, TVAE
 
 from sdv.tabular.base import BaseTabularModel
 
@@ -90,7 +90,7 @@ class CTGANModel(BaseTabularModel):
 
 
 class CTGAN(CTGANModel):
-    """Model wrapping ``CTGANSynthesizer`` model.
+    """Model wrapping ``CTGAN`` model.
 
     Args:
         field_names (list[str]):
@@ -173,7 +173,7 @@ class CTGAN(CTGANModel):
             during ``fit``. Defaults to ``True``.
     """
 
-    _MODEL_CLASS = CTGANSynthesizer
+    _MODEL_CLASS = CTGAN
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
@@ -213,7 +213,7 @@ class CTGAN(CTGANModel):
 
 
 class TVAE(CTGANModel):
-    """Model wrapping ``TVAESynthesizer`` model.
+    """Model wrapping ``TVAE`` model.
 
     Args:
         field_names (list[str]):
@@ -278,7 +278,7 @@ class TVAE(CTGANModel):
             during ``fit``. Defaults to ``True``.
     """
 
-    _MODEL_CLASS = TVAESynthesizer
+    _MODEL_CLASS = TVAE
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
