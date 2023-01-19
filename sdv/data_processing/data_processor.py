@@ -193,7 +193,12 @@ class DataProcessor:
         self._constraints_list.extend(validated_constraints)
 
     def get_constraints(self):
-        """Return a list of the current constraints that will be used."""
+        """Get a list of the current constraints that will be used.
+
+        Returns:
+            list:
+                List of dictionaries describing the constraints for this data processor.
+        """
         return deepcopy(self._constraints_list)
 
     def _fit_constraints(self, data):

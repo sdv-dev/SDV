@@ -69,7 +69,6 @@ class BaseSynthesizer:
         self._fitted = False
         self._random_state_set = False
         self._update_default_transformers()
-        self._constraints = []
 
     def _validate_metadata_matches_data(self, columns):
         errors = []
@@ -287,7 +286,12 @@ class BaseSynthesizer:
         self._data_processor.add_constraints(constraints)
 
     def get_constraints(self):
-        """Return a list of the current constraints that will be used."""
+        """Get a list of the current constraints that will be used.
+
+        Returns:
+            list:
+                List of dictionaries describing the constraints for this synthesizer.
+        """
         return self._data_processor.get_constraints()
 
     def auto_assign_transformers(self, data):
