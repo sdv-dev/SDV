@@ -7,8 +7,6 @@ import warnings
 from copy import deepcopy
 from datetime import datetime
 
-from sdv.constraints import Constraint
-from sdv.constraints.errors import AggregateConstraintsError
 from sdv.metadata.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
@@ -43,7 +41,6 @@ class SingleTableMetadata:
     ])
     _KEYS = frozenset([
         'columns',
-        'constraints',
         'primary_key',
         'alternate_keys',
         'sequence_key',
@@ -112,7 +109,6 @@ class SingleTableMetadata:
 
     def __init__(self):
         self._columns = {}
-        self._constraints = []
         self._primary_key = None
         self._alternate_keys = []
         self._sequence_key = None
@@ -213,35 +209,6 @@ class SingleTableMetadata:
 
         self._validate_column(column_name, sdtype, **kwargs)
         self._columns[column_name] = _kwargs
-
-    def _validate_constraint(self, constraint_name, **kwargs):
-        """Validate a constraint against the single table metadata.
-
-        Args:
-            constraint_name (string):
-                Name of the constraint class.
-            **kwargs:
-                Any arguments the constraint requires.
-        """
-        try:
-            constraint_class = Constraint._get_class_from_dict(constraint_name)
-        except KeyError:
-            raise InvalidMetadataError(f"Invalid constraint ('{constraint_name}').")
-
-        constraint_class._validate_metadata(self, **kwargs)
-
-    def add_constraint(self, constraint_name, **kwargs):
-        """Add a constraint to the single table metadata.
-
-        Args:
-            constraint_name (string):
-                Name of the constraint class.
-            **kwargs:
-                Any other arguments the constraint requires.
-        """
-        self._validate_constraint(constraint_name, **kwargs)
-        kwargs['constraint_name'] = constraint_name
-        self._constraints.append(kwargs)
 
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
@@ -462,17 +429,7 @@ class SingleTableMetadata:
         Raises:
             - ``InvalidMetadataError`` if the metadata is invalid.
         """
-        # Validate constraints
         errors = []
-        for constraint_dict in self._constraints:
-            constraint_dict = deepcopy(constraint_dict)
-            constraint_name = constraint_dict.pop('constraint_name')
-            try:
-                self._validate_constraint(constraint_name, **constraint_dict)
-            except AggregateConstraintsError as e:
-                reformated_errors = '\n'.join(map(str, e.errors))
-                errors.append(reformated_errors)
-
         # Validate keys
         self._append_error(errors, self._validate_key, self._primary_key, 'primary')
         self._append_error(errors, self._validate_key, self._sequence_key, 'sequence')

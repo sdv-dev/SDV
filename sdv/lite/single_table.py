@@ -49,6 +49,17 @@ class SingleTablePreset:
         if name == FAST_ML_PRESET:
             self._setup_fast_preset(metadata)
 
+    def add_constraints(self, constraints):
+        """Add constraints to the synthesizer.
+
+        Args:
+            constraints (list):
+                List of constraints described as dictionaries in the following format:
+                    * ``constraint_class``: Name of the constraint to apply.
+                    * ``constraint_parameters``: A dictionary with the constraint parameters.
+        """
+        self._synthesizer.add_constraints(constraints)
+
     def fit(self, data):
         """Fit this model to the data.
 

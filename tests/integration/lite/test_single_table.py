@@ -37,8 +37,17 @@ def test_sample_with_constraints():
     # Run
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
-    metadata.add_constraint('Inequality', low_column_name='a', high_column_name='b')
     preset = SingleTablePreset(metadata, name='FAST_ML')
+    constraints = [
+        {
+            'constraint_class': 'Inequality',
+            'constraint_parameters': {
+                'low_column_name': 'a',
+                'high_column_name': 'b'
+            }
+        }
+    ]
+    preset.add_constraints(constraints)
     preset.fit(data)
     samples = preset.sample(
         num_rows=10,

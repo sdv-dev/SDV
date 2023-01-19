@@ -15,54 +15,12 @@ from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.constraints.tabular import Positive, ScalarRange
 from sdv.data_processing.data_processor import DataProcessor
-from sdv.data_processing.errors import NotFittedError
+from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.metadata.single_table import SingleTableMetadata
 
 
 class TestDataProcessor:
-
-    @patch('sdv.data_processing.data_processor.Constraint')
-    def test__load_constraints(self, constraint_mock):
-        """Test the ``_load_constraints`` method.
-
-        The method should take all the constraints in the passed metadata and
-        call the ``Constraint.from_dict`` method on them.
-
-        # Setup
-            - Patch the ``Constraint`` module.
-            - Mock the metadata to have constraint dicts.
-
-        # Side effects:
-            - ``self._constraints`` should be populated.
-        """
-        # Setup
-        data_processor = Mock()
-        constraint1 = Mock()
-        constraint2 = Mock()
-        constraint1_dict = {
-            'constraint_name': 'Inequality',
-            'low_column_name': 'col1',
-            'high_column_name': 'col2'
-        }
-        constraint2_dict = {
-            'constraint_name': 'ScalarInequality',
-            'column_name': 'col1',
-            'relation': '<',
-            'value': 10
-        }
-        constraint_mock.from_dict.side_effect = [
-            constraint1, constraint2
-        ]
-        data_processor.metadata._constraints = [constraint1_dict, constraint2_dict]
-
-        # Run
-        loaded_constraints = DataProcessor._load_constraints(data_processor)
-
-        # Assert
-        assert loaded_constraints == [constraint1, constraint2]
-        constraint_mock.from_dict.assert_has_calls(
-            [call(constraint1_dict), call(constraint2_dict)])
 
     def test__update_numerical_transformer(self):
         """Test the ``_update_numerical_transformer`` method.
@@ -87,9 +45,8 @@ class TestDataProcessor:
         assert transformer.enforce_min_max_values is False
 
     @patch('sdv.data_processing.data_processor.rdt')
-    @patch('sdv.data_processing.data_processor.DataProcessor._load_constraints')
     @patch('sdv.data_processing.data_processor.DataProcessor._update_numerical_transformer')
-    def test___init__(self, update_transformer_mock, load_constraints_mock, mock_rdt):
+    def test___init__(self, update_transformer_mock, mock_rdt):
         """Test the ``__init__`` method.
 
         Setup:
@@ -101,31 +58,38 @@ class TestDataProcessor:
             - enforce_min_max_values set to False.
         """
         # Setup
-        metadata_mock = Mock()
-        constraint1_dict = {
-            'constraint_name': 'Inequality',
-            'low_column_name': 'col1',
-            'high_column_name': 'col2'
-        }
-        constraint2_dict = {
-            'constraint_name': 'ScalarInequality',
-            'column_name': 'col1',
-            'relation': '<',
-            'value': 10
-        }
-        metadata_mock._constraints = [constraint1_dict, constraint2_dict]
+        metadata = SingleTableMetadata()
+        metadata.add_column('col', sdtype='numerical')
+        metadata.add_column('col_2', sdtype='numerical')
+        metadata.add_alternate_keys(['col_2'])
+        metadata.set_primary_key('col')
 
         # Run
         data_processor = DataProcessor(
-            metadata=metadata_mock,
+            metadata=metadata,
             enforce_rounding=True,
-            enforce_min_max_values=False)
+            enforce_min_max_values=False
+        )
 
         # Assert
-        assert data_processor.metadata == metadata_mock
-        update_transformer_mock.assert_called_with(True, False)
-        load_constraints_mock.assert_called_once()
+        assert data_processor.metadata == metadata
+        assert data_processor._enforce_rounding is True
+        assert data_processor._enforce_min_max_values is False
+        assert data_processor._model_kwargs == {}
+        assert data_processor._constraints_list == []
+        assert data_processor._constraints == []
+        assert data_processor._constraints_to_reverse == []
+        assert data_processor.table_name is None
+        assert data_processor.fitted is False
+        assert data_processor._dtypes is None
+        assert data_processor.formatters == {}
+        assert data_processor._anonymized_columns == []
+        assert data_processor._keys == ['col_2', 'col']
+        assert data_processor._keys_generators == {}
+        assert data_processor._prepared_for_fitting is False
+
         assert data_processor._hyper_transformer == mock_rdt.HyperTransformer.return_value
+        update_transformer_mock.assert_called_with(True, False)
 
     def test___init___without_mocks(self):
         """Test the ``__init__`` method without using mocks.
@@ -139,7 +103,6 @@ class TestDataProcessor:
         # Setup
         metadata = SingleTableMetadata()
         metadata.add_column('col', sdtype='numerical')
-        metadata.add_constraint('Positive', column_name='col')
 
         # Run
         instance = DataProcessor(metadata=metadata)
@@ -147,11 +110,6 @@ class TestDataProcessor:
         # Assert
         assert isinstance(instance.metadata, SingleTableMetadata)
         assert instance.metadata._columns == {'col': {'sdtype': 'numerical'}}
-        assert instance.metadata._constraints == [
-            {'constraint_name': 'Positive', 'column_name': 'col'}
-        ]
-        assert len(instance._constraints) == 1
-        assert isinstance(instance._constraints[0], Positive)
 
     def test_filter_valid(self):
         """Test that we are calling the ``filter_valid`` of each constraint over the data."""
@@ -193,8 +151,14 @@ class TestDataProcessor:
         # Setup
         metadata = SingleTableMetadata()
         metadata.add_column('col', sdtype='numerical')
-        metadata.add_constraint('Positive', column_name='col')
         instance = DataProcessor(metadata=metadata)
+        constraints = [
+            {
+                'constraint_class': 'Positive',
+                'constraint_parameters': {'column_name': 'col'}
+            }
+        ]
+        instance.add_constraints(constraints)
         instance._constraints_to_reverse = [Positive('col')]
 
         # Run
@@ -203,8 +167,14 @@ class TestDataProcessor:
         # Assert
         assert instance.metadata.to_dict() == new_instance.metadata.to_dict()
         assert instance._model_kwargs == new_instance._model_kwargs
-        assert len(new_instance._constraints) == 1
-        assert instance._constraints[0].to_dict() == new_instance._constraints[0].to_dict()
+        assert len(new_instance._constraints_list) == 1
+        assert new_instance._constraints_list == [
+            {
+                'constraint_class': 'Positive',
+                'constraint_parameters': {'column_name': 'col'}
+            }
+        ]
+
         assert len(new_instance._constraints_to_reverse) == 1
         assert instance._constraints_to_reverse[0].to_dict() == \
             new_instance._constraints_to_reverse[0].to_dict()
@@ -231,8 +201,15 @@ class TestDataProcessor:
         # Setup
         metadata = SingleTableMetadata()
         metadata.add_column('col', sdtype='numerical')
-        metadata.add_constraint('Positive', column_name='col')
         instance = DataProcessor(metadata=metadata)
+        constraints = [
+            {
+                'constraint_class': 'Positive',
+                'constraint_parameters': {'column_name': 'col'}
+            }
+        ]
+        instance.add_constraints(constraints)
+
         instance._constraints_to_reverse = [Positive('col')]
 
         # Run
@@ -244,8 +221,14 @@ class TestDataProcessor:
         # Assert
         assert instance.metadata.to_dict() == new_instance.metadata.to_dict()
         assert instance._model_kwargs == new_instance._model_kwargs
-        assert len(new_instance._constraints) == 1
-        assert instance._constraints[0].to_dict() == new_instance._constraints[0].to_dict()
+        assert len(new_instance._constraints_list) == 1
+        assert new_instance._constraints_list == [
+            {
+                'constraint_class': 'Positive',
+                'constraint_parameters': {'column_name': 'col'}
+            }
+        ]
+
         assert len(new_instance._constraints_to_reverse) == 1
         assert instance._constraints_to_reverse[0].to_dict() == \
             new_instance._constraints_to_reverse[0].to_dict()
@@ -341,6 +324,209 @@ class TestDataProcessor:
             'col2': 'numerical',
             'col3': 'numerical'
         }
+
+    @patch('sdv.data_processing.data_processor.Constraint')
+    def test__validate_constraint_dict(self, mock_constraint):
+        """Ensure that the validation calls the ``Constraint`` class validation."""
+        # Setup
+        constraint_dict = {
+            'constraint_class': 'Positive',
+            'constraint_parameters': {'column_name': 'col1'}
+        }
+        positive_constraint = Mock()
+        mock_constraint._get_class_from_dict.return_value = positive_constraint
+
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='categorical')
+        dp = DataProcessor(metadata)
+
+        # Run
+        dp._validate_constraint_dict(constraint_dict)
+
+        # Assert
+        positive_constraint._validate_metadata.assert_called_once_with(
+            metadata, column_name='col1'
+        )
+        mock_constraint._get_class_from_dict.assert_called_once_with('Positive')
+
+    @patch('sdv.data_processing.data_processor.Constraint')
+    def test__validate_constraint_dict_key_error(self, mock_constraint):
+        """Validate that an ``InvalidConstraintsError`` is raised when the class is not found."""
+        # Setup
+        constraint_dict = {
+            'constraint_class': 'Positiv',
+            'constraint_parameters': {'column_name': 'col1'}
+        }
+        mock_constraint._get_class_from_dict.side_effect = [KeyError]
+
+        metadata = SingleTableMetadata()
+        dp = DataProcessor(metadata)
+
+        # Run and Assert
+        error_msg = re.escape("Invalid constraint class ('Positiv').")
+        with pytest.raises(InvalidConstraintsError, match=error_msg):
+            dp._validate_constraint_dict(constraint_dict)
+
+    def test_add_constraints(self):
+        """Test that constraints are being added when those are valid."""
+        # Setup
+        constraints = [
+            {
+                'constraint_class': 'Positive',
+                'constraint_parameters': {'column_name': 'col1'}
+            },
+            {
+                'constraint_class': 'Positive',
+                'constraint_parameters': {'column_name': 'col2'}
+            }
+        ]
+
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='numerical')
+        metadata.add_column('col2', sdtype='numerical')
+        dp = DataProcessor(metadata)
+
+        # Run
+        dp.add_constraints(constraints)
+
+        # Assert
+        assert dp._constraints_list == constraints
+        assert id(dp._constraints_list) != id(constraints)
+
+    def test_add_constraints_to_existing_list(self):
+        """Test that constraints are being extended with the current ones when those are valid."""
+        # Setup
+        constraints = [
+            {
+                'constraint_class': 'Positive',
+                'constraint_parameters': {'column_name': 'col1'}
+            },
+            {
+                'constraint_class': 'Positive',
+                'constraint_parameters': {'column_name': 'col2'}
+            }
+        ]
+
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='numerical')
+        metadata.add_column('col2', sdtype='numerical')
+        dp = DataProcessor(metadata)
+        dp._constraints_list = [
+            {
+                'constraint_class': 'UniqueCombinations',
+                'constraint_parameters': {'column_names': ['col1', 'col2']}
+            }
+        ]
+
+        # Run
+        dp.add_constraints(constraints)
+
+        # Assert
+        assert dp._constraints_list == [
+            {
+                'constraint_class': 'UniqueCombinations',
+                'constraint_parameters': {'column_names': ['col1', 'col2']}
+            },
+            {
+                'constraint_class': 'Positive',
+                'constraint_parameters': {'column_name': 'col1'}
+            },
+            {
+                'constraint_class': 'Positive',
+                'constraint_parameters': {'column_name': 'col2'}
+            }
+        ]
+        assert id(dp._constraints_list) != id(constraints)
+
+    def test_add_constraints_raises_invalidconstraintserror(self):
+        """Test that constraints raises an ``InvalidConstraintsError`` when those are not valid."""
+        # Setup
+        constraints = [
+            {
+                'constraint_class': 'Positive',
+                'constraint_parameters': {
+                    'column_name': 'col1'
+                }
+            },
+            {
+                'constraint_class': 'Positiveee',
+                'constraint_parameters': {
+                    'column_name': 'col2'
+                }
+            }
+        ]
+
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='categorical')
+        metadata.add_column('col2', sdtype='categorical')
+        dp = DataProcessor(metadata)
+
+        # Run and Assert
+        error_msg = re.escape(
+            'The provided constraint is invalid:\n'
+            "A Positive constraint is being applied to an invalid column 'col1'. "
+            'This constraint is only defined for numerical columns.\n\n'
+            "Invalid constraint class ('Positiveee')."
+        )
+        with pytest.raises(InvalidConstraintsError, match=error_msg):
+            dp.add_constraints(constraints)
+
+    def test_get_constraints(self):
+        """Test that ``get_constraints`` returns a copy of the ``instance._constraints_list``."""
+        # Setup
+        instance = Mock()
+        instance._constraints_list = [
+            {
+                'constraint_class': 'Positive',
+                'constraint_parameters': {'column_name': 'a'}
+            }
+        ]
+
+        # Run
+        result = DataProcessor.get_constraints(instance)
+
+        # Assert
+        assert instance._constraints_list == result
+        assert id(result) != id(instance._constraints_list)
+
+    @patch('sdv.data_processing.data_processor.Constraint')
+    def test__load_constraints(self, constraint_mock):
+        """Test the ``_load_constraints`` method.
+
+        The method should take all the constraints in the passed metadata and
+        call the ``Constraint.from_dict`` method on them.
+        """
+        # Setup
+        data_processor = Mock()
+        constraint1 = Mock()
+        constraint2 = Mock()
+        constraint1_dict = {
+            'constraint_class': 'Inequality',
+            'constraint_parameters': {
+                'low_column_name': 'col1',
+                'high_column_name': 'col2'
+            }
+        }
+        constraint2_dict = {
+            'constraint_class': 'ScalarInequality',
+            'constraint_parameters': {
+                'column_name': 'col1',
+                'relation': '<',
+                'value': 10
+            }
+        }
+        constraint_mock.from_dict.side_effect = [
+            constraint1, constraint2
+        ]
+        data_processor._constraints_list = [constraint1_dict, constraint2_dict]
+
+        # Run
+        loaded_constraints = DataProcessor._load_constraints(data_processor)
+
+        # Assert
+        assert loaded_constraints == [constraint1, constraint2]
+        constraint_mock.from_dict.assert_has_calls(
+            [call(constraint1_dict), call(constraint2_dict)])
 
     def test__fit_transform_constraints(self):
         """Test the ``_fit_transform_constraints`` method.

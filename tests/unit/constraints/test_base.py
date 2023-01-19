@@ -575,18 +575,20 @@ class TestConstraint():
     def test_from_dict_fqn(self):
         """Test the ``Constraint.from_dict`` method passing a FQN.
 
-        If the ``constraint_name`` string is a FQN, import the class
-        before creating an instance of it.
+        If the ``constraint_name`` string is a FQN, import the class before creating
+        an instance of it.
 
         Input:
-        - constraint dict with a FQN and args
+            - Constraint dict with a FQN and constraint parameters dict.
         Output:
-        - Instance of the subclass with the right args.
+            - Instance of the subclass with the right args.
         """
         # Setup
         constraint_dict = {
-            'constraint_name': 'sdv.constraints.tabular.FixedCombinations',
-            'column_names': ['a', 'b'],
+            'constraint_class': 'sdv.constraints.tabular.FixedCombinations',
+            'constraint_parameters': {
+                'column_names': ['a', 'b'],
+            }
         }
 
         # Run
@@ -599,18 +601,20 @@ class TestConstraint():
     def test_from_dict_subclass(self):
         """Test the ``Constraint.from_dict`` method passing a subclass name.
 
-        If the ``constraint_name`` string is a subclass name, take it from the
-        Subclasses dict.
+        If the ``constraint_class`` string is a subclass name, take it from the
+        subclasses dict.
 
         Input:
-        - constraint dict with a subclass name and args
+            - Constraint dict with a subclass name and constraint parameters dict.
         Output:
-        - Instance of the subclass with the right args.
+            - Instance of the subclass with the right args.
         """
         # Setup
         constraint_dict = {
-            'constraint_name': 'FixedCombinations',
-            'column_names': ['a', 'b'],
+            'constraint_class': 'FixedCombinations',
+            'constraint_parameters': {
+                'column_names': ['a', 'b'],
+            }
         }
 
         # Run
@@ -636,8 +640,10 @@ class TestConstraint():
 
         # Assert
         expected_dict = {
-            'constraint_name': 'sdv.constraints.tabular.FixedCombinations',
-            'column_names': ['a', 'b'],
+            'constraint_class': 'sdv.constraints.tabular.FixedCombinations',
+            'constraint_parameters': {
+                'column_names': ['a', 'b'],
+            }
         }
         assert constraint_dict == expected_dict
 

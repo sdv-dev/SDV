@@ -293,8 +293,4 @@ def convert_metadata(old_metadata):
         An equivalent dict in the new metadata format.
     """
     new_metadata = _upgrade_columns_and_keys(old_metadata)
-    new_constraints = _upgrade_constraints(old_metadata)
-    if new_constraints:
-        new_metadata['constraints'] = new_constraints
-
     return new_metadata
