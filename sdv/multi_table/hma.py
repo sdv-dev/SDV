@@ -154,7 +154,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
     def _clear_nans(table_data):
         for column in table_data.columns:
             column_data = table_data[column]
-            if column_data.dtype in (np.int, np.float):
+            if column_data.dtype in (int, float):
                 fill_value = 0 if column_data.isna().all() else column_data.mean()
             else:
                 fill_value = column_data.mode()[0]
