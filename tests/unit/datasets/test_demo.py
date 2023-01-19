@@ -1,9 +1,10 @@
 import re
+from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import download_demo
+from sdv.datasets.demo import download_demo, get_available_demos
 
 
 def test_download_demo_invalid_modality():
@@ -221,3 +222,53 @@ def test_download_demo_multi_table(tmpdir):
         'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
     }
     assert metadata.to_dict() == expected_metadata_dict
+
+
+def test_get_available_demos_invalid_modality():
+    """Test it crashes when an invalid modality is passed."""
+    # Run and Assert
+    err_msg = re.escape("'modality' must be in ['single_table', 'multi_table', 'sequential'].")
+    with pytest.raises(ValueError, match=err_msg):
+        get_available_demos('invalid_modality')
+
+
+@patch('boto3.client')
+def test_get_available_demos(client_mock):
+    """Test it gets the correct output."""
+    # Setup
+    contents_objects = {
+        'Contents': [
+            {'Key': 'SINGLE_TABLE/dataset1.zip'},
+            {'Key': 'SINGLE_TABLE/dataset2.zip'}
+        ]
+    }
+    client_mock.return_value.list_objects = Mock(return_value=contents_objects)
+
+    def metadata_func(Bucket, Key):  # noqa: N803
+        if Key == 'SINGLE_TABLE/dataset1.zip':
+            return {
+                'Metadata': {
+                    'size-mb': 123,
+                    'num-tables': 321
+                }
+            }
+
+        return {
+            'Metadata': {
+                'size-mb': 456,
+                'num-tables': 654
+            }
+        }
+
+    client_mock.return_value.head_object = MagicMock(side_effect=metadata_func)
+
+    # Run
+    tables_info = get_available_demos('single_table')
+
+    # Assert
+    expected_table = pd.DataFrame({
+        'dataset_name': ['dataset1.zip', 'dataset2.zip'],
+        'size_MB': [123, 456],
+        'num_tables': [321, 654]
+    })
+    pd.testing.assert_frame_equal(tables_info, expected_table)

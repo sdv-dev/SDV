@@ -25,7 +25,9 @@ install_requires = [
     'deepecho>=0.4.0,<0.5',
     'rdt>=1.3.0,<2',
     'sdmetrics>=0.9.0,<0.10',
-    'cloudpickle>=2.1.0,<3.0'
+    'cloudpickle>=2.1.0,<3.0',
+    'boto3>=1.15.0,<2',
+    'botocore>=1.18,<2'
 ]
 
 pomegranate_requires = [
