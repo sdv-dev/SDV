@@ -41,11 +41,6 @@ class DeepEchoModel(BaseTimeseriesModel):
     def _fit(self, timeseries_data):
         self._model = self._build_model()
 
-        if self._sequence_index:
-            timeseries_data = timeseries_data.rename(columns={
-                self._sequence_index + '.value': self._sequence_index
-            })
-
         self._output_columns = list(timeseries_data.columns)
         self._data_columns = [
             column
@@ -137,10 +132,6 @@ class DeepEchoModel(BaseTimeseriesModel):
 
         output = pd.concat(output)
         output = output[self._output_columns].reset_index(drop=True)
-        if self._sequence_index:
-            output = output.rename(columns={
-                self._sequence_index: self._sequence_index + '.value'
-            })
 
         return output
 
