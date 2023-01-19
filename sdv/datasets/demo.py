@@ -5,24 +5,31 @@ import json
 import logging
 import os
 import urllib.request
+from collections import defaultdict
 from pathlib import Path
 from zipfile import ZipFile
 
+import boto3
 import pandas as pd
+from botocore import UNSIGNED
+from botocore.client import Config
 
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
+BUCKET = 'sdv-demo-datasets'
 BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
 METADATA_FILENAME = 'metadata.json'
 
 
-def _validate_args_download_demo(modality, output_folder_name):
+def _validate_modalities(modality):
     possible_modalities = ['single_table', 'multi_table', 'sequential']
     if modality not in possible_modalities:
         raise ValueError(f"'modality' must be in {possible_modalities}.")
 
+
+def _validate_output_folder(output_folder_name):
     if output_folder_name and os.path.exists(output_folder_name):
         raise ValueError(
             f"Folder '{output_folder_name}' already exists. Please specify a different name "
@@ -125,10 +132,43 @@ def download_demo(modality, dataset_name, output_folder_name=None):
             * If there is already a folder named ``output_folder_name``.
             * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
     """
-    _validate_args_download_demo(modality, output_folder_name)
+    _validate_modalities(modality)
+    _validate_output_folder(output_folder_name)
     bytes_io = _download(modality, dataset_name)
     in_memory_directory = _extract_data(bytes_io, output_folder_name)
     data = _get_data(modality, output_folder_name, in_memory_directory)
     metadata = _get_metadata(modality, output_folder_name, in_memory_directory)
 
     return data, metadata
+
+
+def get_available_demos(modality):
+    """Get demo datasets available for a ``modality``.
+
+    Args:
+        modality (str):
+            The modality of the dataset: ``'single_table'``, ``'multi_table'``, ``'sequential'``.
+
+    Returns:
+        pandas.DataFrame:
+            A table with three columns:
+                ``dataset_name``: The name of the dataset.
+                ``size_MB``: The unzipped folder size in MB.
+                ``num_tables``: The number of tables in the dataset.
+
+    Raises:
+        Error:
+            * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
+    """
+    _validate_modalities(modality)
+    client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
+    tables_info = defaultdict(list)
+    for item in client.list_objects(Bucket=BUCKET)['Contents']:
+        dataset_modality, dataset = item['Key'].split('/', 1)
+        if dataset_modality == modality.upper():
+            tables_info['dataset_name'].append(dataset)
+            headers = client.head_object(Bucket=BUCKET, Key=item['Key'])['Metadata']
+            tables_info['size_MB'].append(headers['size-mb'])
+            tables_info['num_tables'].append(headers['num-tables'])
+
+    return pd.DataFrame(tables_info)

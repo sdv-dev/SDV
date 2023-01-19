@@ -1,7 +1,7 @@
 from operator import attrgetter
 
 from sdv import SDV, load_demo
-from tests.integration import datasets
+from tests.integration import dataset
 
 
 def test_sdv():
@@ -81,7 +81,7 @@ def test_sdv_multi_foreign_key():
     Multi-foreign-key datasets are those that have one table with
     2 foreign keys to the same parent.
     """
-    metadata, tables = datasets.load_multi_foreign_key()
+    metadata, tables = dataset.load_multi_foreign_key()
 
     sdv = SDV()
     sdv.fit(metadata, tables)
