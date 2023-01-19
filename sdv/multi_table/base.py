@@ -7,6 +7,7 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
+from sdv.errors import SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.errors import InvalidDataError
 
@@ -359,3 +360,48 @@ class BaseMultiTableSynthesizer:
         """
         synthesizer = self._table_synthesizers[table_name]
         return synthesizer.get_learned_distributions()
+
+    def add_constraints(self, constraints):
+        """Add constraints to the synthesizer.
+
+        Args:
+            constraints (list):
+                List of constraints described as dictionaries in the following format:
+                    * ``constraint_class``: Name of the constraint to apply.
+                    * ``table_name``: Name of the table where to apply the constraint.
+                    * ``constraint_parameters``: A dictionary with the constraint parameters.
+
+        Raises:
+            SynthesizerInputError:
+                Raises when the ``Unique`` constraint is passed.
+        """
+        if self._fitted:
+            warnings.warn(
+                "For these constraints to take effect, please refit the synthesizer using 'fit'."
+            )
+
+        for constraint in constraints:
+            if constraint['constraint_class'] == 'Unique':
+                raise SynthesizerInputError(
+                    "The constraint class 'Unique' is not currently supported."
+                    'Please remove the constraint for this synthesizer.'
+                )
+
+            constraint = deepcopy(constraint)
+            synthesizer = self._table_synthesizers[constraint.pop('table_name')]
+            synthesizer._data_processor.add_constraints([constraint])
+
+    def get_constraints(self):
+        """Get constraints of the synthesizer.
+
+        Returns:
+            list:
+                List of dictionaries describing the constraints of the synthesizer.
+        """
+        constraints = []
+        for table_name, synthesizer in self._table_synthesizers.items():
+            for constraint in synthesizer.get_constraints():
+                constraint['table_name'] = table_name
+                constraints.append(constraint)
+
+        return constraints
