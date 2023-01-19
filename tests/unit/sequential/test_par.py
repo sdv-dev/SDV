@@ -79,43 +79,6 @@ class TestPARSynthesizer:
             'name': {'sdtype': 'text'}
         }
 
-    @patch('sdv.sequential.par.warnings')
-    def test___init___constraints(self, warnings_mock):
-        """Test that if the metadata has constraints, a warning is raised.
-
-        If the metadata containts constraints, a warning should be raised saying that constraints
-        are not supported in PAR. The data processor should have constraints removed.
-        """
-        # Setup
-        metadata = self.get_metadata()
-        metadata._constraints.append({
-            'constraint_name': 'ScalarInequality',
-            'value': 50,
-            'relation': '>',
-            'column_name': 'measurement'
-        })
-
-        # Run
-        synthesizer = PARSynthesizer(
-            metadata=metadata,
-            enforce_min_max_values=True,
-            enforce_rounding=True,
-            context_columns=['gender'],
-            segment_size=10,
-            epochs=10,
-            sample_size=5,
-            cuda=False,
-            verbose=False
-        )
-
-        # Assert
-        warning_message = (
-            'The PARSynthesizer does not yet support constraints. This model will ignore any '
-            'constraints in the metadata.'
-        )
-        warnings_mock.warn.assert_called_once_with(warning_message)
-        assert synthesizer._data_processor._constraints == []
-
     def test___init___context_columns_no_sequence_key(self):
         """Test when there are context columns but no sequence keys.
 
@@ -141,6 +104,25 @@ class TestPARSynthesizer:
                 cuda=False,
                 verbose=False
             )
+
+    @patch('sdv.sequential.par.warnings')
+    def test_add_constraints(self, warnings_mock):
+        """Test that if constraints are being added, a warning is raised."""
+        # Setup
+        metadata = self.get_metadata()
+        synthesizer = PARSynthesizer(metadata=metadata)
+
+        # Run
+        synthesizer.add_constraints([object()])
+
+        # Assert
+        warning_message = (
+            'The PARSynthesizer does not yet support constraints. This model will ignore any '
+            'constraints in the metadata.'
+        )
+        warnings_mock.warn.assert_called_once_with(warning_message)
+        assert synthesizer._data_processor._constraints == []
+        assert synthesizer._data_processor._constraints_list == []
 
     def test_get_parameters(self):
         """Test that it returns every ``init`` parameter without the ``metadata``."""

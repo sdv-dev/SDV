@@ -4,7 +4,6 @@ import json
 import re
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch
 
 import pytest
 
@@ -26,7 +25,6 @@ def test_single_table_metadata():
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
     }
     assert instance._columns == {}
-    assert instance._constraints == []
     assert instance._version == 'SINGLE_TABLE_V1'
     assert instance._primary_key is None
     assert instance._sequence_key is None
@@ -43,17 +41,6 @@ def test_validate():
     instance = SingleTableMetadata()
     instance.add_column('col1', sdtype='numerical')
     instance.add_column('col2', sdtype='numerical')
-    instance.add_constraint(
-        constraint_name='Inequality',
-        low_column_name='col1',
-        high_column_name='col2'
-    )
-    instance.add_constraint(
-        constraint_name='ScalarInequality',
-        column_name='col1',
-        relation='<',
-        value=10
-    )
     instance.set_primary_key('col1')
     instance.add_alternate_keys([('col1', 'col2')])
     instance.set_sequence_index('col1')
@@ -78,15 +65,6 @@ def test_validate_errors():
         'col9': {'sdtype': 'datetime', 'datetime_format': '%1-%Y-%m-%d-%'},
         'col10': {'sdtype': 'text', 'regex_format': '[A-{6}'},
     }
-    instance._constraints = [
-        {'constraint_name': 'Inequality', 'low_column_name': 'col1', 'wrong_arg': 'col2'},
-        {
-            'constraint_name': 'ScalarInequality',
-            'column_name': 'col1',
-            'relation': '<',
-            'value': 'string'
-        }
-    ]
     instance._primary_key = 10
     instance._alternate_keys = 'col1'
     instance._sequence_key = ('col3', 'col1')
@@ -94,10 +72,7 @@ def test_validate_errors():
 
     err_msg = re.escape(
         'The following errors were found in the metadata:'
-        "\n\nMissing required values {'high_column_name'} in an Inequality constraint."
-        "\nInvalid values {'wrong_arg'} are present in an Inequality constraint."
-        "\n'value' must be an int or float."
-        "\n'primary_key' must be a string or tuple of strings."
+        "\n\n'primary_key' must be a string or tuple of strings."
         "\nUnknown sequence key values {'col3'}. Keys should be columns that exist in the table."
         "\nUnknown sequence index value {'col3'}. Keys should be columns that exist in the table."
         "\n'sequence_index' and 'sequence_key' have the same value {'col3'}."
@@ -216,141 +191,3 @@ def test_upgrade_metadata():
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
     }
     assert new_metadata == expected_metadata
-
-
-@patch('sdv.metadata.single_table.warnings')
-def test_upgrade_metadata_with_constraints(warnings_mock):
-    """Test the ``upgrade_metadata`` method with constraints."""
-    # Setup
-    old_metadata = {
-        'fields': {
-            'start_date': {
-                'type': 'datetime',
-                'format': '%Y-%m-%d'
-            },
-            'end_date': {
-                'type': 'datetime',
-                'format': '%Y-%m-%d'
-            },
-            'salary': {
-                'type': 'numerical',
-                'subtype': 'integer'
-            },
-            'duration': {
-                'type': 'numerical',
-                'subtype': 'integer'
-            },
-            'student_id': {
-                'type': 'id',
-                'subtype': 'integer'
-            },
-            'high_perc': {
-                'type': 'numerical',
-                'subtype': 'float'
-            },
-            'perc': {
-                'type': 'numerical',
-                'subtype': 'float'
-            },
-            'placed': {
-                'type': 'boolean'
-            },
-            'ssn': {
-                'type': 'id',
-                'subtype': 'integer'
-            },
-            'drivers_license': {
-                'type': 'id',
-                'subtype': 'string',
-                'regex': 'regex'
-            },
-            'city': {
-                'type': 'categorical'
-            },
-            'state': {
-                'type': 'categorical'
-            }
-        },
-        'primary_key': 'student_id',
-        'constraints': [
-            {
-                'constraint': 'sdv.constraints.tabular.GreaterThan',
-                'scalar': None,
-                'high': 'end_date',
-                'low': 'start_date',
-                'strict': False
-            },
-            {
-                'constraint': 'sdv.constraints.tabular.Positive',
-                'columns': ['salary', 'duration'],
-                'strict': True
-            },
-            {
-                'constraint': 'sdv.constraints.tabular.UniqueCombinations',
-                'columns': ['city', 'state']
-            },
-            {
-                'constraint': 'sdv.constraints.tabular.Between',
-                'constraint_column': 'perc',
-                'high_is_scalar': False,
-                'low_is_scalar': True,
-                'low': 0,
-                'high': 'high_perc'
-            }
-        ]
-    }
-
-    # Run
-    with TemporaryDirectory() as temp_dir:
-        old_path = Path(temp_dir) / 'old.json'
-        new_path = Path(temp_dir) / 'new.json'
-        old_metadata_file = open(old_path, 'w')
-        json.dump(old_metadata, old_metadata_file)
-        old_metadata_file.close()
-        SingleTableMetadata.upgrade_metadata(old_filepath=old_path, new_filepath=new_path)
-        new_metadata_file = open(new_path,)
-        new_metadata = json.load(new_metadata_file)
-        new_metadata_file.close()
-
-    # Assert
-    expected_constraints = [
-        {
-            'constraint_name': 'Inequality',
-            'high_column_name': 'end_date',
-            'low_column_name': 'start_date',
-            'strict_boundaries': False
-        },
-        {
-            'constraint_name': 'Positive',
-            'column_name': 'salary',
-            'strict_boundaries': True
-        },
-        {
-            'constraint_name': 'Positive',
-            'column_name': 'duration',
-            'strict_boundaries': True
-        },
-        {
-            'constraint_name': 'FixedCombinations',
-            'column_names': ['city', 'state']
-        },
-        {
-            'constraint_name': 'Inequality',
-            'low_column_name': 'perc',
-            'high_column_name': 'high_perc',
-            'strict_boundaries': False
-        },
-        {
-            'constraint_name': 'ScalarInequality',
-            'column_name': 'perc',
-            'relation': '>=',
-            'value': 0
-        }
-    ]
-
-    constraints = new_metadata['constraints']
-    assert len(expected_constraints) == len(constraints)
-    for constraint in expected_constraints:
-        assert constraint in constraints
-
-    warnings_mock.warn.assert_not_called()

@@ -62,9 +62,11 @@ class TestGaussianCopula:
             'fields': None,
             'constraints': [
                 {
-                    'constraint_name': 'sdv.constraints.tabular.Inequality',
-                    'high_column_name': 'col2',
-                    'low_column_name': 'col1'
+                    'constraint_class': 'sdv.constraints.tabular.Inequality',
+                    'constraint_parameters': {
+                        'high_column_name': 'col2',
+                        'low_column_name': 'col1'
+                    }
                 }
             ],
             'model_kwargs': {

@@ -120,9 +120,15 @@ def test_fit_with_unique_constraint_on_data_with_only_index_column():
     metadata.add_column('key', sdtype='numerical')
     metadata.add_column('index', sdtype='categorical')
     metadata.set_primary_key('key')
-    metadata.add_constraint('Unique', column_names=['index'])
 
     model = GaussianCopulaSynthesizer(metadata)
+    constraint = {
+        'constraint_class': 'Unique',
+        'constraint_parameters': {
+            'column_names': ['index']
+        }
+    }
+    model.add_constraints([constraint])
 
     # Run
     model.fit(test_df)
@@ -181,9 +187,15 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
     metadata.add_column('index', sdtype='categorical')
     metadata.add_column('test_column', sdtype='categorical')
     metadata.set_primary_key('key')
-    metadata.add_constraint('Unique', column_names=['test_column'])
 
     model = GaussianCopulaSynthesizer(metadata)
+    constraint = {
+        'constraint_class': 'Unique',
+        'constraint_parameters': {
+            'column_names': ['test_column']
+        }
+    }
+    model.add_constraints([constraint])
 
     # Run
     model.fit(test_df)
@@ -234,10 +246,16 @@ def test_fit_with_unique_constraint_on_data_subset():
     metadata.add_column('key', sdtype='numerical')
     metadata.add_column('test_column', sdtype='categorical')
     metadata.set_primary_key('key')
-    metadata.add_constraint('Unique', column_names=['test_column'])
 
     test_df = test_df.iloc[[1, 3, 4]]
+    constraint = {
+        'constraint_class': 'Unique',
+        'constraint_parameters': {
+            'column_names': ['test_column']
+        }
+    }
     model = GaussianCopulaSynthesizer(metadata)
+    model.add_constraints([constraint])
 
     # Run
     model.fit(test_df)
@@ -282,9 +300,16 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     metadata.add_column('city', sdtype='categorical')
     metadata.add_column('state', sdtype='categorical')
     metadata.add_column('age', sdtype='numerical')
-    metadata.add_constraint('FixedCombinations', column_names=['city', 'state'])
 
     model = GaussianCopulaSynthesizer(metadata)
+
+    constraint = {
+        'constraint_class': 'FixedCombinations',
+        'constraint_parameters': {
+            'column_names': ['city', 'state']
+        }
+    }
+    model.add_constraints([constraint])
     sampled_numeric_data = [
         pd.DataFrame({
             'city#state': [0, 1, 2, 0, 0],
@@ -376,10 +401,16 @@ def test_multiple_fits():
     metadata.add_column('city', sdtype='categorical')
     metadata.add_column('state', sdtype='categorical')
     metadata.add_column('measurement', sdtype='numerical')
-    metadata.add_constraint('FixedCombinations', column_names=['city', 'state'])
+    constraint = {
+        'constraint_class': 'FixedCombinations',
+        'constraint_parameters': {
+            'column_names': ['city', 'state']
+        }
+    }
+    model = GaussianCopulaSynthesizer(metadata)
+    model.add_constraints([constraint])
 
     # Run
-    model = GaussianCopulaSynthesizer(metadata)
     model.fit(data_1)
     model.fit(data_2)
 
