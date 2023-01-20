@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv.errors import SynthesizerInputError
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.errors import InvalidDataError
@@ -659,3 +660,111 @@ class TestBaseMultiTableSynthesizer:
         )
         with pytest.raises(ValueError, match=error_msg):
             instance.get_learned_distributions('nesreca')
+
+    def test_add_constraint_warning(self):
+        """Test a warning is raised when the synthesizer had already been fitted."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._fitted = True
+
+        # Run and Assert
+        warn_msg = (
+            "For these constraints to take effect, please refit the synthesizer using 'fit'."
+        )
+        with pytest.warns(UserWarning, match=warn_msg):
+            instance.add_constraints([])
+
+    def test_add_constraints(self):
+        """Test a list of constraints can be added to the synthesizer."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        positive_constraint = {
+            'constraint_class': 'Positive',
+            'table_name': 'nesreca',
+            'constraint_parameters': {
+                'column_name': 'id_nesreca',
+                'strict_boundaries': True
+            }
+        }
+        negative_constraint = {
+            'constraint_class': 'Negative',
+            'table_name': 'oseba',
+            'constraint_parameters': {
+                'column_name': 'id_nesreca',
+                'strict_boundaries': False
+            }
+        }
+
+        # Run
+        instance.add_constraints([positive_constraint, negative_constraint])
+
+        # Assert
+        positive_constraint = {
+            'constraint_class': 'Positive',
+            'constraint_parameters': {
+                'column_name': 'id_nesreca',
+                'strict_boundaries': True
+            }
+        }
+        negative_constraint = {
+            'constraint_class': 'Negative',
+            'constraint_parameters': {
+                'column_name': 'id_nesreca',
+                'strict_boundaries': False
+            }
+        }
+        assert instance._table_synthesizers['nesreca'].get_constraints() == [positive_constraint]
+        assert instance._table_synthesizers['oseba'].get_constraints() == [negative_constraint]
+
+    def test_add_constraints_unique(self):
+        """Test an error is raised when a ``Unique`` constraint is passed."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        unique_constraint = {
+            'constraint_class': 'Unique',
+            'table_name': 'oseba',
+            'constraint_parameters': {
+                'column_name': 'id_nesreca',
+            }
+        }
+
+        # Run and Assert
+        err_msg = re.escape(
+            "The constraint class 'Unique' is not currently supported for multi-table"
+            ' synthesizers. Please remove the constraint for this synthesizer.'
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            instance.add_constraints([unique_constraint])
+
+    def test_get_constraints(self):
+        """Test a list of constraints is returned by the method."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        positive_constraint = {
+            'constraint_class': 'Positive',
+            'table_name': 'nesreca',
+            'constraint_parameters': {
+                'column_name': 'id_nesreca',
+                'strict_boundaries': True
+            }
+        }
+        negative_constraint = {
+            'constraint_class': 'Negative',
+            'table_name': 'oseba',
+            'constraint_parameters': {
+                'column_name': 'id_nesreca',
+                'strict_boundaries': False
+            }
+        }
+        constraints = [positive_constraint, negative_constraint]
+        instance.add_constraints(constraints)
+
+        # Run
+        output = instance.get_constraints()
+
+        # Assert
+        assert output == constraints
