@@ -28,7 +28,7 @@ install_requires = [
 ]
 
 pomegranate_requires = [
-    "pomegranate>=0.14.1,<0.15",
+    "pomegranate>=0.14.3,<0.15",
 ]
 
 setup_requires = [
