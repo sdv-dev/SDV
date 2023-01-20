@@ -1785,3 +1785,87 @@ class TestBaseSingleTableSynthesizer:
         assert instance.metadata._sequence_key is None
         assert instance.metadata._sequence_index is None
         assert instance.metadata._version == 'SINGLE_TABLE_V1'
+
+    def test_add_constraint_warning(self):
+        """Test a warning is raised when the synthesizer had already been fitted."""
+        # Setup
+        metadata = SingleTableMetadata()
+        instance = BaseSingleTableSynthesizer(metadata)
+        instance._fitted = True
+
+        # Run and Assert
+        warn_msg = (
+            "For these constraints to take effect, please refit the synthesizer using 'fit'."
+        )
+        with pytest.warns(UserWarning, match=warn_msg):
+            instance.add_constraints([])
+
+    def test_add_constraints(self):
+        """Test a list of constraits can be added to the synthesizer."""
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('col', sdtype='numerical')
+        instance = BaseSingleTableSynthesizer(metadata)
+        positive_constraint = {
+            'constraint_class': 'Positive',
+            'constraint_parameters': {
+                'column_name': 'col',
+                'strict_boundaries': True
+            }
+        }
+        negative_constraint = {
+            'constraint_class': 'Negative',
+            'constraint_parameters': {
+                'column_name': 'col',
+                'strict_boundaries': False
+            }
+        }
+
+        # Run
+        instance.add_constraints([positive_constraint, negative_constraint])
+
+        # Assert
+        positive_constraint = {
+            'constraint_class': 'Positive',
+            'constraint_parameters': {
+                'column_name': 'col',
+                'strict_boundaries': True
+            }
+        }
+        negative_constraint = {
+            'constraint_class': 'Negative',
+            'constraint_parameters': {
+                'column_name': 'col',
+                'strict_boundaries': False
+            }
+        }
+        assert instance.get_constraints() == [positive_constraint, negative_constraint]
+
+    def test_get_constraints(self):
+        """Test a list of constraits is returned by the method."""
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('col', sdtype='numerical')
+        instance = BaseSingleTableSynthesizer(metadata)
+        positive_constraint = {
+            'constraint_class': 'Positive',
+            'constraint_parameters': {
+                'column_name': 'col',
+                'strict_boundaries': True
+            }
+        }
+        negative_constraint = {
+            'constraint_class': 'Negative',
+            'constraint_parameters': {
+                'column_name': 'col',
+                'strict_boundaries': False
+            }
+        }
+        constraints = [positive_constraint, negative_constraint]
+        instance.add_constraints(constraints)
+
+        # Run
+        output = instance.get_constraints()
+
+        # Assert
+        assert output == constraints

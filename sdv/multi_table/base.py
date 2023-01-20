@@ -375,18 +375,19 @@ class BaseMultiTableSynthesizer:
             SynthesizerInputError:
                 Raises when the ``Unique`` constraint is passed.
         """
+        for constraint in constraints:
+            if constraint['constraint_class'] == 'Unique':
+                raise SynthesizerInputError(
+                    "The constraint class 'Unique' is not currently supported."
+                    ' Please remove the constraint for this synthesizer.'
+                )
+
         if self._fitted:
             warnings.warn(
                 "For these constraints to take effect, please refit the synthesizer using 'fit'."
             )
 
         for constraint in constraints:
-            if constraint['constraint_class'] == 'Unique':
-                raise SynthesizerInputError(
-                    "The constraint class 'Unique' is not currently supported."
-                    'Please remove the constraint for this synthesizer.'
-                )
-
             constraint = deepcopy(constraint)
             synthesizer = self._table_synthesizers[constraint.pop('table_name')]
             synthesizer._data_processor.add_constraints([constraint])
