@@ -285,6 +285,18 @@ class BaseSynthesizer:
 
         self._data_processor.add_constraints(constraints)
 
+    def load_custom_constraint_classes(self, filepath, class_names):
+        """Load a custom constraint class for the current model.
+
+        Args:
+            filepath (str):
+                String representing the absolute or relative path to the python file where
+                the custom constraint is declared.
+            class_names (list):
+                A list of custom constraint classes to be imported.
+        """
+        self._data_processor.load_custom_constraint_classes(filepath, class_names)
+
     def get_constraints(self):
         """Get a list of the current constraints that will be used.
 

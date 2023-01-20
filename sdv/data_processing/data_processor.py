@@ -1,14 +1,19 @@
 """Single table data processing."""
 
+import importlib
+import inspect
 import itertools
 import json
 import logging
+import sys
 from copy import deepcopy
+from pathlib import Path
 
 import pandas as pd
 import rdt
 
 from sdv.constraints import Constraint
+from sdv.constraints.base import get_subclasses
 from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
@@ -163,7 +168,10 @@ class DataProcessor:
         try:
             constraint_class = Constraint._get_class_from_dict(constraint_class)
         except KeyError:
-            raise InvalidConstraintsError(f"Invalid constraint class ('{constraint_class}').")
+            if constraint_class in globals():
+                constraint_class = globals().get(constraint_class)
+            else:
+                raise InvalidConstraintsError(f"Invalid constraint class ('{constraint_class}').")
 
         constraint_class._validate_metadata(self.metadata, **constraint_parameters)
 
@@ -191,6 +199,69 @@ class DataProcessor:
             raise InvalidConstraintsError(errors)
 
         self._constraints_list.extend(validated_constraints)
+
+    @staticmethod
+    def _validate_custom_constraints(class_names, modules):
+        reserved_class_names = list(get_subclasses(Constraint))
+        errors = []
+        for class_name, module in zip(class_names, modules):
+            if class_name in reserved_class_names:
+                errors.append(f'The name {class_name} is a reserved constraint name.')
+
+            elif class_name in globals():
+                if module != globals().get(class_name):
+                    errors.append((
+                        f'The name {class_name} is already in use, please use a different '
+                        'class name.'
+                    ))
+
+        if errors:
+            raise InvalidConstraintsError(errors)
+
+    @staticmethod
+    def _load_module_from_path(path):
+        """Return the module from a given ``PosixPath``.
+
+        Args:
+            path (pathlib.Path):
+                A ``PosixPath`` object from where the module should be imported from.
+
+        Returns:
+            module:
+                The in memory module for the given file.
+        """
+        assert path.exists(), 'The expected file was not found.'
+        module_path = path.parent
+        module_name = path.name.split('.')[0]
+        module_path = f'{module_path.name}.{module_name}'
+        spec = importlib.util.spec_from_file_location(module_path, path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        return module
+
+    def load_custom_constraint_classes(self, filepath, class_names):
+        """Load a custom constraint class for the current model.
+
+        Args:
+            filepath (str):
+                String representing the absolute or relative path to the python file where
+                the custom constraint is declared.
+            class_names (list):
+                A list of custom constraint classes to be imported.
+        """
+        path = Path(filepath)
+        parent_module = self._load_module_from_path(path)
+        modules = [getattr(parent_module, name) for name in class_names]
+        self._validate_custom_constraints(class_names, modules)
+        curframe = inspect.currentframe()
+        calframe = inspect.getouterframes(curframe, 2)
+        for class_name, module in zip(class_names, modules):
+            if parent_module not in sys.modules:
+                importlib.import_module(parent_module.__spec__.name)
+
+            calframe[2][0].f_globals[class_name] = module
+            globals()[class_name] = module
 
     def get_constraints(self):
         """Get a list of the current constraints that will be used.

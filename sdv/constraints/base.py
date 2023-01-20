@@ -354,7 +354,15 @@ class Constraint(metaclass=ConstraintMeta):
                 New constraint instance.
         """
         constraint_class = constraint_dict.get('constraint_class')
-        constraint_class = cls._get_class_from_dict(constraint_class)
+        try:
+            constraint_class = cls._get_class_from_dict(constraint_class)
+        except KeyError as ex:
+            curframe = inspect.currentframe()
+            calframe = inspect.getouterframes(curframe, 2)
+            if constraint_class in calframe[2][0].f_globals:
+                constraint_class = calframe[2][0].f_globals[constraint_class]
+            else:
+                raise KeyError from ex
 
         return constraint_class(**constraint_dict.get('constraint_parameters', {}))
 
