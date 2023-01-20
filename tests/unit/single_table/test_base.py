@@ -1801,7 +1801,7 @@ class TestBaseSingleTableSynthesizer:
             instance.add_constraints([])
 
     def test_add_constraints(self):
-        """Test a list of constraits can be added to the synthesizer."""
+        """Test a list of constraints can be added to the synthesizer."""
         # Setup
         metadata = SingleTableMetadata()
         metadata.add_column('col', sdtype='numerical')
@@ -1842,7 +1842,7 @@ class TestBaseSingleTableSynthesizer:
         assert instance.get_constraints() == [positive_constraint, negative_constraint]
 
     def test_get_constraints(self):
-        """Test a list of constraits is returned by the method."""
+        """Test a list of constraints is returned by the method."""
         # Setup
         metadata = SingleTableMetadata()
         metadata.add_column('col', sdtype='numerical')
