@@ -733,8 +733,8 @@ class TestBaseMultiTableSynthesizer:
 
         # Run and Assert
         err_msg = re.escape(
-            "The constraint class 'Unique' is not currently supported."
-            ' Please remove the constraint for this synthesizer.'
+            "The constraint class 'Unique' is not currently supported for multi-table"
+            ' synthesizers. Please remove the constraint for this synthesizer.'
         )
         with pytest.raises(SynthesizerInputError, match=err_msg):
             instance.add_constraints([unique_constraint])

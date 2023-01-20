@@ -378,8 +378,8 @@ class BaseMultiTableSynthesizer:
         for constraint in constraints:
             if constraint['constraint_class'] == 'Unique':
                 raise SynthesizerInputError(
-                    "The constraint class 'Unique' is not currently supported."
-                    ' Please remove the constraint for this synthesizer.'
+                    "The constraint class 'Unique' is not currently supported for multi-table"
+                    ' synthesizers. Please remove the constraint for this synthesizer.'
                 )
 
         if self._fitted:
