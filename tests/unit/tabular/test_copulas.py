@@ -282,20 +282,18 @@ class TestGaussianCopula:
 
         # Run
         data = pd.DataFrame({
-            'a.value': [1, 2, 3]
+            'a': [1, 2, 3]
         })
         out = GaussianCopula._fit(gaussian_copula, data)
 
         # asserts
         assert out is None
-        assert gaussian_copula._field_distributions == {
-            'a': 'a_distribution', 'a.value': 'a_distribution'}
-        gm_mock.assert_called_once_with(
-            distribution={'a': 'a_distribution', 'a.value': 'a_distribution'})
+        assert gaussian_copula._field_distributions == {'a': 'a_distribution'}
+        gm_mock.assert_called_once_with(distribution={'a': 'a_distribution'})
 
         assert gaussian_copula._model == gm_mock.return_value
         expected_data = pd.DataFrame({
-            'a.value': [1, 2, 3]
+            'a': [1, 2, 3]
         })
         call_args = gaussian_copula._model.fit.call_args_list
         passed_table_data = call_args[0][0][0]

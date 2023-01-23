@@ -157,7 +157,7 @@ The ``_fit`` method only expects one argument called ``table_data``, which is a
 
 Within this method, you can perform any steps necessary to fit your model.
 For example, we can see how the ``sdv.tabular.ctgan.CTGAN._fit`` method creates an instance of
-the underlying model, ``CTGANSynthesizer``, and prepares the list of categorical columns that
+the underlying model, ``CTGAN``, and prepares the list of categorical columns that
 it expects alongside the data.
 
 .. code-block:: Python
@@ -188,7 +188,7 @@ it expects alongside the data.
             log_frequency=self._log_frequency,
         )
 
-.. note:: Here you can also see that some of the hyperparameters for the ``CTGANSynthesizer``
+.. note:: Here you can also see that some of the hyperparameters for the ``CTGAN``
           class are being taken from the instance itself, where the ``__init__`` method stored
           them beforehand.
 
