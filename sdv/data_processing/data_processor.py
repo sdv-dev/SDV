@@ -1,14 +1,17 @@
 """Single table data processing."""
 
+import importlib
 import itertools
 import json
 import logging
 from copy import deepcopy
+from pathlib import Path
 
 import pandas as pd
 import rdt
 
 from sdv.constraints import Constraint
+from sdv.constraints.base import get_subclasses
 from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
@@ -89,6 +92,7 @@ class DataProcessor:
         self._constraints_list = []
         self._constraints = []
         self._constraints_to_reverse = []
+        self._custom_constraint_classes = {}
         self._transformers_by_sdtype = self._DEFAULT_TRANSFORMERS_BY_SDTYPE.copy()
         self._update_numerical_transformer(enforce_rounding, enforce_min_max_values)
         self._hyper_transformer = rdt.HyperTransformer()
@@ -149,6 +153,53 @@ class DataProcessor:
 
         return sdtypes
 
+    @staticmethod
+    def _load_module_from_path(path):
+        """Return the module from a given ``PosixPath``.
+        Args:
+            path (pathlib.Path):
+                A ``PosixPath`` object from where the module should be imported from.
+        Returns:
+            module:
+                The in memory module for the given file.
+        """
+        assert path.exists(), 'The expected file was not found.'
+        module_path = path.parent
+        module_name = path.name.split('.')[0]
+        module_path = f'{module_path.name}.{module_name}'
+        spec = importlib.util.spec_from_file_location(module_path, path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        return module
+
+    def _validate_custom_constraints(self, filepath, class_names):
+        errors = []
+        reserved_class_names = list(get_subclasses(Constraint))
+        parent_module = self._load_module_from_path(Path(filepath))
+        for class_name in class_names:
+            if class_name in reserved_class_names:
+                errors.append(f'The name {class_name} is a reserved constraint name.')
+
+            if not hasattr(parent_module, class_name):
+                errors.append(f'The name {class_name} is not declared in {filepath}.')
+
+        if errors:
+            raise InvalidConstraintsError(errors)
+
+    def load_custom_constraint_classes(self, filepath, class_names):
+        """Load a custom constraint class for the current model.
+        Args:
+            filepath (str):
+                String representing the absolute or relative path to the python file where
+                the custom constraint is declared.
+            class_names (list):
+                A list of custom constraint classes to be imported.
+        """
+        self._validate_custom_constraints(filepath, class_names)
+        for class_name in class_names:
+            self._custom_constraint_classes[class_name] = filepath
+
     def _validate_constraint_dict(self, constraint_dict):
         """Validate a constraint against the single table metadata.
 
@@ -161,7 +212,15 @@ class DataProcessor:
         constraint_class = constraint_dict['constraint_class']
         constraint_parameters = constraint_dict.get('constraint_parameters', {})
         try:
-            constraint_class = Constraint._get_class_from_dict(constraint_class)
+            if constraint_class in self._custom_constraint_classes:
+                module = self._load_module_from_path(
+                    Path(self._custom_constraint_classes[constraint_class])
+                )
+                constraint_class = getattr(module, constraint_class)
+
+            else:
+                constraint_class = Constraint._get_class_from_dict(constraint_class)
+
         except KeyError:
             raise InvalidConstraintsError(f"Invalid constraint class ('{constraint_class}').")
 
@@ -442,10 +501,22 @@ class DataProcessor:
             self._prepared_for_fitting = True
 
     def _load_constraints(self):
-        loaded_constraints = [
-            Constraint.from_dict(constraint)
-            for constraint in self._constraints_list
-        ]
+        loaded_constraints = []
+        default_constraints_classes = list(get_subclasses(Constraint))
+        for constraint in self._constraints_list:
+            if constraint['constraint_class'] in default_constraints_classes:
+                loaded_constraints.append(Constraint.from_dict(constraint))
+
+            else:
+                constraint_class = constraint['constraint_class']
+                module = self._load_module_from_path(
+                    Path(self._custom_constraint_classes[constraint_class])
+                )
+                constraint_class = getattr(module, constraint_class)
+                loaded_constraints.append(
+                    constraint_class(**constraint.get('constraint_parameters', {}))
+                )
+
         return loaded_constraints
 
     def fit(self, data):
