@@ -156,9 +156,11 @@ class DataProcessor:
     @staticmethod
     def _load_module_from_path(path):
         """Return the module from a given ``PosixPath``.
+
         Args:
             path (pathlib.Path):
                 A ``PosixPath`` object from where the module should be imported from.
+
         Returns:
             module:
                 The in memory module for the given file.
@@ -176,19 +178,23 @@ class DataProcessor:
     def _validate_custom_constraints(self, filepath, class_names):
         errors = []
         reserved_class_names = list(get_subclasses(Constraint))
-        parent_module = self._load_module_from_path(Path(filepath))
+        module = self._load_module_from_path(Path(filepath))
         for class_name in class_names:
             if class_name in reserved_class_names:
-                errors.append(f'The name {class_name} is a reserved constraint name.')
+                errors.append((
+                    f"The name '{class_name}' is a reserved constraint name. "
+                    'Please use a different one for the custom constraint.'
+                ))
 
-            if not hasattr(parent_module, class_name):
-                errors.append(f'The name {class_name} is not declared in {filepath}.')
+            if not hasattr(module, class_name):
+                errors.append(f"The constraint '{class_name}' is not defined in '{filepath}'.")
 
         if errors:
             raise InvalidConstraintsError(errors)
 
     def load_custom_constraint_classes(self, filepath, class_names):
         """Load a custom constraint class for the current model.
+
         Args:
             filepath (str):
                 String representing the absolute or relative path to the python file where

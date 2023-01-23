@@ -528,3 +528,50 @@ def test_transformers_correctly_auto_assigned():
     assert transformers['primary_key'].enforce_uniqueness is True
 
     assert transformers['categorical_col'].add_noise is True
+
+
+def test_custom_constraints(tmpdir):
+    """Ensure the correct loading for a custom constraint class defined in another file."""
+    data = pd.DataFrame({
+        'primary_key': ['user-000', 'user-001', 'user-002'],
+        'pii_col': ['223 Williams Rd', '75 Waltham St', '77 Mass Ave'],
+        'numerical_col': [1, 2, 3],
+        'categorical_col': ['a', 'b', 'a'],
+    })
+
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+    metadata.update_column(column_name='pii_col', sdtype='address', pii=True)
+    synthesizer = GaussianCopulaSynthesizer(
+        metadata,
+        enforce_min_max_values=False,
+        enforce_rounding=False
+    )
+    synthesizer.load_custom_constraint_classes(
+        'tests/integration/single_table/custom_constraints.py',
+        ['MyConstraint']
+    )
+    constraint = {
+        'constraint_class': 'MyConstraint',
+        'constraint_parameters': {
+            'column_names': ['numerical_col']
+        }
+    }
+
+    # Run
+    synthesizer.add_constraints([constraint])
+    processed_data = synthesizer.preprocess(data)
+
+    # Assert Processed Data
+    assert all(processed_data['numerical_col'] == data['numerical_col'] ** 2)
+
+    # Run - Fit the model
+    synthesizer.fit_processed_data(processed_data)
+
+    # Run - sample
+    synthesizer.sample(10)
+
+    # Run - Save and Sample
+    synthesizer.save(tmpdir / 'test.pkl')
+    loaded_instance = synthesizer.load(tmpdir / 'test.pkl')
+    loaded_instance.sample(10)

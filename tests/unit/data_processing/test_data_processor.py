@@ -325,6 +325,102 @@ class TestDataProcessor:
             'col3': 'numerical'
         }
 
+    @patch('sdv.data_processing.data_processor.importlib')
+    def test__load_module_from_path(self, mock_importlib):
+        """Test the ``load_module_from_path``.
+
+        Test that given a ``PosixPath`` this loads the module and returns it.
+        """
+        # Setup
+        path = Mock()
+        path.exists.return_value = True
+        path.parent = Mock()
+        path.parent.name = 'example'
+        path.name = 'myfile.py'
+
+        # Run
+        result = DataProcessor._load_module_from_path(path)
+
+        # Assert
+        spec = mock_importlib.util.spec_from_file_location.return_value
+        module = mock_importlib.util.module_from_spec.return_value
+        mock_importlib.util.spec_from_file_location.assert_called_once_with('example.myfile', path)
+        mock_importlib.util.module_from_spec.assert_called_once_with(spec)
+        spec.loader.exec_module.assert_called_once_with(module)
+
+        assert result == module
+
+    def test__validate_custom_constraints(self):
+        """Test that ``_validate_custom_constraints`` doesn't raise an error."""
+        # Setup
+        class_names = [
+            'CustomCons',
+            'CustomCons2'
+        ]
+        filepath = 'example/myfile.py'
+        instance = Mock()
+        module = Mock()
+
+        instance._load_module_from_path.return_value = module
+
+        # Run and Assert
+        DataProcessor._validate_custom_constraints(instance, filepath, class_names)
+
+    def test__validate_custom_constraints_raises_an_error(self):
+        """Test the ``_validate_custom_constraints``.
+
+        Ensure that the method will raise an error if the ``class_name`` is within the reserved
+        class names (the default ones provided by ``SDV``) and when the constraint class is not
+        found in the given ``filepath``.
+        """
+        # Setup
+        class_names = [
+            'CustomCons',
+            'Positive',
+            'CustomCons2'
+        ]
+        filepath = 'example/myfile.py'
+        instance = Mock()
+        module = Mock()
+        del module.CustomCons2
+        instance._load_module_from_path.return_value = module
+
+        # Run and Assert
+        error_msg = re.escape(
+            'The provided constraint is invalid:'
+            "\nThe name 'Positive' is a reserved constraint name. Please use a different one for "
+            'the custom constraint.'
+            "\n\nThe constraint 'CustomCons2' is not defined in 'example/myfile.py'."
+        )
+        with pytest.raises(InvalidConstraintsError, match=error_msg):
+            DataProcessor._validate_custom_constraints(instance, filepath, class_names)
+
+    def test_load_custom_constraint_classes(self):
+        """Test ``load_custom_constraint_classes``.
+
+        Ensure that the method calls ``_validate_custom_constraints`` using the ``filepath`` and
+        the ``class_names``. If this are valid, update ``instance._custom_constraint_classes`` with
+        the ``class_name`` and the ``filepath`` from where this class can be loaded.
+        """
+        # Setup
+        instance = Mock()
+        instance._custom_constraint_classes = {}
+        filepath = 'example/myfile.py'
+        class_names = ['CustomCons', 'SimpleCons']
+
+        # Run
+        DataProcessor.load_custom_constraint_classes(instance, filepath, class_names)
+
+        # Assert
+        assert instance._custom_constraint_classes == {
+            'CustomCons': 'example/myfile.py',
+            'SimpleCons': 'example/myfile.py'
+        }
+        instance._validate_custom_constraints.assert_called_once_with(
+            'example/myfile.py',
+            ['CustomCons', 'SimpleCons']
+        )
+
     @patch('sdv.data_processing.data_processor.Constraint')
     def test__validate_constraint_dict(self, mock_constraint):
         """Ensure that the validation calls the ``Constraint`` class validation."""
@@ -348,6 +444,29 @@ class TestDataProcessor:
             metadata, column_name='col1'
         )
         mock_constraint._get_class_from_dict.assert_called_once_with('Positive')
+
+    def test__validate_constraint_dict_custom_constraint(self):
+        """Test that the validation runs properly for a custom constraint class."""
+        # Setup
+        constraint_dict = {
+            'constraint_class': 'CustomCons',
+            'constraint_parameters': {'column_name': 'col1'}
+        }
+        custom_constraint = Mock()
+        custom_module = Mock(CustomCons=custom_constraint)
+
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='categorical')
+        dp = DataProcessor(metadata)
+        dp._custom_constraint_classes = {'CustomCons': 'path/to/constraints.py'}
+        dp._load_module_from_path = Mock(return_value=custom_module)
+
+        # Run
+        dp._validate_constraint_dict(constraint_dict)
+
+        # Assert
+        custom_constraint._validate_metadata.assert_called_once_with(metadata, column_name='col1')
+        dp._load_module_from_path.assert_called_once_with(Path('path/to/constraints.py'))
 
     @patch('sdv.data_processing.data_processor.Constraint')
     def test__validate_constraint_dict_key_error(self, mock_constraint):
@@ -489,14 +608,18 @@ class TestDataProcessor:
         assert instance._constraints_list == result
         assert id(result) != id(instance._constraints_list)
 
+    @patch('sdv.data_processing.data_processor.get_subclasses')
     @patch('sdv.data_processing.data_processor.Constraint')
-    def test__load_constraints(self, constraint_mock):
+    def test__load_constraints(self, constraint_mock, get_subclasses_mock):
         """Test the ``_load_constraints`` method.
 
         The method should take all the constraints in the passed metadata and
-        call the ``Constraint.from_dict`` method on them.
+        call the ``Constraint.from_dict`` method on them if the constraints are the
+        default provided by ``sdv``. If the constraints are custom constraints then
+        this will load them from the specified file.
         """
         # Setup
+        get_subclasses_mock.return_value = {'Inequality', 'ScalarInequality'}
         data_processor = Mock()
         constraint1 = Mock()
         constraint2 = Mock()
@@ -515,16 +638,31 @@ class TestDataProcessor:
                 'value': 10
             }
         }
-        constraint_mock.from_dict.side_effect = [
-            constraint1, constraint2
-        ]
-        data_processor._constraints_list = [constraint1_dict, constraint2_dict]
+        custom_constraint = {
+            'constraint_class': 'CustomCons',
+            'constraint_parameters': {
+                'column_names': ['a', 'b']
+            }
+        }
+
+        data_processor._custom_constraint_classes = {'CustomCons': 'path/to/constraints.py'}
+        constraint_mock.from_dict.side_effect = [constraint1, constraint2]
+        custom_mock = Mock()
+        customcons = Mock()
+        custom_mock.CustomCons = customcons
+
+        data_processor._load_module_from_path.return_value = custom_mock
+        data_processor._constraints_list = [constraint1_dict, constraint2_dict, custom_constraint]
 
         # Run
         loaded_constraints = DataProcessor._load_constraints(data_processor)
 
         # Assert
-        assert loaded_constraints == [constraint1, constraint2]
+        assert loaded_constraints == [constraint1, constraint2, customcons.return_value]
+        customcons.assert_called_once_with(column_names=['a', 'b'])
+        data_processor._load_module_from_path.assert_called_once_with(
+            Path('path/to/constraints.py'))
+
         constraint_mock.from_dict.assert_has_calls(
             [call(constraint1_dict), call(constraint2_dict)])
 
