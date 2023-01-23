@@ -6,7 +6,7 @@
 
 __author__ = 'DataCebo, Inc.'
 __email__ = 'info@sdv.dev'
-__version__ = '0.18.0.dev0'
+__version__ = '0.18.0.dev1'
 
 from sdv import constraints, evaluation, metadata, relational, tabular
 from sdv.demo import get_available_demos, load_demo
