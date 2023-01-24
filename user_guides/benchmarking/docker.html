@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Running on Docker &#8212; SDV 0.17.2 documentation</title>
+    <title>Running on Docker &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -270,7 +270,7 @@ you don’t have permission to install libraries.</p>
 <h3>Pull SDGym<a class="headerlink" href="#pull-sdgym" title="Permalink to this headline">¶</a></h3>
 <p>Pull the latest SDGym image &lt;<a class="reference external" href="https://hub.docker.com/r/sdvproject/sdgym">https://hub.docker.com/r/sdvproject/sdgym</a>&gt;`__
 from DockerHub by running:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker pull sdvproject/sdgym:&lt;tag&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>pull<span class="w"> </span>sdvproject/sdgym:&lt;tag&gt;
 </pre></div>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">&lt;tag&gt;</span></code> is a qualifier for the desired version. You can use:</p>
@@ -285,12 +285,12 @@ from DockerHub by running:</p>
 <div class="section" id="run-sdgym">
 <h3>Run SDGym<a class="headerlink" href="#run-sdgym" title="Permalink to this headline">¶</a></h3>
 <p>Run SDGym using the following command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker run -ti sdvproject/sdgym -- sdgym COMMAND OPTIONS
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>run<span class="w"> </span>-ti<span class="w"> </span>sdvproject/sdgym<span class="w"> </span>--<span class="w"> </span>sdgym<span class="w"> </span>COMMAND<span class="w"> </span>OPTIONS
 </pre></div>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">COMMAND</span></code> and <code class="docutils literal notranslate"><span class="pre">OPTIONS</span></code> are the standard command line options.</p>
 <p>For example, you could try:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker run -ti sdvproject/sdgym -- sdgym run --datasets adult --synthesizer sdv.tabular.CTGANSynthesizer
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>run<span class="w"> </span>-ti<span class="w"> </span>sdvproject/sdgym<span class="w"> </span>--<span class="w"> </span>sdgym<span class="w"> </span>run<span class="w"> </span>--datasets<span class="w"> </span>adult<span class="w"> </span>--synthesizer<span class="w"> </span>sdv.tabular.CTGAN
 </pre></div>
 </div>
 <p>to benchmark the CTGAN model on the adult dataset.</p>
@@ -304,7 +304,7 @@ Docker container. However, if you already have a set of datasets stored
 locally that you want to use for benchmarking, you will need to mount
 the datasets folder so it can be accessed from inside the Docker
 container:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker run -ti -v &lt;/path/to/data&gt;:/SDGym/datasets sdvproject/sdgym -- sdgym run --datasets-path /SDGym/datasets OPTIONS
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>run<span class="w"> </span>-ti<span class="w"> </span>-v<span class="w"> </span>&lt;/path/to/data&gt;:/SDGym/datasets<span class="w"> </span>sdvproject/sdgym<span class="w"> </span>--<span class="w"> </span>sdgym<span class="w"> </span>run<span class="w"> </span>--datasets-path<span class="w"> </span>/SDGym/datasets<span class="w"> </span>OPTIONS
 </pre></div>
 </div>
 <p>The above command will take the path <code class="docutils literal notranslate"><span class="pre">/path/to/data</span></code> and mount it
@@ -346,7 +346,7 @@ inside the Docker container so it is available to SDGym.</p>
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

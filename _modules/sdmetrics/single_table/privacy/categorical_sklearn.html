@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.privacy.categorical_sklearn &#8212; SDV 0.17.2 documentation</title>
+    <title>sdmetrics.single_table.privacy.categorical_sklearn &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -181,7 +181,7 @@
 
 
 <span class="k">class</span> <span class="nc">CategoricalSklearnAttacker</span><span class="p">(</span><span class="n">PrivacyAttackerModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Base class for the categorical attackers based on sklearn models.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for the categorical attackers based on sklearn models.</span>
 
 <span class="sd">    It is used to train a model to predict sensitive attributes from key attributes</span>
 <span class="sd">    using the synthetic data. Then, evaluate the privacy of the model by</span>
@@ -212,7 +212,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">key_fields</span><span class="p">,</span> <span class="n">sensitive_fields</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the CategoricalSklearnAttacker on the synthetic data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the CategoricalSklearnAttacker on the synthetic data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            synthetic_data(pandas.DataFrame):</span>
@@ -232,7 +232,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">predictor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">key_train</span><span class="p">,</span> <span class="n">sensitive_train</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Make a prediction of the sensitive data given keys.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make a prediction of the sensitive data given keys.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key_data(tuple):</span>
@@ -259,13 +259,13 @@
 
 
 <span class="k">class</span> <span class="nc">SVCWrapper</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;A wrapper arround `sklearn.svm.SVC` to support multidimensional y.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A wrapper arround `sklearn.svm.SVC` to support multidimensional y.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">predictors</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the classifier to training data X and lables Y.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the classifier to training data X and lables Y.</span>
 
 <span class="sd">        Arguments:</span>
 <span class="sd">            X (np.array):</span>
@@ -281,7 +281,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">predictors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">predictor</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Predict the labels corresponding to data X.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict the labels corresponding to data X.</span>
 
 <span class="sd">        Arguments:</span>
 <span class="sd">            X (np.array):</span>
@@ -299,13 +299,13 @@
 
 
 <span class="k">class</span> <span class="nc">NBWrapper</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;A wrapper arround `sklearn.naive_bayes.CategoricalNB` to support multidimensional y.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A wrapper arround `sklearn.naive_bayes.CategoricalNB` to support multidimensional y.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">predictors</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the classifier to training data X and lables Y.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the classifier to training data X and lables Y.</span>
 
 <span class="sd">        Arguments:</span>
 <span class="sd">            X (np.array):</span>
@@ -321,7 +321,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">predictors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">predictor</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Predict the labels corresponding to data X.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict the labels corresponding to data X.</span>
 
 <span class="sd">        Arguments:</span>
 <span class="sd">            X (np.array): training data matrix of shape (n_samples, n_features)</span>
@@ -337,7 +337,7 @@
 
 
 <span class="k">class</span> <span class="nc">CategoricalNBAttacker</span><span class="p">(</span><span class="n">CategoricalSklearnAttacker</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The Categorical NaiveBaysian privacy attaker.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Categorical NaiveBaysian privacy attaker.</span>
 
 <span class="sd">    Uses a naive bayesian classifier to calculate the score based on prediction accuracy.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -348,7 +348,7 @@
 
 
 <div class="viewcode-block" id="CategoricalNB"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.CategoricalNB.html#sdv.metrics.tabular.CategoricalNB">[docs]</a><span class="k">class</span> <span class="nc">CategoricalNB</span><span class="p">(</span><span class="n">CategoricalPrivacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The Categorical NaiveBaysian privacy metric. Scored based on the CategoricalNBAttacker.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Categorical NaiveBaysian privacy metric. Scored based on the CategoricalNBAttacker.&quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Categorical NaiveBayesian&#39;</span>
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">CategoricalNBAttacker</span>
@@ -356,7 +356,7 @@
 
 
 <span class="k">class</span> <span class="nc">CategoricalKNNAttacker</span><span class="p">(</span><span class="n">CategoricalSklearnAttacker</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The Categorical KNN (k nearest neighbors) privacy attaker.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Categorical KNN (k nearest neighbors) privacy attaker.</span>
 
 <span class="sd">    Uses a KNN classifier to calculate the score based on prediction accuracy.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -367,7 +367,7 @@
 
 
 <div class="viewcode-block" id="CategoricalKNN"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.CategoricalKNN.html#sdv.metrics.tabular.CategoricalKNN">[docs]</a><span class="k">class</span> <span class="nc">CategoricalKNN</span><span class="p">(</span><span class="n">CategoricalPrivacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The Categorical KNN privacy metric. Scored based on the KNNAttacker.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Categorical KNN privacy metric. Scored based on the KNNAttacker.&quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;K-Nearest Neighbors&#39;</span>
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">CategoricalKNNAttacker</span>
@@ -375,7 +375,7 @@
 
 
 <span class="k">class</span> <span class="nc">CategoricalRFAttacker</span><span class="p">(</span><span class="n">CategoricalSklearnAttacker</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The Categorical RF (Random Forest) privacy attaker.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Categorical RF (Random Forest) privacy attaker.</span>
 
 <span class="sd">    Uses a RF classifier to calculate the score based on prediction accuracy.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -386,7 +386,7 @@
 
 
 <div class="viewcode-block" id="CategoricalRF"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.CategoricalRF.html#sdv.metrics.tabular.CategoricalRF">[docs]</a><span class="k">class</span> <span class="nc">CategoricalRF</span><span class="p">(</span><span class="n">CategoricalPrivacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The Categorical RF privacy metric. Scored based on the CategoricalRFAttacker.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Categorical RF privacy metric. Scored based on the CategoricalRFAttacker.&quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Categorical Random Forest&#39;</span>
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">CategoricalRFAttacker</span>
@@ -394,7 +394,7 @@
 
 
 <span class="k">class</span> <span class="nc">CategoricalSVMAttacker</span><span class="p">(</span><span class="n">CategoricalSklearnAttacker</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The Categorical SVM (Support Vector Machine) privacy attaker.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Categorical SVM (Support Vector Machine) privacy attaker.</span>
 
 <span class="sd">    Uses a SVM classifier to calculate the score based on prediction accuracy.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -405,7 +405,7 @@
 
 
 <div class="viewcode-block" id="CategoricalSVM"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.CategoricalSVM.html#sdv.metrics.tabular.CategoricalSVM">[docs]</a><span class="k">class</span> <span class="nc">CategoricalSVM</span><span class="p">(</span><span class="n">CategoricalPrivacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The Categorical SVM privacy metric. Scored based on the CategoricalSVMAttacker.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Categorical SVM privacy metric. Scored based on the CategoricalSVMAttacker.&quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Support Vector Classifier&#39;</span>
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">CategoricalSVMAttacker</span>
@@ -443,7 +443,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

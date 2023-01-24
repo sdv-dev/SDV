@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Relational Metadata &#8212; SDV 0.17.2 documentation</title>
+    <title>Relational Metadata &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -276,7 +276,7 @@ datasets included in SDV by calling the <code class="docutils literal notranslat
 <p>The output of this function will be a dict that contains several tables
 as <code class="docutils literal notranslate"><span class="pre">pandas.DataFarmes</span></code>.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [3]: </span><span class="n">tables</span>
-<span class="gh">Out[3]: </span><span class="go"></span>
+<span class="gh">Out[3]: </span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
 <span class="go"> 0        0      US      M   34</span>
 <span class="go"> 1        1      UK      F   23</span>
@@ -358,7 +358,7 @@ to import the class and create an empty instance:</p>
 <span class="gp">In [5]: </span><span class="n">metadata</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">()</span>
 
 <span class="gp">In [6]: </span><span class="n">metadata</span>
-<span class="gh">Out[6]: </span><span class="go"></span>
+<span class="gh">Out[6]: </span>
 <span class="go">Metadata</span>
 <span class="go">  root_path: .</span>
 <span class="go">  tables: []</span>
@@ -387,7 +387,7 @@ able to add any child tables to it.</p>
 <p>At this point, our metadata only contains one table and, of course, no
 relationships:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">metadata</span>
-<span class="gh">Out[8]: </span><span class="go"></span>
+<span class="gh">Out[8]: </span>
 <span class="go">Metadata</span>
 <span class="go">  root_path: .</span>
 <span class="go">  tables: [&#39;users&#39;]</span>
@@ -407,7 +407,7 @@ instance:</p>
 <p>Or you can obtain this information in a machine-readable format by
 calling the <code class="docutils literal notranslate"><span class="pre">get_table_meta</span></code> method:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [10]: </span><span class="n">metadata</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="s1">&#39;users&#39;</span><span class="p">)</span>
-<span class="gh">Out[10]: </span><span class="go"></span>
+<span class="gh">Out[10]: </span>
 <span class="go">{&#39;fields&#39;: {&#39;user_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},</span>
 <span class="go">  &#39;country&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
 <span class="go">  &#39;gender&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
@@ -443,7 +443,7 @@ the <code class="docutils literal notranslate"><span class="pre">user_id</span><
 </div>
 <p>Now we can see how the table and the relationship have been registered:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [12]: </span><span class="n">metadata</span>
-<span class="gh">Out[12]: </span><span class="go"></span>
+<span class="gh">Out[12]: </span>
 <span class="go">Metadata</span>
 <span class="go">  root_path: .</span>
 <span class="go">  tables: [&#39;users&#39;, &#39;sessions&#39;]</span>
@@ -482,7 +482,7 @@ is related to the previous <code class="docutils literal notranslate"><span clas
 </div>
 <p>Let’s see what our Metadata looks like right now:</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [15]: </span><span class="n">metadata</span>
-<span class="gh">Out[15]: </span><span class="go"></span>
+<span class="gh">Out[15]: </span>
 <span class="go">Metadata</span>
 <span class="go">  root_path: .</span>
 <span class="go">  tables: [&#39;users&#39;, &#39;sessions&#39;, &#39;transactions&#39;]</span>
@@ -491,7 +491,7 @@ is related to the previous <code class="docutils literal notranslate"><span clas
 <span class="go">    transactions.session_id -&gt; sessions.session_id</span>
 
 <span class="gp">In [16]: </span><span class="n">metadata</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-<span class="gh">Out[16]: </span><span class="go"></span>
+<span class="gh">Out[16]: </span>
 <span class="go">{&#39;tables&#39;: {&#39;users&#39;: {&#39;fields&#39;: {&#39;user_id&#39;: {&#39;type&#39;: &#39;id&#39;,</span>
 <span class="go">     &#39;subtype&#39;: &#39;integer&#39;},</span>
 <span class="go">    &#39;country&#39;: {&#39;type&#39;: &#39;categorical&#39;},</span>
@@ -623,7 +623,7 @@ is as simple as passing it to the <code class="docutils literal notranslate"><sp
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [20]: </span><span class="n">loaded</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">(</span><span class="s1">&#39;demo_metadata.json&#39;</span><span class="p">)</span>
 
 <span class="gp">In [21]: </span><span class="n">loaded</span>
-<span class="gh">Out[21]: </span><span class="go"></span>
+<span class="gh">Out[21]: </span>
 <span class="go">Metadata</span>
 <span class="go">  root_path: </span>
 <span class="go">  tables: [&#39;users&#39;, &#39;sessions&#39;, &#39;transactions&#39;]</span>
@@ -669,7 +669,7 @@ is as simple as passing it to the <code class="docutils literal notranslate"><sp
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

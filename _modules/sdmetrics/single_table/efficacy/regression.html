@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.efficacy.regression &#8212; SDV 0.17.2 documentation</title>
+    <title>sdmetrics.single_table.efficacy.regression &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -177,7 +177,7 @@
 
 
 <div class="viewcode-block" id="RegressionEfficacyMetric"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.RegressionEfficacyMetric.html#sdv.metrics.tabular.RegressionEfficacyMetric">[docs]</a><span class="k">class</span> <span class="nc">RegressionEfficacyMetric</span><span class="p">(</span><span class="n">MLEfficacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;RegressionEfficacy base class.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;RegressionEfficacy base class.&quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">goal</span> <span class="o">=</span> <span class="n">Goal</span><span class="o">.</span><span class="n">MAXIMIZE</span>
@@ -187,7 +187,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return a normalized version of the R^2 score.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a normalized version of the R^2 score.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            raw_score (float):</span>
@@ -201,7 +201,7 @@
 
 
 <div class="viewcode-block" id="LinearRegression"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.LinearRegression.html#sdv.metrics.tabular.LinearRegression">[docs]</a><span class="k">class</span> <span class="nc">LinearRegression</span><span class="p">(</span><span class="n">RegressionEfficacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;LinearRegression Efficacy based metric.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;LinearRegression Efficacy based metric.</span>
 
 <span class="sd">    This fits a LinearRegression to the training data and</span>
 <span class="sd">    then evaluates it making predictions on the test data.</span>
@@ -211,7 +211,7 @@
 
 
 <div class="viewcode-block" id="MLPRegressor"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.MLPRegressor.html#sdv.metrics.tabular.MLPRegressor">[docs]</a><span class="k">class</span> <span class="nc">MLPRegressor</span><span class="p">(</span><span class="n">RegressionEfficacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;MLPRegressor Efficacy based metric.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;MLPRegressor Efficacy based metric.</span>
 
 <span class="sd">    This fits a MLPRegressor to the training data and</span>
 <span class="sd">    then evaluates it making predictions on the test data.</span>
@@ -255,7 +255,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

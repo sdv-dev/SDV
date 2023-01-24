@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.privacy.cap &#8212; SDV 0.17.2 documentation</title>
+    <title>sdmetrics.single_table.privacy.cap &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -173,7 +173,7 @@
 
 
 <span class="k">class</span> <span class="nc">CAPAttacker</span><span class="p">(</span><span class="n">PrivacyAttackerModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The CAP (Correct Attribution Probability) privacy attacker.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The CAP (Correct Attribution Probability) privacy attacker.</span>
 
 <span class="sd">    It will find out all rows in synthetic table that match the target key attributes, and</span>
 <span class="sd">    predict the sensitive entry that appears most frequently among them. The privacy score will</span>
@@ -185,7 +185,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">synthetic_dict</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># {key attribute: [sensitive attribute]}</span>
 
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">key_fields</span><span class="p">,</span> <span class="n">sensitive_fields</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the attacker on the synthetic data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the attacker on the synthetic data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            synthetic_data (Union[numpy.ndarray, pandas.DataFrame]):</span>
@@ -204,7 +204,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">synthetic_dict</span><span class="p">[</span><span class="n">key_value</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">sensitive_value</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Make a prediction of the sensitive data given keys.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make a prediction of the sensitive data given keys.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key_data (tuple):</span>
@@ -220,7 +220,7 @@
         <span class="k">return</span> <span class="n">majority</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">synthetic_dict</span><span class="p">[</span><span class="n">key_data</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_data</span><span class="p">,</span> <span class="n">sensitive_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Score based on the belief of the attacker, in the form P(sensitive_data|key|data).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Score based on the belief of the attacker, in the form P(sensitive_data|key|data).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key_data (tuple):</span>
@@ -240,7 +240,7 @@
 
 
 <div class="viewcode-block" id="CategoricalCAP"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.CategoricalCAP.html#sdv.metrics.tabular.CategoricalCAP">[docs]</a><span class="k">class</span> <span class="nc">CategoricalCAP</span><span class="p">(</span><span class="n">CategoricalPrivacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The Categorical CAP privacy metric. Scored based on the CAPAttacker.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Categorical CAP privacy metric. Scored based on the CAPAttacker.&quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;CategoricalCAP&#39;</span>
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">CAPAttacker</span>
@@ -248,14 +248,14 @@
 
 
 <span class="k">class</span> <span class="nc">ZeroCAPAttacker</span><span class="p">(</span><span class="n">CAPAttacker</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The 0CAP privacy attacker, which operates in the same way as CAP does.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The 0CAP privacy attacker, which operates in the same way as CAP does.</span>
 
 <span class="sd">    The difference is that when a match in key attribute is not found, the attack will</span>
 <span class="sd">    be classified as failed and a score of 0 will be recorded.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_data</span><span class="p">,</span> <span class="n">sensitive_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Score based on the belief of the attacker, in the form P(sensitive_data|key|data).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Score based on the belief of the attacker, in the form P(sensitive_data|key|data).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key_data (tuple):</span>
@@ -275,7 +275,7 @@
 
 
 <div class="viewcode-block" id="CategoricalZeroCAP"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.CategoricalZeroCAP.html#sdv.metrics.tabular.CategoricalZeroCAP">[docs]</a><span class="k">class</span> <span class="nc">CategoricalZeroCAP</span><span class="p">(</span><span class="n">CategoricalPrivacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The Categorical 0CAP privacy metric. Scored based on the ZeroCAPAttacker.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Categorical 0CAP privacy metric. Scored based on the ZeroCAPAttacker.&quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;0CAP&#39;</span>
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">ZeroCAPAttacker</span>
@@ -283,7 +283,7 @@
 
 
 <span class="k">class</span> <span class="nc">GeneralizedCAPAttacker</span><span class="p">(</span><span class="n">CAPAttacker</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The GeneralizedCAP privacy attacker.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The GeneralizedCAP privacy attacker.</span>
 
 <span class="sd">    It will find out all rows in synthetic table that are closest (in hamming distance) to the</span>
 <span class="sd">    target key attributes, and predict the sensitive entry that appears most frequently among</span>
@@ -293,7 +293,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Make a prediction of the sensitive data given keys.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make a prediction of the sensitive data given keys.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key_data (tuple):</span>
@@ -311,7 +311,7 @@
         <span class="k">return</span> <span class="n">majority</span><span class="p">(</span><span class="n">ref_sensitive_attributes</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_data</span><span class="p">,</span> <span class="n">sensitive_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Score based on the belief of the attacker, in the form P(sensitive_data|key|data).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Score based on the belief of the attacker, in the form P(sensitive_data|key|data).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key_data (tuple):</span>
@@ -332,7 +332,7 @@
 
 
 <div class="viewcode-block" id="CategoricalGeneralizedCAP"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.CategoricalGeneralizedCAP.html#sdv.metrics.tabular.CategoricalGeneralizedCAP">[docs]</a><span class="k">class</span> <span class="nc">CategoricalGeneralizedCAP</span><span class="p">(</span><span class="n">CategoricalPrivacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The GeneralizedCAP privacy metric. Scored based on the ZeroCAPAttacker.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The GeneralizedCAP privacy metric. Scored based on the ZeroCAPAttacker.&quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Categorical GeneralizedCAP&#39;</span>
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">GeneralizedCAPAttacker</span>
@@ -370,7 +370,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.column_pairs.statistical.kl_divergence &#8212; SDV 0.17.2 documentation</title>
+    <title>sdmetrics.column_pairs.statistical.kl_divergence &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -178,7 +178,7 @@
 
 
 <span class="k">class</span> <span class="nc">ContinuousKLDivergence</span><span class="p">(</span><span class="n">ColumnPairsMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Continuous Kullback–Leibler Divergence based metric.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Continuous Kullback–Leibler Divergence based metric.</span>
 
 <span class="sd">    This approximates the KL divergence by binning the continuous values</span>
 <span class="sd">    to turn them into categorical values and then computing the relative</span>
@@ -202,7 +202,7 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compare two pairs of continuous columns using Kullback–Leibler Divergence.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compare two pairs of continuous columns using Kullback–Leibler Divergence.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            real_data (pandas.DataFrame):</span>
@@ -231,7 +231,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            raw_score (float):</span>
@@ -245,7 +245,7 @@
 
 
 <span class="k">class</span> <span class="nc">DiscreteKLDivergence</span><span class="p">(</span><span class="n">ColumnPairsMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Discrete Kullback–Leibler Divergence based metric.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Discrete Kullback–Leibler Divergence based metric.</span>
 
 <span class="sd">    This computes the KL divergence and afterwards normalizes the</span>
 <span class="sd">    value applying ``1 / (1 + KLD)``.</span>
@@ -268,7 +268,7 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute the KL divergence.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the KL divergence.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            real_data:</span>
@@ -289,7 +289,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            raw_score (float):</span>
@@ -333,7 +333,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

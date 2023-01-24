@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tabular Models &#8212; SDV 0.17.2 documentation</title>
+    <title>Tabular Models &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -381,10 +381,10 @@ class, but also the signature and API reference exposes all the accepted argumen
 <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> that contains numerical data only.</p>
 <p>Within this method, you can perform any steps necessary to fit your model.
 For example, we can see how the <code class="docutils literal notranslate"><span class="pre">sdv.tabular.ctgan.CTGAN._fit</span></code> method creates an instance of
-the underlying model, <code class="docutils literal notranslate"><span class="pre">CTGANSynthesizer</span></code>, and prepares the list of categorical columns that
+the underlying model, <code class="docutils literal notranslate"><span class="pre">CTGAN</span></code>, and prepares the list of categorical columns that
 it expects alongside the data.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        table_data (pandas.DataFrame):</span>
@@ -412,7 +412,7 @@ it expects alongside the data.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Here you can also see that some of the hyperparameters for the <code class="docutils literal notranslate"><span class="pre">CTGANSynthesizer</span></code>
+<p>Here you can also see that some of the hyperparameters for the <code class="docutils literal notranslate"><span class="pre">CTGAN</span></code>
 class are being taken from the instance itself, where the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> method stored
 them beforehand.</p>
 </div>
@@ -423,7 +423,7 @@ them beforehand.</p>
 indicates the number of rows that need to be sampled. In most cases, such as the <code class="docutils literal notranslate"><span class="pre">CTGAN</span></code> example
 shown below, all this method does is call the <code class="docutils literal notranslate"><span class="pre">sample</span></code> method of the underlying model:</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        num_rows (int):</span>
@@ -474,7 +474,7 @@ shown below, all this method does is call the <code class="docutils literal notr
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

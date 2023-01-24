@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.dataset &#8212; SDV 0.17.2 documentation</title>
+    <title>sdv.metadata.dataset &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -185,7 +185,7 @@
 
 
 <span class="k">def</span> <span class="nf">_read_csv_dtypes</span><span class="p">(</span><span class="n">table_meta</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Get the dtypes specification that needs to be passed to read_csv.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the dtypes specification that needs to be passed to read_csv.&quot;&quot;&quot;</span>
     <span class="n">dtypes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">field_type</span> <span class="o">=</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
@@ -196,7 +196,7 @@
 
 
 <span class="k">def</span> <span class="nf">_parse_dtypes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Convert the data columns to the right dtype after loading the CSV.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert the data columns to the right dtype after loading the CSV.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">field_type</span> <span class="o">=</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;datetime&#39;</span><span class="p">:</span>
@@ -211,7 +211,7 @@
 
 
 <span class="k">def</span> <span class="nf">_load_csv</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Load a CSV with the right dtypes and then parse the columns.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a CSV with the right dtypes and then parse the columns.&quot;&quot;&quot;</span>
     <span class="n">relative_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">])</span>
     <span class="n">dtypes</span> <span class="o">=</span> <span class="n">_read_csv_dtypes</span><span class="p">(</span><span class="n">table_meta</span><span class="p">)</span>
 
@@ -222,7 +222,7 @@
 
 
 <div class="viewcode-block" id="Metadata"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.html#sdv.metadata.dataset.Metadata">[docs]</a><span class="k">class</span> <span class="nc">Metadata</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Dataset Metadata.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dataset Metadata.</span>
 
 <span class="sd">    The Metadata class provides a unified layer of abstraction over the dataset</span>
 <span class="sd">    metadata, which includes both the necessary details to load the data from</span>
@@ -276,7 +276,7 @@
     <span class="p">}</span>
 
     <span class="k">def</span> <span class="nf">_analyze_relationships</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Extract information about child-parent relationships.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract information about child-parent relationships.</span>
 
 <span class="sd">        Creates the following attributes:</span>
 <span class="sd">            * ``_child_map``: set of child tables that each table has.</span>
@@ -296,7 +296,7 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_dict_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get a metadata ``dict`` with SDV format.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a metadata ``dict`` with SDV format.</span>
 
 <span class="sd">        For each table create a dict of fields from a previous list of fields.</span>
 
@@ -350,7 +350,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_relationships</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="Metadata.get_children"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.get_children.html#sdv.metadata.dataset.Metadata.get_children">[docs]</a>    <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get tables for which the given table is parent.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get tables for which the given table is parent.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -363,7 +363,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child_map</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="Metadata.get_parents"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.get_parents.html#sdv.metadata.dataset.Metadata.get_parents">[docs]</a>    <span class="k">def</span> <span class="nf">get_parents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get tables for with the given table is child.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get tables for with the given table is child.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -376,7 +376,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent_map</span><span class="p">[</span><span class="n">table_name</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="Metadata.get_table_meta"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.get_table_meta.html#sdv.metadata.dataset.Metadata.get_table_meta">[docs]</a>    <span class="k">def</span> <span class="nf">get_table_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the metadata dict for a table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the metadata dict for a table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -397,7 +397,7 @@
         <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">table</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Metadata.get_tables"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.get_tables.html#sdv.metadata.dataset.Metadata.get_tables">[docs]</a>    <span class="k">def</span> <span class="nf">get_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the list with the tables found in this metadata.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the list with the tables found in this metadata.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            list:</span>
@@ -406,7 +406,7 @@
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
 
 <div class="viewcode-block" id="Metadata.get_field_meta"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.get_field_meta.html#sdv.metadata.dataset.Metadata.get_field_meta">[docs]</a>    <span class="k">def</span> <span class="nf">get_field_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">field_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the metadata dict for a table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the metadata dict for a table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -430,7 +430,7 @@
         <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">field_meta</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Metadata.get_fields"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.get_fields.html#sdv.metadata.dataset.Metadata.get_fields">[docs]</a>    <span class="k">def</span> <span class="nf">get_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the metadata of the fields of the indicated table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the metadata of the fields of the indicated table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -447,7 +447,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table_name</span><span class="p">)[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="Metadata.get_primary_key"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.get_primary_key.html#sdv.metadata.dataset.Metadata.get_primary_key">[docs]</a>    <span class="k">def</span> <span class="nf">get_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the name of the primary key of the indicated table, if it has one.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the name of the primary key of the indicated table, if it has one.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -464,7 +464,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Metadata.get_foreign_keys"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.get_foreign_keys.html#sdv.metadata.dataset.Metadata.get_foreign_keys">[docs]</a>    <span class="k">def</span> <span class="nf">get_foreign_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the name of all the fields in the child that are foreign keys to this parent.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the name of all the fields in the child that are foreign keys to this parent.</span>
 
 <span class="sd">        If there is no relationship between the two tables an empty list is returned.</span>
 
@@ -487,7 +487,7 @@
         <span class="k">return</span> <span class="n">foreign_keys</span></div>
 
 <div class="viewcode-block" id="Metadata.load_table"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.load_table.html#sdv.metadata.dataset.Metadata.load_table">[docs]</a>    <span class="k">def</span> <span class="nf">load_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Load the data of the indicated table as a DataFrame.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load the data of the indicated table as a DataFrame.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -506,7 +506,7 @@
         <span class="k">return</span> <span class="n">_load_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Metadata.load_tables"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.load_tables.html#sdv.metadata.dataset.Metadata.load_tables">[docs]</a>    <span class="k">def</span> <span class="nf">load_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get a dictionary with data from multiple tables.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a dictionary with data from multiple tables.</span>
 
 <span class="sd">        If a ``tables`` list is given, only load the indicated tables.</span>
 <span class="sd">        Otherwise, load all the tables from this metadata.</span>
@@ -525,7 +525,7 @@
         <span class="p">}</span></div>
 
 <div class="viewcode-block" id="Metadata.get_dtypes"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.get_dtypes.html#sdv.metadata.dataset.Metadata.get_dtypes">[docs]</a>    <span class="k">def</span> <span class="nf">get_dtypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get a ``dict`` with the ``dtypes`` for each field of a given table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a ``dict`` with the ``dtypes`` for each field of a given table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -571,7 +571,7 @@
     <span class="c1"># ################### #</span>
 
     <span class="k">def</span> <span class="nf">_validate_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">table_meta</span><span class="p">,</span> <span class="n">table_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate table metadata.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate table metadata.</span>
 
 <span class="sd">        Validate the type and subtype combination for each field in ``table_meta``.</span>
 <span class="sd">        If a field has type ``id``, validate that it either is the ``primary_key`` or</span>
@@ -632,7 +632,7 @@
                 <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_validate_circular_relationships</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">children</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate that there is no circular relatioship in the metadata.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that there is no circular relatioship in the metadata.&quot;&quot;&quot;</span>
         <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">errors</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">errors</span>
         <span class="n">parents</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span> <span class="k">if</span> <span class="n">parents</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">parents</span>
         <span class="k">if</span> <span class="n">children</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -651,7 +651,7 @@
                 <span class="n">parent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">child</span><span class="p">),</span> <span class="n">errors</span><span class="p">,</span> <span class="n">parents</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Metadata.validate"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.validate.html#sdv.metadata.dataset.Metadata.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate this metadata.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate this metadata.</span>
 
 <span class="sd">        Validate the metadata of each table:</span>
 
@@ -699,7 +699,7 @@
             <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="s1">&#39;Invalid Metadata specification:</span><span class="se">\n</span><span class="s1"> - &#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1"> - &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">errors</span><span class="p">))</span></div>
 
     <span class="k">def</span> <span class="nf">_check_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">exists</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate the existance of the table and existance (or not) of field.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the existance of the table and existance (or not) of field.&quot;&quot;&quot;</span>
         <span class="n">table_fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fields</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">exists</span> <span class="ow">and</span> <span class="p">(</span><span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table_fields</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Field &quot;</span><span class="si">{}</span><span class="s1">&quot; does not exist in table &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">table</span><span class="p">))</span>
@@ -712,7 +712,7 @@
     <span class="c1"># ################# #</span>
 
 <div class="viewcode-block" id="Metadata.add_field"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.add_field.html#sdv.metadata.dataset.Metadata.add_field">[docs]</a>    <span class="k">def</span> <span class="nf">add_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">field_type</span><span class="p">,</span> <span class="n">field_subtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Add a new field to the indicated table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a new field to the indicated table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table (str):</span>
@@ -748,7 +748,7 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_key_subtype</span><span class="p">(</span><span class="n">field_meta</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the appropriate key subtype.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the appropriate key subtype.&quot;&quot;&quot;</span>
         <span class="n">field_type</span> <span class="o">=</span> <span class="n">field_meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;categorical&#39;</span><span class="p">:</span>
@@ -769,7 +769,7 @@
         <span class="k">return</span> <span class="n">field_subtype</span>
 
 <div class="viewcode-block" id="Metadata.set_primary_key"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.set_primary_key.html#sdv.metadata.dataset.Metadata.set_primary_key">[docs]</a>    <span class="k">def</span> <span class="nf">set_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Set the primary key field of the indicated table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the primary key field of the indicated table.</span>
 
 <span class="sd">        The field must exist and either be an integer or categorical field.</span>
 
@@ -797,7 +797,7 @@
         <span class="n">table_meta</span><span class="p">[</span><span class="s1">&#39;primary_key&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span></div>
 
 <div class="viewcode-block" id="Metadata.add_relationship"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.add_relationship.html#sdv.metadata.dataset.Metadata.add_relationship">[docs]</a>    <span class="k">def</span> <span class="nf">add_relationship</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">foreign_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Add a new relationship between the parent and child tables.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a new relationship between the parent and child tables.</span>
 
 <span class="sd">        The relationship is created by adding a reference (``ref``) on the ``foreign_key``</span>
 <span class="sd">        field of the ``child`` table pointing at the ``parent`` primary key.</span>
@@ -879,7 +879,7 @@
                 <span class="k">raise</span></div>
 
     <span class="k">def</span> <span class="nf">_get_field_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">fields</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get or build all the fields metadata.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get or build all the fields metadata.</span>
 
 <span class="sd">        Analyze a ``pandas.DataFrame`` to build a ``dict`` with the name of the column, and</span>
 <span class="sd">        their data type and subtype. If ``columns`` are provided, only those columns will be</span>
@@ -915,7 +915,7 @@
 
 <div class="viewcode-block" id="Metadata.add_table"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.add_table.html#sdv.metadata.dataset.Metadata.add_table">[docs]</a>    <span class="k">def</span> <span class="nf">add_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fields_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                   <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">foreign_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Add a new table to this metadata.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a new table to this metadata.</span>
 
 <span class="sd">        ``fields`` list can be a mixture of field names, which will be build automatically</span>
 <span class="sd">        from the data, or dictionaries specifying the field details. If a field needs to be</span>
@@ -1011,7 +1011,7 @@
     <span class="c1"># ###################### #</span>
 
 <div class="viewcode-block" id="Metadata.to_dict"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.to_dict.html#sdv.metadata.dataset.Metadata.to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get a dict representation of this metadata.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a dict representation of this metadata.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            dict:</span>
@@ -1020,7 +1020,7 @@
         <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Metadata.to_json"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.to_json.html#sdv.metadata.dataset.Metadata.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Dump this metadata into a JSON file.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Dump this metadata into a JSON file.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path (str):</span>
@@ -1054,7 +1054,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="Metadata.visualize"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.dataset.Metadata.visualize.html#sdv.metadata.dataset.Metadata.visualize">[docs]</a>    <span class="k">def</span> <span class="nf">visualize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Plot metadata usign graphviz.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot metadata usign graphviz.</span>
 
 <span class="sd">        Generate a plot using graphviz.</span>
 <span class="sd">        If a ``path`` is provided save the output into a file.</span>
@@ -1102,7 +1102,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

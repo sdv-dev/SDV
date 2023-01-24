@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Constraints &#8212; SDV 0.17.2 documentation</title>
+    <title>Constraints &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -249,7 +249,7 @@ which is a child table of <code class="docutils literal notranslate"><span class
 </div>
 <p>The metadata now contains the <code class="docutils literal notranslate"><span class="pre">users</span></code> table.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [5]: </span><span class="n">metadata</span>
-<span class="gh">Out[5]: </span><span class="go"></span>
+<span class="gh">Out[5]: </span>
 <span class="go">Metadata</span>
 <span class="go">  root_path: .</span>
 <span class="go">  tables: [&#39;users&#39;]</span>
@@ -276,7 +276,7 @@ appear in the original data.</p>
 </div>
 <p>If we get the table metadata for <code class="docutils literal notranslate"><span class="pre">sessions</span></code>, we can see that the constraint has been added.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [9]: </span><span class="n">metadata</span><span class="o">.</span><span class="n">get_table_meta</span><span class="p">(</span><span class="s1">&#39;sessions&#39;</span><span class="p">)</span>
-<span class="gh">Out[9]: </span><span class="go"></span>
+<span class="gh">Out[9]: </span>
 <span class="go">{&#39;fields&#39;: {&#39;session_id&#39;: {&#39;type&#39;: &#39;id&#39;, &#39;subtype&#39;: &#39;integer&#39;},</span>
 <span class="go">  &#39;user_id&#39;: {&#39;type&#39;: &#39;id&#39;,</span>
 <span class="go">   &#39;subtype&#39;: &#39;integer&#39;,</span>
@@ -301,28 +301,28 @@ appear in the original data.</p>
 </div>
 <p>In the sampled data, we should see that our constraint is being satisfied.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [14]: </span><span class="n">new_data</span>
-<span class="gh">Out[14]: </span><span class="go"></span>
+<span class="gh">Out[14]: </span>
 <span class="go">{&#39;users&#39;:    user_id country gender  age</span>
-<span class="go"> 0        0      UK      M   41</span>
-<span class="go"> 1        1      ES      F   50</span>
-<span class="go"> 2        2      US      F   34</span>
-<span class="go"> 3        3      US      M   48</span>
-<span class="go"> 4        4      ES      M   44</span>
-<span class="go"> 5        5      US      M   50</span>
-<span class="go"> 6        6      DE      F   33</span>
-<span class="go"> 7        7      US      M   30</span>
-<span class="go"> 8        8      FR      F   53</span>
-<span class="go"> 9        9      US      M   41,</span>
+<span class="go"> 0        0      US      F   33</span>
+<span class="go"> 1        1      ES      F   27</span>
+<span class="go"> 2        2      US      M   39</span>
+<span class="go"> 3        3      ES      F   33</span>
+<span class="go"> 4        4      UK      M   42</span>
+<span class="go"> 5        5      ES    NaN   50</span>
+<span class="go"> 6        6      FR      F   46</span>
+<span class="go"> 7        7      US      M   42</span>
+<span class="go"> 8        8      UK      M   22</span>
+<span class="go"> 9        9      UK    NaN   57,</span>
 <span class="go"> &#39;sessions&#39;:    session_id  user_id  device       os  minutes</span>
-<span class="go"> 0           0        0  tablet  android       12</span>
-<span class="go"> 1           1        1  tablet  android        7</span>
-<span class="go"> 2           2        2  mobile  android       32</span>
-<span class="go"> 3           3        3  tablet  android        7</span>
-<span class="go"> 4           4        4  mobile  android       28</span>
-<span class="go"> 5           5        5  mobile  android       22</span>
-<span class="go"> 6           6        6  mobile  android       14</span>
-<span class="go"> 7           7        7  mobile  android       16</span>
-<span class="go"> 8           8        8  tablet  android        7</span>
+<span class="go"> 0           0        0  tablet      ios       13</span>
+<span class="go"> 1           1        1  mobile      ios       21</span>
+<span class="go"> 2           2        2  mobile  android       29</span>
+<span class="go"> 3           3        3  mobile  android       20</span>
+<span class="go"> 4           4        4  tablet      ios       23</span>
+<span class="go"> 5           5        5  mobile  android       24</span>
+<span class="go"> 6           6        6  mobile      ios       15</span>
+<span class="go"> 7           7        7  mobile  android       31</span>
+<span class="go"> 8           8        8  tablet      ios       34</span>
 <span class="go"> 9           9        9  mobile  android       22}</span>
 </pre></div>
 </div>
@@ -362,7 +362,7 @@ appear in the original data.</p>
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

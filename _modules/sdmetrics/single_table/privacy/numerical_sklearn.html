@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.privacy.numerical_sklearn &#8212; SDV 0.17.2 documentation</title>
+    <title>sdmetrics.single_table.privacy.numerical_sklearn &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -177,7 +177,7 @@
 
 
 <span class="k">class</span> <span class="nc">NumericalSklearnAttacker</span><span class="p">(</span><span class="n">PrivacyAttackerModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Base class for numerical attacker based on sklearn models.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for numerical attacker based on sklearn models.</span>
 
 <span class="sd">    It is used to train a model to predict sensitive attributes from key attributes</span>
 <span class="sd">    using the synthetic data. Then, evaluate the privacy of the model by</span>
@@ -194,7 +194,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">predictor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SKL_LEARNER</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">sensitive</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the NumericalSklearnAttacker on the synthetic data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the NumericalSklearnAttacker on the synthetic data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            synthetic_data(pandas.DataFrame):</span>
@@ -210,7 +210,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">predictor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">key_table</span><span class="p">,</span> <span class="n">sensitive_table</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Make a prediction of the sensitive data given keys.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make a prediction of the sensitive data given keys.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key_data(tuple):</span>
@@ -228,13 +228,13 @@
 
 
 <span class="k">class</span> <span class="nc">SVRWrapper</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;A wrapper arround `sklearn.svm.SVR` to support multidimensional y.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A wrapper arround `sklearn.svm.SVR` to support multidimensional y.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">predictors</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the classifier to training data X and lables Y.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the classifier to training data X and lables Y.</span>
 
 <span class="sd">        Arguments:</span>
 <span class="sd">            X (np.array):</span>
@@ -250,7 +250,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">predictors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">predictor</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Predict the labels corresponding to data X.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict the labels corresponding to data X.</span>
 
 <span class="sd">        Arguments:</span>
 <span class="sd">            X (np.array): training data matrix of shape (n_samples, n_features)</span>
@@ -267,39 +267,39 @@
 
 
 <span class="k">class</span> <span class="nc">LRAttacker</span><span class="p">(</span><span class="n">NumericalSklearnAttacker</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The privacy attaker based on the Linear Regression model.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The privacy attaker based on the Linear Regression model.&quot;&quot;&quot;</span>
 
     <span class="n">SKL_LEARNER</span> <span class="o">=</span> <span class="n">LinearRegression</span>
 
 
 <div class="viewcode-block" id="NumericalLR"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.NumericalLR.html#sdv.metrics.tabular.NumericalLR">[docs]</a><span class="k">class</span> <span class="nc">NumericalLR</span><span class="p">(</span><span class="n">NumericalPrivacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The Numerical Linear Regression privacy metric. Scored based on the LRAttacker.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Numerical Linear Regression privacy metric. Scored based on the LRAttacker.&quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Numerical Linear Regression&#39;</span>
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">LRAttacker</span></div>
 
 
 <span class="k">class</span> <span class="nc">MLPAttacker</span><span class="p">(</span><span class="n">NumericalSklearnAttacker</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The privacy attaker based on the MLP (Multi-layer Perceptron) regression model.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The privacy attaker based on the MLP (Multi-layer Perceptron) regression model.&quot;&quot;&quot;</span>
 
     <span class="n">SKL_LEARNER</span> <span class="o">=</span> <span class="n">MLPRegressor</span>
 
 
 <div class="viewcode-block" id="NumericalMLP"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.NumericalMLP.html#sdv.metrics.tabular.NumericalMLP">[docs]</a><span class="k">class</span> <span class="nc">NumericalMLP</span><span class="p">(</span><span class="n">NumericalPrivacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The Multi-layer Perceptron regression privacy metric. Scored based on the MLPAttacker.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Multi-layer Perceptron regression privacy metric. Scored based on the MLPAttacker.&quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Multi-layer Perceptron Regression&#39;</span>
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">MLPAttacker</span></div>
 
 
 <span class="k">class</span> <span class="nc">SVRAttacker</span><span class="p">(</span><span class="n">NumericalSklearnAttacker</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The privacy attaker based on the SVR (Support-vector Regression) model.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The privacy attaker based on the SVR (Support-vector Regression) model.&quot;&quot;&quot;</span>
 
     <span class="n">SKL_LEARNER</span> <span class="o">=</span> <span class="n">SVRWrapper</span>
 
 
 <div class="viewcode-block" id="NumericalSVR"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.NumericalSVR.html#sdv.metrics.tabular.NumericalSVR">[docs]</a><span class="k">class</span> <span class="nc">NumericalSVR</span><span class="p">(</span><span class="n">NumericalPrivacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The Numerical Support-vector Regression privacy metric. Scored based on the SVRAttacker.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Numerical Support-vector Regression privacy metric. Scored based on the SVRAttacker.&quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Numerical Support-vector Regression&#39;</span>
     <span class="n">MODEL</span> <span class="o">=</span> <span class="n">SVRAttacker</span></div>
@@ -336,7 +336,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

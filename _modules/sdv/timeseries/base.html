@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.timeseries.base &#8212; SDV 0.17.2 documentation</title>
+    <title>sdv.timeseries.base &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -184,7 +184,7 @@
 
 
 <span class="k">class</span> <span class="nc">BaseTimeseriesModel</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Base class for timeseries models.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for timeseries models.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        field_names (list[str]):</span>
@@ -352,7 +352,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_context_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeseries_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit this model to the data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit this model to the data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            timseries_data (pandas.DataFrame):</span>
@@ -378,7 +378,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span><span class="p">(</span><span class="n">transformed</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get metadata about the table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get metadata about the table.</span>
 
 <span class="sd">        This will return an ``sdv.metadata.Table`` object containing</span>
 <span class="sd">        the information about the data that this model has learned.</span>
@@ -398,7 +398,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_sequences</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sequence_length</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample new sequences.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample new sequences.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_sequences (int):</span>
@@ -436,7 +436,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">reverse_transform</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Save this model instance to the given path using cloudpickle.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save this model instance to the given path using cloudpickle.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path (str):</span>
@@ -449,7 +449,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Load a TabularModel instance from a given path.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load a TabularModel instance from a given path.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path (str):</span>
@@ -497,7 +497,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

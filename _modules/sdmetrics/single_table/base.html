@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.base &#8212; SDV 0.17.2 documentation</title>
+    <title>sdmetrics.single_table.base &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -175,11 +175,12 @@
 
 <span class="kn">from</span> <span class="nn">sdmetrics.base</span> <span class="kn">import</span> <span class="n">BaseMetric</span>
 <span class="kn">from</span> <span class="nn">sdmetrics.errors</span> <span class="kn">import</span> <span class="n">IncomputableMetricError</span>
-<span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="n">get_columns_from_metadata</span><span class="p">,</span> <span class="n">get_type_from_column_meta</span>
+<span class="kn">from</span> <span class="nn">sdmetrics.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_alternate_keys</span><span class="p">,</span> <span class="n">get_columns_from_metadata</span><span class="p">,</span> <span class="n">get_type_from_column_meta</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SingleTableMetric"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.SingleTableMetric.html#sdv.metrics.tabular.SingleTableMetric">[docs]</a><span class="k">class</span> <span class="nc">SingleTableMetric</span><span class="p">(</span><span class="n">BaseMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Base class for metrics that apply to single tables.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for metrics that apply to single tables.</span>
 
 <span class="sd">    Input to these family of metrics are two ``pandas.DataFrame`` instances</span>
 <span class="sd">    and a ``dict`` representations of the corresponding ``Table`` metadata.</span>
@@ -222,7 +223,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_select_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">types</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Select fields from metadata that match the specified types.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Select fields from metadata that match the specified types.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            metadata (dict):</span>
@@ -243,9 +244,10 @@
             <span class="n">types</span> <span class="o">=</span> <span class="p">(</span><span class="n">types</span><span class="p">,</span> <span class="p">)</span>
 
         <span class="n">primary_key</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;primary_key&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">alternate_keys</span> <span class="o">=</span> <span class="n">get_alternate_keys</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">field_meta</span> <span class="ow">in</span> <span class="n">get_columns_from_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="s1">&#39;pii&#39;</span> <span class="ow">in</span> <span class="n">field_meta</span> <span class="ow">or</span> <span class="n">field_name</span> <span class="o">==</span> <span class="n">primary_key</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;pii&#39;</span> <span class="ow">in</span> <span class="n">field_meta</span> <span class="ow">or</span> <span class="n">field_name</span> <span class="o">==</span> <span class="n">primary_key</span> <span class="ow">or</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">alternate_keys</span><span class="p">:</span>
                 <span class="k">continue</span>
 
             <span class="n">field_type</span> <span class="o">=</span> <span class="n">get_type_from_column_meta</span><span class="p">(</span><span class="n">field_meta</span><span class="p">)</span>
@@ -260,7 +262,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_validate_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate the inputs and return the validated data and metadata.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the inputs and return the validated data and metadata.</span>
 
 <span class="sd">        If a metadata is passed, the data is validated against it.</span>
 
@@ -321,7 +323,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute this metric.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute this metric.</span>
 
 <span class="sd">        Real data and synthetic data must be passed as ``pandas.DataFrame`` instances</span>
 <span class="sd">        and ``metadata`` as a ``Table`` metadata ``dict`` representation.</span>
@@ -346,7 +348,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute_breakdown</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute this metric breakdown.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute this metric breakdown.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            real_data (pandas.DataFrame):</span>
@@ -398,7 +400,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Installing SDGym &#8212; SDV 0.17.2 documentation</title>
+    <title>Installing SDGym &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -270,7 +270,7 @@
 <h2>Install with pip<a class="headerlink" href="#install-with-pip" title="Permalink to this headline">¶</a></h2>
 <p>The easiest and recommended way to install <strong>SDGym</strong> is using
 <a class="reference external" href="https://pip.pypa.io/en/stable/">pip</a>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install sdgym
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>sdgym
 </pre></div>
 </div>
 <p>This will pull and install the latest stable release from
@@ -280,7 +280,7 @@
 <h2>Install with conda<a class="headerlink" href="#install-with-conda" title="Permalink to this headline">¶</a></h2>
 <p><strong>SDGym</strong> can also be installed using
 <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda install -c sdv-dev -c conda-forge sdgym
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>sdv-dev<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>sdgym
 </pre></div>
 </div>
 <p>This will pull and install the latest stable release from
@@ -292,10 +292,10 @@
 repository and then execute the <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span></code> command inside the
 <code class="docutils literal notranslate"><span class="pre">stable</span></code> branch. Note that this command works only on Unix based
 systems like GNU/Linux and macOS:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/sdv-dev/SDGym
-<span class="nb">cd</span> SDGym
-git checkout stable
-make install
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/sdv-dev/SDGym
+<span class="nb">cd</span><span class="w"> </span>SDGym
+git<span class="w"> </span>checkout<span class="w"> </span>stable
+make<span class="w"> </span>install
 </pre></div>
 </div>
 </div>
@@ -305,11 +305,11 @@ make install
 will need to install it from the source using the
 <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install-develop</span></code> command. In this case, we recommend you to
 branch from <code class="docutils literal notranslate"><span class="pre">master</span></code> first:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone git@github.com:sdv-dev/SDGym
-<span class="nb">cd</span> SDGym
-git checkout master
-git checkout -b &lt;your-branch-name&gt;
-make install-develp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:sdv-dev/SDGym
+<span class="nb">cd</span><span class="w"> </span>SDGym
+git<span class="w"> </span>checkout<span class="w"> </span>master
+git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>&lt;your-branch-name&gt;
+make<span class="w"> </span>install-develp
 </pre></div>
 </div>
 <p>For more details about how to contribute to the project please visit the
@@ -324,8 +324,8 @@ before they can be used.</p>
 <ol class="arabic simple">
 <li><p>Clone or download the SDGym repository to your local machine:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone git@github.com:sdv-dev/SDGym.git
-<span class="nb">cd</span> SDGym
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:sdv-dev/SDGym.git
+<span class="nb">cd</span><span class="w"> </span>SDGym
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
@@ -333,20 +333,20 @@ before they can be used.</p>
 C++. In Linux distributions based on Ubuntu, this can be done with
 the following command:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo apt-get install build-essential
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>build-essential
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
 <li><p>Trigger the C++ compilation:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make compile
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>compile
 </pre></div>
 </div>
 <ol class="arabic simple" start="4">
 <li><p>Add the path to the created <code class="docutils literal notranslate"><span class="pre">privBayes.bin</span></code> binary to the
 <code class="docutils literal notranslate"><span class="pre">PRIVBAYES_BIN</span></code> environment variable:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">PRIVBAYES_BIN</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/privBayes.bin
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PRIVBAYES_BIN</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/privBayes.bin
 </pre></div>
 </div>
 </div>
@@ -391,7 +391,7 @@ on how to do so, check <a class="reference internal" href="docker.html#benchmark
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

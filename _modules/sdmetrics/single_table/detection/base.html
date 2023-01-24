@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.detection.base &#8212; SDV 0.17.2 documentation</title>
+    <title>sdmetrics.single_table.detection.base &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -183,7 +183,7 @@
 
 
 <div class="viewcode-block" id="DetectionMetric"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.DetectionMetric.html#sdv.metrics.tabular.DetectionMetric">[docs]</a><span class="k">class</span> <span class="nc">DetectionMetric</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Base class for Machine Learning Detection based metrics on single tables.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Machine Learning Detection based metrics on single tables.</span>
 
 <span class="sd">    These metrics build a Machine Learning Classifier that learns to tell the synthetic</span>
 <span class="sd">    data apart from the real data, which later on is evaluated using Cross Validation.</span>
@@ -208,12 +208,12 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_fit_predict</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit a classifier and then use it to predict.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit a classifier and then use it to predict.&quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute this metric.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute this metric.</span>
 
 <span class="sd">        This builds a Machine Learning Classifier that learns to tell the synthetic</span>
 <span class="sd">        data apart from the real data, which later on is evaluated using Cross Validation.</span>
@@ -269,7 +269,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            raw_score (float):</span>
@@ -313,7 +313,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.base &#8212; SDV 0.17.2 documentation</title>
+    <title>sdv.tabular.base &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -195,11 +195,11 @@
 
 
 <span class="k">class</span> <span class="nc">NonParametricError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Exception to indicate that a model is not parametric.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception to indicate that a model is not parametric.&quot;&quot;&quot;</span>
 
 
 <span class="k">class</span> <span class="nc">BaseTabularModel</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Base class for all the tabular models.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for all the tabular models.</span>
 
 <span class="sd">    The ``BaseTabularModel`` class defines the common API that all the</span>
 <span class="sd">    TabularModels need to implement, as well as common functionality.</span>
@@ -286,7 +286,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_fitted</span> <span class="o">=</span> <span class="n">table_metadata</span><span class="o">.</span><span class="n">fitted</span>
 
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit this model to the data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit this model to the data.</span>
 
 <span class="sd">        If the table metadata has not been given, learn it from the data.</span>
 
@@ -317,7 +317,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span><span class="p">(</span><span class="n">transformed</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get metadata about the table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get metadata about the table.</span>
 
 <span class="sd">        This will return an ``sdv.metadata.Table`` object containing</span>
 <span class="sd">        the information about the data that this model has learned.</span>
@@ -335,7 +335,7 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_filter_conditions</span><span class="p">(</span><span class="n">sampled</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">float_rtol</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Filter the sampled rows that match the conditions.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Filter the sampled rows that match the conditions.</span>
 
 <span class="sd">        If condition columns are float values, consider a match anything that</span>
 <span class="sd">        is closer than the given ``float_rtol`` and then make the value exact.</span>
@@ -365,7 +365,7 @@
 
     <span class="k">def</span> <span class="nf">_sample_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transformed_conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                      <span class="n">float_rtol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">previous_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample rows with the given conditions.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample rows with the given conditions.</span>
 
 <span class="sd">        Input conditions is taken both in the raw input format, which will be used</span>
 <span class="sd">        for filtering during the reject-sampling loop, and already transformed</span>
@@ -428,7 +428,7 @@
     <span class="k">def</span> <span class="nf">_sample_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_tries</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
                       <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transformed_conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">float_rtol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
                       <span class="n">progress_bar</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample a batch of rows with the given conditions.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample a batch of rows with the given conditions.</span>
 
 <span class="sd">        This will enter a reject-sampling loop in which rows will be sampled until</span>
 <span class="sd">        all of them are valid and match the requested conditions. If `max_tries`</span>
@@ -514,7 +514,7 @@
         <span class="k">return</span> <span class="n">sampled</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sampled</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">_make_condition_dfs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conditions</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Transform `conditions` into a list of dataframes.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform `conditions` into a list of dataframes.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            conditions (list[sdv.sampling.Condition]):</span>
@@ -599,7 +599,7 @@
         <span class="k">return</span> <span class="n">sampled_rows</span>
 
     <span class="k">def</span> <span class="nf">_validate_file_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_file_path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate the user-passed output file arg, and create the file.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the user-passed output file arg, and create the file.&quot;&quot;&quot;</span>
         <span class="n">output_path</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">output_file_path</span> <span class="o">==</span> <span class="n">DISABLE_TMP_FILE</span><span class="p">:</span>
             <span class="c1"># Temporary way of disabling the output file feature, used by HMA1.</span>
@@ -623,7 +623,7 @@
         <span class="k">return</span> <span class="n">output_path</span>
 
     <span class="k">def</span> <span class="nf">_randomize_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">randomize_samples</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Randomize the samples according to user input.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Randomize the samples according to user input.</span>
 
 <span class="sd">        If ``randomize_samples`` is false, fix the seed that the random number generator</span>
 <span class="sd">        uses in the underlying models.</span>
@@ -683,7 +683,7 @@
 
     <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">randomize_samples</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_tries_per_batch</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                <span class="n">output_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample rows from this table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample rows from this table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_rows (int):</span>
@@ -721,7 +721,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_validate_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conditions</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate the user-passed conditions.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the user-passed conditions.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">conditions</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">get_fields</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unexpected column name `</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s1">`. &#39;</span>
@@ -729,7 +729,7 @@
 
     <span class="k">def</span> <span class="nf">_sample_with_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">max_tries_per_batch</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span>
                                 <span class="n">progress_bar</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample rows with conditions.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample rows with conditions.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            conditions (pandas.DataFrame):</span>
@@ -826,7 +826,7 @@
 
     <span class="k">def</span> <span class="nf">_sample_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">max_tries_per_batch</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">randomize_samples</span><span class="p">,</span>
                            <span class="n">output_file_path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample rows from this table with the given conditions.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample rows from this table with the given conditions.&quot;&quot;&quot;</span>
         <span class="n">output_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_file_path</span><span class="p">(</span><span class="n">output_file_path</span><span class="p">)</span>
 
         <span class="n">num_rows</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span>
@@ -872,7 +872,7 @@
 
     <span class="k">def</span> <span class="nf">sample_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">max_tries_per_batch</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                           <span class="n">randomize_samples</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample rows from this table with the given conditions.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample rows from this table with the given conditions.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            conditions (list[sdv.sampling.Condition]):</span>
@@ -907,7 +907,7 @@
 
     <span class="k">def</span> <span class="nf">_sample_remaining_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">known_columns</span><span class="p">,</span> <span class="n">max_tries_per_batch</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span>
                                   <span class="n">randomize_samples</span><span class="p">,</span> <span class="n">output_file_path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample the remaining columns of a given DataFrame.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample the remaining columns of a given DataFrame.&quot;&quot;&quot;</span>
         <span class="n">output_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_file_path</span><span class="p">(</span><span class="n">output_file_path</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_randomize_samples</span><span class="p">(</span><span class="n">randomize_samples</span><span class="p">)</span>
@@ -940,7 +940,7 @@
 
     <span class="k">def</span> <span class="nf">sample_remaining_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">known_columns</span><span class="p">,</span> <span class="n">max_tries_per_batch</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                                  <span class="n">randomize_samples</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample rows from this table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample rows from this table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            known_columns (pandas.DataFrame):</span>
@@ -977,7 +977,7 @@
         <span class="k">raise</span> <span class="n">NonParametricError</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the parameters learned from the data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the parameters learned from the data.</span>
 
 <span class="sd">        The result is a flat dict (single level) which contains</span>
 <span class="sd">        all the necessary parameters to be able to reproduce</span>
@@ -1010,7 +1010,7 @@
         <span class="k">raise</span> <span class="n">NonParametricError</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Regenerate a previously learned model from its parameters.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Regenerate a previously learned model from its parameters.</span>
 
 <span class="sd">        Subclasses which are not parametric, such as DeepLearning</span>
 <span class="sd">        based models, raise a NonParametricError indicating that</span>
@@ -1032,7 +1032,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_set_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Save this model instance to the given path using cloudpickle.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save this model instance to the given path using cloudpickle.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path (str):</span>
@@ -1045,7 +1045,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Load a TabularModel instance from a given path.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load a TabularModel instance from a given path.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path (str):</span>
@@ -1093,7 +1093,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

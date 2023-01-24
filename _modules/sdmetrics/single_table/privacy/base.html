@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.privacy.base &#8212; SDV 0.17.2 documentation</title>
+    <title>sdmetrics.single_table.privacy.base &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -178,7 +178,7 @@
 
 
 <span class="k">class</span> <span class="nc">CategoricalType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Enumerates the type required for a categorical data.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enumerates the type required for a categorical data.</span>
 
 <span class="sd">    The value can be one-hot-encoded, or coded as class number.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -188,7 +188,7 @@
 
 
 <div class="viewcode-block" id="CategoricalPrivacyMetric"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.CategoricalPrivacyMetric.html#sdv.metrics.tabular.CategoricalPrivacyMetric">[docs]</a><span class="k">class</span> <span class="nc">CategoricalPrivacyMetric</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Base class for Categorical Privacy metrics on single tables.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Categorical Privacy metrics on single tables.</span>
 
 <span class="sd">    These metrics fit an adversial attacker model on the synthetic data and</span>
 <span class="sd">    then evaluate its accuracy (or probability of making the correct attack)</span>
@@ -252,7 +252,7 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">key_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">sensitive_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute this metric.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute this metric.</span>
 
 <span class="sd">        This fits an adversial attacker model on the synthetic data and</span>
 <span class="sd">        then evaluates it making predictions on the real data.</span>
@@ -332,7 +332,7 @@
 
 
 <div class="viewcode-block" id="NumericalPrivacyMetric"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.NumericalPrivacyMetric.html#sdv.metrics.tabular.NumericalPrivacyMetric">[docs]</a><span class="k">class</span> <span class="nc">NumericalPrivacyMetric</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Base class for Numerical Privacy metrics on single tables.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Numerical Privacy metrics on single tables.</span>
 
 <span class="sd">    These metrics fit an adversial attacker model on the synthetic data and</span>
 <span class="sd">    then evaluate its accuracy (or probability of making the correct attack)</span>
@@ -400,7 +400,7 @@
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">key_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">sensitive_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">loss_function</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">loss_function_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute this metric.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute this metric.</span>
 
 <span class="sd">        This fits an adversial attacker model on the synthetic data and</span>
 <span class="sd">        then evaluates it making predictions on the real data.</span>
@@ -473,7 +473,7 @@
 
 
 <span class="k">class</span> <span class="nc">PrivacyAttackerModel</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Train and evaluate a privacy model.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Train and evaluate a privacy model.</span>
 
 <span class="sd">    Train a model to predict sensitive attributes from key attributes</span>
 <span class="sd">    using the synthetic data. Then, evaluate the privacy of the model by</span>
@@ -481,7 +481,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">key_fields</span><span class="p">,</span> <span class="n">sensitive_fields</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the attacker on the synthetic data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the attacker on the synthetic data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            synthetic_data(pandas.DataFrame):</span>
@@ -494,7 +494,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Please implement fit method of attackers&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Make a prediction of the sensitive data given keys.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make a prediction of the sensitive data given keys.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key_data(tuple):</span>
@@ -507,7 +507,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Please implement predict method of attackers&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_data</span><span class="p">,</span> <span class="n">sensitive_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Score based on the belief of the attacker, in the form P(sensitive_data|key|data).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Score based on the belief of the attacker, in the form P(sensitive_data|key|data).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key_data(tuple):</span>
@@ -550,7 +550,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

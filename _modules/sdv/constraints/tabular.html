@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.constraints.tabular &#8212; SDV 0.17.2 documentation</title>
+    <title>sdv.constraints.tabular &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -234,7 +234,7 @@
 
 
 <span class="k">def</span> <span class="nf">create_custom_constraint</span><span class="p">(</span><span class="n">is_valid_fn</span><span class="p">,</span> <span class="n">transform_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reverse_transform_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create a CustomConstraint class.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a CustomConstraint class.</span>
 
 <span class="sd">    Creates a constraint class which uses the ``transform``, ``reverse_transform`` and</span>
 <span class="sd">    ``is_valid`` methods given in the arguments.</span>
@@ -254,7 +254,7 @@
     <span class="n">_validate_inputs_custom_constraint</span><span class="p">(</span><span class="n">is_valid_fn</span><span class="p">,</span> <span class="n">transform_fn</span><span class="p">,</span> <span class="n">reverse_transform_fn</span><span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">CustomConstraint</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;CustomConstraint class.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;CustomConstraint class.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            transform (callable):</span>
@@ -271,7 +271,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">column_names</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-            <span class="sd">&quot;&quot;&quot;Check whether the column values are valid.</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Check whether the column values are valid.</span>
 
 <span class="sd">            Args:</span>
 <span class="sd">                table_data (pandas.DataFrame):</span>
@@ -295,7 +295,7 @@
             <span class="k">return</span> <span class="n">valid</span>
 
         <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-            <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Transform the table data.</span>
 
 <span class="sd">            Args:</span>
 <span class="sd">                table_data (pandas.DataFrame):</span>
@@ -325,7 +325,7 @@
                 <span class="k">raise</span> <span class="n">FunctionError</span>
 
         <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-            <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
 
 <span class="sd">            Args:</span>
 <span class="sd">                table_data (pandas.DataFrame):</span>
@@ -351,7 +351,7 @@
 
 
 <div class="viewcode-block" id="FixedCombinations"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.FixedCombinations.html#sdv.constraints.FixedCombinations">[docs]</a><span class="k">class</span> <span class="nc">FixedCombinations</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure that the combinations across multiple columns are fixed.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure that the combinations across multiple columns are fixed.</span>
 
 <span class="sd">    One simple example of this constraint can be found in a table that</span>
 <span class="sd">    contains the columns `country` and `city`, where each country can</span>
@@ -382,7 +382,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">column_names</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit this Constraint to the data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit this Constraint to the data.</span>
 
 <span class="sd">        The fit process consists on:</span>
 
@@ -411,7 +411,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_uuids_to_combinations</span><span class="p">[</span><span class="n">uuid_str</span><span class="p">]</span> <span class="o">=</span> <span class="n">combination</span>
 
 <div class="viewcode-block" id="FixedCombinations.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.FixedCombinations.is_valid.html#sdv.constraints.FixedCombinations.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Say whether the column values are within the original combinations.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Say whether the column values are within the original combinations.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -430,7 +430,7 @@
         <span class="k">return</span> <span class="n">merged</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint_column</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;both&#39;</span></div>
 
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform the table data.</span>
 
 <span class="sd">        The transformation consist on removing all the ``self._columns`` from</span>
 <span class="sd">        the dataframe, and replacing them with a unique identifier that maps to</span>
@@ -451,7 +451,7 @@
         <span class="k">return</span> <span class="n">table_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
 
 <span class="sd">        The transformation is reversed by popping the joint column from</span>
 <span class="sd">        the table, mapping it back to the original combination of column values,</span>
@@ -475,7 +475,7 @@
 
 
 <div class="viewcode-block" id="Inequality"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Inequality.html#sdv.constraints.Inequality">[docs]</a><span class="k">class</span> <span class="nc">Inequality</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure that the ``high_column_name`` column is greater than the ``low_column_name`` one.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure that the ``high_column_name`` column is greater than the ``low_column_name`` one.</span>
 
 <span class="sd">    The transformation works by creating a column with the difference between the</span>
 <span class="sd">    ``high_column_name`` and ``low_column_name`` columns and storing it in the</span>
@@ -532,7 +532,7 @@
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;The columns </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s1"> were not found in table_data.&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Learn the ``dtype`` of ``_high_column_name`` and whether the data is datetime.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Learn the ``dtype`` of ``_high_column_name`` and whether the data is datetime.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -543,7 +543,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_high_column_name</span><span class="p">]</span><span class="o">.</span><span class="n">dtypes</span>
 
 <div class="viewcode-block" id="Inequality.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Inequality.is_valid.html#sdv.constraints.Inequality.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Check whether ``high`` is greater than ``low`` in each row.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether ``high`` is greater than ``low`` in each row.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -558,7 +558,7 @@
         <span class="k">return</span> <span class="n">valid</span></div>
 
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform the table data.</span>
 
 <span class="sd">        The transformation consists on replacing the ``high_column_name`` values with the</span>
 <span class="sd">        difference between it and the ``low_column_name`` values.</span>
@@ -583,7 +583,7 @@
         <span class="k">return</span> <span class="n">table_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_high_column_name</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
 
 <span class="sd">        The transformation is reversed by computing an exponential of the difference value,</span>
 <span class="sd">        subtracting 1 and converting it to the original dtype. Finally, the obtained column</span>
@@ -611,7 +611,7 @@
 
 
 <div class="viewcode-block" id="ScalarInequality"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.ScalarInequality.html#sdv.constraints.ScalarInequality">[docs]</a><span class="k">class</span> <span class="nc">ScalarInequality</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure an inequality between the ``column_name`` column and a scalar ``value``.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure an inequality between the ``column_name`` column and a scalar ``value``.</span>
 
 <span class="sd">    The transformation works by creating a column with the difference between the ``column_name``</span>
 <span class="sd">    and ``value`` and storing it in the ``column_name``&#39;s place. The reverse transform adds the</span>
@@ -669,7 +669,7 @@
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;The column </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="si">}</span><span class="s1"> was not found in table_data.&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Learn the ``dtype`` of ``_column_name`` and whether the data is datetime.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Learn the ``dtype`` of ``_column_name`` and whether the data is datetime.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -682,7 +682,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_datetime_format</span> <span class="o">=</span> <span class="n">get_datetime_format</span><span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">])</span>
 
 <div class="viewcode-block" id="ScalarInequality.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.ScalarInequality.is_valid.html#sdv.constraints.ScalarInequality.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Say whether ``high`` is greater than ``low`` in each row.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Say whether ``high`` is greater than ``low`` in each row.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -697,7 +697,7 @@
         <span class="k">return</span> <span class="n">valid</span></div>
 
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform the table data.</span>
 
 <span class="sd">        The transformation consists on replacing the ``column_name`` values with the</span>
 <span class="sd">        difference between it and the ``value`` values.</span>
@@ -722,7 +722,7 @@
         <span class="k">return</span> <span class="n">table_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
 
 <span class="sd">        The transformation is reversed by computing an exponential of the difference value,</span>
 <span class="sd">        subtracting 1 and converting it to the original dtype. Finally, the obtained column</span>
@@ -758,7 +758,7 @@
 
 
 <div class="viewcode-block" id="Positive"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Positive.html#sdv.constraints.Positive">[docs]</a><span class="k">class</span> <span class="nc">Positive</span><span class="p">(</span><span class="n">ScalarInequality</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure the ``column_name`` column is greater than zero.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure the ``column_name`` column is greater than zero.</span>
 
 <span class="sd">    The transformation works by applying a logarithm to the ``column_name`` + 1</span>
 <span class="sd">    to ensure that the value stays positive when reverted afterwards using an exponential.</span>
@@ -776,7 +776,7 @@
 
 
 <div class="viewcode-block" id="Negative"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Negative.html#sdv.constraints.Negative">[docs]</a><span class="k">class</span> <span class="nc">Negative</span><span class="p">(</span><span class="n">ScalarInequality</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure that the given columns are always negative.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure that the given columns are always negative.</span>
 
 <span class="sd">    The transformation works by applying a logarithm to the negative of ``column_name`` + 1</span>
 <span class="sd">    to ensure that the value stays positive when reverted afterwards using an exponential.</span>
@@ -794,7 +794,7 @@
 
 
 <div class="viewcode-block" id="Range"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Range.html#sdv.constraints.Range">[docs]</a><span class="k">class</span> <span class="nc">Range</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure that the ``middle_column_name`` is between ``low`` and ``high`` columns.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure that the ``middle_column_name`` is between ``low`` and ``high`` columns.</span>
 
 <span class="sd">    The transformation strategy works by replacing the ``middle_column_name`` with a</span>
 <span class="sd">    scaled version and then applying a logit function. The reverse transform</span>
@@ -847,7 +847,7 @@
         <span class="k">return</span> <span class="n">is_datetime</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the constraint.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the constraint.</span>
 
 <span class="sd">        The fit process consists in generating the ``transformed_column`` name and determine</span>
 <span class="sd">        whether or not the data is ``UnixTimestampEncoder``.</span>
@@ -861,7 +861,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_is_datetime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_is_datetime</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Range.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Range.is_valid.html#sdv.constraints.Range.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Say whether the ``constraint_column`` is between the ``low`` and ``high`` values.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Say whether the ``constraint_column`` is between the ``low`` and ``high`` values.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -890,7 +890,7 @@
         <span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform the table data.</span>
 
 <span class="sd">        The transformation consists of scaling the ``middle_column_name``</span>
 <span class="sd">        (``(middle_column-low)/(high-low)``) and then applying</span>
@@ -914,7 +914,7 @@
         <span class="k">return</span> <span class="n">table_data</span>
 
     <span class="k">def</span> <span class="nf">_reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
 
 <span class="sd">        The reverse transform consists of applying a sigmoid to the transformed</span>
 <span class="sd">        ``middle_column_name`` and then scaling it back to the original space</span>
@@ -946,7 +946,7 @@
 
 
 <div class="viewcode-block" id="ScalarRange"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.ScalarRange.html#sdv.constraints.ScalarRange">[docs]</a><span class="k">class</span> <span class="nc">ScalarRange</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure that the ``column_name`` is between the range of ``low`` and ``high``.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure that the ``column_name`` is between the range of ``low`` and ``high``.</span>
 
 <span class="sd">    The transformation strategy works by replacing the ``column_name`` with a</span>
 <span class="sd">    scaled version and then applying a logit function. The reverse transform</span>
@@ -1013,7 +1013,7 @@
         <span class="k">return</span> <span class="n">is_datetime</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Learn whether or not the ``column_name`` is ``UnixTimestampEncoder``.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Learn whether or not the ``column_name`` is ``UnixTimestampEncoder``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -1028,7 +1028,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_datetime_format</span> <span class="o">=</span> <span class="n">get_datetime_format</span><span class="p">(</span><span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">])</span>
 
 <div class="viewcode-block" id="ScalarRange.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.ScalarRange.is_valid.html#sdv.constraints.ScalarRange.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Say whether the ``column_name`` is between the ``low`` and ``high`` values.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Say whether the ``column_name`` is between the ``low`` and ``high`` values.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -1055,7 +1055,7 @@
         <span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Transform the table data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform the table data.</span>
 
 <span class="sd">        The transformation consists of scaling the ``column_name``</span>
 <span class="sd">        (``(column-low)/(high-low)``) and then applying</span>
@@ -1076,7 +1076,7 @@
         <span class="k">return</span> <span class="n">table_data</span>
 
     <span class="k">def</span> <span class="nf">_reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
 
 <span class="sd">        The reverse transform consists of applying a sigmoid to the transformed</span>
 <span class="sd">        ``column_name`` and then scaling it back to the original space</span>
@@ -1110,7 +1110,7 @@
 
 
 <span class="k">class</span> <span class="nc">FixedIncrements</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure every value in a column is a multiple of the specified increment.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure every value in a column is a multiple of the specified increment.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        column_name (str or list[str]):</span>
@@ -1134,7 +1134,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">column_name</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Determine if the data is evenly divisible by the increment.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Determine if the data is evenly divisible by the increment.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -1149,7 +1149,7 @@
         <span class="k">return</span> <span class="n">is_divisible</span> <span class="o">|</span> <span class="n">isnan</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Learn the dtype of the column.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Learn the dtype of the column.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -1158,7 +1158,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span>
 
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Transform the table_data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform the table_data.</span>
 
 <span class="sd">        The transformation works by dividing each value by the increment.</span>
 
@@ -1174,7 +1174,7 @@
         <span class="k">return</span> <span class="n">table_data</span>
 
     <span class="k">def</span> <span class="nf">_reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Convert column to multiples of the increment.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert column to multiples of the increment.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -1190,7 +1190,7 @@
 
 
 <div class="viewcode-block" id="OneHotEncoding"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.OneHotEncoding.html#sdv.constraints.OneHotEncoding">[docs]</a><span class="k">class</span> <span class="nc">OneHotEncoding</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure the appropriate columns are one hot encoded.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure the appropriate columns are one hot encoded.</span>
 
 <span class="sd">    This constraint allows the user to specify a list of columns where each row</span>
 <span class="sd">    is a one hot vector. During the reverse transform, the output of the model</span>
@@ -1207,7 +1207,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">column_names</span><span class="p">)</span>
 
 <div class="viewcode-block" id="OneHotEncoding.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.OneHotEncoding.is_valid.html#sdv.constraints.OneHotEncoding.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Check whether the data satisfies the one-hot constraint.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the data satisfies the one-hot constraint.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -1227,7 +1227,7 @@
         <span class="k">return</span> <span class="n">sum_one</span> <span class="o">&amp;</span> <span class="n">max_one</span> <span class="o">&amp;</span> <span class="n">min_zero</span> <span class="o">&amp;</span> <span class="n">no_nans</span></div>
 
     <span class="k">def</span> <span class="nf">_reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reverse transform the table data.</span>
 
 <span class="sd">        Set the column with the largest value to one, set all other columns to zero.</span>
 
@@ -1248,7 +1248,7 @@
 
 
 <div class="viewcode-block" id="Unique"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Unique.html#sdv.constraints.Unique">[docs]</a><span class="k">class</span> <span class="nc">Unique</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure that each value for a specified column/group of columns is unique.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure that each value for a specified column/group of columns is unique.</span>
 
 <span class="sd">    This constraint is provided a list of columns, and guarantees that every</span>
 <span class="sd">    unique combination of those columns appears at most once in the sampled</span>
@@ -1264,7 +1264,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">constraint_columns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_names</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Unique.is_valid"><a class="viewcode-back" href="../../../api_reference/constraints/api/sdv.constraints.Unique.is_valid.html#sdv.constraints.Unique.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get indices of first instance of unique rows.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get indices of first instance of unique rows.</span>
 
 <span class="sd">        If a row is the first instance of that combination of column</span>
 <span class="sd">        values, it is valid. Otherwise it is false.</span>
@@ -1311,7 +1311,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

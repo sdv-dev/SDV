@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.gaussian_mixture &#8212; SDV 0.17.2 documentation</title>
+    <title>sdmetrics.single_table.gaussian_mixture &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -181,7 +181,7 @@
 
 
 <div class="viewcode-block" id="GMLogLikelihood"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.GMLogLikelihood.html#sdv.metrics.tabular.GMLogLikelihood">[docs]</a><span class="k">class</span> <span class="nc">GMLogLikelihood</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;GaussianMixture Single Table metric.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;GaussianMixture Single Table metric.</span>
 
 <span class="sd">    This metric fits multiple GaussianMixture models to the real data and then</span>
 <span class="sd">    evaluates how likely it is that the synthetic data belongs to the same</span>
@@ -246,7 +246,7 @@
 <div class="viewcode-block" id="GMLogLikelihood.compute"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.GMLogLikelihood.compute.html#sdv.metrics.tabular.GMLogLikelihood.compute">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_components</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span>
                 <span class="n">covariance_type</span><span class="o">=</span><span class="s1">&#39;diag&#39;</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">retries</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute this metric.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute this metric.</span>
 
 <span class="sd">        This fits multiple GaussianMixture models to the real data and then</span>
 <span class="sd">        evaluates how likely it is that the synthetic data belongs to the same</span>
@@ -327,7 +327,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Normalize the log-likelihood value.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize the log-likelihood value.</span>
 
 <span class="sd">        Notice that this is not the mean likelihood.</span>
 
@@ -373,7 +373,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.lite.tabular &#8212; SDV 0.17.2 documentation</title>
+    <title>sdv.lite.tabular &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -189,7 +189,7 @@
 
 
 <div class="viewcode-block" id="TabularPreset"><a class="viewcode-back" href="../../../api_reference/lite/api/sdv.lite.tabular.TabularPreset.html#sdv.lite.tabular.TabularPreset">[docs]</a><span class="k">class</span> <span class="nc">TabularPreset</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Class for all tabular model presets.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for all tabular model presets.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        name (str):</span>
@@ -272,7 +272,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">_dtype_transformers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">dtype_transformers</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="TabularPreset.fit"><a class="viewcode-back" href="../../../api_reference/lite/api/sdv.lite.tabular.TabularPreset.fit.html#sdv.lite.tabular.TabularPreset.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit this model to the data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit this model to the data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (pandas.DataFrame):</span>
@@ -290,7 +290,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_postprocess_sampled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sampled</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Postprocess the sampled data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Postprocess the sampled data.</span>
 
 <span class="sd">        Add null values back based on null percentages captured in the fitting process.</span>
 
@@ -310,7 +310,7 @@
 
 <div class="viewcode-block" id="TabularPreset.sample"><a class="viewcode-back" href="../../../api_reference/lite/api/sdv.lite.tabular.TabularPreset.sample.html#sdv.lite.tabular.TabularPreset.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">randomize_samples</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_tries_per_batch</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
                <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample rows from this table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample rows from this table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_rows (int):</span>
@@ -342,7 +342,7 @@
 
 <div class="viewcode-block" id="TabularPreset.sample_conditions"><a class="viewcode-back" href="../../../api_reference/lite/api/sdv.lite.tabular.TabularPreset.sample_conditions.html#sdv.lite.tabular.TabularPreset.sample_conditions">[docs]</a>    <span class="k">def</span> <span class="nf">sample_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conditions</span><span class="p">,</span> <span class="n">max_tries_per_batch</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                           <span class="n">randomize_samples</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample rows from this table with the given conditions.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample rows from this table with the given conditions.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            conditions (list[sdv.sampling.Condition]):</span>
@@ -372,7 +372,7 @@
 
 <div class="viewcode-block" id="TabularPreset.sample_remaining_columns"><a class="viewcode-back" href="../../../api_reference/lite/api/sdv.lite.tabular.TabularPreset.sample_remaining_columns.html#sdv.lite.tabular.TabularPreset.sample_remaining_columns">[docs]</a>    <span class="k">def</span> <span class="nf">sample_remaining_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">known_columns</span><span class="p">,</span> <span class="n">max_tries_per_batch</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                                  <span class="n">randomize_samples</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample rows from this table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample rows from this table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            known_columns (pandas.DataFrame):</span>
@@ -401,7 +401,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_postprocess_sampled</span><span class="p">(</span><span class="n">sampled</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="TabularPreset.save"><a class="viewcode-back" href="../../../api_reference/lite/api/sdv.lite.tabular.TabularPreset.save.html#sdv.lite.tabular.TabularPreset.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Save this model instance to the given path using cloudpickle.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save this model instance to the given path using cloudpickle.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path (str):</span>
@@ -414,7 +414,7 @@
 
 <div class="viewcode-block" id="TabularPreset.load"><a class="viewcode-back" href="../../../api_reference/lite/api/sdv.lite.tabular.TabularPreset.load.html#sdv.lite.tabular.TabularPreset.load">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Load a TabularModel instance from a given path.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load a TabularModel instance from a given path.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path (str):</span>
@@ -432,14 +432,14 @@
 
 <div class="viewcode-block" id="TabularPreset.list_available_presets"><a class="viewcode-back" href="../../../api_reference/lite/api/sdv.lite.tabular.TabularPreset.list_available_presets.html#sdv.lite.tabular.TabularPreset.list_available_presets">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">list_available_presets</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;List the available presets and their descriptions.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;List the available presets and their descriptions.&quot;&quot;&quot;</span>
         <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Available presets:</span><span class="se">\n</span><span class="si">{</span><span class="n">PRESETS</span><span class="si">}</span><span class="se">\n\n</span><span class="s1">&#39;</span>
                   <span class="s1">&#39;Supply the desired preset using the `name` parameter.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
                   <span class="s1">&#39;Have any requests for custom presets? Contact the SDV team to learn &#39;</span>
                   <span class="s1">&#39;more an SDV Premium license.</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Represent tabular preset instance as text.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Represent tabular preset instance as text.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            str</span>
@@ -478,7 +478,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

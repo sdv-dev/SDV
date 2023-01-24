@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.metadata.table &#8212; SDV 0.17.2 documentation</title>
+    <title>sdv.metadata.table &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -188,7 +188,7 @@
 
 
 <div class="viewcode-block" id="Table"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.html#sdv.metadata.table.Table">[docs]</a><span class="k">class</span> <span class="nc">Table</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Table Metadata.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Table Metadata.</span>
 
 <span class="sd">    The Metadata class provides a unified layer of abstraction over the metadata</span>
 <span class="sd">    of a single Table, which includes all the necessary details to handle the</span>
@@ -328,7 +328,7 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_faker</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the faker object with localisaton set if specified in field_metadata.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the faker object with localisaton set if specified in field_metadata.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            field_metadata (dict):</span>
@@ -343,7 +343,7 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_faker_method</span><span class="p">(</span><span class="n">faker</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the faker function to anonymize data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the faker function to anonymize data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            faker (Faker object):</span>
@@ -380,7 +380,7 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_fake_values</span><span class="p">(</span><span class="n">field_metadata</span><span class="p">,</span> <span class="n">num_values</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the anonymized values from Faker.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the anonymized values from Faker.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            field_metadata (dict):</span>
@@ -452,7 +452,7 @@
         <span class="k">return</span> <span class="s1">&#39;Table(name=</span><span class="si">{}</span><span class="s1">, field_names=</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Table.get_model_kwargs"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.get_model_kwargs.html#sdv.metadata.table.Table.get_model_kwargs">[docs]</a>    <span class="k">def</span> <span class="nf">get_model_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the required model kwargs for the indicated model.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the required model kwargs for the indicated model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model_name (str):</span>
@@ -466,7 +466,7 @@
         <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">model_name</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Table.set_model_kwargs"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.set_model_kwargs.html#sdv.metadata.table.Table.set_model_kwargs">[docs]</a>    <span class="k">def</span> <span class="nf">set_model_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Set the model kwargs used for the indicated model.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the model kwargs used for the indicated model.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">[</span><span class="n">model_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_kwargs</span></div>
 
     <span class="k">def</span> <span class="nf">_get_field_dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">field_metadata</span><span class="p">):</span>
@@ -482,7 +482,7 @@
         <span class="k">return</span> <span class="n">dtype</span>
 
 <div class="viewcode-block" id="Table.get_fields"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.get_fields.html#sdv.metadata.table.Table.get_fields">[docs]</a>    <span class="k">def</span> <span class="nf">get_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get fields metadata.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get fields metadata.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            dict:</span>
@@ -491,7 +491,7 @@
         <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fields_metadata</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Table.get_dtypes"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.get_dtypes.html#sdv.metadata.table.Table.get_dtypes">[docs]</a>    <span class="k">def</span> <span class="nf">get_dtypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get a ``dict`` with the ``dtypes`` for each field of the table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a ``dict`` with the ``dtypes`` for each field of the table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            ids (bool):</span>
@@ -511,7 +511,7 @@
         <span class="k">return</span> <span class="n">dtypes</span></div>
 
     <span class="k">def</span> <span class="nf">_build_fields_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Build all the fields metadata.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build all the fields metadata.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (pandas.DataFrame):</span>
@@ -558,7 +558,7 @@
         <span class="k">return</span> <span class="n">fields_metadata</span>
 
     <span class="k">def</span> <span class="nf">_get_hypertransformer_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dtypes</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create the transformer instances needed to process the given dtypes.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the transformer instances needed to process the given dtypes.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            dtypes (dict):</span>
@@ -654,7 +654,7 @@
         <span class="k">return</span> <span class="n">data</span>
 
     <span class="k">def</span> <span class="nf">_fit_hyper_transformer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">extra_columns</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create and return a new ``rdt.HyperTransformer`` instance.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and return a new ``rdt.HyperTransformer`` instance.</span>
 
 <span class="sd">        First get the ``dtypes`` and then use them to build a transformer dictionary</span>
 <span class="sd">        to be used by the ``HyperTransformer``.</span>
@@ -700,7 +700,7 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_key_subtype</span><span class="p">(</span><span class="n">field_meta</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the appropriate key subtype.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the appropriate key subtype.&quot;&quot;&quot;</span>
         <span class="n">field_type</span> <span class="o">=</span> <span class="n">field_meta</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="n">field_type</span> <span class="o">==</span> <span class="s1">&#39;categorical&#39;</span><span class="p">:</span>
@@ -721,7 +721,7 @@
         <span class="k">return</span> <span class="n">field_subtype</span>
 
 <div class="viewcode-block" id="Table.set_primary_key"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.set_primary_key.html#sdv.metadata.table.Table.set_primary_key">[docs]</a>    <span class="k">def</span> <span class="nf">set_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">primary_key</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Set the primary key of this table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the primary key of this table.</span>
 
 <span class="sd">        The field must exist and either be an integer or categorical field.</span>
 
@@ -773,7 +773,7 @@
         <span class="k">return</span> <span class="n">data</span>
 
 <div class="viewcode-block" id="Table.fit"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.fit.html#sdv.metadata.table.Table.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit this metadata to the given data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit this metadata to the given data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (pandas.DataFrame):</span>
@@ -806,7 +806,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">fitted</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="Table.transform"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.transform.html#sdv.metadata.table.Table.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">is_condition</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Transform the given data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform the given data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (pandas.DataFrame):</span>
@@ -829,7 +829,7 @@
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Transforming table </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyper_transformer</span><span class="o">.</span><span class="n">transform_subset</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">except</span> <span class="p">(</span><span class="n">rdt</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">NotFittedError</span><span class="p">,</span> <span class="n">rdt</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">rdt</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">NotFittedError</span><span class="p">,</span> <span class="n">rdt</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">ConfigNotSetError</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">data</span></div>
 
     <span class="nd">@classmethod</span>
@@ -850,7 +850,7 @@
             <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">length</span><span class="p">))</span>
 
 <div class="viewcode-block" id="Table.reverse_transform"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.reverse_transform.html#sdv.metadata.table.Table.reverse_transform">[docs]</a>    <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Reverse the transformed data to the original format.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reverse the transformed data to the original format.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (pandas.DataFrame):</span>
@@ -896,7 +896,7 @@
         <span class="k">return</span> <span class="n">reversed_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="Table.filter_valid"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.filter_valid.html#sdv.metadata.table.Table.filter_valid">[docs]</a>    <span class="k">def</span> <span class="nf">filter_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Filter the data using the constraints and return only the valid rows.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Filter the data using the constraints and return only the valid rows.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (pandas.DataFrame):</span>
@@ -912,7 +912,7 @@
         <span class="k">return</span> <span class="n">data</span></div>
 
     <span class="k">def</span> <span class="nf">make_ids_unique</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Repopulate any id fields in provided data to guarantee uniqueness.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Repopulate any id fields in provided data to guarantee uniqueness.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (pandas.DataFrame):</span>
@@ -935,7 +935,7 @@
     <span class="c1"># ###################### #</span>
 
 <div class="viewcode-block" id="Table.to_dict"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.to_dict.html#sdv.metadata.table.Table.to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get a dict representation of this metadata.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a dict representation of this metadata.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            dict:</span>
@@ -956,7 +956,7 @@
         <span class="p">}</span></div>
 
 <div class="viewcode-block" id="Table.to_json"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.to_json.html#sdv.metadata.table.Table.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Dump this metadata into a JSON file.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Dump this metadata into a JSON file.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path (str):</span>
@@ -967,7 +967,7 @@
 
 <div class="viewcode-block" id="Table.from_dict"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.from_dict.html#sdv.metadata.table.Table.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">metadata_dict</span><span class="p">,</span> <span class="n">dtype_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Load a Table from a metadata dict.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load a Table from a metadata dict.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            metadata_dict (dict):</span>
@@ -996,7 +996,7 @@
 
 <div class="viewcode-block" id="Table.from_json"><a class="viewcode-back" href="../../../api_reference/metadata/api/sdv.metadata.table.Table.from_json.html#sdv.metadata.table.Table.from_json">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Load a Table from a JSON.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load a Table from a JSON.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path (str):</span>
@@ -1037,7 +1037,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

@@ -42,7 +42,7 @@ For example, you could try:
 
 .. code:: bash
 
-    docker run -ti sdvproject/sdgym -- sdgym run --datasets adult --synthesizer sdv.tabular.CTGANSynthesizer
+    docker run -ti sdvproject/sdgym -- sdgym run --datasets adult --synthesizer sdv.tabular.CTGAN
 
 to benchmark the CTGAN model on the adult dataset.
 

@@ -84,7 +84,7 @@ indicated above. In order to do this you will need to:
     Notice that the model ``fitting`` process took care of transforming the
     different fields using the appropriate `Reversible Data
     Transforms <http://github.com/sdv-dev/RDT>`__ to ensure that the data
-    has a format that the underlying TVAESynthesizer class can handle.
+    has a format that the underlying TVAE class can handle.
 
 Generate synthetic data from the model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

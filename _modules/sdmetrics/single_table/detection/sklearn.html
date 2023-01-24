@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.detection.sklearn &#8212; SDV 0.17.2 documentation</title>
+    <title>sdmetrics.single_table.detection.sklearn &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -178,7 +178,7 @@
 
 
 <div class="viewcode-block" id="ScikitLearnClassifierDetectionMetric"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.ScikitLearnClassifierDetectionMetric.html#sdv.metrics.tabular.ScikitLearnClassifierDetectionMetric">[docs]</a><span class="k">class</span> <span class="nc">ScikitLearnClassifierDetectionMetric</span><span class="p">(</span><span class="n">DetectionMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Base class for Detection metrics build using Scikit Learn Classifiers.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Detection metrics build using Scikit Learn Classifiers.</span>
 
 <span class="sd">    The base class for these metrics makes a prediction using a scikit-learn</span>
 <span class="sd">    pipeline which contains a SimpleImputer, a RobustScaler and finally</span>
@@ -189,12 +189,12 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_classifier</span><span class="p">():</span>
-        <span class="sd">&quot;&quot;&quot;Build and return an instance of a scikit-learn Classifier.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build and return an instance of a scikit-learn Classifier.&quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_fit_predict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit a pipeline to the training data and then use it to make prediction on test data.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit a pipeline to the training data and then use it to make prediction on test data.&quot;&quot;&quot;</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">([</span>
             <span class="p">(</span><span class="s1">&#39;imputer&#39;</span><span class="p">,</span> <span class="n">SimpleImputer</span><span class="p">()),</span>
             <span class="p">(</span><span class="s1">&#39;scalar&#39;</span><span class="p">,</span> <span class="n">RobustScaler</span><span class="p">()),</span>
@@ -206,7 +206,7 @@
 
 
 <div class="viewcode-block" id="LogisticDetection"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.LogisticDetection.html#sdv.metrics.tabular.LogisticDetection">[docs]</a><span class="k">class</span> <span class="nc">LogisticDetection</span><span class="p">(</span><span class="n">ScikitLearnClassifierDetectionMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;ScikitLearnClassifierDetectionMetric based on a LogisticRegression.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;ScikitLearnClassifierDetectionMetric based on a LogisticRegression.</span>
 
 <span class="sd">    This metric builds a LogisticRegression Classifier that learns to tell the synthetic</span>
 <span class="sd">    data apart from the real data, which later on is evaluated using Cross Validation.</span>
@@ -222,7 +222,7 @@
 
 
 <div class="viewcode-block" id="SVCDetection"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.SVCDetection.html#sdv.metrics.tabular.SVCDetection">[docs]</a><span class="k">class</span> <span class="nc">SVCDetection</span><span class="p">(</span><span class="n">ScikitLearnClassifierDetectionMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;ScikitLearnClassifierDetectionMetric based on a SVC.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;ScikitLearnClassifierDetectionMetric based on a SVC.</span>
 
 <span class="sd">    This metric builds a SVC Classifier that learns to tell the synthetic</span>
 <span class="sd">    data apart from the real data, which later on is evaluated using Cross Validation.</span>
@@ -268,7 +268,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

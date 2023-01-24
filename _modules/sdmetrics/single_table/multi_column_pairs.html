@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.multi_column_pairs &#8212; SDV 0.17.2 documentation</title>
+    <title>sdmetrics.single_table.multi_column_pairs &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -181,7 +181,7 @@
     <span class="n">SingleTableMetric</span><span class="p">,</span>
     <span class="n">metaclass</span><span class="o">=</span><span class="n">nested_attrs_meta</span><span class="p">(</span><span class="s1">&#39;column_pairs_metric&#39;</span><span class="p">)</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;SingleTableMetric subclass that applies a ColumnPairsMetric on each possible column pair.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SingleTableMetric subclass that applies a ColumnPairsMetric on each possible column pair.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        name (str):</span>
@@ -208,7 +208,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">compute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute</span></div>
 
     <span class="k">def</span> <span class="nf">_compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute this metric.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute this metric.</span>
 
 <span class="sd">        This is done by grouping all the columns that are compatible with the</span>
 <span class="sd">        underlying ColumnPairs metric in groups of 2 and then evaluating them</span>
@@ -246,7 +246,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute this metric.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute this metric.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            real_data (Union[numpy.ndarray, pandas.DataFrame]):</span>
@@ -267,7 +267,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute_breakdown</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute the breakdown of this metric.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the breakdown of this metric.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            real_data (Union[numpy.ndarray, pandas.DataFrame]):</span>
@@ -301,7 +301,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            raw_score (float):</span>
@@ -316,7 +316,7 @@
 
 
 <div class="viewcode-block" id="ContinuousKLDivergence"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.ContinuousKLDivergence.html#sdv.metrics.tabular.ContinuousKLDivergence">[docs]</a><span class="k">class</span> <span class="nc">ContinuousKLDivergence</span><span class="p">(</span><span class="n">MultiColumnPairsMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;MultiColumnPairsMetric based on ColumnPairs ContinuousKLDivergence.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;MultiColumnPairsMetric based on ColumnPairs ContinuousKLDivergence.</span>
 
 <span class="sd">    This approximates the KL divergence by binning the continuous values</span>
 <span class="sd">    to turn them into categorical values and then computing the relative</span>
@@ -342,7 +342,7 @@
 
 
 <div class="viewcode-block" id="DiscreteKLDivergence"><a class="viewcode-back" href="../../../api_reference/metrics/api/sdv.metrics.tabular.DiscreteKLDivergence.html#sdv.metrics.tabular.DiscreteKLDivergence">[docs]</a><span class="k">class</span> <span class="nc">DiscreteKLDivergence</span><span class="p">(</span><span class="n">MultiColumnPairsMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;MultiColumnPairsMetric based on ColumnPairs DiscreteKLDivergence.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;MultiColumnPairsMetric based on ColumnPairs DiscreteKLDivergence.</span>
 
 <span class="sd">    This computes the KL divergence and afterwards normalizes the</span>
 <span class="sd">    value applying ``1 / (1 + KLD)``.</span>
@@ -367,7 +367,7 @@
 
 
 <span class="k">class</span> <span class="nc">ContingencySimilarity</span><span class="p">(</span><span class="n">MultiColumnPairsMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;MultiColumnPairsMetric based on ColumnPairs ContingencySimilarity.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;MultiColumnPairsMetric based on ColumnPairs ContingencySimilarity.</span>
 
 <span class="sd">    This computes the complement of the total variation distance between</span>
 <span class="sd">    the contingency contingency tables of the real and synthetic data.</span>
@@ -392,7 +392,7 @@
 
 
 <span class="k">class</span> <span class="nc">CorrelationSimilarity</span><span class="p">(</span><span class="n">MultiColumnPairsMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;MultiColumnPairsMetric based on ColumnPairs CorrelationSimilarity.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;MultiColumnPairsMetric based on ColumnPairs CorrelationSimilarity.</span>
 
 <span class="sd">    This computes the correlation between column pairs based on the specified coefficient,</span>
 <span class="sd">    which defaults to &#39;Pearson&#39;.</span>
@@ -447,7 +447,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

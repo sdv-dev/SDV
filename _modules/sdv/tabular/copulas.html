@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulas &#8212; SDV 0.17.2 documentation</title>
+    <title>sdv.tabular.copulas &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -185,7 +185,7 @@
 
 
 <div class="viewcode-block" id="GaussianCopula"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.copulas.GaussianCopula.html#sdv.tabular.copulas.GaussianCopula">[docs]</a><span class="k">class</span> <span class="nc">GaussianCopula</span><span class="p">(</span><span class="n">BaseTabularModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Model wrapping ``copulas.multivariate.GaussianMultivariate`` copula.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model wrapping ``copulas.multivariate.GaussianMultivariate`` copula.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        field_names (list[str]):</span>
@@ -355,7 +355,7 @@
         <span class="p">})</span></div>
 
 <div class="viewcode-block" id="GaussianCopula.get_distributions"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.copulas.GaussianCopula.get_distributions.html#sdv.tabular.copulas.GaussianCopula.get_distributions">[docs]</a>    <span class="k">def</span> <span class="nf">get_distributions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the marginal distributions used by this copula.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the marginal distributions used by this copula.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            dict:</span>
@@ -373,7 +373,7 @@
         <span class="k">return</span> <span class="n">distributions</span></div>
 
     <span class="k">def</span> <span class="nf">_update_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Add arguments needed to reproduce this model to the Metadata.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add arguments needed to reproduce this model to the Metadata.</span>
 
 <span class="sd">        Additional arguments include:</span>
 <span class="sd">            - Distribution found for each column</span>
@@ -388,7 +388,7 @@
         <span class="p">})</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -397,9 +397,8 @@
         <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">table_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="p">:</span>
                 <span class="c1"># Check if the column is a derived column.</span>
-                <span class="n">column_name</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.value&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                    <span class="n">column_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span><span class="p">)</span>
+                    <span class="n">column</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">copulas</span><span class="o">.</span><span class="n">multivariate</span><span class="o">.</span><span class="n">GaussianMultivariate</span><span class="p">(</span>
             <span class="n">distribution</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_field_distributions</span><span class="p">)</span>
@@ -414,7 +413,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_metadata</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_rows (int):</span>
@@ -431,7 +430,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">num_rows</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="n">conditions</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_set_random_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">random_state</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Set the random state of the model&#39;s random number generator.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the random state of the model&#39;s random number generator.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            random_state (int, np.random.RandomState, or None):</span>
@@ -440,12 +439,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">set_random_state</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
 
 <div class="viewcode-block" id="GaussianCopula.get_likelihood"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.copulas.GaussianCopula.get_likelihood.html#sdv.tabular.copulas.GaussianCopula.get_likelihood">[docs]</a>    <span class="k">def</span> <span class="nf">get_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the likelihood of each row belonging to this table.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the likelihood of each row belonging to this table.&quot;&quot;&quot;</span>
         <span class="n">transformed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">probability_density</span><span class="p">(</span><span class="n">transformed</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get copula model parameters.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get copula model parameters.</span>
 
 <span class="sd">        Compute model ``covariance`` and ``distribution.std``</span>
 <span class="sd">        before it returns the flatten dict.</span>
@@ -479,7 +478,7 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_nearest_correlation_matrix</span><span class="p">(</span><span class="n">matrix</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Find the nearest correlation matrix.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find the nearest correlation matrix.</span>
 
 <span class="sd">        If the given matrix is not Positive Semi-definite, which means</span>
 <span class="sd">        that any of its eigenvalues is negative, find the nearest PSD matrix</span>
@@ -521,7 +520,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_rebuild_correlation_matrix</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">triangular_covariance</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Rebuild a valid correlation matrix from its lower half triangle.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rebuild a valid correlation matrix from its lower half triangle.</span>
 
 <span class="sd">        The input of this function is a list of lists of floats of size 1, 2, 3...n-1:</span>
 
@@ -561,7 +560,7 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_nearest_correlation_matrix</span><span class="p">(</span><span class="n">correlation</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_rebuild_gaussian_copula</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_parameters</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Rebuild the model params to recreate a Gaussian Multivariate instance.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rebuild the model params to recreate a Gaussian Multivariate instance.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model_parameters (dict):</span>
@@ -593,7 +592,7 @@
         <span class="k">return</span> <span class="n">model_parameters</span>
 
     <span class="k">def</span> <span class="nf">_set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Set copula model parameters.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set copula model parameters.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            dict:</span>
@@ -636,7 +635,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

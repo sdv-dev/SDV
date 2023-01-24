@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.efficacy.binary &#8212; SDV 0.17.2 documentation</title>
+    <title>sdmetrics.single_table.efficacy.binary &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -179,7 +179,7 @@
 
 
 <div class="viewcode-block" id="BinaryEfficacyMetric"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.BinaryEfficacyMetric.html#sdv.metrics.tabular.BinaryEfficacyMetric">[docs]</a><span class="k">class</span> <span class="nc">BinaryEfficacyMetric</span><span class="p">(</span><span class="n">MLEfficacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Base class for Binary Classification Efficacy metrics.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Binary Classification Efficacy metrics.&quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">goal</span> <span class="o">=</span> <span class="n">Goal</span><span class="o">.</span><span class="n">MAXIMIZE</span>
@@ -206,7 +206,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the `raw_score` as is, since it is already normalized.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            raw_score (float):</span>
@@ -220,7 +220,7 @@
 
 
 <div class="viewcode-block" id="BinaryDecisionTreeClassifier"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.BinaryDecisionTreeClassifier.html#sdv.metrics.tabular.BinaryDecisionTreeClassifier">[docs]</a><span class="k">class</span> <span class="nc">BinaryDecisionTreeClassifier</span><span class="p">(</span><span class="n">BinaryEfficacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Binary DecisionTreeClassifier Efficacy based metric.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Binary DecisionTreeClassifier Efficacy based metric.</span>
 
 <span class="sd">    This fits a DecisionTreeClassifier to the training data and</span>
 <span class="sd">    then evaluates it making predictions on the test data.</span>
@@ -234,7 +234,7 @@
 
 
 <div class="viewcode-block" id="BinaryAdaBoostClassifier"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.BinaryAdaBoostClassifier.html#sdv.metrics.tabular.BinaryAdaBoostClassifier">[docs]</a><span class="k">class</span> <span class="nc">BinaryAdaBoostClassifier</span><span class="p">(</span><span class="n">BinaryEfficacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Binary AdaBoostClassifier Efficacy based metric.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Binary AdaBoostClassifier Efficacy based metric.</span>
 
 <span class="sd">    This fits an AdaBoostClassifier to the training data and</span>
 <span class="sd">    then evaluates it making predictions on the test data.</span>
@@ -244,7 +244,7 @@
 
 
 <div class="viewcode-block" id="BinaryLogisticRegression"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.BinaryLogisticRegression.html#sdv.metrics.tabular.BinaryLogisticRegression">[docs]</a><span class="k">class</span> <span class="nc">BinaryLogisticRegression</span><span class="p">(</span><span class="n">BinaryEfficacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Binary LogisticRegression Efficacy based metric.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Binary LogisticRegression Efficacy based metric.</span>
 
 <span class="sd">    This fits a LogisticRegression to the training data and</span>
 <span class="sd">    then evaluates it making predictions on the test data.</span>
@@ -260,7 +260,7 @@
 
 
 <div class="viewcode-block" id="BinaryMLPClassifier"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.BinaryMLPClassifier.html#sdv.metrics.tabular.BinaryMLPClassifier">[docs]</a><span class="k">class</span> <span class="nc">BinaryMLPClassifier</span><span class="p">(</span><span class="n">BinaryEfficacyMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Binary MLPClassifier Efficacy based metric.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Binary MLPClassifier Efficacy based metric.</span>
 
 <span class="sd">    This fits a MLPClassifier to the training data and</span>
 <span class="sd">    then evaluates it making predictions on the test data.</span>
@@ -304,7 +304,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.demo &#8212; SDV 0.17.2 documentation</title>
+    <title>sdv.demo &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -340,7 +340,7 @@
 
 
 <span class="k">def</span> <span class="nf">sample_relational_demo</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Sample demo data with the indicate number of rows in the parent table.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sample demo data with the indicate number of rows in the parent table.&quot;&quot;&quot;</span>
     <span class="c1"># Users</span>
     <span class="n">faker</span> <span class="o">=</span> <span class="n">Faker</span><span class="p">()</span>
     <span class="n">countries</span> <span class="o">=</span> <span class="p">[</span><span class="n">faker</span><span class="o">.</span><span class="n">country_code</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
@@ -447,7 +447,7 @@
 
 
 <div class="viewcode-block" id="load_demo"><a class="viewcode-back" href="../../api_reference/api/sdv.demo.load_demo.html#sdv.demo.load_demo">[docs]</a><span class="k">def</span> <span class="nf">load_demo</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="s1">&#39;demo_multi_table&#39;</span><span class="p">,</span> <span class="n">data_path</span><span class="o">=</span><span class="n">DATA_PATH</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Load relational demo data.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load relational demo data.</span>
 
 <span class="sd">    If a dataset name is given, it is downloaded from the sdv-datasets S3 bucket.</span>
 <span class="sd">    Otherwise, a toy dataset with three simple tables is loaded:</span>
@@ -490,7 +490,7 @@
 
 
 <span class="k">def</span> <span class="nf">_load_tabular_dummy</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Load a dummy tabular demo dataframe.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a dummy tabular demo dataframe.&quot;&quot;&quot;</span>
     <span class="n">age</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
     <span class="n">age_when_joined</span> <span class="o">=</span> <span class="n">age</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
     <span class="n">years_exp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
@@ -520,7 +520,7 @@
 
 <div class="viewcode-block" id="load_tabular_demo"><a class="viewcode-back" href="../../api_reference/api/sdv.demo.load_tabular_demo.html#sdv.demo.load_tabular_demo">[docs]</a><span class="k">def</span> <span class="nf">load_tabular_demo</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="s1">&#39;demo_single_table&#39;</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data_path</span><span class="o">=</span><span class="n">DATA_PATH</span><span class="p">,</span>
                       <span class="n">metadata</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Load a tabular demo.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a tabular demo.</span>
 
 <span class="sd">    If a dataset name is given, it is downloaded from the sdv-datasets S3 bucket.</span>
 <span class="sd">    Otherwise, a toy dataset with a single table that contains data from a short fake</span>
@@ -607,7 +607,7 @@
 
 
 <div class="viewcode-block" id="load_timeseries_demo"><a class="viewcode-back" href="../../api_reference/api/sdv.demo.load_timeseries_demo.html#sdv.demo.load_timeseries_demo">[docs]</a><span class="k">def</span> <span class="nf">load_timeseries_demo</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Load a timeseries demo.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a timeseries demo.</span>
 
 <span class="sd">    If a dataset name is given, it is downloaded from the sdv-datasets S3 bucket.</span>
 <span class="sd">    Otherwise, a the NASDAQ100_2019 dataset is loaded.</span>
@@ -638,7 +638,7 @@
 
 
 <div class="viewcode-block" id="get_available_demos"><a class="viewcode-back" href="../../api_reference/api/sdv.demo.get_available_demos.html#sdv.demo.get_available_demos">[docs]</a><span class="k">def</span> <span class="nf">get_available_demos</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Get available demos and information about them.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get available demos and information about them.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        pandas.DataFrame:</span>
@@ -678,7 +678,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

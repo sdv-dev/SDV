@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.relational.base &#8212; SDV 0.17.2 documentation</title>
+    <title>sdv.relational.base &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -183,7 +183,7 @@
 
 
 <span class="k">class</span> <span class="nc">BaseRelationalModel</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Base class for all the relational models.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for all the relational models.</span>
 
 <span class="sd">    The ``BaseRelationalModel`` class defines the common API that all the</span>
 <span class="sd">    relational models need to implement, as well as common functionality.</span>
@@ -209,7 +209,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_remaining_primary_keys</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit this relational model instance to the dataset data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit this relational model instance to the dataset data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            tables (dict):</span>
@@ -220,7 +220,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit this relational model instance to the dataset data.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit this relational model instance to the dataset data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            tables (dict):</span>
@@ -232,12 +232,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">fitted</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">_reset_primary_keys_generators</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Reset the primary key generators.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset the primary key generators.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_primary_key_generators</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_remaining_primary_keys</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_get_primary_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the primary key and amount of values for the requested table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the primary key and amount of values for the requested table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_name (str):</span>
@@ -297,12 +297,12 @@
         <span class="k">return</span> <span class="n">primary_key_values</span>
 
     <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sample_children</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Generate synthetic data for one table or the entire dataset.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate synthetic data for one table or the entire dataset.&quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                <span class="n">sample_children</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reset_primary_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Generate synthetic data for one table or the entire dataset.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate synthetic data for one table or the entire dataset.</span>
 
 <span class="sd">        If a ``table_name`` is given and ``sample_children`` is ``False``, a</span>
 <span class="sd">        ``pandas.DataFrame`` with the values from the indicated table is returned.</span>
@@ -353,7 +353,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">sample_children</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Save this instance to the given path using cloudpickle.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save this instance to the given path using cloudpickle.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path (str):</span>
@@ -366,7 +366,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Load a model from a given path.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load a model from a given path.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path (str):</span>
@@ -410,7 +410,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

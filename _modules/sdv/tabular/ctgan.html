@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.ctgan &#8212; SDV 0.17.2 documentation</title>
+    <title>sdv.tabular.ctgan &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -168,14 +168,14 @@
   <h1>Source code for sdv.tabular.ctgan</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Wrapper around CTGAN model.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">ctgan</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">ctgan</span> <span class="kn">import</span> <span class="n">CTGANSynthesizer</span><span class="p">,</span> <span class="n">TVAESynthesizer</span>
 
 <span class="kn">from</span> <span class="nn">sdv.tabular.base</span> <span class="kn">import</span> <span class="n">BaseTabularModel</span>
 
 
 <span class="k">class</span> <span class="nc">CTGANModel</span><span class="p">(</span><span class="n">BaseTabularModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Base class for all the CTGAN models.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for all the CTGAN models.</span>
 
 <span class="sd">    The ``CTGANModel`` class provides a wrapper for all the CTGAN models.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -191,7 +191,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MODEL_CLASS</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -228,7 +228,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_rows (int):</span>
@@ -248,7 +248,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_MODEL_CLASS</span><span class="si">}</span><span class="s2"> doesn&#39;t support conditional sampling.&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_set_random_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">random_state</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Set the random state of the model&#39;s random number generator.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the random state of the model&#39;s random number generator.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            random_state (int, tuple[np.random.RandomState, torch.Generator], or None):</span>
@@ -258,7 +258,7 @@
 
 
 <div class="viewcode-block" id="CTGAN"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.ctgan.CTGAN.html#sdv.tabular.ctgan.CTGAN">[docs]</a><span class="k">class</span> <span class="nc">CTGAN</span><span class="p">(</span><span class="n">CTGANModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Model wrapping ``CTGANSynthesizer`` model.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model wrapping ``CTGAN`` model.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        field_names (list[str]):</span>
@@ -341,7 +341,7 @@
 <span class="sd">            during ``fit``. Defaults to ``True``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_MODEL_CLASS</span> <span class="o">=</span> <span class="n">CTGANSynthesizer</span>
+    <span class="n">_MODEL_CLASS</span> <span class="o">=</span> <span class="n">ctgan</span><span class="o">.</span><span class="n">CTGAN</span>
 
 <div class="viewcode-block" id="CTGAN.__init__"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.ctgan.CTGAN.html#sdv.tabular.ctgan.CTGAN.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -381,7 +381,7 @@
 
 
 <div class="viewcode-block" id="TVAE"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.ctgan.TVAE.html#sdv.tabular.ctgan.TVAE">[docs]</a><span class="k">class</span> <span class="nc">TVAE</span><span class="p">(</span><span class="n">CTGANModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Model wrapping ``TVAESynthesizer`` model.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model wrapping ``TVAE`` model.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        field_names (list[str]):</span>
@@ -446,7 +446,7 @@
 <span class="sd">            during ``fit``. Defaults to ``True``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_MODEL_CLASS</span> <span class="o">=</span> <span class="n">TVAESynthesizer</span>
+    <span class="n">_MODEL_CLASS</span> <span class="o">=</span> <span class="n">ctgan</span><span class="o">.</span><span class="n">TVAE</span>
 
 <div class="viewcode-block" id="TVAE.__init__"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.ctgan.TVAE.html#sdv.tabular.ctgan.TVAE.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_transformers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">anonymize_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -508,7 +508,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

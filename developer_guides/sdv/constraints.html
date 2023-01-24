@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Constraints &#8212; SDV 0.17.2 documentation</title>
+    <title>Constraints &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -257,7 +257,7 @@ and some even extend to hundreds of legs. But this value has the following prope
 regarding the even numbers, so we will try to help the models by defining a custom Constraint
 called <code class="docutils literal notranslate"><span class="pre">PositiveEvenInteger</span></code>, which inherits from <code class="docutils literal notranslate"><span class="pre">Constraint</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">PositiveEvenInteger</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure that values are positive and even.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure that values are positive and even.&quot;&quot;&quot;</span>
 
     <span class="k">pass</span>
 </pre></div>
@@ -265,13 +265,13 @@ called <code class="docutils literal notranslate"><span class="pre">PositiveEven
 <p>The simplest way to ensure that the values have the desired properties is to validate them,
 so let’s define the <code class="docutils literal notranslate"><span class="pre">is_valid</span></code> method accordingly:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">PositiveEven</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure that values are positive and even.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure that values are positive and even.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_name</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span> <span class="o">=</span> <span class="n">column_name</span>
 
     <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Say if values are positive and even.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Say if values are positive and even.&quot;&quot;&quot;</span>
         <span class="n">column_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">]</span>
         <span class="n">positive</span> <span class="o">=</span> <span class="n">column_data</span> <span class="o">&gt;=</span> <span class="mi">0</span>
         <span class="n">even</span> <span class="o">=</span> <span class="n">column_data</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
@@ -297,13 +297,13 @@ original format.</p>
 <p>For our dataset, a possibility would be to divide the number of legs by two, so we end up
 modeling and sampling the number of <cite>pairs of legs</cite> instead of the number of <cite>legs</cite>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">PositiveEven</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure that values are positive and even.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure that values are positive and even.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_name</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span> <span class="o">=</span> <span class="n">column_name</span>
 
     <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Say if values are positive and even.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Say if values are positive and even.&quot;&quot;&quot;</span>
         <span class="n">column_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">]</span>
         <span class="n">positive</span> <span class="o">=</span> <span class="n">column_data</span> <span class="o">&gt;=</span> <span class="mi">0</span>
         <span class="n">even</span> <span class="o">=</span> <span class="n">column_data</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
@@ -311,24 +311,24 @@ modeling and sampling the number of <cite>pairs of legs</cite> instead of the nu
         <span class="k">return</span> <span class="n">positive</span> <span class="o">&amp;</span> <span class="n">even</span>
 
     <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Divide the data by two before modeling.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Divide the data by two before modeling.&quot;&quot;&quot;</span>
         <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
         <span class="k">return</span> <span class="n">table_data</span>
 
     <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Multiply the data by two after sampling.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Multiply the data by two after sampling.&quot;&quot;&quot;</span>
         <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
         <span class="k">return</span> <span class="n">table_data</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">PositiveEven</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Ensure that values are positive and even.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure that values are positive and even.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_name</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span> <span class="o">=</span> <span class="n">column_name</span>
 
     <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Say if values are positive and even.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Say if values are positive and even.&quot;&quot;&quot;</span>
         <span class="n">column_data</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">]</span>
         <span class="n">positive</span> <span class="o">=</span> <span class="n">column_data</span> <span class="o">&gt;=</span> <span class="mi">0</span>
         <span class="n">even</span> <span class="o">=</span> <span class="n">column_data</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
@@ -336,12 +336,12 @@ modeling and sampling the number of <cite>pairs of legs</cite> instead of the nu
         <span class="k">return</span> <span class="n">positive</span> <span class="o">&amp;</span> <span class="n">even</span>
 
     <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Divide the data by two before modeling.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Divide the data by two before modeling.&quot;&quot;&quot;</span>
         <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
         <span class="k">return</span> <span class="n">table_data</span>
 
     <span class="k">def</span> <span class="nf">reverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Multiply the data by two after sampling.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Multiply the data by two after sampling.&quot;&quot;&quot;</span>
         <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_column_name</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
         <span class="k">return</span> <span class="n">table_data</span>
 </pre></div>
@@ -383,7 +383,7 @@ modeling and sampling the number of <cite>pairs of legs</cite> instead of the nu
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

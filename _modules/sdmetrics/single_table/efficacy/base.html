@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdmetrics.single_table.efficacy.base &#8212; SDV 0.17.2 documentation</title>
+    <title>sdmetrics.single_table.efficacy.base &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -178,7 +178,7 @@
 
 
 <div class="viewcode-block" id="MLEfficacyMetric"><a class="viewcode-back" href="../../../../api_reference/metrics/api/sdv.metrics.tabular.MLEfficacyMetric.html#sdv.metrics.tabular.MLEfficacyMetric">[docs]</a><span class="k">class</span> <span class="nc">MLEfficacyMetric</span><span class="p">(</span><span class="n">SingleTableMetric</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Base class for Machine Learning Efficacy metrics on single tables.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Machine Learning Efficacy metrics on single tables.</span>
 
 <span class="sd">    These metrics fit a Machine Learning model on the training data and</span>
 <span class="sd">    then evaluate it making predictions on the test data.</span>
@@ -208,7 +208,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_fit_predict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">train_data</span><span class="p">,</span> <span class="n">train_target</span><span class="p">,</span> <span class="n">test_data</span><span class="p">,</span> <span class="n">test_target</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit a model to the training data and make predictions for the test data.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit a model to the training data and make predictions for the test data.&quot;&quot;&quot;</span>
         <span class="k">del</span> <span class="n">test_target</span>  <span class="c1"># delete argument which subclasses use but this method does not.</span>
         <span class="n">unique_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">train_target</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_labels</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -258,7 +258,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">test_data</span><span class="p">,</span> <span class="n">train_data</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scorer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute this metric.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute this metric.</span>
 
 <span class="sd">        This fits a Machine Learning model on the training data and</span>
 <span class="sd">        then evaluates it making predictions on the test data.</span>
@@ -328,7 +328,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>

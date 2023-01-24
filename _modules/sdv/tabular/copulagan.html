@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sdv.tabular.copulagan &#8212; SDV 0.17.2 documentation</title>
+    <title>sdv.tabular.copulagan &#8212; SDV 0.18.0 documentation</title>
     
   <link rel="stylesheet" href="../../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -175,7 +175,7 @@
 
 
 <div class="viewcode-block" id="CopulaGAN"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.copulagan.CopulaGAN.html#sdv.tabular.copulagan.CopulaGAN">[docs]</a><span class="k">class</span> <span class="nc">CopulaGAN</span><span class="p">(</span><span class="n">CTGAN</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Combination of GaussianCopula transformation and GANs.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combination of GaussianCopula transformation and GANs.</span>
 
 <span class="sd">    This model extends the ``CTGAN`` model to add the flexibility of the GaussianCopula</span>
 <span class="sd">    transformations provided by the ``GaussianNormalizer`` from ``RDT``.</span>
@@ -330,7 +330,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span> <span class="o">=</span> <span class="n">default_distribution</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_DISTRIBUTION</span></div>
 
 <div class="viewcode-block" id="CopulaGAN.get_distributions"><a class="viewcode-back" href="../../../api_reference/tabular/api/sdv.tabular.copulagan.CopulaGAN.get_distributions.html#sdv.tabular.copulagan.CopulaGAN.get_distributions">[docs]</a>    <span class="k">def</span> <span class="nf">get_distributions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the marginal distributions used by this CopulaGAN.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the marginal distributions used by this CopulaGAN.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            dict:</span>
@@ -344,7 +344,7 @@
         <span class="p">}</span></div>
 
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the model to the table.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            table_data (pandas.DataFrame):</span>
@@ -356,13 +356,12 @@
         <span class="n">sdtypes</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">transformers</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">table_data</span><span class="p">:</span>
-            <span class="n">field_name</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.value&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
-            <span class="n">field_sdtype</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field_name</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">fields</span> <span class="ow">and</span> <span class="n">field_sdtype</span> <span class="o">!=</span> <span class="s1">&#39;categorical&#39;</span><span class="p">:</span>
+            <span class="n">field_sdtype</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span> <span class="ow">and</span> <span class="n">field_sdtype</span> <span class="o">!=</span> <span class="s1">&#39;categorical&#39;</span><span class="p">:</span>
                 <span class="n">sdtypes</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;numerical&#39;</span>
                 <span class="n">transformers</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">GaussianNormalizer</span><span class="p">(</span>
                     <span class="n">model_missing_values</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">distribution</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span><span class="p">)</span>
+                    <span class="n">distribution</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_distribution</span><span class="p">)</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">sdtypes</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">field_sdtype</span> <span class="ow">or</span> <span class="s1">&#39;categorical&#39;</span>
@@ -375,7 +374,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_fit</span><span class="p">(</span><span class="n">table_data</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample the indicated number of rows from the model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_rows (int):</span>
@@ -424,7 +423,7 @@
     <footer class="footer mt-5 mt-md-0">
   <div class="container">
     <p>
-          &copy; Copyright 2018, MIT Data To AI Lab.<br/>
+          &copy; Copyright 2022, DataCebo, Inc..<br/>
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.2.1.<br/>
     </p>
   </div>
