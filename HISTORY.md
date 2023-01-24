@@ -1,6 +1,6 @@
 # Release Notes
 
-## 0.18.0 -2023-01-24
+## 0.18.0 - 2023-01-24
 
 This release adds suppport for Python 3.10 and drops support for 3.6.
 
