@@ -14,21 +14,21 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 install_requires = [
     'Faker>=10,<15',
     'graphviz>=0.13.2,<1',
-    "numpy>=1.18.0,<1.20.0;python_version<'3.7'",
-    "numpy>=1.20.0,<2;python_version>='3.7'",
-    'pandas>=1.1.3,<2',
+    "numpy>=1.20.0,<2;python_version<'3.10'",
+    "numpy>=1.23.3,<2;python_version>='3.10'",
+    "pandas>=1.1.3,<2;python_version<'3.10'",
+    "pandas>=1.5.0,<2;python_version>='3.10'",
     'tqdm>=4.15,<5',
-    'copulas>=0.7.0,<0.8',
-    'ctgan>=0.5.2,<0.6',
-    'deepecho>=0.3.0.post1,<0.4',
-    'rdt>=1.2.0,<1.3.0',
-    'sdmetrics>=0.8.0,<0.9',
+    'copulas>=0.8.0,<0.9',
+    'ctgan>=0.7.0,<0.8',
+    'deepecho>=0.4.0,<0.5',
+    'rdt>=1.3.0,<2',
+    'sdmetrics>=0.9.0,<0.10',
     'cloudpickle>=2.1.0,<3.0'
 ]
 
 pomegranate_requires = [
-    "pomegranate>=0.13.4,<0.14.2;python_version<'3.7'",
-    "pomegranate>=0.14.1,<0.15;python_version>='3.7'",
+    "pomegranate>=0.14.3,<0.15",
 ]
 
 setup_requires = [
@@ -83,20 +83,21 @@ development_requires = [
 ]
 
 setup(
-    author='MIT Data To AI Lab',
-    author_email='dailabmit@gmail.com',
+    author='DataCebo, Inc.',
+    author_email='info@sdv.dev',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
+        'License :: Free for non-commercial use',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ],
-    description='Synthetic Data Generation for tabular, relational and time series data.',
+    description='Generate synthetic data for single table, multi table and sequential data',
     extras_require={
         'test': tests_require,
         'dev': development_requires + tests_require,
@@ -105,16 +106,16 @@ setup(
     include_package_data=True,
     install_requires=install_requires,
     keywords='sdv synthetic-data synhtetic-data-generation timeseries single-table multi-table',
-    license='MIT license',
+    license='BSL-1.1',
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/markdown',
     name='sdv',
     packages=find_packages(include=['sdv', 'sdv.*']),
-    python_requires='>=3.6,<3.10',
+    python_requires='>=3.7,<3.11',
     setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.17.2',
+    version='0.18.0.dev1',
     zip_safe=False,
 )

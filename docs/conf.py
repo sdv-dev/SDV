@@ -79,8 +79,8 @@ nbsphinx_prolog = """
 project = 'SDV'
 slug = 'sdv'
 title = project + ' Documentation',
-copyright = '2018, MIT Data To AI Lab'
-author = 'MIT Data To AI Lab'
+copyright = '2022, DataCebo, Inc.'
+author = 'DataCebo, Inc.'
 description = 'Synthetic Data Generation for tabular, relational and time series data.'
 user = 'sdv-dev'
 
