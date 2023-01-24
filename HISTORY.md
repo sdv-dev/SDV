@@ -1,5 +1,15 @@
 # Release Notes
 
+## 0.18.0 - 2023-01-24
+
+This release adds suppport for Python 3.10 and drops support for 3.6.
+
+### Maintenance
+
+* Drop support for python 3.6 - Issue [#1177](https://github.com/sdv-dev/SDV/issues/1177) by @amontanez24
+* Support for python 3.10 - Issue [#939](https://github.com/sdv-dev/SDV/issues/939) by @amontanez24
+* Support Python >=3.10,<4 - Issue [#1000](https://github.com/sdv-dev/SDV/issues/1000) by @amontanez24
+
 ## 0.17.2 - 2022-12-08
 
 This release fixes a bug in the demo module related to loading the demo data with constraints. It also adds a name to the demo datasets. Finally, it bumps the version of `SDMetrics` used.
