@@ -16,7 +16,7 @@ from sdv.constraints.errors import (
 from sdv.constraints.tabular import (
     FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
     ScalarInequality, ScalarRange, Unique, _validate_inputs_custom_constraint,
-    create_custom_constraint)
+    create_custom_constraint_class)
 
 
 def dummy_transform_table(table_data):
@@ -69,7 +69,7 @@ class TestCreateCustomConstraint():
             "Missing required values {'column_names'} in a CustomConstraint constraint."
         )
         # Run / Assert
-        constraint = create_custom_constraint(sorted, sorted, sorted)
+        constraint = create_custom_constraint_class(sorted, sorted, sorted)
         with pytest.raises(AggregateConstraintsError, match=err_msg):
             constraint._validate_inputs(not_column_name=None, something_else=None)
 
@@ -161,7 +161,7 @@ class TestCreateCustomConstraint():
             - No error should be raised.
         """
         # Setup
-        constraint_class = create_custom_constraint(sorted, sorted, sorted)
+        constraint_class = create_custom_constraint_class(sorted, sorted, sorted)
         metadata = Mock()
         metadata._columns = {'a': 1, 'b': 2}
 
@@ -183,7 +183,7 @@ class TestCreateCustomConstraint():
             - ConstraintMetadataError should be raised.
         """
         # Setup
-        constraint_class = create_custom_constraint(sorted, sorted, sorted)
+        constraint_class = create_custom_constraint_class(sorted, sorted, sorted)
         metadata = Mock()
         metadata._columns = {'a': 1, 'b': 2}
 
@@ -196,7 +196,7 @@ class TestCreateCustomConstraint():
             constraint_class._validate_metadata_columns(metadata, column_names=['a', 'c'])
 
     @patch('sdv.constraints.tabular._validate_inputs_custom_constraint')
-    def test_create_custom_constraint(self, mock_validate):
+    def test_create_custom_constraint_class(self, mock_validate):
         """Test ``CustomConstraint`` object is correctly created.
 
         Input:
@@ -209,7 +209,7 @@ class TestCreateCustomConstraint():
         - ``CustomConstraint`` object
         """
         # Run
-        out = create_custom_constraint(sorted, sorted, sorted)
+        out = create_custom_constraint_class(sorted, sorted, sorted)
 
         # Assert
         mock_validate.assert_called_once_with(sorted, sorted, sorted)
@@ -218,10 +218,10 @@ class TestCreateCustomConstraint():
         assert hasattr(out, 'reverse_transform')
         assert hasattr(out, '_transform')
 
-    def test_create_custom_constraint_is_valid(self):
+    def test_create_custom_constraint_class_is_valid(self):
         """Test ``is_valid`` method of ``CustomConstraint``.
 
-        Call ``create_custom_constraint`` on a ``is_valid`` function and confirm
+        Call ``create_custom_constraint_class`` on a ``is_valid`` function and confirm
         the produced ``CustomConstraint`` correctly applied ``is_valid``.
 
         Input:
@@ -230,7 +230,7 @@ class TestCreateCustomConstraint():
         - pd.Series of booleans, describing whether the values of the input are valid
         """
         # Setup
-        custom_constraint = create_custom_constraint(
+        custom_constraint = create_custom_constraint_class(
             lambda _, x: pd.Series([True if x_i >= 0 else False for x_i in x['col']])
         )
         custom_constraint = custom_constraint('col')
@@ -243,10 +243,10 @@ class TestCreateCustomConstraint():
         expected_out = pd.Series([False, True, True, True, False])
         pd.testing.assert_series_equal(valid_out, expected_out)
 
-    def test_create_custom_constraint_is_valid_wrong_shape(self):
+    def test_create_custom_constraint_class_is_valid_wrong_shape(self):
         """Test ``is_valid`` method of ``CustomConstraint`` which produces data of wrong shape.
 
-        Call ``create_custom_constraint`` on an invalid ``is_valid`` function.
+        Call ``create_custom_constraint_class`` on an invalid ``is_valid`` function.
 
         Input:
         - pd.DataFrame
@@ -254,7 +254,7 @@ class TestCreateCustomConstraint():
         - InvalidFunctionError
         """
         # Setup
-        custom_constraint = create_custom_constraint(
+        custom_constraint = create_custom_constraint_class(
             lambda _, x: pd.Series([True, True, True])
         )
         custom_constraint = custom_constraint('col')
@@ -265,10 +265,10 @@ class TestCreateCustomConstraint():
         with pytest.raises(InvalidFunctionError, match=err_msg):
             custom_constraint.is_valid(data)
 
-    def test_create_custom_constraint_is_valid_not_a_series(self):
+    def test_create_custom_constraint_class_is_valid_not_a_series(self):
         """Test ``is_valid`` method of ``CustomConstraint`` which produces a list.
 
-        Call ``create_custom_constraint`` on an ``is_valid`` function that returns
+        Call ``create_custom_constraint_class`` on an ``is_valid`` function that returns
         a list instead of a ``pandas.Series``.
 
         Input:
@@ -277,7 +277,7 @@ class TestCreateCustomConstraint():
         - ValueError
         """
         # Setup
-        custom_constraint = create_custom_constraint(
+        custom_constraint = create_custom_constraint_class(
             lambda _, x: [True if x_i >= 0 else False for x_i in x['col']]
         )
         custom_constraint = custom_constraint('col')
@@ -291,10 +291,10 @@ class TestCreateCustomConstraint():
         with pytest.raises(ValueError, match=err_msg):
             custom_constraint.is_valid(data)
 
-    def test_create_custom_constraint_transform(self):
+    def test_create_custom_constraint_class_transform(self):
         """Test ``transform`` method of ``CustomConstraint``.
 
-        Call ``create_custom_constraint`` on a ``transform`` function and confirm
+        Call ``create_custom_constraint_class`` on a ``transform`` function and confirm
         the produced ``CustomConstraint`` correctly applied ``transform``.
 
         Input:
@@ -312,7 +312,7 @@ class TestCreateCustomConstraint():
         def test_reverse_transform(dummy, data):
             return pd.DataFrame({'col': data['col'] ** 1 / 2})
 
-        custom_constraint = create_custom_constraint(
+        custom_constraint = create_custom_constraint_class(
             test_is_valid, test_transform, test_reverse_transform
         )('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
@@ -324,10 +324,10 @@ class TestCreateCustomConstraint():
         expected_out = pd.DataFrame({'col': [100, 1, 0, 9, .25]})
         pd.testing.assert_frame_equal(transform_out, expected_out)
 
-    def test_create_custom_constraint_transform_not_defined(self):
+    def test_create_custom_constraint_class_transform_not_defined(self):
         """Test ``transform`` method of ``CustomConstraint`` when it wasn't defined.
 
-        Call ``create_custom_constraint`` on a not defined ``transform`` function.
+        Call ``create_custom_constraint_class`` on a not defined ``transform`` function.
 
         Input:
         - pd.DataFrame
@@ -335,7 +335,7 @@ class TestCreateCustomConstraint():
         - Original data
         """
         # Setup
-        custom_constraint = create_custom_constraint(
+        custom_constraint = create_custom_constraint_class(
             lambda _, x: pd.Series([True] * 5)
         )
         custom_constraint = custom_constraint('col')
@@ -347,10 +347,10 @@ class TestCreateCustomConstraint():
         # Assert
         pd.testing.assert_frame_equal(data, out)
 
-    def test_create_custom_constraint_transform_wrong_shape(self):
+    def test_create_custom_constraint_class_transform_wrong_shape(self):
         """Test ``transform`` method of ``CustomConstraint`` which produces data of wrong shape.
 
-        Call ``create_custom_constraint`` on an invalid ``transform`` function.
+        Call ``create_custom_constraint_class`` on an invalid ``transform`` function.
 
         Input:
         - pd.DataFrame
@@ -358,7 +358,7 @@ class TestCreateCustomConstraint():
         - InvalidFunctionError
         """
         # Setup
-        custom_constraint = create_custom_constraint(
+        custom_constraint = create_custom_constraint_class(
             lambda _, x: pd.Series([True] * 5),
             lambda _, x: pd.DataFrame({'col': [1, 2, 3]}),
             sorted
@@ -371,10 +371,10 @@ class TestCreateCustomConstraint():
         with pytest.raises(InvalidFunctionError, match=err_msg):
             custom_constraint.transform(data)
 
-    def test_create_custom_constraint_incorrect_transform(self):
+    def test_create_custom_constraint_class_incorrect_transform(self):
         """Test ``transform`` method of ``CustomConstraint`` with incorrect transform.
 
-        Call ``create_custom_constraint`` on an incorrect ``transform`` function, such as
+        Call ``create_custom_constraint_class`` on an incorrect ``transform`` function, such as
         only accepting 1 argument instead of the required 2.
 
         Input:
@@ -383,7 +383,7 @@ class TestCreateCustomConstraint():
         - FunctionError
         """
         # Setup
-        custom_constraint = create_custom_constraint(
+        custom_constraint = create_custom_constraint_class(
             lambda _, x: pd.Series([True] * 5),
             lambda _: pd.DataFrame({'col': [1, 2, 3]}),
             sorted
@@ -395,10 +395,10 @@ class TestCreateCustomConstraint():
         with pytest.raises(FunctionError):
             custom_constraint.transform(data)
 
-    def test_create_custom_constraint_reverse_transform(self):
+    def test_create_custom_constraint_class_reverse_transform(self):
         """Test ``reverse_transform`` method of ``CustomConstraint``.
 
-        Call ``create_custom_constraint`` on a ``reverse_transform`` function and confirm
+        Call ``create_custom_constraint_class`` on a ``reverse_transform`` function and confirm
         the produced ``CustomConstraint`` correctly applied ``reverse_transform``.
 
         Input:
@@ -407,7 +407,7 @@ class TestCreateCustomConstraint():
         - pd.DataFrame of transformed values
         """
         # Setup
-        custom_constraint = create_custom_constraint(
+        custom_constraint = create_custom_constraint_class(
             sorted,
             sorted,
             lambda _, x: pd.DataFrame({'col': x['col'] ** 2})
@@ -422,10 +422,10 @@ class TestCreateCustomConstraint():
         expected_out = pd.DataFrame({'col': [100, 1, 0, 9, .25]})
         pd.testing.assert_frame_equal(transformed_out, expected_out)
 
-    def test_create_custom_constraint_reverse_transform_not_defined(self):
+    def test_create_custom_constraint_class_reverse_transform_not_defined(self):
         """Test ``reverse_transform`` method of ``CustomConstraint`` when it wasn't defined.
 
-        Call ``create_custom_constraint`` on a not defined ``reverse_transform`` function.
+        Call ``create_custom_constraint_class`` on a not defined ``reverse_transform`` function.
 
         Input:
         - pd.DataFrame
@@ -433,7 +433,7 @@ class TestCreateCustomConstraint():
         - Original data
         """
         # Setup
-        custom_constraint = create_custom_constraint(sorted)('col')
+        custom_constraint = create_custom_constraint_class(sorted)('col')
         data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
 
         # Run
@@ -442,10 +442,10 @@ class TestCreateCustomConstraint():
         # Assert
         pd.testing.assert_frame_equal(data, out)
 
-    def test_create_custom_constraint_reverse_transform_wrong_shape(self):
+    def test_create_custom_constraint_class_reverse_transform_wrong_shape(self):
         """Test invalid ``reverse_transform`` method of ``CustomConstraint``
 
-        Call ``create_custom_constraint`` on a ``reverse_transform`` function
+        Call ``create_custom_constraint_class`` on a ``reverse_transform`` function
         which produces data of the wrong shape.
 
         Input:
@@ -454,7 +454,7 @@ class TestCreateCustomConstraint():
         - InvalidFunctionError
         """
         # Setup
-        custom_constraint = create_custom_constraint(
+        custom_constraint = create_custom_constraint_class(
             sorted,
             sorted,
             lambda _, x: pd.DataFrame({'col': [1, 2, 3]})

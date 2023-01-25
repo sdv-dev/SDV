@@ -1786,6 +1786,23 @@ class TestBaseSingleTableSynthesizer:
         assert instance.metadata._sequence_index is None
         assert instance.metadata._version == 'SINGLE_TABLE_V1'
 
+    def test_load_custom_constraint_classes(self):
+        """Test that ``load_custom_constraint_classes`` calls the ``DataProcessor``'s method."""
+        # Setup
+        instance = Mock()
+
+        # Run
+        BaseSingleTableSynthesizer.load_custom_constraint_classes(
+            instance,
+            'path/to/file.py',
+            ['Custom', 'Constr', 'UpperPlus']
+        )
+        # Assert
+        instance._data_processor.load_custom_constraint_classes.assert_called_once_with(
+            'path/to/file.py',
+            ['Custom', 'Constr', 'UpperPlus']
+        )
+
     def test_add_constraint_warning(self):
         """Test a warning is raised when the synthesizer had already been fitted."""
         # Setup
