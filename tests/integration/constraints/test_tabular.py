@@ -3,7 +3,8 @@ import pandas as pd
 from rdt.transformers import FloatFormatter
 
 from sdv.constraints import (
-    FixedIncrements, Inequality, Range, ScalarInequality, ScalarRange, create_custom_constraint)
+    FixedIncrements, Inequality, Range, ScalarInequality, ScalarRange,
+    create_custom_constraint_class)
 from sdv.sampling.tabular import Condition
 from sdv.tabular import GaussianCopula
 
@@ -16,13 +17,13 @@ def _reverse_transform(_, data):
     return pd.DataFrame({'col': data['col'] ** .5})
 
 
-def test_create_custom_constraint(tmpdir):
-    """Test the ``create_custom_constraint`` method end to end."""
+def test_create_custom_constraint_class(tmpdir):
+    """Test the ``create_custom_constraint_class`` method end to end."""
     # Setup
     def _transform(_, data):
         return pd.DataFrame({'col': data['col'] ** 2})
 
-    custom_constraint = create_custom_constraint(
+    custom_constraint = create_custom_constraint_class(
         _is_valid, _transform, _reverse_transform
     )('col')
     data = pd.DataFrame({'col': np.random.randint(1, 10, size=100)})
@@ -45,10 +46,10 @@ def test_create_custom_constraint(tmpdir):
     loaded.sample(100)
 
 
-def test_create_custom_constraint_transform_is_none(tmpdir):
-    """Test the ``create_custom_constraint`` method end to end."""
+def test_create_custom_constraint_class_transform_is_none(tmpdir):
+    """Test the ``create_custom_constraint_class`` method end to end."""
     # Setup
-    custom_constraint = create_custom_constraint(_is_valid)('col')
+    custom_constraint = create_custom_constraint_class(_is_valid)('col')
 
     data = pd.DataFrame({'col': np.random.randint(1, 10, size=100)})
     gc = GaussianCopula(constraints=[custom_constraint])
@@ -67,15 +68,15 @@ def test_create_custom_constraint_transform_is_none(tmpdir):
     GaussianCopula.load(tmpdir / 'test.pkl')
 
 
-def test_invalid_create_custom_constraint():
-    """Test the an invalid ``create_custom_constraint`` method end to end.
+def test_invalid_create_custom_constraint_class():
+    """Test the an invalid ``create_custom_constraint_class`` method end to end.
 
     It should correctly sample the synthetic data through reject sample.
     """
     def _bad_transform(_, data):
         return pd.DataFrame({'col': [10 / 0] * 100})
 
-    custom_constraint = create_custom_constraint(
+    custom_constraint = create_custom_constraint_class(
         _is_valid, _bad_transform, _reverse_transform
     )('col')
     data = pd.DataFrame({'col': np.random.randint(1, 10, size=100)})

@@ -12,7 +12,7 @@ Currently implemented constraints are:
 
     * CustomConstraint: Simple constraint to be set up by passing the python
       functions that will be used for transformation, reverse transformation
-      and validation. It can be created through the ``create_custom_constraint`` method.
+      and validation. It can be created through the ``create_custom_constraint_class`` method.
     * FixedCombinations: Ensure that the combinations of values
       across several columns are the same after sampling.
     * Inequality: Ensure that the value in one column is always greater than
@@ -66,7 +66,7 @@ def _validate_inputs_custom_constraint(is_valid_fn, transform_fn=None, reverse_t
         raise ValueError('`reverse_transform_fn` must be a function.')
 
 
-def create_custom_constraint(is_valid_fn, transform_fn=None, reverse_transform_fn=None):
+def create_custom_constraint_class(is_valid_fn, transform_fn=None, reverse_transform_fn=None):
     """Create a CustomConstraint class.
 
     Creates a constraint class which uses the ``transform``, ``reverse_transform`` and
