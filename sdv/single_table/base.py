@@ -275,7 +275,7 @@ class BaseSynthesizer:
         Args:
             filepath (str):
                 String representing the absolute or relative path to the python file where
-                the custom constraint is declared.
+                the custom constraints are declared.
             class_names (list):
                 A list of custom constraint classes to be imported.
         """

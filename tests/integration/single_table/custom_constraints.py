@@ -5,7 +5,7 @@ from sdv.constraints import create_custom_constraint_class
 
 def is_valid(column_names, data):
     """Validate the constraint."""
-    return pd.Series([True for _ in range(len(data[column_names]))])
+    return pd.Series([value[0] > 1 for value in data[column_names].to_numpy()])
 
 
 def transform(column_names, data):

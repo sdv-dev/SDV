@@ -535,7 +535,7 @@ def test_custom_constraints(tmpdir):
     data = pd.DataFrame({
         'primary_key': ['user-000', 'user-001', 'user-002'],
         'pii_col': ['223 Williams Rd', '75 Waltham St', '77 Mass Ave'],
-        'numerical_col': [1, 2, 3],
+        'numerical_col': [2, 3, 4],
         'categorical_col': ['a', 'b', 'a'],
     })
 
@@ -569,9 +569,11 @@ def test_custom_constraints(tmpdir):
     synthesizer.fit_processed_data(processed_data)
 
     # Run - sample
-    synthesizer.sample(10)
+    sampled = synthesizer.sample(10)
+    assert all(sampled['numerical_col'] > 1)
 
     # Run - Save and Sample
     synthesizer.save(tmpdir / 'test.pkl')
     loaded_instance = synthesizer.load(tmpdir / 'test.pkl')
-    loaded_instance.sample(10)
+    loaded_sampled = loaded_instance.sample(10)
+    assert all(loaded_sampled['numerical_col'] > 1)

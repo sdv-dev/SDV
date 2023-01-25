@@ -1,6 +1,5 @@
 """Single table data processing."""
 
-import importlib
 import itertools
 import json
 import logging
@@ -16,6 +15,7 @@ from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
+from sdv.data_processing.utils import load_module_from_path
 from sdv.metadata.anonymization import get_anonymized_transformer
 from sdv.metadata.single_table import SingleTableMetadata
 
@@ -153,32 +153,10 @@ class DataProcessor:
 
         return sdtypes
 
-    @staticmethod
-    def _load_module_from_path(path):
-        """Return the module from a given ``PosixPath``.
-
-        Args:
-            path (pathlib.Path):
-                A ``PosixPath`` object from where the module should be imported from.
-
-        Returns:
-            module:
-                The in memory module for the given file.
-        """
-        assert path.exists(), 'The expected file was not found.'
-        module_path = path.parent
-        module_name = path.name.split('.')[0]
-        module_path = f'{module_path.name}.{module_name}'
-        spec = importlib.util.spec_from_file_location(module_path, path)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-
-        return module
-
     def _validate_custom_constraints(self, filepath, class_names):
         errors = []
         reserved_class_names = list(get_subclasses(Constraint))
-        module = self._load_module_from_path(Path(filepath))
+        module = load_module_from_path(Path(filepath))
         for class_name in class_names:
             if class_name in reserved_class_names:
                 errors.append((
@@ -198,7 +176,7 @@ class DataProcessor:
         Args:
             filepath (str):
                 String representing the absolute or relative path to the python file where
-                the custom constraint is declared.
+                the custom constraints are declared.
             class_names (list):
                 A list of custom constraint classes to be imported.
         """
@@ -219,9 +197,8 @@ class DataProcessor:
         constraint_parameters = constraint_dict.get('constraint_parameters', {})
         try:
             if constraint_class in self._custom_constraint_classes:
-                module = self._load_module_from_path(
-                    Path(self._custom_constraint_classes[constraint_class])
-                )
+                path = Path(self._custom_constraint_classes[constraint_class])
+                module = load_module_from_path(path)
                 constraint_class = getattr(module, constraint_class)
 
             else:
@@ -515,9 +492,8 @@ class DataProcessor:
 
             else:
                 constraint_class = constraint['constraint_class']
-                module = self._load_module_from_path(
-                    Path(self._custom_constraint_classes[constraint_class])
-                )
+                path = Path(self._custom_constraint_classes[constraint_class])
+                module = load_module_from_path(path)
                 constraint_class = getattr(module, constraint_class)
                 loaded_constraints.append(
                     constraint_class(**constraint.get('constraint_parameters', {}))
