@@ -8,7 +8,7 @@ from sdv.constraints import (
     FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
     ScalarInequality, ScalarRange, Unique)
 from sdv.constraints.errors import AggregateConstraintsError
-from sdv.constraints.tabular import create_custom_constraint
+from sdv.constraints.tabular import create_custom_constraint_class
 from sdv.demo import load_tabular_demo
 from sdv.sampling import Condition
 from sdv.tabular import GaussianCopula
@@ -87,7 +87,7 @@ def test_failing_constraints():
         'l': [25, 50, 70, np.nan, 50, 25, 25],
     })
 
-    custom_constraint = create_custom_constraint(
+    custom_constraint = create_custom_constraint_class(
         lambda _, x: pd.Series([True if x_i > 0 else False for x_i in x['k']])
     )
     constraints = [
