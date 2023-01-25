@@ -3,11 +3,11 @@ import warnings
 from copy import deepcopy
 
 import copulas
-import copulas.multivariate
 import copulas.univariate
 import numpy as np
 import pandas as pd
 import scipy
+from copulas import multivariate
 from rdt.transformers import OneHotEncoder
 
 from sdv.errors import NonParametricError
@@ -118,7 +118,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
                 numerical_distributions[column] = self._numerical_distributions.get(
                     column, self._default_distribution)
 
-        self._model = copulas.multivariate.GaussianMultivariate(
+        self._model = multivariate.GaussianMultivariate(
             distribution=numerical_distributions
         )
 
@@ -363,5 +363,5 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             num_rows = parameters.pop('num_rows')
 
         parameters = self._rebuild_gaussian_copula(parameters)
-        self._model = copulas.multivariate.GaussianMultivariate.from_dict(parameters)
+        self._model = multivariate.GaussianMultivariate.from_dict(parameters)
         self._num_rows = 0 if pd.isna(num_rows) else max(0, int(round(num_rows)))
