@@ -83,7 +83,7 @@ indicated above. In order to do this you will need to:
     Notice that the model ``fitting`` process took care of transforming the
     different fields using the appropriate `Reversible Data
     Transforms <http://github.com/sdv-dev/RDT>`__ to ensure that the data
-    has a format that the underlying CTGANSynthesizer class can handle.
+    has a format that the underlying CTGAN class can handle.
 
 Generate synthetic data from the model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -430,7 +430,7 @@ Was the ``CopulaGAN`` able to capture this distribution on its own?
 .. ipython:: python
     :okwarning:
 
-    distributions['experience_years.value']
+    distributions['experience_years']
 
 
 It seems that the it was not, as it rather thought that the behavior was
@@ -491,7 +491,7 @@ distribution for the ``experience_years`` column
 .. ipython:: python
     :okwarning:
 
-    model.get_distributions()['experience_years.value']
+    model.get_distributions()['experience_years']
 
 
 And, as a result, now we can see how the generated data now have a
