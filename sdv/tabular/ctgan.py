@@ -2,7 +2,6 @@
 
 import ctgan
 import numpy as np
-from ctgan import CTGAN, TVAE
 
 from sdv.tabular.base import BaseTabularModel
 
@@ -174,11 +173,7 @@ class CTGAN(CTGANModel):
             during ``fit``. Defaults to ``True``.
     """
 
-<<<<<<< HEAD
     _MODEL_CLASS = ctgan.CTGAN
-=======
-    _MODEL_CLASS = CTGAN
->>>>>>> 0b0ea45d (Create GaussianCopulaSynthesizer, CTGANSynthesizer, TVAESynthesizer and CopulaGANSynthesizer (#1034))
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,
@@ -283,11 +278,7 @@ class TVAE(CTGANModel):
             during ``fit``. Defaults to ``True``.
     """
 
-<<<<<<< HEAD
     _MODEL_CLASS = ctgan.TVAE
-=======
-    _MODEL_CLASS = TVAE
->>>>>>> 0b0ea45d (Create GaussianCopulaSynthesizer, CTGANSynthesizer, TVAESynthesizer and CopulaGANSynthesizer (#1034))
 
     def __init__(self, field_names=None, field_types=None, field_transformers=None,
                  anonymize_fields=None, primary_key=None, constraints=None, table_metadata=None,

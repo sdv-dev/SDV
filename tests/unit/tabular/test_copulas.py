@@ -290,11 +290,8 @@ class TestGaussianCopula:
 
         # asserts
         assert out is None
-        assert gaussian_copula._field_distributions == {
-            'a': 'a_distribution', 'a': 'a_distribution'
-        }
-        gm_mock.assert_called_once_with(
-            distribution={'a': 'a_distribution', 'a': 'a_distribution'})
+        assert gaussian_copula._field_distributions == {'a': 'a_distribution'}
+        gm_mock.assert_called_once_with(distribution={'a': 'a_distribution'})
 
         assert gaussian_copula._model == gm_mock.return_value
         expected_data = pd.DataFrame({
