@@ -942,6 +942,7 @@ class TestDataProcessor:
             'created_bool': [False, True, False],
             'created_categorical': ['d', 'e', 'f'],
             'email': ['a@aol.com', 'b@gmail.com', 'c@gmx.com'],
+            'first_name': ['John', 'Doe', 'Johanna'],
             'id': ['ID_001', 'ID_002', 'ID_003']
         })
         dp = DataProcessor(SingleTableMetadata())
@@ -959,6 +960,7 @@ class TestDataProcessor:
             'bool': {'sdtype': 'boolean'},
             'categorical': {'sdtype': 'categorical'},
             'email': {'sdtype': 'email', 'pii': True},
+            'first_name': {'sdtype': 'first_name'},
             'id': {'sdtype': 'text', 'regex_format': 'ID_\\d{3}[0-9]'}
         }
 
@@ -977,6 +979,7 @@ class TestDataProcessor:
             'created_bool': 'boolean',
             'created_categorical': 'categorical',
             'email': 'pii',
+            'first_name': 'pii',
             'id': 'text',
         }
         int_transformer = config['transformers']['created_int']
@@ -996,10 +999,15 @@ class TestDataProcessor:
         anonymized_transformer = config['transformers']['email']
         primary_key_transformer = config['transformers']['id']
         assert anonymized_transformer == 'AnonymizedFaker'
+        first_name_transformer = config['transformers']['first_name']
+        assert first_name_transformer == 'AnonymizedFaker'
         assert primary_key_transformer == 'RegexGenerator'
-        assert dp._anonymized_columns == ['email']
-        dp.create_anonymized_transformer.assert_called_once_with(
-            'email', {'sdtype': 'email', 'pii': True})
+        assert sorted(dp._anonymized_columns) == sorted(['first_name', 'email'])
+        dp.create_anonymized_transformer.calls == [
+            call('email', {'sdtype': 'email', 'pii': True}),
+            call('first_name', {'sdtype': 'first_name'})
+
+        ]
         dp.create_key_transformer.assert_called_once_with(
             'id', 'text', {'sdtype': 'text', 'regex_format': 'ID_\\d{3}[0-9]'})
 
