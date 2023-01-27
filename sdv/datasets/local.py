@@ -13,6 +13,9 @@ def load_csvs(folder_name):
         folder_name (str):
             The full path of the folder with the data to be loaded.
     """
+    if not path.exists(folder_name):
+        raise ValueError(f"The folder '{folder_name}' cannot be found.")
+
     dirpath, _, filenames = list(walk(folder_name))[0]
     csvs = {}
     other_files = []

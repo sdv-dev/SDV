@@ -12,11 +12,11 @@ def test_get_available_demos_single_table():
     # Assert
     expected_table = pd.DataFrame({
         'dataset_name': [
-            'KRK_v1.zip', 'adult.zip', 'alarm.zip', 'asia.zip', 'census.zip',
-            'census_extended.zip', 'child.zip', 'covtype.zip', 'credit.zip',
-            'expedia_hotel_logs.zip', 'grid.zip', 'gridr.zip', 'insurance.zip',
-            'intrusion.zip', 'mnist12.zip', 'mnist28.zip', 'news.zip',
-            'ring.zip', 'student_placements.zip', 'student_placements_pii.zip'
+            'KRK_v1', 'adult', 'alarm', 'asia', 'census',
+            'census_extended', 'child', 'covtype', 'credit',
+            'expedia_hotel_logs', 'grid', 'gridr', 'insurance',
+            'intrusion', 'mnist12', 'mnist28', 'news',
+            'ring', 'student_placements', 'student_placements_pii'
         ],
         'size_MB': [
             '0.072128', '3.907448', '4.520128', '1.280128', '98.165608',
@@ -26,6 +26,7 @@ def test_get_available_demos_single_table():
         ],
         'num_tables': ['1'] * 20
     })
+    expected_table['size_MB'] = expected_table['size_MB'].astype(float).round(2)
     pd.testing.assert_frame_equal(tables_info, expected_table)
 
 
@@ -37,19 +38,19 @@ def test_get_available_demos_multi_table():
     # Assert
     expected_table = pd.DataFrame({
         'dataset_name': [
-            'Accidents_v1.zip', 'Atherosclerosis_v1.zip', 'AustralianFootball_v1.zip',
-            'Biodegradability_v1.zip', 'Bupa_v1.zip', 'CORA_v1.zip', 'Carcinogenesis_v1.zip',
-            'Chess_v1.zip', 'Countries_v1.zip', 'DCG_v1.zip', 'Dunur_v1.zip', 'Elti_v1.zip',
-            'FNHK_v1.zip', 'Facebook_v1.zip', 'Hepatitis_std_v1.zip', 'Mesh_v1.zip',
-            'Mooney_Family_v1.zip', 'MuskSmall_v1.zip', 'NBA_v1.zip', 'NCAA_v1.zip',
-            'PTE_v1.zip', 'Pima_v1.zip', 'PremierLeague_v1.zip', 'Pyrimidine_v1.zip',
-            'SAP_v1.zip', 'SAT_v1.zip', 'SalesDB_v1.zip', 'Same_gen_v1.zip',
-            'Student_loan_v1.zip', 'Telstra_v1.zip', 'Toxicology_v1.zip', 'Triazine_v1.zip',
-            'TubePricing_v1.zip', 'UTube_v1.zip', 'UW_std_v1.zip', 'WebKP_v1.zip',
-            'airbnb-simplified.zip', 'financial_v1.zip', 'ftp_v1.zip', 'genes_v1.zip',
-            'got_families.zip', 'imdb_MovieLens_v1.zip', 'imdb_ijs_v1.zip', 'imdb_small_v1.zip',
-            'legalActs_v1.zip', 'mutagenesis_v1.zip', 'nations_v1.zip', 'restbase_v1.zip',
-            'rossmann.zip', 'trains_v1.zip', 'university_v1.zip', 'walmart.zip', 'world_v1.zip'
+            'Accidents_v1', 'Atherosclerosis_v1', 'AustralianFootball_v1',
+            'Biodegradability_v1', 'Bupa_v1', 'CORA_v1', 'Carcinogenesis_v1',
+            'Chess_v1', 'Countries_v1', 'DCG_v1', 'Dunur_v1', 'Elti_v1',
+            'FNHK_v1', 'Facebook_v1', 'Hepatitis_std_v1', 'Mesh_v1',
+            'Mooney_Family_v1', 'MuskSmall_v1', 'NBA_v1', 'NCAA_v1',
+            'PTE_v1', 'Pima_v1', 'PremierLeague_v1', 'Pyrimidine_v1',
+            'SAP_v1', 'SAT_v1', 'SalesDB_v1', 'Same_gen_v1',
+            'Student_loan_v1', 'Telstra_v1', 'Toxicology_v1', 'Triazine_v1',
+            'TubePricing_v1', 'UTube_v1', 'UW_std_v1', 'WebKP_v1',
+            'airbnb-simplified', 'financial_v1', 'ftp_v1', 'genes_v1',
+            'got_families', 'imdb_MovieLens_v1', 'imdb_ijs_v1', 'imdb_small_v1',
+            'legalActs_v1', 'mutagenesis_v1', 'nations_v1', 'restbase_v1',
+            'rossmann', 'trains_v1', 'university_v1', 'walmart', 'world_v1'
         ],
         'size_MB': [
             '296.202744', '7.916808', '32.534832', '0.692008', '0.059144', '1.987328', '1.642592',
@@ -68,4 +69,5 @@ def test_get_available_demos_multi_table():
             '7', '7', '7', '5', '3', '3', '3', '2', '2', '5', '3', '3'
         ]
     })
+    expected_table['size_MB'] = expected_table['size_MB'].astype(float).round(2)
     pd.testing.assert_frame_equal(tables_info, expected_table)
