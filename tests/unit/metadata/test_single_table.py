@@ -1023,7 +1023,7 @@ class TestSingleTableMetadata:
         # Assert
         assert instance._primary_key == ('col1', 'col2')
 
-    @patch('sdv.tabular.utils.warnings')
+    @patch('sdv.metadata.single_table.warnings')
     def test_set_primary_key_already_exists_warning(self, warning_mock):
         """Test that ``set_primary_key`` raises a warning when a primary key already exists.
 
@@ -1049,7 +1049,7 @@ class TestSingleTableMetadata:
         assert warning_mock.warn.called_once_with(warning_msg)
         assert instance._primary_key == 'column1'
 
-    @patch('sdv.tabular.utils.warnings')
+    @patch('sdv.metadata.single_table.warnings')
     def test_set_primary_key_in_alternate_keys_warning(self, warning_mock):
         """Test that ``set_primary_key`` raises a warning the key is in ``self._alternate_keys``.
 
@@ -1161,7 +1161,7 @@ class TestSingleTableMetadata:
         # Assert
         assert instance._sequence_key == ('col1', 'col2')
 
-    @patch('sdv.tabular.utils.warnings')
+    @patch('sdv.metadata.single_table.warnings')
     def test_set_sequence_key_warning(self, warning_mock):
         """Test that ``set_sequence_key`` raises a warning when a sequence key already exists.
 

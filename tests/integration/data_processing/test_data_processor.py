@@ -4,7 +4,7 @@ import itertools
 import numpy as np
 
 from sdv.data_processing import DataProcessor
-from sdv.demo import load_tabular_demo
+from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
 
 
@@ -31,18 +31,13 @@ def test_data_processor_with_anonymized_columns(tmpdir):
           ``AnonymizedFaker`` instance.
     """
     # Load metadata and data
-    metadata, data = load_tabular_demo('adult', metadata=True)
-    data = data
-    metadata.to_json(tmpdir / 'adult_old.json')
-    SingleTableMetadata.upgrade_metadata(tmpdir / 'adult_old.json', tmpdir / 'adult_new.json')
-
-    adult_metadata = SingleTableMetadata.load_from_json(tmpdir / 'adult_new.json')
+    data, metadata = download_demo('single_table', 'adult')
 
     # Add anonymized field
-    adult_metadata.update_column('occupation', sdtype='job', pii=True)
+    metadata.update_column('occupation', sdtype='job', pii=True)
 
     # Instance ``DataProcessor``
-    dp = DataProcessor(adult_metadata)
+    dp = DataProcessor(metadata)
 
     # Fit
     dp.fit(data)
@@ -85,26 +80,21 @@ def test_data_processor_with_anonymized_columns_and_primary_key(tmpdir):
         - The column ``id`` has been created in ``transform`` with a unique length of the data.
     """
     # Load metadata and data
-    metadata, data = load_tabular_demo('adult', metadata=True)
-    data = data
-    metadata.to_json(tmpdir / 'adult_old.json')
-    SingleTableMetadata.upgrade_metadata(tmpdir / 'adult_old.json', tmpdir / 'adult_new.json')
-
-    adult_metadata = SingleTableMetadata.load_from_json(tmpdir / 'adult_new.json')
+    data, metadata = download_demo('single_table', 'adult')
 
     # Add anonymized field
-    adult_metadata.update_column('occupation', sdtype='job', pii=True)
+    metadata.update_column('occupation', sdtype='job', pii=True)
 
     # Add primary key field
-    adult_metadata.add_column('id', sdtype='text', regex_format='ID_\\d{4}[0-9]')
-    adult_metadata.set_primary_key('id')
+    metadata.add_column('id', sdtype='text', regex_format='ID_\\d{4}[0-9]')
+    metadata.set_primary_key('id')
 
     # Add id
     size = len(data)
     data['id'] = np.arange(0, size).astype('O')
 
     # Instance ``DataProcessor``
-    dp = DataProcessor(adult_metadata)
+    dp = DataProcessor(metadata)
 
     # Fit
     dp.fit(data)
@@ -147,7 +137,7 @@ def test_data_processor_with_primary_key_numerical(tmpdir):
           matching the original numerical ``id`` column.
     """
     # Load metadata and data
-    data = load_tabular_demo('adult')
+    data, _ = download_demo('single_table', 'adult')
     adult_metadata = SingleTableMetadata()
     adult_metadata.detect_from_dataframe(data=data)
 
@@ -187,7 +177,7 @@ def test_data_processor_with_alternate_keys(tmpdir):
     as with the ``primary_key``.
     """
     # Load metadata and data
-    data = load_tabular_demo('adult')
+    data, _ = download_demo('single_table', 'adult')
     data['fnlwgt'] = data['fnlwgt'].astype(str)
     adult_metadata = SingleTableMetadata()
     adult_metadata.detect_from_dataframe(data=data)
