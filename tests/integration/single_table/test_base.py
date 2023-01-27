@@ -590,20 +590,26 @@ def test_auto_assign_transformers_and_update_with_pii():
     data = pd.DataFrame(data={
         'id': ['N', 'A', 'K', 'F', 'P'],
         'numerical': [1, 2, 3, 2, 1],
-        'categorical': ['A', 'A', 'B', 'B', 'B']
+        'name': ['A', 'A', 'B', 'B', 'B']
     })
 
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
 
     # Run
-    metadata.update_column(column_name='id', sdtype='name')
+    metadata.update_column(column_name='id', sdtype='first_name')
+    metadata.update_column(column_name='name', sdtype='name')
     metadata.set_primary_key('id')
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.auto_assign_transformers(data)
 
     # Assert
     id_transformer = synthesizer.get_transformers()['id']
+    name_transformer = synthesizer.get_transformers()['name']
     assert id_transformer.provider_name == 'person'
-    assert id_transformer.function_name == 'name'
+    assert id_transformer.function_name == 'first_name'
     assert id_transformer.enforce_uniqueness is True
+
+    assert name_transformer.provider_name == 'person'
+    assert name_transformer.function_name == 'name'
+    assert name_transformer.enforce_uniqueness is False

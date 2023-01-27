@@ -375,7 +375,7 @@ class DataProcessor:
             if column in self._keys:
                 transformers[column] = self.create_key_transformer(column, sdtype, column_metadata)
 
-            elif column_metadata.get('pii'):
+            elif pii:
                 transformers[column] = self.create_anonymized_transformer(sdtype, column_metadata)
                 self._anonymized_columns.append(column)
 
