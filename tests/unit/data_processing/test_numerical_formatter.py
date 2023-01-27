@@ -1,8 +1,7 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 
@@ -23,7 +22,8 @@ class TestNumericalFormatter:
         assert formatter.enforce_min_max_values is True
         assert formatter.computer_representation == 'Int8'
 
-    def test__learn_rounding_digits_more_than_15_decimals(self):
+    @patch('sdv.data_processing.numerical_formatter.LOGGER')
+    def test__learn_rounding_digits_more_than_15_decimals(self, log_mock):
         """Test the ``_learn_rounding_digits`` method with more than 15 decimals.
 
         If the data has more than 15 decimals, return None and raise warning.
@@ -31,13 +31,14 @@ class TestNumericalFormatter:
         # Setup
         data = pd.Series(np.random.random(size=10).round(20), name='col')
 
-        # Run and Assert
-        warn_msg = (
+        # Run
+        output = NumericalFormatter._learn_rounding_digits(data)
+
+        # Assert
+        log_msg = (
             "No rounding scheme detected for column 'col'. Synthetic data will not be rounded."
         )
-        with pytest.warns(UserWarning, match=warn_msg):
-            output = NumericalFormatter._learn_rounding_digits(data)
-
+        log_mock.info.assert_called_once_with(log_msg)
         assert output is None
 
     def test__learn_rounding_digits_less_than_15_decimals(self):
