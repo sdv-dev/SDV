@@ -267,8 +267,8 @@ def test_get_available_demos(client_mock):
 
     # Assert
     expected_table = pd.DataFrame({
-        'dataset_name': ['dataset1.zip', 'dataset2.zip'],
-        'size_MB': [123, 456],
+        'dataset_name': ['dataset1', 'dataset2'],
+        'size_MB': [123.00, 456.00],
         'num_tables': [321, 654]
     })
     pd.testing.assert_frame_equal(tables_info, expected_table)
