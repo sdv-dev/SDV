@@ -166,9 +166,9 @@ def get_available_demos(modality):
     for item in client.list_objects(Bucket=BUCKET)['Contents']:
         dataset_modality, dataset = item['Key'].split('/', 1)
         if dataset_modality == modality.upper():
-            tables_info['dataset_name'].append(dataset)
+            tables_info['dataset_name'].append(dataset.replace('.zip', ''))
             headers = client.head_object(Bucket=BUCKET, Key=item['Key'])['Metadata']
-            tables_info['size_MB'].append(headers['size-mb'])
+            tables_info['size_MB'].append(round(float(headers['size-mb']), 2))
             tables_info['num_tables'].append(headers['num-tables'])
 
     return pd.DataFrame(tables_info)

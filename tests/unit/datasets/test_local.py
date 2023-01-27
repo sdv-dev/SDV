@@ -74,3 +74,11 @@ def test_load_csvs_no_csvs(load_mock):
         )
         with pytest.raises(ValueError, match=error_message):
             load_csvs(temp_dir)
+
+
+def test_load_csvs_folder_does_not_exist():
+    """Test that the function raises an error if the folder does not exist."""
+    # Run and Assert
+    error_message = re.escape("The folder 'demo/' cannot be found.")
+    with pytest.raises(ValueError, match=error_message):
+        load_csvs('demo/')
