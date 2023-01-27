@@ -44,6 +44,38 @@ class TestTabularPreset:
             enforce_rounding=False,
         )
 
+    @patch('sdv.single_table.base.DataProcessor')
+    def test_get_parameters(self, mock_data_processor):
+        """Test that it returns every ``init`` parameter without the ``metadata``."""
+        # Setup
+        metadata = Mock()
+        instance = SingleTablePreset(metadata, name='FAST_ML')
+
+        # Run
+        parameters = instance.get_parameters()
+
+        # Assert
+        assert 'metadata' not in parameters
+        assert parameters == {
+            'default_distribution': 'norm',
+            'enforce_min_max_values': True,
+            'enforce_rounding': False,
+            'numerical_distributions': {}
+        }
+
+    @patch('sdv.single_table.base.DataProcessor')
+    def test_get_metadata(self, mock_data_processor):
+        """Test that it returns the ``metadata`` object."""
+        # Setup
+        metadata = Mock()
+        instance = SingleTablePreset(metadata, 'FAST_ML')
+
+        # Run
+        result = instance.get_metadata()
+
+        # Assert
+        assert result == metadata
+
     def test_fit(self):
         """Test that the synthesizer's fit method is called with the expected args."""
         # Setup

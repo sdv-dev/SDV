@@ -60,6 +60,14 @@ class SingleTablePreset:
         """
         self._synthesizer.add_constraints(constraints)
 
+    def get_metadata(self):
+        """Return the ``SingleTableMetadata`` for this synthesizer."""
+        return self._synthesizer.get_metadata()
+
+    def get_parameters(self):
+        """Return the parameters used to instantiate the synthesizer."""
+        return self._synthesizer.get_parameters()
+
     def fit(self, data):
         """Fit this model to the data.
 
