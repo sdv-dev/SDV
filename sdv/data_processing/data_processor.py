@@ -56,13 +56,13 @@ class DataProcessor:
             learn_rounding_scheme=True,
             enforce_min_max_values=True,
             missing_value_replacement='mean',
-            model_missing_values=True,
+            model_missing_values=False,
         ),
         'categorical': rdt.transformers.LabelEncoder(add_noise=True),
         'boolean': rdt.transformers.LabelEncoder(add_noise=True),
         'datetime': rdt.transformers.UnixTimestampEncoder(
             missing_value_replacement='mean',
-            model_missing_values=True,
+            model_missing_values=False,
         ),
         'text': rdt.transformers.RegexGenerator()
     }
@@ -77,7 +77,7 @@ class DataProcessor:
     def _update_numerical_transformer(self, enforce_rounding, enforce_min_max_values):
         custom_float_formatter = rdt.transformers.FloatFormatter(
             missing_value_replacement='mean',
-            model_missing_values=True,
+            model_missing_values=False,
             learn_rounding_scheme=enforce_rounding,
             enforce_min_max_values=enforce_min_max_values
         )
@@ -391,7 +391,7 @@ class DataProcessor:
                 sdtypes[column] = 'numerical'
                 transformers[column] = rdt.transformers.FloatFormatter(
                     missing_value_replacement='mean',
-                    model_missing_values=True,
+                    model_missing_values=False,
                 )
             else:
                 sdtype = self._DTYPE_TO_SDTYPE.get(dtype_kind, 'categorical')

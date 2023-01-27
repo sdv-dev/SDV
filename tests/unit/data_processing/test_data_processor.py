@@ -982,11 +982,11 @@ class TestDataProcessor:
         int_transformer = config['transformers']['created_int']
         assert isinstance(int_transformer, FloatFormatter)
         assert int_transformer.missing_value_replacement == 'mean'
-        assert int_transformer.model_missing_values is True
+        assert int_transformer.model_missing_values is False
         float_transformer = config['transformers']['created_float']
         assert isinstance(float_transformer, FloatFormatter)
         assert float_transformer.missing_value_replacement == 'mean'
-        assert float_transformer.model_missing_values is True
+        assert float_transformer.model_missing_values is False
         assert isinstance(config['transformers']['bool'], LabelEncoder)
         assert isinstance(config['transformers']['created_bool'], LabelEncoder)
         assert isinstance(config['transformers']['categorical'], LabelEncoder)
