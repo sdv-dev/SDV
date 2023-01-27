@@ -253,7 +253,7 @@ def test_check_num_rows_non_reject_sampling_error():
         check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries)
 
 
-@patch('sdv.tabular.utils.warnings')
+@patch('sdv.single_table.utils.warnings')
 def test_check_num_rows_non_reject_sampling_warning(warning_mock):
     """Test the ``check_num_rows`` function.
 
@@ -277,7 +277,7 @@ def test_check_num_rows_non_reject_sampling_warning(warning_mock):
     warning_mock.warn.called_once_with(error_msg)
 
 
-@patch('sdv.tabular.utils.warnings')
+@patch('sdv.single_table.utils.warnings')
 def test_check_num_rows_valid(warning_mock):
     """Test the ``check_num_rows`` passes withnout calling warnings."""
     # Setup

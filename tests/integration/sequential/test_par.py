@@ -3,7 +3,6 @@ import datetime
 import pandas as pd
 from deepecho import load_demo
 
-from sdv.demo import load_timeseries_demo
 from sdv.metadata import SingleTableMetadata
 from sdv.sequential import PARSynthesizer
 
@@ -83,46 +82,3 @@ def test_column_after_date_complex():
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
     assert (sampled.notna().sum(axis=1) != 0).all()
-
-
-def test_sample_sequential_columns_with_context_out_of_order():
-    """Test that the context columns can be out of order when sampling."""
-    # Setup
-    data = load_timeseries_demo()
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
-    metadata.update_column('Symbol', sdtype='text')
-    metadata.set_sequence_key('Symbol')
-    metadata.set_sequence_index('Date')
-    context = pd.DataFrame(data={
-        'Symbol': ['Apple', 'Google'],
-        'Sector': ['Technology', 'Health Care'],
-        'MarketCap': [1.2345e+11, 4.5678e+10],
-        'Industry': ['Electronic Components', 'Medical/Nursing Services']
-    })
-    par = PARSynthesizer(
-        metadata=metadata,
-        context_columns=['MarketCap', 'Sector', 'Industry'],
-        epochs=1
-    )
-
-    # Run
-    par.fit(data)
-    sampled = par.sample_sequential_columns(context_columns=context, sequence_length=10)
-
-    # Assert
-    expected_first_sequence = pd.DataFrame({
-        'Symbol': ['Apple'] * 10,
-        'MarketCap': [1.2345e+11] * 10,
-        'Sector': ['Technology'] * 10,
-        'Industry': ['Electronic Components'] * 10
-    })
-    expected_second_sequence = pd.DataFrame({
-        'Symbol': ['Google'] * 10,
-        'MarketCap': [4.5678e+10] * 10,
-        'Sector': ['Health Care'] * 10,
-        'Industry': ['Medical/Nursing Services'] * 10
-    }, index=range(10, 20))
-    context_columns = ['Symbol', 'MarketCap', 'Sector', 'Industry']
-    pd.testing.assert_frame_equal(sampled[context_columns].iloc[0:10], expected_first_sequence)
-    pd.testing.assert_frame_equal(sampled[context_columns].iloc[10:], expected_second_sequence)

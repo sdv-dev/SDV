@@ -266,8 +266,8 @@ def test_fit_with_unique_constraint_on_data_subset():
     assert samples['test_column'].is_unique
 
 
-@patch('sdv.tabular.base.isinstance')
-@patch('sdv.tabular.copulas.copulas.multivariate.GaussianMultivariate',
+@patch('sdv.single_table.base.isinstance')
+@patch('sdv.single_table.copulas.multivariate.GaussianMultivariate',
        spec_set=GaussianMultivariate)
 def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstance_mock):
     """Test that the ``sample`` method handles constraints with conditions.

@@ -104,7 +104,7 @@ class TestGaussianCopulaSynthesizer:
         }
 
     @patch('sdv.single_table.copulas.warnings')
-    @patch('sdv.single_table.copulas.copulas.multivariate')
+    @patch('sdv.single_table.copulas.multivariate')
     def test__fit(self, mock_multivariate, mock_warnings):
         """Test the ``_fit``.
 
@@ -328,9 +328,9 @@ class TestGaussianCopulaSynthesizer:
         }
         assert result == expected
 
-    @patch('sdv.single_table.copulas.copulas')
+    @patch('sdv.single_table.copulas.multivariate')
     @patch('sdv.single_table.copulas.unflatten_dict')
-    def test___set_parameters(self, mock_unflatten_dict, mock_copulas):
+    def test___set_parameters(self, mock_unflatten_dict, mock_multivariate):
         """Test that parameters are properly set and that number of rows is set properly."""
         # Setup
         parameters = {
@@ -384,10 +384,10 @@ class TestGaussianCopulaSynthesizer:
         }
 
         instance._rebuild_gaussian_copula.assert_called_once_with(expected_parameters)
-        model = mock_copulas.multivariate.GaussianMultivariate.from_dict.return_value
+        model = mock_multivariate.GaussianMultivariate.from_dict.return_value
         assert instance._model == model
         assert instance._num_rows == 5
-        mock_copulas.multivariate.GaussianMultivariate.from_dict.assert_called_once_with(
+        mock_multivariate.GaussianMultivariate.from_dict.assert_called_once_with(
             instance._rebuild_gaussian_copula.return_value
         )
 
