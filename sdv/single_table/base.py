@@ -1015,31 +1015,31 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             output_file_path
         )
 
-    def save(self, path):
+    def save(self, filepath):
         """Save this model instance to the given path using cloudpickle.
 
         Args:
-            path (str):
+            filepath (str):
                 Path where the synthesizer instance will be serialized.
         """
         self._package_versions = get_package_versions(getattr(self, '_model', None))
 
-        with open(path, 'wb') as output:
+        with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
 
     @classmethod
-    def load(cls, path):
+    def load(cls, filepath):
         """Load a TabularModel instance from a given path.
 
         Args:
-            path (str):
+            filepath (str):
                 Path from which to load the serialized synthesizer.
 
         Returns:
             SingleTableSynthesizer:
                 The loaded synthesizer.
         """
-        with open(path, 'rb') as f:
+        with open(filepath, 'rb') as f:
             model = cloudpickle.load(f)
             throw_version_mismatch_warning(getattr(model, '_package_versions', None))
 
