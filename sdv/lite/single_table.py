@@ -84,7 +84,7 @@ class SingleTablePreset:
                 The file to periodically write sampled rows to. If None, does not
                 write rows anywhere.
             conditions:
-                Deprecated argument. Use the ``sample_conditions`` method with
+                Deprecated argument. Use the ``sample_from_conditions`` method with
                 ``sdv.sampling.Condition`` objects instead.
 
         Returns:
@@ -101,8 +101,8 @@ class SingleTablePreset:
 
         return sampled
 
-    def sample_conditions(self, conditions, max_tries_per_batch=100,
-                          batch_size=None, output_file_path=None):
+    def sample_from_conditions(self, conditions, max_tries_per_batch=100,
+                               batch_size=None, output_file_path=None):
         """Sample rows from this table with the given conditions.
 
         Args:
@@ -123,7 +123,7 @@ class SingleTablePreset:
             pandas.DataFrame:
                 Sampled data.
         """
-        sampled = self._synthesizer.sample_conditions(
+        sampled = self._synthesizer.sample_from_conditions(
             conditions,
             max_tries_per_batch,
             batch_size,

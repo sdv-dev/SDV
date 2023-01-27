@@ -695,7 +695,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         if conditions is not None:
             raise TypeError('This method does not support the conditions parameter. '
                             "Please create 'sdv.sampling.Condition' objects and pass them "
-                            "into the 'sample_conditions' method. "
+                            "into the 'sample_from_conditions' method. "
                             'See User Guide or API for more details.')
 
         if num_rows is None:
@@ -743,7 +743,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 The file to periodically write sampled rows to. If None, does not
                 write rows anywhere.
             conditions:
-                Deprecated argument. Use the ``sample_conditions`` method with
+                Deprecated argument. Use the ``sample_from_conditions`` method with
                 ``sdv.sampling.Condition`` objects instead.
 
         Returns:
@@ -871,7 +871,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return all_sampled_rows
 
-    def _sample_conditions(self, conditions, max_tries_per_batch, batch_size, output_file_path):
+    def _sample_from_conditions(self, conditions, max_tries_per_batch,
+                                batch_size, output_file_path):
         """Sample rows from this table with the given conditions."""
         output_file_path = validate_file_path(output_file_path)
 
@@ -914,8 +915,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return sampled
 
-    def sample_conditions(self, conditions, max_tries_per_batch=100,
-                          batch_size=None, output_file_path=None):
+    def sample_from_conditions(self, conditions, max_tries_per_batch=100,
+                               batch_size=None, output_file_path=None):
         """Sample rows from this table with the given conditions.
 
         Args:
@@ -943,7 +944,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        return self._sample_conditions(
+        return self._sample_from_conditions(
             conditions, max_tries_per_batch, batch_size, output_file_path)
 
     def _sample_remaining_columns(self, known_columns, max_tries_per_batch,
