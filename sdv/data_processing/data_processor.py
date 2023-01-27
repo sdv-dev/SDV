@@ -369,7 +369,8 @@ class DataProcessor:
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata._columns.get(column)
             sdtype = column_metadata.get('sdtype')
-            sdtypes[column] = 'pii' if column_metadata.get('pii') else sdtype
+            pii = column_metadata.get('pii', sdtype not in self._DEFAULT_TRANSFORMERS_BY_SDTYPE)
+            sdtypes[column] = 'pii' if pii else sdtype
 
             if column in self._keys:
                 transformers[column] = self.create_key_transformer(column, sdtype, column_metadata)

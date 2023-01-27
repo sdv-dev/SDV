@@ -577,3 +577,33 @@ def test_custom_constraints(tmpdir):
     loaded_instance = synthesizer.load(tmpdir / 'test.pkl')
     loaded_sampled = loaded_instance.sample(10)
     assert all(loaded_sampled['numerical_col'] > 1)
+
+
+def test_auto_assign_transformers_and_update_with_pii():
+    """Ensure the ability to update a transformer with any given ``pii`` sdtype.
+
+    This test is designed to auto-assign the transformers to an updated metadata that contains
+    an ``pii`` field set as ``sdtype`` but no ``pii`` in the ``metadata`` itself. This should
+    still assign the expected transformer to it.
+    """
+    # Setup
+    data = pd.DataFrame(data={
+        'id': ['N', 'A', 'K', 'F', 'P'],
+        'numerical': [1, 2, 3, 2, 1],
+        'categorical': ['A', 'A', 'B', 'B', 'B']
+    })
+
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+
+    # Run
+    metadata.update_column(column_name='id', sdtype='name')
+    metadata.set_primary_key('id')
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.auto_assign_transformers(data)
+
+    # Assert
+    id_transformer = synthesizer.get_transformers()['id']
+    assert id_transformer.provider_name == 'person'
+    assert id_transformer.function_name == 'name'
+    assert id_transformer.enforce_uniqueness is True
