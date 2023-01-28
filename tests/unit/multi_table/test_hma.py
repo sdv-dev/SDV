@@ -645,7 +645,7 @@ class TestHMASynthesizer:
         """Test that ``get_learned_distributions`` returns a dict.
 
         Test that it returns a dictionary with the name of the columns and the learned
-        distribution and it's parameters.
+        distribution and its parameters.
         """
         # Setup
         metadata = get_multi_table_metadata()

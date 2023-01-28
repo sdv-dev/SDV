@@ -77,8 +77,7 @@ class SingleTablePreset:
         """
         self._synthesizer.fit(data)
 
-    def sample(self, num_rows, max_tries_per_batch=100, batch_size=None,
-               output_file_path=None, conditions=None):
+    def sample(self, num_rows, max_tries_per_batch=100, batch_size=None, output_file_path=None):
         """Sample rows from this table.
 
         Args:
@@ -91,9 +90,6 @@ class SingleTablePreset:
             output_file_path (str or None):
                 The file to periodically write sampled rows to. If None, does not
                 write rows anywhere.
-            conditions:
-                Deprecated argument. Use the ``sample_from_conditions`` method with
-                ``sdv.sampling.Condition`` objects instead.
 
         Returns:
             pandas.DataFrame:
@@ -104,7 +100,6 @@ class SingleTablePreset:
             max_tries_per_batch,
             batch_size,
             output_file_path,
-            conditions
         )
 
         return sampled

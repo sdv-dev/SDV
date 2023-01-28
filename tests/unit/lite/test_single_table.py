@@ -145,7 +145,7 @@ class TestTabularPreset:
         SingleTablePreset.sample(preset, 5)
 
         # Assert
-        synthesizer.sample.assert_called_once_with(5, 100, None, None, None)
+        synthesizer.sample.assert_called_once_with(5, 100, None, None)
 
     def test_sample_from_conditions(self):
         """Test that ``sample_from_conditions`` is called with the expected args."""

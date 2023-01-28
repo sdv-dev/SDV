@@ -691,13 +691,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         return sampled_rows
 
     def _sample_with_progress_bar(self, num_rows, max_tries_per_batch=100, batch_size=None,
-                                  output_file_path=None, conditions=None, show_progress_bar=True):
-        if conditions is not None:
-            raise TypeError('This method does not support the conditions parameter. '
-                            "Please create 'sdv.sampling.Condition' objects and pass them "
-                            "into the 'sample_from_conditions' method. "
-                            'See User Guide or API for more details.')
-
+                                  output_file_path=None, show_progress_bar=True):
         if num_rows is None:
             raise ValueError('You must specify the number of rows to sample (e.g. num_rows=100).')
 
@@ -728,8 +722,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return sampled
 
-    def sample(self, num_rows, max_tries_per_batch=100, batch_size=None,
-               output_file_path=None, conditions=None):
+    def sample(self, num_rows, max_tries_per_batch=100, batch_size=None, output_file_path=None):
         """Sample rows from this table.
 
         Args:
@@ -759,7 +752,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             max_tries_per_batch,
             batch_size,
             output_file_path,
-            conditions,
             show_progress_bar=show_progress_bar
         )
 

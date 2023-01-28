@@ -1239,23 +1239,6 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         assert result == []
 
-    def test__sample_with_progress_bar_with_conditions(self):
-        """Test that a ``TypeError`` is raised when there are conditions."""
-        # Setup
-        instance = Mock()
-        conditions = [Mock(), Mock()]
-
-        # Run and Assert
-        expected_message = re.escape(
-            'This method does not support the conditions parameter. '
-            "Please create 'sdv.sampling.Condition' objects and pass them "
-            "into the 'sample_from_conditions' method. "
-            'See User Guide or API for more details.'
-        )
-        with pytest.raises(TypeError, match=expected_message):
-            BaseSingleTableSynthesizer._sample_with_progress_bar(
-                instance, 3, conditions=conditions)
-
     def test__sample_with_progress_bar_num_rows_is_none(self):
         """Test that a ``ValueError`` is raised when ``num_rows`` is ``None``."""
         # Setup
@@ -1387,7 +1370,6 @@ class TestBaseSingleTableSynthesizer:
         max_tries_per_batch = 50
         batch_size = 5
         output_file_path = 'temp.csv'
-        conditions = None
         instance = Mock()
         instance.get_metadata.return_value._constraints = False
 
@@ -1398,7 +1380,6 @@ class TestBaseSingleTableSynthesizer:
             max_tries_per_batch,
             batch_size,
             output_file_path,
-            conditions,
         )
 
         # Assert
@@ -1407,7 +1388,6 @@ class TestBaseSingleTableSynthesizer:
             50,
             5,
             'temp.csv',
-            None,
             show_progress_bar=True
         )
         assert result == instance._sample_with_progress_bar.return_value

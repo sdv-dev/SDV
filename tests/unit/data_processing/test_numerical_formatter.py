@@ -26,7 +26,7 @@ class TestNumericalFormatter:
     def test__learn_rounding_digits_more_than_15_decimals(self, log_mock):
         """Test the ``_learn_rounding_digits`` method with more than 15 decimals.
 
-        If the data has more than 15 decimals, return None and raise warning.
+        If the data has more than 15 decimals, return None and use ``LOGGER`` to inform the user.
         """
         # Setup
         data = pd.Series(np.random.random(size=10).round(20), name='col')
