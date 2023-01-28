@@ -735,9 +735,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             output_file_path (str or None):
                 The file to periodically write sampled rows to. If None, does not
                 write rows anywhere.
-            conditions:
-                Deprecated argument. Use the ``sample_from_conditions`` method with
-                ``sdv.sampling.Condition`` objects instead.
 
         Returns:
             pandas.DataFrame:
