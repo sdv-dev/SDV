@@ -60,6 +60,14 @@ class SingleTablePreset:
         """
         self._synthesizer.add_constraints(constraints)
 
+    def get_metadata(self):
+        """Return the ``SingleTableMetadata`` for this synthesizer."""
+        return self._synthesizer.get_metadata()
+
+    def get_parameters(self):
+        """Return the parameters used to instantiate the synthesizer."""
+        return self._synthesizer.get_parameters()
+
     def fit(self, data):
         """Fit this model to the data.
 
@@ -69,8 +77,7 @@ class SingleTablePreset:
         """
         self._synthesizer.fit(data)
 
-    def sample(self, num_rows, max_tries_per_batch=100, batch_size=None,
-               output_file_path=None, conditions=None):
+    def sample(self, num_rows, max_tries_per_batch=100, batch_size=None, output_file_path=None):
         """Sample rows from this table.
 
         Args:
@@ -83,9 +90,6 @@ class SingleTablePreset:
             output_file_path (str or None):
                 The file to periodically write sampled rows to. If None, does not
                 write rows anywhere.
-            conditions:
-                Deprecated argument. Use the ``sample_conditions`` method with
-                ``sdv.sampling.Condition`` objects instead.
 
         Returns:
             pandas.DataFrame:
@@ -96,13 +100,12 @@ class SingleTablePreset:
             max_tries_per_batch,
             batch_size,
             output_file_path,
-            conditions
         )
 
         return sampled
 
-    def sample_conditions(self, conditions, max_tries_per_batch=100,
-                          batch_size=None, output_file_path=None):
+    def sample_from_conditions(self, conditions, max_tries_per_batch=100,
+                               batch_size=None, output_file_path=None):
         """Sample rows from this table with the given conditions.
 
         Args:
@@ -123,7 +126,7 @@ class SingleTablePreset:
             pandas.DataFrame:
                 Sampled data.
         """
-        sampled = self._synthesizer.sample_conditions(
+        sampled = self._synthesizer.sample_from_conditions(
             conditions,
             max_tries_per_batch,
             batch_size,

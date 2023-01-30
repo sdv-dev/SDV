@@ -44,6 +44,38 @@ class TestTabularPreset:
             enforce_rounding=False,
         )
 
+    @patch('sdv.single_table.base.DataProcessor')
+    def test_get_parameters(self, mock_data_processor):
+        """Test that it returns every ``init`` parameter without the ``metadata``."""
+        # Setup
+        metadata = Mock()
+        instance = SingleTablePreset(metadata, name='FAST_ML')
+
+        # Run
+        parameters = instance.get_parameters()
+
+        # Assert
+        assert 'metadata' not in parameters
+        assert parameters == {
+            'default_distribution': 'norm',
+            'enforce_min_max_values': True,
+            'enforce_rounding': False,
+            'numerical_distributions': {}
+        }
+
+    @patch('sdv.single_table.base.DataProcessor')
+    def test_get_metadata(self, mock_data_processor):
+        """Test that it returns the ``metadata`` object."""
+        # Setup
+        metadata = Mock()
+        instance = SingleTablePreset(metadata, 'FAST_ML')
+
+        # Run
+        result = instance.get_metadata()
+
+        # Assert
+        assert result == metadata
+
     def test_fit(self):
         """Test that the synthesizer's fit method is called with the expected args."""
         # Setup
@@ -113,10 +145,10 @@ class TestTabularPreset:
         SingleTablePreset.sample(preset, 5)
 
         # Assert
-        synthesizer.sample.assert_called_once_with(5, 100, None, None, None)
+        synthesizer.sample.assert_called_once_with(5, 100, None, None)
 
-    def test_sample_conditions(self):
-        """Test that the synthesizer's ``sample_conditions`` is called with the expected args."""
+    def test_sample_from_conditions(self):
+        """Test that ``sample_from_conditions`` is called with the expected args."""
         # Setup
         synthesizer = Mock()
         preset = Mock()
@@ -124,15 +156,15 @@ class TestTabularPreset:
         conditions = [Mock()]
 
         # Run
-        SingleTablePreset.sample_conditions(preset, conditions)
+        SingleTablePreset.sample_from_conditions(preset, conditions)
 
         # Assert
-        synthesizer.sample_conditions.assert_called_once_with(conditions, 100, None, None)
+        synthesizer.sample_from_conditions.assert_called_once_with(conditions, 100, None, None)
 
-    def test_sample_conditions_with_max_tries(self):
+    def test_sample_from_conditions_with_max_tries(self):
         """Test the method with max tries.
 
-        Expect that the synthesizer's ``sample_conditions`` is called with the expected args.
+        Expect that the synthesizer's ``sample_from_conditions`` is called with the expected args.
         """
         # Setup
         synthesizer = MagicMock(spec=GaussianCopulaSynthesizer)
@@ -141,7 +173,7 @@ class TestTabularPreset:
         conditions = [Mock()]
 
         # Run
-        SingleTablePreset.sample_conditions(
+        SingleTablePreset.sample_from_conditions(
             preset,
             conditions,
             max_tries_per_batch=2,
@@ -149,7 +181,7 @@ class TestTabularPreset:
         )
 
         # Assert
-        synthesizer.sample_conditions.assert_called_once_with(conditions, 2, 5, None)
+        synthesizer.sample_from_conditions.assert_called_once_with(conditions, 2, 5, None)
 
     def test_sample_remaining_columns(self):
         """Test the synthesizer's ``sample_remaining_columns`` is called with expected args."""
