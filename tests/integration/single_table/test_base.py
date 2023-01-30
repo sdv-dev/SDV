@@ -59,7 +59,7 @@ def test_conditional_sampling_graceful_reject_sampling_true_dict(model):
     ]
 
     with pytest.raises(ValueError):  # noqa: PT011
-        model.sample_conditions(conditions=conditions)
+        model.sample_from_conditions(conditions=conditions)
 
 
 @pytest.mark.parametrize('model', MODELS)
@@ -325,7 +325,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
 
     # Run
     conditions = [Condition({'age': 30, 'state': 'CA'}, num_rows=5)]
-    sampled_data = model.sample_conditions(conditions=conditions)
+    sampled_data = model.sample_from_conditions(conditions=conditions)
 
     # Assert
     expected_transformed_conditions = {'age': 30}
@@ -340,8 +340,8 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     pd.testing.assert_frame_equal(sampled_data, expected_data)
 
 
-def test_sample_conditions_with_batch_size():
-    """Test the ``sample_conditions`` method with a different ``batch_size``.
+def test_sample_from_conditions_with_batch_size():
+    """Test the ``sample_from_conditions`` method with a different ``batch_size``.
 
     If a smaller ``batch_size`` is passed, then the conditions should be broken down into
     batches of that size. If the ``batch_size`` is larger than the condition length, then
@@ -374,7 +374,7 @@ def test_sample_conditions_with_batch_size():
     ]
 
     # Run
-    sampled_data = model.sample_conditions(conditions, batch_size=50)
+    sampled_data = model.sample_from_conditions(conditions, batch_size=50)
 
     # Assert
     expected = pd.Series([10] * 100 + [50] * 10, name='column1')
@@ -517,7 +517,7 @@ def test_transformers_correctly_auto_assigned():
     assert isinstance(transformers['categorical_col'], LabelEncoder)
 
     assert transformers['numerical_col'].missing_value_replacement == 'mean'
-    assert transformers['numerical_col'].model_missing_values is True
+    assert transformers['numerical_col'].model_missing_values is False
     assert transformers['numerical_col'].learn_rounding_scheme is False
     assert transformers['numerical_col'].enforce_min_max_values is False
 

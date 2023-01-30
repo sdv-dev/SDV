@@ -645,10 +645,7 @@ class TestHMASynthesizer:
         """Test that ``get_learned_distributions`` returns a dict.
 
         Test that it returns a dictionary with the name of the columns and the learned
-        distribution and it's parameters. In this case we ensure that the columns generated
-        by the ``rdt.transformers`` are returned as well (``a_value.is_null``) but the extended
-        columns are not being returned. Can't ensure the ``a_value.is_null`` distribution thats
-        why no validation is being done to check the values of it.
+        distribution and its parameters.
         """
         # Setup
         metadata = get_multi_table_metadata()
@@ -679,7 +676,7 @@ class TestHMASynthesizer:
         result = instance.get_learned_distributions('upravna_enota')
 
         # Assert
-        assert list(result) == ['a_value', 'a_value.is_null']
+        assert list(result) == ['a_value']
         assert result['a_value'] == {
             'distribution': 'beta',
             'learned_parameters': {
