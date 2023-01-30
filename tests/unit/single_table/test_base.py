@@ -1239,23 +1239,6 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         assert result == []
 
-    def test__sample_with_progress_bar_with_conditions(self):
-        """Test that a ``TypeError`` is raised when there are conditions."""
-        # Setup
-        instance = Mock()
-        conditions = [Mock(), Mock()]
-
-        # Run and Assert
-        expected_message = re.escape(
-            'This method does not support the conditions parameter. '
-            "Please create 'sdv.sampling.Condition' objects and pass them "
-            "into the 'sample_conditions' method. "
-            'See User Guide or API for more details.'
-        )
-        with pytest.raises(TypeError, match=expected_message):
-            BaseSingleTableSynthesizer._sample_with_progress_bar(
-                instance, 3, conditions=conditions)
-
     def test__sample_with_progress_bar_num_rows_is_none(self):
         """Test that a ``ValueError`` is raised when ``num_rows`` is ``None``."""
         # Setup
@@ -1387,7 +1370,6 @@ class TestBaseSingleTableSynthesizer:
         max_tries_per_batch = 50
         batch_size = 5
         output_file_path = 'temp.csv'
-        conditions = None
         instance = Mock()
         instance.get_metadata.return_value._constraints = False
 
@@ -1398,7 +1380,6 @@ class TestBaseSingleTableSynthesizer:
             max_tries_per_batch,
             batch_size,
             output_file_path,
-            conditions,
         )
 
         # Assert
@@ -1407,7 +1388,6 @@ class TestBaseSingleTableSynthesizer:
             50,
             5,
             'temp.csv',
-            None,
             show_progress_bar=True
         )
         assert result == instance._sample_with_progress_bar.return_value
@@ -1577,8 +1557,8 @@ class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
-    def test__sample_conditions(self, mock_validate_file_path,
-                                mock_tqdm, mock_data_processor, mock_check_num_rows, mock_os):
+    def test__sample_from_conditions(self, mock_validate_file_path, mock_tqdm,
+                                     mock_data_processor, mock_check_num_rows, mock_os):
         """Test sample conditions with sampled data and reject sampling.
 
         An instance of ``BaseSingleTableSynthesizer`` is created and it's utility functions are
@@ -1601,7 +1581,7 @@ class TestBaseSingleTableSynthesizer:
         mock_tqdm.tqdm.return_value = progress_bar
 
         # Run
-        result = instance._sample_conditions(conditions, 10, 10, '.sample.csv.temp')
+        result = instance._sample_from_conditions(conditions, 10, 10, '.sample.csv.temp')
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
@@ -1611,9 +1591,10 @@ class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.handle_sampling_error')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
-    def test__sample_conditions_handle_sampling_error(self, mock_validate_file_path,
-                                                      mock_tqdm, mock_handle_sampling_error):
-        """Test the error handling when we are using ``_sample_conditions``."""
+    def test__sample_from_conditions_handle_sampling_error(self,
+                                                           mock_validate_file_path,
+                                                           mock_tqdm, mock_handle_sampling_error):
+        """Test the error handling when we are using ``_sample_from_conditions``."""
         # Setup
         progress_bar = MagicMock()
         mock_tqdm.tqdm.return_value = progress_bar
@@ -1625,7 +1606,7 @@ class TestBaseSingleTableSynthesizer:
         mock_validate_file_path.return_value = 'temp_file'
 
         # Run
-        result = BaseSingleTableSynthesizer._sample_conditions(
+        result = BaseSingleTableSynthesizer._sample_from_conditions(
             instance,
             conditions,
             10,
@@ -1642,17 +1623,17 @@ class TestBaseSingleTableSynthesizer:
         )
         mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
 
-    def test_sample_conditions(self):
+    def test_sample_from_conditions(self):
         """Test that this method calls ``_sample_with_conditions``."""
         # Setup
         instance = Mock()
 
         # Run
-        result = BaseSingleTableSynthesizer.sample_conditions(instance, ['conditions'])
+        result = BaseSingleTableSynthesizer.sample_from_conditions(instance, ['conditions'])
 
         # Assert
-        assert result == instance._sample_conditions.return_value
-        instance._sample_conditions.assert_called_once_with(
+        assert result == instance._sample_from_conditions.return_value
+        instance._sample_from_conditions.assert_called_once_with(
             ['conditions'],
             100,
             None,

@@ -1,9 +1,11 @@
 """Formatter for numerical data."""
+import logging
 import sys
-import warnings
 
 import numpy as np
 import pandas as pd
+
+LOGGER = logging.getLogger(__name__)
 
 MAX_DECIMALS = sys.float_info.dig - 1
 INTEGER_BOUNDS = {
@@ -69,7 +71,7 @@ class NumericalFormatter:
                     return decimal
 
         # Can't round, not equal after MAX_DECIMALS digits of precision
-        warnings.warn(
+        LOGGER.info(
             f"No rounding scheme detected for column '{name}'."
             ' Synthetic data will not be rounded.'
         )
