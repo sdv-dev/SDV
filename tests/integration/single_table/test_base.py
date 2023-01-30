@@ -613,3 +613,30 @@ def test_auto_assign_transformers_and_update_with_pii():
     assert name_transformer.provider_name == 'person'
     assert name_transformer.function_name == 'name'
     assert name_transformer.enforce_uniqueness is False
+
+
+def test_refitting_a_model():
+    """Test that refitting a model resets the sampling state of the generators."""
+    # Setup
+    data = pd.DataFrame(data={
+        'id': [0, 1, 2, 3, 4],
+        'numerical': [1, 2, 3, 2, 1],
+        'name': ['A', 'A', 'B', 'B', 'B']
+    })
+
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+    metadata.update_column(column_name='name', sdtype='name')
+    metadata.set_primary_key('id')
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.fit(data)
+    first_sample = synthesizer.sample(10)
+
+    # Run
+    synthesizer.fit(data)
+    second_sample = synthesizer.sample(10)
+
+    # Assert
+    assert all(second_sample['name'] == first_sample['name'])
+    assert all(second_sample['id'] == first_sample['id'])

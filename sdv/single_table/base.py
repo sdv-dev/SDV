@@ -388,6 +388,7 @@ class BaseSynthesizer:
                 The raw data (before any transformations) to fit the model to.
         """
         self._fitted = False
+        self._data_processor.reset_sampling()
         self._random_state_set = False
         processed_data = self._preprocess(data)
         self.fit_processed_data(processed_data)
