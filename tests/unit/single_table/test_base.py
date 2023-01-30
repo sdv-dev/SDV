@@ -1876,13 +1876,6 @@ class TestBaseSingleTableSynthesizer:
 
             return Distribution
 
-    def _date_mock(self):
-        class Date:
-            def strftime(self, _):
-                return '2023-01-23'
-
-        return Date
-
     @patch('pkg_resources.get_distribution')
     def test_get_info(self, pkg_mock):
         """Test the correct dictionary is returned.
