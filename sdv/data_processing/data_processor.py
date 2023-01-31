@@ -540,7 +540,7 @@ class DataProcessor:
 
         Returns:
             pandas.DataFrame:
-                A data frame with the newly generated primary keys of the size ``num_rows``.
+                A dataframe with the newly generated primary keys of the size ``num_rows``.
         """
         anonymized_keys = []
         dataframes = {}
