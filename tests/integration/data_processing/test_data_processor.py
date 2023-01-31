@@ -221,6 +221,14 @@ def test_data_processor_with_alternate_keys():
 
 
 def test_data_processor_prepare_for_fitting():
+    """Test the ``prepare_for_fitting`` method.
+
+    Test that the method sets an expected list of transformers for the given
+    data types of the ``metadata`` and also respects the extra parameters
+    taht those have. In this case the columns ``start_date`` and ``end_date`` have
+    a ``datetime_format`` which has to be set to the ``UnixTimestampEncoder`` and
+    the column ``salary`` has a ``computer_representation`` set to ``Int64``.
+    """
     # Setup
     data, metadata = download_demo(
         modality='single_table',
