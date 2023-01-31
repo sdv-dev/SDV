@@ -114,3 +114,29 @@ def test_get_info():
         'last_fit_date': today,
         'fitted_sdv_version': version
     }
+
+
+def test_hma_set_parameters():
+    """Test the ``set_table_parameters``.
+
+    Validate that the ``set_table_parameters`` sets new parameters to the synthesizers.
+    """
+    # Setup
+    data, metadata = download_demo('multi_table', 'got_families')
+    hmasynthesizer = HMASynthesizer(metadata)
+
+    # Run
+    hmasynthesizer.set_table_parameters('characters', {'default_distribution': 'gamma'})
+    hmasynthesizer.set_table_parameters('families', {'default_distribution': 'uniform'})
+    hmasynthesizer.set_table_parameters('character_families', {'default_distribution': 'norm'})
+
+    # Assert
+    assert hmasynthesizer.get_table_parameters('characters') == {'default_distribution': 'gamma'}
+    assert hmasynthesizer.get_table_parameters('families') == {'default_distribution': 'uniform'}
+    assert hmasynthesizer.get_table_parameters('character_families') == {
+        'default_distribution': 'norm'
+    }
+
+    assert hmasynthesizer._table_synthesizers['characters'].default_distribution == 'gamma'
+    assert hmasynthesizer._table_synthesizers['families'].default_distribution == 'uniform'
+    assert hmasynthesizer._table_synthesizers['character_families'].default_distribution == 'norm'
