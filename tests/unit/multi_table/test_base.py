@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
+from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -791,9 +791,11 @@ class TestBaseMultiTableSynthesizer:
             do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
         """
         # Setup
-        data = pd.DataFrame({'col': [1, 2, 3]})
+        data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
         pkg_mock.side_effect = self._pkg_mock
-        data, metadata = download_demo('multi_table', 'got_families')
+        metadata = MultiTableMetadata()
+        metadata.add_table('tab')
+        metadata.add_column('tab', 'col', sdtype='numerical')
 
         with patch('sdv.multi_table.base.datetime.datetime') as mock_date:
             mock_date.today.return_value = datetime(2023, 1, 23)
