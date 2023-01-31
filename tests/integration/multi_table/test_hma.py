@@ -1,8 +1,12 @@
+import datetime
+
 import pandas as pd
+import pkg_resources
 import pytest
 from faker import Faker
 
 from sdv.datasets.demo import download_demo
+from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
 
 
@@ -70,3 +74,43 @@ def test_hma_reset_sampling(tmpdir):
     for sample_1, sample_2 in zip(first_sample.values(), second_sample.values()):
         with pytest.raises(AssertionError):
             pd.testing.assert_frame_equal(sample_1, sample_2)
+
+
+def test_get_info():
+    """Test the correct dictionary is returned.
+
+    Check the return dictionary is valid both before and after fitting the synthesizer.
+    """
+    # Setup
+    data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
+    today = datetime.datetime.today().strftime('%Y-%m-%d')
+    metadata = MultiTableMetadata()
+    metadata.add_table('tab')
+    metadata.add_column('tab', 'col', sdtype='numerical')
+    synthesizer = HMASynthesizer(metadata)
+
+    # Run
+    info = synthesizer.get_info()
+
+    # Assert
+    assert info == {
+        'class_name': 'HMASynthesizer',
+        'creation_date': today,
+        'is_fit': False,
+        'last_fit_date': None,
+        'fitted_sdv_version': None
+    }
+
+    # Run
+    synthesizer.fit(data)
+    info = synthesizer.get_info()
+
+    # Assert
+    version = pkg_resources.get_distribution('sdv').version
+    assert info == {
+        'class_name': 'HMASynthesizer',
+        'creation_date': today,
+        'is_fit': True,
+        'last_fit_date': today,
+        'fitted_sdv_version': version
+    }

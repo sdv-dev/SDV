@@ -1,6 +1,8 @@
+import datetime
 from unittest.mock import patch
 
 import pandas as pd
+import pkg_resources
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 from rdt.transformers import AnonymizedFaker, FloatFormatter, LabelEncoder, RegexGenerator
@@ -640,3 +642,42 @@ def test_refitting_a_model():
     # Assert
     assert all(second_sample['name'] == first_sample['name'])
     assert all(second_sample['id'] == first_sample['id'])
+
+
+def test_get_info():
+    """Test the correct dictionary is returned.
+
+    Check the return dictionary is valid both before and after fitting a synthesizer.
+    """
+    # Setup
+    data = pd.DataFrame({'col': [1, 2, 3]})
+    today = datetime.datetime.today().strftime('%Y-%m-%d')
+    metadata = SingleTableMetadata()
+    metadata.add_column('col', sdtype='numerical')
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+
+    # Run
+    info = synthesizer.get_info()
+
+    # Assert
+    assert info == {
+        'class_name': 'GaussianCopulaSynthesizer',
+        'creation_date': today,
+        'is_fit': False,
+        'last_fit_date': None,
+        'fitted_sdv_version': None
+    }
+
+    # Run
+    synthesizer.fit(data)
+    info = synthesizer.get_info()
+
+    # Assert
+    version = pkg_resources.get_distribution('sdv').version
+    assert info == {
+        'class_name': 'GaussianCopulaSynthesizer',
+        'creation_date': today,
+        'is_fit': True,
+        'last_fit_date': today,
+        'fitted_sdv_version': version
+    }

@@ -1,5 +1,6 @@
 import re
 from collections import defaultdict
+from datetime import date, datetime
 from unittest.mock import Mock, call, patch
 
 import numpy as np
@@ -7,7 +8,9 @@ import pandas as pd
 import pytest
 
 from sdv.errors import SynthesizerInputError
+from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
+from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.errors import InvalidDataError
 from tests.utils import get_multi_table_data, get_multi_table_metadata
@@ -768,3 +771,58 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         assert output == constraints
+
+    def _pkg_mock(self, lib):
+        if lib == 'sdv':
+            class Distribution:
+                version = '1.0.0'
+
+            return Distribution
+
+    @patch('pkg_resources.get_distribution')
+    def test_get_info(self, pkg_mock):
+        """Test the correct dictionary is returned.
+
+        Check the return dictionary is valid both before and after fitting the synthesizer.
+
+        Mocks:
+            * Mock ``pkg_resources`` so we don't have to rewrite this test for every new release.
+            * Unfortunately, ``datetime`` can't be mocked directly. This link explains how to
+            do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
+        """
+        # Setup
+        data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
+        pkg_mock.side_effect = self._pkg_mock
+        metadata = MultiTableMetadata()
+        metadata.add_table('tab')
+        metadata.add_column('tab', 'col', sdtype='numerical')
+
+        with patch('sdv.multi_table.base.datetime.datetime') as mock_date:
+            mock_date.today.return_value = datetime(2023, 1, 23)
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
+            synthesizer = HMASynthesizer(metadata)
+
+            # Run
+            info = synthesizer.get_info()
+
+            # Assert
+            assert info == {
+                'class_name': 'HMASynthesizer',
+                'creation_date': '2023-01-23',
+                'is_fit': False,
+                'last_fit_date': None,
+                'fitted_sdv_version': None
+            }
+
+            # Run
+            synthesizer.fit(data)
+            info = synthesizer.get_info()
+
+            # Assert
+            assert info == {
+                'class_name': 'HMASynthesizer',
+                'creation_date': '2023-01-23',
+                'is_fit': True,
+                'last_fit_date': '2023-01-23',
+                'fitted_sdv_version': '1.0.0'
+            }
