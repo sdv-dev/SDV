@@ -2,13 +2,14 @@
 import itertools
 
 import numpy as np
+from rdt.transformers import AnonymizedFaker, FloatFormatter, LabelEncoder, UnixTimestampEncoder
 
 from sdv.data_processing import DataProcessor
 from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
 
 
-def test_data_processor_with_anonymized_columns(tmpdir):
+def test_data_processor_with_anonymized_columns():
     """Test the ``DataProcessor``.
 
     Test that when we update a ``pii`` column this uses ``AnonymizedFaker`` to create
@@ -53,7 +54,7 @@ def test_data_processor_with_anonymized_columns(tmpdir):
     assert 'occupation' not in transformed.columns
 
 
-def test_data_processor_with_anonymized_columns_and_primary_key(tmpdir):
+def test_data_processor_with_anonymized_columns_and_primary_key():
     """Test the ``DataProcessor``.
 
     Test that when we update a ``pii`` column this uses ``AnonymizedFaker`` to create
@@ -114,7 +115,7 @@ def test_data_processor_with_anonymized_columns_and_primary_key(tmpdir):
     assert len(reverse_transformed.id.unique()) == size
 
 
-def test_data_processor_with_primary_key_numerical(tmpdir):
+def test_data_processor_with_primary_key_numerical():
     """End to end test for the ``DataProcessor``.
 
     Test that when running the ``DataProcessor`` with a numerical primary key, this is able
@@ -170,7 +171,7 @@ def test_data_processor_with_primary_key_numerical(tmpdir):
     assert len(reverse_transformed.id.unique()) == size
 
 
-def test_data_processor_with_alternate_keys(tmpdir):
+def test_data_processor_with_alternate_keys():
     """Test that alternate keys are being generated in a unique way.
 
     Test that the alternate keys are being generated and dropped the same way
@@ -217,3 +218,47 @@ def test_data_processor_with_alternate_keys(tmpdir):
     assert len(reverse_transformed.id.unique()) == size
     assert len(reverse_transformed.secondary_id.unique()) == size
     assert len(reverse_transformed.fnlwgt.unique()) == size
+
+
+def test_data_processor_prepare_for_fitting():
+    # Setup
+    data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='student_placements_pii'
+    )
+    dp = DataProcessor(metadata)
+
+    # Run
+    dp.prepare_for_fitting(data)
+
+    # Assert
+    field_transformers = dp._hyper_transformer.field_transformers
+    expected_transformers = {
+        'mba_spec': LabelEncoder,
+        'employability_perc': FloatFormatter,
+        'placed': LabelEncoder,
+        'student_id': None,
+        'experience_years': FloatFormatter,
+        'duration': LabelEncoder,
+        'salary': FloatFormatter,
+        'second_perc': FloatFormatter,
+        'start_date': UnixTimestampEncoder,
+        'address': AnonymizedFaker,
+        'gender': LabelEncoder,
+        'mba_perc': FloatFormatter,
+        'degree_type': LabelEncoder,
+        'end_date': UnixTimestampEncoder,
+        'high_spec': LabelEncoder,
+        'high_perc': FloatFormatter,
+        'work_experience': LabelEncoder,
+        'degree_perc': FloatFormatter
+    }
+    for column_name, transformer_class in expected_transformers.items():
+        if transformer_class is not None:
+            assert isinstance(field_transformers[column_name], transformer_class)
+        else:
+            assert field_transformers[column_name] is None
+
+    assert field_transformers['start_date'].datetime_format == '%Y-%m-%d'
+    assert field_transformers['end_date'].datetime_format == '%Y-%m-%d'
+    assert field_transformers['salary'].computer_representation == 'Int64'

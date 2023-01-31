@@ -380,7 +380,15 @@ class DataProcessor:
                 self._anonymized_columns.append(column)
 
             elif sdtype in self._transformers_by_sdtype:
-                transformers[column] = deepcopy(self._transformers_by_sdtype[sdtype])
+                kwargs = {
+                    key: value for key, value in column_metadata.items()
+                    if key not in ['pii', 'sdtype']
+                }
+                if kwargs:
+                    transformer_class = self._transformers_by_sdtype[sdtype].__class__
+                    transformers[column] = transformer_class(**kwargs)
+                else:
+                    transformers[column] = deepcopy(self._transformers_by_sdtype[sdtype])
 
             else:
                 sdtypes[column] = 'categorical'
