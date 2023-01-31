@@ -1,11 +1,13 @@
 """Base Multi Table Synthesizer class."""
 import contextlib
+import datetime
 import warnings
 from collections import defaultdict
 from copy import deepcopy
 
 import numpy as np
 import pandas as pd
+import pkg_resources
 
 from sdv.errors import SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -56,6 +58,9 @@ class BaseMultiTableSynthesizer:
         self._table_parameters = defaultdict(dict)
         self._initialize_models()
         self._fitted = False
+        self._creation_date = datetime.datetime.today().strftime('%Y-%m-%d')
+        self._fitted_date = None
+        self._fitted_sdv_version = None
 
     def get_table_parameters(self, table_name):
         """Return the parameters that will be used to instantiate the table's synthesizer.
@@ -305,6 +310,8 @@ class BaseMultiTableSynthesizer:
         """
         self._fit(processed_data)
         self._fitted = True
+        self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
+        self._fitted_sdv_version = pkg_resources.get_distribution('sdv').version
 
     def fit(self, data):
         """Fit this model to the original data.
@@ -406,3 +413,22 @@ class BaseMultiTableSynthesizer:
                 constraints.append(constraint)
 
         return constraints
+
+    def get_info(self):
+        """Get dictionary with information regarding the synthesizer.
+
+        Return:
+            dict:
+                * ``class_name``: synthesizer class name
+                * ``creation_date``: date of creation
+                * ``is_fit``: whether or not the synthesizer has been fit
+                * ``last_fit_date``: date for the last time it was fit
+                * ``fitted_sdv_version``: version of sdv it was on when fitted
+        """
+        return {
+            'class_name': self.__class__.__name__,
+            'creation_date': self._creation_date,
+            'is_fit': self._fitted,
+            'last_fit_date': self._fitted_date,
+            'fitted_sdv_version': self._fitted_sdv_version
+        }
