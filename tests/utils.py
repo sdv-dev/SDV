@@ -64,7 +64,7 @@ def get_multi_table_metadata():
 
 
 def get_multi_table_data():
-    """Return a dictioonary containing some data for multi table."""
+    """Return a dictionary containing some data for multi table."""
     data = {
         'nesreca': pd.DataFrame({
             'id_nesreca': list(range(4)),
