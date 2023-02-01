@@ -2,8 +2,8 @@
 from unittest.mock import Mock, patch
 import pandas as pd
 
-from sdv.evaluation.single_table import evaluate_quality, run_diagnostic, get_column_pair_plot, get_column_plot, QualityReport, DiagnosticReport
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.evaluation.multi_table import evaluate_quality, run_diagnostic, get_column_pair_plot, get_column_plot, QualityReport, DiagnosticReport
+from sdv.metadata.multi_table import MultiTableMetadata
 
 
 def test_evaluate_quality():
@@ -11,8 +11,8 @@ def test_evaluate_quality():
     # Setup
     data1 = pd.DataFrame({'col': [1, 2, 3]})
     data2 = pd.DataFrame({'col': [2, 1, 3]})
-    metadata = SingleTableMetadata()
-    metadata.add_column('col', sdtype='numerical')
+    metadata = MultiTableMetadata()
+    metadata.detect_table_from_dataframe('table', data1)
     QualityReport.generate = Mock()
     QualityReport.get_score = Mock(return_value=123)
 
@@ -30,8 +30,8 @@ def test_run_diagnostic():
     # Setup
     data1 = pd.DataFrame({'col': [1, 2, 3]})
     data2 = pd.DataFrame({'col': [2, 1, 3]})
-    metadata = SingleTableMetadata()
-    metadata.add_column('col', sdtype='numerical')
+    metadata = MultiTableMetadata()
+    metadata.detect_table_from_dataframe('table', data1)
     DiagnosticReport.generate = Mock()
     DiagnosticReport.get_results = Mock(return_value={'err_type': 'str'})
 
@@ -50,12 +50,12 @@ def test_get_column_plot(mock_plot):
     # Setup
     data1 = pd.DataFrame({'col': [1, 2, 3]})
     data2 = pd.DataFrame({'col': [2, 1, 3]})
-    metadata = SingleTableMetadata()
-    metadata.add_column('col', sdtype='numerical')
+    metadata = MultiTableMetadata()
+    metadata.detect_table_from_dataframe('table', data1)
     mock_plot.return_value = 'plot'
 
     # Run
-    plot = get_column_plot(data1, data2, metadata, 'col') # method produces non uniform for [1,2,3] data, maybe bugged? 
+    plot = get_column_plot(data1, data2, metadata, 'table', 'col')
     
     # Assert
     mock_plot.assert_called_once_with(data1, data2, 'col', metadata.to_dict())
@@ -68,13 +68,12 @@ def test_get_column_pair_plot(mock_plot):
     # Setup
     data1 = pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]})
     data2 = pd.DataFrame({'col1': [2, 1, 3], 'col2': [1, 2, 3]})
-    metadata = SingleTableMetadata()
-    metadata.add_column('col1', sdtype='numerical')
-    metadata.add_column('col2', sdtype='numerical')
+    metadata = MultiTableMetadata()
+    metadata.detect_table_from_dataframe('table', data1)
     mock_plot.return_value = 'plot'
 
     # Run
-    plot = get_column_pair_plot(data1, data2, metadata, ['col1', 'col2']) 
+    plot = get_column_pair_plot(data1, data2, metadata, 'table', ['col1', 'col2']) 
     
     # Assert
     mock_plot.assert_called_once_with(data1, data2, ['col1', 'col2'], metadata.to_dict())

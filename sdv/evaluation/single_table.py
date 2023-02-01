@@ -80,6 +80,5 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, column_names):
     Returns:
         plotly.graph_objects._figure.Figure:
             2D bivariate distribution plot (i.e. a scatterplot) of the columns.
-
     """
     return report.get_column_pair_plot(real_data, synthetic_data, column_names, metadata.to_dict())
