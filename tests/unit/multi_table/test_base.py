@@ -112,7 +112,7 @@ class TestBaseMultiTableSynthesizer:
             'numerical_distributions': {}
         }
 
-    def test_update_table_parameters(self):
+    def test_set_table_parameters(self):
         """Test that the table's parameters are being updated.
 
         This test should ensure that the ``self._table_parameters`` for the given table
@@ -124,7 +124,7 @@ class TestBaseMultiTableSynthesizer:
         instance = BaseMultiTableSynthesizer(metadata)
 
         # Run
-        instance.update_table_parameters('oseba', {'default_distribution': 'gamma'})
+        instance.set_table_parameters('oseba', {'default_distribution': 'gamma'})
 
         # Assert
         assert instance._table_parameters['oseba'] == {'default_distribution': 'gamma'}
