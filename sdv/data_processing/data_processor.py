@@ -182,7 +182,10 @@ class DataProcessor:
         """
         self._validate_custom_constraints(filepath, class_names)
         for class_name in class_names:
-            self._custom_constraint_classes[class_name] = filepath
+            path = Path(filepath)
+            module = load_module_from_path(path)
+            constraint_class = getattr(module, constraint_class)
+            self._custom_constraint_classes[class_name] = constraint_class
 
     def add_custom_constraint_class(self, class_object, class_name):
         """Add a custom constraint class for the synthesizer to use.
@@ -205,13 +208,11 @@ class DataProcessor:
                     * ``constraint_class``: Name of the constraint to apply.
                     * ``constraint_parameters``: A dictionary with the constraint parameters.
         """
-        constraint_class = constraint_dict['constraint_class']
+        constraint_class_name = constraint_dict['constraint_class']
         constraint_parameters = constraint_dict.get('constraint_parameters', {})
         try:
-            if constraint_class in self._custom_constraint_classes:
-                path = Path(self._custom_constraint_classes[constraint_class])
-                module = load_module_from_path(path)
-                constraint_class = getattr(module, constraint_class)
+            if constraint_class_name in self._custom_constraint_classes:
+                constraint_class = self._custom_constraint_classes[constraint_class]
 
             else:
                 constraint_class = Constraint._get_class_from_dict(constraint_class)
@@ -518,10 +519,7 @@ class DataProcessor:
                 loaded_constraints.append(Constraint.from_dict(constraint))
 
             else:
-                constraint_class = constraint['constraint_class']
-                path = Path(self._custom_constraint_classes[constraint_class])
-                module = load_module_from_path(path)
-                constraint_class = getattr(module, constraint_class)
+                constraint_class = self._custom_constraint_classes[constraint['constraint_class']]
                 loaded_constraints.append(
                     constraint_class(**constraint.get('constraint_parameters', {}))
                 )
