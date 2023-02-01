@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
