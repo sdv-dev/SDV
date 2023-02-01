@@ -1,4 +1,4 @@
-
+"""Methods to compare the real and synthetic data for multi-table."""
 import sdmetrics.reports.utils as report
 from sdmetrics.reports.multi_table.diagnostic_report import DiagnosticReport
 from sdmetrics.reports.multi_table.quality_report import QualityReport
@@ -8,18 +8,18 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
     """Evaluate the quality of the synthetic data.
 
     Args:
-        real_data (pd.DataFrame):
-            The table containing the real data.
-        synthetic_data (pd.DataFrame):
-            The table containing the synthetic data.
-        metadata (SingleTableMetadata):
+        real_data (dict):
+            Dictionary containing the real table data.
+        synthetic_column (dict):
+            Dictionary containing the synthetic table data.
+        metadata (MultiTableMetadata):
             The metadata object describing the real/synthetic data.
         verbose (bool):
             Whether or not to print report summary and progress.
             Defaults to True.
 
     Returns:
-        float
+        float:
             The overall quality score.
     """
     quality_report = QualityReport()
@@ -28,18 +28,22 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
 
 
 def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
-    """Wrapper around the initialization and evaluation of this class.
+    """Run diagnostic report for the synthetic data.
 
     Args:
-        real_data (pd.DataFrame):
-            The table containing the real data.
-        synthetic_data (pd.DataFrame):
-            The table containing the synthetic data.
-        metadata (SingleTableMetadata):
+        real_data (dict):
+            Dictionary containing the real table data.
+        synthetic_column (dict):
+            Dictionary containing the synthetic table data.
+        metadata (MultiTableMetadata):
             The metadata object describing the real/synthetic data.
         verbose (bool):
             Whether or not to print report summary and progress.
             Defaults to True.
+
+    Returns:
+        dict:
+            The diagonstic results.
     """
     quality_report = DiagnosticReport()
     quality_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
@@ -50,11 +54,11 @@ def get_column_plot(real_data, synthetic_data, metadata, table_name, column_name
     """Get a plot of the real and synthetic data for a given column.
 
     Args:
-        real_data (pandas.DataFrame):
-            The real table data.
-        synthetic_data (pandas.DataFrame):
-            The synthetic table data.
-        metadata (dict):
+        real_data (dict):
+            Dictionary containing the real table data.
+        synthetic_column (dict):
+            Dictionary containing the synthetic table data.
+        metadata (MultiTableMetadata):
             The table metadata.
         table_name (str):
             The name of the table.
@@ -65,18 +69,19 @@ def get_column_plot(real_data, synthetic_data, metadata, table_name, column_name
         plotly.graph_objects._figure.Figure:
             1D marginal distribution plot (i.e. a histogram) of the columns.
     """
-    return report.get_column_plot(real_data, synthetic_data, column_name, metadata.to_dict())
+    return report.get_column_plot(
+        real_data['table_name'], synthetic_data['table_name'], column_name, metadata.to_dict())
 
 
 def get_column_pair_plot(real_data, synthetic_data, metadata, table_name, column_names):
     """Get a plot of the real and synthetic data for a given column pair.
 
     Args:
-        real_data (pandas.DataFrame):
-            The real table data.
-        synthetic_column (pandas.Dataframe):
-            The synthetic table data.
-        metadata (dict):
+        real_data (dict):
+            Dictionary containing the real table data.
+        synthetic_column (dict):
+            Dictionary containing the synthetic table data.
+        metadata (MultiTableMetadata):
             The table metadata.
         table_name (str):
             The name of the table.
@@ -87,4 +92,5 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, table_name, column
         plotly.graph_objects._figure.Figure:
             2D bivariate distribution plot (i.e. a scatterplot) of the columns.
     """
-    return report.get_column_pair_plot(real_data, synthetic_data, column_names, metadata.to_dict())
+    return report.get_column_pair_plot(
+        real_data['table_name'], synthetic_data['table_name'], column_names, metadata.to_dict())

@@ -1,3 +1,4 @@
+"""Methods to compare the real and synthetic data for single-table."""
 
 import sdmetrics.reports.utils as report
 from sdmetrics.reports.single_table.diagnostic_report import DiagnosticReport
@@ -28,7 +29,7 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
 
 
 def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
-    """Wrapper around the initialization and evaluation of this class.
+    """Run diagnostic report for the synthetic data.
 
     Args:
         real_data (pd.DataFrame):
@@ -40,6 +41,10 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
         verbose (bool):
             Whether or not to print report summary and progress.
             Defaults to True.
+
+    Returns:
+        dict:
+            The diagonstic results.
     """
     quality_report = DiagnosticReport()
     quality_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)

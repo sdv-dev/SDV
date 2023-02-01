@@ -12,10 +12,11 @@ from sdv.metadata.multi_table import MultiTableMetadata
 def test_evaluate_quality():
     """Test the correct score is returned."""
     # Setup
-    data1 = pd.DataFrame({'col': [1, 2, 3]})
-    data2 = pd.DataFrame({'col': [2, 1, 3]})
+    table = pd.DataFrame({'col': [1, 2, 3]})
+    data1 = {'table': table}
+    data2 = {'table': pd.DataFrame({'col': [2, 1, 3]})}
     metadata = MultiTableMetadata()
-    metadata.detect_table_from_dataframe('table', data1)
+    metadata.detect_table_from_dataframe('table', table)
     QualityReport.generate = Mock()
     QualityReport.get_score = Mock(return_value=123)
 
@@ -31,10 +32,11 @@ def test_evaluate_quality():
 def test_run_diagnostic():
     """Test the correct diagnostic is returned."""
     # Setup
-    data1 = pd.DataFrame({'col': [1, 2, 3]})
-    data2 = pd.DataFrame({'col': [2, 1, 3]})
+    table = pd.DataFrame({'col': [1, 2, 3]})
+    data1 = {'table': table}
+    data2 = {'table': pd.DataFrame({'col': [2, 1, 3]})}
     metadata = MultiTableMetadata()
-    metadata.detect_table_from_dataframe('table', data1)
+    metadata.detect_table_from_dataframe('table', table)
     DiagnosticReport.generate = Mock()
     DiagnosticReport.get_results = Mock(return_value={'err_type': 'str'})
 
@@ -51,10 +53,11 @@ def test_run_diagnostic():
 def test_get_column_plot(mock_plot):
     """Test it calls ``get_column_plot`` in sdmetrics."""
     # Setup
-    data1 = pd.DataFrame({'col': [1, 2, 3]})
-    data2 = pd.DataFrame({'col': [2, 1, 3]})
+    table = pd.DataFrame({'col': [1, 2, 3]})
+    data1 = {'table': table}
+    data2 = {'table': pd.DataFrame({'col': [2, 1, 3]})}
     metadata = MultiTableMetadata()
-    metadata.detect_table_from_dataframe('table', data1)
+    metadata.detect_table_from_dataframe('table', table)
     mock_plot.return_value = 'plot'
 
     # Run
@@ -69,10 +72,11 @@ def test_get_column_plot(mock_plot):
 def test_get_column_pair_plot(mock_plot):
     """Test it calls ``get_column_pair_plot`` in sdmetrics."""
     # Setup
-    data1 = pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]})
-    data2 = pd.DataFrame({'col1': [2, 1, 3], 'col2': [1, 2, 3]})
+    table = pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]})
+    data1 = {'table': table}
+    data2 = {'table': pd.DataFrame({'col1': [2, 1, 3], 'col2': [1, 2, 3]})}
     metadata = MultiTableMetadata()
-    metadata.detect_table_from_dataframe('table', data1)
+    metadata.detect_table_from_dataframe('table', table)
     mock_plot.return_value = 'plot'
 
     # Run
