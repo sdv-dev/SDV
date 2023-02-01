@@ -31,7 +31,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         self._max_child_rows = {}
         self._modeled_tables = []
         for table_name in self.metadata._tables:
-            self.update_table_parameters(table_name, self._synthesizer_kwargs)
+            self.set_table_parameters(table_name, self._synthesizer_kwargs)
 
     def _get_extension(self, child_name, child_table, foreign_key):
         """Generate the extension columns for this child table.
