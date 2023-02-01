@@ -1,8 +1,9 @@
 
+import pandas as pd
+
 from sdv.evaluation.single_table import evaluate_quality, run_diagnostic
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-import pandas as pd
 
 
 def test_evaluation():

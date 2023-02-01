@@ -1,12 +1,12 @@
 
-from sdmetrics.reports.single_table.quality_report import QualityReport
-from sdmetrics.reports.single_table.diagnostic_report import DiagnosticReport
 import sdmetrics.reports.utils as report
+from sdmetrics.reports.single_table.diagnostic_report import DiagnosticReport
+from sdmetrics.reports.single_table.quality_report import QualityReport
 
 
 def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
     """Evaluate the quality of the synthetic data.
-    
+
     Args:
         real_data (pd.DataFrame):
             The table containing the real data.
@@ -17,7 +17,7 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
         verbose (bool):
             Whether or not to print report summary and progress.
             Defaults to True.
-    
+
     Returns:
         float
             The overall quality score.
@@ -25,11 +25,11 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
     quality_report = QualityReport()
     quality_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
     return quality_report.get_score()
-    
+
 
 def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
     """Wrapper around the initialization and evaluation of this class.
-    
+
     Args:
         real_data (pd.DataFrame):
             The table containing the real data.
@@ -45,9 +45,10 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
     quality_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
     return quality_report.get_results()
 
+
 def get_column_plot(real_data, synthetic_data, metadata, column_name):
     """Get a plot of the real and synthetic data for a given column.
-    
+
     Args:
         real_data (pandas.DataFrame):
             The real table data.
@@ -63,6 +64,7 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name):
             1D marginal distribution plot (i.e. a histogram) of the columns.
     """
     return report.get_column_plot(real_data, synthetic_data, column_name, metadata.to_dict())
+
 
 def get_column_pair_plot(real_data, synthetic_data, metadata, column_names):
     """Get a plot of the real and synthetic data for a given column pair.

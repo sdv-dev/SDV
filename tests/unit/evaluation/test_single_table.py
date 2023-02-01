@@ -1,8 +1,11 @@
 
 from unittest.mock import Mock, patch
+
 import pandas as pd
 
-from sdv.evaluation.single_table import evaluate_quality, run_diagnostic, get_column_pair_plot, get_column_plot, QualityReport, DiagnosticReport
+from sdv.evaluation.single_table import (
+    DiagnosticReport, QualityReport, evaluate_quality, get_column_pair_plot, get_column_plot,
+    run_diagnostic)
 from sdv.metadata.single_table import SingleTableMetadata
 
 
@@ -17,7 +20,7 @@ def test_evaluate_quality():
     QualityReport.get_score = Mock(return_value=123)
 
     # Run
-    score = evaluate_quality(data1, data2, metadata) 
+    score = evaluate_quality(data1, data2, metadata)
 
     # Assert
     QualityReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
@@ -36,8 +39,8 @@ def test_run_diagnostic():
     DiagnosticReport.get_results = Mock(return_value={'err_type': 'str'})
 
     # Run
-    diagnostic = run_diagnostic(data1, data2, metadata) 
-    
+    diagnostic = run_diagnostic(data1, data2, metadata)
+
     # Assert
     DiagnosticReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
     DiagnosticReport.get_results.assert_called_once_with()
@@ -55,8 +58,9 @@ def test_get_column_plot(mock_plot):
     mock_plot.return_value = 'plot'
 
     # Run
-    plot = get_column_plot(data1, data2, metadata, 'col') # method produces non uniform for [1,2,3] data, maybe bugged? 
-    
+    # method produces non uniform for [1,2,3] data, maybe bugged?
+    plot = get_column_plot(data1, data2, metadata, 'col')
+
     # Assert
     mock_plot.assert_called_once_with(data1, data2, 'col', metadata.to_dict())
     assert plot == 'plot'
@@ -74,8 +78,8 @@ def test_get_column_pair_plot(mock_plot):
     mock_plot.return_value = 'plot'
 
     # Run
-    plot = get_column_pair_plot(data1, data2, metadata, ['col1', 'col2']) 
-    
+    plot = get_column_pair_plot(data1, data2, metadata, ['col1', 'col2'])
+
     # Assert
     mock_plot.assert_called_once_with(data1, data2, ['col1', 'col2'], metadata.to_dict())
     assert plot == 'plot'
