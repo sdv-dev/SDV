@@ -70,7 +70,7 @@ def get_column_plot(real_data, synthetic_data, metadata, table_name, column_name
             1D marginal distribution plot (i.e. a histogram) of the columns.
     """
     return report.get_column_plot(
-        real_data['table_name'], synthetic_data['table_name'], column_name, metadata.to_dict())
+        real_data[table_name], synthetic_data[table_name], column_name, metadata.to_dict())
 
 
 def get_column_pair_plot(real_data, synthetic_data, metadata, table_name, column_names):
@@ -93,4 +93,4 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, table_name, column
             2D bivariate distribution plot (i.e. a scatterplot) of the columns.
     """
     return report.get_column_pair_plot(
-        real_data['table_name'], synthetic_data['table_name'], column_names, metadata.to_dict())
+        real_data[table_name], synthetic_data[table_name], column_names, metadata.to_dict())

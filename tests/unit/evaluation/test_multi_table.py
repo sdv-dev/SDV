@@ -53,18 +53,19 @@ def test_run_diagnostic():
 def test_get_column_plot(mock_plot):
     """Test it calls ``get_column_plot`` in sdmetrics."""
     # Setup
-    table = pd.DataFrame({'col': [1, 2, 3]})
-    data1 = {'table': table}
-    data2 = {'table': pd.DataFrame({'col': [2, 1, 3]})}
+    table1 = pd.DataFrame({'col': [1, 2, 3]})
+    table2 = pd.DataFrame({'col': [2, 1, 3]})
+    data1 = {'table': table1}
+    data2 = {'table': table2}
     metadata = MultiTableMetadata()
-    metadata.detect_table_from_dataframe('table', table)
+    metadata.detect_table_from_dataframe('table', table1)
     mock_plot.return_value = 'plot'
 
     # Run
     plot = get_column_plot(data1, data2, metadata, 'table', 'col')
 
     # Assert
-    mock_plot.assert_called_once_with(data1, data2, 'col', metadata.to_dict())
+    mock_plot.assert_called_once_with(table1, table2, 'col', metadata.to_dict())
     assert plot == 'plot'
 
 
@@ -72,16 +73,17 @@ def test_get_column_plot(mock_plot):
 def test_get_column_pair_plot(mock_plot):
     """Test it calls ``get_column_pair_plot`` in sdmetrics."""
     # Setup
-    table = pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]})
-    data1 = {'table': table}
-    data2 = {'table': pd.DataFrame({'col1': [2, 1, 3], 'col2': [1, 2, 3]})}
+    table1 = pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]})
+    table2 = pd.DataFrame({'col1': [2, 1, 3], 'col2': [1, 2, 3]})
+    data1 = {'table': table1}
+    data2 = {'table': table2}
     metadata = MultiTableMetadata()
-    metadata.detect_table_from_dataframe('table', table)
+    metadata.detect_table_from_dataframe('table', table1)
     mock_plot.return_value = 'plot'
 
     # Run
     plot = get_column_pair_plot(data1, data2, metadata, 'table', ['col1', 'col2'])
 
     # Assert
-    mock_plot.assert_called_once_with(data1, data2, ['col1', 'col2'], metadata.to_dict())
+    mock_plot.assert_called_once_with(table1, table2, ['col1', 'col2'], metadata.to_dict())
     assert plot == 'plot'
