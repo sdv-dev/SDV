@@ -65,7 +65,8 @@ def test_get_column_plot(mock_plot):
     plot = get_column_plot(data1, data2, metadata, 'table', 'col')
 
     # Assert
-    mock_plot.assert_called_once_with(table1, table2, 'col', metadata.to_dict())
+    call_metadata = {'columns': {'col': {'sdtype': 'numerical'}}}
+    mock_plot.assert_called_once_with(table1, table2, 'col', call_metadata)
     assert plot == 'plot'
 
 
@@ -85,5 +86,6 @@ def test_get_column_pair_plot(mock_plot):
     plot = get_column_pair_plot(data1, data2, metadata, 'table', ['col1', 'col2'])
 
     # Assert
-    mock_plot.assert_called_once_with(table1, table2, ['col1', 'col2'], metadata.to_dict())
+    call_metadata = {'columns': {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}}
+    mock_plot.assert_called_once_with(table1, table2, ['col1', 'col2'], call_metadata)
     assert plot == 'plot'

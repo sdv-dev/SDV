@@ -59,7 +59,7 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name):
             The real table data.
         synthetic_data (pandas.DataFrame):
             The synthetic table data.
-        metadata (dict):
+        metadata (SingleTableMetadata):
             The table metadata.
         column_name (str):
             The name of the column.
@@ -79,7 +79,7 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, column_names):
             The real table data.
         synthetic_column (pandas.Dataframe):
             The synthetic table data.
-        metadata (dict):
+        metadata (SingleTableMetadata):
             The table metadata.
         column_names (list[string]):
             The names of the two columns to plot.

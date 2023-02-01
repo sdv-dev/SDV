@@ -59,7 +59,7 @@ def get_column_plot(real_data, synthetic_data, metadata, table_name, column_name
         synthetic_column (dict):
             Dictionary containing the synthetic table data.
         metadata (MultiTableMetadata):
-            The table metadata.
+            Metadata describing the data.
         table_name (str):
             The name of the table.
         column_name (str):
@@ -69,8 +69,10 @@ def get_column_plot(real_data, synthetic_data, metadata, table_name, column_name
         plotly.graph_objects._figure.Figure:
             1D marginal distribution plot (i.e. a histogram) of the columns.
     """
-    return report.get_column_plot(
-        real_data[table_name], synthetic_data[table_name], column_name, metadata.to_dict())
+    metadata = metadata.to_dict()['tables'][table_name]
+    real_data = real_data[table_name]
+    synthetic_data = synthetic_data[table_name]
+    return report.get_column_plot(real_data, synthetic_data, column_name, metadata)
 
 
 def get_column_pair_plot(real_data, synthetic_data, metadata, table_name, column_names):
@@ -82,7 +84,7 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, table_name, column
         synthetic_column (dict):
             Dictionary containing the synthetic table data.
         metadata (MultiTableMetadata):
-            The table metadata.
+            Metadata describing the data.
         table_name (str):
             The name of the table.
         column_names (list[string]):
@@ -92,5 +94,7 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, table_name, column
         plotly.graph_objects._figure.Figure:
             2D bivariate distribution plot (i.e. a scatterplot) of the columns.
     """
-    return report.get_column_pair_plot(
-        real_data[table_name], synthetic_data[table_name], column_names, metadata.to_dict())
+    metadata = metadata.to_dict()['tables'][table_name]
+    real_data = real_data[table_name]
+    synthetic_data = synthetic_data[table_name]
+    return report.get_column_pair_plot(real_data, synthetic_data, column_names, metadata)

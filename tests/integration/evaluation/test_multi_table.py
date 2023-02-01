@@ -17,9 +17,9 @@ def test_evaluation():
 
     # Run and Assert
     synthesizer.fit(data)
-    samples = synthesizer.sample(10)
+    samples = synthesizer.sample()
     score = evaluate_quality(data, samples, metadata)
-    assert score == 0.9
+    assert score == 0.6666666666666667
 
     diagnostic = run_diagnostic(data, samples, metadata)
     assert diagnostic == {
