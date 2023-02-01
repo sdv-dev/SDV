@@ -275,7 +275,7 @@ class BaseSynthesizer:
         return self.metadata
 
     def load_custom_constraint_classes(self, filepath, class_names):
-        """Load a custom constraint class for the current model.
+        """Load a custom constraint class for the current synthesizer.
 
         Args:
             filepath (str):
@@ -285,6 +285,18 @@ class BaseSynthesizer:
                 A list of custom constraint classes to be imported.
         """
         self._data_processor.load_custom_constraint_classes(filepath, class_names)
+    
+    def add_custom_constraint_class(self, class_object, class_name):
+        """Add a custom constraint class for the synthesizer to use.
+
+        Args:
+            class_object (sdv.constraints.Constraint):
+                A custom constraint class object.
+            class_name (str):
+                The name to assign this custom constraint class. This will be the name to use
+                when writing a constraint dictionary for ``add_constraints``.
+        """
+        self._data_processor.add_custom_constraint_class(class_object, class_name)
 
     def add_constraints(self, constraints):
         """Add constraints to the synthesizer.

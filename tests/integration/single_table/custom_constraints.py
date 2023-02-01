@@ -10,12 +10,14 @@ def is_valid(column_names, data):
 
 def transform(column_names, data):
     """Transform the constraint."""
-    return data[column_names] ** 2
+    data[column_names] = data[column_names] ** 2
+    return data
 
 
 def reverse_transform(column_names, data):
     """Reverse transform the constraint."""
-    return data[column_names] // 2
+    data[column_names] =  data[column_names] // 2
+    return data
 
 
 MyConstraint = create_custom_constraint_class(

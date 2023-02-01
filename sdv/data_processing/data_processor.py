@@ -171,7 +171,7 @@ class DataProcessor:
             raise InvalidConstraintsError(errors)
 
     def load_custom_constraint_classes(self, filepath, class_names):
-        """Load a custom constraint class for the current model.
+        """Load a custom constraint class for the current synthesizer.
 
         Args:
             filepath (str):
@@ -183,6 +183,18 @@ class DataProcessor:
         self._validate_custom_constraints(filepath, class_names)
         for class_name in class_names:
             self._custom_constraint_classes[class_name] = filepath
+
+    def add_custom_constraint_class(self, class_object, class_name):
+        """Add a custom constraint class for the synthesizer to use.
+
+        Args:
+            class_object (sdv.constraints.Constraint):
+                A custom constraint class object.
+            class_name (str):
+                The name to assign this custom constraint class. This will be the name to use
+                when writing a constraint dictionary for ``add_constraints``.
+        """
+        self._custom_constraint_classes[class_name] = class_object
 
     def _validate_constraint_dict(self, constraint_dict):
         """Validate a constraint against the single table metadata.
