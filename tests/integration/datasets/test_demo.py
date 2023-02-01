@@ -14,17 +14,17 @@ def test_get_available_demos_single_table():
         'dataset_name': [
             'KRK_v1', 'adult', 'alarm', 'asia', 'census',
             'census_extended', 'child', 'covtype', 'credit',
-            'expedia_hotel_logs', 'grid', 'gridr', 'insurance',
+            'expedia_hotel_logs', 'fake_companies', 'grid', 'gridr', 'insurance',
             'intrusion', 'mnist12', 'mnist28', 'news',
             'ring', 'student_placements', 'student_placements_pii'
         ],
         'size_MB': [
             '0.072128', '3.907448', '4.520128', '1.280128', '98.165608',
             '4.9494', '3.200128', '255.645408', '68.353808', '0.200128',
-            '0.320128', '0.320128', '3.340128', '162.039016', '81.200128',
+            '0.0', '0.320128', '0.320128', '3.340128', '162.039016', '81.200128',
             '439.600128', '18.712096', '0.320128', '0.026358', '0.028078'
         ],
-        'num_tables': ['1'] * 20
+        'num_tables': ['1'] * 21
     })
     expected_table['size_MB'] = expected_table['size_MB'].astype(float).round(2)
     pd.testing.assert_frame_equal(tables_info, expected_table)
