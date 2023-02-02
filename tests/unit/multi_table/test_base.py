@@ -772,6 +772,49 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         assert output == constraints
 
+    def test_load_custom_constraint_classes(self):
+        """Test that the method calls the single table synthesizer's version of the method."""
+        # Setup
+        instance = Mock()
+        table_synth_mock = Mock()
+        instance._table_synthesizers = {'table': table_synth_mock}
+
+        # Run
+        BaseMultiTableSynthesizer.load_custom_constraint_classes(
+            instance,
+            'table',
+            'path/to/file.py',
+            ['Custom', 'Constr', 'UpperPlus']
+        )
+
+        # Assert
+        table_synth_mock.load_custom_constraint_classes.assert_called_once_with(
+            'path/to/file.py',
+            ['Custom', 'Constr', 'UpperPlus']
+        )
+
+    def test_add_custom_constraint_class(self):
+        """Test that this method calls the single table synthesizer's version of the method."""
+        # Setup
+        instance = Mock()
+        constraint_mock = Mock()
+        table_synth_mock = Mock()
+        instance._table_synthesizers = {'table': table_synth_mock}
+
+        # Run
+        BaseMultiTableSynthesizer.add_custom_constraint_class(
+            instance,
+            'table',
+            'custom',
+            constraint_mock
+        )
+
+        # Assert
+        table_synth_mock.add_custom_constraint_class.assert_called_once_with(
+            'custom',
+            constraint_mock
+        )
+
     def _pkg_mock(self, lib):
         if lib == 'sdv':
             class Distribution:

@@ -1779,10 +1779,30 @@ class TestBaseSingleTableSynthesizer:
             'path/to/file.py',
             ['Custom', 'Constr', 'UpperPlus']
         )
+
         # Assert
         instance._data_processor.load_custom_constraint_classes.assert_called_once_with(
             'path/to/file.py',
             ['Custom', 'Constr', 'UpperPlus']
+        )
+
+    def test_add_custom_constraint_class(self):
+        """Test that this method calls the ``DataProcessor``'s method."""
+        # Setup
+        instance = Mock()
+        constraint_mock = Mock()
+
+        # Run
+        BaseSingleTableSynthesizer.add_custom_constraint_class(
+            instance,
+            'custom',
+            constraint_mock
+        )
+
+        # Assert
+        instance._data_processor.add_custom_constraint_class.assert_called_once_with(
+            'custom',
+            constraint_mock
         )
 
     def test_add_constraint_warning(self):
