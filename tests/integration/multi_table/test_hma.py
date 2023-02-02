@@ -1,5 +1,6 @@
 import datetime
 
+import numpy as np
 import pandas as pd
 import pkg_resources
 import pytest
@@ -188,10 +189,9 @@ def test_hma_custom_constraint():
     processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
 
     # Assert Processed Data
-    pd.testing.assert_series_equal(
-        processed_data['parent']['numerical_col'],
-        parent_data['numerical_col'] ** 2.0,
-        check_index=False
+    np.testing.assert_equal(
+        processed_data['parent']['numerical_col'].array,
+        (parent_data['numerical_col'] ** 2.0).array
     )
 
     # Run - Fit the model
@@ -224,10 +224,9 @@ def test_hma_custom_constraint_loaded_from_file():
     processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
 
     # Assert Processed Data
-    pd.testing.assert_series_equal(
-        processed_data['parent']['numerical_col'],
-        parent_data['numerical_col'] ** 2.0,
-        check_index=False
+    np.testing.assert_equal(
+        processed_data['parent']['numerical_col'].array,
+        (parent_data['numerical_col'] ** 2.0).array
     )
 
     # Run - Fit the model
