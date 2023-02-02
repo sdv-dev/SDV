@@ -913,6 +913,41 @@ class TestDataProcessor:
         assert output == mock_get_anonymized_transformer.return_value
         mock_get_anonymized_transformer.assert_called_once_with('email', {'domain': 'gmail.com'})
 
+    def test__get_transformer_instance_no_kwargs(self):
+        """Test the ``_get_transformer_instance`` without keyword args.
+
+        When there are no keyword args this will return a copy of a predefined transformer
+        from the dictionary ``self._transformers_by_sdtype``.
+        """
+        # Setup
+        dp = Mock()
+        dp._transformers_by_sdtype = {
+            'numerical': 'FloatFormatter',
+            'categorical': 'LabelEncoder'
+        }
+
+        # Run
+        result = DataProcessor._get_transformer_instance(dp, 'numerical', {})
+
+        # Assert
+        assert result == 'FloatFormatter'
+
+    def test__get_transformer_instance_kwargs(self):
+        """Test the ``_get_transformer_instance`` without keyword args.
+
+        When there are extra (allowed) keyword args this will create an instance
+        of a transformer with those.
+        """
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+
+        # Run
+        result = dp._get_transformer_instance('numerical', {'computer_representation': 'Int32'})
+
+        # Assert
+        assert isinstance(result, FloatFormatter)
+        assert result.computer_representation == 'Int32'
+
     def test__create_config(self):
         """Test the ``_create_config`` method.
 

@@ -361,6 +361,17 @@ class DataProcessor:
 
         return transformer
 
+    def _get_transformer_instance(self, sdtype, column_metadata):
+        kwargs = {
+            key: value for key, value in column_metadata.items()
+            if key not in ['pii', 'sdtype']
+        }
+        if kwargs and self._transformers_by_sdtype[sdtype] is not None:
+            transformer_class = self._transformers_by_sdtype[sdtype].__class__
+            return transformer_class(**kwargs)
+
+        return deepcopy(self._transformers_by_sdtype[sdtype])
+
     def _create_config(self, data, columns_created_by_constraints):
         sdtypes = {}
         transformers = {}
@@ -380,19 +391,14 @@ class DataProcessor:
                 self._anonymized_columns.append(column)
 
             elif sdtype in self._transformers_by_sdtype:
-                kwargs = {
-                    key: value for key, value in column_metadata.items()
-                    if key not in ['pii', 'sdtype']
-                }
-                if kwargs:
-                    transformer_class = self._transformers_by_sdtype[sdtype].__class__
-                    transformers[column] = transformer_class(**kwargs)
-                else:
-                    transformers[column] = deepcopy(self._transformers_by_sdtype[sdtype])
+                transformers[column] = self._get_transformer_instance(sdtype, column_metadata)
 
             else:
                 sdtypes[column] = 'categorical'
-                transformers[column] = deepcopy(self._transformers_by_sdtype['categorical'])
+                transformers[column] = self._get_transformer_instance(
+                    'categorical',
+                    column_metadata
+                )
 
         for column in columns_created_by_constraints:
             dtype_kind = data[column].dtype.kind
@@ -405,7 +411,7 @@ class DataProcessor:
             else:
                 sdtype = self._DTYPE_TO_SDTYPE.get(dtype_kind, 'categorical')
                 sdtypes[column] = sdtype
-                transformers[column] = deepcopy(self._transformers_by_sdtype[sdtype])
+                transformers[column] = self._get_transformer_instance(sdtype, column_metadata)
 
         return {'transformers': transformers, 'sdtypes': sdtypes}
 
