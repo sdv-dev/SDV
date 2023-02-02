@@ -411,7 +411,7 @@ class DataProcessor:
             else:
                 sdtype = self._DTYPE_TO_SDTYPE.get(dtype_kind, 'categorical')
                 sdtypes[column] = sdtype
-                transformers[column] = self._get_transformer_instance(sdtype, column_metadata)
+                transformers[column] = self._get_transformer_instance(sdtype, {})
 
         return {'transformers': transformers, 'sdtypes': sdtypes}
 
