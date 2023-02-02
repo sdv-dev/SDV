@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariate
+from rdt.transformers import GaussianNormalizer
 
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.copulagan import CopulaGANSynthesizer
@@ -248,7 +249,28 @@ class TestCopulaGANSynthesizer:
         stm = SingleTableMetadata()
         stm.detect_from_dataframe(data)
         cgs = CopulaGANSynthesizer(stm)
-        cgs.fit(data)
+        zero_transformer_mock = Mock(spec_set=GaussianNormalizer)
+        zero_transformer_mock._univariate.to_dict.return_value = {
+            'a': 1.0,
+            'b': 1.0,
+            'loc': 0.0,
+            'scale': 0.0,
+            'type': None
+        }
+        one_transformer_mock = Mock(spec_set=GaussianNormalizer)
+        one_transformer_mock._univariate.to_dict.return_value = {
+            'a': 1.0,
+            'b': 1.0,
+            'loc': 1.0,
+            'scale': 0.0,
+            'type': None
+        }
+        cgs._gaussian_normalizer_hyper_transformer = Mock()
+        cgs._gaussian_normalizer_hyper_transformer.field_transformers = {
+            'zero': zero_transformer_mock,
+            'one': one_transformer_mock
+        }
+        cgs._fitted = True
 
         # Run
         result = cgs.get_learned_distributions()
