@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 from rdt.errors import ConfigNotSetError
 from rdt.errors import NotFittedError as RDTNotFittedError
-from rdt.transformers import FloatFormatter, LabelEncoder
+from rdt.transformers import FloatFormatter, LabelEncoder, UnixTimestampEncoder
 
 from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
@@ -913,6 +913,41 @@ class TestDataProcessor:
         assert output == mock_get_anonymized_transformer.return_value
         mock_get_anonymized_transformer.assert_called_once_with('email', {'domain': 'gmail.com'})
 
+    def test__get_transformer_instance_no_kwargs(self):
+        """Test the ``_get_transformer_instance`` without keyword args.
+
+        When there are no keyword args this will return a copy of a predefined transformer
+        from the dictionary ``self._transformers_by_sdtype``.
+        """
+        # Setup
+        dp = Mock()
+        dp._transformers_by_sdtype = {
+            'numerical': 'FloatFormatter',
+            'categorical': 'LabelEncoder'
+        }
+
+        # Run
+        result = DataProcessor._get_transformer_instance(dp, 'numerical', {})
+
+        # Assert
+        assert result == 'FloatFormatter'
+
+    def test__get_transformer_instance_kwargs(self):
+        """Test the ``_get_transformer_instance`` without keyword args.
+
+        When there are extra (allowed) keyword args this will create an instance
+        of a transformer with those.
+        """
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+
+        # Run
+        result = dp._get_transformer_instance('numerical', {'computer_representation': 'Int32'})
+
+        # Assert
+        assert isinstance(result, FloatFormatter)
+        assert result.computer_representation == 'Int32'
+
     def test__create_config(self):
         """Test the ``_create_config`` method.
 
@@ -943,7 +978,8 @@ class TestDataProcessor:
             'created_categorical': ['d', 'e', 'f'],
             'email': ['a@aol.com', 'b@gmail.com', 'c@gmx.com'],
             'first_name': ['John', 'Doe', 'Johanna'],
-            'id': ['ID_001', 'ID_002', 'ID_003']
+            'id': ['ID_001', 'ID_002', 'ID_003'],
+            'date': ['2021-02-01', '2022-03-05', '2023-01-31']
         })
         dp = DataProcessor(SingleTableMetadata())
         dp.metadata = Mock()
@@ -961,7 +997,8 @@ class TestDataProcessor:
             'categorical': {'sdtype': 'categorical'},
             'email': {'sdtype': 'email', 'pii': True},
             'first_name': {'sdtype': 'first_name'},
-            'id': {'sdtype': 'text', 'regex_format': 'ID_\\d{3}[0-9]'}
+            'id': {'sdtype': 'text', 'regex_format': 'ID_\\d{3}[0-9]'},
+            'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'}
         }
 
         # Run
@@ -981,37 +1018,52 @@ class TestDataProcessor:
             'email': 'pii',
             'first_name': 'pii',
             'id': 'text',
+            'date': 'datetime'
         }
+
         int_transformer = config['transformers']['created_int']
         assert isinstance(int_transformer, FloatFormatter)
         assert int_transformer.missing_value_replacement == 'mean'
         assert int_transformer.model_missing_values is False
+
         float_transformer = config['transformers']['created_float']
         assert isinstance(float_transformer, FloatFormatter)
         assert float_transformer.missing_value_replacement == 'mean'
         assert float_transformer.model_missing_values is False
+
         assert isinstance(config['transformers']['bool'], LabelEncoder)
         assert isinstance(config['transformers']['created_bool'], LabelEncoder)
         assert isinstance(config['transformers']['categorical'], LabelEncoder)
         assert isinstance(config['transformers']['created_categorical'], LabelEncoder)
+
         assert isinstance(config['transformers']['int'], FloatFormatter)
         assert isinstance(config['transformers']['float'], FloatFormatter)
         anonymized_transformer = config['transformers']['email']
         primary_key_transformer = config['transformers']['id']
         assert anonymized_transformer == 'AnonymizedFaker'
+
         first_name_transformer = config['transformers']['first_name']
         assert first_name_transformer == 'AnonymizedFaker'
         assert primary_key_transformer == 'RegexGenerator'
         assert sorted(dp._anonymized_columns) == sorted(['first_name', 'email'])
+
+        datetime_transformer = config['transformers']['date']
+        assert isinstance(datetime_transformer, UnixTimestampEncoder)
+        assert datetime_transformer.missing_value_replacement == 'mean'
+        assert datetime_transformer.model_missing_values is False
+        assert datetime_transformer.datetime_format == '%Y-%m-%d'
+        assert dp._primary_key == 'id'
+
         dp.create_anonymized_transformer.calls == [
             call('email', {'sdtype': 'email', 'pii': True}),
             call('first_name', {'sdtype': 'first_name'})
 
         ]
         dp.create_key_transformer.assert_called_once_with(
-            'id', 'text', {'sdtype': 'text', 'regex_format': 'ID_\\d{3}[0-9]'})
-
-        assert dp._primary_key == 'id'
+            'id',
+            'text',
+            {'sdtype': 'text', 'regex_format': 'ID_\\d{3}[0-9]'}
+        )
 
     def test_update_transformers_not_fitted(self):
         """Test when ``self._hyper_transformer`` is ``None`` raises a ``NotFittedError``."""
