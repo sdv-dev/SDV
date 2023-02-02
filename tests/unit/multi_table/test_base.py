@@ -805,14 +805,14 @@ class TestBaseMultiTableSynthesizer:
         BaseMultiTableSynthesizer.add_custom_constraint_class(
             instance,
             'table',
-            'custom',
-            constraint_mock
+            constraint_mock,
+            'custom'
         )
 
         # Assert
         table_synth_mock.add_custom_constraint_class.assert_called_once_with(
-            'custom',
-            constraint_mock
+            constraint_mock,
+            'custom'
         )
 
     def _pkg_mock(self, lib):

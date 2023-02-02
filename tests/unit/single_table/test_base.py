@@ -1795,14 +1795,14 @@ class TestBaseSingleTableSynthesizer:
         # Run
         BaseSingleTableSynthesizer.add_custom_constraint_class(
             instance,
-            'custom',
-            constraint_mock
+            constraint_mock,
+            'custom'
         )
 
         # Assert
         instance._data_processor.add_custom_constraint_class.assert_called_once_with(
-            'custom',
-            constraint_mock
+            constraint_mock,
+            'custom'
         )
 
     def test_add_constraint_warning(self):
