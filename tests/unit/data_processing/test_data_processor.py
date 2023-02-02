@@ -339,6 +339,24 @@ class TestDataProcessor:
         # Run and Assert
         DataProcessor._validate_custom_constraints(instance, filepath, class_names, module)
 
+    def test__validate_custom_constraint_name_raises_error(self):
+        """Test the method's error case.
+
+        An error should be raised if the name of the custom constraint matches the name of
+        a predefined constraint.
+        """
+        # Setup
+        instance = Mock()
+
+        # Run and Assert
+        error_msg = re.escape(
+            'The provided constraint is invalid:'
+            "\nThe name 'Positive' is a reserved constraint name. Please use a different one for "
+            'the custom constraint.'
+        )
+        with pytest.raises(InvalidConstraintsError, match=error_msg):
+            DataProcessor._validate_custom_constraint_name(instance, 'Positive')
+
     def test__validate_custom_constraints_raises_an_error(self):
         """Test the ``_validate_custom_constraints``.
 
@@ -356,6 +374,11 @@ class TestDataProcessor:
         instance = Mock()
         module = Mock()
         del module.CustomCons2
+        name_error = InvalidConstraintsError(
+            "The name 'Positive' is a reserved constraint name. Please use a different one for "
+            'the custom constraint.'
+        )
+        instance._validate_custom_constraint_name.side_effect = [None, name_error, None]
 
         # Run and Assert
         error_msg = re.escape(
@@ -401,8 +424,8 @@ class TestDataProcessor:
             'SimpleCons': simple_constraint_mock
         }
 
-    def test_add_custom_constraint_classes(self):
-        """Test that the class object is added tot he ``_custom_constraint_classes`` dict."""
+    def test_add_custom_constraint_class(self):
+        """Test that the class object is added to the ``_custom_constraint_classes`` dict."""
         # Setup
         instance = Mock()
         instance._custom_constraint_classes = {}
@@ -412,6 +435,7 @@ class TestDataProcessor:
         DataProcessor.add_custom_constraint_class(instance, custom_constraint, 'custom')
 
         # Assert
+        instance._validate_custom_constraint_name.assert_called_once_with('custom')
         assert instance._custom_constraint_classes == {'custom': custom_constraint}
 
     @patch('sdv.data_processing.data_processor.Constraint')

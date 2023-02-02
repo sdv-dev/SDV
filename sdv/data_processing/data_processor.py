@@ -153,15 +153,22 @@ class DataProcessor:
 
         return sdtypes
 
+    def _validate_custom_constraint_name(self, class_name):
+        reserved_class_names = list(get_subclasses(Constraint))
+        if class_name in reserved_class_names:
+            error_message = (
+                f"The name '{class_name}' is a reserved constraint name. "
+                'Please use a different one for the custom constraint.'
+            )
+            raise InvalidConstraintsError(error_message)
+
     def _validate_custom_constraints(self, filepath, class_names, module):
         errors = []
-        reserved_class_names = list(get_subclasses(Constraint))
         for class_name in class_names:
-            if class_name in reserved_class_names:
-                errors.append((
-                    f"The name '{class_name}' is a reserved constraint name. "
-                    'Please use a different one for the custom constraint.'
-                ))
+            try:
+                self._validate_custom_constraint_name(class_name)
+            except InvalidConstraintsError as err:
+                errors += err.errors
 
             if not hasattr(module, class_name):
                 errors.append(f"The constraint '{class_name}' is not defined in '{filepath}'.")
@@ -196,6 +203,7 @@ class DataProcessor:
                 The name to assign this custom constraint class. This will be the name to use
                 when writing a constraint dictionary for ``add_constraints``.
         """
+        self._validate_custom_constraint_name(class_name)
         self._custom_constraint_classes[class_name] = class_object
 
     def _validate_constraint_dict(self, constraint_dict):
