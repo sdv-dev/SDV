@@ -1221,11 +1221,17 @@ class TestDataProcessor:
         dp._hyper_transformer.set_config.assert_called_with(dp._create_config.return_value)
         fitting_call = call('Fitting table fake_table metadata')
         formatter_call = call('Fitting numerical formatters for table fake_table')
+        datetime_formatter_call = call('Fitting datetime formatters for table fake_table')
         constraint_call = call('Fitting constraints for table fake_table')
         setting_config_call = call(
             'Setting the configuration for the ``HyperTransformer`` for table fake_table')
-        log_mock.info.assert_has_calls(
-            [fitting_call, formatter_call, constraint_call, setting_config_call])
+        log_mock.info.assert_has_calls([
+            fitting_call,
+            formatter_call,
+            datetime_formatter_call,
+            constraint_call,
+            setting_config_call
+        ])
 
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_prepare_for_fitting_config_already_exists(self, log_mock):
@@ -1256,8 +1262,14 @@ class TestDataProcessor:
         dp._hyper_transformer.set_config.assert_not_called()
         fitting_call = call('Fitting table fake_table metadata')
         formatter_call = call('Fitting numerical formatters for table fake_table')
+        datetime_formatter_call = call('Fitting datetime formatters for table fake_table')
         constraint_call = call('Fitting constraints for table fake_table')
-        log_mock.info.assert_has_calls([fitting_call, formatter_call, constraint_call])
+        log_mock.info.assert_has_calls([
+            fitting_call,
+            formatter_call,
+            datetime_formatter_call,
+            constraint_call
+        ])
 
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_prepare_for_fitting_already_prepared(self, log_mock):

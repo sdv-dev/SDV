@@ -13,6 +13,7 @@ from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
 from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
+from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
@@ -453,7 +454,6 @@ class DataProcessor:
 
     def _fit_numerical_formatters(self, data):
         """Fit a ``NumericalFormatter`` for each column in the data."""
-        self.formatters = {}
         for column_name in data:
             column_metadata = self.metadata._columns.get(column_name)
             if column_metadata.get('sdtype') == 'numerical' and column_name != self._primary_key:
@@ -463,6 +463,15 @@ class DataProcessor:
                     enforce_min_max_values=self._enforce_min_max_values,
                     computer_representation=representation
                 )
+                self.formatters[column_name].learn_format(data[column_name])
+
+    def _fit_datetime_formatters(self, data):
+        """Fit a ``DatetimeFormatter`` for each datetime column in the data."""
+        for column_name in data:
+            column_metadata = self.metadata._columns.get(column_name)
+            if column_metadata.get('sdtype') == 'datetime' and column_name != self._primary_key:
+                datetime_format = column_metadata.get('datetime_format')
+                self.formatters[column_name] = DatetimeFormatter(datetime_format=datetime_format)
                 self.formatters[column_name].learn_format(data[column_name])
 
     def prepare_for_fitting(self, data):
@@ -481,8 +490,11 @@ class DataProcessor:
             LOGGER.info(f'Fitting table {self.table_name} metadata')
             self._dtypes = data[list(data.columns)].dtypes
 
+            self.formatters = {}
             LOGGER.info(f'Fitting numerical formatters for table {self.table_name}')
             self._fit_numerical_formatters(data)
+            LOGGER.info(f'Fitting datetime formatters for table {self.table_name}')
+            self._fit_datetime_formatters(data)
 
             LOGGER.info(f'Fitting constraints for table {self.table_name}')
             constrained = self._fit_transform_constraints(data)
@@ -695,7 +707,7 @@ class DataProcessor:
 
             reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
 
-        # reformat numerical columns using the NumericalFormatter
+        # reformat columns using the formatters
         for column in sampled_columns:
             if column in self.formatters:
                 data_to_format = reversed_data[column]
