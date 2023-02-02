@@ -1833,7 +1833,6 @@ class TestScalarInequality():
         assert instance._operator == np.greater
         assert instance._dtype is None
         assert instance._is_datetime is None
-        assert instance._datetime_format is None
         mock_validate.assert_called_once_with('a', 1, '>')
 
     def test__get_is_datetime_incorrect_data(self):
@@ -1952,7 +1951,6 @@ class TestScalarInequality():
 
         # Assert
         assert instance._dtype == np.dtype('<M8[ns]')
-        assert instance._datetime_format == '%Y-%m-%d'
 
     def test_is_valid(self):
         """Test the ``ScalarInequality.is_valid`` method with ``relation = '>'``.
@@ -2178,7 +2176,6 @@ class TestScalarInequality():
         instance._dtype = np.dtype('<M8[ns]')
         instance._diff_column_name = 'a#'
         instance._is_datetime = True
-        instance._datetime_format = '%Y-%m-%dT%H:%M:%S'
 
         # Run
         transformed = pd.DataFrame({
@@ -3585,7 +3582,6 @@ class TestScalarRange():
         Side Effects:
             - The ``instance._low_value`` and ``ìnstance._high_value`` have been converted
               to ``pd.datetime``
-            - The ``instance._datetime_format`` equals to the ``table_data``.
         """
         # Setup
         table_data = pd.DataFrame({
@@ -3604,7 +3600,6 @@ class TestScalarRange():
         # Assert
         assert instance._is_datetime
         assert instance._transformed_column == 'checkin#2022-05-05#2022-06-01'
-        assert instance._datetime_format == '%Y-%m-%d'
         assert instance._low_value == pd.to_datetime('2022-05-05')
         assert instance._high_value == pd.to_datetime('2022-06-01')
 
@@ -3774,7 +3769,6 @@ class TestScalarRange():
         instance._transformed_column = 'current_age#20#28'
         instance._is_datetime = True
         mock_pd.to_datetime.side_effect = lambda x: pd.to_datetime('2021-02-02 10:10:59')
-        instance._datetime_format = '%Y-%m-%d'
 
         # Run
         output = instance.reverse_transform(transformed_data)
@@ -3789,7 +3783,7 @@ class TestScalarRange():
         })
         pd.testing.assert_frame_equal(expected_output, output)
         mock_sigmoid.assert_called_once()
-        assert mock_pd.to_datetime.call_count == 2
+        assert mock_pd.to_datetime.call_count == 1
 
 
 class TestOneHotEncoding():
