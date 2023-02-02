@@ -16,7 +16,7 @@ def transform(column_names, data):
 
 def reverse_transform(column_names, data):
     """Reverse transform the constraint."""
-    data[column_names] =  data[column_names] // 2
+    data[column_names] = data[column_names] // 2
     return data
 
 

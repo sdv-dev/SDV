@@ -153,10 +153,9 @@ class DataProcessor:
 
         return sdtypes
 
-    def _validate_custom_constraints(self, filepath, class_names):
+    def _validate_custom_constraints(self, filepath, class_names, module):
         errors = []
         reserved_class_names = list(get_subclasses(Constraint))
-        module = load_module_from_path(Path(filepath))
         for class_name in class_names:
             if class_name in reserved_class_names:
                 errors.append((
@@ -180,11 +179,11 @@ class DataProcessor:
             class_names (list):
                 A list of custom constraint classes to be imported.
         """
-        self._validate_custom_constraints(filepath, class_names)
+        path = Path(filepath)
+        module = load_module_from_path(path)
+        self._validate_custom_constraints(filepath, class_names, module)
         for class_name in class_names:
-            path = Path(filepath)
-            module = load_module_from_path(path)
-            constraint_class = getattr(module, constraint_class)
+            constraint_class = getattr(module, class_name)
             self._custom_constraint_classes[class_name] = constraint_class
 
     def add_custom_constraint_class(self, class_object, class_name):
@@ -208,10 +207,10 @@ class DataProcessor:
                     * ``constraint_class``: Name of the constraint to apply.
                     * ``constraint_parameters``: A dictionary with the constraint parameters.
         """
-        constraint_class_name = constraint_dict['constraint_class']
+        constraint_class = constraint_dict['constraint_class']
         constraint_parameters = constraint_dict.get('constraint_parameters', {})
         try:
-            if constraint_class_name in self._custom_constraint_classes:
+            if constraint_class in self._custom_constraint_classes:
                 constraint_class = self._custom_constraint_classes[constraint_class]
 
             else:

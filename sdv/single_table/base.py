@@ -285,7 +285,7 @@ class BaseSynthesizer:
                 A list of custom constraint classes to be imported.
         """
         self._data_processor.load_custom_constraint_classes(filepath, class_names)
-    
+
     def add_custom_constraint_class(self, class_object, class_name):
         """Add a custom constraint class for the synthesizer to use.
 
