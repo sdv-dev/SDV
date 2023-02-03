@@ -5,8 +5,10 @@ import pandas as pd
 import pkg_resources
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
-from rdt.transformers import AnonymizedFaker, FloatFormatter, LabelEncoder, RegexGenerator
+from rdt.transformers import (
+    AnonymizedFaker, FloatFormatter, LabelEncoder, PseudoAnonymizedFaker, RegexGenerator)
 
+from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table.copulagan import CopulaGANSynthesizer
@@ -681,3 +683,60 @@ def test_get_info():
         'last_fit_date': today,
         'fitted_sdv_version': version
     }
+
+
+def test_synthesizer_with_pseudoanonymized_faker_as_alternate_key():
+    """Test ``PseudoAnonymizedFaker`` as an ``alternate_key``."""
+    # Setup
+    data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='student_placements_pii'
+    )
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.auto_assign_transformers(data)
+
+    # update address to use psuedo_anonymization
+    address_transformer = PseudoAnonymizedFaker(provider_name='address', function_name='address')
+    synthesizer.update_transformers(column_name_to_transformer={
+        'address': address_transformer
+    })
+
+    # Run
+    synthesizer.fit(data)
+    sampled = synthesizer.sample(10)
+
+    # Assert
+    assert sampled.address.isin(data.address).sum() == 0
+    pseudo_map = address_transformer.get_mapping()
+    assert all(data.address.isin(list(pseudo_map.keys())))
+    assert all(sampled.address.isin(list(pseudo_map.values())))
+
+
+def test_synthesizer_with_pseudoanonymized_faker_as_pii_field():
+    """Test ``PseudoAnonymizedFaker`` as ``pii`` column."""
+    # Setup
+    data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='student_placements_pii'
+    )
+    metadata._alternate_keys = []
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.auto_assign_transformers(data)
+
+    # update address to use psuedo_anonymization
+    address_transformer = PseudoAnonymizedFaker(provider_name='address', function_name='address')
+    synthesizer.update_transformers(column_name_to_transformer={
+        'address': address_transformer
+    })
+
+    # Run
+    synthesizer.fit(data)
+    sampled = synthesizer.sample(10)
+
+    # Assert
+    assert sampled.address.isin(data.address).sum() == 0
+    pseudo_map = address_transformer.get_mapping()
+    assert all(data.address.isin(list(pseudo_map.keys())))
+    assert all(sampled.address.isin(list(pseudo_map.values())))
