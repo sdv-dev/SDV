@@ -12,6 +12,7 @@ from sdv.sampling import Condition
 from sdv.single_table.copulagan import CopulaGANSynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer
+from tests.integration.single_table.custom_constraints import MyConstraint
 
 METADATA = SingleTableMetadata._load_from_dict({
     'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
@@ -532,7 +533,7 @@ def test_transformers_correctly_auto_assigned():
     assert transformers['categorical_col'].add_noise is True
 
 
-def test_custom_constraints(tmpdir):
+def test_custom_constraints_from_file(tmpdir):
     """Ensure the correct loading for a custom constraint class defined in another file."""
     data = pd.DataFrame({
         'primary_key': ['user-000', 'user-001', 'user-002'],
@@ -553,6 +554,52 @@ def test_custom_constraints(tmpdir):
         'tests/integration/single_table/custom_constraints.py',
         ['MyConstraint']
     )
+    constraint = {
+        'constraint_class': 'MyConstraint',
+        'constraint_parameters': {
+            'column_names': ['numerical_col']
+        }
+    }
+
+    # Run
+    synthesizer.add_constraints([constraint])
+    processed_data = synthesizer.preprocess(data)
+
+    # Assert Processed Data
+    assert all(processed_data['numerical_col'] == data['numerical_col'] ** 2)
+
+    # Run - Fit the model
+    synthesizer.fit_processed_data(processed_data)
+
+    # Run - sample
+    sampled = synthesizer.sample(10)
+    assert all(sampled['numerical_col'] > 1)
+
+    # Run - Save and Sample
+    synthesizer.save(tmpdir / 'test.pkl')
+    loaded_instance = synthesizer.load(tmpdir / 'test.pkl')
+    loaded_sampled = loaded_instance.sample(10)
+    assert all(loaded_sampled['numerical_col'] > 1)
+
+
+def test_custom_constraints_from_object(tmpdir):
+    """Ensure the correct loading for a custom constraint class passed as an object."""
+    data = pd.DataFrame({
+        'primary_key': ['user-000', 'user-001', 'user-002'],
+        'pii_col': ['223 Williams Rd', '75 Waltham St', '77 Mass Ave'],
+        'numerical_col': [2, 3, 4],
+        'categorical_col': ['a', 'b', 'a'],
+    })
+
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+    metadata.update_column(column_name='pii_col', sdtype='address', pii=True)
+    synthesizer = GaussianCopulaSynthesizer(
+        metadata,
+        enforce_min_max_values=False,
+        enforce_rounding=False
+    )
+    synthesizer.add_custom_constraint_class(MyConstraint, 'MyConstraint')
     constraint = {
         'constraint_class': 'MyConstraint',
         'constraint_parameters': {

@@ -1,5 +1,6 @@
 import datetime
 
+import numpy as np
 import pandas as pd
 import pkg_resources
 import pytest
@@ -8,6 +9,7 @@ from faker import Faker
 from sdv.datasets.demo import download_demo
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
+from tests.integration.single_table.custom_constraints import MyConstraint
 
 
 def test_hma(tmpdir):
@@ -140,3 +142,96 @@ def test_hma_set_parameters():
     assert hmasynthesizer._table_synthesizers['characters'].default_distribution == 'gamma'
     assert hmasynthesizer._table_synthesizers['families'].default_distribution == 'uniform'
     assert hmasynthesizer._table_synthesizers['character_families'].default_distribution == 'norm'
+
+
+def get_custom_constraint_data_and_metadata():
+    parent_data = pd.DataFrame({
+        'primary_key': [1000, 1001, 1002],
+        'numerical_col': [2, 3, 4],
+        'categorical_col': ['a', 'b', 'a'],
+    })
+    child_data = pd.DataFrame({
+        'user_id': [1000, 1001, 1000],
+        'id': [1, 2, 3],
+        'random': ['a', 'b', 'c']
+    })
+
+    metadata = MultiTableMetadata()
+    metadata.detect_table_from_dataframe('parent', parent_data)
+    metadata.detect_table_from_dataframe('child', child_data)
+    metadata.set_primary_key('parent', 'primary_key')
+    metadata.set_primary_key('child', 'id')
+    metadata.add_relationship(
+        parent_primary_key='primary_key',
+        parent_table_name='parent',
+        child_foreign_key='user_id',
+        child_table_name='child'
+    )
+
+    return parent_data, child_data, metadata
+
+
+def test_hma_custom_constraint():
+    """Test an example of using a custom constraint."""
+    parent_data, child_data, metadata = get_custom_constraint_data_and_metadata()
+    synthesizer = HMASynthesizer(metadata)
+    constraint = {
+        'table_name': 'parent',
+        'constraint_class': 'MyConstraint',
+        'constraint_parameters': {
+            'column_names': ['numerical_col']
+        }
+    }
+    synthesizer.add_custom_constraint_class('parent', MyConstraint, 'MyConstraint')
+
+    # Run
+    synthesizer.add_constraints(constraints=[constraint])
+    processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
+
+    # Assert Processed Data
+    np.testing.assert_equal(
+        processed_data['parent']['numerical_col'].array,
+        (parent_data['numerical_col'] ** 2.0).array
+    )
+
+    # Run - Fit the model
+    synthesizer.fit_processed_data(processed_data)
+
+    # Run - sample
+    sampled = synthesizer.sample(10)
+    assert all(sampled['parent']['numerical_col'] > 1)
+
+
+def test_hma_custom_constraint_loaded_from_file():
+    """Test an example of using a custom constraint loaded from a file."""
+    parent_data, child_data, metadata = get_custom_constraint_data_and_metadata()
+    synthesizer = HMASynthesizer(metadata)
+    constraint = {
+        'table_name': 'parent',
+        'constraint_class': 'MyConstraint',
+        'constraint_parameters': {
+            'column_names': ['numerical_col']
+        }
+    }
+    synthesizer.load_custom_constraint_classes(
+        'parent',
+        'tests/integration/single_table/custom_constraints.py',
+        ['MyConstraint']
+    )
+
+    # Run
+    synthesizer.add_constraints(constraints=[constraint])
+    processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
+
+    # Assert Processed Data
+    np.testing.assert_equal(
+        processed_data['parent']['numerical_col'].array,
+        (parent_data['numerical_col'] ** 2.0).array
+    )
+
+    # Run - Fit the model
+    synthesizer.fit_processed_data(processed_data)
+
+    # Run - sample
+    sampled = synthesizer.sample(10)
+    assert all(sampled['parent']['numerical_col'] > 1)
