@@ -1,6 +1,7 @@
 import re
 from unittest.mock import MagicMock, Mock, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -270,5 +271,44 @@ def test_get_available_demos(client_mock):
         'dataset_name': ['dataset1', 'dataset2'],
         'size_MB': [123.00, 456.00],
         'num_tables': [321, 654]
+    })
+    pd.testing.assert_frame_equal(tables_info, expected_table)
+
+
+@patch('boto3.client')
+def test_get_available_demos_missing_metadata(client_mock):
+    """Test it can handle data with missing metadata information."""
+    # Setup
+    contents_objects = {
+        'Contents': [
+            {'Key': 'SINGLE_TABLE/dataset1.zip'},
+            {'Key': 'SINGLE_TABLE/dataset2.zip'}
+        ]
+    }
+    client_mock.return_value.list_objects = Mock(return_value=contents_objects)
+
+    def metadata_func(Bucket, Key):  # noqa: N803
+        if Key == 'SINGLE_TABLE/dataset1.zip':
+            return {
+                'Metadata': {}
+            }
+
+        return {
+            'Metadata': {
+                'size-mb': 456,
+                'num-tables': 654
+            }
+        }
+
+    client_mock.return_value.head_object = MagicMock(side_effect=metadata_func)
+
+    # Run
+    tables_info = get_available_demos('single_table')
+
+    # Assert
+    expected_table = pd.DataFrame({
+        'dataset_name': ['dataset1', 'dataset2'],
+        'size_MB': [np.nan, 456.00],
+        'num_tables': [np.nan, 654]
     })
     pd.testing.assert_frame_equal(tables_info, expected_table)
