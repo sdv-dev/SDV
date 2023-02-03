@@ -642,6 +642,9 @@ class DataProcessor:
         if not self.fitted:
             raise NotFittedError()
 
+        anonymized_data = pd.DataFrame()
+        generated_keys = pd.DataFrame()
+
         reversible_columns = [
             column
             for column in self._hyper_transformer._output_columns
@@ -663,11 +666,14 @@ class DataProcessor:
         num_rows = len(reversed_data)
         sampled_columns = list(reversed_data.columns)
         if self._anonymized_columns:
-            anonymized_data = self._hyper_transformer.create_anonymized_columns(
-                num_rows=num_rows,
-                column_names=self._anonymized_columns,
-            )
-            sampled_columns.extend(self._anonymized_columns)
+            missing_columns = list(set(self._anonymized_columns) - set(sampled_columns))
+            if missing_columns:
+                anonymized_data = self._hyper_transformer.create_anonymized_columns(
+                    num_rows=num_rows,
+                    column_names=self._anonymized_columns,
+                )
+
+                sampled_columns.extend(missing_columns)
 
         if self._keys:
             generated_keys = self.generate_keys(num_rows, reset_keys)
@@ -682,9 +688,9 @@ class DataProcessor:
             if column in sampled_columns
         ]
         for column_name in sampled_columns:
-            if column_name in self._anonymized_columns:
+            if column_name in anonymized_data:
                 column_data = anonymized_data[column_name]
-            elif column_name in self._keys:
+            elif column_name in generated_keys:
                 column_data = generated_keys[column_name]
             else:
                 column_data = reversed_data[column_name]
