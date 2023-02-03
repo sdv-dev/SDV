@@ -100,7 +100,8 @@ class NumericalFormatter:
                 Data to format.
 
         Returns:
-            numpy.ndarray containing the formatted data.
+            numpy.ndarray:
+                containing the formatted data.
         """
         column = column.copy().to_numpy()
         if self.enforce_min_max_values:

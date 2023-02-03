@@ -11,7 +11,7 @@ class DatetimeFormatter:
         datetime_format (str):
             The strftime to use for parsing time. For more information, see
             https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
-            If ``None`` it will attempt to learn it by itself.
+            If ``None`` it will attempt to learn it by itself. Defaults to ``None``.
     """
 
     def __init__(self, datetime_format=None):
@@ -36,7 +36,8 @@ class DatetimeFormatter:
                 Data to format.
 
         Returns:
-            numpy.ndarray containing the formatted data.
+            numpy.ndarray:
+                containing the formatted data.
         """
         if self.datetime_format:
             column = pd.to_datetime(column).dt.strftime(self.datetime_format)

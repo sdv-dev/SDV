@@ -452,11 +452,12 @@ class DataProcessor:
             if not data.empty:
                 self._hyper_transformer.fit(data)
 
-    def _fit_numerical_formatters(self, data):
-        """Fit a ``NumericalFormatter`` for each column in the data."""
+    def _fit_formatters(self, data):
+        """Fit ``NumericalFormatter`` and ``DatetimeFormatter`` for each column in the data."""
         for column_name in data:
             column_metadata = self.metadata._columns.get(column_name)
-            if column_metadata.get('sdtype') == 'numerical' and column_name != self._primary_key:
+            sdtype = column_metadata.get('sdtype')
+            if sdtype == 'numerical' and column_name != self._primary_key:
                 representation = column_metadata.get('computer_representation', 'Float')
                 self.formatters[column_name] = NumericalFormatter(
                     enforce_rounding=self._enforce_rounding,
@@ -465,11 +466,7 @@ class DataProcessor:
                 )
                 self.formatters[column_name].learn_format(data[column_name])
 
-    def _fit_datetime_formatters(self, data):
-        """Fit a ``DatetimeFormatter`` for each datetime column in the data."""
-        for column_name in data:
-            column_metadata = self.metadata._columns.get(column_name)
-            if column_metadata.get('sdtype') == 'datetime' and column_name != self._primary_key:
+            elif sdtype == 'datetime' and column_name != self._primary_key:
                 datetime_format = column_metadata.get('datetime_format')
                 self.formatters[column_name] = DatetimeFormatter(datetime_format=datetime_format)
                 self.formatters[column_name].learn_format(data[column_name])
@@ -491,10 +488,8 @@ class DataProcessor:
             self._dtypes = data[list(data.columns)].dtypes
 
             self.formatters = {}
-            LOGGER.info(f'Fitting numerical formatters for table {self.table_name}')
-            self._fit_numerical_formatters(data)
-            LOGGER.info(f'Fitting datetime formatters for table {self.table_name}')
-            self._fit_datetime_formatters(data)
+            LOGGER.info(f'Fitting formatters for table {self.table_name}')
+            self._fit_formatters(data)
 
             LOGGER.info(f'Fitting constraints for table {self.table_name}')
             constrained = self._fit_transform_constraints(data)
