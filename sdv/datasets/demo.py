@@ -10,6 +10,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import boto3
+import numpy as np
 import pandas as pd
 from botocore import UNSIGNED
 from botocore.client import Config
@@ -168,7 +169,8 @@ def get_available_demos(modality):
         if dataset_modality == modality.upper():
             tables_info['dataset_name'].append(dataset.replace('.zip', ''))
             headers = client.head_object(Bucket=BUCKET, Key=item['Key'])['Metadata']
-            tables_info['size_MB'].append(round(float(headers['size-mb']), 2))
-            tables_info['num_tables'].append(headers['num-tables'])
+            size_mb = headers.get('size-mb', np.nan)
+            tables_info['size_MB'].append(round(float(size_mb), 2))
+            tables_info['num_tables'].append(headers.get('num-tables', np.nan))
 
     return pd.DataFrame(tables_info)
