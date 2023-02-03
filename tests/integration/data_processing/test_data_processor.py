@@ -2,7 +2,6 @@
 import itertools
 
 import numpy as np
-import pandas as pd
 from rdt.transformers import AnonymizedFaker, FloatFormatter, LabelEncoder, UnixTimestampEncoder
 
 from sdv.data_processing import DataProcessor
@@ -290,7 +289,7 @@ def test_data_processor_reverse_transform_with_formatters():
 
     transformed = dp.transform(data)
     reverse_transformed = dp.reverse_transform(transformed)
-    reverse_transformed.drop('student_id', inplace=True, axis=1)
+    reverse_transformed = reverse_transformed.drop('student_id', axis=1)
     reverse_transformed = reverse_transformed.reset_index()
 
     # Assert
@@ -305,13 +304,13 @@ def test_data_processor_reverse_transform_with_formatters():
     assert isinstance(dp.formatters['end_date'], DatetimeFormatter)
 
     start_date_data_format = get_datetime_format(data['start_date'][~data['start_date'].isna()][0])
-    start_date_reversed_format = get_datetime_format(
-        reverse_transformed['start_date'][~reverse_transformed['start_date'].isna()].iloc[0]
-    )
-    assert start_date_data_format == start_date_reversed_format
+    reversed_start_date = reverse_transformed['start_date'][
+        ~reverse_transformed['start_date'].isna()
+    ]
+    reversed_start_date_format = get_datetime_format(reversed_start_date.iloc[0])
+    assert start_date_data_format == reversed_start_date_format
 
     end_date_data_format = get_datetime_format(data['end_date'][~data['end_date'].isna()][0])
-    end_date_reversed_format = get_datetime_format(
-        reverse_transformed['end_date'][~reverse_transformed['end_date'].isna()].iloc[0]
-    )
-    assert end_date_data_format == end_date_reversed_format
+    reversed_end_date = reverse_transformed['end_date'][~reverse_transformed['end_date'].isna()]
+    reversed_end_date_format = get_datetime_format(reversed_end_date.iloc[0])
+    assert end_date_data_format == reversed_end_date_format
