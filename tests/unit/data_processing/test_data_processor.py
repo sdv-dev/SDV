@@ -15,6 +15,7 @@ from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.constraints.tabular import Positive, ScalarRange
 from sdv.data_processing.data_processor import DataProcessor
+from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.metadata.single_table import SingleTableMetadata
@@ -1195,6 +1196,36 @@ class TestDataProcessor:
 
         learn_format_mock.assert_has_calls([call(data['col2']), call(data['col3'])])
 
+    def test__fit_datetime_formatters(self):
+        """Test the ``_fit_datetime_formatters`` method.
+
+        Runs over the metadata and creates instances for the ``datetime`` specified columns
+        of a ``DatetimeFormatter``, which then learns the ``datetime_format`` and the ``dtype``
+        which is represented in the ``pd.dataframe``.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'col1': ['abc', 'def'],
+            'col2': ['16-05-2023', '14-04-2022'],
+            'col3': pd.to_datetime(['2021-02-15', '2022-05-16']),
+        })
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='categorical')
+        metadata.add_column('col2', sdtype='datetime')
+        metadata.add_column('col3', sdtype='datetime', datetime_format='%Y-%d-%M')
+        dp = DataProcessor(metadata)
+
+        # Run
+        dp._fit_datetime_formatters(data)
+
+        # Assert
+        assert isinstance(dp.formatters['col2'], DatetimeFormatter)
+        assert isinstance(dp.formatters['col3'], DatetimeFormatter)
+        assert dp.formatters['col2']._dtype == 'O'
+        assert dp.formatters['col2'].datetime_format == '%d-%m-%Y'
+        assert dp.formatters['col3']._dtype == '<M8[ns]'
+        assert dp.formatters['col3'].datetime_format == '%Y-%d-%M'
+
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_prepare_for_fitting(self, log_mock):
         """Test the steps before fitting.
@@ -1905,3 +1936,38 @@ class TestDataProcessor:
             formatter_mock2.format_data.call_args[0][0], data['col2'].to_numpy())
 
         pd.testing.assert_frame_equal(output, data)
+
+    def test_reverse_transform_datetime_formatter(self):
+        """Test that the ``reverse_transform`` calls the ``DatetimeFormatter``.
+
+        Iterate over the ``instance.formatters`` and ensure that applies the
+        expected formatting.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'col1': ['abc', 'def'],
+            'col2': ['16-05-2023', '14-04-2022'],
+            'col3': pd.to_datetime(['2021-02-15', '2022-05-16']),
+        })
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='categorical')
+        metadata.add_column('col2', sdtype='datetime')
+        metadata.add_column('col3', sdtype='datetime', datetime_format='%Y-%d-%M')
+        dp = DataProcessor(metadata)
+
+        col2_datetime_formatter = Mock()
+        col3_datetime_formatter = Mock()
+        dp.formatters = {'col2': col2_datetime_formatter, 'col3': col3_datetime_formatter}
+
+        dp._hyper_transformer = Mock()
+        dp._hyper_transformer._output_columns = []
+        dp._hyper_transformer.reverse_transform_subset.return_value = data
+        dp.fitted = True
+        dp._dtypes = {'col1': 'str', 'col2': 'str', 'col3': 'str'}
+
+        # Run
+        dp.reverse_transform(data)
+
+        # Assert
+        col2_datetime_formatter.format_data.assert_called_once()
+        col3_datetime_formatter.format_data.assert_called_once()

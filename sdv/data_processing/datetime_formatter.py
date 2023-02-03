@@ -25,7 +25,7 @@ class DatetimeFormatter:
                 Data to learn the format.
         """
         self._dtype = column.dtype
-        if self.datetime_format is not None:
+        if self.datetime_format is None:
             self.datetime_format = get_datetime_format(column)
 
     def format_data(self, column):
