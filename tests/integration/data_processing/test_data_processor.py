@@ -5,8 +5,11 @@ import numpy as np
 from rdt.transformers import AnonymizedFaker, FloatFormatter, LabelEncoder, UnixTimestampEncoder
 
 from sdv.data_processing import DataProcessor
+from sdv.data_processing.datetime_formatter import DatetimeFormatter
+from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
+from sdv.utils import get_datetime_format
 
 
 def test_data_processor_with_anonymized_columns():
@@ -270,3 +273,44 @@ def test_data_processor_prepare_for_fitting():
     assert field_transformers['start_date'].datetime_format == '%Y-%m-%d'
     assert field_transformers['end_date'].datetime_format == '%Y-%m-%d'
     assert field_transformers['salary'].computer_representation == 'Int64'
+
+
+def test_data_processor_reverse_transform_with_formatters():
+    """End to end test using formatters."""
+    # Setup
+    data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='student_placements'
+    )
+    dp = DataProcessor(metadata)
+
+    # Run
+    dp.fit(data)
+
+    transformed = dp.transform(data)
+    reverse_transformed = dp.reverse_transform(transformed)
+    reverse_transformed = reverse_transformed.drop('student_id', axis=1)
+    reverse_transformed = reverse_transformed.reset_index()
+
+    # Assert
+    assert isinstance(dp.formatters['degree_perc'], NumericalFormatter)
+    assert isinstance(dp.formatters['employability_perc'], NumericalFormatter)
+    assert isinstance(dp.formatters['experience_years'], NumericalFormatter)
+    assert isinstance(dp.formatters['high_perc'], NumericalFormatter)
+    assert isinstance(dp.formatters['mba_perc'], NumericalFormatter)
+    assert isinstance(dp.formatters['salary'], NumericalFormatter)
+    assert isinstance(dp.formatters['second_perc'], NumericalFormatter)
+    assert isinstance(dp.formatters['start_date'], DatetimeFormatter)
+    assert isinstance(dp.formatters['end_date'], DatetimeFormatter)
+
+    start_date_data_format = get_datetime_format(data['start_date'][~data['start_date'].isna()][0])
+    reversed_start_date = reverse_transformed['start_date'][
+        ~reverse_transformed['start_date'].isna()
+    ]
+    reversed_start_date_format = get_datetime_format(reversed_start_date.iloc[0])
+    assert start_date_data_format == reversed_start_date_format
+
+    end_date_data_format = get_datetime_format(data['end_date'][~data['end_date'].isna()][0])
+    reversed_end_date = reverse_transformed['end_date'][~reverse_transformed['end_date'].isna()]
+    reversed_end_date_format = get_datetime_format(reversed_end_date.iloc[0])
+    assert end_date_data_format == reversed_end_date_format

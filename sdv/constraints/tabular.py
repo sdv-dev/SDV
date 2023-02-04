@@ -40,7 +40,7 @@ from sdv.constraints.base import Constraint
 from sdv.constraints.errors import (
     AggregateConstraintsError, ConstraintMetadataError, FunctionError, InvalidFunctionError)
 from sdv.constraints.utils import cast_to_datetime64, logit, matches_datetime_format, sigmoid
-from sdv.utils import get_datetime_format, is_datetime_type
+from sdv.utils import is_datetime_type
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,
@@ -415,6 +415,10 @@ class Inequality(Constraint):
                 Whether each row is valid.
         """
         low, high = self._get_data(table_data)
+        if self._is_datetime and self._dtype == 'O':
+            low = cast_to_datetime64(low)
+            high = cast_to_datetime64(high)
+
         valid = np.isnan(low) | np.isnan(high) | self._operator(high, low)
         return valid
 
@@ -436,6 +440,10 @@ class Inequality(Constraint):
                 Transformed data.
         """
         low, high = self._get_data(table_data)
+        if self._is_datetime and self._dtype == 'O':
+            low = cast_to_datetime64(low)
+            high = cast_to_datetime64(high)
+
         diff_column = high - low
         if self._is_datetime:
             diff_column = diff_column.astype(np.float64)
@@ -467,6 +475,9 @@ class Inequality(Constraint):
             diff_column = diff_column.astype('timedelta64[ns]')
 
         low = table_data[self._low_column_name].to_numpy()
+        if self._is_datetime and self._dtype == 'O':
+            low = cast_to_datetime64(low)
+
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
         return table_data.drop(self._diff_column_name, axis=1)
 
@@ -553,7 +564,6 @@ class ScalarInequality(Constraint):
         self._diff_column_name = f'{self._column_name}#diff'
         self.constraint_columns = (column_name,)
         self._is_datetime = None
-        self._datetime_format = None
         self._dtype = None
         self._operator = INEQUALITY_TO_OPERATION[relation]
 
@@ -582,8 +592,6 @@ class ScalarInequality(Constraint):
         self._validate_columns_exist(table_data)
         self._is_datetime = self._get_is_datetime(table_data)
         self._dtype = table_data[self._column_name].dtypes
-        if self._is_datetime:
-            self._datetime_format = get_datetime_format(table_data[self._column_name])
 
     def is_valid(self, table_data):
         """Say whether ``high`` is greater than ``low`` in each row.
@@ -597,6 +605,9 @@ class ScalarInequality(Constraint):
                 Whether each row is valid.
         """
         column = table_data[self._column_name].to_numpy()
+        if self._is_datetime and self._dtype == 'O':
+            column = cast_to_datetime64(column)
+
         valid = np.isnan(column) | self._operator(column, self._value)
         return valid
 
@@ -653,10 +664,6 @@ class ScalarInequality(Constraint):
             original_column = self._value - diff_column
 
         table_data[self._column_name] = pd.Series(original_column).astype(self._dtype)
-        if self._is_datetime and self._datetime_format:
-            table_data[self._column_name] = pd.to_datetime(
-                table_data[self._column_name].dt.strftime(self._datetime_format)
-            )
 
         return table_data.drop(self._diff_column_name, axis=1)
 
@@ -1011,7 +1018,6 @@ class ScalarRange(Constraint):
         if self._is_datetime:
             self._low_value = cast_to_datetime64(self._low_value)
             self._high_value = cast_to_datetime64(self._high_value)
-            self._datetime_format = get_datetime_format(table_data[self._column_name])
 
     def is_valid(self, table_data):
         """Say whether the ``column_name`` is between the ``low`` and ``high`` values.
@@ -1083,15 +1089,10 @@ class ScalarRange(Constraint):
 
         if self._is_datetime:
             table_data[self._column_name] = pd.to_datetime(data)
-            if self._datetime_format:
-                table_data[self._column_name] = pd.to_datetime(
-                    table_data[self._column_name].dt.strftime(self._datetime_format)
-                )
         else:
             table_data[self._column_name] = data.astype(self._dtype)
 
         table_data = table_data.drop(self._transformed_column, axis=1)
-
         return table_data
 
 
