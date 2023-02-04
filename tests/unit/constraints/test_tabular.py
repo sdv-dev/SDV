@@ -1339,6 +1339,25 @@ class TestInequality():
         expected_out = [True, False, True]
         np.testing.assert_array_equal(expected_out, out)
 
+    def test_is_valid_datetime_objects(self):
+        """Test the ``is_valid`` method with datetimes that are as ``dtype`` object."""
+        # Setup
+        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance._is_datetime = True
+        instance._dtype = 'O'
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': ['2020-5-17', '2021-9-1', np.nan],
+            'b': ['2020-5-18', '2020-9-2', '2020-9-2'],
+            'c': [7, 8, 9]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [True, False, True]
+        np.testing.assert_array_equal(expected_out, out)
+
     def test__transform(self):
         """Test the ``Inequality._transform`` method.
 
@@ -1401,6 +1420,35 @@ class TestInequality():
         # Assert
         expected_out = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
+            'c': [1, 2],
+            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test__transform_datetime_dtype_object(self):
+        """Test the ``Inequality._transform`` method.
+
+        The method is expected to compute the distance between the high and low columns
+        and create a diff column with the logarithm of the distance + 1 even when those
+        are from ``_dtype`` object but are representing a datetime.
+        """
+        # Setup
+        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance._diff_column_name = 'a#b'
+        instance._is_datetime = True
+        instance._dtype = 'O'
+
+        # Run
+        table_data = pd.DataFrame({
+            'a': ['2020-01-01T00:00:00', '2020-01-02T00:00:00'],
+            'b': ['2020-01-01T00:00:01', '2020-01-02T00:00:01'],
+            'c': [1, 2],
+        })
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': ['2020-01-01T00:00:00', '2020-01-02T00:00:00'],
             'c': [1, 2],
             'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
         })
@@ -1522,6 +1570,35 @@ class TestInequality():
             'c': [1, 2],
             'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01'])
         })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_datetime_dtype_is_object(self):
+        """Test the ``Inequality.reverse_transform`` method.
+
+        This should cast the ``low`` column to ``datetime`` when the ``dtype`` is
+        object.
+        """
+        # Setup
+        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance._dtype = np.dtype('O')
+        instance._diff_column_name = 'a#b'
+        instance._is_datetime = True
+
+        # Run
+        transformed = pd.DataFrame({
+            'a': ['2020-01-01T00:00:00', '2020-01-02T00:00:00'],
+            'c': [1, 2],
+            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': ['2020-01-01T00:00:00', '2020-01-02T00:00:00'],
+            'c': [1, 2],
+            'b': [pd.Timestamp('2020-01-01 00:00:01'), pd.Timestamp('2020-01-02 00:00:01')]
+        })
+        expected_out['b'] = expected_out['b'].astype(np.dtype('O'))
         pd.testing.assert_frame_equal(out, expected_out)
 
 
@@ -1833,7 +1910,6 @@ class TestScalarInequality():
         assert instance._operator == np.greater
         assert instance._dtype is None
         assert instance._is_datetime is None
-        assert instance._datetime_format is None
         mock_validate.assert_called_once_with('a', 1, '>')
 
     def test__get_is_datetime_incorrect_data(self):
@@ -1952,7 +2028,6 @@ class TestScalarInequality():
 
         # Assert
         assert instance._dtype == np.dtype('<M8[ns]')
-        assert instance._datetime_format == '%Y-%m-%d'
 
     def test_is_valid(self):
         """Test the ``ScalarInequality.is_valid`` method with ``relation = '>'``.
@@ -1999,6 +2074,32 @@ class TestScalarInequality():
         # Run
         table_data = pd.DataFrame({
             'b': [datetime(2021, 8, 30), datetime(2021, 8, 31), datetime(2021, 9, 2), np.nan],
+            'c': [7, 8, 9, 10]
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [False, True, True, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+    def test_is_valid_datetimes_as_object(self):
+        """Test the ``ScalarInequality.is_valid`` method with datetimes and their dtype is object.
+
+        The method should return True when ``column_name`` is greater or equal to
+        ``value`` or the row contains nan, even when the ``datetime`` is passed as an object.
+        """
+        # Setup
+        instance = ScalarInequality(
+            column_name='b',
+            value='8/31/2021',
+            relation='>='
+        )
+        instance._dtype = np.dtype('O')
+        instance._is_datetime = True
+
+        # Run
+        table_data = pd.DataFrame({
+            'b': ['2021, 8, 30', '2021, 8, 31', '2021, 9, 2', np.nan],
             'c': [7, 8, 9, 10]
         })
         out = instance.is_valid(table_data)
@@ -2178,7 +2279,6 @@ class TestScalarInequality():
         instance._dtype = np.dtype('<M8[ns]')
         instance._diff_column_name = 'a#'
         instance._is_datetime = True
-        instance._datetime_format = '%Y-%m-%dT%H:%M:%S'
 
         # Run
         transformed = pd.DataFrame({
@@ -2191,6 +2291,27 @@ class TestScalarInequality():
         expected_out = pd.DataFrame({
             'c': [1, 2],
             'a': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-01T00:00:01']),
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test_reverse_transform_operator_less(self):
+        """Test the ``ScalarInequality.reverse_transform`` method when operator is ``np.less``."""
+        # Setup
+        instance = ScalarInequality(column_name='a', value=1, relation='<')
+        instance._dtype = np.dtype('float')
+        instance._diff_column_name = 'a#'
+
+        # Run
+        transformed = pd.DataFrame({
+            'a#': [np.log(1.1), np.log(2.1), np.log(3.3)],
+            'c': [7, 8, 9],
+        })
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'c': [7, 8, 9],
+            'a': [0.9, -0.1, -1.3],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -3585,7 +3706,6 @@ class TestScalarRange():
         Side Effects:
             - The ``instance._low_value`` and ``ìnstance._high_value`` have been converted
               to ``pd.datetime``
-            - The ``instance._datetime_format`` equals to the ``table_data``.
         """
         # Setup
         table_data = pd.DataFrame({
@@ -3604,7 +3724,6 @@ class TestScalarRange():
         # Assert
         assert instance._is_datetime
         assert instance._transformed_column == 'checkin#2022-05-05#2022-06-01'
-        assert instance._datetime_format == '%Y-%m-%d'
         assert instance._low_value == pd.to_datetime('2022-05-05')
         assert instance._high_value == pd.to_datetime('2022-06-01')
 
@@ -3774,7 +3893,6 @@ class TestScalarRange():
         instance._transformed_column = 'current_age#20#28'
         instance._is_datetime = True
         mock_pd.to_datetime.side_effect = lambda x: pd.to_datetime('2021-02-02 10:10:59')
-        instance._datetime_format = '%Y-%m-%d'
 
         # Run
         output = instance.reverse_transform(transformed_data)
@@ -3789,7 +3907,7 @@ class TestScalarRange():
         })
         pd.testing.assert_frame_equal(expected_output, output)
         mock_sigmoid.assert_called_once()
-        assert mock_pd.to_datetime.call_count == 2
+        assert mock_pd.to_datetime.call_count == 1
 
 
 class TestOneHotEncoding():
