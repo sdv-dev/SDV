@@ -368,6 +368,35 @@ class BaseMultiTableSynthesizer:
         synthesizer = self._table_synthesizers[table_name]
         return synthesizer.get_learned_distributions()
 
+    def _validate_constraints(self, constraints):
+        for constraint_dict in constraints:
+            params = {'constraint_class', 'constraint_parameters', 'table_name'}
+            keys = constraint_dict.keys()
+            missing_params = params - keys
+            if missing_params:
+                raise SynthesizerInputError(
+                    f'A constraint is missing required parameters {missing_params}. '
+                    'Please add these parameters to your constraint definition.'
+                )
+
+            extra_params = keys - params
+            if extra_params:
+                raise SynthesizerInputError(
+                    f'Unrecognized constraint parameter {extra_params}. '
+                    'Please remove these parameters from your constraint definition.'
+                )
+
+            if constraint_dict['constraint_class'] == 'Unique':
+                raise SynthesizerInputError(
+                    "The constraint class 'Unique' is not currently supported for multi-table"
+                    ' synthesizers. Please remove the constraint for this synthesizer.'
+                )
+
+        if self._fitted:
+            warnings.warn(
+                "For these constraints to take effect, please refit the synthesizer using 'fit'."
+            )
+
     def add_constraints(self, constraints):
         """Add constraints to the synthesizer.
 
@@ -382,18 +411,7 @@ class BaseMultiTableSynthesizer:
             SynthesizerInputError:
                 Raises when the ``Unique`` constraint is passed.
         """
-        for constraint in constraints:
-            if constraint['constraint_class'] == 'Unique':
-                raise SynthesizerInputError(
-                    "The constraint class 'Unique' is not currently supported for multi-table"
-                    ' synthesizers. Please remove the constraint for this synthesizer.'
-                )
-
-        if self._fitted:
-            warnings.warn(
-                "For these constraints to take effect, please refit the synthesizer using 'fit'."
-            )
-
+        self._validate_constraints(constraints)
         for constraint in constraints:
             constraint = deepcopy(constraint)
             synthesizer = self._table_synthesizers[constraint.pop('table_name')]

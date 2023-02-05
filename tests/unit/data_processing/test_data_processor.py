@@ -18,7 +18,9 @@ from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
+from sdv.errors import SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
+from sdv.single_table.base import BaseSynthesizer
 
 
 class TestDataProcessor:
@@ -604,6 +606,47 @@ class TestDataProcessor:
         )
         with pytest.raises(InvalidConstraintsError, match=error_msg):
             dp.add_constraints(constraints)
+
+    def test_add_constraints_missing_parameters(self):
+        """Test error raised when required params are missing."""
+        # Setup
+        data = pd.DataFrame({'col': [1, 2, 3]})
+        metadata = SingleTableMetadata()
+        metadata.detect_from_dataframe(data)
+        constraint = {'constraint_class': 'Inequality'}
+        model = BaseSynthesizer(metadata)
+
+        # Run and Assert
+        err_msg = re.escape(
+            "A constraint is missing required parameters {'constraint_parameters'}. "
+            'Please add these parameters to your constraint definition.'
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            model.add_constraints([constraint])
+
+    def test_add_constraints_invalid_parameters(self):
+        """Test error raised when invalid params are passed."""
+        # Setup
+        data = pd.DataFrame({'col': [1, 2, 3]})
+        metadata = SingleTableMetadata()
+        metadata.detect_from_dataframe(data)
+        constraint = {
+            'constraint_class': 'Inequality',
+            'constraint_parameters': {
+                'low_column_name': 'col',
+                'high_column_name': 'col'
+            },
+            'invalid': 42
+        }
+        model = BaseSynthesizer(metadata)
+
+        # Run and Assert
+        err_msg = re.escape(
+            "Unrecognized constraint parameter {'invalid'}. "
+            'Please remove these parameters from your constraint definition.'
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            model.add_constraints([constraint])
 
     def test_get_constraints(self):
         """Test that ``get_constraints`` returns a copy of the ``instance._constraints_list``."""
