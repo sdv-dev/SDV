@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import rdt
+from rdt.transformers import AnonymizedFaker, RegexGenerator
 
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
@@ -16,6 +17,7 @@ from sdv.constraints.errors import (
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
+from sdv.errors import InvalidPreprocessingError
 from sdv.metadata.anonymization import get_anonymized_transformer
 from sdv.metadata.single_table import SingleTableMetadata
 
@@ -424,6 +426,14 @@ class DataProcessor:
                 'The DataProcessor must be prepared for fitting before the transformers can be '
                 'updated.'
             )
+
+        for column, transformer in column_name_to_transformer.items():
+            if column in self._keys and not type(transformer) in (AnonymizedFaker, RegexGenerator):
+                raise InvalidPreprocessingError(
+                    f"Invalid transformer '{transformer.__class__.__name__}' for a primary "
+                    f"or alternate key '{column}'. Please use 'AnonymizedFaker' or "
+                    "'RegexGenerator' instead."
+                )
 
         self._hyper_transformer.update_transformers(column_name_to_transformer)
 
