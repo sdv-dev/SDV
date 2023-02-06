@@ -490,7 +490,7 @@ class TestDataProcessor:
         """Validate that an ``InvalidConstraintsError`` is raised when the class is not found."""
         # Setup
         constraint_dict = {
-            'constraint_class': 'Positiv',
+            'constraint_class': 'Positive',
             'constraint_parameters': {'column_name': 'col1'}
         }
         mock_constraint._get_class_from_dict.side_effect = [KeyError]
@@ -499,7 +499,7 @@ class TestDataProcessor:
         dp = DataProcessor(metadata)
 
         # Run and Assert
-        error_msg = re.escape("Invalid constraint class ('Positiv').")
+        error_msg = re.escape("Invalid constraint class ('Positive').")
         with pytest.raises(InvalidConstraintsError, match=error_msg):
             dp._validate_constraint_dict(constraint_dict)
 

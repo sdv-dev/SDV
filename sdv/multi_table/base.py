@@ -370,20 +370,10 @@ class BaseMultiTableSynthesizer:
 
     def _validate_constraints(self, constraints):
         for constraint_dict in constraints:
-            params = {'constraint_class', 'constraint_parameters', 'table_name'}
-            keys = constraint_dict.keys()
-            missing_params = params - keys
-            if missing_params:
+            if 'table_name' not in constraint_dict.keys():
                 raise SynthesizerInputError(
-                    f'A constraint is missing required parameters {missing_params}. '
-                    'Please add these parameters to your constraint definition.'
-                )
-
-            extra_params = keys - params
-            if extra_params:
-                raise SynthesizerInputError(
-                    f'Unrecognized constraint parameter {extra_params}. '
-                    'Please remove these parameters from your constraint definition.'
+                    "A constraint is missing required parameter 'table_name'. "
+                    'Please add this parameter to your constraint definition.'
                 )
 
             if constraint_dict['constraint_class'] == 'Unique':
