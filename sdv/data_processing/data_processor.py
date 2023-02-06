@@ -100,7 +100,6 @@ class DataProcessor:
         self._dtypes = None
         self.fitted = False
         self.formatters = {}
-        self._anonymized_columns = []
         self._primary_key = self.metadata._primary_key
         self._prepared_for_fitting = False
         self._keys = deepcopy(self.metadata._alternate_keys)
@@ -375,7 +374,6 @@ class DataProcessor:
     def _create_config(self, data, columns_created_by_constraints):
         sdtypes = {}
         transformers = {}
-        self._anonymized_columns = []
 
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata._columns.get(column)
@@ -388,7 +386,6 @@ class DataProcessor:
 
             elif pii:
                 transformers[column] = self.create_anonymized_transformer(sdtype, column_metadata)
-                self._anonymized_columns.append(column)
 
             elif sdtype in self._transformers_by_sdtype:
                 transformers[column] = self._get_transformer_instance(sdtype, column_metadata)
@@ -665,15 +662,15 @@ class DataProcessor:
 
         num_rows = len(reversed_data)
         sampled_columns = list(reversed_data.columns)
-        if self._anonymized_columns:
-            missing_columns = list(set(self._anonymized_columns) - set(sampled_columns))
-            if missing_columns:
-                anonymized_data = self._hyper_transformer.create_anonymized_columns(
-                    num_rows=num_rows,
-                    column_names=self._anonymized_columns,
-                )
-
-                sampled_columns.extend(missing_columns)
+        missing_columns = list(
+            set(self.metadata._columns.keys()) - set(sampled_columns + self._keys)
+        )
+        if missing_columns:
+            anonymized_data = self._hyper_transformer.create_anonymized_columns(
+                num_rows=num_rows,
+                column_names=missing_columns
+            )
+            sampled_columns.extend(missing_columns)
 
         if self._keys:
             generated_keys = self.generate_keys(num_rows, reset_keys)
@@ -688,7 +685,7 @@ class DataProcessor:
             if column in sampled_columns
         ]
         for column_name in sampled_columns:
-            if column_name in anonymized_data:
+            if column_name in missing_columns:
                 column_data = anonymized_data[column_name]
             elif column_name in generated_keys:
                 column_data = generated_keys[column_name]
