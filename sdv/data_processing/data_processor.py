@@ -646,8 +646,6 @@ class DataProcessor:
         Returns:
             pandas.DataFrame
         """
-        generated_keys = pd.DataFrame()
-
         if not self.fitted:
             raise NotFittedError()
 
@@ -698,7 +696,7 @@ class DataProcessor:
         for column_name in sampled_columns:
             if column_name in missing_columns:
                 column_data = anonymized_data[column_name]
-            elif column_name in generated_keys:
+            elif column_name in self._keys:
                 column_data = generated_keys[column_name]
             else:
                 column_data = reversed_data[column_name]
