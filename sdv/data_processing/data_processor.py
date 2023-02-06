@@ -646,6 +646,8 @@ class DataProcessor:
         Returns:
             pandas.DataFrame
         """
+        generated_keys = pd.DataFrame()
+
         if not self.fitted:
             raise NotFittedError()
 
