@@ -248,7 +248,7 @@ class TestCopulaGANSynthesizer:
         metadata = SingleTableMetadata()
         instance = CopulaGANSynthesizer(metadata)
         instance._create_gaussian_normalizer_config = Mock()
-        processed_data = Mock()
+        processed_data = pd.DataFrame()
 
         # Run
         instance._fit(processed_data)
