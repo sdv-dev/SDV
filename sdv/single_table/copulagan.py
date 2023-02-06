@@ -114,7 +114,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             if not isinstance(numerical_distributions, dict):
                 raise TypeError('numerical_distributions can only be None or a dict instance.')
 
-            invalid_columns = numerical_distributions.keys() - dict(self.metadata._columns)
+            invalid_columns = numerical_distributions.keys() - set(self.metadata._columns)
             if invalid_columns:
                 raise SynthesizerInputError(
                     'Invalid column names found in the numerical_distributions dictionary '

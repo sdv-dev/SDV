@@ -120,6 +120,17 @@ class TestCopulaGANSynthesizer:
         assert instance._default_distribution == UniformUnivariate
 
     def test___init__incorrect_numerical_distributions(self):
+        """Test it crashes when ``numerical_distributions`` receives a non-dictionary."""
+        # Setup
+        metadata = SingleTableMetadata()
+        numerical_distributions = 'invalid'
+
+        # Run
+        err_msg = 'numerical_distributions can only be None or a dict instance.'
+        with pytest.raises(TypeError, match=err_msg):
+            CopulaGANSynthesizer(metadata, numerical_distributions=numerical_distributions)
+
+    def test___init__invalid_column_numerical_distributions(self):
         """Test it crashes when ``numerical_distributions`` includes invalid columns."""
         # Setup
         metadata = SingleTableMetadata()
