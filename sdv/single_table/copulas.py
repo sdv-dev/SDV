@@ -17,6 +17,7 @@ from sdv.single_table.utils import flatten_dict, unflatten_dict, validate_numeri
 
 LOGGER = logging.getLogger(__name__)
 
+
 class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
     """Model wrapping ``copulas.multivariate.GaussianMultivariate`` copula.
 
@@ -126,7 +127,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         unseen_columns = self._numerical_distributions.keys() - set(processed_data.columns)
         for column in unseen_columns:
             LOGGER.info(
-                f"Requested distribution {numerical_distributions['column']} "
+                f"Requested distribution {self.numerical_distributions['column']} "
                 f'cannot be applied to column {column} because it no longer '
                 'exists after preprocessing.'
             )
@@ -138,7 +139,6 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             if column not in numerical_distributions:
                 numerical_distributions[column] = self._numerical_distributions.get(
                     column, self._default_distribution)
-                    
 
         self._model = multivariate.GaussianMultivariate(
             distribution=numerical_distributions

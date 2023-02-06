@@ -1,6 +1,6 @@
 """Combination of GaussianCopula transformation and GANs."""
-from copy import deepcopy
 import logging
+from copy import deepcopy
 
 import rdt
 
@@ -10,6 +10,7 @@ from sdv.single_table.ctgan import CTGANSynthesizer
 from sdv.single_table.utils import validate_numerical_distributions
 
 LOGGER = logging.getLogger(__name__)
+
 
 class CopulaGANSynthesizer(CTGANSynthesizer):
     """Combination of GaussianCopula transformation and GANs.
@@ -195,10 +196,10 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
-        unseen_columns = self._numerical_distributions.keys() - dict(processed_data.columns)
+        unseen_columns = self._numerical_distributions.keys() - set(processed_data.columns)
         for column in unseen_columns:
             LOGGER.info(
-                f"Requested distribution {self._numerical_distributions['column']} "
+                f"Requested distribution {self.numerical_distributions['column']} "
                 f'cannot be applied to column {column} because it no longer '
                 'exists after preprocessing.'
             )
