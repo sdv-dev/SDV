@@ -1,5 +1,6 @@
 """Combination of GaussianCopula transformation and GANs."""
 from copy import deepcopy
+import logging
 
 import rdt
 
@@ -8,6 +9,7 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
 from sdv.single_table.utils import validate_numerical_distributions
 
+LOGGER = logging.getLogger(__name__)
 
 class CopulaGANSynthesizer(CTGANSynthesizer):
     """Combination of GaussianCopula transformation and GANs.
@@ -115,7 +117,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             if not isinstance(numerical_distributions, dict):
                 raise TypeError('numerical_distributions can only be None or a dict instance.')
 
-            invalid_columns = numerical_distributions.keys() - dict(self.metadata._columns)
+            invalid_columns = numerical_distributions.keys() - set(self.metadata._columns)
             if invalid_columns:
                 raise SynthesizerInputError(
                     'Invalid column names found in the numerical_distributions dictionary '
@@ -159,7 +161,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         )
         self._numerical_distributions = {
             field: GaussianCopulaSynthesizer.get_distribution_class(distribution)
-            for field, distribution in (numerical_distributions or {}).items()
+            for field, distribution in self.numerical_distributions.items()
         }
 
     def _create_gaussian_normalizer_config(self, processed_data):
@@ -193,6 +195,14 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
+        unseen_columns = self._numerical_distributions.keys() - dict(processed_data.columns)
+        for column in unseen_columns:
+            LOGGER.info(
+                f"Requested distribution {self._numerical_distributions['column']} "
+                f'cannot be applied to column {column} because it no longer '
+                'exists after preprocessing.'
+            )
+
         gaussian_normalizer_config = self._create_gaussian_normalizer_config(processed_data)
 
         self._gaussian_normalizer_hyper_transformer = rdt.HyperTransformer()

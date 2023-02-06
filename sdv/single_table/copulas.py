@@ -1,4 +1,5 @@
 """Wrappers around copulas models."""
+import logging
 import warnings
 from copy import deepcopy
 
@@ -14,6 +15,7 @@ from sdv.errors import NonParametricError, SynthesizerInputError
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.single_table.utils import flatten_dict, unflatten_dict, validate_numerical_distributions
 
+LOGGER = logging.getLogger(__name__)
 
 class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
     """Model wrapping ``copulas.multivariate.GaussianMultivariate`` copula.
@@ -88,7 +90,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             if not isinstance(numerical_distributions, dict):
                 raise TypeError('numerical_distributions can only be None or a dict instance.')
 
-            invalid_columns = numerical_distributions.keys() - dict(self.metadata._columns)
+            invalid_columns = numerical_distributions.keys() - set(self.metadata._columns)
             if invalid_columns:
                 raise SynthesizerInputError(
                     'Invalid column names found in the numerical_distributions dictionary '
@@ -110,7 +112,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         self._default_distribution = self.get_distribution_class(self.default_distribution)
         self._numerical_distributions = {
             field: self.get_distribution_class(distribution)
-            for field, distribution in (numerical_distributions or {}).items()
+            for field, distribution in self.numerical_distributions.items()
         }
         self._num_rows = None
 
@@ -121,6 +123,14 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
+        unseen_columns = self._numerical_distributions.keys() - set(processed_data.columns)
+        for column in unseen_columns:
+            LOGGER.info(
+                f"Requested distribution {numerical_distributions['column']} "
+                f'cannot be applied to column {column} because it no longer '
+                'exists after preprocessing.'
+            )
+
         self._num_rows = len(processed_data)
         numerical_distributions = deepcopy(self._numerical_distributions)
 
@@ -128,6 +138,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             if column not in numerical_distributions:
                 numerical_distributions[column] = self._numerical_distributions.get(
                     column, self._default_distribution)
+                    
 
         self._model = multivariate.GaussianMultivariate(
             distribution=numerical_distributions
