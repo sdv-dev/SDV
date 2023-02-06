@@ -10,7 +10,7 @@ import scipy
 from copulas import multivariate
 from rdt.transformers import OneHotEncoder
 
-from sdv.errors import NonParametricError
+from sdv.errors import NonParametricError, SynthesizerInputError
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.single_table.utils import flatten_dict, unflatten_dict
 
@@ -83,6 +83,19 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         return cls._DISTRIBUTIONS[distribution]
 
+    def _validate_numerical_distributions(self, numerical_distributions):
+        if numerical_distributions:
+            if not isinstance(numerical_distributions, dict):
+                raise TypeError('numerical_distributions can only be None or a dict instance.')
+
+            invalid_columns = numerical_distributions.keys() - dict(self.metadata._columns)
+            if invalid_columns:
+                raise SynthesizerInputError(
+                    'Invalid column names found in the numerical_distributions dictionary '
+                    f'{invalid_columns}. The column names you provide must be present '
+                    'in the metadata.'
+                )
+
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
                  numerical_distributions=None, default_distribution=None):
         super().__init__(
@@ -90,11 +103,9 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
         )
-        if numerical_distributions and not isinstance(numerical_distributions, dict):
-            raise TypeError('numerical_distributions can only be None or a dict instance')
-
-        self.default_distribution = default_distribution or 'beta'
+        self._validate_numerical_distributions(numerical_distributions)
         self.numerical_distributions = numerical_distributions or {}
+        self.default_distribution = default_distribution or 'beta'
 
         self._default_distribution = self.get_distribution_class(self.default_distribution)
         self._numerical_distributions = {
