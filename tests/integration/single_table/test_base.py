@@ -5,10 +5,8 @@ import pandas as pd
 import pkg_resources
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
-from rdt.transformers import (
-    AnonymizedFaker, FloatFormatter, LabelEncoder, PseudoAnonymizedFaker, RegexGenerator)
+from rdt.transformers import AnonymizedFaker, FloatFormatter, LabelEncoder, RegexGenerator
 
-from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table.copulagan import CopulaGANSynthesizer

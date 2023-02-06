@@ -14,10 +14,10 @@ from rdt.transformers import FloatFormatter, LabelEncoder, UnixTimestampEncoder
 from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.constraints.tabular import Positive, ScalarRange
-from sdv.errors import InvalidPreprocessingError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
+from sdv.errors import InvalidPreprocessingError
 from sdv.metadata.single_table import SingleTableMetadata
 
 
