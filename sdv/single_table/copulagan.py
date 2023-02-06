@@ -199,8 +199,8 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         unseen_columns = self._numerical_distributions.keys() - set(processed_data.columns)
         for column in unseen_columns:
             LOGGER.info(
-                f"Requested distribution {self.numerical_distributions['column']} "
-                f'cannot be applied to column {column} because it no longer '
+                f"Requested distribution '{self.numerical_distributions[column]}' "
+                f"cannot be applied to column '{column}' because it no longer "
                 'exists after preprocessing.'
             )
 
