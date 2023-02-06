@@ -672,9 +672,11 @@ class DataProcessor:
 
         num_rows = len(reversed_data)
         sampled_columns = list(reversed_data.columns)
-        missing_columns = list(
-            set(self.metadata._columns.keys()) - set(sampled_columns + self._keys)
-        )
+        missing_columns = [
+            column
+            for column in set(self.metadata._columns.keys()) - set(sampled_columns + self._keys)
+            if self._hyper_transformer.field_transformers.get(column)
+        ]
         if missing_columns:
             anonymized_data = self._hyper_transformer.create_anonymized_columns(
                 num_rows=num_rows,
