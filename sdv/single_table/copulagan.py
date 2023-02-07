@@ -3,9 +3,9 @@ from copy import deepcopy
 
 import rdt
 
-from sdv.errors import SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
+from sdv.single_table.utils import _validate_numerical_distributions
 
 
 class CopulaGANSynthesizer(CTGANSynthesizer):
@@ -109,19 +109,6 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
 
     _gaussian_normalizer_hyper_transformer = None
 
-    def _validate_numerical_distributions(self, numerical_distributions):
-        if numerical_distributions:
-            if not isinstance(numerical_distributions, dict):
-                raise TypeError('numerical_distributions can only be None or a dict instance.')
-
-            invalid_columns = numerical_distributions.keys() - set(self.metadata._columns)
-            if invalid_columns:
-                raise SynthesizerInputError(
-                    'Invalid column names found in the numerical_distributions dictionary '
-                    f'{invalid_columns}. The column names you provide must be present '
-                    'in the metadata.'
-                )
-
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
                  generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
@@ -149,7 +136,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             cuda=cuda,
         )
 
-        self._validate_numerical_distributions(numerical_distributions)
+        _validate_numerical_distributions(numerical_distributions, self.metadata._columns)
         self.numerical_distributions = numerical_distributions or {}
         self.default_distribution = default_distribution or 'beta'
 

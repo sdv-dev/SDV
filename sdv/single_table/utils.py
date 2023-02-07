@@ -5,6 +5,8 @@ import warnings
 
 import numpy as np
 
+from sdv.errors import SynthesizerInputError
+
 TMP_FILE_NAME = '.sample.csv.temp'
 DISABLE_TMP_FILE = 'disable'
 IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
@@ -281,3 +283,17 @@ def unflatten_dict(flat):
             unflattened[key] = value
 
     return unflattened
+
+
+def _validate_numerical_distributions(numerical_distributions, metadata_columns):
+    if numerical_distributions:
+        if not isinstance(numerical_distributions, dict):
+            raise TypeError('numerical_distributions can only be None or a dict instance.')
+
+        invalid_columns = numerical_distributions.keys() - set(metadata_columns)
+        if invalid_columns:
+            raise SynthesizerInputError(
+                'Invalid column names found in the numerical_distributions dictionary '
+                f'{invalid_columns}. The column names you provide must be present '
+                'in the metadata.'
+            )
