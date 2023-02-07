@@ -551,6 +551,7 @@ class TestDataProcessor:
                 'constraint_parameters': {'column_names': ['col1', 'col2']}
             }
         ]
+        dp._prepared_for_fitting = True
 
         # Run
         dp.add_constraints(constraints)
@@ -571,6 +572,7 @@ class TestDataProcessor:
             }
         ]
         assert id(dp._constraints_list) != id(constraints)
+        assert dp._prepared_for_fitting is False
 
     def test_add_constraints_raises_invalidconstraintserror(self):
         """Test that constraints raises an ``InvalidConstraintsError`` when those are not valid."""
