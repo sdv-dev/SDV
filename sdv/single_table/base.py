@@ -352,6 +352,11 @@ class BaseSynthesizer:
                 "Use 'auto_assign_transformers' or 'fit' to create them."
             )
 
+        field_transformers = {
+            column_name: field_transformers.get(column_name)
+            for column_name in self.metadata._columns
+        }
+
         return field_transformers
 
     def get_info(self):
