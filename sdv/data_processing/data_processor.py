@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import rdt
+from rdt.transformers import AnonymizedFaker, RegexGenerator
 
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
@@ -102,7 +103,6 @@ class DataProcessor:
         self._dtypes = None
         self.fitted = False
         self.formatters = {}
-        self._anonymized_columns = []
         self._primary_key = self.metadata._primary_key
         self._prepared_for_fitting = False
         self._keys = deepcopy(self.metadata._alternate_keys)
@@ -413,7 +413,6 @@ class DataProcessor:
     def _create_config(self, data, columns_created_by_constraints):
         sdtypes = {}
         transformers = {}
-        self._anonymized_columns = []
 
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata._columns.get(column)
@@ -426,7 +425,6 @@ class DataProcessor:
 
             elif pii:
                 transformers[column] = self.create_anonymized_transformer(sdtype, column_metadata)
-                self._anonymized_columns.append(column)
 
             elif sdtype in self._transformers_by_sdtype:
                 transformers[column] = self._get_transformer_instance(sdtype, column_metadata)
@@ -465,6 +463,14 @@ class DataProcessor:
                 'The DataProcessor must be prepared for fitting before the transformers can be '
                 'updated.'
             )
+
+        for column, transformer in column_name_to_transformer.items():
+            if column in self._keys and not type(transformer) in (AnonymizedFaker, RegexGenerator):
+                raise SynthesizerInputError(
+                    f"Invalid transformer '{transformer.__class__.__name__}' for a primary "
+                    f"or alternate key '{column}'. Please use 'AnonymizedFaker' or "
+                    "'RegexGenerator' instead."
+                )
 
         self._hyper_transformer.update_transformers(column_name_to_transformer)
 
@@ -703,12 +709,17 @@ class DataProcessor:
 
         num_rows = len(reversed_data)
         sampled_columns = list(reversed_data.columns)
-        if self._anonymized_columns:
+        missing_columns = [
+            column
+            for column in self.metadata._columns.keys() - set(sampled_columns + self._keys)
+            if self._hyper_transformer.field_transformers.get(column)
+        ]
+        if missing_columns:
             anonymized_data = self._hyper_transformer.create_anonymized_columns(
                 num_rows=num_rows,
-                column_names=self._anonymized_columns,
+                column_names=missing_columns
             )
-            sampled_columns.extend(self._anonymized_columns)
+            sampled_columns.extend(missing_columns)
 
         if self._keys:
             generated_keys = self.generate_keys(num_rows, reset_keys)
@@ -723,7 +734,7 @@ class DataProcessor:
             if column in sampled_columns
         ]
         for column_name in sampled_columns:
-            if column_name in self._anonymized_columns:
+            if column_name in missing_columns:
                 column_data = anonymized_data[column_name]
             elif column_name in self._keys:
                 column_data = generated_keys[column_name]
