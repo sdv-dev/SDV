@@ -7,6 +7,7 @@ import pytest
 from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariate
 from rdt.transformers import GaussianNormalizer
 
+from sdv.errors import SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.copulagan import CopulaGANSynthesizer
 
@@ -53,6 +54,7 @@ class TestCopulaGANSynthesizer:
         """Test creating an instance of ``CopulaGANSynthesizer`` with custom parameters."""
         # Setup
         metadata = SingleTableMetadata()
+        metadata.add_column('field', sdtype='numerical')
         enforce_min_max_values = False
         enforce_rounding = False
         embedding_dim = 64
@@ -116,6 +118,32 @@ class TestCopulaGANSynthesizer:
         assert instance._numerical_distributions == {'field': GammaUnivariate}
         assert instance.default_distribution == 'uniform'
         assert instance._default_distribution == UniformUnivariate
+
+    def test___init__incorrect_numerical_distributions(self):
+        """Test it crashes when ``numerical_distributions`` receives a non-dictionary."""
+        # Setup
+        metadata = SingleTableMetadata()
+        numerical_distributions = 'invalid'
+
+        # Run
+        err_msg = 'numerical_distributions can only be None or a dict instance.'
+        with pytest.raises(TypeError, match=err_msg):
+            CopulaGANSynthesizer(metadata, numerical_distributions=numerical_distributions)
+
+    def test___init__invalid_column_numerical_distributions(self):
+        """Test it crashes when ``numerical_distributions`` includes invalid columns."""
+        # Setup
+        metadata = SingleTableMetadata()
+        numerical_distributions = {'totally_fake_column_name': 'beta'}
+
+        # Run
+        err_msg = re.escape(
+            'Invalid column names found in the numerical_distributions dictionary '
+            "{'totally_fake_column_name'}. The column names you provide must be present "
+            'in the metadata.'
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            CopulaGANSynthesizer(metadata, numerical_distributions=numerical_distributions)
 
     def test_get_params(self):
         """Test that inherited method ``get_params`` returns all the specific init parameters."""

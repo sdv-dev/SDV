@@ -7,6 +7,7 @@ import pytest
 import scipy
 from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariate
 
+from sdv.errors import SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
@@ -64,6 +65,7 @@ class TestGaussianCopulaSynthesizer:
         """Test creating an instance of ``GaussianCopulaSynthesizer`` with custom parameters."""
         # Setup
         metadata = SingleTableMetadata()
+        metadata.add_column('field', sdtype='numerical')
         enforce_min_max_values = False
         enforce_rounding = False
         numerical_distributions = {'field': 'gamma'}
@@ -85,6 +87,32 @@ class TestGaussianCopulaSynthesizer:
         assert instance.default_distribution == 'uniform'
         assert instance._default_distribution == UniformUnivariate
         assert instance._numerical_distributions == {'field': GammaUnivariate}
+
+    def test___init__incorrect_numerical_distributions(self):
+        """Test it crashes when ``numerical_distributions`` receives a non-dictionary."""
+        # Setup
+        metadata = SingleTableMetadata()
+        numerical_distributions = 'invalid'
+
+        # Run
+        err_msg = 'numerical_distributions can only be None or a dict instance.'
+        with pytest.raises(TypeError, match=err_msg):
+            GaussianCopulaSynthesizer(metadata, numerical_distributions=numerical_distributions)
+
+    def test___init__incorrect_column_numerical_distributions(self):
+        """Test it crashes when ``numerical_distributions`` includes invalid columns."""
+        # Setup
+        metadata = SingleTableMetadata()
+        numerical_distributions = {'totally_fake_column_name': 'beta'}
+
+        # Run
+        err_msg = re.escape(
+            'Invalid column names found in the numerical_distributions dictionary '
+            "{'totally_fake_column_name'}. The column names you provide must be present "
+            'in the metadata.'
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            GaussianCopulaSynthesizer(metadata, numerical_distributions=numerical_distributions)
 
     def test_get_parameters(self):
         """Test that inherited method ``get_parameters`` returns the specified init parameters."""
@@ -114,6 +142,8 @@ class TestGaussianCopulaSynthesizer:
         """
         # Setup
         metadata = SingleTableMetadata()
+        metadata.add_column('name', sdtype='numerical')
+        metadata.add_column('user.id', sdtype='numerical')
         numerical_distributions = {'name': 'uniform', 'user.id': 'gamma'}
 
         processed_data = pd.DataFrame({
