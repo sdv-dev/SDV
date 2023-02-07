@@ -772,6 +772,23 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         assert output == constraints
 
+    def test_add_constraints_missing_table_name(self):
+        """Test error raised when ``table_name`` is missing."""
+        # Setup
+        data = pd.DataFrame({'col': [1, 2, 3]})
+        metadata = MultiTableMetadata()
+        metadata.detect_table_from_dataframe('table', data)
+        constraint = {'constraint_class': 'Inequality'}
+        model = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        err_msg = re.escape(
+            "A constraint is missing required parameter 'table_name'. "
+            'Please add this parameter to your constraint definition.'
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            model.add_constraints([constraint])
+
     def test_load_custom_constraint_classes(self):
         """Test that the method calls the single table synthesizer's version of the method."""
         # Setup
