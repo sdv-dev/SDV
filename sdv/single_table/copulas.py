@@ -12,7 +12,7 @@ from rdt.transformers import OneHotEncoder
 
 from sdv.errors import NonParametricError
 from sdv.single_table.base import BaseSingleTableSynthesizer
-from sdv.single_table.utils import flatten_dict, unflatten_dict
+from sdv.single_table.utils import flatten_dict, unflatten_dict, validate_numerical_distributions
 
 
 class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
@@ -90,11 +90,9 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
         )
-        if numerical_distributions and not isinstance(numerical_distributions, dict):
-            raise TypeError('numerical_distributions can only be None or a dict instance')
-
-        self.default_distribution = default_distribution or 'beta'
+        validate_numerical_distributions(numerical_distributions, self.metadata._columns)
         self.numerical_distributions = numerical_distributions or {}
+        self.default_distribution = default_distribution or 'beta'
 
         self._default_distribution = self.get_distribution_class(self.default_distribution)
         self._numerical_distributions = {
