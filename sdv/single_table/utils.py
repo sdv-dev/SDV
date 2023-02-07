@@ -288,7 +288,14 @@ def unflatten_dict(flat):
 def validate_numerical_distributions(numerical_distributions, metadata_columns):
     """Validate ``numerical_distributions``.
 
-    Raise an error if it's not None or dict, or if its columns must be present in the metadata.
+    Raise an error if it's not None or dict, or if its columns are not present in the metadata.
+
+    Args:
+        numerical_distributions (dict):
+            Dictionary that maps field names from the table that is being modeled with
+            the distribution that needs to be used.
+        metadata_columns (list):
+            Columns present in the metadata.
     """
     if numerical_distributions:
         if not isinstance(numerical_distributions, dict):
