@@ -19,7 +19,7 @@ import tqdm
 from copulas.multivariate import GaussianMultivariate
 
 from sdv.data_processing.data_processor import DataProcessor
-from sdv.errors import ConstraintsNotMetError, InvalidPreprocessingError
+from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
 from sdv.single_table.errors import InvalidDataError
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 from sdv.utils import (
@@ -224,14 +224,14 @@ class BaseSynthesizer:
                 continue
 
             if column in keys and not transformer.is_generator():
-                raise InvalidPreprocessingError(
+                raise SynthesizerInputError(
                     f"Column '{column}' is a key. It cannot be preprocessed using "
                     f"the '{type(transformer).__name__}' transformer."
                 )
 
             # If columns were set, the transformer was fitted
             if transformer.columns:
-                raise InvalidPreprocessingError(
+                raise SynthesizerInputError(
                     f"Transformer for column '{column}' has already been fit on data.")
 
     def _warn_for_update_transformers(self, column_name_to_transformer):

@@ -17,7 +17,7 @@ from sdv.constraints.tabular import Positive, ScalarRange
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
-from sdv.errors import InvalidPreprocessingError
+from sdv.errors import SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 
 
@@ -1089,7 +1089,7 @@ class TestDataProcessor:
             "Invalid transformer 'FloatFormatter' for a primary or alternate key 'pk_column'. "
             "Please use 'AnonymizedFaker' or 'RegexGenerator' instead."
         )
-        with pytest.raises(InvalidPreprocessingError, match=error_msg):
+        with pytest.raises(SynthesizerInputError, match=error_msg):
             dp.update_transformers({'pk_column': FloatFormatter()})
 
     @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')

@@ -11,7 +11,7 @@ from copulas.multivariate import GaussianMultivariate
 from rdt.transformers import (
     BinaryEncoder, FloatFormatter, GaussianNormalizer, OneHotEncoder, RegexGenerator)
 
-from sdv.errors import ConstraintsNotMetError, InvalidPreprocessingError
+from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
 from sdv.single_table import (
@@ -585,7 +585,7 @@ class TestBaseSingleTableSynthesizer:
             "Column 'col3' is a key. It cannot be preprocessed using "
             "the 'FloatFormatter' transformer."
         )
-        with pytest.raises(InvalidPreprocessingError, match=err_msg):
+        with pytest.raises(SynthesizerInputError, match=err_msg):
             instance.update_transformers(column_name_to_transformer)
 
     def test_update_transformers_already_fitted(self):
@@ -604,7 +604,7 @@ class TestBaseSingleTableSynthesizer:
 
         # Run and Assert
         err_msg = "Transformer for column 'col2' has already been fit on data."
-        with pytest.raises(InvalidPreprocessingError, match=err_msg):
+        with pytest.raises(SynthesizerInputError, match=err_msg):
             instance.update_transformers(column_name_to_transformer)
 
     def test_update_transformers_warns_gaussian_copula(self):

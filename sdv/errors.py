@@ -13,10 +13,6 @@ class ConstraintsNotMetError(ValueError):
         super().__init__(self.message)
 
 
-class InvalidPreprocessingError(Exception):
-    """Error raised during an invalid preprocessing step."""
-
-
 class SynthesizerInputError(Exception):
     """Error to raise when a bad input is provided to a ``Synthesizer``."""
 

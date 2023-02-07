@@ -17,7 +17,7 @@ from sdv.constraints.errors import (
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
-from sdv.errors import InvalidPreprocessingError
+from sdv.errors import SynthesizerInputError
 from sdv.metadata.anonymization import get_anonymized_transformer
 from sdv.metadata.single_table import SingleTableMetadata
 
@@ -429,7 +429,7 @@ class DataProcessor:
 
         for column, transformer in column_name_to_transformer.items():
             if column in self._keys and not type(transformer) in (AnonymizedFaker, RegexGenerator):
-                raise InvalidPreprocessingError(
+                raise SynthesizerInputError(
                     f"Invalid transformer '{transformer.__class__.__name__}' for a primary "
                     f"or alternate key '{column}'. Please use 'AnonymizedFaker' or "
                     "'RegexGenerator' instead."
