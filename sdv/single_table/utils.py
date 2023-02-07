@@ -285,7 +285,11 @@ def unflatten_dict(flat):
     return unflattened
 
 
-def _validate_numerical_distributions(numerical_distributions, metadata_columns):
+def validate_numerical_distributions(numerical_distributions, metadata_columns):
+    """Validate ``numerical_distributions``.
+
+    Raise an error if it's not None or dict, or if its columns must be present in the metadata.
+    """
     if numerical_distributions:
         if not isinstance(numerical_distributions, dict):
             raise TypeError('numerical_distributions can only be None or a dict instance.')

@@ -5,7 +5,7 @@ import rdt
 
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
-from sdv.single_table.utils import _validate_numerical_distributions
+from sdv.single_table.utils import validate_numerical_distributions
 
 
 class CopulaGANSynthesizer(CTGANSynthesizer):
@@ -136,7 +136,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             cuda=cuda,
         )
 
-        _validate_numerical_distributions(numerical_distributions, self.metadata._columns)
+        validate_numerical_distributions(numerical_distributions, self.metadata._columns)
         self.numerical_distributions = numerical_distributions or {}
         self.default_distribution = default_distribution or 'beta'
 
