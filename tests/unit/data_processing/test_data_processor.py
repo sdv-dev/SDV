@@ -86,7 +86,6 @@ class TestDataProcessor:
         assert data_processor.fitted is False
         assert data_processor._dtypes is None
         assert data_processor.formatters == {}
-        assert data_processor._anonymized_columns == []
         assert data_processor._keys == ['col_2', 'col']
         assert data_processor._keys_generators == {}
         assert data_processor._prepared_for_fitting is False
@@ -1123,7 +1122,6 @@ class TestDataProcessor:
         first_name_transformer = config['transformers']['first_name']
         assert first_name_transformer == 'AnonymizedFaker'
         assert primary_key_transformer == 'RegexGenerator'
-        assert sorted(dp._anonymized_columns) == sorted(['first_name', 'email'])
 
         datetime_transformer = config['transformers']['date']
         assert isinstance(datetime_transformer, UnixTimestampEncoder)
@@ -1155,6 +1153,21 @@ class TestDataProcessor:
         )
         with pytest.raises(NotFittedError, match=error_msg):
             dp.update_transformers({'column': None})
+
+    def test_update_transformers_for_key(self):
+        """Test when ``transformer`` is not ``AnonymizedFaker`` or ``RegexGenerator`` for keys."""
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        dp._keys = ['pk_column', 'b']
+        dp._hyper_transformer = Mock()
+
+        # Run and Assert
+        error_msg = re.escape(
+            "Invalid transformer 'FloatFormatter' for a primary or alternate key 'pk_column'. "
+            "Please use 'AnonymizedFaker' or 'RegexGenerator' instead."
+        )
+        with pytest.raises(SynthesizerInputError, match=error_msg):
+            dp.update_transformers({'pk_column': FloatFormatter()})
 
     @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
     def test__fit_hyper_transformer(self, ht_mock):
@@ -1787,7 +1800,6 @@ class TestDataProcessor:
         # Setup
         constraint_mock = Mock()
         dp = DataProcessor(SingleTableMetadata())
-        dp._anonymized_columns = ['d']
         dp.fitted = True
         dp.metadata = Mock()
         dp.metadata._columns = {'a': None, 'b': None, 'c': None, 'd': None}
