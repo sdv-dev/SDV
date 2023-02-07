@@ -11,7 +11,7 @@ import scipy
 from copulas import multivariate
 from rdt.transformers import OneHotEncoder
 
-from sdv.errors import NonParametricError, SynthesizerInputError
+from sdv.errors import NonParametricError
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.single_table.utils import flatten_dict, unflatten_dict, validate_numerical_distributions
 
@@ -85,19 +85,6 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             raise ValueError(error_message)
 
         return cls._DISTRIBUTIONS[distribution]
-
-    def _validate_numerical_distributions(self, numerical_distributions):
-        if numerical_distributions:
-            if not isinstance(numerical_distributions, dict):
-                raise TypeError('numerical_distributions can only be None or a dict instance.')
-
-            invalid_columns = numerical_distributions.keys() - set(self.metadata._columns)
-            if invalid_columns:
-                raise SynthesizerInputError(
-                    'Invalid column names found in the numerical_distributions dictionary '
-                    f'{invalid_columns}. The column names you provide must be present '
-                    'in the metadata.'
-                )
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
                  numerical_distributions=None, default_distribution=None):
