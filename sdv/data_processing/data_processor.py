@@ -17,6 +17,7 @@ from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
+from sdv.errors import SynthesizerInputError
 from sdv.metadata.anonymization import get_anonymized_transformer
 from sdv.metadata.single_table import SingleTableMetadata
 
@@ -216,8 +217,24 @@ class DataProcessor:
                     * ``constraint_class``: Name of the constraint to apply.
                     * ``constraint_parameters``: A dictionary with the constraint parameters.
         """
+        params = {'constraint_class', 'constraint_parameters'}
+        keys = constraint_dict.keys()
+        missing_params = params - keys
+        if missing_params:
+            raise SynthesizerInputError(
+                f'A constraint is missing required parameters {missing_params}. '
+                'Please add these parameters to your constraint definition.'
+            )
+
+        extra_params = keys - params
+        if extra_params:
+            raise SynthesizerInputError(
+                f'Unrecognized constraint parameter {extra_params}. '
+                'Please remove these parameters from your constraint definition.'
+            )
+
         constraint_class = constraint_dict['constraint_class']
-        constraint_parameters = constraint_dict.get('constraint_parameters', {})
+        constraint_parameters = constraint_dict['constraint_parameters']
         try:
             if constraint_class in self._custom_constraint_classes:
                 constraint_class = self._custom_constraint_classes[constraint_class]
