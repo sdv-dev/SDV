@@ -131,6 +131,30 @@ class TestGaussianCopulaSynthesizer:
             'default_distribution': 'beta'
         }
 
+    @patch('sdv.single_table.copulas.LOGGER')
+    def test__fit_logging(self, mock_logger):
+        """Test a message is logged.
+
+        A message should be logged if the columns passed in ``numerical_distributions``
+        were renamed/dropped during preprocessing.
+        """
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('col', sdtype='numerical')
+        numerical_distributions = {'col': 'gamma'}
+        instance = GaussianCopulaSynthesizer(
+            metadata, numerical_distributions=numerical_distributions)
+        processed_data = pd.DataFrame({'updated_col': [1, 2, 3]})
+
+        # Run
+        instance._fit(processed_data)
+
+        # Assert
+        mock_logger.info.assert_called_once_with(
+            "Requested distribution 'gamma' cannot be applied to column 'col' "
+            'because it no longer exists after preprocessing.'
+        )
+
     @patch('sdv.single_table.copulas.warnings')
     @patch('sdv.single_table.copulas.multivariate')
     def test__fit(self, mock_multivariate, mock_warnings):
