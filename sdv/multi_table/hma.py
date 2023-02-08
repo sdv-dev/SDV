@@ -88,7 +88,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
     def _get_foreign_keys(self, table_name, child_name):
         foreign_keys = []
-        for relation in self.metadata._relationships:
+        for relation in self.metadata.relationships:
             if table_name == relation['parent_table_name'] and\
                child_name == relation['child_table_name']:
                 foreign_keys.append(deepcopy(relation['child_foreign_key']))

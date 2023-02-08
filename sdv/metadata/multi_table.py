@@ -23,7 +23,7 @@ class MultiTableMetadata:
 
     def __init__(self):
         self.tables = {}
-        self._relationships = []
+        self.relationships = []
 
     def _validate_missing_relationship_keys(self, parent_table_name, parent_primary_key,
                                             child_table_name, child_foreign_key):
@@ -137,7 +137,7 @@ class MultiTableMetadata:
 
     def _validate_relationship_does_not_exist(self, parent_table_name, parent_primary_key,
                                               child_table_name, child_foreign_key):
-        for relationship in self._relationships:
+        for relationship in self.relationships:
             already_exists = (
                 relationship['parent_table_name'] == parent_table_name and
                 relationship['parent_primary_key'] == parent_primary_key and
@@ -176,7 +176,7 @@ class MultiTableMetadata:
 
     def _get_child_map(self):
         child_map = defaultdict(set)
-        for relation in self._relationships:
+        for relation in self.relationships:
             parent_name = relation['parent_table_name']
             child_name = relation['child_table_name']
             child_map[parent_name].add(child_name)
@@ -223,7 +223,7 @@ class MultiTableMetadata:
         )
         self._validate_child_map_circular_relationship(child_map)
 
-        self._relationships.append({
+        self.relationships.append({
             'parent_table_name': parent_table_name,
             'child_table_name': child_table_name,
             'parent_primary_key': deepcopy(parent_primary_key),
@@ -446,7 +446,7 @@ class MultiTableMetadata:
 
     def _get_parent_map(self):
         parent_map = defaultdict(set)
-        for relation in self._relationships:
+        for relation in self.relationships:
             parent_name = relation['parent_table_name']
             child_name = relation['child_table_name']
             parent_map[child_name].add(parent_name)
@@ -461,7 +461,7 @@ class MultiTableMetadata:
         """
         errors = []
         self._validate_single_table(errors)
-        for relation in self._relationships:
+        for relation in self.relationships:
             self._append_relationships_errors(errors, self._validate_relationship, **relation)
 
         parent_map = self._get_parent_map()
@@ -537,7 +537,7 @@ class MultiTableMetadata:
         else:
             nodes = {table_name: None for table_name in self.tables}
 
-        for relationship in self._relationships:
+        for relationship in self.relationships:
             parent = relationship.get('parent_table_name')
             child = relationship.get('child_table_name')
             foreign_key = relationship.get('child_foreign_key')
@@ -574,7 +574,7 @@ class MultiTableMetadata:
             table_dict.pop('METADATA_SPEC_VERSION', None)
             metadata['tables'][table_name] = table_dict
 
-        metadata['relationships'] = deepcopy(self._relationships)
+        metadata['relationships'] = deepcopy(self.relationships)
         metadata['METADATA_SPEC_VERSION'] = self.METADATA_SPEC_VERSION
         return metadata
 
@@ -589,7 +589,7 @@ class MultiTableMetadata:
             self.tables[table_name] = SingleTableMetadata._load_from_dict(table_dict)
 
         for relationship in metadata.get('relationships', []):
-            self._relationships.append(relationship)
+            self.relationships.append(relationship)
 
     @classmethod
     def _load_from_dict(cls, metadata):

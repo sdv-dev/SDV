@@ -112,7 +112,7 @@ class BaseMultiTableSynthesizer:
 
     def _get_all_foreign_keys(self, table_name):
         foreign_keys = []
-        for relation in self.metadata._relationships:
+        for relation in self.metadata.relationships:
             if table_name == relation['child_table_name']:
                 foreign_keys.append(deepcopy(relation['child_foreign_key']))
 
@@ -121,7 +121,7 @@ class BaseMultiTableSynthesizer:
     def _validate_foreign_keys(self, data):
         error_msg = None
         errors = []
-        for relation in self.metadata._relationships:
+        for relation in self.metadata.relationships:
             child_table = data.get(relation['child_table_name'])
             parent_table = data.get(relation['parent_table_name'])
 

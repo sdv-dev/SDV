@@ -23,7 +23,7 @@ def test_multi_table_metadata():
         'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
     }
     assert instance.tables == {}
-    assert instance._relationships == []
+    assert instance.relationships == []
 
 
 def test_upgrade_metadata():

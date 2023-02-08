@@ -84,7 +84,7 @@ class TestMultiTableMetadata:
 
         # Assert
         assert instance.tables == {}
-        assert instance._relationships == []
+        assert instance.relationships == []
 
     def test__validate_missing_relationship_keys_foreign_key(self):
         """Test the ``_validate_missing_relationship_keys`` method of ``MultiTableMetadata``.
@@ -322,7 +322,7 @@ class TestMultiTableMetadata:
         """Test the method raises an error if an existing relationship is added."""
         # Setup
         metadata = MultiTableMetadata()
-        metadata._relationships = [
+        metadata.relationships = [
             {
                 'parent_table_name': 'users',
                 'child_table_name': 'sessions',
@@ -466,7 +466,7 @@ class TestMultiTableMetadata:
             'users': parent_table,
             'sessions': child_table,
         }
-        instance._relationships = [
+        instance.relationships = [
             {
                 'parent_table_name': 'users',
                 'child_table_name': 'sessions',
@@ -495,7 +495,7 @@ class TestMultiTableMetadata:
         """Test the ``add_relationship`` method of ``MultiTableMetadata``.
 
         Test that when passing a valid ``relationship`` this is being added to the
-        ``instance._relationships``.
+        ``instance.relationships``.
 
         Setup:
             - Instance of ``MultiTableMetadata``.
@@ -513,7 +513,7 @@ class TestMultiTableMetadata:
             - ``child_foreign_key`` string representing the ``foreing_Key`` of the child table.
 
         Side Effects:
-            - ``instance._relationships`` has been updated.
+            - ``instance.relationships`` has been updated.
         """
         # Setup
         instance = MultiTableMetadata()
@@ -544,7 +544,7 @@ class TestMultiTableMetadata:
         instance.add_relationship('users', 'sessions', 'id', 'user_id')
 
         # Assert
-        instance._relationships == [
+        instance.relationships == [
             {
                 'parent_table_name': 'users',
                 'child_table_name': 'sessions',
@@ -819,7 +819,7 @@ class TestMultiTableMetadata:
         instance.tables['transactions'].columns['session_id']['sdtype'] = 'datetime'
         instance.tables['payments'].columns['date']['sdtype'] = 'text'
         instance.tables['payments'].columns['date']['regex_format'] = '[A-z{'
-        instance._relationships.pop(-1)
+        instance.relationships.pop(-1)
 
         # Run
         error_msg = re.escape(
@@ -926,7 +926,7 @@ class TestMultiTableMetadata:
 
         Setup:
             - Instance of ``MultiTableMetadata``.
-            - Add mocked values to ``instance.tables`` and ``instance._relationships``.
+            - Add mocked values to ``instance.tables`` and ``instance.relationships``.
         Mock:
             - Mock ``SingleTableMetadata`` like object to ``instance.tables``.
 
@@ -953,7 +953,7 @@ class TestMultiTableMetadata:
             'accounts': table_accounts,
             'branches': table_branches
         }
-        instance._relationships = [
+        instance.relationships = [
             {
                 'parent_table_name': 'accounts',
                 'parent_primary_key': 'id',
@@ -1004,7 +1004,7 @@ class TestMultiTableMetadata:
             - Mock ``SingleTableMetadata`` from ``sdv.metadata.multi_table``
 
         Side Effects:
-            - ``instance`` now contains ``instance.tables`` and ``instance._relationships``.
+            - ``instance`` now contains ``instance.tables`` and ``instance.relationships``.
             - ``SingleTableMetadata._load_from_dict`` has been called.
         """
         # Setup
@@ -1050,7 +1050,7 @@ class TestMultiTableMetadata:
             'branches': single_table_branches
         }
 
-        assert instance._relationships == [
+        assert instance.relationships == [
             {
                 'parent_table_name': 'accounts',
                 'parent_primary_key': 'id',
@@ -1073,7 +1073,7 @@ class TestMultiTableMetadata:
             - Mock ``SingleTableMetadata`` from ``sdv.metadata.multi_table``
 
         Output:
-            - ``instance`` that contains ``instance.tables`` and ``instance._relationships``.
+            - ``instance`` that contains ``instance.tables`` and ``instance.relationships``.
 
         Side Effects:
             - ``SingleTableMetadata._load_from_dict`` has been called.
@@ -1119,7 +1119,7 @@ class TestMultiTableMetadata:
             'branches': single_table_branches
         }
 
-        assert instance._relationships == [
+        assert instance.relationships == [
             {
                 'parent_table_name': 'accounts',
                 'parent_primary_key': 'id',
