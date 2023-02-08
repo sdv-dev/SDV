@@ -271,6 +271,7 @@ class DataProcessor:
             raise InvalidConstraintsError(errors)
 
         self._constraints_list.extend(validated_constraints)
+        self._prepared_for_fitting = False
 
     def get_constraints(self):
         """Get a list of the current constraints that will be used.
@@ -410,6 +411,34 @@ class DataProcessor:
 
         return deepcopy(self._transformers_by_sdtype[sdtype])
 
+    def _update_constraint_transformers(self, data, columns_created_by_constraints, config):
+        missing_columns = set(columns_created_by_constraints) - config['transformers'].keys()
+        for column in missing_columns:
+            dtype_kind = data[column].dtype.kind
+            if dtype_kind in ('i', 'f'):
+                config['sdtypes'][column] = 'numerical'
+                config['transformers'][column] = rdt.transformers.FloatFormatter(
+                    missing_value_replacement='mean',
+                    model_missing_values=False,
+                    enforce_min_max_values=self._enforce_min_max_values
+                )
+            else:
+                sdtype = self._DTYPE_TO_SDTYPE.get(dtype_kind, 'categorical')
+                config['sdtypes'][column] = sdtype
+                config['transformers'][column] = self._get_transformer_instance(sdtype, {})
+
+        # Remove columns that have been dropped by the constraint
+        for column in list(config['sdtypes'].keys()):
+            if column not in data:
+                LOGGER.info(
+                    f"A constraint has dropped the column '{column}', removing the transformer "
+                    "from the 'HyperTransformer'."
+                )
+                config['sdtypes'].pop(column)
+                config['transformers'].pop(column)
+
+        return config
+
     def _create_config(self, data, columns_created_by_constraints):
         sdtypes = {}
         transformers = {}
@@ -436,20 +465,10 @@ class DataProcessor:
                     column_metadata
                 )
 
-        for column in columns_created_by_constraints:
-            dtype_kind = data[column].dtype.kind
-            if dtype_kind in ('i', 'f'):
-                sdtypes[column] = 'numerical'
-                transformers[column] = rdt.transformers.FloatFormatter(
-                    missing_value_replacement='mean',
-                    model_missing_values=False,
-                )
-            else:
-                sdtype = self._DTYPE_TO_SDTYPE.get(dtype_kind, 'categorical')
-                sdtypes[column] = sdtype
-                transformers[column] = self._get_transformer_instance(sdtype, {})
+        config = {'transformers': transformers, 'sdtypes': sdtypes}
+        config = self._update_constraint_transformers(data, columns_created_by_constraints, config)
 
-        return {'transformers': transformers, 'sdtypes': sdtypes}
+        return config
 
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
@@ -538,12 +557,23 @@ class DataProcessor:
             constrained = self._fit_transform_constraints(data)
             columns_created_by_constraints = set(constrained.columns) - set(data.columns)
 
-            if not self._hyper_transformer.get_config().get('sdtypes'):
+            config = self._hyper_transformer.get_config()
+            missing_columns = columns_created_by_constraints - config.get('sdtypes').keys()
+            if not config.get('sdtypes'):
                 LOGGER.info((
                     'Setting the configuration for the ``HyperTransformer`` '
                     f'for table {self.table_name}'
                 ))
                 config = self._create_config(constrained, columns_created_by_constraints)
+                self._hyper_transformer.set_config(config)
+
+            elif missing_columns:
+                config = self._update_constraint_transformers(
+                    constrained,
+                    missing_columns,
+                    config
+                )
+                self._hyper_transformer = rdt.HyperTransformer()
                 self._hyper_transformer.set_config(config)
 
             self._prepared_for_fitting = True
