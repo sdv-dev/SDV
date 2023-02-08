@@ -1280,7 +1280,7 @@ class Unique(Constraint):
         else:
             keys.add(metadata.primary_key)
 
-        for key in metadata._alternate_keys:
+        for key in metadata.alternate_keys:
             if isinstance(key, tuple):
                 keys.update(key)
             else:

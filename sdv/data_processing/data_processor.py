@@ -105,7 +105,7 @@ class DataProcessor:
         self.formatters = {}
         self._primary_key = self.metadata.primary_key
         self._prepared_for_fitting = False
-        self._keys = deepcopy(self.metadata._alternate_keys)
+        self._keys = deepcopy(self.metadata.alternate_keys)
         self._keys_generators = {}
         if self._primary_key:
             self._keys.append(self._primary_key)

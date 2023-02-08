@@ -94,7 +94,7 @@ class BaseSynthesizer:
             raise InvalidDataError(errors)
 
     def _get_primary_and_alternate_keys(self):
-        keys = set(self.metadata._alternate_keys)
+        keys = set(self.metadata.alternate_keys)
         if self.metadata.primary_key:
             keys.update({self.metadata.primary_key})
 

@@ -1767,7 +1767,7 @@ class TestBaseSingleTableSynthesizer:
         assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
         assert instance.metadata.columns == {}
         assert instance.metadata.primary_key is None
-        assert instance.metadata._alternate_keys == []
+        assert instance.metadata.alternate_keys == []
         assert instance.metadata._sequence_key is None
         assert instance.metadata._sequence_index is None
         assert instance.metadata._version == 'SINGLE_TABLE_V1'

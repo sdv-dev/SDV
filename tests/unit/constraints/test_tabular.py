@@ -4110,7 +4110,7 @@ class TestUnique():
         # Setup
         metadata = Mock()
         metadata.primary_key = 'a'
-        metadata._alternate_keys = ['b', 'c']
+        metadata.alternate_keys = ['b', 'c']
 
         # Run
         Unique._validate_metadata_specific_to_constraint(
@@ -4131,7 +4131,7 @@ class TestUnique():
         # Setup
         metadata = Mock()
         metadata.primary_key = 'a'
-        metadata._alternate_keys = [('b', 'c'), 'd']
+        metadata.alternate_keys = [('b', 'c'), 'd']
 
         # Run
         error_message = re.escape(

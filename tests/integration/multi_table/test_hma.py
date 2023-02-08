@@ -54,7 +54,7 @@ def test_hma_reset_sampling(tmpdir):
     )
     data['characters']['ssn'] = [faker.lexify() for _ in range(len(data['characters']))]
     for table in metadata._tables.values():
-        table._alternate_keys = []
+        table.alternate_keys = []
 
     hmasynthesizer = HMASynthesizer(metadata)
 

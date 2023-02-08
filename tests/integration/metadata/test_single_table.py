@@ -28,7 +28,7 @@ def test_single_table_metadata():
     assert instance._version == 'SINGLE_TABLE_V1'
     assert instance.primary_key is None
     assert instance._sequence_key is None
-    assert instance._alternate_keys == []
+    assert instance.alternate_keys == []
     assert instance._sequence_index is None
 
 
@@ -66,7 +66,7 @@ def test_validate_errors():
         'col10': {'sdtype': 'text', 'regex_format': '[A-{6}'},
     }
     instance.primary_key = 10
-    instance._alternate_keys = 'col1'
+    instance.alternate_keys = 'col1'
     instance._sequence_key = ('col3', 'col1')
     instance._sequence_index = 'col3'
 
