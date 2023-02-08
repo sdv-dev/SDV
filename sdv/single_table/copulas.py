@@ -13,7 +13,9 @@ from rdt.transformers import OneHotEncoder
 
 from sdv.errors import NonParametricError
 from sdv.single_table.base import BaseSingleTableSynthesizer
-from sdv.single_table.utils import flatten_dict, unflatten_dict, validate_numerical_distributions
+from sdv.single_table.utils import (
+    flatten_dict, log_numerical_distributions_error, unflatten_dict,
+    validate_numerical_distributions)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -111,17 +113,11 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
-        unseen_columns = self._numerical_distributions.keys() - set(processed_data.columns)
-        for column in unseen_columns:
-            LOGGER.info(
-                f"Requested distribution '{self.numerical_distributions[column]}' "
-                f"cannot be applied to column '{column}' because it no longer "
-                'exists after preprocessing.'
-            )
-
+        log_numerical_distributions_error(
+            self.numerical_distributions, processed_data.columns, LOGGER)
         self._num_rows = len(processed_data)
-        numerical_distributions = deepcopy(self._numerical_distributions)
 
+        numerical_distributions = deepcopy(self._numerical_distributions)
         for column in processed_data.columns:
             if column not in numerical_distributions:
                 numerical_distributions[column] = self._numerical_distributions.get(

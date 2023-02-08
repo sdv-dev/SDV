@@ -6,7 +6,8 @@ import rdt
 
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
-from sdv.single_table.utils import validate_numerical_distributions
+from sdv.single_table.utils import (
+    log_numerical_distributions_error, validate_numerical_distributions)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -182,16 +183,10 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
-        unseen_columns = self._numerical_distributions.keys() - set(processed_data.columns)
-        for column in unseen_columns:
-            LOGGER.info(
-                f"Requested distribution '{self.numerical_distributions[column]}' "
-                f"cannot be applied to column '{column}' because it no longer "
-                'exists after preprocessing.'
-            )
+        log_numerical_distributions_error(
+            self.numerical_distributions, processed_data.columns, LOGGER)
 
         gaussian_normalizer_config = self._create_gaussian_normalizer_config(processed_data)
-
         self._gaussian_normalizer_hyper_transformer = rdt.HyperTransformer()
         self._gaussian_normalizer_hyper_transformer.set_config(gaussian_normalizer_config)
         processed_data = self._gaussian_normalizer_hyper_transformer.fit_transform(processed_data)
