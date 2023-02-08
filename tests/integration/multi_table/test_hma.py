@@ -235,3 +235,57 @@ def test_hma_custom_constraint_loaded_from_file():
     # Run - sample
     sampled = synthesizer.sample(10)
     assert all(sampled['parent']['numerical_col'] > 1)
+
+
+def test_hma_with_inequality_constraint():
+    """Test that ensures that when new columns are created by the constraint this still works."""
+    # Setup
+    parent_table = pd.DataFrame(data={
+        'id': [1, 2, 3, 4, 5],
+        'column': [1.2, 2.1, 2.2, 2.1, 1.4]
+    })
+
+    child_table = pd.DataFrame(data={
+        'id': [1, 2, 3, 4, 5],
+        'parent_id': [1, 1, 3, 2, 1],
+        'low_column': [1, 3, 3, 1, 2],
+        'high_column': [2, 4, 5, 2, 4]
+    })
+
+    data = {
+        'parent_table': parent_table,
+        'child_table': child_table
+    }
+
+    metadata = MultiTableMetadata()
+    metadata.detect_table_from_dataframe(table_name='parent_table', data=parent_table)
+    metadata.detect_table_from_dataframe(table_name='child_table', data=child_table)
+
+    metadata.set_primary_key(table_name='parent_table', column_name='id')
+    metadata.set_primary_key(table_name='child_table', column_name='id')
+
+    metadata.add_relationship(
+        parent_table_name='parent_table',
+        child_table_name='child_table',
+        parent_primary_key='id',
+        child_foreign_key='parent_id'
+    )
+
+    constraint = {
+        'constraint_class': 'Inequality',
+        'table_name': 'child_table',
+        'constraint_parameters': {
+            'low_column_name': 'low_column',
+            'high_column_name': 'high_column'
+        }
+    }
+
+    synthesizer = HMASynthesizer(metadata)
+
+    # Run
+    synthesizer.add_constraints(constraints=[constraint])
+    synthesizer.fit(data)
+    sampled = synthesizer.sample(10)
+
+    # Assert
+    assert all(sampled['child_table']['low_column'] < sampled['child_table']['high_column'])
