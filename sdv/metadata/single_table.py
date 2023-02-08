@@ -144,6 +144,13 @@ class SingleTableMetadata:
             self._validate_datetime(column_name, **kwargs)
         elif sdtype == 'text':
             self._validate_text(column_name, **kwargs)
+        if 'pii' in kwargs:
+            pii_value = kwargs['pii']
+            if not isinstance(pii_value, bool):
+                raise InvalidMetadataError(
+                    f"Parameter 'pii' is set to an invalid attribute ({pii_value}). "
+                    'Expected a value of True or False.'
+                )
 
     def add_column(self, column_name, **kwargs):
         """Add a column to the ``SingleTableMetadata``.
