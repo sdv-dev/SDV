@@ -146,14 +146,18 @@ class TestBaseSingleTableSynthesizer:
             'name': 'FrequencyEncoder',
             'salary': 'FloatFormatter'
         }
+        instance.metadata._columns = {
+            'salary': {'sdtype': 'numerical'},
+            'name': {'sdtype': 'categorical'}
+        }
 
         # Run
         result = BaseSingleTableSynthesizer.get_transformers(instance)
 
         # Assert
         assert result == {
-            'name': 'FrequencyEncoder',
-            'salary': 'FloatFormatter'
+            'salary': 'FloatFormatter',
+            'name': 'FrequencyEncoder'
         }
 
     def test_get_transformers_raises_an_error(self):
