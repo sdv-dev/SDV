@@ -231,11 +231,7 @@ class SingleTableMetadata:
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
         metadata = {}
         for key in self._KEYS:
-            if key in ('columns', 'primary_key', 'alternate_keys', 'sequence_key', 'sequence_index'):
-                value = getattr(self, f'{key}')
-            else:
-                value = \
-                    getattr(self, f'_{key}') if key != 'METADATA_SPEC_VERSION' else self._version
+            value = getattr(self, f'{key}') if key != 'METADATA_SPEC_VERSION' else self._version
             if value:
                 metadata[key] = value
 
@@ -503,10 +499,7 @@ class SingleTableMetadata:
         for key in instance._KEYS:
             value = deepcopy(metadata.get(key))
             if value:
-                if key in ('columns', 'primary_key', 'alternate_keys', 'sequence_key', 'sequence_index'):
-                    setattr(instance, f'{key}', value)
-                else:
-                    setattr(instance, f'_{key}', value)
+                setattr(instance, f'{key}', value)
 
         return instance
 
