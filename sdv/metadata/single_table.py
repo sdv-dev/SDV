@@ -120,7 +120,7 @@ class SingleTableMetadata:
         self.columns = {}
         self.primary_key = None
         self.alternate_keys = []
-        self._sequence_key = None
+        self.sequence_key = None
         self._sequence_index = None
         self._version = self.METADATA_SPEC_VERSION
 
@@ -231,7 +231,7 @@ class SingleTableMetadata:
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
         metadata = {}
         for key in self._KEYS:
-            if key in ('columns', 'primary_key', 'alternate_keys'):
+            if key in ('columns', 'primary_key', 'alternate_keys', 'sequence_key'):
                 value = getattr(self, f'{key}')
             else:
                 value = \
@@ -354,13 +354,13 @@ class SingleTableMetadata:
                 Name (or tuple of names) of the sequence key column(s).
         """
         self._validate_key(column_name, 'sequence')
-        if self._sequence_key is not None:
+        if self.sequence_key is not None:
             warnings.warn(
-                f'There is an existing sequence key {self._sequence_key}.'
+                f'There is an existing sequence key {self.sequence_key}.'
                 ' This key will be removed.'
             )
 
-        self._sequence_key = column_name
+        self.sequence_key = column_name
 
     def _validate_alternate_keys(self, column_names):
         if not isinstance(column_names, list) or \
@@ -430,7 +430,7 @@ class SingleTableMetadata:
 
     def _validate_sequence_index_not_in_sequence_key(self):
         """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
-        seq_key = self._sequence_key
+        seq_key = self.sequence_key
         sequence_key = set(cast_to_iterable(seq_key))
         if self._sequence_index in sequence_key or seq_key is None:
             index = {self._sequence_index}
@@ -455,7 +455,7 @@ class SingleTableMetadata:
         errors = []
         # Validate keys
         self._append_error(errors, self._validate_key, self.primary_key, 'primary')
-        self._append_error(errors, self._validate_key, self._sequence_key, 'sequence')
+        self._append_error(errors, self._validate_key, self.sequence_key, 'sequence')
         if self._sequence_index:
             self._append_error(errors, self._validate_sequence_index, self._sequence_index)
             self._append_error(errors, self._validate_sequence_index_not_in_sequence_key)
@@ -503,7 +503,7 @@ class SingleTableMetadata:
         for key in instance._KEYS:
             value = deepcopy(metadata.get(key))
             if value:
-                if key in ('columns', 'primary_key', 'alternate_keys'):
+                if key in ('columns', 'primary_key', 'alternate_keys', 'sequence_key'):
                     setattr(instance, f'{key}', value)
                 else:
                     setattr(instance, f'_{key}', value)

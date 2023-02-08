@@ -85,7 +85,7 @@ class PARSynthesizer(BaseSynthesizer):
             enforce_rounding=enforce_rounding,
         )
 
-        sequence_key = self.metadata._sequence_key
+        sequence_key = self.metadata.sequence_key
         self._sequence_key = list(cast_to_iterable(sequence_key)) if sequence_key else None
         if context_columns and not self._sequence_key:
             raise SynthesizerInputError(

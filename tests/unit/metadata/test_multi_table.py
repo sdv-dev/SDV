@@ -1781,7 +1781,7 @@ class TestMultiTableMetadata:
         assert list(instance._tables.keys()) == ['table1']
         assert instance._tables['table1'].columns == {'animals': {'type': 'categorical'}}
         assert instance._tables['table1'].primary_key == 'animals'
-        assert instance._tables['table1']._sequence_key is None
+        assert instance._tables['table1'].sequence_key is None
         assert instance._tables['table1'].alternate_keys == []
         assert instance._tables['table1']._sequence_index is None
         assert instance._tables['table1']._version == 'SINGLE_TABLE_V1'

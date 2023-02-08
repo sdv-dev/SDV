@@ -101,11 +101,11 @@ class BaseSynthesizer:
         return keys
 
     def _get_set_of_sequence_keys(self):
-        if isinstance(self.metadata._sequence_key, tuple):
-            return set(self.metadata._sequence_key)
+        if isinstance(self.metadata.sequence_key, tuple):
+            return set(self.metadata.sequence_key)
 
-        if isinstance(self.metadata._sequence_key, str):
-            return {self.metadata._sequence_key}
+        if isinstance(self.metadata.sequence_key, str):
+            return {self.metadata.sequence_key}
 
         return set()
 

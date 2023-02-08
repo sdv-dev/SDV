@@ -76,7 +76,7 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.columns == {}
         assert instance.primary_key is None
-        assert instance._sequence_key is None
+        assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance._sequence_index is None
         assert instance._version == 'SINGLE_TABLE_V1'
@@ -1198,7 +1198,7 @@ class TestSingleTableMetadata:
         instance.set_sequence_key('column')
 
         # Assert
-        assert instance._sequence_key == 'column'
+        assert instance.sequence_key == 'column'
 
     def test_set_sequence_key_tuple(self):
         """Test that ``set_sequence_key`` sets ``_sequence_key`` for tuples."""
@@ -1210,7 +1210,7 @@ class TestSingleTableMetadata:
         instance.set_sequence_key(('col1', 'col2'))
 
         # Assert
-        assert instance._sequence_key == ('col1', 'col2')
+        assert instance.sequence_key == ('col1', 'col2')
 
     @patch('sdv.metadata.single_table.warnings')
     def test_set_sequence_key_warning(self, warning_mock):
@@ -1228,7 +1228,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         instance.columns = {'column1': {'sdtype': 'numerical'}}
-        instance._sequence_key = 'column0'
+        instance.sequence_key = 'column0'
 
         # Run
         instance.set_sequence_key('column1')
@@ -1236,7 +1236,7 @@ class TestSingleTableMetadata:
         # Assert
         warning_msg = "There is an existing sequence key 'column0'. This key will be removed."
         assert warning_mock.warn.called_once_with(warning_msg)
-        assert instance._sequence_key == 'column1'
+        assert instance.sequence_key == 'column1'
 
     def test_add_alternate_keys_validation_dtype(self):
         """Test that ``add_alternate_keys`` crashes for invalid arguments.
@@ -1428,7 +1428,7 @@ class TestSingleTableMetadata:
         """Test the ``_validate_sequence_index_not_in_sequence_key`` method."""
         # Setup
         instance = SingleTableMetadata()
-        instance._sequence_key = ('abc', 'def')
+        instance.sequence_key = ('abc', 'def')
         instance._sequence_index = 'abc'
 
         err_msg = (
@@ -1456,7 +1456,7 @@ class TestSingleTableMetadata:
         instance.columns = {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
         instance.primary_key = 'col1'
         instance.alternate_keys = ['col2']
-        instance._sequence_key = 'col1'
+        instance.sequence_key = 'col1'
         instance._sequence_index = 'col2'
         instance._validate_key = Mock()
         instance._validate_alternate_keys = Mock()
@@ -1475,7 +1475,7 @@ class TestSingleTableMetadata:
 
         # Assert
         instance._validate_key.assert_has_calls(
-            [call(instance.primary_key, 'primary'), call(instance._sequence_key, 'sequence')]
+            [call(instance.primary_key, 'primary'), call(instance.sequence_key, 'sequence')]
         )
         instance._validate_column.assert_has_calls(
             [call('col1', sdtype='numerical'), call('col2', sdtype='numerical')]
@@ -1529,7 +1529,7 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.columns == {'my_column': 'value'}
         assert instance.primary_key == 'pk'
-        assert instance._sequence_key is None
+        assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance._sequence_index is None
         assert instance._version == 'SINGLE_TABLE_V1'
@@ -1643,7 +1643,7 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.columns == {'animals': {'type': 'categorical'}}
         assert instance.primary_key == 'animals'
-        assert instance._sequence_key is None
+        assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance._sequence_index is None
         assert instance._version == 'SINGLE_TABLE_V1'
