@@ -308,3 +308,14 @@ def validate_numerical_distributions(numerical_distributions, metadata_columns):
                 f'{invalid_columns}. The column names you provide must be present '
                 'in the metadata.'
             )
+
+
+def log_numerical_distributions_error(numerical_distributions, processed_data_columns, logger):
+    """Log error when numerical distributions columns don't exist anymore."""
+    unseen_columns = numerical_distributions.keys() - set(processed_data_columns)
+    for column in unseen_columns:
+        logger.info(
+            f"Requested distribution '{numerical_distributions[column]}' "
+            f"cannot be applied to column '{column}' because it no longer "
+            'exists after preprocessing.'
+        )

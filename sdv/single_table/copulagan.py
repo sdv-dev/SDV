@@ -1,11 +1,15 @@
 """Combination of GaussianCopula transformation and GANs."""
+import logging
 from copy import deepcopy
 
 import rdt
 
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
-from sdv.single_table.utils import validate_numerical_distributions
+from sdv.single_table.utils import (
+    log_numerical_distributions_error, validate_numerical_distributions)
+
+LOGGER = logging.getLogger(__name__)
 
 
 class CopulaGANSynthesizer(CTGANSynthesizer):
@@ -145,7 +149,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         )
         self._numerical_distributions = {
             field: GaussianCopulaSynthesizer.get_distribution_class(distribution)
-            for field, distribution in (numerical_distributions or {}).items()
+            for field, distribution in self.numerical_distributions.items()
         }
 
     def _create_gaussian_normalizer_config(self, processed_data):
@@ -179,8 +183,10 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
-        gaussian_normalizer_config = self._create_gaussian_normalizer_config(processed_data)
+        log_numerical_distributions_error(
+            self.numerical_distributions, processed_data.columns, LOGGER)
 
+        gaussian_normalizer_config = self._create_gaussian_normalizer_config(processed_data)
         self._gaussian_normalizer_hyper_transformer = rdt.HyperTransformer()
         self._gaussian_normalizer_hyper_transformer.set_config(gaussian_normalizer_config)
         processed_data = self._gaussian_normalizer_hyper_transformer.fit_transform(processed_data)
