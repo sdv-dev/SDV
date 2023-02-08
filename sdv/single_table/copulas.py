@@ -1,4 +1,5 @@
 """Wrappers around copulas models."""
+import logging
 import warnings
 from copy import deepcopy
 
@@ -12,7 +13,11 @@ from rdt.transformers import OneHotEncoder
 
 from sdv.errors import NonParametricError
 from sdv.single_table.base import BaseSingleTableSynthesizer
-from sdv.single_table.utils import flatten_dict, unflatten_dict, validate_numerical_distributions
+from sdv.single_table.utils import (
+    flatten_dict, log_numerical_distributions_error, unflatten_dict,
+    validate_numerical_distributions)
+
+LOGGER = logging.getLogger(__name__)
 
 
 class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
@@ -97,7 +102,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         self._default_distribution = self.get_distribution_class(self.default_distribution)
         self._numerical_distributions = {
             field: self.get_distribution_class(distribution)
-            for field, distribution in (numerical_distributions or {}).items()
+            for field, distribution in self.numerical_distributions.items()
         }
         self._num_rows = None
 
@@ -108,9 +113,11 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
+        log_numerical_distributions_error(
+            self.numerical_distributions, processed_data.columns, LOGGER)
         self._num_rows = len(processed_data)
-        numerical_distributions = deepcopy(self._numerical_distributions)
 
+        numerical_distributions = deepcopy(self._numerical_distributions)
         for column in processed_data.columns:
             if column not in numerical_distributions:
                 numerical_distributions[column] = self._numerical_distributions.get(
