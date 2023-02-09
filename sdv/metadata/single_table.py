@@ -107,6 +107,15 @@ class SingleTableMetadata:
                 f"Invalid regex format string '{regex}' for text column '{column_name}'."
             ) from exception
 
+    @staticmethod
+    def _validate_pii(column_name, **kwargs):
+        pii_value = kwargs['pii']
+        if not isinstance(pii_value, bool):
+            raise InvalidMetadataError(
+                f"Parameter 'pii' is set to an invalid attribute ('{pii_value}') for column "
+                f"'{column_name}'. Expected a value of True or False."
+            )
+
     def __init__(self):
         self._columns = {}
         self._primary_key = None
@@ -144,6 +153,8 @@ class SingleTableMetadata:
             self._validate_datetime(column_name, **kwargs)
         elif sdtype == 'text':
             self._validate_text(column_name, **kwargs)
+        elif 'pii' in kwargs:
+            self._validate_pii(column_name, **kwargs)
 
     def add_column(self, column_name, **kwargs):
         """Add a column to the ``SingleTableMetadata``.
@@ -159,6 +170,8 @@ class SingleTableMetadata:
             - ``ValueError`` if the ``kwargs`` do not contain ``sdtype``.
             - ``ValueError`` if the column has unexpected values or ``kwargs`` for the given
               ``sdtype``.
+            - ``InvalidMetadataError`` if the ``pii`` value is not ``True`` or ``False`` when
+               present.
         """
         if column_name in self._columns:
             raise ValueError(
@@ -198,6 +211,8 @@ class SingleTableMetadata:
             - ``ValueError`` if the column doesn't already exist in the ``SingleTableMetadata``.
             - ``ValueError`` if the column has unexpected values or ``kwargs`` for the current
               ``sdtype``.
+            - ``InvalidMetadataError`` if the ``pii`` value is not ``True`` or ``False`` when
+               present.
         """
         self._validate_column_exists(column_name)
         _kwargs = deepcopy(kwargs)
