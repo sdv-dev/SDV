@@ -19,7 +19,7 @@ def test_evaluate_quality():
     QualityReport.generate = Mock()
 
     # Run
-    quality_report = evaluate_quality(data1, data2, metadata)
+    evaluate_quality(data1, data2, metadata)
 
     # Assert
     QualityReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
