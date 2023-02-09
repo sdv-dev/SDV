@@ -482,27 +482,21 @@ class TestSingleTableMetadata:
         mock__validate_text.assert_called_once_with('phrase', regex_format='[A-z0-9]', pii=True)
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
-    def test__validate_column_pii_not_true_or_false(self, mock__validate_kwargs):
+    def test__validate_pii_not_true_or_false(self, mock__validate_kwargs):
         """Test ``_validate_column`` method when ``pii`` is not ``True``or ``False``."""
-        # Setup
-        instance = SingleTableMetadata()
-
         # Run and Assert
         error_msg = re.escape(
-            "Parameter 'pii' is set to an invalid attribute (some_text). Expected a value of "
-            'True or False.'
+            "Parameter 'pii' is set to an invalid attribute ('some_text') for column 'address'. "
+            'Expected a value of True or False.'
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
-            instance._validate_column('address', 'address', pii='some_text')
+            SingleTableMetadata._validate_pii('address', pii='some_text')
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
-    def test__validate_column_pii(self, mock__validate_kwargs):
+    def test__validate_pii(self, mock__validate_kwargs):
         """Test ``_validate_column`` method when ``pii`` is ``True``or ``False``."""
-        # Setup
-        instance = SingleTableMetadata()
-
         # Run and Assert
-        instance._validate_column('address', 'address', pii=True)
+        SingleTableMetadata._validate_pii('address', pii=True)
 
     def test_update_column_sdtype(self):
         """Test that ``update_column`` updates the sdtype and keyword args for the given column."""
