@@ -52,7 +52,7 @@ class SingleTableMetadata:
     def _validate_numerical(self, column_name, **kwargs):
         representation = kwargs.get('computer_representation')
         if representation and representation not in self._NUMERICAL_REPRESENTATIONS:
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"Invalid value for 'computer_representation' '{representation}'"
                 f" for column '{column_name}'."
             )
@@ -64,14 +64,14 @@ class SingleTableMetadata:
             try:
                 formated_date = datetime.now().strftime(datetime_format)
             except Exception as exception:
-                raise ValueError(
+                raise InvalidMetadataError(
                     f"Invalid datetime format string '{datetime_format}' "
                     f"for datetime column '{column_name}'."
                 ) from exception
 
             matches = re.findall('(%.)|(%)', formated_date)
             if matches:
-                raise ValueError(
+                raise InvalidMetadataError(
                     f"Invalid datetime format string '{datetime_format}' "
                     f"for datetime column '{column_name}'."
                 )
@@ -81,18 +81,18 @@ class SingleTableMetadata:
         order = kwargs.get('order')
         order_by = kwargs.get('order_by')
         if order is not None and order_by is not None:
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"Categorical column '{column_name}' has both an 'order' and 'order_by' "
                 'attribute. Only 1 is allowed.'
             )
         if order_by is not None and order_by not in ('numerical_value', 'alphabetical'):
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"Unknown ordering method '{order_by}' provided for categorical column "
                 f"'{column_name}'. Ordering method must be 'numerical_value' or 'alphabetical'."
             )
         if (isinstance(order, list) and not len(order)) or\
            (not isinstance(order, list) and order is not None):
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"Invalid order value provided for categorical column '{column_name}'. "
                 "The 'order' must be a list with 1 or more elements."
             )
@@ -103,7 +103,7 @@ class SingleTableMetadata:
         try:
             re.compile(regex)
         except Exception as exception:
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"Invalid regex format string '{regex}' for text column '{column_name}'."
             ) from exception
 
@@ -130,14 +130,14 @@ class SingleTableMetadata:
         if unexpected_kwargs:
             unexpected_kwargs = sorted(unexpected_kwargs)
             unexpected_kwargs = ', '.join(unexpected_kwargs)
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'.")
 
     def _validate_sdtype(self, sdtype):
         is_default_sdtype = sdtype in self._SDTYPE_KWARGS
         is_anonymized_type = sdtype in SDTYPE_ANONYMIZERS
         if not (is_default_sdtype or is_anonymized_type or is_faker_function(sdtype)):
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"Invalid sdtype : '{sdtype}' is not recognized. Please use one of the "
                 'supported SDV sdtypes.'
             )
@@ -166,22 +166,22 @@ class SingleTableMetadata:
                 Any additional key word arguments for the column, where ``sdtype`` is required.
 
         Raises:
-            - ``ValueError`` if the column already exists.
-            - ``ValueError`` if the ``kwargs`` do not contain ``sdtype``.
-            - ``ValueError`` if the column has unexpected values or ``kwargs`` for the given
+            - ``InvalidMetadataError`` if the column already exists.
+            - ``InvalidMetadataError`` if the ``kwargs`` do not contain ``sdtype``.
+            - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the given
               ``sdtype``.
             - ``InvalidMetadataError`` if the ``pii`` value is not ``True`` or ``False`` when
                present.
         """
         if column_name in self._columns:
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"Column name '{column_name}' already exists. Use 'update_column' "
                 'to update an existing column.'
             )
 
         sdtype = kwargs.get('sdtype')
         if sdtype is None:
-            raise ValueError(f"Please provide a 'sdtype' for column '{column_name}'.")
+            raise InvalidMetadataError(f"Please provide a 'sdtype' for column '{column_name}'.")
 
         self._validate_column(column_name, **kwargs)
         column_kwargs = deepcopy(kwargs)
@@ -193,7 +193,7 @@ class SingleTableMetadata:
 
     def _validate_column_exists(self, column_name):
         if column_name not in self._columns:
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"Column name ('{column_name}') does not exist in the table. "
                 "Use 'add_column' to add new column."
             )
@@ -208,8 +208,8 @@ class SingleTableMetadata:
                 Any key word arguments that describe metadata for the column.
 
         Raises:
-            - ``ValueError`` if the column doesn't already exist in the ``SingleTableMetadata``.
-            - ``ValueError`` if the column has unexpected values or ``kwargs`` for the current
+            - ``InvalidMetadataError`` if the column doesn't already exist in the ``SingleTableMetadata``.
+            - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the current
               ``sdtype``.
             - ``InvalidMetadataError`` if the ``pii`` value is not ``True`` or ``False`` when
                present.
@@ -251,7 +251,7 @@ class SingleTableMetadata:
                 ``pandas.DataFrame`` to detect the metadata from.
         """
         if self._columns:
-            raise ValueError(
+            raise InvalidMetadataError(
                 'Metadata already exists. Create a new ``SingleTableMetadata`` '
                 'object to detect from other data sources.'
             )
@@ -274,7 +274,7 @@ class SingleTableMetadata:
                 function. Defaults to ``None``.
         """
         if self._columns:
-            raise ValueError(
+            raise InvalidMetadataError(
                 'Metadata already exists. Create a new ``SingleTableMetadata`` '
                 'object to detect from other data sources.'
             )
@@ -295,7 +295,7 @@ class SingleTableMetadata:
             {key for key in keys if self._columns[key]['sdtype'] in bad_sdtypes}
         )
         if categorical_keys:
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"The {key_type}_keys {categorical_keys} cannot be type 'categorical' or "
                 "'boolean'."
             )
@@ -304,12 +304,12 @@ class SingleTableMetadata:
         """Validate the primary and sequence keys."""
         if column_name is not None:
             if not self._validate_datatype(column_name):
-                raise ValueError(f"'{key_type}_key' must be a string or tuple of strings.")
+                raise InvalidMetadataError(f"'{key_type}_key' must be a string or tuple of strings.")
 
             keys = {column_name} if isinstance(column_name, str) else set(column_name)
             invalid_ids = keys - set(self._columns)
             if invalid_ids:
-                raise ValueError(
+                raise InvalidMetadataError(
                     f'Unknown {key_type} key values {invalid_ids}.'
                     ' Keys should be columns that exist in the table.'
                 )
@@ -358,7 +358,7 @@ class SingleTableMetadata:
     def _validate_alternate_keys(self, column_names):
         if not isinstance(column_names, list) or \
            not all(self._validate_datatype(column_name) for column_name in column_names):
-            raise ValueError(
+            raise InvalidMetadataError(
                 "'alternate_keys' must be a list of strings or a list of tuples of strings."
             )
 
@@ -368,13 +368,13 @@ class SingleTableMetadata:
 
         invalid_ids = keys - set(self._columns)
         if invalid_ids:
-            raise ValueError(
+            raise InvalidMetadataError(
                 f'Unknown alternate key values {invalid_ids}.'
                 ' Keys should be columns that exist in the table.'
             )
 
         if self._primary_key in column_names:
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"Invalid alternate key '{self._primary_key}'. The key is "
                 'already specified as a primary key.'
             )
@@ -397,18 +397,18 @@ class SingleTableMetadata:
 
     def _validate_sequence_index(self, column_name):
         if not isinstance(column_name, str):
-            raise ValueError("'sequence_index' must be a string.")
+            raise InvalidMetadataError("'sequence_index' must be a string.")
 
         if column_name not in self._columns:
             column_name = {column_name}
-            raise ValueError(
+            raise InvalidMetadataError(
                 f'Unknown sequence index value {column_name}.'
                 ' Keys should be columns that exist in the table.'
             )
 
         sdtype = self._columns[column_name].get('sdtype')
         if sdtype not in ['datetime', 'numerical']:
-            raise ValueError("The sequence_index must be of type 'datetime' or 'numerical'.")
+            raise InvalidMetadataError("The sequence_index must be of type 'datetime' or 'numerical'.")
 
     def set_sequence_index(self, column_name):
         """Set the metadata sequence index.
@@ -426,7 +426,7 @@ class SingleTableMetadata:
         sequence_key = set(cast_to_iterable(seq_key))
         if self._sequence_index in sequence_key or seq_key is None:
             index = {self._sequence_index}
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"'sequence_index' and 'sequence_key' have the same value {index}."
                 ' These columns must be different.'
             )
@@ -435,7 +435,7 @@ class SingleTableMetadata:
         """Inplace, append the produced error to the passed ``errors`` list."""
         try:
             method(*args, **kwargs)
-        except ValueError as e:
+        except InvalidMetadataError as e:
             errors.append(e)
 
     def validate(self):
@@ -516,7 +516,7 @@ class SingleTableMetadata:
         """
         metadata = read_json(filepath)
         if 'METADATA_SPEC_VERSION' not in metadata:
-            raise ValueError(
+            raise InvalidMetadataError(
                 'This metadata file is incompatible with the ``SingleTableMetadata`` '
                 'class and version.'
             )
@@ -539,14 +539,14 @@ class SingleTableMetadata:
                 String that represents the ``path`` to save the upgraded metadata to.
 
         Raises:
-            Raises a ``ValueError`` if the path already exists.
+            Raises a ``InvalidMetadataError`` if the path already exists.
         """
         validate_file_does_not_exist(new_filepath)
         old_metadata = read_json(old_filepath)
         if 'tables' in old_metadata:
             tables = old_metadata.get('tables')
             if len(tables) > 1:
-                raise ValueError(
+                raise InvalidMetadataError(
                     'There are multiple tables specified in the JSON. '
                     'Try using the MultiTableMetadata class to upgrade this file.'
                 )
