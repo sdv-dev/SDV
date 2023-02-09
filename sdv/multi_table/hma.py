@@ -484,7 +484,11 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         """Sample a single table and optionally its children."""
         if sampled_data is None:
             sampled_data = {}
-
+        
+        if not isinstance(scale, (float,int)) or type(scale) is bool:
+            raise TypeError('scale parameter can only be float or a int instance.')
+        elif scale<0 : 
+            raise ValueError('scale parameter must be >0.0.')
         num_rows = int(self._table_sizes[table_name] * scale)
 
         LOGGER.info('Sampling %s rows from table %s', num_rows, table_name)
