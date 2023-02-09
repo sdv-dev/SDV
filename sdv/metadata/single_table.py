@@ -170,7 +170,8 @@ class SingleTableMetadata:
             - ``ValueError`` if the ``kwargs`` do not contain ``sdtype``.
             - ``ValueError`` if the column has unexpected values or ``kwargs`` for the given
               ``sdtype``.
-            - ``ValueError`` if the ``pii`` value is not ``True`` or ``False`` when present.
+            - ``InvalidMetadataError`` if the ``pii`` value is not ``True`` or ``False`` when
+               present.
         """
         if column_name in self._columns:
             raise ValueError(
@@ -210,7 +211,8 @@ class SingleTableMetadata:
             - ``ValueError`` if the column doesn't already exist in the ``SingleTableMetadata``.
             - ``ValueError`` if the column has unexpected values or ``kwargs`` for the current
               ``sdtype``.
-            - ``ValueError`` if the ``pii`` value is not ``True`` or ``False`` when present.
+            - ``InvalidMetadataError`` if the ``pii`` value is not ``True`` or ``False`` when
+               present.
         """
         self._validate_column_exists(column_name)
         _kwargs = deepcopy(kwargs)
