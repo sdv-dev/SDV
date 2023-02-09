@@ -217,7 +217,8 @@ class BaseMultiTableSynthesizer:
         """
         for table_name, table_data in data.items():
             self._validate_table_name(table_name)
-            self._table_synthesizers[table_name].auto_assign_transformers(table_data)
+            synthesizer = self._table_synthesizers[table_name]
+            self._skip_foreign_key_transformations(synthesizer, table_name, table_data)
 
     def get_transformers(self, table_name):
         """Get a dictionary mapping of ``column_name`` and ``rdt.transformers``.
