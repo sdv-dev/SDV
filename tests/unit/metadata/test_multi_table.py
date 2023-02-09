@@ -558,6 +558,25 @@ class TestMultiTableMetadata:
             'users', 'id', 'sessions', 'user_id'
         )
 
+    def test_add_relationship_child_key_is_primary_key(self):
+        """Test that passing a primary key as ``child_foreign_key`` crashes."""
+        # Setup
+        table = pd.DataFrame({
+            'pk': [1, 2, 3],
+            'col1': [.1, .1, .2],
+            'col2': ['a', 'b', 'c']
+        })
+        metadata = MultiTableMetadata()
+        metadata.detect_table_from_dataframe('table', table)
+        metadata.set_primary_key('table', 'pk')
+        metadata.detect_table_from_dataframe('table2', table)
+        metadata.set_primary_key('table2', 'pk')
+
+        # Run and Assert
+        err_msg = 'A relationship must be specified between a primary key and a non-primary key.'
+        with pytest.raises(InvalidMetadataError, match=err_msg):
+            metadata.add_relationship('table', 'table2', 'pk', 'pk')
+
     def test__validate_single_table(self):
         """Test ``_validate_single_table``.
 
@@ -817,6 +836,38 @@ class TestMultiTableMetadata:
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.validate()
+
+    def test_validate_child_key_is_primary_key(self):
+        """Test it crashes if the child key is a primary key."""
+        # Setup
+        table = pd.DataFrame({
+            'pk': [1, 2, 3],
+            'col1': [.1, .1, .2],
+            'col2': ['a', 'b', 'c']
+        })
+        metadata = MultiTableMetadata()
+        metadata.detect_table_from_dataframe('table', table)
+        metadata.set_primary_key('table', 'pk')
+        metadata.detect_table_from_dataframe('table2', table)
+        metadata.set_primary_key('table2', 'pk')
+
+        metadata._relationships = [
+            {
+                'parent_table_name': 'table',
+                'parent_primary_key': 'pk',
+                'child_table_name': 'table2',
+                'child_foreign_key': 'pk',
+            }
+        ]
+
+        # Run and Assert
+        err_msg = re.escape(
+            'The metadata is not valid\n'
+            'Relationships:\n'
+            'A relationship must be specified between a primary key and a non-primary key.'
+        )
+        with pytest.raises(InvalidMetadataError, match=err_msg):
+            metadata.validate()
 
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
     def test_add_table(self, table_metadata_mock):
