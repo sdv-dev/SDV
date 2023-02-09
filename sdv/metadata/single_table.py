@@ -168,8 +168,8 @@ class SingleTableMetadata:
         Raises:
             - ``InvalidMetadataError`` if the column already exists.
             - ``InvalidMetadataError`` if the ``kwargs`` do not contain ``sdtype``.
-            - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the given
-              ``sdtype``.
+            - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the
+              given ``sdtype``.
             - ``InvalidMetadataError`` if the ``pii`` value is not ``True`` or ``False`` when
                present.
         """
@@ -208,8 +208,10 @@ class SingleTableMetadata:
                 Any key word arguments that describe metadata for the column.
 
         Raises:
-            - ``InvalidMetadataError`` if the column doesn't already exist in the ``SingleTableMetadata``.
-            - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the current
+            - ``InvalidMetadataError`` if the column doesn't already exist in the
+              ``SingleTableMetadata``.
+            - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the
+              current
               ``sdtype``.
             - ``InvalidMetadataError`` if the ``pii`` value is not ``True`` or ``False`` when
                present.
@@ -304,7 +306,8 @@ class SingleTableMetadata:
         """Validate the primary and sequence keys."""
         if column_name is not None:
             if not self._validate_datatype(column_name):
-                raise InvalidMetadataError(f"'{key_type}_key' must be a string or tuple of strings.")
+                raise InvalidMetadataError(
+                    f"'{key_type}_key' must be a string or tuple of strings.")
 
             keys = {column_name} if isinstance(column_name, str) else set(column_name)
             invalid_ids = keys - set(self._columns)
@@ -408,7 +411,8 @@ class SingleTableMetadata:
 
         sdtype = self._columns[column_name].get('sdtype')
         if sdtype not in ['datetime', 'numerical']:
-            raise InvalidMetadataError("The sequence_index must be of type 'datetime' or 'numerical'.")
+            raise InvalidMetadataError(
+                "The sequence_index must be of type 'datetime' or 'numerical'.")
 
     def set_sequence_index(self, column_name):
         """Set the metadata sequence index.

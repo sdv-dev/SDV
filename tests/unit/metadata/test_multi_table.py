@@ -107,7 +107,7 @@ class TestMultiTableMetadata:
             - ``child_foreign_key`` string.
 
         Side Effects:
-            - Raises ``ValueError`` stating that foreign key is unknown.
+            - Raises ``InvalidMetadataError`` stating that foreign key is unknown.
         """
         # Setup
         parent_table = Mock()
@@ -141,7 +141,7 @@ class TestMultiTableMetadata:
             'Relationship between tables (users, sessions) contains '
             "an unknown foreign key {'id'}."
         )
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             MultiTableMetadata._validate_missing_relationship_keys(
                 instance,
                 parent_table_name,
@@ -171,7 +171,7 @@ class TestMultiTableMetadata:
             - ``child_foreign_key`` a string that is not in the ``parent_table._columns``.
 
         Side Effects:
-            - Raises ``ValueError`` stating that primary key is unknown.
+            - Raises ``InvalidMetadataError`` stating that primary key is unknown.
         """
         # Setup
         parent_table = Mock()
@@ -186,7 +186,7 @@ class TestMultiTableMetadata:
             'Relationship between tables (users, sessions) contains '
             "an unknown primary key {'primary_key'}."
         )
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             MultiTableMetadata._validate_missing_relationship_keys(
                 parent_table,
                 parent_table_name,
@@ -211,7 +211,7 @@ class TestMultiTableMetadata:
 
         # Run
         error_msg = re.escape("Relationship contains an unknown table {'session'}.")
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             MultiTableMetadata._validate_no_missing_tables_in_relationship(
                 'users',
                 'session',
@@ -241,7 +241,7 @@ class TestMultiTableMetadata:
             "Relationship between tables ('users', 'sessions') is invalid. "
             'Primary key has length 2 but the foreign key has length 1.'
         )
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             MultiTableMetadata._validate_relationship_key_length(
                 parent_table_name,
                 parent_primary_key,
@@ -274,7 +274,7 @@ class TestMultiTableMetadata:
             - ``parent_table`` to match the ``SingleTableMetadata`` description.
 
         Side Effcts:
-            - A ``ValueError`` is being raised because the ``sdtype`` on one of the keys
+            - An ``InvalidMetadataError`` is being raised because the ``sdtype`` on one of the keys
               does not match.
         """
         # Setup
@@ -309,7 +309,7 @@ class TestMultiTableMetadata:
             "Relationship between tables ('users', 'sessions') is invalid. "
             'The primary and foreign key columns are not the same type.'
         )
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             MultiTableMetadata._validate_relationship_sdtypes(
                 instance,
                 parent_table_name,
@@ -339,7 +339,7 @@ class TestMultiTableMetadata:
 
         # Run and Assert
         error_msg = 'This relationship has already been added.'
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             metadata._validate_relationship_does_not_exist(
                 parent_table_name='sessions',
                 parent_primary_key='id',
@@ -383,7 +383,7 @@ class TestMultiTableMetadata:
     def test__validate_child_map_circular_relationship(self):
         """Test the ``_validate_child_map_circular_relationship`` method of ``MultiTableMetadata``.
 
-        Test that when a circular relationship occurs a ``ValueError`` is being raised.
+        Test that when a circular relationship occurs an ``InvalidMetadataError`` is being raised.
 
         Setup:
             - Instance of ``MultiTableMetadata``.
@@ -397,7 +397,7 @@ class TestMultiTableMetadata:
             - ``child_foreign_key`` string representing the ``foreing_Key`` of the child table.
 
         Side Effects:
-            - ``ValueError`` is raised.
+            - ``InvalidMetadataError`` is raised.
         """
         # Setup
         instance = MultiTableMetadata()
@@ -418,7 +418,7 @@ class TestMultiTableMetadata:
             'The relationships in the dataset describe a circular dependency between tables '
             "['users', 'sessions']."
         )
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance._validate_child_map_circular_relationship(child_map)
 
     @patch(
@@ -664,7 +664,8 @@ class TestMultiTableMetadata:
         """Test ``_validate_all_tables_connected``.
 
         Test that ``_validate_all_tables_connected`` performs a ``DFS`` and marks nodes as
-        ``connected``. A ``ValueError`` is being raised since one colmn is not connected.
+        ``connected``. An ``InvalidMetadataError`` is being raised since one colmn is not
+        connected.
 
         Setup:
             - Create a mock instance of the ``MultiTableMetadata``.
@@ -676,7 +677,7 @@ class TestMultiTableMetadata:
             - Mock the tables as they are not being used.
 
         Side Effects:
-            - ``ValueError`` is raised stating that a ``table`` is disjointed.
+            - ``InvalidMetadataError`` is raised stating that a ``table`` is disjointed.
         """
         # Setup
         instance = Mock()
@@ -711,14 +712,15 @@ class TestMultiTableMetadata:
             "The relationships in the dataset are disjointed. Table ['accounts'] "
             'is not connected to any of the other tables.'
         )
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             MultiTableMetadata._validate_all_tables_connected(instance, parent_map, child_map)
 
     def test__validate_all_tables_connected_multiple_not_connected(self):
         """Test ``_validate_all_tables_connected``.
 
         Test that ``_validate_all_tables_connected`` performs a ``DFS`` and marks nodes as
-        ``connected``. A ``ValueError`` is being raised since two colmns are not connected.
+        ``connected``. An ``InvalidMetadataError`` is being raised since two colmns are not
+        connected.
 
         Setup:
             - Create a mock instance of the ``MultiTableMetadata``.
@@ -730,7 +732,7 @@ class TestMultiTableMetadata:
             - Mock the tables as they are not being used.
 
         Side Effects:
-            - ``ValueError`` is raised stating that more than one tables are disjointed.
+            - ``InvalidMetadataError`` is raised stating that more than one tables are disjointed.
         """
         # Setup
         instance = Mock()
@@ -766,7 +768,7 @@ class TestMultiTableMetadata:
             "The relationships in the dataset are disjointed. Tables ['accounts', 'branches'] "
             'are not connected to any of the other tables.'
         )
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             MultiTableMetadata._validate_all_tables_connected(instance, parent_map, child_map)
 
     def test_validate(self):
@@ -839,7 +841,7 @@ class TestMultiTableMetadata:
         error_message = re.escape(
             "Invalid table name (''). The table name must be a non-empty string."
         )
-        with pytest.raises(ValueError, match=error_message):
+        with pytest.raises(InvalidMetadataError, match=error_message):
             instance.add_table('')
 
     def test_add_table_not_string(self):
@@ -851,7 +853,7 @@ class TestMultiTableMetadata:
         error_message = re.escape(
             "Invalid table name (''). The table name must be a non-empty string."
         )
-        with pytest.raises(ValueError, match=error_message):
+        with pytest.raises(InvalidMetadataError, match=error_message):
             instance.add_table(Mock())
 
     def test_add_table_table_already_exists(self):
@@ -865,7 +867,7 @@ class TestMultiTableMetadata:
             "Cannot add a table named 'users' because it already exists in the metadata. Please "
             'choose a different name.'
         )
-        with pytest.raises(ValueError, match=error_message):
+        with pytest.raises(InvalidMetadataError, match=error_message):
             instance.add_table('users')
 
     def test_to_dict(self):
@@ -1285,7 +1287,7 @@ class TestMultiTableMetadata:
 
         # Run
         error_message = re.escape("Unknown table name ('table')")
-        with pytest.raises(ValueError, match=error_message):
+        with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.add_column('table', 'column', sdtype='numerical', pii=False)
 
     def test_update_column(self):
@@ -1333,7 +1335,7 @@ class TestMultiTableMetadata:
 
         # Run
         error_message = re.escape("Unknown table name ('table')")
-        with pytest.raises(ValueError, match=error_message):
+        with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.update_column('table', 'column', sdtype='numerical', pii=False)
 
     @patch('sdv.metadata.multi_table.LOGGER')
@@ -1482,7 +1484,7 @@ class TestMultiTableMetadata:
             - Table name
 
         Raises:
-            - ``ValueError`` if the table name is not in the metadata.
+            - ``InvalidMetadataError`` if the table name is not in the metadata.
         """
         # Setup
         metadata = MultiTableMetadata()
@@ -1493,7 +1495,7 @@ class TestMultiTableMetadata:
 
         # Assert
         err_msg = re.escape("Unknown table name ('table3').")
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             metadata._validate_table_exists('table3')
 
     def test_set_primary_key(self):
@@ -1650,7 +1652,7 @@ class TestMultiTableMetadata:
 
         # Run
         error_message = re.escape("Unknown table name ('table')")
-        with pytest.raises(ValueError, match=error_message):
+        with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.add_constraint(
                 'table', 'Inequality', low_column_name='a', high_column_name='b')
 
@@ -1658,7 +1660,8 @@ class TestMultiTableMetadata:
     def test_load_from_json_path_does_not_exist(self, mock_path):
         """Test the ``load_from_json`` method.
 
-        Test that the method raises a ``ValueError`` when the specified path does not exist.
+        Test that the method raises an ``InvalidMetadataError`` when the specified path does not
+        exist.
 
         Mock:
             - Mock the ``Path`` library in order to return ``False``, that the file does not exist.
@@ -1667,7 +1670,7 @@ class TestMultiTableMetadata:
             - String representing a filepath.
 
         Side Effects:
-            - A ``ValueError`` is raised pointing that the ``file`` does not exist.
+            - An ``InvalidMetadataError`` is raised pointing that the ``file`` does not exist.
         """
         # Setup
         mock_path.return_value.exists.return_value = False
@@ -1737,7 +1740,7 @@ class TestMultiTableMetadata:
         """Test the ``save_to_json`` method.
 
         Test that when attempting to write over a file that already exists, the method
-        raises a ``ValueError``.
+        raises an ``InvalidMetadataError``.
 
         Setup:
             - instance of ``MultiTableMetadata``.
@@ -1745,7 +1748,7 @@ class TestMultiTableMetadata:
             - Mock ``Path`` in order to point that the file does exist.
 
         Side Effects:
-            - Raise ``ValueError`` pointing that the file does exist.
+            - Raise ``InvalidMetadataError`` pointing that the file does exist.
         """
         # Setup
         instance = MultiTableMetadata()

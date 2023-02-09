@@ -63,9 +63,11 @@ class MultiTableMetadata:
         missing_table_names = {parent_table_name, child_table_name} - set(tables)
         if missing_table_names:
             if len(missing_table_names) == 1:
-                raise InvalidMetadataError(f'Relationship contains an unknown table {missing_table_names}.')
+                raise InvalidMetadataError(
+                    f'Relationship contains an unknown table {missing_table_names}.')
             else:
-                raise InvalidMetadataError(f'Relationship contains unknown tables {missing_table_names}.')
+                raise InvalidMetadataError(
+                    f'Relationship contains unknown tables {missing_table_names}.')
 
     @staticmethod
     def _validate_relationship_key_length(parent_table_name, parent_primary_key,
@@ -188,10 +190,13 @@ class MultiTableMetadata:
 
         Raises:
             - ``InvalidMetadataError`` if a table is missing.
-            - ``InvalidMetadataError`` if the ``parent_primary_key`` or ``child_foreign_key`` are missing.
-            - ``InvalidMetadataError`` if the ``parent_primary_key`` and ``child_foreign_key`` have different
+            - ``InvalidMetadataError`` if the ``parent_primary_key`` or ``child_foreign_key`` are
+              missing.
+            - ``InvalidMetadataError`` if the ``parent_primary_key`` and ``child_foreign_key``
+              have different
               size.
-            - ``InvalidMetadataError`` if the ``parent_primary_key`` and ``child_foreign_key`` are different
+            - ``InvalidMetadataError`` if the ``parent_primary_key`` and ``child_foreign_key`` are
+              different
               ``sdtype``.
             - ``InvalidMetadataError`` if the relationship causes a circular dependency.
         """
@@ -233,8 +238,8 @@ class MultiTableMetadata:
         Raises:
             - ``InvalidMetadataError`` if the column already exists.
             - ``InvalidMetadataError`` if the ``kwargs`` do not contain ``sdtype``.
-            - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the given
-              ``sdtype``.
+            - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the
+              given ``sdtype``.
             - ``InvalidMetadataError`` if the table doesn't exist in the ``MultiTableMetadata``.
         """
         self._validate_table_exists(table_name)
@@ -253,9 +258,10 @@ class MultiTableMetadata:
                 Any key word arguments that describe metadata for the column.
 
         Raises:
-            - ``InvalidMetadataError`` if the column doesn't already exist in the ``SingleTableMetadata``.
-            - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the current
-              ``sdtype``.
+            - ``InvalidMetadataError`` if the column doesn't already exist in the
+              ``SingleTableMetadata``.
+            - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the
+              current ``sdtype``.
             - ``InvalidMetadataError`` if the table doesn't exist in the ``MultiTableMetadata``.
         """
         self._validate_table_exists(table_name)
@@ -411,7 +417,8 @@ class MultiTableMetadata:
                     f'Table {disconnected_tables} is not connected to any of the other tables.'
                 )
 
-            raise InvalidMetadataError(f'The relationships in the dataset are disjointed. {table_msg}')
+            raise InvalidMetadataError(
+                f'The relationships in the dataset are disjointed. {table_msg}')
 
     def _append_relationships_errors(self, errors, method, *args, **kwargs):
         try:
