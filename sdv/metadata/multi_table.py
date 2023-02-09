@@ -126,6 +126,13 @@ class MultiTableMetadata:
                 f'tables {errors}.'
             )
 
+    def _validate_foreign_child_key(self, child_table_name, child_foreign_key):
+        child_primary_key = cast_to_iterable(self._tables[child_table_name]._primary_key)
+        child_foreign_key = cast_to_iterable(child_foreign_key)
+        if set(child_foreign_key).intersection(set(child_primary_key)):
+            raise InvalidMetadataError(
+                'A relationship must be specified between a primary key and a non-primary key.')
+
     def _validate_relationship_does_not_exist(self, parent_table_name, parent_primary_key,
                                               child_table_name, child_foreign_key):
         for relationship in self._relationships:
@@ -155,6 +162,8 @@ class MultiTableMetadata:
             child_table_name,
             child_foreign_key
         )
+
+        self._validate_foreign_child_key(child_table_name, child_foreign_key)
 
         self._validate_relationship_sdtypes(
             parent_table_name,
@@ -194,6 +203,7 @@ class MultiTableMetadata:
             - ``ValueError`` if the ``parent_primary_key`` and ``child_foreign_key`` are different
               ``sdtype``.
             - ``ValueError`` if the relationship causes a circular dependency.
+            - ``InvalidMetadataError`` if ``child_foreign_key`` is a primary key.
         """
         self._validate_relationship(
             parent_table_name, child_table_name, parent_primary_key, child_foreign_key)
