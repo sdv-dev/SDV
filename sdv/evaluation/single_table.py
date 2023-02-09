@@ -46,9 +46,9 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
         DiagnosticReport:
             Single table diagnostic report object.
     """
-    quality_report = DiagnosticReport()
-    quality_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
-    return quality_report
+    diagnostic_report = DiagnosticReport()
+    diagnostic_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
+    return diagnostic_report
 
 
 def get_column_plot(real_data, synthetic_data, metadata, column_name):
