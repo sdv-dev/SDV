@@ -839,6 +839,7 @@ class TestMultiTableMetadata:
 
     def test_validate_child_key_is_primary_key(self):
         """Test it crashes if the child key is a primary key."""
+        # Setup
         table = pd.DataFrame({
             'pk': [1, 2, 3],
             'col1': [.1, .1, .2],
