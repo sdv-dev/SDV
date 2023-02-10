@@ -77,7 +77,7 @@ class BaseSynthesizer:
 
     def _validate_metadata_matches_data(self, columns):
         errors = []
-        metadata_columns = self.metadata._columns or []
+        metadata_columns = self.metadata.columns or []
         missing_data_columns = set(columns).difference(metadata_columns)
         if missing_data_columns:
             errors.append(
@@ -94,18 +94,18 @@ class BaseSynthesizer:
             raise InvalidDataError(errors)
 
     def _get_primary_and_alternate_keys(self):
-        keys = set(self.metadata._alternate_keys)
-        if self.metadata._primary_key:
-            keys.update({self.metadata._primary_key})
+        keys = set(self.metadata.alternate_keys)
+        if self.metadata.primary_key:
+            keys.update({self.metadata.primary_key})
 
         return keys
 
     def _get_set_of_sequence_keys(self):
-        if isinstance(self.metadata._sequence_key, tuple):
-            return set(self.metadata._sequence_key)
+        if isinstance(self.metadata.sequence_key, tuple):
+            return set(self.metadata.sequence_key)
 
-        if isinstance(self.metadata._sequence_key, str):
-            return {self.metadata._sequence_key}
+        if isinstance(self.metadata.sequence_key, str):
+            return {self.metadata.sequence_key}
 
         return set()
 
@@ -150,7 +150,7 @@ class BaseSynthesizer:
     def _validate_column(self, column):
         """Validate values of the column satisfy its sdtype properties."""
         errors = []
-        sdtype = self.metadata._columns[column.name]['sdtype']
+        sdtype = self.metadata.columns[column.name]['sdtype']
 
         # boolean values must be True/False, None or missing values
         # int/str are not allowed
@@ -242,7 +242,7 @@ class BaseSynthesizer:
                 Dict mapping column names to transformers to be used for that column.
         """
         for column in column_name_to_transformer:
-            sdtype = self.metadata._columns[column]['sdtype']
+            sdtype = self.metadata.columns[column]['sdtype']
             if sdtype in {'categorical', 'boolean'}:
                 warnings.warn(
                     f"Replacing the default transformer for column '{column}' "
@@ -354,7 +354,7 @@ class BaseSynthesizer:
 
         field_transformers = {
             column_name: field_transformers.get(column_name)
-            for column_name in self.metadata._columns
+            for column_name in self.metadata.columns
         }
 
         return field_transformers

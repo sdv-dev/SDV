@@ -44,9 +44,9 @@ class TestBaseMultiTableSynthesizer:
             'upravna_enota': instance._synthesizer.return_value
         }
         instance._synthesizer.assert_has_calls([
-            call(metadata=instance.metadata._tables['nesreca'], default_distribution='gamma'),
-            call(metadata=instance.metadata._tables['oseba']),
-            call(metadata=instance.metadata._tables['upravna_enota'])
+            call(metadata=instance.metadata.tables['nesreca'], default_distribution='gamma'),
+            call(metadata=instance.metadata.tables['oseba']),
+            call(metadata=instance.metadata.tables['upravna_enota'])
         ])
 
     def test___init__(self):

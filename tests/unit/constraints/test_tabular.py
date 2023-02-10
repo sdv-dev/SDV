@@ -163,7 +163,7 @@ class TestCreateCustomConstraint():
         # Setup
         constraint_class = create_custom_constraint_class(sorted, sorted, sorted)
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         constraint_class._validate_metadata_columns(metadata, column_names=['a', 'b'])
@@ -185,7 +185,7 @@ class TestCreateCustomConstraint():
         # Setup
         constraint_class = create_custom_constraint_class(sorted, sorted, sorted)
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -504,7 +504,7 @@ class TestFixedCombinations():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         FixedCombinations._validate_metadata_columns(metadata, column_names=['a', 'b'])
@@ -522,7 +522,7 @@ class TestFixedCombinations():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -942,7 +942,7 @@ class TestInequality():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         Inequality._validate_metadata_columns(metadata, low_column_name='a', high_column_name='b')
@@ -960,7 +960,7 @@ class TestInequality():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -982,7 +982,7 @@ class TestInequality():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'datetime'}}
+        metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'datetime'}}
 
         # Run
         Inequality._validate_metadata_specific_to_constraint(
@@ -1002,7 +1002,7 @@ class TestInequality():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'categorical'}}
+        metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'categorical'}}
 
         # Run
         error_message = re.escape(
@@ -1027,7 +1027,7 @@ class TestInequality():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'numerical'}, 'b': {'sdtype': 'numerical'}}
+        metadata.columns = {'a': {'sdtype': 'numerical'}, 'b': {'sdtype': 'numerical'}}
 
         # Run
         Inequality._validate_metadata_specific_to_constraint(
@@ -1047,7 +1047,7 @@ class TestInequality():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'numerical'}, 'b': {'sdtype': 'categorical'}}
+        metadata.columns = {'a': {'sdtype': 'numerical'}, 'b': {'sdtype': 'categorical'}}
 
         # Run
         error_message = re.escape(
@@ -1642,7 +1642,7 @@ class TestScalarInequality():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         ScalarInequality._validate_metadata_columns(metadata, column_name='a')
@@ -1660,7 +1660,7 @@ class TestScalarInequality():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -1684,7 +1684,7 @@ class TestScalarInequality():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'numerical'}}
+        metadata.columns = {'a': {'sdtype': 'numerical'}}
 
         # Run
         ScalarInequality._validate_metadata_specific_to_constraint(
@@ -1708,7 +1708,7 @@ class TestScalarInequality():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'numerical'}}
+        metadata.columns = {'a': {'sdtype': 'numerical'}}
 
         # Run
         error_message = "'value' must be an int or float."
@@ -1736,7 +1736,7 @@ class TestScalarInequality():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        metadata.columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
         datetime_format_mock.return_value = True
 
         # Run
@@ -1766,7 +1766,7 @@ class TestScalarInequality():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        metadata.columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
         datetime_format_mock.return_value = False
 
         # Run
@@ -1796,7 +1796,7 @@ class TestScalarInequality():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'categorical'}}
+        metadata.columns = {'a': {'sdtype': 'categorical'}}
 
         # Run
         error_message = (
@@ -2352,7 +2352,7 @@ class TestPositive():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         Positive._validate_metadata_columns(metadata, column_name='a')
@@ -2370,7 +2370,7 @@ class TestPositive():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -2391,7 +2391,7 @@ class TestPositive():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {
+        metadata.columns = {
             'a': {'sdtype': 'numerical'}
         }
 
@@ -2415,7 +2415,7 @@ class TestPositive():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {
+        metadata.columns = {
             'a': {'sdtype': 'datetime'}
         }
 
@@ -2493,7 +2493,7 @@ class TestNegative():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         Negative._validate_metadata_columns(metadata, column_name='a')
@@ -2511,7 +2511,7 @@ class TestNegative():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -2532,7 +2532,7 @@ class TestNegative():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {
+        metadata.columns = {
             'a': {'sdtype': 'numerical'}
         }
 
@@ -2556,7 +2556,7 @@ class TestNegative():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {
+        metadata.columns = {
             'a': {'sdtype': 'datetime'}
         }
 
@@ -2637,7 +2637,7 @@ class TestRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2, 'c': 3}
+        metadata.columns = {'a': 1, 'b': 2, 'c': 3}
 
         # Run
         Range._validate_metadata_columns(
@@ -2660,7 +2660,7 @@ class TestRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -2686,7 +2686,7 @@ class TestRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {
+        metadata.columns = {
             'a': {'sdtype': 'datetime'},
             'b': {'sdtype': 'datetime'},
             'c': {'sdtype': 'datetime'}
@@ -2712,7 +2712,7 @@ class TestRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {
+        metadata.columns = {
             'a': {'sdtype': 'datetime'},
             'b': {'sdtype': 'datetime'},
             'c': {'sdtype': 'numerical'}
@@ -2742,7 +2742,7 @@ class TestRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {
+        metadata.columns = {
             'a': {'sdtype': 'numerical'},
             'b': {'sdtype': 'numerical'},
             'c': {'sdtype': 'numerical'}
@@ -2768,7 +2768,7 @@ class TestRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {
+        metadata.columns = {
             'a': {'sdtype': 'numerical'},
             'b': {'sdtype': 'numerical'},
             'c': {'sdtype': 'datetime'}
@@ -3240,7 +3240,7 @@ class TestScalarRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         ScalarRange._validate_metadata_columns(metadata, column_name='a')
@@ -3258,7 +3258,7 @@ class TestScalarRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -3282,7 +3282,7 @@ class TestScalarRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'numerical'}}
+        metadata.columns = {'a': {'sdtype': 'numerical'}}
 
         # Run
         ScalarRange._validate_metadata_specific_to_constraint(
@@ -3306,7 +3306,7 @@ class TestScalarRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'numerical'}}
+        metadata.columns = {'a': {'sdtype': 'numerical'}}
 
         # Run
         error_message = "Both 'high_value' and 'low_value' must be ints or floats"
@@ -3332,7 +3332,7 @@ class TestScalarRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'numerical'}}
+        metadata.columns = {'a': {'sdtype': 'numerical'}}
 
         # Run
         error_message = "Both 'high_value' and 'low_value' must be ints or floats"
@@ -3361,7 +3361,7 @@ class TestScalarRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        metadata.columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
         datetime_format_mock.return_value = True
 
         # Run
@@ -3393,7 +3393,7 @@ class TestScalarRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        metadata.columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
         datetime_format_mock.side_effect = [False, True]
 
         # Run
@@ -3429,7 +3429,7 @@ class TestScalarRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        metadata.columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
         datetime_format_mock.side_effect = [True, False]
 
         # Run
@@ -3461,7 +3461,7 @@ class TestScalarRange():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': {'sdtype': 'categorical'}}
+        metadata.columns = {'a': {'sdtype': 'categorical'}}
 
         # Run
         error_message = (
@@ -3946,7 +3946,7 @@ class TestOneHotEncoding():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         OneHotEncoding._validate_metadata_columns(metadata, column_names=['a', 'b'])
@@ -3964,7 +3964,7 @@ class TestOneHotEncoding():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -4069,7 +4069,7 @@ class TestUnique():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         Unique._validate_metadata_columns(metadata, column_names=['a', 'b'])
@@ -4087,7 +4087,7 @@ class TestUnique():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -4109,8 +4109,8 @@ class TestUnique():
         """
         # Setup
         metadata = Mock()
-        metadata._primary_key = 'a'
-        metadata._alternate_keys = ['b', 'c']
+        metadata.primary_key = 'a'
+        metadata.alternate_keys = ['b', 'c']
 
         # Run
         Unique._validate_metadata_specific_to_constraint(
@@ -4130,8 +4130,8 @@ class TestUnique():
         """
         # Setup
         metadata = Mock()
-        metadata._primary_key = 'a'
-        metadata._alternate_keys = [('b', 'c'), 'd']
+        metadata.primary_key = 'a'
+        metadata.alternate_keys = [('b', 'c'), 'd']
 
         # Run
         error_message = re.escape(
@@ -4432,7 +4432,7 @@ class TestFixedIncrements():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         FixedIncrements._validate_metadata_columns(metadata, column_name='a')
@@ -4450,7 +4450,7 @@ class TestFixedIncrements():
         """
         # Setup
         metadata = Mock()
-        metadata._columns = {'a': 1, 'b': 2}
+        metadata.columns = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
