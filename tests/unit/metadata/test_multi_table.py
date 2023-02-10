@@ -83,7 +83,7 @@ class TestMultiTableMetadata:
         instance = MultiTableMetadata()
 
         # Assert
-        assert instance._tables == {}
+        assert instance.tables == {}
         assert instance._relationships == []
 
     def test__validate_missing_relationship_keys_foreign_key(self):
@@ -131,7 +131,7 @@ class TestMultiTableMetadata:
         child_foreign_key = 'id'
 
         instance = Mock()
-        instance._tables = {
+        instance.tables = {
             'users': parent_table,
             'sessions': child_table,
         }
@@ -299,7 +299,7 @@ class TestMultiTableMetadata:
         child_foreign_key = ['user_id', 'timestamp']
 
         instance = Mock()
-        instance._tables = {
+        instance.tables = {
             'users': parent_table,
             'sessions': child_table,
         }
@@ -402,7 +402,7 @@ class TestMultiTableMetadata:
         # Setup
         instance = MultiTableMetadata()
         parent_table = Mock()
-        instance._tables = {
+        instance.tables = {
             'users': parent_table,
             'sessions': Mock(),
             'transactions': Mock()
@@ -462,7 +462,7 @@ class TestMultiTableMetadata:
             'transactions': {'sdtype': 'numerical'},
         }
 
-        instance._tables = {
+        instance.tables = {
             'users': parent_table,
             'sessions': child_table,
         }
@@ -483,7 +483,7 @@ class TestMultiTableMetadata:
 
         # Assert
         mock_validate_no_missing_tables_in_relationship.assert_called_once_with(
-            'users', 'sessions', instance._tables.keys())
+            'users', 'sessions', instance.tables.keys())
         instance._validate_missing_relationship_keys.assert_called_once_with(
             'users', 'id', 'sessions', 'user_id')
         mock_validate_relationship_key_length.assert_called_once_with(
@@ -501,7 +501,7 @@ class TestMultiTableMetadata:
             - Instance of ``MultiTableMetadata``.
             - Mock of ``parent_table`` simulating a ``SingleTableMetadata``.
             - Mock of ``child_table`` simulating a ``SingleTableMetadata``.
-            - Add those to ``instance._tables``.
+            - Add those to ``instance.tables``.
 
         Mock:
             - Mock ``validate_child_map_circular_relationship``.
@@ -535,7 +535,7 @@ class TestMultiTableMetadata:
             'transactions': {'sdtype': 'numerical'},
         }
 
-        instance._tables = {
+        instance.tables = {
             'users': parent_table,
             'sessions': child_table,
         }
@@ -580,7 +580,7 @@ class TestMultiTableMetadata:
     def test__validate_single_table(self):
         """Test ``_validate_single_table``.
 
-        Test that ``_validate_single_table`` iterates over the ``self._tables`` items and
+        Test that ``_validate_single_table`` iterates over the ``self.tables`` items and
         calls their ``validate()`` method, catches the error if raised and parses it to
         ``MultiTableMetadata`` error message.
 
@@ -606,7 +606,7 @@ class TestMultiTableMetadata:
         instance = Mock()
         users_mock = Mock()
         users_mock.columns = {}
-        instance._tables = {
+        instance.tables = {
             'accounts': table_accounts,
             'users': users_mock
         }
@@ -624,7 +624,7 @@ class TestMultiTableMetadata:
             "Table 'users' has 0 columns. Use 'add_column' to specify its columns."
         )
         assert errors == ['\n', expected_error_msg, empty_table_error_message]
-        instance._tables['users'].validate.assert_called_once()
+        instance.tables['users'].validate.assert_called_once()
 
     def test__validate_all_tables_connected_connected(self):
         """Test ``_validate_all_tables_connected``.
@@ -646,7 +646,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         instance = Mock()
-        instance._tables = {
+        instance.tables = {
             'users': Mock(),
             'sessions': Mock(),
             'transactions': Mock(),
@@ -700,7 +700,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         instance = Mock()
-        instance._tables = {
+        instance.tables = {
             'users': Mock(),
             'sessions': Mock(),
             'transactions': Mock(),
@@ -755,7 +755,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         instance = Mock()
-        instance._tables = {
+        instance.tables = {
             'users': Mock(),
             'sessions': Mock(),
             'transactions': Mock(),
@@ -815,10 +815,10 @@ class TestMultiTableMetadata:
         """
         # Setup
         instance = self.get_metadata()
-        instance._tables['users'].primary_key = None
-        instance._tables['transactions'].columns['session_id']['sdtype'] = 'datetime'
-        instance._tables['payments'].columns['date']['sdtype'] = 'text'
-        instance._tables['payments'].columns['date']['regex_format'] = '[A-z{'
+        instance.tables['users'].primary_key = None
+        instance.tables['transactions'].columns['session_id']['sdtype'] = 'datetime'
+        instance.tables['payments'].columns['date']['sdtype'] = 'text'
+        instance.tables['payments'].columns['date']['regex_format'] = '[A-z{'
         instance._relationships.pop(-1)
 
         # Run
@@ -873,7 +873,7 @@ class TestMultiTableMetadata:
 
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
     def test_add_table(self, table_metadata_mock):
-        """Test that the method adds the table name to ``instance._tables``."""
+        """Test that the method adds the table name to ``instance.tables``."""
         # Setup
         instance = MultiTableMetadata()
 
@@ -881,7 +881,7 @@ class TestMultiTableMetadata:
         instance.add_table('users')
 
         # Assert
-        assert instance._tables == {'users': table_metadata_mock.return_value}
+        assert instance.tables == {'users': table_metadata_mock.return_value}
 
     def test_add_table_empty_string(self):
         """Test that the method raises an error if the table name is an empty string."""
@@ -911,7 +911,7 @@ class TestMultiTableMetadata:
         """Test that the method raises an error if the table already exists."""
         # Setup
         instance = MultiTableMetadata()
-        instance._tables = {'users': Mock()}
+        instance.tables = {'users': Mock()}
 
         # Run and Assert
         error_message = re.escape(
@@ -926,9 +926,9 @@ class TestMultiTableMetadata:
 
         Setup:
             - Instance of ``MultiTableMetadata``.
-            - Add mocked values to ``instance._tables`` and ``instance._relationships``.
+            - Add mocked values to ``instance.tables`` and ``instance._relationships``.
         Mock:
-            - Mock ``SingleTableMetadata`` like object to ``instance._tables``.
+            - Mock ``SingleTableMetadata`` like object to ``instance.tables``.
 
         Output:
             - A dict representation containing ``tables`` and ``relationships`` has to be returned
@@ -949,7 +949,7 @@ class TestMultiTableMetadata:
             'name': {'sdtype': 'text'},
         }
         instance = MultiTableMetadata()
-        instance._tables = {
+        instance.tables = {
             'accounts': table_accounts,
             'branches': table_branches
         }
@@ -1004,7 +1004,7 @@ class TestMultiTableMetadata:
             - Mock ``SingleTableMetadata`` from ``sdv.metadata.multi_table``
 
         Side Effects:
-            - ``instance`` now contains ``instance._tables`` and ``instance._relationships``.
+            - ``instance`` now contains ``instance.tables`` and ``instance._relationships``.
             - ``SingleTableMetadata._load_from_dict`` has been called.
         """
         # Setup
@@ -1045,7 +1045,7 @@ class TestMultiTableMetadata:
         instance._set_metadata_dict(multitable_metadata)
 
         # Assert
-        assert instance._tables == {
+        assert instance.tables == {
             'accounts': single_table_accounts,
             'branches': single_table_branches
         }
@@ -1073,7 +1073,7 @@ class TestMultiTableMetadata:
             - Mock ``SingleTableMetadata`` from ``sdv.metadata.multi_table``
 
         Output:
-            - ``instance`` that contains ``instance._tables`` and ``instance._relationships``.
+            - ``instance`` that contains ``instance.tables`` and ``instance._relationships``.
 
         Side Effects:
             - ``SingleTableMetadata._load_from_dict`` has been called.
@@ -1114,7 +1114,7 @@ class TestMultiTableMetadata:
         instance = MultiTableMetadata._load_from_dict(multitable_metadata)
 
         # Assert
-        assert instance._tables == {
+        assert instance.tables == {
             'accounts': single_table_accounts,
             'branches': single_table_branches
         }
@@ -1312,7 +1312,7 @@ class TestMultiTableMetadata:
         # Setup
         metadata = MultiTableMetadata()
         table = Mock()
-        metadata._tables = {'table': table}
+        metadata.tables = {'table': table}
 
         # Run
         metadata.add_column('table', 'column', sdtype='numerical', pii=False)
@@ -1360,7 +1360,7 @@ class TestMultiTableMetadata:
         # Setup
         metadata = MultiTableMetadata()
         table = Mock()
-        metadata._tables = {'table': table}
+        metadata.tables = {'table': table}
 
         # Run
         metadata.update_column('table', 'column', sdtype='numerical', pii=False)
@@ -1401,7 +1401,7 @@ class TestMultiTableMetadata:
             - Mock the ``SingleTableMetadata`` class and the print function.
 
         Assert:
-            - Table should be added to ``self._tables``.
+            - Table should be added to ``self.tables``.
         """
         # Setup
         metadata = MultiTableMetadata()
@@ -1417,7 +1417,7 @@ class TestMultiTableMetadata:
         # Assert
         single_table_mock.return_value._load_data_from_csv.assert_called_once_with('path.csv')
         single_table_mock.return_value._detect_columns.assert_called_once_with(fake_data)
-        assert metadata._tables == {'table': single_table_mock.return_value}
+        assert metadata.tables == {'table': single_table_mock.return_value}
 
         expected_log_calls = call(
             'Detected metadata:\n'
@@ -1448,7 +1448,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         metadata = MultiTableMetadata()
-        metadata._tables = {'table': Mock()}
+        metadata.tables = {'table': Mock()}
 
         # Run
         error_message = (
@@ -1470,7 +1470,7 @@ class TestMultiTableMetadata:
             - Mock the ``SingleTableMetadata`` class and print function.
 
         Assert:
-            - Table should be added to ``self._tables``.
+            - Table should be added to ``self.tables``.
         """
         # Setup
         metadata = MultiTableMetadata()
@@ -1484,7 +1484,7 @@ class TestMultiTableMetadata:
 
         # Assert
         single_table_mock.return_value._detect_columns.assert_called_once_with(data)
-        assert metadata._tables == {'table': single_table_mock.return_value}
+        assert metadata.tables == {'table': single_table_mock.return_value}
 
         expected_log_calls = call(
             'Detected metadata:\n'
@@ -1515,7 +1515,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         metadata = MultiTableMetadata()
-        metadata._tables = {'table': Mock()}
+        metadata.tables = {'table': Mock()}
 
         # Run
         error_message = (
@@ -1539,7 +1539,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         metadata = MultiTableMetadata()
-        metadata._tables = {'table1': 'val', 'table2': 'val'}
+        metadata.tables = {'table1': 'val', 'table2': 'val'}
 
         # Run
         metadata._validate_table_exists('table1')
@@ -1565,7 +1565,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         metadata = MultiTableMetadata()
-        metadata._tables = {'table1': Mock(), 'table2': 'val'}
+        metadata.tables = {'table1': Mock(), 'table2': 'val'}
         metadata._validate_table_exists = Mock()
 
         # Run
@@ -1573,7 +1573,7 @@ class TestMultiTableMetadata:
 
         # Assert
         metadata._validate_table_exists.assert_called_once_with('table1')
-        metadata._tables['table1'].set_primary_key.assert_called_once_with('col')
+        metadata.tables['table1'].set_primary_key.assert_called_once_with('col')
 
     def test_set_sequence_key(self):
         """Test ``set_sequence_key``.
@@ -1591,7 +1591,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         metadata = MultiTableMetadata()
-        metadata._tables = {'table1': Mock(), 'table2': 'val'}
+        metadata.tables = {'table1': Mock(), 'table2': 'val'}
         metadata._validate_table_exists = Mock()
 
         # Run
@@ -1601,7 +1601,7 @@ class TestMultiTableMetadata:
 
         # Assert
         metadata._validate_table_exists.assert_called_once_with('table1')
-        metadata._tables['table1'].set_sequence_key.assert_called_once_with('col')
+        metadata.tables['table1'].set_sequence_key.assert_called_once_with('col')
 
     def test_add_alternate_keys(self):
         """Test ``add_alternate_keys``.
@@ -1619,7 +1619,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         metadata = MultiTableMetadata()
-        metadata._tables = {'table1': Mock(), 'table2': 'val'}
+        metadata.tables = {'table1': Mock(), 'table2': 'val'}
         metadata._validate_table_exists = Mock()
 
         # Run
@@ -1627,7 +1627,7 @@ class TestMultiTableMetadata:
 
         # Assert
         metadata._validate_table_exists.assert_called_once_with('table1')
-        metadata._tables['table1'].add_alternate_keys.assert_called_once_with(['col1', 'col2'])
+        metadata.tables['table1'].add_alternate_keys.assert_called_once_with(['col1', 'col2'])
 
     def test_set_sequence_index(self):
         """Test ``set_sequence_index``.
@@ -1645,7 +1645,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         metadata = MultiTableMetadata()
-        metadata._tables = {'table1': Mock(), 'table2': 'val'}
+        metadata.tables = {'table1': Mock(), 'table2': 'val'}
         metadata._validate_table_exists = Mock()
 
         # Run
@@ -1655,7 +1655,7 @@ class TestMultiTableMetadata:
 
         # Assert
         metadata._validate_table_exists.assert_called_once_with('table1')
-        metadata._tables['table1'].set_sequence_index.assert_called_once_with('col')
+        metadata.tables['table1'].set_sequence_index.assert_called_once_with('col')
 
     def test_add_constraint(self):
         """Test the ``add_constraint`` method.
@@ -1676,7 +1676,7 @@ class TestMultiTableMetadata:
         # Setup
         metadata = MultiTableMetadata()
         table = Mock()
-        metadata._tables = {'table': table}
+        metadata.tables = {'table': table}
 
         # Run
         metadata.add_constraint('table', 'Inequality', low_column_name='a', high_column_name='b')
@@ -1778,13 +1778,13 @@ class TestMultiTableMetadata:
         instance = MultiTableMetadata.load_from_json('filepath.json')
 
         # Asserts
-        assert list(instance._tables.keys()) == ['table1']
-        assert instance._tables['table1'].columns == {'animals': {'type': 'categorical'}}
-        assert instance._tables['table1'].primary_key == 'animals'
-        assert instance._tables['table1'].sequence_key is None
-        assert instance._tables['table1'].alternate_keys == []
-        assert instance._tables['table1'].sequence_index is None
-        assert instance._tables['table1']._version == 'SINGLE_TABLE_V1'
+        assert list(instance.tables.keys()) == ['table1']
+        assert instance.tables['table1'].columns == {'animals': {'type': 'categorical'}}
+        assert instance.tables['table1'].primary_key == 'animals'
+        assert instance.tables['table1'].sequence_key is None
+        assert instance.tables['table1'].alternate_keys == []
+        assert instance.tables['table1'].sequence_index is None
+        assert instance.tables['table1']._version == 'SINGLE_TABLE_V1'
 
     @patch('sdv.metadata.utils.Path')
     def test_save_to_json_file_exists(self, mock_path):

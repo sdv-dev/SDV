@@ -432,15 +432,9 @@ class SingleTableMetadata:
         """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
         seq_key = self.sequence_key
         sequence_key = set(cast_to_iterable(seq_key))
-<<<<<<< HEAD
         if self.sequence_index in sequence_key or seq_key is None:
             index = {self.sequence_index}
             raise InvalidMetadataError(
-=======
-        if self.sequence_index in sequence_key or seq_key is None:
-            index = {self.sequence_index}
-            raise ValueError(
->>>>>>> 6e95ae5e (_sequence_index -> sequence_index)
                 f"'sequence_index' and 'sequence_key' have the same value {index}."
                 ' These columns must be different.'
             )

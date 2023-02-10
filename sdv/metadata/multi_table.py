@@ -22,13 +22,13 @@ class MultiTableMetadata:
     METADATA_SPEC_VERSION = 'MULTI_TABLE_V1'
 
     def __init__(self):
-        self._tables = {}
+        self.tables = {}
         self._relationships = []
 
     def _validate_missing_relationship_keys(self, parent_table_name, parent_primary_key,
                                             child_table_name, child_foreign_key):
-        parent_table = self._tables.get(parent_table_name)
-        child_table = self._tables.get(child_table_name)
+        parent_table = self.tables.get(parent_table_name)
+        child_table = self.tables.get(child_table_name)
         if parent_table.primary_key is None:
             raise InvalidMetadataError(
                 f"The parent table '{parent_table_name}' does not have a primary key set. "
@@ -83,8 +83,8 @@ class MultiTableMetadata:
 
     def _validate_relationship_sdtypes(self, parent_table_name, parent_primary_key,
                                        child_table_name, child_foreign_key):
-        parent_table_columns = self._tables.get(parent_table_name).columns
-        child_table_columns = self._tables.get(child_table_name).columns
+        parent_table_columns = self.tables.get(parent_table_name).columns
+        child_table_columns = self.tables.get(child_table_name).columns
         parent_primary_key = cast_to_iterable(parent_primary_key)
         child_foreign_key = cast_to_iterable(child_foreign_key)
         for pk, fk in zip(parent_primary_key, child_foreign_key):
@@ -119,7 +119,7 @@ class MultiTableMetadata:
 
     def _validate_child_map_circular_relationship(self, child_map):
         errors = []
-        for table_name in self._tables.keys():
+        for table_name in self.tables.keys():
             self._validate_circular_relationships(table_name, child_map=child_map, errors=errors)
 
         if errors:
@@ -150,7 +150,7 @@ class MultiTableMetadata:
     def _validate_relationship(self, parent_table_name, child_table_name,
                                parent_primary_key, child_foreign_key):
         self._validate_no_missing_tables_in_relationship(
-            parent_table_name, child_table_name, self._tables.keys())
+            parent_table_name, child_table_name, self.tables.keys())
 
         self._validate_missing_relationship_keys(
             parent_table_name,
@@ -231,8 +231,13 @@ class MultiTableMetadata:
         })
 
     def _validate_table_exists(self, table_name):
+<<<<<<< HEAD
         if table_name not in self._tables:
             raise InvalidMetadataError(f"Unknown table name ('{table_name}').")
+=======
+        if table_name not in self.tables:
+            raise ValueError(f"Unknown table name ('{table_name}').")
+>>>>>>> a8fd8aba (_tables -> tables)
 
     def add_column(self, table_name, column_name, **kwargs):
         """Add a column to a table in the ``MultiTableMetadata``.
@@ -253,7 +258,7 @@ class MultiTableMetadata:
             - ``InvalidMetadataError`` if the table doesn't exist in the ``MultiTableMetadata``.
         """
         self._validate_table_exists(table_name)
-        table = self._tables.get(table_name)
+        table = self.tables.get(table_name)
         table.add_column(column_name, **kwargs)
 
     def update_column(self, table_name, column_name, **kwargs):
@@ -275,7 +280,7 @@ class MultiTableMetadata:
             - ``InvalidMetadataError`` if the table doesn't exist in the ``MultiTableMetadata``.
         """
         self._validate_table_exists(table_name)
-        table = self._tables.get(table_name)
+        table = self.tables.get(table_name)
         table.update_column(column_name, **kwargs)
 
     def add_constraint(self, table_name, constraint_name, **kwargs):
@@ -290,11 +295,11 @@ class MultiTableMetadata:
                 Any other arguments the constraint requires.
         """
         self._validate_table_exists(table_name)
-        table = self._tables.get(table_name)
+        table = self.tables.get(table_name)
         table.add_constraint(constraint_name, **kwargs)
 
     def _validate_table_not_detected(self, table_name):
-        if table_name in self._tables:
+        if table_name in self.tables:
             raise InvalidMetadataError(
                 f"Metadata for table '{table_name}' already exists. Specify a new table name or "
                 'create a new MultiTableMetadata object for other data sources.'
@@ -319,7 +324,7 @@ class MultiTableMetadata:
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
         table._detect_columns(data)
-        self._tables[table_name] = table
+        self.tables[table_name] = table
         self._log_detected_table(table)
 
     def detect_table_from_csv(self, table_name, filepath):
@@ -335,7 +340,7 @@ class MultiTableMetadata:
         table = SingleTableMetadata()
         data = table._load_data_from_csv(filepath)
         table._detect_columns(data)
-        self._tables[table_name] = table
+        self.tables[table_name] = table
         self._log_detected_table(table)
 
     def set_primary_key(self, table_name, column_name):
@@ -348,7 +353,7 @@ class MultiTableMetadata:
                 Name (or tuple of names) of the primary key column(s).
         """
         self._validate_table_exists(table_name)
-        self._tables[table_name].set_primary_key(column_name)
+        self.tables[table_name].set_primary_key(column_name)
 
     def set_sequence_key(self, table_name, column_name):
         """Set the sequence key of a table.
@@ -361,7 +366,7 @@ class MultiTableMetadata:
         """
         self._validate_table_exists(table_name)
         warnings.warn('Sequential modeling is not yet supported on SDV Multi Table models.')
-        self._tables[table_name].set_sequence_key(column_name)
+        self.tables[table_name].set_sequence_key(column_name)
 
     def add_alternate_keys(self, table_name, column_names):
         """Set the alternate keys of a table.
@@ -373,7 +378,7 @@ class MultiTableMetadata:
                 List of names (or tuple of names) of the alternate key columns.
         """
         self._validate_table_exists(table_name)
-        self._tables[table_name].add_alternate_keys(column_names)
+        self.tables[table_name].add_alternate_keys(column_names)
 
     def set_sequence_index(self, table_name, column_name):
         """Set the sequence index of a table.
@@ -386,10 +391,10 @@ class MultiTableMetadata:
         """
         self._validate_table_exists(table_name)
         warnings.warn('Sequential modeling is not yet supported on SDV Multi Table models.')
-        self._tables[table_name].set_sequence_index(column_name)
+        self.tables[table_name].set_sequence_index(column_name)
 
     def _validate_single_table(self, errors):
-        for table_name, table in self._tables.items():
+        for table_name, table in self.tables.items():
             if len(table.columns) == 0:
                 error_message = (
                     f"Table '{table_name}' has 0 columns. Use 'add_column' to specify its columns."
@@ -405,7 +410,7 @@ class MultiTableMetadata:
                 errors.append(error)
 
     def _validate_all_tables_connected(self, parent_map, child_map):
-        nodes = list(self._tables.keys())
+        nodes = list(self.tables.keys())
         queue = [nodes[0]]
         connected = {table_name: False for table_name in nodes}
 
@@ -487,13 +492,18 @@ class MultiTableMetadata:
                 "Invalid table name (''). The table name must be a non-empty string."
             )
 
-        if table_name in self._tables:
+<<<<<<< HEAD
+        if table_name in self.tables:
             raise InvalidMetadataError(
+=======
+        if table_name in self.tables:
+            raise ValueError(
+>>>>>>> a8fd8aba (_tables -> tables)
                 f"Cannot add a table named '{table_name}' because it already exists in the "
                 'metadata. Please choose a different name.'
             )
 
-        self._tables[table_name] = SingleTableMetadata()
+        self.tables[table_name] = SingleTableMetadata()
 
     def visualize(self, show_table_details=True, show_relationship_labels=True,
                   output_filepath=None):
@@ -516,7 +526,7 @@ class MultiTableMetadata:
         nodes = {}
         edges = []
         if show_table_details:
-            for table_name, table_meta in self._tables.items():
+            for table_name, table_meta in self.tables.items():
                 column_dict = table_meta.columns.items()
                 columns = [f"{name} : {meta.get('sdtype')}" for name, meta in column_dict]
                 nodes[table_name] = {
@@ -525,13 +535,13 @@ class MultiTableMetadata:
                 }
 
         else:
-            nodes = {table_name: None for table_name in self._tables}
+            nodes = {table_name: None for table_name in self.tables}
 
         for relationship in self._relationships:
             parent = relationship.get('parent_table_name')
             child = relationship.get('child_table_name')
             foreign_key = relationship.get('child_foreign_key')
-            primary_key = self._tables.get(parent).primary_key
+            primary_key = self.tables.get(parent).primary_key
             edge_label = f'  {foreign_key} → {primary_key}' if show_relationship_labels else ''
             edges.append((parent, child, edge_label))
 
@@ -559,7 +569,7 @@ class MultiTableMetadata:
     def to_dict(self):
         """Return a python ``dict`` representation of the ``MultiTableMetadata``."""
         metadata = {'tables': {}, 'relationships': []}
-        for table_name, single_table_metadata in self._tables.items():
+        for table_name, single_table_metadata in self.tables.items():
             table_dict = single_table_metadata.to_dict()
             table_dict.pop('METADATA_SPEC_VERSION', None)
             metadata['tables'][table_name] = table_dict
@@ -576,7 +586,7 @@ class MultiTableMetadata:
                 Python dictionary representing a ``MultiTableMetadata`` object.
         """
         for table_name, table_dict in metadata.get('tables', {}).items():
-            self._tables[table_name] = SingleTableMetadata._load_from_dict(table_dict)
+            self.tables[table_name] = SingleTableMetadata._load_from_dict(table_dict)
 
         for relationship in metadata.get('relationships', []):
             self._relationships.append(relationship)

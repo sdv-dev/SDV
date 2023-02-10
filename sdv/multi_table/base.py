@@ -44,7 +44,7 @@ class BaseMultiTableSynthesizer:
             np.random.set_state(initial_state)
 
     def _initialize_models(self):
-        for table_name, table_metadata in self.metadata._tables.items():
+        for table_name, table_metadata in self.metadata.tables.items():
             synthesizer_parameters = self._table_parameters.get(table_name, {})
             self._table_synthesizers[table_name] = self._synthesizer(
                 metadata=table_metadata,
@@ -101,7 +101,7 @@ class BaseMultiTableSynthesizer:
                 the table's synthesizer.
         """
         self._table_synthesizers[table_name] = self._synthesizer(
-            metadata=self.metadata._tables[table_name],
+            metadata=self.metadata.tables[table_name],
             **table_parameters
         )
         self._table_parameters[table_name].update(deepcopy(table_parameters))
@@ -169,7 +169,7 @@ class BaseMultiTableSynthesizer:
                     * values of a column don't satisfy their sdtype
         """
         errors = []
-        missing_tables = set(self.metadata._tables) - set(data)
+        missing_tables = set(self.metadata.tables) - set(data)
         if missing_tables:
             errors.append(f'The provided data is missing the tables {missing_tables}.')
 

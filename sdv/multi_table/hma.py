@@ -30,7 +30,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         self._table_sizes = {}
         self._max_child_rows = {}
         self._modeled_tables = []
-        for table_name in self.metadata._tables:
+        for table_name in self.metadata.tables:
             self.set_table_parameters(table_name, self._synthesizer_kwargs)
 
     def _get_extension(self, child_name, child_table, foreign_key):
@@ -314,7 +314,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
     def _get_child_synthesizer(self, parent_row, table_name, foreign_key):
         parameters = self._extract_parameters(parent_row, table_name, foreign_key)
-        table_meta = self.metadata._tables[table_name]
+        table_meta = self.metadata.tables[table_name]
         synthesizer = self._synthesizer(table_meta, **self._synthesizer_kwargs)
         synthesizer._set_parameters(parameters)
 
@@ -340,7 +340,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         table_rows = self._sample_rows(synthesizer, table_name)
 
         if len(table_rows):
-            parent_key = self.metadata._tables[parent_name].primary_key
+            parent_key = self.metadata.tables[parent_name].primary_key
             table_rows[foreign_key] = parent_row[parent_key]
 
             previous = sampled_data.get(table_name)
@@ -473,7 +473,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             parent_model = self._table_synthesizers[parent_name]
             parent_rows = self._sample_rows(parent_model, parent_name, num_parent_rows)
 
-        primary_key = self.metadata._tables[parent_name].primary_key
+        primary_key = self.metadata.tables[parent_name].primary_key
         parent_rows = parent_rows.set_index(primary_key)
         num_rows = parent_rows[f'__{table_name}__{foreign_key}__num_rows'].fillna(0).clip(0)
 
@@ -524,7 +524,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                 A ``NotFittedError`` is raised when the ``SDV`` instance has not been fitted yet.
         """
         sampled_data = {}
-        for table in self.metadata._tables:
+        for table in self.metadata.tables:
             if not self.metadata._get_parent_map().get(table):
                 self._sample_table(table, scale=scale, sampled_data=sampled_data)
 

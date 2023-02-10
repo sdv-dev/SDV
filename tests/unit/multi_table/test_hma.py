@@ -404,7 +404,7 @@ class TestHMASynthesizer:
         table_name = 'users'
         foreign_key = 'session_id'
         table_meta = Mock()
-        instance.metadata._tables = {'users': table_meta}
+        instance.metadata.tables = {'users': table_meta}
         instance._synthesizer_kwargs = {'a': 1}
 
         # Run
@@ -440,7 +440,7 @@ class TestHMASynthesizer:
         sessions_meta = Mock()
         users_meta = Mock()
         users_meta.primary_key.return_value = 'user_id'
-        metadata._tables = {
+        metadata.tables = {
             'users': users_meta,
             'sessions': sessions_meta
         }
@@ -490,7 +490,7 @@ class TestHMASynthesizer:
         sessions_meta = Mock()
         users_meta = Mock()
         users_meta.primary_key.return_value = 'user_id'
-        metadata._tables = {
+        metadata.tables = {
             'users': users_meta,
             'sessions': sessions_meta
         }
@@ -627,7 +627,7 @@ class TestHMASynthesizer:
             'sessions': ['users'],
             'transactions': ['sessions']
         }
-        instance.metadata._tables = {
+        instance.metadata.tables = {
             'users': Mock(),
             'sessions': Mock(),
             'transactions': Mock(),
