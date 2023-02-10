@@ -10,7 +10,7 @@ from sdv.metadata.multi_table import MultiTableMetadata
 
 
 def test_evaluate_quality():
-    """Test the correct score is returned."""
+    """Test ``generate`` is called for the ``QualityReport`` object."""
     # Setup
     table = pd.DataFrame({'col': [1, 2, 3]})
     data1 = {'table': table}
@@ -18,19 +18,16 @@ def test_evaluate_quality():
     metadata = MultiTableMetadata()
     metadata.detect_table_from_dataframe('table', table)
     QualityReport.generate = Mock()
-    QualityReport.get_score = Mock(return_value=123)
 
     # Run
-    score = evaluate_quality(data1, data2, metadata)
+    evaluate_quality(data1, data2, metadata)
 
     # Assert
     QualityReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
-    QualityReport.get_score.assert_called_once_with()
-    assert score == 123
 
 
 def test_run_diagnostic():
-    """Test the correct diagnostic is returned."""
+    """Test ``generate`` is called for the ``DiagnosticReport`` object."""
     # Setup
     table = pd.DataFrame({'col': [1, 2, 3]})
     data1 = {'table': table}
@@ -38,15 +35,12 @@ def test_run_diagnostic():
     metadata = MultiTableMetadata()
     metadata.detect_table_from_dataframe('table', table)
     DiagnosticReport.generate = Mock()
-    DiagnosticReport.get_results = Mock(return_value={'err_type': 'str'})
 
     # Run
-    diagnostic = run_diagnostic(data1, data2, metadata)
+    run_diagnostic(data1, data2, metadata)
 
     # Assert
     DiagnosticReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
-    DiagnosticReport.get_results.assert_called_once_with()
-    assert diagnostic == {'err_type': 'str'}
 
 
 @patch('sdmetrics.reports.utils.get_column_plot')
