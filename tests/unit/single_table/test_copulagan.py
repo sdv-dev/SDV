@@ -188,7 +188,7 @@ class TestCopulaGANSynthesizer:
         # Setup
         numerical_distributions = {'age': 'gamma'}
         metadata = SingleTableMetadata()
-        metadata._columns = {
+        metadata.columns = {
             'name': {
                 'sdtype': 'categorical',
             },

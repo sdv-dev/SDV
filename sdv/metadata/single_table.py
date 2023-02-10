@@ -117,11 +117,11 @@ class SingleTableMetadata:
             )
 
     def __init__(self):
-        self._columns = {}
-        self._primary_key = None
-        self._alternate_keys = []
-        self._sequence_key = None
-        self._sequence_index = None
+        self.columns = {}
+        self.primary_key = None
+        self.alternate_keys = []
+        self.sequence_key = None
+        self.sequence_index = None
         self._version = self.METADATA_SPEC_VERSION
 
     def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
@@ -173,7 +173,7 @@ class SingleTableMetadata:
             - ``InvalidMetadataError`` if the ``pii`` value is not ``True`` or ``False`` when
                present.
         """
-        if column_name in self._columns:
+        if column_name in self.columns:
             raise InvalidMetadataError(
                 f"Column name '{column_name}' already exists. Use 'update_column' "
                 'to update an existing column.'
@@ -189,10 +189,10 @@ class SingleTableMetadata:
             pii = column_kwargs.get('pii', True)
             column_kwargs['pii'] = pii
 
-        self._columns[column_name] = column_kwargs
+        self.columns[column_name] = column_kwargs
 
     def _validate_column_exists(self, column_name):
-        if column_name not in self._columns:
+        if column_name not in self.columns:
             raise InvalidMetadataError(
                 f"Column name ('{column_name}') does not exist in the table. "
                 "Use 'add_column' to add new column."
@@ -221,17 +221,17 @@ class SingleTableMetadata:
         if 'sdtype' in kwargs:
             sdtype = kwargs.pop('sdtype')
         else:
-            sdtype = self._columns[column_name]['sdtype']
+            sdtype = self.columns[column_name]['sdtype']
             _kwargs['sdtype'] = sdtype
 
         self._validate_column(column_name, sdtype, **kwargs)
-        self._columns[column_name] = _kwargs
+        self.columns[column_name] = _kwargs
 
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
         metadata = {}
         for key in self._KEYS:
-            value = getattr(self, f'_{key}') if key != 'METADATA_SPEC_VERSION' else self._version
+            value = getattr(self, f'{key}') if key != 'METADATA_SPEC_VERSION' else self._version
             if value:
                 metadata[key] = value
 
@@ -241,7 +241,7 @@ class SingleTableMetadata:
         for field in data:
             clean_data = data[field].dropna()
             kind = clean_data.infer_objects().dtype.kind
-            self._columns[field] = {'sdtype': self._DTYPES_TO_SDTYPES.get(kind, 'categorical')}
+            self.columns[field] = {'sdtype': self._DTYPES_TO_SDTYPES.get(kind, 'categorical')}
 
     def detect_from_dataframe(self, data):
         """Detect the metadata from a ``pd.DataFrame`` object.
@@ -252,7 +252,7 @@ class SingleTableMetadata:
             data (pandas.DataFrame):
                 ``pandas.DataFrame`` to detect the metadata from.
         """
-        if self._columns:
+        if self.columns:
             raise InvalidMetadataError(
                 'Metadata already exists. Create a new ``SingleTableMetadata`` '
                 'object to detect from other data sources.'
@@ -275,7 +275,7 @@ class SingleTableMetadata:
                 A python dictionary of with string and value accepted by ``pandas.read_csv``
                 function. Defaults to ``None``.
         """
-        if self._columns:
+        if self.columns:
             raise InvalidMetadataError(
                 'Metadata already exists. Create a new ``SingleTableMetadata`` '
                 'object to detect from other data sources.'
@@ -294,7 +294,7 @@ class SingleTableMetadata:
         """Validate that no key is of type 'categorical'."""
         bad_sdtypes = ('boolean', 'categorical')
         categorical_keys = sorted(
-            {key for key in keys if self._columns[key]['sdtype'] in bad_sdtypes}
+            {key for key in keys if self.columns[key]['sdtype'] in bad_sdtypes}
         )
         if categorical_keys:
             raise InvalidMetadataError(
@@ -310,7 +310,7 @@ class SingleTableMetadata:
                     f"'{key_type}_key' must be a string or tuple of strings.")
 
             keys = {column_name} if isinstance(column_name, str) else set(column_name)
-            invalid_ids = keys - set(self._columns)
+            invalid_ids = keys - set(self.columns)
             if invalid_ids:
                 raise InvalidMetadataError(
                     f'Unknown {key_type} key values {invalid_ids}.'
@@ -327,20 +327,20 @@ class SingleTableMetadata:
                 Name (or tuple of names) of the primary key column(s).
         """
         self._validate_key(column_name, 'primary')
-        if column_name in self._alternate_keys:
+        if column_name in self.alternate_keys:
             warnings.warn(
                 f'{column_name} is currently set as an alternate key and will be removed from '
                 'that list.'
             )
-            self._alternate_keys.remove(column_name)
+            self.alternate_keys.remove(column_name)
 
-        if self._primary_key is not None:
+        if self.primary_key is not None:
             warnings.warn(
-                f'There is an existing primary key {self._primary_key}.'
+                f'There is an existing primary key {self.primary_key}.'
                 ' This key will be removed.'
             )
 
-        self._primary_key = column_name
+        self.primary_key = column_name
 
     def set_sequence_key(self, column_name):
         """Set the metadata sequence key.
@@ -350,13 +350,13 @@ class SingleTableMetadata:
                 Name (or tuple of names) of the sequence key column(s).
         """
         self._validate_key(column_name, 'sequence')
-        if self._sequence_key is not None:
+        if self.sequence_key is not None:
             warnings.warn(
-                f'There is an existing sequence key {self._sequence_key}.'
+                f'There is an existing sequence key {self.sequence_key}.'
                 ' This key will be removed.'
             )
 
-        self._sequence_key = column_name
+        self.sequence_key = column_name
 
     def _validate_alternate_keys(self, column_names):
         if not isinstance(column_names, list) or \
@@ -369,16 +369,16 @@ class SingleTableMetadata:
         for column_name in column_names:
             keys.update({column_name} if isinstance(column_name, str) else set(column_name))
 
-        invalid_ids = keys - set(self._columns)
+        invalid_ids = keys - set(self.columns)
         if invalid_ids:
             raise InvalidMetadataError(
                 f'Unknown alternate key values {invalid_ids}.'
                 ' Keys should be columns that exist in the table.'
             )
 
-        if self._primary_key in column_names:
+        if self.primary_key in column_names:
             raise InvalidMetadataError(
-                f"Invalid alternate key '{self._primary_key}'. The key is "
+                f"Invalid alternate key '{self.primary_key}'. The key is "
                 'already specified as a primary key.'
             )
 
@@ -393,23 +393,23 @@ class SingleTableMetadata:
         """
         self._validate_alternate_keys(column_names)
         for column in column_names:
-            if column in self._alternate_keys:
+            if column in self.alternate_keys:
                 warnings.warn(f'{column} is already an alternate key.')
             else:
-                self._alternate_keys.append(column)
+                self.alternate_keys.append(column)
 
     def _validate_sequence_index(self, column_name):
         if not isinstance(column_name, str):
             raise InvalidMetadataError("'sequence_index' must be a string.")
 
-        if column_name not in self._columns:
+        if column_name not in self.columns:
             column_name = {column_name}
             raise InvalidMetadataError(
                 f'Unknown sequence index value {column_name}.'
                 ' Keys should be columns that exist in the table.'
             )
 
-        sdtype = self._columns[column_name].get('sdtype')
+        sdtype = self.columns[column_name].get('sdtype')
         if sdtype not in ['datetime', 'numerical']:
             raise InvalidMetadataError(
                 "The sequence_index must be of type 'datetime' or 'numerical'.")
@@ -422,14 +422,14 @@ class SingleTableMetadata:
                 Name of the sequence index column.
         """
         self._validate_sequence_index(column_name)
-        self._sequence_index = column_name
+        self.sequence_index = column_name
 
     def _validate_sequence_index_not_in_sequence_key(self):
         """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
-        seq_key = self._sequence_key
+        seq_key = self.sequence_key
         sequence_key = set(cast_to_iterable(seq_key))
-        if self._sequence_index in sequence_key or seq_key is None:
-            index = {self._sequence_index}
+        if self.sequence_index in sequence_key or seq_key is None:
+            index = {self.sequence_index}
             raise InvalidMetadataError(
                 f"'sequence_index' and 'sequence_key' have the same value {index}."
                 ' These columns must be different.'
@@ -450,16 +450,16 @@ class SingleTableMetadata:
         """
         errors = []
         # Validate keys
-        self._append_error(errors, self._validate_key, self._primary_key, 'primary')
-        self._append_error(errors, self._validate_key, self._sequence_key, 'sequence')
-        if self._sequence_index:
-            self._append_error(errors, self._validate_sequence_index, self._sequence_index)
+        self._append_error(errors, self._validate_key, self.primary_key, 'primary')
+        self._append_error(errors, self._validate_key, self.sequence_key, 'sequence')
+        if self.sequence_index:
+            self._append_error(errors, self._validate_sequence_index, self.sequence_index)
             self._append_error(errors, self._validate_sequence_index_not_in_sequence_key)
 
-        self._append_error(errors, self._validate_alternate_keys, self._alternate_keys)
+        self._append_error(errors, self._validate_alternate_keys, self.alternate_keys)
 
         # Validate columns
-        for column, kwargs in self._columns.items():
+        for column, kwargs in self.columns.items():
             self._append_error(errors, self._validate_column, column, **kwargs)
 
         if errors:
@@ -499,7 +499,7 @@ class SingleTableMetadata:
         for key in instance._KEYS:
             value = deepcopy(metadata.get(key))
             if value:
-                setattr(instance, f'_{key}', value)
+                setattr(instance, f'{key}', value)
 
         return instance
 
