@@ -543,7 +543,8 @@ class SingleTableMetadata:
                 String that represents the ``path`` to save the upgraded metadata to.
 
         Raises:
-            Raises a ``InvalidMetadataError`` if the path already exists.
+            - ``ValueError`` if the path already exists.
+            - ``InvalidMetadataError`` if multiple tables are specified in the JSON.
         """
         validate_file_does_not_exist(new_filepath)
         old_metadata = read_json(old_filepath)

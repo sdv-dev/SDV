@@ -604,7 +604,7 @@ class MultiTableMetadata:
                 String that represent the ``path`` to the ``json`` file to be written.
 
         Raises:
-            Raises a ``InvalidMetadataError`` if the path already exists.
+            Raises a ``ValueError`` if the path already exists.
         """
         validate_file_does_not_exist(filepath)
         metadata = self.to_dict()
@@ -680,7 +680,7 @@ class MultiTableMetadata:
                 String that represents the ``path`` to save the upgraded metadata to.
 
         Raises:
-            Raises a ``InvalidMetadataError`` if the path already exists.
+            Raises a ``ValueError`` if the path already exists.
         """
         validate_file_does_not_exist(new_filepath)
         old_metadata = read_json(old_filepath)

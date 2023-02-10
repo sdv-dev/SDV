@@ -713,7 +713,7 @@ class TestSingleTableMetadata:
         mock__validate_column.assert_called_once_with(
             'age', 'numerical', computer_representation='Float')
 
-    def test_detect_from_dataframe_raises_value_error(self):
+    def test_detect_from_dataframe_raises_error(self):
         """Test the ``detect_from_dataframe`` method.
 
         Test that if there are existing columns in the metadata, this raises an
@@ -785,7 +785,7 @@ class TestSingleTableMetadata:
         ]
         mock_log.info.assert_has_calls(expected_log_calls)
 
-    def test_detect_from_csv_raises_value_error(self):
+    def test_detect_from_csv_raises_error(self):
         """Test the ``detect_from_csv`` method.
 
         Test that if there are existing columns in the metadata, this raises an
@@ -1538,7 +1538,7 @@ class TestSingleTableMetadata:
     def test_load_from_json_path_does_not_exist(self, mock_path):
         """Test the ``load_from_json`` method.
 
-        Test that the method raises an ``InvalidMetadataError`` when the specified path does not
+        Test that the method raises a ``ValueError`` when the specified path does not
         exist.
 
         Mock:
@@ -1548,7 +1548,7 @@ class TestSingleTableMetadata:
             - String representing a filepath.
 
         Side Effects:
-            - An ``InvalidMetadataError`` is raised pointing that the ``file`` does not exist.
+            - A ``ValueError`` is raised pointing that the ``file`` does not exist.
         """
         # Setup
         mock_path.return_value.exists.return_value = False
@@ -1653,7 +1653,7 @@ class TestSingleTableMetadata:
         """Test the ``save_to_json`` method.
 
         Test that when attempting to write over a file that already exists, the method
-        raises an ``InvalidMetadataError``.
+        raises a ``ValueError``.
 
         Setup:
             - instance of ``SingleTableMetadata``.
@@ -1661,7 +1661,7 @@ class TestSingleTableMetadata:
             - Mock ``Path`` in order to point that the file does exist.
 
         Side Effects:
-            - Raise ``InvalidMetadataError`` pointing that the file does exist.
+            - Raise ``ValueError`` pointing that the file does exist.
         """
         # Setup
         instance = SingleTableMetadata()

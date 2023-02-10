@@ -1711,7 +1711,7 @@ class TestMultiTableMetadata:
     def test_load_from_json_path_does_not_exist(self, mock_path):
         """Test the ``load_from_json`` method.
 
-        Test that the method raises an ``InvalidMetadataError`` when the specified path does not
+        Test that the method raises a ``ValueError`` when the specified path does not
         exist.
 
         Mock:
@@ -1721,7 +1721,7 @@ class TestMultiTableMetadata:
             - String representing a filepath.
 
         Side Effects:
-            - An ``InvalidMetadataError`` is raised pointing that the ``file`` does not exist.
+            - A ``ValueError`` is raised pointing that the ``file`` does not exist.
         """
         # Setup
         mock_path.return_value.exists.return_value = False
@@ -1791,7 +1791,7 @@ class TestMultiTableMetadata:
         """Test the ``save_to_json`` method.
 
         Test that when attempting to write over a file that already exists, the method
-        raises an ``InvalidMetadataError``.
+        raises a ``ValueError``.
 
         Setup:
             - instance of ``MultiTableMetadata``.
@@ -1799,7 +1799,7 @@ class TestMultiTableMetadata:
             - Mock ``Path`` in order to point that the file does exist.
 
         Side Effects:
-            - Raise ``InvalidMetadataError`` pointing that the file does exist.
+            - Raise ``ValueError`` pointing that the file does exist.
         """
         # Setup
         instance = MultiTableMetadata()
