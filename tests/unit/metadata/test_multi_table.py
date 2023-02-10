@@ -853,7 +853,7 @@ class TestMultiTableMetadata:
         metadata.detect_table_from_dataframe('table2', table)
         metadata.set_primary_key('table2', 'pk')
 
-        metadata._relationships = [
+        metadata.relationships = [
             {
                 'parent_table_name': 'table',
                 'parent_primary_key': 'pk',

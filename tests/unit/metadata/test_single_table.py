@@ -504,25 +504,25 @@ class TestSingleTableMetadata:
         """Test that ``update_column`` updates the sdtype and keyword args for the given column."""
         # Setup
         instance = SingleTableMetadata()
-        instance._columns = {'a': {'sdtype': 'numerical'}}
+        instance.columns = {'a': {'sdtype': 'numerical'}}
 
         # Run
         instance.update_column('a', sdtype='categorical', order_by='alphabetical')
 
         # Assert
-        assert instance._columns == {'a': {'sdtype': 'categorical', 'order_by': 'alphabetical'}}
+        assert instance.columns == {'a': {'sdtype': 'categorical', 'order_by': 'alphabetical'}}
 
     def test_update_column_add_extra_value(self):
         """Test that ``update_column`` updates only the keyword args for the given column."""
         # Setup
         instance = SingleTableMetadata()
-        instance._columns = {'a': {'sdtype': 'numerical'}}
+        instance.columns = {'a': {'sdtype': 'numerical'}}
 
         # Run
         instance.update_column('a', computer_representation='Int64')
 
         # Assert
-        assert instance._columns == {
+        assert instance.columns == {
             'a': {
                 'sdtype': 'numerical',
                 'computer_representation': 'Int64'

@@ -129,7 +129,7 @@ class MultiTableMetadata:
             )
 
     def _validate_foreign_child_key(self, child_table_name, child_foreign_key):
-        child_primary_key = cast_to_iterable(self._tables[child_table_name]._primary_key)
+        child_primary_key = cast_to_iterable(self.tables[child_table_name].primary_key)
         child_foreign_key = cast_to_iterable(child_foreign_key)
         if set(child_foreign_key).intersection(set(child_primary_key)):
             raise InvalidMetadataError(
@@ -231,13 +231,8 @@ class MultiTableMetadata:
         })
 
     def _validate_table_exists(self, table_name):
-<<<<<<< HEAD
-        if table_name not in self._tables:
-            raise InvalidMetadataError(f"Unknown table name ('{table_name}').")
-=======
         if table_name not in self.tables:
-            raise ValueError(f"Unknown table name ('{table_name}').")
->>>>>>> a8fd8aba (_tables -> tables)
+            raise InvalidMetadataError(f"Unknown table name ('{table_name}').")
 
     def add_column(self, table_name, column_name, **kwargs):
         """Add a column to a table in the ``MultiTableMetadata``.
@@ -492,13 +487,8 @@ class MultiTableMetadata:
                 "Invalid table name (''). The table name must be a non-empty string."
             )
 
-<<<<<<< HEAD
         if table_name in self.tables:
             raise InvalidMetadataError(
-=======
-        if table_name in self.tables:
-            raise ValueError(
->>>>>>> a8fd8aba (_tables -> tables)
                 f"Cannot add a table named '{table_name}' because it already exists in the "
                 'metadata. Please choose a different name.'
             )
