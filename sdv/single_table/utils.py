@@ -29,8 +29,8 @@ def detect_discrete_columns(metadata, data):
     discrete_columns = []
 
     for column in data.columns:
-        if column in metadata._columns:
-            if metadata._columns[column]['sdtype'] not in ['numerical', 'datetime']:
+        if column in metadata.columns:
+            if metadata.columns[column]['sdtype'] not in ['numerical', 'datetime']:
                 discrete_columns.append(column)
 
         else:

@@ -24,12 +24,12 @@ def test_single_table_metadata():
     assert result == {
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
     }
-    assert instance._columns == {}
+    assert instance.columns == {}
     assert instance._version == 'SINGLE_TABLE_V1'
-    assert instance._primary_key is None
-    assert instance._sequence_key is None
-    assert instance._alternate_keys == []
-    assert instance._sequence_index is None
+    assert instance.primary_key is None
+    assert instance.sequence_key is None
+    assert instance.alternate_keys == []
+    assert instance.sequence_index is None
 
 
 def test_validate():
@@ -54,7 +54,7 @@ def test_validate_errors():
     """Test ``SingleTableMetadata.validate`` raises the correct errors."""
     # Setup
     instance = SingleTableMetadata()
-    instance._columns = {
+    instance.columns = {
         'col1': {'sdtype': 'numerical'},
         'col2': {'sdtype': 'numerical'},
         'col4': {'sdtype': 'categorical', 'invalid1': 'value'},
@@ -65,10 +65,10 @@ def test_validate_errors():
         'col9': {'sdtype': 'datetime', 'datetime_format': '%1-%Y-%m-%d-%'},
         'col10': {'sdtype': 'text', 'regex_format': '[A-{6}'},
     }
-    instance._primary_key = 10
-    instance._alternate_keys = 'col1'
-    instance._sequence_key = ('col3', 'col1')
-    instance._sequence_index = 'col3'
+    instance.primary_key = 10
+    instance.alternate_keys = 'col1'
+    instance.sequence_key = ('col3', 'col1')
+    instance.sequence_index = 'col3'
 
     err_msg = re.escape(
         'The following errors were found in the metadata:'

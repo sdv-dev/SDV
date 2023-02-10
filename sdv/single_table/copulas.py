@@ -95,7 +95,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
         )
-        validate_numerical_distributions(numerical_distributions, self.metadata._columns)
+        validate_numerical_distributions(numerical_distributions, self.metadata.columns)
         self.numerical_distributions = numerical_distributions or {}
         self.default_distribution = default_distribution or 'beta'
 
@@ -139,7 +139,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
                 Dict mapping column names to transformers to be used for that column.
         """
         for column, transformer in column_name_to_transformer.items():
-            sdtype = self.metadata._columns[column]['sdtype']
+            sdtype = self.metadata.columns[column]['sdtype']
             if sdtype == 'categorical' and isinstance(transformer, OneHotEncoder):
                 warnings.warn(
                     f"Using a OneHotEncoder transformer for column '{column}' "
@@ -166,7 +166,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
     def _get_valid_columns_from_metadata(self, columns):
         valid_columns = []
         for column in columns:
-            for valid_column in self.metadata._columns:
+            for valid_column in self.metadata.columns:
                 if column.startswith(valid_column):
                     valid_columns.append(column)
                     break

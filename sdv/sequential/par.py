@@ -71,7 +71,7 @@ class PARSynthesizer(BaseSynthesizer):
             context_columns += self._sequence_key
 
         for column in context_columns:
-            context_columns_dict[column] = self.metadata._columns[column]
+            context_columns_dict[column] = self.metadata.columns[column]
 
         context_metadata_dict = {'columns': context_columns_dict}
         return SingleTableMetadata._load_from_dict(context_metadata_dict)
@@ -85,7 +85,7 @@ class PARSynthesizer(BaseSynthesizer):
             enforce_rounding=enforce_rounding,
         )
 
-        sequence_key = self.metadata._sequence_key
+        sequence_key = self.metadata.sequence_key
         self._sequence_key = list(cast_to_iterable(sequence_key)) if sequence_key else None
         if context_columns and not self._sequence_key:
             raise SynthesizerInputError(
@@ -93,7 +93,7 @@ class PARSynthesizer(BaseSynthesizer):
                 "model 'context_columns' in this case."
             )
 
-        self._sequence_index = self.metadata._sequence_index
+        self._sequence_index = self.metadata.sequence_index
         self.context_columns = context_columns or []
         self.segment_size = segment_size
         self._model_kwargs = {

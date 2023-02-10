@@ -15,7 +15,7 @@ def test_detect_discrete_columns():
     """Test that the detect discrete columns returns a list columns that are not continuum."""
     # Setup
     metadata = SingleTableMetadata()
-    metadata._columns = {
+    metadata.columns = {
         'name': {
             'sdtype': 'categorical',
         },

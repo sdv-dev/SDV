@@ -74,7 +74,7 @@ class TestPARSynthesizer:
         assert isinstance(synthesizer._data_processor, DataProcessor)
         assert synthesizer._data_processor.metadata == metadata
         assert isinstance(synthesizer._context_synthesizer, GaussianCopulaSynthesizer)
-        assert synthesizer._context_synthesizer.metadata._columns == {
+        assert synthesizer._context_synthesizer.metadata.columns == {
             'gender': {'sdtype': 'categorical'},
             'name': {'sdtype': 'text'}
         }

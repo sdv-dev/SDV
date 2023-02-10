@@ -351,8 +351,8 @@ class Inequality(Constraint):
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
         high = kwargs.get('high_column_name')
         low = kwargs.get('low_column_name')
-        high_sdtype = metadata._columns.get(high, {}).get('sdtype')
-        low_sdtype = metadata._columns.get(low, {}).get('sdtype')
+        high_sdtype = metadata.columns.get(high, {}).get('sdtype')
+        low_sdtype = metadata.columns.get(low, {}).get('sdtype')
         both_datetime = high_sdtype == low_sdtype == 'datetime'
         both_numerical = high_sdtype == low_sdtype == 'numerical'
         if not (both_datetime or both_numerical) and not (high is None or low is None):
@@ -520,14 +520,14 @@ class ScalarInequality(Constraint):
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
         column_name = kwargs.get('column_name')
-        sdtype = metadata._columns.get(column_name, {}).get('sdtype')
+        sdtype = metadata.columns.get(column_name, {}).get('sdtype')
         value = kwargs.get('value')
         if sdtype == 'numerical':
             if not isinstance(value, (int, float)):
                 raise ConstraintMetadataError("'value' must be an int or float.")
 
         elif sdtype == 'datetime':
-            datetime_format = metadata._columns.get(column_name).get('datetime_format')
+            datetime_format = metadata.columns.get(column_name).get('datetime_format')
             matches_format = matches_datetime_format(value, datetime_format)
             if not matches_format:
                 raise ConstraintMetadataError(
@@ -685,7 +685,7 @@ class Positive(ScalarInequality):
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
         column_name = kwargs.get('column_name')
-        sdtype = metadata._columns.get(column_name, {}).get('sdtype')
+        sdtype = metadata.columns.get(column_name, {}).get('sdtype')
         if sdtype != 'numerical':
             raise ConstraintMetadataError(
                 f'A Positive constraint is being applied to an invalid column '
@@ -714,7 +714,7 @@ class Negative(ScalarInequality):
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
         column_name = kwargs.get('column_name')
-        sdtype = metadata._columns.get(column_name, {}).get('sdtype')
+        sdtype = metadata.columns.get(column_name, {}).get('sdtype')
         if sdtype != 'numerical':
             raise ConstraintMetadataError(
                 f'A Negative constraint is being applied to an invalid column '
@@ -759,9 +759,9 @@ class Range(Constraint):
         high = kwargs.get('high_column_name')
         low = kwargs.get('low_column_name')
         middle = kwargs.get('middle_column_name')
-        high_sdtype = metadata._columns.get(high, {}).get('sdtype')
-        low_sdtype = metadata._columns.get(low, {}).get('sdtype')
-        middle_sdtype = metadata._columns.get(middle, {}).get('sdtype')
+        high_sdtype = metadata.columns.get(high, {}).get('sdtype')
+        low_sdtype = metadata.columns.get(low, {}).get('sdtype')
+        middle_sdtype = metadata.columns.get(middle, {}).get('sdtype')
         all_datetime = high_sdtype == low_sdtype == middle_sdtype == 'datetime'
         all_numerical = high_sdtype == low_sdtype == middle_sdtype == 'numerical'
         if not (all_datetime or all_numerical) and \
@@ -942,12 +942,12 @@ class ScalarRange(Constraint):
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
         column_name = kwargs.get('column_name')
-        if column_name not in metadata._columns:
+        if column_name not in metadata.columns:
             raise ConstraintMetadataError(
                 f'A ScalarRange constraint is being applied to invalid column names '
                 f'({column_name}). The columns must exist in the table.'
             )
-        sdtype = metadata._columns.get(column_name).get('sdtype')
+        sdtype = metadata.columns.get(column_name).get('sdtype')
         high_value = kwargs.get('high_value')
         low_value = kwargs.get('low_value')
         if sdtype == 'numerical':
@@ -957,7 +957,7 @@ class ScalarRange(Constraint):
                 )
 
         elif sdtype == 'datetime':
-            datetime_format = metadata._columns.get(column_name, {}).get('datetime_format')
+            datetime_format = metadata.columns.get(column_name, {}).get('datetime_format')
             high_matches_format = matches_datetime_format(high_value, datetime_format)
             low_matches_format = matches_datetime_format(low_value, datetime_format)
             if not (low_matches_format and high_matches_format):
@@ -1275,12 +1275,12 @@ class Unique(Constraint):
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
         column_names = kwargs.get('column_names')
         keys = set()
-        if isinstance(metadata._primary_key, tuple):
-            keys.update(metadata._primary_key)
+        if isinstance(metadata.primary_key, tuple):
+            keys.update(metadata.primary_key)
         else:
-            keys.add(metadata._primary_key)
+            keys.add(metadata.primary_key)
 
-        for key in metadata._alternate_keys:
+        for key in metadata.alternate_keys:
             if isinstance(key, tuple):
                 keys.update(key)
             else:

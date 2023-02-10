@@ -103,9 +103,9 @@ class DataProcessor:
         self._dtypes = None
         self.fitted = False
         self.formatters = {}
-        self._primary_key = self.metadata._primary_key
+        self._primary_key = self.metadata.primary_key
         self._prepared_for_fitting = False
-        self._keys = deepcopy(self.metadata._alternate_keys)
+        self._keys = deepcopy(self.metadata.alternate_keys)
         self._keys_generators = {}
         if self._primary_key:
             self._keys.append(self._primary_key)
@@ -147,7 +147,7 @@ class DataProcessor:
                 Dictionary that contains the column names and ``sdtypes``.
         """
         sdtypes = {}
-        for name, column_metadata in self.metadata._columns.items():
+        for name, column_metadata in self.metadata.columns.items():
             sdtype = column_metadata['sdtype']
 
             if primary_keys or (name not in self._keys):
@@ -444,7 +444,7 @@ class DataProcessor:
         transformers = {}
 
         for column in set(data.columns) - columns_created_by_constraints:
-            column_metadata = self.metadata._columns.get(column)
+            column_metadata = self.metadata.columns.get(column)
             sdtype = column_metadata.get('sdtype')
             pii = column_metadata.get('pii', sdtype not in self._DEFAULT_TRANSFORMERS_BY_SDTYPE)
             sdtypes[column] = 'pii' if pii else sdtype
@@ -517,7 +517,7 @@ class DataProcessor:
     def _fit_formatters(self, data):
         """Fit ``NumericalFormatter`` and ``DatetimeFormatter`` for each column in the data."""
         for column_name in data:
-            column_metadata = self.metadata._columns.get(column_name)
+            column_metadata = self.metadata.columns.get(column_name)
             sdtype = column_metadata.get('sdtype')
             if sdtype == 'numerical' and column_name != self._primary_key:
                 representation = column_metadata.get('computer_representation', 'Float')
@@ -741,7 +741,7 @@ class DataProcessor:
         sampled_columns = list(reversed_data.columns)
         missing_columns = [
             column
-            for column in self.metadata._columns.keys() - set(sampled_columns + self._keys)
+            for column in self.metadata.columns.keys() - set(sampled_columns + self._keys)
             if self._hyper_transformer.field_transformers.get(column)
         ]
         if missing_columns:
@@ -760,7 +760,7 @@ class DataProcessor:
         # And alternate keys. Thats the reason of ensuring that the metadata column is within
         # The sampled columns.
         sampled_columns = [
-            column for column in self.metadata._columns.keys()
+            column for column in self.metadata.columns.keys()
             if column in sampled_columns
         ]
         for column_name in sampled_columns:
