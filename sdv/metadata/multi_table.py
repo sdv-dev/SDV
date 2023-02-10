@@ -49,7 +49,7 @@ class MultiTableMetadata:
             )
 
         for key in set(cast_to_iterable(child_foreign_key)):
-            if key not in child_table._columns:
+            if key not in child_table.columns:
                 missing_keys.add(key)
 
         if missing_keys:
@@ -83,8 +83,8 @@ class MultiTableMetadata:
 
     def _validate_relationship_sdtypes(self, parent_table_name, parent_primary_key,
                                        child_table_name, child_foreign_key):
-        parent_table_columns = self._tables.get(parent_table_name)._columns
-        child_table_columns = self._tables.get(child_table_name)._columns
+        parent_table_columns = self._tables.get(parent_table_name).columns
+        child_table_columns = self._tables.get(child_table_name).columns
         parent_primary_key = cast_to_iterable(parent_primary_key)
         child_foreign_key = cast_to_iterable(child_foreign_key)
         for pk, fk in zip(parent_primary_key, child_foreign_key):
@@ -390,7 +390,7 @@ class MultiTableMetadata:
 
     def _validate_single_table(self, errors):
         for table_name, table in self._tables.items():
-            if len(table._columns) == 0:
+            if len(table.columns) == 0:
                 error_message = (
                     f"Table '{table_name}' has 0 columns. Use 'add_column' to specify its columns."
                 )
@@ -517,7 +517,7 @@ class MultiTableMetadata:
         edges = []
         if show_table_details:
             for table_name, table_meta in self._tables.items():
-                column_dict = table_meta._columns.items()
+                column_dict = table_meta.columns.items()
                 columns = [f"{name} : {meta.get('sdtype')}" for name, meta in column_dict]
                 nodes[table_name] = {
                     'columns': r'\l'.join(columns),

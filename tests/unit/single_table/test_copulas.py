@@ -449,7 +449,7 @@ class TestGaussianCopulaSynthesizer:
         """Test that it returns a list with columns that are from the metadata."""
         # Seutp
         instance = Mock()
-        instance.metadata._columns = {
+        instance.metadata.columns = {
             'a_value': object(),
             'n_value': object(),
             'b_value': object()

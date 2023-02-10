@@ -112,7 +112,7 @@ class TestMultiTableMetadata:
         # Setup
         parent_table = Mock()
         parent_table._primary_key = 'id'
-        parent_table._columns = {
+        parent_table.columns = {
             'id': {'sdtype': 'numerical'},
             'session': {'sdtype': 'numerical'},
             'transactions': {'sdtype': 'numerical'},
@@ -122,7 +122,7 @@ class TestMultiTableMetadata:
 
         child_table = Mock()
         child_table._primary_key = 'session_id'
-        child_table._columns = {
+        child_table.columns = {
             'user_id': {'sdtype': 'numerical'},
             'session_id': {'sdtype': 'numerical'},
             'transactions': {'sdtype': 'numerical'},
@@ -154,7 +154,7 @@ class TestMultiTableMetadata:
         """Test the ``_validate_missing_relationship_keys`` method of ``MultiTableMetadata``.
 
         Test that when the provided ``child_foreign_key`` key is not in the
-        ``parent_table._columns``, this raises an error.
+        ``parent_table.columns``, this raises an error.
 
         Setup:
             - Create ``parent_table``.
@@ -168,7 +168,7 @@ class TestMultiTableMetadata:
             - ``parent_table_name`` string.
             - ``parent_primary_key`` a string that is the parent primary key.
             - ``child_table_name`` string.
-            - ``child_foreign_key`` a string that is not in the ``parent_table._columns``.
+            - ``child_foreign_key`` a string that is not in the ``parent_table.columns``.
 
         Side Effects:
             - Raises ``InvalidMetadataError`` stating that primary key is unknown.
@@ -280,7 +280,7 @@ class TestMultiTableMetadata:
         # Setup
         parent_table = Mock()
         parent_table._primary_key = 'id'
-        parent_table._columns = {
+        parent_table.columns = {
             'id': {'sdtype': 'numerical'},
             'user_name': {'sdtype': 'categorical'},
             'transactions': {'sdtype': 'numerical'},
@@ -290,7 +290,7 @@ class TestMultiTableMetadata:
 
         child_table = Mock()
         child_table._primary_key = 'session_id'
-        child_table._columns = {
+        child_table.columns = {
             'user_id': {'sdtype': 'numerical'},
             'session_id': {'sdtype': 'numerical'},
             'timestamp': {'sdtype': 'datetime'},
@@ -448,7 +448,7 @@ class TestMultiTableMetadata:
 
         parent_table = Mock()
         parent_table._primary_key = 'id'
-        parent_table._columns = {
+        parent_table.columns = {
             'id': {'sdtype': 'numerical'},
             'session': {'sdtype': 'numerical'},
             'transactions': {'sdtype': 'numerical'},
@@ -456,7 +456,7 @@ class TestMultiTableMetadata:
 
         child_table = Mock()
         child_table._primary_key = 'session_id'
-        child_table._columns = {
+        child_table.columns = {
             'user_id': {'sdtype': 'numerical'},
             'session_id': {'sdtype': 'numerical'},
             'transactions': {'sdtype': 'numerical'},
@@ -521,7 +521,7 @@ class TestMultiTableMetadata:
         instance._validate_relationship_does_not_exist = Mock()
         parent_table = Mock()
         parent_table._primary_key = 'id'
-        parent_table._columns = {
+        parent_table.columns = {
             'id': {'sdtype': 'numerical'},
             'session': {'sdtype': 'numerical'},
             'transactions': {'sdtype': 'numerical'},
@@ -529,7 +529,7 @@ class TestMultiTableMetadata:
 
         child_table = Mock()
         child_table._primary_key = 'session_id'
-        child_table._columns = {
+        child_table.columns = {
             'user_id': {'sdtype': 'numerical'},
             'session_id': {'sdtype': 'numerical'},
             'transactions': {'sdtype': 'numerical'},
@@ -605,7 +605,7 @@ class TestMultiTableMetadata:
 
         instance = Mock()
         users_mock = Mock()
-        users_mock._columns = {}
+        users_mock.columns = {}
         instance._tables = {
             'accounts': table_accounts,
             'users': users_mock
@@ -816,9 +816,9 @@ class TestMultiTableMetadata:
         # Setup
         instance = self.get_metadata()
         instance._tables['users']._primary_key = None
-        instance._tables['transactions']._columns['session_id']['sdtype'] = 'datetime'
-        instance._tables['payments']._columns['date']['sdtype'] = 'text'
-        instance._tables['payments']._columns['date']['regex_format'] = '[A-z{'
+        instance._tables['transactions'].columns['session_id']['sdtype'] = 'datetime'
+        instance._tables['payments'].columns['date']['sdtype'] = 'text'
+        instance._tables['payments'].columns['date']['regex_format'] = '[A-z{'
         instance._relationships.pop(-1)
 
         # Run
@@ -1779,7 +1779,7 @@ class TestMultiTableMetadata:
 
         # Asserts
         assert list(instance._tables.keys()) == ['table1']
-        assert instance._tables['table1']._columns == {'animals': {'type': 'categorical'}}
+        assert instance._tables['table1'].columns == {'animals': {'type': 'categorical'}}
         assert instance._tables['table1']._primary_key == 'animals'
         assert instance._tables['table1']._sequence_key is None
         assert instance._tables['table1']._alternate_keys == []

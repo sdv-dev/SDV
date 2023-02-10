@@ -24,7 +24,7 @@ def test_single_table_metadata():
     assert result == {
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
     }
-    assert instance._columns == {}
+    assert instance.columns == {}
     assert instance._version == 'SINGLE_TABLE_V1'
     assert instance._primary_key is None
     assert instance._sequence_key is None
@@ -54,7 +54,7 @@ def test_validate_errors():
     """Test ``SingleTableMetadata.validate`` raises the correct errors."""
     # Setup
     instance = SingleTableMetadata()
-    instance._columns = {
+    instance.columns = {
         'col1': {'sdtype': 'numerical'},
         'col2': {'sdtype': 'numerical'},
         'col4': {'sdtype': 'categorical', 'invalid1': 'value'},

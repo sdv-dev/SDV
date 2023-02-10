@@ -146,7 +146,7 @@ class TestBaseSingleTableSynthesizer:
             'name': 'FrequencyEncoder',
             'salary': 'FloatFormatter'
         }
-        instance.metadata._columns = {
+        instance.metadata.columns = {
             'salary': {'sdtype': 'numerical'},
             'name': {'sdtype': 'categorical'}
         }
@@ -1765,7 +1765,7 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
-        assert instance.metadata._columns == {}
+        assert instance.metadata.columns == {}
         assert instance.metadata._primary_key is None
         assert instance.metadata._alternate_keys == []
         assert instance.metadata._sequence_key is None

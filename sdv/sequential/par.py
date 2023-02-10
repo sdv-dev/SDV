@@ -71,7 +71,7 @@ class PARSynthesizer(BaseSynthesizer):
             context_columns += self._sequence_key
 
         for column in context_columns:
-            context_columns_dict[column] = self.metadata._columns[column]
+            context_columns_dict[column] = self.metadata.columns[column]
 
         context_metadata_dict = {'columns': context_columns_dict}
         return SingleTableMetadata._load_from_dict(context_metadata_dict)

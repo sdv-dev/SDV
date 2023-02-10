@@ -111,7 +111,7 @@ class TestDataProcessor:
 
         # Assert
         assert isinstance(instance.metadata, SingleTableMetadata)
-        assert instance.metadata._columns == {'col': {'sdtype': 'numerical'}}
+        assert instance.metadata.columns == {'col': {'sdtype': 'numerical'}}
 
     def test_filter_valid(self):
         """Test that we are calling the ``filter_valid`` of each constraint over the data."""
@@ -1140,7 +1140,7 @@ class TestDataProcessor:
         dp.metadata._primary_key = 'id'
         dp._primary_key = 'id'
         dp._keys = ['id']
-        dp.metadata._columns = {
+        dp.metadata.columns = {
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
             'bool': {'sdtype': 'boolean'},
@@ -1914,7 +1914,7 @@ class TestDataProcessor:
         dp = DataProcessor(SingleTableMetadata())
         dp.fitted = True
         dp.metadata = Mock()
-        dp.metadata._columns = {'a': None, 'b': None, 'c': None, 'd': None}
+        dp.metadata.columns = {'a': None, 'b': None, 'c': None, 'd': None}
         data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [True, True, False],
@@ -1980,7 +1980,7 @@ class TestDataProcessor:
         dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
         dp.fitted = True
         dp.metadata = Mock()
-        dp.metadata._columns = {'a': None, 'b': None, 'c': None}
+        dp.metadata.columns = {'a': None, 'b': None, 'c': None}
         data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [True, True, False],
@@ -2060,7 +2060,7 @@ class TestDataProcessor:
         dp._constraints_to_reverse = []
         dp._dtypes = {'bar': 'int'}
         dp.metadata = Mock()
-        dp.metadata._columns = {'bar': None}
+        dp.metadata.columns = {'bar': None}
 
         # Run
         output = dp.reverse_transform(data)

@@ -117,7 +117,7 @@ class SingleTableMetadata:
             )
 
     def __init__(self):
-        self._columns = {}
+        self.columns = {}
         self._primary_key = None
         self._alternate_keys = []
         self._sequence_key = None
@@ -173,7 +173,7 @@ class SingleTableMetadata:
             - ``InvalidMetadataError`` if the ``pii`` value is not ``True`` or ``False`` when
                present.
         """
-        if column_name in self._columns:
+        if column_name in self.columns:
             raise InvalidMetadataError(
                 f"Column name '{column_name}' already exists. Use 'update_column' "
                 'to update an existing column.'
@@ -189,10 +189,10 @@ class SingleTableMetadata:
             pii = column_kwargs.get('pii', True)
             column_kwargs['pii'] = pii
 
-        self._columns[column_name] = column_kwargs
+        self.columns[column_name] = column_kwargs
 
     def _validate_column_exists(self, column_name):
-        if column_name not in self._columns:
+        if column_name not in self.columns:
             raise InvalidMetadataError(
                 f"Column name ('{column_name}') does not exist in the table. "
                 "Use 'add_column' to add new column."
@@ -221,17 +221,21 @@ class SingleTableMetadata:
         if 'sdtype' in kwargs:
             sdtype = kwargs.pop('sdtype')
         else:
-            sdtype = self._columns[column_name]['sdtype']
+            sdtype = self.columns[column_name]['sdtype']
             _kwargs['sdtype'] = sdtype
 
         self._validate_column(column_name, sdtype, **kwargs)
-        self._columns[column_name] = _kwargs
+        self.columns[column_name] = _kwargs
 
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
         metadata = {}
         for key in self._KEYS:
-            value = getattr(self, f'_{key}') if key != 'METADATA_SPEC_VERSION' else self._version
+            if key == 'columns':
+                value = getattr(self, f'{key}')
+            else:
+                value = \
+                    getattr(self, f'_{key}') if key != 'METADATA_SPEC_VERSION' else self._version
             if value:
                 metadata[key] = value
 
@@ -241,7 +245,7 @@ class SingleTableMetadata:
         for field in data:
             clean_data = data[field].dropna()
             kind = clean_data.infer_objects().dtype.kind
-            self._columns[field] = {'sdtype': self._DTYPES_TO_SDTYPES.get(kind, 'categorical')}
+            self.columns[field] = {'sdtype': self._DTYPES_TO_SDTYPES.get(kind, 'categorical')}
 
     def detect_from_dataframe(self, data):
         """Detect the metadata from a ``pd.DataFrame`` object.
@@ -252,7 +256,7 @@ class SingleTableMetadata:
             data (pandas.DataFrame):
                 ``pandas.DataFrame`` to detect the metadata from.
         """
-        if self._columns:
+        if self.columns:
             raise InvalidMetadataError(
                 'Metadata already exists. Create a new ``SingleTableMetadata`` '
                 'object to detect from other data sources.'
@@ -275,7 +279,7 @@ class SingleTableMetadata:
                 A python dictionary of with string and value accepted by ``pandas.read_csv``
                 function. Defaults to ``None``.
         """
-        if self._columns:
+        if self.columns:
             raise InvalidMetadataError(
                 'Metadata already exists. Create a new ``SingleTableMetadata`` '
                 'object to detect from other data sources.'
@@ -294,7 +298,7 @@ class SingleTableMetadata:
         """Validate that no key is of type 'categorical'."""
         bad_sdtypes = ('boolean', 'categorical')
         categorical_keys = sorted(
-            {key for key in keys if self._columns[key]['sdtype'] in bad_sdtypes}
+            {key for key in keys if self.columns[key]['sdtype'] in bad_sdtypes}
         )
         if categorical_keys:
             raise InvalidMetadataError(
@@ -310,7 +314,7 @@ class SingleTableMetadata:
                     f"'{key_type}_key' must be a string or tuple of strings.")
 
             keys = {column_name} if isinstance(column_name, str) else set(column_name)
-            invalid_ids = keys - set(self._columns)
+            invalid_ids = keys - set(self.columns)
             if invalid_ids:
                 raise InvalidMetadataError(
                     f'Unknown {key_type} key values {invalid_ids}.'
@@ -369,7 +373,7 @@ class SingleTableMetadata:
         for column_name in column_names:
             keys.update({column_name} if isinstance(column_name, str) else set(column_name))
 
-        invalid_ids = keys - set(self._columns)
+        invalid_ids = keys - set(self.columns)
         if invalid_ids:
             raise InvalidMetadataError(
                 f'Unknown alternate key values {invalid_ids}.'
@@ -402,14 +406,14 @@ class SingleTableMetadata:
         if not isinstance(column_name, str):
             raise InvalidMetadataError("'sequence_index' must be a string.")
 
-        if column_name not in self._columns:
+        if column_name not in self.columns:
             column_name = {column_name}
             raise InvalidMetadataError(
                 f'Unknown sequence index value {column_name}.'
                 ' Keys should be columns that exist in the table.'
             )
 
-        sdtype = self._columns[column_name].get('sdtype')
+        sdtype = self.columns[column_name].get('sdtype')
         if sdtype not in ['datetime', 'numerical']:
             raise InvalidMetadataError(
                 "The sequence_index must be of type 'datetime' or 'numerical'.")
@@ -459,7 +463,7 @@ class SingleTableMetadata:
         self._append_error(errors, self._validate_alternate_keys, self._alternate_keys)
 
         # Validate columns
-        for column, kwargs in self._columns.items():
+        for column, kwargs in self.columns.items():
             self._append_error(errors, self._validate_column, column, **kwargs)
 
         if errors:
@@ -498,7 +502,9 @@ class SingleTableMetadata:
         instance = cls()
         for key in instance._KEYS:
             value = deepcopy(metadata.get(key))
-            if value:
+            if key == 'columns':
+                setattr(instance, f'{key}', value)
+            elif value:
                 setattr(instance, f'_{key}', value)
 
         return instance
