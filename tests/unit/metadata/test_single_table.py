@@ -95,8 +95,8 @@ class TestSingleTableMetadata:
 
         Side Effects:
             - Passes when no ``computer_representation`` is provided
-            - ``ValueError`` is raised stating that the ``computer_representation`` is not
-            supported.
+            - ``InvalidMetadataError`` is raised stating that the ``computer_representation`` is
+              not supported.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -105,7 +105,7 @@ class TestSingleTableMetadata:
         instance._validate_numerical('age')
 
         error_msg = re.escape("Invalid value for 'computer_representation' '36' for column 'age'.")
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_numerical('age', computer_representation=36)
 
     @pytest.mark.parametrize(
@@ -124,7 +124,8 @@ class TestSingleTableMetadata:
 
         Side Effects:
             - Passes with the correct ``computer_representation``
-            - ``ValueError`` is raised stating that the ``computer_representation`` is wrong.
+            - ``InvalidMetadataError`` is raised stating that the ``computer_representation`` is
+              wrong.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -145,7 +146,7 @@ class TestSingleTableMetadata:
             - Invalid ``datetime_format``.
 
         Side Effects:
-            - ``ValueError`` indicating the format ``%`` that has not been formatted.
+            - ``InvalidMetadataError`` indicating the format ``%`` that has not been formatted.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -156,7 +157,7 @@ class TestSingleTableMetadata:
 
         error_msg = re.escape(
             "Invalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'start_date'.")
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_datetime('start_date', datetime_format='%1-%Y-%m-%d-%')
 
     def test__validate_categorical(self):
@@ -173,9 +174,10 @@ class TestSingleTableMetadata:
             - An invalid ``order_by`` and ``order``.
 
         Side Effects:
-            - ``ValueError`` when both ``order`` and ``order_by`` are present.
-            - ``ValueError`` when ``order`` is an empty list or a random string.
-            - ``ValueError`` when ``order_by`` is not ``numerical_value`` or ``alphabetical``.
+            - ``InvalidMetadataError`` when both ``order`` and ``order_by`` are present.
+            - ``InvalidMetadataError`` when ``order`` is an empty list or a random string.
+            - ``InvalidMetadataError`` when ``order_by`` is not ``numerical_value`` or
+              ``alphabetical``.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -190,24 +192,24 @@ class TestSingleTableMetadata:
             "Categorical column 'name' has both an 'order' and 'order_by' "
             'attribute. Only 1 is allowed.'
         )
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_categorical('name', order_by='alphabetical', order=['a', 'b', 'c'])
 
         error_msg_order_by = re.escape(
             "Unknown ordering method 'my_ordering' provided for categorical column "
             "'name'. Ordering method must be 'numerical_value' or 'alphabetical'."
         )
-        with pytest.raises(ValueError, match=error_msg_order_by):
+        with pytest.raises(InvalidMetadataError, match=error_msg_order_by):
             instance._validate_categorical('name', order_by='my_ordering')
 
         error_msg_order = re.escape(
             "Invalid order value provided for categorical column 'name'. "
             "The 'order' must be a list with 1 or more elements."
         )
-        with pytest.raises(ValueError, match=error_msg_order):
+        with pytest.raises(InvalidMetadataError, match=error_msg_order):
             instance._validate_categorical('name', order='my_ordering')
 
-        with pytest.raises(ValueError, match=error_msg_order):
+        with pytest.raises(InvalidMetadataError, match=error_msg_order):
             instance._validate_categorical('name', order=[])
 
     def test__validate_text(self):
@@ -223,7 +225,7 @@ class TestSingleTableMetadata:
             - Invalid ``regex_format``.
 
         Side Effects:
-            - ``ValueError``
+            - ``InvalidMetadataError``
         """
         # Setup
         instance = SingleTableMetadata()
@@ -231,7 +233,7 @@ class TestSingleTableMetadata:
         # Run / Assert
         instance._validate_text('phrase', regex_format='[A-z]')
         error_msg = re.escape("Invalid regex format string '[A-z{' for text column 'phrase'.")
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_text('phrase', regex_format='[A-z{')
 
     def test__validate_column_exists(self):
@@ -245,7 +247,7 @@ class TestSingleTableMetadata:
             - Column name.
 
         Side Effects:
-            - ``ValueError`` when the column is not in the ``instance._columns``.
+            - ``InvalidMetadataError`` when the column is not in the ``instance._columns``.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -262,7 +264,7 @@ class TestSingleTableMetadata:
             "Column name ('synthetic') does not exist in the table. "
             "Use 'add_column' to add new column."
         )
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_column_exists('synthetic')
 
     @pytest.mark.parametrize(('column_name', 'sdtype', 'kwargs'), VALID_KWARGS)
@@ -296,13 +298,13 @@ class TestSingleTableMetadata:
             - unexpected kwargs
 
         Side Effects:
-            - ``ValueError`` is being raised for each sdtype.
+            - ``InvalidMetadataError`` is being raised for each sdtype.
         """
         # Setup
         instance = SingleTableMetadata()
 
         # Run / Assert
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
 
     def test__validate_column_invalid_sdtype(self):
@@ -319,7 +321,7 @@ class TestSingleTableMetadata:
             "Invalid sdtype : 'fake_type' is not recognized. Please use one of the "
             'supported SDV sdtypes.'
         )
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_column('column', 'fake_type')
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
@@ -531,7 +533,8 @@ class TestSingleTableMetadata:
         """Test ``add_column`` method.
 
         Test that when calling ``add_column`` with a column that is already in
-        ``instance._columns`` raises a ``ValueError`` stating to use the ``update_column`` instead.
+        ``instance._columns`` raises an ``InvalidMetadataError`` stating to use the
+        ``update_column`` instead.
 
         Setup:
             - Instance of ``SingleTableMetadata``.
@@ -541,7 +544,7 @@ class TestSingleTableMetadata:
             - A column name that is already in ``instance._columns``.
 
         Side Effects:
-            - ``ValueError`` is being raised stating that the column exists.
+            - ``InvalidMetadataError`` is being raised stating that the column exists.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -550,14 +553,14 @@ class TestSingleTableMetadata:
         # Run / Assert
         error_msg = re.escape(
             "Column name 'age' already exists. Use 'update_column' to update an existing column.")
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.add_column('age')
 
     def test_add_column_sdtype_not_in_kwargs(self):
         """Test ``add_column`` method.
 
-        Test that when calling ``add_column`` without an sdtype a ``ValueError`` stating that
-        it must be provided is raised.
+        Test that when calling ``add_column`` without an sdtype an ``InvalidMetadataError`` stating
+        that it must be provided is raised.
 
         Setup:
             - Instance of ``SingleTableMetadata``.
@@ -566,14 +569,14 @@ class TestSingleTableMetadata:
             - A column name.
 
         Side Effects:
-            - ``ValueError`` is being raised stating that sdtype must be provided.
+            - ``InvalidMetadataError`` is being raised stating that sdtype must be provided.
         """
         # Setup
         instance = SingleTableMetadata()
 
         # Run / Assert
         error_msg = re.escape("Please provide a 'sdtype' for column 'synthetic'.")
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.add_column('synthetic')
 
     def test_add_column_invalid_sdtype(self):
@@ -590,7 +593,7 @@ class TestSingleTableMetadata:
             "Invalid sdtype : 'fake_type' is not recognized. Please use one of the "
             'supported SDV sdtypes.'
         )
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.add_column('column', sdtype='fake_type')
 
     def test_add_column(self):
@@ -710,17 +713,18 @@ class TestSingleTableMetadata:
         mock__validate_column.assert_called_once_with(
             'age', 'numerical', computer_representation='Float')
 
-    def test_detect_from_dataframe_raises_value_error(self):
+    def test_detect_from_dataframe_raises_error(self):
         """Test the ``detect_from_dataframe`` method.
 
-        Test that if there are existing columns in the metadata, this raises a ``ValueError``.
+        Test that if there are existing columns in the metadata, this raises an
+        ``InvalidMetadataError``.
 
         Setup:
             - instance of ``SingleTableMetadata``.
             - Add some value to ``instance._columns``.
 
         Side Effects:
-            Raises a ``ValueError`` stating that ``metadata`` already exists.
+            Raises an ``InvalidMetadataError`` stating that ``metadata`` already exists.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -732,7 +736,7 @@ class TestSingleTableMetadata:
             'object to detect from other data sources.'
         )
 
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.detect_from_dataframe('dataframe')
 
     @patch('sdv.metadata.single_table.LOGGER')
@@ -781,17 +785,18 @@ class TestSingleTableMetadata:
         ]
         mock_log.info.assert_has_calls(expected_log_calls)
 
-    def test_detect_from_csv_raises_value_error(self):
+    def test_detect_from_csv_raises_error(self):
         """Test the ``detect_from_csv`` method.
 
-        Test that if there are existing columns in the metadata, this raises a ``ValueError``.
+        Test that if there are existing columns in the metadata, this raises an
+        ``InvalidMetadataError``.
 
         Setup:
             - instance of ``SingleTableMetadata``.
             - Add some value to ``instance._columns``.
 
         Side Effects:
-            Raises a ``ValueError`` stating that ``metadata`` already exists.
+            Raises an ``InvalidMetadataError`` stating that ``metadata`` already exists.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -803,7 +808,7 @@ class TestSingleTableMetadata:
             'object to detect from other data sources.'
         )
 
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.detect_from_csv('filepath')
 
     @patch('sdv.metadata.single_table.LOGGER')
@@ -986,7 +991,7 @@ class TestSingleTableMetadata:
             - A tuple with non-string values.
 
         Side Effect:
-            - A ``ValueError`` should be raised.
+            - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -995,7 +1000,7 @@ class TestSingleTableMetadata:
             "'primary_key' must be a string or tuple of strings."
         )
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_primary_key(('1', 2, '3'))
 
     def test_set_primary_key_validation_columns(self):
@@ -1008,7 +1013,7 @@ class TestSingleTableMetadata:
             - A tuple with columns not present in ``_columns``.
 
         Side Effect:
-            - A ``ValueError`` should be raised.
+            - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -1019,7 +1024,7 @@ class TestSingleTableMetadata:
             ' Keys should be columns that exist in the table.'
         )
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_primary_key(('a', 'b', 'd'))
             # NOTE: used to be ('a', 'b', 'd', 'c')
 
@@ -1030,7 +1035,7 @@ class TestSingleTableMetadata:
             - A tuple of keys, some of which have sdtype categorical.
 
         Side Effect:
-            - A ``ValueError`` should be raised.
+            - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -1042,7 +1047,7 @@ class TestSingleTableMetadata:
             "The primary_keys ['column1', 'column2'] cannot be type 'categorical' or 'boolean'."
         )
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_primary_key(('column1', 'column2', 'column3'))
 
     def test_set_primary_key(self):
@@ -1126,14 +1131,14 @@ class TestSingleTableMetadata:
             - A tuple with non-string values.
 
         Side Effect:
-            - A ``ValueError`` should be raised.
+            - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
         instance = SingleTableMetadata()
 
         err_msg = "'sequence_key' must be a string or tuple of strings."
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_sequence_key(('1', 2, '3'))
 
     def test_set_sequence_key_validation_columns(self):
@@ -1146,7 +1151,7 @@ class TestSingleTableMetadata:
             - A tuple with columns not present in ``_columns``.
 
         Side Effect:
-            - A ``ValueError`` should be raised.
+            - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -1157,7 +1162,7 @@ class TestSingleTableMetadata:
             ' Keys should be columns that exist in the table.'
         )
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_sequence_key(('a', 'b', 'd'))
             # NOTE: used to be ('a', 'b', 'd', 'c')
 
@@ -1168,7 +1173,7 @@ class TestSingleTableMetadata:
             - A tuple of keys, some of which have sdtype categorical.
 
         Side Effect:
-            - A ``ValueError`` should be raised.
+            - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -1180,7 +1185,7 @@ class TestSingleTableMetadata:
             "The sequence_keys ['column1', 'column2'] cannot be type 'categorical' or 'boolean'."
         )
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_sequence_key(('column1', 'column2', 'column3'))
 
     def test_set_sequence_key(self):
@@ -1240,14 +1245,14 @@ class TestSingleTableMetadata:
             - A list with tuples with non-string values.
 
         Side Effect:
-            - A ``ValueError`` should be raised.
+            - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
         instance = SingleTableMetadata()
 
         err_msg = "'alternate_keys' must be a list of strings or a list of tuples of strings."
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.add_alternate_keys(['col1', ('1', 2, '3'), 'col3'])
 
     def test_add_alternate_keys_validation_columns(self):
@@ -1260,7 +1265,7 @@ class TestSingleTableMetadata:
             - A tuple with non-string values.
 
         Side Effect:
-            - A ``ValueError`` should be raised.
+            - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -1271,7 +1276,7 @@ class TestSingleTableMetadata:
             ' Keys should be columns that exist in the table.'
         )
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.add_alternate_keys(['abc', ('123', '213', '312')])
             # NOTE: used to be ['abc', ('123', '213', '312'), 'bca']
 
@@ -1282,7 +1287,7 @@ class TestSingleTableMetadata:
             - A list of keys, some of which have sdtype categorical.
 
         Side Effect:
-            - A ``ValueError`` should be raised.
+            - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -1294,13 +1299,14 @@ class TestSingleTableMetadata:
             "The alternate_keys ['column1', 'column2'] cannot be type 'categorical' or 'boolean'."
         )
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.add_alternate_keys([('column1', 'column2'), 'column3'])
 
     def test_add_alternate_keys_validation_primary_key(self):
         """Test that ``add_alternate_keys`` crashes when the key is a primary key.
 
-        If the ``_primary_key`` is set to be the same as the key being added, a ``ValueError``
+        If the ``_primary_key`` is set to be the same as the key being added, an
+        ``InvalidMetadataError``
         should be raised.
         """
         # Setup
@@ -1312,7 +1318,7 @@ class TestSingleTableMetadata:
             "Invalid alternate key 'column1'. The key is already specified as a primary key."
         )
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.add_alternate_keys(['column1'])
 
     def test_add_alternate_keys(self):
@@ -1358,14 +1364,14 @@ class TestSingleTableMetadata:
             - A non-string value.
 
         Side Effect:
-            - A ``ValueError`` should be raised.
+            - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
         instance = SingleTableMetadata()
 
         err_msg = "'sequence_index' must be a string."
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_sequence_index(('column1', 'column2'))
 
     def test_set_sequence_index_validation_columns(self):
@@ -1378,7 +1384,7 @@ class TestSingleTableMetadata:
             - A string not present in ``_columns``.
 
         Side Effect:
-            - A ``ValueError`` should be raised.
+            - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
         instance = SingleTableMetadata()
@@ -1389,7 +1395,7 @@ class TestSingleTableMetadata:
             ' Keys should be columns that exist in the table.'
         )
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_sequence_index('column')
 
     def test_set_sequence_index_column_not_numerical_or_datetime(self):
@@ -1403,7 +1409,7 @@ class TestSingleTableMetadata:
 
         # Run / Assert
         error_message = "The sequence_index must be of type 'datetime' or 'numerical'."
-        with pytest.raises(ValueError, match=error_message):
+        with pytest.raises(InvalidMetadataError, match=error_message):
             instance.set_sequence_index('d')
 
     def test_set_sequence_index(self):
@@ -1430,7 +1436,7 @@ class TestSingleTableMetadata:
             ' These columns must be different.'
         )
         # Run / Assert
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=err_msg):
             instance._validate_sequence_index_not_in_sequence_key()
 
     def test_validate(self):
@@ -1456,7 +1462,7 @@ class TestSingleTableMetadata:
         instance._validate_alternate_keys = Mock()
         instance._validate_sequence_index = Mock()
         instance._validate_sequence_index_not_in_sequence_key = Mock()
-        instance._validate_column = Mock(side_effect=ValueError('column_error'))
+        instance._validate_column = Mock(side_effect=InvalidMetadataError('column_error'))
 
         err_msg = re.escape(
             'The following errors were found in the metadata:'
@@ -1532,7 +1538,8 @@ class TestSingleTableMetadata:
     def test_load_from_json_path_does_not_exist(self, mock_path):
         """Test the ``load_from_json`` method.
 
-        Test that the method raises a ``ValueError`` when the specified path does not exist.
+        Test that the method raises a ``ValueError`` when the specified path does not
+        exist.
 
         Mock:
             - Mock the ``Path`` library in order to return ``False``, that the file does not exist.
@@ -1560,8 +1567,8 @@ class TestSingleTableMetadata:
     def test_load_from_json_schema_not_present(self, mock_json, mock_path, mock_open):
         """Test the ``load_from_json`` method.
 
-        Test that the method raises a ``ValueError`` when the specified ``json`` file does
-        not contain a ``METADATA_SPEC_VERSION`` in it.
+        Test that the method raises an ``InvalidMetadataError`` when the specified ``json`` file
+        does not contain a ``METADATA_SPEC_VERSION`` in it.
 
         Mock:
             - Mock the ``Path`` library in order to return ``True``, so the file exists.
@@ -1572,8 +1579,8 @@ class TestSingleTableMetadata:
             - String representing a filepath.
 
         Side Effects:
-            - A ``ValueError`` is raised pointing that the given metadata configuration is not
-              compatible with the current version.
+            - An ``InvalidMetadataError`` is raised pointing that the given metadata configuration
+              is not compatible with the current version.
         """
         # Setup
         mock_path.return_value.exists.return_value = True
@@ -1592,7 +1599,7 @@ class TestSingleTableMetadata:
             'This metadata file is incompatible with the ``SingleTableMetadata`` '
             'class and version.'
         )
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(InvalidMetadataError, match=error_msg):
             SingleTableMetadata.load_from_json('filepath.json')
 
     @patch('sdv.metadata.utils.open')
@@ -1822,7 +1829,7 @@ class TestSingleTableMetadata:
             - A fake new filepath.
 
         Side effect:
-            - A ``ValueError`` should be raised.
+            - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
         validate_mock.return_value = True
@@ -1838,7 +1845,7 @@ class TestSingleTableMetadata:
             'There are multiple tables specified in the JSON. '
             'Try using the MultiTableMetadata class to upgrade this file.'
         )
-        with pytest.raises(ValueError, match=message):
+        with pytest.raises(InvalidMetadataError, match=message):
             SingleTableMetadata.upgrade_metadata('old', 'new')
 
     @patch('sdv.metadata.single_table.warnings')
