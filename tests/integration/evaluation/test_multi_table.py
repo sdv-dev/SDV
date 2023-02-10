@@ -18,10 +18,10 @@ def test_evaluation():
     # Run and Assert
     synthesizer.fit(data)
     samples = synthesizer.sample()
-    score = evaluate_quality(data, samples, metadata)
+    score = evaluate_quality(data, samples, metadata).get_score()
     assert score == 0.6666666666666667
 
-    diagnostic = run_diagnostic(data, samples, metadata)
+    diagnostic = run_diagnostic(data, samples, metadata).get_results()
     assert diagnostic == {
         'DANGER': ['More than 50% of the synthetic rows are copies of the real data'],
         'SUCCESS': [

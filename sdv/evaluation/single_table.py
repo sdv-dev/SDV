@@ -20,12 +20,12 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
             Defaults to True.
 
     Returns:
-        float
-            The overall quality score.
+        QualityReport:
+            Single table quality report object.
     """
     quality_report = QualityReport()
     quality_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
-    return quality_report.get_score()
+    return quality_report
 
 
 def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
@@ -43,12 +43,12 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
             Defaults to True.
 
     Returns:
-        dict:
-            The diagonstic results.
+        DiagnosticReport:
+            Single table diagnostic report object.
     """
-    quality_report = DiagnosticReport()
-    quality_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
-    return quality_report.get_results()
+    diagnostic_report = DiagnosticReport()
+    diagnostic_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
+    return diagnostic_report
 
 
 def get_column_plot(real_data, synthetic_data, metadata, column_name):

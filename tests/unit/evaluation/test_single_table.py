@@ -10,41 +10,35 @@ from sdv.metadata.single_table import SingleTableMetadata
 
 
 def test_evaluate_quality():
-    """Test the correct score is returned."""
+    """Test ``generate`` is called for the ``QualityReport`` object."""
     # Setup
     data1 = pd.DataFrame({'col': [1, 2, 3]})
     data2 = pd.DataFrame({'col': [2, 1, 3]})
     metadata = SingleTableMetadata()
     metadata.add_column('col', sdtype='numerical')
     QualityReport.generate = Mock()
-    QualityReport.get_score = Mock(return_value=123)
 
     # Run
-    score = evaluate_quality(data1, data2, metadata)
+    evaluate_quality(data1, data2, metadata)
 
     # Assert
     QualityReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
-    QualityReport.get_score.assert_called_once_with()
-    assert score == 123
 
 
 def test_run_diagnostic():
-    """Test the correct diagnostic is returned."""
+    """Test ``generate`` is called for the ``DiagnosticReport`` object."""
     # Setup
     data1 = pd.DataFrame({'col': [1, 2, 3]})
     data2 = pd.DataFrame({'col': [2, 1, 3]})
     metadata = SingleTableMetadata()
     metadata.add_column('col', sdtype='numerical')
-    DiagnosticReport.generate = Mock()
-    DiagnosticReport.get_results = Mock(return_value={'err_type': 'str'})
+    DiagnosticReport.generate = Mock(return_value=123)
 
     # Run
-    diagnostic = run_diagnostic(data1, data2, metadata)
+    run_diagnostic(data1, data2, metadata)
 
     # Assert
     DiagnosticReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
-    DiagnosticReport.get_results.assert_called_once_with()
-    assert diagnostic == {'err_type': 'str'}
 
 
 @patch('sdmetrics.reports.utils.get_column_plot')
@@ -58,7 +52,6 @@ def test_get_column_plot(mock_plot):
     mock_plot.return_value = 'plot'
 
     # Run
-    # method produces non uniform for [1,2,3] data, maybe bugged?
     plot = get_column_plot(data1, data2, metadata, 'col')
 
     # Assert
