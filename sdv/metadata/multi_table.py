@@ -30,7 +30,7 @@ class MultiTableMetadata:
         parent_table = self._tables.get(parent_table_name)
         child_table = self._tables.get(child_table_name)
         if parent_table._primary_key is None:
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"The parent table '{parent_table_name}' does not have a primary key set. "
                 "Please use 'set_primary_key' in order to set one."
             )
@@ -43,7 +43,7 @@ class MultiTableMetadata:
                 missing_keys.add(key)
 
         if missing_keys:
-            raise ValueError(
+            raise InvalidMetadataError(
                 f'Relationship between tables ({parent_table_name}, {child_table_name}) contains '
                 f'an unknown primary key {missing_keys}.'
             )
@@ -53,7 +53,7 @@ class MultiTableMetadata:
                 missing_keys.add(key)
 
         if missing_keys:
-            raise ValueError(
+            raise InvalidMetadataError(
                 f'Relationship between tables ({parent_table_name}, {child_table_name}) '
                 f'contains an unknown foreign key {missing_keys}.'
             )
@@ -63,9 +63,11 @@ class MultiTableMetadata:
         missing_table_names = {parent_table_name, child_table_name} - set(tables)
         if missing_table_names:
             if len(missing_table_names) == 1:
-                raise ValueError(f'Relationship contains an unknown table {missing_table_names}.')
+                raise InvalidMetadataError(
+                    f'Relationship contains an unknown table {missing_table_names}.')
             else:
-                raise ValueError(f'Relationship contains unknown tables {missing_table_names}.')
+                raise InvalidMetadataError(
+                    f'Relationship contains unknown tables {missing_table_names}.')
 
     @staticmethod
     def _validate_relationship_key_length(parent_table_name, parent_primary_key,
@@ -73,7 +75,7 @@ class MultiTableMetadata:
         pk_len = len(set(cast_to_iterable(parent_primary_key)))
         fk_len = len(set(cast_to_iterable(child_foreign_key)))
         if pk_len != fk_len:
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"Relationship between tables ('{parent_table_name}', '{child_table_name}') is "
                 f'invalid. Primary key has length {pk_len} but the foreign key has '
                 f'length {fk_len}.'
@@ -87,7 +89,7 @@ class MultiTableMetadata:
         child_foreign_key = cast_to_iterable(child_foreign_key)
         for pk, fk in zip(parent_primary_key, child_foreign_key):
             if parent_table_columns[pk]['sdtype'] != child_table_columns[fk]['sdtype']:
-                raise ValueError(
+                raise InvalidMetadataError(
                     f"Relationship between tables ('{parent_table_name}', '{child_table_name}') "
                     'is invalid. The primary and foreign key columns are not the same type.'
                 )
@@ -121,7 +123,7 @@ class MultiTableMetadata:
             self._validate_circular_relationships(table_name, child_map=child_map, errors=errors)
 
         if errors:
-            raise ValueError(
+            raise InvalidMetadataError(
                 'The relationships in the dataset describe a circular dependency between '
                 f'tables {errors}.'
             )
@@ -143,7 +145,7 @@ class MultiTableMetadata:
                 relationship['child_foreign_key'] == child_foreign_key
             )
             if already_exists:
-                raise ValueError('This relationship has already been added.')
+                raise InvalidMetadataError('This relationship has already been added.')
 
     def _validate_relationship(self, parent_table_name, child_table_name,
                                parent_primary_key, child_foreign_key):
@@ -196,13 +198,16 @@ class MultiTableMetadata:
                 A string or tuple of strings representing the foreign key of the child.
 
         Raises:
-            - ``ValueError`` if a table is missing.
-            - ``ValueError`` if the ``parent_primary_key`` or ``child_foreign_key`` are missing.
-            - ``ValueError`` if the ``parent_primary_key`` and ``child_foreign_key`` have different
+            - ``InvalidMetadataError`` if a table is missing.
+            - ``InvalidMetadataError`` if the ``parent_primary_key`` or ``child_foreign_key`` are
+              missing.
+            - ``InvalidMetadataError`` if the ``parent_primary_key`` and ``child_foreign_key``
+              have different
               size.
-            - ``ValueError`` if the ``parent_primary_key`` and ``child_foreign_key`` are different
+            - ``InvalidMetadataError`` if the ``parent_primary_key`` and ``child_foreign_key`` are
+              different
               ``sdtype``.
-            - ``ValueError`` if the relationship causes a circular dependency.
+            - ``InvalidMetadataError`` if the relationship causes a circular dependency.
             - ``InvalidMetadataError`` if ``child_foreign_key`` is a primary key.
         """
         self._validate_relationship(
@@ -227,7 +232,7 @@ class MultiTableMetadata:
 
     def _validate_table_exists(self, table_name):
         if table_name not in self._tables:
-            raise ValueError(f"Unknown table name ('{table_name}').")
+            raise InvalidMetadataError(f"Unknown table name ('{table_name}').")
 
     def add_column(self, table_name, column_name, **kwargs):
         """Add a column to a table in the ``MultiTableMetadata``.
@@ -241,11 +246,11 @@ class MultiTableMetadata:
                 Any additional key word arguments for the column, where ``sdtype`` is required.
 
         Raises:
-            - ``ValueError`` if the column already exists.
-            - ``ValueError`` if the ``kwargs`` do not contain ``sdtype``.
-            - ``ValueError`` if the column has unexpected values or ``kwargs`` for the given
-              ``sdtype``.
-            - ``ValueError`` if the table doesn't exist in the ``MultiTableMetadata``.
+            - ``InvalidMetadataError`` if the column already exists.
+            - ``InvalidMetadataError`` if the ``kwargs`` do not contain ``sdtype``.
+            - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the
+              given ``sdtype``.
+            - ``InvalidMetadataError`` if the table doesn't exist in the ``MultiTableMetadata``.
         """
         self._validate_table_exists(table_name)
         table = self._tables.get(table_name)
@@ -263,10 +268,11 @@ class MultiTableMetadata:
                 Any key word arguments that describe metadata for the column.
 
         Raises:
-            - ``ValueError`` if the column doesn't already exist in the ``SingleTableMetadata``.
-            - ``ValueError`` if the column has unexpected values or ``kwargs`` for the current
-              ``sdtype``.
-            - ``ValueError`` if the table doesn't exist in the ``MultiTableMetadata``.
+            - ``InvalidMetadataError`` if the column doesn't already exist in the
+              ``SingleTableMetadata``.
+            - ``InvalidMetadataError`` if the column has unexpected values or ``kwargs`` for the
+              current ``sdtype``.
+            - ``InvalidMetadataError`` if the table doesn't exist in the ``MultiTableMetadata``.
         """
         self._validate_table_exists(table_name)
         table = self._tables.get(table_name)
@@ -421,7 +427,8 @@ class MultiTableMetadata:
                     f'Table {disconnected_tables} is not connected to any of the other tables.'
                 )
 
-            raise ValueError(f'The relationships in the dataset are disjointed. {table_msg}')
+            raise InvalidMetadataError(
+                f'The relationships in the dataset are disjointed. {table_msg}')
 
     def _append_relationships_errors(self, errors, method, *args, **kwargs):
         try:
@@ -473,15 +480,15 @@ class MultiTableMetadata:
                 The name of the table to add to the metadata.
 
         Raises:
-            Raises ``ValueError`` if ``table_name`` is not valid.
+            Raises ``InvalidMetadataError`` if ``table_name`` is not valid.
         """
         if not isinstance(table_name, str) or table_name == '':
-            raise ValueError(
+            raise InvalidMetadataError(
                 "Invalid table name (''). The table name must be a non-empty string."
             )
 
         if table_name in self._tables:
-            raise ValueError(
+            raise InvalidMetadataError(
                 f"Cannot add a table named '{table_name}' because it already exists in the "
                 'metadata. Please choose a different name.'
             )
