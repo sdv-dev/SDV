@@ -1769,7 +1769,7 @@ class TestBaseSingleTableSynthesizer:
         assert instance.metadata.primary_key is None
         assert instance.metadata.alternate_keys == []
         assert instance.metadata.sequence_key is None
-        assert instance.metadata._sequence_index is None
+        assert instance.metadata.sequence_index is None
         assert instance.metadata._version == 'SINGLE_TABLE_V1'
 
     def test_load_custom_constraint_classes(self):

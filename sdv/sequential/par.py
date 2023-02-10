@@ -93,7 +93,7 @@ class PARSynthesizer(BaseSynthesizer):
                 "model 'context_columns' in this case."
             )
 
-        self._sequence_index = self.metadata._sequence_index
+        self._sequence_index = self.metadata.sequence_index
         self.context_columns = context_columns or []
         self.segment_size = segment_size
         self._model_kwargs = {

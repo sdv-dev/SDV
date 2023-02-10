@@ -1783,7 +1783,7 @@ class TestMultiTableMetadata:
         assert instance._tables['table1'].primary_key == 'animals'
         assert instance._tables['table1'].sequence_key is None
         assert instance._tables['table1'].alternate_keys == []
-        assert instance._tables['table1']._sequence_index is None
+        assert instance._tables['table1'].sequence_index is None
         assert instance._tables['table1']._version == 'SINGLE_TABLE_V1'
 
     @patch('sdv.metadata.utils.Path')

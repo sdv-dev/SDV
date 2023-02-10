@@ -78,7 +78,7 @@ class TestSingleTableMetadata:
         assert instance.primary_key is None
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
-        assert instance._sequence_index is None
+        assert instance.sequence_index is None
         assert instance._version == 'SINGLE_TABLE_V1'
 
     def test__validate_numerical_default_and_invalid(self):
@@ -1422,14 +1422,14 @@ class TestSingleTableMetadata:
         instance.set_sequence_index('column')
 
         # Assert
-        assert instance._sequence_index == 'column'
+        assert instance.sequence_index == 'column'
 
     def test_validate_sequence_index_not_in_sequence_key(self):
         """Test the ``_validate_sequence_index_not_in_sequence_key`` method."""
         # Setup
         instance = SingleTableMetadata()
         instance.sequence_key = ('abc', 'def')
-        instance._sequence_index = 'abc'
+        instance.sequence_index = 'abc'
 
         err_msg = (
             "'sequence_index' and 'sequence_key' have the same value {'abc'}."
@@ -1457,7 +1457,7 @@ class TestSingleTableMetadata:
         instance.primary_key = 'col1'
         instance.alternate_keys = ['col2']
         instance.sequence_key = 'col1'
-        instance._sequence_index = 'col2'
+        instance.sequence_index = 'col2'
         instance._validate_key = Mock()
         instance._validate_alternate_keys = Mock()
         instance._validate_sequence_index = Mock()
@@ -1481,7 +1481,7 @@ class TestSingleTableMetadata:
             [call('col1', sdtype='numerical'), call('col2', sdtype='numerical')]
         )
         instance._validate_alternate_keys.assert_called_once_with(instance.alternate_keys)
-        instance._validate_sequence_index.assert_called_once_with(instance._sequence_index)
+        instance._validate_sequence_index.assert_called_once_with(instance.sequence_index)
         instance._validate_sequence_index_not_in_sequence_key.assert_called_once()
 
     def test_to_dict(self):
@@ -1531,7 +1531,7 @@ class TestSingleTableMetadata:
         assert instance.primary_key == 'pk'
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
-        assert instance._sequence_index is None
+        assert instance.sequence_index is None
         assert instance._version == 'SINGLE_TABLE_V1'
 
     @patch('sdv.metadata.utils.Path')
@@ -1645,7 +1645,7 @@ class TestSingleTableMetadata:
         assert instance.primary_key == 'animals'
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
-        assert instance._sequence_index is None
+        assert instance.sequence_index is None
         assert instance._version == 'SINGLE_TABLE_V1'
 
     @patch('sdv.metadata.utils.Path')
