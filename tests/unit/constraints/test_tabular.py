@@ -4109,7 +4109,7 @@ class TestUnique():
         """
         # Setup
         metadata = Mock()
-        metadata._primary_key = 'a'
+        metadata.primary_key = 'a'
         metadata._alternate_keys = ['b', 'c']
 
         # Run
@@ -4130,7 +4130,7 @@ class TestUnique():
         """
         # Setup
         metadata = Mock()
-        metadata._primary_key = 'a'
+        metadata.primary_key = 'a'
         metadata._alternate_keys = [('b', 'c'), 'd']
 
         # Run

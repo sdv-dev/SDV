@@ -1137,7 +1137,7 @@ class TestDataProcessor:
         dp.create_key_transformer = Mock()
         dp.create_anonymized_transformer.return_value = 'AnonymizedFaker'
         dp.create_key_transformer.return_value = 'RegexGenerator'
-        dp.metadata._primary_key = 'id'
+        dp.metadata.primary_key = 'id'
         dp._primary_key = 'id'
         dp._keys = ['id']
         dp.metadata.columns = {

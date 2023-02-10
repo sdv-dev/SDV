@@ -111,7 +111,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         parent_table = Mock()
-        parent_table._primary_key = 'id'
+        parent_table.primary_key = 'id'
         parent_table.columns = {
             'id': {'sdtype': 'numerical'},
             'session': {'sdtype': 'numerical'},
@@ -121,7 +121,7 @@ class TestMultiTableMetadata:
         parent_primary_key = 'id'
 
         child_table = Mock()
-        child_table._primary_key = 'session_id'
+        child_table.primary_key = 'session_id'
         child_table.columns = {
             'user_id': {'sdtype': 'numerical'},
             'session_id': {'sdtype': 'numerical'},
@@ -175,7 +175,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         parent_table = Mock()
-        parent_table._primary_key = 'users_id'
+        parent_table.primary_key = 'users_id'
         parent_table_name = 'users'
         parent_primary_key = 'primary_key'
         child_table_name = 'sessions'
@@ -279,7 +279,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         parent_table = Mock()
-        parent_table._primary_key = 'id'
+        parent_table.primary_key = 'id'
         parent_table.columns = {
             'id': {'sdtype': 'numerical'},
             'user_name': {'sdtype': 'categorical'},
@@ -289,7 +289,7 @@ class TestMultiTableMetadata:
         parent_primary_key = ['id', 'user_name']
 
         child_table = Mock()
-        child_table._primary_key = 'session_id'
+        child_table.primary_key = 'session_id'
         child_table.columns = {
             'user_id': {'sdtype': 'numerical'},
             'session_id': {'sdtype': 'numerical'},
@@ -447,7 +447,7 @@ class TestMultiTableMetadata:
         instance = MultiTableMetadata()
 
         parent_table = Mock()
-        parent_table._primary_key = 'id'
+        parent_table.primary_key = 'id'
         parent_table.columns = {
             'id': {'sdtype': 'numerical'},
             'session': {'sdtype': 'numerical'},
@@ -455,7 +455,7 @@ class TestMultiTableMetadata:
         }
 
         child_table = Mock()
-        child_table._primary_key = 'session_id'
+        child_table.primary_key = 'session_id'
         child_table.columns = {
             'user_id': {'sdtype': 'numerical'},
             'session_id': {'sdtype': 'numerical'},
@@ -520,7 +520,7 @@ class TestMultiTableMetadata:
         instance._validate_child_map_circular_relationship = Mock()
         instance._validate_relationship_does_not_exist = Mock()
         parent_table = Mock()
-        parent_table._primary_key = 'id'
+        parent_table.primary_key = 'id'
         parent_table.columns = {
             'id': {'sdtype': 'numerical'},
             'session': {'sdtype': 'numerical'},
@@ -528,7 +528,7 @@ class TestMultiTableMetadata:
         }
 
         child_table = Mock()
-        child_table._primary_key = 'session_id'
+        child_table.primary_key = 'session_id'
         child_table.columns = {
             'user_id': {'sdtype': 'numerical'},
             'session_id': {'sdtype': 'numerical'},
@@ -815,7 +815,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         instance = self.get_metadata()
-        instance._tables['users']._primary_key = None
+        instance._tables['users'].primary_key = None
         instance._tables['transactions'].columns['session_id']['sdtype'] = 'datetime'
         instance._tables['payments'].columns['date']['sdtype'] = 'text'
         instance._tables['payments'].columns['date']['regex_format'] = '[A-z{'
@@ -1780,7 +1780,7 @@ class TestMultiTableMetadata:
         # Asserts
         assert list(instance._tables.keys()) == ['table1']
         assert instance._tables['table1'].columns == {'animals': {'type': 'categorical'}}
-        assert instance._tables['table1']._primary_key == 'animals'
+        assert instance._tables['table1'].primary_key == 'animals'
         assert instance._tables['table1']._sequence_key is None
         assert instance._tables['table1']._alternate_keys == []
         assert instance._tables['table1']._sequence_index is None

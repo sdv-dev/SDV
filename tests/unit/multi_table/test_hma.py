@@ -439,7 +439,7 @@ class TestHMASynthesizer:
         metadata = Mock()
         sessions_meta = Mock()
         users_meta = Mock()
-        users_meta._primary_key.return_value = 'user_id'
+        users_meta.primary_key.return_value = 'user_id'
         metadata._tables = {
             'users': users_meta,
             'sessions': sessions_meta
@@ -489,7 +489,7 @@ class TestHMASynthesizer:
         metadata = Mock()
         sessions_meta = Mock()
         users_meta = Mock()
-        users_meta._primary_key.return_value = 'user_id'
+        users_meta.primary_key.return_value = 'user_id'
         metadata._tables = {
             'users': users_meta,
             'sessions': sessions_meta

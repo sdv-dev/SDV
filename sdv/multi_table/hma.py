@@ -340,7 +340,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         table_rows = self._sample_rows(synthesizer, table_name)
 
         if len(table_rows):
-            parent_key = self.metadata._tables[parent_name]._primary_key
+            parent_key = self.metadata._tables[parent_name].primary_key
             table_rows[foreign_key] = parent_row[parent_key]
 
             previous = sampled_data.get(table_name)
@@ -473,7 +473,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             parent_model = self._table_synthesizers[parent_name]
             parent_rows = self._sample_rows(parent_model, parent_name, num_parent_rows)
 
-        primary_key = self.metadata._tables[parent_name]._primary_key
+        primary_key = self.metadata._tables[parent_name].primary_key
         parent_rows = parent_rows.set_index(primary_key)
         num_rows = parent_rows[f'__{table_name}__{foreign_key}__num_rows'].fillna(0).clip(0)
 

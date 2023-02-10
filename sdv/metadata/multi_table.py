@@ -29,7 +29,7 @@ class MultiTableMetadata:
                                             child_table_name, child_foreign_key):
         parent_table = self._tables.get(parent_table_name)
         child_table = self._tables.get(child_table_name)
-        if parent_table._primary_key is None:
+        if parent_table.primary_key is None:
             raise InvalidMetadataError(
                 f"The parent table '{parent_table_name}' does not have a primary key set. "
                 "Please use 'set_primary_key' in order to set one."
@@ -37,7 +37,7 @@ class MultiTableMetadata:
 
         missing_keys = set()
         parent_primary_key = cast_to_iterable(parent_primary_key)
-        table_primary_keys = set(cast_to_iterable(parent_table._primary_key))
+        table_primary_keys = set(cast_to_iterable(parent_table.primary_key))
         for key in parent_primary_key:
             if key not in table_primary_keys:
                 missing_keys.add(key)
@@ -521,7 +521,7 @@ class MultiTableMetadata:
                 columns = [f"{name} : {meta.get('sdtype')}" for name, meta in column_dict]
                 nodes[table_name] = {
                     'columns': r'\l'.join(columns),
-                    'primary_key': f'Primary key: {table_meta._primary_key}'
+                    'primary_key': f'Primary key: {table_meta.primary_key}'
                 }
 
         else:
@@ -531,7 +531,7 @@ class MultiTableMetadata:
             parent = relationship.get('parent_table_name')
             child = relationship.get('child_table_name')
             foreign_key = relationship.get('child_foreign_key')
-            primary_key = self._tables.get(parent)._primary_key
+            primary_key = self._tables.get(parent).primary_key
             edge_label = f'  {foreign_key} → {primary_key}' if show_relationship_labels else ''
             edges.append((parent, child, edge_label))
 

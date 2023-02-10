@@ -118,7 +118,7 @@ class SingleTableMetadata:
 
     def __init__(self):
         self.columns = {}
-        self._primary_key = None
+        self.primary_key = None
         self._alternate_keys = []
         self._sequence_key = None
         self._sequence_index = None
@@ -231,7 +231,7 @@ class SingleTableMetadata:
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
         metadata = {}
         for key in self._KEYS:
-            if key == 'columns':
+            if key in ('columns', 'primary_key'):
                 value = getattr(self, f'{key}')
             else:
                 value = \
@@ -338,13 +338,13 @@ class SingleTableMetadata:
             )
             self._alternate_keys.remove(column_name)
 
-        if self._primary_key is not None:
+        if self.primary_key is not None:
             warnings.warn(
-                f'There is an existing primary key {self._primary_key}.'
+                f'There is an existing primary key {self.primary_key}.'
                 ' This key will be removed.'
             )
 
-        self._primary_key = column_name
+        self.primary_key = column_name
 
     def set_sequence_key(self, column_name):
         """Set the metadata sequence key.
@@ -380,9 +380,9 @@ class SingleTableMetadata:
                 ' Keys should be columns that exist in the table.'
             )
 
-        if self._primary_key in column_names:
+        if self.primary_key in column_names:
             raise InvalidMetadataError(
-                f"Invalid alternate key '{self._primary_key}'. The key is "
+                f"Invalid alternate key '{self.primary_key}'. The key is "
                 'already specified as a primary key.'
             )
 
@@ -454,7 +454,7 @@ class SingleTableMetadata:
         """
         errors = []
         # Validate keys
-        self._append_error(errors, self._validate_key, self._primary_key, 'primary')
+        self._append_error(errors, self._validate_key, self.primary_key, 'primary')
         self._append_error(errors, self._validate_key, self._sequence_key, 'sequence')
         if self._sequence_index:
             self._append_error(errors, self._validate_sequence_index, self._sequence_index)
@@ -502,7 +502,7 @@ class SingleTableMetadata:
         instance = cls()
         for key in instance._KEYS:
             value = deepcopy(metadata.get(key))
-            if key == 'columns':
+            if key in ('columns', 'primary_key'):
                 setattr(instance, f'{key}', value)
             elif value:
                 setattr(instance, f'_{key}', value)

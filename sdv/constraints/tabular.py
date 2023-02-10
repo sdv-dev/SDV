@@ -1275,10 +1275,10 @@ class Unique(Constraint):
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
         column_names = kwargs.get('column_names')
         keys = set()
-        if isinstance(metadata._primary_key, tuple):
-            keys.update(metadata._primary_key)
+        if isinstance(metadata.primary_key, tuple):
+            keys.update(metadata.primary_key)
         else:
-            keys.add(metadata._primary_key)
+            keys.add(metadata.primary_key)
 
         for key in metadata._alternate_keys:
             if isinstance(key, tuple):

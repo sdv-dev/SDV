@@ -95,8 +95,8 @@ class BaseSynthesizer:
 
     def _get_primary_and_alternate_keys(self):
         keys = set(self.metadata._alternate_keys)
-        if self.metadata._primary_key:
-            keys.update({self.metadata._primary_key})
+        if self.metadata.primary_key:
+            keys.update({self.metadata.primary_key})
 
         return keys
 
