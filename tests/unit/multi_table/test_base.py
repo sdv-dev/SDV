@@ -349,6 +349,29 @@ class TestBaseMultiTableSynthesizer:
         instance._table_synthesizers['oseba'].auto_assign_transformers.assert_called_once_with(
             table2)
 
+    def test_auto_assign_transformers_foreign_key_none(self):
+        """Test that each table's foreign key transformers are set to None."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        data = {
+            'nesreca': Mock(),
+            'oseba': Mock()
+        }
+        instance.validate = Mock()
+        instance._get_all_foreign_keys = Mock(return_value=['a', 'b'])
+        nesreca_synthesizer = Mock()
+        oseba_synthesizer = Mock()
+        instance._table_synthesizers['nesreca'] = nesreca_synthesizer
+        instance._table_synthesizers['oseba'] = oseba_synthesizer
+
+        # Run
+        instance.auto_assign_transformers(data)
+
+        # Assert
+        nesreca_synthesizer.update_transformers.assert_called_once_with({'a': None, 'b': None})
+        oseba_synthesizer.update_transformers.assert_called_once_with({'a': None, 'b': None})
+
     def test_auto_assign_transformers_missing_table(self):
         """Test it errors out when the passed table was not seen in the metadata."""
         # Setup
@@ -445,8 +468,8 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(NotImplementedError, match=''):
             instance._fit(data)
 
-    def test__skip_foreign_key_transformations(self):
-        """Test the ``_skip_foreign_key_transformations`` method.
+    def test__assign_table_transformers(self):
+        """Test the ``_assign_table_transformers`` method.
 
         Test that the function creates a dictionary mapping with the columns returned from
         ``_get_all_foreign_keys`` and maps them to the value ``None`` to avoid being transformed.
@@ -461,7 +484,7 @@ class TestBaseMultiTableSynthesizer:
         table_data = Mock()
 
         # Run
-        instance._skip_foreign_key_transformations(synthesizer, 'oseba', table_data)
+        instance._assign_table_transformers(synthesizer, 'oseba', table_data)
 
         # Assert
         synthesizer.auto_assign_transformers.assert_called_once_with(table_data)
