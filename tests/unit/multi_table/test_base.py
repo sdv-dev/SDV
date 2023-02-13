@@ -638,6 +638,32 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(NotImplementedError, match=''):
             instance._sample(scale=1.0)
 
+    def test_validate_input_sample(self):
+        """Test that ``_sample`` raises
+        errors if sample in not a number or negative ``NotImplementedError``.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        scales = [1, 2.3, 'scale', True, -1.2, np.nan]
+
+        # Run and Assert
+
+        errors = [
+            NotImplementedError, NotImplementedError,
+            SynthesizerInputError, SynthesizerInputError, ValueError,
+            ValueError
+        ]
+        err_msg_1 = re.escape(
+            'scale parameter can only be float or a int instance.'
+        )
+        err_msg_2 = re.escape('scale parameter must be >0.0.')
+        err_msg = ['', '', err_msg_1, err_msg_1, err_msg_2, err_msg_2]
+
+        for (scale, err, msg) in zip(scales, errors, err_msg):
+            with pytest.raises(err, match=msg):
+                instance.sample(scale=scale)
+
     def test_sample(self):
         """Test that ``sample`` calls the ``_sample`` with the given arguments."""
         # Setup

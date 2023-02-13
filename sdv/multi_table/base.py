@@ -346,8 +346,8 @@ class BaseMultiTableSynthesizer:
                 than the original tables. Defaults to ``1.0``.
         """
         if not isinstance(scale, (float, int)) or type(scale) is bool:
-            raise TypeError('scale parameter can only be float or a int instance.')
-        elif scale < 0:
+            raise SynthesizerInputError('scale parameter can only be float or a int instance.')
+        elif scale < 0 or np.isnan(scale):
             raise ValueError('scale parameter must be >0.0.')
         with self._set_temp_numpy_seed():
             sampled_data = self._sample(scale=scale)
