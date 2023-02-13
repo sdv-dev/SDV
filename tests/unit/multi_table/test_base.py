@@ -651,8 +651,8 @@ class TestBaseMultiTableSynthesizer:
 
         errors = [
             NotImplementedError, NotImplementedError,
-            SynthesizerInputError, SynthesizerInputError, ValueError,
-            ValueError
+            SynthesizerInputError, SynthesizerInputError, SynthesizerInputError,
+            SynthesizerInputError
         ]
         err_msg_1 = re.escape(
             'scale parameter can only be float or a int instance.'
