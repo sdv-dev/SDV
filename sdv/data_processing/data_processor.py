@@ -332,6 +332,7 @@ class DataProcessor:
     def _fit_transform_constraints(self, data):
         # Fit and validate all constraints first because `transform` might change columns
         # making the following constraints invalid
+        self._constraints = self._load_constraints()
         self._fit_constraints(data)
         data = self._transform_constraints(data)
 
@@ -601,7 +602,6 @@ class DataProcessor:
                 Table to be analyzed.
         """
         self._prepared_for_fitting = False
-        self._constraints = self._load_constraints()
         self.prepare_for_fitting(data)
         constrained = self._transform_constraints(data)
         LOGGER.info(f'Fitting HyperTransformer for table {self.table_name}')

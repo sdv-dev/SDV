@@ -144,11 +144,14 @@ class TestBaseSingleTableSynthesizer:
         instance = Mock()
         instance._data_processor._hyper_transformer.field_transformers = {
             'name': 'FrequencyEncoder',
-            'salary': 'FloatFormatter'
+            'salary': 'FloatFormatter',
+            'salary#name': 'LabelEncoder',
+            'address': None
         }
         instance.metadata.columns = {
             'salary': {'sdtype': 'numerical'},
-            'name': {'sdtype': 'categorical'}
+            'name': {'sdtype': 'categorical'},
+            'address': {'sdtype': 'address'}
         }
 
         # Run
@@ -157,7 +160,8 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         assert result == {
             'salary': 'FloatFormatter',
-            'name': 'FrequencyEncoder'
+            'name': 'FrequencyEncoder',
+            'salary#name': 'LabelEncoder'
         }
 
     def test_get_transformers_raises_an_error(self):
