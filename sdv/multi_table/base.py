@@ -201,6 +201,16 @@ class BaseMultiTableSynthesizer:
         if table_name not in self._table_synthesizers:
             raise InvalidDataError([f"Table '{table_name}' is not present in the metadata."])
 
+    def _assign_table_transformers(self, synthesizer, table_name, table_data):
+        """Update the ``synthesizer`` to ignore the foreign keys while preprocessing the data."""
+        synthesizer.auto_assign_transformers(table_data)
+        foreign_key_columns = self._get_all_foreign_keys(table_name)
+        column_name_to_transformers = {
+            column_name: None
+            for column_name in foreign_key_columns
+        }
+        synthesizer.update_transformers(column_name_to_transformers)
+
     def auto_assign_transformers(self, data):
         """Automatically assign the required transformers for the given data and constraints.
 
@@ -217,7 +227,8 @@ class BaseMultiTableSynthesizer:
         """
         for table_name, table_data in data.items():
             self._validate_table_name(table_name)
-            self._table_synthesizers[table_name].auto_assign_transformers(table_data)
+            synthesizer = self._table_synthesizers[table_name]
+            self._assign_table_transformers(synthesizer, table_name, table_data)
 
     def get_transformers(self, table_name):
         """Get a dictionary mapping of ``column_name`` and ``rdt.transformers``.
@@ -265,16 +276,6 @@ class BaseMultiTableSynthesizer:
         """
         raise NotImplementedError()
 
-    def _skip_foreign_key_transformations(self, synthesizer, table_name, table_data):
-        """Update the ``synthesizer`` to ignore the foreign keys while preprocessing the data."""
-        synthesizer.auto_assign_transformers(table_data)
-        foreign_key_columns = self._get_all_foreign_keys(table_name)
-        column_name_to_transformers = {
-            column_name: None
-            for column_name in foreign_key_columns
-        }
-        synthesizer.update_transformers(column_name_to_transformers)
-
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -296,7 +297,7 @@ class BaseMultiTableSynthesizer:
         processed_data = {}
         for table_name, table_data in data.items():
             synthesizer = self._table_synthesizers[table_name]
-            self._skip_foreign_key_transformations(synthesizer, table_name, table_data)
+            self._assign_table_transformers(synthesizer, table_name, table_data)
             processed_data[table_name] = synthesizer.preprocess(table_data)
 
         return processed_data
