@@ -607,6 +607,7 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         instance = Mock()
         data = Mock()
+        data.copy.return_value = data
 
         # Run
         BaseMultiTableSynthesizer.fit_processed_data(instance, data)

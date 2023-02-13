@@ -1,5 +1,5 @@
 import re
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -227,6 +227,27 @@ class TestHMASynthesizer:
 
         # Assert
         instance._model_table.assert_called_once_with('upravna_enota', data)
+
+    def test_fit_processed_multiple_calls(self):
+        """Test that ``fit_processed_data`` calls ``_fit`` and does not modify input data."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = HMASynthesizer(metadata)
+        for table in instance._table_synthesizers:
+            instance._table_synthesizers[table] = Mock()
+        data = get_multi_table_data()
+
+        with patch.object(instance, '_fit', wraps=instance._fit) as wrapped__fit:
+            # Run
+            instance.fit_processed_data(data)
+
+            # Assert
+            wrapped__fit.assert_called_once()
+            original_data = get_multi_table_data()
+            assert data.keys() == original_data.keys()
+            for key in data.keys():
+                pd.testing.assert_frame_equal(data[key], data[key])
+                pd.testing.assert_frame_equal(data[key], original_data[key])
 
     def test__finalize(self):
         """Test that the finalize method applies the final touches to the generated data.
