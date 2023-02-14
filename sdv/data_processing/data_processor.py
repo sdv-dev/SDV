@@ -502,15 +502,11 @@ class DataProcessor:
         Args:
             data (pandas.DataFrame):
                 Data to transform.
-            columns_created_by_constraints (set):
-                Names of columns that are not in the metadata but that should also
-                be transformed. In most cases, these are the fields that were added
-                by previous transformations which the data underwent.
 
         Returns:
             rdt.HyperTransformer
         """
-        if not self._hyper_transformer._fitted:
+        if not self._hyper_transformer._fitted or self._hyper_transformer._modified_config:
             if not data.empty:
                 self._hyper_transformer.fit(data)
 
