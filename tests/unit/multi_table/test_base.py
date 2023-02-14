@@ -639,7 +639,7 @@ class TestBaseMultiTableSynthesizer:
             instance._sample(scale=1.0)
 
     def test_sample_validate_input(self):
-        """Test that SynthesizerInputError is raised if sample is not >0.0."""
+        """Test that SynthesizerInputError is raised if 'scale' is not >0.0."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
