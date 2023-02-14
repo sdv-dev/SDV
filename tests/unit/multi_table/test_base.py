@@ -655,9 +655,10 @@ class TestBaseMultiTableSynthesizer:
             SynthesizerInputError
         ]
         err_msg_1 = re.escape(
-            'scale parameter can only be float or a int instance.'
+            "Invalid parameter for 'scale'. Please provide a number that is >0.0."
         )
-        err_msg_2 = re.escape('scale parameter must be >0.0.')
+        err_msg_2 = re.escape(
+            "Invalid parameter for 'scale'. Please provide a number that is >0.0.")
         err_msg = ['', '', err_msg_1, err_msg_1, err_msg_2, err_msg_2]
 
         for (scale, err, msg) in zip(scales, errors, err_msg):
