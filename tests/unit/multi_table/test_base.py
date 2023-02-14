@@ -661,6 +661,33 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(NotImplementedError, match=''):
             instance._sample(scale=1.0)
 
+    def test_sample_validate_input(self):
+        """Test that SynthesizerInputError is raised if 'scale' is not >0.0."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._sample = Mock()
+        scales = ['Test', True, -1.2, np.nan]
+
+        # Run and Assert
+        msg_1 = re.escape(
+            "Invalid parameter for 'scale' (Test). Please provide a number that is >0.0."
+        )
+        msg_2 = re.escape(
+            "Invalid parameter for 'scale' (True). Please provide a number that is >0.0."
+        )
+        msg_3 = re.escape(
+            "Invalid parameter for 'scale' (-1.2). Please provide a number that is >0.0."
+        )
+        msg_4 = re.escape(
+            "Invalid parameter for 'scale' (nan). Please provide a number that is >0.0."
+        )
+        err_msg = [msg_1, msg_2, msg_3, msg_4]
+
+        for scale, msg in zip(scales, err_msg):
+            with pytest.raises(SynthesizerInputError, match=msg):
+                instance.sample(scale=scale)
+
     def test_sample(self):
         """Test that ``sample`` calls the ``_sample`` with the given arguments."""
         # Setup
