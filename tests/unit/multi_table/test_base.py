@@ -640,32 +640,32 @@ class TestBaseMultiTableSynthesizer:
 
     def test_validate_input_sample(self):
         """Test that ``_sample`` raises
-        errors if sample in not a number or negative ``NotImplementedError``.
+        errors if scale parameter is not a number >=0.0.
         """
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
         instance._sample = Mock()
-        #instance = BaseMultiTableSynthesizer(metadata)
-        scales = ['scale', True] # -1.2, np.nan]
+        scales = ['Test', True, -1.2, np.nan]
 
         # Run and Assert
-
-        errors = [
-            SynthesizerInputError, SynthesizerInputError, SynthesizerInputError,
-            SynthesizerInputError
-        ]
-        err_msg_1 = re.escape(
-            "Invalid parameter for 'scale'. Please provide a number that is >0.0."
+        msg_1 = re.escape(
+            "Invalid parameter for 'scale' (Test). Please provide a number that is >0.0."
         )
-        err_msg_2 = re.escape(
-            "Invalid parameter for 'scale'. Please provide a number that is >0.0.")
-        err_msg = ['', '', err_msg_1, err_msg_1, err_msg_2, err_msg_2]
+        msg_2 = re.escape(
+            "Invalid parameter for 'scale' (True). Please provide a number that is >0.0."
+        )
+        msg_3 = re.escape(
+            "Invalid parameter for 'scale' (-1.2). Please provide a number that is >0.0."
+        )
+        msg_4 = re.escape(
+            "Invalid parameter for 'scale' (nan). Please provide a number that is >0.0."
+        )
+        err_msg = [msg_1, msg_2, msg_3, msg_4]
 
-        for scale in scales:
-            with pytest.raises(SynthesizerInputError, match=err_msg_1 ):
-                 instance.sample(scale=scale)
-                #instance.sample(scale=scale)
+        for scale, msg in zip(scales, err_msg):
+            with pytest.raises(SynthesizerInputError, match=msg):
+                instance.sample(scale=scale)
 
     def test_sample(self):
         """Test that ``sample`` calls the ``_sample`` with the given arguments."""

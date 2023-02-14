@@ -347,16 +347,10 @@ class BaseMultiTableSynthesizer:
         """
         if not type(scale) in (float, int):
             raise SynthesizerInputError(
-                "Invalid parameter for 'scale'. Please provide a number that is >0.0.")
-        elif scale < 0:
+                f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0.")
+        elif scale <= 0 or np.isnan(scale):
             raise SynthesizerInputError(
-                "Invalid parameter for 'scale'. Please provide a number that is >0.0.")
-        '''
-        if not isinstance(scale, (float, int)) or type(scale) is bool:
-            raise SynthesizerInputError("Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0.")
-        elif scale < 0 or np.isnan(scale):
-            raise SynthesizerInputError('scale parameter must be >0.0.')
-        '''
+                f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0.")
         with self._set_temp_numpy_seed():
             sampled_data = self._sample(scale=scale)
 
