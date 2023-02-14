@@ -345,12 +345,10 @@ class BaseMultiTableSynthesizer:
                 If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
                 than the original tables. Defaults to ``1.0``.
         """
-        if not type(scale) in (float, int):
+        if not type(scale) in (float, int) or not scale > 0:
             raise SynthesizerInputError(
                 f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0.")
-        elif scale <= 0 or np.isnan(scale):
-            raise SynthesizerInputError(
-                f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0.")
+
         with self._set_temp_numpy_seed():
             sampled_data = self._sample(scale=scale)
 
