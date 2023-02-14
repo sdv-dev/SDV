@@ -638,7 +638,7 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(NotImplementedError, match=''):
             instance._sample(scale=1.0)
 
-    def test_validate_input_sample(self):
+    def test_sample_validate_input(self):
         """Test that ``_sample`` raises
         errors if scale parameter is not a number >=0.0.
         """
