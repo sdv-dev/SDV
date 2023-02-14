@@ -53,12 +53,26 @@ class BaseSynthesizer:
 
     _model_sdtype_transformers = None
 
+    def _validate_inputs(self, enforce_min_max_values, enforce_rounding):
+        if not isinstance(enforce_min_max_values, bool):
+            raise SynthesizerInputError(
+                f"Invalid value '{enforce_min_max_values}' for parameter 'enforce_min_max_values'."
+                ' Please provide True or False.'
+            )
+
+        if not isinstance(enforce_rounding, bool):
+            raise SynthesizerInputError(
+                f"Invalid value '{enforce_rounding}' for parameter 'enforce_rounding'."
+                ' Please provide True or False.'
+            )
+
     def _update_default_transformers(self):
         if self._model_sdtype_transformers is not None:
             for sdtype, transformer in self._model_sdtype_transformers.items():
                 self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True):
+        self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata = metadata
         self.metadata.validate()
         self.enforce_min_max_values = enforce_min_max_values
