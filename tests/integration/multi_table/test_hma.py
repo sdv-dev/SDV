@@ -342,5 +342,5 @@ def test_fit_processed_multiple_calls():
     for key in data.keys():
         pd.testing.assert_frame_equal(original_data[key], data[key], check_like=True)
 
-    # Re-run to ensure it doesn not error
+    # Re-run to ensure it does not error
     synthesizer.fit_processed_data(data)
