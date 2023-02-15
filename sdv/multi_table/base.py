@@ -205,14 +205,11 @@ class BaseMultiTableSynthesizer:
         """Update the ``synthesizer`` to ignore the foreign keys while preprocessing the data."""
         synthesizer.auto_assign_transformers(table_data)
         foreign_key_columns = self._get_all_foreign_keys(table_name)
-        transformers = synthesizer.get_transformers()
         column_name_to_transformers = {
             column_name: None
             for column_name in foreign_key_columns
-            if transformers.get(column_name) is not None
         }
-        if column_name_to_transformers:
-            synthesizer.update_transformers(column_name_to_transformers)
+        synthesizer.update_transformers(column_name_to_transformers)
 
     def auto_assign_transformers(self, data):
         """Automatically assign the required transformers for the given data and constraints.

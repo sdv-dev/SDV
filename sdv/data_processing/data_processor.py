@@ -506,9 +506,8 @@ class DataProcessor:
         Returns:
             rdt.HyperTransformer
         """
-        if not self._hyper_transformer._fitted or self._hyper_transformer._modified_config:
-            if not data.empty:
-                self._hyper_transformer.fit(data)
+        if not data.empty:
+            self._hyper_transformer.fit(data)
 
     def _fit_formatters(self, data):
         """Fit ``NumericalFormatter`` and ``DatetimeFormatter`` for each column in the data."""
