@@ -289,3 +289,58 @@ def test_hma_with_inequality_constraint():
 
     # Assert
     assert all(sampled['child_table']['low_column'] < sampled['child_table']['high_column'])
+
+
+def get_data_and_metadata():
+    parent_table = pd.DataFrame(data={
+        'id': [1, 2, 3, 4, 5],
+        'column': [1.2, 2.1, 2.2, 2.1, 1.4]
+    })
+
+    child_table = pd.DataFrame(data={
+        'id': [1, 2, 3, 4, 5],
+        'parent_id': [1, 1, 3, 2, 1],
+        'low_column': [1, 3, 3, 1, 2],
+        'high_column': [2, 4, 5, 2, 4]
+    })
+
+    data = {
+        'parent_table': parent_table,
+        'child_table': child_table
+    }
+
+    metadata = MultiTableMetadata()
+    metadata.detect_table_from_dataframe(table_name='parent_table', data=parent_table)
+    metadata.detect_table_from_dataframe(table_name='child_table', data=child_table)
+
+    metadata.set_primary_key(table_name='parent_table', column_name='id')
+    metadata.set_primary_key(table_name='child_table', column_name='id')
+
+    metadata.add_relationship(
+        parent_table_name='parent_table',
+        child_table_name='child_table',
+        parent_primary_key='id',
+        child_foreign_key='parent_id'
+    )
+
+    return data, metadata
+
+
+def test_fit_processed_multiple_calls():
+    """Test that ``fit_processed_data`` does not modify input data."""
+    # Setup
+    data, metadata = get_data_and_metadata()
+    original_data = get_data_and_metadata()[0]
+
+    synthesizer = HMASynthesizer(metadata)
+
+    # Run
+    synthesizer.fit_processed_data(data)
+
+    # Assert
+    assert original_data.keys() == data.keys()
+    for key in data.keys():
+        pd.testing.assert_frame_equal(original_data[key], data[key], check_like=True)
+
+    # Re-run to ensure it doesn not error
+    synthesizer.fit_processed_data(data)
