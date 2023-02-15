@@ -107,15 +107,10 @@ class TestHMASynthesizer:
             'id_nesreca': [0, 1, 2, 3],
             'upravna_enota': [0, 1, 2, 3],
             'value': [0, 1, 2, 3],
-            '__oseba__id_nesreca__covariance__0__0': [0.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__b': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__loc': [0., 1., 2., 3.],
             '__oseba__id_nesreca__univariates__oseba_value__scale': [np.nan] * 4,
-            '__oseba__id_nesreca__univariates__upravna_enota__a': [1.] * 4,
-            '__oseba__id_nesreca__univariates__upravna_enota__b': [1.] * 4,
-            '__oseba__id_nesreca__univariates__upravna_enota__loc': [0., 1., 2., 3.],
-            '__oseba__id_nesreca__univariates__upravna_enota__scale': [np.nan] * 4,
             '__oseba__id_nesreca__num_rows': [1.] * 4,
         })
 
