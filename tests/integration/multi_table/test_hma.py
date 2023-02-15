@@ -1,4 +1,6 @@
 import datetime
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import numpy as np
 import pandas as pd
@@ -311,3 +313,24 @@ def test_fit_processed_multiple_calls():
 
     # Re-run to ensure it does not error
     synthesizer.fit_processed_data(preprocessed)
+
+
+def test_save_and_load():
+    """Test saving and loading a multi-table synthesizer."""
+    # Setup
+    _, _, metadata = get_custom_constraint_data_and_metadata()
+    synthesizer = HMASynthesizer(metadata)
+    temp_dir = TemporaryDirectory()
+    model_path = Path(temp_dir.name) / 'synthesizer.pkl'
+
+    # Run
+    synthesizer.save(model_path)
+
+    # Assert
+    assert model_path.exists()
+    assert model_path.is_file()
+    loaded_synthesizer = HMASynthesizer.load(model_path)
+
+    assert isinstance(synthesizer, HMASynthesizer)
+    assert loaded_synthesizer.get_info() == synthesizer.get_info()
+    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
