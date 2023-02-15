@@ -1323,10 +1323,11 @@ class TestDataProcessor:
 
     @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
     def test__fit_hyper_transformer_hyper_transformer_is_fitted_and_modified_config(self, ht_mock):
-        """Test when ``self._hyper_transformer`` is not ``None`` and
-        self._hyper_transformer._modified_config is True.
+        """Test when ``self._hyper_transformer._modified_config is True.
 
-        This should re-fit or re-create the ``self._hyper_transformer``.
+        Tests when both ``self._hyper_transformer._fitted`` and
+        ``self._hyper_transformer._modified_config`` are ``True``. This should re-fit or re-create
+        the ``self._hyper_transformer``.
         """
         # Setup
         dp = DataProcessor(SingleTableMetadata())
