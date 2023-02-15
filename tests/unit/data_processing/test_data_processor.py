@@ -750,7 +750,8 @@ class TestDataProcessor:
         constraint2 = Mock()
         constraint1.transform.return_value = transformed_data
         constraint2.transform.return_value = data
-        dp._constraints = [constraint1, constraint2]
+        dp._load_constraints = Mock()
+        dp._load_constraints.return_value = [constraint1, constraint2]
 
         # Run
         constrained_data = dp._fit_transform_constraints(data)
@@ -785,7 +786,8 @@ class TestDataProcessor:
         constraint2 = Mock()
         constraint1.fit.side_effect = Exception('error 1')
         constraint2.fit.side_effect = Exception('error 2')
-        dp._constraints = [constraint1, constraint2]
+        dp._load_constraints = Mock()
+        dp._load_constraints.return_value = [constraint1, constraint2]
 
         # Run / Assert
         error_message = re.escape('\nerror 1\n\nerror 2')
@@ -816,7 +818,8 @@ class TestDataProcessor:
         constraint2 = Mock()
         constraint1.transform.side_effect = Exception('error 1')
         constraint2.transform.side_effect = Exception('error 2')
-        dp._constraints = [constraint1, constraint2]
+        dp._load_constraints = Mock()
+        dp._load_constraints.return_value = [constraint1, constraint2]
 
         # Run / Assert
         error_message = re.escape('\nerror 1\n\nerror 2')
@@ -855,7 +858,8 @@ class TestDataProcessor:
         constraint1.transform.return_value = data
         constraint2.transform.side_effect = MissingConstraintColumnError(['column'])
         constraint3.transform.side_effect = FunctionError()
-        dp._constraints = [constraint1, constraint2, constraint3]
+        dp._load_constraints = Mock()
+        dp._load_constraints.return_value = [constraint1, constraint2, constraint3]
 
         # Run
         dp._fit_transform_constraints(data)
