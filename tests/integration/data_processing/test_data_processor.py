@@ -2,7 +2,8 @@
 import itertools
 
 import numpy as np
-from rdt.transformers import AnonymizedFaker, FloatFormatter, LabelEncoder, UnixTimestampEncoder
+from rdt.transformers import (
+    AnonymizedFaker, BinaryEncoder, FloatFormatter, LabelEncoder, UnixTimestampEncoder)
 
 from sdv.data_processing import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
@@ -314,3 +315,26 @@ def test_data_processor_reverse_transform_with_formatters():
     reversed_end_date = reverse_transformed['end_date'][~reverse_transformed['end_date'].isna()]
     reversed_end_date_format = get_datetime_format(reversed_end_date.iloc[0])
     assert end_date_data_format == reversed_end_date_format
+
+
+def test_data_processor_refit_hypertransformer():
+    """Test data processor re-fits _hyper_transformer."""
+    # Setup
+    data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='student_placements'
+    )
+    dp = DataProcessor(metadata)
+
+    # Run
+    dp.fit(data)
+    dp.update_transformers({'placed': BinaryEncoder()})
+
+    # Assert
+    assert dp._hyper_transformer._fitted
+    assert dp._hyper_transformer._modified_config
+
+    dp.fit(data)
+
+    transformed = dp.transform(data)
+    assert all(transformed.dtypes == float)

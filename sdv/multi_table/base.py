@@ -298,7 +298,7 @@ class BaseMultiTableSynthesizer:
         for table_name, table_data in data.items():
             synthesizer = self._table_synthesizers[table_name]
             self._assign_table_transformers(synthesizer, table_name, table_data)
-            processed_data[table_name] = synthesizer.preprocess(table_data)
+            processed_data[table_name] = synthesizer._preprocess(table_data)
 
         return processed_data
 
