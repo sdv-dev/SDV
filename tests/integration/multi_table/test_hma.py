@@ -289,3 +289,25 @@ def test_hma_with_inequality_constraint():
 
     # Assert
     assert all(sampled['child_table']['low_column'] < sampled['child_table']['high_column'])
+
+
+def test_fit_processed_multiple_calls():
+    """Test that ``fit_processed_data`` does not modify input data."""
+    # Setup
+    parent_data, child_data, metadata = get_custom_constraint_data_and_metadata()
+    synthesizer = HMASynthesizer(metadata)
+
+    # Run
+    preprocessed = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
+    parent_copy = preprocessed['parent'].copy()
+    child_copy = preprocessed['child'].copy()
+
+    synthesizer.fit_processed_data(preprocessed)
+
+    # Assert
+    assert preprocessed.keys() == {'parent', 'child'}
+    pd.testing.assert_frame_equal(parent_copy, preprocessed['parent'], check_like=True)
+    pd.testing.assert_frame_equal(child_copy, preprocessed['child'], check_like=True)
+
+    # Re-run to ensure it does not error
+    synthesizer.fit_processed_data(preprocessed)
