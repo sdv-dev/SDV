@@ -503,17 +503,12 @@ class DataProcessor:
         Args:
             data (pandas.DataFrame):
                 Data to transform.
-            columns_created_by_constraints (set):
-                Names of columns that are not in the metadata but that should also
-                be transformed. In most cases, these are the fields that were added
-                by previous transformations which the data underwent.
 
         Returns:
             rdt.HyperTransformer
         """
-        if not self._hyper_transformer._fitted:
-            if not data.empty:
-                self._hyper_transformer.fit(data)
+        if not data.empty:
+            self._hyper_transformer.fit(data)
 
     def _fit_formatters(self, data):
         """Fit ``NumericalFormatter`` and ``DatetimeFormatter`` for each column in the data."""

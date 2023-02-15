@@ -530,9 +530,9 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         assert result == {
-            'nesreca': synth_nesreca.preprocess.return_value,
-            'oseba': synth_oseba.preprocess.return_value,
-            'upravna_enota': synth_upravna_enota.preprocess.return_value
+            'nesreca': synth_nesreca._preprocess.return_value,
+            'oseba': synth_oseba._preprocess.return_value,
+            'upravna_enota': synth_upravna_enota._preprocess.return_value
         }
         instance.validate.assert_called_once_with(data)
         assert instance._get_all_foreign_keys.call_args_list == [
@@ -542,15 +542,15 @@ class TestBaseMultiTableSynthesizer:
         ]
 
         synth_nesreca.auto_assign_transformers.assert_called_once_with(data['nesreca'])
-        synth_nesreca.preprocess.assert_called_once_with(data['nesreca'])
+        synth_nesreca._preprocess.assert_called_once_with(data['nesreca'])
         synth_nesreca.update_transformers.assert_called_once_with({'a': None, 'b': None})
 
-        synth_oseba.preprocess.assert_called_once_with(data['oseba'])
-        synth_oseba.preprocess.assert_called_once_with(data['oseba'])
+        synth_oseba._preprocess.assert_called_once_with(data['oseba'])
+        synth_oseba._preprocess.assert_called_once_with(data['oseba'])
         synth_oseba.update_transformers.assert_called_once_with({'a': None, 'b': None})
 
-        synth_upravna_enota.preprocess.assert_called_once_with(data['upravna_enota'])
-        synth_upravna_enota.preprocess.assert_called_once_with(data['upravna_enota'])
+        synth_upravna_enota._preprocess.assert_called_once_with(data['upravna_enota'])
+        synth_upravna_enota._preprocess.assert_called_once_with(data['upravna_enota'])
         synth_upravna_enota.update_transformers.assert_called_once_with({'a': None, 'b': None})
 
     @patch('sdv.multi_table.base.warnings')
@@ -589,14 +589,14 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         assert result == {
-            'nesreca': synth_nesreca.preprocess.return_value,
-            'oseba': synth_oseba.preprocess.return_value,
-            'upravna_enota': synth_upravna_enota.preprocess.return_value
+            'nesreca': synth_nesreca._preprocess.return_value,
+            'oseba': synth_oseba._preprocess.return_value,
+            'upravna_enota': synth_upravna_enota._preprocess.return_value
         }
         instance.validate.assert_called_once_with(data)
-        synth_nesreca.preprocess.assert_called_once_with(data['nesreca'])
-        synth_oseba.preprocess.assert_called_once_with(data['oseba'])
-        synth_upravna_enota.preprocess.assert_called_once_with(data['upravna_enota'])
+        synth_nesreca._preprocess.assert_called_once_with(data['nesreca'])
+        synth_oseba._preprocess.assert_called_once_with(data['oseba'])
+        synth_upravna_enota._preprocess.assert_called_once_with(data['upravna_enota'])
         mock_warnings.warn.assert_called_once_with(
             'This model has already been fitted. To use the new preprocessed data, '
             "please refit the model using 'fit' or 'fit_processed_data'."

@@ -1325,6 +1325,26 @@ class TestDataProcessor:
         ht_mock.return_value.fit.assert_not_called()
         dp._create_config.assert_not_called()
 
+    @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
+    def test__fit_hyper_transformer_hyper_transformer_is_fitted_and_modified_config(self, ht_mock):
+        """Test when ``self._hyper_transformer._modified_config is True.
+
+        Tests when both ``self._hyper_transformer._fitted`` and
+        ``self._hyper_transformer._modified_config`` are ``True``. This should re-fit or re-create
+        the ``self._hyper_transformer``.
+        """
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        ht_mock.return_value._fitted = True
+        ht_mock.return_value._modified_config = True
+        data = pd.DataFrame({'a': [1, 2, 3]})
+
+        # Run
+        dp._fit_hyper_transformer(data)
+
+        # Assert
+        ht_mock.return_value.fit.assert_called_once_with(data)
+
     @patch('sdv.data_processing.numerical_formatter.NumericalFormatter.learn_format')
     def test__fit_formatters(self, learn_format_mock):
         """Test the ``_fit_formatters`` method.
