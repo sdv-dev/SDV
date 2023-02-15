@@ -144,11 +144,14 @@ class TestBaseSingleTableSynthesizer:
         instance = Mock()
         instance._data_processor._hyper_transformer.field_transformers = {
             'name': 'FrequencyEncoder',
-            'salary': 'FloatFormatter'
+            'salary': 'FloatFormatter',
+            'salary#name': 'LabelEncoder',
+            'address': None
         }
         instance.metadata.columns = {
             'salary': {'sdtype': 'numerical'},
-            'name': {'sdtype': 'categorical'}
+            'name': {'sdtype': 'categorical'},
+            'address': {'sdtype': 'address'}
         }
 
         # Run
@@ -157,7 +160,32 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         assert result == {
             'salary': 'FloatFormatter',
-            'name': 'FrequencyEncoder'
+            'name': 'FrequencyEncoder',
+            'address': None,
+            'salary#name': 'LabelEncoder'
+        }
+
+    def test_get_transformers_with_columns_dropped_by_constraint(self):
+        """Test that this returns the transformers that are within the ``field_transformers``."""
+        # Setup
+        instance = Mock()
+        instance._data_processor._hyper_transformer.field_transformers = {
+            'salary#name': 'LabelEncoder',
+            'address': None
+        }
+        instance.metadata.columns = {
+            'salary': {'sdtype': 'numerical'},
+            'name': {'sdtype': 'categorical'},
+            'address': {'sdtype': 'address'}
+        }
+
+        # Run
+        result = BaseSingleTableSynthesizer.get_transformers(instance)
+
+        # Assert
+        assert result == {
+            'address': None,
+            'salary#name': 'LabelEncoder'
         }
 
     def test_get_transformers_raises_an_error(self):

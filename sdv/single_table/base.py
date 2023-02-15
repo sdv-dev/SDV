@@ -352,12 +352,17 @@ class BaseSynthesizer:
                 "Use 'auto_assign_transformers' or 'fit' to create them."
             )
 
-        field_transformers = {
+        # Order the output to match metadata
+        ordered_field_transformers = {
             column_name: field_transformers.get(column_name)
             for column_name in self.metadata.columns
+            if column_name in field_transformers
         }
 
-        return field_transformers
+        # Add missing columns created by the constraints
+        ordered_field_transformers.update(field_transformers)
+
+        return ordered_field_transformers
 
     def get_info(self):
         """Get dictionary with information regarding the synthesizer.
