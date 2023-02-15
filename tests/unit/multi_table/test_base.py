@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
 from datetime import date, datetime
-from unittest.mock import Mock, call, patch
+from unittest.mock import ANY, Mock, call, mock_open, patch
 
 import numpy as np
 import pandas as pd
@@ -937,3 +937,31 @@ class TestBaseMultiTableSynthesizer:
                 'last_fit_date': '2023-01-23',
                 'fitted_sdv_version': '1.0.0'
             }
+
+    @patch('sdv.multi_table.base.cloudpickle')
+    def test_save(self, cloudpickle_mock):
+        """Test that the synthesizer is saved correctly."""
+        # Setup
+        synthesizer = Mock()
+
+        # Run
+        BaseMultiTableSynthesizer.save(synthesizer, 'output.pkl')
+
+        # Assert
+        cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
+
+    @patch('sdv.multi_table.base.cloudpickle')
+    @patch('builtins.open', new_callable=mock_open)
+    def test_load(self, mock_file, cloudpickle_mock):
+        """Test that the ``load`` method loads a stored model."""
+        # Setup
+        synthesizer_mock = Mock()
+        cloudpickle_mock.load.return_value = synthesizer_mock
+
+        # Run
+        loaded_instance = BaseMultiTableSynthesizer.load('synth.pkl')
+
+        # Assert
+        mock_file.assert_called_once_with('synth.pkl', 'rb')
+        cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
+        assert loaded_instance == synthesizer_mock
