@@ -88,6 +88,26 @@ class TestBaseSingleTableSynthesizer:
         )
         metadata.validate.assert_called_once_with()
 
+    def test___init__invalid_enforce_min_max_values(self):
+        """Test it crashes when ``enforce_min_max_values`` is not a boolean."""
+        # Run and Assert
+        err_msg = re.escape(
+            "Invalid value 'invalid' for parameter 'enforce_min_max_values'."
+            ' Please provide True or False.'
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            BaseSingleTableSynthesizer(SingleTableMetadata(), enforce_min_max_values='invalid')
+
+    def test___init__invalid_enforce_rounding(self):
+        """Test it crashes when ``enforce_rounding`` is not a boolean."""
+        # Run and Assert
+        err_msg = re.escape(
+            "Invalid value 'invalid' for parameter 'enforce_rounding'."
+            ' Please provide True or False.'
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            BaseSingleTableSynthesizer(SingleTableMetadata(), enforce_rounding='invalid')
+
     @patch('sdv.single_table.base.DataProcessor')
     def test_get_parameters(self, mock_data_processor):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
