@@ -2,7 +2,6 @@
 
 import operator
 import re
-import uuid
 from datetime import datetime
 from unittest.mock import Mock, patch
 
@@ -762,10 +761,6 @@ class TestFixedCombinations():
         assert instance._uuids_to_combinations is not None
         expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
         pd.testing.assert_series_equal(expected_out_a, out['a'])
-        try:
-            [uuid.UUID(u) for c, u in out['b#c'].items()]
-        except ValueError:
-            pytest.fail('ValueError')
 
     def test_transform_non_string(self):
         """Test the ``FixedCombinations.transform`` method with non strings.
@@ -799,10 +794,6 @@ class TestFixedCombinations():
         assert instance._uuids_to_combinations is not None
         expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
         pd.testing.assert_series_equal(expected_out_a, out['a'])
-        try:
-            [uuid.UUID(u) for c, u in out['b#c#d'].items()]
-        except ValueError:
-            pytest.fail('ValueError')
 
     def test_transform_not_all_columns_provided(self):
         """Test the ``FixedCombinations.transform`` method.

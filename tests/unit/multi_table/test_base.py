@@ -135,6 +135,34 @@ class TestBaseMultiTableSynthesizer:
             'numerical_distributions': {}
         }
 
+    def test_set_table_parameters_invalid_enforce_min_max_values(self):
+        """Test it crashes when ``enforce_min_max_values`` is not a boolean."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        err_msg = re.escape(
+            "Invalid value 'invalid' for parameter 'enforce_min_max_values'."
+            ' Please provide True or False.'
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            instance.set_table_parameters('oseba', {'enforce_min_max_values': 'invalid'})
+
+    def test_set_table_parameters_invalid_enforce_rounding(self):
+        """Test it crashes when ``enforce_rounding`` is not a boolean."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        err_msg = re.escape(
+            "Invalid value 'invalid' for parameter 'enforce_rounding'."
+            ' Please provide True or False.'
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            instance.set_table_parameters('oseba', {'enforce_rounding': 'invalid'})
+
     def test_get_metadata(self):
         """Test that the metadata object is returned."""
         # Setup
