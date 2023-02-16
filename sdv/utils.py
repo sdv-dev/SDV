@@ -1,11 +1,9 @@
 """Miscellaneous utility functions."""
-import warnings
 from datetime import datetime
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pkg_resources
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
 
@@ -53,78 +51,6 @@ def display_tables(tables, max_rows=10, datetime_fmt='%Y-%m-%d %H:%M:%S', row=Tr
         html = f"<table>{''.join(rows)}</table>"
 
     return HTML(html)
-
-
-def get_package_versions(model=None):
-    """Get the package versions for SDV libraries.
-
-    Args:
-        model (object or None):
-            If model is not None, also store the SDV library versions relevant to this model.
-
-    Returns:
-        dict:
-            A mapping of library to current version.
-    """
-    versions = {}
-    try:
-        versions['sdv'] = pkg_resources.get_distribution('sdv').version
-        versions['rdt'] = pkg_resources.get_distribution('rdt').version
-    except pkg_resources.ResolutionError:
-        pass
-
-    if model is not None:
-        if not isinstance(model, type):
-            model = model.__class__
-
-        model_name = model.__module__ + model.__name__
-
-        for lib in ['copulas', 'ctgan', 'deepecho']:
-            if lib in model_name or ('hma' in model_name and lib == 'copulas'):
-                try:
-                    versions[lib] = pkg_resources.get_distribution(lib).version
-                except pkg_resources.ResolutionError:
-                    pass
-
-    return versions
-
-
-def throw_version_mismatch_warning(package_versions):
-    """Throw mismatch warning if the given package versions don't match current package versions.
-
-    If there is no mismatch, no warning is thrown.
-
-    Args:
-        package_versions (dict[str, str]):
-            A mapping from library to expected version.
-
-    Side Effects:
-        A warning is thrown if there is a mismatch.
-    """
-    warning_str = (
-        'The libraries used to create the model have older versions '
-        'than your current setup. This may cause errors when sampling.'
-    )
-
-    if package_versions is None:
-        warnings.warn(warning_str)
-        return
-
-    mismatched_details = ''
-    for lib, version in package_versions.items():
-        try:
-            current_version = pkg_resources.get_distribution(lib).version
-        except pkg_resources.ResolutionError:
-            current_version = ''
-
-        if current_version != version:
-            mismatched_details += (
-                f'\n{lib} used version `{version}`; '
-                f'current version is `{current_version}`'
-            )
-
-    if len(mismatched_details) > 0:
-        warnings.warn(f'{warning_str}{mismatched_details}')
 
 
 def get_datetime_format(value):
