@@ -22,9 +22,7 @@ from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
 from sdv.single_table.errors import InvalidDataError
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
-from sdv.utils import (
-    get_package_versions, is_boolean_type, is_datetime_type, is_numerical_type,
-    throw_version_mismatch_warning)
+from sdv.utils import is_boolean_type, is_datetime_type, is_numerical_type
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
@@ -1075,8 +1073,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             filepath (str):
                 Path where the synthesizer instance will be serialized.
         """
-        self._package_versions = get_package_versions(getattr(self, '_model', None))
-
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
 
@@ -1094,6 +1090,4 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         """
         with open(filepath, 'rb') as f:
             model = cloudpickle.load(f)
-            throw_version_mismatch_warning(getattr(model, '_package_versions', None))
-
             return model
