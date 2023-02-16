@@ -69,7 +69,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
     }
 
     _model = None
-    _numpy_generator = 73251
+    _numpy_seed = 73251
 
     @classmethod
     def get_distribution_class(cls, distribution):
@@ -106,6 +106,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             for field, distribution in self.numerical_distributions.items()
         }
         self._num_rows = None
+        self._numpy_generator = np.random.PCG64(self._numpy_seed)
 
     def _fit(self, processed_data):
         """Fit the model to the table.
@@ -360,7 +361,6 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
     def _get_likelihood(self, table_rows):
         with np.random.default_rng(self._numpy_generator):
             probabilities = self._model.probability_density(table_rows)
-            self._numpy_generator = np.random.get_bit_generator()
 
         return probabilities
 
