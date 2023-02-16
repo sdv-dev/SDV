@@ -248,7 +248,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                                 foreign_key,
                                 sampled_data
                             )
-                            table_rows[foreign_key] = parent_ids.values
+                            table_rows[foreign_key] = parent_ids.to_numpy()
 
             synthesizer = self._table_synthesizers.get(table_name)
             dtypes = synthesizer._data_processor._dtypes
