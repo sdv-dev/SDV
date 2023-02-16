@@ -69,6 +69,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
     }
 
     _model = None
+    _numpy_generator = 73251
 
     @classmethod
     def get_distribution_class(cls, distribution):
@@ -357,7 +358,11 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         return model_parameters
 
     def _get_likelihood(self, table_rows):
-        return self._model.probability_density(table_rows)
+        with np.random.default_rng(self._numpy_generator):
+            probabilities = self._model.probability_density(table_rows)
+            self._numpy_generator = np.random.get_bit_generator()
+
+        return probabilities
 
     def _set_parameters(self, parameters):
         """Set copula model parameters.

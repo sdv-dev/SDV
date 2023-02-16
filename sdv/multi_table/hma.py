@@ -16,12 +16,13 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
     """Hierarchical Modeling Algorithm One.
 
     Args:
-        metadata (dict, str or Metadata):
-            Metadata dict, path to the metadata JSON file or Metadata instance itself.
+        metadata (sdv.metadata.multi_table.MultiTableMetadata):
+            Multi table metadata representing the data tables that this synthesizer will be used
+            for.
     """
 
     DEFAULT_SYNTHESIZER_KWARGS = {
-        'default_distribution': 'beta',
+        'default_distribution': 'beta'
     }
 
     def __init__(self, metadata, synthesizer_kwargs=None):
@@ -423,8 +424,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         else:
             weights = likelihoods.to_numpy() / total
 
-        np.random.seed(200)
-        return np.random.choice(likelihoods.index, p=weights)
+        return np.random.choice(likelihoods.index.to_list(), p=weights)
 
     def _get_likelihoods(self, table_rows, parent_rows, table_name, foreign_key):
         """Calculate the likelihood of each parent id value appearing in the data.
@@ -454,6 +454,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             synthesizer = self._synthesizer(table_meta, **self._synthesizer_kwargs)
             synthesizer._set_parameters(parameters)
             try:
+                synthesizer._numpy_generator = self._numpy_generator
                 likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)
             except (AttributeError, np.linalg.LinAlgError):
                 likelihoods[parent_id] = None
