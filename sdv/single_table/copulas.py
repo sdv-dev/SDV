@@ -359,7 +359,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         return model_parameters
 
     def _get_likelihood(self, table_rows):
-        with np.random.default_rng(self._numpy_generator):
+        with np.random.default_rng(self._numpy_seed):
             probabilities = self._model.probability_density(table_rows)
 
         return probabilities

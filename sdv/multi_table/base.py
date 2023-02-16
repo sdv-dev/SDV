@@ -29,18 +29,16 @@ class BaseMultiTableSynthesizer:
 
     _synthesizer = GaussianCopulaSynthesizer
     _numpy_seed = 73251
-    _numpy_generator = None
 
     @contextlib.contextmanager
     def _set_temp_numpy_seed(self):
         initial_state = np.random.get_state()
         if isinstance(self._numpy_seed, int):
             np.random.seed(self._numpy_seed)
-            self._numpy_generator = np.random.PCG64(self._numpy_seed)
-            np.random.default_rng(self._numpy_generator)
+            np.random.default_rng(self._numpy_seed)
         else:
             np.random.set_state(self._numpy_seed)
-            np.random.default_rng(self._numpy_generator)
+            np.random.default_rng(self._numpy_seed[1])
         try:
             yield
         finally:
