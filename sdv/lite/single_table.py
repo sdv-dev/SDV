@@ -7,7 +7,6 @@ import cloudpickle
 import rdt.transformers
 
 from sdv.single_table import GaussianCopulaSynthesizer
-from sdv.utils import get_package_versions, throw_version_mismatch_warning
 
 LOGGER = logging.getLogger(__name__)
 
@@ -173,8 +172,6 @@ class SingleTablePreset:
             path (str):
                 Path where the SDV instance will be serialized.
         """
-        self._package_versions = get_package_versions(getattr(self, '_synthesizer', None))
-
         with open(path, 'wb') as output:
             cloudpickle.dump(self, output)
 
@@ -192,8 +189,6 @@ class SingleTablePreset:
         """
         with open(path, 'rb') as f:
             model = cloudpickle.load(f)
-            throw_version_mismatch_warning(getattr(model, '_package_versions', None))
-
             return model
 
     @classmethod
