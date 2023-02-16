@@ -334,3 +334,52 @@ def test_save_and_load():
     assert isinstance(synthesizer, HMASynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
     assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+
+
+def test_hma_primary_key_and_foreign_key_only():
+    """Test that ``HMASynthesizer`` can handle tables with primary and foreign keys only."""
+    # Setup
+    users = pd.DataFrame({
+        'user_id': [1, 2, 3],
+        'user_name': ['John', 'Doe', 'Johanna']
+    })
+    sessions = pd.DataFrame({
+        'session_id': ['a', 'b', 'c'],
+        'clicks': [10, 20, 30]
+    })
+    games = pd.DataFrame({
+        'game_id': ['a1', 'b2', 'c3'],
+        'session_id': ['a', 'b', 'c'],
+        'user_id': [1, 2, 3]
+    })
+
+    data = {
+        'users': users,
+        'sessions': sessions,
+        'games': games
+    }
+
+    metadata = MultiTableMetadata()
+    for table_name, table in data.items():
+        metadata.detect_table_from_dataframe(table_name, table)
+
+    metadata.update_column('sessions', 'session_id', sdtype='text')
+    metadata.update_column('games', 'session_id', sdtype='text')
+    metadata.update_column('games', 'game_id', sdtype='text')
+    metadata.set_primary_key('users', 'user_id')
+    metadata.set_primary_key('sessions', 'session_id')
+    metadata.set_primary_key('games', 'game_id')
+    metadata.add_relationship('users', 'games', 'user_id', 'user_id')
+    metadata.add_relationship('sessions', 'games', 'session_id', 'session_id')
+
+    hmasynthesizer = HMASynthesizer(metadata)
+
+    # Fit
+    hmasynthesizer.fit(data)
+
+    # Sample
+    sample = hmasynthesizer.sample()
+
+    # Assert
+    assert all(sample['games']['user_id'].isin(sample['users']['user_id']))
+    assert all(sample['games']['session_id'].isin(sample['sessions']['session_id']))
