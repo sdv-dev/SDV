@@ -522,3 +522,16 @@ class TestGaussianCopulaSynthesizer:
         )
         with pytest.raises(ValueError, match=error_msg):
             gcs.get_learned_distributions()
+
+    def test__get_likelihood(self):
+        """Test that ``_get_likelihood`` returns the ``model.probability_density`` of the input."""
+        # Setup
+        table_rows = pd.Series([1, 2, 3])
+        instance = Mock()
+
+        # Run
+        result = GaussianCopulaSynthesizer._get_likelihood(instance, table_rows)
+
+        # Assert
+        assert result == instance._model.probability_density.return_value
+        instance._model.probability_density.assert_called_once_with(table_rows)
