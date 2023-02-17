@@ -59,6 +59,34 @@ class TestHMASynthesizer:
 
         pd.testing.assert_frame_equal(result, expected)
 
+    def test__get_extension_foreign_key_only(self):
+        """Test the ``_get_extension`` method.
+
+        Test when foreign key only is passed, just the ``num_rows`` is being captured.
+        """
+        # Setup
+        instance = Mock()
+        instance._get_all_foreign_keys.return_value = ['id_upravna_enota']
+        instance._table_synthesizers = {'nesreca': Mock()}
+        child_table = pd.DataFrame({
+            'id_upravna_enota': [0, 1, 2, 3]
+        })
+
+        # Run
+        result = HMASynthesizer._get_extension(
+            instance,
+            'nesreca',
+            child_table,
+            'id_upravna_enota'
+        )
+
+        # Assert
+        expected = pd.DataFrame({
+            '__nesreca__id_upravna_enota__num_rows': [1, 1, 1, 1]
+        })
+
+        pd.testing.assert_frame_equal(result, expected)
+
     def test__get_foreign_keys(self):
         """Test that this method returns the foreign keys for a given table name and child name."""
         # Setup
