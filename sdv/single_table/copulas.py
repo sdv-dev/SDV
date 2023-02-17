@@ -356,6 +356,9 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         return model_parameters
 
+    def _get_likelihood(self, table_rows):
+        return self._model.probability_density(table_rows)
+
     def _set_parameters(self, parameters):
         """Set copula model parameters.
 
@@ -366,7 +369,8 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         parameters = unflatten_dict(parameters)
         if 'num_rows' in parameters:
             num_rows = parameters.pop('num_rows')
+            self._num_rows = 0 if pd.isna(num_rows) else max(0, int(round(num_rows)))
 
-        parameters = self._rebuild_gaussian_copula(parameters)
-        self._model = multivariate.GaussianMultivariate.from_dict(parameters)
-        self._num_rows = 0 if pd.isna(num_rows) else max(0, int(round(num_rows)))
+        if parameters:
+            parameters = self._rebuild_gaussian_copula(parameters)
+            self._model = multivariate.GaussianMultivariate.from_dict(parameters)

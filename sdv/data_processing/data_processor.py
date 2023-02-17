@@ -739,14 +739,14 @@ class DataProcessor:
             for column in self.metadata.columns.keys() - set(sampled_columns + self._keys)
             if self._hyper_transformer.field_transformers.get(column)
         ]
-        if missing_columns:
+        if missing_columns and num_rows:
             anonymized_data = self._hyper_transformer.create_anonymized_columns(
                 num_rows=num_rows,
                 column_names=missing_columns
             )
             sampled_columns.extend(missing_columns)
 
-        if self._keys:
+        if self._keys and num_rows:
             generated_keys = self.generate_keys(num_rows, reset_keys)
             sampled_columns.extend(self._keys)
 

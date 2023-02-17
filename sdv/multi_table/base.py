@@ -35,9 +35,10 @@ class BaseMultiTableSynthesizer:
         initial_state = np.random.get_state()
         if isinstance(self._numpy_seed, int):
             np.random.seed(self._numpy_seed)
+            np.random.default_rng(self._numpy_seed)
         else:
             np.random.set_state(self._numpy_seed)
-
+            np.random.default_rng(self._numpy_seed[1])
         try:
             yield
         finally:

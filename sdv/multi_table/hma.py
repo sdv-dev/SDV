@@ -16,12 +16,13 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
     """Hierarchical Modeling Algorithm One.
 
     Args:
-        metadata (dict, str or Metadata):
-            Metadata dict, path to the metadata JSON file or Metadata instance itself.
+        metadata (sdv.metadata.multi_table.MultiTableMetadata):
+            Multi table metadata representing the data tables that this synthesizer will be used
+            for.
     """
 
     DEFAULT_SYNTHESIZER_KWARGS = {
-        'default_distribution': 'beta',
+        'default_distribution': 'beta'
     }
 
     def __init__(self, metadata, synthesizer_kwargs=None):
@@ -54,6 +55,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         table_meta = self._table_synthesizers[child_name].get_metadata()
 
         extension_rows = []
+        foreign_key_columns = self._get_all_foreign_keys(child_name)
         foreign_key_values = child_table[foreign_key].unique()
         child_table = child_table.set_index(foreign_key)
 
@@ -61,22 +63,28 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         scale_columns = None
         for foreign_key_value in foreign_key_values:
             child_rows = child_table.loc[[foreign_key_value]]
+            child_rows = child_rows[child_rows.columns.difference(foreign_key_columns)]
+
             try:
-                synthesizer = self._synthesizer(table_meta, **self._synthesizer_kwargs)
-                synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
-                row = synthesizer._get_parameters()
-                row = pd.Series(row)
-                row.index = f'__{child_name}__{foreign_key}__' + row.index
+                if child_rows.empty:
+                    row = pd.Series({'num_rows': len(child_rows)})
+                    row.index = f'__{child_name}__{foreign_key}__' + row.index
+                else:
+                    synthesizer = self._synthesizer(table_meta, **self._synthesizer_kwargs)
+                    synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
+                    row = synthesizer._get_parameters()
+                    row = pd.Series(row)
+                    row.index = f'__{child_name}__{foreign_key}__' + row.index
 
-                if scale_columns is None:
-                    scale_columns = [
-                        column
-                        for column in row.index
-                        if column.endswith('scale')
-                    ]
+                    if scale_columns is None:
+                        scale_columns = [
+                            column
+                            for column in row.index
+                            if column.endswith('scale')
+                        ]
 
-                if len(child_rows) == 1:
-                    row.loc[scale_columns] = None
+                    if len(child_rows) == 1:
+                        row.loc[scale_columns] = None
 
                 extension_rows.append(row)
                 index.append(foreign_key_value)
@@ -140,7 +148,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                 The name representing the table.
 
         Returns:
-            keyes (dict):
+            keys (dict):
                 A dictionary mapping with the foreign key and it's values within the table.
         """
         foreign_keys = self._get_all_foreign_keys(table_name)
@@ -185,7 +193,8 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         LOGGER.info('Fitting %s for table %s; shape: %s', self._synthesizer.__name__,
                     table_name, table.shape)
 
-        self._table_synthesizers[table_name].fit_processed_data(table)
+        if not table.empty:
+            self._table_synthesizers[table_name].fit_processed_data(table)
 
         for name, values in keys.items():
             table[name] = values
@@ -196,7 +205,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         return table
 
     def _fit(self, processed_data):
-        """Fit this HMA1 instance to the dataset data.
+        """Fit this ``HMASynthesizer`` instance to the dataset data.
 
         Args:
             processed_data (dict):
@@ -239,7 +248,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                                 foreign_key,
                                 sampled_data
                             )
-                            table_rows[foreign_key] = parent_ids
+                            table_rows[foreign_key] = parent_ids.to_numpy()
 
             synthesizer = self._table_synthesizers.get(table_name)
             dtypes = synthesizer._data_processor._dtypes
@@ -309,7 +318,11 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                 Sampled rows, shape (, num_rows)
         """
         num_rows = num_rows or synthesizer._num_rows
-        sampled_rows = synthesizer._sample(num_rows)
+        if synthesizer._model:
+            sampled_rows = synthesizer._sample(num_rows)
+        else:
+            sampled_rows = pd.DataFrame(index=range(num_rows))
+
         return self._process_samples(table_name, sampled_rows)
 
     def _get_child_synthesizer(self, parent_row, table_name, foreign_key):
@@ -411,7 +424,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         else:
             weights = likelihoods.to_numpy() / total
 
-        return np.random.choice(likelihoods.index, p=weights)
+        return np.random.choice(likelihoods.index.to_list(), p=weights)
 
     def _get_likelihoods(self, table_rows, parent_rows, table_name, foreign_key):
         """Calculate the likelihood of each parent id value appearing in the data.
@@ -431,13 +444,19 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                 A DataFrame of the likelihood of each parent id.
         """
         likelihoods = {}
+
+        data_processor = self._table_synthesizers[table_name]._data_processor
+        table_rows = data_processor.transform(table_rows)
+
         for parent_id, row in parent_rows.iterrows():
             parameters = self._extract_parameters(row, table_name, foreign_key)
             table_meta = self._table_synthesizers[table_name].get_metadata()
             synthesizer = self._synthesizer(table_meta, **self._synthesizer_kwargs)
-            synthesizer.set_parameters(parameters)
+            synthesizer._set_parameters(parameters)
             try:
-                likelihoods[parent_id] = synthesizer.get_likelihood(table_rows)
+                with np.random.default_rng(np.random.get_state()[1]):
+                    likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)
+
             except (AttributeError, np.linalg.LinAlgError):
                 likelihoods[parent_id] = None
 
