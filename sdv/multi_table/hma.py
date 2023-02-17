@@ -454,8 +454,9 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             synthesizer = self._synthesizer(table_meta, **self._synthesizer_kwargs)
             synthesizer._set_parameters(parameters)
             try:
-                synthesizer._numpy_seed = np.random.get_state()[1]
-                likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)
+                with np.random.default_rng(np.random.get_state()[1]):
+                    likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)
+
             except (AttributeError, np.linalg.LinAlgError):
                 likelihoods[parent_id] = None
 
