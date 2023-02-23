@@ -7,6 +7,7 @@ import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 from rdt.transformers import AnonymizedFaker, FloatFormatter, LabelEncoder, RegexGenerator
 
+from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table.copulagan import CopulaGANSynthesizer
@@ -30,10 +31,10 @@ METADATA = SingleTableMetadata._load_from_dict({
 })
 
 MODELS = [
-    pytest.param(CTGANSynthesizer(METADATA, epochs=1), id='CTGANSynthesizer'),
-    pytest.param(TVAESynthesizer(METADATA, epochs=1), id='TVAESynthesizer'),
+    pytest.param(CTGANSynthesizer(METADATA, epochs=1, cuda=False), id='CTGANSynthesizer'),
+    pytest.param(TVAESynthesizer(METADATA, epochs=1, cuda=False), id='TVAESynthesizer'),
     pytest.param(GaussianCopulaSynthesizer(METADATA), id='GaussianCopulaSynthesizer'),
-    pytest.param(CopulaGANSynthesizer(METADATA, epochs=1), id='CopulaGANSynthesizer'),
+    pytest.param(CopulaGANSynthesizer(METADATA, epochs=1, cuda=False), id='CopulaGANSynthesizer'),
 ]
 
 
@@ -460,7 +461,11 @@ def test_sampling_reset_sampling(model):
         'column4': [str(i) for i in (range(100))],
     })
 
-    model = model.__class__(metadata)
+    if isinstance(model, (CTGANSynthesizer, TVAESynthesizer)):
+        model = model.__class__(metadata, cuda=False)
+    else:
+        model = model.__class__(metadata)
+
     model.fit(data)
 
     sampled1 = model.sample(10)
@@ -728,3 +733,31 @@ def test_get_info():
         'last_fit_date': today,
         'fitted_sdv_version': version
     }
+
+
+def test_synthesizer_with_inequality_constraint():
+    """Ensure that the ``Inequality`` constraint can sample from the model."""
+    # Setup
+    real_data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='fake_hotel_guests'
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    checkin_lessthan_checkout = {
+        'constraint_class': 'Inequality',
+        'constraint_parameters': {
+            'low_column_name': 'checkin_date',
+            'high_column_name': 'checkout_date'
+        }
+    }
+
+    synthesizer.add_constraints([checkin_lessthan_checkout])
+    synthesizer.fit(real_data)
+
+    # Run and Assert
+    sampled = synthesizer.sample(num_rows=500)
+    synthesizer.validate(sampled)
+    _sampled = sampled[~sampled['checkout_date'].isna()]
+    assert all(
+        pd.to_datetime(_sampled['checkin_date']) < pd.to_datetime(_sampled['checkout_date'])
+    )
