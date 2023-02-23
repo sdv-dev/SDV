@@ -472,7 +472,7 @@ class Inequality(Constraint):
             diff_column = diff_column.round()
 
         if self._is_datetime:
-            diff_column = diff_column.astype('timedelta64[ns]')
+            diff_column = pd.to_timedelta(diff_column)
 
         low = table_data[self._low_column_name].to_numpy()
         if self._is_datetime and self._dtype == 'O':
