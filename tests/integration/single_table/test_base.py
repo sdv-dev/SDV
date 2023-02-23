@@ -755,4 +755,9 @@ def test_synthesizer_with_inequality_constraint():
     synthesizer.fit(real_data)
 
     # Run and Assert
-    synthesizer.sample(num_rows=500)
+    sampled = synthesizer.sample(num_rows=500)
+    synthesizer.validate(sampled)
+    _sampled = sampled[~sampled['checkout_date'].isna()]
+    assert all(
+        pd.to_datetime(_sampled['checkin_date']) < pd.to_datetime(_sampled['checkout_date'])
+    )
