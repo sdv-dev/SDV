@@ -9,6 +9,7 @@ import pytest
 from faker import Faker
 
 from sdv.datasets.demo import download_demo
+from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
@@ -383,3 +384,100 @@ def test_hma_primary_key_and_foreign_key_only():
     # Assert
     assert all(sample['games']['user_id'].isin(sample['users']['user_id']))
     assert all(sample['games']['session_id'].isin(sample['sessions']['session_id']))
+
+
+def test_synthesize_multiple_tables_using_hma(tmpdir):
+    """End to end test for the ``SDV: Synthesize multiple tables (HMA).ipynb``."""
+
+    # Loading the demo data
+    real_data, metadata = download_demo(
+        modality='multi_table',
+        dataset_name='fake_hotels'
+    )
+
+    # Creating a Synthesizer
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.fit(real_data)
+
+    # Generating Synthetic Data
+    synthetic_data = synthesizer.sample(scale=2)
+
+    # Assert new data is bigger than real_data
+    for table_name in metadata.tables:
+        assert len(synthetic_data[table_name]) > len(real_data[table_name])
+
+    # Assert Anonymization
+    sensitive_columns = ['guest_email', 'billing_address', 'credit_card_number']
+    for column in sensitive_columns:
+        assert synthetic_data['guests'][column].isin(real_data['guests'][column]).sum() == 0
+
+
+    # Evaluate Real vs Synthetic Data
+    quality_report = evaluate_quality(
+        real_data,
+        synthetic_data,
+        metadata,
+        verbose=False
+    )
+
+    column_plot = get_column_plot(
+        real_data=real_data,
+        synthetic_data=synthetic_data,
+        column_name='has_rewards',
+        table_name='guests',
+        metadata=metadata
+    )
+
+    column_pair_plot = get_column_pair_plot(
+        real_data=real_data,
+        synthetic_data=synthetic_data,
+        column_names=['room_rate', 'room_type'],
+        table_name='guests',
+        metadata=metadata
+    )
+
+    # Assert
+    assert quality_report.get_score() > 0
+    assert column_plot
+    assert column_pair_plot
+
+
+    # Save and Load
+    temp_dir = TemporaryDirectory()
+    model_path = Path(temp_dir.name) / 'synthesizer.pkl'
+
+    synthesizer.save(model_path)
+
+    # Assert
+    assert model_path.exists()
+    assert model_path.is_file()
+    loaded_synthesizer = HMASynthesizer.load(model_path)
+
+    assert isinstance(synthesizer, HMASynthesizer)
+    assert loaded_synthesizer.get_info() == synthesizer.get_info()
+    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+    loaded_synthesizer.sample()
+
+    # HMA Customization
+    custom_synthesizer = HMASynthesizer(
+        metadata
+    )
+
+    custom_synthesizer.set_table_parameters(
+        table_name='hotels',
+        table_parameters={
+            'default_distribution': 'truncnorm'
+        }
+    )
+
+    custom_synthesizer.fit(real_data)
+    learned_distributions = custom_synthesizer.get_learned_distributions(table_name='hotels')
+
+    # Assert
+    assert list(learned_distributions['rating']['learned_parameters']) == [
+        'a',
+        'b',
+        'loc',
+        'scale'
+    ]
+    assert learned_distributions['rating']['distribution'] == 'truncnorm'
