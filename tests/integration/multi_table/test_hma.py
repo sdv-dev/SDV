@@ -399,7 +399,7 @@ def test_synthesize_multiple_tables_using_hma(tmpdir):
     synthesizer = HMASynthesizer(metadata)
     synthesizer.fit(real_data)
 
-    # Generating Synthetic Data
+    # Generating Synthetic Data
     synthetic_data = synthesizer.sample(scale=2)
 
     # Assert new data is bigger than real_data
@@ -410,7 +410,6 @@ def test_synthesize_multiple_tables_using_hma(tmpdir):
     sensitive_columns = ['guest_email', 'billing_address', 'credit_card_number']
     for column in sensitive_columns:
         assert synthetic_data['guests'][column].isin(real_data['guests'][column]).sum() == 0
-
 
     # Evaluate Real vs Synthetic Data
     quality_report = evaluate_quality(
@@ -440,7 +439,6 @@ def test_synthesize_multiple_tables_using_hma(tmpdir):
     assert quality_report.get_score() > 0
     assert column_plot
     assert column_pair_plot
-
 
     # Save and Load
     temp_dir = TemporaryDirectory()
