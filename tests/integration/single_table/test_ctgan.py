@@ -1,15 +1,10 @@
-from pathlib import Path
-
 from sdv.datasets.demo import download_demo
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.single_table import CTGANSynthesizer
 
 
-def test_synthesize_table_ctgan(tmpdir):
-    """Test synthesize a table demo.
-
-    Runs and tests the Synthesize a Table demo using Gaussian Copula.
-    """
+def test_synthesize_table_ctgan(tmp_path):
+    """End to end test for the ``SDV: Synthesize a Table (CTGAN).ipynb``."""
     # Setup
     real_data, metadata = download_demo(
         modality='single_table',
@@ -20,7 +15,8 @@ def test_synthesize_table_ctgan(tmpdir):
         metadata,
         epochs=1000
     )
-    model_path = Path(tmpdir) / 'synthesizer.pkl'
+    sensitive_columns = ['guest_email', 'billing_address', 'credit_card_number']
+    model_path = tmp_path / 'synthesizer.pkl'
 
     # Run - fit
     synthesizer.fit(real_data)
@@ -62,6 +58,9 @@ def test_synthesize_table_ctgan(tmpdir):
     # Assert - fit
     assert set(real_data.columns) == set(synthetic_data.columns)
     assert real_data.shape[1] == synthetic_data.shape[1]
+    assert len(synthetic_data) == 500
+    for column in sensitive_columns:
+        assert synthetic_data[column].isin(real_data[column]).sum() == 0
 
     # Assert - evaluate
     assert quality_report.get_score() > 0
