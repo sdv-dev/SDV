@@ -491,7 +491,11 @@ def test_synthesize_multiple_tables_using_hma():
 
     
 def test_use_own_data_using_hma(tmp_path):
-    """End to end test for the ``SDV: Prepare your own data.ipynb``."""
+    """End to end test for loading and preparing data.
+
+    Tests loading data from CSVs, auto-detecting metadata from the dataframes, updating the
+    metadata with correct sdtypes, and finally fitting the synthesizer.
+    """
     # Setup
     data_folder = tmp_path / 'datasets'
     download_demo(
