@@ -25,3 +25,42 @@ MyConstraint = create_custom_constraint_class(
     transform,
     reverse_transform
 )
+
+
+def amenities_is_valid(column_names, data):
+    """Validate that if ``has_rewards`` amenities fee is 0."""
+    boolean_column = column_names[0]
+    numerical_column = column_names[1]
+    true_values = (data[boolean_column] == True) & (data[numerical_column] == 0.0)
+    false_values = (data[boolean_column] == False)
+
+    return (true_values) | (false_values)
+
+
+def amenities_transform(column_names, data):
+    """Transform the data if amenities fee is to be applied."""
+    boolean_column = column_names[0]
+    numerical_column = column_names[1]
+    typical_value = data[numerical_column].median()
+    data[numerical_column] = data[numerical_column].mask(
+        data[boolean_column] == True,
+        typical_value
+    )
+
+    return data
+
+
+def amenities_reverse_transform(column_names, data):
+    """Reverse the data if amenities fee is to be applied."""
+    boolean_column = column_names[0]
+    numerical_column = column_names[1]
+    data[numerical_column] = data[numerical_column].mask(data[boolean_column] == True, 0.0)
+
+    return data
+
+
+IfTrueThenZero = create_custom_constraint_class(
+    amenities_is_valid,
+    amenities_transform,
+    amenities_reverse_transform
+)
