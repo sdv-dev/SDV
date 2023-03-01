@@ -65,6 +65,16 @@ def _validate_inputs_custom_constraint(is_valid_fn, transform_fn=None, reverse_t
     if reverse_transform_fn is not None and not callable(reverse_transform_fn):
         raise ValueError('`reverse_transform_fn` must be a function.')
 
+class _RecreateCustomConstraint():
+    def __call__(self, is_valid_fn, transform_fn, reverse_transform_fn):
+        constraint_class = _RecreateCustomConstraint()
+        constraint_class.__class__ = create_custom_constraint_class(
+            is_valid_fn=is_valid_fn,
+            transform_fn=transform_fn,
+            reverse_transform_fn=reverse_transform_fn
+        )
+
+        return constraint_class
 
 def create_custom_constraint_class(is_valid_fn, transform_fn=None, reverse_transform_fn=None):
     """Create a CustomConstraint class.
@@ -106,6 +116,13 @@ def create_custom_constraint_class(is_valid_fn, transform_fn=None, reverse_trans
                     )
                 ]
                 raise AggregateConstraintsError(errors)
+    
+        def __reduce__(self):
+            return (
+                _RecreateCustomConstraint(),
+                (is_valid_fn, transform_fn, reverse_transform_fn),
+                self.__dict__
+            )
 
         def __init__(self, column_names, **kwargs):
             self.column_names = column_names
