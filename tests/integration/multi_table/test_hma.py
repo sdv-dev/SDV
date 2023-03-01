@@ -9,6 +9,7 @@ import pytest
 from faker import Faker
 
 from sdv.datasets.demo import download_demo
+from sdv.datasets.local import load_csvs
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
@@ -386,7 +387,7 @@ def test_hma_primary_key_and_foreign_key_only():
     assert all(sample['games']['session_id'].isin(sample['sessions']['session_id']))
 
 
-def test_synthesize_multiple_tables_using_hma(tmpdir):
+def test_synthesize_multiple_tables_using_hma():
     """End to end test for multiple tables using ``HMASynthesizer``.
 
     The following functionalities are being tested:
@@ -487,3 +488,143 @@ def test_synthesize_multiple_tables_using_hma(tmpdir):
         'scale'
     ]
     assert learned_distributions['rating']['distribution'] == 'truncnorm'
+
+    
+def test_use_own_data_using_hma(tmp_path):
+    """End to end test for the ``SDV: Prepare your own data.ipynb``."""
+    # Setup
+    data_folder = tmp_path / 'datasets'
+    download_demo(
+        modality='multi_table',
+        dataset_name='fake_hotels',
+        output_folder_name=data_folder
+    )
+
+    # Run - load CSVs
+    datasets = load_csvs(data_folder)
+
+    # Assert - loaded CSVs correctly
+    assert datasets.keys() == {'guests', 'hotels'}
+
+    # Metadata
+    metadata = MultiTableMetadata()
+
+    metadata.detect_table_from_dataframe(
+        table_name='guests',
+        data=datasets['guests']
+    )
+    metadata.detect_table_from_dataframe(
+        table_name='hotels',
+        data=datasets['hotels']
+    )
+
+    # Assert - detected metadata correctly
+    for table in metadata.tables:
+        assert metadata.tables[table].columns.keys() == set(datasets[table].columns)
+
+    # Update metadata
+    metadata.update_column(
+        table_name='guests',
+        column_name='checkin_date',
+        sdtype='datetime',
+        datetime_format='%d %b %Y'
+    )
+
+    metadata.update_column(
+        table_name='guests',
+        column_name='checkout_date',
+        sdtype='datetime',
+        datetime_format='%d %b %Y'
+    )
+    metadata.update_column(
+        table_name='hotels',
+        column_name='hotel_id',
+        sdtype='text',
+        regex_format='HID_[0-9]{3,4}'
+    )
+
+    metadata.update_column(
+        table_name='guests',
+        column_name='hotel_id',
+        sdtype='text',
+        regex_format='HID_[0-9]{3,4}'
+    )
+    metadata.update_column(
+        table_name='guests',
+        column_name='guest_email',
+        sdtype='email',
+        pii=True
+    )
+
+    metadata.update_column(
+        table_name='guests',
+        column_name='billing_address',
+        sdtype='address',
+        pii=True
+    )
+
+    metadata.update_column(
+        table_name='guests',
+        column_name='credit_card_number',
+        sdtype='credit_card_number',
+        pii=True
+    )
+    metadata.set_primary_key(
+        table_name='hotels',
+        column_name='hotel_id'
+    )
+
+    metadata.set_primary_key(
+        table_name='guests',
+        column_name='guest_email'
+    )
+    metadata.add_alternate_keys(
+        table_name='guests',
+        column_names=['credit_card_number']
+    )
+    metadata.add_relationship(
+        parent_table_name='hotels',
+        child_table_name='guests',
+        parent_primary_key='hotel_id',
+        child_foreign_key='hotel_id'
+    )
+
+    # Assert - check updated metadata
+    metadata.validate()
+    hotels_metadata = metadata.tables['hotels']
+    assert hotels_metadata.primary_key == 'hotel_id'
+    assert hotels_metadata.columns['hotel_id']['sdtype'] == 'text'
+    assert hotels_metadata.columns['hotel_id']['regex_format'] == 'HID_[0-9]{3,4}'
+
+    guests_metadata = metadata.tables['guests']
+    assert guests_metadata.primary_key == 'guest_email'
+    assert guests_metadata.alternate_keys == ['credit_card_number']
+    assert guests_metadata.columns['checkin_date']['sdtype'] == 'datetime'
+    assert guests_metadata.columns['checkin_date']['datetime_format'] == '%d %b %Y'
+    assert guests_metadata.columns['checkout_date']['sdtype'] == 'datetime'
+    assert guests_metadata.columns['checkout_date']['datetime_format'] == '%d %b %Y'
+    assert guests_metadata.columns['hotel_id']['sdtype'] == 'text'
+    assert guests_metadata.columns['hotel_id']['regex_format'] == 'HID_[0-9]{3,4}'
+    assert guests_metadata.columns['guest_email']['sdtype'] == 'email'
+    assert guests_metadata.columns['guest_email']['pii'] is True
+    assert guests_metadata.columns['billing_address']['sdtype'] == 'address'
+    assert guests_metadata.columns['billing_address']['pii'] is True
+    assert guests_metadata.columns['credit_card_number']['sdtype'] == 'credit_card_number'
+    assert guests_metadata.columns['credit_card_number']['pii'] is True
+
+    # Save and load metadata
+    metadata_path = tmp_path / 'metadata.json'
+    metadata.save_to_json(metadata_path)
+    loaded_metadata = MultiTableMetadata.load_from_json(metadata_path)
+
+    # Assert loaded metadata matches saved
+    assert metadata.to_dict() == loaded_metadata.to_dict()
+
+    # Fit synthesizer
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.validate(datasets)
+    synthesizer.fit(datasets)
+    synthetic_data = synthesizer.sample(scale=1)
+
+    for table in metadata.tables:
+        assert set(synthetic_data[table].columns) == set(datasets[table].columns)
