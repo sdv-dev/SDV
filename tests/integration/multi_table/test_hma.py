@@ -489,7 +489,7 @@ def test_synthesize_multiple_tables_using_hma():
     ]
     assert learned_distributions['rating']['distribution'] == 'truncnorm'
 
-    
+
 def test_use_own_data_using_hma(tmp_path):
     """End to end test for loading and preparing data.
 
@@ -624,6 +624,7 @@ def test_use_own_data_using_hma(tmp_path):
     synthesizer.validate(datasets)
     synthesizer.fit(datasets)
     synthetic_data = synthesizer.sample(scale=1)
+    synthesizer.validate(synthetic_data)
 
     for table in metadata.tables:
         assert set(synthetic_data[table].columns) == set(datasets[table].columns)
