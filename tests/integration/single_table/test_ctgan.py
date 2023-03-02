@@ -4,7 +4,10 @@ from sdv.single_table import CTGANSynthesizer
 
 
 def test_synthesize_table_ctgan(tmp_path):
-    """End to end test for the ``SDV: Synthesize a Table (CTGAN).ipynb``."""
+    """End to end test for the CTGAN synthesizer.
+    
+    Tests quality reports, anonymization, and customizing the synthesizer.
+    """
     # Setup
     real_data, metadata = download_demo(
         modality='single_table',

@@ -5,7 +5,11 @@ from sdv.single_table import GaussianCopulaSynthesizer
 
 
 def test_synthesize_table_gaussian_copula(tmp_path):
-    """End to end test for the ``SDV: Synthesize a Table (Gaussian Copula).ipynb``."""
+    """End to end test for the Gaussian Copula synthesizer.
+
+    Tests fitting and sampling from the synthesizer, anonymization, quality reports, and
+    synthesizer customization.
+    """
     # Setup
     real_data, metadata = download_demo(
         modality='single_table',
