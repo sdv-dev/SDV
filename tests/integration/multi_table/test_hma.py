@@ -387,7 +387,15 @@ def test_hma_primary_key_and_foreign_key_only():
 
 
 def test_synthesize_multiple_tables_using_hma(tmpdir):
-    """End to end test for the ``SDV: Synthesize multiple tables (HMA).ipynb``."""
+    """End to end test for multiple tables using ``HMASynthesizer``.
+
+    The following functionalities are being tested:
+        * Create, fit and sample from model
+        * Anonymization
+        * Evaluating synthetic data
+        * Saving, loading and sampling from the loaded model
+        * Using a custom configuration for the ``HMASynthesizer``
+    """
 
     # Loading the demo data
     real_data, metadata = download_demo(
