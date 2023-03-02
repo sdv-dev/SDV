@@ -477,7 +477,7 @@ class BaseMultiTableSynthesizer:
         }
 
     def save(self, filepath):
-        """Save this instance to the given path using cloudpickle.
+        """Save this instance to the given path using dill.
 
         Args:
             filepath (str):
