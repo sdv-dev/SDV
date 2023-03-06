@@ -1,3 +1,5 @@
+import pandas as pd
+
 from sdv.datasets.demo import download_demo
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.sampling import Condition
@@ -119,3 +121,80 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     assert learned_distributions['has_rewards']['distribution'] == 'truncnorm'
     assert set(real_data.columns) == set(simulated_synthetic_data.columns)
     assert real_data.shape[1] == simulated_synthetic_data.shape[1]
+
+
+def test_adding_constraints(tmp_path):
+    """End to end test for adding constraints to a ``BaseSingleTableSynthesizer``.
+
+    The following functionalities are being tested:
+        * Use an ``Inequality`` constraint.
+        * Load custom constraint class from a file.
+        * Add a custom constraint class to the model.
+        * Validate that the custom constraint was applied properly.
+        * Save, load and sample from the model storing both custom and pre-defined constraints.
+    """
+    # Setup
+    real_data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='fake_hotel_guests'
+    )
+
+    checkin_lessthan_checkout = {
+        'constraint_class': 'Inequality',
+        'constraint_parameters': {
+            'low_column_name': 'checkin_date',
+            'high_column_name': 'checkout_date'
+        }
+    }
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+
+    # Run
+    synthesizer.add_constraints([checkin_lessthan_checkout])
+    synthesizer.fit(real_data)
+    synthetic_data_constrained = synthesizer.sample(500)
+
+    # Assert
+    synthetic_dates = synthetic_data_constrained[['checkin_date', 'checkout_date']].dropna()
+    checkin_dates = pd.to_datetime(synthetic_dates['checkin_date'])
+    checkout_dates = pd.to_datetime(synthetic_dates['checkout_date'])
+    violations = checkin_dates >= checkout_dates
+    assert all(~violations)
+
+    # Load custom constraint class
+    synthesizer.load_custom_constraint_classes(
+        'tests/integration/single_table/custom_constraints.py',
+        ['IfTrueThenZero']
+    )
+    rewards_member_no_fee = {
+        'constraint_class': 'IfTrueThenZero',
+        'constraint_parameters': {
+            'column_names': ['has_rewards', 'amenities_fee']
+        }
+    }
+    synthesizer.add_constraints([rewards_member_no_fee])
+
+    # Re-Fit the model
+    synthesizer.fit(real_data)
+    synthetic_data_custom_constraint = synthesizer.sample(500)
+
+    # Assert
+    validation = synthetic_data_custom_constraint[synthetic_data_custom_constraint['has_rewards']]
+    assert validation['amenities_fee'].sum() == 0.0
+
+    # Save and Load
+    model_path = tmp_path / 'synthesizer.pkl'
+    synthesizer.save(model_path)
+
+    # Assert
+    assert model_path.exists()
+    assert model_path.is_file()
+    loaded_synthesizer = GaussianCopulaSynthesizer.load(model_path)
+
+    assert isinstance(loaded_synthesizer, GaussianCopulaSynthesizer)
+    assert loaded_synthesizer.get_info() == synthesizer.get_info()
+    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+    sampled_data = loaded_synthesizer.sample(100)
+    validation = sampled_data[sampled_data['has_rewards']]
+    assert validation['amenities_fee'].sum() == 0.0
+    synthesizer.validate(sampled_data)
+    loaded_synthesizer.validate(sampled_data)
