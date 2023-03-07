@@ -3,8 +3,6 @@
 import json
 import re
 from collections import defaultdict
-from pathlib import Path
-from tempfile import TemporaryDirectory
 from unittest.mock import Mock, call, patch
 
 import pandas as pd
@@ -1814,7 +1812,7 @@ class TestMultiTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             instance.save_to_json('filepath.json')
 
-    def test_save_to_json(self):
+    def test_save_to_json(self, tmp_path):
         """Test the ``save_to_json`` method.
 
         Test that ``save_to_json`` stores a ``json`` file and dumps the instance dict into
@@ -1832,13 +1830,12 @@ class TestMultiTableMetadata:
         instance = MultiTableMetadata()
 
         # Run / Assert
-        with TemporaryDirectory() as temp_dir:
-            file_name = Path(temp_dir) / 'multitable.json'
-            instance.save_to_json(file_name)
+        file_name = tmp_path / 'multitable.json'
+        instance.save_to_json(file_name)
 
-            with open(file_name, 'rb') as multi_table_file:
-                saved_metadata = json.load(multi_table_file)
-                assert saved_metadata == instance.to_dict()
+        with open(file_name, 'rb') as multi_table_file:
+            saved_metadata = json.load(multi_table_file)
+            assert saved_metadata == instance.to_dict()
 
     def test__convert_relationships(self):
         """Test the ``_convert_relationships`` method.

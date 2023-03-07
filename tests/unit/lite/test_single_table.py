@@ -1,5 +1,4 @@
 import io
-from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, Mock, mock_open, patch
 
 import cloudpickle
@@ -234,7 +233,7 @@ class TestTabularPreset:
         assert out.getvalue().strip() == expected
 
     @patch('sdv.lite.single_table.cloudpickle')
-    def test_save(self, cloudpickle_mock):
+    def test_save(self, cloudpickle_mock, tmp_path):
         """Test that the synthesizer's save method is called with the expected args."""
         # Setup
         synthesizer = Mock()
@@ -243,12 +242,11 @@ class TestTabularPreset:
         open_mock = mock_open(read_data=cloudpickle.dumps('test'))
 
         # Run
-        with TemporaryDirectory() as temp_dir:
-            with patch('sdv.lite.single_table.open', open_mock):
-                SingleTablePreset.save(preset, temp_dir)
+        with patch('sdv.lite.single_table.open', open_mock):
+            SingleTablePreset.save(preset, tmp_path)
 
         # Assert
-        open_mock.assert_called_once_with(temp_dir, 'wb')
+        open_mock.assert_called_once_with(tmp_path, 'wb')
         cloudpickle_mock.dump.assert_called_once_with(preset, open_mock())
 
     @patch('sdv.lite.single_table.cloudpickle')

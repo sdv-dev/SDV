@@ -453,6 +453,32 @@ class BaseSynthesizer:
         processed_data = self._preprocess(data)
         self.fit_processed_data(processed_data)
 
+    def save(self, filepath):
+        """Save this model instance to the given path using cloudpickle.
+
+        Args:
+            filepath (str):
+                Path where the synthesizer instance will be serialized.
+        """
+        with open(filepath, 'wb') as output:
+            cloudpickle.dump(self, output)
+
+    @classmethod
+    def load(cls, filepath):
+        """Load a TabularModel instance from a given path.
+
+        Args:
+            filepath (str):
+                Path from which to load the serialized synthesizer.
+
+        Returns:
+            SingleTableSynthesizer:
+                The loaded synthesizer.
+        """
+        with open(filepath, 'rb') as f:
+            model = cloudpickle.load(f)
+            return model
+
 
 class BaseSingleTableSynthesizer(BaseSynthesizer):
     """Base class for all single-table ``Synthesizers``.
@@ -1065,29 +1091,3 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             batch_size,
             output_file_path
         )
-
-    def save(self, filepath):
-        """Save this model instance to the given path using cloudpickle.
-
-        Args:
-            filepath (str):
-                Path where the synthesizer instance will be serialized.
-        """
-        with open(filepath, 'wb') as output:
-            cloudpickle.dump(self, output)
-
-    @classmethod
-    def load(cls, filepath):
-        """Load a TabularModel instance from a given path.
-
-        Args:
-            filepath (str):
-                Path from which to load the serialized synthesizer.
-
-        Returns:
-            SingleTableSynthesizer:
-                The loaded synthesizer.
-        """
-        with open(filepath, 'rb') as f:
-            model = cloudpickle.load(f)
-            return model

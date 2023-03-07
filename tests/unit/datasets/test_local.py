@@ -3,8 +3,6 @@
 import json
 import os.path as op
 import re
-from pathlib import Path
-from tempfile import TemporaryDirectory
 from unittest.mock import Mock, call, patch
 
 import pandas as pd
@@ -15,7 +13,7 @@ from sdv.datasets.local import load_csvs
 
 @patch('sdv.datasets.local.warnings')
 @patch('sdv.datasets.local.load_data_from_csv')
-def test_load_csvs(load_mock, warnings_mock):
+def test_load_csvs(load_mock, warnings_mock, tmp_path):
     """Test that the function loads only the csv files in a folder.
     If the folder contains files that aren't csvs, they should be ignored.
     """
@@ -35,45 +33,42 @@ def test_load_csvs(load_mock, warnings_mock):
     load_mock.side_effect = lambda file: orders_mock if 'orders.csv' in file else users_mock
 
     # Run
-    with TemporaryDirectory() as temp_dir:
-        orders_path = Path(temp_dir) / 'orders.csv'
-        users_path = Path(temp_dir) / 'users.csv'
-        users_table.to_csv(users_path)
-        orders_table.to_csv(orders_path)
-        json_file_path = op.join(temp_dir, 'fake.json')
-        with open(json_file_path, 'w') as outfile:
-            json.dump(fake_json, outfile)
+    orders_path = tmp_path / 'orders.csv'
+    users_path = tmp_path / 'users.csv'
+    users_table.to_csv(users_path)
+    orders_table.to_csv(orders_path)
+    json_file_path = op.join(tmp_path, 'fake.json')
+    with open(json_file_path, 'w') as outfile:
+        json.dump(fake_json, outfile)
 
-        csvs = load_csvs(temp_dir)
+    csvs = load_csvs(tmp_path)
 
     # Assert
     assert csvs == {
         'orders': orders_mock,
         'users': users_mock
     }
-    assert call(op.join(temp_dir, 'orders.csv')) in load_mock.mock_calls
-    assert call(op.join(temp_dir, 'users.csv')) in load_mock.mock_calls
+    assert call(op.join(tmp_path, 'orders.csv')) in load_mock.mock_calls
+    assert call(op.join(tmp_path, 'users.csv')) in load_mock.mock_calls
     warnings_mock.warn.assert_called_once_with(
-        f"Ignoring incompatible files ['fake.json'] in folder '{temp_dir}'.")
+        f"Ignoring incompatible files ['fake.json'] in folder '{tmp_path}'.")
 
 
-@patch('sdv.datasets.local.load_data_from_csv')
-def test_load_csvs_no_csvs(load_mock):
+def test_load_csvs_no_csvs(tmp_path):
     """Test that the function raises an error if there are no csvs in the folder."""
     # Setup
     fake_json = {'tables': ['orders', 'users']}
 
     # Run and Assert
-    with TemporaryDirectory() as temp_dir:
-        json_file_path = op.join(temp_dir, 'fake.json')
-        with open(json_file_path, 'w') as outfile:
-            json.dump(fake_json, outfile)
-        error_message = re.escape(
-            f"No CSV files exist in '{temp_dir}'. Please make sure your files end in the "
-            "'.csv' suffix."
-        )
-        with pytest.raises(ValueError, match=error_message):
-            load_csvs(temp_dir)
+    json_file_path = tmp_path / 'fake.json'
+    with open(json_file_path, 'w') as outfile:
+        json.dump(fake_json, outfile)
+    error_message = re.escape(
+        f"No CSV files exist in '{tmp_path}'. Please make sure your files end in the "
+        "'.csv' suffix."
+    )
+    with pytest.raises(ValueError, match=error_message):
+        load_csvs(tmp_path)
 
 
 def test_load_csvs_folder_does_not_exist():
