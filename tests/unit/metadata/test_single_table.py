@@ -2,8 +2,6 @@
 
 import json
 import re
-from pathlib import Path
-from tempfile import TemporaryDirectory
 from unittest.mock import Mock, call, patch
 
 import numpy as np
@@ -812,7 +810,7 @@ class TestSingleTableMetadata:
             instance.detect_from_csv('filepath')
 
     @patch('sdv.metadata.single_table.LOGGER')
-    def test_detect_from_csv(self, mock_log):
+    def test_detect_from_csv(self, mock_log, tmp_path):
         """Test the ``dectect_from_csv`` method.
 
         Test that when given a file path to a ``csv`` file, the current instance of
@@ -841,10 +839,9 @@ class TestSingleTableMetadata:
         })
 
         # Run
-        with TemporaryDirectory() as temp_dir:
-            filepath = Path(temp_dir) / 'mydata.csv'
-            data.to_csv(filepath, index=False)
-            instance.detect_from_csv(filepath)
+        filepath = tmp_path / 'mydata.csv'
+        data.to_csv(filepath, index=False)
+        instance.detect_from_csv(filepath)
 
         # Assert
         assert instance.columns == {
@@ -862,7 +859,7 @@ class TestSingleTableMetadata:
         mock_log.info.assert_has_calls(expected_log_calls)
 
     @patch('sdv.metadata.single_table.LOGGER')
-    def test_detect_from_csv_with_kwargs(self, mock_log):
+    def test_detect_from_csv_with_kwargs(self, mock_log, tmp_path):
         """Test the ``dectect_from_csv`` method.
 
         Test that when given a file path to a ``csv`` file, the current instance of
@@ -892,10 +889,9 @@ class TestSingleTableMetadata:
         })
 
         # Run
-        with TemporaryDirectory() as temp_dir:
-            filepath = Path(temp_dir) / 'mydata.csv'
-            data.to_csv(filepath, index=False)
-            instance.detect_from_csv(filepath, pandas_kwargs={'parse_dates': ['date']})
+        filepath = tmp_path / 'mydata.csv'
+        data.to_csv(filepath, index=False)
+        instance.detect_from_csv(filepath, pandas_kwargs={'parse_dates': ['date']})
 
         # Assert
         assert instance.columns == {
@@ -1676,7 +1672,7 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             instance.save_to_json('filepath.json')
 
-    def test_save_to_json(self):
+    def test_save_to_json(self, tmp_path):
         """Test the ``save_to_json`` method.
 
         Test that ``save_to_json`` stores a ``json`` file and dumps the instance dict into
@@ -1694,13 +1690,12 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run / Assert
-        with TemporaryDirectory() as temp_dir:
-            file_name = Path(temp_dir) / 'singletable.json'
-            instance.save_to_json(file_name)
+        file_name = tmp_path / 'singletable.json'
+        instance.save_to_json(file_name)
 
-            with open(file_name, 'rb') as single_table_file:
-                saved_metadata = json.load(single_table_file)
-                assert saved_metadata == instance.to_dict()
+        with open(file_name, 'rb') as single_table_file:
+            saved_metadata = json.load(single_table_file)
+            assert saved_metadata == instance.to_dict()
 
     @patch('sdv.metadata.single_table.json')
     def test___repr__(self, mock_json):

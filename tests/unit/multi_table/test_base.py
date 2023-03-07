@@ -981,7 +981,7 @@ class TestBaseMultiTableSynthesizer:
     @patch('sdv.multi_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
     def test_load(self, mock_file, cloudpickle_mock):
-        """Test that the ``load`` method loads a stored model."""
+        """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
         synthesizer_mock = Mock()
         cloudpickle_mock.load.return_value = synthesizer_mock

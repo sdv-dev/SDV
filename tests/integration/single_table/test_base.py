@@ -10,9 +10,9 @@ from rdt.transformers import AnonymizedFaker, FloatFormatter, LabelEncoder, Rege
 from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
-from sdv.single_table.copulagan import CopulaGANSynthesizer
-from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer
+from sdv.single_table import (
+    CopulaGANSynthesizer, CTGANSynthesizer, GaussianCopulaSynthesizer, TVAESynthesizer)
+from sdv.single_table.base import BaseSingleTableSynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
 
 METADATA = SingleTableMetadata._load_from_dict({
@@ -30,7 +30,7 @@ METADATA = SingleTableMetadata._load_from_dict({
     }
 })
 
-MODELS = [
+SYNTHESIZERS = [
     pytest.param(CTGANSynthesizer(METADATA, epochs=1, cuda=False), id='CTGANSynthesizer'),
     pytest.param(TVAESynthesizer(METADATA, epochs=1, cuda=False), id='TVAESynthesizer'),
     pytest.param(GaussianCopulaSynthesizer(METADATA), id='GaussianCopulaSynthesizer'),
@@ -45,15 +45,15 @@ def _isinstance_side_effect(*args, **kwargs):
         return isinstance(args[0], args[1])
 
 
-@pytest.mark.parametrize('model', MODELS)
-def test_conditional_sampling_graceful_reject_sampling_true_dict(model):
+@pytest.mark.parametrize('synthesizer', SYNTHESIZERS)
+def test_conditional_sampling_graceful_reject_sampling_true_dict(synthesizer):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
         'column3': list(range(100))
     })
 
-    model.fit(data)
+    synthesizer.fit(data)
     conditions = [
         Condition({
             'column1': 28,
@@ -63,18 +63,18 @@ def test_conditional_sampling_graceful_reject_sampling_true_dict(model):
     ]
 
     with pytest.raises(ValueError):  # noqa: PT011
-        model.sample_from_conditions(conditions=conditions)
+        synthesizer.sample_from_conditions(conditions=conditions)
 
 
-@pytest.mark.parametrize('model', MODELS)
-def test_conditional_sampling_graceful_reject_sampling_true_dataframe(model):
+@pytest.mark.parametrize('synthesizer', SYNTHESIZERS)
+def test_conditional_sampling_graceful_reject_sampling_true_dataframe(synthesizer):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
         'column3': list(range(100))
     })
 
-    model.fit(data)
+    synthesizer.fit(data)
     conditions = pd.DataFrame({
         'column1': [28],
         'column2': [37],
@@ -82,7 +82,7 @@ def test_conditional_sampling_graceful_reject_sampling_true_dataframe(model):
     })
 
     with pytest.raises(ValueError, match='a'):
-        model.sample_remaining_columns(conditions)
+        synthesizer.sample_remaining_columns(conditions)
 
 
 def test_fit_with_unique_constraint_on_data_with_only_index_column():
@@ -423,19 +423,19 @@ def test_multiple_fits():
     assert model._data_processor.formatters['measurement']._rounding_digits == 1
 
 
-@pytest.mark.parametrize('model', MODELS)
-def test_sampling(model):
+@pytest.mark.parametrize('synthesizer', SYNTHESIZERS)
+def test_sampling(synthesizer):
     """Test that samples are different when ``reset_sampling`` is not called."""
-    sample_1 = model.sample(10)
-    sample_2 = model.sample(10)
+    sample_1 = synthesizer.sample(10)
+    sample_2 = synthesizer.sample(10)
 
     with pytest.raises(AssertionError):
         pd.testing.assert_frame_equal(sample_1, sample_2)
 
 
-@pytest.mark.parametrize('model', MODELS)
-def test_sampling_reset_sampling(model):
-    """Test ``sample`` method for each model using ``reset_sampling``."""
+@pytest.mark.parametrize('synthesizer', SYNTHESIZERS)
+def test_sampling_reset_sampling(synthesizer):
+    """Test ``sample`` method for each synthesizer using ``reset_sampling``."""
     metadata = SingleTableMetadata._load_from_dict({
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         'columns': {
@@ -461,16 +461,16 @@ def test_sampling_reset_sampling(model):
         'column4': [str(i) for i in (range(100))],
     })
 
-    if isinstance(model, (CTGANSynthesizer, TVAESynthesizer)):
-        model = model.__class__(metadata, cuda=False)
+    if isinstance(synthesizer, (CTGANSynthesizer, TVAESynthesizer)):
+        synthesizer = synthesizer.__class__(metadata, cuda=False)
     else:
-        model = model.__class__(metadata)
+        synthesizer = synthesizer.__class__(metadata)
 
-    model.fit(data)
+    synthesizer.fit(data)
 
-    sampled1 = model.sample(10)
-    model.reset_sampling()
-    sampled2 = model.sample(10)
+    sampled1 = synthesizer.sample(10)
+    synthesizer.reset_sampling()
+    sampled2 = synthesizer.sample(10)
 
     pd.testing.assert_frame_equal(sampled1, sampled2)
 
@@ -761,3 +761,24 @@ def test_synthesizer_with_inequality_constraint():
     assert all(
         pd.to_datetime(_sampled['checkin_date']) < pd.to_datetime(_sampled['checkout_date'])
     )
+
+
+def test_save_and_load(tmp_path):
+    """Test that synthesizers can be saved and loaded properly."""
+    # Setup
+    metadata = SingleTableMetadata()
+    instance = BaseSingleTableSynthesizer(metadata)
+    synthesizer_path = tmp_path / 'synthesizer.pkl'
+    instance.save(synthesizer_path)
+
+    # Run
+    loaded_instance = BaseSingleTableSynthesizer.load(synthesizer_path)
+
+    # Assert
+    assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
+    assert instance.metadata.columns == {}
+    assert instance.metadata.primary_key is None
+    assert instance.metadata.alternate_keys == []
+    assert instance.metadata.sequence_key is None
+    assert instance.metadata.sequence_index is None
+    assert instance.metadata._version == 'SINGLE_TABLE_V1'

@@ -1,6 +1,4 @@
 import datetime
-from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import numpy as np
 import pandas as pd
@@ -16,7 +14,7 @@ from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
 
 
-def test_hma(tmpdir):
+def test_hma():
     """End to end integration tests with ``HMASynthesizer``.
 
     The test consist on loading the demo data, convert the old metadata to the new format
@@ -42,7 +40,7 @@ def test_hma(tmpdir):
         assert increased_table.size > normal_table.size
 
 
-def test_hma_reset_sampling(tmpdir):
+def test_hma_reset_sampling():
     """End to end integration test that uses ``reset_sampling``.
 
     This test uses ``reset_sampling`` to ensure that the model will generate the same data
@@ -317,13 +315,12 @@ def test_fit_processed_multiple_calls():
     synthesizer.fit_processed_data(preprocessed)
 
 
-def test_save_and_load():
+def test_save_and_load(tmp_path):
     """Test saving and loading a multi-table synthesizer."""
     # Setup
     _, _, metadata = get_custom_constraint_data_and_metadata()
     synthesizer = HMASynthesizer(metadata)
-    temp_dir = TemporaryDirectory()
-    model_path = Path(temp_dir.name) / 'synthesizer.pkl'
+    model_path = tmp_path / 'synthesizer.pkl'
 
     # Run
     synthesizer.save(model_path)
@@ -387,7 +384,7 @@ def test_hma_primary_key_and_foreign_key_only():
     assert all(sample['games']['session_id'].isin(sample['sessions']['session_id']))
 
 
-def test_synthesize_multiple_tables_using_hma():
+def test_synthesize_multiple_tables_using_hma(tmp_path):
     """End to end test for multiple tables using ``HMASynthesizer``.
 
     The following functionalities are being tested:
@@ -450,8 +447,7 @@ def test_synthesize_multiple_tables_using_hma():
     assert column_pair_plot
 
     # Save and Load
-    temp_dir = TemporaryDirectory()
-    model_path = Path(temp_dir.name) / 'synthesizer.pkl'
+    model_path = tmp_path / 'synthesizer.pkl'
 
     synthesizer.save(model_path)
 
