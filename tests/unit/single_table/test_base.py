@@ -1,8 +1,6 @@
 import re
 from datetime import date, datetime
-from pathlib import Path
-from tempfile import TemporaryDirectory
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import ANY, MagicMock, Mock, call, mock_open, patch
 
 import numpy as np
 import pandas as pd
@@ -1783,42 +1781,33 @@ class TestBaseSingleTableSynthesizer:
         assert result == instance._sample_remaining_columns.return_value
         instance._sample_remaining_columns.assert_called_once()
 
-    def test_save(self):
-        """Test that ``save`` stores the current model."""
+    @patch('sdv.single_table.base.cloudpickle')
+    def test_save(self, cloudpickle_mock):
+        """Test that the synthesizer is saved correctly."""
         # Setup
-        metadata = SingleTableMetadata()
-        instance = BaseSingleTableSynthesizer(metadata)
-        temp_dir = TemporaryDirectory()
-        model_path = Path(temp_dir.name) / 'model.pkl'
+        synthesizer = Mock()
 
         # Run
-        instance.save(model_path)
+        BaseSingleTableSynthesizer.save(synthesizer, 'output.pkl')
 
         # Assert
-        assert model_path.exists()
-        assert model_path.is_file()
-        BaseSingleTableSynthesizer.load(model_path)
+        cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
 
-    def test_load(self):
-        """Test that the ``load`` method loads a stored model."""
+    @patch('sdv.single_table.base.cloudpickle')
+    @patch('builtins.open', new_callable=mock_open)
+    def test_load(self, mock_file, cloudpickle_mock):
+        """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
-        metadata = SingleTableMetadata()
-        instance = BaseSingleTableSynthesizer(metadata)
-        temp_dir = TemporaryDirectory()
-        model_path = Path(temp_dir.name) / 'model.pkl'
-        instance.save(model_path)
+        synthesizer_mock = Mock()
+        cloudpickle_mock.load.return_value = synthesizer_mock
 
         # Run
-        loaded_instance = BaseSingleTableSynthesizer.load(model_path)
+        loaded_instance = BaseSingleTableSynthesizer.load('synth.pkl')
 
         # Assert
-        assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
-        assert instance.metadata.columns == {}
-        assert instance.metadata.primary_key is None
-        assert instance.metadata.alternate_keys == []
-        assert instance.metadata.sequence_key is None
-        assert instance.metadata.sequence_index is None
-        assert instance.metadata._version == 'SINGLE_TABLE_V1'
+        mock_file.assert_called_once_with('synth.pkl', 'rb')
+        cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
+        assert loaded_instance == synthesizer_mock
 
     def test_load_custom_constraint_classes(self):
         """Test that ``load_custom_constraint_classes`` calls the ``DataProcessor``'s method."""

@@ -1,5 +1,5 @@
 import re
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, mock_open, patch
 
 import numpy as np
 import pandas as pd
@@ -757,3 +757,31 @@ class TestPARSynthesizer:
         )
         with pytest.raises(SamplingError, match=error_message):
             par.sample_sequential_columns(context_columns, 5)
+
+    @patch('sdv.single_table.base.cloudpickle')
+    def test_save(self, cloudpickle_mock):
+        """Test that the synthesizer is saved correctly."""
+        # Setup
+        synthesizer = Mock()
+
+        # Run
+        PARSynthesizer.save(synthesizer, 'output.pkl')
+
+        # Assert
+        cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
+
+    @patch('sdv.single_table.base.cloudpickle')
+    @patch('builtins.open', new_callable=mock_open)
+    def test_load(self, mock_file, cloudpickle_mock):
+        """Test that the ``load`` method loads a stored synthesizer."""
+        # Setup
+        synthesizer_mock = Mock()
+        cloudpickle_mock.load.return_value = synthesizer_mock
+
+        # Run
+        loaded_instance = PARSynthesizer.load('synth.pkl')
+
+        # Assert
+        mock_file.assert_called_once_with('synth.pkl', 'rb')
+        cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
+        assert loaded_instance == synthesizer_mock

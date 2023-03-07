@@ -2,8 +2,6 @@
 
 import json
 import re
-from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import pytest
 
@@ -94,7 +92,7 @@ def test_validate_errors():
         instance.validate()
 
 
-def test_upgrade_metadata():
+def test_upgrade_metadata(tmp_path):
     """Test the ``upgrade_metadata`` method."""
     # Setup
     old_metadata = {
@@ -139,16 +137,15 @@ def test_upgrade_metadata():
     }
 
     # Run
-    with TemporaryDirectory() as temp_dir:
-        old_path = Path(temp_dir) / 'old.json'
-        new_path = Path(temp_dir) / 'new.json'
-        old_metadata_file = open(old_path, 'w')
-        json.dump(old_metadata, old_metadata_file)
-        old_metadata_file.close()
-        SingleTableMetadata.upgrade_metadata(old_filepath=old_path, new_filepath=new_path)
-        new_metadata_file = open(new_path,)
-        new_metadata = json.load(new_metadata_file)
-        new_metadata_file.close()
+    old_path = tmp_path / 'old.json'
+    new_path = tmp_path / 'new.json'
+    old_metadata_file = open(old_path, 'w')
+    json.dump(old_metadata, old_metadata_file)
+    old_metadata_file.close()
+    SingleTableMetadata.upgrade_metadata(old_filepath=old_path, new_filepath=new_path)
+    new_metadata_file = open(new_path,)
+    new_metadata = json.load(new_metadata_file)
+    new_metadata_file.close()
 
     # Assert
     expected_metadata = {
