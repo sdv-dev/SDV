@@ -966,8 +966,8 @@ class TestBaseMultiTableSynthesizer:
                 'fitted_sdv_version': '1.0.0'
             }
 
-    @patch('sdv.multi_table.base.dill')
-    def test_save(self, dill_mock):
+    @patch('sdv.multi_table.base.cloudpickle')
+    def test_save(self, cloudpickle_mock):
         """Test that the synthesizer is saved correctly."""
         # Setup
         synthesizer = Mock()
@@ -976,20 +976,20 @@ class TestBaseMultiTableSynthesizer:
         BaseMultiTableSynthesizer.save(synthesizer, 'output.pkl')
 
         # Assert
-        dill_mock.dump.assert_called_once_with(synthesizer, ANY)
+        cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
 
-    @patch('sdv.multi_table.base.dill')
+    @patch('sdv.multi_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
-    def test_load(self, mock_file, dill_mock):
+    def test_load(self, mock_file, cloudpickle_mock):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
         synthesizer_mock = Mock()
-        dill_mock.load.return_value = synthesizer_mock
+        cloudpickle_mock.load.return_value = synthesizer_mock
 
         # Run
         loaded_instance = BaseMultiTableSynthesizer.load('synth.pkl')
 
         # Assert
         mock_file.assert_called_once_with('synth.pkl', 'rb')
-        dill_mock.load.assert_called_once_with(mock_file.return_value)
+        cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         assert loaded_instance == synthesizer_mock

@@ -10,8 +10,8 @@ import uuid
 import warnings
 from collections import defaultdict
 
+import cloudpickle
 import copulas
-import dill
 import numpy as np
 import pandas as pd
 import pkg_resources
@@ -461,7 +461,7 @@ class BaseSynthesizer:
                 Path where the synthesizer instance will be serialized.
         """
         with open(filepath, 'wb') as output:
-            dill.dump(self, output)
+            cloudpickle.dump(self, output)
 
     @classmethod
     def load(cls, filepath):
@@ -476,7 +476,7 @@ class BaseSynthesizer:
                 The loaded synthesizer.
         """
         with open(filepath, 'rb') as f:
-            model = dill.load(f)
+            model = cloudpickle.load(f)
             return model
 
 

@@ -5,7 +5,7 @@ import warnings
 from collections import defaultdict
 from copy import deepcopy
 
-import dill
+import cloudpickle
 import numpy as np
 import pandas as pd
 import pkg_resources
@@ -477,14 +477,14 @@ class BaseMultiTableSynthesizer:
         }
 
     def save(self, filepath):
-        """Save this instance to the given path using dill.
+        """Save this instance to the given path using cloudpickle.
 
         Args:
             filepath (str):
                 Path where the instance will be serialized.
         """
         with open(filepath, 'wb') as output:
-            dill.dump(self, output)
+            cloudpickle.dump(self, output)
 
     @classmethod
     def load(cls, path):
@@ -495,5 +495,5 @@ class BaseMultiTableSynthesizer:
                 Path from which to load the instance.
         """
         with open(path, 'rb') as f:
-            synthesizer = dill.load(f)
+            synthesizer = cloudpickle.load(f)
             return synthesizer

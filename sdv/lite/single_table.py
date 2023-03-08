@@ -3,7 +3,7 @@
 import logging
 import sys
 
-import dill
+import cloudpickle
 import rdt.transformers
 
 from sdv.single_table import GaussianCopulaSynthesizer
@@ -166,14 +166,14 @@ class SingleTablePreset:
         return sampled
 
     def save(self, path):
-        """Save this model instance to the given path using dill.
+        """Save this model instance to the given path using cloudpickle.
 
         Args:
             path (str):
                 Path where the SDV instance will be serialized.
         """
         with open(path, 'wb') as output:
-            dill.dump(self, output)
+            cloudpickle.dump(self, output)
 
     @classmethod
     def load(cls, path):
@@ -188,7 +188,7 @@ class SingleTablePreset:
                 The loaded synthesizer.
         """
         with open(path, 'rb') as f:
-            model = dill.load(f)
+            model = cloudpickle.load(f)
             return model
 
     @classmethod
