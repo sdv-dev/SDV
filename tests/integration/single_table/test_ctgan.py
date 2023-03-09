@@ -16,7 +16,7 @@ def test_synthesize_table_ctgan(tmp_path):
     synthesizer = CTGANSynthesizer(metadata)
     custom_synthesizer = CTGANSynthesizer(
         metadata,
-        epochs=1000
+        epochs=100
     )
     sensitive_columns = ['guest_email', 'billing_address', 'credit_card_number']
     model_path = tmp_path / 'synthesizer.pkl'
