@@ -14,8 +14,8 @@ from sdv.constraints.errors import (
     MissingConstraintColumnError)
 from sdv.constraints.tabular import (
     FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
-    ScalarInequality, ScalarRange, Unique, _validate_inputs_custom_constraint,
-    create_custom_constraint_class)
+    ScalarInequality, ScalarRange, Unique, _RecreateCustomConstraint,
+    _validate_inputs_custom_constraint, create_custom_constraint_class)
 
 
 def dummy_transform_table(table_data):
@@ -55,6 +55,35 @@ def dummy_is_valid_column(column_data):
 
 
 class TestCreateCustomConstraint():
+
+    @patch('sdv.constraints.tabular.create_custom_constraint_class')
+    def test___recreatecustomconstraint___call__(self, create_custom_constraint_mock):
+        """Test that custom constraints are recreated properly."""
+        # Setup
+        dummy_is_valid = Mock()
+        dummy_transform = Mock()
+        dummy_reverse_transform = Mock()
+        class_recreator = _RecreateCustomConstraint()
+
+        class MockClass:
+            pass
+
+        create_custom_constraint_mock.return_value = MockClass
+
+        # Run
+        recreated_class = class_recreator(
+            dummy_is_valid,
+            dummy_transform,
+            dummy_reverse_transform
+        )
+
+        # Assert
+        create_custom_constraint_mock.assert_called_once_with(
+            is_valid_fn=dummy_is_valid,
+            transform_fn=dummy_transform,
+            reverse_transform_fn=dummy_reverse_transform
+        )
+        assert type(recreated_class) == MockClass
 
     def test__validate_inputs(self):
         """Test the ``CustomConstraint._validate_inputs`` method.
@@ -465,6 +494,38 @@ class TestCreateCustomConstraint():
         err_msg = 'Reverse transform did not produce the same number of rows as the original.'
         with pytest.raises(InvalidFunctionError, match=err_msg):
             custom_constraint.reverse_transform(data)
+
+    def test_create_custom_constraint_class___reduce__(self):
+        """Test that the ``__reduce__`` method properly reduces the custom constraint.
+
+        The ``__reduce__`` method should package the custom constraint as a tuple containing
+        the ``_RecreateCustomConstraint`` class, the transform functions and the custom
+        constraint's ``__dict__``.
+        """
+        # Setup
+        is_valid_fn = Mock()
+        transform_fn = Mock()
+        reverse_transfom_fn = Mock()
+
+        custom_constraint = create_custom_constraint_class(
+            is_valid_fn,
+            transform_fn,
+            reverse_transfom_fn
+        )
+        custom_constraint = custom_constraint(['col'])
+
+        # Run
+        reduced_cusom_constraint = custom_constraint.__reduce__()
+
+        # Assert
+        assert isinstance(reduced_cusom_constraint[0], _RecreateCustomConstraint)
+        assert (is_valid_fn, transform_fn, reverse_transfom_fn) == reduced_cusom_constraint[1]
+        assert reduced_cusom_constraint[2] == {
+            '__kwargs__': {'column_names': ['col']},
+            'column_names': ['col'],
+            'constraint_columns': ('col',),
+            'kwargs': {}
+        }
 
 
 class TestFixedCombinations():
