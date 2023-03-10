@@ -9,7 +9,7 @@
 [![Tests](https://github.com/sdv-dev/SDV/workflows/Run%20Tests/badge.svg)](https://github.com/sdv-dev/SDV/actions?query=workflow%3A%22Run+Tests%22+branch%3Amaster)
 [![Coverage Status](https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/SDV)
 [![Downloads](https://pepy.tech/badge/sdv)](https://pepy.tech/project/sdv)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://bit.ly/sdv-tutorials)
 [![Slack](https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack)](https://bit.ly/sdv-slack-invite)
 
 <div align="left">
@@ -41,19 +41,17 @@ Underneath the hood it uses several probabilistic graphical modeling and deep le
 techniques. To enable a variety of data storage structures, we employ unique
 hierarchical generative modeling and recursive sampling techniques.
 
-| Important Links                               |                                                                      |
-| --------------------------------------------- | -------------------------------------------------------------------- |
-| :computer: **[Website]**                      | Check out the SDV Website for more information about the project.    |
-| :orange_book: **[SDV Blog]**                  | Regular publshing of useful content about Synthetic Data Generation. |
-| :book: **[Documentation]**                    | Quickstarts, User and Development Guides, and API Reference.         |
-| :octocat: **[Repository]**                    | The link to the Github Repository of this library.                   |
-| :keyboard: **[Development Status]**           | This software is in its Pre-Alpha stage.                             |
-| [![][Slack Logo] **Community**][Community]    | Join our Slack Workspace for announcements and discussions.          |
-| [![][MyBinder Logo] **Tutorials**][Tutorials] | Run the SDV Tutorials in a Binder environment.                       |
+| Important Links                               |                                                                                                     |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------|
+| :computer: **[Website]**                      | Check out the SDV Website for more information about the project.                                   |
+| :book: **[Documentation]**                    | Learn how to use the SDV library with tutorials, demos and API references.                          |
+| [![][MyBinder Logo] **Tutorials**][Tutorials] | Get some hands-on experience with the SDV. Launch the tutorial notebooks and run the code yourself. |
+| :orange_book: **[DataCebo Blog]**             | Get more insights about using the SDV, deploying models, and our synthetic data community.          |
+| [![][Slack Logo] **Community**][Community]    | Join our Slack Workspace for announcements and discussions.                                         |
 
 [Website]: https://sdv.dev
 [SDV Blog]: https://sdv.dev/blog
-[Documentation]: https://sdv.dev/SDV
+[Documentation]: https://bit.ly/sdv-docs
 [Repository]: https://github.com/sdv-dev/SDV
 [License]: https://github.com/sdv-dev/SDV/blob/master/LICENSE
 [Development Status]: https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha
@@ -89,7 +87,14 @@ hierarchical generative modeling and recursive sampling techniques.
 
 If you want to quickly discover **SDV**, simply click the button below and follow the tutorials!
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://bit.ly/sdv-tutorials)
+
+**New! Try the SDV 1.0 Beta**
+
+The newest version of the SDV library is in Beta testing. It includes many new features for
+customizing your models and evaluating your data. Use the link below to test it out.
+
+[![SDV](https://img.shields.io/badge/SDV%201.0-Try%20the%20beta!-03aff1)](https://docs.sdv.dev/sdv)
 
 ## Join our Slack Workspace
 
@@ -116,7 +121,18 @@ conda install -c pytorch -c conda-forge sdv
 For more installation options please visit the [SDV installation Guide](
 https://sdv.dev/SDV/getting_started/install.html)
 
+**New! Try the SDV 1.0 Beta**
+
+The newest version of the SDV library is in Beta testing. It includes many new features for
+customizing your models and evaluating your data. Use pip to install the Beta version.
+
+```bash
+pip install sdv==1.0.0b0
+```
+
 # Quickstart
+
+**Are you using the new SDV 1.0 Beta?** Get started [with these new demos](https://docs.sdv.dev/sdv/demos)!
 
 In this short tutorial we will guide you through a series of steps that will help you
 getting started using **SDV**.
@@ -215,8 +231,7 @@ using the `save` method of your instance.
 sdv.save('sdv.pkl')
 ```
 
-The generated `pkl` file will not include any of the original data in it, so it can be
-safely sent to where the synthetic data will be generated without any privacy concerns.
+The generated `pkl` file will not include any of the original data in it.
 
 ## 2. Sample data from the fitted model
 
@@ -257,21 +272,17 @@ https://github.com/sdv-dev/SDMetrics) library.
 
 If you use **SDV** for your research, please consider citing the following paper:
 
-Neha Patki, Roy Wedge, Kalyan Veeramachaneni. [The Synthetic Data Vault](https://dai.lids.mit.edu/wp-content/uploads/2018/03/SDV.pdf). [IEEE DSAA 2016](https://ieeexplore.ieee.org/document/7796926).
+*Neha Patki, Roy Wedge, Kalyan Veeramachaneni*. [The Synthetic Data Vault](https://dai.lids.mit.edu/wp-content/uploads/2018/03/SDV.pdf). [IEEE DSAA 2016](https://ieeexplore.ieee.org/document/7796926).
 
 ```
 @inproceedings{
-    7796926,
-    author={N. {Patki} and R. {Wedge} and K. {Veeramachaneni}},
-    booktitle={2016 IEEE International Conference on Data Science and Advanced Analytics (DSAA)},
-    title={The Synthetic Data Vault},
+    SDV,
+    title={The Synthetic data vault},
+    author={Patki, Neha and Wedge, Roy and Veeramachaneni, Kalyan},
+    booktitle={IEEE International Conference on Data Science and Advanced Analytics (DSAA)},
     year={2016},
-    volume={},
-    number={},
     pages={399-410},
-    keywords={data analysis;relational databases;synthetic data vault;SDV;generative model;relational database;multivariate modelling;predictive model;data analysis;data science;Data models;Databases;Computational modeling;Predictive models;Hidden Markov models;Numerical models;Synthetic data generation;crowd sourcing;data science;predictive modeling},
     doi={10.1109/DSAA.2016.49},
-    ISSN={},
     month={Oct}
 }
 ```
