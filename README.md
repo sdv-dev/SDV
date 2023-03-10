@@ -50,7 +50,7 @@ hierarchical generative modeling and recursive sampling techniques.
 | [![][Slack Logo] **Community**][Community]    | Join our Slack Workspace for announcements and discussions.                                         |
 
 [Website]: https://sdv.dev
-[SDV Blog]: https://sdv.dev/blog
+[DataCebo Blog]: https://datacebo.com/blog
 [Documentation]: https://bit.ly/sdv-docs
 [Repository]: https://github.com/sdv-dev/SDV
 [License]: https://github.com/sdv-dev/SDV/blob/master/LICENSE
@@ -58,7 +58,7 @@ hierarchical generative modeling and recursive sampling techniques.
 [Slack Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/slack.png
 [Community]: https://bit.ly/sdv-slack-invite
 [MyBinder Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/mybinder.png
-[Tutorials]: https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials
+[Tutorials]: https://bit.ly/sdv-tutorials
 
 ## Current functionality and features:
 
