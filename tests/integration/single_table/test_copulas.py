@@ -1,4 +1,8 @@
+from uuid import UUID
+
 import pandas as pd
+from rdt.transformers import (
+    AnonymizedFaker, CustomLabelEncoder, FloatFormatter, PseudoAnonymizedFaker)
 
 from sdv.datasets.demo import download_demo
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
@@ -198,3 +202,84 @@ def test_adding_constraints(tmp_path):
     assert validation['amenities_fee'].sum() == 0.0
     synthesizer.validate(sampled_data)
     loaded_synthesizer.validate(sampled_data)
+
+
+def test_custom_processing_anonymization():
+    """End to end testing for custom processing and anonymization.
+
+    Tests the following functionality:
+        * Pre-processing data
+        * Fitting pre-processed data
+        * Modifying transformers
+        * Anonymization and pseudo-anonymization
+    """
+    # Setup
+    real_data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='fake_hotel_guests'
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    transformers_synthesizer = GaussianCopulaSynthesizer(metadata)
+    anonymization_synthesizer = GaussianCopulaSynthesizer(metadata)
+
+    room_type_transformer = CustomLabelEncoder(
+        order=['BASIC', 'DELUXE', 'SUITE'],
+        add_noise=True
+    )
+    amenities_fee_transformer = FloatFormatter(
+        learn_rounding_scheme=True,
+        enforce_min_max_values=True,
+        missing_value_replacement=0.00
+    )
+
+    sensitive_columns = ['guest_email', 'billing_address', 'credit_card_number']
+    guest_email_transformer = AnonymizedFaker(
+        provider_name='misc',
+        function_name='uuid4',
+        enforce_uniqueness=True
+    )
+    billing_address_transformer = PseudoAnonymizedFaker(
+        provider_name='address',
+        function_name='address'
+    )
+
+    # Run - Pre-process data
+    pre_processed_data = synthesizer.preprocess(real_data)
+    synthesizer.fit_processed_data(pre_processed_data)
+    default_sample = synthesizer.sample(num_rows=100)
+
+    # Run - Update transformers
+    transformers_synthesizer.preprocess(real_data)
+    transformers_synthesizer.update_transformers({
+        'room_type': room_type_transformer,
+        'amenities_fee': amenities_fee_transformer
+    })
+    transformers_synthesizer.fit(real_data)
+
+    # Run - Anonymization
+    anonymization_synthesizer.preprocess(real_data)
+    anonymization_synthesizer.update_transformers({
+        'guest_email': guest_email_transformer,
+        'billing_address': billing_address_transformer
+    })
+    anonymization_synthesizer.fit(real_data)
+    anonymized_sample = anonymization_synthesizer.sample(num_rows=100)
+
+    # Assert - Pre-process data
+    assert pre_processed_data.index.name == metadata.primary_key
+    assert all(pre_processed_data.dtypes == 'float64')
+    for column in sensitive_columns:
+        assert default_sample[column].isin(real_data[column]).sum() == 0
+        assert all(default_sample[column].value_counts() == 1)
+
+    # Assert - Update transformers
+    transformers = transformers_synthesizer.get_transformers()
+    assert transformers['room_type'] == room_type_transformer
+    assert transformers['amenities_fee'] == amenities_fee_transformer
+
+    # Assert - Anonymization
+    anonymized_transformers = anonymization_synthesizer.get_transformers()
+    assert anonymized_transformers['guest_email'] == guest_email_transformer
+    assert anonymized_transformers['billing_address'] == billing_address_transformer
+    assert [UUID(uuid) for uuid in anonymized_sample['guest_email']]
+    assert any(anonymized_sample['billing_address'].value_counts() > 1)
