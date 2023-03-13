@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Evaluation Framework &#8212; SDV 0.18.0 documentation</title>
+    <title>Evaluation Framework &#8212; SDV 0.18.1.dev0 documentation</title>
     
   <link rel="stylesheet" href="../../_static/css/index.f658d18f9b420779cfdf24aa0a7e2d77.css">
 
@@ -235,7 +235,15 @@
               
               <div>
                 
-  <div class="section" id="evaluation-framework">
+  <blockquote>
+<div><div class="admonition-try-the-new-sdv-1-0-beta admonition">
+<p class="admonition-title">Try the new SDV 1.0 Beta!</p>
+<p>We are transitioning to a new version of SDV with improved workflows, new features
+and an updated documentation site.</p>
+<p><a class="reference external" href="https://docs.sdv.dev/sdv/">Click here to go to the new docs pages.</a></p>
+</div>
+</div></blockquote>
+<div class="section" id="evaluation-framework">
 <span id="id1"></span><h1>Evaluation Framework<a class="headerlink" href="#evaluation-framework" title="Permalink to this headline">¶</a></h1>
 <p>The <a class="reference external" href="https://docs.sdv.dev/sdmetrics/">SDMetrics library</a> includes reports, metrics and
 visualizations that you can use to evaluate your synthetic data.</p>
@@ -282,11 +290,11 @@ properties as the original</p></li>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [8]: </span><span class="n">synthetic_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[8]: </span>
 <span class="go">   student_id gender  second_perc  high_perc high_spec  degree_perc degree_type  work_experience  experience_years  employability_perc mba_spec   mba_perc   salary  placed start_date   end_date  duration</span>
-<span class="go">0           0      M    68.522030  78.125968   Science    65.533845   Comm&amp;Mgmt            False                 0           84.131468  Mkt&amp;Fin  65.630635      NaN    True        NaT        NaT       NaN</span>
-<span class="go">1           1      M    72.621949  59.211773   Science    71.217157   Comm&amp;Mgmt             True                 1           68.866987  Mkt&amp;Fin  63.738896      NaN    True        NaT        NaT       NaN</span>
-<span class="go">2           2      M    48.613749  63.273716  Commerce    66.160602    Sci&amp;Tech            False                 0           70.380054   Mkt&amp;HR  51.246375  28714.0   False 2019-12-23 2020-05-31       NaN</span>
-<span class="go">3           3      M    40.890000  53.641346  Commerce    50.000000   Comm&amp;Mgmt            False                 0           79.172965  Mkt&amp;Fin  57.954418      NaN   False        NaT        NaT       NaN</span>
-<span class="go">4           4      F    76.164501  77.687319  Commerce    68.865283   Comm&amp;Mgmt            False                 0           73.140776  Mkt&amp;Fin  66.662172      NaN    True        NaT        NaT       3.0</span>
+<span class="go">0           0      F    62.650439  73.154386   Science    75.972731   Comm&amp;Mgmt             True                 2           53.327043  Mkt&amp;Fin  67.713611      NaN    True        NaT        NaT      12.0</span>
+<span class="go">1           1      F    72.868463  66.883681  Commerce    65.720537   Comm&amp;Mgmt            False                 0           84.613120  Mkt&amp;Fin  71.773283      NaN   False        NaT        NaT       3.0</span>
+<span class="go">2           2      F    78.133815  65.523606      Arts    71.612115      Others             True                 1           52.868627  Mkt&amp;Fin  72.569259      NaN    True 2020-07-02 2020-08-25       3.0</span>
+<span class="go">3           3      M    78.960420  72.274036   Science    67.880697   Comm&amp;Mgmt             True                 0           73.737140  Mkt&amp;Fin  69.296605      NaN    True        NaT        NaT      12.0</span>
+<span class="go">4           4      F    68.305342  84.727306   Science    68.272651   Comm&amp;Mgmt            False                 1           85.774004  Mkt&amp;Fin  69.401578  22644.0    True 2020-03-17        NaT       3.0</span>
 </pre></div>
 </div>
 <p>We can also convert metadata to a Python dictionary by calling the <code class="docutils literal notranslate"><span class="pre">to_dict</span></code> method</p>
@@ -304,11 +312,11 @@ of the columns (marginal distributions) and the pairwise trends between the colu
 
 <span class="gp">In [12]: </span><span class="n">report</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">real_data</span><span class="p">,</span> <span class="n">synthetic_data</span><span class="p">,</span> <span class="n">metadata_dict</span><span class="p">)</span>
 
-<span class="go">Overall Quality Score: 86.93%</span>
+<span class="go">Overall Quality Score: 85.8%</span>
 
 <span class="go">Properties:</span>
-<span class="go">Column Shapes: 89.84%</span>
-<span class="go">Column Pair Trends: 84.03%</span>
+<span class="go">Column Shapes: 88.97%</span>
+<span class="go">Column Pair Trends: 82.64%</span>
 </pre></div>
 </div>
 <p>The report uses information in the metadata to select which metrics to apply to your data. The
@@ -321,22 +329,22 @@ the highest.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [13]: </span><span class="n">report</span><span class="o">.</span><span class="n">get_details</span><span class="p">(</span><span class="n">property_name</span><span class="o">=</span><span class="s1">&#39;Column Shapes&#39;</span><span class="p">)</span>
 <span class="gh">Out[13]: </span>
 <span class="go">                Column        Metric  Quality Score</span>
-<span class="go">0          second_perc  KSComplement       0.920930</span>
-<span class="go">1            high_perc  KSComplement       0.893023</span>
-<span class="go">2          degree_perc  KSComplement       0.879070</span>
-<span class="go">3     experience_years  KSComplement       0.930233</span>
-<span class="go">4   employability_perc  KSComplement       0.869767</span>
-<span class="go">5             mba_perc  KSComplement       0.911628</span>
-<span class="go">6               salary  KSComplement       0.812845</span>
-<span class="go">7           start_date  KSComplement       0.672897</span>
-<span class="go">8             end_date  KSComplement       0.736635</span>
-<span class="go">9               gender  TVComplement       0.934884</span>
-<span class="go">10           high_spec  TVComplement       0.986047</span>
-<span class="go">11         degree_type  TVComplement       0.930233</span>
-<span class="go">12     work_experience  TVComplement       0.967442</span>
-<span class="go">13            mba_spec  TVComplement       0.944186</span>
-<span class="go">14              placed  TVComplement       0.986047</span>
-<span class="go">15            duration  TVComplement       0.997748</span>
+<span class="go">0          second_perc  KSComplement       0.934884</span>
+<span class="go">1            high_perc  KSComplement       0.897674</span>
+<span class="go">2          degree_perc  KSComplement       0.916279</span>
+<span class="go">3     experience_years  KSComplement       0.851163</span>
+<span class="go">4   employability_perc  KSComplement       0.888372</span>
+<span class="go">5             mba_perc  KSComplement       0.888372</span>
+<span class="go">6               salary  KSComplement       0.791340</span>
+<span class="go">7           start_date  KSComplement       0.713179</span>
+<span class="go">8             end_date  KSComplement       0.759875</span>
+<span class="go">9               gender  TVComplement       0.920930</span>
+<span class="go">10           high_spec  TVComplement       0.967442</span>
+<span class="go">11         degree_type  TVComplement       0.879070</span>
+<span class="go">12     work_experience  TVComplement       0.948837</span>
+<span class="go">13            mba_spec  TVComplement       0.986047</span>
+<span class="go">14              placed  TVComplement       0.995349</span>
+<span class="go">15            duration  TVComplement       0.895711</span>
 </pre></div>
 </div>
 <p>In the detailed view, you can see the quality score for each column of the table. Based on the data
