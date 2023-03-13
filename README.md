@@ -44,14 +44,14 @@ hierarchical generative modeling and recursive sampling techniques.
 | Important Links                               |                                                                                                     |
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------|
 | :computer: **[Website]**                      | Check out the SDV Website for more information about the project.                                   |
-| :book: **[Documentation]**                    | Learn how to use the SDV library with tutorials, demos and API references.                          |
+| :book: **[Docs]**                             | Learn how to use the SDV library with tutorials, demos and API references.                          |
 | [![][MyBinder Logo] **Tutorials**][Tutorials] | Get some hands-on experience with the SDV. Launch the tutorial notebooks and run the code yourself. |
-| :orange_book: **[DataCebo Blog]**             | Get more insights about using the SDV, deploying models, and our synthetic data community.          |
+| :orange_book: **[Blog]**                      | Get more insights about using the SDV, deploying models, and our synthetic data community.          |
 | [![][Slack Logo] **Community**][Community]    | Join our Slack Workspace for announcements and discussions.                                         |
 
 [Website]: https://sdv.dev
-[DataCebo Blog]: https://datacebo.com/blog
-[Documentation]: https://bit.ly/sdv-docs
+[Blog]: https://datacebo.com/blog
+[Docs]: https://bit.ly/sdv-docs
 [Repository]: https://github.com/sdv-dev/SDV
 [License]: https://github.com/sdv-dev/SDV/blob/master/LICENSE
 [Development Status]: https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha
