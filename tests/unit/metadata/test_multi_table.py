@@ -571,7 +571,11 @@ class TestMultiTableMetadata:
         metadata.set_primary_key('table2', 'pk')
 
         # Run and Assert
-        err_msg = 'A relationship must be specified between a primary key and a non-primary key.'
+        err_msg = re.escape(
+            "Invalid relationship between table 'table' and table "
+            "'table2'. A relationship must connect a primary key "
+            'with a non-primary key.'
+        )
         with pytest.raises(InvalidMetadataError, match=err_msg):
             metadata.add_relationship('table', 'table2', 'pk', 'pk')
 
@@ -864,7 +868,9 @@ class TestMultiTableMetadata:
         err_msg = re.escape(
             'The metadata is not valid\n'
             'Relationships:\n'
-            'A relationship must be specified between a primary key and a non-primary key.'
+            "Invalid relationship between table 'table' and table "
+            "'table2'. A relationship must connect a primary key "
+            'with a non-primary key.'
         )
         with pytest.raises(InvalidMetadataError, match=err_msg):
             metadata.validate()
