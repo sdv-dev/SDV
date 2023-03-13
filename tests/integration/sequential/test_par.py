@@ -3,6 +3,7 @@ import datetime
 import pandas as pd
 from deepecho import load_demo
 
+from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
 from sdv.sequential import PARSynthesizer
 
@@ -103,3 +104,69 @@ def test_save_and_load(tmp_path):
     # Assert
     assert isinstance(loaded_instance, PARSynthesizer)
     assert metadata == instance.metadata
+
+
+def test_sythesize_sequences(tmp_path):
+    """End to end test for synthesizing sequences.
+
+    The following functionalities are being tested:
+        * Fit a ``PARSynthesizer`` with the demo dataset.
+        * Fit a ``PARSynthesizer`` with custom context.
+        * Sample from the model.
+        * Conditionally sample from the model.
+        * Save and Load.
+    """
+    # Setup
+    real_data, metadata = download_demo(
+        modality='sequential',
+        dataset_name='nasdaq100_2019'
+    )
+    real_data[real_data['Symbol'] == 'AMZN']['Sector'].unique()
+    synthesizer = PARSynthesizer(
+        metadata,
+        context_columns=['Sector', 'Industry']
+    )
+    custom_synthesizer = PARSynthesizer(
+        metadata,
+        epochs=250,
+        context_columns=['Sector', 'Industry'],
+        verbose=True
+    )
+    scenario_context = pd.DataFrame(data={
+        'Symbol': ['COMPANY-A', 'COMPANY-B', 'COMPANY-C', 'COMPANY-D', 'COMPANY-E'],
+        'Sector': ['Technology'] * 2 + ['Consumer Services'] * 3,
+        'Industry': [
+            'Computer Manufacturing', 'Computer Software: Prepackaged Software',
+            'Hotels/Resorts', 'Restaurants', 'Clothing/Shoe/Accessory Stores'
+        ]
+    })
+
+    # Run - Fit
+    synthesizer.fit(real_data)
+    custom_synthesizer.fit(real_data)
+
+    # Run - Sample
+    synthetic_data = synthesizer.sample(num_sequences=10)
+    custom_synthetic_data = custom_synthesizer.sample(num_sequences=3, sequence_length=2)
+    custom_synthetic_data_conditional = custom_synthesizer.sample_sequential_columns(
+        context_columns=scenario_context,
+        sequence_length=2
+    )
+
+    # Save and Load
+    model_path = tmp_path / 'my_synthesizer.pkl'
+    synthesizer.save(model_path)
+    loaded_synthesizer = PARSynthesizer.load(model_path)
+    loaded_sample = loaded_synthesizer.sample(100)
+
+    # Assert
+    assert model_path.exists()
+    assert model_path.is_file()
+    assert loaded_synthesizer.get_info() == synthesizer.get_info()
+    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+    synthesizer.validate(synthetic_data)
+    synthesizer.validate(custom_synthetic_data)
+    synthesizer.validate(custom_synthetic_data_conditional)
+    synthesizer.validate(loaded_sample)
+    loaded_synthesizer.validate(synthetic_data)
+    loaded_synthesizer.validate(loaded_sample)
