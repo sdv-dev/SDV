@@ -124,11 +124,12 @@ def test_sythesize_sequences(tmp_path):
     real_data[real_data['Symbol'] == 'AMZN']['Sector'].unique()
     synthesizer = PARSynthesizer(
         metadata,
+        epochs=5,
         context_columns=['Sector', 'Industry']
     )
     custom_synthesizer = PARSynthesizer(
         metadata,
-        epochs=250,
+        epochs=5,
         context_columns=['Sector', 'Industry'],
         verbose=True
     )
@@ -160,6 +161,20 @@ def test_sythesize_sequences(tmp_path):
     loaded_sample = loaded_synthesizer.sample(100)
 
     # Assert
+    assert all(custom_synthetic_data_conditional['Symbol'].value_counts() == 2)
+    companies = ['COMPANY-A', 'COMPANY-B', 'COMPANY-C', 'COMPANY-D', 'COMPANY-E']
+    assert companies in custom_synthetic_data_conditional['Symbol'].unique()
+    assert custom_synthetic_data_conditional['Sector'].value_counts()['Technology'] == 4
+    assert custom_synthetic_data_conditional['Sector'].value_counts()['Consumer Services'] == 6
+    industries = [
+        'Computer Manufacturing',
+        'Computer Software: Prepackaged Software',
+        'Hotels/Resorts',
+        'Restaurants',
+        'Clothing/Shoe/Accessory Stores'
+    ]
+    assert industries in custom_synthetic_data_conditional['Industry'].unique()
+
     assert model_path.exists()
     assert model_path.is_file()
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
