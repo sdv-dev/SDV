@@ -591,7 +591,7 @@ class TestFixedCombinations():
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             FixedCombinations._validate_metadata_columns(metadata, column_names=['a', 'c'])
-    
+
     def test__validate_metadata_specific_to_constraint(self):
         """Test validating sdtypes with valid sdtypes."""
         # Setup
