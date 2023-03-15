@@ -591,6 +591,35 @@ class TestFixedCombinations():
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             FixedCombinations._validate_metadata_columns(metadata, column_names=['a', 'c'])
+    
+    def test__validate_metadata_specific_to_constraint(self):
+        """Test validating sdtypes with valid sdtypes."""
+        # Setup
+        metadata = Mock()
+        metadata.columns = {'a': {'sdtype': 'boolean'}, 'b': {'sdtype': 'categorical'}}
+
+        # Run
+        FixedCombinations._validate_metadata_specific_to_constraint(
+            metadata,
+            column_names=['a', 'b']
+        )
+
+    def test__validate_metadata_specific_to_constraint_incorrect_types(self):
+        """Test validating sdtypes with invalid sdtypes"""
+        # Setup
+        metadata = Mock()
+        metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'numeric'}}
+
+        # Run
+        error_message = re.escape(
+            'Invalid columns ("a", "b") supplied to a FixedCombinations constraint. '
+            'This constraint only supports boolean and categorical columns.'
+        )
+        with pytest.raises(ConstraintMetadataError, match=error_message):
+            FixedCombinations._validate_metadata_specific_to_constraint(
+                metadata,
+                column_names=['a', 'b']
+            )
 
     def test___init__(self):
         """Test the ``FixedCombinations.__init__`` method.
