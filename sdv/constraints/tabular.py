@@ -235,6 +235,20 @@ class FixedCombinations(Constraint):
     _combinations_to_uuids = None
     _uuids_to_combinations = None
 
+    @staticmethod
+    def _validate_metadata_specific_to_constraint(metadata, **kwargs):
+        invalid_columns = []
+        column_names = kwargs.get('column_names')
+        for column in column_names:
+            if metadata.columns[column]['sdtype'] not in ['boolean', 'categorical']:
+                invalid_columns.append(column)
+
+        if invalid_columns:
+            columns = '", "'.join(invalid_columns)
+            raise ConstraintMetadataError(f'Invalid columns ("{columns}") supplied to a '
+                                          'FixedCombinations constraint. This constraint only '
+                                          'supports boolean and categorical columns.')
+
     def __init__(self, column_names):
         if len(column_names) < 2:
             raise ValueError('FixedCombinations requires at least two constraint columns.')
