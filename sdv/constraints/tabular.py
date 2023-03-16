@@ -242,6 +242,7 @@ class FixedCombinations(Constraint):
         for column in column_names:
             if metadata.columns[column]['sdtype'] not in ['boolean', 'categorical']:
                 invalid_columns.append(column)
+
         if invalid_columns:
             columns = '", "'.join(invalid_columns)
             raise ConstraintMetadataError(f'Invalid columns ("{columns}") supplied to a '
