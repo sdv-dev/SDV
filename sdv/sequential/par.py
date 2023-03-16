@@ -74,7 +74,7 @@ class PARSynthesizer(BaseSynthesizer):
             context_columns_dict[column] = self.metadata.columns[column]
 
         context_metadata_dict = {'columns': context_columns_dict}
-        return SingleTableMetadata._load_from_dict(context_metadata_dict)
+        return SingleTableMetadata.load_from_dict(context_metadata_dict)
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=False,
                  context_columns=None, segment_size=None, epochs=128, sample_size=1, cuda=True,

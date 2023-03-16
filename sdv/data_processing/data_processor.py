@@ -824,7 +824,7 @@ class DataProcessor:
                 If passed, set the ``enforce_min_max_values`` on the new instance.
         """
         instance = cls(
-            metadata=SingleTableMetadata._load_from_dict(metadata_dict['metadata']),
+            metadata=SingleTableMetadata.load_from_dict(metadata_dict['metadata']),
             enforce_rounding=enforce_rounding,
             enforce_min_max_values=enforce_min_max_values,
             model_kwargs=metadata_dict.get('model_kwargs')

@@ -60,7 +60,7 @@ def get_multi_table_metadata():
         'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
     }
 
-    return MultiTableMetadata._load_from_dict(dict_metadata)
+    return MultiTableMetadata.load_from_dict(dict_metadata)
 
 
 def get_multi_table_data():

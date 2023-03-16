@@ -101,7 +101,7 @@ def _get_metadata(modality, output_folder_name, in_memory_directory):
 
     else:
         metadict = json.loads(in_memory_directory['metadata_v1.json'])
-        metadata = metadata._load_from_dict(metadict)
+        metadata = metadata.load_from_dict(metadict)
 
     return metadata
 
