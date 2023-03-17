@@ -15,7 +15,7 @@ from sdv.single_table import (
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
 
-METADATA = SingleTableMetadata._load_from_dict({
+METADATA = SingleTableMetadata.load_from_dict({
     'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
     'columns': {
         'column1': {
@@ -436,7 +436,7 @@ def test_sampling(synthesizer):
 @pytest.mark.parametrize('synthesizer', SYNTHESIZERS)
 def test_sampling_reset_sampling(synthesizer):
     """Test ``sample`` method for each synthesizer using ``reset_sampling``."""
-    metadata = SingleTableMetadata._load_from_dict({
+    metadata = SingleTableMetadata.load_from_dict({
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         'columns': {
             'column1': {

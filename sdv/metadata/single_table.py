@@ -485,11 +485,11 @@ class SingleTableMetadata:
             json.dump(metadata, metadata_file, indent=4)
 
     @classmethod
-    def _load_from_dict(cls, metadata):
+    def load_from_dict(cls, metadata_dict):
         """Create a ``SingleTableMetadata`` instance from a python ``dict``.
 
         Args:
-            metadata (dict):
+            metadata_dict (dict):
                 Python dictionary representing a ``SingleTableMetadata`` object.
 
         Returns:
@@ -497,7 +497,7 @@ class SingleTableMetadata:
         """
         instance = cls()
         for key in instance._KEYS:
-            value = deepcopy(metadata.get(key))
+            value = deepcopy(metadata_dict.get(key))
             if value:
                 setattr(instance, f'{key}', value)
 
@@ -525,7 +525,7 @@ class SingleTableMetadata:
                 'class and version.'
             )
 
-        return cls._load_from_dict(metadata)
+        return cls.load_from_dict(metadata)
 
     def __repr__(self):
         """Pretty print the ``SingleTableMetadata``."""
@@ -560,7 +560,7 @@ class SingleTableMetadata:
                 old_metadata = list(tables.values())[0]
 
         new_metadata = convert_metadata(old_metadata)
-        metadata = cls._load_from_dict(new_metadata)
+        metadata = cls.load_from_dict(new_metadata)
         metadata.save_to_json(new_filepath)
 
         try:

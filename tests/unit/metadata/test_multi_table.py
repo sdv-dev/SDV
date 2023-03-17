@@ -73,7 +73,7 @@ class TestMultiTableMetadata:
             }
         ]
 
-        return MultiTableMetadata._load_from_dict(metadata)
+        return MultiTableMetadata.load_from_dict(metadata)
 
     def test___init__(self):
         """Test the ``__init__`` method of ``MultiTableMetadata``."""
@@ -594,7 +594,7 @@ class TestMultiTableMetadata:
             - Errors has been updated with the error message for that column.
         """
         # Setup
-        table_accounts = SingleTableMetadata._load_from_dict({
+        table_accounts = SingleTableMetadata.load_from_dict({
             'columns': {
                 'id': {'sdtype': 'numerical'},
                 'branch_id': {'sdtype': 'numerical'},
@@ -1009,7 +1009,7 @@ class TestMultiTableMetadata:
 
         Side Effects:
             - ``instance`` now contains ``instance.tables`` and ``instance.relationships``.
-            - ``SingleTableMetadata._load_from_dict`` has been called.
+            - ``SingleTableMetadata.load_from_dict`` has been called.
         """
         # Setup
         multitable_metadata = {
@@ -1038,7 +1038,7 @@ class TestMultiTableMetadata:
 
         single_table_accounts = object()
         single_table_branches = object()
-        mock_singletablemetadata._load_from_dict.side_effect = [
+        mock_singletablemetadata.load_from_dict.side_effect = [
             single_table_accounts,
             single_table_branches
         ]
@@ -1064,10 +1064,10 @@ class TestMultiTableMetadata:
         ]
 
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    def test__load_from_dict(self, mock_singletablemetadata):
-        """Test that ``_load_from_dict`` returns a instance of ``MultiTableMetadata``.
+    def test_load_from_dict(self, mock_singletablemetadata):
+        """Test that ``load_from_dict`` returns a instance of ``MultiTableMetadata``.
 
-        Test that when calling the ``_load_from_dict`` method a new instance with the passed
+        Test that when calling the ``load_from_dict`` method a new instance with the passed
         python ``dict`` details should be created.
 
         Setup:
@@ -1080,7 +1080,7 @@ class TestMultiTableMetadata:
             - ``instance`` that contains ``instance.tables`` and ``instance.relationships``.
 
         Side Effects:
-            - ``SingleTableMetadata._load_from_dict`` has been called.
+            - ``SingleTableMetadata.load_from_dict`` has been called.
         """
         # Setup
         multitable_metadata = {
@@ -1109,13 +1109,13 @@ class TestMultiTableMetadata:
 
         single_table_accounts = object()
         single_table_branches = object()
-        mock_singletablemetadata._load_from_dict.side_effect = [
+        mock_singletablemetadata.load_from_dict.side_effect = [
             single_table_accounts,
             single_table_branches
         ]
 
         # Run
-        instance = MultiTableMetadata._load_from_dict(multitable_metadata)
+        instance = MultiTableMetadata.load_from_dict(multitable_metadata)
 
         # Assert
         assert instance.tables == {
@@ -1938,7 +1938,7 @@ class TestMultiTableMetadata:
     @patch('sdv.metadata.multi_table.read_json')
     @patch('sdv.metadata.multi_table.MultiTableMetadata._convert_relationships')
     @patch('sdv.metadata.multi_table.convert_metadata')
-    @patch('sdv.metadata.multi_table.MultiTableMetadata._load_from_dict')
+    @patch('sdv.metadata.multi_table.MultiTableMetadata.load_from_dict')
     def test_upgrade_metadata(
             self, from_dict_mock, convert_mock, relationships_mock, read_json_mock, validate_mock):
         """Test the ``upgrade_metadata`` method.
@@ -2024,7 +2024,7 @@ class TestMultiTableMetadata:
     @patch('sdv.metadata.multi_table.read_json')
     @patch('sdv.metadata.multi_table.MultiTableMetadata._convert_relationships')
     @patch('sdv.metadata.multi_table.convert_metadata')
-    @patch('sdv.metadata.multi_table.MultiTableMetadata._load_from_dict')
+    @patch('sdv.metadata.multi_table.MultiTableMetadata.load_from_dict')
     def test_upgrade_metadata_validate_error(
             self, from_dict_mock, convert_mock, relationships_mock, read_json_mock, validate_mock,
             warnings_mock):

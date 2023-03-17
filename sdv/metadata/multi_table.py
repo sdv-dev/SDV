@@ -579,24 +579,24 @@ class MultiTableMetadata:
                 Python dictionary representing a ``MultiTableMetadata`` object.
         """
         for table_name, table_dict in metadata.get('tables', {}).items():
-            self.tables[table_name] = SingleTableMetadata._load_from_dict(table_dict)
+            self.tables[table_name] = SingleTableMetadata.load_from_dict(table_dict)
 
         for relationship in metadata.get('relationships', []):
             self.relationships.append(relationship)
 
     @classmethod
-    def _load_from_dict(cls, metadata):
+    def load_from_dict(cls, metadata_dict):
         """Create a ``MultiTableMetadata`` instance from a python ``dict``.
 
         Args:
-            metadata (dict):
+            metadata_dict (dict):
                 Python dictionary representing a ``MultiTableMetadata`` object.
 
         Returns:
             Instance of ``MultiTableMetadata``.
         """
         instance = cls()
-        instance._set_metadata_dict(metadata)
+        instance._set_metadata_dict(metadata_dict)
         return instance
 
     def save_to_json(self, filepath):
@@ -630,7 +630,7 @@ class MultiTableMetadata:
             A ``MultiTableMetadata`` instance.
         """
         metadata = read_json(filepath)
-        return cls._load_from_dict(metadata)
+        return cls.load_from_dict(metadata)
 
     def __repr__(self):
         """Pretty print the ``MultiTableMetadata``."""
@@ -698,7 +698,7 @@ class MultiTableMetadata:
             'relationships': relationships,
             'METADATA_SPEC_VERSION': cls.METADATA_SPEC_VERSION
         }
-        metadata = cls._load_from_dict(metadata_dict)
+        metadata = cls.load_from_dict(metadata_dict)
         metadata.save_to_json(new_filepath)
         try:
             metadata.validate()
