@@ -711,6 +711,30 @@ class TestBaseSingleTableSynthesizer:
             with pytest.warns(UserWarning, match=warning):
                 instance.update_transformers(column_name_to_transformer)
 
+    def test_update_transformers_warns_fitted(self):
+        """Test warning is raised if model is fitted.
+
+        A warning telling the user they need to refit the model should be raised if a transformer
+        is assigned updated after the model has been fitted.
+        """
+        # Setup
+        column_name_to_transformer = {
+            'col1': GaussianNormalizer(),
+            'col2': GaussianNormalizer()
+        }
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='numerical')
+        metadata.add_column('col2', sdtype='numerical')
+        instance = BaseSingleTableSynthesizer(metadata)
+        instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
+        instance._fitted = True
+        warning_msg = re.escape('For this change to take effect, please refit the synthesizer '
+                                'using `fit`.')
+
+        # Run
+        with pytest.warns(UserWarning, match=warning_msg):
+            instance.update_transformers(column_name_to_transformer)
+
     def test_update_transformers(self):
         """Test method correctly updates the transformers in the HyperTransformer."""
         # Setup
