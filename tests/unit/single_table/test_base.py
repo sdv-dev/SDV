@@ -715,7 +715,7 @@ class TestBaseSingleTableSynthesizer:
         """Test warning is raised if model is fitted.
 
         A warning telling the user they need to refit the model should be raised if a transformer
-        is assigned updated after the model has been fitted.
+        is updated after the model has been fitted.
         """
         # Setup
         column_name_to_transformer = {
@@ -728,10 +728,10 @@ class TestBaseSingleTableSynthesizer:
         instance = BaseSingleTableSynthesizer(metadata)
         instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
         instance._fitted = True
+
+        # Run and Assert
         warning_msg = re.escape('For this change to take effect, please refit the synthesizer '
                                 'using `fit`.')
-
-        # Run
         with pytest.warns(UserWarning, match=warning_msg):
             instance.update_transformers(column_name_to_transformer)
 
