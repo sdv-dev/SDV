@@ -3,6 +3,7 @@
 import itertools
 import json
 import logging
+import warnings
 from copy import deepcopy
 from pathlib import Path
 
@@ -492,7 +493,9 @@ class DataProcessor:
                     "'RegexGenerator' instead."
                 )
 
+        warnings.filterwarnings('ignore', module='rdt')
         self._hyper_transformer.update_transformers(column_name_to_transformer)
+        warnings.resetwarnings()
 
     def _fit_hyper_transformer(self, data):
         """Create and return a new ``rdt.HyperTransformer`` instance.
