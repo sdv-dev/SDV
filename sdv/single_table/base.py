@@ -271,6 +271,9 @@ class BaseSynthesizer:
         self._validate_transformers(column_name_to_transformer)
         self._warn_for_update_transformers(column_name_to_transformer)
         self._data_processor.update_transformers(column_name_to_transformer)
+        if self._fitted:
+            msg = 'For this change to take effect, please refit the synthesizer using `fit`.'
+            warnings.warn(msg, UserWarning)
 
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
