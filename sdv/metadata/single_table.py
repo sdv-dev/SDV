@@ -533,21 +533,20 @@ class SingleTableMetadata:
         return printed
 
     @classmethod
-    def upgrade_metadata(cls, old_filepath, new_filepath):
+    def upgrade_metadata(cls, filepath):
         """Upgrade an old metadata file to the ``V1`` schema.
 
         Args:
-            old_filepath (str):
+            filepath (str):
                 String that represents the ``path`` to the old metadata ``json`` file.
-            new_file_path (str):
-                String that represents the ``path`` to save the upgraded metadata to.
 
         Raises:
-            - ``ValueError`` if the path already exists.
-            - ``InvalidMetadataError`` if multiple tables are specified in the JSON.
+            Raises a ``ValueError`` if the filepath does not exist.
+
+        Returns:
+            A ``SingleTableMetadata`` instance.
         """
-        validate_file_does_not_exist(new_filepath)
-        old_metadata = read_json(old_filepath)
+        old_metadata = read_json(filepath)
         if 'tables' in old_metadata:
             tables = old_metadata.get('tables')
             if len(tables) > 1:
@@ -561,7 +560,6 @@ class SingleTableMetadata:
 
         new_metadata = convert_metadata(old_metadata)
         metadata = cls.load_from_dict(new_metadata)
-        metadata.save_to_json(new_filepath)
 
         try:
             metadata.validate()
@@ -571,3 +569,5 @@ class SingleTableMetadata:
                 f'To use this with the SDV, please fix the following errors.\n {str(error)}'
             )
             warnings.warn(message)
+
+        return metadata

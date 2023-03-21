@@ -1934,13 +1934,12 @@ class TestMultiTableMetadata:
         for relationship in expected:
             assert relationship in relationships
 
-    @patch('sdv.metadata.multi_table.validate_file_does_not_exist')
     @patch('sdv.metadata.multi_table.read_json')
     @patch('sdv.metadata.multi_table.MultiTableMetadata._convert_relationships')
     @patch('sdv.metadata.multi_table.convert_metadata')
     @patch('sdv.metadata.multi_table.MultiTableMetadata.load_from_dict')
     def test_upgrade_metadata(
-            self, from_dict_mock, convert_mock, relationships_mock, read_json_mock, validate_mock):
+            self, from_dict_mock, convert_mock, relationships_mock, read_json_mock):
         """Test the ``upgrade_metadata`` method.
 
         The method should validate that the ``new_filepath`` does not exist, read the old metadata
@@ -1962,7 +1961,6 @@ class TestMultiTableMetadata:
             - The mock should call ``save_to_json`` and ``validate``.
         """
         # Setup
-        validate_mock.return_value = True
         convert_mock.side_effect = [
             {'columns': {'column1': {'sdtype': 'numerical'}}},
             {'columns': {'column2': {'sdtype': 'categorical'}}},
@@ -1985,10 +1983,9 @@ class TestMultiTableMetadata:
         ]
 
         # Run
-        MultiTableMetadata.upgrade_metadata('old', 'new')
+        MultiTableMetadata.upgrade_metadata('old')
 
         # Assert
-        validate_mock.assert_called_once_with('new')
         read_json_mock.assert_called_once_with('old')
         relationships_mock.assert_called_once_with({
             'tables': {
@@ -2016,18 +2013,15 @@ class TestMultiTableMetadata:
             'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
         }
         from_dict_mock.assert_called_once_with(expected_new_metadata)
-        new_metadata.save_to_json.assert_called_with('new')
         new_metadata.validate.assert_called_once()
 
     @patch('sdv.metadata.multi_table.warnings')
-    @patch('sdv.metadata.multi_table.validate_file_does_not_exist')
     @patch('sdv.metadata.multi_table.read_json')
     @patch('sdv.metadata.multi_table.MultiTableMetadata._convert_relationships')
     @patch('sdv.metadata.multi_table.convert_metadata')
     @patch('sdv.metadata.multi_table.MultiTableMetadata.load_from_dict')
     def test_upgrade_metadata_validate_error(
-            self, from_dict_mock, convert_mock, relationships_mock, read_json_mock, validate_mock,
-            warnings_mock):
+            self, from_dict_mock, convert_mock, relationships_mock, read_json_mock, warnings_mock):
         """Test the ``upgrade_metadata`` method.
 
         The method should validate that the ``new_filepath`` does not exist, read the old metadata
@@ -2051,7 +2045,6 @@ class TestMultiTableMetadata:
             - The mock should call ``save_to_json`` and ``validate``.
         """
         # Setup
-        validate_mock.return_value = True
         convert_mock.return_value = {}
         new_metadata = Mock()
         from_dict_mock.return_value = new_metadata
@@ -2060,10 +2053,9 @@ class TestMultiTableMetadata:
         new_metadata.validate.side_effect = InvalidMetadataError('blah')
 
         # Run
-        MultiTableMetadata.upgrade_metadata('old', 'new')
+        MultiTableMetadata.upgrade_metadata('old')
 
         # Assert
-        validate_mock.assert_called_once_with('new')
         read_json_mock.assert_called_once_with('old')
         relationships_mock.assert_called_once_with({})
         expected_new_metadata = {
@@ -2072,7 +2064,6 @@ class TestMultiTableMetadata:
             'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
         }
         from_dict_mock.assert_called_once_with(expected_new_metadata)
-        new_metadata.save_to_json.assert_called_with('new')
         new_metadata.validate.assert_called_once()
         warnings_mock.warn.assert_called_once_with(
             'Successfully converted the old metadata, but the metadata was not valid.'
