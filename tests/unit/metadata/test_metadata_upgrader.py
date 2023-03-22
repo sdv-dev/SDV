@@ -625,9 +625,7 @@ def test_convert_metadata():
             },
             'student_id': {
                 'type': 'id',
-                'subtype': 'integer',
-                'pii': True,
-                'pii_category': ['bothify', '#######']
+                'subtype': 'integer'
             },
             'high_perc': {
                 'type': 'numerical',
@@ -637,10 +635,14 @@ def test_convert_metadata():
                 'type': 'boolean'
             },
             'ssn': {
-                'type': 'id',
-                'subtype': 'integer',
+                'type': 'categorical',
                 'pii': True,
                 'pii_category': 'ssn'
+            },
+            'credit_card': {
+                'type': 'categorical',
+                'pii': True,
+                'pii_category': ['credit_card_number', 'visa']
             },
             'drivers_license': {
                 'type': 'id',
@@ -673,8 +675,7 @@ def test_convert_metadata():
                 'sdtype': 'categorical'
             },
             'student_id': {
-                'sdtype': 'bothify',
-                'pii': True,
+                'sdtype': 'numerical'
             },
             'high_perc': {
                 'sdtype': 'numerical',
@@ -687,13 +688,17 @@ def test_convert_metadata():
                 'sdtype': 'ssn',
                 'pii': True
             },
+            'credit_card': {
+                'sdtype': 'credit_card_number',
+                'pii': True
+            },
             'drivers_license': {
                 'sdtype': 'text',
                 'regex_format': 'regex',
             }
         },
         'primary_key': 'student_id',
-        'alternate_keys': ['ssn', 'drivers_license']
+        'alternate_keys': ['drivers_license']
     }
     assert new_metadata == expected_metadata
 
