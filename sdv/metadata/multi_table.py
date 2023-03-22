@@ -673,20 +673,20 @@ class MultiTableMetadata:
         return relationships
 
     @classmethod
-    def upgrade_metadata(cls, old_filepath, new_filepath):
+    def upgrade_metadata(cls, filepath):
         """Upgrade an old metadata file to the ``V1`` schema.
 
         Args:
-            old_filepath (str):
+            filepath (str):
                 String that represents the ``path`` to the old metadata ``json`` file.
-            new_file_path (str):
-                String that represents the ``path`` to save the upgraded metadata to.
 
         Raises:
-            Raises a ``ValueError`` if the path already exists.
+            Raises a ``ValueError`` if the filepath does not exist.
+
+        Returns:
+            A ``MultiTableMetadata`` instance.
         """
-        validate_file_does_not_exist(new_filepath)
-        old_metadata = read_json(old_filepath)
+        old_metadata = read_json(filepath)
         tables_metadata = {}
 
         for table_name, metadata in old_metadata.get('tables', {}).items():
@@ -699,7 +699,7 @@ class MultiTableMetadata:
             'METADATA_SPEC_VERSION': cls.METADATA_SPEC_VERSION
         }
         metadata = cls.load_from_dict(metadata_dict)
-        metadata.save_to_json(new_filepath)
+
         try:
             metadata.validate()
         except InvalidMetadataError as error:
@@ -708,3 +708,5 @@ class MultiTableMetadata:
                 f'To use this with the SDV, please fix the following errors.\n {str(error)}'
             )
             warnings.warn(message)
+
+        return metadata

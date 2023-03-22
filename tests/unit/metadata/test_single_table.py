@@ -1722,11 +1722,10 @@ class TestSingleTableMetadata:
         mock_json.dumps.assert_called_once_with(instance.to_dict(), indent=4)
         assert res == mock_json.dumps.return_value
 
-    @patch('sdv.metadata.single_table.validate_file_does_not_exist')
     @patch('sdv.metadata.single_table.read_json')
     @patch('sdv.metadata.single_table.convert_metadata')
     @patch('sdv.metadata.single_table.SingleTableMetadata.load_from_dict')
-    def test_upgrade_metadata(self, from_dict_mock, convert_mock, read_json_mock, validate_mock):
+    def test_upgrade_metadata(self, from_dict_mock, convert_mock, read_json_mock):
         """Test the ``upgrade_metadata`` method.
 
         The method should validate that the ``new_filepath`` does not exist, read the old metadata
@@ -1746,27 +1745,23 @@ class TestSingleTableMetadata:
             - The mock should call ``save_to_json`` and ``validate``.
         """
         # Setup
-        validate_mock.return_value = True
         convert_mock.return_value = {}
         new_metadata = Mock()
         from_dict_mock.return_value = new_metadata
 
         # Run
-        SingleTableMetadata.upgrade_metadata('old', 'new')
+        SingleTableMetadata.upgrade_metadata('old')
 
         # Assert
         convert_mock.assert_called_once()
-        validate_mock.assert_called_once_with('new')
         read_json_mock.assert_called_once_with('old')
-        new_metadata.save_to_json.assert_called_once()
         new_metadata.validate.assert_called_once()
 
-    @patch('sdv.metadata.single_table.validate_file_does_not_exist')
     @patch('sdv.metadata.single_table.read_json')
     @patch('sdv.metadata.single_table.convert_metadata')
     @patch('sdv.metadata.single_table.SingleTableMetadata.load_from_dict')
     def test_upgrade_metadata_multiple_tables(
-            self, from_dict_mock, convert_mock, read_json_mock, validate_mock):
+            self, from_dict_mock, convert_mock, read_json_mock):
         """Test the ``upgrade_metadata`` method.
 
         If the old metadata is in the multi-table format (has 'tables'), but it only contains one
@@ -1786,7 +1781,6 @@ class TestSingleTableMetadata:
             - The conversion should be done on the nested table.
         """
         # Setup
-        validate_mock.return_value = True
         convert_mock.return_value = {}
         new_metadata = Mock()
         from_dict_mock.return_value = new_metadata
@@ -1795,19 +1789,17 @@ class TestSingleTableMetadata:
         }
 
         # Run
-        SingleTableMetadata.upgrade_metadata('old', 'new')
+        SingleTableMetadata.upgrade_metadata('old')
 
         # Assert
         convert_mock.assert_called_once_with({'columns': {}})
-        new_metadata.save_to_json.assert_called_once()
         new_metadata.validate.assert_called_once()
 
-    @patch('sdv.metadata.single_table.validate_file_does_not_exist')
     @patch('sdv.metadata.single_table.read_json')
     @patch('sdv.metadata.single_table.convert_metadata')
     @patch('sdv.metadata.single_table.SingleTableMetadata.load_from_dict')
     def test_upgrade_metadata_multiple_tables_fails(
-            self, from_dict_mock, convert_mock, read_json_mock, validate_mock):
+            self, from_dict_mock, convert_mock, read_json_mock):
         """Test the ``upgrade_metadata`` method.
 
         If the old metadata is in the multi-table format (has 'tables'), but contains multiple
@@ -1827,7 +1819,6 @@ class TestSingleTableMetadata:
             - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
-        validate_mock.return_value = True
         convert_mock.return_value = {}
         new_metadata = Mock()
         from_dict_mock.return_value = new_metadata
@@ -1841,15 +1832,14 @@ class TestSingleTableMetadata:
             'Try using the MultiTableMetadata class to upgrade this file.'
         )
         with pytest.raises(InvalidMetadataError, match=message):
-            SingleTableMetadata.upgrade_metadata('old', 'new')
+            SingleTableMetadata.upgrade_metadata('old')
 
     @patch('sdv.metadata.single_table.warnings')
-    @patch('sdv.metadata.single_table.validate_file_does_not_exist')
     @patch('sdv.metadata.single_table.read_json')
     @patch('sdv.metadata.single_table.convert_metadata')
     @patch('sdv.metadata.single_table.SingleTableMetadata.load_from_dict')
     def test_upgrade_metadata_validate_error(
-            self, from_dict_mock, convert_mock, read_json_mock, validate_mock, warnings_mock):
+            self, from_dict_mock, convert_mock, read_json_mock, warnings_mock):
         """Test the ``upgrade_metadata`` method.
 
         The method should raise a warning with any validation errors after the metadata is
@@ -1869,20 +1859,17 @@ class TestSingleTableMetadata:
             - The mock should call ``save_to_json`` and ``validate``.
         """
         # Setup
-        validate_mock.return_value = True
         convert_mock.return_value = {}
         new_metadata = Mock()
         from_dict_mock.return_value = new_metadata
         new_metadata.validate.side_effect = InvalidMetadataError('blah')
 
         # Run
-        SingleTableMetadata.upgrade_metadata('old', 'new')
+        SingleTableMetadata.upgrade_metadata('old')
 
         # Assert
         convert_mock.assert_called_once()
-        validate_mock.assert_called_once_with('new')
         read_json_mock.assert_called_once_with('old')
-        new_metadata.save_to_json.assert_called_once()
         new_metadata.validate.assert_called_once()
         warnings_mock.warn.assert_called_once_with(
             'Successfully converted the old metadata, but the metadata was not valid. '
