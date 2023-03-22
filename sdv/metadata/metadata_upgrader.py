@@ -43,6 +43,14 @@ def _upgrade_columns_and_keys(old_metadata):
             if field != primary_key and field_meta.get('ref') is None:
                 alternate_keys.append(field)
 
+        if field_meta.get('pii'):
+            column_meta['pii'] = True
+            pii_category = field_meta.get('pii_category')
+            if isinstance(pii_category, list):
+                column_meta['sdtype'] = pii_category[0]
+            elif pii_category:
+                column_meta['sdtype'] = pii_category
+
         columns[field] = column_meta
 
     new_metadata['columns'] = columns
