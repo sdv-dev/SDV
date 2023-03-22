@@ -625,7 +625,9 @@ def test_convert_metadata():
             },
             'student_id': {
                 'type': 'id',
-                'subtype': 'integer'
+                'subtype': 'integer',
+                'pii': True,
+                'pii_category': ['bothify', '#######']
             },
             'high_perc': {
                 'type': 'numerical',
@@ -636,7 +638,9 @@ def test_convert_metadata():
             },
             'ssn': {
                 'type': 'id',
-                'subtype': 'integer'
+                'subtype': 'integer',
+                'pii': True,
+                'pii_category': 'ssn'
             },
             'drivers_license': {
                 'type': 'id',
@@ -669,7 +673,8 @@ def test_convert_metadata():
                 'sdtype': 'categorical'
             },
             'student_id': {
-                'sdtype': 'numerical'
+                'sdtype': 'bothify',
+                'pii': True,
             },
             'high_perc': {
                 'sdtype': 'numerical',
@@ -679,11 +684,12 @@ def test_convert_metadata():
                 'sdtype': 'boolean'
             },
             'ssn': {
-                'sdtype': 'numerical'
+                'sdtype': 'ssn',
+                'pii': True
             },
             'drivers_license': {
                 'sdtype': 'text',
-                'regex_format': 'regex'
+                'regex_format': 'regex',
             }
         },
         'primary_key': 'student_id',
