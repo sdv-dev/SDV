@@ -77,17 +77,13 @@ def test_upgrade_metadata(tmp_path):
             }
         }
     }
-
-    # Run
-    old_path = tmp_path / 'old.json'
-    new_path = tmp_path / 'new.json'
-    old_metadata_file = open(old_path, 'w')
+    filepath = tmp_path / 'old.json'
+    old_metadata_file = open(filepath, 'w')
     json.dump(old_metadata, old_metadata_file)
     old_metadata_file.close()
-    MultiTableMetadata.upgrade_metadata(old_filepath=old_path, new_filepath=new_path)
-    new_metadata_file = open(new_path,)
-    new_metadata = json.load(new_metadata_file)
-    new_metadata_file.close()
+
+    # Run
+    new_metadata = MultiTableMetadata.upgrade_metadata(filepath=filepath).to_dict()
 
     # Assert
     expected_metadata = {
