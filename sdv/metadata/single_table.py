@@ -292,7 +292,7 @@ class SingleTableMetadata:
 
     def _validate_keys_sdtype(self, keys, key_type):
         """Validate that each key is of type 'id' or a valid Faker function."""
-        bad_keys = {}
+        bad_keys = set()
         for key in keys:
             if not (self.columns[key]['sdtype'] == 'id' or
                     is_faker_function(self.columns[key]['sdtype'])):

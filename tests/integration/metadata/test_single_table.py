@@ -37,11 +37,12 @@ def test_validate():
     """
     # Setup
     instance = SingleTableMetadata()
-    instance.add_column('col1', sdtype='numerical')
-    instance.add_column('col2', sdtype='numerical')
+    instance.add_column('col1', sdtype='id')
+    instance.add_column('col2', sdtype='id')
+    instance.add_column('col3', sdtype='numerical')
     instance.set_primary_key('col1')
     instance.add_alternate_keys([('col1', 'col2')])
-    instance.set_sequence_index('col1')
+    instance.set_sequence_index('col3')
     instance.set_sequence_key('col2')
 
     # Run
@@ -53,7 +54,7 @@ def test_validate_errors():
     # Setup
     instance = SingleTableMetadata()
     instance.columns = {
-        'col1': {'sdtype': 'numerical'},
+        'col1': {'sdtype': 'id'},
         'col2': {'sdtype': 'numerical'},
         'col4': {'sdtype': 'categorical', 'invalid1': 'value'},
         'col5': {'sdtype': 'categorical', 'order': ''},
@@ -61,7 +62,7 @@ def test_validate_errors():
         'col7': {'sdtype': 'categorical', 'order': '', 'order_by': ''},
         'col8': {'sdtype': 'numerical', 'computer_representation': 'value'},
         'col9': {'sdtype': 'datetime', 'datetime_format': '%1-%Y-%m-%d-%'},
-        'col10': {'sdtype': 'text', 'regex_format': '[A-{6}'},
+        'col10': {'sdtype': 'id', 'regex_format': '[A-{6}'},
     }
     instance.primary_key = 10
     instance.alternate_keys = 'col1'
@@ -85,7 +86,7 @@ def test_validate_errors():
         ' Only 1 is allowed.'
         "\nInvalid value for 'computer_representation' 'value' for column 'col8'."
         "\nInvalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'col9'."
-        "\nInvalid regex format string '[A-{6}' for text column 'col10'."
+        "\nInvalid regex format string '[A-{6}' for id column 'col10'."
     )
     # Run / Assert
     with pytest.raises(InvalidMetadataError, match=err_msg):

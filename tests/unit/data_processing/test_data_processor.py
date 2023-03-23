@@ -59,8 +59,8 @@ class TestDataProcessor:
         """
         # Setup
         metadata = SingleTableMetadata()
-        metadata.add_column('col', sdtype='numerical')
-        metadata.add_column('col_2', sdtype='numerical')
+        metadata.add_column('col', sdtype='id')
+        metadata.add_column('col_2', sdtype='id')
         metadata.add_alternate_keys(['col_2'])
         metadata.set_primary_key('col')
 
@@ -284,7 +284,7 @@ class TestDataProcessor:
         # Setup
         metadata = SingleTableMetadata()
         metadata.add_column('col1', sdtype='categorical')
-        metadata.add_column('col2', sdtype='numerical')
+        metadata.add_column('col2', sdtype='id')
         metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
         metadata.set_primary_key('col2')
         dp = DataProcessor(metadata)
@@ -307,7 +307,7 @@ class TestDataProcessor:
         # Setup
         metadata = SingleTableMetadata()
         metadata.add_column('col1', sdtype='categorical')
-        metadata.add_column('col2', sdtype='numerical')
+        metadata.add_column('col2', sdtype='id')
         metadata.add_column('col3', sdtype='numerical', computer_representation='Int8')
         metadata.set_primary_key('col2')
         dp = DataProcessor(metadata)
@@ -318,7 +318,7 @@ class TestDataProcessor:
         # Assert
         assert sdtypes == {
             'col1': 'categorical',
-            'col2': 'numerical',
+            'col2': 'id',
             'col3': 'numerical'
         }
 

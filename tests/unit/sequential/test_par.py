@@ -193,8 +193,8 @@ class TestPARSynthesizer:
             'ct_col2': [3, 3, 4, 3, 2],
         })
         metadata = SingleTableMetadata()
-        metadata.add_column('sk_col1', sdtype='numerical')
-        metadata.add_column('sk_col2', sdtype='numerical')
+        metadata.add_column('sk_col1', sdtype='id')
+        metadata.add_column('sk_col2', sdtype='id')
         metadata.add_column('ct_col1', sdtype='numerical')
         metadata.add_column('ct_col2', sdtype='numerical')
         metadata.set_sequence_key(('sk_col1', 'sk_col2'))

@@ -23,18 +23,23 @@ def get_multi_table_metadata():
                 'primary_key': 'id_nesreca',
                 'columns': {
                     'upravna_enota': {'sdtype': 'id'},
-                    'id_nesreca': {'sdtype': 'id'}
+                    'id_nesreca': {'sdtype': 'id'},
+                    'nesreca_val': {'sdtype': 'numerical'}
                 }
             },
             'oseba': {
                 'columns': {
                     'upravna_enota': {'sdtype': 'id'},
-                    'id_nesreca': {'sdtype': 'id'}
+                    'id_nesreca': {'sdtype': 'id'},
+                    'oseba_val': {'sdtype': 'numerical'}
                 }
             },
             'upravna_enota': {
                 'primary_key': 'id_upravna_enota',
-                'columns': {'id_upravna_enota': {'sdtype': 'id'}}
+                'columns': {
+                    'id_upravna_enota': {'sdtype': 'id'},
+                    'upravna_val': {'sdtype': 'numerical'}
+                }
             }
         },
         'relationships': [
@@ -69,13 +74,16 @@ def get_multi_table_data():
         'nesreca': pd.DataFrame({
             'id_nesreca': list(range(4)),
             'upravna_enota': list(range(4)),
+            'nesreca_val': list(range(4))
         }),
         'oseba': pd.DataFrame({
             'upravna_enota': list(range(4)),
             'id_nesreca': list(range(4)),
+            'oseba_val': list(range(4))
         }),
         'upravna_enota': pd.DataFrame({
             'id_upravna_enota': list(range(4)),
+            'upravna_val': list(range(4))
         }),
     }
 

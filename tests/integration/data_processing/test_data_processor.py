@@ -3,7 +3,8 @@ import itertools
 
 import numpy as np
 from rdt.transformers import (
-    AnonymizedFaker, BinaryEncoder, FloatFormatter, LabelEncoder, UnixTimestampEncoder)
+    AnonymizedFaker, BinaryEncoder, FloatFormatter, LabelEncoder, RegexGenerator,
+    UnixTimestampEncoder)
 
 from sdv.data_processing import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
@@ -238,6 +239,7 @@ def test_data_processor_prepare_for_fitting():
         modality='single_table',
         dataset_name='student_placements_pii'
     )
+    metadata.update_column('student_id', sdtype='id')
     dp = DataProcessor(metadata)
 
     # Run
@@ -249,7 +251,7 @@ def test_data_processor_prepare_for_fitting():
         'mba_spec': LabelEncoder,
         'employability_perc': FloatFormatter,
         'placed': LabelEncoder,
-        'student_id': None,
+        'student_id': RegexGenerator,
         'experience_years': FloatFormatter,
         'duration': LabelEncoder,
         'salary': FloatFormatter,
@@ -283,6 +285,7 @@ def test_data_processor_reverse_transform_with_formatters():
         modality='single_table',
         dataset_name='student_placements'
     )
+    metadata.update_column('student_id', sdtype='id')
     dp = DataProcessor(metadata)
 
     # Run
@@ -324,6 +327,7 @@ def test_data_processor_refit_hypertransformer():
         modality='single_table',
         dataset_name='student_placements'
     )
+    metadata.update_column('student_id', sdtype='id')
     dp = DataProcessor(metadata)
 
     # Run

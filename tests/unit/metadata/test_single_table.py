@@ -1037,10 +1037,10 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         instance.add_column('column1', sdtype='categorical')
         instance.add_column('column2', sdtype='categorical')
-        instance.add_column('column3', sdtype='numerical')
+        instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The primary_keys ['column1', 'column2'] cannot be type 'categorical' or 'boolean'."
+            "The primary_keys ['column1', 'column2'] must be type 'id' or a valid Faker function."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -1050,7 +1050,7 @@ class TestSingleTableMetadata:
         """Test that ``set_primary_key`` sets the ``_primary_key`` value."""
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'column': {'sdtype': 'numerical'}}
+        instance.columns = {'column': {'sdtype': 'id'}}
 
         # Run
         instance.set_primary_key('column')
@@ -1062,7 +1062,7 @@ class TestSingleTableMetadata:
         """Test that ``set_primary_key`` sets the ``_primary_key`` value for tuples."""
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
+        instance.columns = {'col1': {'sdtype': 'id'}, 'col2': {'sdtype': 'id'}}
 
         # Run
         instance.set_primary_key(('col1', 'col2'))
@@ -1085,7 +1085,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'column1': {'sdtype': 'numerical'}}
+        instance.columns = {'column1': {'sdtype': 'id'}}
         instance.primary_key = 'column0'
 
         # Run
@@ -1105,7 +1105,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'column1': {'sdtype': 'numerical'}}
+        instance.columns = {'column1': {'sdtype': 'id'}}
         instance.primary_key = 'column0'
         instance.alternate_keys = ['column1', 'column2']
 
@@ -1175,10 +1175,10 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         instance.add_column('column1', sdtype='categorical')
         instance.add_column('column2', sdtype='categorical')
-        instance.add_column('column3', sdtype='numerical')
+        instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The sequence_keys ['column1', 'column2'] cannot be type 'categorical' or 'boolean'."
+            "The sequence_keys ['column1', 'column2'] must be type 'id' or a valid Faker function."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -1188,7 +1188,7 @@ class TestSingleTableMetadata:
         """Test that ``set_sequence_key`` sets the ``_sequence_key`` value."""
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'column': {'sdtype': 'numerical'}}
+        instance.columns = {'column': {'sdtype': 'id'}}
 
         # Run
         instance.set_sequence_key('column')
@@ -1200,7 +1200,7 @@ class TestSingleTableMetadata:
         """Test that ``set_sequence_key`` sets ``_sequence_key`` for tuples."""
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
+        instance.columns = {'col1': {'sdtype': 'id'}, 'col2': {'sdtype': 'id'}}
 
         # Run
         instance.set_sequence_key(('col1', 'col2'))
@@ -1223,7 +1223,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'column1': {'sdtype': 'numerical'}}
+        instance.columns = {'column1': {'sdtype': 'id'}}
         instance.sequence_key = 'column0'
 
         # Run
@@ -1289,10 +1289,11 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         instance.add_column('column1', sdtype='categorical')
         instance.add_column('column2', sdtype='categorical')
-        instance.add_column('column3', sdtype='numerical')
+        instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The alternate_keys ['column1', 'column2'] cannot be type 'categorical' or 'boolean'."
+            "The alternate_keys ['column1', 'column2'] must be type 'id' or a valid Faker "
+            'function.'
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -1322,9 +1323,9 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         instance.columns = {
-            'column1': {'sdtype': 'numerical'},
-            'column2': {'sdtype': 'numerical'},
-            'column3': {'sdtype': 'numerical'}
+            'column1': {'sdtype': 'id'},
+            'column2': {'sdtype': 'id'},
+            'column3': {'sdtype': 'id'}
         }
 
         # Run
@@ -1339,9 +1340,9 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         instance.columns = {
-            'column1': {'sdtype': 'numerical'},
-            'column2': {'sdtype': 'numerical'},
-            'column3': {'sdtype': 'numerical'}
+            'column1': {'sdtype': 'id'},
+            'column2': {'sdtype': 'id'},
+            'column3': {'sdtype': 'id'}
         }
         instance.alternate_keys = ['column3']
 
