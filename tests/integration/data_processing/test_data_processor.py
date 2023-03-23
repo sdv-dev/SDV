@@ -239,7 +239,6 @@ def test_data_processor_prepare_for_fitting():
         modality='single_table',
         dataset_name='student_placements_pii'
     )
-    metadata.update_column('student_id', sdtype='id')
     dp = DataProcessor(metadata)
 
     # Run
@@ -285,7 +284,6 @@ def test_data_processor_reverse_transform_with_formatters():
         modality='single_table',
         dataset_name='student_placements'
     )
-    metadata.update_column('student_id', sdtype='id')
     dp = DataProcessor(metadata)
 
     # Run
@@ -327,7 +325,6 @@ def test_data_processor_refit_hypertransformer():
         modality='single_table',
         dataset_name='student_placements'
     )
-    metadata.update_column('student_id', sdtype='id')
     dp = DataProcessor(metadata)
 
     # Run

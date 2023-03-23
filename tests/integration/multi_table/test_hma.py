@@ -23,10 +23,6 @@ def test_hma():
     """
     # Setup
     data, metadata = download_demo('multi_table', 'got_families')
-    metadata.update_column('characters', 'character_id', sdtype='id')
-    metadata.update_column('families', 'family_id', sdtype='id')
-    metadata.update_column('character_families', 'character_id', sdtype='id')
-    metadata.update_column('character_families', 'family_id', sdtype='id')
     hmasynthesizer = HMASynthesizer(metadata)
 
     # Run
@@ -58,10 +54,6 @@ def test_hma_reset_sampling():
         'ssn',
         sdtype='ssn',
     )
-    metadata.update_column('characters', 'character_id', sdtype='id')
-    metadata.update_column('families', 'family_id', sdtype='id')
-    metadata.update_column('character_families', 'character_id', sdtype='id')
-    metadata.update_column('character_families', 'family_id', sdtype='id')
     data['characters']['ssn'] = [faker.lexify() for _ in range(len(data['characters']))]
     for table in metadata.tables.values():
         table.alternate_keys = []
@@ -135,10 +127,6 @@ def test_hma_set_parameters():
     """
     # Setup
     data, metadata = download_demo('multi_table', 'got_families')
-    metadata.update_column('characters', 'character_id', sdtype='id')
-    metadata.update_column('families', 'family_id', sdtype='id')
-    metadata.update_column('character_families', 'character_id', sdtype='id')
-    metadata.update_column('character_families', 'family_id', sdtype='id')
     hmasynthesizer = HMASynthesizer(metadata)
 
     # Run
@@ -420,8 +408,6 @@ def test_synthesize_multiple_tables_using_hma(tmp_path):
         modality='multi_table',
         dataset_name='fake_hotels'
     )
-    metadata.update_column('hotels', 'hotel_id', sdtype='id')
-    metadata.update_column('guests', 'hotel_id', sdtype='id')
 
     # Creating a Synthesizer
     synthesizer = HMASynthesizer(metadata)
