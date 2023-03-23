@@ -22,19 +22,19 @@ def get_multi_table_metadata():
             'nesreca': {
                 'primary_key': 'id_nesreca',
                 'columns': {
-                    'upravna_enota': {'sdtype': 'numerical'},
-                    'id_nesreca': {'sdtype': 'numerical'}
+                    'upravna_enota': {'sdtype': 'id'},
+                    'id_nesreca': {'sdtype': 'id'}
                 }
             },
             'oseba': {
                 'columns': {
-                    'upravna_enota': {'sdtype': 'numerical'},
-                    'id_nesreca': {'sdtype': 'numerical'}
+                    'upravna_enota': {'sdtype': 'id'},
+                    'id_nesreca': {'sdtype': 'id'}
                 }
             },
             'upravna_enota': {
                 'primary_key': 'id_upravna_enota',
-                'columns': {'id_upravna_enota': {'sdtype': 'numerical'}}
+                'columns': {'id_upravna_enota': {'sdtype': 'id'}}
             }
         },
         'relationships': [

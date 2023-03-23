@@ -600,7 +600,7 @@ class TestMultiTableMetadata:
                 'branch_id': {'sdtype': 'numerical'},
                 'amount': {'sdtype': 'numerical'},
                 'start_date': {'sdtype': 'datetime'},
-                'owner': {'sdtype': 'text'},
+                'owner': {'sdtype': 'id'},
             },
             'primary_key': 'branches'
         })
@@ -819,7 +819,7 @@ class TestMultiTableMetadata:
         instance = self.get_metadata()
         instance.tables['users'].primary_key = None
         instance.tables['transactions'].columns['session_id']['sdtype'] = 'datetime'
-        instance.tables['payments'].columns['date']['sdtype'] = 'text'
+        instance.tables['payments'].columns['date']['sdtype'] = 'id'
         instance.tables['payments'].columns['date']['regex_format'] = '[A-z{'
         instance.relationships.pop(-1)
 
@@ -827,7 +827,7 @@ class TestMultiTableMetadata:
         error_msg = re.escape(
             'The metadata is not valid\n'
             '\nTable: payments'
-            "\nInvalid regex format string '[A-z{' for text column 'date'."
+            "\nInvalid regex format string '[A-z{' for id column 'date'."
             '\n\nRelationships:'
             "\nThe parent table 'users' does not have a primary key set. "
             "Please use 'set_primary_key' in order to set one."
@@ -945,12 +945,12 @@ class TestMultiTableMetadata:
             'branch_id': {'sdtype': 'numerical'},
             'amount': {'sdtype': 'numerical'},
             'start_date': {'sdtype': 'datetime'},
-            'owner': {'sdtype': 'text'},
+            'owner': {'sdtype': 'id'},
         }
         table_branches = Mock()
         table_branches.to_dict.return_value = {
             'id': {'sdtype': 'numerical'},
-            'name': {'sdtype': 'text'},
+            'name': {'sdtype': 'id'},
         }
         instance = MultiTableMetadata()
         instance.tables = {
@@ -977,11 +977,11 @@ class TestMultiTableMetadata:
                     'branch_id': {'sdtype': 'numerical'},
                     'amount': {'sdtype': 'numerical'},
                     'start_date': {'sdtype': 'datetime'},
-                    'owner': {'sdtype': 'text'},
+                    'owner': {'sdtype': 'id'},
                 },
                 'branches': {
                     'id': {'sdtype': 'numerical'},
-                    'name': {'sdtype': 'text'},
+                    'name': {'sdtype': 'id'},
                 }
             },
             'relationships': [
@@ -1019,11 +1019,11 @@ class TestMultiTableMetadata:
                     'branch_id': {'sdtype': 'numerical'},
                     'amount': {'sdtype': 'numerical'},
                     'start_date': {'sdtype': 'datetime'},
-                    'owner': {'sdtype': 'text'},
+                    'owner': {'sdtype': 'id'},
                 },
                 'branches': {
                     'id': {'sdtype': 'numerical'},
-                    'name': {'sdtype': 'text'},
+                    'name': {'sdtype': 'id'},
                 }
             },
             'relationships': [
@@ -1090,11 +1090,11 @@ class TestMultiTableMetadata:
                     'branch_id': {'sdtype': 'numerical'},
                     'amount': {'sdtype': 'numerical'},
                     'start_date': {'sdtype': 'datetime'},
-                    'owner': {'sdtype': 'text'},
+                    'owner': {'sdtype': 'id'},
                 },
                 'branches': {
                     'id': {'sdtype': 'numerical'},
-                    'name': {'sdtype': 'text'},
+                    'name': {'sdtype': 'id'},
                 }
             },
             'relationships': [

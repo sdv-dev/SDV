@@ -24,7 +24,6 @@ class SingleTableMetadata:
         'datetime': frozenset(['datetime_format']),
         'categorical': frozenset(['order', 'order_by']),
         'boolean': frozenset([]),
-        'text': frozenset(['regex_format']),
         'id': frozenset(['regex_format']),
     }
 
@@ -99,13 +98,13 @@ class SingleTableMetadata:
             )
 
     @staticmethod
-    def _validate_text(column_name, **kwargs):
+    def _validate_id(column_name, **kwargs):
         regex = kwargs.get('regex_format', '')
         try:
             re.compile(regex)
         except Exception as exception:
             raise InvalidMetadataError(
-                f"Invalid regex format string '{regex}' for text column '{column_name}'."
+                f"Invalid regex format string '{regex}' for id column '{column_name}'."
             ) from exception
 
     @staticmethod
@@ -152,8 +151,8 @@ class SingleTableMetadata:
             self._validate_numerical(column_name, **kwargs)
         elif sdtype == 'datetime':
             self._validate_datetime(column_name, **kwargs)
-        elif sdtype == 'text':
-            self._validate_text(column_name, **kwargs)
+        elif sdtype == 'id':
+            self._validate_id(column_name, **kwargs)
         elif 'pii' in kwargs:
             self._validate_pii(column_name, **kwargs)
 
