@@ -1,4 +1,3 @@
-import itertools
 import re
 from unittest.mock import Mock, call, patch
 
@@ -85,7 +84,6 @@ class TestDataProcessor:
         assert data_processor._dtypes is None
         assert data_processor.formatters == {}
         assert data_processor._keys == ['col_2', 'col']
-        assert data_processor._keys_generators == {}
         assert data_processor._prepared_for_fitting is False
 
         assert data_processor._hyper_transformer == mock_rdt.HyperTransformer.return_value
@@ -894,8 +892,8 @@ class TestDataProcessor:
         }
 
     @patch('sdv.data_processing.data_processor.rdt')
-    def test_create_key_transformer_regex_generator(self, mock_rdt):
-        """Test the ``create_key_transformer`` method.
+    def test_create_regex_generator_regex_generator(self, mock_rdt):
+        """Test the ``create_regex_generator`` method.
 
         Test that when given an ``sdtype`` and ``column_metadata`` that contains ``regex_format``
         this creates and returns an instance of ``RegexGenerator``.
@@ -911,14 +909,22 @@ class TestDataProcessor:
             - The return value of ``rdt.transformers.RegexGenerator``.
         """
         # Setup
-        sdtype = 'text'
+        sdtype = 'id'
         column_metadata = {
-            'sdtype': 'text',
+            'sdtype': 'id',
             'regex_format': 'ID_00',
         }
+        instance = Mock()
+        instance._keys = ['ssn']
 
         # Run
-        output = DataProcessor.create_key_transformer(Mock(), 'id', sdtype, column_metadata)
+        output = DataProcessor.create_regex_generator(
+            instance,
+            'ssn',
+            sdtype,
+            column_metadata,
+            'O'
+        )
 
         # Assert
         assert output == mock_rdt.transformers.RegexGenerator.return_value
@@ -927,8 +933,10 @@ class TestDataProcessor:
             enforce_uniqueness=True
         )
 
-    def test_create_key_transformer_anonymized_faker(self):
-        """Test the ``create_key_transformer`` method.
+    @patch('sdv.data_processing.data_processor.get_anonymized_transformer')
+    def test_create_anonymized_transformer_enforce_uniqueness(self,
+                                                              mock_get_anonymized_transformer):
+        """Test the ``create_regex_generator`` method.
 
         Test that when given an ``sdtype`` and ``column_metadata`` that does not contain a
         ``regex_format`` this calls ``create_anonymized_transformer`` with ``enforce_uniqueness``
@@ -949,17 +957,20 @@ class TestDataProcessor:
         column_metadata = {
             'sdtype': 'ssn',
         }
-        instance = Mock()
 
         # Run
-        output = DataProcessor.create_key_transformer(instance, 'ssn', sdtype, column_metadata)
+        output = DataProcessor.create_anonymized_transformer(
+            sdtype,
+            column_metadata,
+            True
+        )
 
         # Assert
-        assert output == instance.create_anonymized_transformer.return_value
-        instance.create_anonymized_transformer.assert_called_once_with(
+        mock_get_anonymized_transformer.assert_called_once_with(
             'ssn',
-            {'sdtype': 'ssn', 'enforce_uniqueness': True}
+            {'enforce_uniqueness': True}
         )
+        assert output == mock_get_anonymized_transformer.return_value
 
     @patch('sdv.data_processing.data_processor.get_anonymized_transformer')
     def test_create_anonymized_transformer(self, mock_get_anonymized_transformer):
@@ -987,7 +998,7 @@ class TestDataProcessor:
         }
 
         # Run
-        output = DataProcessor.create_anonymized_transformer(sdtype, column_metadata)
+        output = DataProcessor.create_anonymized_transformer(sdtype, column_metadata, False)
 
         # Assert
         assert output == mock_get_anonymized_transformer.return_value
@@ -1135,9 +1146,9 @@ class TestDataProcessor:
         dp = DataProcessor(SingleTableMetadata())
         dp.metadata = Mock()
         dp.create_anonymized_transformer = Mock()
-        dp.create_key_transformer = Mock()
+        dp.create_regex_generator = Mock()
         dp.create_anonymized_transformer.return_value = 'AnonymizedFaker'
-        dp.create_key_transformer.return_value = 'RegexGenerator'
+        dp.create_regex_generator.return_value = 'RegexGenerator'
         dp.metadata.primary_key = 'id'
         dp._primary_key = 'id'
         dp._keys = ['id']
@@ -1148,7 +1159,7 @@ class TestDataProcessor:
             'categorical': {'sdtype': 'categorical'},
             'email': {'sdtype': 'email', 'pii': True},
             'first_name': {'sdtype': 'first_name'},
-            'id': {'sdtype': 'text', 'regex_format': 'ID_\\d{3}[0-9]'},
+            'id': {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'},
             'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'}
         }
 
@@ -1190,12 +1201,12 @@ class TestDataProcessor:
         assert isinstance(config['transformers']['int'], FloatFormatter)
         assert isinstance(config['transformers']['float'], FloatFormatter)
         anonymized_transformer = config['transformers']['email']
-        primary_key_transformer = config['transformers']['id']
+        primary_regex_generator = config['transformers']['id']
         assert anonymized_transformer == 'AnonymizedFaker'
 
         first_name_transformer = config['transformers']['first_name']
         assert first_name_transformer == 'AnonymizedFaker'
-        assert primary_key_transformer == 'RegexGenerator'
+        assert primary_regex_generator == 'RegexGenerator'
 
         datetime_transformer = config['transformers']['date']
         assert isinstance(datetime_transformer, UnixTimestampEncoder)
@@ -1209,10 +1220,11 @@ class TestDataProcessor:
             call('first_name', {'sdtype': 'first_name'})
 
         ]
-        dp.create_key_transformer.assert_called_once_with(
+        dp.create_regex_generator.assert_called_once_with(
             'id',
-            'text',
-            {'sdtype': 'text', 'regex_format': 'ID_\\d{3}[0-9]'}
+            'id',
+            {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'},
+            'O'
         )
 
     def test_update_transformers_not_fitted(self):
@@ -1647,27 +1659,6 @@ class TestDataProcessor:
         )
 
         assert result == instance._hyper_transformer.create_anonymized_columns.return_value
-
-    def test_generate_keys_reset_primary_key(self):
-        """Test that a new ``counter`` is created when ``reset_primary_key`` is ``True``."""
-        # Setup
-        instance = Mock()
-        instance._primary_key = 'a'
-        instance._hyper_transformer.field_transformers = {}
-        counter = itertools.count(start=10)
-        instance._keys = ['a']
-        instance._keys_generators = {'a': counter}
-
-        # Run
-        result = DataProcessor.generate_keys(instance, 10, reset_keys=True)
-
-        # Assert
-        expected_result = pd.DataFrame({
-            'a': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-        })
-
-        pd.testing.assert_frame_equal(result, expected_result)
-        assert instance._keys_generators != {'a': counter}
 
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_transform_primary_key(self, log_mock):

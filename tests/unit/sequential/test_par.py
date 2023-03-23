@@ -21,7 +21,7 @@ class TestPARSynthesizer:
         metadata = SingleTableMetadata()
         metadata.add_column('time', sdtype='datetime')
         metadata.add_column('gender', sdtype='categorical')
-        metadata.add_column('name', sdtype='text')
+        metadata.add_column('name', sdtype='id')
         metadata.add_column('measurement', sdtype='numerical')
         if add_sequence_key:
             metadata.set_sequence_key('name')
@@ -76,7 +76,7 @@ class TestPARSynthesizer:
         assert isinstance(synthesizer._context_synthesizer, GaussianCopulaSynthesizer)
         assert synthesizer._context_synthesizer.metadata.columns == {
             'gender': {'sdtype': 'categorical'},
-            'name': {'sdtype': 'text'}
+            'name': {'sdtype': 'id'}
         }
 
     def test___init___context_columns_no_sequence_key(self):

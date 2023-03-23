@@ -312,15 +312,12 @@ class TestBaseMultiTableSynthesizer:
         # Run and Assert
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
-            "Table: 'nesreca'\n"
-            "Error: Invalid values found for numerical column 'id_nesreca': ['0', '1', '2', "
-            "'+ 7 more']."
-            "\n\nTable: 'oseba'\n"
-            "Error: Invalid values found for numerical column 'upravna_enota': ['0', '1', '2', "
-            "'+ 7 more']."
-            "\n\nTable: 'upravna_enota'\n"
-            "Error: Invalid values found for numerical column 'id_upravna_enota': ['0', '1', '2', "
-            "'+ 7 more']."
+            'Relationships:\n'
+            "Error: foreign key column 'upravna_enota' contains unknown references: "
+            '(0, 1, 2, 3, 4, + more). All the values in this column must reference a primary key.'
+            '\n'
+            "Error: foreign key column 'id_nesreca' contains unknown references: "
+            '(0, 1, 2, 3, 4, + more). All the values in this column must reference a primary key.'
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)
@@ -762,11 +759,13 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
+        metadata.add_column('nesreca', 'positive_int', sdtype='numerical')
+        metadata.add_column('oseba', 'negative_int', sdtype='numerical')
         positive_constraint = {
             'constraint_class': 'Positive',
             'table_name': 'nesreca',
             'constraint_parameters': {
-                'column_name': 'id_nesreca',
+                'column_name': 'positive_int',
                 'strict_boundaries': True
             }
         }
@@ -774,7 +773,7 @@ class TestBaseMultiTableSynthesizer:
             'constraint_class': 'Negative',
             'table_name': 'oseba',
             'constraint_parameters': {
-                'column_name': 'id_nesreca',
+                'column_name': 'negative_int',
                 'strict_boundaries': False
             }
         }
@@ -786,14 +785,14 @@ class TestBaseMultiTableSynthesizer:
         positive_constraint = {
             'constraint_class': 'Positive',
             'constraint_parameters': {
-                'column_name': 'id_nesreca',
+                'column_name': 'positive_int',
                 'strict_boundaries': True
             }
         }
         negative_constraint = {
             'constraint_class': 'Negative',
             'constraint_parameters': {
-                'column_name': 'id_nesreca',
+                'column_name': 'negative_int',
                 'strict_boundaries': False
             }
         }
@@ -826,11 +825,13 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
+        metadata.add_column('nesreca', 'positive_int', sdtype='numerical')
+        metadata.add_column('oseba', 'negative_int', sdtype='numerical')
         positive_constraint = {
             'constraint_class': 'Positive',
             'table_name': 'nesreca',
             'constraint_parameters': {
-                'column_name': 'id_nesreca',
+                'column_name': 'positive_int',
                 'strict_boundaries': True
             }
         }
@@ -838,7 +839,7 @@ class TestBaseMultiTableSynthesizer:
             'constraint_class': 'Negative',
             'table_name': 'oseba',
             'constraint_parameters': {
-                'column_name': 'id_nesreca',
+                'column_name': 'negative_int',
                 'strict_boundaries': False
             }
         }
