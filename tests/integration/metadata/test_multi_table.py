@@ -91,19 +91,19 @@ def test_upgrade_metadata(tmp_path):
             'nesreca': {
                 'primary_key': 'id_nesreca',
                 'columns': {
-                    'upravna_enota': {'sdtype': 'numerical'},
-                    'id_nesreca': {'sdtype': 'numerical'}
+                    'upravna_enota': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+                    'id_nesreca': {'sdtype': 'id', 'regex_format': r'\d{30}'}
                 }
             },
             'oseba': {
                 'columns': {
-                    'upravna_enota': {'sdtype': 'numerical'},
-                    'id_nesreca': {'sdtype': 'numerical'}
+                    'upravna_enota': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+                    'id_nesreca': {'sdtype': 'id', 'regex_format': r'\d{30}'}
                 }
             },
             'upravna_enota': {
                 'primary_key': 'id_upravna_enota',
-                'columns': {'id_upravna_enota': {'sdtype': 'numerical'}}
+                'columns': {'id_upravna_enota': {'sdtype': 'id', 'regex_format': r'\d{30}'}}
             }
         },
         'relationships': [

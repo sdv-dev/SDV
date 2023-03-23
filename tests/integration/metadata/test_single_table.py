@@ -162,7 +162,8 @@ def test_upgrade_metadata(tmp_path):
                 'sdtype': 'categorical'
             },
             'student_id': {
-                'sdtype': 'numerical'
+                'sdtype': 'id',
+                'regex_format': r'\d{30}'
             },
             'high_perc': {
                 'sdtype': 'numerical',
@@ -172,10 +173,11 @@ def test_upgrade_metadata(tmp_path):
                 'sdtype': 'boolean'
             },
             'ssn': {
-                'sdtype': 'numerical'
+                'sdtype': 'id',
+                'regex_format': r'\d{30}'
             },
             'drivers_license': {
-                'sdtype': 'text',
+                'sdtype': 'id',
                 'regex_format': 'regex'
             }
         },
