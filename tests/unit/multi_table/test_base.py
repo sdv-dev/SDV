@@ -295,15 +295,18 @@ class TestBaseMultiTableSynthesizer:
         metadata = get_multi_table_metadata()
         data = {
             'nesreca': pd.DataFrame({
-                'id_nesreca': np.arange(10).astype(str),
+                'id_nesreca': np.arange(10),
                 'upravna_enota': np.arange(10),
+                'nesreca_val': np.arange(10).astype(str)
             }),
             'oseba': pd.DataFrame({
-                'upravna_enota': np.arange(10).astype(str),
+                'upravna_enota': np.arange(10),
                 'id_nesreca': np.arange(10),
+                'oseba_val': np.arange(10).astype(str)
             }),
             'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': np.arange(10).astype(str),
+                'id_upravna_enota': np.arange(10),
+                'upravna_val': np.arange(10).astype(str)
             }),
         }
 
@@ -312,12 +315,15 @@ class TestBaseMultiTableSynthesizer:
         # Run and Assert
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
-            'Relationships:\n'
-            "Error: foreign key column 'upravna_enota' contains unknown references: "
-            '(0, 1, 2, 3, 4, + more). All the values in this column must reference a primary key.'
-            '\n'
-            "Error: foreign key column 'id_nesreca' contains unknown references: "
-            '(0, 1, 2, 3, 4, + more). All the values in this column must reference a primary key.'
+            "Table: 'nesreca'\n"
+            "Error: Invalid values found for numerical column 'nesreca_val': ['0', '1', '2', "
+            "'+ 7 more']."
+            "\n\nTable: 'oseba'\n"
+            "Error: Invalid values found for numerical column 'oseba_val': ['0', '1', '2', "
+            "'+ 7 more']."
+            "\n\nTable: 'upravna_enota'\n"
+            "Error: Invalid values found for numerical column 'upravna_val': ['0', '1', '2', "
+            "'+ 7 more']."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)
@@ -330,13 +336,16 @@ class TestBaseMultiTableSynthesizer:
             'nesreca': pd.DataFrame({
                 'id_nesreca': np.arange(0, 20, 2),
                 'upravna_enota': np.arange(10),
+                'nesreca_val': np.arange(10)
             }),
             'oseba': pd.DataFrame({
                 'upravna_enota': np.arange(10),
                 'id_nesreca': np.arange(10),
+                'oseba_val': np.arange(10)
             }),
             'upravna_enota': pd.DataFrame({
                 'id_upravna_enota': np.arange(10),
+                'upravna_val': np.arange(10)
             }),
         }
         instance = BaseMultiTableSynthesizer(metadata)
@@ -765,7 +774,7 @@ class TestBaseMultiTableSynthesizer:
             'constraint_class': 'Positive',
             'table_name': 'nesreca',
             'constraint_parameters': {
-                'column_name': 'positive_int',
+                'column_name': 'nesreca_val',
                 'strict_boundaries': True
             }
         }
@@ -773,7 +782,7 @@ class TestBaseMultiTableSynthesizer:
             'constraint_class': 'Negative',
             'table_name': 'oseba',
             'constraint_parameters': {
-                'column_name': 'negative_int',
+                'column_name': 'oseba_val',
                 'strict_boundaries': False
             }
         }
@@ -785,14 +794,14 @@ class TestBaseMultiTableSynthesizer:
         positive_constraint = {
             'constraint_class': 'Positive',
             'constraint_parameters': {
-                'column_name': 'positive_int',
+                'column_name': 'nesreca_val',
                 'strict_boundaries': True
             }
         }
         negative_constraint = {
             'constraint_class': 'Negative',
             'constraint_parameters': {
-                'column_name': 'negative_int',
+                'column_name': 'oseba_val',
                 'strict_boundaries': False
             }
         }
@@ -831,7 +840,7 @@ class TestBaseMultiTableSynthesizer:
             'constraint_class': 'Positive',
             'table_name': 'nesreca',
             'constraint_parameters': {
-                'column_name': 'positive_int',
+                'column_name': 'nesreca_val',
                 'strict_boundaries': True
             }
         }
@@ -839,7 +848,7 @@ class TestBaseMultiTableSynthesizer:
             'constraint_class': 'Negative',
             'table_name': 'oseba',
             'constraint_parameters': {
-                'column_name': 'negative_int',
+                'column_name': 'oseba_val',
                 'strict_boundaries': False
             }
         }

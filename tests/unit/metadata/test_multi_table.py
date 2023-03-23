@@ -21,31 +21,31 @@ class TestMultiTableMetadata:
         metadata['tables'] = {
             'users': {
                 'columns': {
-                    'id': {'sdtype': 'numerical'},
+                    'id': {'sdtype': 'id'},
                     'country': {'sdtype': 'categorical'}
                 },
                 'primary_key': 'id'
             },
             'payments': {
                 'columns': {
-                    'payment_id': {'sdtype': 'numerical'},
-                    'user_id': {'sdtype': 'numerical'},
+                    'payment_id': {'sdtype': 'id'},
+                    'user_id': {'sdtype': 'id'},
                     'date': {'sdtype': 'datetime'}
                 },
                 'primary_key': 'payment_id'
             },
             'sessions': {
                 'columns': {
-                    'session_id': {'sdtype': 'numerical'},
-                    'user_id': {'sdtype': 'numerical'},
+                    'session_id': {'sdtype': 'id'},
+                    'user_id': {'sdtype': 'id'},
                     'device': {'sdtype': 'categorical'}
                 },
                 'primary_key': 'session_id'
             },
             'transactions': {
                 'columns': {
-                    'transaction_id': {'sdtype': 'numerical'},
-                    'session_id': {'sdtype': 'numerical'},
+                    'transaction_id': {'sdtype': 'id'},
+                    'session_id': {'sdtype': 'id'},
                     'timestamp': {'sdtype': 'datetime'}
                 },
                 'primary_key': 'transaction_id'
@@ -566,8 +566,10 @@ class TestMultiTableMetadata:
         })
         metadata = MultiTableMetadata()
         metadata.detect_table_from_dataframe('table', table)
+        metadata.update_column('table', 'pk', sdtype='id')
         metadata.set_primary_key('table', 'pk')
         metadata.detect_table_from_dataframe('table2', table)
+        metadata.update_column('table2', 'pk', sdtype='id')
         metadata.set_primary_key('table2', 'pk')
 
         # Run and Assert
@@ -851,8 +853,10 @@ class TestMultiTableMetadata:
         })
         metadata = MultiTableMetadata()
         metadata.detect_table_from_dataframe('table', table)
+        metadata.update_column('table', 'pk', sdtype='id')
         metadata.set_primary_key('table', 'pk')
         metadata.detect_table_from_dataframe('table2', table)
+        metadata.update_column('table2', 'pk', sdtype='id')
         metadata.set_primary_key('table2', 'pk')
 
         metadata.relationships = [
@@ -1183,19 +1187,19 @@ class TestMultiTableMetadata:
 
         # Assert
         expected_payments_label = (
-            '{payments|payment_id : numerical\\luser_id : numerical\\ldate : datetime\\l|'
+            '{payments|payment_id : id\\luser_id : id\\ldate : datetime\\l|'
             'Primary key: payment_id\\lForeign key (users): user_id\\l}'
         )
         expected_sessions_label = (
-            '{sessions|session_id : numerical\\luser_id : numerical\\ldevice : categorical\\l|'
+            '{sessions|session_id : id\\luser_id : id\\ldevice : categorical\\l|'
             'Primary key: session_id\\lForeign key (users): user_id\\l}'
         )
         expected_transactions_label = (
-            '{transactions|transaction_id : numerical\\lsession_id : numerical\\ltimestamp : '
+            '{transactions|transaction_id : id\\lsession_id : id\\ltimestamp : '
             'datetime\\l|Primary key: transaction_id\\lForeign key (sessions): session_id\\l}'
         )
         expected_nodes = {
-            'users': '{users|id : numerical\\lcountry : categorical\\l|Primary key: id\\l\\l}',
+            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l\\l}',
             'payments': expected_payments_label,
             'sessions': expected_sessions_label,
             'transactions': expected_transactions_label
@@ -1273,19 +1277,19 @@ class TestMultiTableMetadata:
 
         # Assert
         expected_payments_label = (
-            '{payments|payment_id : numerical\\luser_id : numerical\\ldate : datetime\\l|'
+            '{payments|payment_id : id\\luser_id : id\\ldate : datetime\\l|'
             'Primary key: payment_id\\lForeign key (users): user_id\\l}'
         )
         expected_sessions_label = (
-            '{sessions|session_id : numerical\\luser_id : numerical\\ldevice : categorical\\l|'
+            '{sessions|session_id : id\\luser_id : id\\ldevice : categorical\\l|'
             'Primary key: session_id\\lForeign key (users): user_id\\l}'
         )
         expected_transactions_label = (
-            '{transactions|transaction_id : numerical\\lsession_id : numerical\\ltimestamp : '
+            '{transactions|transaction_id : id\\lsession_id : id\\ltimestamp : '
             'datetime\\l|Primary key: transaction_id\\lForeign key (sessions): session_id\\l}'
         )
         expected_nodes = {
-            'users': '{users|id : numerical\\lcountry : categorical\\l|Primary key: id\\l\\l}',
+            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l\\l}',
             'payments': expected_payments_label,
             'sessions': expected_sessions_label,
             'transactions': expected_transactions_label
