@@ -67,7 +67,7 @@ class DataProcessor:
             missing_value_replacement='mean',
             model_missing_values=False,
         ),
-        'text': rdt.transformers.RegexGenerator()
+        'id': rdt.transformers.RegexGenerator()
     }
     _DTYPE_TO_SDTYPE = {
         'i': 'numerical',
@@ -456,7 +456,7 @@ class DataProcessor:
             column_metadata = self.metadata.columns.get(column)
             sdtype = column_metadata.get('sdtype')
             pii = column_metadata.get('pii', sdtype not in self._DEFAULT_TRANSFORMERS_BY_SDTYPE)
-            sdtypes[column] = 'pii' if pii else sdtype
+            sdtypes[column] = 'pii' if pii else ('text' if sdtype == 'id' else sdtype)
 
             if sdtype == 'id':
                 dtype = data[column].infer_objects().dtype.kind
