@@ -456,7 +456,7 @@ class DataProcessor:
             column_metadata = self.metadata.columns.get(column)
             sdtype = column_metadata.get('sdtype')
             pii = column_metadata.get('pii', sdtype not in self._DEFAULT_TRANSFORMERS_BY_SDTYPE)
-            sdtypes[column] = 'pii' if pii else ('text' if sdtype == 'id' else sdtype)
+            sdtypes[column] = 'pii' if pii else sdtype
 
             if sdtype == 'id':
                 dtype = data[column].infer_objects().dtype.kind
