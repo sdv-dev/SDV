@@ -106,7 +106,7 @@ setup(
     author='DataCebo, Inc.',
     author_email='info@sdv.dev',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: Free for non-commercial use',
         'Natural Language :: English',
