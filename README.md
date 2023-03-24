@@ -17,7 +17,7 @@
 <br/>
 <p align="center">
 <a href="https://github.com/sdv-dev/SDV">
-<img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/master/docs/images/SDV-DataCebo.png"></img>
+<img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/readme-update-v1.0/docs/images/SDV-logo.png"></img>
 </a>
 </p>
 </div>
@@ -26,7 +26,7 @@
 
 # Overview
 
-The **Synthetic Data Vault (SDV)** is a Python library designed to be your one-stop shop for
+The **Synthetic Data Vault** (SDV) is a Python library designed to be your one-stop shop for
 creating tabular synthetic data. The SDV uses a variety of machine learning algorithms to learn
 patterns from your real data and emulate them in synthetic data.
 
@@ -59,7 +59,7 @@ and define business rules in the form of logical constraints.
 [Slack Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/slack.png
 [Community]: https://bit.ly/sdv-slack-invite
 [Colab Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/google_colab.png
-[Tutorials]: https://bit.ly/sdv-tutorials
+[Tutorials]: https://docs.sdv.dev/sdv/demos
 
 # Install
 The SDV is publicly available under the [Business Source License](https://github.com/sdv-dev/SDV/blob/master/LICENSE).
@@ -191,7 +191,10 @@ If you use SDV for your research, please cite the following paper:
 
 
 <div align="center">
-<a href="https://datacebo.com"><img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/master/docs/images/DataCebo.png"></img></a>
+  <a href="https://datacebo.com"><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/sdv-dev/SDV/blob/readme-update-v1.0/docs/images/datacebo-logo-dark-mode.png">
+      <img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/readme-update-v1.0/docs/images/datacebo-log.png"></img>
+  </picture></a>
 </div>
 <br/>
 <br/>
