@@ -193,7 +193,7 @@ If you use SDV for your research, please cite the following paper:
 <div align="center">
   <a href="https://datacebo.com"><picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://github.com/sdv-dev/SDV/blob/readme-update-v1.0/docs/images/datacebo-logo-dark-mode.png">
-      <img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/readme-update-v1.0/docs/images/datacebo-log.png"></img>
+      <img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/readme-update-v1.0/docs/images/datacebo-logo.png"></img>
   </picture></a>
 </div>
 <br/>
