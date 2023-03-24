@@ -45,6 +45,139 @@ PII handling is improved by the following features:
 
 Finally, the synthetic data can now be easily evaluated using the `evaluate_quality()` and `run_diagnostic()` methods. The data can be compared visually to the actual data using the `get_column_plot()` and `get_column_pair_plot()` methods. For more info on how to visualize or interpret the synthetic data evaluation, read the docs [here](https://docs.sdv.dev/sdv/single-table-data/evaluation).
 
+### New Features
+
+* In `upgrade_metadata`, return the object instead of writing it to a JSON file - Issue [#1319](https://github.com/sdv-dev/SDV/issues/1319) by @frances-h
+* In `upgrade_metadata` index primary keys should be converted to `text` - Issue [#1318](https://github.com/sdv-dev/SDV/issues/1318) by @amontanez24
+* Add `load_from_dict` to SingleTableMetadata and MultiTableMetadata - Issue [#1314](https://github.com/sdv-dev/SDV/issues/1314) by @amontanez24
+* Throw a `SynthesizerInputError` if `FixedCombinations` constraint is applied to a column that is not `boolean` or `categorical` - Issue [#1306](https://github.com/sdv-dev/SDV/issues/1306) by @frances-h
+* Add integration tests for 'Adding Constraints' demo - Issue [#1280](https://github.com/sdv-dev/SDV/issues/1280) by @pvk-developer
+* Add integration tests to the 'Use Your Own Data' demo - Issue [#1278](https://github.com/sdv-dev/SDV/issues/1278) by @frances-h
+* Add integration tests for 'Synthesize Multi Tables' demo - Issue [#1277](https://github.com/sdv-dev/SDV/issues/1277) by @pvk-developer
+* Add integration tests for 'Synthesize a Table' demo - Issue [#1276](https://github.com/sdv-dev/SDV/issues/1276) by @frances-h
+* Missing `save` and `load` methods for `HMASynthesizer` - Issue [#1262](https://github.com/sdv-dev/SDV/issues/1262) by @amontanez24
+* Better input validation when creating single and multi table synthesizers - Issue [#1242](https://github.com/sdv-dev/SDV/issues/1242) by @fealho
+* Better input validation on `HMASynthesizer.sample` - Issue [#1241](https://github.com/sdv-dev/SDV/issues/1241) by @R-Palazzo
+* Validate that relationship must be between a `primary key` and `foreign key` - Issue [#1236](https://github.com/sdv-dev/SDV/issues/1236) by @fealho
+* Improve `update_column` validation for `pii` attribute - Issue [#1226](https://github.com/sdv-dev/SDV/issues/1226) by @pvk-developer
+* Order the output of `get_transformers()` based on the metadata - Issue [#1222](https://github.com/sdv-dev/SDV/issues/1222) by @pvk-developer
+* Log if any `numerical_distributions` will not be applied - Issue [#1212](https://github.com/sdv-dev/SDV/issues/1212) by @fealho
+* Improve error handling for `GaussianCopulaSynthesizer`: `numerical_distributions` - Issue [#1211](https://github.com/sdv-dev/SDV/issues/1211) by @fealho
+* Improve error handling when validating `constraints` - Issue [#1210](https://github.com/sdv-dev/SDV/issues/1210) by @fealho
+* Add `fake_companies` demo - Issue [#1209](https://github.com/sdv-dev/SDV/issues/1209) by @amontanez24
+* Allow me to create a custom constraint class and use it in the same file - Issue [#1205](https://github.com/sdv-dev/SDV/issues/1205) by @amontanez24
+* Sampling should reset after retraining the model - Issue [#1201](https://github.com/sdv-dev/SDV/issues/1201) by @pvk-developer
+* Change function name `HMASynthesizer.update_table_parameters` --> `set_table_parameters` - Issue [#1200](https://github.com/sdv-dev/SDV/issues/1200) by @pvk-developer
+* Add `get_info` method to synthesizers - Issue [#1199](https://github.com/sdv-dev/SDV/issues/1199) by @fealho
+* Add evaluation methods to synthesizer - Issue [#1190](https://github.com/sdv-dev/SDV/issues/1190) by @fealho
+* Update `evaluate.py` to work with the new `metadata` - Issue [#1186](https://github.com/sdv-dev/SDV/issues/1186) by @fealho
+* Remove old code - Issue [#1181](https://github.com/sdv-dev/SDV/issues/1181) by @pvk-developer
+* Drop support for python 3.6 and add support for 3.10 - Issue [#1176](https://github.com/sdv-dev/SDV/issues/1176) by @fealho
+* Add constraint methods to MultiTableSynthesizers - Issue [#1171](https://github.com/sdv-dev/SDV/issues/1171) by @fealho
+* Update custom constraint workflow - Issue [#1169](https://github.com/sdv-dev/SDV/issues/1169) by @pvk-developer
+* Add get_constraints method to synthesizers - Issue [#1168](https://github.com/sdv-dev/SDV/issues/1168) by @pvk-developer
+* Migrate adding and validating constraints to BaseSynthesizer - Issue [#1163](https://github.com/sdv-dev/SDV/issues/1163) by @pvk-developer
+* Change metadata `"SCHEMA_VERSION"` --> `"METADATA_SPEC_VERSION"` - Issue [#1139](https://github.com/sdv-dev/SDV/issues/1139) by @amontanez24
+* Add ability to reset random sampling - Issue [#1130](https://github.com/sdv-dev/SDV/issues/1130) by @pvk-developer
+* Add get_available_demos - Issue [#1129](https://github.com/sdv-dev/SDV/issues/1129) by @fealho
+* Add demo loading functionality - Issue [#1128](https://github.com/sdv-dev/SDV/issues/1128) by @fealho
+* Use logging instead of printing in detect methods - Issue [#1107](https://github.com/sdv-dev/SDV/issues/1107) by @fealho
+* Add save and load methods to synthesizers - Issue [#1106](https://github.com/sdv-dev/SDV/issues/1106) by @pvk-developer
+* Add sampling methods to PARSynthesizer - Issue [#1083](https://github.com/sdv-dev/SDV/issues/1083) by @amontanez24
+* Add transformer methods to PARSynthesizer - Issue [#1082](https://github.com/sdv-dev/SDV/issues/1082) by @fealho
+* Add validate to PARSynthesizer - Issue [#1081](https://github.com/sdv-dev/SDV/issues/1081) by @amontanez24
+* Add preprocess and fit methods to PARSynthesizer - Issue [#1080](https://github.com/sdv-dev/SDV/issues/1080) by @amontanez24
+* Create SingleTablePreset - Issue [#1079](https://github.com/sdv-dev/SDV/issues/1079) by @amontanez24
+* Add sample method to multi-table synthesizers - Issue [#1078](https://github.com/sdv-dev/SDV/issues/1078) by @pvk-developer
+* Add get_learned_distributions method to synthesizers - Issue [#1075](https://github.com/sdv-dev/SDV/issues/1075) by @pvk-developer
+* Add preprocess and fit methods to multi-table synthesizers - Issue [#1074](https://github.com/sdv-dev/SDV/issues/1074) by @pvk-developer
+* Add transformer related methods to BaseMultiTableSynthesizer - Issue [#1072](https://github.com/sdv-dev/SDV/issues/1072) by @fealho
+* Add validate method to `BaseMultiTableSynthesizer` - Issue [#1071](https://github.com/sdv-dev/SDV/issues/1071) by @pvk-developer
+* Create BaseMultiTableSynthesizer and HMASynthesizer classes - Issue [#1070](https://github.com/sdv-dev/SDV/issues/1070) by @pvk-developer
+* Create PARSynthesizer - Issue [#1055](https://github.com/sdv-dev/SDV/issues/1055) by @amontanez24
+* Raise an error if an invalid sdtype is provided to the metadata - Issue [#1042](https://github.com/sdv-dev/SDV/issues/1042) by @amontanez24
+* Only allow datetime and numerical sdtypes to be set as the sequence index - Issue [#1030](https://github.com/sdv-dev/SDV/issues/1030) by @amontanez24
+* Change set_alternate_keys to add_alternate_keys and add error handling - Issue [#1029](https://github.com/sdv-dev/SDV/issues/1029) by @amontanez24
+* Create `MultiTableMetadata.add_table` method - Issue [#1024](https://github.com/sdv-dev/SDV/issues/1024) by @amontanez24
+* Add update_transformers to synthesizers - Issue [#1021](https://github.com/sdv-dev/SDV/issues/1021) by @fealho
+* Add assign_transformers and get_transformers methods to synthesizers - Issue [#1020](https://github.com/sdv-dev/SDV/issues/1020) by @pvk-developer
+* Add fit and fit_processed_data methods to synthesizers - Issue [#1019](https://github.com/sdv-dev/SDV/issues/1019) by @pvk-developer
+* Add preprocess method to synthesizers - Issue [#1018](https://github.com/sdv-dev/SDV/issues/1018) by @pvk-developer
+* Add sampling to synthesizer classes - Issue [#1015](https://github.com/sdv-dev/SDV/issues/1015) by @pvk-developer
+* Add validate method to synthesizer - Issue [#1014](https://github.com/sdv-dev/SDV/issues/1014) by @fealho
+* Create GaussianCopula, CTGAN, TVAE and CopulaGAN synthesizer classes - Issue [#1013](https://github.com/sdv-dev/SDV/issues/1013) by @pvk-developer
+* Create BaseSynthesizer class - Issue [#1012](https://github.com/sdv-dev/SDV/issues/1012) by @pvk-developer
+* Add constraint conversion to upgrade_metadata - Issue [#1005](https://github.com/sdv-dev/SDV/issues/1005) by @amontanez24
+* Add method to generate keys to DataProcessor - Issue [#994](https://github.com/sdv-dev/SDV/issues/994) by @pvk-developer
+* Create formatter - Issue [#970](https://github.com/sdv-dev/SDV/issues/970) by @fealho
+* Create a utility to load multiple CSV files at once - Issue [#969](https://github.com/sdv-dev/SDV/issues/969) by @amontanez24
+* Create a utility to convert old --> new metadata format - Issue [#966](https://github.com/sdv-dev/SDV/issues/966) by @amontanez24
+* Add validation check that `primary_key`, `alternate_keys` and `sequence_key` cannot be sdtype categorical - Issue [#963](https://github.com/sdv-dev/SDV/issues/963) by @fealho
+* Add anonymization to DataProcessor - Issue [#950](https://github.com/sdv-dev/SDV/issues/950) by @pvk-developer
+* Add utility methods to DataProcessor - Issue [#948](https://github.com/sdv-dev/SDV/issues/948) by @fealho
+* Add fit, transform and reverse_transform to DataProcessor - Issue [#947](https://github.com/sdv-dev/SDV/issues/947) by @amontanez24
+* Create DataProcessor class - Issue [#946](https://github.com/sdv-dev/SDV/issues/946) by @amontanez24
+* Add add_constraint method to MultiTableMetadata - Issue [#895](https://github.com/sdv-dev/SDV/issues/895) by @amontanez24
+* Add key related methods to MultiTableMetadata - Issue [#894](https://github.com/sdv-dev/SDV/issues/894) by @fealho
+* Add update_column and add_column methods to MultiTableMetadata - Issue [#893](https://github.com/sdv-dev/SDV/issues/893) by @amontanez24
+* Add detect methods to MultiTableMetadata - Issue [#892](https://github.com/sdv-dev/SDV/issues/892) by @amontanez24
+* Add load_from_json and save_to_json methods to the MultiTableMetadata - Issue [#891](https://github.com/sdv-dev/SDV/issues/891) by @fealho
+* Add add_relationship method to MultiTableMetadata - Issue [#890](https://github.com/sdv-dev/SDV/issues/890) by @pvk-developer
+* Add validate method to MultiTableMetadata - Issue [#888](https://github.com/sdv-dev/SDV/issues/888) by @pvk-developer
+* Add visualize method to MultiTableMetadata class - Issue [#884](https://github.com/sdv-dev/SDV/issues/884) by @amontanez24
+* Create MultiTableMetadata class - Issue [#883](https://github.com/sdv-dev/SDV/issues/883) by @pvk-developer
+* Add add_constraint method to SingleTableMetadata - Issue [#881](https://github.com/sdv-dev/SDV/issues/881) by @amontanez24
+* Add key related methods to SingleTableMetadata - Issue [#880](https://github.com/sdv-dev/SDV/issues/880) by @fealho
+* Add validate method to SingleTableMetadata - Issue [#879](https://github.com/sdv-dev/SDV/issues/879) by @fealho
+* Add _validate_inputs class method to each constraint - Issue [#878](https://github.com/sdv-dev/SDV/issues/878) by @fealho
+* Add update_column and add_column methods to SingleTableMetadata - Issue [#877](https://github.com/sdv-dev/SDV/issues/877) by @pvk-developer
+* Add detect methods to SingleTableMetadata - Issue [#876](https://github.com/sdv-dev/SDV/issues/876) by @pvk-developer
+* Add load_from_json and save_to_json methods to SingleTableMetadata - Issue [#874](https://github.com/sdv-dev/SDV/issues/874) by @pvk-developer
+* Create SingleTableMetadata class - Issue [#873](https://github.com/sdv-dev/SDV/issues/873) by @pvk-developer
+
+### Bugs Fixed
+
+* In `upgrade_metadata`, PII values are being converted to generic categorical columns - Issue [#1317](https://github.com/sdv-dev/SDV/issues/1317) by @frances-h
+* `PARSynthesizer` is missing `save` and `load` methods - Issue [#1289](https://github.com/sdv-dev/SDV/issues/1289) by @amontanez24
+* Confusing warning when updating transformers - Issue [#1272](https://github.com/sdv-dev/SDV/issues/1272) by @frances-h
+* When adding constraints, `auto_assign_transformers` is showing columns that should no longer exist - Issue [#1260](https://github.com/sdv-dev/SDV/issues/1260) by @pvk-developer
+* Cannot fit twice if I modify transformers: `ValueError: There are non-numerical values in your data.` - Issue [#1259](https://github.com/sdv-dev/SDV/issues/1259) by @frances-h
+* Cannot fit twice if I add constraints: `ValueError: There are non-numerical values in your data.` - Issue [#1258](https://github.com/sdv-dev/SDV/issues/1258) by @frances-h
+* `HMASynthesizer` errors out when fitting a dataset that has a table which holds primary key and foreign keys only - Issue [#1257](https://github.com/sdv-dev/SDV/issues/1257) by @pvk-developer
+* Change ValueErrors to InvalidMetadataErrors - Issue [#1251](https://github.com/sdv-dev/SDV/issues/1251) by @frances-h
+* Multi-table should show foreign key transformers as None - Issue [#1249](https://github.com/sdv-dev/SDV/issues/1249) by @frances-h
+* Cannot use `HMASynthesizer.fit_processed_data` more than once (`KeyError`) - Issue [#1240](https://github.com/sdv-dev/SDV/issues/1240) by @frances-h
+* Function `get_available_demos` crashes if a dataset's `num-tables` or `size-MB` cannot be found - Issue [#1215](https://github.com/sdv-dev/SDV/issues/1215) by @amontanez24
+* Cannot supply a natural key to `HMASynthesizer` (where `sdtype` is custom): Error in `sample` - Issue [#1214](https://github.com/sdv-dev/SDV/issues/1214) by @pvk-developer
+* Unable to sample when using a `PseudoAnonymizedFaker` - Issue [#1207](https://github.com/sdv-dev/SDV/issues/1207) by @pvk-developer
+* Incorrect `sdtype` specified in demo dataset `student_placements_pii` - Issue [#1206](https://github.com/sdv-dev/SDV/issues/1206) by @amontanez24
+* Auto assigned transformers for datetime columns don't have the right parameters - Issue [#1204](https://github.com/sdv-dev/SDV/issues/1204) by @pvk-developer
+* Cannot apply `Inequality` constraint on demo dataset's datetime columns - Issue [#1203](https://github.com/sdv-dev/SDV/issues/1203) by @pvk-developer
+* pii should not be required to auto-assign faker transformers - Issue [#1194](https://github.com/sdv-dev/SDV/issues/1194) by @pvk-developer
+* Misc. bug fixes for SDV 1.0.0 - Issue [#1193](https://github.com/sdv-dev/SDV/issues/1193) by @pvk-developer
+* Small bug fixes in demo module - Issue [#1192](https://github.com/sdv-dev/SDV/issues/1192) by @pvk-developer
+* Foreign Keys are added as Alternate Keys when upgrading - Issue [#1143](https://github.com/sdv-dev/SDV/issues/1143) by @pvk-developer
+* Alternate keys not unique when assigned to a semantic type - Issue [#1111](https://github.com/sdv-dev/SDV/issues/1111) by @pvk-developer
+* Synthesizer errors if column is semantic type and pii is False - Issue [#1110](https://github.com/sdv-dev/SDV/issues/1110) by @fealho
+* Sampled values not unique if primary key is numerical - Issue [#1109](https://github.com/sdv-dev/SDV/issues/1109) by @pvk-developer
+* Validate not called during synthesizer creation - Issue [#1105](https://github.com/sdv-dev/SDV/issues/1105) by @pvk-developer
+* SingleTableSynthesizer fit doesn't update rounding - Issue [#1104](https://github.com/sdv-dev/SDV/issues/1104) by @amontanez24
+* Method `auto_assign_tranformers` always sets `enforce_min_max_values=True` - Issue [#1095](https://github.com/sdv-dev/SDV/issues/1095) by @fealho
+* Sampled context columns in PAR must be in the same order - Issue [#1052](https://github.com/sdv-dev/SDV/issues/1052) by @amontanez24
+* Incorrect schema version printing during detect_table_from_dataframe - Issue [#1038](https://github.com/sdv-dev/SDV/issues/1038) by @amontanez24
+* Same relationship can be added twice to MultiTableMetadata - Issue [#1031](https://github.com/sdv-dev/SDV/issues/1031) by @amontanez24
+* Miscellaneous metadata bugs - Issue [#1026](https://github.com/sdv-dev/SDV/issues/1026) by @amontanez24
+
+### Maintenance
+
+* SDV Package Maintenance Updates - Issue [#1140](https://github.com/sdv-dev/SDV/issues/1140) by @amontanez24
+
+### Internal
+
+* Add integration tests for 'Synthesize Sequences' demo - Issue [#1295](https://github.com/sdv-dev/SDV/issues/1295) by @pvk-developer
+* Update `get_available_demos` tests - Issue [#1247](https://github.com/sdv-dev/SDV/issues/1247) by @fealho
+* Make private attributes public in the metadata - Issue [#1245](https://github.com/sdv-dev/SDV/issues/1245) by @fealho
+
 ## 0.18.0 - 2023-01-24
 
 This release adds suppport for Python 3.10 and drops support for 3.6.
