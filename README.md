@@ -55,7 +55,7 @@ and define business rules in the form of logical constraints.
 [Docs]: https://bit.ly/sdv-docs
 [Repository]: https://github.com/sdv-dev/SDV
 [License]: https://github.com/sdv-dev/SDV/blob/master/LICENSE
-[Development Status]: https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha
+[Development Status]: https://pypi.org/search/?c=Development+Status+%3A%3A+5+-+Production%2FStable
 [Slack Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/slack.png
 [Community]: https://bit.ly/sdv-slack-invite
 [Colab Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/google_colab.png
