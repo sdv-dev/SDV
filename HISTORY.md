@@ -4,6 +4,8 @@
 
 This is a major release that introduces a new API to the `SDV` aimed at streamlining the process of synthetic data generation! To achieve this, this release includes the addition of several large features.
 
+### Metadata
+
 Some of the most notable additions are the new `SingleTableMetadata` and `MultiTableMetadata` classes. These classes enable a number of features that make it easier to synthesize your data correctly such as:
 
 * Automatic data detection - Calling `metadata.detect_from_dataframe()` or `metadata.detect_from_csv()` will populate the metadata autonomously with values it thinks represent the data.
@@ -11,6 +13,8 @@ Some of the most notable additions are the new `SingleTableMetadata` and `MultiT
 * Metadata validation - Calling `metadata.validate()` will return a report of any invalid definitions in the metadata specification.
 * Upgrading - Users with the previous metadata format can easily update to the new specification using the `upgrade_metadata()` method.
 * Saving and loading - The metadata itself can easily be saved to a json file and loaded back up later.
+
+### Class and Module Names
 
 Another major change is the renaming of our core modeling classes and modules. The name changes are meant to highlight the difference between the underlying machine learning models, and the objects responsible for the end-to-end workflow of generating synthetic data. The main name changes are as follows:
 * `tabular` -> `single_table`
@@ -26,9 +30,11 @@ Another major change is the renaming of our core modeling classes and modules. T
 
 In `SDV` 1.0, synthesizers are classes that take in metadata and handle data preprocessing, model training and model sampling. This is similar to the previous `BaseTabularModel` in `SDV` <1.0.
 
+### Synthetic Data Workflow
+
 `Synthesizers` in `SDV` 1.0 define a clear workflow for generating synthetic data.
 1. Synthesizers are initialized with a metadata class.
-2. They can then be used to transform the data and apply constraints using the `synthesizer.preprocess()` method. This step also validate that the data matches the provided metadata to avoid errors in fitting or sampling.
+2. They can then be used to transform the data and apply constraints using the `synthesizer.preprocess()` method. This step also validates that the data matches the provided metadata to avoid errors in fitting or sampling.
 3. The processed data can then be fed into the underlying machine learning model using `synthesizer.fit_processed_data()`. (Alternatively, data can be preprocessed and fit to the model using `synthesizer.fit()`.)
 4. Data can then be sampled using `synthesizer.sample()`.
 
@@ -36,7 +42,9 @@ Each synthesizer class also provides a series of methods to help users customize
 
 Notice that the preprocessing and model fitting steps can now be separated. This can be helpful if preprocessing is time consuming or if the data has been processed externally.
 
-Another major addition is control over randomization. In `SDV` <1.0, users could set a seed to control the randomization for only some columns. In `SDV` 1.0, randomization is controlled for all columns. Every new call to sample generates new data, but the synthesizers seed can be reset to the original state using `synthesizer.reset_randomization()`, enabling reproducibility.
+### Other Highly Requested Features
+
+Another major addition is control over randomization. In `SDV` <1.0, users could set a seed to control the randomization for only some columns. In `SDV` 1.0, randomization is controlled for all columns. Every new call to sample generates new data, but the synthesizer's seed can be reset to the original state using `synthesizer.reset_randomization()`, enabling reproducibility.
 
 PII handling is improved by the following features:
 * Primary keys can be set to natural sdtypes (eg. SSN, email, name). Previously they could only be numerical or text.
@@ -45,7 +53,9 @@ PII handling is improved by the following features:
 
 Finally, the synthetic data can now be easily evaluated using the `evaluate_quality()` and `run_diagnostic()` methods. The data can be compared visually to the actual data using the `get_column_plot()` and `get_column_pair_plot()` methods. For more info on how to visualize or interpret the synthetic data evaluation, read the docs [here](https://docs.sdv.dev/sdv/single-table-data/evaluation).
 
-### New Features
+### Issues Resolved
+
+#### New Features
 
 * In `upgrade_metadata`, return the object instead of writing it to a JSON file - Issue [#1319](https://github.com/sdv-dev/SDV/issues/1319) by @frances-h
 * In `upgrade_metadata` index primary keys should be converted to `text` - Issue [#1318](https://github.com/sdv-dev/SDV/issues/1318) by @amontanez24
@@ -135,7 +145,7 @@ Finally, the synthetic data can now be easily evaluated using the `evaluate_qual
 * Add load_from_json and save_to_json methods to SingleTableMetadata - Issue [#874](https://github.com/sdv-dev/SDV/issues/874) by @pvk-developer
 * Create SingleTableMetadata class - Issue [#873](https://github.com/sdv-dev/SDV/issues/873) by @pvk-developer
 
-### Bugs Fixed
+#### Bugs Fixed
 
 * In `upgrade_metadata`, PII values are being converted to generic categorical columns - Issue [#1317](https://github.com/sdv-dev/SDV/issues/1317) by @frances-h
 * `PARSynthesizer` is missing `save` and `load` methods - Issue [#1289](https://github.com/sdv-dev/SDV/issues/1289) by @amontanez24
@@ -168,11 +178,11 @@ Finally, the synthetic data can now be easily evaluated using the `evaluate_qual
 * Same relationship can be added twice to MultiTableMetadata - Issue [#1031](https://github.com/sdv-dev/SDV/issues/1031) by @amontanez24
 * Miscellaneous metadata bugs - Issue [#1026](https://github.com/sdv-dev/SDV/issues/1026) by @amontanez24
 
-### Maintenance
+#### Maintenance
 
 * SDV Package Maintenance Updates - Issue [#1140](https://github.com/sdv-dev/SDV/issues/1140) by @amontanez24
 
-### Internal
+#### Internal
 
 * Add integration tests for 'Synthesize Sequences' demo - Issue [#1295](https://github.com/sdv-dev/SDV/issues/1295) by @pvk-developer
 * Update `get_available_demos` tests - Issue [#1247](https://github.com/sdv-dev/SDV/issues/1247) by @fealho
