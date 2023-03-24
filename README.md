@@ -17,7 +17,7 @@
 <br/>
 <p align="center">
 <a href="https://github.com/sdv-dev/SDV">
-<img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/readme-update-v1.0/docs/images/SDV-logo.png"></img>
+<img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/master/docs/images/SDV-logo.png"></img>
 </a>
 </p>
 </div>
@@ -86,7 +86,7 @@ real_data, metadata = download_demo(
     dataset_name='fake_hotel_guests')
 ```
 
-![Single Table Metadata Example](https://github.com/sdv-dev/SDV/blob/readme-update-v1.0/docs/images/Single-Table-Metadata-Example.png)
+![Single Table Metadata Example](https://github.com/sdv-dev/SDV/blob/master/docs/images/Single-Table-Metadata-Example.png)
 
 The demo also includes **metadata**, a description of the dataset, including the data types in each
 column and the primary key (`guest_email`).
@@ -154,7 +154,7 @@ fig = get_column_plot(
 fig.show()
 ```
 
-![Real vs. Synthetic Data](https://github.com/sdv-dev/SDV/blob/readme-update-v1.0/docs/images/Real-vs-Synthetic-Evaluation.png)
+![Real vs. Synthetic Data](https://github.com/sdv-dev/SDV/blob/master/docs/images/Real-vs-Synthetic-Evaluation.png)
 
 # What's Next?
 Using the SDV library, you can synthesize single table, multi table and sequential data. You can
@@ -192,8 +192,8 @@ If you use SDV for your research, please cite the following paper:
 
 <div align="center">
   <a href="https://datacebo.com"><picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/sdv-dev/SDV/blob/readme-update-v1.0/docs/images/datacebo-logo-dark-mode.png">
-      <img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/readme-update-v1.0/docs/images/datacebo-logo.png"></img>
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/sdv-dev/SDV/blob/master/docs/images/datacebo-logo-dark-mode.png">
+      <img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/master/docs/images/datacebo-logo.png"></img>
   </picture></a>
 </div>
 <br/>
