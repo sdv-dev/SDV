@@ -209,6 +209,6 @@ data, including:
 * 📊 Measuring quality and privacy of synthetic data, and comparing different synthetic data
   generation models.
 
-[Get started using the SDV package](https://sdv.dev/SDV/getting_started/install.html) -- a fully
+[Get started using the SDV package](https://bit.ly/sdv-docs) -- a fully
 integrated solution and your one-stop shop for synthetic data. Or, use the standalone libraries
 for specific needs.
