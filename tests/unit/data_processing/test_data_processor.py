@@ -923,7 +923,7 @@ class TestDataProcessor:
             'ssn',
             sdtype,
             column_metadata,
-            'O'
+            False
         )
 
         # Assert
@@ -1224,7 +1224,7 @@ class TestDataProcessor:
             'id',
             'id',
             {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'},
-            'O'
+            False
         )
 
     def test_update_transformers_not_fitted(self):

@@ -369,7 +369,7 @@ class DataProcessor:
 
         return get_anonymized_transformer(sdtype, kwargs)
 
-    def create_regex_generator(self, column_name, sdtype, column_metadata, dtype):
+    def create_regex_generator(self, column_name, sdtype, column_metadata, is_numeric):
         """Create a ``RegexGenerator`` for the ``id`` columns.
 
         Read the keyword arguments from the ``column_metadata`` and use them to create
@@ -385,8 +385,8 @@ class DataProcessor:
                 Sematic data type or a ``Faker`` function name.
             column_metadata (dict):
                 A dictionary representing the rest of the metadata for the given ``sdtype``.
-            dtype (str):
-                A string representing the data type for this column.
+            is_numeric (boolean):
+                A boolean representing whether or not data type is numeric or not.
 
         Returns:
             transformer:
@@ -394,7 +394,7 @@ class DataProcessor:
                 ``rdt.transformers.pii.AnonymizedFaker`` with ``enforce_uniqueness`` set to
                 ``True``.
         """
-        if dtype == 'i':
+        if is_numeric:
             regex_format = column_metadata.get('regex_format', r'\d{30}')
             transformer = rdt.transformers.RegexGenerator(
                 regex_format=regex_format,
@@ -459,12 +459,12 @@ class DataProcessor:
             sdtypes[column] = 'pii' if pii else sdtype
 
             if sdtype == 'id':
-                dtype = data[column].infer_objects().dtype.kind
+                is_numeric = pd.api.types.is_numeric_dtype(data[column].dtype)
                 transformers[column] = self.create_regex_generator(
                     column,
                     sdtype,
                     column_metadata,
-                    dtype
+                    is_numeric
                 )
                 sdtypes[column] = 'text'
 
