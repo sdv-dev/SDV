@@ -46,9 +46,13 @@ Notice that the preprocessing and model fitting steps can now be separated. This
 
 Another major addition is control over randomization. In `SDV` <1.0, users could set a seed to control the randomization for only some columns. In `SDV` 1.0, randomization is controlled for all columns. Every new call to sample generates new data, but the synthesizer's seed can be reset to the original state using `synthesizer.reset_randomization()`, enabling reproducibility.
 
+`SDV 1.0` adds accessibility and transparency into the transformers used for preprocessing and underlying machine learning models.
+* Using the `synthesizer.get_transformers()` method, you can access the transformers used to preprocess each column and view their properties. This can be useful for debugging and accessing privacy information like mappings used to mask data.
+* Distribution parameters learned by copula models can be accessed using the `synthesizer.get_learned_distributions()` method.
+
 PII handling is improved by the following features:
 * Primary keys can be set to natural sdtypes (eg. SSN, email, name). Previously they could only be numerical or text.
-* The `PseudoAnonymizedFaker` can be used to provide consistent mapping to PII columns. The mapping itself can be accessed by viewing the transformers for the column using `synthesizer.get_transformers()`.
+* The `PseudoAnonymizedFaker` can be used to provide consistent mapping to PII columns. As mentioned before, the mapping itself can be accessed by viewing the transformers for the column using `synthesizer.get_transformers()`.
 * A bug causing PII columns to slow down modeling is patched.
 
 Finally, the synthetic data can now be easily evaluated using the `evaluate_quality()` and `run_diagnostic()` methods. The data can be compared visually to the actual data using the `get_column_plot()` and `get_column_pair_plot()` methods. For more info on how to visualize or interpret the synthetic data evaluation, read the docs [here](https://docs.sdv.dev/sdv/single-table-data/evaluation).
