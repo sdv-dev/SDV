@@ -394,18 +394,12 @@ class DataProcessor:
                 ``rdt.transformers.pii.AnonymizedFaker`` with ``enforce_uniqueness`` set to
                 ``True``.
         """
-        if is_numeric:
-            regex_format = column_metadata.get('regex_format', r'\d{30}')
-            transformer = rdt.transformers.RegexGenerator(
-                regex_format=regex_format,
-                enforce_uniqueness=(column_name in self._keys)
-            )
-        else:
-            regex_format = column_metadata.get('regex_format', '[0-1a-z]{5}')
-            transformer = rdt.transformers.RegexGenerator(
-                regex_format=regex_format,
-                enforce_uniqueness=(column_name in self._keys)
-            )
+        default_regex_format = r'\d{30}' if is_numeric else '[0-1a-z]{5}'
+        regex_format = column_metadata.get('regex_format', default_regex_format)
+        transformer = rdt.transformers.RegexGenerator(
+            regex_format=regex_format,
+            enforce_uniqueness=(column_name in self._keys)
+        )
 
         return transformer
 
