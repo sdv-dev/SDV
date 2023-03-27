@@ -19,8 +19,8 @@ from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
-BUCKET = 'sdv-updated-datasets'
-BUCKET_URL = 'https://sdv-updated-datasets.s3.amazonaws.com'
+BUCKET = 'sdv-demo-datasets'
+BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
 METADATA_FILENAME = 'metadata.json'
 
 
