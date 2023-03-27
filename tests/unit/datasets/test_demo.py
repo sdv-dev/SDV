@@ -239,14 +239,14 @@ def test_get_available_demos(client_mock):
     # Setup
     contents_objects = {
         'Contents': [
-            {'Key': 'single_table/dataset1.zip'},
-            {'Key': 'single_table/dataset2.zip'}
+            {'Key': 'SINGLE_TABLE/dataset1.zip'},
+            {'Key': 'SINGLE_TABLE/dataset2.zip'}
         ]
     }
     client_mock.return_value.list_objects = Mock(return_value=contents_objects)
 
     def metadata_func(Bucket, Key):  # noqa: N803
-        if Key == 'single_table/dataset1.zip':
+        if Key == 'SINGLE_TABLE/dataset1.zip':
             return {
                 'Metadata': {
                     'size-mb': 123,
@@ -281,14 +281,14 @@ def test_get_available_demos_missing_metadata(client_mock):
     # Setup
     contents_objects = {
         'Contents': [
-            {'Key': 'single_table/dataset1.zip'},
-            {'Key': 'single_table/dataset2.zip'}
+            {'Key': 'SINGLE_TABLE/dataset1.zip'},
+            {'Key': 'SINGLE_TABLE/dataset2.zip'}
         ]
     }
     client_mock.return_value.list_objects = Mock(return_value=contents_objects)
 
     def metadata_func(Bucket, Key):  # noqa: N803
-        if Key == 'single_table/dataset1.zip':
+        if Key == 'SINGLE_TABLE/dataset1.zip':
             return {
                 'Metadata': {}
             }
