@@ -39,7 +39,7 @@ def _validate_output_folder(output_folder_name):
 
 
 def _download(modality, dataset_name):
-    dataset_url = f'{BUCKET_URL}/{modality}/{dataset_name}.zip'
+    dataset_url = f'{BUCKET_URL}/{modality.upper()}/{dataset_name}.zip'
     LOGGER.info(f'Downloading dataset {dataset_name} from {dataset_url}')
     try:
         response = urllib.request.urlopen(dataset_url)
@@ -166,7 +166,7 @@ def get_available_demos(modality):
     tables_info = defaultdict(list)
     for item in client.list_objects(Bucket=BUCKET)['Contents']:
         dataset_modality, dataset = item['Key'].split('/', 1)
-        if dataset_modality == modality:
+        if dataset_modality == modality.upper():
             tables_info['dataset_name'].append(dataset.replace('.zip', ''))
             headers = client.head_object(Bucket=BUCKET, Key=item['Key'])['Metadata']
             size_mb = headers.get('size-mb', np.nan)
