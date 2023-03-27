@@ -39,7 +39,7 @@ def _validate_output_folder(output_folder_name):
 
 
 def _download(modality, dataset_name):
-    dataset_url = BUCKET_URL + '/' + modality + '/' + dataset_name + '.zip'
+    dataset_url = f'{BUCKET_URL}/{modality}/{dataset_name}.zip'
     LOGGER.info(f'Downloading dataset {dataset_name} from {dataset_url}')
     try:
         response = urllib.request.urlopen(dataset_url)
