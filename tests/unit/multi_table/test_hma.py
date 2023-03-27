@@ -134,7 +134,13 @@ class TestHMASynthesizer:
         expected_result = pd.DataFrame({
             'id_nesreca': [0, 1, 2, 3],
             'upravna_enota': [0, 1, 2, 3],
+            'nesreca_val': [0, 1, 2, 3],
             'value': [0, 1, 2, 3],
+            '__oseba__id_nesreca__covariance__0__0': [0.] * 4,
+            '__oseba__id_nesreca__univariates__oseba_val__a': [1.] * 4,
+            '__oseba__id_nesreca__univariates__oseba_val__b': [1.] * 4,
+            '__oseba__id_nesreca__univariates__oseba_val__loc': [0., 1., 2., 3.],
+            '__oseba__id_nesreca__univariates__oseba_val__scale': [np.nan] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__b': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__loc': [0., 1., 2., 3.],
@@ -672,24 +678,21 @@ class TestHMASynthesizer:
         """
         # Setup
         metadata = get_multi_table_metadata()
-        metadata.add_column('nesreca', 'value', sdtype='numerical')
-        metadata.add_column('oseba', 'value', sdtype='numerical')
-        metadata.add_column('upravna_enota', 'a_value', sdtype='numerical')
         instance = HMASynthesizer(metadata)
         data = {
             'nesreca': pd.DataFrame({
                 'id_nesreca': np.arange(10),
                 'upravna_enota': np.arange(10),
-                'value': np.arange(10),
+                'nesreca_val': np.arange(10),
             }),
             'oseba': pd.DataFrame({
                 'upravna_enota': np.arange(10),
                 'id_nesreca': np.arange(10),
-                'value': np.arange(10),
+                'oseba_val': np.arange(10),
             }),
             'upravna_enota': pd.DataFrame({
                 'id_upravna_enota': np.arange(10),
-                'a_value': [10, np.nan] * 5,
+                'upravna_val': [10, np.nan] * 5,
             }),
         }
 
@@ -699,8 +702,8 @@ class TestHMASynthesizer:
         result = instance.get_learned_distributions('upravna_enota')
 
         # Assert
-        assert list(result) == ['a_value']
-        assert result['a_value'] == {
+        assert list(result) == ['upravna_val']
+        assert result['upravna_val'] == {
             'distribution': 'beta',
             'learned_parameters': {
                 'a': 1.0,

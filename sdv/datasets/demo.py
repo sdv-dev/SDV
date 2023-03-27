@@ -19,8 +19,8 @@ from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
-BUCKET = 'sdv-demo-datasets'
-BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
+BUCKET = 'sdv-updated-datasets'
+BUCKET_URL = 'https://sdv-updated-datasets.s3.amazonaws.com'
 METADATA_FILENAME = 'metadata.json'
 
 
@@ -39,7 +39,7 @@ def _validate_output_folder(output_folder_name):
 
 
 def _download(modality, dataset_name):
-    dataset_url = BUCKET_URL + '/' + modality.upper() + '/' + dataset_name + '.zip'
+    dataset_url = f'{BUCKET_URL}/{modality.upper()}/{dataset_name}.zip'
     LOGGER.info(f'Downloading dataset {dataset_name} from {dataset_url}')
     try:
         response = urllib.request.urlopen(dataset_url)

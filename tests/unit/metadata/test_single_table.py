@@ -24,8 +24,8 @@ class TestSingleTableMetadata:
         ('name', 'categorical', {'order_by': 'alphabetical'}),
         ('name', 'categorical', {'order': ['a', 'b', 'c']}),
         ('synthetic', 'boolean', {}),
-        ('phrase', 'text', {}),
-        ('phrase', 'text', {'regex_format': '[A-z]'}),
+        ('phrase', 'id', {}),
+        ('phrase', 'id', {'regex_format': '[A-z]'}),
         ('phone', 'phone_number', {}),
         ('phone', 'phone_number', {'pii': True}),
     ]
@@ -55,8 +55,8 @@ class TestSingleTableMetadata:
             re.escape("Invalid values '(pii)' for boolean column 'synthetic'.")
         ),
         (
-            'phrase', 'text', {'regex_format': '[A-z]', 'pii': True, 'anonymization': True},
-            re.escape("Invalid values '(anonymization, pii)' for text column 'phrase'.")
+            'phrase', 'id', {'regex_format': '[A-z]', 'pii': True, 'anonymization': True},
+            re.escape("Invalid values '(anonymization, pii)' for id column 'phrase'.")
         ),
         (
             'phone', 'phone_number', {'anonymization': True, 'order_by': 'phone_number'},
@@ -210,15 +210,15 @@ class TestSingleTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_msg_order):
             instance._validate_categorical('name', order=[])
 
-    def test__validate_text(self):
-        """Test the ``_validate_text`` method.
+    def test__validate_id(self):
+        """Test the ``_validate_id`` method.
 
         Setup:
             - instance of ``SingleTableMetadata``
 
         Input:
             - Column name.
-            - sdtype text
+            - sdtype id
             - Valid ``regex_format``.
             - Invalid ``regex_format``.
 
@@ -229,10 +229,10 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run / Assert
-        instance._validate_text('phrase', regex_format='[A-z]')
-        error_msg = re.escape("Invalid regex format string '[A-z{' for text column 'phrase'.")
+        instance._validate_id('phrase', regex_format='[A-z]')
+        error_msg = re.escape("Invalid regex format string '[A-z{' for id column 'phrase'.")
         with pytest.raises(InvalidMetadataError, match=error_msg):
-            instance._validate_text('phrase', regex_format='[A-z{')
+            instance._validate_id('phrase', regex_format='[A-z{')
 
     def test__validate_column_exists(self):
         """Test the ``_validate_column_exists`` method.
@@ -253,7 +253,7 @@ class TestSingleTableMetadata:
             'name': {'sdtype': 'categorical'},
             'age': {'sdtype': 'numerical'},
             'start_date': {'sdtype': 'datetime'},
-            'phrase': {'sdtype': 'text'},
+            'phrase': {'sdtype': 'id'},
         }
 
         # Run / Assert
@@ -449,37 +449,37 @@ class TestSingleTableMetadata:
         mock__validate_datetime.assert_called_once_with('start')
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
-    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_text')
-    def test__validate_column_text(self, mock__validate_text, mock__validate_kwargs):
+    @patch('sdv.metadata.single_table.SingleTableMetadata._validate_id')
+    def test__validate_column_id(self, mock__validate_id, mock__validate_kwargs):
         """Test ``_validate_column`` method.
 
-        Test the ``_validate_column`` method when a ``text`` sdtype is passed.
+        Test the ``_validate_column`` method when a ``id`` sdtype is passed.
 
         Setup:
             - Instance of ``SingleTableMetadata``.
 
         Input:
             - ``column_name`` - a string.
-            - ``sdtype`` - a string 'text'.
+            - ``sdtype`` - a string 'id'.
             - kwargs - any additional key word arguments.
 
         Mock:
             - ``_validate_unexpected_kwargs``
-            - ``_validate_text`` function from ``SingleTableMetadata``.
+            - ``_validate_id`` function from ``SingleTableMetadata``.
 
         Side effects:
-            - ``_validate_text`` has been called once.
+            - ``_validate_id`` has been called once.
         """
         # Setup
         instance = SingleTableMetadata()
 
         # Run
-        instance._validate_column('phrase', 'text', regex_format='[A-z0-9]', pii=True)
+        instance._validate_column('phrase', 'id', regex_format='[A-z0-9]', pii=True)
 
         # Assert
         mock__validate_kwargs.assert_called_once_with(
-            'phrase', 'text', regex_format='[A-z0-9]', pii=True)
-        mock__validate_text.assert_called_once_with('phrase', regex_format='[A-z0-9]', pii=True)
+            'phrase', 'id', regex_format='[A-z0-9]', pii=True)
+        mock__validate_id.assert_called_once_with('phrase', regex_format='[A-z0-9]', pii=True)
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
     def test__validate_pii_not_true_or_false(self, mock__validate_kwargs):
@@ -1037,10 +1037,10 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         instance.add_column('column1', sdtype='categorical')
         instance.add_column('column2', sdtype='categorical')
-        instance.add_column('column3', sdtype='numerical')
+        instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The primary_keys ['column1', 'column2'] cannot be type 'categorical' or 'boolean'."
+            "The primary_keys ['column1', 'column2'] must be type 'id' or a valid Faker function."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -1050,7 +1050,7 @@ class TestSingleTableMetadata:
         """Test that ``set_primary_key`` sets the ``_primary_key`` value."""
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'column': {'sdtype': 'numerical'}}
+        instance.columns = {'column': {'sdtype': 'id'}}
 
         # Run
         instance.set_primary_key('column')
@@ -1062,7 +1062,7 @@ class TestSingleTableMetadata:
         """Test that ``set_primary_key`` sets the ``_primary_key`` value for tuples."""
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
+        instance.columns = {'col1': {'sdtype': 'id'}, 'col2': {'sdtype': 'id'}}
 
         # Run
         instance.set_primary_key(('col1', 'col2'))
@@ -1085,7 +1085,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'column1': {'sdtype': 'numerical'}}
+        instance.columns = {'column1': {'sdtype': 'id'}}
         instance.primary_key = 'column0'
 
         # Run
@@ -1105,7 +1105,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'column1': {'sdtype': 'numerical'}}
+        instance.columns = {'column1': {'sdtype': 'id'}}
         instance.primary_key = 'column0'
         instance.alternate_keys = ['column1', 'column2']
 
@@ -1175,10 +1175,10 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         instance.add_column('column1', sdtype='categorical')
         instance.add_column('column2', sdtype='categorical')
-        instance.add_column('column3', sdtype='numerical')
+        instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The sequence_keys ['column1', 'column2'] cannot be type 'categorical' or 'boolean'."
+            "The sequence_keys ['column1', 'column2'] must be type 'id' or a valid Faker function."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -1188,7 +1188,7 @@ class TestSingleTableMetadata:
         """Test that ``set_sequence_key`` sets the ``_sequence_key`` value."""
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'column': {'sdtype': 'numerical'}}
+        instance.columns = {'column': {'sdtype': 'id'}}
 
         # Run
         instance.set_sequence_key('column')
@@ -1200,7 +1200,7 @@ class TestSingleTableMetadata:
         """Test that ``set_sequence_key`` sets ``_sequence_key`` for tuples."""
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
+        instance.columns = {'col1': {'sdtype': 'id'}, 'col2': {'sdtype': 'id'}}
 
         # Run
         instance.set_sequence_key(('col1', 'col2'))
@@ -1223,7 +1223,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {'column1': {'sdtype': 'numerical'}}
+        instance.columns = {'column1': {'sdtype': 'id'}}
         instance.sequence_key = 'column0'
 
         # Run
@@ -1289,10 +1289,11 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         instance.add_column('column1', sdtype='categorical')
         instance.add_column('column2', sdtype='categorical')
-        instance.add_column('column3', sdtype='numerical')
+        instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The alternate_keys ['column1', 'column2'] cannot be type 'categorical' or 'boolean'."
+            "The alternate_keys ['column1', 'column2'] must be type 'id' or a valid Faker "
+            'function.'
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -1322,9 +1323,9 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         instance.columns = {
-            'column1': {'sdtype': 'numerical'},
-            'column2': {'sdtype': 'numerical'},
-            'column3': {'sdtype': 'numerical'}
+            'column1': {'sdtype': 'id'},
+            'column2': {'sdtype': 'id'},
+            'column3': {'sdtype': 'id'}
         }
 
         # Run
@@ -1339,9 +1340,9 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         instance.columns = {
-            'column1': {'sdtype': 'numerical'},
-            'column2': {'sdtype': 'numerical'},
-            'column3': {'sdtype': 'numerical'}
+            'column1': {'sdtype': 'id'},
+            'column2': {'sdtype': 'id'},
+            'column3': {'sdtype': 'id'}
         }
         instance.alternate_keys = ['column3']
 

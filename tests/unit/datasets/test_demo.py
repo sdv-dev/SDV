@@ -161,7 +161,7 @@ def test_download_demo_multi_table(tmpdir):
             'characters': {
                 'columns': {
                     'character_id': {
-                        'sdtype': 'text',
+                        'sdtype': 'id',
                         'regex_format': '^[1-9]{1,2}$'
                     },
                     'name': {
@@ -177,7 +177,7 @@ def test_download_demo_multi_table(tmpdir):
             'families': {
                 'columns': {
                     'family_id': {
-                        'sdtype': 'text',
+                        'sdtype': 'id',
                         'regex_format': '^[1-9]$'
                     },
                     'name': {
@@ -189,11 +189,11 @@ def test_download_demo_multi_table(tmpdir):
             'character_families': {
                 'columns': {
                     'character_id': {
-                        'sdtype': 'text',
+                        'sdtype': 'id',
                         'regex_format': '[A-Za-z]{5}'
                     },
                     'family_id': {
-                        'sdtype': 'text',
+                        'sdtype': 'id',
                         'regex_format': '[A-Za-z]{5}'
                     },
                     'type': {

@@ -121,7 +121,7 @@ def test_fit_with_unique_constraint_on_data_with_only_index_column():
     })
 
     metadata = SingleTableMetadata()
-    metadata.add_column('key', sdtype='numerical')
+    metadata.add_column('key', sdtype='id')
     metadata.add_column('index', sdtype='categorical')
     metadata.set_primary_key('key')
 
@@ -187,7 +187,7 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
     })
 
     metadata = SingleTableMetadata()
-    metadata.add_column('key', sdtype='numerical')
+    metadata.add_column('key', sdtype='id')
     metadata.add_column('index', sdtype='categorical')
     metadata.add_column('test_column', sdtype='categorical')
     metadata.set_primary_key('key')
@@ -247,7 +247,7 @@ def test_fit_with_unique_constraint_on_data_subset():
     })
 
     metadata = SingleTableMetadata()
-    metadata.add_column('key', sdtype='numerical')
+    metadata.add_column('key', sdtype='id')
     metadata.add_column('test_column', sdtype='categorical')
     metadata.set_primary_key('key')
 
@@ -508,7 +508,7 @@ def test_transformers_correctly_auto_assigned():
 
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
-    metadata.update_column(column_name='primary_key', sdtype='text', regex_format='user-[0-9]{3}')
+    metadata.update_column(column_name='primary_key', sdtype='id', regex_format='user-[0-9]{3}')
     metadata.set_primary_key('primary_key')
     metadata.update_column(column_name='pii_col', sdtype='address', pii=True)
     synthesizer = GaussianCopulaSynthesizer(
@@ -681,6 +681,7 @@ def test_refitting_a_model():
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
     metadata.update_column(column_name='name', sdtype='name')
+    metadata.update_column('id', sdtype='id')
     metadata.set_primary_key('id')
 
     synthesizer = GaussianCopulaSynthesizer(metadata)

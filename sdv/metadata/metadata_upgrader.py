@@ -37,7 +37,8 @@ def _upgrade_columns_and_keys(old_metadata):
             else:
                 regex_format = field_meta.get('regex', '[A-Za-z]{5}')
 
-            column_meta['regex_format'] = regex_format
+            if not field_meta.get('pii'):
+                column_meta['regex_format'] = regex_format
 
             if field != primary_key and field_meta.get('ref') is None:
                 alternate_keys.append(field)
