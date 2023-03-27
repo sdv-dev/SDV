@@ -208,16 +208,16 @@ def test_download_demo_multi_table(tmpdir):
         },
         'relationships': [
             {
-                'parent_table_name': 'characters',
-                'parent_primary_key': 'character_id',
-                'child_table_name': 'character_families',
-                'child_foreign_key': 'character_id'
-            },
-            {
                 'parent_table_name': 'families',
                 'parent_primary_key': 'family_id',
                 'child_table_name': 'character_families',
                 'child_foreign_key': 'family_id'
+            },
+            {
+                'parent_table_name': 'characters',
+                'parent_primary_key': 'character_id',
+                'child_table_name': 'character_families',
+                'child_foreign_key': 'character_id'
             },
         ],
         'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
