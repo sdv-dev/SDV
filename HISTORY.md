@@ -67,10 +67,6 @@ Finally, the synthetic data can now be easily evaluated using the `evaluate_qual
 * In `upgrade_metadata` index primary keys should be converted to `text` - Issue [#1318](https://github.com/sdv-dev/SDV/issues/1318) by @amontanez24
 * Add `load_from_dict` to SingleTableMetadata and MultiTableMetadata - Issue [#1314](https://github.com/sdv-dev/SDV/issues/1314) by @amontanez24
 * Throw a `SynthesizerInputError` if `FixedCombinations` constraint is applied to a column that is not `boolean` or `categorical` - Issue [#1306](https://github.com/sdv-dev/SDV/issues/1306) by @frances-h
-* Add integration tests for 'Adding Constraints' demo - Issue [#1280](https://github.com/sdv-dev/SDV/issues/1280) by @pvk-developer
-* Add integration tests to the 'Use Your Own Data' demo - Issue [#1278](https://github.com/sdv-dev/SDV/issues/1278) by @frances-h
-* Add integration tests for 'Synthesize Multi Tables' demo - Issue [#1277](https://github.com/sdv-dev/SDV/issues/1277) by @pvk-developer
-* Add integration tests for 'Synthesize a Table' demo - Issue [#1276](https://github.com/sdv-dev/SDV/issues/1276) by @frances-h
 * Missing `save` and `load` methods for `HMASynthesizer` - Issue [#1262](https://github.com/sdv-dev/SDV/issues/1262) by @amontanez24
 * Better input validation when creating single and multi table synthesizers - Issue [#1242](https://github.com/sdv-dev/SDV/issues/1242) by @fealho
 * Better input validation on `HMASynthesizer.sample` - Issue [#1241](https://github.com/sdv-dev/SDV/issues/1241) by @R-Palazzo
@@ -191,6 +187,10 @@ Finally, the synthetic data can now be easily evaluated using the `evaluate_qual
 #### Internal
 
 * Add integration tests for 'Synthesize Sequences' demo - Issue [#1295](https://github.com/sdv-dev/SDV/issues/1295) by @pvk-developer
+* Add integration tests for 'Adding Constraints' demo - Issue [#1280](https://github.com/sdv-dev/SDV/issues/1280) by @pvk-developer
+* Add integration tests to the 'Use Your Own Data' demo - Issue [#1278](https://github.com/sdv-dev/SDV/issues/1278) by @frances-h
+* Add integration tests for 'Synthesize Multi Tables' demo - Issue [#1277](https://github.com/sdv-dev/SDV/issues/1277) by @pvk-developer
+* Add integration tests for 'Synthesize a Table' demo - Issue [#1276](https://github.com/sdv-dev/SDV/issues/1276) by @frances-h
 * Update `get_available_demos` tests - Issue [#1247](https://github.com/sdv-dev/SDV/issues/1247) by @fealho
 * Make private attributes public in the metadata - Issue [#1245](https://github.com/sdv-dev/SDV/issues/1245) by @fealho
 
