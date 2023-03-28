@@ -31,14 +31,14 @@ def _upgrade_columns_and_keys(old_metadata):
                 column_meta['datetime_format'] = datetime_format
 
         elif old_type == 'id':
+            column_meta['sdtype'] = 'id'
             if subtype == 'integer':
-                column_meta['sdtype'] = 'numerical'
-
+                regex_format = r'\d{30}'
             else:
-                column_meta['sdtype'] = 'text'
                 regex_format = field_meta.get('regex', '[A-Za-z]{5}')
-                if regex_format:
-                    column_meta['regex_format'] = regex_format
+
+            if not field_meta.get('pii'):
+                column_meta['regex_format'] = regex_format
 
             if field != primary_key and field_meta.get('ref') is None:
                 alternate_keys.append(field)

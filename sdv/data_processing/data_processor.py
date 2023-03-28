@@ -1,6 +1,5 @@
 """Single table data processing."""
 
-import itertools
 import json
 import logging
 import warnings
@@ -68,7 +67,7 @@ class DataProcessor:
             missing_value_replacement='mean',
             model_missing_values=False,
         ),
-        'text': rdt.transformers.RegexGenerator()
+        'id': rdt.transformers.RegexGenerator()
     }
     _DTYPE_TO_SDTYPE = {
         'i': 'numerical',
@@ -107,7 +106,6 @@ class DataProcessor:
         self._primary_key = self.metadata.primary_key
         self._prepared_for_fitting = False
         self._keys = deepcopy(self.metadata.alternate_keys)
-        self._keys_generators = {}
         if self._primary_key:
             self._keys.append(self._primary_key)
 
@@ -343,7 +341,7 @@ class DataProcessor:
         self._transformers_by_sdtype[sdtype] = transformer
 
     @staticmethod
-    def create_anonymized_transformer(sdtype, column_metadata):
+    def create_anonymized_transformer(sdtype, column_metadata, enforce_uniqueness):
         """Create an instance of an ``AnonymizedFaker``.
 
         Read the extra keyword arguments from the ``column_metadata`` and use them to create
@@ -354,6 +352,9 @@ class DataProcessor:
                 Sematic data type or a ``Faker`` function name.
             column_metadata (dict):
                 A dictionary representing the rest of the metadata for the given ``sdtype``.
+            enforce_uniqueness (bool):
+                If ``True`` overwrite ``enforce_uniqueness`` with ``True`` to ensure unique
+                generation for primary keys.
 
         Returns:
             Instance of ``rdt.transformers.pii.AnonymizedFaker``.
@@ -363,20 +364,29 @@ class DataProcessor:
             if key not in ['pii', 'sdtype']:
                 kwargs[key] = value
 
+        if enforce_uniqueness:
+            kwargs['enforce_uniqueness'] = True
+
         return get_anonymized_transformer(sdtype, kwargs)
 
-    def create_key_transformer(self, column_name, sdtype, column_metadata):
-        """Create an instance for the primary key or alternate key transformer.
+    def create_regex_generator(self, column_name, sdtype, column_metadata, is_numeric):
+        """Create a ``RegexGenerator`` for the ``id`` columns.
 
         Read the keyword arguments from the ``column_metadata`` and use them to create
-        an instance of an ``RegexGenerator`` or ``AnonymizedFaker`` transformer with
-        ``enforce_uniqueness`` set to ``True``.
+        an instance of a ``RegexGenerator``. If ``regex_format`` is not present in the
+        metadata a default ``[0-1a-z]{5}`` will be used for object like data and an increasing
+        integer from ``0`` will be used for numerical data. Also if the column name is a primary
+        key or alternate key this will enforce the values to be unique.
 
         Args:
+            column_name (str):
+                Name of the column.
             sdtype (str):
                 Sematic data type or a ``Faker`` function name.
             column_metadata (dict):
                 A dictionary representing the rest of the metadata for the given ``sdtype``.
+            is_numeric (boolean):
+                A boolean representing whether or not data type is numeric or not.
 
         Returns:
             transformer:
@@ -384,21 +394,12 @@ class DataProcessor:
                 ``rdt.transformers.pii.AnonymizedFaker`` with ``enforce_uniqueness`` set to
                 ``True``.
         """
-        if sdtype == 'numerical':
-            self._keys_generators[column_name] = itertools.count()
-            return None
-
-        if sdtype == 'text':
-            regex_format = column_metadata.get('regex_format', '[A-Za-z]{5}')
-            transformer = rdt.transformers.RegexGenerator(
-                regex_format=regex_format,
-                enforce_uniqueness=True
-            )
-
-        else:
-            kwargs = deepcopy(column_metadata)
-            kwargs['enforce_uniqueness'] = True
-            transformer = self.create_anonymized_transformer(sdtype, kwargs)
+        default_regex_format = r'\d{30}' if is_numeric else '[0-1a-z]{5}'
+        regex_format = column_metadata.get('regex_format', default_regex_format)
+        transformer = rdt.transformers.RegexGenerator(
+            regex_format=regex_format,
+            enforce_uniqueness=(column_name in self._keys)
+        )
 
         return transformer
 
@@ -451,11 +452,23 @@ class DataProcessor:
             pii = column_metadata.get('pii', sdtype not in self._DEFAULT_TRANSFORMERS_BY_SDTYPE)
             sdtypes[column] = 'pii' if pii else sdtype
 
-            if column in self._keys:
-                transformers[column] = self.create_key_transformer(column, sdtype, column_metadata)
+            if sdtype == 'id':
+                is_numeric = pd.api.types.is_numeric_dtype(data[column].dtype)
+                transformers[column] = self.create_regex_generator(
+                    column,
+                    sdtype,
+                    column_metadata,
+                    is_numeric
+                )
+                sdtypes[column] = 'text'
 
             elif pii:
-                transformers[column] = self.create_anonymized_transformer(sdtype, column_metadata)
+                enforce_uniqueness = bool(column in self._keys)
+                transformers[column] = self.create_anonymized_transformer(
+                    sdtype,
+                    column_metadata,
+                    enforce_uniqueness
+                )
 
             elif sdtype in self._transformers_by_sdtype:
                 transformers[column] = self._get_transformer_instance(sdtype, column_metadata)
@@ -608,15 +621,7 @@ class DataProcessor:
 
     def reset_sampling(self):
         """Reset the sampling state for the anonymized columns and primary keys."""
-        # Resetting the transformers manually until fixed on RDT
-        for transformer in self._hyper_transformer.field_transformers.values():
-            if transformer is not None:
-                transformer.reset_randomization()
-
-        self._keys_generators = {
-            key: itertools.count()
-            for key in self._keys_generators
-        }
+        self._hyper_transformer.reset_randomization()
 
     def generate_keys(self, num_rows, reset_keys=False):
         """Generate the columns that are identified as ``keys``.
@@ -631,32 +636,11 @@ class DataProcessor:
             pandas.DataFrame:
                 A dataframe with the newly generated primary keys of the size ``num_rows``.
         """
-        anonymized_keys = []
-        dataframes = {}
-        for key in self._keys:
-            if self._hyper_transformer.field_transformers.get(key) is None:
-                if reset_keys:
-                    self._keys_generators[key] = itertools.count()
-
-                dataframes[key] = pd.DataFrame({
-                    key: [next(self._keys_generators[key]) for _ in range(num_rows)]
-                })
-
-            else:
-                anonymized_keys.append(key)
-
-        # Add ``reset_keys`` for RDT once the version is updated.
-        if anonymized_keys:
-            anonymized_dataframe = self._hyper_transformer.create_anonymized_columns(
-                num_rows=num_rows,
-                column_names=anonymized_keys,
-            )
-            if dataframes:
-                return pd.concat(list(dataframes.values()) + [anonymized_dataframe], axis=1)
-
-            return anonymized_dataframe
-
-        return pd.concat(dataframes.values(), axis=1)
+        generated_keys = self._hyper_transformer.create_anonymized_columns(
+            num_rows=num_rows,
+            column_names=self._keys,
+        )
+        return generated_keys
 
     def transform(self, data, is_condition=False):
         """Transform the given data.
@@ -683,17 +667,7 @@ class DataProcessor:
 
         LOGGER.debug(f'Transforming table {self.table_name}')
         if self._keys and not is_condition:
-            keys_to_drop = []
-            for key in self._keys:
-                if key == self._primary_key:
-                    drop_primary_key = bool(self._keys_generators.get(key))
-                    data = data.set_index(self._primary_key, drop=drop_primary_key)
-
-                elif self._keys_generators.get(key):
-                    keys_to_drop.append(key)
-
-            if keys_to_drop:
-                data = data.drop(keys_to_drop, axis=1)
+            data = data.set_index(self._primary_key, drop=False)
 
         try:
             transformed = self._hyper_transformer.transform_subset(data)

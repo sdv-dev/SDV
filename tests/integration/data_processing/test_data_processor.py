@@ -3,7 +3,8 @@ import itertools
 
 import numpy as np
 from rdt.transformers import (
-    AnonymizedFaker, BinaryEncoder, FloatFormatter, LabelEncoder, UnixTimestampEncoder)
+    AnonymizedFaker, BinaryEncoder, FloatFormatter, LabelEncoder, RegexGenerator,
+    UnixTimestampEncoder)
 
 from sdv.data_processing import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
@@ -91,7 +92,7 @@ def test_data_processor_with_anonymized_columns_and_primary_key():
     metadata.update_column('occupation', sdtype='job', pii=True)
 
     # Add primary key field
-    metadata.add_column('id', sdtype='text', regex_format='ID_\\d{4}[0-9]')
+    metadata.add_column('id', sdtype='id', regex_format='ID_\\d{4}[0-9]')
     metadata.set_primary_key('id')
 
     # Add id
@@ -147,7 +148,7 @@ def test_data_processor_with_primary_key_numerical():
     adult_metadata.detect_from_dataframe(data=data)
 
     # Add primary key field
-    adult_metadata.add_column('id', sdtype='numerical')
+    adult_metadata.add_column('id', sdtype='id')
     adult_metadata.set_primary_key('id')
 
     # Add id
@@ -188,11 +189,11 @@ def test_data_processor_with_alternate_keys():
     adult_metadata.detect_from_dataframe(data=data)
 
     # Add primary key field
-    adult_metadata.add_column('id', sdtype='numerical')
+    adult_metadata.add_column('id', sdtype='id')
     adult_metadata.set_primary_key('id')
 
-    adult_metadata.add_column('secondary_id', sdtype='numerical')
-    adult_metadata.update_column('fnlwgt', sdtype='text', regex_format='ID_\\d{4}[0-9]')
+    adult_metadata.add_column('secondary_id', sdtype='id')
+    adult_metadata.update_column('fnlwgt', sdtype='id', regex_format='ID_\\d{4}[0-9]')
 
     adult_metadata.add_alternate_keys(['secondary_id', 'fnlwgt'])
 
@@ -249,7 +250,7 @@ def test_data_processor_prepare_for_fitting():
         'mba_spec': LabelEncoder,
         'employability_perc': FloatFormatter,
         'placed': LabelEncoder,
-        'student_id': None,
+        'student_id': RegexGenerator,
         'experience_years': FloatFormatter,
         'duration': LabelEncoder,
         'salary': FloatFormatter,

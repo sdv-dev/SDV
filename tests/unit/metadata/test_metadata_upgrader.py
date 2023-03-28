@@ -675,7 +675,8 @@ def test_convert_metadata():
                 'sdtype': 'categorical'
             },
             'student_id': {
-                'sdtype': 'numerical'
+                'sdtype': 'id',
+                'regex_format': r'\d{30}'
             },
             'high_perc': {
                 'sdtype': 'numerical',
@@ -693,8 +694,8 @@ def test_convert_metadata():
                 'pii': True
             },
             'drivers_license': {
-                'sdtype': 'text',
-                'regex_format': 'regex',
+                'sdtype': 'id',
+                'regex_format': 'regex'
             }
         },
         'primary_key': 'student_id',
@@ -766,7 +767,8 @@ def test_convert_metadata_with_constraints(upgrade_constraints_mock):
                 'computer_representation': 'Int64'
             },
             'student_id': {
-                'sdtype': 'numerical'
+                'sdtype': 'id',
+                'regex_format': r'\d{30}'
             }
         },
         'primary_key': 'student_id'

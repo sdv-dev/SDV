@@ -67,4 +67,4 @@ def test_get_available_demos_multi_table():
         ]
     })
     expected_table['size_MB'] = expected_table['size_MB'].astype(float).round(2)
-    assert len(expected_table.merge(tables_info)) == len(expected_table)
+    assert len(expected_table.merge(tables_info, on='dataset_name')) == len(expected_table)

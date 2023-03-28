@@ -24,7 +24,7 @@ class SingleTableMetadata:
         'datetime': frozenset(['datetime_format']),
         'categorical': frozenset(['order', 'order_by']),
         'boolean': frozenset([]),
-        'text': frozenset(['regex_format']),
+        'id': frozenset(['regex_format']),
     }
 
     _DTYPES_TO_SDTYPES = {
@@ -98,13 +98,13 @@ class SingleTableMetadata:
             )
 
     @staticmethod
-    def _validate_text(column_name, **kwargs):
+    def _validate_id(column_name, **kwargs):
         regex = kwargs.get('regex_format', '')
         try:
             re.compile(regex)
         except Exception as exception:
             raise InvalidMetadataError(
-                f"Invalid regex format string '{regex}' for text column '{column_name}'."
+                f"Invalid regex format string '{regex}' for id column '{column_name}'."
             ) from exception
 
     @staticmethod
@@ -151,8 +151,8 @@ class SingleTableMetadata:
             self._validate_numerical(column_name, **kwargs)
         elif sdtype == 'datetime':
             self._validate_datetime(column_name, **kwargs)
-        elif sdtype == 'text':
-            self._validate_text(column_name, **kwargs)
+        elif sdtype == 'id':
+            self._validate_id(column_name, **kwargs)
         elif 'pii' in kwargs:
             self._validate_pii(column_name, **kwargs)
 
@@ -291,15 +291,16 @@ class SingleTableMetadata:
             isinstance(column_name, tuple) and all(isinstance(i, str) for i in column_name)
 
     def _validate_keys_sdtype(self, keys, key_type):
-        """Validate that no key is of type 'categorical'."""
-        bad_sdtypes = ('boolean', 'categorical')
-        categorical_keys = sorted(
-            {key for key in keys if self.columns[key]['sdtype'] in bad_sdtypes}
-        )
-        if categorical_keys:
+        """Validate that each key is of type 'id' or a valid Faker function."""
+        bad_keys = set()
+        for key in keys:
+            if not (self.columns[key]['sdtype'] == 'id' or
+                    is_faker_function(self.columns[key]['sdtype'])):
+                bad_keys.add(key)
+        if bad_keys:
             raise InvalidMetadataError(
-                f"The {key_type}_keys {categorical_keys} cannot be type 'categorical' or "
-                "'boolean'."
+                f"The {key_type}_keys {sorted(bad_keys)} must be type 'id' or "
+                'a valid Faker function.'
             )
 
     def _validate_key(self, column_name, key_type):

@@ -608,7 +608,7 @@ class TestFixedCombinations():
         """Test validating sdtypes with invalid sdtypes"""
         # Setup
         metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'numeric'}}
+        metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'numerical'}}
 
         # Run
         error_message = re.escape(

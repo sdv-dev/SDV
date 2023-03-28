@@ -160,7 +160,10 @@ def get_custom_constraint_data_and_metadata():
 
     metadata = MultiTableMetadata()
     metadata.detect_table_from_dataframe('parent', parent_data)
+    metadata.update_column('parent', 'primary_key', sdtype='id')
     metadata.detect_table_from_dataframe('child', child_data)
+    metadata.update_column('child', 'user_id', sdtype='id')
+    metadata.update_column('child', 'id', sdtype='id')
     metadata.set_primary_key('parent', 'primary_key')
     metadata.set_primary_key('child', 'id')
     metadata.add_relationship(
@@ -261,7 +264,10 @@ def test_hma_with_inequality_constraint():
 
     metadata = MultiTableMetadata()
     metadata.detect_table_from_dataframe(table_name='parent_table', data=parent_table)
+    metadata.update_column('parent_table', 'id', sdtype='id')
     metadata.detect_table_from_dataframe(table_name='child_table', data=child_table)
+    metadata.update_column('child_table', 'id', sdtype='id')
+    metadata.update_column('child_table', 'parent_id', sdtype='id')
 
     metadata.set_primary_key(table_name='parent_table', column_name='id')
     metadata.set_primary_key(table_name='child_table', column_name='id')
@@ -362,9 +368,11 @@ def test_hma_primary_key_and_foreign_key_only():
     for table_name, table in data.items():
         metadata.detect_table_from_dataframe(table_name, table)
 
-    metadata.update_column('sessions', 'session_id', sdtype='text')
-    metadata.update_column('games', 'session_id', sdtype='text')
-    metadata.update_column('games', 'game_id', sdtype='text')
+    metadata.update_column('users', 'user_id', sdtype='id')
+    metadata.update_column('sessions', 'session_id', sdtype='id')
+    metadata.update_column('games', 'game_id', sdtype='id')
+    metadata.update_column('games', 'session_id', sdtype='id')
+    metadata.update_column('games', 'user_id', sdtype='id')
     metadata.set_primary_key('users', 'user_id')
     metadata.set_primary_key('sessions', 'session_id')
     metadata.set_primary_key('games', 'game_id')
@@ -538,13 +546,13 @@ def test_use_own_data_using_hma(tmp_path):
     metadata.update_column(
         table_name='hotels',
         column_name='hotel_id',
-        sdtype='text',
+        sdtype='id',
         regex_format='HID_[0-9]{3,4}'
     )
     metadata.update_column(
         table_name='guests',
         column_name='hotel_id',
-        sdtype='text',
+        sdtype='id',
         regex_format='HID_[0-9]{3,4}'
     )
     metadata.update_column(
@@ -588,7 +596,7 @@ def test_use_own_data_using_hma(tmp_path):
     metadata.validate()
     hotels_metadata = metadata.tables['hotels']
     assert hotels_metadata.primary_key == 'hotel_id'
-    assert hotels_metadata.columns['hotel_id']['sdtype'] == 'text'
+    assert hotels_metadata.columns['hotel_id']['sdtype'] == 'id'
     assert hotels_metadata.columns['hotel_id']['regex_format'] == 'HID_[0-9]{3,4}'
 
     guests_metadata = metadata.tables['guests']
@@ -598,7 +606,7 @@ def test_use_own_data_using_hma(tmp_path):
     assert guests_metadata.columns['checkin_date']['datetime_format'] == '%d %b %Y'
     assert guests_metadata.columns['checkout_date']['sdtype'] == 'datetime'
     assert guests_metadata.columns['checkout_date']['datetime_format'] == '%d %b %Y'
-    assert guests_metadata.columns['hotel_id']['sdtype'] == 'text'
+    assert guests_metadata.columns['hotel_id']['sdtype'] == 'id'
     assert guests_metadata.columns['hotel_id']['regex_format'] == 'HID_[0-9]{3,4}'
     assert guests_metadata.columns['guest_email']['sdtype'] == 'email'
     assert guests_metadata.columns['guest_email']['pii'] is True

@@ -19,6 +19,7 @@ def _get_par_data_and_metadata():
     })
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
+    metadata.update_column('entity', sdtype='id')
     metadata.set_sequence_key('entity')
     metadata.set_sequence_index('date')
     return data, metadata
@@ -31,6 +32,7 @@ def test_par():
     data['date'] = pd.to_datetime(data['date'])
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
+    metadata.update_column('store_id', sdtype='id')
     metadata.set_sequence_key('store_id')
     metadata.set_sequence_index('date')
     model = PARSynthesizer(
@@ -60,6 +62,7 @@ def test_column_after_date_simple():
     })
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
+    metadata.update_column('col', sdtype='id')
     metadata.set_sequence_key('col')
     metadata.set_sequence_index('date')
 
