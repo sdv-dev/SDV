@@ -11,7 +11,8 @@ from copulas.univariate import GaussianUnivariate
 from rdt import HyperTransformer
 from rdt.transformers import BinaryEncoder, FloatFormatter, OneHotEncoder, UnixTimestampEncoder
 
-from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.constraints.errors import (
+    AggregateConstraintsError, ConstraintMetadataError, MissingConstraintColumnError)
 from sdv.errors import ConstraintsNotMetError
 
 LOGGER = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ def _module_contains_callable_name(obj):
 
 def get_subclasses(cls):
     """Recursively find subclasses for the current class object."""
-    subclasses = dict()
+    subclasses = {}
     for subclass in cls.__subclasses__():
         subclasses[subclass.__name__] = subclass
         subclasses.update(get_subclasses(subclass))
@@ -66,14 +67,14 @@ class ConstraintMeta(type):
     This allows us to later on dump the class definition as a dict.
     """
 
-    def __init__(self, name, bases, attr):
+    def __init__(self, name, bases, attr):  # noqa: N804
         super().__init__(name, bases, attr)
 
         old__init__ = self.__init__
         signature = inspect.signature(old__init__)
         arg_names = list(signature.parameters.keys())[1:]
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs):  # noqa: N807
             class_name = self.__class__.__name__
             if name == class_name:
                 self.__kwargs__ = copy.deepcopy(kwargs)
@@ -103,6 +104,86 @@ class Constraint(metaclass=ConstraintMeta):
     constraint_columns = ()
     _hyper_transformer = None
 
+    @classmethod
+    def _validate_inputs(cls, **kwargs):
+        errors = []
+        required_args = []
+        args = []
+        params = inspect.signature(cls).parameters
+        for arg_name, value in params.items():
+            args.append(arg_name)
+            if value.default is inspect._empty:
+                required_args.append(arg_name)
+
+        missing_values = set(required_args) - set(kwargs)
+        constraint = cls.__name__
+        article = 'an' if constraint == 'Inequality' else 'a'
+        if missing_values:
+            errors.append(ValueError(
+                f'Missing required values {missing_values} in {article} {constraint} constraint.'
+            ))
+
+        invalid_vals = set(kwargs) - set(args)
+        if invalid_vals:
+            errors.append(ValueError(
+                f'Invalid values {invalid_vals} are present in {article} {constraint} constraint.'
+            ))
+
+        if errors:
+            raise AggregateConstraintsError(errors)
+
+    @classmethod
+    def _validate_metadata_columns(cls, metadata, **kwargs):
+        if 'column_name' in kwargs:
+            column_names = [kwargs.get('column_name')]
+        else:
+            column_names = kwargs.get('column_names')
+
+        missing_columns = set(column_names) - set(metadata.columns) - {None}
+        if missing_columns:
+            article = 'An' if cls.__name__ == 'Inequality' else 'A'
+            raise ConstraintMetadataError(
+                f'{article} {cls.__name__} constraint is being applied to invalid column names '
+                f'{missing_columns}. The columns must exist in the table.'
+            )
+
+    @staticmethod
+    def _validate_metadata_specific_to_constraint(metadata, **kwargs):
+        pass
+
+    @classmethod
+    def _validate_metadata(cls, metadata, **kwargs):
+        """Validate the metadata against the constraint.
+
+        Args:
+            metadata (sdv.metadata.SingleTableMetadata):
+                Single table metadata instance.
+            **kwargs (dict):
+                Any required kwargs for the constraint.
+
+        Raises:
+            AggregateConstraintsError:
+                All the errors from validating the metadata.
+        """
+        errors = []
+        try:
+            cls._validate_inputs(**kwargs)
+        except AggregateConstraintsError as agg_error:
+            errors.extend(agg_error.errors)
+
+        try:
+            cls._validate_metadata_columns(metadata, **kwargs)
+        except Exception as e:
+            errors.append(e)
+
+        try:
+            cls._validate_metadata_specific_to_constraint(metadata, **kwargs)
+        except Exception as e:
+            errors.append(e)
+
+        if errors:
+            raise AggregateConstraintsError(errors)
+
     def _validate_data_meets_constraint(self, table_data):
         """Make sure the given data is valid for the constraint.
 
@@ -114,7 +195,7 @@ class Constraint(metaclass=ConstraintMeta):
             ConstraintsNotMetError:
                 If the table data is not valid for the provided constraints.
         """
-        if set(self.constraint_columns).issubset(table_data.columns.values):
+        if set(self.constraint_columns).issubset(table_data.columns.to_numpy()):
             is_valid_data = self.is_valid(table_data)
             if not is_valid_data.all():
                 constraint_data = table_data[list(self.constraint_columns)]
@@ -244,25 +325,12 @@ class Constraint(metaclass=ConstraintMeta):
                          self.__class__.__name__, sum(~valid), len(valid))
 
         if isinstance(valid, pd.Series):
-            return table_data[valid.values]
+            return table_data[valid.to_numpy()]
 
         return table_data[valid]
 
     @classmethod
-    def from_dict(cls, constraint_dict):
-        """Build a Constraint object from a dict.
-
-        Args:
-            constraint_dict (dict):
-                Dict containing the keyword ``constraint`` alongside
-                any additional arguments needed to create the instance.
-
-        Returns:
-            Constraint:
-                New constraint instance.
-        """
-        constraint_dict = constraint_dict.copy()
-        constraint_class = constraint_dict.pop('constraint')
+    def _get_class_from_dict(cls, constraint_class):
         subclasses = get_subclasses(cls)
         if isinstance(constraint_class, str):
             if '.' in constraint_class:
@@ -270,29 +338,47 @@ class Constraint(metaclass=ConstraintMeta):
             else:
                 constraint_class = subclasses[constraint_class]
 
-        return constraint_class(**constraint_dict)
+        return constraint_class
+
+    @classmethod
+    def from_dict(cls, constraint_dict):
+        """Build a Constraint object from a dict.
+
+        Args:
+            constraint_dict (dict):
+                Dict containing the keyword ``constraint_name`` alongside
+                any additional arguments needed to create the instance.
+
+        Returns:
+            Constraint:
+                New constraint instance.
+        """
+        constraint_class = constraint_dict.get('constraint_class')
+        constraint_class = cls._get_class_from_dict(constraint_class)
+
+        return constraint_class(**constraint_dict.get('constraint_parameters', {}))
 
     def to_dict(self):
         """Return a dict representation of this Constraint.
 
         The dictionary will contain the Qualified Name of the constraint
-        class in the key ``constraint``, as well as any other arguments
+        class in the key ``constraint_name``, as well as any other arguments
         that were passed to the constructor when the instance was created.
 
         Returns:
             dict:
                 Dict representation of this Constraint.
         """
-        constraint_dict = {
-            'constraint': _get_qualified_name(self.__class__),
-        }
+        constraint_dict = {'constraint_class': _get_qualified_name(self.__class__)}
 
+        constraint_parameters = {}
         for key, obj in copy.deepcopy(self.__kwargs__).items():
             if callable(obj) and _module_contains_callable_name(obj):
-                constraint_dict[key] = _get_qualified_name(obj)
+                constraint_parameters[key] = _get_qualified_name(obj)
             else:
-                constraint_dict[key] = obj
+                constraint_parameters[key] = obj
 
+        constraint_dict['constraint_parameters'] = constraint_parameters
         return constraint_dict
 
 
@@ -300,7 +386,7 @@ class ColumnsModel:
     """ColumnsModel class.
 
     The ``ColumnsModel`` class enables the usage of conditional sampling when a column is a
-    ``constraint``.
+    ``constraint_name``.
     """
 
     _columns_model = None
@@ -412,14 +498,14 @@ class ColumnsModel:
         """
         condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
         grouped_conditions = table_data[condition_columns].groupby(condition_columns)
-        all_sampled_rows = list()
-        for group, df in grouped_conditions:
+        all_sampled_rows = []
+        for group, dataframe in grouped_conditions:
             if not isinstance(group, tuple):
                 group = [group]
 
-            transformed_condition = self._hyper_transformer.transform(df).iloc[0].to_dict()
+            transformed_condition = self._hyper_transformer.transform(dataframe).iloc[0].to_dict()
             sampled_rows = self._reject_sample(
-                num_rows=df.shape[0],
+                num_rows=dataframe.shape[0],
                 conditions=transformed_condition
             )
             all_sampled_rows.append(sampled_rows)

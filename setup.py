@@ -11,6 +11,7 @@ with open('README.md', encoding='utf-8') as readme_file:
 with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
+
 install_requires = [
     'Faker>=10,<15',
     'graphviz>=0.13.2,<1',
@@ -20,11 +21,13 @@ install_requires = [
     "pandas>=1.5.0,<2;python_version>='3.10'",
     'tqdm>=4.15,<5',
     'copulas>=0.8.0,<0.9',
-    'ctgan>=0.7.0,<0.8',
+    'ctgan>=0.7.1,<0.8',
     'deepecho>=0.4.0,<0.5',
     'rdt>=1.3.0,<2',
-    'sdmetrics>=0.9.0,<0.10',
-    'cloudpickle>=2.1.0,<3.0'
+    'sdmetrics>=0.9.1,<0.10',
+    'cloudpickle>=2.1.0,<3.0',
+    'boto3>=1.15.0,<2',
+    'botocore>=1.18,<2'
 ]
 
 pomegranate_requires = [
@@ -64,9 +67,26 @@ development_requires = [
     # style check
     'flake8>=3.7.7,<4',
     'flake8-absolute-import>=1.0,<2',
+    'flake8-builtins>=1.5.3,<1.6',
+    'flake8-comprehensions>=3.6.1,<3.7',
+    'flake8-debugger>=4.0.0,<4.1',
     'flake8-docstrings>=1.5.0,<2',
+    'flake8-eradicate>=1.1.0,<1.2',
+    'flake8-fixme>=1.1.1,<1.2',
+    'flake8-mock>=0.3,<0.4',
+    'flake8-multiline-containers>=0.0.18,<0.1',
+    'flake8-mutable>=1.2.0,<1.3',
+    'flake8-expression-complexity>=0.0.9,<0.1',
+    'flake8-print>=4.0.0,<4.1',
+    'flake8-pytest-style>=1.5.0,<2',
+    'flake8-quotes>=3.3.0,<4',
     'flake8-sfs>=0.0.3,<0.1',
+    'flake8-variables-names>=0.0.4,<0.1',
+    'dlint>=0.11.0,<0.12',
     'isort>=4.3.4,<5',
+    'pandas-vet>=0.2.3,<0.3',
+    'pep8-naming>=0.12.1,<0.13',
+    'pydocstyle>=6.1.1,<6.2',
 
     # fix style issues
     'autoflake>=1.1,<2',
@@ -86,7 +106,7 @@ setup(
     author='DataCebo, Inc.',
     author_email='info@sdv.dev',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: Free for non-commercial use',
         'Natural Language :: English',
@@ -116,6 +136,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='0.18.0',
+    version='1.0.0rc1',
     zip_safe=False,
 )

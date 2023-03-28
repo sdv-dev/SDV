@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.utils import (
-    _cast_to_type, cast_to_datetime64, get_datetime_format, is_datetime_type, logit, sigmoid)
+    _cast_to_type, cast_to_datetime64, logit, matches_datetime_format, sigmoid)
+from sdv.utils import get_datetime_format, is_datetime_type
 
 
 def test_is_datetime_type_with_datetime_series():
@@ -23,7 +24,8 @@ def test_is_datetime_type_with_datetime_series():
     data = pd.Series([
         pd.to_datetime('2020-01-01'),
         pd.to_datetime('2020-01-02'),
-        pd.to_datetime('2020-01-03')],
+        pd.to_datetime('2020-01-03')
+    ],
     )
 
     # Run
@@ -283,7 +285,7 @@ def test_cast_to_datetime64():
     # Assert
     expected_string_output = np.datetime64('2021-02-02')
     expected_series_output = pd.Series(np.datetime64('2021-02-02'))
-    expected_list_output = np.array([np.datetime64("NaT"), '2021-02-02'], dtype='datetime64[ns]')
+    expected_list_output = np.array([np.datetime64('NaT'), '2021-02-02'], dtype='datetime64[ns]')
     np.testing.assert_array_equal(expected_list_output, list_out)
     pd.testing.assert_series_equal(expected_series_output, series_out)
     assert expected_string_output == string_out
@@ -315,3 +317,57 @@ def test_get_datetime_format():
     assert string_out == expected_output
     assert list_out == expected_output
     assert series_out == '%Y-%m-%dT%H:%M:%S'
+
+
+def test_matches_datetime_format():
+    """Test the ``matches_datetime_format`` method.
+
+    If the provided datetime string matches the format, then it should return True.
+
+    Input:
+        - Datetime string that matches the format
+
+    Output:
+        - True
+    """
+    # Run
+    result = matches_datetime_format('1/1/2020', '%m/%d/%Y')
+
+    # Assert
+    assert result is True
+
+
+def test_matches_datetime_format_does_not_match():
+    """Test the ``matches_datetime_format`` method.
+
+    If the provided datetime string does not match the format, then it should return False.
+
+    Input:
+        - Datetime string that does not match the format
+
+    Output:
+        - False
+    """
+    # Run
+    result = matches_datetime_format('1-1-2020', '%m/%d/%Y')
+
+    # Assert
+    assert result is False
+
+
+def test_matches_datetime_format_bad_value():
+    """Test the ``matches_datetime_format`` method.
+
+    If the provided value is not a string, then it should return False.
+
+    Input:
+        - int and a datetime format
+
+    Output:
+        - False
+    """
+    # Run
+    result = matches_datetime_format(10, '%m/%d/%Y')
+
+    # Assert
+    assert result is False
