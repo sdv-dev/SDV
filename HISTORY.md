@@ -61,6 +61,8 @@ Finally, the synthetic data can now be easily evaluated using the `evaluate_qual
 
 #### New Features
 
+* Change auto_assign_transformers to handle id types - Issue [#1325](https://github.com/sdv-dev/SDV/issues/1325) by @pvk-developer
+* Change 'text' sdtype to 'id' - Issue [#1324](https://github.com/sdv-dev/SDV/issues/1324) by @frances-h
 * In `upgrade_metadata`, return the object instead of writing it to a JSON file - Issue [#1319](https://github.com/sdv-dev/SDV/issues/1319) by @frances-h
 * In `upgrade_metadata` index primary keys should be converted to `text` - Issue [#1318](https://github.com/sdv-dev/SDV/issues/1318) by @amontanez24
 * Add `load_from_dict` to SingleTableMetadata and MultiTableMetadata - Issue [#1314](https://github.com/sdv-dev/SDV/issues/1314) by @amontanez24
