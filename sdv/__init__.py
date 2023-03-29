@@ -9,19 +9,14 @@ __email__ = 'info@sdv.dev'
 __version__ = '1.0.1.dev0'
 
 import warnings
-from importlib.metadata import entry_points as get_entry_points
+try:
+    from importlib_metadata import entry_points
+except ImportError:
+    from importlib.metadata import entry_points
 
 
 def _add_version():
-    try:
-        entry_points = get_entry_points(name='version', group='sdv_modules')
-    except TypeError:
-        entry_points = [
-            entry_point for entry_point in get_entry_points().get('sdv_modules', [])
-            if entry_point.name == 'version'
-        ]
-
-    for entry_point in entry_points:
+    for entry_point in entry_points(name='version', group='sdv_modules'):
         try:
             module = entry_point.load()
         except Exception:
