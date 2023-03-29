@@ -9,6 +9,7 @@ __email__ = 'info@sdv.dev'
 __version__ = '1.0.1.dev0'
 
 import warnings
+
 try:
     from importlib_metadata import entry_points
 except ImportError:
