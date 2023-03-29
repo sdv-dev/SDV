@@ -28,7 +28,7 @@ install_requires = [
     'cloudpickle>=2.1.0,<3.0',
     'boto3>=1.15.0,<2',
     'botocore>=1.18,<2',
-    "importlib-metadata>=4.6;python_version<'3.10'"
+    "importlib-metadata>=4.6,<6;python_version<'3.10'"
 ]
 
 pomegranate_requires = [
