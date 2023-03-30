@@ -1,23 +1,27 @@
 from unittest.mock import Mock, patch
 
-from sdv import _add_version
+from sdv._addons import _find_addons
 
 
-@patch('sdv.iter_entry_points')
+@patch('sdv._addons.iter_entry_points')
 def test__add_version(entry_points_mock):
     # Setup
     entry_point = Mock()
+    entry_point.name = 'entry_name'
+    entry_point.load.return_value = 'entry_point'
     entry_points_mock.return_value = [entry_point]
+    test_dict = {}
 
     # Run
-    _add_version()
+    _find_addons(group='group', parent_globals=test_dict)
 
     # Assert
-    entry_points_mock.assert_called_once_with(name='version', group='sdv_modules')
+    entry_points_mock.assert_called_once_with(group='group')
+    assert test_dict['entry_name'] == 'entry_point'
 
 
-@patch('sdv.warnings.warn')
-@patch('sdv.iter_entry_points')
+@patch('sdv._addons.warnings.warn')
+@patch('sdv._addons.iter_entry_points')
 def test__add_version_bad_addon(entry_points_mock, warning_mock):
     # Setup
     def entry_point_error():
@@ -28,11 +32,12 @@ def test__add_version_bad_addon(entry_points_mock, warning_mock):
     bad_entry_point.module = 'bad_module'
     bad_entry_point.load.side_effect = entry_point_error
     entry_points_mock.return_value = [bad_entry_point]
+    test_dict = {}
     msg = 'Failed to load "bad_entry_point" from "bad_module".'
 
     # Run
-    _add_version()
+    _find_addons(group='group', parent_globals=test_dict)
 
     # Assert
-    entry_points_mock.assert_called_once_with(name='version', group='sdv_modules')
+    entry_points_mock.assert_called_once_with(group='group')
     warning_mock.assert_called_once_with(msg)
