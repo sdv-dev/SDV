@@ -5,6 +5,7 @@ from sdv._addons import _find_addons
 
 @patch('sdv._addons.iter_entry_points')
 def test__add_version(entry_points_mock):
+    """Test loading an add-on."""
     # Setup
     entry_point = Mock()
     entry_point.name = 'entry_name'
@@ -23,6 +24,7 @@ def test__add_version(entry_points_mock):
 @patch('sdv._addons.warnings.warn')
 @patch('sdv._addons.iter_entry_points')
 def test__add_version_bad_addon(entry_points_mock, warning_mock):
+    """Test failing to load an add-on generates a warning."""
     # Setup
     def entry_point_error():
         raise ValueError()
