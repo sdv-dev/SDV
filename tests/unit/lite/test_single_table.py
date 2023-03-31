@@ -12,7 +12,7 @@ from sdv.single_table import GaussianCopulaSynthesizer
 from tests.utils import DataFrameMatcher
 
 
-class TestTabularPreset:
+class TestSingleTablePreset:
 
     def test___init__invalid_name(self):
         """Test the method with an invalid name.
