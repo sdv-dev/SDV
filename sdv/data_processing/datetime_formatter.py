@@ -1,5 +1,6 @@
 """Formatter for datetime data."""
 import pandas as pd
+from pandas.errors import OutOfBoundsDatetime
 
 from sdv.utils import get_datetime_format
 
@@ -40,6 +41,10 @@ class DatetimeFormatter:
                 containing the formatted data.
         """
         if self.datetime_format:
-            column = pd.to_datetime(column).dt.strftime(self.datetime_format)
+            try:
+                column = pd.to_datetime(column).dt.strftime(self.datetime_format)
+            except OutOfBoundsDatetime:
+                datetime_column = pd.to_datetime(column, format=self.datetime_format)
+                column = datetime_column.dt.strftime(self.datetime_format)
 
         return column.astype(self._dtype)

@@ -160,37 +160,45 @@ class BaseSynthesizer:
 
         return []
 
+    @staticmethod
+    def _get_invalid_column_values(column, validation_function):
+        valid = column.apply(validation_function)
+        return set(column[~valid])
+
     def _validate_column(self, column):
         """Validate values of the column satisfy its sdtype properties."""
         column_metadata = self.metadata.columns[column.name]
         sdtype = column_metadata['sdtype']
+        invalid_values = None
 
         # boolean values must be True/False, None or missing values
         # int/str are not allowed
         if sdtype == 'boolean':
-            return self._validate_sdtype(sdtype, column, is_boolean_type)
+            invalid_values = self._get_invalid_column_values(column, is_boolean_type)
 
         # numerical values must be int/float, None or missing values
         # str/bool are not allowed
         if sdtype == 'numerical':
-            return self._validate_sdtype(sdtype, column, is_numerical_type)
+            invalid_values = self._get_invalid_column_values(column, is_numerical_type)
 
         # datetime values must be castable to datetime, None or missing values
         if sdtype == 'datetime':
             datetime_format = column_metadata.get('datetime_format')
             if datetime_format:
-                return self._validate_sdtype(
-                    sdtype,
+                invalid_values = self._get_invalid_column_values(
                     column,
                     lambda x: validate_datetime_format(x, datetime_format)
                 )
 
             else:
-                return self._validate_sdtype(
-                    sdtype,
+                invalid_values = self._get_invalid_column_values(
                     column,
                     lambda x: pd.isna(x) | is_datetime_type(x)
                 )
+
+        if invalid_values:
+            invalid_values = self._format_invalid_values_string(invalid_values)
+            return [f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."]
 
         return []
 

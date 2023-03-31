@@ -577,6 +577,50 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
 
+    def test_validate_datetime_sdtype(self):
+        """Test validation for columns with datetime format.
+
+        If the datetime format is provided, then the values must match. Otherwise an error should
+        be raised.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'date_str': [
+                '20220902110443000000',
+                '20220916230356000000',
+                '20220826173917000000',
+                '20220826212135000000',
+                '20220929111311000000'
+            ],
+            'date_int': [
+                20220902110443000000,
+                20220916230356000000,
+                20220826173917000000,
+                20220826212135000000,
+                20220929111311000000
+            ],
+            'bad_date': [
+                2022090,
+                20220916230356000000,
+                2022,
+                20220826212135000000,
+                20220929111311000000
+            ]
+        })
+        metadata = SingleTableMetadata()
+        metadata.add_column('date_str', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f')
+        metadata.add_column('date_int', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f')
+        metadata.add_column('bad_date', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f')
+        instance = BaseSingleTableSynthesizer(metadata)
+
+        # Run and Assert
+        err_msg = re.escape(
+            'The provided data does not match the metadata:'
+            "\nInvalid values found for datetime column 'bad_date': [2022, 2022090]."
+        )
+        with pytest.raises(InvalidDataError, match=err_msg):
+            instance.validate(data)
+
     def test_validate(self):
         """Test the method doesn't crash when the passed data is valid.
 
