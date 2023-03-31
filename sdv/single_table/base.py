@@ -151,15 +151,6 @@ class BaseSynthesizer:
 
         return errors
 
-    def _validate_sdtype(self, sdtype, column, validation):
-        valid = column.apply(validation)
-        invalid_values = set(column[~valid])
-        if invalid_values:
-            invalid_values = self._format_invalid_values_string(invalid_values)
-            return [f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."]
-
-        return []
-
     @staticmethod
     def _get_invalid_column_values(column, validation_function):
         valid = column.apply(validation_function)
