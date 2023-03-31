@@ -62,3 +62,29 @@ class TestDatetimeFormatter:
             result,
             pd.Series(['15-02-2021', '16-05-2022', '11-04-2023'])
         )
+
+    def test_format_data_complex_input(self):
+        """Test that data can be formatted even if it's hard to parse."""
+        # Setup
+        formatter = DatetimeFormatter('%Y%m%d%H%M%S%f')
+        formatter._dtype = 'O'
+        column = pd.Series([
+            '20220902110443000000',
+            '20220916230356000000',
+            '20220826173917000000',
+            '20220826212135000000',
+            '20220929111311000000'
+        ])
+
+        # Run
+        result = formatter.format_data(column)
+
+        # Assert
+        expected = pd.Series([
+            '20220902110443000000',
+            '20220916230356000000',
+            '20220826173917000000',
+            '20220826212135000000',
+            '20220929111311000000'
+        ])
+        pd.testing.assert_series_equal(result, expected)
