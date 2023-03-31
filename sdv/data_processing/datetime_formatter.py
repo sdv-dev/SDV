@@ -43,7 +43,7 @@ class DatetimeFormatter:
         if self.datetime_format:
             try:
                 column = pd.to_datetime(column).dt.strftime(self.datetime_format)
-            except OutOfBoundsDatetime:
+            except (OutOfBoundsDatetime, OverflowError):
                 datetime_column = pd.to_datetime(column, format=self.datetime_format)
                 column = datetime_column.dt.strftime(self.datetime_format)
 
