@@ -22,7 +22,8 @@ from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
 from sdv.single_table.errors import InvalidDataError
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
-from sdv.utils import is_boolean_type, is_datetime_type, is_numerical_type
+from sdv.utils import (
+    is_boolean_type, is_datetime_type, is_numerical_type, validate_datetime_format)
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
@@ -161,25 +162,37 @@ class BaseSynthesizer:
 
     def _validate_column(self, column):
         """Validate values of the column satisfy its sdtype properties."""
-        errors = []
-        sdtype = self.metadata.columns[column.name]['sdtype']
+        column_metadata = self.metadata.columns[column.name]
+        sdtype = column_metadata['sdtype']
 
         # boolean values must be True/False, None or missing values
         # int/str are not allowed
         if sdtype == 'boolean':
-            errors += self._validate_sdtype(sdtype, column, is_boolean_type)
+            return self._validate_sdtype(sdtype, column, is_boolean_type)
 
         # numerical values must be int/float, None or missing values
         # str/bool are not allowed
         if sdtype == 'numerical':
-            errors += self._validate_sdtype(sdtype, column, is_numerical_type)
+            return self._validate_sdtype(sdtype, column, is_numerical_type)
 
         # datetime values must be castable to datetime, None or missing values
         if sdtype == 'datetime':
-            errors += self._validate_sdtype(
-                sdtype, column, lambda x: pd.isna(x) | is_datetime_type(x))
+            datetime_format = column_metadata.get('datetime_format')
+            if datetime_format:
+                return self._validate_sdtype(
+                    sdtype,
+                    column,
+                    lambda x: validate_datetime_format(x, datetime_format)
+                )
 
-        return errors
+            else:
+                return self._validate_sdtype(
+                    sdtype,
+                    column,
+                    lambda x: pd.isna(x) | is_datetime_type(x)
+                )
+
+        return []
 
     def _validate(self, data):
         """Validate any rules that only apply to specific synthesizers.
