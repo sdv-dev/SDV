@@ -8,8 +8,10 @@ def _find_addons(group, parent_globals):
     """Find and load add-ons based on the given group.
 
     Args:
-        group (str): The name of the entry points group to load.
-        parent_globals (dict): The caller's global scope. Modules will be added
+        group (str):
+            The name of the entry points group to load.
+        parent_globals (dict):
+            The caller's global scope. Modules will be added
             to the parent's global scope through their name.
     """
     for entry_point in iter_entry_points(group=group):
