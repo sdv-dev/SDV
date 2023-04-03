@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import rdt
+from pandas.api.types import is_float_dtype, is_integer_dtype
 from rdt.transformers import AnonymizedFaker, RegexGenerator
 
 from sdv.constraints import Constraint
@@ -744,7 +745,7 @@ class DataProcessor:
                 column_data = reversed_data[column_name]
 
             dtype = self._dtypes[column_name]
-            if pd.api.types.is_integer_dtype(dtype) and column_data.dtype != 'O':
+            if is_integer_dtype(dtype) and is_float_dtype(column_data.dtype):
                 column_data = column_data.round()
 
             reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
