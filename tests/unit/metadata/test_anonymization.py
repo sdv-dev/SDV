@@ -21,9 +21,11 @@ class TestAnonimization:
         # Run / Assert
         email_provider = _detect_provider_name('email')
         lexify_provider = _detect_provider_name('lexify')
+        state_provider = _detect_provider_name('state')
 
         assert email_provider == 'internet'
         assert lexify_provider == 'BaseProvider'
+        assert state_provider == 'address.en_US'
 
     @patch('sdv.metadata.anonymization.AnonymizedFaker')
     def test_get_anonymized_transformer_with_existing_sdtype(self, mock_anonymized_faker):
