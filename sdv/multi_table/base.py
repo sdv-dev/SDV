@@ -487,13 +487,13 @@ class BaseMultiTableSynthesizer:
             cloudpickle.dump(self, output)
 
     @classmethod
-    def load(cls, path):
+    def load(cls, filepath):
         """Load the multi-table synthesizer from a given path.
 
         Args:
-            path (str):
+            filepath (str):
                 Path from which to load the instance.
         """
-        with open(path, 'rb') as f:
+        with open(filepath, 'rb') as f:
             synthesizer = cloudpickle.load(f)
             return synthesizer

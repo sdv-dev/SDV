@@ -5,9 +5,9 @@ import warnings
 import graphviz
 
 
-def _get_graphviz_extension(path):
-    if path:
-        path_splitted = path.split('.')
+def _get_graphviz_extension(filepath):
+    if filepath:
+        path_splitted = filepath.split('.')
         if len(path_splitted) == 1:
             raise ValueError('Path without graphviz extension.')
 
@@ -21,24 +21,24 @@ def _get_graphviz_extension(path):
     return None, None
 
 
-def visualize_graph(nodes, edges, path=None):
+def visualize_graph(nodes, edges, filepath=None):
     """Plot metadata usign graphviz.
 
     Try to generate a plot using graphviz.
-    If a ``path`` is provided save the output into a file.
+    If a ``filepath`` is provided save the output into a file.
 
     Args:
         nodes (dict):
             Dictionary mapping a node name to a node label.
         edges (list):
             List of tuples of the format (parent, child, label).
-        path (str):
+        filepath (str):
             Output file path to save the plot, it requires a graphviz
             supported extension. If ``None`` do not save the plot.
             Defaults to ``None``.
     """
     try:
-        filename, graphviz_extension = _get_graphviz_extension(path)
+        filename, graphviz_extension = _get_graphviz_extension(filepath)
     except ValueError:
         raise ValueError(
             'Unable to save a visualization with this file type. Try a supported file type like '

@@ -165,29 +165,29 @@ class SingleTablePreset:
 
         return sampled
 
-    def save(self, path):
+    def save(self, filepath):
         """Save this model instance to the given path using cloudpickle.
 
         Args:
-            path (str):
+            filepath (str):
                 Path where the SDV instance will be serialized.
         """
-        with open(path, 'wb') as output:
+        with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
 
     @classmethod
-    def load(cls, path):
+    def load(cls, filepath):
         """Load a SingleTableSynthesizer instance from a given path.
 
         Args:
-            path (str):
+            filepath (str):
                 Path from which to load the instance.
 
         Returns:
             SingleTableSynthesizer:
                 The loaded synthesizer.
         """
-        with open(path, 'rb') as f:
+        with open(filepath, 'rb') as f:
             model = cloudpickle.load(f)
             return model
 

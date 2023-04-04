@@ -815,23 +815,23 @@ class DataProcessor:
 
         return instance
 
-    def to_json(self, path):
+    def to_json(self, filepath):
         """Dump this DataProcessor into a JSON file.
 
         Args:
-            path (str):
+            filepath (str):
                 Path of the JSON file where this metadata will be stored.
         """
-        with open(path, 'w') as out_file:
+        with open(filepath, 'w') as out_file:
             json.dump(self.to_dict(), out_file, indent=4)
 
     @classmethod
-    def from_json(cls, path):
+    def from_json(cls, filepath):
         """Load a DataProcessor from a JSON.
 
         Args:
-            path (str):
+            filepath (str):
                 Path of the JSON file to load
         """
-        with open(path, 'r') as in_file:
+        with open(filepath, 'r') as in_file:
             return cls.from_dict(json.load(in_file))
