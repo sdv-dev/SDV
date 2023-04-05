@@ -433,8 +433,6 @@ class BaseMultiTableSynthesizer:
         """Load a custom constraint class for the specified table's synthesizer.
 
         Args:
-            table_name (str):
-                Table to add constraint to.
             filepath (str):
                 String representing the absolute or relative path to the python file where
                 the custom constraints are declared.
@@ -448,8 +446,6 @@ class BaseMultiTableSynthesizer:
         """Add a custom constraint class for the synthesizer to use.
 
         Args:
-            table_name (str):
-                Table to add constraint to.
             class_object (sdv.constraints.Constraint):
                 A custom constraint class object.
             class_name (str):
