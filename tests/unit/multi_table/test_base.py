@@ -888,13 +888,37 @@ class TestBaseMultiTableSynthesizer:
         # Run
         BaseMultiTableSynthesizer.load_custom_constraint_classes(
             instance,
-            'table',
             'path/to/file.py',
             ['Custom', 'Constr', 'UpperPlus']
         )
 
         # Assert
         table_synth_mock.load_custom_constraint_classes.assert_called_once_with(
+            'path/to/file.py',
+            ['Custom', 'Constr', 'UpperPlus']
+        )
+
+    def test_load_custom_constraint_classes_multi_tables(self):
+        """Check that ``load_custom_constraint_classes`` is called for every tables."""
+        # Setup
+        instance = Mock()
+        table_synth_mock = Mock()
+        table_synth_mock_2 = Mock()
+        instance._table_synthesizers = {'table': table_synth_mock, 'table_2': table_synth_mock_2}
+
+        # Run
+        BaseMultiTableSynthesizer.load_custom_constraint_classes(
+            instance,
+            'path/to/file.py',
+            ['Custom', 'Constr', 'UpperPlus']
+        )
+
+        # Assert
+        table_synth_mock.load_custom_constraint_classes.assert_called_once_with(
+            'path/to/file.py',
+            ['Custom', 'Constr', 'UpperPlus']
+        )
+        table_synth_mock_2.load_custom_constraint_classes.assert_called_once_with(
             'path/to/file.py',
             ['Custom', 'Constr', 'UpperPlus']
         )
@@ -910,13 +934,38 @@ class TestBaseMultiTableSynthesizer:
         # Run
         BaseMultiTableSynthesizer.add_custom_constraint_class(
             instance,
-            'table',
             constraint_mock,
             'custom'
         )
 
         # Assert
         table_synth_mock.add_custom_constraint_class.assert_called_once_with(
+            constraint_mock,
+            'custom'
+        )
+
+    def test_add_custom_constraint_class_multi_tables(self):
+        """Check that ``add_custom_constraint_class`` is called for every tables."""
+        # Setup
+        instance = Mock()
+        constraint_mock = Mock()
+        table_synth_mock = Mock()
+        table_synth_mock_2 = Mock()
+        instance._table_synthesizers = {'table': table_synth_mock, 'table_2': table_synth_mock_2}
+
+        # Run
+        BaseMultiTableSynthesizer.add_custom_constraint_class(
+            instance,
+            constraint_mock,
+            'custom'
+        )
+
+        # Assert
+        table_synth_mock.add_custom_constraint_class.assert_called_once_with(
+            constraint_mock,
+            'custom'
+        )
+        table_synth_mock_2.add_custom_constraint_class.assert_called_once_with(
             constraint_mock,
             'custom'
         )
