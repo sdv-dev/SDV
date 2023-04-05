@@ -300,7 +300,7 @@ class SingleTableMetadata:
         if bad_keys:
             raise InvalidMetadataError(
                 f"The {key_type}_keys {sorted(bad_keys)} must be type 'id' or "
-                'a valid Faker function.'
+                'another PII type.'
             )
 
     def _validate_key(self, column_name, key_type):

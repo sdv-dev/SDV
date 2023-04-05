@@ -1040,7 +1040,7 @@ class TestSingleTableMetadata:
         instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The primary_keys ['column1', 'column2'] must be type 'id' or a valid Faker function."
+            "The primary_keys ['column1', 'column2'] must be type 'id' or another PII type."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -1178,7 +1178,7 @@ class TestSingleTableMetadata:
         instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The sequence_keys ['column1', 'column2'] must be type 'id' or a valid Faker function."
+            "The sequence_keys ['column1', 'column2'] must be type 'id' or another PII type."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -1292,8 +1292,7 @@ class TestSingleTableMetadata:
         instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The alternate_keys ['column1', 'column2'] must be type 'id' or a valid Faker "
-            'function.'
+            "The alternate_keys ['column1', 'column2'] must be type 'id' or another PII type."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
