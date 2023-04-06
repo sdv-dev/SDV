@@ -430,7 +430,7 @@ class BaseMultiTableSynthesizer:
         return constraints
 
     def load_custom_constraint_classes(self, filepath, class_names):
-        """Load a custom constraint class for the specified table's synthesizer.
+        """Load a custom constraint class for each table's synthesizer.
 
         Args:
             filepath (str):
@@ -439,8 +439,8 @@ class BaseMultiTableSynthesizer:
             class_names (list):
                 A list of custom constraint classes to be imported.
         """
-        for t_name in self._table_synthesizers:
-            self._table_synthesizers[t_name].load_custom_constraint_classes(filepath, class_names)
+        for synthesizer in self._table_synthesizers.values():
+            synthesizer.load_custom_constraint_classes(filepath, class_names)
 
     def add_custom_constraint_class(self, class_object, class_name):
         """Add a custom constraint class for the synthesizer to use.
@@ -451,10 +451,9 @@ class BaseMultiTableSynthesizer:
             class_name (str):
                 The name to assign this custom constraint class. This will be the name to use
                 when writing a constraint dictionary for ``add_constraints``.
-        #self._table_synthesizers[table_name].add_custom_constraint_class(class_object, class_name)
         """
-        for t_name in self._table_synthesizers:
-            self._table_synthesizers[t_name].add_custom_constraint_class(class_object, class_name)
+        for synthesizer in self._table_synthesizers.values():
+            synthesizer.add_custom_constraint_class(class_object, class_name)
 
     def get_info(self):
         """Get dictionary with information regarding the synthesizer.

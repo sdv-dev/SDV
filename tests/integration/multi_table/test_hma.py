@@ -211,47 +211,6 @@ def test_hma_custom_constraint():
     assert all(sampled['parent']['numerical_col'] > 1)
 
 
-def test_hma_custom_constraint_1_table():
-    """Test an example of using a custom constraint.
-
-    Here the parent and child table both contains the numerical column.
-    Check that the constraint is only applied to the parent table.
-    """
-    # Setup
-    parent_data, child_data, metadata = get_custom_constraint_data_and_metadata()
-    synthesizer = HMASynthesizer(metadata)
-    constraint = {
-        'table_name': 'parent',
-        'constraint_class': 'MyConstraint',
-        'constraint_parameters': {
-            'column_names': ['numerical_col']
-        }
-    }
-    synthesizer.add_custom_constraint_class(MyConstraint, 'MyConstraint')
-
-    # Run
-    synthesizer.add_constraints(constraints=[constraint])
-    processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
-
-    # Assert Processed Data
-    np.testing.assert_equal(
-        processed_data['parent']['numerical_col'].array,
-        (parent_data['numerical_col'] ** 2.0).array
-    )
-    np.testing.assert_equal(
-        processed_data['child']['numerical_col'].array,
-        (child_data['numerical_col']).array
-    )
-
-    # Run - Fit the model
-    synthesizer.fit_processed_data(processed_data)
-
-    # Run - sample
-    sampled = synthesizer.sample(10)
-    assert all(sampled['parent']['numerical_col'] > 1)
-    assert not all(sampled['child']['numerical_col'] > 1)
-
-
 def test_hma_custom_constraint_2_tables():
     """Test an example of using a custom constraint.
 
