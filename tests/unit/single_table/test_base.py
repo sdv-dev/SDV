@@ -880,7 +880,7 @@ class TestBaseSingleTableSynthesizer:
         })
         instance = Mock()
         instance._random_state_set = False
-        instance._data_processor._dtypes = pd.Series()
+        instance._data_processor._dtypes = pd.Series
         instance._data_processor.filter_valid.return_value = data
 
         # Run
@@ -906,7 +906,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [90.0, 100.0, 80.0]
         })
         instance = Mock()
-        instance._data_processor._dtypes = pd.Series()
+        instance._data_processor._dtypes = pd.Series
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.}
         transformed_conditions = {'salary': 80.0}
@@ -943,7 +943,7 @@ class TestBaseSingleTableSynthesizer:
         })
 
         instance = Mock()
-        instance._data_processor._dtypes = pd.Series()
+        instance._data_processor._dtypes = pd.Series
         instance._data_processor.filter_valid = lambda x: x
         instance._data_processor.reverse_transform.return_value = data
 
@@ -971,7 +971,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [90.0, 100.0, 80.0]
         })
         instance = Mock()
-        instance._data_processor._dtypes = pd.Series()
+        instance._data_processor._dtypes = pd.Series
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.}
         transformed_conditions = {'salary': 80.0}
