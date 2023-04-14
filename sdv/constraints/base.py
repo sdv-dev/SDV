@@ -497,7 +497,8 @@ class ColumnsModel:
                 Table data with additional ``constraint_columns``.
         """
         condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
-        grouped_conditions = table_data[condition_columns].groupby(condition_columns)
+        cond_columns = condition_columns[0] if len(condition_columns) == 1 else condition_columns
+        grouped_conditions = table_data[condition_columns].groupby(cond_columns)
         all_sampled_rows = []
         for group, dataframe in grouped_conditions:
             if not isinstance(group, tuple):

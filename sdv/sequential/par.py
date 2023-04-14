@@ -134,8 +134,8 @@ class PARSynthesizer(BaseSynthesizer):
     def _validate_context_columns(self, data):
         errors = []
         if self.context_columns:
-            errors = []
-            for sequence_key_value, data_values in data.groupby(self._sequence_key):
+            seq_key = self._sequence_key[0] if len(self._sequence_key) == 1 else self._sequence_key
+            for sequence_key_value, data_values in data.groupby(seq_key):
                 for context_column in self.context_columns:
                     if len(data_values[context_column].unique()) > 1:
                         errors.append((

@@ -893,7 +893,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         condition_columns = list(conditions.columns)
         conditions.index.name = COND_IDX
         conditions = conditions.reset_index()
-        grouped_conditions = conditions.groupby(condition_columns)
+        cond_columns = condition_columns[0] if len(condition_columns) == 1 else condition_columns
+        grouped_conditions = conditions.groupby(cond_columns)
 
         # sample
         all_sampled_rows = []
@@ -935,7 +936,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 )
                 all_sampled_rows.append(sampled_rows)
             else:
-                transformed_groups = transformed_conditions.groupby(transformed_columns)
+                if len(transformed_columns) == 1:
+                    transformed_column = transformed_columns[0]
+                else:
+                    transformed_column = transformed_columns
+
+                transformed_groups = transformed_conditions.groupby(transformed_column)
                 for transformed_group, transformed_dataframe in transformed_groups:
                     if not isinstance(transformed_group, tuple):
                         transformed_group = [transformed_group]
