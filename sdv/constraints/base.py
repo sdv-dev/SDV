@@ -10,11 +10,11 @@ from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianUnivariate
 from rdt import HyperTransformer
 from rdt.transformers import BinaryEncoder, FloatFormatter, OneHotEncoder, UnixTimestampEncoder
-from sdv.utils import groupby_list
 
 from sdv.constraints.errors import (
     AggregateConstraintsError, ConstraintMetadataError, MissingConstraintColumnError)
 from sdv.errors import ConstraintsNotMetError
+from sdv.utils import groupby_list
 
 LOGGER = logging.getLogger(__name__)
 

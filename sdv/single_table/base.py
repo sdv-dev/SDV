@@ -21,10 +21,9 @@ from copulas.multivariate import GaussianMultivariate
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
 from sdv.single_table.errors import InvalidDataError
-from sdv.single_table.utils import (check_num_rows, handle_sampling_error,
-                                    validate_file_path)
+from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 from sdv.utils import (
-    is_boolean_type, is_datetime_type, is_numerical_type, validate_datetime_format, groupby_list)
+    groupby_list, is_boolean_type, is_datetime_type, is_numerical_type, validate_datetime_format)
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
