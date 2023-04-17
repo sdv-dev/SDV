@@ -10,6 +10,7 @@ from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianUnivariate
 from rdt import HyperTransformer
 from rdt.transformers import BinaryEncoder, FloatFormatter, OneHotEncoder, UnixTimestampEncoder
+from sdv.utils import groupby_list
 
 from sdv.constraints.errors import (
     AggregateConstraintsError, ConstraintMetadataError, MissingConstraintColumnError)
@@ -497,8 +498,7 @@ class ColumnsModel:
                 Table data with additional ``constraint_columns``.
         """
         condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
-        cond_columns = condition_columns[0] if len(condition_columns) == 1 else condition_columns
-        grouped_conditions = table_data[condition_columns].groupby(cond_columns)
+        grouped_conditions = table_data[condition_columns].groupby(groupby_list(condition_columns))
         all_sampled_rows = []
         for group, dataframe in grouped_conditions:
             if not isinstance(group, tuple):

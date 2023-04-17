@@ -21,9 +21,10 @@ from copulas.multivariate import GaussianMultivariate
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
 from sdv.single_table.errors import InvalidDataError
-from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
+from sdv.single_table.utils import (check_num_rows, handle_sampling_error,
+                                    validate_file_path)
 from sdv.utils import (
-    is_boolean_type, is_datetime_type, is_numerical_type, validate_datetime_format)
+    is_boolean_type, is_datetime_type, is_numerical_type, validate_datetime_format, groupby_list)
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
@@ -893,8 +894,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         condition_columns = list(conditions.columns)
         conditions.index.name = COND_IDX
         conditions = conditions.reset_index()
-        cond_columns = condition_columns[0] if len(condition_columns) == 1 else condition_columns
-        grouped_conditions = conditions.groupby(cond_columns)
+        grouped_conditions = conditions.groupby(groupby_list(condition_columns))
 
         # sample
         all_sampled_rows = []
@@ -936,12 +936,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 )
                 all_sampled_rows.append(sampled_rows)
             else:
-                if len(transformed_columns) == 1:
-                    transformed_column = transformed_columns[0]
-                else:
-                    transformed_column = transformed_columns
-
-                transformed_groups = transformed_conditions.groupby(transformed_column)
+                transformed_groups = transformed_conditions.groupby(
+                                                                groupby_list(transformed_columns)
+                                                                   )
                 for transformed_group, transformed_dataframe in transformed_groups:
                     if not isinstance(transformed_group, tuple):
                         transformed_group = [transformed_group]
