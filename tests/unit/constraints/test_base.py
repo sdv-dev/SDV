@@ -890,7 +890,7 @@ class TestColumnsModel:
         constraint = Mock()
         constraint.is_valid.side_effect = lambda x: pd.Series(
             [True for _ in range(len(x))],
-            index=x.index
+            index=x.index, dtype=bool
         )
         instance = ColumnsModel(constraint, ['a', 'b'])
         instance._hyper_transformer = Mock()
@@ -941,7 +941,7 @@ class TestColumnsModel:
         constraint = Mock()
         constraint.is_valid.side_effect = lambda x: pd.Series(
             [False for _ in range(len(x))],
-            index=x.index
+            index=x.index, dtype=bool
         )
         instance = ColumnsModel(constraint, ['a', 'b'])
         instance._hyper_transformer = Mock()
