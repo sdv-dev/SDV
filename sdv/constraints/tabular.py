@@ -479,9 +479,9 @@ class Inequality(Constraint):
 
         diff_column = high - low
         if self._is_datetime:
-            nat_mask = np.isnan(diff_column)
+            nan_mask = np.isnan(diff_column)
             diff_column = diff_column.astype(np.float64)
-            diff_column[nat_mask] = np.nan
+            diff_column[nan_mask] = np.nan
 
         table_data[self._diff_column_name] = np.log(diff_column + 1)
         return table_data.drop(self._high_column_name, axis=1)
