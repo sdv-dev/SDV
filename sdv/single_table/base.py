@@ -936,8 +936,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 all_sampled_rows.append(sampled_rows)
             else:
                 transformed_groups = transformed_conditions.groupby(
-                                                                groupby_list(transformed_columns)
-                                                                   )
+                    groupby_list(transformed_columns)
+                )
                 for transformed_group, transformed_dataframe in transformed_groups:
                     if not isinstance(transformed_group, tuple):
                         transformed_group = [transformed_group]
