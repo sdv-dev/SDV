@@ -1439,6 +1439,25 @@ class TestInequality():
         expected_out = [True, False, True]
         np.testing.assert_array_equal(expected_out, out)
 
+    def test__get_datetime_diff(self):
+        """Test the ``Inequality._get_datetime_diff method.
+        
+        The method is expected to compute the difference between the high and low
+        datetime columns, treating missing values as NaN.
+        """
+        # Setup
+        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance._dtype = 'O'
+        high = pd.Series(['2022-02-02', '', '2023-01-02']).to_numpy()
+        low = pd.Series(['2022-02-01', '2022-02-02', '2023-01-01']).to_numpy()
+        expected = np.array([8.64e13, np.nan, 8.64e13])
+
+        # Run
+        diff = instance._get_datetime_diff(low, high)
+
+        # Assert
+        assert np.array_equal(expected, diff, equal_nan=True)
+    
     def test__transform(self):
         """Test the ``Inequality._transform`` method.
 
