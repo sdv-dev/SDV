@@ -455,6 +455,32 @@ class Inequality(Constraint):
         valid = np.isnan(low) | np.isnan(high) | self._operator(high, low)
         return valid
 
+    def _get_datetime_diff(self, low, high):
+        """Calculate the difference between two datetime columns.
+
+        When casting datetimes to float using ``astype``, NaT values are not automatically
+        converted to NaN values. This method calculates the difference between the high
+        and low column values, preserving missing values as NaNs. 
+
+        Args:
+            high (numpy.ndarray):
+                The high column values.
+            low (numpy.ndarray):
+                The low column values.
+
+        Returns:
+            numpy.ndarray:
+                The difference between the high and low column values.
+        """
+        if self._dtype == 'O':
+            low = cast_to_datetime64(low)
+            high = cast_to_datetime64(high)
+        diff_column = high - low
+        nan_mask = np.isnan(diff_column)
+        diff_column = diff_column.astype(np.float64)
+        diff_column[nan_mask] = np.nan
+        return diff_column
+    
     def _transform(self, table_data):
         """Transform the table data.
 
@@ -473,15 +499,10 @@ class Inequality(Constraint):
                 Transformed data.
         """
         low, high = self._get_data(table_data)
-        if self._is_datetime and self._dtype == 'O':
-            low = cast_to_datetime64(low)
-            high = cast_to_datetime64(high)
-
-        diff_column = high - low
         if self._is_datetime:
-            nan_mask = np.isnan(diff_column)
-            diff_column = diff_column.astype(np.float64)
-            diff_column[nan_mask] = np.nan
+            diff_column = self._get_datetime_diff(low, high)
+        else:
+            diff_column = high - low
 
         table_data[self._diff_column_name] = np.log(diff_column + 1)
         return table_data.drop(self._high_column_name, axis=1)
