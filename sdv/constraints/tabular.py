@@ -40,7 +40,7 @@ from sdv.constraints.base import Constraint
 from sdv.constraints.errors import (
     AggregateConstraintsError, ConstraintMetadataError, FunctionError, InvalidFunctionError)
 from sdv.constraints.utils import cast_to_datetime64, logit, matches_datetime_format, sigmoid
-from sdv.utils import is_datetime_type
+from sdv.utils import convert_to_timedelta, is_datetime_type
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,
@@ -512,8 +512,8 @@ class Inequality(Constraint):
 
         The transformation is reversed by computing an exponential of the difference value,
         subtracting 1 and converting it to the original dtype. Finally, the obtained column
-        is added to the ``low_column_name`` column to get back the original
-        ``high_column_name`` value.
+        is added to the ``low_column_name`` column to get back the original ``high_column_name``
+        value.
 
         Args:
             table_data (pandas.DataFrame):
@@ -528,7 +528,7 @@ class Inequality(Constraint):
             diff_column = diff_column.round()
 
         if self._is_datetime:
-            diff_column = pd.to_timedelta(diff_column)
+            diff_column = convert_to_timedelta(diff_column)
 
         low = table_data[self._low_column_name].to_numpy()
         if self._is_datetime and self._dtype == 'O':
