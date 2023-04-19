@@ -460,7 +460,7 @@ class Inequality(Constraint):
 
         When casting datetimes to float using ``astype``, NaT values are not automatically
         converted to NaN values. This method calculates the difference between the high
-        and low column values, preserving missing values as NaNs. 
+        and low column values, preserving missing values as NaNs.
 
         Args:
             high (numpy.ndarray):
@@ -480,7 +480,7 @@ class Inequality(Constraint):
         diff_column = diff_column.astype(np.float64)
         diff_column[nan_mask] = np.nan
         return diff_column
-    
+
     def _transform(self, table_data):
         """Transform the table data.
 

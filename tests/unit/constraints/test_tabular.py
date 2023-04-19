@@ -1441,7 +1441,7 @@ class TestInequality():
 
     def test__get_datetime_diff(self):
         """Test the ``Inequality._get_datetime_diff method.
-        
+
         The method is expected to compute the difference between the high and low
         datetime columns, treating missing values as NaN.
         """
@@ -1457,7 +1457,7 @@ class TestInequality():
 
         # Assert
         assert np.array_equal(expected, diff, equal_nan=True)
-    
+
     def test__transform(self):
         """Test the ``Inequality._transform`` method.
 
