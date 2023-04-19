@@ -54,7 +54,8 @@ class TestAnonimization:
         mock_anonymized_faker.assert_called_once_with(
             provider_name='internet',
             function_name='email',
-            domain='@gmail.com'
+            domain='@gmail.com',
+            locales=None
         )
 
     @patch('sdv.metadata.anonymization.AnonymizedFaker')
@@ -84,7 +85,8 @@ class TestAnonimization:
         mock_anonymized_faker.assert_called_once_with(
             provider_name='color',
             function_name='color',
-            hue='red'
+            hue='red',
+            locales=None
         )
 
     @patch('sdv.metadata.anonymization.Faker')

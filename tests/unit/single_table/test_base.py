@@ -58,7 +58,8 @@ class TestBaseSingleTableSynthesizer:
         mock_data_processor.assert_called_once_with(
             metadata=metadata,
             enforce_rounding=instance.enforce_rounding,
-            enforce_min_max_values=instance.enforce_min_max_values
+            enforce_min_max_values=instance.enforce_min_max_values,
+            locales=instance.locales
         )
         metadata.validate.assert_called_once_with()
 
@@ -72,17 +73,20 @@ class TestBaseSingleTableSynthesizer:
         instance = BaseSingleTableSynthesizer(
             metadata,
             enforce_min_max_values=False,
-            enforce_rounding=False
+            enforce_rounding=False,
+            locales='en_CA'
         )
 
         # Assert
         assert instance.enforce_min_max_values is False
         assert instance.enforce_rounding is False
+        assert instance.locales == 'en_CA'
         assert instance._data_processor == mock_data_processor.return_value
         mock_data_processor.assert_called_once_with(
             metadata=metadata,
             enforce_rounding=instance.enforce_rounding,
-            enforce_min_max_values=instance.enforce_min_max_values
+            enforce_min_max_values=instance.enforce_min_max_values,
+            locales=instance.locales
         )
         metadata.validate.assert_called_once_with()
 
@@ -114,7 +118,8 @@ class TestBaseSingleTableSynthesizer:
         instance = BaseSingleTableSynthesizer(
             metadata,
             enforce_min_max_values=False,
-            enforce_rounding=False
+            enforce_rounding=False,
+            locales='en_CA'
         )
 
         # Run
@@ -122,7 +127,11 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         assert 'metadata' not in parameters
-        assert parameters == {'enforce_min_max_values': False, 'enforce_rounding': False}
+        assert parameters == {
+            'enforce_min_max_values': False,
+            'enforce_rounding': False,
+            'locales': 'en_CA'
+        }
 
     @patch('sdv.single_table.base.DataProcessor')
     def test_get_metadata(self, mock_data_processor):
