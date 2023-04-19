@@ -1453,7 +1453,7 @@ class TestInequality():
         expected = np.array([8.64e13, np.nan, 8.64e13])
 
         # Run
-        diff = instance._get_datetime_diff(low, high)
+        diff = instance._get_datetime_diff(high, low)
 
         # Assert
         assert np.array_equal(expected, diff, equal_nan=True)

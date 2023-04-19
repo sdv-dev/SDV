@@ -455,7 +455,7 @@ class Inequality(Constraint):
         valid = np.isnan(low) | np.isnan(high) | self._operator(high, low)
         return valid
 
-    def _get_datetime_diff(self, low, high):
+    def _get_datetime_diff(self, high, low):
         """Calculate the difference between two datetime columns.
 
         When casting datetimes to float using ``astype``, NaT values are not automatically
@@ -500,7 +500,7 @@ class Inequality(Constraint):
         """
         low, high = self._get_data(table_data)
         if self._is_datetime:
-            diff_column = self._get_datetime_diff(low, high)
+            diff_column = self._get_datetime_diff(high, low)
         else:
             diff_column = high - low
 
