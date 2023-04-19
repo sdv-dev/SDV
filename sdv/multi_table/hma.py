@@ -19,14 +19,16 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         metadata (sdv.metadata.multi_table.MultiTableMetadata):
             Multi table metadata representing the data tables that this synthesizer will be used
             for.
+        locales (list or str):
+            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
     """
 
     DEFAULT_SYNTHESIZER_KWARGS = {
         'default_distribution': 'beta'
     }
 
-    def __init__(self, metadata, synthesizer_kwargs=None):
-        super().__init__(metadata)
+    def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
+        super().__init__(metadata, locales=locales)
         self._synthesizer_kwargs = synthesizer_kwargs or self.DEFAULT_SYNTHESIZER_KWARGS
         self._table_sizes = {}
         self._max_child_rows = {}

@@ -33,6 +33,8 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         enforce_rounding (bool):
             Define rounding scheme for ``numerical`` columns. If ``True``, the data returned
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
+        locales (list or str):
+            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
         numerical_distributions (dict):
             Dictionary that maps field names from the table that is being modeled with
             the distribution that needs to be used. The distributions can be passed as either
@@ -88,12 +90,13 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         return cls._DISTRIBUTIONS[distribution]
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
+    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=None,
                  numerical_distributions=None, default_distribution=None):
         super().__init__(
             metadata,
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
+            locales=locales,
         )
         validate_numerical_distributions(numerical_distributions, self.metadata.columns)
         self.numerical_distributions = numerical_distributions or {}
