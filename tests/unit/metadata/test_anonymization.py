@@ -33,7 +33,8 @@ class TestAnonimization:
 
         Test that when calling with an existing ``sdtype`` / ``function_name`` from the
         ``SDTYPE_ANONYMZIERS`` dictionary, their ``provider_name`` and ``function_name`` are being
-        used by default, and also other ``kwargs`` are being passed to the ``AnonymizedFaker``.
+        used by default, and also other ``kwargs`` and provided locales are being passed to the
+        ``AnonymizedFaker``.
 
         Input:
             - ``function_name`` from the ``SDTYPE_ANONYMIZERS``.
@@ -47,7 +48,9 @@ class TestAnonimization:
             - The return value must be the instance of ``AnonymizedFaker``.
         """
         # Setup
-        output = get_anonymized_transformer('email', function_kwargs={'domain': '@gmail.com'})
+        output = get_anonymized_transformer('email',
+                                            function_kwargs={'domain': '@gmail.com'},
+                                            locales=['en_CA', 'fr_CA'])
 
         # Assert
         assert output == mock_anonymized_faker.return_value
@@ -55,7 +58,7 @@ class TestAnonimization:
             provider_name='internet',
             function_name='email',
             domain='@gmail.com',
-            locales=None
+            locales=['en_CA', 'fr_CA']
         )
 
     @patch('sdv.metadata.anonymization.AnonymizedFaker')
@@ -64,7 +67,8 @@ class TestAnonimization:
 
         Test that when calling with a custom ``sdtype`` / ``function_name`` that does not belong
         to the ``SDTYPE_ANONYMZIERS`` dictionary. The ``provider_name`` is being found
-        automatically other ``kwargs`` are being passed to the ``AnonymizedFaker``.
+        automatically other ``kwargs`` and provided locales are being passed to the
+        ``AnonymizedFaker``.
 
         Input:
             - ``function_name`` color.
@@ -78,7 +82,9 @@ class TestAnonimization:
             - The return value must be the instance of ``AnonymizedFaker``.
         """
         # Setup
-        output = get_anonymized_transformer('color', function_kwargs={'hue': 'red'})
+        output = get_anonymized_transformer('color',
+                                            function_kwargs={'hue': 'red'},
+                                            locales=['en_CA', 'fr_CA'])
 
         # Assert
         assert output == mock_anonymized_faker.return_value
@@ -86,7 +92,7 @@ class TestAnonimization:
             provider_name='color',
             function_name='color',
             hue='red',
-            locales=None
+            locales=['en_CA', 'fr_CA']
         )
 
     @patch('sdv.metadata.anonymization.Faker')
