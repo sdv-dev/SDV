@@ -15,7 +15,7 @@ def test_convert_to_timedelta(to_timedelta_mock):
     to_timedelta_mock.return_value = pd.Series([
         pd.Timedelta(hours=1),
         pd.Timedelta(hours=2),
-        pd.Timedelta(0)
+        pd.Timedelta(hours=0)
     ])
 
     # Run
