@@ -6,7 +6,7 @@
 
 __author__ = 'DataCebo, Inc.'
 __email__ = 'info@sdv.dev'
-__version__ = '1.0.1'
+__version__ = '1.0.2.dev0'
 
 from sdv._addons import _find_addons
 
