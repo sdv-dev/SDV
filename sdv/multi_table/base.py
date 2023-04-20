@@ -429,33 +429,31 @@ class BaseMultiTableSynthesizer:
 
         return constraints
 
-    def load_custom_constraint_classes(self, table_name, filepath, class_names):
-        """Load a custom constraint class for the specified table's synthesizer.
+    def load_custom_constraint_classes(self, filepath, class_names):
+        """Load a custom constraint class for each table's synthesizer.
 
         Args:
-            table_name (str):
-                Table to add constraint to.
             filepath (str):
                 String representing the absolute or relative path to the python file where
                 the custom constraints are declared.
             class_names (list):
                 A list of custom constraint classes to be imported.
         """
-        self._table_synthesizers[table_name].load_custom_constraint_classes(filepath, class_names)
+        for synthesizer in self._table_synthesizers.values():
+            synthesizer.load_custom_constraint_classes(filepath, class_names)
 
-    def add_custom_constraint_class(self, table_name, class_object, class_name):
+    def add_custom_constraint_class(self, class_object, class_name):
         """Add a custom constraint class for the synthesizer to use.
 
         Args:
-            table_name (str):
-                Table to add constraint to.
             class_object (sdv.constraints.Constraint):
                 A custom constraint class object.
             class_name (str):
                 The name to assign this custom constraint class. This will be the name to use
                 when writing a constraint dictionary for ``add_constraints``.
         """
-        self._table_synthesizers[table_name].add_custom_constraint_class(class_object, class_name)
+        for synthesizer in self._table_synthesizers.values():
+            synthesizer.add_custom_constraint_class(class_object, class_name)
 
     def get_info(self):
         """Get dictionary with information regarding the synthesizer.
@@ -487,13 +485,13 @@ class BaseMultiTableSynthesizer:
             cloudpickle.dump(self, output)
 
     @classmethod
-    def load(cls, path):
+    def load(cls, filepath):
         """Load the multi-table synthesizer from a given path.
 
         Args:
-            path (str):
+            filepath (str):
                 Path from which to load the instance.
         """
-        with open(path, 'rb') as f:
+        with open(filepath, 'rb') as f:
             synthesizer = cloudpickle.load(f)
             return synthesizer

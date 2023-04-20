@@ -147,6 +147,7 @@ def test_hma_set_parameters():
 
 
 def get_custom_constraint_data_and_metadata():
+    """Return data and metadata for the custom constraint tests."""
     parent_data = pd.DataFrame({
         'primary_key': [1000, 1001, 1002],
         'numerical_col': [2, 3, 4],
@@ -155,7 +156,9 @@ def get_custom_constraint_data_and_metadata():
     child_data = pd.DataFrame({
         'user_id': [1000, 1001, 1000],
         'id': [1, 2, 3],
-        'random': ['a', 'b', 'c']
+        'random': ['a', 'b', 'c'],
+        'numerical_col': [0.2, 0.7, 1.3],
+        'numerical_col_2': [2, 4, 6],
     })
 
     metadata = MultiTableMetadata()
@@ -178,6 +181,7 @@ def get_custom_constraint_data_and_metadata():
 
 def test_hma_custom_constraint():
     """Test an example of using a custom constraint."""
+    # Setup
     parent_data, child_data, metadata = get_custom_constraint_data_and_metadata()
     synthesizer = HMASynthesizer(metadata)
     constraint = {
@@ -187,7 +191,7 @@ def test_hma_custom_constraint():
             'column_names': ['numerical_col']
         }
     }
-    synthesizer.add_custom_constraint_class('parent', MyConstraint, 'MyConstraint')
+    synthesizer.add_custom_constraint_class(MyConstraint, 'MyConstraint')
 
     # Run
     synthesizer.add_constraints(constraints=[constraint])
@@ -207,8 +211,59 @@ def test_hma_custom_constraint():
     assert all(sampled['parent']['numerical_col'] > 1)
 
 
+def test_hma_custom_constraint_2_tables():
+    """Test an example of using a custom constraint.
+
+    Check that the same custom constraint can be applied to two different tables and columns.
+    """
+    # Setup
+    parent_data, child_data, metadata = get_custom_constraint_data_and_metadata()
+    synthesizer = HMASynthesizer(metadata)
+
+    constraint_parent = {
+        'table_name': 'parent',
+        'constraint_class': 'MyConstraint',
+        'constraint_parameters': {
+            'column_names': ['numerical_col']
+        }
+    }
+
+    constraint_child = {
+        'table_name': 'child',
+        'constraint_class': 'MyConstraint',
+        'constraint_parameters': {
+            'column_names': ['numerical_col_2']
+        }
+    }
+    synthesizer.add_custom_constraint_class(MyConstraint, 'MyConstraint')
+
+    # Run
+    synthesizer.add_constraints(constraints=[constraint_parent, constraint_child])
+    processed_data = synthesizer.preprocess({'parent': parent_data, 'child': child_data})
+
+    # Assert Processed Data
+    np.testing.assert_equal(
+        processed_data['parent']['numerical_col'].array,
+        (parent_data['numerical_col'] ** 2.0).array
+    )
+    np.testing.assert_equal(
+        processed_data['child']['numerical_col_2'].array,
+        (child_data['numerical_col_2'] ** 2.0).array
+    )
+
+    # Run - Fit the model
+    synthesizer.fit_processed_data(processed_data)
+
+    # Run - sample
+    sampled = synthesizer.sample(10)
+    assert all(sampled['parent']['numerical_col'] > 1)
+    assert all(sampled['child']['numerical_col_2'] > 1)
+    assert not all(sampled['child']['numerical_col'] > 1)
+
+
 def test_hma_custom_constraint_loaded_from_file():
     """Test an example of using a custom constraint loaded from a file."""
+    # Setup
     parent_data, child_data, metadata = get_custom_constraint_data_and_metadata()
     synthesizer = HMASynthesizer(metadata)
     constraint = {
@@ -219,7 +274,6 @@ def test_hma_custom_constraint_loaded_from_file():
         }
     }
     synthesizer.load_custom_constraint_classes(
-        'parent',
         'tests/integration/single_table/custom_constraints.py',
         ['MyConstraint']
     )

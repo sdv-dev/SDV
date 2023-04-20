@@ -1,5 +1,30 @@
 # Release Notes
 
+## 1.0.1 - 2023-04-20
+
+This release improves the `load_custom_constraint_classes` method by removing the `table_name` parameter and just loading the constraint
+for all tables instead. It also improves some error messages as well as removes some of the warnings that have been surfacing.
+
+Support for sdtypes is enhanced by resolving a bug that was incorrecttly specifying Faker functions for some of them. Support for datetime formats has also been improved. Finally, the `path` argument in some `save` and `load` methods was changed to `filepath` for consistency.
+
+### New Features
+
+* Method load_custom_constraint_classes does not need table_name parameter - Issue [#1354](https://github.com/sdv-dev/SDV/issues/1354) by @R-Palazzo
+* Improve error message for invalid primary keys - Issue [#1341](https://github.com/sdv-dev/SDV/issues/1341) by @R-Palazzo
+* Add functionality to find version add-on - Issue [#1309](https://github.com/sdv-dev/SDV/issues/1309) by @frances-h
+
+### Bugs Fixed
+
+* Certain sdtypes cause Faker to raise error - Issue [#1346](https://github.com/sdv-dev/SDV/issues/1346) by @frances-h
+* Change path to filepath for load and save methods - Issue [#1352](https://github.com/sdv-dev/SDV/issues/1352) by @fealho
+* Some datetime formats cause InvalidDataError, even if the datetime matches the format - Issue [#1136](https://github.com/sdv-dev/SDV/issues/1136) by @amontanez24
+
+### Internal
+
+* Inequality constraint raises RuntimeWarning (invalid value encountered in log) - Issue [#1275](https://github.com/sdv-dev/SDV/issues/1275) by @frances-h
+* Pandas FutureWarning: Default dtype for Empty Series will be 'object' - Issue [#1355](https://github.com/sdv-dev/SDV/issues/1355) by @R-Palazzo
+* Pandas FutureWarning: Length 1 tuple will be returned - Issue [#1356](https://github.com/sdv-dev/SDV/issues/1356) by @R-Palazzo
+
 ## 1.0.0 - 2023-03-28
 
 This is a major release that introduces a new API to the `SDV` aimed at streamlining the process of synthetic data generation! To achieve this, this release includes the addition of several large features.

@@ -538,6 +538,51 @@ def test_transformers_correctly_auto_assigned():
     assert transformers['categorical_col'].add_noise is True
 
 
+def test_modeling_with_complex_datetimes():
+    """Test that models work with datetimes passed as strings or ints with complex format."""
+    # Setup
+    data = pd.DataFrame(data={
+        'string_column': [
+            '20220902110443000000',
+            '20220916230356000000',
+            '20220826173917000000',
+            '20220826212135000000',
+            '20220929111311000000'
+        ],
+        'int_column': [
+            20220902110443000000,
+            20220916230356000000,
+            20220826173917000000,
+            20220826212135000000,
+            20220929111311000000
+        ]
+    })
+
+    test_metadata = {
+        'columns': {
+            'string_column': {
+                'sdtype': 'datetime',
+                'datetime_format': '%Y%m%d%H%M%S%f'
+            },
+            'int_column': {
+                'sdtype': 'datetime',
+                'datetime_format': '%Y%m%d%H%M%S%f'
+            }
+        }
+    }
+
+    # Run
+    metadata = SingleTableMetadata.load_from_dict(test_metadata)
+    metadata.validate()
+    synth = GaussianCopulaSynthesizer(metadata)
+    synth.validate(data)
+    synth.fit(data)
+    sampled = synth.sample(10)
+
+    # Assert
+    synth.validate(sampled)
+
+
 def test_custom_constraints_from_file(tmpdir):
     """Ensure the correct loading for a custom constraint class defined in another file."""
     data = pd.DataFrame({

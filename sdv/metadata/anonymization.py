@@ -71,7 +71,7 @@ def _detect_provider_name(function_name):
         return 'BaseProvider'
 
     else:
-        return module[-1]
+        return '.'.join(module[2:])
 
 
 def get_anonymized_transformer(function_name, function_kwargs=None):

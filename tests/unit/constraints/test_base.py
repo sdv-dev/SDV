@@ -890,7 +890,7 @@ class TestColumnsModel:
         constraint = Mock()
         constraint.is_valid.side_effect = lambda x: pd.Series(
             [True for _ in range(len(x))],
-            index=x.index
+            index=x.index, dtype=bool
         )
         instance = ColumnsModel(constraint, ['a', 'b'])
         instance._hyper_transformer = Mock()
@@ -941,7 +941,7 @@ class TestColumnsModel:
         constraint = Mock()
         constraint.is_valid.side_effect = lambda x: pd.Series(
             [False for _ in range(len(x))],
-            index=x.index
+            index=x.index, dtype=bool
         )
         instance = ColumnsModel(constraint, ['a', 'b'])
         instance._hyper_transformer = Mock()
@@ -1006,3 +1006,12 @@ class TestColumnsModel:
         })
         instance._reject_sample.assert_any_call(num_rows=5, conditions={'b': 1})
         pd.testing.assert_frame_equal(transformed_data, expected_result)
+
+    @patch('warnings.warn')
+    def test_groupby_removed_warning(self, mock_warn):
+        """Test that the pandas warning is no longer raised."""
+        # Run
+        self.test_sample()
+
+        # Assert
+        mock_warn.assert_not_called()

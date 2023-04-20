@@ -126,6 +126,30 @@ def is_boolean_type(value):
     return True if pd.isna(value) | (value is True) | (value is False) else False
 
 
+def validate_datetime_format(value, datetime_format):
+    """Determine that value matches datetime format.
+
+    Args:
+        value (int, str, datetime, bool):
+            Input to evaluate.
+        datetime_format (str):
+            The datetime format.
+
+    Returns:
+        bool:
+            True if the input matches the format, False if not.
+    """
+    pandas_datetime_format = datetime_format.replace('%-', '%')
+
+    try:
+        pd.to_datetime(value, format=pandas_datetime_format)
+
+    except ValueError:
+        return False
+
+    return True
+
+
 def load_data_from_csv(filepath, pandas_kwargs=None):
     """Load DataFrame from a filepath.
 
@@ -140,3 +164,8 @@ def load_data_from_csv(filepath, pandas_kwargs=None):
     pandas_kwargs = pandas_kwargs or {}
     data = pd.read_csv(filepath, **pandas_kwargs)
     return data
+
+
+def groupby_list(list_to_check):
+    """Return the first element of the list if the length is 1 else the entire list."""
+    return list_to_check[0] if len(list_to_check) == 1 else list_to_check

@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import rdt
+from pandas.api.types import is_float_dtype, is_integer_dtype
 from rdt.transformers import AnonymizedFaker, RegexGenerator
 
 from sdv.constraints import Constraint
@@ -744,7 +745,7 @@ class DataProcessor:
                 column_data = reversed_data[column_name]
 
             dtype = self._dtypes[column_name]
-            if pd.api.types.is_integer_dtype(dtype) and column_data.dtype != 'O':
+            if is_integer_dtype(dtype) and is_float_dtype(column_data.dtype):
                 column_data = column_data.round()
 
             reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
@@ -814,23 +815,23 @@ class DataProcessor:
 
         return instance
 
-    def to_json(self, path):
+    def to_json(self, filepath):
         """Dump this DataProcessor into a JSON file.
 
         Args:
-            path (str):
+            filepath (str):
                 Path of the JSON file where this metadata will be stored.
         """
-        with open(path, 'w') as out_file:
+        with open(filepath, 'w') as out_file:
             json.dump(self.to_dict(), out_file, indent=4)
 
     @classmethod
-    def from_json(cls, path):
+    def from_json(cls, filepath):
         """Load a DataProcessor from a JSON.
 
         Args:
-            path (str):
+            filepath (str):
                 Path of the JSON file to load
         """
-        with open(path, 'r') as in_file:
+        with open(filepath, 'r') as in_file:
             return cls.from_dict(json.load(in_file))
