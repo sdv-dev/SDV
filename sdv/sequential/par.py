@@ -15,7 +15,7 @@ from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
-from sdv.utils import cast_to_iterable
+from sdv.utils import cast_to_iterable, groupby_list
 
 LOGGER = logging.getLogger(__name__)
 
@@ -134,8 +134,7 @@ class PARSynthesizer(BaseSynthesizer):
     def _validate_context_columns(self, data):
         errors = []
         if self.context_columns:
-            errors = []
-            for sequence_key_value, data_values in data.groupby(self._sequence_key):
+            for sequence_key_value, data_values in data.groupby(groupby_list(self._sequence_key)):
                 for context_column in self.context_columns:
                     if len(data_values[context_column].unique()) > 1:
                         errors.append((

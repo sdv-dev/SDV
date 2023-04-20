@@ -164,3 +164,8 @@ def load_data_from_csv(filepath, pandas_kwargs=None):
     pandas_kwargs = pandas_kwargs or {}
     data = pd.read_csv(filepath, **pandas_kwargs)
     return data
+
+
+def groupby_list(list_to_check):
+    """Return the first element of the list if the length is 1 else the entire list."""
+    return list_to_check[0] if len(list_to_check) == 1 else list_to_check

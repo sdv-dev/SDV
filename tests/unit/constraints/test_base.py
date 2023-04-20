@@ -1006,3 +1006,12 @@ class TestColumnsModel:
         })
         instance._reject_sample.assert_any_call(num_rows=5, conditions={'b': 1})
         pd.testing.assert_frame_equal(transformed_data, expected_result)
+
+    @patch('warnings.warn')
+    def test_groupby_removed_warning(self, mock_warn):
+        """Test that the pandas warning is no longer raised."""
+        # Run
+        self.test_sample()
+
+        # Assert
+        mock_warn.assert_not_called()
