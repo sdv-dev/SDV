@@ -3,6 +3,7 @@
 import inspect
 
 from faker import Faker
+from faker.config import AVAILABLE_LOCALES
 from rdt.transformers import AnonymizedFaker
 
 SDTYPE_ANONYMIZERS = {
@@ -56,7 +57,7 @@ def is_faker_function(function_name):
         True if the ``function_name`` is know to ``Faker``, otherwise False.
     """
     try:
-        getattr(Faker(), function_name)
+        getattr(Faker(AVAILABLE_LOCALES), function_name)
     except AttributeError:
         return False
 
