@@ -23,6 +23,7 @@ Support for sdtypes is enhanced by resolving a bug that was incorrecttly specify
 
 * Inequality constraint raises RuntimeWarning (invalid value encountered in log) - Issue [#1275](https://github.com/sdv-dev/SDV/issues/1275) by @frances-h
 * Pandas FutureWarning: Default dtype for Empty Series will be 'object' - Issue [#1355](https://github.com/sdv-dev/SDV/issues/1355) by @R-Palazzo
+* Pandas FutureWarning: Length 1 tuple will be returned - Issue [#1356](https://github.com/sdv-dev/SDV/issues/1356) by @R-Palazzo
 
 ## 1.0.0 - 2023-03-28
 
