@@ -48,6 +48,9 @@ class BaseSynthesizer:
         enforce_rounding (bool):
             Define rounding scheme for ``numerical`` columns. If ``True``, the data returned
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
+        locales (list or str):
+            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+
     """
 
     _model_sdtype_transformers = None
@@ -70,16 +73,18 @@ class BaseSynthesizer:
             for sdtype, transformer in self._model_sdtype_transformers.items():
                 self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True):
+    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=None):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata = metadata
         self.metadata.validate()
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
+        self.locales = locales
         self._data_processor = DataProcessor(
             metadata=self.metadata,
             enforce_rounding=self.enforce_rounding,
-            enforce_min_max_values=self.enforce_min_max_values
+            enforce_min_max_values=self.enforce_min_max_values,
+            locales=self.locales
         )
         self._fitted = False
         self._random_state_set = False

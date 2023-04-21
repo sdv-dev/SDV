@@ -339,3 +339,18 @@ def test_data_processor_refit_hypertransformer():
 
     transformed = dp.transform(data)
     assert all(transformed.dtypes == float)
+
+
+def test_data_processor_localized_anonymized_columns():
+    """Test data processor uses the default locale for anonymized columns."""
+    # Setup
+    data, metadata = download_demo('single_table', 'adult')
+    metadata.update_column('occupation', sdtype='job', pii=True)
+
+    dp = DataProcessor(metadata, locales=['en_CA', 'fr_CA'])
+
+    # Run
+    dp.fit(data)
+
+    # Assert
+    assert dp._hyper_transformer.field_transformers['occupation'].locales == ['en_CA', 'fr_CA']

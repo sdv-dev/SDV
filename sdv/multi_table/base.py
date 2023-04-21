@@ -25,6 +25,8 @@ class BaseMultiTableSynthesizer:
         metadata (sdv.metadata.multi_table.MultiTableMetadata):
             Multi table metadata representing the data tables that this synthesizer will be used
             for.
+        locales (list or str):
+            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
     """
 
     _synthesizer = GaussianCopulaSynthesizer
@@ -50,12 +52,14 @@ class BaseMultiTableSynthesizer:
             synthesizer_parameters = self._table_parameters.get(table_name, {})
             self._table_synthesizers[table_name] = self._synthesizer(
                 metadata=table_metadata,
+                locales=self.locales,
                 **synthesizer_parameters
             )
 
-    def __init__(self, metadata):
+    def __init__(self, metadata, locales=None):
         self.metadata = metadata
         self.metadata.validate()
+        self.locales = locales
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
         self._initialize_models()

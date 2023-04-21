@@ -59,6 +59,7 @@ class TestSingleTablePreset:
             'default_distribution': 'norm',
             'enforce_min_max_values': True,
             'enforce_rounding': False,
+            'locales': None,
             'numerical_distributions': {}
         }
 

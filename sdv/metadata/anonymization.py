@@ -3,6 +3,7 @@
 import inspect
 
 from faker import Faker
+from faker.config import AVAILABLE_LOCALES
 from rdt.transformers import AnonymizedFaker
 
 SDTYPE_ANONYMIZERS = {
@@ -56,15 +57,15 @@ def is_faker_function(function_name):
         True if the ``function_name`` is know to ``Faker``, otherwise False.
     """
     try:
-        getattr(Faker(), function_name)
+        getattr(Faker(AVAILABLE_LOCALES), function_name)
     except AttributeError:
         return False
 
     return True
 
 
-def _detect_provider_name(function_name):
-    function_name = getattr(Faker(), function_name)
+def _detect_provider_name(function_name, locales=None):
+    function_name = getattr(Faker(locale=locales), function_name)
     module = inspect.getmodule(function_name).__name__
     module = module.split('.')
     if len(module) == 2:
@@ -74,26 +75,25 @@ def _detect_provider_name(function_name):
         return '.'.join(module[2:])
 
 
-def get_anonymized_transformer(function_name, function_kwargs=None):
+def get_anonymized_transformer(function_name, transformer_kwargs=None):
     """Get an instance with an ``AnonymizedFaker`` for the given ``function_name``.
 
     Args:
         function_name (str):
             String representing predefined ``sdtype`` or a ``faker`` function.
-
-        function_kwargs (dict):
-            Keyword args to pass into the ``function_name``  when being called if needed.
-            This is optional.
+        transformer_kwargs (dict):
+            Keyword args to pass into AnonymizedFaker transformer. Optional.
     """
-    function_kwargs = function_kwargs or {}
+    transformer_kwargs = transformer_kwargs or {}
+    locales = transformer_kwargs.get('locales')
     if function_name in SDTYPE_ANONYMIZERS:
-        function_kwargs.update(SDTYPE_ANONYMIZERS[function_name])
-        return AnonymizedFaker(**function_kwargs)
+        transformer_kwargs.update(SDTYPE_ANONYMIZERS[function_name])
+        return AnonymizedFaker(**transformer_kwargs)
 
-    provider_name = _detect_provider_name(function_name)
-    function_kwargs.update({
+    provider_name = _detect_provider_name(function_name, locales=locales)
+    transformer_kwargs.update({
         'function_name': function_name,
         'provider_name': provider_name
     })
 
-    return AnonymizedFaker(**function_kwargs)
+    return AnonymizedFaker(**transformer_kwargs)

@@ -25,6 +25,7 @@ class TestBaseMultiTableSynthesizer:
         ``table_parameters`` we use those to initialize the model.
         """
         # Setup
+        locales = ['en_CA', 'fr_CA']
         instance = Mock()
         instance._table_synthesizers = {}
         instance._table_parameters = {
@@ -32,6 +33,7 @@ class TestBaseMultiTableSynthesizer:
                 'default_distribution': 'gamma'
             }
         }
+        instance.locales = locales
         instance.metadata = get_multi_table_metadata()
 
         # Run
@@ -44,9 +46,10 @@ class TestBaseMultiTableSynthesizer:
             'upravna_enota': instance._synthesizer.return_value
         }
         instance._synthesizer.assert_has_calls([
-            call(metadata=instance.metadata.tables['nesreca'], default_distribution='gamma'),
-            call(metadata=instance.metadata.tables['oseba']),
-            call(metadata=instance.metadata.tables['upravna_enota'])
+            call(metadata=instance.metadata.tables['nesreca'], default_distribution='gamma',
+                 locales=locales),
+            call(metadata=instance.metadata.tables['oseba'], locales=locales),
+            call(metadata=instance.metadata.tables['upravna_enota'], locales=locales)
         ])
 
     def test___init__(self):
@@ -99,7 +102,7 @@ class TestBaseMultiTableSynthesizer:
         """Test that the table's synthesizer parameters are being returned."""
         # Setup
         metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata)
+        instance = BaseMultiTableSynthesizer(metadata, locales='en_CA')
 
         # Run
         result = instance.get_parameters('oseba')
@@ -108,6 +111,7 @@ class TestBaseMultiTableSynthesizer:
         assert result == {
             'default_distribution': 'beta',
             'enforce_min_max_values': True,
+            'locales': 'en_CA',
             'enforce_rounding': True,
             'numerical_distributions': {}
         }
@@ -131,6 +135,7 @@ class TestBaseMultiTableSynthesizer:
         assert instance.get_parameters('oseba') == {
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
+            'locales': None,
             'enforce_rounding': True,
             'numerical_distributions': {}
         }

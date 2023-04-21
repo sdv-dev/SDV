@@ -65,6 +65,8 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         enforce_rounding (bool):
             Define rounding scheme for ``numerical`` columns. If ``True``, the data returned
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
+        locales (list or str):
+            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
         log_frequency (boolean):
             Whether to use log frequency of categorical levels in conditional
             sampling. Defaults to ``True``.
@@ -113,7 +115,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
 
     _gaussian_normalizer_hyper_transformer = None
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
+    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=None,
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
                  generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
                  discriminator_decay=1e-6, batch_size=500, discriminator_steps=1,
@@ -124,6 +126,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             metadata,
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
+            locales=locales,
             embedding_dim=embedding_dim,
             generator_dim=generator_dim,
             discriminator_dim=discriminator_dim,
