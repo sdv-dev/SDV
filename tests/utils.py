@@ -15,6 +15,17 @@ class DataFrameMatcher:
         return True
 
 
+class SeriesMatcher:
+    """Match a given Pandas Series in a mock function call."""
+
+    def __init__(self, series):
+        self.series = series
+
+    def __eq__(self, other):
+        pd.testing.assert_series_equal(self.series, other)
+        return True
+
+
 def get_multi_table_metadata():
     """Return a ``MultiTableMetadata`` object to be used with tests."""
     dict_metadata = {

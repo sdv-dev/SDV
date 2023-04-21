@@ -15,44 +15,6 @@ def cast_to_iterable(value):
     return [value]
 
 
-def display_tables(tables, max_rows=10, datetime_fmt='%Y-%m-%d %H:%M:%S', row=True):
-    """Display mutiple tables side by side on a Jupyter Notebook.
-
-    Args:
-        tables (dict[str, DataFrame]):
-            ``dict`` containing table names and pandas DataFrames.
-        max_rows (int):
-            Max rows to show per table. Defaults to 10.
-        datetime_fmt (str):
-            Format with which to display datetime columns.
-    """
-    # Import here to avoid making IPython a hard dependency
-    from IPython.core.display import HTML
-
-    names = []
-    data = []
-    for name, table in tables.items():
-        table = table.copy()
-        for column in table.columns:
-            column_data = table[column]
-            if column_data.dtype.kind == 'M':
-                table[column] = column_data.dt.strftime(datetime_fmt)
-
-        names.append(f'<td style="text-align:left"><b>{name}</b></td>')
-        data.append(f'<td>{table.head(max_rows).to_html(index=False)}</td>')
-
-    if row:
-        html = f"<table><tr>{''.join(names)}</tr><tr>{''.join(data)}</tr></table>"
-    else:
-        rows = [
-            f'<tr>{name}</tr><tr>{table}</tr>'
-            for name, table in zip(names, data)
-        ]
-        html = f"<table>{''.join(rows)}</table>"
-
-    return HTML(html)
-
-
 def get_datetime_format(value):
     """Get the ``strftime`` format for a given ``value``.
 
@@ -148,6 +110,27 @@ def validate_datetime_format(value, datetime_format):
         return False
 
     return True
+
+
+def convert_to_timedelta(column):
+    """Convert a ``pandas.Series`` to one with dtype ``timedelta``.
+
+    ``pd.to_timedelta`` does not handle nans, so this function masks the nans, converts and then
+    reinserts them.
+
+    Args:
+        column (pandas.Series):
+            Column to convert.
+
+    Returns:
+        pandas.Series:
+            The column converted to timedeltas.
+    """
+    nan_mask = pd.isna(column)
+    column[nan_mask] = 0
+    column = pd.to_timedelta(column)
+    column[nan_mask] = pd.NaT
+    return column
 
 
 def load_data_from_csv(filepath, pandas_kwargs=None):
