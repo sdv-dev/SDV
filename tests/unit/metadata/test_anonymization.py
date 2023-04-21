@@ -48,16 +48,15 @@ class TestAnonimization:
             - The return value must be the instance of ``AnonymizedFaker``.
         """
         # Setup
-        output = get_anonymized_transformer('email',
-                                            function_kwargs={'domain': '@gmail.com'},
-                                            locales=['en_CA', 'fr_CA'])
-
+        output = get_anonymized_transformer('email', transformer_kwargs={
+            'function_kwargs': {'domain': '@gmail.com'}, 'locales': ['en_CA', 'fr_CA']
+        })
         # Assert
         assert output == mock_anonymized_faker.return_value
         mock_anonymized_faker.assert_called_once_with(
             provider_name='internet',
             function_name='email',
-            domain='@gmail.com',
+            function_kwargs={'domain': '@gmail.com'},
             locales=['en_CA', 'fr_CA']
         )
 
@@ -82,16 +81,16 @@ class TestAnonimization:
             - The return value must be the instance of ``AnonymizedFaker``.
         """
         # Setup
-        output = get_anonymized_transformer('color',
-                                            function_kwargs={'hue': 'red'},
-                                            locales=['en_CA', 'fr_CA'])
+        output = get_anonymized_transformer('color', transformer_kwargs={
+            'function_kwargs': {'hue': 'red'}, 'locales': ['en_CA', 'fr_CA']
+        })
 
         # Assert
         assert output == mock_anonymized_faker.return_value
         mock_anonymized_faker.assert_called_once_with(
             provider_name='color',
             function_name='color',
-            hue='red',
+            function_kwargs={'hue': 'red'},
             locales=['en_CA', 'fr_CA']
         )
 

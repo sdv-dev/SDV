@@ -75,27 +75,25 @@ def _detect_provider_name(function_name, locales=None):
         return '.'.join(module[2:])
 
 
-def get_anonymized_transformer(function_name, function_kwargs=None, locales=None):
+def get_anonymized_transformer(function_name, transformer_kwargs=None):
     """Get an instance with an ``AnonymizedFaker`` for the given ``function_name``.
 
     Args:
         function_name (str):
             String representing predefined ``sdtype`` or a ``faker`` function.
-        function_kwargs (dict):
-            Keyword args to pass into the ``function_name``  when being called if needed.
-            This is optional.
-        locales (str or list):
-            The locale(s) to use instead of the default locale. Optional.
+        transformer_kwargs (dict):
+            Keyword args to pass into AnonymizedFaker transformer. Optional.
     """
-    function_kwargs = function_kwargs or {}
+    transformer_kwargs = transformer_kwargs or {}
+    locales = transformer_kwargs.get('locales')
     if function_name in SDTYPE_ANONYMIZERS:
-        function_kwargs.update(SDTYPE_ANONYMIZERS[function_name])
-        return AnonymizedFaker(locales=locales, **function_kwargs)
+        transformer_kwargs.update(SDTYPE_ANONYMIZERS[function_name])
+        return AnonymizedFaker(**transformer_kwargs)
 
     provider_name = _detect_provider_name(function_name, locales=locales)
-    function_kwargs.update({
+    transformer_kwargs.update({
         'function_name': function_name,
         'provider_name': provider_name
     })
 
-    return AnonymizedFaker(locales=locales, **function_kwargs)
+    return AnonymizedFaker(**transformer_kwargs)

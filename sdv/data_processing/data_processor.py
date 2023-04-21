@@ -367,7 +367,7 @@ class DataProcessor:
         Returns:
             Instance of ``rdt.transformers.pii.AnonymizedFaker``.
         """
-        kwargs = {}
+        kwargs = {'locales': locales}
         for key, value in column_metadata.items():
             if key not in ['pii', 'sdtype']:
                 kwargs[key] = value
@@ -375,7 +375,7 @@ class DataProcessor:
         if enforce_uniqueness:
             kwargs['enforce_uniqueness'] = True
 
-        return get_anonymized_transformer(sdtype, kwargs, locales=locales)
+        return get_anonymized_transformer(sdtype, kwargs)
 
     def create_regex_generator(self, column_name, sdtype, column_metadata, is_numeric):
         """Create a ``RegexGenerator`` for the ``id`` columns.

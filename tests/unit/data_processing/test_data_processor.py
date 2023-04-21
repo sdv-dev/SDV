@@ -969,7 +969,7 @@ class TestDataProcessor:
 
         # Assert
         mock_get_anonymized_transformer.assert_called_once_with(
-            'ssn', {'enforce_uniqueness': True}, locales=None
+            'ssn', {'enforce_uniqueness': True, 'locales': None}
         )
         assert output == mock_get_anonymized_transformer.return_value
 
@@ -996,7 +996,7 @@ class TestDataProcessor:
 
         # Assert
         mock_get_anonymized_transformer.assert_called_once_with(
-            'ssn', {}, locales=['en_US', 'en_CA']
+            'ssn', {'locales': ['en_US', 'en_CA']}
         )
         assert output == mock_get_anonymized_transformer.return_value
 
@@ -1022,7 +1022,7 @@ class TestDataProcessor:
         column_metadata = {
             'sdtype': 'email',
             'pii': True,
-            'domain': 'gmail.com'
+            'function_kwargs': {'domain': 'gmail.com'}
         }
 
         # Run
@@ -1031,7 +1031,7 @@ class TestDataProcessor:
         # Assert
         assert output == mock_get_anonymized_transformer.return_value
         mock_get_anonymized_transformer.assert_called_once_with(
-            'email', {'domain': 'gmail.com'}, locales=None
+            'email', {'function_kwargs': {'domain': 'gmail.com'}, 'locales': None}
         )
 
     def test__get_transformer_instance_no_kwargs(self):
