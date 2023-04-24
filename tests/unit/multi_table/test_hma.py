@@ -277,20 +277,20 @@ class TestHMASynthesizer:
 
         sampled_data = {
             'users': pd.DataFrame({
-                'user_id': [0, 1, 2],
-                'name': ['John', 'Doe', 'Johanna'],
-                'additional_column': [0.1, 0.2, 0.3],
-                'another_additional_column': [0.1, 0.2, 0.5]
-            }, dtype=np.int64),
+                'user_id': pd.Series([0, 1, 2], dtype=np.int64),
+                'name': pd.Series(['John', 'Doe', 'Johanna'], dtype=object),
+                'additional_column': pd.Series([0.1, 0.2, 0.3], dtype=float),
+                'another_additional_column': pd.Series([0.1, 0.2, 0.5], dtype=float),
+            }),
             'sessions': pd.DataFrame({
-                'user_id': [1, 2, 1],
-                'session_id': ['a', 'b', 'c'],
-                'os': ['linux', 'mac', 'win'],
-                'country': ['us', 'us', 'es']
-            }, dtype=np.int64),
+                'user_id': pd.Series([1, 2, 1], dtype=np.int64),
+                'session_id': pd.Series(['a', 'b', 'c'], dtype=object),
+                'os': pd.Series(['linux', 'mac', 'win'], dtype=object),
+                'country': pd.Series(['us', 'us', 'es'], dtype=object),
+            }),
             'transactions': pd.DataFrame({
-                'transaction_id': [1, 2, 3],
-            }, dtype=np.int64),
+                'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
+            }),
         }
 
         users_synth = Mock()
@@ -320,19 +320,19 @@ class TestHMASynthesizer:
         # Assert
         expected_result = {
             'users': pd.DataFrame({
-                'user_id': [0, 1, 2],
-                'name': ['John', 'Doe', 'Johanna'],
-            }, dtype=np.int64),
+                'user_id': pd.Series([0, 1, 2], dtype=np.int64),
+                'name': pd.Series(['John', 'Doe', 'Johanna'], dtype=object),
+            }),
             'sessions': pd.DataFrame({
-                'user_id': [1, 2, 1],
-                'session_id': ['a', 'b', 'c'],
-                'os': ['linux', 'mac', 'win'],
-                'country': ['us', 'us', 'es'],
-            }, dtype=np.int64),
+                'user_id': pd.Series([1, 2, 1], dtype=np.int64),
+                'session_id': pd.Series(['a', 'b', 'c'], dtype=object),
+                'os': pd.Series(['linux', 'mac', 'win'], dtype=object),
+                'country': pd.Series(['us', 'us', 'es'], dtype=object),
+            }),
             'transactions': pd.DataFrame({
-                'transaction_id': [1, 2, 3],
-                'session_id': ['a', 'a', 'b']
-            }, dtype=np.int64),
+                'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
+                'session_id': pd.Series(['a', 'a', 'b'], dtype=object),
+            }),
         }
         for result_frame, expected_frame in zip(result.values(), expected_result.values()):
             pd.testing.assert_frame_equal(result_frame, expected_frame)
