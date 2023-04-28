@@ -812,6 +812,7 @@ def test_synthesizer_with_inequality_constraint():
 
 def test_inequality_constraint_all_possible_nans_configurations():
     """Test that the inequality constraint works with all possible NaN configurations."""
+    # Setup
     data = pd.DataFrame(data={
         'A': [0, 1, np.nan, np.nan, 2],
         'B': [2, np.nan, 3, np.nan, 3]
@@ -838,10 +839,11 @@ def test_inequality_constraint_all_possible_nans_configurations():
         ]
     )
 
+    # Run
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(10000)
 
-    # there are no cases where A is null but B is present
+    # Assert
     assert (~(pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
     assert ((pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
     assert (~(pd.isna(synthetic_data['A'])) & (pd.isna(synthetic_data['B']))).any()
