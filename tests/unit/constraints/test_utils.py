@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.utils import (
-    _cast_to_type, cast_to_datetime64, logit, matches_datetime_format, sigmoid)
+    _cast_to_type, add_nans_column, cast_to_datetime64, check_nans_row, logit,
+    matches_datetime_format, revert_nans_columns, sigmoid)
 from sdv.utils import get_datetime_format, is_datetime_type
 
 
@@ -371,3 +372,52 @@ def test_matches_datetime_format_bad_value():
 
     # Assert
     assert result is False
+
+
+def test_check_nans_row():
+    """Test the ``check_nans_row`` method."""
+    # Setup
+    row = pd.Series([np.nan, 2, np.nan, 4], index=['a', 'b', 'c', 'd'])
+
+    # Run
+    result = check_nans_row(row)
+
+    # Assert
+    assert result == 'a, c'
+
+
+def test_add_nans_columns():
+    """Test the ``add_nans_columns`` method."""
+    # Setup
+    data = pd.DataFrame({
+        'a': [1, np.nan, 3, np.nan], 'b': [np.nan, 2, 3, np.nan], 'c': [1, np.nan, 3, np.nan]
+    })
+
+    # Run
+    add_nans_column(data, ['a', 'b', 'c'])
+
+    expected_nan_columns = ['b', 'a, c', 'None', 'a, b, c']
+
+    # Assert
+    assert list(data['a#b#c.nan_component']) == expected_nan_columns
+
+
+def test_revert_nans_columns():
+    """Test the ``revert_nans_columns`` method."""
+    # Setup
+    data = pd.DataFrame({
+        'a': [1, 2, 3, 2], 'b': [2.5, 2, 3, 2.5], 'c': [1, 2, 3, 2],
+        'a#b#c.nan_component': ['b', 'a, c', 'None', 'a, b, c']
+    })
+    nan_column_name = 'a#b#c.nan_component'
+
+    # Run
+    result = revert_nans_columns(data, nan_column_name)
+
+    expected_data = pd.DataFrame({
+        'a': [1, np.nan, 3, np.nan], 'b': [np.nan, 2, 3, np.nan],
+        'c': [1, np.nan, 3, np.nan]
+    })
+
+    # Assert
+    pd.testing.assert_frame_equal(result, expected_data)
