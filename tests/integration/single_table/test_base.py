@@ -812,6 +812,7 @@ def test_synthesizer_with_inequality_constraint():
 
 def test_inequality_constraint_all_possible_nans_configurations():
     """Test that the inequality constraint works with all possible NaN configurations."""
+    # Setup
     data = pd.DataFrame(data={
         'A': [0, 1, np.nan, np.nan, 2],
         'B': [2, np.nan, 3, np.nan, 3]
@@ -838,6 +839,7 @@ def test_inequality_constraint_all_possible_nans_configurations():
         ]
     )
 
+    # Run
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(10000)
 
@@ -846,6 +848,56 @@ def test_inequality_constraint_all_possible_nans_configurations():
     assert ((pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
     assert (~(pd.isna(synthetic_data['A'])) & (pd.isna(synthetic_data['B']))).any()
     assert (~(pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
+
+
+def test_range_constraint_all_possible_nans_configurations():
+    """Test that the range constraint works with all possible NaN configurations."""
+    # Setup
+    data = pd.DataFrame(data={
+    'low':    [1, 4, np.nan, 0,      4,      np.nan, np.nan, 5,      np.nan],
+    'middle': [2, 5, 3,      np.nan, 5,      np.nan, 5,      np.nan, np.nan],
+    'high':   [3, 7, 8,      4,      np.nan, 9,      np.nan, np.nan, np.nan]
+    })
+
+    metadata_dict = {
+        'columns': {
+            'low': { 'sdtype': 'numerical' },
+            'middle': { 'sdtype': 'numerical'},
+            'high': { 'sdtype': 'numerical'}
+        }
+    }
+
+    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+    synth = GaussianCopulaSynthesizer(metadata)
+
+    my_constraint = {
+        'constraint_class': 'Range',
+        'constraint_parameters': {
+            'low_column_name': 'low',
+            'middle_column_name': 'middle',
+            'high_column_name': 'high'
+        }
+    }
+
+    # Run
+    synth.add_constraints(constraints=[my_constraint])
+    synth.fit(data)
+
+    synth_data = synth.sample(2000)
+
+    # Assert
+    assert all(synth_data[synth_data['low'] > synth_data['high']])
+    assert all(synth_data[synth_data['low'] < synth_data['middle']])
+    assert all(synth_data[synth_data['middle'] > synth_data['high']])
+    assert any(~(pd.isna(synth_data['low'])) & ~(pd.isna(synth_data['middle'])) & ~(pd.isna(synth_data['high'])))
+    assert any((pd.isna(synth_data['low'])) & ~(pd.isna(synth_data['middle'])) & ~(pd.isna(synth_data['high'])))
+    assert any(~(pd.isna(synth_data['low'])) & (pd.isna(synth_data['middle'])) & ~(pd.isna(synth_data['high'])))
+    assert any(~(pd.isna(synth_data['low'])) & ~(pd.isna(synth_data['middle'])) & (pd.isna(synth_data['high'])))
+    assert any(~(pd.isna(synth_data['low'])) & (pd.isna(synth_data['middle'])) & (pd.isna(synth_data['high'])))
+    assert any((pd.isna(synth_data['low'])) & ~(pd.isna(synth_data['middle'])) & (pd.isna(synth_data['high'])))
+    assert any((pd.isna(synth_data['low'])) & (pd.isna(synth_data['middle'])) & ~(pd.isna(synth_data['high'])))
+    assert any((pd.isna(synth_data['low'])) & (pd.isna(synth_data['middle'])) & (pd.isna(synth_data['high'])))
+    
 
 
 def test_save_and_load(tmp_path):

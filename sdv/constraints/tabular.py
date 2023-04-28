@@ -852,6 +852,9 @@ class Range(Constraint):
         self.low_column_name = low_column_name
         self.middle_column_name = middle_column_name
         self.high_column_name = high_column_name
+        self.diff_column_name_1 = f'{self.low_column_name}#{self.middle_column_name}'
+        self.diff_column_name_2 = f'{self.middle_column_name}#{self.high_column_name}'
+        self._is_datetime = None
         self.strict_boundaries = strict_boundaries
         self._operator = operator.lt if strict_boundaries else operator.le
 
@@ -938,13 +941,33 @@ class Range(Constraint):
                 Transformed data.
         """
         low = table_data[self.low_column_name]
+        middle = table_data[self.middle_column_name]
         high = table_data[self.high_column_name]
+    
+        if self._is_datetime:
+            diff_column_1 = self._get_datetime_diff(middle, low)
+            diff_column_2 = self._get_datetime_diff(high, middle)
+        else:
+            diff_column_1 = middle - low
+            diff_column_2 = high - middle
 
-        data = logit(table_data[self.middle_column_name], low, high)
-        table_data[self._transformed_column] = data
-        table_data = table_data.drop(self.middle_column_name, axis=1)
+        table_data[self.diff_column_name_1] = np.log(diff_column_1 + 1)
+        table_data[self.diff_column_name_2] = np.log(diff_column_2 + 1)
 
-        return table_data
+        list_columns_nans = [self.low_column_name, self.middle_column_name, self.high_column_name]
+        if add_nans_column(table_data, list_columns_nans):
+            if self._is_datetime:
+                mean_value_low = table_data[self.low_column_name].mode()[0]
+            else:
+                mean_value_low = table_data[self.low_column_name].mean()
+
+            table_data = table_data.fillna({
+                self.low_column_name: mean_value_low,
+                self.diff_column_name_1: table_data[self.diff_column_name_1].mean(),
+                self.diff_column_name_2: table_data[self.diff_column_name_2].mean()
+            })
+
+        return table_data.drop([self.middle_column_name, self.high_column_name], axis=1)
 
     def _reverse_transform(self, table_data):
         """Reverse transform the table data.
@@ -961,21 +984,28 @@ class Range(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        low = table_data[self.low_column_name]
-        high = table_data[self.high_column_name]
-        data = table_data[self._transformed_column]
-
-        data = sigmoid(data, low, high)
-        data = data.clip(low, high)
+        diff_column_1 = np.exp(table_data[self.diff_column_name_1]) - 1
+        diff_column_2 = np.exp(table_data[self.diff_column_name_2]) - 1
+        if self._dtype != np.dtype('float'):
+            diff_column_1 = diff_column_1.round()
+            diff_column_2 = diff_column_2.round()
 
         if self._is_datetime:
-            table_data[self.middle_column_name] = pd.to_datetime(data)
-        else:
-            table_data[self.middle_column_name] = data.astype(self._dtype)
+            diff_column_1 = convert_to_timedelta(diff_column_1)
+            diff_column_2 = convert_to_timedelta(diff_column_2)
 
-        table_data = table_data.drop(self._transformed_column, axis=1)
+        low = table_data[self.low_column_name].to_numpy()
+        if self._is_datetime and self._dtype == 'O':
+            low = cast_to_datetime64(low)
 
-        return table_data
+        table_data[self.middle_column_name] = pd.Series(diff_column_1 + low).astype(self._dtype)
+        table_data[self.high_column_name] = pd.Series(diff_column_2 + table_data[self.middle_column_name].to_numpy()).astype(self._dtype)
+
+        nan_col_name = '#'.join([self.low_column_name, self.middle_column_name, self.high_column_name]) + '.nan_component'
+        if nan_col_name in table_data.columns:
+            table_data = revert_nans_columns(table_data, nan_col_name)
+
+        return table_data.drop([self.diff_column_name_1, self.diff_column_name_2], axis=1)
 
 
 class ScalarRange(Constraint):
