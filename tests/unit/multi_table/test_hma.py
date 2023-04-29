@@ -111,10 +111,10 @@ class TestHMASynthesizer:
         # Assert
         assert result == ['upravna_enota']
 
-    def test__extend_table(self):
-        """Test that ``extend_table`` extends the current table with extra columns.
+    def test__augment_table(self):
+        """Test that ``augment_table`` extends the current table with extra columns.
 
-        This also updates ``self._modeled_tables`` and ``self._max_child_rows``.
+        This also updates ``self._augmented_tables`` and ``self._max_child_rows``.
         """
         # Setup
         metadata = get_multi_table_metadata()
@@ -128,7 +128,7 @@ class TestHMASynthesizer:
         data['oseba']['oseba_value'] = [0, 1, 2, 3]
 
         # Run
-        result = instance._extend_table(data['nesreca'], data, 'nesreca')
+        result = instance._augment_table(data['nesreca'], data, 'nesreca')
 
         # Assert
         expected_result = pd.DataFrame({
@@ -149,7 +149,7 @@ class TestHMASynthesizer:
         })
 
         pd.testing.assert_frame_equal(expected_result, result)
-        assert instance._modeled_tables == ['oseba']
+        assert instance._augmented_tables == ['oseba', 'nesreca']
         assert instance._max_child_rows['__oseba__id_nesreca__num_rows'] == 1
 
     def test__pop_foreign_keys(self):
@@ -189,21 +189,21 @@ class TestHMASynthesizer:
         })
         pd.testing.assert_frame_equal(expected_data, data)
 
-    def test__model_table(self):
-        """Test that ``_model_table`` performs the modeling.
+    def test__model_tables(self):
+        """Test that ``_model_tables`` performs the modeling.
 
         Modeling consists of getting the table for the given table name,
         learning the size of this table, removing the foreign keys and clearing
         any null values by using the ``_clear_nans`` method. Then, fitting the table model by
         calling ``fit_processed_data``,  adding back the foreign keys, updating the ``tables`` and
-        marking the table name as modeled within the ``instance._modeled_tables``.
+        marking the table name as modeled within the ``instance._augmented_tables``.
         """
         # Setup
         nesreca_model = Mock()
         instance = Mock()
         instance._synthesizer = GaussianCopulaSynthesizer
 
-        instance._modeled_tables = []
+        instance._augmented_tables = []
         instance._table_sizes = {}
         instance._table_synthesizers = {'nesreca': nesreca_model}
         instance._pop_foreign_keys.return_value = {'fk': [1, 2, 3]}
@@ -211,18 +211,16 @@ class TestHMASynthesizer:
             'id_nesreca': [0, 1, 2],
             'upravna_enota': [0, 1, 2]
         })
-        extended_data = pd.DataFrame({
+        augmented_data = pd.DataFrame({
             'id_nesreca': [0, 1, 2],
             'upravna_enota': [0, 1, 2],
             'extended': ['a', 'b', 'c']
         })
 
-        instance._extend_table.return_value = extended_data
-
         tables = {'nesreca': data}
 
         # Run
-        result = HMASynthesizer._model_table(instance, 'nesreca', tables)
+        HMASynthesizer._model_tables(instance, tables)
 
         # Assert
         expected_result = pd.DataFrame({
@@ -231,22 +229,18 @@ class TestHMASynthesizer:
             'extended': ['a', 'b', 'c'],
             'fk': [1, 2, 3]
         })
-        pd.testing.assert_frame_equal(expected_result, result)
+        pd.testing.assert_frame_equal(expected_result, augmented_data)
 
-        instance._extend_table.assert_called_once_with(data, tables, 'nesreca')
-        instance._pop_foreign_keys.assert_called_once_with(extended_data, 'nesreca')
-        instance._clear_nans(extended_data)
-        nesreca_model.fit_processed_data.assert_called_once_with(extended_data)
-
-        assert instance._modeled_tables == ['nesreca']
-        assert instance._table_sizes == {'nesreca': 3}
+        instance._pop_foreign_keys.assert_called_once_with(augmented_data, 'nesreca')
+        instance._clear_nans.assert_called_once_with(augmented_data)
+        nesreca_model.fit_processed_data.assert_called_once_with(augmented_data)
 
     def test__fit(self):
-        """Test that ``_fit`` calls ``_model_table`` only if the table has no parents."""
+        """Test that ``_fit`` calls ``_model_tables`` only if the table has no parents."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = HMASynthesizer(metadata)
-        instance._model_table = Mock()
+        instance._model_tables = Mock()
         data = get_multi_table_data()
         data['nesreca']['value'] = [0, 1, 2, 3]
         data['oseba']['oseba_value'] = [0, 1, 2, 3]
@@ -255,7 +249,7 @@ class TestHMASynthesizer:
         instance._fit(data)
 
         # Assert
-        instance._model_table.assert_called_once_with('upravna_enota', data)
+        instance._model_tables.assert_called_once_with('upravna_enota', data)
 
     def test__finalize(self):
         """Test that the finalize method applies the final touches to the generated data.

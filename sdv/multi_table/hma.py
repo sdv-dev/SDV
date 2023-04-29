@@ -123,6 +123,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             pandas.DataFrame:
                 The extended table.
         """
+        self._table_sizes[table_name] = len(table)
         LOGGER.info('Computing extensions for table %s', table_name)
         for child_name in self.metadata._get_child_map()[table_name]:
             if child_name not in self._augmented_tables:
@@ -140,6 +141,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                 self._max_child_rows[num_rows_key] = table[num_rows_key].max()
                 tables[table_name] = table
 
+        self._augmented_tables.append(table_name)
         return table
 
     def _pop_foreign_keys(self, table_data, table_name):

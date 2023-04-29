@@ -308,6 +308,28 @@ class BaseMultiTableSynthesizer:
         """
         raise NotImplementedError()
 
+    def _augment_tables(self, processed_data):
+        """Augment the processed data.
+
+        Args:
+            processed_data (dict):
+                Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
+        """
+        raise NotImplementedError()
+
+    def fit_processed_data(self, processed_data):
+        """Fit this model to the transformed data.
+
+        Args:
+            processed_data (dict):
+                Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
+        """
+        augmented_data = self._augment_tables(processed_data)
+        self._model_tables(augmented_data)
+        self._fitted = True
+        self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
+        self._fitted_sdv_version = pkg_resources.get_distribution('sdv').version
+
     def fit(self, data):
         """Fit this model to the original data.
 
@@ -318,11 +340,7 @@ class BaseMultiTableSynthesizer:
         """
         self._fitted = False
         processed_data = self.preprocess(data)
-        augmented_data = self._augment_tables(processed_data)
-        self._model_tables(augmented_data)
-        self._fitted = True
-        self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
-        self._fitted_sdv_version = pkg_resources.get_distribution('sdv').version
+        self.fit_processed_data(processed_data)
 
     def reset_sampling(self):
         """Reset the sampling to the state that was left right after fitting."""
