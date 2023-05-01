@@ -48,7 +48,7 @@ SDTYPE_ANONYMIZERS = {
 }
 
 
-@lru_cache
+@lru_cache()
 def get_faker_instance():
     """Return a ``faker.Faker`` instance with all the locales."""
     return Faker(AVAILABLE_LOCALES)
