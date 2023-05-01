@@ -1,6 +1,7 @@
 """Anonymization module for the ``DataProcessor``."""
 
 import inspect
+import warnings
 
 from faker import Faker
 from faker.config import AVAILABLE_LOCALES
@@ -57,7 +58,9 @@ def is_faker_function(function_name):
         True if the ``function_name`` is know to ``Faker``, otherwise False.
     """
     try:
-        getattr(Faker(AVAILABLE_LOCALES), function_name)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', module='faker')
+            getattr(Faker(AVAILABLE_LOCALES), function_name)
     except AttributeError:
         return False
 
