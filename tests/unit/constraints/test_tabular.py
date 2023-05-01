@@ -1439,25 +1439,6 @@ class TestInequality():
         expected_out = [True, False, True]
         np.testing.assert_array_equal(expected_out, out)
 
-    def test__get_datetime_diff(self):
-        """Test the ``Inequality._get_datetime_diff method.
-
-        The method is expected to compute the difference between the high and low
-        datetime columns, treating missing values as NaN.
-        """
-        # Setup
-        instance = Inequality(low_column_name='a', high_column_name='b')
-        instance._dtype = 'O'
-        high = pd.Series(['2022-02-02', '', '2023-01-02']).to_numpy()
-        low = pd.Series(['2022-02-01', '2022-02-02', '2023-01-01']).to_numpy()
-        expected = np.array([8.64e13, np.nan, 8.64e13])
-
-        # Run
-        diff = instance._get_datetime_diff(high, low)
-
-        # Assert
-        assert np.array_equal(expected, diff, equal_nan=True)
-
     def test__transform(self):
         """Test the ``Inequality._transform`` method.
 
@@ -3080,7 +3061,6 @@ class TestRange():
         instance._fit(table_data)
 
         # Assert
-        assert instance._transformed_column == 'current_age##age_when_joined##retirement_age'
         assert instance._dtype == np.int64
         assert not instance._is_datetime
 
@@ -3176,132 +3156,74 @@ class TestRange():
         # Assert
         assert not all(result)
 
-    @patch('sdv.constraints.tabular.logit')
-    def test__transform(self, mock_logit):
-        """Test the ``Range._transform`` method.
-
-        It is expected to create a new column similar to the constraint ``column``, and then
-        scale and apply a logit function to that column.
-
-        Mock:
-            - Mock the ``logit`` function.
-        Input:
-            - pd.DataFrame with ``age_when_joined``, ``current_age``, ``retirement_age`` columns.
-
-        Output:
-            - pd.DataFrame with an extra column containing the transformed ``column``.
-        """
+    def test__transform(self):
+        """Test the ``_transform`` method for ``Range``."""
         # Setup
-        table_data = pd.DataFrame({
-            'age_when_joined': [18, 19, 20],
-            'current_age': [21, 22, 25],
-            'retirement_age': [65, 68, 75]
-        })
-        mock_logit.return_value = [1, 2, 3]
-        instance = Range('age_when_joined', 'current_age', 'retirement_age')
+        instance = Range('a', 'b', 'c')
+        instance._diff_column_name = 'a#b'
 
         # Run
-        instance.fit(table_data)
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [2, 5, 5],
+            'c': [6, 8, 10],
+        })
         out = instance._transform(table_data)
 
         # Assert
         expected_out = pd.DataFrame({
-            'age_when_joined': [18, 19, 20],
-            'retirement_age': [65, 68, 75],
-            'current_age#age_when_joined#retirement_age': [1, 2, 3]
+            'a': [1, 2, 3],
+            'a#b': [np.log(2), np.log(4), np.log(3)],
+            'b#c': [np.log(5), np.log(4), np.log(6)],
         })
-        mock_logit.assert_called_once()
-        pd.testing.assert_frame_equal(expected_out, out)
+        pd.testing.assert_frame_equal(out, expected_out)
 
-    @patch('sdv.constraints.tabular.sigmoid')
-    def test_reverse_transform(self, mock_sigmoid):
-        """Test the ``reverse_transform`` method for ``Range``.
-
-        It is expected to recover the original table which was transformed, but with different
-        column order. It does so by applying a sigmoid to the transformed column and then
-        scaling it back to the original space. It also replaces the transformed column with
-        an equal column but with the original name.
-
-        Mock:
-            - Mock the sigomid function.
-        Setup:
-            - Original table data.
-            - An expected transformed data with the expected column name.
-            - Instance of Range constraint.
-
-        Output:
-            - A pd.DataFrame containing the original data.
-        """
+    def test_reverse_transform(self):
+        """Test the ``reverse_transform`` method for ``Range``."""
         # Setup
         table_data = pd.DataFrame({
-            'age_when_joined': [18, 19, 20],
-            'retirement_age': [65, 68, 75],
-            'current_age': [21, 22, 25],
+            'a': [1, 2, 3],
+            'b': [2, 5, 5],
+            'c': [6, 8, 10],
         })
-        mock_sigmoid.return_value = pd.Series([21, 22, 25])
+
         transformed_data = pd.DataFrame({
-            'age_when_joined': [18, 19, 20],
-            'retirement_age': [65, 68, 75],
-            'current_age#age_when_joined#retirement_age': [1, 2, 3]
+            'a': [1, 2, 3],
+            'a#b': [np.log(2), np.log(4), np.log(3)],
+            'b#c': [np.log(5), np.log(4), np.log(6)],
         })
-        instance = Range('age_when_joined', 'current_age', 'retirement_age')
+        instance = Range('a', 'b', 'c')
 
         # Run
         instance.fit(table_data)
         out = instance.reverse_transform(transformed_data)
 
         # Assert
-        mock_sigmoid.assert_called_once()
         pd.testing.assert_frame_equal(table_data, out)
 
-    @patch('sdv.constraints.tabular.pd')
-    @patch('sdv.constraints.tabular.sigmoid')
-    def test_reverse_transform_is_datetime(self, mock_sigmoid, mock_pd):
-        """Test the ``reverse_transform`` method for ``Range``.
-
-        When ``instance._is_datetime`` is ``True``, the data should be converted
-        to ``pandas.to_datetime``.
-
-        Mock:
-            - Mock the sigmoid function.
-            - Mock pandas.
-
-        Setup:
-            - Original table data.
-            - An expected transformed data.
-            - Instance of ScalarRange constraint.
-
-        Output:
-            - A pd.DataFrame containing the original data.
-
-        Side Effects:
-            - ``mock_pd`` has to be called once.
-        """
+    def test_reverse_transform_is_datetime(self):
+        """Test the ``reverse_transform`` method for ``Range`` with datetime."""
         # Setup
         table_data = pd.DataFrame({
-            'age_when_joined': [18, 19, 20],
-            'retirement_age': [65, 68, 75],
-            'current_age': [21, 22, 25],
+            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
+            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
+            'c': pd.to_datetime(['2020-01-01T00:00:02', '2020-01-02T00:00:02']),
         })
-        mock_sigmoid.return_value = pd.Series([21, 22, 25])
-        transformed_data = pd.DataFrame({
-            'age_when_joined': [18, 19, 20],
-            'retirement_age': [65, 68, 75],
-            'current_age#age_when_joined#retirement_age': [1, 2, 3]
-        })
-        mock_pd.to_datetime.side_effect = lambda x: x
 
-        instance = Range('age_when_joined', 'current_age', 'retirement_age')
-        instance._transformed_column = 'current_age#age_when_joined#retirement_age'
-        instance._is_datetime = True
+        transformed_data = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
+            'a#b': [np.log(1_000_000_001), np.log(1_000_000_001)],
+            'b#c': [np.log(1_000_000_001), np.log(1_000_000_001)],
+        })
+
+        instance = Range('a', 'b', 'c')
 
         # Run
+        instance.fit(table_data)
         out = instance.reverse_transform(transformed_data)
 
         # Assert
         pd.testing.assert_frame_equal(table_data, out)
-        mock_sigmoid.assert_called_once()
-        mock_pd.to_datetime.assert_called_once()
 
 
 class TestScalarRange():

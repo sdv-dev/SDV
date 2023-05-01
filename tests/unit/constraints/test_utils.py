@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.utils import (
-    _cast_to_type, add_nans_column, cast_to_datetime64, check_nans_row, logit,
+    _cast_to_type, add_nans_column, cast_to_datetime64, check_nans_row, get_datetime_diff, logit,
     matches_datetime_format, revert_nans_columns, sigmoid)
 from sdv.utils import get_datetime_format, is_datetime_type
 
@@ -421,3 +421,21 @@ def test_revert_nans_columns():
 
     # Assert
     pd.testing.assert_frame_equal(result, expected_data)
+
+
+def test_get_datetime_diff():
+    """Test the ``_get_datetime_diff`` method.
+
+    The method is expected to compute the difference between the high and low
+    datetime columns, treating missing values as NaN.
+    """
+    # Setup
+    high = pd.Series(['2022-02-02', '', '2023-01-02']).to_numpy()
+    low = pd.Series(['2022-02-01', '2022-02-02', '2023-01-01']).to_numpy()
+    expected = np.array([8.64e13, np.nan, 8.64e13])
+
+    # Run
+    diff = get_datetime_diff(high, low, dtype='O')
+
+    # Assert
+    assert np.array_equal(expected, diff, equal_nan=True)
