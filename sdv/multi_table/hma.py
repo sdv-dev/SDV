@@ -96,6 +96,17 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
         return pd.DataFrame(extension_rows, index=index)
 
+    @staticmethod
+    def _clear_nans(table_data):
+        for column in table_data.columns:
+            column_data = table_data[column]
+            if column_data.dtype in (int, float):
+                fill_value = 0 if column_data.isna().all() else column_data.mean()
+            else:
+                fill_value = column_data.mode()[0]
+
+            table_data[column] = table_data[column].fillna(fill_value)
+
     def _get_foreign_keys(self, table_name, child_name):
         foreign_keys = []
         for relation in self.metadata.relationships:
@@ -142,6 +153,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                 tables[table_name] = table
 
         self._augmented_tables.append(table_name)
+        self._clear_nans(table)
         return table
 
     def _pop_foreign_keys(self, table_data, table_name):
@@ -163,17 +175,6 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             keys[fk] = table_data.pop(fk).to_numpy()
 
         return keys
-
-    @staticmethod
-    def _clear_nans(table_data):
-        for column in table_data.columns:
-            column_data = table_data[column]
-            if column_data.dtype in (int, float):
-                fill_value = 0 if column_data.isna().all() else column_data.mean()
-            else:
-                fill_value = column_data.mode()[0]
-
-            table_data[column] = table_data[column].fillna(fill_value)
 
     def _model_tables(self, augmented_data):
         """Model the augmented tables.

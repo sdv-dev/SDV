@@ -140,11 +140,11 @@ class TestHMASynthesizer:
             '__oseba__id_nesreca__univariates__oseba_val__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__b': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__loc': [0., 1., 2., 3.],
-            '__oseba__id_nesreca__univariates__oseba_val__scale': [np.nan] * 4,
+            '__oseba__id_nesreca__univariates__oseba_val__scale': [0.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__b': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__loc': [0., 1., 2., 3.],
-            '__oseba__id_nesreca__univariates__oseba_value__scale': [np.nan] * 4,
+            '__oseba__id_nesreca__univariates__oseba_value__scale': [0.] * 4,
             '__oseba__id_nesreca__num_rows': [1.] * 4,
         })
 
@@ -203,24 +203,21 @@ class TestHMASynthesizer:
         instance = Mock()
         instance._synthesizer = GaussianCopulaSynthesizer
 
-        instance._augmented_tables = []
-        instance._table_sizes = {}
+        instance._augmented_tables = ['nesreca']
+        instance._table_sizes = {'nesreca': 3}
         instance._table_synthesizers = {'nesreca': nesreca_model}
         instance._pop_foreign_keys.return_value = {'fk': [1, 2, 3]}
-        data = pd.DataFrame({
-            'id_nesreca': [0, 1, 2],
-            'upravna_enota': [0, 1, 2]
-        })
-        augmented_data = pd.DataFrame({
-            'id_nesreca': [0, 1, 2],
-            'upravna_enota': [0, 1, 2],
-            'extended': ['a', 'b', 'c']
-        })
-
-        tables = {'nesreca': data}
+        input_data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': [0, 1, 2],
+                'upravna_enota': [0, 1, 2],
+                'extended': ['a', 'b', 'c']
+            })
+        }
+        augmented_data = input_data.copy()
 
         # Run
-        HMASynthesizer._model_tables(instance, tables)
+        HMASynthesizer._model_tables(instance, augmented_data)
 
         # Assert
         expected_result = pd.DataFrame({
@@ -229,27 +226,36 @@ class TestHMASynthesizer:
             'extended': ['a', 'b', 'c'],
             'fk': [1, 2, 3]
         })
-        pd.testing.assert_frame_equal(expected_result, augmented_data)
+        pd.testing.assert_frame_equal(expected_result, augmented_data['nesreca'])
 
-        instance._pop_foreign_keys.assert_called_once_with(augmented_data, 'nesreca')
-        instance._clear_nans.assert_called_once_with(augmented_data)
-        nesreca_model.fit_processed_data.assert_called_once_with(augmented_data)
+        instance._pop_foreign_keys.assert_called_once_with(input_data['nesreca'], 'nesreca')
+        instance._clear_nans.assert_called_once_with(input_data['nesreca'])
+        nesreca_model.fit_processed_data.assert_called_once_with(augmented_data['nesreca'])
 
-    def test__fit(self):
+    def test__augment_tables(self):
         """Test that ``_fit`` calls ``_model_tables`` only if the table has no parents."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = HMASynthesizer(metadata)
-        instance._model_tables = Mock()
+        instance._augment_table = Mock()
         data = get_multi_table_data()
         data['nesreca']['value'] = [0, 1, 2, 3]
         data['oseba']['oseba_value'] = [0, 1, 2, 3]
 
         # Run
-        instance._fit(data)
+        instance._augment_tables(data)
 
         # Assert
-        instance._model_tables.assert_called_once_with('upravna_enota', data)
+        call_table = instance._augment_table.call_args[0][0]
+        call_augmented_data = instance._augment_table.call_args[0][1]
+        call_table_name = instance._augment_table.call_args[0][2]
+
+        pd.testing.assert_frame_equal(call_table, data['upravna_enota'])
+        for input_table, orig_table in zip(call_augmented_data.values(), data.values()):
+            pd.testing.assert_frame_equal(input_table, orig_table)
+
+        assert list(call_augmented_data) == list(data)
+        assert call_table_name == 'upravna_enota'
 
     def test__finalize(self):
         """Test that the finalize method applies the final touches to the generated data.
