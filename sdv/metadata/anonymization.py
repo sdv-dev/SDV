@@ -58,9 +58,9 @@ def is_faker_function(function_name):
         True if the ``function_name`` is know to ``Faker``, otherwise False.
     """
     try:
-        warnings.filterwarnings('ignore', module='faker')
-        getattr(Faker(AVAILABLE_LOCALES), function_name)
-        warnings.resetwarnings()
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', module='faker')
+            getattr(Faker(AVAILABLE_LOCALES), function_name)
     except AttributeError:
         return False
 
