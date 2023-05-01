@@ -115,16 +115,15 @@ def check_nans_row(row):
         row (pandas.Series):
             A pandas row.
     """
-    columns_with_nans = ''
+    columns_with_nans = []
     for column, value in row.items():
         if pd.isna(value):
-            columns_with_nans += f'{column}, '
+            columns_with_nans.append(column)
 
-    columns_with_nans = columns_with_nans.rstrip(', ')
-    if columns_with_nans == '':
+    if columns_with_nans:
+        return ', '.join(columns_with_nans)
+    else:
         return 'None'
-
-    return columns_with_nans
 
 
 def add_nans_column(table_data, list_column_names):
