@@ -1,7 +1,7 @@
 from unittest.mock import Mock, patch
 
 from sdv.metadata.anonymization import (
-    _detect_provider_name, get_anonymized_transformer, is_faker_function)
+    _detect_provider_name, get_anonymized_transformer, get_faker_instance, is_faker_function)
 
 
 class TestAnonimization:
@@ -110,18 +110,31 @@ class TestAnonimization:
         # Assert
         assert result is True
 
-    @patch('sdv.metadata.anonymization.Faker')
-    def test_is_faker_function_error(self, faker_mock):
+    @patch('sdv.metadata.anonymization.get_faker_instance')
+    def test_is_faker_function_error(self, mock_get_faker_instance):
         """Test that the method returns False if ``function_name`` is not a valid faker function.
 
         If the ``function_name`` is not an attribute of ``Faker()`` then we should return false.
         This test mocks ``Faker`` to not have the attribute that is passed as ``function_name``.
         """
         # Setup
-        faker_mock.return_value = Mock(spec=[])
+        mock_get_faker_instance.return_value = Mock(spec=[])
 
         # Run
         result = is_faker_function('blah')
 
         # Assert
         assert result is False
+        mock_get_faker_instance.assert_called_once()
+
+    @patch('sdv.metadata.anonymization.Faker')
+    def test_get_faker_instance(self, mock_faker):
+        """Test that ``get_faker_instance`` returns the same object."""
+        # Setup
+        first_instance = get_faker_instance()
+
+        # Run
+        second_instance = get_faker_instance()
+
+        # Assert
+        assert id(first_instance) == id(second_instance)

@@ -2,6 +2,7 @@
 
 import inspect
 import warnings
+from functools import lru_cache
 
 from faker import Faker
 from faker.config import AVAILABLE_LOCALES
@@ -47,6 +48,12 @@ SDTYPE_ANONYMIZERS = {
 }
 
 
+@lru_cache()
+def get_faker_instance():
+    """Return a ``faker.Faker`` instance with all the locales."""
+    return Faker(AVAILABLE_LOCALES)
+
+
 def is_faker_function(function_name):
     """Return whether or not the function name is a valid Faker function.
 
@@ -60,7 +67,7 @@ def is_faker_function(function_name):
     try:
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', module='faker')
-            getattr(Faker(AVAILABLE_LOCALES), function_name)
+            getattr(get_faker_instance(), function_name)
     except AttributeError:
         return False
 
