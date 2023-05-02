@@ -1491,6 +1491,39 @@ class TestInequality():
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
+    def test__transform_with_nans(self):
+
+        # Setup
+        instance = Inequality(low_column_name='a', high_column_name='b')
+        instance._diff_column_name = 'a#b'
+
+        table_data_with_nans = pd.DataFrame({
+            'a': [1, np.nan, 3, np.nan], 'b': [np.nan, 2, 4, np.nan]
+        })
+
+        table_data_without_nans = pd.DataFrame({
+            'a': [1, 2, 3], 'b': [2, 3, 4]
+        })
+
+        # Run
+        output_with_nans = instance._transform(table_data_with_nans)
+        output_without_nans = instance._transform(table_data_without_nans)
+
+        # Assert
+        expected_output_with_nans = pd.DataFrame({
+            'a': [1., 2., 3., 2.],
+            'a#b': [np.log(2)] * 4,
+            'a#b.nan_component': ['b', 'a', 'None', 'a, b']
+        })
+
+        expected_output_without_nans = pd.DataFrame({
+            'a': [1, 2, 3],
+            'a#b': [np.log(2)] * 3,
+        })
+
+        pd.testing.assert_frame_equal(output_with_nans, expected_output_with_nans)
+        pd.testing.assert_frame_equal(output_without_nans, expected_output_without_nans)
+
     def test__transform_datetime(self):
         """Test the ``Inequality._transform`` method.
 

@@ -40,7 +40,7 @@ from sdv.constraints.base import Constraint
 from sdv.constraints.errors import (
     AggregateConstraintsError, ConstraintMetadataError, FunctionError, InvalidFunctionError)
 from sdv.constraints.utils import (
-    add_nans_column, cast_to_datetime64, logit, matches_datetime_format, revert_nans_columns,
+    cast_to_datetime64, compute_nans_column, logit, matches_datetime_format, revert_nans_columns,
     sigmoid)
 from sdv.utils import convert_to_timedelta, is_datetime_type
 
@@ -508,7 +508,10 @@ class Inequality(Constraint):
 
         table_data[self._diff_column_name] = np.log(diff_column + 1)
 
-        if add_nans_column(table_data, [self._low_column_name, self._high_column_name]):
+        nan_dict = compute_nans_column(table_data, [self._low_column_name, self._high_column_name])
+        if nan_dict:
+            [(nan_column_name, nan_column)] = nan_dict.items()
+            table_data[nan_column_name] = nan_column
             if self._is_datetime:
                 mean_value_low = table_data[self._low_column_name].mode()[0]
             else:
@@ -549,7 +552,7 @@ class Inequality(Constraint):
 
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
 
-        nan_col_name = '#'.join([self._low_column_name, self._high_column_name]) + '.nan_component'
+        nan_col_name = f'{self._diff_column_name}.nan_component'
         if nan_col_name in table_data.columns:
             table_data = revert_nans_columns(table_data, nan_col_name)
 
