@@ -273,15 +273,6 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].update_transformers(column_name_to_transformer)
 
-    def _fit(self, processed_data):
-        """Fit the model to the tables.
-
-        Args:
-            processed_data (dict):
-                Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
-        """
-        raise NotImplementedError()
-
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -308,6 +299,24 @@ class BaseMultiTableSynthesizer:
 
         return processed_data
 
+    def _model_tables(self, augmented_data):
+        """Model the augmented tables.
+
+        Args:
+            augmented_data (dict):
+                Dictionary mapping each table name to an augmented ``pandas.DataFrame``.
+        """
+        raise NotImplementedError()
+
+    def _augment_tables(self, processed_data):
+        """Augment the processed data.
+
+        Args:
+            processed_data (dict):
+                Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
+        """
+        raise NotImplementedError()
+
     def fit_processed_data(self, processed_data):
         """Fit this model to the transformed data.
 
@@ -315,7 +324,8 @@ class BaseMultiTableSynthesizer:
             processed_data (dict):
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
         """
-        self._fit(processed_data.copy())
+        augmented_data = self._augment_tables(processed_data)
+        self._model_tables(augmented_data)
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_sdv_version = pkg_resources.get_distribution('sdv').version
