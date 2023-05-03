@@ -1630,9 +1630,9 @@ class TestSingleTableMetadata:
         mock_path.return_value.name = 'filepath.json'
         mock_json.load.return_value = {
             'columns': {
-                'color': {'sdtype': 'color'}
+                'bothify': {'sdtype': 'bothify'}
             },
-            'primary_key': 'color',
+            'primary_key': 'bothify',
             'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
         }
 
@@ -1640,8 +1640,8 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata.load_from_json('filepath.json')
 
         # Assert
-        assert instance.columns == {'color': {'sdtype': 'color'}}
-        assert instance.primary_key == 'color'
+        assert instance.columns == {'bothify': {'sdtype': 'bothify'}}
+        assert instance.primary_key == 'bothify'
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance.sequence_index is None

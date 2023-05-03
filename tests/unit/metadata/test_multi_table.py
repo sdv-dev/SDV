@@ -1756,11 +1756,11 @@ class TestMultiTableMetadata:
             'tables': {
                 'table1': {
                     'columns': {
-                        'color': {
-                            'sdtype': 'color'
+                        'bothify': {
+                            'sdtype': 'bothify'
                         }
                     },
-                    'primary_key': 'color',
+                    'primary_key': 'bothify',
                     'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
                 }
             },
@@ -1772,8 +1772,8 @@ class TestMultiTableMetadata:
 
         # Asserts
         assert list(instance.tables.keys()) == ['table1']
-        assert instance.tables['table1'].columns == {'color': {'sdtype': 'color'}}
-        assert instance.tables['table1'].primary_key == 'color'
+        assert instance.tables['table1'].columns == {'bothify': {'sdtype': 'bothify'}}
+        assert instance.tables['table1'].primary_key == 'bothify'
         assert instance.tables['table1'].sequence_key is None
         assert instance.tables['table1'].alternate_keys == []
         assert instance.tables['table1'].sequence_index is None
