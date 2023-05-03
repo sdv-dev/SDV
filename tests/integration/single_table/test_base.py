@@ -843,7 +843,7 @@ def test_inequality_constraint_all_possible_nans_configurations():
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(10000)
 
-    # there are no cases where A is null but B is present
+    # Assert
     assert (~(pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
     assert ((pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
     assert (~(pd.isna(synthetic_data['A'])) & (pd.isna(synthetic_data['B']))).any()

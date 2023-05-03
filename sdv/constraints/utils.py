@@ -106,7 +106,7 @@ def sigmoid(data, low, high):
     return data
 
 
-def check_nans_row(row):
+def get_nan_component_value(row):
     """Check for NaNs in a pandas row.
 
     Outputs a concatenated string of the column names with NaNs.
@@ -114,35 +114,40 @@ def check_nans_row(row):
     Args:
         row (pandas.Series):
             A pandas row.
+
+    Returns:
+        A concatenated string of the column names with NaNs.
     """
-    columns_with_nans = ''
+    columns_with_nans = []
     for column, value in row.items():
         if pd.isna(value):
-            columns_with_nans += f'{column}, '
+            columns_with_nans.append(column)
 
-    columns_with_nans = columns_with_nans.rstrip(', ')
-    if columns_with_nans == '':
+    if columns_with_nans:
+        return ', '.join(columns_with_nans)
+    else:
         return 'None'
 
-    return columns_with_nans
 
-
-def add_nans_column(table_data, list_column_names):
-    """Add a categorical column to the table_data indicating where NaNs are.
+def compute_nans_column(table_data, list_column_names):
+    """Compute a categorical column to the table_data indicating where NaNs are.
 
     Args:
         table_data (pandas.DataFrame):
             The table data.
         list_column_names (list):
             The list of column names to check for NaNs.
+
+    Returns:
+        A dict with the column name as key and the column indicating where NaNs are as value.
+        Empty dict if there are no NaNs.
     """
     nan_column_name = '#'.join(list_column_names) + '.nan_component'
-    nan_column = table_data[list_column_names].apply(check_nans_row, axis=1)
-    if not (nan_column == 'None').all():
-        table_data[nan_column_name] = nan_column
-        return True
-    else:
-        return False
+    column = table_data[list_column_names].apply(get_nan_component_value, axis=1)
+    if not (column == 'None').all():
+        return pd.Series(column, name=nan_column_name)
+
+    return None
 
 
 def revert_nans_columns(table_data, nan_column_name):

@@ -40,7 +40,7 @@ from sdv.constraints.base import Constraint
 from sdv.constraints.errors import (
     AggregateConstraintsError, ConstraintMetadataError, FunctionError, InvalidFunctionError)
 from sdv.constraints.utils import (
-    add_nans_column, cast_to_datetime64, get_datetime_diff, logit, matches_datetime_format,
+    cast_to_datetime64, compute_nans_column, get_datetime_diff, logit, matches_datetime_format,
     revert_nans_columns, sigmoid)
 from sdv.utils import convert_to_timedelta, is_datetime_type
 
@@ -405,6 +405,7 @@ class Inequality(Constraint):
         self.constraint_columns = (low_column_name, high_column_name)
         self._dtype = None
         self._is_datetime = None
+        self.nan_column_name = None
 
     def _get_data(self, table_data):
         low = table_data[self._low_column_name].to_numpy()
@@ -482,7 +483,10 @@ class Inequality(Constraint):
 
         table_data[self._diff_column_name] = np.log(diff_column + 1)
 
-        if add_nans_column(table_data, [self._low_column_name, self._high_column_name]):
+        nan_col = compute_nans_column(table_data, [self._low_column_name, self._high_column_name])
+        if nan_col is not None:
+            self.nan_column_name = nan_col.name
+            table_data[self.nan_column_name] = nan_col
             if self._is_datetime:
                 mean_value_low = table_data[self._low_column_name].mode()[0]
             else:
@@ -523,9 +527,8 @@ class Inequality(Constraint):
 
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
 
-        nan_col_name = '#'.join([self._low_column_name, self._high_column_name]) + '.nan_component'
-        if nan_col_name in table_data.columns:
-            table_data = revert_nans_columns(table_data, nan_col_name)
+        if self.nan_column_name and self.nan_column_name in table_data.columns:
+            table_data = revert_nans_columns(table_data, self.nan_column_name)
 
         return table_data.drop(self._diff_column_name, axis=1)
 
@@ -777,7 +780,7 @@ class Negative(ScalarInequality):
 class Range(Constraint):
     """Ensure that the ``middle_column_name`` is between ``low`` and ``high`` columns.
 
-    The transformation strategy works as the Inequality constraint but with two
+    The transformation strategy works the same as the Inequality constraint but with two
     columns instead of one. We compute the difference between the ``middle_column_name``
     and the ``low`` column and then apply a logarithm to the difference + 1 to ensure
     that the value stays positive when reverted afterwards using an exponential.
@@ -829,8 +832,9 @@ class Range(Constraint):
         self.low_column_name = low_column_name
         self.middle_column_name = middle_column_name
         self.high_column_name = high_column_name
-        self.diff_column_name_1 = f'{self.low_column_name}#{self.middle_column_name}'
-        self.diff_column_name_2 = f'{self.middle_column_name}#{self.high_column_name}'
+        self.low_diff_column_name = f'{self.low_column_name}#{self.middle_column_name}'
+        self.high_diff_column_name = f'{self.middle_column_name}#{self.high_column_name}'
+        self.nan_column_name = None
         self._is_datetime = None
         self._dtype = None
         self.strict_boundaries = strict_boundaries
@@ -928,11 +932,14 @@ class Range(Constraint):
             diff_column_1 = middle - low
             diff_column_2 = high - middle
 
-        table_data[self.diff_column_name_1] = np.log(diff_column_1 + 1)
-        table_data[self.diff_column_name_2] = np.log(diff_column_2 + 1)
+        table_data[self.low_diff_column_name] = np.log(diff_column_1 + 1)
+        table_data[self.high_diff_column_name] = np.log(diff_column_2 + 1)
 
         list_columns_nans = [self.low_column_name, self.middle_column_name, self.high_column_name]
-        if add_nans_column(table_data, list_columns_nans):
+        nan_column = compute_nans_column(table_data, list_columns_nans)
+        if nan_column is not None:
+            self.nan_column_name = nan_column.name
+            table_data[self.nan_column_name] = nan_column
             if self._is_datetime:
                 mean_value_low = table_data[self.low_column_name].mode()[0]
             else:
@@ -940,8 +947,8 @@ class Range(Constraint):
 
             table_data = table_data.fillna({
                 self.low_column_name: mean_value_low,
-                self.diff_column_name_1: table_data[self.diff_column_name_1].mean(),
-                self.diff_column_name_2: table_data[self.diff_column_name_2].mean()
+                self.low_diff_column_name: table_data[self.low_diff_column_name].mean(),
+                self.high_diff_column_name: table_data[self.high_diff_column_name].mean()
             })
 
         return table_data.drop([self.middle_column_name, self.high_column_name], axis=1)
@@ -961,8 +968,8 @@ class Range(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        diff_column_1 = np.exp(table_data[self.diff_column_name_1]) - 1
-        diff_column_2 = np.exp(table_data[self.diff_column_name_2]) - 1
+        diff_column_1 = np.exp(table_data[self.low_diff_column_name]) - 1
+        diff_column_2 = np.exp(table_data[self.high_diff_column_name]) - 1
         if self._dtype != np.dtype('float'):
             diff_column_1 = diff_column_1.round()
             diff_column_2 = diff_column_2.round()
@@ -981,13 +988,10 @@ class Range(Constraint):
             diff_column_2 + middle.to_numpy()
         ).astype(self._dtype)
 
-        nan_col_name = '#'.join([
-            self.low_column_name, self.middle_column_name, self.high_column_name
-        ]) + '.nan_component'
-        if nan_col_name in table_data.columns:
-            table_data = revert_nans_columns(table_data, nan_col_name)
+        if self.nan_column_name and self.nan_column_name in table_data.columns:
+            table_data = revert_nans_columns(table_data, self.nan_column_name)
 
-        return table_data.drop([self.diff_column_name_1, self.diff_column_name_2], axis=1)
+        return table_data.drop([self.low_diff_column_name, self.high_diff_column_name], axis=1)
 
 
 class ScalarRange(Constraint):

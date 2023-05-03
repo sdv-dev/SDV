@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.utils import (
-    _cast_to_type, add_nans_column, cast_to_datetime64, check_nans_row, get_datetime_diff, logit,
-    matches_datetime_format, revert_nans_columns, sigmoid)
+    _cast_to_type, cast_to_datetime64, compute_nans_column, get_datetime_diff,
+    get_nan_component_value, logit, matches_datetime_format, revert_nans_columns, sigmoid)
 from sdv.utils import get_datetime_format, is_datetime_type
 
 
@@ -97,7 +97,7 @@ def test_is_datetime_type_with_int():
 
 
 def test_is_datetime_type_with_datetime_str():
-    """Test the ``is_datetime_type`` function when an valid datetime string is passed.
+    """Test the ``is_datetime_type`` function with a valid datetime string is passed.
 
     Expect to return True when a valid string representing datetime is passed.
 
@@ -374,32 +374,45 @@ def test_matches_datetime_format_bad_value():
     assert result is False
 
 
-def test_check_nans_row():
-    """Test the ``check_nans_row`` method."""
+def test_get_nan_component_value():
+    """Test the ``get_nan_component_value`` method."""
     # Setup
     row = pd.Series([np.nan, 2, np.nan, 4], index=['a', 'b', 'c', 'd'])
 
     # Run
-    result = check_nans_row(row)
+    result = get_nan_component_value(row)
 
     # Assert
     assert result == 'a, c'
 
 
-def test_add_nans_columns():
-    """Test the ``add_nans_columns`` method."""
+def test_compute_nans_columns():
+    """Test the ``compute_nans_columns`` method."""
     # Setup
     data = pd.DataFrame({
         'a': [1, np.nan, 3, np.nan], 'b': [np.nan, 2, 3, np.nan], 'c': [1, np.nan, 3, np.nan]
     })
 
     # Run
-    add_nans_column(data, ['a', 'b', 'c'])
-
-    expected_nan_columns = ['b', 'a, c', 'None', 'a, b, c']
+    output = compute_nans_column(data, ['a', 'b', 'c'])
+    expected_output = pd.Series(['b', 'a, c', 'None', 'a, b, c'], name='a#b#c.nan_component')
 
     # Assert
-    assert list(data['a#b#c.nan_component']) == expected_nan_columns
+    pd.testing.assert_series_equal(output, expected_output)
+
+
+def test_compute_nans_columns_without_nan():
+    """Test the ``compute_nans_columns`` method when there are no nans."""
+    # Setup
+    data = pd.DataFrame({
+        'a': [1, 2, 3, 2], 'b': [2.5, 2, 3, 2.5], 'c': [1, 2, 3, 2]
+    })
+
+    # Run
+    output = compute_nans_column(data, ['a', 'b', 'c'])
+
+    # Assert
+    assert output is None
 
 
 def test_revert_nans_columns():
