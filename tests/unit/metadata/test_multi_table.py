@@ -824,8 +824,10 @@ class TestMultiTableMetadata:
         instance.tables['payments'].columns['date']['sdtype'] = 'id'
         instance.tables['payments'].columns['date']['regex_format'] = '[A-z{'
         instance.relationships.pop(-1)
+        instance._is_valid = False
+        for table in instance.tables.values():
+            table._is_valid = False
 
-        # Run
         error_msg = re.escape(
             'The metadata is not valid\n'
             '\nTable: payments'
@@ -1067,24 +1069,12 @@ class TestMultiTableMetadata:
             }
         ]
 
-    @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    def test_load_from_dict(self, mock_singletablemetadata):
+    @patch('sdv.metadata.multi_table.warnings')
+    def test_load_from_dict(self, mock_warnings):
         """Test that ``load_from_dict`` returns a instance of ``MultiTableMetadata``.
 
         Test that when calling the ``load_from_dict`` method a new instance with the passed
         python ``dict`` details should be created.
-
-        Setup:
-            - A dict representing a ``MultiTableMetadata``.
-
-        Mock:
-            - Mock ``SingleTableMetadata`` from ``sdv.metadata.multi_table``
-
-        Output:
-            - ``instance`` that contains ``instance.tables`` and ``instance.relationships``.
-
-        Side Effects:
-            - ``SingleTableMetadata.load_from_dict`` has been called.
         """
         # Setup
         multitable_metadata = {
@@ -1111,22 +1101,8 @@ class TestMultiTableMetadata:
             ]
         }
 
-        single_table_accounts = object()
-        single_table_branches = object()
-        mock_singletablemetadata.load_from_dict.side_effect = [
-            single_table_accounts,
-            single_table_branches
-        ]
-
         # Run
         instance = MultiTableMetadata.load_from_dict(multitable_metadata)
-
-        # Assert
-        assert instance.tables == {
-            'accounts': single_table_accounts,
-            'branches': single_table_branches
-        }
-
         assert instance.relationships == [
             {
                 'parent_table_name': 'accounts',
@@ -1135,6 +1111,15 @@ class TestMultiTableMetadata:
                 'child_foreign_key': 'branch_id',
             }
         ]
+        warning_message = (
+            'Successfully loaded the metadata, but the metadata was not valid. '
+            'To use this with the SDV, please fix the following errors.\n The metadata is not '
+            "validTable 'accounts' has 0 columns. Use 'add_column' to specify its columns."
+            "\nTable 'branches' has 0 columns. Use 'add_column' to specify its columns."
+            "\n\nRelationships:\nThe parent table 'accounts' does not have a primary key set. "
+            "Please use 'set_primary_key' in order to set one."
+        )
+        mock_warnings.warn.assert_called_once_with(warning_message)
 
     @patch('sdv.metadata.multi_table.json')
     def test___repr__(self, mock_json):
@@ -1771,11 +1756,11 @@ class TestMultiTableMetadata:
             'tables': {
                 'table1': {
                     'columns': {
-                        'animals': {
-                            'type': 'categorical'
+                        'color': {
+                            'sdtype': 'color'
                         }
                     },
-                    'primary_key': 'animals',
+                    'primary_key': 'color',
                     'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
                 }
             },
@@ -1787,8 +1772,8 @@ class TestMultiTableMetadata:
 
         # Asserts
         assert list(instance.tables.keys()) == ['table1']
-        assert instance.tables['table1'].columns == {'animals': {'type': 'categorical'}}
-        assert instance.tables['table1'].primary_key == 'animals'
+        assert instance.tables['table1'].columns == {'color': {'sdtype': 'color'}}
+        assert instance.tables['table1'].primary_key == 'color'
         assert instance.tables['table1'].sequence_key is None
         assert instance.tables['table1'].alternate_keys == []
         assert instance.tables['table1'].sequence_index is None

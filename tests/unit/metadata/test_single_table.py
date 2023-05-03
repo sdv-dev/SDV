@@ -78,7 +78,7 @@ class TestSingleTableMetadata:
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
         assert instance._version == 'SINGLE_TABLE_V1'
-        assert instance._is_valid is None
+        assert instance._is_valid is False
 
     def test__validate_numerical_default_and_invalid(self):
         """Test the ``_validate_numerical`` method.

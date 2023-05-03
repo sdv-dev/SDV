@@ -602,7 +602,7 @@ class MultiTableMetadata:
         """
         instance = cls()
         with warnings.catch_warnings():
-            # Silence single table warnings if metadata is not valid as it will be warned later
+            #  Silence single table warnings if metadata is not valid as it will be warned later
             warnings.filterwarnings('ignore', module='sdv')
             instance._set_metadata_dict(metadata_dict)
 
