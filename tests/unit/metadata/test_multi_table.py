@@ -1727,10 +1727,11 @@ class TestMultiTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             MultiTableMetadata.load_from_json('filepath.json')
 
+    @patch('sdv.metadata.single_table.is_faker_function')
     @patch('sdv.metadata.utils.open')
     @patch('sdv.metadata.utils.Path')
     @patch('sdv.metadata.utils.json')
-    def test_load_from_json(self, mock_json, mock_path, mock_open):
+    def test_load_from_json(self, mock_json, mock_path, mock_open, mock_is_faker_function):
         """Test the ``load_from_json`` method.
 
         Test that ``load_from_json`` function creates an instance with the contents returned by the
@@ -1750,6 +1751,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         instance = MultiTableMetadata()
+        mock_is_faker_function.return_value = True
         mock_path.return_value.exists.return_value = True
         mock_path.return_value.name = 'filepath.json'
         mock_json.load.return_value = {
