@@ -78,6 +78,7 @@ class TestSingleTableMetadata:
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
         assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._is_valid is None
 
     def test__validate_numerical_default_and_invalid(self):
         """Test the ``_validate_numerical`` method.
@@ -1511,7 +1512,10 @@ class TestSingleTableMetadata:
         """Test that ``load_from_dict`` returns a instance with the ``dict`` updated objects."""
         # Setup
         my_metadata = {
-            'columns': {'my_column': 'value'},
+            'columns': {
+                'my_column': {'sdtype': 'categorical'},
+                'pk': {'sdtype': 'id'}
+            },
             'primary_key': 'pk',
             'alternate_keys': [],
             'sequence_key': None,
@@ -1523,12 +1527,13 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata.load_from_dict(my_metadata)
 
         # Assert
-        assert instance.columns == {'my_column': 'value'}
+        assert instance.columns == {'my_column': {'sdtype': 'categorical'}, 'pk': {'sdtype': 'id'}}
         assert instance.primary_key == 'pk'
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
         assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._is_valid is True
 
     @patch('sdv.metadata.utils.Path')
     def test_load_from_json_path_does_not_exist(self, mock_path):
@@ -1584,7 +1589,7 @@ class TestSingleTableMetadata:
         mock_json.load.return_value = {
             'columns': {
                 'animals': {
-                    'type': 'categorical'
+                    'sdtype': 'id'
                 }
             },
             'primary_key': 'animals',
@@ -1625,11 +1630,9 @@ class TestSingleTableMetadata:
         mock_path.return_value.name = 'filepath.json'
         mock_json.load.return_value = {
             'columns': {
-                'animals': {
-                    'type': 'categorical'
-                }
+                'color': {'sdtype': 'color'}
             },
-            'primary_key': 'animals',
+            'primary_key': 'color',
             'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
         }
 
@@ -1637,12 +1640,13 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata.load_from_json('filepath.json')
 
         # Assert
-        assert instance.columns == {'animals': {'type': 'categorical'}}
-        assert instance.primary_key == 'animals'
+        assert instance.columns == {'color': {'sdtype': 'color'}}
+        assert instance.primary_key == 'color'
         assert instance.sequence_key is None
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
         assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._is_valid is True
 
     @patch('sdv.metadata.utils.Path')
     def test_save_to_json_file_exists(self, mock_path):

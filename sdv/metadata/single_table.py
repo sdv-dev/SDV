@@ -123,6 +123,7 @@ class SingleTableMetadata:
         self.sequence_key = None
         self.sequence_index = None
         self._version = self.METADATA_SPEC_VERSION
+        self._is_valid = False
 
     def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
         expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii'])
@@ -449,25 +450,29 @@ class SingleTableMetadata:
         Raises:
             - ``InvalidMetadataError`` if the metadata is invalid.
         """
-        errors = []
-        # Validate keys
-        self._append_error(errors, self._validate_key, self.primary_key, 'primary')
-        self._append_error(errors, self._validate_key, self.sequence_key, 'sequence')
-        if self.sequence_index:
-            self._append_error(errors, self._validate_sequence_index, self.sequence_index)
-            self._append_error(errors, self._validate_sequence_index_not_in_sequence_key)
+        if not self._is_valid:
+            errors = []
+            # Validate keys
+            self._append_error(errors, self._validate_key, self.primary_key, 'primary')
+            self._append_error(errors, self._validate_key, self.sequence_key, 'sequence')
+            if self.sequence_index:
+                self._append_error(errors, self._validate_sequence_index, self.sequence_index)
+                self._append_error(errors, self._validate_sequence_index_not_in_sequence_key)
 
-        self._append_error(errors, self._validate_alternate_keys, self.alternate_keys)
+            self._append_error(errors, self._validate_alternate_keys, self.alternate_keys)
 
-        # Validate columns
-        for column, kwargs in self.columns.items():
-            self._append_error(errors, self._validate_column, column, **kwargs)
+            # Validate columns
+            for column, kwargs in self.columns.items():
+                self._append_error(errors, self._validate_column, column, **kwargs)
 
-        if errors:
-            raise InvalidMetadataError(
-                'The following errors were found in the metadata:\n\n'
-                + '\n'.join([str(e) for e in errors])
-            )
+            if errors:
+                self._is_valid = False
+                raise InvalidMetadataError(
+                    'The following errors were found in the metadata:\n\n'
+                    + '\n'.join([str(e) for e in errors])
+                )
+
+            self._is_valid = True
 
     def save_to_json(self, filepath):
         """Save the current ``SingleTableMetadata`` in to a ``json`` file.
@@ -501,6 +506,16 @@ class SingleTableMetadata:
             value = deepcopy(metadata_dict.get(key))
             if value:
                 setattr(instance, f'{key}', value)
+
+        try:
+            instance.validate()
+        except InvalidMetadataError as error:
+            message = (
+                'Successfully loaded the metadata, but the metadata was not valid. '
+                f'To use this with the SDV, please fix the following errors.\n {str(error)}'
+            )
+            warnings.warn(message)
+            instance._is_valid = False
 
         return instance
 

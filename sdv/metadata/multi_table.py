@@ -24,6 +24,7 @@ class MultiTableMetadata:
     def __init__(self):
         self.tables = {}
         self.relationships = []
+        self._is_valid = False
 
     def _validate_missing_relationship_keys(self, parent_table_name, parent_primary_key,
                                             child_table_name, child_foreign_key):
@@ -457,23 +458,27 @@ class MultiTableMetadata:
         Raises:
             - ``InvalidMetadataError`` if the metadata is invalid.
         """
-        errors = []
-        self._validate_single_table(errors)
-        for relation in self.relationships:
-            self._append_relationships_errors(errors, self._validate_relationship, **relation)
+        if not self._is_valid:
+            errors = []
+            self._validate_single_table(errors)
+            for relation in self.relationships:
+                self._append_relationships_errors(errors, self._validate_relationship, **relation)
 
-        parent_map = self._get_parent_map()
-        child_map = self._get_child_map()
+            parent_map = self._get_parent_map()
+            child_map = self._get_child_map()
 
-        self._append_relationships_errors(
-            errors, self._validate_child_map_circular_relationship, child_map)
-        self._append_relationships_errors(
-            errors, self._validate_all_tables_connected, parent_map, child_map)
+            self._append_relationships_errors(
+                errors, self._validate_child_map_circular_relationship, child_map)
+            self._append_relationships_errors(
+                errors, self._validate_all_tables_connected, parent_map, child_map)
 
-        if errors:
-            raise InvalidMetadataError(
-                'The metadata is not valid' + '\n'.join(str(e) for e in errors)
-            )
+            if errors:
+                self._is_valid = False
+                raise InvalidMetadataError(
+                    'The metadata is not valid' + '\n'.join(str(e) for e in errors)
+                )
+
+        self._is_valid = True
 
     def add_table(self, table_name):
         """Add a table to the metadata.
@@ -596,7 +601,21 @@ class MultiTableMetadata:
             Instance of ``MultiTableMetadata``.
         """
         instance = cls()
-        instance._set_metadata_dict(metadata_dict)
+        with warnings.catch_warnings():
+            # Silence single table warnings if metadata is not valid as it will be warned later
+            warnings.filterwarnings('ignore', module='sdv')
+            instance._set_metadata_dict(metadata_dict)
+
+        try:
+            instance.validate()
+        except InvalidMetadataError as error:
+            message = (
+                'Successfully loaded the metadata, but the metadata was not valid. '
+                f'To use this with the SDV, please fix the following errors.\n {str(error)}'
+            )
+            warnings.warn(message)
+            instance._is_valid = False
+
         return instance
 
     def save_to_json(self, filepath):
