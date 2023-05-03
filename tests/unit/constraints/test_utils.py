@@ -395,12 +395,10 @@ def test_compute_nans_columns():
 
     # Run
     output = compute_nans_column(data, ['a', 'b', 'c'])
-    expected_output = {'a#b#c.nan_component': pd.Series(['b', 'a, c', 'None', 'a, b, c'])}
+    expected_output = pd.Series(['b', 'a, c', 'None', 'a, b, c'], name='a#b#c.nan_component')
 
     # Assert
-    pd.testing.assert_series_equal(
-        output['a#b#c.nan_component'], expected_output['a#b#c.nan_component']
-    )
+    pd.testing.assert_series_equal(output, expected_output)
 
 
 def test_compute_nans_columns_without_nan():
@@ -414,7 +412,7 @@ def test_compute_nans_columns_without_nan():
     output = compute_nans_column(data, ['a', 'b', 'c'])
 
     # Assert
-    assert output == {}
+    assert output is None
 
 
 def test_revert_nans_columns():

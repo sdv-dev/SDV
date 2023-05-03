@@ -143,12 +143,11 @@ def compute_nans_column(table_data, list_column_names):
         Empty dict if there are no NaNs.
     """
     nan_column_name = '#'.join(list_column_names) + '.nan_component'
-    nan_column_dict = {}
     column = table_data[list_column_names].apply(get_nan_component_value, axis=1)
     if not (column == 'None').all():
-        nan_column_dict[nan_column_name] = column
+        return pd.Series(column, name=nan_column_name)
 
-    return nan_column_dict
+    return None
 
 
 def revert_nans_columns(table_data, nan_column_name):
