@@ -135,9 +135,13 @@ class SingleTableMetadata:
                 f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'.")
 
     def _validate_sdtype(self, sdtype):
-        is_default_sdtype = sdtype in self._SDTYPE_KWARGS
-        is_anonymized_type = sdtype in SDTYPE_ANONYMIZERS
-        if not (is_default_sdtype or is_anonymized_type or is_faker_function(sdtype)):
+        if sdtype in self._SDTYPE_KWARGS:
+            return
+
+        if sdtype in SDTYPE_ANONYMIZERS:
+            return
+
+        if not is_faker_function(sdtype):
             raise InvalidMetadataError(
                 f"Invalid sdtype : '{sdtype}' is not recognized. Please use one of the "
                 'supported SDV sdtypes.'
@@ -290,6 +294,7 @@ class SingleTableMetadata:
         """Check whether column_name is a string or a tuple of strings."""
         return isinstance(column_name, str) or \
             isinstance(column_name, tuple) and all(isinstance(i, str) for i in column_name)
+
 
     def _validate_keys_sdtype(self, keys, key_type):
         """Validate that each key is of type 'id' or a valid Faker function."""
