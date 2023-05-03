@@ -295,7 +295,6 @@ class SingleTableMetadata:
         return isinstance(column_name, str) or \
             isinstance(column_name, tuple) and all(isinstance(i, str) for i in column_name)
 
-
     def _validate_keys_sdtype(self, keys, key_type):
         """Validate that each key is of type 'id' or a valid Faker function."""
         bad_keys = set()
