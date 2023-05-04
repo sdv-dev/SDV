@@ -39,7 +39,9 @@ import pandas as pd
 from sdv.constraints.base import Constraint
 from sdv.constraints.errors import (
     AggregateConstraintsError, ConstraintMetadataError, FunctionError, InvalidFunctionError)
-from sdv.constraints.utils import cast_to_datetime64, logit, matches_datetime_format, sigmoid
+from sdv.constraints.utils import (
+    cast_to_datetime64, compute_nans_column, logit, matches_datetime_format, revert_nans_columns,
+    sigmoid)
 from sdv.utils import convert_to_timedelta, is_datetime_type
 
 INEQUALITY_TO_OPERATION = {
@@ -403,6 +405,7 @@ class Inequality(Constraint):
         self.constraint_columns = (low_column_name, high_column_name)
         self._dtype = None
         self._is_datetime = None
+        self._nan_column_name = None
 
     def _get_data(self, table_data):
         low = table_data[self._low_column_name].to_numpy()
@@ -505,6 +508,20 @@ class Inequality(Constraint):
             diff_column = high - low
 
         table_data[self._diff_column_name] = np.log(diff_column + 1)
+
+        nan_col = compute_nans_column(table_data, [self._low_column_name, self._high_column_name])
+        if nan_col is not None:
+            self._nan_column_name = nan_col.name
+            table_data[self._nan_column_name] = nan_col
+            if self._is_datetime:
+                mean_value_low = table_data[self._low_column_name].mode()[0]
+            else:
+                mean_value_low = table_data[self._low_column_name].mean()
+            table_data = table_data.fillna({
+                self._low_column_name: mean_value_low,
+                self._diff_column_name: table_data[self._diff_column_name].mean()
+            })
+
         return table_data.drop(self._high_column_name, axis=1)
 
     def _reverse_transform(self, table_data):
@@ -535,6 +552,10 @@ class Inequality(Constraint):
             low = cast_to_datetime64(low)
 
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
+
+        if self._nan_column_name and self._nan_column_name in table_data.columns:
+            table_data = revert_nans_columns(table_data, self._nan_column_name)
+
         return table_data.drop(self._diff_column_name, axis=1)
 
 

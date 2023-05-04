@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.utils import (
-    _cast_to_type, cast_to_datetime64, logit, matches_datetime_format, sigmoid)
+    _cast_to_type, cast_to_datetime64, compute_nans_column, get_nan_component_value, logit,
+    matches_datetime_format, revert_nans_columns, sigmoid)
 from sdv.utils import get_datetime_format, is_datetime_type
 
 
@@ -371,3 +372,65 @@ def test_matches_datetime_format_bad_value():
 
     # Assert
     assert result is False
+
+
+def test_get_nan_component_value():
+    """Test the ``get_nan_component_value`` method."""
+    # Setup
+    row = pd.Series([np.nan, 2, np.nan, 4], index=['a', 'b', 'c', 'd'])
+
+    # Run
+    result = get_nan_component_value(row)
+
+    # Assert
+    assert result == 'a, c'
+
+
+def test_compute_nans_columns():
+    """Test the ``compute_nans_columns`` method."""
+    # Setup
+    data = pd.DataFrame({
+        'a': [1, np.nan, 3, np.nan], 'b': [np.nan, 2, 3, np.nan], 'c': [1, np.nan, 3, np.nan]
+    })
+
+    # Run
+    output = compute_nans_column(data, ['a', 'b', 'c'])
+    expected_output = pd.Series(['b', 'a, c', 'None', 'a, b, c'], name='a#b#c.nan_component')
+
+    # Assert
+    pd.testing.assert_series_equal(output, expected_output)
+
+
+def test_compute_nans_columns_without_nan():
+    """Test the ``compute_nans_columns`` method when there are no nans."""
+    # Setup
+    data = pd.DataFrame({
+        'a': [1, 2, 3, 2], 'b': [2.5, 2, 3, 2.5], 'c': [1, 2, 3, 2]
+    })
+
+    # Run
+    output = compute_nans_column(data, ['a', 'b', 'c'])
+
+    # Assert
+    assert output is None
+
+
+def test_revert_nans_columns():
+    """Test the ``revert_nans_columns`` method."""
+    # Setup
+    data = pd.DataFrame({
+        'a': [1, 2, 3, 2], 'b': [2.5, 2, 3, 2.5], 'c': [1, 2, 3, 2],
+        'a#b#c.nan_component': ['b', 'a, c', 'None', 'a, b, c']
+    })
+    nan_column_name = 'a#b#c.nan_component'
+
+    # Run
+    result = revert_nans_columns(data, nan_column_name)
+
+    expected_data = pd.DataFrame({
+        'a': [1, np.nan, 3, np.nan], 'b': [np.nan, 2, 3, np.nan],
+        'c': [1, np.nan, 3, np.nan]
+    })
+
+    # Assert
+    pd.testing.assert_frame_equal(result, expected_data)
