@@ -892,19 +892,11 @@ class Range(Constraint):
         middle = table_data[self.middle_column_name]
         high = table_data[self.high_column_name]
 
-        list_columns_nans = [self.low_column_name, self.middle_column_name, self.high_column_name]
-        nan_column = compute_nans_column(table_data, list_columns_nans)
-        validate_column = pd.Series([True]*len(table_data), index=table_data.index)
-        if nan_column is None:
-            validate_column = self._operator(low, middle) * self._operator(middle, high)
-        else:
-            validate_column.loc[nan_column == 'None'] = self._operator(
-                low, middle) * self._operator(middle, high)
-            validate_column.loc[nan_column == self.low_column_name] = self._operator(middle, high)
-            validate_column.loc[nan_column == self.middle_column_name] = self._operator(low, high)
-            validate_column.loc[nan_column == self.high_column_name] = self._operator(low, middle)
+        low_lt_middle = self._operator(low, middle) | np.isnan(low) | np.isnan(middle)
+        middle_lt_high = self._operator(middle, high) | np.isnan(middle) | np.isnan(high)
+        low_lt_high = self._operator(low, high) | np.isnan(low) | np.isnan(high)
 
-        return validate_column
+        return low_lt_middle & middle_lt_high & low_lt_high
 
     def _transform(self, table_data):
         """Transform the table data.
