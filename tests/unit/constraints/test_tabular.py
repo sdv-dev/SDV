@@ -3189,6 +3189,34 @@ class TestRange():
         # Assert
         assert not all(result)
 
+    def test_is_valid_with_nans(self):
+        """Test the ``Range.is_valid`` when there are NaNs in the columns."""
+
+        # Setup
+        table_data_valid = pd.DataFrame({
+            'low': [1, np.nan, 3, 4, np.nan, 1],
+            'middle': [2, 3, np.nan, 5, np.nan, np.nan],
+            'high': [3, 4, 5, np.nan, 6, np.nan],
+        })
+        table_data_invalid = pd.DataFrame({
+            'low': [1, np.nan, 3, 4, np.nan, 1],
+            'middle': [2, 3, np.nan, 5, np.nan, np.nan],
+            'high': [3, 4, 2, np.nan, 6, np.nan],
+        })
+
+        instance = Range('low', 'middle', 'high')
+
+        # Run
+        result_valid = instance.is_valid(table_data_valid)
+        result_invalid = instance.is_valid(table_data_invalid)
+
+        expected_valid = pd.Series([True] * 6)
+        expected_invalid = pd.Series([True, True, False, True, True, True])
+
+        # Assert
+        pd.testing.assert_series_equal(result_valid, expected_valid)
+        pd.testing.assert_series_equal(result_invalid, expected_invalid)
+
     def test__transform(self):
         """Test the ``_transform`` method for ``Range``."""
         # Setup
