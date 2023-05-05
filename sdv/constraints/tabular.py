@@ -892,9 +892,13 @@ class Range(Constraint):
         middle = table_data[self.middle_column_name]
         high = table_data[self.high_column_name]
 
-        low_lt_middle = self._operator(low, middle) | np.isnan(low) | np.isnan(middle)
-        middle_lt_high = self._operator(middle, high) | np.isnan(middle) | np.isnan(high)
-        low_lt_high = self._operator(low, high) | np.isnan(low) | np.isnan(high)
+        low_is_nan = low.isna()
+        middle_is_nan = middle.isna()
+        high_is_nan = high.isna()
+
+        low_lt_middle = self._operator(low, middle) | low_is_nan | middle_is_nan
+        middle_lt_high = self._operator(middle, high) | middle_is_nan | high_is_nan
+        low_lt_high = self._operator(low, high) | low_is_nan | high_is_nan
 
         return low_lt_middle & middle_lt_high & low_lt_high
 
