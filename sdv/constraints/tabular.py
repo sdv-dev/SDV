@@ -405,7 +405,7 @@ class Inequality(Constraint):
         self.constraint_columns = (low_column_name, high_column_name)
         self._dtype = None
         self._is_datetime = None
-        self.nan_column_name = None
+        self._nan_column_name = None
 
     def _get_data(self, table_data):
         low = table_data[self._low_column_name].to_numpy()
@@ -485,8 +485,8 @@ class Inequality(Constraint):
 
         nan_col = compute_nans_column(table_data, [self._low_column_name, self._high_column_name])
         if nan_col is not None:
-            self.nan_column_name = nan_col.name
-            table_data[self.nan_column_name] = nan_col
+            self._nan_column_name = nan_col.name
+            table_data[self._nan_column_name] = nan_col
             if self._is_datetime:
                 mean_value_low = table_data[self._low_column_name].mode()[0]
             else:
@@ -527,8 +527,8 @@ class Inequality(Constraint):
 
         table_data[self._high_column_name] = pd.Series(diff_column + low).astype(self._dtype)
 
-        if self.nan_column_name and self.nan_column_name in table_data.columns:
-            table_data = revert_nans_columns(table_data, self.nan_column_name)
+        if self._nan_column_name and self._nan_column_name in table_data.columns:
+            table_data = revert_nans_columns(table_data, self._nan_column_name)
 
         return table_data.drop(self._diff_column_name, axis=1)
 
