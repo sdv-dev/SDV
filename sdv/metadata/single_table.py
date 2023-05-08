@@ -48,6 +48,7 @@ class SingleTableMetadata:
         'METADATA_SPEC_VERSION'
     ])
     METADATA_SPEC_VERSION = 'SINGLE_TABLE_V1'
+    _DEFAULT_SDTYPES = list(_SDTYPE_KWARGS) + list(SDTYPE_ANONYMIZERS)
 
     def _validate_numerical(self, column_name, **kwargs):
         representation = kwargs.get('computer_representation')
@@ -134,9 +135,10 @@ class SingleTableMetadata:
                 f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'.")
 
     def _validate_sdtype(self, sdtype):
-        is_default_sdtype = sdtype in self._SDTYPE_KWARGS
-        is_anonymized_type = sdtype in SDTYPE_ANONYMIZERS
-        if not (is_default_sdtype or is_anonymized_type or is_faker_function(sdtype)):
+        if sdtype in self._DEFAULT_SDTYPES:
+            return
+
+        if not is_faker_function(sdtype):
             raise InvalidMetadataError(
                 f"Invalid sdtype : '{sdtype}' is not recognized. Please use one of the "
                 'supported SDV sdtypes.'
