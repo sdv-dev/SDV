@@ -40,11 +40,10 @@ class TestBaseHierarchicalSampler():
 
         # Run and Assert
         with pytest.raises(NotImplementedError, match=''):
-            instance._add_foreign_key_column(parent_name='nescra',
-                                             parent_primary_key='id_nescra',
+            instance._add_foreign_key_column(child_table=pd.DataFrame(),
+                                             parent_table=pd.DataFrame(),
                                              child_name='oseba',
-                                             child_foreign_key='id_nescra',
-                                             sampled_data={})
+                                             parent_name='nescra')
 
     def test__get_foreign_keys(self):
         """Test that this method returns the foreign keys for a given table name and child name."""
@@ -237,7 +236,8 @@ class TestBaseHierarchicalSampler():
         })
 
         # Run
-        result = BaseHierarchicalSampler._sample_table(instance, table_synthesizer, 'users', 3)
+        result = {}
+        BaseHierarchicalSampler._sample_table(instance, table_synthesizer, 'users', 3, result)
 
         # Assert
         expected_result = {
