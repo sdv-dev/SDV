@@ -21,7 +21,7 @@ def _find_addons(group, parent_globals, add_all=False):
         try:
             module = entry_point.load()
         except Exception:
-            msg = f'Failed to load "{entry_point.name}" from "{entry_point.module}".'
+            msg = f'Failed to load "{entry_point.name}" from "{entry_point.module_name}".'
             warnings.warn(msg)
             continue
 
