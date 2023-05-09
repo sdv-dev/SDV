@@ -181,11 +181,7 @@ class BaseSynthesizer:
         if sdtype == 'datetime':
             datetime_format = column_metadata.get('datetime_format')
             if datetime_format:
-                invalid_values = self._get_invalid_column_values(
-                    column,
-                    lambda x: validate_datetime_format(x, datetime_format)
-                )
-
+                invalid_values = validate_datetime_format(column, datetime_format)
             else:
                 invalid_values = self._get_invalid_column_values(
                     column,
