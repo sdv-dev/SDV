@@ -31,9 +31,13 @@ def get_datetime_format(value):
         String representing the datetime format in ``strftime`` format or ``None`` if not detected.
     """
     if isinstance(value, pd.Series):
-        value = value.astype(str).to_list()
-    if not isinstance(value, (list, np.ndarray)):
-        value = [value]
+        value = value.astype(str).to_numpy()
+    elif isinstance(value, list):
+        value = np.array(value)
+    if not isinstance(value, np.ndarray):
+        value = np.array([value])
+
+    value = value.astype(object)  # Fixes a bug that occurs in pandas as numpy casts to np.str_
 
     return _guess_datetime_format_for_array(value)
 
