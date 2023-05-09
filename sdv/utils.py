@@ -37,7 +37,7 @@ def get_datetime_format(value):
     if not isinstance(value, np.ndarray):
         value = np.array([value])
 
-    value = value.astype(object)  # Fixes a bug that occurs in pandas as numpy casts to np.str_
+    value = value.astype(object)  #  Fixes a bug that occurs in pandas as numpy casts to np.str_
 
     return _guess_datetime_format_for_array(value)
 
