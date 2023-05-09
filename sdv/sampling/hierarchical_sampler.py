@@ -13,7 +13,7 @@ class BaseHierarchicalSampler():
 
     Args:
         metadata (sdv.metadata.multi_table.MultiTableMetadata):
-            Multi table metadata representing the data tables that this sampler will be used for.
+            Multi-table metadata representing the data tables that this sampler will be used for.
         table_synthesizers (dict):
             Dictionary mapping each table to a synthesizer. Should be instantiated and passed to
             sampler by the multi-table synthesizer using this sampler.
@@ -88,8 +88,7 @@ class BaseHierarchicalSampler():
 
     def _get_num_rows_from_parent(self, parent_row, child_name, foreign_key):
         """Get the number of rows to sample for the child from the parent row."""
-        prefix = f'__{child_name}__{foreign_key}__'
-        num_rows_key = f'{prefix}num_rows'
+        num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
         num_rows = 0
         if num_rows_key in parent_row.keys():
             num_rows = parent_row[num_rows_key]

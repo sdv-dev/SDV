@@ -104,7 +104,6 @@ class TestBaseHierarchicalSampler():
 
         # Assert
         expected_result = 10.0
-
         assert result == expected_result
 
     def test__add_child_rows(self):
@@ -151,7 +150,7 @@ class TestBaseHierarchicalSampler():
         pd.testing.assert_frame_equal(sampled_data['sessions'], expected_result)
 
     def test__add_child_rows_with_sampled_data(self):
-        """Test the adding child rows when sampled data contains values.
+        """Test adding child rows when sampled data contains values.
 
         The new sampled data has to be concatenated to the current sampled data.
         """
