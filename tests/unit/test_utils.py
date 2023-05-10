@@ -3,7 +3,7 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 
-from sdv.utils import convert_to_timedelta
+from sdv.utils import convert_to_timedelta, modify_existing_name
 from tests.utils import SeriesMatcher
 
 
@@ -29,3 +29,16 @@ def test_convert_to_timedelta(to_timedelta_mock):
         pd.NaT
     ], dtype='timedelta64[ns]')
     pd.testing.assert_series_equal(converted_column, expected_column)
+
+
+def test_modify_existing_name():
+    """Test the ``modify_existing_name`` method."""
+    # Setup
+    name = 'name'
+    existing_names = ['name', 'name_', 'name__']
+
+    # Run
+    result = modify_existing_name(name, existing_names)
+
+    # Assert
+    assert result == 'name___'

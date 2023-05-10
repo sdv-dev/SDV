@@ -1505,6 +1505,23 @@ class TestInequality():
         pd.testing.assert_frame_equal(output_with_nans, expected_output_with_nans)
         pd.testing.assert_frame_equal(output_without_nans, expected_output_without_nans)
 
+    def test_transform_existing_column_name(self):
+        """Test ``_transform`` method when the ``diff_column_name`` already exists in the table."""
+        # Setup
+        instance = Inequality(low_column_name='a', high_column_name='b')
+        table_data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'a#b': ['c', 'd', 'e'],
+        })
+
+        # Run
+        output = instance._transform(table_data)
+
+        # Assert
+        expected_column_name = ['a', 'a#b', 'a#b_']
+        assert list(output.columns) == expected_column_name
+
     def test__transform_datetime(self):
         """Test the ``Inequality._transform`` method.
 

@@ -42,7 +42,7 @@ from sdv.constraints.errors import (
 from sdv.constraints.utils import (
     cast_to_datetime64, compute_nans_column, get_datetime_diff, logit, matches_datetime_format,
     revert_nans_columns, sigmoid)
-from sdv.utils import convert_to_timedelta, is_datetime_type
+from sdv.utils import convert_to_timedelta, is_datetime_type, modify_existing_name
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,
@@ -481,11 +481,12 @@ class Inequality(Constraint):
         else:
             diff_column = high - low
 
+        self._diff_column_name = modify_existing_name(self._diff_column_name, table_data.columns)
         table_data[self._diff_column_name] = np.log(diff_column + 1)
 
         nan_col = compute_nans_column(table_data, [self._low_column_name, self._high_column_name])
         if nan_col is not None:
-            self._nan_column_name = nan_col.name
+            self._nan_column_name = modify_existing_name(nan_col.name, table_data.columns)
             table_data[self._nan_column_name] = nan_col
             if self._is_datetime:
                 mean_value_low = table_data[self._low_column_name].mode()[0]
@@ -684,6 +685,7 @@ class ScalarInequality(Constraint):
         if self._is_datetime:
             diff_column = diff_column.astype(np.float64)
 
+        self._diff_column_name = modify_existing_name(self._diff_column_name, table_data.columns)
         table_data[self._diff_column_name] = np.log(diff_column + 1)
         return table_data.drop(self._column_name, axis=1)
 
@@ -932,13 +934,20 @@ class Range(Constraint):
             diff_column_1 = middle - low
             diff_column_2 = high - middle
 
+        self.low_diff_column_name = modify_existing_name(
+            self.low_diff_column_name, table_data.columns
+        )
+        self.high_diff_column_name = modify_existing_name(
+            self.high_diff_column_name, table_data.columns
+        )
+
         table_data[self.low_diff_column_name] = np.log(diff_column_1 + 1)
         table_data[self.high_diff_column_name] = np.log(diff_column_2 + 1)
 
         list_columns_nans = [self.low_column_name, self.middle_column_name, self.high_column_name]
         nan_column = compute_nans_column(table_data, list_columns_nans)
         if nan_column is not None:
-            self.nan_column_name = nan_column.name
+            self.nan_column_name = modify_existing_name(nan_column.name, table_data.columns)
             table_data[self.nan_column_name] = nan_column
             if self._is_datetime:
                 mean_value_low = table_data[self.low_column_name].mode()[0]
