@@ -860,9 +860,6 @@ class Range(Constraint):
     def _fit(self, table_data):
         """Fit the constraint.
 
-        The fit process consists in generating the ``transformed_column`` name and determine
-        whether or not the data is ``UnixTimestampEncoder``.
-
         Args:
             table_data (pandas.DataFrame):
                 The Table data.
