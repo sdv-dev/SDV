@@ -211,7 +211,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
     def _get_parameters(self):
         """Get copula model parameters.
 
-        Compute model ``covariance`` and ``distribution.std``
+        Compute model ``correlation`` and ``distribution.std``
         before it returns the flatten dict.
 
         Returns:
@@ -232,11 +232,11 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         params = self._model.to_dict()
 
-        covariance = []
-        for index, row in enumerate(params['covariance'][1:]):
-            covariance.append(row[:index + 1])
+        correlation = []
+        for index, row in enumerate(params['correlation'][1:]):
+            correlation.append(row[:index + 1])
 
-        params['covariance'] = covariance
+        params['correlation'] = correlation
         params['univariates'] = dict(zip(params.pop('columns'), params['univariates']))
         params['num_rows'] = self._num_rows
 
@@ -351,11 +351,11 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         model_parameters['univariates'] = univariates
         model_parameters['columns'] = columns
 
-        covariance = model_parameters.get('covariance')
-        if covariance:
-            model_parameters['covariance'] = self._rebuild_correlation_matrix(covariance)
+        correlation = model_parameters.get('correlation')
+        if correlation:
+            model_parameters['correlation'] = self._rebuild_correlation_matrix(correlation)
         else:
-            model_parameters['covariance'] = [[1.0]]
+            model_parameters['correlation'] = [[1.0]]
 
         return model_parameters
 

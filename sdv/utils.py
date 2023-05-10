@@ -23,6 +23,11 @@ def get_datetime_format(value):
     able to detect the ``strftime`` it will return it as a ``string`` if not, a ``None``
     will be returned.
 
+    In order to achieve this we have to ensure that the given input array has no ``nans``
+    since pandas does not validate it properly. Also there is a bug in ``pandas`` that
+    does not support ``numpy.str_`` data type, that is why we use ``pandas.Series`` and convert
+    the data type to ``string`` and then to ``numpy.ndarray``.
+
     Args:
         value (pandas.Series, np.ndarray, list, or str):
             Input to attempt detecting the format.
@@ -30,11 +35,11 @@ def get_datetime_format(value):
     Return:
         String representing the datetime format in ``strftime`` format or ``None`` if not detected.
     """
-    if isinstance(value, pd.Series):
-        value = value.astype(str).to_list()
-    if not isinstance(value, (list, np.ndarray)):
-        value = [value]
+    if not isinstance(value, pd.Series):
+        value = pd.Series(value)
 
+    value = value[~value.isna()]
+    value = value.astype(str).to_numpy()
     return _guess_datetime_format_for_array(value)
 
 

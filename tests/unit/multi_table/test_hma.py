@@ -136,7 +136,7 @@ class TestHMASynthesizer:
             'upravna_enota': [0, 1, 2, 3],
             'nesreca_val': [0, 1, 2, 3],
             'value': [0, 1, 2, 3],
-            '__oseba__id_nesreca__covariance__0__0': [0.] * 4,
+            '__oseba__id_nesreca__correlation__0__0': [0.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__b': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__loc': [0., 1., 2., 3.],
