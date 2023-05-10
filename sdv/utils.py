@@ -88,28 +88,28 @@ def is_boolean_type(value):
     return True if pd.isna(value) | (value is True) | (value is False) else False
 
 
-def validate_datetime_format(value, datetime_format):
-    """Determine that value matches datetime format.
+def validate_datetime_format(column, datetime_format):
+    """Determine the values of the column that match the datetime format.
 
     Args:
-        value (int, str, datetime, bool):
-            Input to evaluate.
+        column (pd.Series):
+            Column to evaluate.
         datetime_format (str):
             The datetime format.
 
     Returns:
-        bool:
-            True if the input matches the format, False if not.
+        pd.Series:
+            Series of booleans, with True if the value matches the format, False if not.
     """
     pandas_datetime_format = datetime_format.replace('%-', '%')
+    datetime_column = pd.to_datetime(
+        column,
+        errors='coerce',
+        format=pandas_datetime_format
+    )
+    valid = pd.isna(column) | ~pd.isna(datetime_column)
 
-    try:
-        pd.to_datetime(value, format=pandas_datetime_format)
-
-    except ValueError:
-        return False
-
-    return True
+    return set(column[~valid])
 
 
 def convert_to_timedelta(column):
