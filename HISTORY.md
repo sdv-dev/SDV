@@ -1,5 +1,35 @@
 # Release Notes
 
+## 1.1.0 - 2023-05-10
+
+This release adds a new initialization parameter to synthesizers called `locales` that allows users to set the locales to use for all columns that have a locale based `sdtype` (eg. `address` or `phone_number`). Additionally, it adds support for Pandas 2.0!
+
+Multiple enhancements were made to improve the performance of data and metadata validation in synthesizers. The `Inequality` constraint was improved to be able to generate more scenarios of data concerning the presence of NaNs. Finally, many warnings have been resolved.
+
+### New Features
+
+* Add add-on detection for new constraints - Issue [#1397](https://github.com/sdv-dev/SDV/issues/1397) by @frances-h
+* Add add-on detection for multi and single table synthesizers - Issue [#1385](https://github.com/sdv-dev/SDV/issues/1385) by @frances-h
+* Setting a locale for all my anonymized (PII) columns - Issue [#1371](https://github.com/sdv-dev/SDV/issues/1371) by @frances-h
+
+### Bigs Fixed
+
+* Skip checking for Faker function if its a default sdtype - PR [#1410](https://github.com/sdv-dev/SDV/pull/1410) by @pvk-developer
+* Inequality constraint does not produce all possibilities of missing values - Issue [#1392](https://github.com/sdv-dev/SDV/issues/1392) by @R-Palazzo
+* Deprecated locale warning - Issue [#1400](https://github.com/sdv-dev/SDV/issues/1400) by @frances-h
+
+### Maintenance
+
+* Use cached Faker instance to discover if an sdtype is a Faker function. - Issue [#1405](https://github.com/sdv-dev/SDV/issues/1405) by @pvk-developer
+* Upgrade to pandas 2.0 - Issue [#1366](https://github.com/sdv-dev/SDV/issues/1366) by @pvk-developer
+
+### Internal
+
+* Refactor Multi Table Modeling - Issue [#1387](https://github.com/sdv-dev/SDV/issues/1387) by @pvk-developer
+* PytestConfigWarning: Unknown config option: collect_ignore - Issue [#1376](https://github.com/sdv-dev/SDV/issues/1376) by @amontanez24
+* Pandas FutureWarning: Could not cast to int64 - Issue [#1357](https://github.com/sdv-dev/SDV/issues/1357) by @R-Palazzo
+* RuntimeWarning: invalid value encountered in cast. - Issue [#1369](https://github.com/sdv-dev/SDV/issues/1369) by @amontanez24
+
 ## 1.0.1 - 2023-04-20
 
 This release improves the `load_custom_constraint_classes` method by removing the `table_name` parameter and just loading the constraint
