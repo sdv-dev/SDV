@@ -127,6 +127,7 @@ class TestGaussianCopulaSynthesizer:
         assert result == {
             'enforce_min_max_values': True,
             'enforce_rounding': True,
+            'locales': None,
             'numerical_distributions': {},
             'default_distribution': 'beta'
         }
@@ -272,11 +273,11 @@ class TestGaussianCopulaSynthesizer:
         - numpy array with the square correlation matrix
         """
         # Run
-        triangular_covariance = [
+        triangular_correlation = [
             [0.1],
             [0.2, 0.3]
         ]
-        correlation = GaussianCopulaSynthesizer._rebuild_correlation_matrix(triangular_covariance)
+        correlation = GaussianCopulaSynthesizer._rebuild_correlation_matrix(triangular_correlation)
 
         # Assert
         expected = [
@@ -299,11 +300,11 @@ class TestGaussianCopulaSynthesizer:
         - numpy array with the square correlation matrix
         """
         # Run
-        triangular_covariance = [
+        triangular_correlation = [
             [1.0],
             [2.0, 1.0]
         ]
-        correlation = GaussianCopulaSynthesizer._rebuild_correlation_matrix(triangular_covariance)
+        correlation = GaussianCopulaSynthesizer._rebuild_correlation_matrix(triangular_correlation)
 
         # Assert
         expected = [
@@ -317,7 +318,7 @@ class TestGaussianCopulaSynthesizer:
         """Test the ``GaussianCopulaSynthesizer._rebuild_gaussian_copula`` method.
 
         The ``test__rebuild_gaussian_copula`` method is expected to:
-        - Rebuild a square covariance matrix out of a triangular one.
+        - Rebuild a square correlation matrix out of a triangular one.
 
         Input:
         - numpy array, Triangular correlation matrix
@@ -343,7 +344,7 @@ class TestGaussianCopulaSynthesizer:
                     'loc': 2.0
                 },
             },
-            'covariance': [[0.1], [0.2, 0.3]],
+            'correlation': [[0.1], [0.2, 0.3]],
             'distribution': 'beta',
         }
 
@@ -372,7 +373,7 @@ class TestGaussianCopulaSynthesizer:
                     'type': BetaUnivariate
                 },
             ],
-            'covariance': [
+            'correlation': [
                 [1.0, 0.1, 0.2],
                 [0.1, 1.0, 0.3],
                 [0.2, 0.3, 1.0]
@@ -388,7 +389,7 @@ class TestGaussianCopulaSynthesizer:
         """Test that parameters are properly set and that number of rows is set properly."""
         # Setup
         parameters = {
-            'covariance': [
+            'correlation': [
                 [0.0],
                 [0.0, 0.0]
             ],
@@ -417,7 +418,7 @@ class TestGaussianCopulaSynthesizer:
         # Assert
         mock_unflatten_dict.assert_called_once_with(parameters)
         expected_parameters = {
-            'covariance': [
+            'correlation': [
                 [0.0],
                 [0.0, 0.0]
             ],

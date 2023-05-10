@@ -53,6 +53,9 @@ class DataProcessor:
             different slices of the same table.
         table_name (str):
             Name of table this processor is for. Optional.
+        locales (str or list):
+            Default locales to use for AnonymizedFaker transformers. Optional, defaults to using
+            Faker's default locale.
     """
 
     _DEFAULT_TRANSFORMERS_BY_SDTYPE = {
@@ -88,11 +91,12 @@ class DataProcessor:
         self._transformers_by_sdtype.update({'numerical': custom_float_formatter})
 
     def __init__(self, metadata, enforce_rounding=True, enforce_min_max_values=True,
-                 model_kwargs=None, table_name=None):
+                 model_kwargs=None, table_name=None, locales=None):
         self.metadata = metadata
         self._enforce_rounding = enforce_rounding
         self._enforce_min_max_values = enforce_min_max_values
         self._model_kwargs = model_kwargs or {}
+        self._locales = locales
         self._constraints_list = []
         self._constraints = []
         self._constraints_to_reverse = []
@@ -342,7 +346,7 @@ class DataProcessor:
         self._transformers_by_sdtype[sdtype] = transformer
 
     @staticmethod
-    def create_anonymized_transformer(sdtype, column_metadata, enforce_uniqueness):
+    def create_anonymized_transformer(sdtype, column_metadata, enforce_uniqueness, locales=None):
         """Create an instance of an ``AnonymizedFaker``.
 
         Read the extra keyword arguments from the ``column_metadata`` and use them to create
@@ -356,11 +360,14 @@ class DataProcessor:
             enforce_uniqueness (bool):
                 If ``True`` overwrite ``enforce_uniqueness`` with ``True`` to ensure unique
                 generation for primary keys.
+            locales (str or list):
+                Locale or list of locales to use for the AnonymizedFaker transfomer. Optional,
+                defaults to using Faker's default locale.
 
         Returns:
             Instance of ``rdt.transformers.pii.AnonymizedFaker``.
         """
-        kwargs = {}
+        kwargs = {'locales': locales}
         for key, value in column_metadata.items():
             if key not in ['pii', 'sdtype']:
                 kwargs[key] = value
@@ -468,7 +475,8 @@ class DataProcessor:
                 transformers[column] = self.create_anonymized_transformer(
                     sdtype,
                     column_metadata,
-                    enforce_uniqueness
+                    enforce_uniqueness,
+                    self._locales
                 )
 
             elif sdtype in self._transformers_by_sdtype:

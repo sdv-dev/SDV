@@ -33,6 +33,8 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         enforce_rounding (bool):
             Define rounding scheme for ``numerical`` columns. If ``True``, the data returned
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
+        locales (list or str):
+            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
         numerical_distributions (dict):
             Dictionary that maps field names from the table that is being modeled with
             the distribution that needs to be used. The distributions can be passed as either
@@ -88,12 +90,13 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         return cls._DISTRIBUTIONS[distribution]
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
+    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=None,
                  numerical_distributions=None, default_distribution=None):
         super().__init__(
             metadata,
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
+            locales=locales,
         )
         validate_numerical_distributions(numerical_distributions, self.metadata.columns)
         self.numerical_distributions = numerical_distributions or {}
@@ -208,7 +211,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
     def _get_parameters(self):
         """Get copula model parameters.
 
-        Compute model ``covariance`` and ``distribution.std``
+        Compute model ``correlation`` and ``distribution.std``
         before it returns the flatten dict.
 
         Returns:
@@ -229,11 +232,11 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         params = self._model.to_dict()
 
-        covariance = []
-        for index, row in enumerate(params['covariance'][1:]):
-            covariance.append(row[:index + 1])
+        correlation = []
+        for index, row in enumerate(params['correlation'][1:]):
+            correlation.append(row[:index + 1])
 
-        params['covariance'] = covariance
+        params['correlation'] = correlation
         params['univariates'] = dict(zip(params.pop('columns'), params['univariates']))
         params['num_rows'] = self._num_rows
 
@@ -348,11 +351,11 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         model_parameters['univariates'] = univariates
         model_parameters['columns'] = columns
 
-        covariance = model_parameters.get('covariance')
-        if covariance:
-            model_parameters['covariance'] = self._rebuild_correlation_matrix(covariance)
+        correlation = model_parameters.get('correlation')
+        if correlation:
+            model_parameters['correlation'] = self._rebuild_correlation_matrix(correlation)
         else:
-            model_parameters['covariance'] = [[1.0]]
+            model_parameters['correlation'] = [[1.0]]
 
         return model_parameters
 

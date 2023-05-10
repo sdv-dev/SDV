@@ -1,7 +1,7 @@
 from unittest.mock import Mock, patch
 
 from sdv.metadata.anonymization import (
-    _detect_provider_name, get_anonymized_transformer, is_faker_function)
+    _detect_provider_name, get_anonymized_transformer, get_faker_instance, is_faker_function)
 
 
 class TestAnonimization:
@@ -33,7 +33,8 @@ class TestAnonimization:
 
         Test that when calling with an existing ``sdtype`` / ``function_name`` from the
         ``SDTYPE_ANONYMZIERS`` dictionary, their ``provider_name`` and ``function_name`` are being
-        used by default, and also other ``kwargs`` are being passed to the ``AnonymizedFaker``.
+        used by default, and also other ``kwargs`` and provided locales are being passed to the
+        ``AnonymizedFaker``.
 
         Input:
             - ``function_name`` from the ``SDTYPE_ANONYMIZERS``.
@@ -47,14 +48,16 @@ class TestAnonimization:
             - The return value must be the instance of ``AnonymizedFaker``.
         """
         # Setup
-        output = get_anonymized_transformer('email', function_kwargs={'domain': '@gmail.com'})
-
+        output = get_anonymized_transformer('email', transformer_kwargs={
+            'function_kwargs': {'domain': '@gmail.com'}, 'locales': ['en_CA', 'fr_CA']
+        })
         # Assert
         assert output == mock_anonymized_faker.return_value
         mock_anonymized_faker.assert_called_once_with(
             provider_name='internet',
             function_name='email',
-            domain='@gmail.com'
+            function_kwargs={'domain': '@gmail.com'},
+            locales=['en_CA', 'fr_CA']
         )
 
     @patch('sdv.metadata.anonymization.AnonymizedFaker')
@@ -63,7 +66,8 @@ class TestAnonimization:
 
         Test that when calling with a custom ``sdtype`` / ``function_name`` that does not belong
         to the ``SDTYPE_ANONYMZIERS`` dictionary. The ``provider_name`` is being found
-        automatically other ``kwargs`` are being passed to the ``AnonymizedFaker``.
+        automatically other ``kwargs`` and provided locales are being passed to the
+        ``AnonymizedFaker``.
 
         Input:
             - ``function_name`` color.
@@ -77,14 +81,17 @@ class TestAnonimization:
             - The return value must be the instance of ``AnonymizedFaker``.
         """
         # Setup
-        output = get_anonymized_transformer('color', function_kwargs={'hue': 'red'})
+        output = get_anonymized_transformer('color', transformer_kwargs={
+            'function_kwargs': {'hue': 'red'}, 'locales': ['en_CA', 'fr_CA']
+        })
 
         # Assert
         assert output == mock_anonymized_faker.return_value
         mock_anonymized_faker.assert_called_once_with(
             provider_name='color',
             function_name='color',
-            hue='red'
+            function_kwargs={'hue': 'red'},
+            locales=['en_CA', 'fr_CA']
         )
 
     @patch('sdv.metadata.anonymization.Faker')
@@ -103,18 +110,31 @@ class TestAnonimization:
         # Assert
         assert result is True
 
-    @patch('sdv.metadata.anonymization.Faker')
-    def test_is_faker_function_error(self, faker_mock):
+    @patch('sdv.metadata.anonymization.get_faker_instance')
+    def test_is_faker_function_error(self, mock_get_faker_instance):
         """Test that the method returns False if ``function_name`` is not a valid faker function.
 
         If the ``function_name`` is not an attribute of ``Faker()`` then we should return false.
         This test mocks ``Faker`` to not have the attribute that is passed as ``function_name``.
         """
         # Setup
-        faker_mock.return_value = Mock(spec=[])
+        mock_get_faker_instance.return_value = Mock(spec=[])
 
         # Run
         result = is_faker_function('blah')
 
         # Assert
         assert result is False
+        mock_get_faker_instance.assert_called_once()
+
+    @patch('sdv.metadata.anonymization.Faker')
+    def test_get_faker_instance(self, mock_faker):
+        """Test that ``get_faker_instance`` returns the same object."""
+        # Setup
+        first_instance = get_faker_instance()
+
+        # Run
+        second_instance = get_faker_instance()
+
+        # Assert
+        assert id(first_instance) == id(second_instance)

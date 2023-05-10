@@ -68,13 +68,15 @@ class TestDataProcessor:
         data_processor = DataProcessor(
             metadata=metadata,
             enforce_rounding=True,
-            enforce_min_max_values=False
+            enforce_min_max_values=False,
+            locales='en_US'
         )
 
         # Assert
         assert data_processor.metadata == metadata
         assert data_processor._enforce_rounding is True
         assert data_processor._enforce_min_max_values is False
+        assert data_processor._locales == 'en_US'
         assert data_processor._model_kwargs == {}
         assert data_processor._constraints_list == []
         assert data_processor._constraints == []
@@ -967,8 +969,34 @@ class TestDataProcessor:
 
         # Assert
         mock_get_anonymized_transformer.assert_called_once_with(
-            'ssn',
-            {'enforce_uniqueness': True}
+            'ssn', {'enforce_uniqueness': True, 'locales': None}
+        )
+        assert output == mock_get_anonymized_transformer.return_value
+
+    @patch('sdv.data_processing.data_processor.get_anonymized_transformer')
+    def test_create_anonymized_transformer_locales(self, mock_get_anonymized_transformer):
+        """Test the ``create_anonymized_transformer`` method with locales.
+
+        Test that when given an ``sdtype``, ``column_metadata``, and locales, this calls the
+        ``get_anonymized_transformer`` with the ``locales`` keyword arg.
+        """
+        # Setup
+        sdtype = 'ssn'
+        column_metadata = {
+            'sdtype': 'ssn',
+        }
+
+        # Run
+        output = DataProcessor.create_anonymized_transformer(
+            sdtype,
+            column_metadata,
+            False,
+            locales=['en_US', 'en_CA']
+        )
+
+        # Assert
+        mock_get_anonymized_transformer.assert_called_once_with(
+            'ssn', {'locales': ['en_US', 'en_CA']}
         )
         assert output == mock_get_anonymized_transformer.return_value
 
@@ -994,7 +1022,7 @@ class TestDataProcessor:
         column_metadata = {
             'sdtype': 'email',
             'pii': True,
-            'domain': 'gmail.com'
+            'function_kwargs': {'domain': 'gmail.com'}
         }
 
         # Run
@@ -1002,7 +1030,9 @@ class TestDataProcessor:
 
         # Assert
         assert output == mock_get_anonymized_transformer.return_value
-        mock_get_anonymized_transformer.assert_called_once_with('email', {'domain': 'gmail.com'})
+        mock_get_anonymized_transformer.assert_called_once_with(
+            'email', {'function_kwargs': {'domain': 'gmail.com'}, 'locales': None}
+        )
 
     def test__get_transformer_instance_no_kwargs(self):
         """Test the ``_get_transformer_instance`` without keyword args.
@@ -1129,6 +1159,7 @@ class TestDataProcessor:
             - The expected ``HyperTransformer`` config.
         """
         # Setup
+        locales = ['en_US', 'en_CA', 'fr_CA']
         data = pd.DataFrame({
             'int': [1, 2, 3],
             'float': [1., 2., 3.],
@@ -1143,7 +1174,7 @@ class TestDataProcessor:
             'id': ['ID_001', 'ID_002', 'ID_003'],
             'date': ['2021-02-01', '2022-03-05', '2023-01-31']
         })
-        dp = DataProcessor(SingleTableMetadata())
+        dp = DataProcessor(SingleTableMetadata(), locales=locales)
         dp.metadata = Mock()
         dp.create_anonymized_transformer = Mock()
         dp.create_regex_generator = Mock()
@@ -1216,8 +1247,8 @@ class TestDataProcessor:
         assert dp._primary_key == 'id'
 
         dp.create_anonymized_transformer.calls == [
-            call('email', {'sdtype': 'email', 'pii': True}),
-            call('first_name', {'sdtype': 'first_name'})
+            call('email', {'sdtype': 'email', 'pii': True, 'locales': locales}),
+            call('first_name', {'sdtype': 'first_name', 'locales': locales})
 
         ]
         dp.create_regex_generator.assert_called_once_with(

@@ -104,3 +104,65 @@ def sigmoid(data, low, high):
     data = data * (high - low) + low
 
     return data
+
+
+def get_nan_component_value(row):
+    """Check for NaNs in a pandas row.
+
+    Outputs a concatenated string of the column names with NaNs.
+
+    Args:
+        row (pandas.Series):
+            A pandas row.
+
+    Returns:
+        A concatenated string of the column names with NaNs.
+    """
+    columns_with_nans = []
+    for column, value in row.items():
+        if pd.isna(value):
+            columns_with_nans.append(column)
+
+    if columns_with_nans:
+        return ', '.join(columns_with_nans)
+    else:
+        return 'None'
+
+
+def compute_nans_column(table_data, list_column_names):
+    """Compute a categorical column to the table_data indicating where NaNs are.
+
+    Args:
+        table_data (pandas.DataFrame):
+            The table data.
+        list_column_names (list):
+            The list of column names to check for NaNs.
+
+    Returns:
+        A dict with the column name as key and the column indicating where NaNs are as value.
+        Empty dict if there are no NaNs.
+    """
+    nan_column_name = '#'.join(list_column_names) + '.nan_component'
+    column = table_data[list_column_names].apply(get_nan_component_value, axis=1)
+    if not (column == 'None').all():
+        return pd.Series(column, name=nan_column_name)
+
+    return None
+
+
+def revert_nans_columns(table_data, nan_column_name):
+    """Reverts the NaNs in the table_data based on the categorical column.
+
+    Args:
+        table_data (pandas.DataFrame):
+            The table data.
+        nan_column (pandas.Series):
+            The categorical columns indicating where the NaNs are.
+    """
+    combinations = table_data[nan_column_name].unique()
+    for combination in combinations:
+        if combination != 'None':
+            column_names = [column_name.strip() for column_name in combination.split(',')]
+            table_data.loc[table_data[nan_column_name] == combination, column_names] = np.nan
+
+    return table_data.drop(columns=nan_column_name)

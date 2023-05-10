@@ -41,6 +41,28 @@ class TestSingleTablePreset:
             metadata=metadata_mock,
             default_distribution='norm',
             enforce_rounding=False,
+            locales=None
+        )
+
+    @patch('sdv.lite.single_table.rdt.transformers')
+    @patch('sdv.lite.single_table.GaussianCopulaSynthesizer')
+    def test__init__passes_correct_locales(self, gaussian_copula_mock, transformers_mock):
+        """Tests the method with locales.
+
+        The method should pass the locales parameter to the ``GaussianCopulaSynthesizer`` class.
+        """
+        # Setup
+        metadata_mock = MagicMock(spec_set=SingleTableMetadata)
+
+        # Run
+        SingleTablePreset(metadata=metadata_mock, name='FAST_ML', locales=['en_US', 'fr_CA'])
+
+        # Assert
+        gaussian_copula_mock.assert_called_once_with(
+            metadata=metadata_mock,
+            default_distribution='norm',
+            enforce_rounding=False,
+            locales=['en_US', 'fr_CA']
         )
 
     @patch('sdv.single_table.base.DataProcessor')
@@ -59,6 +81,7 @@ class TestSingleTablePreset:
             'default_distribution': 'norm',
             'enforce_min_max_values': True,
             'enforce_rounding': False,
+            'locales': None,
             'numerical_distributions': {}
         }
 

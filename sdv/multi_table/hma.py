@@ -19,18 +19,20 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         metadata (sdv.metadata.multi_table.MultiTableMetadata):
             Multi table metadata representing the data tables that this synthesizer will be used
             for.
+        locales (list or str):
+            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
     """
 
     DEFAULT_SYNTHESIZER_KWARGS = {
         'default_distribution': 'beta'
     }
 
-    def __init__(self, metadata, synthesizer_kwargs=None):
-        super().__init__(metadata)
+    def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
+        super().__init__(metadata, locales=locales)
         self._synthesizer_kwargs = synthesizer_kwargs or self.DEFAULT_SYNTHESIZER_KWARGS
         self._table_sizes = {}
         self._max_child_rows = {}
-        self._modeled_tables = []
+        self._augmented_tables = []
         for table_name in self.metadata.tables:
             self.set_table_parameters(table_name, self._synthesizer_kwargs)
 
@@ -94,6 +96,17 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
         return pd.DataFrame(extension_rows, index=index)
 
+    @staticmethod
+    def _clear_nans(table_data):
+        for column in table_data.columns:
+            column_data = table_data[column]
+            if column_data.dtype in (int, float):
+                fill_value = 0 if column_data.isna().all() else column_data.mean()
+            else:
+                fill_value = column_data.mode()[0]
+
+            table_data[column] = table_data[column].fillna(fill_value)
+
     def _get_foreign_keys(self, table_name, child_name):
         foreign_keys = []
         for relation in self.metadata.relationships:
@@ -103,7 +116,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
         return foreign_keys
 
-    def _extend_table(self, table, tables, table_name):
+    def _augment_table(self, table, tables, table_name):
         """Generate the extension columns for this table.
 
         For each of the table's foreign keys, generate the related extension columns,
@@ -121,10 +134,12 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             pandas.DataFrame:
                 The extended table.
         """
+        self._table_sizes[table_name] = len(table)
         LOGGER.info('Computing extensions for table %s', table_name)
         for child_name in self.metadata._get_child_map()[table_name]:
-            if child_name not in self._modeled_tables:
-                child_table = self._model_table(child_name, tables)
+            if child_name not in self._augmented_tables:
+                child_table = self._augment_table(tables[child_name], tables, child_name)
+
             else:
                 child_table = tables[child_name]
 
@@ -135,7 +150,10 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                 num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
                 table[num_rows_key] = table[num_rows_key].fillna(0)
                 self._max_child_rows[num_rows_key] = table[num_rows_key].max()
+                tables[table_name] = table
 
+        self._augmented_tables.append(table_name)
+        self._clear_nans(table)
         return table
 
     def _pop_foreign_keys(self, table_data, table_name):
@@ -158,66 +176,41 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
         return keys
 
-    @staticmethod
-    def _clear_nans(table_data):
-        for column in table_data.columns:
-            column_data = table_data[column]
-            if column_data.dtype in (int, float):
-                fill_value = 0 if column_data.isna().all() else column_data.mean()
-            else:
-                fill_value = column_data.mode()[0]
-
-            table_data[column] = table_data[column].fillna(fill_value)
-
-    def _model_table(self, table_name, tables):
-        """Model the indicated table and its children.
+    def _model_tables(self, augmented_data):
+        """Model the augmented tables.
 
         Args:
-            table_name (str):
-                Name of the table to model.
-            tables (dict):
-                Dict of original tables.
-
-        Returns:
-            pandas.DataFrame:
-                table data with the extensions created while modeling its children.
+            augmented_data (dict):
+                Dictionary mapping each table name to an augmented ``pandas.DataFrame``.
         """
-        LOGGER.info('Modeling %s', table_name)
+        for table_name, table in augmented_data.items():
+            keys = self._pop_foreign_keys(table, table_name)
+            self._clear_nans(table)
+            LOGGER.info('Fitting %s for table %s; shape: %s', self._synthesizer.__name__,
+                        table_name, table.shape)
 
-        table = tables.get(table_name)
-        self._table_sizes[table_name] = len(table)
+            if not table.empty:
+                self._table_synthesizers[table_name].fit_processed_data(table)
 
-        table = self._extend_table(table, tables, table_name)
-        keys = self._pop_foreign_keys(table, table_name)
-        self._clear_nans(table)
-        LOGGER.info('Fitting %s for table %s; shape: %s', self._synthesizer.__name__,
-                    table_name, table.shape)
+            for name, values in keys.items():
+                table[name] = values
 
-        if not table.empty:
-            self._table_synthesizers[table_name].fit_processed_data(table)
-
-        for name, values in keys.items():
-            table[name] = values
-
-        tables[table_name] = table
-        self._modeled_tables.append(table_name)
-
-        return table
-
-    def _fit(self, processed_data):
+    def _augment_tables(self, processed_data):
         """Fit this ``HMASynthesizer`` instance to the dataset data.
 
         Args:
             processed_data (dict):
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
         """
-        self._modeled_tables = []
+        augmented_data = deepcopy(processed_data)
+        self._augmented_tables = []
         parent_map = self.metadata._get_parent_map()
         for table_name in processed_data:
             if not parent_map.get(table_name):
-                self._model_table(table_name, processed_data)
+                self._augment_table(augmented_data[table_name], augmented_data, table_name)
 
-        LOGGER.info('Modeling Complete')
+        LOGGER.info('Augmentation Complete')
+        return augmented_data
 
     def _finalize(self, sampled_data):
         """Do the final touches to the generated data.

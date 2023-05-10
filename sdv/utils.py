@@ -15,44 +15,6 @@ def cast_to_iterable(value):
     return [value]
 
 
-def display_tables(tables, max_rows=10, datetime_fmt='%Y-%m-%d %H:%M:%S', row=True):
-    """Display mutiple tables side by side on a Jupyter Notebook.
-
-    Args:
-        tables (dict[str, DataFrame]):
-            ``dict`` containing table names and pandas DataFrames.
-        max_rows (int):
-            Max rows to show per table. Defaults to 10.
-        datetime_fmt (str):
-            Format with which to display datetime columns.
-    """
-    # Import here to avoid making IPython a hard dependency
-    from IPython.core.display import HTML
-
-    names = []
-    data = []
-    for name, table in tables.items():
-        table = table.copy()
-        for column in table.columns:
-            column_data = table[column]
-            if column_data.dtype.kind == 'M':
-                table[column] = column_data.dt.strftime(datetime_fmt)
-
-        names.append(f'<td style="text-align:left"><b>{name}</b></td>')
-        data.append(f'<td>{table.head(max_rows).to_html(index=False)}</td>')
-
-    if row:
-        html = f"<table><tr>{''.join(names)}</tr><tr>{''.join(data)}</tr></table>"
-    else:
-        rows = [
-            f'<tr>{name}</tr><tr>{table}</tr>'
-            for name, table in zip(names, data)
-        ]
-        html = f"<table>{''.join(rows)}</table>"
-
-    return HTML(html)
-
-
 def get_datetime_format(value):
     """Get the ``strftime`` format for a given ``value``.
 
@@ -61,6 +23,11 @@ def get_datetime_format(value):
     able to detect the ``strftime`` it will return it as a ``string`` if not, a ``None``
     will be returned.
 
+    In order to achieve this we have to ensure that the given input array has no ``nans``
+    since pandas does not validate it properly. Also there is a bug in ``pandas`` that
+    does not support ``numpy.str_`` data type, that is why we use ``pandas.Series`` and convert
+    the data type to ``string`` and then to ``numpy.ndarray``.
+
     Args:
         value (pandas.Series, np.ndarray, list, or str):
             Input to attempt detecting the format.
@@ -68,11 +35,11 @@ def get_datetime_format(value):
     Return:
         String representing the datetime format in ``strftime`` format or ``None`` if not detected.
     """
-    if isinstance(value, pd.Series):
-        value = value.astype(str).to_list()
-    if not isinstance(value, (list, np.ndarray)):
-        value = [value]
+    if not isinstance(value, pd.Series):
+        value = pd.Series(value)
 
+    value = value[~value.isna()]
+    value = value.astype(str).to_numpy()
     return _guess_datetime_format_for_array(value)
 
 
@@ -126,28 +93,49 @@ def is_boolean_type(value):
     return True if pd.isna(value) | (value is True) | (value is False) else False
 
 
-def validate_datetime_format(value, datetime_format):
-    """Determine that value matches datetime format.
+def validate_datetime_format(column, datetime_format):
+    """Determine the values of the column that match the datetime format.
 
     Args:
-        value (int, str, datetime, bool):
-            Input to evaluate.
+        column (pd.Series):
+            Column to evaluate.
         datetime_format (str):
             The datetime format.
 
     Returns:
-        bool:
-            True if the input matches the format, False if not.
+        pd.Series:
+            Series of booleans, with True if the value matches the format, False if not.
     """
     pandas_datetime_format = datetime_format.replace('%-', '%')
+    datetime_column = pd.to_datetime(
+        column,
+        errors='coerce',
+        format=pandas_datetime_format
+    )
+    valid = pd.isna(column) | ~pd.isna(datetime_column)
 
-    try:
-        pd.to_datetime(value, format=pandas_datetime_format)
+    return set(column[~valid])
 
-    except ValueError:
-        return False
 
-    return True
+def convert_to_timedelta(column):
+    """Convert a ``pandas.Series`` to one with dtype ``timedelta``.
+
+    ``pd.to_timedelta`` does not handle nans, so this function masks the nans, converts and then
+    reinserts them.
+
+    Args:
+        column (pandas.Series):
+            Column to convert.
+
+    Returns:
+        pandas.Series:
+            The column converted to timedeltas.
+    """
+    nan_mask = pd.isna(column)
+    column[nan_mask] = 0
+    column = pd.to_timedelta(column)
+    column[nan_mask] = pd.NaT
+    return column
 
 
 def load_data_from_csv(filepath, pandas_kwargs=None):

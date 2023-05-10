@@ -25,6 +25,8 @@ class BaseMultiTableSynthesizer:
         metadata (sdv.metadata.multi_table.MultiTableMetadata):
             Multi table metadata representing the data tables that this synthesizer will be used
             for.
+        locales (list or str):
+            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
     """
 
     _synthesizer = GaussianCopulaSynthesizer
@@ -50,12 +52,14 @@ class BaseMultiTableSynthesizer:
             synthesizer_parameters = self._table_parameters.get(table_name, {})
             self._table_synthesizers[table_name] = self._synthesizer(
                 metadata=table_metadata,
+                locales=self.locales,
                 **synthesizer_parameters
             )
 
-    def __init__(self, metadata):
+    def __init__(self, metadata, locales=None):
         self.metadata = metadata
         self.metadata.validate()
+        self.locales = locales
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
         self._initialize_models()
@@ -269,15 +273,6 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].update_transformers(column_name_to_transformer)
 
-    def _fit(self, processed_data):
-        """Fit the model to the tables.
-
-        Args:
-            processed_data (dict):
-                Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
-        """
-        raise NotImplementedError()
-
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -304,6 +299,24 @@ class BaseMultiTableSynthesizer:
 
         return processed_data
 
+    def _model_tables(self, augmented_data):
+        """Model the augmented tables.
+
+        Args:
+            augmented_data (dict):
+                Dictionary mapping each table name to an augmented ``pandas.DataFrame``.
+        """
+        raise NotImplementedError()
+
+    def _augment_tables(self, processed_data):
+        """Augment the processed data.
+
+        Args:
+            processed_data (dict):
+                Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
+        """
+        raise NotImplementedError()
+
     def fit_processed_data(self, processed_data):
         """Fit this model to the transformed data.
 
@@ -311,7 +324,8 @@ class BaseMultiTableSynthesizer:
             processed_data (dict):
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
         """
-        self._fit(processed_data.copy())
+        augmented_data = self._augment_tables(processed_data)
+        self._model_tables(augmented_data)
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_sdv_version = pkg_resources.get_distribution('sdv').version

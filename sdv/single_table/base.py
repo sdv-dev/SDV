@@ -48,6 +48,9 @@ class BaseSynthesizer:
         enforce_rounding (bool):
             Define rounding scheme for ``numerical`` columns. If ``True``, the data returned
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
+        locales (list or str):
+            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+
     """
 
     _model_sdtype_transformers = None
@@ -70,16 +73,18 @@ class BaseSynthesizer:
             for sdtype, transformer in self._model_sdtype_transformers.items():
                 self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True):
+    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=None):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata = metadata
         self.metadata.validate()
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
+        self.locales = locales
         self._data_processor = DataProcessor(
             metadata=self.metadata,
             enforce_rounding=self.enforce_rounding,
-            enforce_min_max_values=self.enforce_min_max_values
+            enforce_min_max_values=self.enforce_min_max_values,
+            locales=self.locales
         )
         self._fitted = False
         self._random_state_set = False
@@ -176,14 +181,13 @@ class BaseSynthesizer:
         if sdtype == 'datetime':
             datetime_format = column_metadata.get('datetime_format')
             if datetime_format:
-                invalid_values = self._get_invalid_column_values(
-                    column,
-                    lambda x: validate_datetime_format(x, datetime_format)
-                )
-
+                invalid_values = validate_datetime_format(column, datetime_format)
             else:
+                # cap number of samples to be validated to improve performance
+                num_samples_to_validate = min(len(column), 1000)
+
                 invalid_values = self._get_invalid_column_values(
-                    column,
+                    column.sample(num_samples_to_validate),
                     lambda x: pd.isna(x) | is_datetime_type(x)
                 )
 

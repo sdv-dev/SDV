@@ -111,10 +111,10 @@ class TestHMASynthesizer:
         # Assert
         assert result == ['upravna_enota']
 
-    def test__extend_table(self):
-        """Test that ``extend_table`` extends the current table with extra columns.
+    def test__augment_table(self):
+        """Test that ``augment_table`` extends the current table with extra columns.
 
-        This also updates ``self._modeled_tables`` and ``self._max_child_rows``.
+        This also updates ``self._augmented_tables`` and ``self._max_child_rows``.
         """
         # Setup
         metadata = get_multi_table_metadata()
@@ -128,7 +128,7 @@ class TestHMASynthesizer:
         data['oseba']['oseba_value'] = [0, 1, 2, 3]
 
         # Run
-        result = instance._extend_table(data['nesreca'], data, 'nesreca')
+        result = instance._augment_table(data['nesreca'], data, 'nesreca')
 
         # Assert
         expected_result = pd.DataFrame({
@@ -136,20 +136,20 @@ class TestHMASynthesizer:
             'upravna_enota': [0, 1, 2, 3],
             'nesreca_val': [0, 1, 2, 3],
             'value': [0, 1, 2, 3],
-            '__oseba__id_nesreca__covariance__0__0': [0.] * 4,
+            '__oseba__id_nesreca__correlation__0__0': [0.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__b': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__loc': [0., 1., 2., 3.],
-            '__oseba__id_nesreca__univariates__oseba_val__scale': [np.nan] * 4,
+            '__oseba__id_nesreca__univariates__oseba_val__scale': [0.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__b': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__loc': [0., 1., 2., 3.],
-            '__oseba__id_nesreca__univariates__oseba_value__scale': [np.nan] * 4,
+            '__oseba__id_nesreca__univariates__oseba_value__scale': [0.] * 4,
             '__oseba__id_nesreca__num_rows': [1.] * 4,
         })
 
         pd.testing.assert_frame_equal(expected_result, result)
-        assert instance._modeled_tables == ['oseba']
+        assert instance._augmented_tables == ['oseba', 'nesreca']
         assert instance._max_child_rows['__oseba__id_nesreca__num_rows'] == 1
 
     def test__pop_foreign_keys(self):
@@ -189,40 +189,35 @@ class TestHMASynthesizer:
         })
         pd.testing.assert_frame_equal(expected_data, data)
 
-    def test__model_table(self):
-        """Test that ``_model_table`` performs the modeling.
+    def test__model_tables(self):
+        """Test that ``_model_tables`` performs the modeling.
 
         Modeling consists of getting the table for the given table name,
         learning the size of this table, removing the foreign keys and clearing
         any null values by using the ``_clear_nans`` method. Then, fitting the table model by
         calling ``fit_processed_data``,  adding back the foreign keys, updating the ``tables`` and
-        marking the table name as modeled within the ``instance._modeled_tables``.
+        marking the table name as modeled within the ``instance._augmented_tables``.
         """
         # Setup
         nesreca_model = Mock()
         instance = Mock()
         instance._synthesizer = GaussianCopulaSynthesizer
 
-        instance._modeled_tables = []
-        instance._table_sizes = {}
+        instance._augmented_tables = ['nesreca']
+        instance._table_sizes = {'nesreca': 3}
         instance._table_synthesizers = {'nesreca': nesreca_model}
         instance._pop_foreign_keys.return_value = {'fk': [1, 2, 3]}
-        data = pd.DataFrame({
-            'id_nesreca': [0, 1, 2],
-            'upravna_enota': [0, 1, 2]
-        })
-        extended_data = pd.DataFrame({
-            'id_nesreca': [0, 1, 2],
-            'upravna_enota': [0, 1, 2],
-            'extended': ['a', 'b', 'c']
-        })
-
-        instance._extend_table.return_value = extended_data
-
-        tables = {'nesreca': data}
+        input_data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': [0, 1, 2],
+                'upravna_enota': [0, 1, 2],
+                'extended': ['a', 'b', 'c']
+            })
+        }
+        augmented_data = input_data.copy()
 
         # Run
-        result = HMASynthesizer._model_table(instance, 'nesreca', tables)
+        HMASynthesizer._model_tables(instance, augmented_data)
 
         # Assert
         expected_result = pd.DataFrame({
@@ -231,31 +226,36 @@ class TestHMASynthesizer:
             'extended': ['a', 'b', 'c'],
             'fk': [1, 2, 3]
         })
-        pd.testing.assert_frame_equal(expected_result, result)
+        pd.testing.assert_frame_equal(expected_result, augmented_data['nesreca'])
 
-        instance._extend_table.assert_called_once_with(data, tables, 'nesreca')
-        instance._pop_foreign_keys.assert_called_once_with(extended_data, 'nesreca')
-        instance._clear_nans(extended_data)
-        nesreca_model.fit_processed_data.assert_called_once_with(extended_data)
+        instance._pop_foreign_keys.assert_called_once_with(input_data['nesreca'], 'nesreca')
+        instance._clear_nans.assert_called_once_with(input_data['nesreca'])
+        nesreca_model.fit_processed_data.assert_called_once_with(augmented_data['nesreca'])
 
-        assert instance._modeled_tables == ['nesreca']
-        assert instance._table_sizes == {'nesreca': 3}
-
-    def test__fit(self):
-        """Test that ``_fit`` calls ``_model_table`` only if the table has no parents."""
+    def test__augment_tables(self):
+        """Test that ``_fit`` calls ``_model_tables`` only if the table has no parents."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = HMASynthesizer(metadata)
-        instance._model_table = Mock()
+        instance._augment_table = Mock()
         data = get_multi_table_data()
         data['nesreca']['value'] = [0, 1, 2, 3]
         data['oseba']['oseba_value'] = [0, 1, 2, 3]
 
         # Run
-        instance._fit(data)
+        instance._augment_tables(data)
 
         # Assert
-        instance._model_table.assert_called_once_with('upravna_enota', data)
+        call_table = instance._augment_table.call_args[0][0]
+        call_augmented_data = instance._augment_table.call_args[0][1]
+        call_table_name = instance._augment_table.call_args[0][2]
+
+        pd.testing.assert_frame_equal(call_table, data['upravna_enota'])
+        for input_table, orig_table in zip(call_augmented_data.values(), data.values()):
+            pd.testing.assert_frame_equal(input_table, orig_table)
+
+        assert list(call_augmented_data) == list(data)
+        assert call_table_name == 'upravna_enota'
 
     def test__finalize(self):
         """Test that the finalize method applies the final touches to the generated data.
@@ -277,20 +277,20 @@ class TestHMASynthesizer:
 
         sampled_data = {
             'users': pd.DataFrame({
-                'user_id': [0, 1, 2],
-                'name': ['John', 'Doe', 'Johanna'],
-                'additional_column': [0.1, 0.2, 0.3],
-                'another_additional_column': [0.1, 0.2, 0.5]
-            }, dtype=np.int64),
+                'user_id': pd.Series([0, 1, 2], dtype=np.int64),
+                'name': pd.Series(['John', 'Doe', 'Johanna'], dtype=object),
+                'additional_column': pd.Series([0.1, 0.2, 0.3], dtype=float),
+                'another_additional_column': pd.Series([0.1, 0.2, 0.5], dtype=float),
+            }),
             'sessions': pd.DataFrame({
-                'user_id': [1, 2, 1],
-                'session_id': ['a', 'b', 'c'],
-                'os': ['linux', 'mac', 'win'],
-                'country': ['us', 'us', 'es']
-            }, dtype=np.int64),
+                'user_id': pd.Series([1, 2, 1], dtype=np.int64),
+                'session_id': pd.Series(['a', 'b', 'c'], dtype=object),
+                'os': pd.Series(['linux', 'mac', 'win'], dtype=object),
+                'country': pd.Series(['us', 'us', 'es'], dtype=object),
+            }),
             'transactions': pd.DataFrame({
-                'transaction_id': [1, 2, 3],
-            }, dtype=np.int64),
+                'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
+            }),
         }
 
         users_synth = Mock()
@@ -320,19 +320,19 @@ class TestHMASynthesizer:
         # Assert
         expected_result = {
             'users': pd.DataFrame({
-                'user_id': [0, 1, 2],
-                'name': ['John', 'Doe', 'Johanna'],
-            }, dtype=np.int64),
+                'user_id': pd.Series([0, 1, 2], dtype=np.int64),
+                'name': pd.Series(['John', 'Doe', 'Johanna'], dtype=object),
+            }),
             'sessions': pd.DataFrame({
-                'user_id': [1, 2, 1],
-                'session_id': ['a', 'b', 'c'],
-                'os': ['linux', 'mac', 'win'],
-                'country': ['us', 'us', 'es'],
-            }, dtype=np.int64),
+                'user_id': pd.Series([1, 2, 1], dtype=np.int64),
+                'session_id': pd.Series(['a', 'b', 'c'], dtype=object),
+                'os': pd.Series(['linux', 'mac', 'win'], dtype=object),
+                'country': pd.Series(['us', 'us', 'es'], dtype=object),
+            }),
             'transactions': pd.DataFrame({
-                'transaction_id': [1, 2, 3],
-                'session_id': ['a', 'a', 'b']
-            }, dtype=np.int64),
+                'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
+                'session_id': pd.Series(['a', 'a', 'b'], dtype=object),
+            }),
         }
         for result_frame, expected_frame in zip(result.values(), expected_result.values()):
             pd.testing.assert_frame_equal(result_frame, expected_frame)

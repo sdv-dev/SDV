@@ -1,6 +1,7 @@
 import datetime
 from unittest.mock import patch
 
+import numpy as np
 import pandas as pd
 import pkg_resources
 import pytest
@@ -807,6 +808,46 @@ def test_synthesizer_with_inequality_constraint():
     assert all(
         pd.to_datetime(_sampled['checkin_date']) < pd.to_datetime(_sampled['checkout_date'])
     )
+
+
+def test_inequality_constraint_all_possible_nans_configurations():
+    """Test that the inequality constraint works with all possible NaN configurations."""
+    # Setup
+    data = pd.DataFrame(data={
+        'A': [0, 1, np.nan, np.nan, 2],
+        'B': [2, np.nan, 3, np.nan, 3]
+    })
+
+    metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'numerical'},
+            'B': {'sdtype': 'numerical'},
+        }
+    })
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+
+    synthesizer.add_constraints(
+        [
+            {
+                'constraint_class': 'Inequality',
+                'constraint_parameters': {
+                    'low_column_name': 'A',
+                    'high_column_name': 'B'
+                }
+            }
+        ]
+    )
+
+    # Run
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(10000)
+
+    # Assert
+    assert (~(pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
+    assert ((pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
+    assert (~(pd.isna(synthetic_data['A'])) & (pd.isna(synthetic_data['B']))).any()
+    assert (~(pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
 
 
 def test_save_and_load(tmp_path):

@@ -24,29 +24,32 @@ class SingleTablePreset:
             ``SingleTableMetadata`` instance.
         name (str):
             The preset to use.
+        locales (list or str):
+            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
     """
 
     _synthesizer = None
     _default_synthesizer = GaussianCopulaSynthesizer
 
-    def _setup_fast_preset(self, metadata):
+    def _setup_fast_preset(self, metadata, locales):
         self._synthesizer = GaussianCopulaSynthesizer(
             metadata=metadata,
             default_distribution='norm',
-            enforce_rounding=False
+            enforce_rounding=False,
+            locales=locales
         )
         self._synthesizer._data_processor._update_transformers_by_sdtypes(
             'categorical',
             rdt.transformers.FrequencyEncoder(add_noise=True)
         )
 
-    def __init__(self, metadata, name):
+    def __init__(self, metadata, name, locales=None):
         if name not in PRESETS:
             raise ValueError(f"'name' must be one of {PRESETS}.")
 
         self.name = name
         if name == FAST_ML_PRESET:
-            self._setup_fast_preset(metadata)
+            self._setup_fast_preset(metadata, locales)
 
     def add_constraints(self, constraints):
         """Add constraints to the synthesizer.

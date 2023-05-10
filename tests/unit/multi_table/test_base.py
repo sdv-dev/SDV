@@ -25,6 +25,7 @@ class TestBaseMultiTableSynthesizer:
         ``table_parameters`` we use those to initialize the model.
         """
         # Setup
+        locales = ['en_CA', 'fr_CA']
         instance = Mock()
         instance._table_synthesizers = {}
         instance._table_parameters = {
@@ -32,6 +33,7 @@ class TestBaseMultiTableSynthesizer:
                 'default_distribution': 'gamma'
             }
         }
+        instance.locales = locales
         instance.metadata = get_multi_table_metadata()
 
         # Run
@@ -44,9 +46,10 @@ class TestBaseMultiTableSynthesizer:
             'upravna_enota': instance._synthesizer.return_value
         }
         instance._synthesizer.assert_has_calls([
-            call(metadata=instance.metadata.tables['nesreca'], default_distribution='gamma'),
-            call(metadata=instance.metadata.tables['oseba']),
-            call(metadata=instance.metadata.tables['upravna_enota'])
+            call(metadata=instance.metadata.tables['nesreca'], default_distribution='gamma',
+                 locales=locales),
+            call(metadata=instance.metadata.tables['oseba'], locales=locales),
+            call(metadata=instance.metadata.tables['upravna_enota'], locales=locales)
         ])
 
     def test___init__(self):
@@ -99,7 +102,7 @@ class TestBaseMultiTableSynthesizer:
         """Test that the table's synthesizer parameters are being returned."""
         # Setup
         metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata)
+        instance = BaseMultiTableSynthesizer(metadata, locales='en_CA')
 
         # Run
         result = instance.get_parameters('oseba')
@@ -108,6 +111,7 @@ class TestBaseMultiTableSynthesizer:
         assert result == {
             'default_distribution': 'beta',
             'enforce_min_max_values': True,
+            'locales': 'en_CA',
             'enforce_rounding': True,
             'numerical_distributions': {}
         }
@@ -131,6 +135,7 @@ class TestBaseMultiTableSynthesizer:
         assert instance.get_parameters('oseba') == {
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
+            'locales': None,
             'enforce_rounding': True,
             'numerical_distributions': {}
         }
@@ -479,8 +484,8 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.update_transformers('not_seen', {})
 
-    def test__fit(self):
-        """Test that ``_fit`` raises a ``NotImplementedError``."""
+    def test__model_tables(self):
+        """Test that ``_model_tables`` raises a ``NotImplementedError``."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
@@ -500,7 +505,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Run and Assert
         with pytest.raises(NotImplementedError, match=''):
-            instance._fit(data)
+            instance._model_tables(data)
 
     def test__assign_table_transformers(self):
         """Test the ``_assign_table_transformers`` method.
@@ -637,7 +642,11 @@ class TestBaseMultiTableSynthesizer:
         )
 
     def test_fit_processed_data(self):
-        """Test that fit processed data calls ``_fit`` and sets ``_fitted`` to ``True``."""
+        """Test that fit processed data calls ``_augment_tables`` and ``_model_tables``.
+
+        Ensure that the ``fit_processed_data`` augments the tables and then models those using
+        the ``_model_tables`` method. Then sets the state to fitted.
+        """
         # Setup
         instance = Mock()
         data = Mock()
@@ -647,7 +656,8 @@ class TestBaseMultiTableSynthesizer:
         BaseMultiTableSynthesizer.fit_processed_data(instance, data)
 
         # Assert
-        instance._fit.assert_called_once_with(data)
+        instance._augment_tables.assert_called_once_with(data)
+        instance._model_tables.assert_called_once_with(instance._augment_tables.return_value)
         assert instance._fitted
 
     def test_fit(self):
