@@ -73,6 +73,46 @@ class TestBaseHierarchicalSampler():
         )
         synthesizer._sample.assert_called_once_with(10)
 
+    def test__process_samples(self):
+        """Test the ``_process_samples`` method.
+
+        Test that the method retrieves the ``data_processor`` from the fitted ``table_synthesizer``
+        and performs a ``reverse_transform`` and returns the data in the real space.
+        """
+        # Setup
+        sampled_rows = pd.DataFrame({
+            'name': [0.1, 0.25, 0.35],
+            'a': [1.0, 0.25, 0.5],
+            'b': [0.2, 0.6, 0.9],
+            'loc': [0.5, 0.1, 0.2],
+            'num_rows': [1, 2, 3],
+            'scale': [0.25, 0.35, 0.15]
+        })
+        instance = Mock()
+        users_synthesizer = Mock()
+        users_synthesizer._data_processor.reverse_transform.return_value = pd.DataFrame({
+            'user_id': [0, 1, 2],
+            'name': ['John', 'Doe', 'Johanna']
+        })
+        instance._table_synthesizers = {'users': users_synthesizer}
+
+        # Run
+        result = BaseHierarchicalSampler._process_samples(instance, 'users', sampled_rows)
+
+        # Assert
+        expected_result = pd.DataFrame({
+            'user_id': [0, 1, 2],
+            'name': ['John', 'Doe', 'Johanna'],
+            'a': [1.0, 0.25, 0.5],
+            'b': [0.2, 0.6, 0.9],
+            'loc': [0.5, 0.1, 0.2],
+            'num_rows': [1, 2, 3],
+            'scale': [0.25, 0.35, 0.15]
+        })
+        result = result.reindex(sorted(result.columns), axis=1)
+        expected_result = expected_result.reindex(sorted(expected_result.columns), axis=1)
+        pd.testing.assert_frame_equal(result, expected_result)
+
     def test__sample_rows_no_model(self):
         """Test that the method returns an empty dataframe if the synthesizer cannot sample."""
         synthesizer = Mock()

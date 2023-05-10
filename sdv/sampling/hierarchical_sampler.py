@@ -63,6 +63,22 @@ class BaseHierarchicalSampler():
 
         return foreign_keys
 
+    def _process_samples(self, table_name, sampled_rows):
+        """Process the ``sampled_rows`` for the given ``table_name``.
+
+        Process the raw samples and convert them to the original space by reverse transforming
+        them. Also, when there are synthesizer columns (columns used to recreate an instance
+        of a synthesizer), those will be returned together.
+        """
+        data_processor = self._table_synthesizers[table_name]._data_processor
+        sampled = data_processor.reverse_transform(sampled_rows)
+
+        synthesizer_columns = list(set(sampled_rows.columns) - set(sampled.columns))
+        if synthesizer_columns:
+            sampled = pd.concat([sampled, sampled_rows[synthesizer_columns]], axis=1)
+
+        return sampled
+
     def _sample_rows(self, synthesizer, table_name, num_rows=None):
         """Sample ``num_rows`` from ``synthesizer``.
 
