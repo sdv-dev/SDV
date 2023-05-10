@@ -880,7 +880,7 @@ class Range(Constraint):
         self._is_datetime = self._get_is_datetime(table_data)
 
     def is_valid(self, table_data):
-        """Say whether the ``constraint_column`` is between the ``low`` and ``high`` values.
+        """Say whether the ``middle`` column is between the ``low`` and ``high`` columns.
 
         Args:
             table_data (pandas.DataFrame):
@@ -894,19 +894,15 @@ class Range(Constraint):
         middle = table_data[self.middle_column_name]
         high = table_data[self.high_column_name]
 
-        satisfy_low_bound = np.logical_or(
-            self._operator(low, middle),
-            np.isnan(low),
-        )
-        satisfy_high_bound = np.logical_or(
-            self._operator(middle, high),
-            np.isnan(high),
-        )
+        low_is_nan = low.isna()
+        middle_is_nan = middle.isna()
+        high_is_nan = high.isna()
 
-        return np.logical_or(
-            np.logical_and(satisfy_low_bound, satisfy_high_bound),
-            np.isnan(middle),
-        )
+        low_lt_middle = self._operator(low, middle) | low_is_nan | middle_is_nan
+        middle_lt_high = self._operator(middle, high) | middle_is_nan | high_is_nan
+        low_lt_high = self._operator(low, high) | low_is_nan | high_is_nan
+
+        return low_lt_middle & middle_lt_high & low_lt_high
 
     def _transform(self, table_data):
         """Transform the table data.
