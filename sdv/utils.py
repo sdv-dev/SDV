@@ -102,11 +102,13 @@ def validate_datetime_format(column, datetime_format):
             Series of booleans, with True if the value matches the format, False if not.
     """
     pandas_datetime_format = datetime_format.replace('%-', '%')
-    valid = pd.isna(column) | ~pd.isna(
-        pd.to_datetime(
-            column,
-            errors='coerce',
-            format=pandas_datetime_format))
+    datetime_column = pd.to_datetime(
+        column,
+        errors='coerce',
+        format=pandas_datetime_format
+    )
+    valid = pd.isna(column) | ~pd.isna(datetime_column)
+
     return set(column[~valid])
 
 
