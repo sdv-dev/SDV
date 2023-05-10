@@ -2961,37 +2961,6 @@ class TestRange():
         assert instance.high_column_name == 'retirement_age'
         assert instance._operator == operator.le
 
-    def test__get_diff_column_name(self):
-        """Test the ``Range._get_diff_column_name`` method.
-
-        This method should return the name for the new ``transform_column``.
-
-        Setup:
-            - Create a pd.DataFrame with three columns.
-            - Instance of ``Range`` constraint with those three column names.
-
-        Input:
-            - pd.DataFrame with ``age_when_joined``, ``current_age``, ``retirement_age`` columns.
-
-        Output:
-            - The column names concatenated with ``#`` where the order is
-              the ``middle_column_name`` followed by ``lower_column_name`` and ends with the
-              ``higher_column_name``.
-        """
-        # Setup
-        table_data = pd.DataFrame({
-            'age_when_joined': [18, 19, 20],
-            'current_age': [21, 22, 25],
-            'retirement_age': [65, 68, 75]
-        })
-        instance = Range('age_when_joined', 'current_age', 'retirement_age')
-
-        # Run
-        transformed_column_name = instance._get_diff_column_name(table_data)
-
-        # Assert
-        assert transformed_column_name == 'current_age#age_when_joined#retirement_age'
-
     def test__get_is_datetime(self):
         """Test that the method detects whether or not the ``data`` is ``datetime``.
 

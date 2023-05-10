@@ -842,15 +842,6 @@ class Range(Constraint):
         self.strict_boundaries = strict_boundaries
         self._operator = operator.lt if strict_boundaries else operator.le
 
-    def _get_diff_column_name(self, table_data):
-        token = '#'
-        columns = [self.middle_column_name, self.low_column_name, self.high_column_name]
-        components = list(map(str, columns))
-        while token.join(components) in table_data.columns:
-            token += '#'
-
-        return token.join(components)
-
     def _get_is_datetime(self, table_data):
         low = table_data[self.low_column_name]
         middle = table_data[self.middle_column_name]
