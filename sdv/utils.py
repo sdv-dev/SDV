@@ -15,17 +15,6 @@ def cast_to_iterable(value):
     return [value]
 
 
-def get_fisrt_valid_value(values):
-    """Return the first not ``nan`` value or ``nan`` if all are ``nan``."""
-    for item in values:
-        if pd.isna(item):
-            continue
-        elif item != 'nan':
-            return item
-
-    return item
-
-
 def get_datetime_format(value):
     """Get the ``strftime`` format for a given ``value``.
 
@@ -41,16 +30,11 @@ def get_datetime_format(value):
     Return:
         String representing the datetime format in ``strftime`` format or ``None`` if not detected.
     """
-    if isinstance(value, pd.Series):
-        value = value.astype(str).to_numpy()
-    elif isinstance(value, list):
-        value = np.array(value)
-    if not isinstance(value, np.ndarray):
-        value = np.array([value])
+    if not isinstance(value, pd.Series):
+        value = pd.Series(value)
 
-    #  Fixes a bug that occurs in pandas as numpy casts to np.str_
-    value = np.array([get_fisrt_valid_value(value)], dtype=object)
-
+    value = value[~value.isna()]
+    value = value.astype(str).to_numpy()
     return _guess_datetime_format_for_array(value)
 
 
@@ -66,7 +50,7 @@ def is_datetime_type(value):
             True if the input is a datetime type, False if not.
     """
     if isinstance(value, (np.ndarray, pd.Series, list)):
-        value = get_fisrt_valid_value(value)
+        value = value[0]
 
     return (
         pd.api.types.is_datetime64_any_dtype(value)
