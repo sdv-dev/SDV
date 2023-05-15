@@ -3207,7 +3207,8 @@ class TestRange():
         """Test the ``_transform`` method for ``Range``."""
         # Setup
         instance = Range('a', 'b', 'c')
-        instance._diff_column_name = 'a#b'
+        instance.low_diff_column_name = 'a#b'
+        instance.high_diff_column_name = 'b#c'
 
         # Run
         table_data = pd.DataFrame({
@@ -3215,6 +3216,7 @@ class TestRange():
             'b': [2, 5, 5],
             'c': [6, 8, 10],
         })
+
         out = instance._transform(table_data)
 
         # Assert

@@ -42,7 +42,7 @@ from sdv.constraints.errors import (
 from sdv.constraints.utils import (
     cast_to_datetime64, compute_nans_column, get_datetime_diff, logit, matches_datetime_format,
     revert_nans_columns, sigmoid)
-from sdv.utils import convert_to_timedelta, is_datetime_type, modify_existing_name
+from sdv.utils import convert_to_timedelta, create_unique_name, is_datetime_type
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,
@@ -481,12 +481,12 @@ class Inequality(Constraint):
         else:
             diff_column = high - low
 
-        self._diff_column_name = modify_existing_name(self._diff_column_name, table_data.columns)
+        self._diff_column_name = create_unique_name(self._diff_column_name, table_data.columns)
         table_data[self._diff_column_name] = np.log(diff_column + 1)
 
         nan_col = compute_nans_column(table_data, [self._low_column_name, self._high_column_name])
         if nan_col is not None:
-            self._nan_column_name = modify_existing_name(nan_col.name, table_data.columns)
+            self._nan_column_name = create_unique_name(nan_col.name, table_data.columns)
             table_data[self._nan_column_name] = nan_col
             if self._is_datetime:
                 mean_value_low = table_data[self._low_column_name].mode()[0]
@@ -685,7 +685,7 @@ class ScalarInequality(Constraint):
         if self._is_datetime:
             diff_column = diff_column.astype(np.float64)
 
-        self._diff_column_name = modify_existing_name(self._diff_column_name, table_data.columns)
+        self._diff_column_name = create_unique_name(self._diff_column_name, table_data.columns)
         table_data[self._diff_column_name] = np.log(diff_column + 1)
         return table_data.drop(self._column_name, axis=1)
 
@@ -834,8 +834,6 @@ class Range(Constraint):
         self.low_column_name = low_column_name
         self.middle_column_name = middle_column_name
         self.high_column_name = high_column_name
-        self.low_diff_column_name = f'{self.low_column_name}#{self.middle_column_name}'
-        self.high_diff_column_name = f'{self.middle_column_name}#{self.high_column_name}'
         self.nan_column_name = None
         self._is_datetime = None
         self._dtype = None
@@ -866,6 +864,15 @@ class Range(Constraint):
         """
         self._dtype = table_data[self.middle_column_name].dtypes
         self._is_datetime = self._get_is_datetime(table_data)
+
+        self.low_diff_column_name = f'{self.low_column_name}#{self.middle_column_name}'
+        self.high_diff_column_name = f'{self.middle_column_name}#{self.high_column_name}'
+        self.low_diff_column_name = create_unique_name(
+            self.low_diff_column_name, table_data.columns
+        )
+        self.high_diff_column_name = create_unique_name(
+            self.high_diff_column_name, table_data.columns
+        )
 
     def is_valid(self, table_data):
         """Say whether the ``middle`` column is between the ``low`` and ``high`` columns.
@@ -912,26 +919,19 @@ class Range(Constraint):
         high = table_data[self.high_column_name]
 
         if self._is_datetime:
-            diff_column_1 = get_datetime_diff(middle, low, self._dtype)
-            diff_column_2 = get_datetime_diff(high, middle, self._dtype)
+            low_diff_column = get_datetime_diff(middle, low, self._dtype)
+            high_diff_column = get_datetime_diff(high, middle, self._dtype)
         else:
-            diff_column_1 = middle - low
-            diff_column_2 = high - middle
+            low_diff_column = middle - low
+            high_diff_column = high - middle
 
-        self.low_diff_column_name = modify_existing_name(
-            self.low_diff_column_name, table_data.columns
-        )
-        self.high_diff_column_name = modify_existing_name(
-            self.high_diff_column_name, table_data.columns
-        )
-
-        table_data[self.low_diff_column_name] = np.log(diff_column_1 + 1)
-        table_data[self.high_diff_column_name] = np.log(diff_column_2 + 1)
+        table_data[self.low_diff_column_name] = np.log(low_diff_column + 1)
+        table_data[self.high_diff_column_name] = np.log(high_diff_column + 1)
 
         list_columns_nans = [self.low_column_name, self.middle_column_name, self.high_column_name]
         nan_column = compute_nans_column(table_data, list_columns_nans)
         if nan_column is not None:
-            self.nan_column_name = modify_existing_name(nan_column.name, table_data.columns)
+            self.nan_column_name = create_unique_name(nan_column.name, table_data.columns)
             table_data[self.nan_column_name] = nan_column
             if self._is_datetime:
                 mean_value_low = table_data[self.low_column_name].mode()[0]
@@ -949,9 +949,9 @@ class Range(Constraint):
     def _reverse_transform(self, table_data):
         """Reverse transform the table data.
 
-        The reverse transformation consists in replacing ``diff_column_1`` and ``diff_column_2``
-        by the sum of ``low`` and ``diff_column_1`` and ``middle`` and ``diff_column_2``
-        respectively.
+        The reverse transformation consists in replacing ``low_diff_column`` and
+        ``high_diff_column`` by the sum of ``low`` and ``low_diff_column`` and ``middle``
+        and ``high_diff_column`` respectively.
 
         Args:
             table_data (pandas.DataFrame):
@@ -961,24 +961,24 @@ class Range(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        diff_column_1 = np.exp(table_data[self.low_diff_column_name]) - 1
-        diff_column_2 = np.exp(table_data[self.high_diff_column_name]) - 1
+        low_diff_column = np.exp(table_data[self.low_diff_column_name]) - 1
+        high_diff_column = np.exp(table_data[self.high_diff_column_name]) - 1
         if self._dtype != np.dtype('float'):
-            diff_column_1 = diff_column_1.round()
-            diff_column_2 = diff_column_2.round()
+            low_diff_column = low_diff_column.round()
+            high_diff_column = high_diff_column.round()
 
         if self._is_datetime:
-            diff_column_1 = convert_to_timedelta(diff_column_1)
-            diff_column_2 = convert_to_timedelta(diff_column_2)
+            low_diff_column = convert_to_timedelta(low_diff_column)
+            high_diff_column = convert_to_timedelta(high_diff_column)
 
         low = table_data[self.low_column_name].to_numpy()
         if self._is_datetime and self._dtype == 'O':
             low = cast_to_datetime64(low)
 
-        middle = pd.Series(diff_column_1 + low).astype(self._dtype)
+        middle = pd.Series(low_diff_column + low).astype(self._dtype)
         table_data[self.middle_column_name] = middle
         table_data[self.high_column_name] = pd.Series(
-            diff_column_2 + middle.to_numpy()
+            high_diff_column + middle.to_numpy()
         ).astype(self._dtype)
 
         if self.nan_column_name and self.nan_column_name in table_data.columns:
