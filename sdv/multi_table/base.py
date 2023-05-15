@@ -57,16 +57,15 @@ class BaseMultiTableSynthesizer:
                 **synthesizer_parameters
             )
 
-    def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
+    def __init__(self, metadata, locales=None):
         self.metadata = metadata
         self.metadata.validate()
         self.locales = locales
         self._table_synthesizers = {}
-        self._synthesizer_kwargs = synthesizer_kwargs or self.DEFAULT_SYNTHESIZER_KWARGS
         self._table_parameters = defaultdict(dict)
-        if self._synthesizer_kwargs:
+        if self.DEFAULT_SYNTHESIZER_KWARGS:
             for table_name in self.metadata.tables:
-                self._table_parameters[table_name] = deepcopy(self._synthesizer_kwargs)
+                self._table_parameters[table_name] = deepcopy(self.DEFAULT_SYNTHESIZER_KWARGS)
 
         self._initialize_models()
         self._fitted = False
