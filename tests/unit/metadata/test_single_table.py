@@ -321,6 +321,14 @@ class TestSingleTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_column('column', 'fake_type')
+        
+        error_msg = re.escape(
+            "Invalid sdtype : None is not a string. Please use one of the "
+            'supported SDV sdtypes.'
+        )
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            instance._validate_column('column', None)
+
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_numerical')
