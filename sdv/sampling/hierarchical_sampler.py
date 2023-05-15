@@ -22,7 +22,7 @@ class BaseHierarchicalSampler():
             sampler by the multi-table synthesizer using this sampler.
     """
 
-    def __init__(self, metadata, table_synthesizers={}, table_sizes={}):
+    def __init__(self, metadata, table_synthesizers, table_sizes):
         self.metadata = metadata
         self._table_synthesizers = table_synthesizers
         self._table_sizes = table_sizes
@@ -69,6 +69,12 @@ class BaseHierarchicalSampler():
         Process the raw samples and convert them to the original space by reverse transforming
         them. Also, when there are synthesizer columns (columns used to recreate an instance
         of a synthesizer), those will be returned together.
+
+        Args:
+            table_name (str):
+                The name of the table.
+            sampled_rows (pd.DataFrame):
+                The sampled rows from the table to process.
         """
         data_processor = self._table_synthesizers[table_name]._data_processor
         sampled = data_processor.reverse_transform(sampled_rows)
@@ -145,7 +151,7 @@ class BaseHierarchicalSampler():
                 sampled_data[child_name] = pd.concat(
                     [previous, sampled_rows]).reset_index(drop=True)
 
-    def _sample_table(self, synthesizer, table_name, num_rows, sampled_data={}):
+    def _sample_table(self, synthesizer, table_name, num_rows, sampled_data):
         """Sample a single table and all its children.
 
         Args:

@@ -15,7 +15,7 @@ class TestBaseHierarchicalSampler():
         """Test the default initialization of the ``BaseHierarchicalSampler``."""
         # Run
         metadata = get_multi_table_metadata()
-        instance = BaseHierarchicalSampler(metadata)
+        instance = BaseHierarchicalSampler(metadata, table_synthesizers={}, table_sizes={})
 
         # Assert
         assert instance.metadata == metadata
@@ -26,7 +26,7 @@ class TestBaseHierarchicalSampler():
         """Test that ``_recreate_child_synthesizer`` raises a ``NotImplementedError``."""
         # Setup
         metadata = get_multi_table_metadata()
-        instance = BaseHierarchicalSampler(metadata)
+        instance = BaseHierarchicalSampler(metadata, table_synthesizers={}, table_sizes={})
 
         # Run and Assert
         with pytest.raises(NotImplementedError, match=''):
@@ -36,7 +36,7 @@ class TestBaseHierarchicalSampler():
         """Test that ``_add_foreign_key_column`` raises a ``NotImplementedError``."""
         # Setup
         metadata = get_multi_table_metadata()
-        instance = BaseHierarchicalSampler(metadata)
+        instance = BaseHierarchicalSampler(metadata, table_synthesizers={}, table_sizes={})
 
         # Run and Assert
         with pytest.raises(NotImplementedError, match=''):
@@ -49,7 +49,7 @@ class TestBaseHierarchicalSampler():
         """Test that this method returns the foreign keys for a given table name and child name."""
         # Setup
         metadata = get_multi_table_metadata()
-        instance = BaseHierarchicalSampler(metadata)
+        instance = BaseHierarchicalSampler(metadata, table_synthesizers={}, table_sizes={})
 
         # Run
         result = instance._get_foreign_keys('nesreca', 'oseba')
