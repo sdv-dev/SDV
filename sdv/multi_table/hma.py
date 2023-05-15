@@ -27,14 +27,11 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         'default_distribution': 'beta'
     }
 
-    def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
+    def __init__(self, metadata, locales=None):
         super().__init__(metadata, locales=locales)
-        self._synthesizer_kwargs = synthesizer_kwargs or self.DEFAULT_SYNTHESIZER_KWARGS
         self._table_sizes = {}
         self._max_child_rows = {}
         self._augmented_tables = []
-        for table_name in self.metadata.tables:
-            self.set_table_parameters(table_name, self._synthesizer_kwargs)
 
     def _get_extension(self, child_name, child_table, foreign_key):
         """Generate the extension columns for this child table.
