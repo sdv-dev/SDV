@@ -27,8 +27,8 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         'default_distribution': 'beta'
     }
 
-    def __init__(self, metadata, locales=None):
-        super().__init__(metadata, locales=locales)
+    def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
+        super().__init__(metadata, locales=locales, synthesizer_kwargs=synthesizer_kwargs)
         self._table_sizes = {}
         self._max_child_rows = {}
         self._augmented_tables = []
