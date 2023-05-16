@@ -1,7 +1,6 @@
 """Hierarchical Samplers."""
 import logging
 import math
-from copy import deepcopy
 
 import pandas as pd
 
