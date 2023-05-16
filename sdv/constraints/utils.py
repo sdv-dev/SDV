@@ -194,3 +194,12 @@ def get_datetime_diff(high, low, dtype='O'):
     diff_column = diff_column.astype(np.float64)
     diff_column[nan_mask] = np.nan
     return diff_column
+
+
+def create_unique_name(name, list_names):
+    """Modify the ``name`` parameter if it already exists in the list of names."""
+    result = name
+    while result in list_names:
+        result += '_'
+
+    return result

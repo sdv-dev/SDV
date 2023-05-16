@@ -204,6 +204,18 @@ class BaseSynthesizer:
         """
         return []
 
+    def _validate_constraints(self, data):
+        """Validate that the data satisfies the constraints."""
+        errors = []
+        constraints = self._data_processor._load_constraints()
+        for constraint in constraints:
+            try:
+                constraint.fit(data)
+            except Exception as e:
+                errors.append(e)
+
+        return errors
+
     def validate(self, data):
         """Validate data.
 
@@ -234,6 +246,9 @@ class BaseSynthesizer:
 
         # Primary and alternate key values must be unique
         errors += self._validate_key_values_are_unique(data)
+
+        # Validate constraints
+        errors += self._validate_constraints(data)
 
         # Any other rules that must be met
         errors += self._validate(data)
