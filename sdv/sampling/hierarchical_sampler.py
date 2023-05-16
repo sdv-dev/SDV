@@ -38,8 +38,8 @@ class BaseHierarchicalSampler():
         """
         raise NotImplementedError()
 
-    def _add_foreign_key_column(self, child_table, parent_table, child_name, parent_name):
-        """Add the foreign key that connects the child table to the parent table.
+    def _add_foreign_key_columns(self, child_table, parent_table, child_name, parent_name):
+        """Add all the foreign keys that connect the child table to the parent table.
 
         Args:
             child_table (pd.DataFrame):
@@ -52,16 +52,6 @@ class BaseHierarchicalSampler():
                 The name of the child table.
         """
         raise NotImplementedError()
-
-    def _get_foreign_keys(self, parent_table_name, child_table_name):
-        """Get all foreign keys for the parent table."""
-        foreign_keys = []
-        for relation in self.metadata.relationships:
-            if parent_table_name == relation['parent_table_name'] and\
-               child_table_name == relation['child_table_name']:
-                foreign_keys.append(deepcopy(relation['child_foreign_key']))
-
-        return foreign_keys
 
     def _process_samples(self, table_name, sampled_rows):
         """Process the ``sampled_rows`` for the given ``table_name``.
@@ -101,10 +91,7 @@ class BaseHierarchicalSampler():
                 Sampled rows, shape (, num_rows)
         """
         num_rows = num_rows or synthesizer._num_rows
-        if synthesizer._model:
-            sampled_rows = synthesizer._sample(num_rows)
-        else:
-            sampled_rows = pd.DataFrame(index=range(num_rows))
+        sampled_rows = synthesizer.sample(num_rows)
 
         return self._process_samples(table_name, sampled_rows)
 
@@ -134,7 +121,7 @@ class BaseHierarchicalSampler():
             sampled_data (dict):
                 A dictionary mapping table names to sampled data (pd.DataFrame).
         """
-        foreign_key = self._get_foreign_keys(parent_name, child_name)[0]
+        foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         num_rows = self._get_num_rows_from_parent(parent_row, child_name, foreign_key)
         child_synthesizer = self._recreate_child_synthesizer(child_name, parent_row)
 
@@ -171,10 +158,12 @@ class BaseHierarchicalSampler():
 
         for child_name in self.metadata._get_child_map()[table_name]:
             for row in table_rows:
-                self._add_child_rows(child_name=child_name,
-                                     parent_name=table_name,
-                                     parent_row=row,
-                                     sampled_data=sampled_data)
+                self._add_child_rows(
+                    child_name=child_name,
+                    parent_name=table_name,
+                    parent_row=row,
+                    sampled_data=sampled_data
+                )
 
     def _finalize(self, sampled_data):
         """Remove extra columns from sampled tables and apply finishing touches.
@@ -226,13 +215,21 @@ class BaseHierarchicalSampler():
             if not self.metadata._get_parent_map().get(table):
                 num_rows = int(self._table_sizes[table] * scale)
                 synthesizer = self._table_synthesizers[table]
-                self._sample_table(synthesizer=synthesizer, table_name=table, num_rows=num_rows,
-                                   sampled_data=sampled_data)
+                self._sample_table(
+                    synthesizer=synthesizer,
+                    table_name=table,
+                    num_rows=num_rows,
+                    sampled_data=sampled_data
+                )
 
         for relationship in self.metadata.relationships:
             parent_name = relationship['parent_table_name']
             child_name = relationship['child_table_name']
-            self._add_foreign_key_column(sampled_data[child_name], sampled_data[parent_name],
-                                         child_name, parent_name)
+            self._add_foreign_key_columns(
+                sampled_data[child_name],
+                sampled_data[parent_name],
+                child_name,
+                parent_name
+            )
 
         return self._finalize(sampled_data)

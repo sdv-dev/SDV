@@ -32,30 +32,20 @@ class TestBaseHierarchicalSampler():
         with pytest.raises(NotImplementedError, match=''):
             instance._recreate_child_synthesizer('nescra', pd.Series([], dtype='Int64'))
 
-    def test__add_foreign_key_column(self):
-        """Test that ``_add_foreign_key_column`` raises a ``NotImplementedError``."""
+    def test__add_foreign_key_columns(self):
+        """Test that ``_add_foreign_key_columns`` raises a ``NotImplementedError``."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseHierarchicalSampler(metadata, table_synthesizers={}, table_sizes={})
 
         # Run and Assert
         with pytest.raises(NotImplementedError, match=''):
-            instance._add_foreign_key_column(child_table=pd.DataFrame(),
-                                             parent_table=pd.DataFrame(),
-                                             child_name='oseba',
-                                             parent_name='nescra')
-
-    def test__get_foreign_keys(self):
-        """Test that this method returns the foreign keys for a given table name and child name."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = BaseHierarchicalSampler(metadata, table_synthesizers={}, table_sizes={})
-
-        # Run
-        result = instance._get_foreign_keys('nesreca', 'oseba')
-
-        # Assert
-        assert result == ['id_nesreca']
+            instance._add_foreign_key_columns(
+                child_table=pd.DataFrame(),
+                parent_table=pd.DataFrame(),
+                child_name='oseba',
+                parent_name='nescra'
+            )
 
     def test__sample_rows(self):
         """Test that ``_sample_rows`` samples ``num_rows`` from the synthesizer. """
@@ -69,9 +59,9 @@ class TestBaseHierarchicalSampler():
         assert result == instance._process_samples.return_value
         instance._process_samples.assert_called_once_with(
             'users',
-            synthesizer._sample.return_value
+            synthesizer.sample.return_value
         )
-        synthesizer._sample.assert_called_once_with(10)
+        synthesizer.sample.assert_called_once_with(10)
 
     def test__process_samples(self):
         """Test the ``_process_samples`` method.
@@ -113,22 +103,6 @@ class TestBaseHierarchicalSampler():
         expected_result = expected_result.reindex(sorted(expected_result.columns), axis=1)
         pd.testing.assert_frame_equal(result, expected_result)
 
-    def test__sample_rows_no_model(self):
-        """Test that the method returns an empty dataframe if the synthesizer cannot sample."""
-        synthesizer = Mock()
-        synthesizer._model = False
-        instance = Mock()
-
-        # Run
-        result = BaseHierarchicalSampler._sample_rows(instance, synthesizer, 'users', 10)
-
-        # Assert
-        assert result == instance._process_samples.return_value
-        instance._process_samples.assert_called_once_with(
-            'users',
-            DataFrameMatcher(pd.DataFrame(index=range(10)))
-        )
-
     def test__get_num_rows_from_parent(self):
         """Test that the number of child rows is extracted from the parent row."""
         # Setup
@@ -150,7 +124,6 @@ class TestBaseHierarchicalSampler():
         """Test adding child rows when sampled data is empty."""
         # Setup
         instance = Mock()
-        instance._get_foreign_keys.return_value = ['user_id']
         instance._get_num_rows_from_parent.return_value = 10
         child_synthesizer_mock = Mock()
         instance._recreate_child_synthesizer.return_value = child_synthesizer_mock
@@ -163,6 +136,7 @@ class TestBaseHierarchicalSampler():
             'users': users_meta,
             'sessions': sessions_meta
         }
+        metadata._get_foreign_keys.return_value = ['user_id']
         instance.metadata = metadata
 
         instance._sample_rows.return_value = pd.DataFrame({
@@ -178,7 +152,8 @@ class TestBaseHierarchicalSampler():
 
         # Run
         BaseHierarchicalSampler._add_child_rows(
-            instance, 'sessions', 'users', parent_row, sampled_data)
+            instance, 'sessions', 'users', parent_row, sampled_data
+        )
 
         # Assert
         expected_result = pd.DataFrame({
@@ -196,7 +171,6 @@ class TestBaseHierarchicalSampler():
         """
         # Setup
         instance = Mock()
-        instance._get_foreign_keys.return_value = ['user_id']
         instance._get_num_rows_from_parent.return_value = 10
         child_synthesizer_mock = Mock()
         instance._recreate_child_synthesizer.return_value = child_synthesizer_mock
@@ -209,6 +183,7 @@ class TestBaseHierarchicalSampler():
             'users': users_meta,
             'sessions': sessions_meta
         }
+        metadata._get_foreign_keys.return_value = ['user_id']
         instance.metadata = metadata
         instance._synthesizer_kwargs = {'a': 0.1, 'b': 0.5, 'loc': 0.25}
 
@@ -430,7 +405,7 @@ class TestBaseHierarchicalSampler():
                                                        table_name='users',
                                                        num_rows=3,
                                                        sampled_data=expected_sample)
-        instance._add_foreign_key_column.assert_called_once_with(
+        instance._add_foreign_key_columns.assert_called_once_with(
             DataFrameMatcher(expected_sample['sessions']),
             DataFrameMatcher(expected_sample['users']),
             'sessions',

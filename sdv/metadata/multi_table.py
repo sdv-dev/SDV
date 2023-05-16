@@ -185,6 +185,16 @@ class MultiTableMetadata:
             child_map[parent_name].add(child_name)
 
         return child_map
+    
+    def _get_foreign_keys(self, parent_table_name, child_table_name):
+        """Get all foreign keys for the parent table."""
+        foreign_keys = []
+        for relation in self.relationships:
+            if parent_table_name == relation['parent_table_name'] and\
+               child_table_name == relation['child_table_name']:
+                foreign_keys.append(deepcopy(relation['child_foreign_key']))
+
+        return foreign_keys
 
     def add_relationship(self, parent_table_name, child_table_name,
                          parent_primary_key, child_foreign_key):
