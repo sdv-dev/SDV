@@ -69,8 +69,10 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                     row = pd.Series({'num_rows': len(child_rows)})
                     row.index = f'__{child_name}__{foreign_key}__' + row.index
                 else:
-                    synthesizer = self._synthesizer(table_meta,
-                                                    **self._table_parameters[child_name])
+                    synthesizer = self._synthesizer(
+                        table_meta,
+                        **self._table_parameters[child_name]
+                    )
                     synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
                     row = synthesizer._get_parameters()
                     row = pd.Series(row)
