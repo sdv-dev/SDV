@@ -316,14 +316,14 @@ class TestSingleTableMetadata:
 
         # Run and Assert
         error_msg = re.escape(
-            "Invalid sdtype : 'fake_type' is not recognized. Please use one of the "
+            "Invalid sdtype: 'fake_type' is not recognized. Please use one of the "
             'supported SDV sdtypes.'
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_column('column', 'fake_type')
 
         error_msg = re.escape(
-            'Invalid sdtype : None is not a string. Please use one of the '
+            'Invalid sdtype: None is not a string. Please use one of the '
             'supported SDV sdtypes.'
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
@@ -595,7 +595,7 @@ class TestSingleTableMetadata:
 
         # Run and Assert
         error_msg = re.escape(
-            "Invalid sdtype : 'fake_type' is not recognized. Please use one of the "
+            "Invalid sdtype: 'fake_type' is not recognized. Please use one of the "
             'supported SDV sdtypes.'
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):

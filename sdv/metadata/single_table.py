@@ -137,7 +137,7 @@ class SingleTableMetadata:
     def _validate_sdtype(self, sdtype):
         if not isinstance(sdtype, str):
             raise InvalidMetadataError(
-                f'Invalid sdtype : {sdtype} is not a string. Please use one of the '
+                f'Invalid sdtype: {sdtype} is not a string. Please use one of the '
                 'supported SDV sdtypes.'
             )
 
@@ -146,7 +146,7 @@ class SingleTableMetadata:
 
         if not is_faker_function(sdtype):
             raise InvalidMetadataError(
-                f"Invalid sdtype : '{sdtype}' is not recognized. Please use one of the "
+                f"Invalid sdtype: '{sdtype}' is not recognized. Please use one of the "
                 'supported SDV sdtypes.'
             )
 
