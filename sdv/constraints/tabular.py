@@ -981,7 +981,7 @@ class Range(Constraint):
             high_diff_column + middle.to_numpy()
         ).astype(self._dtype)
 
-        if self.nan_column_name and self.nan_column_name in table_data.columns:
+        if self.nan_column_name in table_data.columns:
             table_data = revert_nans_columns(table_data, self.nan_column_name)
 
         return table_data.drop([self.low_diff_column_name, self.high_diff_column_name], axis=1)
