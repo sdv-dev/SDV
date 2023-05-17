@@ -27,14 +27,11 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         'default_distribution': 'beta'
     }
 
-    def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
+    def __init__(self, metadata, locales=None):
         super().__init__(metadata, locales=locales)
-        self._synthesizer_kwargs = synthesizer_kwargs or self.DEFAULT_SYNTHESIZER_KWARGS
         self._table_sizes = {}
         self._max_child_rows = {}
         self._augmented_tables = []
-        for table_name in self.metadata.tables:
-            self.set_table_parameters(table_name, self._synthesizer_kwargs)
 
     def _get_extension(self, child_name, child_table, foreign_key):
         """Generate the extension columns for this child table.
@@ -72,7 +69,10 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                     row = pd.Series({'num_rows': len(child_rows)})
                     row.index = f'__{child_name}__{foreign_key}__' + row.index
                 else:
-                    synthesizer = self._synthesizer(table_meta, **self._synthesizer_kwargs)
+                    synthesizer = self._synthesizer(
+                        table_meta,
+                        **self._table_parameters[child_name]
+                    )
                     synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
                     row = synthesizer._get_parameters()
                     row = pd.Series(row)
@@ -321,7 +321,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
     def _get_child_synthesizer(self, parent_row, table_name, foreign_key):
         parameters = self._extract_parameters(parent_row, table_name, foreign_key)
         table_meta = self.metadata.tables[table_name]
-        synthesizer = self._synthesizer(table_meta, **self._synthesizer_kwargs)
+        synthesizer = self._synthesizer(table_meta, **self._table_parameters[table_name])
         synthesizer._set_parameters(parameters)
 
         return synthesizer
@@ -444,7 +444,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         for parent_id, row in parent_rows.iterrows():
             parameters = self._extract_parameters(row, table_name, foreign_key)
             table_meta = self._table_synthesizers[table_name].get_metadata()
-            synthesizer = self._synthesizer(table_meta, **self._synthesizer_kwargs)
+            synthesizer = self._synthesizer(table_meta, **self._table_parameters[table_name])
             synthesizer._set_parameters(parameters)
             try:
                 with np.random.default_rng(np.random.get_state()[1]):

@@ -434,7 +434,7 @@ class TestHMASynthesizer:
         foreign_key = 'session_id'
         table_meta = Mock()
         instance.metadata.tables = {'users': table_meta}
-        instance._synthesizer_kwargs = {'a': 1}
+        instance._table_parameters = {'users': {'a': 1}}
 
         # Run
         synthesizer = HMASynthesizer._get_child_synthesizer(

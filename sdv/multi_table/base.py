@@ -29,6 +29,7 @@ class BaseMultiTableSynthesizer:
             The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
     """
 
+    DEFAULT_SYNTHESIZER_KWARGS = None
     _synthesizer = GaussianCopulaSynthesizer
     _numpy_seed = 73251
 
@@ -62,6 +63,10 @@ class BaseMultiTableSynthesizer:
         self.locales = locales
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
+        if self.DEFAULT_SYNTHESIZER_KWARGS:
+            for table_name in self.metadata.tables:
+                self._table_parameters[table_name] = deepcopy(self.DEFAULT_SYNTHESIZER_KWARGS)
+
         self._initialize_models()
         self._fitted = False
         self._creation_date = datetime.datetime.today().strftime('%Y-%m-%d')
