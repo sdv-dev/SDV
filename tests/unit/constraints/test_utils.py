@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.utils import (
-    _cast_to_type, cast_to_datetime64, compute_nans_column, get_nan_component_value, logit,
-    matches_datetime_format, revert_nans_columns, sigmoid)
+    _cast_to_type, cast_to_datetime64, compute_nans_column, get_datetime_diff,
+    get_nan_component_value, logit, matches_datetime_format, revert_nans_columns, sigmoid)
 from sdv.utils import get_datetime_format, is_datetime_type
 
 
@@ -97,7 +97,7 @@ def test_is_datetime_type_with_int():
 
 
 def test_is_datetime_type_with_datetime_str():
-    """Test the ``is_datetime_type`` function when an valid datetime string is passed.
+    """Test the ``is_datetime_type`` function with a valid datetime string is passed.
 
     Expect to return True when a valid string representing datetime is passed.
 
@@ -434,3 +434,21 @@ def test_revert_nans_columns():
 
     # Assert
     pd.testing.assert_frame_equal(result, expected_data)
+
+
+def test_get_datetime_diff():
+    """Test the ``_get_datetime_diff`` method.
+
+    The method is expected to compute the difference between the high and low
+    datetime columns, treating missing values as NaN.
+    """
+    # Setup
+    high = pd.Series(['2022-02-02', '', '2023-01-02']).to_numpy()
+    low = pd.Series(['2022-02-01', '2022-02-02', '2023-01-01']).to_numpy()
+    expected = np.array([8.64e13, np.nan, 8.64e13])
+
+    # Run
+    diff = get_datetime_diff(high, low, dtype='O')
+
+    # Assert
+    assert np.array_equal(expected, diff, equal_nan=True)

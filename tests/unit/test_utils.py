@@ -3,7 +3,7 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 
-from sdv.utils import convert_to_timedelta
+from sdv.utils import convert_to_timedelta, create_unique_name
 from tests.utils import SeriesMatcher
 
 
@@ -29,3 +29,16 @@ def test_convert_to_timedelta(to_timedelta_mock):
         pd.NaT
     ], dtype='timedelta64[ns]')
     pd.testing.assert_series_equal(converted_column, expected_column)
+
+
+def test_create_unique_name():
+    """Test the ``create_unique_name`` method."""
+    # Setup
+    name = 'name'
+    existing_names = ['name', 'name_', 'name__']
+
+    # Run
+    result = create_unique_name(name, existing_names)
+
+    # Assert
+    assert result == 'name___'

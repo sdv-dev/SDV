@@ -850,6 +850,66 @@ def test_inequality_constraint_all_possible_nans_configurations():
     assert (~(pd.isna(synthetic_data['A'])) & ~(pd.isna(synthetic_data['B']))).any()
 
 
+def test_range_constraint_all_possible_nans_configurations():
+    """Test that the range constraint works with all possible NaN configurations."""
+    # Setup
+    data = pd.DataFrame(data={
+        'low': [1, 4, np.nan, 0, 4, np.nan, np.nan, 5, np.nan],
+        'middle': [2, 5, 3, np.nan, 5, np.nan, 5, np.nan, np.nan],
+        'high': [3, 7, 8, 4, np.nan, 9, np.nan, np.nan, np.nan]
+    })
+
+    metadata_dict = {
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'middle': {'sdtype': 'numerical'},
+            'high': {'sdtype': 'numerical'}
+        }
+    }
+
+    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+
+    my_constraint = {
+        'constraint_class': 'Range',
+        'constraint_parameters': {
+            'low_column_name': 'low',
+            'middle_column_name': 'middle',
+            'high_column_name': 'high'
+        }
+    }
+
+    # Run
+    synthesizer.add_constraints(constraints=[my_constraint])
+    synthesizer.fit(data)
+
+    s_data = synthesizer.sample(2000)
+
+    # Assert
+    synt_data_not_nan_low_middle = s_data[~(pd.isna(s_data['low'])) & ~(pd.isna(s_data['middle']))]
+    synt_data_not_nan_middle_high = s_data[
+        ~(pd.isna(s_data['middle'])) & ~(pd.isna(s_data['high']))
+    ]
+    synt_data_not_nan_low_high = s_data[~(pd.isna(s_data['low'])) & ~(pd.isna(s_data['high']))]
+
+    is_nan_low = pd.isna(s_data['low'])
+    is_nan_middle = pd.isna(s_data['middle'])
+    is_nan_high = pd.isna(s_data['high'])
+
+    assert all(synt_data_not_nan_low_middle['low'] <= synt_data_not_nan_low_middle['middle'])
+    assert all(synt_data_not_nan_middle_high['middle'] <= synt_data_not_nan_middle_high['high'])
+    assert all(synt_data_not_nan_low_high['low'] <= synt_data_not_nan_low_high['high'])
+
+    assert any(is_nan_low & is_nan_middle & is_nan_high)
+    assert any(is_nan_low & is_nan_middle & ~is_nan_high)
+    assert any(is_nan_low & ~is_nan_middle & is_nan_high)
+    assert any(is_nan_low & ~is_nan_middle & ~is_nan_high)
+    assert any(~is_nan_low & is_nan_middle & is_nan_high)
+    assert any(~is_nan_low & is_nan_middle & ~is_nan_high)
+    assert any(~is_nan_low & ~is_nan_middle & is_nan_high)
+    assert any(~is_nan_low & ~is_nan_middle & ~is_nan_high)
+
+
 def test_save_and_load(tmp_path):
     """Test that synthesizers can be saved and loaded properly."""
     # Setup
