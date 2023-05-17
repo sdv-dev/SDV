@@ -1681,8 +1681,8 @@ class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
-    def test__sample_from_conditions(self, mock_validate_file_path, mock_tqdm,
-                                     mock_data_processor, mock_check_num_rows, mock_os):
+    def test_sample_from_conditions(self, mock_validate_file_path, mock_tqdm,
+                                    mock_data_processor, mock_check_num_rows, mock_os):
         """Test sample conditions with sampled data and reject sampling.
 
         An instance of ``BaseSingleTableSynthesizer`` is created and it's utility functions are
@@ -1705,7 +1705,7 @@ class TestBaseSingleTableSynthesizer:
         mock_tqdm.tqdm.return_value = progress_bar
 
         # Run
-        result = instance._sample_from_conditions(conditions, 10, 10, '.sample.csv.temp')
+        result = instance.sample_from_conditions(conditions, 10, 10, '.sample.csv.temp')
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
@@ -1715,9 +1715,9 @@ class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.handle_sampling_error')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
-    def test__sample_from_conditions_handle_sampling_error(self,
-                                                           mock_validate_file_path,
-                                                           mock_tqdm, mock_handle_sampling_error):
+    def test_sample_from_conditions_handle_sampling_error(self,
+                                                          mock_validate_file_path,
+                                                          mock_tqdm, mock_handle_sampling_error):
         """Test the error handling when we are using ``_sample_from_conditions``."""
         # Setup
         progress_bar = MagicMock()
@@ -1730,7 +1730,7 @@ class TestBaseSingleTableSynthesizer:
         mock_validate_file_path.return_value = 'temp_file'
 
         # Run
-        result = BaseSingleTableSynthesizer._sample_from_conditions(
+        result = BaseSingleTableSynthesizer.sample_from_conditions(
             instance,
             conditions,
             10,
@@ -1747,30 +1747,13 @@ class TestBaseSingleTableSynthesizer:
         )
         mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
 
-    def test_sample_from_conditions(self):
-        """Test that this method calls ``_sample_with_conditions``."""
-        # Setup
-        instance = Mock()
-
-        # Run
-        result = BaseSingleTableSynthesizer.sample_from_conditions(instance, ['conditions'])
-
-        # Assert
-        assert result == instance._sample_from_conditions.return_value
-        instance._sample_from_conditions.assert_called_once_with(
-            ['conditions'],
-            100,
-            None,
-            None
-        )
-
     @patch('sdv.single_table.base.os')
     @patch('sdv.single_table.base.check_num_rows')
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
-    def test__sample_remaining_columns(self, mock_validate_file_path, mock_tqdm,
-                                       mock_data_processor, mock_check_num_rows, mock_os):
+    def test_sample_remaining_columns(self, mock_validate_file_path, mock_tqdm,
+                                      mock_data_processor, mock_check_num_rows, mock_os):
         """Test the this method calls ``_sample_with_conditions`` with the ``known_column."""
         # Setup
         metadata = Mock()
@@ -1787,7 +1770,7 @@ class TestBaseSingleTableSynthesizer:
         mock_tqdm.tqdm.return_value = progress_bar
 
         # Run
-        result = instance._sample_remaining_columns(
+        result = instance.sample_remaining_columns(
             known_columns,
             10,
             10,
@@ -1804,7 +1787,7 @@ class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
-    def test__sample_remaining_columns_handles_sampling_error(
+    def test_sample_remaining_columns_handles_sampling_error(
         self, mock_validate_file_path, mock_tqdm, mock_data_processor,
         mock_check_num_rows, mock_handle_sampling_error
     ):
@@ -1828,7 +1811,7 @@ class TestBaseSingleTableSynthesizer:
         mock_tqdm.tqdm.return_value = progress_bar
 
         # Run
-        result = instance._sample_remaining_columns(
+        result = instance.sample_remaining_columns(
             known_columns,
             10,
             10,
@@ -1838,21 +1821,6 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame())
         mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
-
-    def test_sample_remaining_columns(self):
-        """Test that this method calls the ``_sample_remaining_columns``."""
-        # Setup
-        instance = Mock()
-        known_columns = pd.DataFrame({'name': ['Johanna']})
-        instance._validate_conditions = Mock()
-        instance._sample_with_conditions = Mock()
-
-        # Run
-        result = BaseSingleTableSynthesizer.sample_remaining_columns(instance, known_columns)
-
-        # Assert
-        assert result == instance._sample_remaining_columns.return_value
-        instance._sample_remaining_columns.assert_called_once()
 
     @patch('sdv.single_table.base.cloudpickle')
     def test_save(self, cloudpickle_mock):
