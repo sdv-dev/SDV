@@ -1718,7 +1718,7 @@ class TestBaseSingleTableSynthesizer:
     def test_sample_from_conditions_handle_sampling_error(self,
                                                           mock_validate_file_path,
                                                           mock_tqdm, mock_handle_sampling_error):
-        """Test the error handling when we are using ``_sample_from_conditions``."""
+        """Test the error handling when we are using ``sample_from_conditions``."""
         # Setup
         progress_bar = MagicMock()
         mock_tqdm.tqdm.return_value = progress_bar
