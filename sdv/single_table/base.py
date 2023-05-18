@@ -18,6 +18,7 @@ import pkg_resources
 import tqdm
 from copulas.multivariate import GaussianMultivariate
 
+from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
 from sdv.single_table.errors import InvalidDataError
@@ -207,12 +208,10 @@ class BaseSynthesizer:
     def _validate_constraints(self, data):
         """Validate that the data satisfies the constraints."""
         errors = []
-        constraints = self._data_processor._load_constraints()
-        for constraint in constraints:
-            try:
-                constraint.fit(data)
-            except Exception as e:
-                errors.append(e)
+        try:
+            self._data_processor._fit_constraints(data)
+        except AggregateConstraintsError as e:
+            errors.append(e)
 
         return errors
 

@@ -9,6 +9,7 @@ from copulas.multivariate import GaussianMultivariate
 from rdt.transformers import (
     BinaryEncoder, FloatFormatter, GaussianNormalizer, OneHotEncoder, RegexGenerator)
 
+from sdv.constraints.errors import AggregateConstraintsError
 from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
@@ -668,21 +669,18 @@ class TestBaseSingleTableSynthesizer:
     def test__validate_constraints(self):
         """Test that ``_validate_constraints`` calls ``fit`` and returns any errors."""
         # Setup
-        a_constraint = Mock()
-        b_constraint = Mock()
-        b_constraint.fit.side_effect = Exception('Invalid data.')
         instance = Mock()
-        instance._data_processor._load_constraints.return_value = [a_constraint, b_constraint]
+        msg = 'Invalid data for constraint.'
+        instance._data_processor._fit_constraints.side_effect = AggregateConstraintsError([msg])
         data = object()
 
         # Run
         errors = BaseSingleTableSynthesizer._validate_constraints(instance, data)
 
         # Assert
-        assert str(errors[0]) == 'Invalid data.'
+        assert str(errors[0]) == '\nInvalid data for constraint.'
         assert len(errors) == 1
-        a_constraint.fit.assert_called_once_with(data)
-        b_constraint.fit.assert_called_once_with(data)
+        instance._data_processor._fit_constraints.assert_called_once_with(data)
 
     def test_update_transformers_invalid_keys(self):
         """Test error is raised if passed transformer doesn't match key column.

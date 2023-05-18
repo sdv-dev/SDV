@@ -310,7 +310,7 @@ def test_validate_with_failing_constraint():
 
     error_msg = (
         'The provided data does not match the metadata:'
-        "\nData is not valid for the 'Inequality' constraint:"
+        "\n\nData is not valid for the 'Inequality' constraint:"
         '\n  checkin_date checkout_date'
         '\n0  02 Jan 2021   29 Dec 2020'
     )
