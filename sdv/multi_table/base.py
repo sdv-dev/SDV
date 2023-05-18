@@ -57,12 +57,19 @@ class BaseMultiTableSynthesizer:
                 **synthesizer_parameters
             )
 
-    def __init__(self, metadata, locales=None):
+    def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
         self.metadata = metadata
         self.metadata.validate()
         self.locales = locales
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
+        if synthesizer_kwargs is not None:
+            warn_message = (
+                'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
+                'affect the synthesizer. Please use the `set_table_parameters` method instead.'
+            )
+            warnings.warn(warn_message, FutureWarning)
+
         if self.DEFAULT_SYNTHESIZER_KWARGS:
             for table_name in self.metadata.tables:
                 self._table_parameters[table_name] = deepcopy(self.DEFAULT_SYNTHESIZER_KWARGS)
