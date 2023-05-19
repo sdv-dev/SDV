@@ -40,9 +40,9 @@ from sdv.constraints.base import Constraint
 from sdv.constraints.errors import (
     AggregateConstraintsError, ConstraintMetadataError, FunctionError, InvalidFunctionError)
 from sdv.constraints.utils import (
-    cast_to_datetime64, compute_nans_column, create_unique_name, get_datetime_diff, logit,
-    matches_datetime_format, revert_nans_columns, sigmoid)
-from sdv.utils import convert_to_timedelta, is_datetime_type
+    cast_to_datetime64, compute_nans_column, get_datetime_diff, logit, matches_datetime_format,
+    revert_nans_columns, sigmoid)
+from sdv.utils import convert_to_timedelta, create_unique_name, is_datetime_type
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,

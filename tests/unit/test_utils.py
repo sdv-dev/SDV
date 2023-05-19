@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 
 from sdv.utils import (
-    convert_to_timedelta, get_datetime_format, get_first_non_nan_value, is_datetime_type)
+    convert_to_timedelta, create_unique_name, get_datetime_format, get_first_non_nan_value,
+    is_datetime_type)
 from tests.utils import SeriesMatcher
 
 
@@ -236,3 +237,16 @@ def test_get_first_non_nan_value():
 
     # Assert
     assert result == '2021-02-01'
+
+
+def test_create_unique_name():
+    """Test the ``create_unique_name`` method."""
+    # Setup
+    name = 'name'
+    existing_names = ['name', 'name_', 'name__']
+
+    # Run
+    result = create_unique_name(name, existing_names)
+
+    # Assert
+    assert result == 'name___'

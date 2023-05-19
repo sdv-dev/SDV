@@ -5,21 +5,8 @@ import numpy as np
 import pandas as pd
 
 from sdv.constraints.utils import (
-    _cast_to_type, cast_to_datetime64, compute_nans_column, create_unique_name, get_datetime_diff,
+    _cast_to_type, cast_to_datetime64, compute_nans_column, get_datetime_diff,
     get_nan_component_value, logit, matches_datetime_format, revert_nans_columns, sigmoid)
-
-
-def test_create_unique_name():
-    """Test the ``create_unique_name`` method."""
-    # Setup
-    name = 'name'
-    existing_names = ['name', 'name_', 'name__']
-
-    # Run
-    result = create_unique_name(name, existing_names)
-
-    # Assert
-    assert result == 'name___'
 
 
 def test__cast_to_type():
