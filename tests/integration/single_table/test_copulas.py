@@ -1,6 +1,7 @@
 from uuid import UUID
 
 import pandas as pd
+import pytest
 from rdt.transformers import (
     AnonymizedFaker, CustomLabelEncoder, FloatFormatter, PseudoAnonymizedFaker)
 
@@ -8,6 +9,7 @@ from sdv.datasets.demo import download_demo
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
+from sdv.single_table.errors import InvalidDataError
 
 
 def test_synthesize_table_gaussian_copula(tmp_path):
@@ -283,3 +285,36 @@ def test_custom_processing_anonymization():
     assert anonymized_transformers['billing_address'] == billing_address_transformer
     assert [UUID(uuid) for uuid in anonymized_sample['guest_email']]
     assert any(anonymized_sample['billing_address'].value_counts() > 1)
+
+
+def test_validate_with_failing_constraint():
+    """Validate that the ``constraint`` are raising errors if there is an error during validate."""
+    # Setup
+    real_data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='fake_hotel_guests'
+    )
+    real_data['checkin_date'][0] = real_data['checkout_date'][1]
+    gc = GaussianCopulaSynthesizer(metadata)
+
+    checkin_lessthan_checkout = {
+        'constraint_class': 'Inequality',
+        'constraint_parameters': {
+            'low_column_name': 'checkin_date',
+            'high_column_name': 'checkout_date'
+        }
+    }
+    gc.add_constraints([
+        checkin_lessthan_checkout
+    ])
+
+    error_msg = (
+        'The provided data does not match the metadata:'
+        "\n\nData is not valid for the 'Inequality' constraint:"
+        '\n  checkin_date checkout_date'
+        '\n0  02 Jan 2021   29 Dec 2020'
+    )
+
+    # Run / Assert
+    with pytest.raises(InvalidDataError, match=error_msg):
+        gc.validate(real_data)

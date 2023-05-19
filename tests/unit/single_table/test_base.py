@@ -9,6 +9,7 @@ from copulas.multivariate import GaussianMultivariate
 from rdt.transformers import (
     BinaryEncoder, FloatFormatter, GaussianNormalizer, OneHotEncoder, RegexGenerator)
 
+from sdv.constraints.errors import AggregateConstraintsError
 from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
@@ -664,6 +665,22 @@ class TestBaseSingleTableSynthesizer:
 
         # Run
         instance.validate(data)
+
+    def test__validate_constraints(self):
+        """Test that ``_validate_constraints`` calls ``fit`` and returns any errors."""
+        # Setup
+        instance = Mock()
+        msg = 'Invalid data for constraint.'
+        instance._data_processor._fit_constraints.side_effect = AggregateConstraintsError([msg])
+        data = object()
+
+        # Run
+        errors = BaseSingleTableSynthesizer._validate_constraints(instance, data)
+
+        # Assert
+        assert str(errors[0]) == '\nInvalid data for constraint.'
+        assert len(errors) == 1
+        instance._data_processor._fit_constraints.assert_called_once_with(data)
 
     def test_update_transformers_invalid_keys(self):
         """Test error is raised if passed transformer doesn't match key column.

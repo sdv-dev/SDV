@@ -826,7 +826,6 @@ def test_inequality_constraint_all_possible_nans_configurations():
     })
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
-
     synthesizer.add_constraints(
         [
             {

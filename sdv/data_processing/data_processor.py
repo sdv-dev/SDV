@@ -286,7 +286,23 @@ class DataProcessor:
         """
         return deepcopy(self._constraints_list)
 
+    def _load_constraints(self):
+        loaded_constraints = []
+        default_constraints_classes = list(get_subclasses(Constraint))
+        for constraint in self._constraints_list:
+            if constraint['constraint_class'] in default_constraints_classes:
+                loaded_constraints.append(Constraint.from_dict(constraint))
+
+            else:
+                constraint_class = self._custom_constraint_classes[constraint['constraint_class']]
+                loaded_constraints.append(
+                    constraint_class(**constraint.get('constraint_parameters', {}))
+                )
+
+        return loaded_constraints
+
     def _fit_constraints(self, data):
+        self._constraints = self._load_constraints()
         errors = []
         for constraint in self._constraints:
             try:
@@ -330,15 +346,6 @@ class DataProcessor:
 
         if errors:
             raise AggregateConstraintsError(errors)
-
-        return data
-
-    def _fit_transform_constraints(self, data):
-        # Fit and validate all constraints first because `transform` might change columns
-        # making the following constraints invalid
-        self._constraints = self._load_constraints()
-        self._fit_constraints(data)
-        data = self._transform_constraints(data)
 
         return data
 
@@ -575,7 +582,10 @@ class DataProcessor:
             self._fit_formatters(data)
 
             LOGGER.info(f'Fitting constraints for table {self.table_name}')
-            constrained = self._fit_transform_constraints(data)
+            if len(self._constraints_list) != len(self._constraints):
+                self._fit_constraints(data)
+
+            constrained = self._transform_constraints(data)
             columns_created_by_constraints = set(constrained.columns) - set(data.columns)
 
             config = self._hyper_transformer.get_config()
@@ -598,21 +608,6 @@ class DataProcessor:
                 self._hyper_transformer.set_config(config)
 
             self._prepared_for_fitting = True
-
-    def _load_constraints(self):
-        loaded_constraints = []
-        default_constraints_classes = list(get_subclasses(Constraint))
-        for constraint in self._constraints_list:
-            if constraint['constraint_class'] in default_constraints_classes:
-                loaded_constraints.append(Constraint.from_dict(constraint))
-
-            else:
-                constraint_class = self._custom_constraint_classes[constraint['constraint_class']]
-                loaded_constraints.append(
-                    constraint_class(**constraint.get('constraint_parameters', {}))
-                )
-
-        return loaded_constraints
 
     def fit(self, data):
         """Fit this metadata to the given data.
