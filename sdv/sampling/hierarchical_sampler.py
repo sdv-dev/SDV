@@ -52,28 +52,6 @@ class BaseHierarchicalSampler():
         """
         raise NotImplementedError()
 
-    def _process_samples(self, table_name, sampled_rows):
-        """Process the ``sampled_rows`` for the given ``table_name``.
-
-        Process the raw samples and convert them to the original space by reverse transforming
-        them. Also, when there are synthesizer columns (columns used to recreate an instance
-        of a synthesizer), those will be returned together.
-
-        Args:
-            table_name (str):
-                The name of the table.
-            sampled_rows (pd.DataFrame):
-                The sampled rows from the table to process.
-        """
-        data_processor = self._table_synthesizers[table_name]._data_processor
-        sampled = data_processor.reverse_transform(sampled_rows)
-
-        synthesizer_columns = list(set(sampled_rows.columns) - set(sampled.columns))
-        if synthesizer_columns:
-            sampled = pd.concat([sampled, sampled_rows[synthesizer_columns]], axis=1)
-
-        return sampled
-
     def _sample_rows(self, synthesizer, table_name, num_rows=None):
         """Sample ``num_rows`` from ``synthesizer``.
 
@@ -90,9 +68,7 @@ class BaseHierarchicalSampler():
                 Sampled rows, shape (, num_rows)
         """
         num_rows = num_rows or synthesizer._num_rows
-        sampled_rows = synthesizer.sample(num_rows)
-
-        return self._process_samples(table_name, sampled_rows)
+        return synthesizer._sample_batch(num_rows, remove_extra_columns=False)
 
     def _get_num_rows_from_parent(self, parent_row, child_name, foreign_key):
         """Get the number of rows to sample for the child from the parent row."""

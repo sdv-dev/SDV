@@ -889,7 +889,10 @@ class TestBaseSingleTableSynthesizer:
         })
         instance = Mock()
         instance._random_state_set = False
+        instance._sample.return_value = pd.DataFrame()
+        instance._data_processor.reverse_transform.return_value = data
         instance._data_processor.filter_valid.return_value = data
+        instance._data_processor._hyper_transformer._input_columns = []
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(instance, 3)
@@ -914,6 +917,9 @@ class TestBaseSingleTableSynthesizer:
             'salary': [90.0, 100.0, 80.0]
         })
         instance = Mock()
+        instance._sample.return_value = pd.DataFrame()
+        instance._data_processor.reverse_transform.return_value = data
+        instance._data_processor._hyper_transformer._input_columns = []
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.}
         transformed_conditions = {'salary': 80.0}
@@ -950,6 +956,8 @@ class TestBaseSingleTableSynthesizer:
         })
 
         instance = Mock()
+        instance._sample.return_value = pd.DataFrame()
+        instance._data_processor._hyper_transformer._input_columns = []
         instance._data_processor.filter_valid = lambda x: x
         instance._data_processor.reverse_transform.return_value = data
 
@@ -977,10 +985,12 @@ class TestBaseSingleTableSynthesizer:
             'salary': [90.0, 100.0, 80.0]
         })
         instance = Mock()
+        instance._data_processor.reverse_transform.return_value = data
+        instance._data_processor._hyper_transformer._input_columns = []
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.}
         transformed_conditions = {'salary': 80.0}
-        instance._sample.side_effect = [NotImplementedError, None]
+        instance._sample.side_effect = [NotImplementedError, pd.DataFrame()]
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
@@ -1022,6 +1032,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [80., 60., 100.]
         })
         instance = Mock()
+        instance.metadata.columns.keys.return_value = ['name', 'salary']
         instance._sample_rows.return_value = (sampled_data, 3)
 
         # Run
@@ -1057,6 +1068,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [80., 60., 100., 300.]
         })
         instance = Mock()
+        instance.metadata.columns.keys.return_value = ['name', 'salary']
         instance._sample_rows.return_value = (sampled_data, 3)
 
         # Run
@@ -1088,6 +1100,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [80., 60., 100., 300.]
         })
         instance = Mock()
+        instance.metadata.columns.keys.return_value = ['name', 'salary']
         instance._sample_rows.return_value = (sampled_data, 3)
 
         # Run
@@ -1118,6 +1131,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [80., 60., 100., 300.]
         })
         instance = Mock()
+        instance.metadata.columns.keys.return_value = ['name', 'salary']
         instance._sample_rows.side_effect = [
             (sampled_data, 4),
             (sampled_data, 5),

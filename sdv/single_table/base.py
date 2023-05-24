@@ -593,14 +593,19 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         if self._data_processor.get_sdtypes(primary_keys=False):
             if conditions is None:
-                sampled = self._sample(num_rows)
+                raw_sampled = self._sample(num_rows)
             else:
                 try:
-                    sampled = self._sample(num_rows, transformed_conditions)
+                    raw_sampled = self._sample(num_rows, transformed_conditions)
                 except NotImplementedError:
-                    sampled = self._sample(num_rows)
+                    raw_sampled = self._sample(num_rows)
 
-            sampled = self._data_processor.reverse_transform(sampled)
+            sampled = self._data_processor.reverse_transform(raw_sampled)
+            input_columns = self._data_processor._hyper_transformer._input_columns
+            missing_cols = list(
+                set(raw_sampled.columns) - set(input_columns) - set(sampled.columns)
+            )
+            sampled[missing_cols] = raw_sampled[missing_cols]
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
@@ -621,7 +626,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
     def _sample_batch(self, batch_size, max_tries=100,
                       conditions=None, transformed_conditions=None, float_rtol=0.01,
-                      progress_bar=None, output_file_path=None):
+                      progress_bar=None, output_file_path=None, remove_extra_columns=True):
         """Sample a batch of rows with the given conditions.
 
         This will enter a reject-sampling loop in which rows will be sampled until
@@ -660,6 +665,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             output_file_path (str or None):
                 The file to periodically write sampled rows to. If None, does not write
                 rows anywhere.
+            remove_extra_columns (bool):
+                Whether to remove extra columns from the sampled data. Defaults to True.
 
         Returns:
             pandas.DataFrame:
@@ -708,6 +715,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     f'{remaining} valid rows remaining. Resampling {num_rows_to_sample} rows')
 
             counter += 1
+
+        if remove_extra_columns:
+            sampled = sampled[self.metadata.columns.keys()]
 
         return sampled.head(min(len(sampled), batch_size))
 
