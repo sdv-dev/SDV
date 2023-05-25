@@ -559,7 +559,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             if column_values.dtype.kind == 'f':
                 distance = value * float_rtol
                 sampled = sampled[np.abs(column_values - value) <= distance]
-                sampled[column] = value
+                sampled.loc[:, column] = value
             else:
                 sampled = sampled[column_values == value]
 
