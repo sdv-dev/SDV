@@ -196,22 +196,30 @@ class TestHMASynthesizer:
         learning the size of this table, removing the foreign keys and clearing
         any null values by using the ``_clear_nans`` method. Then, fitting the table model by
         calling ``fit_processed_data``,  adding back the foreign keys, updating the ``tables`` and
-        marking the table name as modeled within the ``instance._augmented_tables``.
+        marking the table name as modeled within the ``instance._augmented_tables``. This
+        task has to be performed only on the root tables, the childs are being skipped
+        since each row is being re-created from the parent.
         """
         # Setup
-        nesreca_model = Mock()
+        upravna_enota_model = Mock()
         instance = Mock()
         instance._synthesizer = GaussianCopulaSynthesizer
 
-        instance._augmented_tables = ['nesreca']
-        instance._table_sizes = {'nesreca': 3}
-        instance._table_synthesizers = {'nesreca': nesreca_model}
+        metadata = get_multi_table_metadata()
+        instance.metadata = metadata
+        instance._augmented_tables = ['upravna_enota']
+        instance._table_sizes = {'upravna_enota': 3}
+        instance._table_synthesizers = {'upravna_enota': upravna_enota_model}
         instance._pop_foreign_keys.return_value = {'fk': [1, 2, 3]}
         input_data = {
-            'nesreca': pd.DataFrame({
+            'upravna_enota': pd.DataFrame({
                 'id_nesreca': [0, 1, 2],
                 'upravna_enota': [0, 1, 2],
                 'extended': ['a', 'b', 'c']
+            }),
+            'oseba': pd.DataFrame({
+                'id_oseba': [0, 1, 2],
+                'note': [0, 1, 2],
             })
         }
         augmented_data = input_data.copy()
@@ -226,11 +234,16 @@ class TestHMASynthesizer:
             'extended': ['a', 'b', 'c'],
             'fk': [1, 2, 3]
         })
-        pd.testing.assert_frame_equal(expected_result, augmented_data['nesreca'])
+        pd.testing.assert_frame_equal(expected_result, augmented_data['upravna_enota'])
 
-        instance._pop_foreign_keys.assert_called_once_with(input_data['nesreca'], 'nesreca')
-        instance._clear_nans.assert_called_once_with(input_data['nesreca'])
-        nesreca_model.fit_processed_data.assert_called_once_with(augmented_data['nesreca'])
+        instance._pop_foreign_keys.assert_called_once_with(
+            input_data['upravna_enota'],
+            'upravna_enota'
+        )
+        instance._clear_nans.assert_called_once_with(input_data['upravna_enota'])
+        upravna_enota_model.fit_processed_data.assert_called_once_with(
+            augmented_data['upravna_enota']
+        )
 
     def test__augment_tables(self):
         """Test that ``_fit`` calls ``_model_tables`` only if the table has no parents."""
