@@ -183,17 +183,19 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             augmented_data (dict):
                 Dictionary mapping each table name to an augmented ``pandas.DataFrame``.
         """
+        parent_map = self.metadata._get_parent_map()
         for table_name, table in augmented_data.items():
-            keys = self._pop_foreign_keys(table, table_name)
-            self._clear_nans(table)
-            LOGGER.info('Fitting %s for table %s; shape: %s', self._synthesizer.__name__,
-                        table_name, table.shape)
+            if table_name not in parent_map:
+                keys = self._pop_foreign_keys(table, table_name)
+                self._clear_nans(table)
+                LOGGER.info('Fitting %s for table %s; shape: %s', self._synthesizer.__name__,
+                            table_name, table.shape)
 
-            if not table.empty:
-                self._table_synthesizers[table_name].fit_processed_data(table)
+                if not table.empty:
+                    self._table_synthesizers[table_name].fit_processed_data(table)
 
-            for name, values in keys.items():
-                table[name] = values
+                for name, values in keys.items():
+                    table[name] = values
 
     def _augment_tables(self, processed_data):
         """Fit this ``HMASynthesizer`` instance to the dataset data.
