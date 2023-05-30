@@ -1056,7 +1056,7 @@ class TestBaseSingleTableSynthesizer:
         assert trans_cond is None
         assert float_rtol == 0.01
         pd.testing.assert_frame_equal(sampled, pd.DataFrame())
-        assert keep_extra_columns == False
+        assert keep_extra_columns is False
 
     def test__sample_batch_with_sampled_data_bigger_than_batch_size(self):
         """Test ``sampled_data`` is bigger than the batch size.
@@ -1094,7 +1094,7 @@ class TestBaseSingleTableSynthesizer:
         assert trans_cond is None
         assert float_rtol == 0.01
         pd.testing.assert_frame_equal(sampled, pd.DataFrame())
-        assert keep_extra_columns == False
+        assert keep_extra_columns is False
 
     def test__sample_batch_max_tries_reached(self):
         """Test that when ``max_tries`` is reached, a break occurs."""
