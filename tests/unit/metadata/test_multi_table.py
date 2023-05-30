@@ -489,6 +489,17 @@ class TestMultiTableMetadata:
         instance._validate_relationship_sdtypes.assert_called_once_with(
             'users', 'id', 'sessions', 'user_id')
 
+    def test__get_foreign_keys(self):
+        """Test that this method returns the foreign keys for a given table name and child name."""
+        # Setup
+        metadata = self.get_metadata()
+
+        # Run
+        result = metadata._get_foreign_keys('users', 'sessions')
+
+        # Assert
+        assert result == ['user_id']
+
     def test_add_relationship(self):
         """Test the ``add_relationship`` method of ``MultiTableMetadata``.
 

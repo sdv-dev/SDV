@@ -906,7 +906,10 @@ class TestBaseSingleTableSynthesizer:
         })
         instance = Mock()
         instance._random_state_set = False
+        instance._sample.return_value = pd.DataFrame()
+        instance._data_processor.reverse_transform.return_value = data
         instance._data_processor.filter_valid.return_value = data
+        instance._data_processor._hyper_transformer._input_columns = []
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(instance, 3)
@@ -931,6 +934,9 @@ class TestBaseSingleTableSynthesizer:
             'salary': [90.0, 100.0, 80.0]
         })
         instance = Mock()
+        instance._sample.return_value = pd.DataFrame()
+        instance._data_processor.reverse_transform.return_value = data
+        instance._data_processor._hyper_transformer._input_columns = []
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.}
         transformed_conditions = {'salary': 80.0}
@@ -967,6 +973,8 @@ class TestBaseSingleTableSynthesizer:
         })
 
         instance = Mock()
+        instance._sample.return_value = pd.DataFrame()
+        instance._data_processor._hyper_transformer._input_columns = []
         instance._data_processor.filter_valid = lambda x: x
         instance._data_processor.reverse_transform.return_value = data
 
@@ -994,10 +1002,12 @@ class TestBaseSingleTableSynthesizer:
             'salary': [90.0, 100.0, 80.0]
         })
         instance = Mock()
+        instance._data_processor.reverse_transform.return_value = data
+        instance._data_processor._hyper_transformer._input_columns = []
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.}
         transformed_conditions = {'salary': 80.0}
-        instance._sample.side_effect = [NotImplementedError, None]
+        instance._sample.side_effect = [NotImplementedError, pd.DataFrame()]
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
@@ -1039,6 +1049,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [80., 60., 100.]
         })
         instance = Mock()
+        instance.metadata.columns.keys.return_value = ['name', 'salary']
         instance._sample_rows.return_value = (sampled_data, 3)
 
         # Run
@@ -1055,12 +1066,14 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, sampled_data)
-        rows, conditions, trans_cond, float_rtol, sampled = instance._sample_rows.call_args[0]
+        _sample_rows_args = instance._sample_rows.call_args[0]
+        rows, conditions, trans_cond, float_rtol, sampled, keep_extra_columns = _sample_rows_args
         assert rows == 3
         assert conditions is None
         assert trans_cond is None
         assert float_rtol == 0.01
         pd.testing.assert_frame_equal(sampled, pd.DataFrame())
+        assert keep_extra_columns is False
 
     def test__sample_batch_with_sampled_data_bigger_than_batch_size(self):
         """Test ``sampled_data`` is bigger than the batch size.
@@ -1074,6 +1087,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [80., 60., 100., 300.]
         })
         instance = Mock()
+        instance.metadata.columns.keys.return_value = ['name', 'salary']
         instance._sample_rows.return_value = (sampled_data, 3)
 
         # Run
@@ -1090,12 +1104,14 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, sampled_data.head(3))
-        rows, conditions, trans_cond, float_rtol, sampled = instance._sample_rows.call_args[0]
+        _sample_rows_args = instance._sample_rows.call_args[0]
+        rows, conditions, trans_cond, float_rtol, sampled, keep_extra_columns = _sample_rows_args
         assert rows == 3
         assert conditions is None
         assert trans_cond is None
         assert float_rtol == 0.01
         pd.testing.assert_frame_equal(sampled, pd.DataFrame())
+        assert keep_extra_columns is False
 
     def test__sample_batch_max_tries_reached(self):
         """Test that when ``max_tries`` is reached, a break occurs."""
@@ -1105,6 +1121,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [80., 60., 100., 300.]
         })
         instance = Mock()
+        instance.metadata.columns.keys.return_value = ['name', 'salary']
         instance._sample_rows.return_value = (sampled_data, 3)
 
         # Run
@@ -1121,7 +1138,8 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, sampled_data)
-        rows, conditions, trans_cond, float_rtol, sampled = instance._sample_rows.call_args[0]
+        _sample_rows_args = instance._sample_rows.call_args[0]
+        rows, conditions, trans_cond, float_rtol, sampled, keep_extra_columns = _sample_rows_args
         assert instance._sample_rows.call_count == 2
 
     def test__sample_batch_storing_output_file(self, tmpdir):
@@ -1135,6 +1153,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [80., 60., 100., 300.]
         })
         instance = Mock()
+        instance.metadata.columns.keys.return_value = ['name', 'salary']
         instance._sample_rows.side_effect = [
             (sampled_data, 4),
             (sampled_data, 5),
