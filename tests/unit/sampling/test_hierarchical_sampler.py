@@ -30,7 +30,7 @@ class TestBaseHierarchicalSampler():
 
         # Run and Assert
         with pytest.raises(NotImplementedError, match=''):
-            instance._recreate_child_synthesizer('nescra', pd.Series([], dtype='Int64'))
+            instance._recreate_child_synthesizer('nescra', 'oseba', pd.Series([], dtype='Int64'))
 
     def test__add_foreign_key_columns(self):
         """Test that ``_add_foreign_key_columns`` raises a ``NotImplementedError``."""
@@ -53,7 +53,7 @@ class TestBaseHierarchicalSampler():
         instance = Mock()
 
         # Run
-        result = BaseHierarchicalSampler._sample_rows(instance, synthesizer, 'users', 10)
+        result = BaseHierarchicalSampler._sample_rows(instance, synthesizer, 10)
 
         # Assert
         assert result == synthesizer._sample_batch.return_value

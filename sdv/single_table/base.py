@@ -552,7 +552,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         return sampled
 
     def _sample_rows(self, num_rows, conditions=None, transformed_conditions=None,
-                     float_rtol=0.1, previous_rows=None):
+                     float_rtol=0.1, previous_rows=None, keep_extra_columns=False):
         """Sample rows with the given conditions.
 
         Input conditions is taken both in the raw input format, which will be used
@@ -580,6 +580,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Maximum tolerance when considering a float match.
             previous_rows (pandas.DataFrame):
                 Valid rows sampled in the previous iterations.
+            remove_extra_columns (bool):
+                Whether to keep extra columns from the sampled data. Defaults to False.
 
         Returns:
             tuple:
@@ -601,11 +603,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     raw_sampled = self._sample(num_rows)
 
             sampled = self._data_processor.reverse_transform(raw_sampled)
-            input_columns = self._data_processor._hyper_transformer._input_columns
-            missing_cols = list(
-                set(raw_sampled.columns) - set(input_columns) - set(sampled.columns)
-            )
-            sampled[missing_cols] = raw_sampled[missing_cols]
+            if keep_extra_columns:
+                input_columns = self._data_processor._hyper_transformer._input_columns
+                missing_cols = list(
+                    set(raw_sampled.columns) - set(input_columns) - set(sampled.columns)
+                )
+                sampled = pd.concat([sampled, raw_sampled[missing_cols]], axis=1)
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
@@ -626,7 +629,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
     def _sample_batch(self, batch_size, max_tries=100,
                       conditions=None, transformed_conditions=None, float_rtol=0.01,
-                      progress_bar=None, output_file_path=None, remove_extra_columns=True):
+                      progress_bar=None, output_file_path=None, keep_extra_columns=False):
         """Sample a batch of rows with the given conditions.
 
         This will enter a reject-sampling loop in which rows will be sampled until
@@ -666,7 +669,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 The file to periodically write sampled rows to. If None, does not write
                 rows anywhere.
             remove_extra_columns (bool):
-                Whether to remove extra columns from the sampled data. Defaults to True.
+                Whether to keep extra columns from the sampled data. Defaults to False.
 
         Returns:
             pandas.DataFrame:
@@ -687,7 +690,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 conditions,
                 transformed_conditions,
                 float_rtol,
-                sampled
+                sampled,
+                keep_extra_columns
             )
 
             num_new_valid_rows = num_valid - prev_num_valid
@@ -715,9 +719,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     f'{remaining} valid rows remaining. Resampling {num_rows_to_sample} rows')
 
             counter += 1
-
-        if remove_extra_columns:
-            sampled = sampled[self.metadata.columns.keys()]
 
         return sampled.head(min(len(sampled), batch_size))
 

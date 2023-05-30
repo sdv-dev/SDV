@@ -26,12 +26,14 @@ class BaseHierarchicalSampler():
         self._table_synthesizers = table_synthesizers
         self._table_sizes = table_sizes
 
-    def _recreate_child_synthesizer(self, child_name, parent_row):
+    def _recreate_child_synthesizer(self, child_name, parent_name, parent_row):
         """Recreate a child table's synthesizer based on the parent's row.
 
         Args:
             child_name (str):
                 The name of the child table.
+            parent_name (str):
+                The name of the parent table.
             parent_row (pd.Series):
                 The row from the parent table to use for the child synthesizer.
         """
@@ -52,14 +54,12 @@ class BaseHierarchicalSampler():
         """
         raise NotImplementedError()
 
-    def _sample_rows(self, synthesizer, table_name, num_rows=None):
+    def _sample_rows(self, synthesizer, num_rows=None):
         """Sample ``num_rows`` from ``synthesizer``.
 
         Args:
             synthesizer (copula.multivariate.base):
                 The fitted synthesizer for the table.
-            table_name (str):
-                Name of the table to sample from.
             num_rows (int):
                 Number of rows to sample.
 
@@ -98,9 +98,9 @@ class BaseHierarchicalSampler():
         """
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         num_rows = self._get_num_rows_from_parent(parent_row, child_name, foreign_key)
-        child_synthesizer = self._recreate_child_synthesizer(child_name, parent_row)
+        child_synthesizer = self._recreate_child_synthesizer(child_name, parent_name, parent_row)
 
-        sampled_rows = self._sample_rows(child_synthesizer, child_name, num_rows)
+        sampled_rows = self._sample_rows(child_synthesizer, num_rows)
 
         if len(sampled_rows):
             parent_key = self.metadata.tables[parent_name].primary_key
@@ -126,19 +126,19 @@ class BaseHierarchicalSampler():
             sampled_data (dict):
                 A dictionary mapping table names to sampled tables (pd.DataFrame).
         """
-        LOGGER.info('Sampling %s rows from table %s', num_rows, table_name)
+        LOGGER.info(f'Sampling {num_rows} rows from table {table_name}')
 
-        table_rows = self._sample_rows(synthesizer, table_name, num_rows)
+        table_rows = self._sample_rows(synthesizer, num_rows)
         sampled_data[table_name] = table_rows
-
         for child_name in self.metadata._get_child_map()[table_name]:
-            for row in table_rows:
-                self._add_child_rows(
-                    child_name=child_name,
-                    parent_name=table_name,
-                    parent_row=row,
-                    sampled_data=sampled_data
-                )
+            if child_name not in sampled_data:
+                for _, row in table_rows.iterrows():
+                    self._add_child_rows(
+                        child_name=child_name,
+                        parent_name=table_name,
+                        parent_row=row,
+                        sampled_data=sampled_data
+                    )
 
     def _finalize(self, sampled_data):
         """Remove extra columns from sampled tables and apply finishing touches.
@@ -197,14 +197,17 @@ class BaseHierarchicalSampler():
                     sampled_data=sampled_data
                 )
 
+        added_relationships = set()
         for relationship in self.metadata.relationships:
             parent_name = relationship['parent_table_name']
             child_name = relationship['child_table_name']
-            self._add_foreign_key_columns(
-                sampled_data[child_name],
-                sampled_data[parent_name],
-                child_name,
-                parent_name
-            )
+            if (parent_name, child_name) not in added_relationships:
+                self._add_foreign_key_columns(
+                    sampled_data[child_name],
+                    sampled_data[parent_name],
+                    child_name,
+                    parent_name
+                )
+                added_relationships.add((parent_name, child_name))
 
         return self._finalize(sampled_data)

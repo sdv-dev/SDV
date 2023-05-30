@@ -1049,12 +1049,14 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, sampled_data)
-        rows, conditions, trans_cond, float_rtol, sampled = instance._sample_rows.call_args[0]
+        _sample_rows_args = instance._sample_rows.call_args[0]
+        rows, conditions, trans_cond, float_rtol, sampled, keep_extra_columns = _sample_rows_args
         assert rows == 3
         assert conditions is None
         assert trans_cond is None
         assert float_rtol == 0.01
         pd.testing.assert_frame_equal(sampled, pd.DataFrame())
+        assert keep_extra_columns == False
 
     def test__sample_batch_with_sampled_data_bigger_than_batch_size(self):
         """Test ``sampled_data`` is bigger than the batch size.
@@ -1085,12 +1087,14 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, sampled_data.head(3))
-        rows, conditions, trans_cond, float_rtol, sampled = instance._sample_rows.call_args[0]
+        _sample_rows_args = instance._sample_rows.call_args[0]
+        rows, conditions, trans_cond, float_rtol, sampled, keep_extra_columns = _sample_rows_args
         assert rows == 3
         assert conditions is None
         assert trans_cond is None
         assert float_rtol == 0.01
         pd.testing.assert_frame_equal(sampled, pd.DataFrame())
+        assert keep_extra_columns == False
 
     def test__sample_batch_max_tries_reached(self):
         """Test that when ``max_tries`` is reached, a break occurs."""
@@ -1117,7 +1121,8 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, sampled_data)
-        rows, conditions, trans_cond, float_rtol, sampled = instance._sample_rows.call_args[0]
+        _sample_rows_args = instance._sample_rows.call_args[0]
+        rows, conditions, trans_cond, float_rtol, sampled, keep_extra_columns = _sample_rows_args
         assert instance._sample_rows.call_count == 2
 
     def test__sample_batch_storing_output_file(self, tmpdir):
