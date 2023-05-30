@@ -9,7 +9,7 @@ import cloudpickle
 import numpy as np
 import pandas as pd
 import pkg_resources
-from tqdm.auto import tqdm
+from tqdm import tqdm
 
 from sdv.errors import SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -61,6 +61,7 @@ class BaseMultiTableSynthesizer:
             )
 
     def _get_pbar_args(self, **kwargs):
+        """Return a dictionary with the updated keyword args for a progress bar."""
         pbar_args = {'disable': not self.verbose}
         pbar_args.update(kwargs)
 
@@ -70,6 +71,7 @@ class BaseMultiTableSynthesizer:
         self.metadata = metadata
         self.metadata.validate()
         self.locales = locales
+        self.verbose = verbose
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
         if synthesizer_kwargs is not None:

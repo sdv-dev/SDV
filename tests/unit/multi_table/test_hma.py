@@ -46,7 +46,7 @@ class TestHMASynthesizer:
         instance = HMASynthesizer(metadata)
 
         # Run
-        result = instance._get_extension('nesreca', child_table, 'upravna_enota')
+        result = instance._get_extension('nesreca', child_table, 'upravna_enota', '')
 
         # Assert
         expected = pd.DataFrame({
@@ -66,6 +66,7 @@ class TestHMASynthesizer:
         """
         # Setup
         instance = Mock()
+        instance._get_pbar_args.return_value = {'desc': "(1/2) Tables 'A' and 'B' ('user_id')"}
         instance._get_all_foreign_keys.return_value = ['id_upravna_enota']
         instance._table_synthesizers = {'nesreca': Mock()}
         child_table = pd.DataFrame({
@@ -77,13 +78,16 @@ class TestHMASynthesizer:
             instance,
             'nesreca',
             child_table,
-            'id_upravna_enota'
+            'id_upravna_enota',
+            "(1/2) Tables 'A' and 'B' ('user_id')"
         )
 
         # Assert
         expected = pd.DataFrame({
             '__nesreca__id_upravna_enota__num_rows': [1, 1, 1, 1]
         })
+        instance._get_pbar_args.assert_called_once_with(
+            desc="(1/2) Tables 'A' and 'B' ('user_id')")
 
         pd.testing.assert_frame_equal(result, expected)
 
@@ -126,6 +130,9 @@ class TestHMASynthesizer:
         data = get_multi_table_data()
         data['nesreca']['value'] = [0, 1, 2, 3]
         data['oseba']['oseba_value'] = [0, 1, 2, 3]
+        mock_get_pbar_args = Mock()
+        mock_get_pbar_args.return_value = {}
+        instance._get_pbar_args = mock_get_pbar_args
 
         # Run
         result = instance._augment_table(data['nesreca'], data, 'nesreca')
@@ -151,6 +158,9 @@ class TestHMASynthesizer:
         pd.testing.assert_frame_equal(expected_result, result)
         assert instance._augmented_tables == ['oseba', 'nesreca']
         assert instance._max_child_rows['__oseba__id_nesreca__num_rows'] == 1
+        mock_get_pbar_args.assert_called_once_with(
+            desc="(1/3) Tables 'nesreca' and 'oseba' ('id_nesreca')"
+        )
 
     def test__pop_foreign_keys(self):
         """Test that this method removes the foreign keys from the ``table_data``."""
@@ -204,6 +214,7 @@ class TestHMASynthesizer:
         upravna_enota_model = Mock()
         instance = Mock()
         instance._synthesizer = GaussianCopulaSynthesizer
+        instance._get_pbar_args.return_value = {'desc': 'Modeling Tables'}
 
         metadata = get_multi_table_metadata()
         instance.metadata = metadata

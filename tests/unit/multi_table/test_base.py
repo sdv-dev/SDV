@@ -52,6 +52,38 @@ class TestBaseMultiTableSynthesizer:
             call(metadata=instance.metadata.tables['upravna_enota'], locales=locales)
         ])
 
+    def test__get_pbar_args(self):
+        """Test that ``_get_pbar_args`` returns a dictionary with disable oposite to verbose."""
+        # Setup
+        instance = Mock()
+        instance.verbose = False
+
+        # Run
+        result = BaseMultiTableSynthesizer._get_pbar_args(instance)
+
+        # Assert
+        assert result == {'disable': True}
+
+    def test__get_pbar_args_kwargs(self):
+        """Test that ``_get_pbar_args`` returns a dictionary with the given kwargs."""
+        # Setup
+        instance = Mock()
+        instance.verbose = True
+
+        # Run
+        result = BaseMultiTableSynthesizer._get_pbar_args(
+            instance,
+            desc='Process Table',
+            position=0
+        )
+
+        # Assert
+        assert result == {
+            'disable': False,
+            'desc': 'Process Table',
+            'position': 0
+        }
+
     def test___init__(self):
         """Test that when creating a new instance this sets the defaults.
 

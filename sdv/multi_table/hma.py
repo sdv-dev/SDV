@@ -6,7 +6,7 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
-from tqdm.auto import tqdm
+from tqdm import tqdm
 
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 
@@ -35,6 +35,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         self._table_sizes = {}
         self._max_child_rows = {}
         self._augmented_tables = []
+        self._learned_relationships = 0
         self.verbose = verbose
 
     def _get_extension(self, child_name, child_table, foreign_key, pbar_desc):
