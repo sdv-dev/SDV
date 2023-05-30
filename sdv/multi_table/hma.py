@@ -145,7 +145,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         self._table_sizes[table_name] = len(table)
         LOGGER.info('Computing extensions for table %s', table_name)
         child_map = self.metadata._get_child_map()[table_name]
-        for child_idx, child_name in enumerate(child_map):
+        for child_name in child_map:
             if child_name not in self._augmented_tables:
                 child_table = self._augment_table(tables[child_name], tables, child_name)
 
