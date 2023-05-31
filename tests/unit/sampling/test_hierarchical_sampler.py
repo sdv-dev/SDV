@@ -59,7 +59,7 @@ class TestBaseHierarchicalSampler():
         assert result == synthesizer._sample_batch.return_value
         synthesizer._sample_batch.assert_called_once_with(
             10,
-            remove_extra_columns=False
+            keep_extra_columns=True
         )
 
     def test__get_num_rows_from_parent(self):

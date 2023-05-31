@@ -91,18 +91,6 @@ class TestHMASynthesizer:
 
         pd.testing.assert_frame_equal(result, expected)
 
-    def test__get_foreign_keys(self):
-        """Test that this method returns the foreign keys for a given table name and child name."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = HMASynthesizer(metadata)
-
-        # Run
-        result = instance._get_foreign_keys('nesreca', 'oseba')
-
-        # Assert
-        assert result == ['id_nesreca']
-
     def test__get_all_foreign_keys(self):
         """Test that this method returns all the foreign keys for a given table name."""
         # Setup
@@ -284,8 +272,8 @@ class TestHMASynthesizer:
     def test__finalize(self):
         """Test that the finalize method applies the final touches to the generated data.
 
-        The process consists of applying the propper data types to each table, and finding
-        foreign keys if those are not present in the current sampled data.
+        The process consists of applying the propper data types to each table, and dropping
+        extra columns not present in the metadata.
         """
         # Setup
         instance = Mock()
@@ -295,9 +283,6 @@ class TestHMASynthesizer:
             'transactions': ['sessions']
         }
         instance.metadata = metadata
-
-        instance._get_foreign_keys.side_effect = [['user_id'], ['session_id']]
-        instance._find_parent_ids.return_value = pd.Series(['a', 'a', 'b'], name='session_id')
 
         sampled_data = {
             'users': pd.DataFrame({
@@ -314,6 +299,7 @@ class TestHMASynthesizer:
             }),
             'transactions': pd.DataFrame({
                 'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
+                'session_id': pd.Series(['a', 'a', 'b'], dtype=object),
             }),
         }
 
@@ -388,311 +374,36 @@ class TestHMASynthesizer:
 
         assert result == expected_result
 
-    def test__process_samples(self):
-        """Test the ``_process_samples``.
-
-        Test that the method retrieves the ``data_processor`` from the fitted ``table_synthesizer``
-        and performs a ``reverse_transform`` and returns the data in the real space.
-        """
-        # Setup
-        sampled_rows = pd.DataFrame({
-            'name': [0.1, 0.25, 0.35],
-            'a': [1.0, 0.25, 0.5],
-            'b': [0.2, 0.6, 0.9],
-            'loc': [0.5, 0.1, 0.2],
-            'num_rows': [1, 2, 3],
-            'scale': [0.25, 0.35, 0.15]
-        })
-        instance = Mock()
-        users_synthesizer = Mock()
-        users_synthesizer._data_processor.reverse_transform.return_value = pd.DataFrame({
-            'user_id': [0, 1, 2],
-            'name': ['John', 'Doe', 'Johanna']
-        })
-        instance._table_synthesizers = {'users': users_synthesizer}
-
-        # Run
-        result = HMASynthesizer._process_samples(instance, 'users', sampled_rows)
-
-        # Assert
-        expected_result = pd.DataFrame({
-            'user_id': [0, 1, 2],
-            'name': ['John', 'Doe', 'Johanna'],
-            'a': [1.0, 0.25, 0.5],
-            'b': [0.2, 0.6, 0.9],
-            'loc': [0.5, 0.1, 0.2],
-            'num_rows': [1, 2, 3],
-            'scale': [0.25, 0.35, 0.15]
-        })
-        result = result.reindex(sorted(result.columns), axis=1)
-        expected_result = expected_result.reindex(sorted(expected_result.columns), axis=1)
-        pd.testing.assert_frame_equal(result, expected_result)
-
-    def test__sample_rows(self):
-        """Test sample rows.
-
-        Test that sampling rows will return the reverse transformed data with the extension columns
-        sampled by the model.
-        """
-        # Setup
-        synthesizer = Mock()
-        instance = Mock()
-
-        # Run
-        result = HMASynthesizer._sample_rows(instance, synthesizer, 'users', 10)
-
-        # Assert
-        assert result == instance._process_samples.return_value
-        instance._process_samples.assert_called_once_with(
-            'users',
-            synthesizer._sample.return_value
-        )
-        synthesizer._sample.assert_called_once_with(10)
-
-    def test__get_child_synthesizer(self):
+    def test__recreate_child_synthesizer(self):
         """Test that this method returns a synthesizer for the given child table."""
         # Setup
         instance = Mock()
         parent_row = 'row'
         table_name = 'users'
-        foreign_key = 'session_id'
+        parent_table_name = 'sessions'
         table_meta = Mock()
+        table_synthesizer = Mock()
         instance.metadata.tables = {'users': table_meta}
+        instance.metadata._get_foreign_keys.return_value = ['session_id']
         instance._table_parameters = {'users': {'a': 1}}
+        instance._table_synthesizers = {'users': table_synthesizer}
 
         # Run
-        synthesizer = HMASynthesizer._get_child_synthesizer(
+        synthesizer = HMASynthesizer._recreate_child_synthesizer(
             instance,
-            parent_row,
             table_name,
-            foreign_key
+            parent_table_name,
+            parent_row,
         )
 
         # Assert
         assert synthesizer == instance._synthesizer.return_value
+        assert synthesizer._data_processor == table_synthesizer._data_processor
         instance._synthesizer.assert_called_once_with(table_meta, a=1)
         synthesizer._set_parameters.assert_called_once_with(
             instance._extract_parameters.return_value
         )
-        instance._extract_parameters.assert_called_once_with(parent_row, table_name, foreign_key)
-
-    def test__sample_child_rows(self):
-        """Test the sampling of child rows when sampled data is empty."""
-        # Setup
-        instance = Mock()
-        instance._get_foreign_keys.return_value = ['user_id']
-        instance._extract_parameters.return_value = {
-            'a': 1.0,
-            'b': 0.2,
-            'loc': 0.5,
-            'num_rows': 10.0,
-            'scale': 0.25
-        }
-
-        metadata = Mock()
-        sessions_meta = Mock()
-        users_meta = Mock()
-        users_meta.primary_key.return_value = 'user_id'
-        metadata.tables = {
-            'users': users_meta,
-            'sessions': sessions_meta
-        }
-        instance.metadata = metadata
-        instance._synthesizer_kwargs = {'a': 0.1, 'b': 0.5, 'loc': 0.25}
-
-        instance._sample_rows.return_value = pd.DataFrame({
-            'session_id': ['a', 'b', 'c'],
-            'os': ['linux', 'mac', 'win'],
-            'country': ['us', 'us', 'es'],
-        })
-        parent_row = pd.DataFrame({
-            'user_id': [1, 2, 3],
-            'name': ['John', 'Doe', 'Johanna']
-        })
-        sampled_data = {}
-
-        # Run
-        HMASynthesizer._sample_child_rows(instance, 'sessions', 'users', parent_row, sampled_data)
-
-        # Assert
-        expected_result = pd.DataFrame({
-            'session_id': ['a', 'b', 'c'],
-            'os': ['linux', 'mac', 'win'],
-            'country': ['us', 'us', 'es'],
-            'user_id': [1, 2, 3]
-        })
-        pd.testing.assert_frame_equal(sampled_data['sessions'], expected_result)
-
-    def test__sample_child_rows_with_sampled_data(self):
-        """Test the sampling of child rows when sampled data contains values.
-
-        The new sampled data has to be concatenated to the current sampled data.
-        """
-        # Setup
-        instance = Mock()
-        instance._get_foreign_keys.return_value = ['user_id']
-        instance._extract_parameters.return_value = {
-            'a': 1.0,
-            'b': 0.2,
-            'loc': 0.5,
-            'num_rows': 10.0,
-            'scale': 0.25
-        }
-
-        metadata = Mock()
-        sessions_meta = Mock()
-        users_meta = Mock()
-        users_meta.primary_key.return_value = 'user_id'
-        metadata.tables = {
-            'users': users_meta,
-            'sessions': sessions_meta
-        }
-        instance.metadata = metadata
-        instance._synthesizer_kwargs = {'a': 0.1, 'b': 0.5, 'loc': 0.25}
-
-        instance._sample_rows.return_value = pd.DataFrame({
-            'session_id': ['a', 'b', 'c'],
-            'os': ['linux', 'mac', 'win'],
-            'country': ['us', 'us', 'es'],
-        })
-        parent_row = pd.DataFrame({
-            'user_id': [1, 2, 3],
-            'name': ['John', 'Doe', 'Johanna']
-        })
-        sampled_data = {
-            'sessions': pd.DataFrame({
-                'user_id': [0, 1, 0],
-                'session_id': ['d', 'e', 'f'],
-                'os': ['linux', 'mac', 'win'],
-                'country': ['us', 'us', 'es'],
-            })
-        }
-
-        # Run
-        HMASynthesizer._sample_child_rows(instance, 'sessions', 'users', parent_row, sampled_data)
-
-        # Assert
-        expected_result = pd.DataFrame({
-            'user_id': [0, 1, 0, 1, 2, 3],
-            'session_id': ['d', 'e', 'f', 'a', 'b', 'c'],
-            'os': ['linux', 'mac', 'win', 'linux', 'mac', 'win'],
-            'country': ['us', 'us', 'es', 'us', 'us', 'es'],
-        })
-        pd.testing.assert_frame_equal(sampled_data['sessions'], expected_result)
-
-    def test__sample_children(self):
-        """Test that child tables are being sampled recursively."""
-        # Setup
-        def update_sampled_data(child_name, table_name, row, sampled_data):
-            sampled_data['sessions'] = pd.DataFrame({
-                'user_id': [1],
-                'session_id': ['d'],
-                'os': ['linux'],
-                'country': ['us'],
-            })
-
-        metadata = Mock()
-        metadata._get_child_map.return_value = {'users': ['sessions']}
-        instance = Mock()
-        table_rows = pd.DataFrame({
-            'user_id': [1, 2, 3],
-            'name': ['John', 'Doe', 'Johanna']
-        })
-        sampled_data = {}
-        instance.metadata = metadata
-        instance._sample_child_rows.side_effect = update_sampled_data
-
-        # Run
-        HMASynthesizer._sample_children(instance, 'users', sampled_data, table_rows)
-
-        # Assert
-        assert instance._sample_child_rows.call_count == 3
-        sample_calls = instance._sample_child_rows.call_args_list
-        pd.testing.assert_series_equal(
-            sample_calls[0][0][2],
-            pd.Series({'user_id': 1, 'name': 'John'}, name=0)
-        )
-        pd.testing.assert_series_equal(
-            sample_calls[1][0][2],
-            pd.Series({'user_id': 2, 'name': 'Doe'}, name=1)
-        )
-        pd.testing.assert_series_equal(
-            sample_calls[2][0][2],
-            pd.Series({'user_id': 3, 'name': 'Johanna'}, name=2)
-        )
-
-    def test__sample_table(self):
-        """Test sampling a table.
-
-        The ``sample_table`` method will call sample children and return the sampled data
-        dictionary.
-        """
-        # Setup
-        def sample_children(table_name, sampled_data, table_rows):
-            sampled_data['sessions'] = pd.DataFrame({
-                'user_id': [1, 1, 3],
-                'session_id': ['a', 'b', 'c'],
-                'os': ['windows', 'linux', 'mac'],
-                'country': ['us', 'us', 'es']
-            })
-            sampled_data['transactions'] = pd.DataFrame({
-                'transaction_id': [1, 2, 3],
-                'session_id': ['a', 'a', 'b']
-            })
-
-        instance = Mock()
-        instance._table_sizes = {'users': 10}
-        instance._table_synthesizers = {'users': Mock()}
-        instance._sample_children.side_effect = sample_children
-        instance._sample_rows.return_value = pd.DataFrame({
-            'user_id': [1, 2, 3],
-            'name': ['John', 'Doe', 'Johanna']
-        })
-
-        # Run
-        result = HMASynthesizer._sample_table(instance, 'users')
-
-        # Assert
-        expected_result = {
-            'users': pd.DataFrame({
-                'user_id': [1, 2, 3],
-                'name': ['John', 'Doe', 'Johanna'],
-            }),
-            'sessions': pd.DataFrame({
-                'user_id': [1, 1, 3],
-                'session_id': ['a', 'b', 'c'],
-                'os': ['windows', 'linux', 'mac'],
-                'country': ['us', 'us', 'es'],
-            }),
-            'transactions': pd.DataFrame({
-                'transaction_id': [1, 2, 3],
-                'session_id': ['a', 'a', 'b']
-            })
-        }
-        for result_frame, expected_frame in zip(result.values(), expected_result.values()):
-            pd.testing.assert_frame_equal(result_frame, expected_frame)
-
-    def test__sample(self):
-        """Test that the ``_sample_table`` is called for tables that don't have parents."""
-        # Setup
-        instance = Mock()
-        instance.metadata._get_parent_map.return_value = {
-            'sessions': ['users'],
-            'transactions': ['sessions']
-        }
-        instance.metadata.tables = {
-            'users': Mock(),
-            'sessions': Mock(),
-            'transactions': Mock(),
-        }
-
-        # Run
-        result = HMASynthesizer._sample(instance)
-
-        # Assert
-        assert result == instance._finalize.return_value
-        instance._sample_table.assert_called_once_with('users', scale=1, sampled_data={})
-        instance._finalize.assert_called_once_with({})
+        instance._extract_parameters.assert_called_once_with(parent_row, table_name, 'session_id')
 
     def test_get_learned_distributions(self):
         """Test that ``get_learned_distributions`` returns a dict.
@@ -752,3 +463,48 @@ class TestHMASynthesizer:
         )
         with pytest.raises(ValueError, match=error_msg):
             instance.get_learned_distributions('upravna_enota')
+
+    def test__add_foreign_key_columns(self):
+        """Test that the ``_add_foreign_key_columns`` method adds foreign keys."""
+        # Setup
+        instance = Mock()
+        metadata = Mock()
+        metadata._get_foreign_keys.return_value = ['primary_user_id', 'secondary_user_id']
+        instance.metadata = metadata
+
+        instance._find_parent_ids.return_value = pd.Series([2, 1, 2], name='secondary_user_id')
+
+        parent_table = pd.DataFrame({
+            'user_id': pd.Series([0, 1, 2], dtype=np.int64),
+            'name': pd.Series(['John', 'Doe', 'Johanna'], dtype=object),
+        })
+        child_table = pd.DataFrame({
+            'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
+            'primary_user_id': pd.Series([0, 0, 1], dtype=np.int64)
+        })
+
+        instance._table_synthesizers = {
+            'users': Mock(),
+            'transactions': Mock()
+        }
+
+        # Run
+        HMASynthesizer._add_foreign_key_columns(
+            instance,
+            child_table,
+            parent_table,
+            'transactions',
+            'users')
+
+        # Assert
+        expected_parent_table = pd.DataFrame({
+            'user_id': pd.Series([0, 1, 2], dtype=np.int64),
+            'name': pd.Series(['John', 'Doe', 'Johanna'], dtype=object),
+        })
+        expected_child_table = pd.DataFrame({
+            'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
+            'primary_user_id': pd.Series([0, 0, 1], dtype=np.int64),
+            'secondary_user_id': pd.Series([2, 1, 2], dtype=np.int64)
+        })
+        pd.testing.assert_frame_equal(expected_parent_table, parent_table)
+        pd.testing.assert_frame_equal(expected_child_table, child_table)

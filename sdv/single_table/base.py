@@ -594,7 +594,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Maximum tolerance when considering a float match.
             previous_rows (pandas.DataFrame):
                 Valid rows sampled in the previous iterations.
-            remove_extra_columns (bool):
+            keep_extra_columns (bool):
                 Whether to keep extra columns from the sampled data. Defaults to False.
 
         Returns:
@@ -604,10 +604,11 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 * int:
                     Number of rows that are considered valid.
         """
-        if not self._random_state_set:
-            self._set_random_state(FIXED_RNG_SEED)
+        if (self._model and (
+                self._data_processor.get_sdtypes(primary_keys=False) or keep_extra_columns)):
+            if not self._random_state_set:
+                self._set_random_state(FIXED_RNG_SEED)
 
-        if self._data_processor.get_sdtypes(primary_keys=False):
             if conditions is None:
                 raw_sampled = self._sample(num_rows)
             else:
@@ -682,7 +683,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             output_file_path (str or None):
                 The file to periodically write sampled rows to. If None, does not write
                 rows anywhere.
-            remove_extra_columns (bool):
+            keep_extra_columns (bool):
                 Whether to keep extra columns from the sampled data. Defaults to False.
 
         Returns:
