@@ -327,7 +327,7 @@ class BaseMultiTableSynthesizer:
 
         return processed_data
 
-    def _model_tables(self, augmented_data, prefix=None):
+    def _model_tables(self, augmented_data):
         """Model the augmented tables.
 
         Args:
@@ -352,7 +352,7 @@ class BaseMultiTableSynthesizer:
             processed_data (dict):
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
         """
-        augmented_data = self._augment_tables(processed_data.copy())
+        augmented_data = self._augment_tables(processed_data)
         self._model_tables(augmented_data)
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
