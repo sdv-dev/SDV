@@ -75,7 +75,7 @@ class BaseMultiTableSynthesizer:
                 print(message, **kwargs)  # noqa: T001
 
             elif message:
-                print(message)  # noqa: T001
+                print(message, **kwargs)  # noqa: T001
 
     def __init__(self, metadata, locales=None, synthesizer_kwargs=None, verbose=True):
         self.metadata = metadata
