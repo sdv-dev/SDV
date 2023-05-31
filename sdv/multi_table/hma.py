@@ -38,7 +38,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         self._learned_relationships = 0
         self.verbose = verbose
 
-    def _get_extension(self, child_name, child_table, foreign_key, pbar_desc):
+    def _get_extension(self, child_name, child_table, foreign_key, progress_bar_desc):
         """Generate the extension columns for this child table.
 
         The resulting dataframe will have an index that contains all the foreign key values.
@@ -52,7 +52,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                 Data for the child table.
             foreign_key (str):
                 Name of the foreign key field.
-            pbar_desc (str):
+            progress_bar_desc (str):
                 Progress bar description.
 
         Returns:
@@ -67,7 +67,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
         index = []
         scale_columns = None
-        pbar_args = self._get_pbar_args(desc=pbar_desc)
+        pbar_args = self._get_pbar_args(desc=progress_bar_desc)
         for foreign_key_value in tqdm(foreign_key_values, **pbar_args):
             child_rows = child_table.loc[[foreign_key_value]]
             child_rows = child_rows[child_rows.columns.difference(foreign_key_columns)]
@@ -154,7 +154,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
             foreign_keys = self._get_foreign_keys(table_name, child_name)
             for foreign_key in foreign_keys:
-                pbar_desc = (
+                progress_bar_desc = (
                     f'({self._learned_relationships + 1}/{len(self.metadata.relationships)}) '
                     f"Tables '{table_name}' and '{child_name}' ('{foreign_key}')"
                 )
@@ -162,7 +162,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
                     child_name,
                     child_table.copy(),
                     foreign_key,
-                    pbar_desc
+                    progress_bar_desc
                 )
                 table = table.merge(extension, how='left', right_index=True, left_index=True)
                 num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
@@ -195,15 +195,12 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
         return keys
 
-    def _model_tables(self, augmented_data, prefix=None):
+    def _model_tables(self, augmented_data):
         """Model the augmented tables.
 
         Args:
             augmented_data (dict):
                 Dictionary mapping each table name to an augmented ``pandas.DataFrame``.
-            prefix (str):
-                Prefix to be used when ``self.verbose`` is ``True`` in order to add extra spacing
-                between multiple progress bars.
         """
         parent_map = self.metadata._get_parent_map()
         augmented_data_to_model = [
@@ -211,7 +208,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             for table_name, table in augmented_data.items()
             if table_name not in parent_map
         ]
-        self._print_info(prefix=prefix, text='')
+        self._print(text='\n', end='')
         pbar_args = self._get_pbar_args(desc='Modeling Tables')
         for table_name, table in tqdm(augmented_data_to_model, **pbar_args):
             keys = self._pop_foreign_keys(table, table_name)
@@ -236,7 +233,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
         self._augmented_tables = []
         self._learned_relationships = 0
         parent_map = self.metadata._get_parent_map()
-        self._print_info(text='Learning relationships:')
+        self._print(text='Learning relationships:')
         for table_name in processed_data:
             if not parent_map.get(table_name):
                 self._augment_table(augmented_data[table_name], augmented_data, table_name)

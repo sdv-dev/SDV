@@ -67,15 +67,9 @@ class BaseMultiTableSynthesizer:
 
         return pbar_args
 
-    def _print_info(self, prefix=None, text='', **kwargs):
+    def _print(self, text='', **kwargs):
         if self.verbose:
-            message = f"{prefix if prefix else ''}{text}"
-            if text == '' and prefix == '\n':
-                message = ''
-                print(message, **kwargs)  # noqa: T001
-
-            elif message:
-                print(message, **kwargs)  # noqa: T001
+            print(text, **kwargs)  # noqa: T001
 
     def __init__(self, metadata, locales=None, synthesizer_kwargs=None, verbose=True):
         self.metadata = metadata
@@ -333,7 +327,7 @@ class BaseMultiTableSynthesizer:
 
         return processed_data
 
-    def _model_tables(self, augmented_data):
+    def _model_tables(self, augmented_data, prefix=None):
         """Model the augmented tables.
 
         Args:
@@ -359,7 +353,7 @@ class BaseMultiTableSynthesizer:
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
         """
         augmented_data = self._augment_tables(processed_data.copy())
-        self._model_tables(augmented_data, prefix='\n')
+        self._model_tables(augmented_data)
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_sdv_version = pkg_resources.get_distribution('sdv').version
@@ -374,7 +368,7 @@ class BaseMultiTableSynthesizer:
         """
         self._fitted = False
         processed_data = self.preprocess(data)
-        self._print_info(text='\n', end='')
+        self._print(text='\n', end='')
         self.fit_processed_data(processed_data)
 
     def reset_sampling(self):
