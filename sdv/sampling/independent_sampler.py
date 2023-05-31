@@ -51,7 +51,7 @@ class BaseIndependentSampler():
             sampled_data (dict):
                 A dictionary mapping table names to sampled tables (pd.DataFrame).
         """
-        LOGGER.info('Sampling %s rows from table %s', num_rows, table_name)
+        LOGGER.info(f'Sampling {num_rows} rows from table {table_name}')
 
         sampled_rows = synthesizer._sample_batch(num_rows, keep_extra_columns=True)
         sampled_data[table_name] = sampled_rows
@@ -67,7 +67,9 @@ class BaseIndependentSampler():
                 A dictionary mapping table names to the sampled tables (pd.DataFrame).
         """
         queue = [
-            table for table in self.metadata.tables if not self.metadata._get_parent_map()[table]
+            table
+            for table in self.metadata.tables
+            if not self.metadata._get_parent_map()[table]
         ]
         while queue:
             parent = queue.pop(0)
