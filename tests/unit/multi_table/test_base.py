@@ -84,6 +84,29 @@ class TestBaseMultiTableSynthesizer:
             'position': 0
         }
 
+    @patch('sdv.multi_table.base.print')
+    def test__print_info(self, mock_print):
+        """Test that print info will print a message if verbose is True."""
+        # Setup
+        instance = Mock(verbose=True)
+
+        # Run
+        BaseMultiTableSynthesizer._print_info(instance, prefix='SDV;', text='Fitting')
+
+        # Assert
+        mock_print.assert_called_once_with('SDV;Fitting')
+
+    @patch('sdv.multi_table.base.print')
+    def test__print_info_empty_text_breakline(self, mock_print):
+        # Setup
+        instance = Mock(verbose=True)
+
+        # Run
+        BaseMultiTableSynthesizer._print_info(instance, prefix='\n', text='')
+
+        # Assert
+        mock_print.assert_called_once_with('')
+
     def test___init__(self):
         """Test that when creating a new instance this sets the defaults.
 
@@ -702,8 +725,9 @@ class TestBaseMultiTableSynthesizer:
         BaseMultiTableSynthesizer.fit_processed_data(instance, data)
 
         # Assert
-        instance._augment_tables.assert_called_once_with(data)
-        instance._model_tables.assert_called_once_with(instance._augment_tables.return_value)
+        instance._augment_tables.assert_called_once_with(data, prefix='')
+        instance._model_tables.assert_called_once_with(
+            instance._augment_tables.return_value, prefix='\n')
         assert instance._fitted
 
     def test_fit(self):
@@ -717,7 +741,10 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         instance.preprocess.assert_called_once_with(data)
-        instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
+        instance.fit_processed_data.assert_called_once_with(
+            instance.preprocess.return_value,
+            prefix='\n'
+        )
 
     def test_reset_sampling(self):
         """Test that ``reset_sampling`` resets the numpy seed and the synthesizers."""

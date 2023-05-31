@@ -195,12 +195,15 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
 
         return keys
 
-    def _model_tables(self, augmented_data):
+    def _model_tables(self, augmented_data, prefix=None):
         """Model the augmented tables.
 
         Args:
             augmented_data (dict):
                 Dictionary mapping each table name to an augmented ``pandas.DataFrame``.
+            prefix (str):
+                Prefix to be used when ``self.verbose`` is ``True`` in order to add extra spacing
+                between multiple progress bars.
         """
         parent_map = self.metadata._get_parent_map()
         augmented_data_to_model = [
@@ -208,6 +211,7 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             for table_name, table in augmented_data.items()
             if table_name not in parent_map
         ]
+        self._print_info(prefix=prefix, text='')
         pbar_args = self._get_pbar_args(desc='Modeling Tables')
         for table_name, table in tqdm(augmented_data_to_model, **pbar_args):
             keys = self._pop_foreign_keys(table, table_name)
@@ -221,20 +225,21 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             for name, values in keys.items():
                 table[name] = values
 
-    def _augment_tables(self, processed_data):
+    def _augment_tables(self, processed_data, prefix=None):
         """Fit this ``HMASynthesizer`` instance to the dataset data.
 
         Args:
             processed_data (dict):
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
+            prefix (str):
+                Prefix to be used when ``self.verbose`` is ``True`` in order to add extra spacing
+                between multiple progress bars.
         """
         augmented_data = deepcopy(processed_data)
         self._augmented_tables = []
         self._learned_relationships = 0
         parent_map = self.metadata._get_parent_map()
-        if self.verbose:
-            print('Learning relationships:')  # noqa: T001
-
+        self._print_info(prefix=prefix, text='Learning relationships:')
         for table_name in processed_data:
             if not parent_map.get(table_name):
                 self._augment_table(augmented_data[table_name], augmented_data, table_name)
