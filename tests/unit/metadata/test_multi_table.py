@@ -500,6 +500,24 @@ class TestMultiTableMetadata:
         # Assert
         assert result == ['user_id']
 
+    def test__get_all_foreign_keys(self):
+        """Test that this method returns the all the foreign keys for a table."""
+        # Setup
+        instance = self.get_metadata()
+        instance.add_column('transactions', 'user_id', sdtype='id')
+        instance.add_relationship(
+            parent_table_name='users',
+            parent_primary_key='id',
+            child_table_name='transactions',
+            child_foreign_key='user_id'
+        )
+
+        # Run
+        result = instance._get_all_foreign_keys('transactions')
+
+        # Assert
+        assert set(result) == {'user_id', 'session_id'}
+
     def test_add_relationship(self):
         """Test the ``add_relationship`` method of ``MultiTableMetadata``.
 

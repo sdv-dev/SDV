@@ -196,6 +196,14 @@ class MultiTableMetadata:
 
         return foreign_keys
 
+    def _get_all_foreign_keys(self, table_name):
+        foreign_keys = []
+        for relation in self.relationships:
+            if table_name == relation['child_table_name']:
+                foreign_keys.append(deepcopy(relation['child_foreign_key']))
+
+        return foreign_keys
+
     def add_relationship(self, parent_table_name, child_table_name,
                          parent_primary_key, child_foreign_key):
         """Add a relationship between two tables.
