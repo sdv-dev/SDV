@@ -225,21 +225,18 @@ class HMASynthesizer(BaseMultiTableSynthesizer):
             for name, values in keys.items():
                 table[name] = values
 
-    def _augment_tables(self, processed_data, prefix=None):
+    def _augment_tables(self, processed_data):
         """Fit this ``HMASynthesizer`` instance to the dataset data.
 
         Args:
             processed_data (dict):
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
-            prefix (str):
-                Prefix to be used when ``self.verbose`` is ``True`` in order to add extra spacing
-                between multiple progress bars.
         """
         augmented_data = deepcopy(processed_data)
         self._augmented_tables = []
         self._learned_relationships = 0
         parent_map = self.metadata._get_parent_map()
-        self._print_info(prefix=prefix, text='Learning relationships:')
+        self._print_info(text='Learning relationships:')
         for table_name in processed_data:
             if not parent_map.get(table_name):
                 self._augment_table(augmented_data[table_name], augmented_data, table_name)

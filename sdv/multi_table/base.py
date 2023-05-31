@@ -67,13 +67,15 @@ class BaseMultiTableSynthesizer:
 
         return pbar_args
 
-    def _print_info(self, prefix=None, text=''):
+    def _print_info(self, prefix=None, text='', **kwargs):
         if self.verbose:
             message = f"{prefix if prefix else ''}{text}"
             if text == '' and prefix == '\n':
                 message = ''
+                print(message, **kwargs)  # noqa: T001
 
-            print(message)  # noqa: T001
+            elif message:
+                print(message)
 
     def __init__(self, metadata, locales=None, synthesizer_kwargs=None, verbose=True):
         self.metadata = metadata
@@ -349,17 +351,14 @@ class BaseMultiTableSynthesizer:
         """
         raise NotImplementedError()
 
-    def fit_processed_data(self, processed_data, prefix=''):
+    def fit_processed_data(self, processed_data):
         """Fit this model to the transformed data.
 
         Args:
             processed_data (dict):
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
-            prefix (str):
-                Prefix to be used when ``self.verbose`` is ``True`` in order to add extra spacing
-                between multiple progress bars.
         """
-        augmented_data = self._augment_tables(processed_data.copy(), prefix=prefix)
+        augmented_data = self._augment_tables(processed_data.copy())
         self._model_tables(augmented_data, prefix='\n')
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
@@ -375,7 +374,8 @@ class BaseMultiTableSynthesizer:
         """
         self._fitted = False
         processed_data = self.preprocess(data)
-        self.fit_processed_data(processed_data, prefix='\n')
+        self._print_info(text='\n', end='')
+        self.fit_processed_data(processed_data)
 
     def reset_sampling(self):
         """Reset the sampling to the state that was left right after fitting."""

@@ -725,7 +725,7 @@ class TestBaseMultiTableSynthesizer:
         BaseMultiTableSynthesizer.fit_processed_data(instance, data)
 
         # Assert
-        instance._augment_tables.assert_called_once_with(data, prefix='')
+        instance._augment_tables.assert_called_once_with(data)
         instance._model_tables.assert_called_once_with(
             instance._augment_tables.return_value, prefix='\n')
         assert instance._fitted
@@ -741,10 +741,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         instance.preprocess.assert_called_once_with(data)
-        instance.fit_processed_data.assert_called_once_with(
-            instance.preprocess.return_value,
-            prefix='\n'
-        )
+        instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
 
     def test_reset_sampling(self):
         """Test that ``reset_sampling`` resets the numpy seed and the synthesizers."""
