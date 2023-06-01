@@ -7,6 +7,7 @@ from rdt.transformers import (
 
 from sdv.datasets.demo import download_demo
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
+from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.errors import InvalidDataError
@@ -318,3 +319,23 @@ def test_validate_with_failing_constraint():
     # Run / Assert
     with pytest.raises(InvalidDataError, match=error_msg):
         gc.validate(real_data)
+
+
+def test_numerical_columns_gets_pii():
+    """Test that the synthesizer works when a ``numerical`` column gets converted to ``PII``."""
+    data = pd.DataFrame(data={
+        'id': [0, 1, 2, 3, 4],
+        'address': [0, 0, 0, 0, 0],
+        'numerical': [0.234234, 0.123213, 0.123123, 0.123123, 0.1345435]
+    })
+    metadata = SingleTableMetadata.load_from_dict({
+        'primary_key': 'id',
+        'columns': {
+            'id': {'sdtype': 'id'},
+            'address': {'sdtype': 'address'},
+            'numerical': {'sdtype': 'numerical'}
+        }
+    })
+    synth = GaussianCopulaSynthesizer(metadata)
+    synth.fit(data)
+    synth.sample(10)

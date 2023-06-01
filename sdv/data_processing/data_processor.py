@@ -751,7 +751,17 @@ class DataProcessor:
             if is_integer_dtype(dtype) and is_float_dtype(column_data.dtype):
                 column_data = column_data.round()
 
-            reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
+            try:
+                reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
+            except ValueError:
+                LOGGER.info(
+                    f"The real data in '{column_name}' was stored as '{dtype}' but the synthetic "
+                    'data could not be cast back to this type. If this is a problem, please check '
+                    'your input data and metadata settings.'
+                )
+                reversed_data[column_name] = column_data[column_data.notna()]
+                if column_name in self.formatters:
+                    self.formatters.pop(column_name)
 
         # reformat columns using the formatters
         for column in sampled_columns:
