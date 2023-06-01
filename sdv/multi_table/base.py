@@ -9,6 +9,7 @@ import cloudpickle
 import numpy as np
 import pandas as pd
 import pkg_resources
+from tqdm import tqdm
 
 from sdv.errors import SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -27,6 +28,8 @@ class BaseMultiTableSynthesizer:
             for.
         locales (list or str):
             The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+        verbose (bool):
+            Whether to print progress for fitting or not.
     """
 
     DEFAULT_SYNTHESIZER_KWARGS = None
@@ -57,10 +60,22 @@ class BaseMultiTableSynthesizer:
                 **synthesizer_parameters
             )
 
-    def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
+    def _get_pbar_args(self, **kwargs):
+        """Return a dictionary with the updated keyword args for a progress bar."""
+        pbar_args = {'disable': not self.verbose}
+        pbar_args.update(kwargs)
+
+        return pbar_args
+
+    def _print(self, text='', **kwargs):
+        if self.verbose:
+            print(text, **kwargs)  # noqa: T001
+
+    def __init__(self, metadata, locales=None, synthesizer_kwargs=None, verbose=True):
         self.metadata = metadata
         self.metadata.validate()
         self.locales = locales
+        self.verbose = verbose
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
         if synthesizer_kwargs is not None:
@@ -304,7 +319,8 @@ class BaseMultiTableSynthesizer:
             )
 
         processed_data = {}
-        for table_name, table_data in data.items():
+        pbar_args = self._get_pbar_args(desc='Preprocess Tables')
+        for table_name, table_data in tqdm(data.items(), **pbar_args):
             synthesizer = self._table_synthesizers[table_name]
             self._assign_table_transformers(synthesizer, table_name, table_data)
             processed_data[table_name] = synthesizer._preprocess(table_data)
@@ -352,6 +368,7 @@ class BaseMultiTableSynthesizer:
         """
         self._fitted = False
         processed_data = self.preprocess(data)
+        self._print(text='\n', end='')
         self.fit_processed_data(processed_data)
 
     def reset_sampling(self):
