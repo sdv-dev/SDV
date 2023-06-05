@@ -27,6 +27,20 @@ import sdv.sampling
 import sdv.sequential
 import sdv.single_table
 
+__all__ = [
+    'constraints',
+    'data_processing',
+    'datasets',
+    'evaluation',
+    'lite',
+    'metadata',
+    'metrics',
+    'multi_table',
+    'sampling',
+    'sequential',
+    'single_table'
+]
+
 
 def _get_addon_target(addon_path_name):
     """Find the target object for the add-on.
