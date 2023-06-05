@@ -1633,7 +1633,7 @@ class TestDataProcessor:
         }, index=[0, 1, 2])
         dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
 
-        # Run
+        # Run and Assert
         with pytest.raises(NotFittedError):
             dp.transform(data)
 
@@ -1935,7 +1935,7 @@ class TestDataProcessor:
         }, index=[0, 1, 2])
         dp = DataProcessor(SingleTableMetadata(), table_name='table_name')
 
-        # Run
+        # Run and Assert
         with pytest.raises(NotFittedError):
             dp.reverse_transform(data)
 
@@ -1987,7 +1987,7 @@ class TestDataProcessor:
         dp._constraints_to_reverse = []
         dp._dtypes = {'bar': 'int'}
         dp.metadata = Mock()
-        dp.metadata.columns = {'bar': None}
+        dp.metadata.columns = {'bar': {'sdtype': 'address'}}
         dp.formatters = {'bar': object()}
 
         # Run
@@ -2003,6 +2003,33 @@ class TestDataProcessor:
         )
         mock_logger.info.assert_called_with(message)
         assert dp.formatters == {}
+
+    @patch('sdv.data_processing.data_processor.LOGGER')
+    def test_reverse_transform_value_error_is_raised(self, mock_logger):
+        """Test the ``reverse_transform`` method raises a ``ValueError``.
+
+        If ``ValueError`` is raised while trying to set the data as type ``dtype``, if this is
+        not ``PII`` column, a value error should be raised.
+        """
+        # Setup
+        data = pd.DataFrame({'bar': ['a', 'b', 'c']})
+        dp = DataProcessor(SingleTableMetadata())
+        dp.fitted = True
+        dp._hyper_transformer = Mock()
+        dp._hyper_transformer._output_columns = []
+        dp._hyper_transformer.reverse_transform_subset.return_value = data
+        dp._constraints_to_reverse = []
+        dp._dtypes = {'bar': 'int'}
+        dp.metadata = Mock()
+        dp.metadata.columns = {'bar': {'sdtype': 'numerical'}}
+        dp.formatters = {'bar': object()}
+
+        # Run and Assert
+        error_msg = re.escape("invalid literal for int() with base 10: 'a'")
+        with pytest.raises(ValueError, match=error_msg):
+            dp.reverse_transform(data)
+
+        mock_logger.info.assert_not_called()
 
     @patch('sdv.data_processing.numerical_formatter.NumericalFormatter')
     @patch('sdv.data_processing.numerical_formatter.NumericalFormatter')

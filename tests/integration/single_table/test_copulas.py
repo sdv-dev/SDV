@@ -323,19 +323,41 @@ def test_validate_with_failing_constraint():
 
 def test_numerical_columns_gets_pii():
     """Test that the synthesizer works when a ``numerical`` column gets converted to ``PII``."""
+    # Setup
     data = pd.DataFrame(data={
         'id': [0, 1, 2, 3, 4],
-        'address': [0, 0, 0, 0, 0],
-        'numerical': [0.234234, 0.123213, 0.123123, 0.123123, 0.1345435]
+        'city': [0, 0, 0, 0, 0],
+        'numerical': [21, 22, 23, 24, 25]
     })
     metadata = SingleTableMetadata.load_from_dict({
         'primary_key': 'id',
         'columns': {
             'id': {'sdtype': 'id'},
-            'address': {'sdtype': 'address'},
+            'city': {'sdtype': 'city'},
             'numerical': {'sdtype': 'numerical'}
         }
     })
     synth = GaussianCopulaSynthesizer(metadata)
     synth.fit(data)
-    synth.sample(10)
+
+    # Run
+    sampled = synth.sample(10)
+
+    # Assert
+    expected_sampled = pd.DataFrame({
+        'id': {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9},
+        'city': {
+            0: 'Danielfort',
+            1: 'Glendaside',
+            2: 'Port Jenniferchester',
+            3: 'Port Susan',
+            4: 'West Michellemouth',
+            5: 'West Jason',
+            6: 'Ryanfort',
+            7: 'West Stephenland',
+            8: 'Davidland',
+            9: 'Port Christopher'
+        },
+        'numerical': {0: 21, 1: 24, 2: 22, 3: 23, 4: 22, 5: 24, 6: 23, 7: 23, 8: 24, 9: 23}
+    })
+    pd.testing.assert_frame_equal(expected_sampled, sampled)
