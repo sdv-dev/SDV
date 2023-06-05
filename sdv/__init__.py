@@ -15,17 +15,9 @@ from operator import attrgetter
 
 from pkg_resources import iter_entry_points
 
-import sdv.constraints
-import sdv.data_processing
-import sdv.datasets
-import sdv.evaluation
-import sdv.lite
-import sdv.metadata
-import sdv.metrics
-import sdv.multi_table
-import sdv.sampling
-import sdv.sequential
-import sdv.single_table
+from sdv import (
+    constraints, data_processing, datasets, evaluation, lite, metadata, metrics, multi_table,
+    sampling, sequential, single_table)
 
 __all__ = [
     'constraints',

@@ -110,7 +110,7 @@ lint: ## check style with flake8 and isort
 
 .PHONY: fix-lint
 fix-lint: ## fix lint issues using autoflake, autopep8, and isort
-	find sdv tests -name '*.py' | xargs autoflake --in-place --remove-all-unused-imports --remove-unused-variables --ignore-init-module-imports
+	find sdv tests -name '*.py' | xargs autoflake --in-place --remove-all-unused-imports --remove-unused-variables
 	autopep8 --in-place --recursive --aggressive sdv tests
 	isort --apply --atomic --recursive sdv tests
 
