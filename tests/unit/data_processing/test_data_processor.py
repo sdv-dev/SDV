@@ -1064,12 +1064,12 @@ class TestDataProcessor:
         int_transformer = config['transformers']['created_int']
         assert isinstance(int_transformer, FloatFormatter)
         assert int_transformer.missing_value_replacement == 'mean'
-        assert int_transformer.model_missing_values is False
+        assert int_transformer.missing_value_generation == 'random'
 
         float_transformer = config['transformers']['created_float']
         assert isinstance(float_transformer, FloatFormatter)
         assert float_transformer.missing_value_replacement == 'mean'
-        assert float_transformer.model_missing_values is False
+        assert float_transformer.missing_value_generation == 'random'
 
         assert isinstance(config['transformers']['bool'], LabelEncoder)
         assert isinstance(config['transformers']['created_bool'], LabelEncoder)
@@ -1089,7 +1089,7 @@ class TestDataProcessor:
         datetime_transformer = config['transformers']['date']
         assert isinstance(datetime_transformer, UnixTimestampEncoder)
         assert datetime_transformer.missing_value_replacement == 'mean'
-        assert datetime_transformer.model_missing_values is False
+        assert datetime_transformer.missing_value_generation == 'random'
         assert datetime_transformer.datetime_format == '%Y-%m-%d'
         assert dp._primary_key == 'id'
 
