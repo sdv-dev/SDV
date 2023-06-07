@@ -526,7 +526,7 @@ def test_transformers_correctly_auto_assigned():
     assert isinstance(transformers['categorical_col'], LabelEncoder)
 
     assert transformers['numerical_col'].missing_value_replacement == 'mean'
-    assert transformers['numerical_col'].model_missing_values is False
+    assert transformers['numerical_col'].missing_value_generation == 'random'
     assert transformers['numerical_col'].learn_rounding_scheme is False
     assert transformers['numerical_col'].enforce_min_max_values is False
 

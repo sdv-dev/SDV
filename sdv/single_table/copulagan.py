@@ -169,7 +169,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
                 )
 
                 transformers[column] = rdt.transformers.GaussianNormalizer(
-                    model_missing_values=True,
+                    missing_value_generation='from_column',
                     distribution=distribution,
                 )
 
