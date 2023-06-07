@@ -1,179 +1,12 @@
 """Tests for the sdv.constraints.utils module."""
-from datetime import datetime
 from decimal import Decimal
 
 import numpy as np
 import pandas as pd
 
 from sdv.constraints.utils import (
-    _cast_to_type, cast_to_datetime64, compute_nans_column, get_nan_component_value, logit,
-    matches_datetime_format, revert_nans_columns, sigmoid)
-from sdv.utils import get_datetime_format, is_datetime_type
-
-
-def test_is_datetime_type_with_datetime_series():
-    """Test the ``is_datetime_type`` function when a datetime series is passed.
-
-    Expect to return True when a datetime series is passed.
-
-    Input:
-    - A pandas.Series of type `datetime64[ns]`
-    Output:
-    - True
-    """
-    # Setup
-    data = pd.Series([
-        pd.to_datetime('2020-01-01'),
-        pd.to_datetime('2020-01-02'),
-        pd.to_datetime('2020-01-03')
-    ],
-    )
-
-    # Run
-    is_datetime = is_datetime_type(data)
-
-    # Assert
-    assert is_datetime
-
-
-def test_is_datetime_type_with_datetime():
-    """Test the ``is_datetime_type`` function when a datetime is passed.
-
-    Expect to return True when a datetime variable is passed.
-
-    Input:
-    - datetime.Datetime
-    Output:
-    - True
-    """
-    # Setup
-    data = datetime(2020, 1, 1)
-
-    # Run
-    is_datetime = is_datetime_type(data)
-
-    # Assert
-    assert is_datetime
-
-
-def test_is_datetime_type_with_pandas_datetime():
-    """Test the ``is_datetime_type`` function when a pandas.datetime is passed.
-
-    Expect to return True when a datetime variable is passed.
-
-    Input:
-    - pandas.Datetime
-    Output:
-    - True
-    """
-    # Setup
-    data = pd.to_datetime('2020-01-01')
-
-    # Run
-    is_datetime = is_datetime_type(data)
-
-    # Assert
-    assert is_datetime
-
-
-def test_is_datetime_type_with_int():
-    """Test the ``is_datetime_type`` function when an int is passed.
-
-    Expect to return False when an int variable is passed.
-
-    Input:
-    - int
-    Output:
-    - False
-    """
-    # Setup
-    data = 2
-
-    # Run
-    is_datetime = is_datetime_type(data)
-
-    # Assert
-    assert is_datetime is False
-
-
-def test_is_datetime_type_with_datetime_str():
-    """Test the ``is_datetime_type`` function when an valid datetime string is passed.
-
-    Expect to return True when a valid string representing datetime is passed.
-
-    Input:
-    - string
-    Output:
-    - True
-    """
-    # Setup
-    value = '2021-02-02'
-
-    # Run
-    is_datetime = is_datetime_type(value)
-
-    # Assert
-    assert is_datetime
-
-
-def test_is_datetime_type_with_invalid_str():
-    """Test the ``is_datetime_type`` function when an invalid string is passed.
-
-    Expect to return False when an invalid string is passed.
-
-    Input:
-    - string
-    Output:
-    - False
-    """
-    # Setup
-    value = 'abcd'
-
-    # Run
-    is_datetime = is_datetime_type(value)
-
-    # Assert
-    assert is_datetime is False
-
-
-def test_is_datetime_type_with_string():
-    """Test the ``is_datetime_type`` function when a string is passed.
-
-    Expect to return False when a string variable is passed.
-
-    Input:
-    - string
-    Output:
-    - False
-    """
-    # Setup
-    data = 'test'
-
-    # Run
-    is_datetime = is_datetime_type(data)
-
-    # Assert
-    assert is_datetime is False
-
-
-def test_is_datetime_type_with_int_series():
-    """Test the ``is_datetime_type`` function when an int series is passed.
-
-    Expect to return False when an int series variable is passed.
-
-    Input:
-    -  pd.Series of type int
-    Output:
-    - False
-    """
-    # Setup
-    data = pd.Series([1, 2, 3, 4])
-
-    # Run
-    is_datetime = is_datetime_type(data)
-
-    # Assert
-    assert is_datetime is False
+    _cast_to_type, cast_to_datetime64, compute_nans_column, get_datetime_diff,
+    get_nan_component_value, logit, matches_datetime_format, revert_nans_columns, sigmoid)
 
 
 def test__cast_to_type():
@@ -292,34 +125,6 @@ def test_cast_to_datetime64():
     assert expected_string_output == string_out
 
 
-def test_get_datetime_format():
-    """Test the ``get_datetime_format``.
-
-    Setup:
-        - string value representing datetime.
-        - list of values with a datetime.
-        - series with a datetime.
-
-    Output:
-        - The expected output is the format of the datetime representation.
-    """
-    # Setup
-    string_value = '2021-02-02'
-    list_value = [np.nan, '2021-02-02']
-    series_value = pd.Series(['2021-02-02T12:10:59'])
-
-    # Run
-    string_out = get_datetime_format(string_value)
-    list_out = get_datetime_format(list_value)
-    series_out = get_datetime_format(series_value)
-
-    # Assert
-    expected_output = '%Y-%m-%d'
-    assert string_out == expected_output
-    assert list_out == expected_output
-    assert series_out == '%Y-%m-%dT%H:%M:%S'
-
-
 def test_matches_datetime_format():
     """Test the ``matches_datetime_format`` method.
 
@@ -434,3 +239,21 @@ def test_revert_nans_columns():
 
     # Assert
     pd.testing.assert_frame_equal(result, expected_data)
+
+
+def test_get_datetime_diff():
+    """Test the ``_get_datetime_diff`` method.
+
+    The method is expected to compute the difference between the high and low
+    datetime columns, treating missing values as NaN.
+    """
+    # Setup
+    high = pd.Series(['2022-02-02', '', '2023-01-02']).to_numpy()
+    low = pd.Series(['2022-02-01', '2022-02-02', '2023-01-01']).to_numpy()
+    expected = np.array([8.64e13, np.nan, 8.64e13])
+
+    # Run
+    diff = get_datetime_diff(high, low, dtype='O')
+
+    # Assert
+    assert np.array_equal(expected, diff, equal_nan=True)

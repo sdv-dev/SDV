@@ -18,6 +18,7 @@ import pkg_resources
 import tqdm
 from copulas.multivariate import GaussianMultivariate
 
+from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
 from sdv.single_table.errors import InvalidDataError
@@ -204,6 +205,16 @@ class BaseSynthesizer:
         """
         return []
 
+    def _validate_constraints(self, data):
+        """Validate that the data satisfies the constraints."""
+        errors = []
+        try:
+            self._data_processor._fit_constraints(data)
+        except AggregateConstraintsError as e:
+            errors.append(e)
+
+        return errors
+
     def validate(self, data):
         """Validate data.
 
@@ -234,6 +245,9 @@ class BaseSynthesizer:
 
         # Primary and alternate key values must be unique
         errors += self._validate_key_values_are_unique(data)
+
+        # Validate constraints
+        errors += self._validate_constraints(data)
 
         # Any other rules that must be met
         errors += self._validate(data)
@@ -545,14 +559,14 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             if column_values.dtype.kind == 'f':
                 distance = value * float_rtol
                 sampled = sampled[np.abs(column_values - value) <= distance]
-                sampled[column] = value
+                sampled.loc[:, column] = value
             else:
                 sampled = sampled[column_values == value]
 
         return sampled
 
     def _sample_rows(self, num_rows, conditions=None, transformed_conditions=None,
-                     float_rtol=0.1, previous_rows=None):
+                     float_rtol=0.1, previous_rows=None, keep_extra_columns=False):
         """Sample rows with the given conditions.
 
         Input conditions is taken both in the raw input format, which will be used
@@ -580,6 +594,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 Maximum tolerance when considering a float match.
             previous_rows (pandas.DataFrame):
                 Valid rows sampled in the previous iterations.
+            remove_extra_columns (bool):
+                Whether to keep extra columns from the sampled data. Defaults to False.
 
         Returns:
             tuple:
@@ -593,14 +609,20 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         if self._data_processor.get_sdtypes(primary_keys=False):
             if conditions is None:
-                sampled = self._sample(num_rows)
+                raw_sampled = self._sample(num_rows)
             else:
                 try:
-                    sampled = self._sample(num_rows, transformed_conditions)
+                    raw_sampled = self._sample(num_rows, transformed_conditions)
                 except NotImplementedError:
-                    sampled = self._sample(num_rows)
+                    raw_sampled = self._sample(num_rows)
 
-            sampled = self._data_processor.reverse_transform(sampled)
+            sampled = self._data_processor.reverse_transform(raw_sampled)
+            if keep_extra_columns:
+                input_columns = self._data_processor._hyper_transformer._input_columns
+                missing_cols = list(
+                    set(raw_sampled.columns) - set(input_columns) - set(sampled.columns)
+                )
+                sampled = pd.concat([sampled, raw_sampled[missing_cols]], axis=1)
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
@@ -621,7 +643,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
     def _sample_batch(self, batch_size, max_tries=100,
                       conditions=None, transformed_conditions=None, float_rtol=0.01,
-                      progress_bar=None, output_file_path=None):
+                      progress_bar=None, output_file_path=None, keep_extra_columns=False):
         """Sample a batch of rows with the given conditions.
 
         This will enter a reject-sampling loop in which rows will be sampled until
@@ -660,6 +682,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             output_file_path (str or None):
                 The file to periodically write sampled rows to. If None, does not write
                 rows anywhere.
+            remove_extra_columns (bool):
+                Whether to keep extra columns from the sampled data. Defaults to False.
 
         Returns:
             pandas.DataFrame:
@@ -680,7 +704,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 conditions,
                 transformed_conditions,
                 float_rtol,
-                sampled
+                sampled,
+                keep_extra_columns
             )
 
             num_new_valid_rows = num_valid - prev_num_valid
@@ -968,50 +993,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return all_sampled_rows
 
-    def _sample_from_conditions(self, conditions, max_tries_per_batch,
-                                batch_size, output_file_path):
-        """Sample rows from this table with the given conditions."""
-        output_file_path = validate_file_path(output_file_path)
-
-        num_rows = functools.reduce(
-            lambda num_rows, condition: condition.get_num_rows() + num_rows, conditions, 0)
-
-        conditions = self._make_condition_dfs(conditions)
-        for condition_dataframe in conditions:
-            self._validate_conditions(condition_dataframe)
-
-        sampled = pd.DataFrame()
-        try:
-            with tqdm.tqdm(total=num_rows) as progress_bar:
-                progress_bar.set_description('Sampling conditions')
-                for condition_dataframe in conditions:
-                    sampled_for_condition = self._sample_with_conditions(
-                        condition_dataframe,
-                        max_tries_per_batch,
-                        batch_size,
-                        progress_bar,
-                        output_file_path,
-                    )
-                    sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
-
-            is_reject_sampling = bool(
-                hasattr(self, '_model') and not isinstance(self._model, GaussianMultivariate))
-            check_num_rows(
-                num_rows=len(sampled),
-                expected_num_rows=num_rows,
-                is_reject_sampling=is_reject_sampling,
-                max_tries_per_batch=max_tries_per_batch
-            )
-
-        except (Exception, KeyboardInterrupt) as error:
-            handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
-
-        else:
-            if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
-                os.remove(output_file_path)
-
-        return sampled
-
     def sample_from_conditions(self, conditions, max_tries_per_batch=100,
                                batch_size=None, output_file_path=None):
         """Sample rows from this table with the given conditions.
@@ -1041,29 +1022,34 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        return self._sample_from_conditions(
-            conditions, max_tries_per_batch, batch_size, output_file_path)
-
-    def _sample_remaining_columns(self, known_columns, max_tries_per_batch,
-                                  batch_size, output_file_path):
-        """Sample the remaining columns of a given DataFrame."""
         output_file_path = validate_file_path(output_file_path)
 
-        known_columns = known_columns.copy()
-        self._validate_conditions(known_columns)
+        num_rows = functools.reduce(
+            lambda num_rows, condition: condition.get_num_rows() + num_rows, conditions, 0)
+
+        conditions = self._make_condition_dfs(conditions)
+        for condition_dataframe in conditions:
+            self._validate_conditions(condition_dataframe)
+
         sampled = pd.DataFrame()
         try:
-            with tqdm.tqdm(total=len(known_columns)) as progress_bar:
-                progress_bar.set_description('Sampling remaining columns')
-                sampled = self._sample_with_conditions(
-                    known_columns, max_tries_per_batch, batch_size, progress_bar, output_file_path)
+            with tqdm.tqdm(total=num_rows) as progress_bar:
+                progress_bar.set_description('Sampling conditions')
+                for condition_dataframe in conditions:
+                    sampled_for_condition = self._sample_with_conditions(
+                        condition_dataframe,
+                        max_tries_per_batch,
+                        batch_size,
+                        progress_bar,
+                        output_file_path,
+                    )
+                    sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
 
-            is_reject_sampling = (hasattr(self, '_model') and not isinstance(
-                self._model, copulas.multivariate.GaussianMultivariate))
-
+            is_reject_sampling = bool(
+                hasattr(self, '_model') and not isinstance(self._model, GaussianMultivariate))
             check_num_rows(
                 num_rows=len(sampled),
-                expected_num_rows=len(known_columns),
+                expected_num_rows=num_rows,
                 is_reject_sampling=is_reject_sampling,
                 max_tries_per_batch=max_tries_per_batch
             )
@@ -1106,9 +1092,32 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     * any of the conditions' columns are not valid.
                     * no rows could be generated.
         """
-        return self._sample_remaining_columns(
-            known_columns,
-            max_tries_per_batch,
-            batch_size,
-            output_file_path
-        )
+        output_file_path = validate_file_path(output_file_path)
+
+        known_columns = known_columns.copy()
+        self._validate_conditions(known_columns)
+        sampled = pd.DataFrame()
+        try:
+            with tqdm.tqdm(total=len(known_columns)) as progress_bar:
+                progress_bar.set_description('Sampling remaining columns')
+                sampled = self._sample_with_conditions(
+                    known_columns, max_tries_per_batch, batch_size, progress_bar, output_file_path)
+
+            is_reject_sampling = (hasattr(self, '_model') and not isinstance(
+                self._model, copulas.multivariate.GaussianMultivariate))
+
+            check_num_rows(
+                num_rows=len(sampled),
+                expected_num_rows=len(known_columns),
+                is_reject_sampling=is_reject_sampling,
+                max_tries_per_batch=max_tries_per_batch
+            )
+
+        except (Exception, KeyboardInterrupt) as error:
+            handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
+
+        else:
+            if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
+                os.remove(output_file_path)
+
+        return sampled

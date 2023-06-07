@@ -1,5 +1,39 @@
 # Release Notes
 
+## 1.2.0 - 2023-06-07
+
+This release adds a parameter called `verbose` to the `HMASynthesizer`. Setting it to True will show progress bars during the fitting steps. Additionally, performance optimizations were made to the modeling and initialization of the `HMASynthesizer`.
+
+Multiple changes were made to enhance constraints. The `Range` constraint was improved to be able to generate more accurate data when null values are provided. Constraints are also now validated against the data when running `validate()` on any synthesizer.
+
+Finally, some warnings were resolved.
+
+### New Features
+
+* Report fitting progress for the HMASynthesizer - Issue [#1440](https://github.com/sdv-dev/SDV/issues/1440) by @pvk-developer
+
+### Bugs Fixed
+
+* Range constraint does not produce cases of missing values & may create violative data - Issue [#1393](https://github.com/sdv-dev/SDV/issues/1393) by @R-Palazzo
+* Synthesizers don't validate constraints during validate() - Issue [#1402](https://github.com/sdv-dev/SDV/issues/1402) by @pvk-developer
+* Confusing error during metadata validation - Issue [#1417](https://github.com/sdv-dev/SDV/issues/1417) by @frances-h
+* SettingWithCopyWarning when conditional sampling - [#1436](https://github.com/sdv-dev/SDV/issues/1436) by @pvk-developer
+* HMASynthesizer is modeling child tables - Issue [#1442](https://github.com/sdv-dev/SDV/issues/1442) by @pvk-developer
+* ValueError when sampling PII columns - Issue [#1445](https://github.com/sdv-dev/SDV/issues/1445) by @pvk-developer
+
+### Internal
+
+* Add BaseHierarchicalSampler Mixin - Issue [#1394](https://github.com/sdv-dev/SDV/issues/1394) by @frances-h
+* Add BaseIndependentSampler Mixin - Issue [#1395](https://github.com/sdv-dev/SDV/issues/1395) by @frances-h
+* Synthesizers created twice during HMA init - Issue [#1418](https://github.com/sdv-dev/SDV/issues/1418) by @frances-h
+* Get rid of unnecessary methods for single table sampling - Issue [#1430](https://github.com/sdv-dev/SDV/issues/1430) by @amontanez24
+* Detect all addons from top level __init__ - PR [#1453](https://github.com/sdv-dev/SDV/pull/1453) by @frances-h
+
+### Maintenance
+
+* Upgrade to torch 2.0 - Issue [#1365](https://github.com/sdv-dev/SDV/issues/1365) by @fealho
+* During fit, there is a FutureWarning (due to RDT 1.5.0) - Issue [#1456](https://github.com/sdv-dev/SDV/issues/1456) by @amontanez24
+
 ## 1.1.0 - 2023-05-10
 
 This release adds a new initialization parameter to synthesizers called `locales` that allows users to set the locales to use for all columns that have a locale based `sdtype` (eg. `address` or `phone_number`). Additionally, it adds support for Pandas 2.0!
@@ -12,7 +46,7 @@ Multiple enhancements were made to improve the performance of data and metadata 
 * Add add-on detection for multi and single table synthesizers - Issue [#1385](https://github.com/sdv-dev/SDV/issues/1385) by @frances-h
 * Setting a locale for all my anonymized (PII) columns - Issue [#1371](https://github.com/sdv-dev/SDV/issues/1371) by @frances-h
 
-### Bigs Fixed
+### Bugs Fixed
 
 * Skip checking for Faker function if its a default sdtype - PR [#1410](https://github.com/sdv-dev/SDV/pull/1410) by @pvk-developer
 * Inequality constraint does not produce all possibilities of missing values - Issue [#1392](https://github.com/sdv-dev/SDV/issues/1392) by @R-Palazzo

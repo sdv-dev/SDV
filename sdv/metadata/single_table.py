@@ -135,12 +135,18 @@ class SingleTableMetadata:
                 f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'.")
 
     def _validate_sdtype(self, sdtype):
+        if not isinstance(sdtype, str):
+            raise InvalidMetadataError(
+                f'Invalid sdtype: {sdtype} is not a string. Please use one of the '
+                'supported SDV sdtypes.'
+            )
+
         if sdtype in self._DEFAULT_SDTYPES:
             return
 
         if not is_faker_function(sdtype):
             raise InvalidMetadataError(
-                f"Invalid sdtype : '{sdtype}' is not recognized. Please use one of the "
+                f"Invalid sdtype: '{sdtype}' is not recognized. Please use one of the "
                 'supported SDV sdtypes.'
             )
 

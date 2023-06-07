@@ -215,8 +215,8 @@ class TestCopulaGANSynthesizer:
 
         # Assert
         expected_calls = [
-            call(model_missing_values=True, distribution=GammaUnivariate),
-            call(model_missing_values=True, distribution=BetaUnivariate),
+            call(missing_value_generation='from_column', distribution=GammaUnivariate),
+            call(missing_value_generation='from_column', distribution=BetaUnivariate),
         ]
         expected_config = {
             'transformers': {

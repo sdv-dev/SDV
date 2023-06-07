@@ -52,6 +52,50 @@ class TestBaseMultiTableSynthesizer:
             call(metadata=instance.metadata.tables['upravna_enota'], locales=locales)
         ])
 
+    def test__get_pbar_args(self):
+        """Test that ``_get_pbar_args`` returns a dictionary with disable opposite to verbose."""
+        # Setup
+        instance = Mock()
+        instance.verbose = False
+
+        # Run
+        result = BaseMultiTableSynthesizer._get_pbar_args(instance)
+
+        # Assert
+        assert result == {'disable': True}
+
+    def test__get_pbar_args_kwargs(self):
+        """Test that ``_get_pbar_args`` returns a dictionary with the given kwargs."""
+        # Setup
+        instance = Mock()
+        instance.verbose = True
+
+        # Run
+        result = BaseMultiTableSynthesizer._get_pbar_args(
+            instance,
+            desc='Process Table',
+            position=0
+        )
+
+        # Assert
+        assert result == {
+            'disable': False,
+            'desc': 'Process Table',
+            'position': 0
+        }
+
+    @patch('sdv.multi_table.base.print')
+    def test__print(self, mock_print):
+        """Test that print info will print a message if verbose is True."""
+        # Setup
+        instance = Mock(verbose=True)
+
+        # Run
+        BaseMultiTableSynthesizer._print(instance, text='Fitting', end='')
+
+        # Assert
+        mock_print.assert_called_once_with('Fitting', end='')
+
     def test___init__(self):
         """Test that when creating a new instance this sets the defaults.
 
@@ -72,6 +116,20 @@ class TestBaseMultiTableSynthesizer:
         assert isinstance(instance._table_synthesizers['upravna_enota'], GaussianCopulaSynthesizer)
         assert instance._table_parameters == defaultdict(dict)
         instance.metadata.validate.assert_called_once_with()
+
+    def test___init___synthesizer_kwargs_deprecated(self):
+        """Test that the ``synthesizer_kwargs`` method is deprecated."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        metadata.validate = Mock()
+
+        # Run and Assert
+        warn_message = (
+            'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
+            'affect the synthesizer. Please use the `set_table_parameters` method instead.'
+        )
+        with pytest.warns(FutureWarning, match=warn_message):
+            BaseMultiTableSynthesizer(metadata, synthesizer_kwargs={})
 
     def test_get_table_parameters_empty(self):
         """Test that this method returns an empty dictionary when there are no parameters."""

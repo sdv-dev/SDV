@@ -9,6 +9,7 @@ from copulas.multivariate import GaussianMultivariate
 from rdt.transformers import (
     BinaryEncoder, FloatFormatter, GaussianNormalizer, OneHotEncoder, RegexGenerator)
 
+from sdv.constraints.errors import AggregateConstraintsError
 from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
@@ -665,6 +666,22 @@ class TestBaseSingleTableSynthesizer:
         # Run
         instance.validate(data)
 
+    def test__validate_constraints(self):
+        """Test that ``_validate_constraints`` calls ``fit`` and returns any errors."""
+        # Setup
+        instance = Mock()
+        msg = 'Invalid data for constraint.'
+        instance._data_processor._fit_constraints.side_effect = AggregateConstraintsError([msg])
+        data = object()
+
+        # Run
+        errors = BaseSingleTableSynthesizer._validate_constraints(instance, data)
+
+        # Assert
+        assert str(errors[0]) == '\nInvalid data for constraint.'
+        assert len(errors) == 1
+        instance._data_processor._fit_constraints.assert_called_once_with(data)
+
     def test_update_transformers_invalid_keys(self):
         """Test error is raised if passed transformer doesn't match key column.
 
@@ -889,7 +906,10 @@ class TestBaseSingleTableSynthesizer:
         })
         instance = Mock()
         instance._random_state_set = False
+        instance._sample.return_value = pd.DataFrame()
+        instance._data_processor.reverse_transform.return_value = data
         instance._data_processor.filter_valid.return_value = data
+        instance._data_processor._hyper_transformer._input_columns = []
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(instance, 3)
@@ -914,6 +934,9 @@ class TestBaseSingleTableSynthesizer:
             'salary': [90.0, 100.0, 80.0]
         })
         instance = Mock()
+        instance._sample.return_value = pd.DataFrame()
+        instance._data_processor.reverse_transform.return_value = data
+        instance._data_processor._hyper_transformer._input_columns = []
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.}
         transformed_conditions = {'salary': 80.0}
@@ -950,6 +973,8 @@ class TestBaseSingleTableSynthesizer:
         })
 
         instance = Mock()
+        instance._sample.return_value = pd.DataFrame()
+        instance._data_processor._hyper_transformer._input_columns = []
         instance._data_processor.filter_valid = lambda x: x
         instance._data_processor.reverse_transform.return_value = data
 
@@ -977,10 +1002,12 @@ class TestBaseSingleTableSynthesizer:
             'salary': [90.0, 100.0, 80.0]
         })
         instance = Mock()
+        instance._data_processor.reverse_transform.return_value = data
+        instance._data_processor._hyper_transformer._input_columns = []
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.}
         transformed_conditions = {'salary': 80.0}
-        instance._sample.side_effect = [NotImplementedError, None]
+        instance._sample.side_effect = [NotImplementedError, pd.DataFrame()]
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
@@ -1022,6 +1049,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [80., 60., 100.]
         })
         instance = Mock()
+        instance.metadata.columns.keys.return_value = ['name', 'salary']
         instance._sample_rows.return_value = (sampled_data, 3)
 
         # Run
@@ -1038,12 +1066,14 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, sampled_data)
-        rows, conditions, trans_cond, float_rtol, sampled = instance._sample_rows.call_args[0]
+        _sample_rows_args = instance._sample_rows.call_args[0]
+        rows, conditions, trans_cond, float_rtol, sampled, keep_extra_columns = _sample_rows_args
         assert rows == 3
         assert conditions is None
         assert trans_cond is None
         assert float_rtol == 0.01
         pd.testing.assert_frame_equal(sampled, pd.DataFrame())
+        assert keep_extra_columns is False
 
     def test__sample_batch_with_sampled_data_bigger_than_batch_size(self):
         """Test ``sampled_data`` is bigger than the batch size.
@@ -1057,6 +1087,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [80., 60., 100., 300.]
         })
         instance = Mock()
+        instance.metadata.columns.keys.return_value = ['name', 'salary']
         instance._sample_rows.return_value = (sampled_data, 3)
 
         # Run
@@ -1073,12 +1104,14 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, sampled_data.head(3))
-        rows, conditions, trans_cond, float_rtol, sampled = instance._sample_rows.call_args[0]
+        _sample_rows_args = instance._sample_rows.call_args[0]
+        rows, conditions, trans_cond, float_rtol, sampled, keep_extra_columns = _sample_rows_args
         assert rows == 3
         assert conditions is None
         assert trans_cond is None
         assert float_rtol == 0.01
         pd.testing.assert_frame_equal(sampled, pd.DataFrame())
+        assert keep_extra_columns is False
 
     def test__sample_batch_max_tries_reached(self):
         """Test that when ``max_tries`` is reached, a break occurs."""
@@ -1088,6 +1121,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [80., 60., 100., 300.]
         })
         instance = Mock()
+        instance.metadata.columns.keys.return_value = ['name', 'salary']
         instance._sample_rows.return_value = (sampled_data, 3)
 
         # Run
@@ -1104,7 +1138,8 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, sampled_data)
-        rows, conditions, trans_cond, float_rtol, sampled = instance._sample_rows.call_args[0]
+        _sample_rows_args = instance._sample_rows.call_args[0]
+        rows, conditions, trans_cond, float_rtol, sampled, keep_extra_columns = _sample_rows_args
         assert instance._sample_rows.call_count == 2
 
     def test__sample_batch_storing_output_file(self, tmpdir):
@@ -1118,6 +1153,7 @@ class TestBaseSingleTableSynthesizer:
             'salary': [80., 60., 100., 300.]
         })
         instance = Mock()
+        instance.metadata.columns.keys.return_value = ['name', 'salary']
         instance._sample_rows.side_effect = [
             (sampled_data, 4),
             (sampled_data, 5),
@@ -1681,8 +1717,8 @@ class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
-    def test__sample_from_conditions(self, mock_validate_file_path, mock_tqdm,
-                                     mock_data_processor, mock_check_num_rows, mock_os):
+    def test_sample_from_conditions(self, mock_validate_file_path, mock_tqdm,
+                                    mock_data_processor, mock_check_num_rows, mock_os):
         """Test sample conditions with sampled data and reject sampling.
 
         An instance of ``BaseSingleTableSynthesizer`` is created and it's utility functions are
@@ -1705,7 +1741,7 @@ class TestBaseSingleTableSynthesizer:
         mock_tqdm.tqdm.return_value = progress_bar
 
         # Run
-        result = instance._sample_from_conditions(conditions, 10, 10, '.sample.csv.temp')
+        result = instance.sample_from_conditions(conditions, 10, 10, '.sample.csv.temp')
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
@@ -1715,10 +1751,10 @@ class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.handle_sampling_error')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
-    def test__sample_from_conditions_handle_sampling_error(self,
-                                                           mock_validate_file_path,
-                                                           mock_tqdm, mock_handle_sampling_error):
-        """Test the error handling when we are using ``_sample_from_conditions``."""
+    def test_sample_from_conditions_handle_sampling_error(self,
+                                                          mock_validate_file_path,
+                                                          mock_tqdm, mock_handle_sampling_error):
+        """Test the error handling when we are using ``sample_from_conditions``."""
         # Setup
         progress_bar = MagicMock()
         mock_tqdm.tqdm.return_value = progress_bar
@@ -1730,7 +1766,7 @@ class TestBaseSingleTableSynthesizer:
         mock_validate_file_path.return_value = 'temp_file'
 
         # Run
-        result = BaseSingleTableSynthesizer._sample_from_conditions(
+        result = BaseSingleTableSynthesizer.sample_from_conditions(
             instance,
             conditions,
             10,
@@ -1747,30 +1783,13 @@ class TestBaseSingleTableSynthesizer:
         )
         mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
 
-    def test_sample_from_conditions(self):
-        """Test that this method calls ``_sample_with_conditions``."""
-        # Setup
-        instance = Mock()
-
-        # Run
-        result = BaseSingleTableSynthesizer.sample_from_conditions(instance, ['conditions'])
-
-        # Assert
-        assert result == instance._sample_from_conditions.return_value
-        instance._sample_from_conditions.assert_called_once_with(
-            ['conditions'],
-            100,
-            None,
-            None
-        )
-
     @patch('sdv.single_table.base.os')
     @patch('sdv.single_table.base.check_num_rows')
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
-    def test__sample_remaining_columns(self, mock_validate_file_path, mock_tqdm,
-                                       mock_data_processor, mock_check_num_rows, mock_os):
+    def test_sample_remaining_columns(self, mock_validate_file_path, mock_tqdm,
+                                      mock_data_processor, mock_check_num_rows, mock_os):
         """Test the this method calls ``_sample_with_conditions`` with the ``known_column."""
         # Setup
         metadata = Mock()
@@ -1787,7 +1806,7 @@ class TestBaseSingleTableSynthesizer:
         mock_tqdm.tqdm.return_value = progress_bar
 
         # Run
-        result = instance._sample_remaining_columns(
+        result = instance.sample_remaining_columns(
             known_columns,
             10,
             10,
@@ -1804,7 +1823,7 @@ class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.tqdm')
     @patch('sdv.single_table.base.validate_file_path')
-    def test__sample_remaining_columns_handles_sampling_error(
+    def test_sample_remaining_columns_handles_sampling_error(
         self, mock_validate_file_path, mock_tqdm, mock_data_processor,
         mock_check_num_rows, mock_handle_sampling_error
     ):
@@ -1828,7 +1847,7 @@ class TestBaseSingleTableSynthesizer:
         mock_tqdm.tqdm.return_value = progress_bar
 
         # Run
-        result = instance._sample_remaining_columns(
+        result = instance.sample_remaining_columns(
             known_columns,
             10,
             10,
@@ -1838,21 +1857,6 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame())
         mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
-
-    def test_sample_remaining_columns(self):
-        """Test that this method calls the ``_sample_remaining_columns``."""
-        # Setup
-        instance = Mock()
-        known_columns = pd.DataFrame({'name': ['Johanna']})
-        instance._validate_conditions = Mock()
-        instance._sample_with_conditions = Mock()
-
-        # Run
-        result = BaseSingleTableSynthesizer.sample_remaining_columns(instance, known_columns)
-
-        # Assert
-        assert result == instance._sample_remaining_columns.return_value
-        instance._sample_remaining_columns.assert_called_once()
 
     @patch('sdv.single_table.base.cloudpickle')
     def test_save(self, cloudpickle_mock):

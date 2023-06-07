@@ -46,7 +46,7 @@ class TestHMASynthesizer:
         instance = HMASynthesizer(metadata)
 
         # Run
-        result = instance._get_extension('nesreca', child_table, 'upravna_enota')
+        result = instance._get_extension('nesreca', child_table, 'upravna_enota', '')
 
         # Assert
         expected = pd.DataFrame({
@@ -66,6 +66,7 @@ class TestHMASynthesizer:
         """
         # Setup
         instance = Mock()
+        instance._get_pbar_args.return_value = {'desc': "(1/2) Tables 'A' and 'B' ('user_id')"}
         instance._get_all_foreign_keys.return_value = ['id_upravna_enota']
         instance._table_synthesizers = {'nesreca': Mock()}
         child_table = pd.DataFrame({
@@ -77,13 +78,16 @@ class TestHMASynthesizer:
             instance,
             'nesreca',
             child_table,
-            'id_upravna_enota'
+            'id_upravna_enota',
+            "(1/2) Tables 'A' and 'B' ('user_id')"
         )
 
         # Assert
         expected = pd.DataFrame({
             '__nesreca__id_upravna_enota__num_rows': [1, 1, 1, 1]
         })
+        instance._get_pbar_args.assert_called_once_with(
+            desc="(1/2) Tables 'A' and 'B' ('user_id')")
 
         pd.testing.assert_frame_equal(result, expected)
 
@@ -126,6 +130,9 @@ class TestHMASynthesizer:
         data = get_multi_table_data()
         data['nesreca']['value'] = [0, 1, 2, 3]
         data['oseba']['oseba_value'] = [0, 1, 2, 3]
+        mock_get_pbar_args = Mock()
+        mock_get_pbar_args.return_value = {}
+        instance._get_pbar_args = mock_get_pbar_args
 
         # Run
         result = instance._augment_table(data['nesreca'], data, 'nesreca')
@@ -151,6 +158,9 @@ class TestHMASynthesizer:
         pd.testing.assert_frame_equal(expected_result, result)
         assert instance._augmented_tables == ['oseba', 'nesreca']
         assert instance._max_child_rows['__oseba__id_nesreca__num_rows'] == 1
+        mock_get_pbar_args.assert_called_once_with(
+            desc="(1/3) Tables 'nesreca' and 'oseba' ('id_nesreca')"
+        )
 
     def test__pop_foreign_keys(self):
         """Test that this method removes the foreign keys from the ``table_data``."""
@@ -196,22 +206,31 @@ class TestHMASynthesizer:
         learning the size of this table, removing the foreign keys and clearing
         any null values by using the ``_clear_nans`` method. Then, fitting the table model by
         calling ``fit_processed_data``,  adding back the foreign keys, updating the ``tables`` and
-        marking the table name as modeled within the ``instance._augmented_tables``.
+        marking the table name as modeled within the ``instance._augmented_tables``. This
+        task has to be performed only on the root tables, the childs are being skipped
+        since each row is being re-created from the parent.
         """
         # Setup
-        nesreca_model = Mock()
+        upravna_enota_model = Mock()
         instance = Mock()
         instance._synthesizer = GaussianCopulaSynthesizer
+        instance._get_pbar_args.return_value = {'desc': 'Modeling Tables'}
 
-        instance._augmented_tables = ['nesreca']
-        instance._table_sizes = {'nesreca': 3}
-        instance._table_synthesizers = {'nesreca': nesreca_model}
+        metadata = get_multi_table_metadata()
+        instance.metadata = metadata
+        instance._augmented_tables = ['upravna_enota']
+        instance._table_sizes = {'upravna_enota': 3}
+        instance._table_synthesizers = {'upravna_enota': upravna_enota_model}
         instance._pop_foreign_keys.return_value = {'fk': [1, 2, 3]}
         input_data = {
-            'nesreca': pd.DataFrame({
+            'upravna_enota': pd.DataFrame({
                 'id_nesreca': [0, 1, 2],
                 'upravna_enota': [0, 1, 2],
                 'extended': ['a', 'b', 'c']
+            }),
+            'oseba': pd.DataFrame({
+                'id_oseba': [0, 1, 2],
+                'note': [0, 1, 2],
             })
         }
         augmented_data = input_data.copy()
@@ -226,11 +245,16 @@ class TestHMASynthesizer:
             'extended': ['a', 'b', 'c'],
             'fk': [1, 2, 3]
         })
-        pd.testing.assert_frame_equal(expected_result, augmented_data['nesreca'])
+        pd.testing.assert_frame_equal(expected_result, augmented_data['upravna_enota'])
 
-        instance._pop_foreign_keys.assert_called_once_with(input_data['nesreca'], 'nesreca')
-        instance._clear_nans.assert_called_once_with(input_data['nesreca'])
-        nesreca_model.fit_processed_data.assert_called_once_with(augmented_data['nesreca'])
+        instance._pop_foreign_keys.assert_called_once_with(
+            input_data['upravna_enota'],
+            'upravna_enota'
+        )
+        instance._clear_nans.assert_called_once_with(input_data['upravna_enota'])
+        upravna_enota_model.fit_processed_data.assert_called_once_with(
+            augmented_data['upravna_enota']
+        )
 
     def test__augment_tables(self):
         """Test that ``_fit`` calls ``_model_tables`` only if the table has no parents."""
@@ -434,7 +458,7 @@ class TestHMASynthesizer:
         foreign_key = 'session_id'
         table_meta = Mock()
         instance.metadata.tables = {'users': table_meta}
-        instance._synthesizer_kwargs = {'a': 1}
+        instance._table_parameters = {'users': {'a': 1}}
 
         # Run
         synthesizer = HMASynthesizer._get_child_synthesizer(

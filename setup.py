@@ -23,7 +23,7 @@ install_requires = [
     'copulas>=0.9.0,<0.10',
     'ctgan>=0.7.2,<0.8',
     'deepecho>=0.4.1,<0.5',
-    'rdt>=1.4.2,<2',
+    'rdt>=1.5.0,<2',
     'sdmetrics>=0.10.0,<0.11',
     'cloudpickle>=2.1.0,<3.0',
     'boto3>=1.15.0,<2',
@@ -136,6 +136,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='1.1.0',
+    version='1.2.0.dev2',
     zip_safe=False,
 )

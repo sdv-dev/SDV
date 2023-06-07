@@ -410,7 +410,7 @@ class ColumnsModel:
                 sdtypes[column_name] = 'numerical'
                 transformers = FloatFormatter(
                     missing_value_replacement='mean',
-                    model_missing_values=True,
+                    missing_value_generation='from_column'
                 )
             elif dtype == 'O':
                 sdtypes[column_name] = 'categorical'
@@ -419,13 +419,13 @@ class ColumnsModel:
                 sdtypes[column_name] = 'datetime'
                 transformers[column_name] = UnixTimestampEncoder(
                     missing_value_replacement='mean',
-                    model_missing_values=True,
+                    missing_value_generation='from_column'
                 )
             elif dtype == 'b':
                 sdtypes[column_name] = 'boolean'
                 transformers[column_name] = BinaryEncoder(
                     missing_value_replacement=-1,
-                    model_missing_values=True
+                    missing_value_generation='from_column'
                 )
 
         return {'sdtypes': sdtypes, 'transformers': transformers}

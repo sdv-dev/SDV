@@ -166,3 +166,31 @@ def revert_nans_columns(table_data, nan_column_name):
             table_data.loc[table_data[nan_column_name] == combination, column_names] = np.nan
 
     return table_data.drop(columns=nan_column_name)
+
+
+def get_datetime_diff(high, low, dtype='O'):
+    """Calculate the difference between two datetime columns.
+
+    When casting datetimes to float using ``astype``, NaT values are not automatically
+    converted to NaN values. This method calculates the difference between the high
+    and low column values, preserving missing values as NaNs.
+
+    Args:
+        high (numpy.ndarray):
+            The high column values.
+        low (numpy.ndarray):
+            The low column values.
+
+    Returns:
+        numpy.ndarray:
+            The difference between the high and low column values.
+    """
+    if dtype == 'O':
+        low = cast_to_datetime64(low)
+        high = cast_to_datetime64(high)
+
+    diff_column = high - low
+    nan_mask = np.isnan(diff_column)
+    diff_column = diff_column.astype(np.float64)
+    diff_column[nan_mask] = np.nan
+    return diff_column

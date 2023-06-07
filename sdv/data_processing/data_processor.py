@@ -63,13 +63,13 @@ class DataProcessor:
             learn_rounding_scheme=True,
             enforce_min_max_values=True,
             missing_value_replacement='mean',
-            model_missing_values=False,
+            missing_value_generation='random',
         ),
         'categorical': rdt.transformers.LabelEncoder(add_noise=True),
         'boolean': rdt.transformers.LabelEncoder(add_noise=True),
         'datetime': rdt.transformers.UnixTimestampEncoder(
             missing_value_replacement='mean',
-            model_missing_values=False,
+            missing_value_generation='random',
         ),
         'id': rdt.transformers.RegexGenerator()
     }
@@ -84,7 +84,7 @@ class DataProcessor:
     def _update_numerical_transformer(self, enforce_rounding, enforce_min_max_values):
         custom_float_formatter = rdt.transformers.FloatFormatter(
             missing_value_replacement='mean',
-            model_missing_values=False,
+            missing_value_generation='random',
             learn_rounding_scheme=enforce_rounding,
             enforce_min_max_values=enforce_min_max_values
         )
@@ -286,7 +286,23 @@ class DataProcessor:
         """
         return deepcopy(self._constraints_list)
 
+    def _load_constraints(self):
+        loaded_constraints = []
+        default_constraints_classes = list(get_subclasses(Constraint))
+        for constraint in self._constraints_list:
+            if constraint['constraint_class'] in default_constraints_classes:
+                loaded_constraints.append(Constraint.from_dict(constraint))
+
+            else:
+                constraint_class = self._custom_constraint_classes[constraint['constraint_class']]
+                loaded_constraints.append(
+                    constraint_class(**constraint.get('constraint_parameters', {}))
+                )
+
+        return loaded_constraints
+
     def _fit_constraints(self, data):
+        self._constraints = self._load_constraints()
         errors = []
         for constraint in self._constraints:
             try:
@@ -330,15 +346,6 @@ class DataProcessor:
 
         if errors:
             raise AggregateConstraintsError(errors)
-
-        return data
-
-    def _fit_transform_constraints(self, data):
-        # Fit and validate all constraints first because `transform` might change columns
-        # making the following constraints invalid
-        self._constraints = self._load_constraints()
-        self._fit_constraints(data)
-        data = self._transform_constraints(data)
 
         return data
 
@@ -430,7 +437,7 @@ class DataProcessor:
                 config['sdtypes'][column] = 'numerical'
                 config['transformers'][column] = rdt.transformers.FloatFormatter(
                     missing_value_replacement='mean',
-                    model_missing_values=False,
+                    missing_value_generation='random',
                     enforce_min_max_values=self._enforce_min_max_values
                 )
             else:
@@ -575,7 +582,10 @@ class DataProcessor:
             self._fit_formatters(data)
 
             LOGGER.info(f'Fitting constraints for table {self.table_name}')
-            constrained = self._fit_transform_constraints(data)
+            if len(self._constraints_list) != len(self._constraints):
+                self._fit_constraints(data)
+
+            constrained = self._transform_constraints(data)
             columns_created_by_constraints = set(constrained.columns) - set(data.columns)
 
             config = self._hyper_transformer.get_config()
@@ -598,21 +608,6 @@ class DataProcessor:
                 self._hyper_transformer.set_config(config)
 
             self._prepared_for_fitting = True
-
-    def _load_constraints(self):
-        loaded_constraints = []
-        default_constraints_classes = list(get_subclasses(Constraint))
-        for constraint in self._constraints_list:
-            if constraint['constraint_class'] in default_constraints_classes:
-                loaded_constraints.append(Constraint.from_dict(constraint))
-
-            else:
-                constraint_class = self._custom_constraint_classes[constraint['constraint_class']]
-                loaded_constraints.append(
-                    constraint_class(**constraint.get('constraint_parameters', {}))
-                )
-
-        return loaded_constraints
 
     def fit(self, data):
         """Fit this metadata to the given data.
@@ -756,7 +751,23 @@ class DataProcessor:
             if is_integer_dtype(dtype) and is_float_dtype(column_data.dtype):
                 column_data = column_data.round()
 
-            reversed_data[column_name] = column_data[column_data.notna()].astype(dtype)
+            reversed_data[column_name] = column_data[column_data.notna()]
+            try:
+                reversed_data[column_name] = reversed_data[column_name].astype(dtype)
+            except ValueError as e:
+                column_metadata = self.metadata.columns.get(column_name)
+                sdtype = column_metadata.get('sdtype')
+                if sdtype not in self._DTYPE_TO_SDTYPE.values():
+                    LOGGER.info(
+                        f"The real data in '{column_name}' was stored as '{dtype}' but the "
+                        'synthetic data could not be cast back to this type. If this is a '
+                        'problem, please check your input data and metadata settings.'
+                    )
+                    if column_name in self.formatters:
+                        self.formatters.pop(column_name)
+
+                else:
+                    raise ValueError(e)
 
         # reformat columns using the formatters
         for column in sampled_columns:
