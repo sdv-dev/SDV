@@ -2,6 +2,12 @@
 
 ## 1.2.0 - 2023-06-07
 
+This release adds a parameter called `verbose` to the `HMASynthesizer`. Setting it to True will show progress bars during the fitting steps. Additionally, performance optimizations were made to the modeling and initialization of the `HMASynthesizer`.
+
+Multiple changes were made to enhance constraints. The `Range` constraint was improved to be able to generate more accurate data when null values are provided. Constraints are also now validated against the data when running `validate()` on any synthesizer.
+
+Finally, some warnings were resolved.
+
 ### New Features
 
 * Report fitting progress for the HMASynthesizer - Issue [#1440](https://github.com/sdv-dev/SDV/issues/1440) by @pvk-developer
@@ -26,6 +32,7 @@
 ### Maintenance
 
 * Upgrade to torch 2.0 - Issue [#1365](https://github.com/sdv-dev/SDV/issues/1365) by @fealho
+* During fit, there is a FutureWarning (due to RDT 1.5.0) - Issue [#1456](https://github.com/sdv-dev/SDV/issues/1456) by @amontanez24
 
 ## 1.1.0 - 2023-05-10
 
