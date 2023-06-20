@@ -15,7 +15,7 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 install_requires = [
     'Faker>=10,<15',
     'graphviz>=0.13.2,<1',
-    "numpy>=1.20.0,<2;python_version<'3.10'",
+    "numpy>=1.20.0,<1.25.0;python_version<'3.10'",
     "numpy>=1.23.3,<2;python_version>='3.10'",
     "pandas>=1.1.3;python_version<'3.10'",
     "pandas>=1.5.0;python_version>='3.10'",
