@@ -358,16 +358,15 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         """Find parent ids for the given table and foreign key.
 
         The parent ids are chosen randomly based on the likelihood of the available
-        parent ids in the parent table. If the parent table is not sampled, this method
-        will first sample rows for the parent table.
+        parent ids in the parent table.
 
         Args:
             child_table (pd.DataFrame):
-
+                The child table dataframe.
             parent_table (pd.DataFrame):
-
+                The parent table dataframe.
             child_name (str):
-
+                The name of the child table.
             parent_name (dict):
                 Map of table name to sampled data (pandas.DataFrame).
             foreign_key (str):
@@ -377,6 +376,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             pandas.Series:
                 The parent ids for the given table data.
         """
+        # Create a copy of the parent table with the primary key as index to calculate likilihoods
         primary_key = self.metadata.tables[parent_name].primary_key
         parent_table = parent_table.set_index(primary_key)
         num_rows = parent_table[f'__{child_name}__{foreign_key}__num_rows'].fillna(0).clip(0)

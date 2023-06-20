@@ -604,10 +604,11 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 * int:
                     Number of rows that are considered valid.
         """
-        if (self._model and (
-                self._data_processor.get_sdtypes(primary_keys=False) or keep_extra_columns)):
-            if not self._random_state_set:
-                self._set_random_state(FIXED_RNG_SEED)
+        if self._model and not self._random_state_set:
+            self._set_random_state(FIXED_RNG_SEED)
+
+        need_sample = self._data_processor.get_sdtypes(primary_keys=False) or keep_extra_columns
+        if self._model and need_sample:
 
             if conditions is None:
                 raw_sampled = self._sample(num_rows)
