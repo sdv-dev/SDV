@@ -108,8 +108,8 @@ def test_cast_to_datetime64():
     """
     # Setup
     string_value = '2021-02-02'
-    list_value = [np.nan, '2021-02-02']
-    series_value = pd.Series(['2021-02-02'])
+    list_value = [None, np.nan, '2021-02-02']
+    series_value = pd.Series(['2021-02-02', None, pd.NaT])
 
     # Run
     string_out = cast_to_datetime64(string_value)
@@ -118,8 +118,16 @@ def test_cast_to_datetime64():
 
     # Assert
     expected_string_output = np.datetime64('2021-02-02')
-    expected_series_output = pd.Series(np.datetime64('2021-02-02'))
-    expected_list_output = np.array([np.datetime64('NaT'), '2021-02-02'], dtype='datetime64[ns]')
+    expected_series_output = pd.Series([
+        np.datetime64('2021-02-02'),
+        np.datetime64('NaT'),
+        np.datetime64('NaT')
+    ])
+    expected_list_output = np.array([
+        np.datetime64('NaT'),
+        np.datetime64('NaT'),
+        '2021-02-02'
+    ], dtype='datetime64[ns]')
     np.testing.assert_array_equal(expected_list_output, list_out)
     pd.testing.assert_series_equal(expected_series_output, series_out)
     assert expected_string_output == string_out
