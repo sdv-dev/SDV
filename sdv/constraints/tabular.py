@@ -712,7 +712,7 @@ class ScalarInequality(Constraint):
             diff_column = diff_column.round()
 
         if self._is_datetime:
-            diff_column = diff_column.astype('timedelta64[ns]')
+            diff_column = diff_column.astype('timedelta64[ns]', errors='ignore')
 
         if self._operator in [np.greater, np.greater_equal]:
             original_column = self._value + diff_column
