@@ -712,7 +712,10 @@ class ScalarInequality(Constraint):
             diff_column = diff_column.round()
 
         if self._is_datetime:
-            diff_column = convert_to_timedelta(diff_column)
+            nan_mask = pd.isna(diff_column)
+            diff_column[nan_mask] = 0
+            diff_column = diff_column.astype('timedelta64[ns]')
+            diff_column[nan_mask] = pd.NaT
 
         if self._operator in [np.greater, np.greater_equal]:
             original_column = self._value + diff_column
