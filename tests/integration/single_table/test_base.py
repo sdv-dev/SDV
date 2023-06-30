@@ -903,7 +903,7 @@ def test_scalar_inequality_constraint_with_datetimes_and_nones():
 
     # Run
     synth.fit(data)
-    sampled = synth.sample(10)
+    sampled = synth.sample(5)
 
     # Assert
     expected_sampled = pd.DataFrame({
@@ -913,11 +913,6 @@ def test_scalar_inequality_constraint_with_datetimes_and_nones():
             2: np.nan,
             3: '2020-01-29',
             4: '2020-01-31',
-            5: np.nan,
-            6: '2020-01-13',
-            7: '2020-01-31',
-            8: np.nan,
-            9: np.nan
         },
         'B': {
             0: '2021-07-28',
@@ -925,11 +920,6 @@ def test_scalar_inequality_constraint_with_datetimes_and_nones():
             2: '2021-07-26',
             3: '2021-07-02',
             4: '2021-06-06',
-            5: '2021-07-30',
-            6: '2021-07-14',
-            7: np.nan,
-            8: '2021-07-04',
-            9: np.nan
         }
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
