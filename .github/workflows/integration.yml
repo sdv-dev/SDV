@@ -6,7 +6,7 @@ on:
     types: [opened, reopened]
 
 jobs:
-  unit:
+  integration:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
