@@ -25,7 +25,7 @@ def cast_to_datetime64(value):
         value = np.array([
             pd.to_datetime(item).to_datetime64()
             if not pd.isna(item)
-            else pd.to_datetime(pd.NaT).to_datetime64()
+            else pd.NaT.to_datetime64()
             for item in value
         ])
 
