@@ -810,6 +810,263 @@ def test_synthesizer_with_inequality_constraint():
     )
 
 
+def test_inequality_constraint_with_datetimes_and_nones():
+    """Test that the ``Inequality`` constraint works with ``None`` and ``datetime``."""
+    # Setup
+    data = pd.DataFrame(data={
+        'A': [None, None, '2020-01-02', '2020-03-04'] * 2,
+        'B': [None, '2021-03-04', '2021-12-31', None] * 2
+    })
+
+    metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'}
+        }
+    })
+
+    metadata.validate()
+    synth = GaussianCopulaSynthesizer(metadata)
+    synth.add_constraints([
+        {
+            'constraint_class': 'Inequality',
+            'constraint_parameters': {
+                'low_column_name': 'A',
+                'high_column_name': 'B'
+            }
+        }
+    ])
+    synth.validate(data)
+
+    # Run
+    synth.fit(data)
+    sampled = synth.sample(10)
+
+    # Assert
+    expected_sampled = pd.DataFrame({
+        'A': {
+            0: '2020-01-02',
+            1: '2019-10-30',
+            2: np.nan,
+            3: np.nan,
+            4: '2020-01-02',
+            5: np.nan,
+            6: '2019-10-30',
+            7: np.nan,
+            8: '2020-01-02',
+            9: np.nan
+        },
+        'B': {
+            0: '2021-12-30',
+            1: '2021-10-27',
+            2: '2021-10-27',
+            3: '2021-10-27',
+            4: np.nan,
+            5: '2021-10-27',
+            6: '2021-10-27',
+            7: '2021-12-30',
+            8: np.nan,
+            9: '2021-10-27'
+        }
+    })
+    pd.testing.assert_frame_equal(expected_sampled, sampled)
+
+
+def test_scalar_inequality_constraint_with_datetimes_and_nones():
+    """Test that the ``ScalarInequality`` constraint works with ``None`` and ``datetime``."""
+    # Setup
+    data = pd.DataFrame(data={
+        'A': [None, None, '2020-01-02', '2020-03-04'],
+        'B': [None, '2021-03-04', '2021-12-31', None]
+    })
+
+    metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'}
+        }
+    })
+
+    metadata.validate()
+    synth = GaussianCopulaSynthesizer(metadata)
+    synth.add_constraints([
+        {
+            'constraint_class': 'ScalarInequality',
+            'constraint_parameters': {
+                'column_name': 'A',
+                'relation': '>=',
+                'value': '2019-01-01'
+            }
+        }
+    ])
+    synth.validate(data)
+
+    # Run
+    synth.fit(data)
+    sampled = synth.sample(5)
+
+    # Assert
+    expected_sampled = pd.DataFrame({
+        'A': {
+            0: np.nan,
+            1: '2020-01-19',
+            2: np.nan,
+            3: '2020-01-29',
+            4: '2020-01-31',
+        },
+        'B': {
+            0: '2021-07-28',
+            1: '2021-07-14',
+            2: '2021-07-26',
+            3: '2021-07-02',
+            4: '2021-06-06',
+        }
+    })
+    pd.testing.assert_frame_equal(expected_sampled, sampled)
+
+
+def test_scalar_range_constraint_with_datetimes_and_nones():
+    """Test that the ``ScalarRange`` constraint works with ``None`` and ``datetime``."""
+    # Setup
+    data = pd.DataFrame(data={
+        'A': [None, None, '2020-01-02', '2020-03-04'],
+        'B': [None, '2021-03-04', '2021-12-31', None]
+    })
+
+    metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'}
+        }
+    })
+
+    metadata.validate()
+    synth = GaussianCopulaSynthesizer(metadata)
+    synth.add_constraints([
+        {
+            'constraint_class': 'ScalarRange',
+            'constraint_parameters': {
+                'column_name': 'A',
+                'low_value': '2019-10-30',
+                'high_value': '2020-03-04',
+                'strict_boundaries': False
+            }
+        }
+    ])
+    synth.validate(data)
+
+    # Run
+    synth.fit(data)
+    sampled = synth.sample(10)
+
+    # Assert
+    expected_sampled = pd.DataFrame({
+        'A': {
+            0: '2020-03-03',
+            1: np.nan,
+            2: '2020-03-03',
+            3: np.nan,
+            4: np.nan,
+            5: '2020-03-03',
+            6: np.nan,
+            7: np.nan,
+            8: np.nan,
+            9: '2020-02-27',
+        },
+        'B': {
+            0: np.nan,
+            1: np.nan,
+            2: np.nan,
+            3: np.nan,
+            4: np.nan,
+            5: '2021-04-14',
+            6: np.nan,
+            7: '2021-05-21',
+            8: np.nan,
+            9: np.nan,
+        }
+    })
+    pd.testing.assert_frame_equal(expected_sampled, sampled)
+
+
+def test_range_constraint_with_datetimes_and_nones():
+    """Test that the ``Range`` constraint works with ``None`` and ``datetime``."""
+    # Setup
+    data = pd.DataFrame(data={
+        'A': [None, None, '2020-01-02', '2020-03-04'],
+        'B': [None, '2021-03-04', '2021-12-31', None],
+        'C': [None, '2022-03-04', '2022-12-31', None],
+    })
+
+    metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'C': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'}
+        }
+    })
+
+    metadata.validate()
+    synth = GaussianCopulaSynthesizer(metadata)
+    synth.add_constraints([
+        {
+            'constraint_class': 'Range',
+            'constraint_parameters': {
+                'low_column_name': 'A',
+                'middle_column_name': 'B',
+                'high_column_name': 'C',
+                'strict_boundaries': False
+            }
+        }
+    ])
+    synth.validate(data)
+
+    # Run
+    synth.fit(data)
+    sampled = synth.sample(10)
+
+    # Assert
+    expected_sampled = pd.DataFrame({
+        'A': {
+            0: '2020-01-02',
+            1: '2020-01-02',
+            2: np.nan,
+            3: '2020-01-02',
+            4: '2019-10-30',
+            5: np.nan,
+            6: '2020-01-02',
+            7: '2019-10-30',
+            8: '2019-10-30',
+            9: np.nan
+        },
+        'B': {
+            0: '2021-12-30',
+            1: '2021-12-30',
+            2: '2021-10-27',
+            3: np.nan,
+            4: '2021-10-27',
+            5: '2021-10-27',
+            6: np.nan,
+            7: '2021-10-27',
+            8: np.nan,
+            9: '2021-10-27'
+        },
+        'C': {
+            0: '2022-12-30',
+            1: '2022-12-30',
+            2: '2022-10-27',
+            3: np.nan,
+            4: '2022-10-27',
+            5: '2022-10-27',
+            6: np.nan,
+            7: '2022-10-27',
+            8: np.nan,
+            9: '2022-10-27'
+        }
+    })
+    pd.testing.assert_frame_equal(expected_sampled, sampled)
+
+
 def test_inequality_constraint_all_possible_nans_configurations():
     """Test that the inequality constraint works with all possible NaN configurations."""
     # Setup
