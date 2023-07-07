@@ -45,6 +45,13 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             self._table_synthesizers,
             self._table_sizes)
 
+    def _get_pbar_args(self, **kwargs):
+        """Return a dictionary with the updated keyword args for a progress bar."""
+        pbar_args = super()._get_pbar_args(**kwargs)
+        pbar_args['disable'] = not self.verbose
+
+        return pbar_args
+
     def _get_extension(self, child_name, child_table, foreign_key, progress_bar_desc):
         """Generate the extension columns for this child table.
 
