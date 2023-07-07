@@ -695,7 +695,6 @@ def test_progress_bar_print(capsys):
     data, metadata = download_demo('multi_table', 'got_families')
     hmasynthesizer = HMASynthesizer(metadata)
 
-    # Define the phrases that should be printed
     key_phrases = [
         r'Preprocess Tables:',
         r'Learning relationships:',
@@ -707,7 +706,6 @@ def test_progress_bar_print(capsys):
     hmasynthesizer.fit(data)
     hmasynthesizer.sample(0.5)
 
-    # Capture output
     captured = capsys.readouterr()
 
     # Assert

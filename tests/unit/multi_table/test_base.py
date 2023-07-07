@@ -53,7 +53,7 @@ class TestBaseMultiTableSynthesizer:
         ])
 
     def test__get_pbar_args(self):
-        """Test that ``_get_pbar_args`` returns a dictionary with disable True."""
+        """Test that ``_get_pbar_args`` returns a dictionary with disable equals to True."""
         # Setup
         instance = Mock()
 
