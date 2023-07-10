@@ -28,6 +28,8 @@ class BaseMultiTableSynthesizer:
             for.
         locales (list or str):
             The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+        verbose (bool):
+            Whether to print progress for fitting or not.
     """
 
     DEFAULT_SYNTHESIZER_KWARGS = None
@@ -60,18 +62,20 @@ class BaseMultiTableSynthesizer:
 
     def _get_pbar_args(self, **kwargs):
         """Return a dictionary with the updated keyword args for a progress bar."""
-        pbar_args = {'disable': True}
+        pbar_args = {'disable': not self.verbose}
         pbar_args.update(kwargs)
 
         return pbar_args
 
     def _print(self, text='', **kwargs):
-        print(text, **kwargs)  # noqa: T001
+        if self.verbose:
+            print(text, **kwargs)  # noqa: T001
 
-    def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
+    def __init__(self, metadata, locales=None, synthesizer_kwargs=None, verbose=False):
         self.metadata = metadata
         self.metadata.validate()
         self.locales = locales
+        self.verbose = verbose
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
         if synthesizer_kwargs is not None:

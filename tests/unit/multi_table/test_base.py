@@ -53,9 +53,10 @@ class TestBaseMultiTableSynthesizer:
         ])
 
     def test__get_pbar_args(self):
-        """Test that ``_get_pbar_args`` returns a dictionary with disable equals to True."""
+        """Test that ``_get_pbar_args`` returns a dictionary with disable opposite to verbose."""
         # Setup
         instance = Mock()
+        instance.verbose = False
 
         # Run
         result = BaseMultiTableSynthesizer._get_pbar_args(instance)
@@ -77,7 +78,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         assert result == {
-            'disable': True,
+            'disable': False,
             'desc': 'Process Table',
             'position': 0
         }
