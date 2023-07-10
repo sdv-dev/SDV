@@ -71,11 +71,11 @@ class BaseMultiTableSynthesizer:
         if self.verbose:
             print(text, **kwargs)  # noqa: T001
 
-    def __init__(self, metadata, locales=None, synthesizer_kwargs=None, verbose=False):
+    def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
         self.metadata = metadata
         self.metadata.validate()
         self.locales = locales
-        self.verbose = verbose
+        self.verbose = False
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
         if synthesizer_kwargs is not None:

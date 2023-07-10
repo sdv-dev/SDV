@@ -32,12 +32,12 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
     }
 
     def __init__(self, metadata, locales=None, verbose=True):
-        BaseMultiTableSynthesizer.__init__(self, metadata, locales=locales, verbose=verbose)
+        BaseMultiTableSynthesizer.__init__(self, metadata, locales=locales)
         self._table_sizes = {}
         self._max_child_rows = {}
         self._augmented_tables = []
         self._learned_relationships = 0
-
+        self.verbose = verbose
         BaseHierarchicalSampler.__init__(
             self,
             self.metadata,
