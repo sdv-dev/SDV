@@ -1,4 +1,5 @@
 import datetime
+import re
 
 import numpy as np
 import pandas as pd
@@ -686,3 +687,28 @@ def test_use_own_data_using_hma(tmp_path):
 
     for table in metadata.tables:
         assert set(synthetic_data[table].columns) == set(datasets[table].columns)
+
+
+def test_progress_bar_print(capsys):
+    """Test that the progress bar prints correctly."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'got_families')
+    hmasynthesizer = HMASynthesizer(metadata)
+
+    key_phrases = [
+        r'Preprocess Tables:',
+        r'Learning relationships:',
+        r"\(1/2\) Tables 'characters' and 'character_families' \('character_id'\):",
+        r"\(2/2\) Tables 'families' and 'character_families' \('family_id'\):"
+    ]
+
+    # Run
+    hmasynthesizer.fit(data)
+    hmasynthesizer.sample(0.5)
+
+    captured = capsys.readouterr()
+
+    # Assert
+    for pattern in key_phrases:
+        match = re.search(pattern, captured.out + captured.err)
+        assert match is not None

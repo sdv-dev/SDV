@@ -38,7 +38,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         self._augmented_tables = []
         self._learned_relationships = 0
         self.verbose = verbose
-
         BaseHierarchicalSampler.__init__(
             self,
             self.metadata,
