@@ -68,6 +68,7 @@ class TestBaseMultiTableSynthesizer:
         """Test that ``_get_pbar_args`` returns a dictionary with the given kwargs."""
         # Setup
         instance = Mock()
+        instance.verbose = True
 
         # Run
         result = BaseMultiTableSynthesizer._get_pbar_args(
