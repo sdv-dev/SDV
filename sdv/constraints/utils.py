@@ -20,11 +20,12 @@ def cast_to_datetime64(value):
     if isinstance(value, str):
         value = pd.to_datetime(value).to_datetime64()
     elif isinstance(value, pd.Series):
-        value.apply(lambda x: pd.to_datetime(x).to_datetime64())
         value = value.astype('datetime64[ns]')
     elif isinstance(value, (np.ndarray, list)):
         value = np.array([
             pd.to_datetime(item).to_datetime64()
+            if not pd.isna(item)
+            else pd.NaT.to_datetime64()
             for item in value
         ])
 

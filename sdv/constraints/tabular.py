@@ -681,9 +681,12 @@ class ScalarInequality(Constraint):
                 Transformed data.
         """
         column = table_data[self._column_name].to_numpy()
-        diff_column = abs(column - self._value)
         if self._is_datetime:
+            column = cast_to_datetime64(column)
+            diff_column = abs(column - self._value)
             diff_column = diff_column.astype(np.float64)
+        else:
+            diff_column = abs(column - self._value)
 
         self._diff_column_name = create_unique_name(self._diff_column_name, table_data.columns)
         table_data[self._diff_column_name] = np.log(diff_column + 1)
@@ -709,7 +712,7 @@ class ScalarInequality(Constraint):
             diff_column = diff_column.round()
 
         if self._is_datetime:
-            diff_column = diff_column.astype('timedelta64[ns]')
+            diff_column = convert_to_timedelta(diff_column)
 
         if self._operator in [np.greater, np.greater_equal]:
             original_column = self._value + diff_column
@@ -914,9 +917,10 @@ class Range(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        low = table_data[self.low_column_name]
-        middle = table_data[self.middle_column_name]
-        high = table_data[self.high_column_name]
+        # Using ``to_numpy`` since ``get_datetime_diff`` requires ``numpy.ndarray``
+        low = table_data[self.low_column_name].to_numpy()
+        middle = table_data[self.middle_column_name].to_numpy()
+        high = table_data[self.high_column_name].to_numpy()
 
         if self._is_datetime:
             low_diff_column = get_datetime_diff(middle, low, self._dtype)
@@ -1115,6 +1119,9 @@ class ScalarRange(Constraint):
         """
         data = table_data[self._column_name]
 
+        if self._is_datetime:
+            data = cast_to_datetime64(data)
+
         satisfy_low_bound = np.logical_or(
             self._operator(self._low_value, data),
             np.isnan(self._low_value),
@@ -1144,7 +1151,11 @@ class ScalarRange(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
-        data = logit(table_data[self._column_name], self._low_value, self._high_value)
+        data = table_data[self._column_name]
+        if self._is_datetime:
+            data = cast_to_datetime64(table_data[self._column_name])
+
+        data = logit(data, self._low_value, self._high_value)
         table_data[self._transformed_column] = data
         table_data = table_data.drop(self._column_name, axis=1)
 
