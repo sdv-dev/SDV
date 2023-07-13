@@ -1,5 +1,22 @@
 # Release Notes
 
+## 1.2.1 - 2023-07-13
+
+This release fixes a bug that caused the `Inequality` constraint and others to fail if there were None values in a datetime column.
+
+### Bugs Fixed
+
+* Inequality fails with None and datetime - Issue [#1471](https://github.com/sdv-dev/SDV/issues/1471) by @pvk-developer
+
+### Maintenance
+
+* Drop support for Python 3.7 - Issue [#1487](https://github.com/sdv-dev/SDV/issues/1487) by @pvk-developer
+
+### Internal
+
+* Make HMA use hierarchical sampling mixin - Issue [#1428](https://github.com/sdv-dev/SDV/issues/1428) by @frances-h
+* Move progress bar out of base multi table synthesizer - Issue [#1486](https://github.com/sdv-dev/SDV/issues/1486) by @R-Palazzo
+
 ## 1.2.0 - 2023-06-07
 
 This release adds a parameter called `verbose` to the `HMASynthesizer`. Setting it to True will show progress bars during the fitting steps. Additionally, performance optimizations were made to the modeling and initialization of the `HMASynthesizer`.
