@@ -1,6 +1,6 @@
 # Release Notes
 
-## 1.2.1 - 2023-07-11
+## 1.2.1 - 2023-07-13
 
 This release fixes a bug that caused the `Inequality` constraint and others to fail if there were None values in a datetime column.
 
