@@ -43,13 +43,20 @@ class TestDataProcessor:
         assert transformer.learn_rounding_scheme is False
         assert transformer.enforce_min_max_values is False
 
+    @patch('sdv.data_processing.data_processor.rdt.transformers.RegexGenerator')
+    @patch('sdv.data_processing.data_processor.get_default_transformers')
     @patch('sdv.data_processing.data_processor.rdt')
     @patch('sdv.data_processing.data_processor.DataProcessor._update_numerical_transformer')
-    def test___init__(self, update_transformer_mock, mock_rdt):
+    def test___init__(
+        self, update_transformer_mock, mock_rdt, mock_default_transformers, mock_regex_generator
+    ):
         """Test the ``__init__`` method.
 
         Setup:
-            - Patch the ``Constraint`` module.
+            - Patch the ``RegexGenerator`` class.
+            - Patch the ``get_default_transformers`` function.
+            - Patch the ``rdt`` module.
+            - Patch the ``_update_numerical_transformer`` method.
 
         Input:
             - A mock for metadata.
@@ -89,6 +96,9 @@ class TestDataProcessor:
 
         assert data_processor._hyper_transformer == mock_rdt.HyperTransformer.return_value
         update_transformer_mock.assert_called_with(True, False)
+
+        mock_default_transformers.assert_called_once()
+        mock_regex_generator.assert_called_once()
 
     def test___init___without_mocks(self):
         """Test the ``__init__`` method without using mocks.
