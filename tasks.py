@@ -78,8 +78,7 @@ def install_minimum(c):
                     requirement += version
                 versions.append(requirement)
 
-        elif (line.startswith('install_requires = [') or
-              line.startswith('pomegranate_requires = [')):
+        elif (line.startswith('install_requires = [')):
             started = True
 
     c.run(f'python -m pip install {" ".join(versions)}')
