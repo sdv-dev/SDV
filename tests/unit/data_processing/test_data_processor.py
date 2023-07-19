@@ -70,6 +70,17 @@ class TestDataProcessor:
         metadata.add_alternate_keys(['col_2'])
         metadata.set_primary_key('col')
 
+        mock_default_transformers.return_value = {
+            'numerical': 'FloatFormatter()',
+            'categorical': 'LabelEncoder(add_noise=True)',
+            'boolean': 'LabelEncoder(add_noise=True)',
+            'datetime': 'UnixTimestampEncoder()',
+            'text': 'RegexGenerator()',
+            'pii': 'AnonymizedFaker()',
+        }
+
+        mock_regex_generator.return_value = 'RegexGenerator()'
+
         # Run
         data_processor = DataProcessor(
             metadata=metadata,
@@ -99,6 +110,18 @@ class TestDataProcessor:
 
         mock_default_transformers.assert_called_once()
         mock_regex_generator.assert_called_once()
+
+        expected_default_transformers = {
+            'numerical': 'FloatFormatter()',
+            'categorical': 'LabelEncoder(add_noise=True)',
+            'boolean': 'LabelEncoder(add_noise=True)',
+            'datetime': 'UnixTimestampEncoder()',
+            'id': 'RegexGenerator()',
+            'pii': 'AnonymizedFaker()',
+        }
+        assert 'text' not in data_processor._transformers_by_sdtype
+        assert 'id' in data_processor._transformers_by_sdtype
+        assert data_processor._transformers_by_sdtype == expected_default_transformers
 
     def test___init___without_mocks(self):
         """Test the ``__init__`` method without using mocks.
