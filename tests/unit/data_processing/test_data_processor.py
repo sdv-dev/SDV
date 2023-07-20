@@ -119,8 +119,7 @@ class TestDataProcessor:
             'id': 'RegexGenerator()',
             'pii': 'AnonymizedFaker()',
         }
-        assert 'text' not in data_processor._transformers_by_sdtype
-        assert 'id' in data_processor._transformers_by_sdtype
+
         assert data_processor._transformers_by_sdtype == expected_default_transformers
 
     def test___init___without_mocks(self):
