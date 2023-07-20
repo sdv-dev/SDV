@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 import rdt
 from pandas.api.types import is_float_dtype, is_integer_dtype
-from rdt.transformers import AnonymizedFaker, RegexGenerator
+from rdt.transformers import AnonymizedFaker, RegexGenerator, get_default_transformers
 
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
@@ -58,21 +58,6 @@ class DataProcessor:
             Faker's default locale.
     """
 
-    _DEFAULT_TRANSFORMERS_BY_SDTYPE = {
-        'numerical': rdt.transformers.FloatFormatter(
-            learn_rounding_scheme=True,
-            enforce_min_max_values=True,
-            missing_value_replacement='mean',
-            missing_value_generation='random',
-        ),
-        'categorical': rdt.transformers.LabelEncoder(add_noise=True),
-        'boolean': rdt.transformers.LabelEncoder(add_noise=True),
-        'datetime': rdt.transformers.UnixTimestampEncoder(
-            missing_value_replacement='mean',
-            missing_value_generation='random',
-        ),
-        'id': rdt.transformers.RegexGenerator()
-    }
     _DTYPE_TO_SDTYPE = {
         'i': 'numerical',
         'f': 'numerical',
@@ -101,7 +86,11 @@ class DataProcessor:
         self._constraints = []
         self._constraints_to_reverse = []
         self._custom_constraint_classes = {}
-        self._transformers_by_sdtype = self._DEFAULT_TRANSFORMERS_BY_SDTYPE.copy()
+
+        self._transformers_by_sdtype = deepcopy(get_default_transformers())
+        self._transformers_by_sdtype['id'] = rdt.transformers.RegexGenerator()
+        del self._transformers_by_sdtype['text']
+
         self._update_numerical_transformer(enforce_rounding, enforce_min_max_values)
         self._hyper_transformer = rdt.HyperTransformer()
         self.table_name = table_name
@@ -464,7 +453,7 @@ class DataProcessor:
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata.columns.get(column)
             sdtype = column_metadata.get('sdtype')
-            pii = column_metadata.get('pii', sdtype not in self._DEFAULT_TRANSFORMERS_BY_SDTYPE)
+            pii = column_metadata.get('pii', sdtype not in self._transformers_by_sdtype)
             sdtypes[column] = 'pii' if pii else sdtype
 
             if sdtype == 'id':
