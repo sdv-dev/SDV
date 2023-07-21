@@ -43,13 +43,20 @@ class TestDataProcessor:
         assert transformer.learn_rounding_scheme is False
         assert transformer.enforce_min_max_values is False
 
+    @patch('sdv.data_processing.data_processor.rdt.transformers.RegexGenerator')
+    @patch('sdv.data_processing.data_processor.get_default_transformers')
     @patch('sdv.data_processing.data_processor.rdt')
     @patch('sdv.data_processing.data_processor.DataProcessor._update_numerical_transformer')
-    def test___init__(self, update_transformer_mock, mock_rdt):
+    def test___init__(
+        self, update_transformer_mock, mock_rdt, mock_default_transformers, mock_regex_generator
+    ):
         """Test the ``__init__`` method.
 
         Setup:
-            - Patch the ``Constraint`` module.
+            - Patch the ``RegexGenerator`` class.
+            - Patch the ``get_default_transformers`` function.
+            - Patch the ``rdt`` module.
+            - Patch the ``_update_numerical_transformer`` method.
 
         Input:
             - A mock for metadata.
@@ -62,6 +69,17 @@ class TestDataProcessor:
         metadata.add_column('col_2', sdtype='id')
         metadata.add_alternate_keys(['col_2'])
         metadata.set_primary_key('col')
+
+        mock_default_transformers.return_value = {
+            'numerical': 'FloatFormatter()',
+            'categorical': 'LabelEncoder(add_noise=True)',
+            'boolean': 'LabelEncoder(add_noise=True)',
+            'datetime': 'UnixTimestampEncoder()',
+            'text': 'RegexGenerator()',
+            'pii': 'AnonymizedFaker()',
+        }
+
+        mock_regex_generator.return_value = 'RegexGenerator()'
 
         # Run
         data_processor = DataProcessor(
@@ -89,6 +107,20 @@ class TestDataProcessor:
 
         assert data_processor._hyper_transformer == mock_rdt.HyperTransformer.return_value
         update_transformer_mock.assert_called_with(True, False)
+
+        mock_default_transformers.assert_called_once()
+        mock_regex_generator.assert_called_once()
+
+        expected_default_transformers = {
+            'numerical': 'FloatFormatter()',
+            'categorical': 'LabelEncoder(add_noise=True)',
+            'boolean': 'LabelEncoder(add_noise=True)',
+            'datetime': 'UnixTimestampEncoder()',
+            'id': 'RegexGenerator()',
+            'pii': 'AnonymizedFaker()',
+        }
+
+        assert data_processor._transformers_by_sdtype == expected_default_transformers
 
     def test___init___without_mocks(self):
         """Test the ``__init__`` method without using mocks.

@@ -71,15 +71,14 @@ def install_minimum(c):
             if _validate_python_version(line):
                 requirement = re.match(r'[^>]*', line).group(0)
                 requirement = re.sub(r"""['",]""", '', requirement)
-                version = re.search(r'>=?(\d\.?)+', line).group(0)
+                version = re.search(r'>=?(\d\.?)+\w*', line).group(0)
                 if version:
                     version = re.sub(r'>=?', '==', version)
                     version = re.sub(r"""['",]""", '', version)
                     requirement += version
                 versions.append(requirement)
 
-        elif (line.startswith('install_requires = [') or
-              line.startswith('pomegranate_requires = [')):
+        elif (line.startswith('install_requires = [')):
             started = True
 
     c.run(f'python -m pip install {" ".join(versions)}')
