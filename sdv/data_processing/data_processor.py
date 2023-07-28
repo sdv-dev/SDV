@@ -712,6 +712,7 @@ class DataProcessor:
                 column_names=missing_columns
             )
             sampled_columns.extend(missing_columns)
+            reversed_data[anonymized_data.columns] = anonymized_data[anonymized_data.notna()]
 
         if self._keys and num_rows:
             generated_keys = self.generate_keys(num_rows, reset_keys)
