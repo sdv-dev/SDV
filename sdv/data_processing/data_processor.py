@@ -716,6 +716,7 @@ class DataProcessor:
         if self._keys and num_rows:
             generated_keys = self.generate_keys(num_rows, reset_keys)
             sampled_columns.extend(self._keys)
+            reversed_data[generated_keys.columns] = generated_keys[generated_keys.notna()]
 
         for constraint in reversed(self._constraints_to_reverse):
             reversed_data = constraint.reverse_transform(reversed_data)
