@@ -17,6 +17,7 @@ from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.base import BaseSynthesizer
+from tests.utils import DataFrameMatcher
 
 
 class TestDataProcessor:
@@ -1846,21 +1847,26 @@ class TestDataProcessor:
         dp = DataProcessor(SingleTableMetadata())
         dp.fitted = True
         dp.metadata = Mock()
-        dp.metadata.columns = {'a': None, 'b': None, 'c': None, 'd': None}
+        dp.metadata.columns = {'a': None, 'b': None, 'c': None, 'key': None, 'd': None}
         data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [True, True, False],
             'c': ['d', 'e', 'f'],
+
         })
+        dp._keys = ['key']
         dp._hyper_transformer = Mock()
-        dp._hyper_transformer.create_anonymized_columns.return_value = pd.DataFrame({
-            'd': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com']
-        })
+        dp._hyper_transformer.create_anonymized_columns.side_effect = [
+            pd.DataFrame({'d': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com']}),
+            pd.DataFrame({'key': ['sdv_0', 'sdv_1', 'sdv_2']})
+        ]
         dp._constraints_to_reverse = [constraint_mock]
-        dp._hyper_transformer.reverse_transform_subset.return_value = data
+        dp._hyper_transformer.reverse_transform_subset.return_value = data.copy()
         dp._hyper_transformer._output_columns = ['a', 'b', 'c']
         dp._dtypes = pd.Series(
-            [np.float64, np.bool_, np.object_, np.object_], index=['a', 'b', 'c', 'd'])
+            [np.float64, np.bool_, np.object_, np.object_, np.object_],
+            index=['a', 'b', 'c', 'd', 'key']
+        )
         constraint_mock.reverse_transform.return_value = data
 
         # Run
@@ -1872,20 +1878,29 @@ class TestDataProcessor:
             'b': [True, True, False],
             'c': ['d', 'e', 'f']
         })
-        constraint_mock.reverse_transform.assert_called_once_with(data)
+        expected_constraint_input = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [True, True, False],
+            'c': ['d', 'e', 'f'],
+            'd': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com'],
+            'key': ['sdv_0', 'sdv_1', 'sdv_2']
+        })
+        constraint_mock.reverse_transform.assert_called_once_with(
+            DataFrameMatcher(expected_constraint_input))
         data_from_call = dp._hyper_transformer.reverse_transform_subset.mock_calls[0][1][0]
         pd.testing.assert_frame_equal(input_data, data_from_call)
         dp._hyper_transformer.reverse_transform_subset.assert_called_once()
+        dp._hyper_transformer.create_anonymized_columns.has_calls(
+            call(num_rows=3, column_names=['d']),
+            call(num_rows=3, column_names=['key'])
+        )
         expected_output = pd.DataFrame({
             'a': [1., 2., 3.],
             'b': [True, True, False],
             'c': ['d', 'e', 'f'],
-            'd': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com']
+            'key': ['sdv_0', 'sdv_1', 'sdv_2'],
+            'd': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com'],
         })
-        dp._hyper_transformer.create_anonymized_columns.assert_called_once_with(
-            num_rows=3,
-            column_names=['d']
-        )
         pd.testing.assert_frame_equal(reverse_transformed, expected_output)
 
     @patch('sdv.data_processing.data_processor.LOGGER')
