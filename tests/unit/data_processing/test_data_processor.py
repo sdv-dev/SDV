@@ -1822,7 +1822,7 @@ class TestDataProcessor:
         assert result.equals(expected_result)
         assert dp._constraints_to_reverse == []
 
-    def test_reverse_transform_blah(self):
+    def test_reverse_transform(self):
         """Test the ``reverse_transform`` method.
 
         This method should attempt to reverse transform all the columns using the
