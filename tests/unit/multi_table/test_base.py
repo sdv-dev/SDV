@@ -719,7 +719,7 @@ class TestBaseMultiTableSynthesizer:
         assert instance._fitted
 
     def test_fit_processed_data_empty_table(self):
-        """Test the fit attributes are properly set when data is empty."""
+        """Test attributes are properly set when data is empty and that _fit is not called."""
         # Setup
         instance = Mock()
         data = pd.DataFrame()
@@ -728,6 +728,7 @@ class TestBaseMultiTableSynthesizer:
         BaseMultiTableSynthesizer.fit_processed_data(instance, data)
 
         # Assert
+        instance._fit.assert_not_called()
         assert instance._fitted
         assert instance._fitted_date
         assert instance._fitted_sdv_version
