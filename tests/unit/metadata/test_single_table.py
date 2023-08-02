@@ -720,6 +720,65 @@ class TestSingleTableMetadata:
         mock__validate_column.assert_called_once_with(
             'age', 'numerical', computer_representation='Float')
 
+    def test__determine_sdtype_for_numbers(self):
+        """Test the ``determine_sdtype_for_numbers`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+
+        data_less_than_5_rows = pd.Series([1, np.nan, 3, 4, 5])
+        data_less_than_10_percent_unique_values = pd.Series(
+            [1, 2, 2, None, 2, 1, 1, 1, 1, 1, 2, 2, np.nan, 2, 1, 1, 2, 1, 2, 2]
+        )
+        data_all_unique = pd.Series([1, 2, 3, 4, 5, 6])
+        data_numerical_int = pd.Series([1, np.nan, 3, 4, 5, 6, 7, 8, 9, 10])
+        data_numerical_float = pd.Series([1.1, 2.2, 3.3, 4.4, 5.5, 6.6])
+
+        # Run
+        sdtype_less_than_5_rows = instance._determine_sdtype_for_numbers(data_less_than_5_rows)
+        sdtype_less_than_10_percent_unique_values = instance._determine_sdtype_for_numbers(
+            data_less_than_10_percent_unique_values
+        )
+        sdtype_all_unique = instance._determine_sdtype_for_numbers(data_all_unique)
+        sdtype_numerical_int = instance._determine_sdtype_for_numbers(data_numerical_int)
+        sdtype_numerical_float = instance._determine_sdtype_for_numbers(data_numerical_float)
+
+        # Assert
+        assert sdtype_less_than_5_rows == 'numerical'
+        assert sdtype_less_than_10_percent_unique_values == 'categorical'
+        assert sdtype_all_unique == 'id'
+        assert sdtype_numerical_int == 'numerical'
+        assert sdtype_numerical_float == 'numerical'
+
+    def test__determine_sdtype_for_objects(self):
+        """Test the ``_determine_sdtype_for_objects`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+
+        data_datetime = pd.Series(['2022-01-01', '2022-02-01', '2022-03-01'])
+        data_categorical_small = pd.Series(['a', 'b', 'c', 'd', 'e'])
+        data_numerical = pd.Series(
+            ['1', '2', '2', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+        )
+        data_all_unique = pd.Series(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'])
+        data_categorical_large = pd.Series(['a'] * 10 + ['b'] * 4)
+        data_unknown = pd.Series(['a', 'b', 'c', 'c', 1, 2.2, np.nan, None, 'd', 'e', 'f'])
+
+        # Run
+        sdtype_datetime = instance._determine_sdtype_for_objects(data_datetime)
+        sdtype_categorical_small = instance._determine_sdtype_for_objects(data_categorical_small)
+        sdtype_numerical_float = instance._determine_sdtype_for_objects(data_numerical)
+        sdtype_all_unique = instance._determine_sdtype_for_objects(data_all_unique)
+        sdtype_categorical_large = instance._determine_sdtype_for_objects(data_categorical_large)
+        sdtype_unknown = instance._determine_sdtype_for_objects(data_unknown)
+
+        # Assert
+        assert sdtype_datetime == 'datetime'
+        assert sdtype_categorical_small == 'categorical'
+        assert sdtype_numerical_float == 'numerical'
+        assert sdtype_all_unique == 'id'
+        assert sdtype_categorical_large == 'categorical'
+        assert sdtype_unknown == 'unknown'
+
     def test_detect_from_dataframe_raises_error(self):
         """Test the ``detect_from_dataframe`` method.
 
@@ -767,7 +826,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         data = pd.DataFrame({
-            'categorical': ['cat', 'dog', 'tiger', np.nan],
+            'categorical': ['cat', 'dog', 'cat', np.nan],
             'date': pd.to_datetime(['2021-02-02', np.nan, '2021-03-05', '2022-12-09']),
             'int': [1, 2, 3, 4],
             'float': [1., 2., 3., 4],
@@ -783,7 +842,7 @@ class TestSingleTableMetadata:
             'date': {'sdtype': 'datetime'},
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
-            'bool': {'sdtype': 'boolean'}
+            'bool': {'sdtype': 'categorical'}
         }
 
         expected_log_calls = [
@@ -855,10 +914,10 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.columns == {
             'categorical': {'sdtype': 'categorical'},
-            'date': {'sdtype': 'categorical'},
+            'date': {'sdtype': 'datetime'},
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
-            'bool': {'sdtype': 'boolean'}
+            'bool': {'sdtype': 'categorical'}
         }
 
         expected_log_calls = [
@@ -908,7 +967,7 @@ class TestSingleTableMetadata:
             'date': {'sdtype': 'datetime'},
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
-            'bool': {'sdtype': 'boolean'}
+            'bool': {'sdtype': 'categorical'}
         }
 
         expected_log_calls = [
