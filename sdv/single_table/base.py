@@ -468,7 +468,9 @@ class BaseSynthesizer:
             processed_data (pandas.DataFrame):
                 The transformed data used to fit the model to.
         """
-        self._fit(processed_data)
+        if not processed_data.empty:
+            self._fit(processed_data)
+
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_sdv_version = pkg_resources.get_distribution('sdv').version
