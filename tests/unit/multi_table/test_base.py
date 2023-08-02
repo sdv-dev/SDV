@@ -717,7 +717,7 @@ class TestBaseMultiTableSynthesizer:
         instance._augment_tables.assert_called_once_with(data)
         instance._model_tables.assert_called_once_with(instance._augment_tables.return_value)
         assert instance._fitted
-    
+
     def test_fit_processed_data_empty_table(self):
         """Test the fit attributes are properly set when data is empty."""
         # Setup
