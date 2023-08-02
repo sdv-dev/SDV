@@ -36,7 +36,6 @@ class SingleTableMetadata:
 
     _DTYPES_TO_SDTYPES = {
         'b': 'categorical',
-        'c': 'categorrical',
         'M': 'datetime',
     }
 
@@ -314,14 +313,14 @@ class SingleTableMetadata:
             if dtype in self._DTYPES_TO_SDTYPES:
                 sdtype = self._DTYPES_TO_SDTYPES[dtype]
             elif dtype in ['i', 'u', 'f']:
-                sdtype = self._determine_sdtype_for_numbers(clean_data)
+                sdtype = self._determine_sdtype_for_numbers(column_data)
 
             elif dtype == 'O':
                 sdtype = self._determine_sdtype_for_objects(column_data)
 
             if sdtype is None:
                 raise InvalidMetadataError(
-                    f"Unsupported data type for column '{field}' ({dtype})."
+                    f"Unsupported data type for column '{field}' (kind: {dtype})."
                     "The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
                 )
             column_dict = {'sdtype': deepcopy(sdtype)}

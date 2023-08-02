@@ -779,6 +779,77 @@ class TestSingleTableMetadata:
         assert sdtype_categorical_large == 'categorical'
         assert sdtype_unknown == 'unknown'
 
+    def test_detect_columns(self):
+        """Test the ``_detect_columns`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+        data = pd.DataFrame({
+            'numerical': [1, 2, 3, 2, 5, 6, 7, 8, 9, 10, 11],
+            'datetime': [
+                '2022-01-01', '2022-02-01', '2022-03-01', '2022-04-01', '2022-05-01', '2022-06-01',
+                '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01', '2022-11-01'
+            ],
+            'categorical': ['a', 'b', 'a', 'a', 'b', 'b', 'a', 'b', 'a', 'b', 'a'],
+            'bool': [True, False, True, False, True, False, True, False, True, False, True],
+            'unknown': ['a', 'b', 'c', 'c', 1, 2.2, np.nan, None, 'd', 'e', 'f'],
+        })
+
+        expected_datetime_format = '%Y-%m-%d'
+
+        # Run
+        instance._detect_columns(data)
+
+        # Assert
+        assert instance.columns['numerical']['sdtype'] == 'numerical'
+        assert instance.columns['datetime']['sdtype'] == 'datetime'
+        assert instance.columns['datetime']['datetime_format'] == expected_datetime_format
+        assert instance.columns['categorical']['sdtype'] == 'categorical'
+        assert instance.columns['unknown']['sdtype'] == 'unknown'
+        assert instance.columns['unknown']['pii'] is True
+        assert instance.columns['bool']['sdtype'] == 'categorical'
+
+    @patch('sdv.metadata.single_table.get_datetime_format')
+    def test_detect_columns_with_error(self, mock_get_datetime_format):
+        """Test the ``_detect_columns`` method with unsupported dtype."""
+        # Setup
+        instance = SingleTableMetadata()
+        data = pd.DataFrame({
+            'numerical': [1, 2, 3],
+            'datetime': ['2022-01-01', '2022-02-01', '2022-03-01'],
+        })
+
+        non_supported_data = pd.DataFrame({
+            'complex_dtype': [1 + 2j, 3 + 4j, 5 + 6j],
+            'numerical': [1, 2, 3],
+        })
+
+        instance._determine_sdtype_for_numbers = Mock(return_value='numerical')
+        instance._determine_sdtype_for_objects = Mock(return_value='datetime')
+
+        # Run
+        instance._detect_columns(data)
+
+        expected_error_message = re.escape(
+            "Unsupported data type for column 'complex_dtype' (kind: c)."
+            "The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
+        )
+
+        with pytest.raises(InvalidMetadataError, match=expected_error_message):
+            instance._detect_columns(non_supported_data)
+
+        # Assert
+        args_numerical, _ = instance._determine_sdtype_for_numbers.call_args
+        args_datetime, _ = instance._determine_sdtype_for_objects.call_args
+        args_datetime_format, _ = mock_get_datetime_format.call_args
+
+        pd.testing.assert_series_equal(args_numerical[0], data['numerical'])
+        pd.testing.assert_series_equal(args_datetime[0], data['datetime'])
+        pd.testing.assert_series_equal(args_datetime_format[0], data['datetime'])
+
+        instance._determine_sdtype_for_numbers.assert_called_once()
+        instance._determine_sdtype_for_objects.assert_called_once()
+        mock_get_datetime_format.assert_called_once()
+
     def test_detect_from_dataframe_raises_error(self):
         """Test the ``detect_from_dataframe`` method.
 
@@ -839,7 +910,7 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.columns == {
             'categorical': {'sdtype': 'categorical'},
-            'date': {'sdtype': 'datetime'},
+            'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
             'bool': {'sdtype': 'categorical'}
@@ -914,7 +985,7 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.columns == {
             'categorical': {'sdtype': 'categorical'},
-            'date': {'sdtype': 'datetime'},
+            'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
             'bool': {'sdtype': 'categorical'}
@@ -964,7 +1035,7 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.columns == {
             'categorical': {'sdtype': 'categorical'},
-            'date': {'sdtype': 'datetime'},
+            'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
             'bool': {'sdtype': 'categorical'}
