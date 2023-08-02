@@ -281,8 +281,10 @@ class SingleTableMetadata:
         """
         sdtype = None
         try:
-            pd.to_datetime(data)
-            sdtype = 'datetime'
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', category=UserWarning)
+                pd.to_datetime(data)
+                sdtype = 'datetime'
 
         except Exception:
             if len(data) <= 10:
@@ -304,6 +306,12 @@ class SingleTableMetadata:
         return sdtype
 
     def _detect_columns(self, data):
+        """Detect columns sdtype in the data.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to be analyzed.
+        """
         for field in data:
             column_data = data[field]
             clean_data = column_data.dropna()
