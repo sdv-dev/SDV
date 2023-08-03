@@ -290,18 +290,13 @@ class SingleTableMetadata:
             if len(data) <= 10:
                 sdtype = 'categorical'
             else:
-                try:
-                    number_data = data.astype('float')
-                    sdtype = self._determine_sdtype_for_numbers(number_data)
-
-                except Exception:
-                    unique_values = data.nunique()
-                    if unique_values == len(data):
-                        sdtype = 'id'
-                    elif unique_values <= round(len(data) / 5):
-                        sdtype = 'categorical'
-                    else:
-                        sdtype = 'unknown'
+                unique_values = data.nunique()
+                if unique_values == len(data):
+                    sdtype = 'id'
+                elif unique_values <= round(len(data) / 5):
+                    sdtype = 'categorical'
+                else:
+                    sdtype = 'unknown'
 
         return sdtype
 

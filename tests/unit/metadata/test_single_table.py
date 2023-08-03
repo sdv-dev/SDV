@@ -756,9 +756,6 @@ class TestSingleTableMetadata:
 
         data_datetime = pd.Series(['2022-01-01', '2022-02-01', '2022-03-01'])
         data_categorical_small = pd.Series(['a', 'b', 'c', 'd', 'e'])
-        data_numerical = pd.Series(
-            ['1', '2', '2', '4', '5', '6', '7', '8', '9', '10', '11', '12']
-        )
         data_all_unique = pd.Series(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'])
         data_categorical_large = pd.Series(['a'] * 10 + ['b'] * 4)
         data_unknown = pd.Series(['a', 'b', 'c', 'c', 1, 2.2, np.nan, None, 'd', 'e', 'f'])
@@ -766,7 +763,6 @@ class TestSingleTableMetadata:
         # Run
         sdtype_datetime = instance._determine_sdtype_for_objects(data_datetime)
         sdtype_categorical_small = instance._determine_sdtype_for_objects(data_categorical_small)
-        sdtype_numerical_float = instance._determine_sdtype_for_objects(data_numerical)
         sdtype_all_unique = instance._determine_sdtype_for_objects(data_all_unique)
         sdtype_categorical_large = instance._determine_sdtype_for_objects(data_categorical_large)
         sdtype_unknown = instance._determine_sdtype_for_objects(data_unknown)
@@ -774,7 +770,6 @@ class TestSingleTableMetadata:
         # Assert
         assert sdtype_datetime == 'datetime'
         assert sdtype_categorical_small == 'categorical'
-        assert sdtype_numerical_float == 'numerical'
         assert sdtype_all_unique == 'id'
         assert sdtype_categorical_large == 'categorical'
         assert sdtype_unknown == 'unknown'

@@ -1,5 +1,6 @@
 from uuid import UUID
 
+import numpy as np
 import pandas as pd
 import pytest
 from rdt.transformers import (
@@ -361,3 +362,35 @@ def test_numerical_columns_gets_pii():
         'numerical': {0: 21, 1: 24, 2: 22, 3: 23, 4: 22, 5: 24, 6: 23, 7: 23, 8: 24, 9: 23}
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
+
+
+def test_categorical_column_with_numbers():
+    """Test that categorical column represented with numbers works end to end."""
+    # Setup
+    data = pd.DataFrame({
+        'category_col': [
+            1, 2, 1, 2, 1, 2, np.nan, 1, 1, np.nan, 2, 2, None, 2,
+            1, 1, None, 1, 2, 2
+        ],
+        'numerical_col': np.random.rand(20),
+    })
+
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+
+    # Run
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(20)
+
+    # Assert
+    expected_dtypes = pd.Series({
+        'category_col': 'float64',
+        'numerical_col': 'float64',
+    })
+    pd.testing.assert_series_equal(synthetic_data.dtypes, expected_dtypes)
+
+    unique_values = synthetic_data['category_col'].unique()
+    assert np.isnan(unique_values).sum() == 1
+    assert set(unique_values[~np.isnan(unique_values)]) == {1, 2}

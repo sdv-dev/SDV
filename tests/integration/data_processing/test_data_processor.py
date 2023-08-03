@@ -2,6 +2,7 @@
 import itertools
 
 import numpy as np
+import pandas as pd
 from rdt.transformers import (
     AnonymizedFaker, BinaryEncoder, FloatFormatter, RegexGenerator, UniformEncoder,
     UnixTimestampEncoder)
@@ -353,3 +354,25 @@ class TestDataProcessor:
 
         # Assert
         assert dp._hyper_transformer.field_transformers['occupation'].locales == ['en_CA', 'fr_CA']
+
+    def test_categorical_column_with_numbers(self):
+        """Test that LabelEncoder is assigned for categorical columns represented with numbers."""
+        # Setup
+        data = pd.DataFrame({
+            'category_col': [
+                1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 2, 2, 1, 2,
+                1, 1, 2, 1, 2, 2
+            ],
+            'numerical_col': np.random.rand(20),
+        })
+
+        metadata = SingleTableMetadata()
+        metadata.detect_from_dataframe(data)
+
+        dp = DataProcessor(metadata)
+
+        # Run
+        dp.fit(data)
+
+        # Assert
+        assert isinstance(dp._hyper_transformer.field_transformers['category_col'], LabelEncoder)
