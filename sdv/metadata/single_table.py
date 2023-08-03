@@ -313,7 +313,7 @@ class SingleTableMetadata:
             sdtype = None
             if dtype in self._DTYPES_TO_SDTYPES:
                 sdtype = self._DTYPES_TO_SDTYPES[dtype]
-            elif dtype in ['i', 'u', 'f']:
+            elif dtype in ['i', 'f']:
                 sdtype = self._determine_sdtype_for_numbers(column_data)
 
             elif dtype == 'O':
