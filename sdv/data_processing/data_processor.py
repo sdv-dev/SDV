@@ -485,7 +485,6 @@ class DataProcessor:
 
             elif sdtype == 'unknown':
                 transformers[column] = AnonymizedFaker(
-                    provider_name=None,
                     function_name='bothify',
                 )
                 transformers[column].function_kwargs = {
