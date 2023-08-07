@@ -1,7 +1,10 @@
 """Integration tests for Multi Table Metadata."""
 
 import json
+import os
+import tempfile
 
+from sdv.datasets.demo import download_demo
 from sdv.metadata import MultiTableMetadata
 
 
@@ -132,3 +135,103 @@ def test_upgrade_metadata(tmp_path):
     assert new_metadata['tables'] == expected_metadata['tables']
     for relationship in new_metadata['relationships']:
         assert relationship in expected_metadata['relationships']
+
+
+def test_detect_from_dataframes():
+    """Test the ``detect_from_dataframes`` method."""
+    # Setup
+    real_data, _ = download_demo(
+        modality='multi_table',
+        dataset_name='fake_hotels'
+    )
+
+    metadata = MultiTableMetadata()
+
+    # Run
+    metadata.detect_from_dataframes(real_data)
+
+    # Assert
+    expected_metadata = {
+        'tables': {
+            'hotels': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'categorical'},
+                    'city': {'sdtype': 'categorical'},
+                    'state': {'sdtype': 'categorical'},
+                    'rating': {'sdtype': 'numerical'},
+                    'classification': {'sdtype': 'categorical'}
+                }
+            },
+            'guests': {
+                'columns': {
+                    'guest_email': {'sdtype': 'categorical'},
+                    'hotel_id': {'sdtype': 'categorical'},
+                    'has_rewards': {'sdtype': 'boolean'},
+                    'room_type': {'sdtype': 'categorical'},
+                    'amenities_fee': {'sdtype': 'numerical'},
+                    'checkin_date': {'sdtype': 'categorical'},
+                    'checkout_date': {'sdtype': 'categorical'},
+                    'room_rate': {'sdtype': 'numerical'},
+                    'billing_address': {'sdtype': 'categorical'},
+                    'credit_card_number': {'sdtype': 'numerical'}
+                }
+            }
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+    }
+
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_from_csvs():
+    """Test the ``detect_from_csvs`` method."""
+    # Setup
+    real_data, _ = download_demo(
+        modality='multi_table',
+        dataset_name='fake_hotels'
+    )
+
+    metadata = MultiTableMetadata()
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Save the dataframes as CSV files in the temporary directory
+        for table_name, dataframe in real_data.items():
+            csv_path = os.path.join(temp_dir, f'{table_name}.csv')
+            dataframe.to_csv(csv_path, index=False)
+
+        # Run
+        metadata.detect_from_csvs(folder_name=temp_dir)
+
+        # Assert
+        expected_metadata = {
+            'tables': {
+                'hotels': {
+                    'columns': {
+                        'hotel_id': {'sdtype': 'categorical'},
+                        'city': {'sdtype': 'categorical'},
+                        'state': {'sdtype': 'categorical'},
+                        'rating': {'sdtype': 'numerical'},
+                        'classification': {'sdtype': 'categorical'}
+                    }
+                },
+                'guests': {
+                    'columns': {
+                        'guest_email': {'sdtype': 'categorical'},
+                        'hotel_id': {'sdtype': 'categorical'},
+                        'has_rewards': {'sdtype': 'boolean'},
+                        'room_type': {'sdtype': 'categorical'},
+                        'amenities_fee': {'sdtype': 'numerical'},
+                        'checkin_date': {'sdtype': 'categorical'},
+                        'checkout_date': {'sdtype': 'categorical'},
+                        'room_rate': {'sdtype': 'numerical'},
+                        'billing_address': {'sdtype': 'categorical'},
+                        'credit_card_number': {'sdtype': 'numerical'}
+                    }
+                }
+            },
+            'relationships': [],
+            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+        }
+
+        assert metadata.to_dict() == expected_metadata

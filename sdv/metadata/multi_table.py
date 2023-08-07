@@ -2,9 +2,12 @@
 
 import json
 import logging
+import os
 import warnings
 from collections import defaultdict
 from copy import deepcopy
+
+import pandas as pd
 
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
@@ -344,6 +347,20 @@ class MultiTableMetadata:
         self.tables[table_name] = table
         self._log_detected_table(table)
 
+    def detect_from_dataframes(self, data):
+        """Detect the metadata for all tables in a dictionary of dataframes.
+
+        Args:
+            data (dict):
+                Dictionary of ``pandas.DataFrame`` objects where the keys are the table names and
+                the values are the dataframes.
+        """
+        if not data or not all(isinstance(df, pd.DataFrame) for df in data.values()):
+            raise ValueError('The provided dictionary must contain only pandas DataFrame objects')
+
+        for table_name, dataframe in data.items():
+            self.detect_table_from_dataframe(table_name, dataframe)
+
     def detect_table_from_csv(self, table_name, filepath):
         """Detect the metadata for a table from a csv file.
 
@@ -355,10 +372,29 @@ class MultiTableMetadata:
         """
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
-        data = table._load_data_from_csv(filepath)
-        table._detect_columns(data)
+        table.detect_from_csv(filepath)
         self.tables[table_name] = table
         self._log_detected_table(table)
+
+    def detect_from_csvs(self, folder_name):
+        """Detect the metadata for all tables in a folder of csv files.
+
+        Args:
+            folder_name (str):
+                Name of the folder to detect the metadata from.
+
+        Raises:
+            ValueError: If no CSV files are detected in the folder.
+        """
+        csv_files = [filename for filename in os.listdir(folder_name) if filename.endswith('.csv')]
+
+        if not csv_files:
+            raise ValueError(f"No CSV files detected in the folder '{folder_name}'")
+
+        for filename in csv_files:
+            table_name = filename[:-4]  # Removing the .csv extension
+            csv_file = os.path.join(folder_name, filename)
+            self.detect_table_from_csv(table_name, csv_file)
 
     def set_primary_key(self, table_name, column_name):
         """Set the primary key of a table.
