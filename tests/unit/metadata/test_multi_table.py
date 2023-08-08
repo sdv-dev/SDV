@@ -1194,9 +1194,110 @@ class TestMultiTableMetadata:
     def test_visualize_show_relationship_and_details(self, visualize_graph_mock):
         """Test the ``visualize`` method.
 
+        If both the ``show_relationship_labels`` is ``'full'`` and ``show_table_details``
+        parameters is ``True``, then the edges should have labels and the labels for the nodes
+        should include column info, primary keys and alternate keys.
+
+        Setup:
+            - Mock the ``visualize_graph`` function.
+            - Set the tables and relationships for the multi-table metadata.
+
+        Side effects:
+            - The ``visualize_graph_mock`` should be called with the correct nodes and edges.
+        """
+        # Setup
+        metadata = self.get_metadata()
+
+        # Run
+        metadata.visualize('full', True)
+
+        # Assert
+        expected_payments_label = (
+            '{payments|payment_id : id\\luser_id : id\\ldate : datetime\\l|'
+            'Primary key: payment_id\\lForeign key (users): user_id\\l}'
+        )
+        expected_sessions_label = (
+            '{sessions|session_id : id\\luser_id : id\\ldevice : categorical\\l|'
+            'Primary key: session_id\\lForeign key (users): user_id\\l}'
+        )
+        expected_transactions_label = (
+            '{transactions|transaction_id : id\\lsession_id : id\\ltimestamp : '
+            'datetime\\l|Primary key: transaction_id\\lForeign key (sessions): session_id\\l}'
+        )
+        expected_nodes = {
+            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l\\l}',
+            'payments': expected_payments_label,
+            'sessions': expected_sessions_label,
+            'transactions': expected_transactions_label
+        }
+        expected_edges = [
+            ('users', 'sessions', '  user_id → id'),
+            ('sessions', 'transactions', '  session_id → session_id'),
+            ('users', 'payments', '  user_id → id')
+        ]
+        visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
+
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_show_relationship_and_details_summarized(self, visualize_graph_mock):
+        """Test the ``visualize`` method.
+
+        If ``show_relationship_labels`` is ``'summarized'`` and ``show_table_details`` parameters
+        is ``True``, then the edges should have labels and the labels for the nodes should include
+        column label and each ``sdtype`` count, primary keys and alternate keys.
+
+        Setup:
+            - Mock the ``visualize_graph`` function.
+            - Set the tables and relationships for the multi-table metadata.
+
+        Side effects:
+            - The ``visualize_graph_mock`` should be called with the correct nodes and edges.
+        """
+        # Setup
+        metadata = self.get_metadata()
+
+        # Run
+        metadata.visualize('summarized', True)
+
+        # Assert
+        expected_payments_label = (
+            '{payments|Columns\\l&nbsp; &nbsp; • datetime : 1\\l&nbsp; '
+            '&nbsp; • id : 2\\l|Primary key: payment_id\\lForeign key (users): user_id\\l}'
+        )
+        expected_sessions_label = (
+            '{sessions|Columns\\l&nbsp; &nbsp; • categorical : 1\\l&nbsp; '
+            '&nbsp; • id : 2\\l|Primary key: session_id\\lForeign key (users): user_id\\l}'
+        )
+        expected_transactions_label = (
+            '{transactions|Columns\\l&nbsp; &nbsp; • datetime : 1\\l&nbsp; &nbsp; '
+            '• id : 2\\l|Primary key: transaction_id\\lForeign key (sessions): session_id\\l}'
+        )
+        expected_user_label = (
+            '{users|Columns\\l&nbsp; &nbsp; • categorical : 1\\l&nbsp; &nbsp; • id : '
+            '1\\l|Primary key: id\\l\\l}'
+        )
+        expected_nodes = {
+            'users': expected_user_label,
+            'payments': expected_payments_label,
+            'sessions': expected_sessions_label,
+            'transactions': expected_transactions_label
+        }
+        expected_edges = [
+            ('users', 'sessions', '  user_id → id'),
+            ('sessions', 'transactions', '  session_id → session_id'),
+            ('users', 'payments', '  user_id → id')
+        ]
+        visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
+
+    @patch('sdv.metadata.multi_table.FutureWarning')
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_show_relationship_and_details_warning(self, visualize_graph_mock,
+                                                             future_warning_mock):
+        """Test the ``visualize`` method.
+
         If both the ``show_relationship_labels`` and ``show_table_details`` parameters are
         True, then the edges should have labels and the labels for the nodes should include
-        column info, primary keys and alternate keys.
+        column info, primary keys and alternate keys. Also a future warning should be shown
+        stating that the ``show_table_details`` should be ``'full'``.
 
         Setup:
             - Mock the ``visualize_graph`` function.
@@ -1239,14 +1340,60 @@ class TestMultiTableMetadata:
             ('users', 'payments', '  user_id → id')
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
+        future_warning_mock.assert_called_once_with(
+            'Using True or False for show_table_details is deprecated. Use '
+            "show_table_details='full' to show all table details."
+        )
 
     @patch('sdv.metadata.multi_table.visualize_graph')
-    def test_visualize_show_relationship_only(self, visualize_graph_mock):
+    def test_visualize_show_relationship_show_table_details_none(self, visualize_graph_mock):
         """Test the ``visualize`` method.
 
         If ``show_relationship_labels`` is True but ``show_table_details``is False,
         then the edges should have labels and the labels for the nodes should be just
-        the table name.
+        the table name. Also a ``FutureWarning`` should be raised to use ``None`` instead.
+
+        Setup:
+            - Mock the ``visualize_graph`` function.
+            - Set the tables and relationships for the multi-table metadata.
+
+        Input:
+            - ``show_relationship_labels`` set to True.
+            - ``show_table_details`` set to None.
+            - ``output_file`` is set to ``output.jpg``.
+
+        Side effects:
+            - The ``visualize_graph_mock`` should be called with the correct nodes and edges.
+        """
+        # Setup
+        metadata = self.get_metadata()
+
+        # Run
+        metadata.visualize(None, True, 'output.jpg')
+
+        # Assert
+        expected_nodes = {
+            'users': 'users',
+            'payments': 'payments',
+            'sessions': 'sessions',
+            'transactions': 'transactions'
+        }
+        expected_edges = [
+            ('users', 'sessions', '  user_id → id'),
+            ('sessions', 'transactions', '  session_id → session_id'),
+            ('users', 'payments', '  user_id → id')
+        ]
+        visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
+
+    @patch('sdv.metadata.multi_table.FutureWarning')
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_show_relationship_only_warning(self, visualize_graph_mock,
+                                                      future_warning_mock):
+        """Test the ``visualize`` method.
+
+        If ``show_relationship_labels`` is True but ``show_table_details``is False,
+        then the edges should have labels and the labels for the nodes should be just
+        the table name. Also a ``FutureWarning`` should be raised to use ``None`` instead.
 
         Setup:
             - Mock the ``visualize_graph`` function.
@@ -1278,6 +1425,10 @@ class TestMultiTableMetadata:
             ('users', 'payments', '  user_id → id')
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
+        future_warning_mock.assert_called_once_with(
+            "Using True or False for 'show_table_details' is deprecated. "
+            'Use show_table_details=None to hide table details.'
+        )
 
     @patch('sdv.metadata.multi_table.visualize_graph')
     def test_visualize_show_table_details_only(self, visualize_graph_mock):

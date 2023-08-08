@@ -516,14 +516,16 @@ class MultiTableMetadata:
 
         self.tables[table_name] = SingleTableMetadata()
 
-    def visualize(self, show_table_details=True, show_relationship_labels=True,
+    def visualize(self, show_table_details='full', show_relationship_labels=True,
                   output_filepath=None):
         """Create a visualization of the multi-table dataset.
 
         Args:
-            show_table_details (bool):
-                If True, the column names, primary and foreign keys are all shown along with the
-                table names. If False, only the table names are shown. Defaults to True.
+            show_table_details (str or None):
+                If 'full', show the column names, primary and foreign keys are all shown along with
+                the table names. If 'summarized' primary and foreign keys are shown and a count
+                of the different sdtypes is shown, if None only the table names are shown. Defaults
+                to 'full'.
             show_relationship_labels (bool):
                 If True, every edge is labeled with the column names (eg. purchaser_id -> user_id).
                 Defaults to True.
@@ -534,9 +536,26 @@ class MultiTableMetadata:
         Returns:
             ``graphviz.Digraph`` object.
         """
+        if isinstance(show_table_details, bool):
+            if show_table_details:
+                future_warning_msg = (
+                    'Using True or False for show_table_details is deprecated. Use '
+                    "show_table_details='full' to show all table details."
+                )
+                show_table_details = 'full'
+
+            else:
+                future_warning_msg = (
+                    "Using True or False for 'show_table_details' is deprecated. "
+                    'Use show_table_details=None to hide table details.'
+                )
+                show_table_details = None
+
+            FutureWarning(future_warning_msg)
+
         nodes = {}
         edges = []
-        if show_table_details:
+        if show_table_details == 'full':
             for table_name, table_meta in self.tables.items():
                 column_dict = table_meta.columns.items()
                 columns = [f"{name} : {meta.get('sdtype')}" for name, meta in column_dict]
@@ -545,7 +564,26 @@ class MultiTableMetadata:
                     'primary_key': f'Primary key: {table_meta.primary_key}'
                 }
 
-        else:
+        elif show_table_details == 'summarized':
+            default_sdtypes = ['id', 'numerical', 'categorical', 'datetime', 'boolean']
+            for table_name, table_meta in self.tables.items():
+                count_dict = defaultdict(int)
+                for column_name, meta in table_meta.columns.items():
+                    sdtype = 'other' if meta['sdtype'] not in default_sdtypes else meta['sdtype']
+                    count_dict[sdtype] += 1
+
+                count_dict = dict(sorted(count_dict.items()))
+                columns = ['Columns']
+                columns.extend([
+                    fr'&nbsp; &nbsp; • {sdtype} : {count}'
+                    for sdtype, count in count_dict.items()
+                ])
+                nodes[table_name] = {
+                    'columns': r'\l'.join(columns),
+                    'primary_key': f'Primary key: {table_meta.primary_key}'
+                }
+
+        elif show_table_details is None:
             nodes = {table_name: None for table_name in self.tables}
 
         for relationship in self.relationships:
@@ -556,7 +594,7 @@ class MultiTableMetadata:
             edge_label = f'  {foreign_key} → {primary_key}' if show_relationship_labels else ''
             edges.append((parent, child, edge_label))
 
-            if show_table_details:
+            if show_table_details is not None:
                 child_node = nodes.get(child)
                 foreign_key_text = f'Foreign key ({parent}): {foreign_key}'
                 if 'foreign_keys' in child_node:
