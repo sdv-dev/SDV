@@ -1729,6 +1729,93 @@ class TestSingleTableMetadata:
         mock_json.dumps.assert_called_once_with(instance.to_dict(), indent=4)
         assert res == mock_json.dumps.return_value
 
+    def test_visualize_with_invalid_input(self):
+        """Test that a ``ValueError`` is being raised when ``show_table_details`` is incorrect."""
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run and Assert
+        error_msg = "'show_table_details' should be 'full' or 'summarized'."
+        with pytest.raises(ValueError, match=error_msg):
+            instance.visualize(None)
+
+    @patch('sdv.metadata.single_table.visualize_graph')
+    def test_visualize_metadata_full(self, mock_visualize_graph):
+        """Test the ``visualize`` method when ``show_table_details`` is 'full'."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'name': {'sdtype': 'categorical'},
+            'age': {'sdtype': 'numerical'},
+            'start_date': {'sdtype': 'datetime'},
+            'phrase': {'sdtype': 'id'},
+        }
+
+        # Run
+        result = instance.visualize('full')
+
+        # Assert
+        assert result == mock_visualize_graph.return_value
+        expected_node = {
+            '': '{name : categorical\\lage : numerical\\lstart_date : datetime\\lphrase : id\\l}'
+        }
+        assert mock_visualize_graph.called_once_with(call(expected_node, [], None))
+
+    @patch('sdv.metadata.single_table.visualize_graph')
+    def test_visualize_metadata_summarized(self, mock_visualize_graph):
+        """Test the ``visualize`` method when ``show_table_details`` is 'summarized'."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'name': {'sdtype': 'categorical'},
+            'age': {'sdtype': 'numerical'},
+            'start_date': {'sdtype': 'datetime'},
+            'phrase': {'sdtype': 'id'},
+        }
+
+        # Run
+        result = instance.visualize('summarized')
+
+        # Assert
+        assert result == mock_visualize_graph.return_value
+        node = (
+            '{Columns\\l&nbsp; &nbsp; • categorical : 1\\l&nbsp; &nbsp; • datetime : 1\\l&nbsp; '
+            '&nbsp; • id : 1\\l&nbsp; &nbsp; • numerical : 1\\l}'
+        )
+        expected_node = {'': node}
+        assert mock_visualize_graph.called_once_with(call(expected_node, [], None))
+
+    @patch('sdv.metadata.single_table.visualize_graph')
+    def test_visualize_metadata_with_primary_alternate_and_sequence_key(self,
+                                                                        mock_visualize_graph):
+        """Test the ``visualize`` method when there are primary, alternate and sequence keys."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'name': {'sdtype': 'categorical'},
+            'timestamp': {'sdtype': 'datetime'},
+            'age': {'sdtype': 'numerical'},
+            'start_date': {'sdtype': 'datetime'},
+            'phrase': {'sdtype': 'id'},
+            'passport': {'sdtype': 'id'}
+        }
+        instance.primary_key = 'passport'
+        instance.alternate_keys = ['phrase', 'name']
+        instance.sequence_key = 'timestamp'
+
+        # Run
+        result = instance.visualize('full')
+
+        # Assert
+        assert result == mock_visualize_graph.return_value
+        node = (
+            '{name : categorical\\ltimestamp : datetime\\lage : numerical\\lstart_date : '
+            'datetime\\lphrase : id\\lpassport : id\\l|Primary key: passport\\l|Sequence key: '
+            'timestamp\\l|Alternate keys:\\l &nbsp; &nbsp; • phrase\\l&nbsp; &nbsp; • name\\l}'
+        )
+        expected_node = {'': node}
+        assert mock_visualize_graph.called_once_with(call(expected_node, [], None))
+
     @patch('sdv.metadata.single_table.read_json')
     @patch('sdv.metadata.single_table.convert_metadata')
     @patch('sdv.metadata.single_table.SingleTableMetadata.load_from_dict')

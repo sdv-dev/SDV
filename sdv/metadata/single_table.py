@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import warnings
+from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
 
@@ -11,6 +12,7 @@ from sdv.metadata.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
+from sdv.metadata.visualization import visualize_graph
 from sdv.utils import cast_to_iterable, load_data_from_csv
 
 LOGGER = logging.getLogger(__name__)
@@ -476,6 +478,60 @@ class SingleTableMetadata:
                 'The following errors were found in the metadata:\n\n'
                 + '\n'.join([str(e) for e in errors])
             )
+
+    def visualize(self, show_table_details='full', output_filepath=None):
+        """Create a visualization of the multi-table dataset.
+
+        Args:
+            show_table_details (str):
+                If 'full', show the column names, primary, alternate and sequence keys are all
+                shown along with the table names. If 'summarized' primary, alternate and sequence
+                keys are shown and a count of the different sdtypes is shown. Defaults to 'full'.
+            output_filepath (str):
+                Full path of where to savve the visualization. If None, the visualization is not
+                saved. Defaults to None.
+
+        Returns:
+            ``graphviz.Digraph`` object.
+        """
+        if show_table_details not in ('full', 'summarized'):
+            raise ValueError("'show_table_details' should be 'full' or 'summarized'.")
+
+        if show_table_details == 'full':
+            columns = [
+                fr"{name} : {meta.get('sdtype')}\l"
+                for name, meta in self.columns.items()
+            ]
+            node = ''.join(columns)
+
+        elif show_table_details == 'summarized':
+            default_sdtypes = ['id', 'numerical', 'categorical', 'datetime', 'boolean']
+            count_dict = defaultdict(int)
+            for column_name, meta in self.columns.items():
+                sdtype = 'other' if meta['sdtype'] not in default_sdtypes else meta['sdtype']
+                count_dict[sdtype] += 1
+
+            count_dict = dict(sorted(count_dict.items()))
+            columns = [r'Columns\l']
+            columns.extend([
+                fr'&nbsp; &nbsp; • {sdtype} : {count}\l'
+                for sdtype, count in count_dict.items()
+            ])
+            node = ''.join(columns)
+
+        if self.primary_key:
+            node = fr'{node}|Primary key: {self.primary_key}\l'
+
+        if self.sequence_key:
+            node = fr'{node}|Sequence key: {self.sequence_key}\l'
+
+        if self.alternate_keys:
+            alternate_keys = [fr'&nbsp; &nbsp; • {key}\l' for key in self.alternate_keys]
+            alternate_keys = ''.join(alternate_keys)
+            node = fr'{node}|Alternate keys:\l {alternate_keys}'
+
+        node = {'': f'{{{node}}}'}
+        return visualize_graph(node, [], output_filepath)
 
     def save_to_json(self, filepath):
         """Save the current ``SingleTableMetadata`` in to a ``json`` file.
