@@ -522,9 +522,9 @@ class MultiTableMetadata:
 
         Args:
             show_table_details (str or None):
-                If 'full', show the column names, primary and foreign keys are all shown along with
-                the table names. If 'summarized' primary and foreign keys are shown and a count
-                of the different sdtypes is shown, if None only the table names are shown. Defaults
+                If 'full', the column names, primary and foreign keys are all shown along with
+                the table names. If 'summarized', primary and foreign keys are shown and a count
+                of the different sdtypes is shown. If None only the table names are shown. Defaults
                 to 'full'.
             show_relationship_labels (bool):
                 If True, every edge is labeled with the column names (eg. purchaser_id -> user_id).
@@ -536,6 +536,10 @@ class MultiTableMetadata:
         Returns:
             ``graphviz.Digraph`` object.
         """
+        if show_table_details not in (None, True, False, 'full', 'summarized'):
+            raise ValueError(
+                "'show_table_details' parameter should be 'full', 'summarized' or None.")
+
         if isinstance(show_table_details, bool):
             if show_table_details:
                 future_warning_msg = (

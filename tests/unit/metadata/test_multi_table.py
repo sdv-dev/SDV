@@ -1190,6 +1190,16 @@ class TestMultiTableMetadata:
         mock_json.dumps.assert_called_once_with(instance.to_dict(), indent=4)
         assert res == mock_json.dumps.return_value
 
+    def test_visualize_incorrect_input(self):
+        """Test that visualize raises a ``ValueError`` when ``show_table_details`` is invalid."""
+        # Setup
+        instance = MultiTableMetadata()
+
+        # Run / Assert
+        error_msg = "'show_table_details' parameter should be 'full', 'summarized' or None."
+        with pytest.raises(ValueError, match=error_msg):
+            instance.visualize('summarized-full')
+
     @patch('sdv.metadata.multi_table.visualize_graph')
     def test_visualize_show_relationship_and_details(self, visualize_graph_mock):
         """Test the ``visualize`` method.
