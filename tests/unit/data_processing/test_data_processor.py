@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from rdt.errors import ConfigNotSetError
 from rdt.errors import NotFittedError as RDTNotFittedError
-from rdt.transformers import FloatFormatter, LabelEncoder, UnixTimestampEncoder
+from rdt.transformers import AnonymizedFaker, FloatFormatter, IDGenerator, LabelEncoder, UnixTimestampEncoder
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import Positive, ScalarRange
@@ -1052,15 +1052,21 @@ class TestDataProcessor:
             'email': ['a@aol.com', 'b@gmail.com', 'c@gmx.com'],
             'first_name': ['John', 'Doe', 'Johanna'],
             'id': ['ID_001', 'ID_002', 'ID_003'],
+            'id_no_regex': ['ID_001', 'ID_002', 'ID_003'],
+            'id_numeric': [0, 1, 2],
+            'id_column': ['ID_999', 'ID_999', 'ID_007'],
             'date': ['2021-02-01', '2022-03-05', '2023-01-31']
         })
         dp = DataProcessor(SingleTableMetadata(), locales=locales)
         dp.metadata = Mock()
         dp.create_anonymized_transformer = Mock()
         dp.create_regex_generator = Mock()
+        dp.create_id_generator = Mock()
         dp.create_anonymized_transformer.return_value = 'AnonymizedFaker'
         dp.create_regex_generator.return_value = 'RegexGenerator'
+        dp.create_id_generator.return_value = 'IDGenerator'
         dp.metadata.primary_key = 'id'
+        dp.metadata.alternate_keys = ['id_no_regex', 'id_numeric']
         dp._primary_key = 'id'
         dp._keys = ['id']
         dp.metadata.columns = {
@@ -1071,6 +1077,9 @@ class TestDataProcessor:
             'email': {'sdtype': 'email', 'pii': True},
             'first_name': {'sdtype': 'first_name'},
             'id': {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'},
+            'id_no_regex': {'sdtype': 'id'},
+            'id_numeric': {'sdtype': 'id'},
+            'id_column': {'sdtype': 'id'},
             'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'}
         }
 
@@ -1091,6 +1100,9 @@ class TestDataProcessor:
             'email': 'pii',
             'first_name': 'pii',
             'id': 'text',
+            'id_no_regex': 'text',
+            'id_numeric': 'text',
+            'id_column': 'pii',
             'date': 'datetime'
         }
 
@@ -1125,6 +1137,21 @@ class TestDataProcessor:
         assert datetime_transformer.missing_value_generation == 'random'
         assert datetime_transformer.datetime_format == '%Y-%m-%d'
         assert dp._primary_key == 'id'
+
+        id_no_regex_transformer = config['transformers']['id_no_regex']
+        assert isinstance(id_no_regex_transformer, IDGenerator)
+        assert id_no_regex_transformer.prefix == 'sdv-id-'
+        assert id_no_regex_transformer.starting_value == 0
+        
+        id_numeric_transformer = config['transformers']['id_numeric']
+        assert isinstance(id_numeric_transformer, IDGenerator)
+        assert id_numeric_transformer.prefix == None
+        assert id_numeric_transformer.starting_value == 0
+        
+        id_column_transformer = config['transformers']['id_column']
+        assert isinstance(id_column_transformer, AnonymizedFaker)
+        assert id_column_transformer.function_name == 'bothify'
+        assert id_column_transformer.function_kwargs == {'text': '#####'}
 
         dp.create_anonymized_transformer.calls == [
             call('email', {'sdtype': 'email', 'pii': True, 'locales': locales}),
