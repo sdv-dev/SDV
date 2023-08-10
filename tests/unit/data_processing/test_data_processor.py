@@ -6,7 +6,8 @@ import pandas as pd
 import pytest
 from rdt.errors import ConfigNotSetError
 from rdt.errors import NotFittedError as RDTNotFittedError
-from rdt.transformers import AnonymizedFaker, FloatFormatter, IDGenerator, LabelEncoder, UnixTimestampEncoder
+from rdt.transformers import (
+    AnonymizedFaker, FloatFormatter, IDGenerator, LabelEncoder, UnixTimestampEncoder)
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import Positive, ScalarRange
@@ -1142,12 +1143,12 @@ class TestDataProcessor:
         assert isinstance(id_no_regex_transformer, IDGenerator)
         assert id_no_regex_transformer.prefix == 'sdv-id-'
         assert id_no_regex_transformer.starting_value == 0
-        
+
         id_numeric_transformer = config['transformers']['id_numeric']
         assert isinstance(id_numeric_transformer, IDGenerator)
-        assert id_numeric_transformer.prefix == None
+        assert id_numeric_transformer.prefix is None
         assert id_numeric_transformer.starting_value == 0
-        
+
         id_column_transformer = config['transformers']['id_column']
         assert isinstance(id_column_transformer, AnonymizedFaker)
         assert id_column_transformer.function_name == 'bothify'
