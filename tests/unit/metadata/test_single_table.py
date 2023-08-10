@@ -755,6 +755,7 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         data_datetime = pd.Series(['2022-01-01', '2022-02-01', '2022-03-01'])
+        wrong_datetime = pd.Series(['2022-01-01', '01-02-2022', '2022-03-01', '2022-03-01'])
         data_categorical_small = pd.Series(['a', 'b', 'c', 'd', 'e'])
         data_all_unique = pd.Series(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'])
         data_categorical_large = pd.Series(['a'] * 10 + ['b'] * 4)
@@ -762,6 +763,7 @@ class TestSingleTableMetadata:
 
         # Run
         sdtype_datetime = instance._determine_sdtype_for_objects(data_datetime)
+        sdtype_wrong_datetime = instance._determine_sdtype_for_objects(wrong_datetime)
         sdtype_categorical_small = instance._determine_sdtype_for_objects(data_categorical_small)
         sdtype_all_unique = instance._determine_sdtype_for_objects(data_all_unique)
         sdtype_categorical_large = instance._determine_sdtype_for_objects(data_categorical_large)
@@ -769,6 +771,7 @@ class TestSingleTableMetadata:
 
         # Assert
         assert sdtype_datetime == 'datetime'
+        assert sdtype_wrong_datetime == 'categorical'
         assert sdtype_categorical_small == 'categorical'
         assert sdtype_all_unique == 'id'
         assert sdtype_categorical_large == 'categorical'

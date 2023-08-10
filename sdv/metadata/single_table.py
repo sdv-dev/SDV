@@ -256,7 +256,6 @@ class SingleTableMetadata:
         """
         sdtype = 'numerical'
         if len(data) > 5:
-
             whole_values = (data == data.round()).loc[~data.isna()].all()
             positive_values = (data >= 0).loc[~data.isna()].all()
 
@@ -279,10 +278,9 @@ class SingleTableMetadata:
         """
         sdtype = None
         try:
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', category=UserWarning)
-                pd.to_datetime(data)
-                sdtype = 'datetime'
+            datetime_format = get_datetime_format(data)
+            pd.to_datetime(data, format=datetime_format, errors='raise')
+            sdtype = 'datetime'
 
         except Exception:
             if len(data) <= 5:
