@@ -2,10 +2,10 @@
 
 import json
 import logging
-import os
 import warnings
 from collections import defaultdict
 from copy import deepcopy
+from pathlib import Path
 
 import pandas as pd
 
@@ -383,20 +383,19 @@ class MultiTableMetadata:
                 Name of the folder to detect the metadata from.
 
         """
-        if os.path.exists(folder_name) and os.path.isdir(folder_name):
-            csv_files = [
-                filename for filename in os.listdir(folder_name) if filename.endswith('.csv')
-            ]
+        folder_path = Path(folder_name)
+
+        if folder_path.is_dir():
+            csv_files = list(folder_path.rglob('*.csv'))
         else:
             raise ValueError(f"The folder '{folder_name}' does not exist.")
 
         if not csv_files:
             raise ValueError(f"No CSV files detected in the folder '{folder_name}'.")
 
-        for filename in csv_files:
-            table_name = filename[:-4]  # Removing the .csv extension
-            csv_file = os.path.join(folder_name, filename)
-            self.detect_table_from_csv(table_name, csv_file)
+        for csv_file in csv_files:
+            table_name = csv_file.stem
+            self.detect_table_from_csv(table_name, str(csv_file))
 
     def set_primary_key(self, table_name, column_name):
         """Set the primary key of a table.
