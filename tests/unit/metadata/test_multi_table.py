@@ -1698,10 +1698,15 @@ class TestMultiTableMetadata:
             json_file.write('{"key": "value"}')
 
         # Run and Assert
-        expected_message = re.escape("No CSV files detected in the folder '{}'".format(tmp_path))
-
+        expected_message = re.escape("No CSV files detected in the folder '{}'.".format(tmp_path))
         with pytest.raises(ValueError, match=expected_message):
             instance.detect_from_csvs(tmp_path)
+
+        expected_message_folder = re.escape(
+            "The folder '{}' does not exist.".format('not_a_folder')
+        )
+        with pytest.raises(ValueError, match=expected_message_folder):
+            instance.detect_from_csvs('not_a_folder')
 
     @patch('sdv.metadata.multi_table.LOGGER')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
@@ -1804,7 +1809,7 @@ class TestMultiTableMetadata:
         metadata = MultiTableMetadata()
 
         # Run and Assert
-        expected_message = 'The provided dictionary must contain only pandas DataFrame objects'
+        expected_message = 'The provided dictionary must contain only pandas DataFrame objects.'
 
         with pytest.raises(ValueError, match=expected_message):
             metadata.detect_from_dataframes(data={})

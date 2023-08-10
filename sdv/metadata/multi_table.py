@@ -352,11 +352,10 @@ class MultiTableMetadata:
 
         Args:
             data (dict):
-                Dictionary of ``pandas.DataFrame`` objects where the keys are the table names and
-                the values are the dataframes.
+                Dictionary of table names to dataframes.
         """
         if not data or not all(isinstance(df, pd.DataFrame) for df in data.values()):
-            raise ValueError('The provided dictionary must contain only pandas DataFrame objects')
+            raise ValueError('The provided dictionary must contain only pandas DataFrame objects.')
 
         for table_name, dataframe in data.items():
             self.detect_table_from_dataframe(table_name, dataframe)
@@ -383,13 +382,16 @@ class MultiTableMetadata:
             folder_name (str):
                 Name of the folder to detect the metadata from.
 
-        Raises:
-            ValueError: If no CSV files are detected in the folder.
         """
-        csv_files = [filename for filename in os.listdir(folder_name) if filename.endswith('.csv')]
+        if os.path.exists(folder_name) and os.path.isdir(folder_name):
+            csv_files = [
+                filename for filename in os.listdir(folder_name) if filename.endswith('.csv')
+            ]
+        else:
+            raise ValueError(f"The folder '{folder_name}' does not exist.")
 
         if not csv_files:
-            raise ValueError(f"No CSV files detected in the folder '{folder_name}'")
+            raise ValueError(f"No CSV files detected in the folder '{folder_name}'.")
 
         for filename in csv_files:
             table_name = filename[:-4]  # Removing the .csv extension
