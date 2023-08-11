@@ -1,7 +1,6 @@
 """Integration tests for Multi Table Metadata."""
 
 import json
-import pytest
 
 from sdv.datasets.demo import download_demo
 from sdv.metadata import MultiTableMetadata
@@ -194,7 +193,7 @@ def test_detect_from_csvs(tmp_path):
     metadata = MultiTableMetadata()
 
     for table_name, dataframe in real_data.items():
-        csv_path = tmp_path / f"{table_name}.csv"
+        csv_path = tmp_path / f'{table_name}.csv'
         dataframe.to_csv(csv_path, index=False)
 
     # Run
@@ -224,6 +223,43 @@ def test_detect_from_csvs(tmp_path):
                     'room_rate': {'sdtype': 'numerical'},
                     'billing_address': {'sdtype': 'categorical'},
                     'credit_card_number': {'sdtype': 'numerical'}
+                }
+            }
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+    }
+
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_table_from_csv(tmp_path):
+    """Test the ``detect_table_from_csv`` method."""
+    # Setup
+    real_data, _ = download_demo(
+        modality='multi_table',
+        dataset_name='fake_hotels'
+    )
+
+    metadata = MultiTableMetadata()
+
+    for table_name, dataframe in real_data.items():
+        csv_path = tmp_path / f'{table_name}.csv'
+        dataframe.to_csv(csv_path, index=False)
+
+    # Run
+    metadata.detect_table_from_csv('hotels', tmp_path / 'hotels.csv')
+
+    # Assert
+    expected_metadata = {
+        'tables': {
+            'hotels': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'categorical'},
+                    'city': {'sdtype': 'categorical'},
+                    'state': {'sdtype': 'categorical'},
+                    'rating': {'sdtype': 'numerical'},
+                    'classification': {'sdtype': 'categorical'}
                 }
             }
         },
