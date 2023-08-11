@@ -1589,7 +1589,8 @@ class TestMultiTableMetadata:
 
     @patch('sdv.metadata.multi_table.LOGGER')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    def test_detect_table_from_csv(self, single_table_mock, log_mock):
+    @patch('sdv.metadata.multi_table.load_data_from_csv')
+    def test_detect_table_from_csv(self, load_csv_mock, single_table_mock, log_mock):
         """Test the ``detect_table_from_csv`` method.
 
         If the table does not already exist, a ``SingleTableMetadata`` instance
@@ -1604,7 +1605,7 @@ class TestMultiTableMetadata:
         # Setup
         metadata = MultiTableMetadata()
         fake_data = Mock()
-        single_table_mock.return_value.detect_from_csv.return_value = fake_data
+        load_csv_mock.return_value = fake_data
         single_table_mock.return_value.to_dict.return_value = {
             'columns': {'a': {'sdtype': 'numerical'}}
         }
@@ -1613,7 +1614,8 @@ class TestMultiTableMetadata:
         metadata.detect_table_from_csv('table', 'path.csv')
 
         # Assert
-        single_table_mock.return_value.detect_from_csv.assert_called_once_with('path.csv')
+        load_csv_mock.assert_called_once_with('path.csv')
+        single_table_mock.return_value._detect_columns.assert_called_once_with(fake_data)
         assert metadata.tables == {'table': single_table_mock.return_value}
 
         expected_log_calls = call(
