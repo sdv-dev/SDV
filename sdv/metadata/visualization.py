@@ -1,8 +1,57 @@
 """Functions for Metadata visualization."""
 
 import warnings
+from collections import defaultdict
 
 import graphviz
+
+DEFAULT_SDTYPES = ['id', 'numerical', 'categorical', 'datetime', 'boolean']
+
+
+def create_columns_node(columns):
+    """Convert columns into text for ``graphviz`` node.
+
+    Args:
+        columns (dict):
+            A dict mapping the column names with a dictionary containing the ``sdtype`` of the
+            column name.
+
+    Returns:
+        str:
+            String representing the node that will be printed for the given columns.
+    """
+    columns = [
+        fr"{name} : {meta.get('sdtype')}"
+        for name, meta in columns.items()
+    ]
+    return r'\l'.join(columns)
+
+
+def create_summarized_columns_node(columns):
+    """Convert columns into summarized text for ``graphviz`` node.
+
+    Args:
+        columns (dict):
+            A dict mapping the column names with a dictionary containing the ``sdtype`` of the
+            column name.
+
+    Returns:
+        str:
+            String representing the node that will be printed for the given columns.
+    """
+    count_dict = defaultdict(int)
+    for column_name, meta in columns.items():
+        sdtype = 'other' if meta['sdtype'] not in DEFAULT_SDTYPES else meta['sdtype']
+        count_dict[sdtype] += 1
+
+    count_dict = dict(sorted(count_dict.items()))
+    columns = ['Columns']
+    columns.extend([
+        fr'&nbsp; &nbsp; • {sdtype} : {count}'
+        for sdtype, count in count_dict.items()
+    ])
+
+    return r'\l'.join(columns)
 
 
 def _get_graphviz_extension(filepath):
