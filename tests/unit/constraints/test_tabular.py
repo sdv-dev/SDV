@@ -83,7 +83,7 @@ class TestCreateCustomConstraint():
             transform_fn=dummy_transform,
             reverse_transform_fn=dummy_reverse_transform
         )
-        assert type(recreated_class) == MockClass
+        assert isinstance(recreated_class, MockClass)
 
     def test__validate_inputs(self):
         """Test the ``CustomConstraint._validate_inputs`` method.
