@@ -1,8 +1,7 @@
 """Integration tests for Multi Table Metadata."""
 
 import json
-import os
-import tempfile
+import pytest
 
 from sdv.datasets.demo import download_demo
 from sdv.metadata import MultiTableMetadata
@@ -184,7 +183,7 @@ def test_detect_from_dataframes():
     assert metadata.to_dict() == expected_metadata
 
 
-def test_detect_from_csvs():
+def test_detect_from_csvs(tmp_path):
     """Test the ``detect_from_csvs`` method."""
     # Setup
     real_data, _ = download_demo(
@@ -194,44 +193,42 @@ def test_detect_from_csvs():
 
     metadata = MultiTableMetadata()
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # Save the dataframes as CSV files in the temporary directory
-        for table_name, dataframe in real_data.items():
-            csv_path = os.path.join(temp_dir, f'{table_name}.csv')
-            dataframe.to_csv(csv_path, index=False)
+    for table_name, dataframe in real_data.items():
+        csv_path = tmp_path / f"{table_name}.csv"
+        dataframe.to_csv(csv_path, index=False)
 
-        # Run
-        metadata.detect_from_csvs(folder_name=temp_dir)
+    # Run
+    metadata.detect_from_csvs(folder_name=tmp_path)
 
-        # Assert
-        expected_metadata = {
-            'tables': {
-                'hotels': {
-                    'columns': {
-                        'hotel_id': {'sdtype': 'categorical'},
-                        'city': {'sdtype': 'categorical'},
-                        'state': {'sdtype': 'categorical'},
-                        'rating': {'sdtype': 'numerical'},
-                        'classification': {'sdtype': 'categorical'}
-                    }
-                },
-                'guests': {
-                    'columns': {
-                        'guest_email': {'sdtype': 'categorical'},
-                        'hotel_id': {'sdtype': 'categorical'},
-                        'has_rewards': {'sdtype': 'boolean'},
-                        'room_type': {'sdtype': 'categorical'},
-                        'amenities_fee': {'sdtype': 'numerical'},
-                        'checkin_date': {'sdtype': 'categorical'},
-                        'checkout_date': {'sdtype': 'categorical'},
-                        'room_rate': {'sdtype': 'numerical'},
-                        'billing_address': {'sdtype': 'categorical'},
-                        'credit_card_number': {'sdtype': 'numerical'}
-                    }
+    # Assert
+    expected_metadata = {
+        'tables': {
+            'hotels': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'categorical'},
+                    'city': {'sdtype': 'categorical'},
+                    'state': {'sdtype': 'categorical'},
+                    'rating': {'sdtype': 'numerical'},
+                    'classification': {'sdtype': 'categorical'}
                 }
             },
-            'relationships': [],
-            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
-        }
+            'guests': {
+                'columns': {
+                    'guest_email': {'sdtype': 'categorical'},
+                    'hotel_id': {'sdtype': 'categorical'},
+                    'has_rewards': {'sdtype': 'boolean'},
+                    'room_type': {'sdtype': 'categorical'},
+                    'amenities_fee': {'sdtype': 'numerical'},
+                    'checkin_date': {'sdtype': 'categorical'},
+                    'checkout_date': {'sdtype': 'categorical'},
+                    'room_rate': {'sdtype': 'numerical'},
+                    'billing_address': {'sdtype': 'categorical'},
+                    'credit_card_number': {'sdtype': 'numerical'}
+                }
+            }
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+    }
 
-        assert metadata.to_dict() == expected_metadata
+    assert metadata.to_dict() == expected_metadata
