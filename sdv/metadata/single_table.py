@@ -480,13 +480,13 @@ class SingleTableMetadata:
             )
 
     def visualize(self, show_table_details='full', output_filepath=None):
-        """Create a visualization of the multi-table dataset.
+        """Create a visualization of the single-table dataset.
 
         Args:
             show_table_details (str):
-                If 'full', show the column names, primary, alternate and sequence keys are all
-                shown along with the table names. If 'summarized' primary, alternate and sequence
-                keys are shown and a count of the different sdtypes is shown. Defaults to 'full'.
+                If 'full', the column names, primary, alternate and sequence keys are all
+                shown. If 'summarized', primary, alternate and sequence keys are shown and a
+                count of the different sdtypes. Defaults to 'full'.
             output_filepath (str):
                 Full path of where to savve the visualization. If None, the visualization is not
                 saved. Defaults to None.
