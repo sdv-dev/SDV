@@ -6,7 +6,6 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
-from packaging import version
 from tqdm import tqdm
 
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -346,12 +345,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             synthesizer = self._synthesizer(table_meta, **self._table_parameters[table_name])
             synthesizer._set_parameters(parameters)
             try:
-                if version.parse(np.__version__) >= version.parse('1.17'):
-                    with np.random.Generator(np.random.get_state()[1]):
-                        likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)
-                else:
-                    with np.random.default_rng(np.random.get_state()[1]):
-                        likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)
+                with np.random.Generator(np.random.get_state()[1]):
+                    likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)
 
             except (AttributeError, np.linalg.LinAlgError):
                 likelihoods[parent_id] = None
