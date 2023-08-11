@@ -4,7 +4,6 @@ import json
 import logging
 import re
 import warnings
-from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
 
@@ -12,7 +11,8 @@ from sdv.metadata.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
-from sdv.metadata.visualization import visualize_graph
+from sdv.metadata.visualization import (
+    create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import cast_to_iterable, load_data_from_csv
 
 LOGGER = logging.getLogger(__name__)
@@ -498,26 +498,10 @@ class SingleTableMetadata:
             raise ValueError("'show_table_details' should be 'full' or 'summarized'.")
 
         if show_table_details == 'full':
-            columns = [
-                fr"{name} : {meta.get('sdtype')}\l"
-                for name, meta in self.columns.items()
-            ]
-            node = ''.join(columns)
+            node = fr'{create_columns_node(self.columns)}\l'
 
         elif show_table_details == 'summarized':
-            default_sdtypes = ['id', 'numerical', 'categorical', 'datetime', 'boolean']
-            count_dict = defaultdict(int)
-            for column_name, meta in self.columns.items():
-                sdtype = 'other' if meta['sdtype'] not in default_sdtypes else meta['sdtype']
-                count_dict[sdtype] += 1
-
-            count_dict = dict(sorted(count_dict.items()))
-            columns = [r'Columns\l']
-            columns.extend([
-                fr'&nbsp; &nbsp; • {sdtype} : {count}\l'
-                for sdtype, count in count_dict.items()
-            ])
-            node = ''.join(columns)
+            node = fr'{create_summarized_columns_node(self.columns)}\l'
 
         if self.primary_key:
             node = fr'{node}|Primary key: {self.primary_key}\l'

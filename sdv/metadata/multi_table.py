@@ -10,7 +10,8 @@ from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
-from sdv.metadata.visualization import visualize_graph
+from sdv.metadata.visualization import (
+    create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import cast_to_iterable
 
 LOGGER = logging.getLogger(__name__)
@@ -561,29 +562,15 @@ class MultiTableMetadata:
         edges = []
         if show_table_details == 'full':
             for table_name, table_meta in self.tables.items():
-                column_dict = table_meta.columns.items()
-                columns = [f"{name} : {meta.get('sdtype')}" for name, meta in column_dict]
                 nodes[table_name] = {
-                    'columns': r'\l'.join(columns),
+                    'columns': create_columns_node(table_meta.columns),
                     'primary_key': f'Primary key: {table_meta.primary_key}'
                 }
 
         elif show_table_details == 'summarized':
-            default_sdtypes = ['id', 'numerical', 'categorical', 'datetime', 'boolean']
             for table_name, table_meta in self.tables.items():
-                count_dict = defaultdict(int)
-                for column_name, meta in table_meta.columns.items():
-                    sdtype = 'other' if meta['sdtype'] not in default_sdtypes else meta['sdtype']
-                    count_dict[sdtype] += 1
-
-                count_dict = dict(sorted(count_dict.items()))
-                columns = ['Columns']
-                columns.extend([
-                    fr'&nbsp; &nbsp; • {sdtype} : {count}'
-                    for sdtype, count in count_dict.items()
-                ])
                 nodes[table_name] = {
-                    'columns': r'\l'.join(columns),
+                    'columns': create_summarized_columns_node(table_meta.columns),
                     'primary_key': f'Primary key: {table_meta.primary_key}'
                 }
 
@@ -610,7 +597,10 @@ class MultiTableMetadata:
             if show_table_details:
                 foreign_keys = r'\l'.join(info.get('foreign_keys', []))
                 keys = r'\l'.join([info['primary_key'], foreign_keys])
-                label = fr"{{{table}|{info['columns']}\l|{keys}\l}}"
+                if foreign_keys:
+                    label = fr"{{{table}|{info['columns']}\l|{keys}\l}}"
+                else:
+                    label = fr"{{{table}|{info['columns']}\l|{keys}}}"
 
             else:
                 label = f'{table}'

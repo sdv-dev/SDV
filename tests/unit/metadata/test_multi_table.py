@@ -1235,7 +1235,7 @@ class TestMultiTableMetadata:
             'datetime\\l|Primary key: transaction_id\\lForeign key (sessions): session_id\\l}'
         )
         expected_nodes = {
-            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l\\l}',
+            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l}',
             'payments': expected_payments_label,
             'sessions': expected_sessions_label,
             'transactions': expected_transactions_label
@@ -1283,7 +1283,7 @@ class TestMultiTableMetadata:
         )
         expected_user_label = (
             '{users|Columns\\l&nbsp; &nbsp; • categorical : 1\\l&nbsp; &nbsp; • id : '
-            '1\\l|Primary key: id\\l\\l}'
+            '1\\l|Primary key: id\\l}'
         )
         expected_nodes = {
             'users': expected_user_label,
@@ -1339,7 +1339,7 @@ class TestMultiTableMetadata:
             'datetime\\l|Primary key: transaction_id\\lForeign key (sessions): session_id\\l}'
         )
         expected_nodes = {
-            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l\\l}',
+            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l}',
             'payments': expected_payments_label,
             'sessions': expected_sessions_label,
             'transactions': expected_transactions_label
@@ -1479,7 +1479,7 @@ class TestMultiTableMetadata:
             'datetime\\l|Primary key: transaction_id\\lForeign key (sessions): session_id\\l}'
         )
         expected_nodes = {
-            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l\\l}',
+            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l}',
             'payments': expected_payments_label,
             'sessions': expected_sessions_label,
             'transactions': expected_transactions_label
