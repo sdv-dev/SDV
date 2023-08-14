@@ -1298,10 +1298,10 @@ class TestMultiTableMetadata:
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
 
-    @patch('sdv.metadata.multi_table.FutureWarning')
+    @patch('sdv.metadata.multi_table.warnings')
     @patch('sdv.metadata.multi_table.visualize_graph')
     def test_visualize_show_relationship_and_details_warning(self, visualize_graph_mock,
-                                                             future_warning_mock):
+                                                             warnings_mock):
         """Test the ``visualize`` method.
 
         If both the ``show_relationship_labels`` and ``show_table_details`` parameters are
@@ -1350,18 +1350,18 @@ class TestMultiTableMetadata:
             ('users', 'payments', '  user_id → id')
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
-        future_warning_mock.assert_called_once_with(
+        warnings_mock.warn.assert_called_once_with(
             'Using True or False for show_table_details is deprecated. Use '
-            "show_table_details='full' to show all table details."
+            "show_table_details='full' to show all table details.", FutureWarning
         )
 
     @patch('sdv.metadata.multi_table.visualize_graph')
     def test_visualize_show_relationship_show_table_details_none(self, visualize_graph_mock):
         """Test the ``visualize`` method.
 
-        If ``show_relationship_labels`` is True but ``show_table_details``is False,
+        If ``show_relationship_labels`` is True but ``show_table_details``is None,
         then the edges should have labels and the labels for the nodes should be just
-        the table name. Also a ``FutureWarning`` should be raised to use ``None`` instead.
+        the table name.
 
         Setup:
             - Mock the ``visualize_graph`` function.
@@ -1395,10 +1395,10 @@ class TestMultiTableMetadata:
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
 
-    @patch('sdv.metadata.multi_table.FutureWarning')
+    @patch('sdv.metadata.multi_table.warnings')
     @patch('sdv.metadata.multi_table.visualize_graph')
     def test_visualize_show_relationship_only_warning(self, visualize_graph_mock,
-                                                      future_warning_mock):
+                                                      warnings_mock):
         """Test the ``visualize`` method.
 
         If ``show_relationship_labels`` is True but ``show_table_details``is False,
@@ -1435,9 +1435,9 @@ class TestMultiTableMetadata:
             ('users', 'payments', '  user_id → id')
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
-        future_warning_mock.assert_called_once_with(
+        warnings_mock.warn.assert_called_once_with(
             "Using True or False for 'show_table_details' is deprecated. "
-            'Use show_table_details=None to hide table details.'
+            'Use show_table_details=None to hide table details.', FutureWarning
         )
 
     @patch('sdv.metadata.multi_table.visualize_graph')
