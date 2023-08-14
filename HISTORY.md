@@ -1,5 +1,28 @@
 # Release Notes
 
+## 1.3.0 - 2023-08-14
+
+This release adds two new methods to the `MultiTableMetadata`: `detect_from_csvs` and `detect_From_dataframes`. These methods allow you to detect metadata for a whole dataset at once by either loading them from a folder or a dictionary mapping table names to the `pandas.DataFrames`. The `SingleTableMetadata` can now be visualized! Additionally, there is now a `summarized` option in the `show_table_details` parameter of the `visualize` methods. This will print each sdtype in the table and the number of columns that have that sdtype.
+
+Additionally, this release patches a bug that prevented custom constraints from working on columns that were primary or alternate keys. It also adds support for Python 3.11!
+
+### New Features
+
+* Align default transformers between SDV and RDT - Issue [#1484](https://github.com/sdv-dev/SDV/issues/1484) by @R-Palazzo
+* Add visualize method to SingleTableMetadata - Issue [#1517](https://github.com/sdv-dev/SDV/issues/1517) by @pvk-developer
+* Add detect_from_csvs and detect_from_dataframes methods to MultiTableMetadata - Issue [#1520](https://github.com/sdv-dev/SDV/issues/1520) by @R-Palazzo
+* Allow empty tables to be fitted using fit_processed_data - Issue [#1524](https://github.com/sdv-dev/SDV/issues/1524) by @fealho
+* Summarized metadata visualization - Issue [#1525](https://github.com/sdv-dev/SDV/issues/1525) by @pvk-developer
+
+### Bugs Fixed
+
+* Cannot use custom constraint transforms for certain columns (inconsistent ordering in forward vs. reverse) - Issue [#1476](https://github.com/sdv-dev/SDV/issues/1476) by @fealho
+* Cannot create custom constraint with primary key - Issue [#1514](https://github.com/sdv-dev/SDV/issues/1514) by @amontanez24
+
+### Maintenance
+
+* Add support for Python 3.11 - Issue [#1459](https://github.com/sdv-dev/SDV/issues/1459) by @fealho
+
 ## 1.2.1 - 2023-07-13
 
 This release fixes a bug that caused the `Inequality` constraint and others to fail if there were None values in a datetime column.
