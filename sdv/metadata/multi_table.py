@@ -594,7 +594,7 @@ class MultiTableMetadata:
                 )
                 show_table_details = None
 
-            FutureWarning(future_warning_msg)
+            warnings.warn(future_warning_msg, FutureWarning)
 
         nodes = {}
         edges = []
