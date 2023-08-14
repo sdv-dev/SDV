@@ -718,6 +718,21 @@ class TestBaseMultiTableSynthesizer:
         instance._model_tables.assert_called_once_with(instance._augment_tables.return_value)
         assert instance._fitted
 
+    def test_fit_processed_data_empty_table(self):
+        """Test attributes are properly set when data is empty and that _fit is not called."""
+        # Setup
+        instance = Mock()
+        data = pd.DataFrame()
+
+        # Run
+        BaseMultiTableSynthesizer.fit_processed_data(instance, data)
+
+        # Assert
+        instance._fit.assert_not_called()
+        assert instance._fitted
+        assert instance._fitted_date
+        assert instance._fitted_sdv_version
+
     def test_fit(self):
         """Test that ``fit`` calls ``preprocess`` and then ``fit_processed_data``."""
         # Setup

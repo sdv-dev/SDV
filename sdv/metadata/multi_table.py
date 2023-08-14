@@ -5,13 +5,17 @@ import logging
 import warnings
 from collections import defaultdict
 from copy import deepcopy
+from pathlib import Path
+
+import pandas as pd
 
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
-from sdv.metadata.visualization import visualize_graph
-from sdv.utils import cast_to_iterable
+from sdv.metadata.visualization import (
+    create_columns_node, create_summarized_columns_node, visualize_graph)
+from sdv.utils import cast_to_iterable, load_data_from_csv
 
 LOGGER = logging.getLogger(__name__)
 
@@ -343,6 +347,19 @@ class MultiTableMetadata:
         self.tables[table_name] = table
         self._log_detected_table(table)
 
+    def detect_from_dataframes(self, data):
+        """Detect the metadata for all tables in a dictionary of dataframes.
+
+        Args:
+            data (dict):
+                Dictionary of table names to dataframes.
+        """
+        if not data or not all(isinstance(df, pd.DataFrame) for df in data.values()):
+            raise ValueError('The provided dictionary must contain only pandas DataFrame objects.')
+
+        for table_name, dataframe in data.items():
+            self.detect_table_from_dataframe(table_name, dataframe)
+
     def detect_table_from_csv(self, table_name, filepath):
         """Detect the metadata for a table from a csv file.
 
@@ -354,10 +371,32 @@ class MultiTableMetadata:
         """
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
-        data = table._load_data_from_csv(filepath)
+        data = load_data_from_csv(filepath)
         table._detect_columns(data)
         self.tables[table_name] = table
         self._log_detected_table(table)
+
+    def detect_from_csvs(self, folder_name):
+        """Detect the metadata for all tables in a folder of csv files.
+
+        Args:
+            folder_name (str):
+                Name of the folder to detect the metadata from.
+
+        """
+        folder_path = Path(folder_name)
+
+        if folder_path.is_dir():
+            csv_files = list(folder_path.rglob('*.csv'))
+        else:
+            raise ValueError(f"The folder '{folder_name}' does not exist.")
+
+        if not csv_files:
+            raise ValueError(f"No CSV files detected in the folder '{folder_name}'.")
+
+        for csv_file in csv_files:
+            table_name = csv_file.stem
+            self.detect_table_from_csv(table_name, str(csv_file))
 
     def set_primary_key(self, table_name, column_name):
         """Set the primary key of a table.
@@ -516,14 +555,16 @@ class MultiTableMetadata:
 
         self.tables[table_name] = SingleTableMetadata()
 
-    def visualize(self, show_table_details=True, show_relationship_labels=True,
+    def visualize(self, show_table_details='full', show_relationship_labels=True,
                   output_filepath=None):
         """Create a visualization of the multi-table dataset.
 
         Args:
-            show_table_details (bool):
-                If True, the column names, primary and foreign keys are all shown along with the
-                table names. If False, only the table names are shown. Defaults to True.
+            show_table_details (str or None):
+                If 'full', the column names, primary and foreign keys are all shown along with
+                the table names. If 'summarized', primary and foreign keys are shown and a count
+                of the different sdtypes is shown. If None only the table names are shown. Defaults
+                to 'full'.
             show_relationship_labels (bool):
                 If True, every edge is labeled with the column names (eg. purchaser_id -> user_id).
                 Defaults to True.
@@ -534,18 +575,44 @@ class MultiTableMetadata:
         Returns:
             ``graphviz.Digraph`` object.
         """
+        if show_table_details not in (None, True, False, 'full', 'summarized'):
+            raise ValueError(
+                "'show_table_details' parameter should be 'full', 'summarized' or None.")
+
+        if isinstance(show_table_details, bool):
+            if show_table_details:
+                future_warning_msg = (
+                    'Using True or False for show_table_details is deprecated. Use '
+                    "show_table_details='full' to show all table details."
+                )
+                show_table_details = 'full'
+
+            else:
+                future_warning_msg = (
+                    "Using True or False for 'show_table_details' is deprecated. "
+                    'Use show_table_details=None to hide table details.'
+                )
+                show_table_details = None
+
+            warnings.warn(future_warning_msg, FutureWarning)
+
         nodes = {}
         edges = []
-        if show_table_details:
+        if show_table_details == 'full':
             for table_name, table_meta in self.tables.items():
-                column_dict = table_meta.columns.items()
-                columns = [f"{name} : {meta.get('sdtype')}" for name, meta in column_dict]
                 nodes[table_name] = {
-                    'columns': r'\l'.join(columns),
+                    'columns': create_columns_node(table_meta.columns),
                     'primary_key': f'Primary key: {table_meta.primary_key}'
                 }
 
-        else:
+        elif show_table_details == 'summarized':
+            for table_name, table_meta in self.tables.items():
+                nodes[table_name] = {
+                    'columns': create_summarized_columns_node(table_meta.columns),
+                    'primary_key': f'Primary key: {table_meta.primary_key}'
+                }
+
+        elif show_table_details is None:
             nodes = {table_name: None for table_name in self.tables}
 
         for relationship in self.relationships:
@@ -556,7 +623,7 @@ class MultiTableMetadata:
             edge_label = f'  {foreign_key} → {primary_key}' if show_relationship_labels else ''
             edges.append((parent, child, edge_label))
 
-            if show_table_details:
+            if show_table_details is not None:
                 child_node = nodes.get(child)
                 foreign_key_text = f'Foreign key ({parent}): {foreign_key}'
                 if 'foreign_keys' in child_node:
@@ -568,7 +635,10 @@ class MultiTableMetadata:
             if show_table_details:
                 foreign_keys = r'\l'.join(info.get('foreign_keys', []))
                 keys = r'\l'.join([info['primary_key'], foreign_keys])
-                label = fr"{{{table}|{info['columns']}\l|{keys}\l}}"
+                if foreign_keys:
+                    label = fr"{{{table}|{info['columns']}\l|{keys}\l}}"
+                else:
+                    label = fr"{{{table}|{info['columns']}\l|{keys}}}"
 
             else:
                 label = f'{table}'

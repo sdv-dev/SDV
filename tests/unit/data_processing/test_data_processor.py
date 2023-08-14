@@ -17,6 +17,7 @@ from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.base import BaseSynthesizer
+from tests.utils import DataFrameMatcher
 
 
 class TestDataProcessor:
@@ -43,13 +44,20 @@ class TestDataProcessor:
         assert transformer.learn_rounding_scheme is False
         assert transformer.enforce_min_max_values is False
 
+    @patch('sdv.data_processing.data_processor.rdt.transformers.RegexGenerator')
+    @patch('sdv.data_processing.data_processor.get_default_transformers')
     @patch('sdv.data_processing.data_processor.rdt')
     @patch('sdv.data_processing.data_processor.DataProcessor._update_numerical_transformer')
-    def test___init__(self, update_transformer_mock, mock_rdt):
+    def test___init__(
+        self, update_transformer_mock, mock_rdt, mock_default_transformers, mock_regex_generator
+    ):
         """Test the ``__init__`` method.
 
         Setup:
-            - Patch the ``Constraint`` module.
+            - Patch the ``RegexGenerator`` class.
+            - Patch the ``get_default_transformers`` function.
+            - Patch the ``rdt`` module.
+            - Patch the ``_update_numerical_transformer`` method.
 
         Input:
             - A mock for metadata.
@@ -62,6 +70,17 @@ class TestDataProcessor:
         metadata.add_column('col_2', sdtype='id')
         metadata.add_alternate_keys(['col_2'])
         metadata.set_primary_key('col')
+
+        mock_default_transformers.return_value = {
+            'numerical': 'FloatFormatter()',
+            'categorical': 'LabelEncoder(add_noise=True)',
+            'boolean': 'LabelEncoder(add_noise=True)',
+            'datetime': 'UnixTimestampEncoder()',
+            'text': 'RegexGenerator()',
+            'pii': 'AnonymizedFaker()',
+        }
+
+        mock_regex_generator.return_value = 'RegexGenerator()'
 
         # Run
         data_processor = DataProcessor(
@@ -89,6 +108,20 @@ class TestDataProcessor:
 
         assert data_processor._hyper_transformer == mock_rdt.HyperTransformer.return_value
         update_transformer_mock.assert_called_with(True, False)
+
+        mock_default_transformers.assert_called_once()
+        mock_regex_generator.assert_called_once()
+
+        expected_default_transformers = {
+            'numerical': 'FloatFormatter()',
+            'categorical': 'LabelEncoder(add_noise=True)',
+            'boolean': 'LabelEncoder(add_noise=True)',
+            'datetime': 'UnixTimestampEncoder()',
+            'id': 'RegexGenerator()',
+            'pii': 'AnonymizedFaker()',
+        }
+
+        assert data_processor._transformers_by_sdtype == expected_default_transformers
 
     def test___init___without_mocks(self):
         """Test the ``__init__`` method without using mocks.
@@ -1814,21 +1847,26 @@ class TestDataProcessor:
         dp = DataProcessor(SingleTableMetadata())
         dp.fitted = True
         dp.metadata = Mock()
-        dp.metadata.columns = {'a': None, 'b': None, 'c': None, 'd': None}
+        dp.metadata.columns = {'a': None, 'b': None, 'c': None, 'key': None, 'd': None}
         data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [True, True, False],
             'c': ['d', 'e', 'f'],
+
         })
+        dp._keys = ['key']
         dp._hyper_transformer = Mock()
-        dp._hyper_transformer.create_anonymized_columns.return_value = pd.DataFrame({
-            'd': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com']
-        })
+        dp._hyper_transformer.create_anonymized_columns.side_effect = [
+            pd.DataFrame({'d': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com']}),
+            pd.DataFrame({'key': ['sdv_0', 'sdv_1', 'sdv_2']})
+        ]
         dp._constraints_to_reverse = [constraint_mock]
-        dp._hyper_transformer.reverse_transform_subset.return_value = data
+        dp._hyper_transformer.reverse_transform_subset.return_value = data.copy()
         dp._hyper_transformer._output_columns = ['a', 'b', 'c']
         dp._dtypes = pd.Series(
-            [np.float64, np.bool_, np.object_, np.object_], index=['a', 'b', 'c', 'd'])
+            [np.float64, np.bool_, np.object_, np.object_, np.object_],
+            index=['a', 'b', 'c', 'd', 'key']
+        )
         constraint_mock.reverse_transform.return_value = data
 
         # Run
@@ -1840,20 +1878,29 @@ class TestDataProcessor:
             'b': [True, True, False],
             'c': ['d', 'e', 'f']
         })
-        constraint_mock.reverse_transform.assert_called_once_with(data)
+        expected_constraint_input = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [True, True, False],
+            'c': ['d', 'e', 'f'],
+            'd': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com'],
+            'key': ['sdv_0', 'sdv_1', 'sdv_2']
+        })
+        constraint_mock.reverse_transform.assert_called_once_with(
+            DataFrameMatcher(expected_constraint_input))
         data_from_call = dp._hyper_transformer.reverse_transform_subset.mock_calls[0][1][0]
         pd.testing.assert_frame_equal(input_data, data_from_call)
         dp._hyper_transformer.reverse_transform_subset.assert_called_once()
+        dp._hyper_transformer.create_anonymized_columns.has_calls(
+            call(num_rows=3, column_names=['d']),
+            call(num_rows=3, column_names=['key'])
+        )
         expected_output = pd.DataFrame({
             'a': [1., 2., 3.],
             'b': [True, True, False],
             'c': ['d', 'e', 'f'],
-            'd': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com']
+            'key': ['sdv_0', 'sdv_1', 'sdv_2'],
+            'd': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com'],
         })
-        dp._hyper_transformer.create_anonymized_columns.assert_called_once_with(
-            num_rows=3,
-            column_names=['d']
-        )
         pd.testing.assert_frame_equal(reverse_transformed, expected_output)
 
     @patch('sdv.data_processing.data_processor.LOGGER')

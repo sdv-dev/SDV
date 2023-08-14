@@ -1190,13 +1190,124 @@ class TestMultiTableMetadata:
         mock_json.dumps.assert_called_once_with(instance.to_dict(), indent=4)
         assert res == mock_json.dumps.return_value
 
+    def test_visualize_incorrect_input(self):
+        """Test that visualize raises a ``ValueError`` when ``show_table_details`` is invalid."""
+        # Setup
+        instance = MultiTableMetadata()
+
+        # Run / Assert
+        error_msg = "'show_table_details' parameter should be 'full', 'summarized' or None."
+        with pytest.raises(ValueError, match=error_msg):
+            instance.visualize('summarized-full')
+
     @patch('sdv.metadata.multi_table.visualize_graph')
     def test_visualize_show_relationship_and_details(self, visualize_graph_mock):
         """Test the ``visualize`` method.
 
+        If both the ``show_relationship_labels`` is ``'full'`` and ``show_table_details``
+        parameters is ``True``, then the edges should have labels and the labels for the nodes
+        should include column info, primary keys and alternate keys.
+
+        Setup:
+            - Mock the ``visualize_graph`` function.
+            - Set the tables and relationships for the multi-table metadata.
+
+        Side effects:
+            - The ``visualize_graph_mock`` should be called with the correct nodes and edges.
+        """
+        # Setup
+        metadata = self.get_metadata()
+
+        # Run
+        metadata.visualize('full', True)
+
+        # Assert
+        expected_payments_label = (
+            '{payments|payment_id : id\\luser_id : id\\ldate : datetime\\l|'
+            'Primary key: payment_id\\lForeign key (users): user_id\\l}'
+        )
+        expected_sessions_label = (
+            '{sessions|session_id : id\\luser_id : id\\ldevice : categorical\\l|'
+            'Primary key: session_id\\lForeign key (users): user_id\\l}'
+        )
+        expected_transactions_label = (
+            '{transactions|transaction_id : id\\lsession_id : id\\ltimestamp : '
+            'datetime\\l|Primary key: transaction_id\\lForeign key (sessions): session_id\\l}'
+        )
+        expected_nodes = {
+            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l}',
+            'payments': expected_payments_label,
+            'sessions': expected_sessions_label,
+            'transactions': expected_transactions_label
+        }
+        expected_edges = [
+            ('users', 'sessions', '  user_id → id'),
+            ('sessions', 'transactions', '  session_id → session_id'),
+            ('users', 'payments', '  user_id → id')
+        ]
+        visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
+
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_show_relationship_and_details_summarized(self, visualize_graph_mock):
+        """Test the ``visualize`` method.
+
+        If ``show_relationship_labels`` is ``'summarized'`` and ``show_table_details`` parameters
+        is ``True``, then the edges should have labels and the labels for the nodes should include
+        column label and each ``sdtype`` count, primary keys and alternate keys.
+
+        Setup:
+            - Mock the ``visualize_graph`` function.
+            - Set the tables and relationships for the multi-table metadata.
+
+        Side effects:
+            - The ``visualize_graph_mock`` should be called with the correct nodes and edges.
+        """
+        # Setup
+        metadata = self.get_metadata()
+
+        # Run
+        metadata.visualize('summarized', True)
+
+        # Assert
+        expected_payments_label = (
+            '{payments|Columns\\l&nbsp; &nbsp; • datetime : 1\\l&nbsp; '
+            '&nbsp; • id : 2\\l|Primary key: payment_id\\lForeign key (users): user_id\\l}'
+        )
+        expected_sessions_label = (
+            '{sessions|Columns\\l&nbsp; &nbsp; • categorical : 1\\l&nbsp; '
+            '&nbsp; • id : 2\\l|Primary key: session_id\\lForeign key (users): user_id\\l}'
+        )
+        expected_transactions_label = (
+            '{transactions|Columns\\l&nbsp; &nbsp; • datetime : 1\\l&nbsp; &nbsp; '
+            '• id : 2\\l|Primary key: transaction_id\\lForeign key (sessions): session_id\\l}'
+        )
+        expected_user_label = (
+            '{users|Columns\\l&nbsp; &nbsp; • categorical : 1\\l&nbsp; &nbsp; • id : '
+            '1\\l|Primary key: id\\l}'
+        )
+        expected_nodes = {
+            'users': expected_user_label,
+            'payments': expected_payments_label,
+            'sessions': expected_sessions_label,
+            'transactions': expected_transactions_label
+        }
+        expected_edges = [
+            ('users', 'sessions', '  user_id → id'),
+            ('sessions', 'transactions', '  session_id → session_id'),
+            ('users', 'payments', '  user_id → id')
+        ]
+        visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
+
+    @patch('sdv.metadata.multi_table.warnings')
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_show_relationship_and_details_warning(self, visualize_graph_mock,
+                                                             warnings_mock):
+        """Test the ``visualize`` method.
+
         If both the ``show_relationship_labels`` and ``show_table_details`` parameters are
         True, then the edges should have labels and the labels for the nodes should include
-        column info, primary keys and alternate keys.
+        column info, primary keys and alternate keys. Also a future warning should be shown
+        stating that the ``show_table_details`` should be ``'full'``.
 
         Setup:
             - Mock the ``visualize_graph`` function.
@@ -1228,7 +1339,7 @@ class TestMultiTableMetadata:
             'datetime\\l|Primary key: transaction_id\\lForeign key (sessions): session_id\\l}'
         )
         expected_nodes = {
-            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l\\l}',
+            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l}',
             'payments': expected_payments_label,
             'sessions': expected_sessions_label,
             'transactions': expected_transactions_label
@@ -1239,14 +1350,60 @@ class TestMultiTableMetadata:
             ('users', 'payments', '  user_id → id')
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
+        warnings_mock.warn.assert_called_once_with(
+            'Using True or False for show_table_details is deprecated. Use '
+            "show_table_details='full' to show all table details.", FutureWarning
+        )
 
     @patch('sdv.metadata.multi_table.visualize_graph')
-    def test_visualize_show_relationship_only(self, visualize_graph_mock):
+    def test_visualize_show_relationship_show_table_details_none(self, visualize_graph_mock):
+        """Test the ``visualize`` method.
+
+        If ``show_relationship_labels`` is True but ``show_table_details``is None,
+        then the edges should have labels and the labels for the nodes should be just
+        the table name.
+
+        Setup:
+            - Mock the ``visualize_graph`` function.
+            - Set the tables and relationships for the multi-table metadata.
+
+        Input:
+            - ``show_relationship_labels`` set to True.
+            - ``show_table_details`` set to None.
+            - ``output_file`` is set to ``output.jpg``.
+
+        Side effects:
+            - The ``visualize_graph_mock`` should be called with the correct nodes and edges.
+        """
+        # Setup
+        metadata = self.get_metadata()
+
+        # Run
+        metadata.visualize(None, True, 'output.jpg')
+
+        # Assert
+        expected_nodes = {
+            'users': 'users',
+            'payments': 'payments',
+            'sessions': 'sessions',
+            'transactions': 'transactions'
+        }
+        expected_edges = [
+            ('users', 'sessions', '  user_id → id'),
+            ('sessions', 'transactions', '  session_id → session_id'),
+            ('users', 'payments', '  user_id → id')
+        ]
+        visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
+
+    @patch('sdv.metadata.multi_table.warnings')
+    @patch('sdv.metadata.multi_table.visualize_graph')
+    def test_visualize_show_relationship_only_warning(self, visualize_graph_mock,
+                                                      warnings_mock):
         """Test the ``visualize`` method.
 
         If ``show_relationship_labels`` is True but ``show_table_details``is False,
         then the edges should have labels and the labels for the nodes should be just
-        the table name.
+        the table name. Also a ``FutureWarning`` should be raised to use ``None`` instead.
 
         Setup:
             - Mock the ``visualize_graph`` function.
@@ -1278,6 +1435,10 @@ class TestMultiTableMetadata:
             ('users', 'payments', '  user_id → id')
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
+        warnings_mock.warn.assert_called_once_with(
+            "Using True or False for 'show_table_details' is deprecated. "
+            'Use show_table_details=None to hide table details.', FutureWarning
+        )
 
     @patch('sdv.metadata.multi_table.visualize_graph')
     def test_visualize_show_table_details_only(self, visualize_graph_mock):
@@ -1318,7 +1479,7 @@ class TestMultiTableMetadata:
             'datetime\\l|Primary key: transaction_id\\lForeign key (sessions): session_id\\l}'
         )
         expected_nodes = {
-            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l\\l}',
+            'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l}',
             'payments': expected_payments_label,
             'sessions': expected_sessions_label,
             'transactions': expected_transactions_label
@@ -1428,7 +1589,8 @@ class TestMultiTableMetadata:
 
     @patch('sdv.metadata.multi_table.LOGGER')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    def test_detect_table_from_csv(self, single_table_mock, log_mock):
+    @patch('sdv.metadata.multi_table.load_data_from_csv')
+    def test_detect_table_from_csv(self, load_csv_mock, single_table_mock, log_mock):
         """Test the ``detect_table_from_csv`` method.
 
         If the table does not already exist, a ``SingleTableMetadata`` instance
@@ -1443,7 +1605,7 @@ class TestMultiTableMetadata:
         # Setup
         metadata = MultiTableMetadata()
         fake_data = Mock()
-        single_table_mock.return_value._load_data_from_csv.return_value = fake_data
+        load_csv_mock.return_value = fake_data
         single_table_mock.return_value.to_dict.return_value = {
             'columns': {'a': {'sdtype': 'numerical'}}
         }
@@ -1452,7 +1614,7 @@ class TestMultiTableMetadata:
         metadata.detect_table_from_csv('table', 'path.csv')
 
         # Assert
-        single_table_mock.return_value._load_data_from_csv.assert_called_once_with('path.csv')
+        load_csv_mock.assert_called_once_with('path.csv')
         single_table_mock.return_value._detect_columns.assert_called_once_with(fake_data)
         assert metadata.tables == {'table': single_table_mock.return_value}
 
@@ -1494,6 +1656,59 @@ class TestMultiTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.detect_table_from_csv('table', 'path.csv')
+
+    def test_detect_from_csvs(self, tmp_path):
+        """Test the ``detect_from_csvs`` method.
+
+        The method should call ``detect_table_from_csv`` for each csv in the folder.
+        """
+        # Setup
+        instance = MultiTableMetadata()
+        instance.detect_table_from_csv = Mock()
+
+        data1 = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
+        data2 = pd.DataFrame({'col1': [5, 6], 'col2': [7, 8]})
+
+        filepath1 = tmp_path / 'table1.csv'
+        filepath2 = tmp_path / 'table2.csv'
+        data1.to_csv(filepath1, index=False)
+        data2.to_csv(filepath2, index=False)
+
+        json_filepath = tmp_path / 'not_csv.json'
+        with open(json_filepath, 'w') as json_file:
+            json_file.write('{"key": "value"}')
+
+        # Run
+        instance.detect_from_csvs(tmp_path)
+
+        # Assert
+        expected_calls = [
+            call('table1', str(filepath1)),
+            call('table2', str(filepath2))
+        ]
+
+        instance.detect_table_from_csv.assert_has_calls(expected_calls, any_order=True)
+        assert instance.detect_table_from_csv.call_count == 2
+
+    def test_detect_from_csvs_no_csv(self, tmp_path):
+        """Test the ``detect_from_csvs`` method with no csv file in the folder."""
+        # Setup
+        instance = MultiTableMetadata()
+
+        json_filepath = tmp_path / 'not_csv.json'
+        with open(json_filepath, 'w') as json_file:
+            json_file.write('{"key": "value"}')
+
+        # Run and Assert
+        expected_message = re.escape("No CSV files detected in the folder '{}'.".format(tmp_path))
+        with pytest.raises(ValueError, match=expected_message):
+            instance.detect_from_csvs(tmp_path)
+
+        expected_message_folder = re.escape(
+            "The folder '{}' does not exist.".format('not_a_folder')
+        )
+        with pytest.raises(ValueError, match=expected_message_folder):
+            instance.detect_from_csvs('not_a_folder')
 
     @patch('sdv.metadata.multi_table.LOGGER')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
@@ -1561,6 +1776,48 @@ class TestMultiTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.detect_table_from_dataframe('table', pd.DataFrame())
+
+    def test_detect_from_dataframes(self):
+        """Test ``detect_from_dataframes``.
+
+        Expected to call ``detect_table_from_dataframe`` for each table name and dataframe
+        in the input.
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata.detect_table_from_dataframe = Mock()
+
+        guests_table = pd.DataFrame()
+        hotels_table = pd.DataFrame()
+
+        # Run
+        metadata.detect_from_dataframes(
+            data={
+                'guests': guests_table,
+                'hotels': hotels_table
+            }
+        )
+
+        # Assert
+        metadata.detect_table_from_dataframe.assert_any_call('guests', guests_table)
+        metadata.detect_table_from_dataframe.assert_any_call('hotels', hotels_table)
+
+    def test_detect_from_dataframes_no_dataframes(self):
+        """Test ``detect_from_dataframes`` with no dataframes in the input.
+
+        Expected to raise an error.
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+
+        # Run and Assert
+        expected_message = 'The provided dictionary must contain only pandas DataFrame objects.'
+
+        with pytest.raises(ValueError, match=expected_message):
+            metadata.detect_from_dataframes(data={})
+
+        with pytest.raises(ValueError, match=expected_message):
+            metadata.detect_from_dataframes(data={'a': 1})
 
     def test__validate_table_exists(self):
         """Test ``_validate_table_exists``.
