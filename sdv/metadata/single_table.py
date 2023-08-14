@@ -256,13 +256,14 @@ class SingleTableMetadata:
         """
         sdtype = 'numerical'
         if len(data) > 5:
-            whole_values = (data == data.round()).loc[~data.isna()].all()
-            positive_values = (data >= 0).loc[~data.isna()].all()
+            is_not_null = ~data.isna()
+            whole_values = (data == data.round()).loc[is_not_null].all()
+            positive_values = (data >= 0).loc[is_not_null].all()
 
             unique_values = data.nunique()
-            percentage_unique_values = unique_values <= round(len(data) / 10)
+            unique_lt_categorical_threshold = unique_values <= round(len(data) / 10)
 
-            if whole_values and positive_values and percentage_unique_values:
+            if whole_values and positive_values and unique_lt_categorical_threshold:
                 sdtype = 'categorical'
             elif unique_values == len(data) and whole_values:
                 sdtype = 'id'

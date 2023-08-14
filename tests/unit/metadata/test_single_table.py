@@ -721,7 +721,16 @@ class TestSingleTableMetadata:
             'age', 'numerical', computer_representation='Float')
 
     def test__determine_sdtype_for_numbers(self):
-        """Test the ``determine_sdtype_for_numbers`` method."""
+        """Test the ``determine_sdtype_for_numbers`` method.
+
+        Setup:
+            - Instance of ``SingleTableMetadata``.
+            - A series of numbers with less than 5 rows. Should be detected as numerical sdtype
+            - A series of numbers with less than 10% unique values. Should be detected as
+              categorical sdtype
+            - A series of numbers with all unique values. Should be detected as id sdtype
+            - A series of integers. Should be detected as numerical sdtype
+            - A series of floats. Should be detected as numerical sdtype"""
         # Setup
         instance = SingleTableMetadata()
 
