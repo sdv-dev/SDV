@@ -5,6 +5,9 @@ import logging
 import warnings
 from collections import defaultdict
 from copy import deepcopy
+from pathlib import Path
+
+import pandas as pd
 
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
@@ -12,7 +15,7 @@ from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
-from sdv.utils import cast_to_iterable
+from sdv.utils import cast_to_iterable, load_data_from_csv
 
 LOGGER = logging.getLogger(__name__)
 
@@ -344,6 +347,19 @@ class MultiTableMetadata:
         self.tables[table_name] = table
         self._log_detected_table(table)
 
+    def detect_from_dataframes(self, data):
+        """Detect the metadata for all tables in a dictionary of dataframes.
+
+        Args:
+            data (dict):
+                Dictionary of table names to dataframes.
+        """
+        if not data or not all(isinstance(df, pd.DataFrame) for df in data.values()):
+            raise ValueError('The provided dictionary must contain only pandas DataFrame objects.')
+
+        for table_name, dataframe in data.items():
+            self.detect_table_from_dataframe(table_name, dataframe)
+
     def detect_table_from_csv(self, table_name, filepath):
         """Detect the metadata for a table from a csv file.
 
@@ -355,10 +371,32 @@ class MultiTableMetadata:
         """
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
-        data = table._load_data_from_csv(filepath)
+        data = load_data_from_csv(filepath)
         table._detect_columns(data)
         self.tables[table_name] = table
         self._log_detected_table(table)
+
+    def detect_from_csvs(self, folder_name):
+        """Detect the metadata for all tables in a folder of csv files.
+
+        Args:
+            folder_name (str):
+                Name of the folder to detect the metadata from.
+
+        """
+        folder_path = Path(folder_name)
+
+        if folder_path.is_dir():
+            csv_files = list(folder_path.rglob('*.csv'))
+        else:
+            raise ValueError(f"The folder '{folder_name}' does not exist.")
+
+        if not csv_files:
+            raise ValueError(f"No CSV files detected in the folder '{folder_name}'.")
+
+        for csv_file in csv_files:
+            table_name = csv_file.stem
+            self.detect_table_from_csv(table_name, str(csv_file))
 
     def set_primary_key(self, table_name, column_name):
         """Set the primary key of a table.

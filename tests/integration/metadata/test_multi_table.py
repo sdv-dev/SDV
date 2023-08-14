@@ -2,6 +2,7 @@
 
 import json
 
+from sdv.datasets.demo import download_demo
 from sdv.metadata import MultiTableMetadata
 
 
@@ -132,3 +133,138 @@ def test_upgrade_metadata(tmp_path):
     assert new_metadata['tables'] == expected_metadata['tables']
     for relationship in new_metadata['relationships']:
         assert relationship in expected_metadata['relationships']
+
+
+def test_detect_from_dataframes():
+    """Test the ``detect_from_dataframes`` method."""
+    # Setup
+    real_data, _ = download_demo(
+        modality='multi_table',
+        dataset_name='fake_hotels'
+    )
+
+    metadata = MultiTableMetadata()
+
+    # Run
+    metadata.detect_from_dataframes(real_data)
+
+    # Assert
+    expected_metadata = {
+        'tables': {
+            'hotels': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'categorical'},
+                    'city': {'sdtype': 'categorical'},
+                    'state': {'sdtype': 'categorical'},
+                    'rating': {'sdtype': 'numerical'},
+                    'classification': {'sdtype': 'categorical'}
+                }
+            },
+            'guests': {
+                'columns': {
+                    'guest_email': {'sdtype': 'categorical'},
+                    'hotel_id': {'sdtype': 'categorical'},
+                    'has_rewards': {'sdtype': 'boolean'},
+                    'room_type': {'sdtype': 'categorical'},
+                    'amenities_fee': {'sdtype': 'numerical'},
+                    'checkin_date': {'sdtype': 'categorical'},
+                    'checkout_date': {'sdtype': 'categorical'},
+                    'room_rate': {'sdtype': 'numerical'},
+                    'billing_address': {'sdtype': 'categorical'},
+                    'credit_card_number': {'sdtype': 'numerical'}
+                }
+            }
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+    }
+
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_from_csvs(tmp_path):
+    """Test the ``detect_from_csvs`` method."""
+    # Setup
+    real_data, _ = download_demo(
+        modality='multi_table',
+        dataset_name='fake_hotels'
+    )
+
+    metadata = MultiTableMetadata()
+
+    for table_name, dataframe in real_data.items():
+        csv_path = tmp_path / f'{table_name}.csv'
+        dataframe.to_csv(csv_path, index=False)
+
+    # Run
+    metadata.detect_from_csvs(folder_name=tmp_path)
+
+    # Assert
+    expected_metadata = {
+        'tables': {
+            'hotels': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'categorical'},
+                    'city': {'sdtype': 'categorical'},
+                    'state': {'sdtype': 'categorical'},
+                    'rating': {'sdtype': 'numerical'},
+                    'classification': {'sdtype': 'categorical'}
+                }
+            },
+            'guests': {
+                'columns': {
+                    'guest_email': {'sdtype': 'categorical'},
+                    'hotel_id': {'sdtype': 'categorical'},
+                    'has_rewards': {'sdtype': 'boolean'},
+                    'room_type': {'sdtype': 'categorical'},
+                    'amenities_fee': {'sdtype': 'numerical'},
+                    'checkin_date': {'sdtype': 'categorical'},
+                    'checkout_date': {'sdtype': 'categorical'},
+                    'room_rate': {'sdtype': 'numerical'},
+                    'billing_address': {'sdtype': 'categorical'},
+                    'credit_card_number': {'sdtype': 'numerical'}
+                }
+            }
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+    }
+
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_table_from_csv(tmp_path):
+    """Test the ``detect_table_from_csv`` method."""
+    # Setup
+    real_data, _ = download_demo(
+        modality='multi_table',
+        dataset_name='fake_hotels'
+    )
+
+    metadata = MultiTableMetadata()
+
+    for table_name, dataframe in real_data.items():
+        csv_path = tmp_path / f'{table_name}.csv'
+        dataframe.to_csv(csv_path, index=False)
+
+    # Run
+    metadata.detect_table_from_csv('hotels', tmp_path / 'hotels.csv')
+
+    # Assert
+    expected_metadata = {
+        'tables': {
+            'hotels': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'categorical'},
+                    'city': {'sdtype': 'categorical'},
+                    'state': {'sdtype': 'categorical'},
+                    'rating': {'sdtype': 'numerical'},
+                    'classification': {'sdtype': 'categorical'}
+                }
+            }
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+    }
+
+    assert metadata.to_dict() == expected_metadata

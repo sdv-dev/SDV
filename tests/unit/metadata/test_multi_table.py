@@ -1589,7 +1589,8 @@ class TestMultiTableMetadata:
 
     @patch('sdv.metadata.multi_table.LOGGER')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    def test_detect_table_from_csv(self, single_table_mock, log_mock):
+    @patch('sdv.metadata.multi_table.load_data_from_csv')
+    def test_detect_table_from_csv(self, load_csv_mock, single_table_mock, log_mock):
         """Test the ``detect_table_from_csv`` method.
 
         If the table does not already exist, a ``SingleTableMetadata`` instance
@@ -1604,7 +1605,7 @@ class TestMultiTableMetadata:
         # Setup
         metadata = MultiTableMetadata()
         fake_data = Mock()
-        single_table_mock.return_value._load_data_from_csv.return_value = fake_data
+        load_csv_mock.return_value = fake_data
         single_table_mock.return_value.to_dict.return_value = {
             'columns': {'a': {'sdtype': 'numerical'}}
         }
@@ -1613,7 +1614,7 @@ class TestMultiTableMetadata:
         metadata.detect_table_from_csv('table', 'path.csv')
 
         # Assert
-        single_table_mock.return_value._load_data_from_csv.assert_called_once_with('path.csv')
+        load_csv_mock.assert_called_once_with('path.csv')
         single_table_mock.return_value._detect_columns.assert_called_once_with(fake_data)
         assert metadata.tables == {'table': single_table_mock.return_value}
 
@@ -1655,6 +1656,59 @@ class TestMultiTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.detect_table_from_csv('table', 'path.csv')
+
+    def test_detect_from_csvs(self, tmp_path):
+        """Test the ``detect_from_csvs`` method.
+
+        The method should call ``detect_table_from_csv`` for each csv in the folder.
+        """
+        # Setup
+        instance = MultiTableMetadata()
+        instance.detect_table_from_csv = Mock()
+
+        data1 = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
+        data2 = pd.DataFrame({'col1': [5, 6], 'col2': [7, 8]})
+
+        filepath1 = tmp_path / 'table1.csv'
+        filepath2 = tmp_path / 'table2.csv'
+        data1.to_csv(filepath1, index=False)
+        data2.to_csv(filepath2, index=False)
+
+        json_filepath = tmp_path / 'not_csv.json'
+        with open(json_filepath, 'w') as json_file:
+            json_file.write('{"key": "value"}')
+
+        # Run
+        instance.detect_from_csvs(tmp_path)
+
+        # Assert
+        expected_calls = [
+            call('table1', str(filepath1)),
+            call('table2', str(filepath2))
+        ]
+
+        instance.detect_table_from_csv.assert_has_calls(expected_calls, any_order=True)
+        assert instance.detect_table_from_csv.call_count == 2
+
+    def test_detect_from_csvs_no_csv(self, tmp_path):
+        """Test the ``detect_from_csvs`` method with no csv file in the folder."""
+        # Setup
+        instance = MultiTableMetadata()
+
+        json_filepath = tmp_path / 'not_csv.json'
+        with open(json_filepath, 'w') as json_file:
+            json_file.write('{"key": "value"}')
+
+        # Run and Assert
+        expected_message = re.escape("No CSV files detected in the folder '{}'.".format(tmp_path))
+        with pytest.raises(ValueError, match=expected_message):
+            instance.detect_from_csvs(tmp_path)
+
+        expected_message_folder = re.escape(
+            "The folder '{}' does not exist.".format('not_a_folder')
+        )
+        with pytest.raises(ValueError, match=expected_message_folder):
+            instance.detect_from_csvs('not_a_folder')
 
     @patch('sdv.metadata.multi_table.LOGGER')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
@@ -1722,6 +1776,48 @@ class TestMultiTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.detect_table_from_dataframe('table', pd.DataFrame())
+
+    def test_detect_from_dataframes(self):
+        """Test ``detect_from_dataframes``.
+
+        Expected to call ``detect_table_from_dataframe`` for each table name and dataframe
+        in the input.
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata.detect_table_from_dataframe = Mock()
+
+        guests_table = pd.DataFrame()
+        hotels_table = pd.DataFrame()
+
+        # Run
+        metadata.detect_from_dataframes(
+            data={
+                'guests': guests_table,
+                'hotels': hotels_table
+            }
+        )
+
+        # Assert
+        metadata.detect_table_from_dataframe.assert_any_call('guests', guests_table)
+        metadata.detect_table_from_dataframe.assert_any_call('hotels', hotels_table)
+
+    def test_detect_from_dataframes_no_dataframes(self):
+        """Test ``detect_from_dataframes`` with no dataframes in the input.
+
+        Expected to raise an error.
+        """
+        # Setup
+        metadata = MultiTableMetadata()
+
+        # Run and Assert
+        expected_message = 'The provided dictionary must contain only pandas DataFrame objects.'
+
+        with pytest.raises(ValueError, match=expected_message):
+            metadata.detect_from_dataframes(data={})
+
+        with pytest.raises(ValueError, match=expected_message):
+            metadata.detect_from_dataframes(data={'a': 1})
 
     def test__validate_table_exists(self):
         """Test ``_validate_table_exists``.
