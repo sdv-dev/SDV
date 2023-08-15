@@ -6,11 +6,11 @@ from rdt.transformers import (
     AnonymizedFaker, CustomLabelEncoder, FloatFormatter, PseudoAnonymizedFaker)
 
 from sdv.datasets.demo import download_demo
+from sdv.errors import InvalidDataError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
-from sdv.single_table.errors import InvalidDataError
 
 
 def test_synthesize_table_gaussian_copula(tmp_path):

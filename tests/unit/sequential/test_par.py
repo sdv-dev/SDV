@@ -7,11 +7,10 @@ import pytest
 from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 
 from sdv.data_processing.data_processor import DataProcessor
-from sdv.errors import SamplingError, SynthesizerInputError
+from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sequential.par import PARSynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from sdv.single_table.errors import InvalidDataError
 from tests.utils import DataFrameMatcher
 
 
