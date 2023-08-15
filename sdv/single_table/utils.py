@@ -15,6 +15,10 @@ IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
 def detect_discrete_columns(metadata, data):
     """Detect the discrete columns in a dataset.
 
+    Because the metadata doesn't necessarily match the data (we only preprocess the data,
+    while the metadata stays static), this method tries to infer whether the data is
+    discrete.
+
     Args:
         metadata (sdv.metadata.SingleTableMetadata):
             Metadata that belongs to the given ``data``.
@@ -27,24 +31,28 @@ def detect_discrete_columns(metadata, data):
             A list of discrete columns to be used with some of ``sdv`` synthesizers.
     """
     discrete_columns = []
-
     for column in data.columns:
-        if column in metadata.columns:
-            if metadata.columns[column]['sdtype'] not in ['numerical', 'datetime']:
-                discrete_columns.append(column)
+        # Numerical and datetime columns never get preprocessed into categorical ones
+        if column in metadata.columns and \
+                metadata.columns[column]['sdtype'] in ['numerical', 'datetime']:
+            continue
 
-        else:
-            column_data = data[column].dropna()
-            if set(column_data.unique()) == {0.0, 1.0}:
-                column_data = column_data.astype(bool)
+        column_data = data[column].dropna()
 
-            try:
-                dtype = column_data.infer_objects().dtype.kind
-                if dtype in ['O', 'b']:
-                    discrete_columns.append(column)
+        # Ignore columns with only nans and empty datasets
+        if column_data.empty:
+            continue
 
-            except Exception:
-                discrete_columns.append(column)
+        # Non-integer floats cannot be categorical
+        try:
+            column_data = column_data.astype('float')
+            if list(column_data) != list(column_data.round()):
+                continue
+        except BaseException:
+            pass
+
+        # Everything else is presumed categorical
+        discrete_columns.append(column)
 
     return discrete_columns
 
