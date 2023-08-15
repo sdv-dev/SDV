@@ -9,6 +9,7 @@ from datetime import datetime
 
 import pandas as pd
 
+from sdv.constraints.errors import AggregateConstraintsError
 from sdv.errors import InvalidDataError
 from sdv.metadata.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 from sdv.metadata.errors import InvalidMetadataError
