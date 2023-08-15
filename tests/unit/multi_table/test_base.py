@@ -249,56 +249,6 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         assert result == ['upravna_enota']
 
-    def test__validate_foreign_keys(self):
-        """Test that when the data matches as expected there are no errors."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata)
-        data = get_multi_table_data()
-
-        # Run
-        result = instance._validate_foreign_keys(data)
-
-        # Assert
-        assert result is None
-
-    def test__validate_foreign_keys_missing_keys(self):
-        """Test that errors are being returned.
-
-        When the values of the foreign keys are not within the values of the parent
-        primary key, a list of errors must be returned indicating the values that are missing.
-        """
-        # Setup
-        metadata = get_multi_table_metadata()
-        data = {
-            'nesreca': pd.DataFrame({
-                'id_nesreca': np.arange(0, 20, 2),
-                'upravna_enota': np.arange(10),
-            }),
-            'oseba': pd.DataFrame({
-                'upravna_enota': np.arange(10, 20),
-                'id_nesreca': np.arange(10),
-            }),
-            'upravna_enota': pd.DataFrame({
-                'id_upravna_enota': np.arange(10),
-            }),
-        }
-        instance = BaseMultiTableSynthesizer(metadata)
-
-        # Run
-        result = instance._validate_foreign_keys(data)
-
-        # Assert
-        missing_upravna_enota = (
-            'Relationships:\n'
-            "Error: foreign key column 'upravna_enota' contains unknown references: "
-            '(10, 11, 12, 13, 14, + more). '
-            'All the values in this column must reference a primary key.\n'
-            "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9)."
-            ' All the values in this column must reference a primary key.'
-        )
-        assert result == missing_upravna_enota
-
     def test_validate(self):
         """Test that no error is being raised when the data is valid."""
         # Setup

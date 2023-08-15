@@ -7,7 +7,6 @@ from copy import deepcopy
 
 import cloudpickle
 import numpy as np
-import pandas as pd
 import pkg_resources
 from tqdm import tqdm
 
@@ -150,37 +149,6 @@ class BaseMultiTableSynthesizer:
 
         return foreign_keys
 
-    def _validate_foreign_keys(self, data):
-        error_msg = None
-        errors = []
-        for relation in self.metadata.relationships:
-            child_table = data.get(relation['child_table_name'])
-            parent_table = data.get(relation['parent_table_name'])
-
-            if isinstance(child_table, pd.DataFrame) and isinstance(parent_table, pd.DataFrame):
-                child_column = child_table[relation['child_foreign_key']]
-                parent_column = parent_table[relation['parent_primary_key']]
-                missing_values = child_column[~child_column.isin(parent_column)].unique()
-
-                if any(missing_values):
-                    message = ', '.join(missing_values[:5].astype(str))
-                    if len(missing_values) > 5:
-                        message = f'({message}, + more)'
-                    else:
-                        message = f'({message})'
-
-                    errors.append(
-                        f"Error: foreign key column '{relation['child_foreign_key']}' contains "
-                        f'unknown references: {message}. All the values in this column must '
-                        'reference a primary key.'
-                    )
-
-            if errors:
-                error_msg = 'Relationships:\n'
-                error_msg += '\n'.join(errors)
-
-        return error_msg
-
     def validate(self, data):
         """Validate data.
 
@@ -201,30 +169,9 @@ class BaseMultiTableSynthesizer:
                     * values of a column don't satisfy their sdtype
         """
         errors = []
-        missing_tables = set(self.metadata.tables) - set(data)
-        if missing_tables:
-            errors.append(f'The provided data is missing the tables {missing_tables}.')
-
-        for table_name, table_data in data.items():
-            try:
-                self._table_synthesizers[table_name].validate(table_data)
-
-            except InvalidDataError as error:
-                error_msg = f"Table: '{table_name}'"
-                for _error in error.errors:
-                    error_msg += f'\nError: {_error}'
-
-                errors.append(error_msg)
-
-            except ValueError as error:
-                errors.append(str(error))
-
-            except KeyError:
-                continue
-
-        foreign_key_errors = self._validate_foreign_keys(data)
-        if foreign_key_errors:
-            errors.append(foreign_key_errors)
+        errors += self.metadata._validate_missing_tables(data)
+        errors += self.metadata._validate_all_tables(data, self._table_synthesizers)
+        errors += self.metadata._validate_foreign_keys(data)
 
         if errors:
             raise InvalidDataError(errors)

@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -531,6 +532,76 @@ class MultiTableMetadata:
             raise InvalidMetadataError(
                 'The metadata is not valid' + '\n'.join(str(e) for e in errors)
             )
+
+    def _validate_missing_tables(self, data):
+        errors = []
+        missing_tables = set(self.tables) - set(data)
+        if missing_tables:
+            errors.append(f'The provided data is missing the tables {missing_tables}.')
+
+        return errors
+
+    def _validate_all_tables(self, data, tables_object):
+        errors = []
+        for table_name, table_data in data.items():
+            try:
+                tables_object[table_name].validate(table_data)
+
+            except InvalidDataError as error:
+                error_msg = f"Table: '{table_name}'"
+                for _error in error.errors:
+                    error_msg += f'\nError: {_error}'
+
+                errors.append(error_msg)
+
+            except ValueError as error:
+                errors.append(str(error))
+
+            except KeyError:
+                continue
+
+        return errors
+
+    def _validate_foreign_keys(self, data):
+        error_msg = None
+        errors = []
+        for relation in self.relationships:
+            child_table = data.get(relation['child_table_name'])
+            parent_table = data.get(relation['parent_table_name'])
+
+            if isinstance(child_table, pd.DataFrame) and isinstance(parent_table, pd.DataFrame):
+                child_column = child_table[relation['child_foreign_key']]
+                parent_column = parent_table[relation['parent_primary_key']]
+                missing_values = child_column[~child_column.isin(parent_column)].unique()
+
+                if any(missing_values):
+                    message = ', '.join(missing_values[:5].astype(str))
+                    if len(missing_values) > 5:
+                        message = f'({message}, + more)'
+                    else:
+                        message = f'({message})'
+
+                    errors.append(
+                        f"Error: foreign key column '{relation['child_foreign_key']}' contains "
+                        f'unknown references: {message}. All the values in this column must '
+                        'reference a primary key.'
+                    )
+
+            if errors:
+                error_msg = 'Relationships:\n'
+                error_msg += '\n'.join(errors)
+
+        return [error_msg] if error_msg else []
+
+    def validate_with_data(self, data):
+        """Validate the data matches the metadata."""
+        errors = []
+        errors += self._validate_missing_tables(data)
+        errors += self._validate_all_tables(data, self.tables)
+        errors += self._validate_foreign_keys(data)
+
+        if errors:
+            raise InvalidDataError(errors)
 
     def add_table(self, table_name):
         """Add a table to the metadata.

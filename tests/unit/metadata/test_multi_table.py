@@ -5,11 +5,13 @@ import re
 from collections import defaultdict
 from unittest.mock import Mock, call, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata, SingleTableMetadata
+from tests.utils import get_multi_table_data, get_multi_table_metadata
 
 
 class TestMultiTableMetadata:
@@ -907,6 +909,54 @@ class TestMultiTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=err_msg):
             metadata.validate()
+
+    def test__validate_foreign_keys(self):
+        """Test that when the data matches as expected there are no errors."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+
+        # Run
+        result = metadata._validate_foreign_keys(data)
+
+        # Assert
+        assert result == []
+
+    def test__validate_foreign_keys_missing_keys(self):
+        """Test that errors are being returned.
+
+        When the values of the foreign keys are not within the values of the parent
+        primary key, a list of errors must be returned indicating the values that are missing.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(0, 20, 2),
+                'upravna_enota': np.arange(10),
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(10, 20),
+                'id_nesreca': np.arange(10),
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(10),
+            }),
+        }
+
+        # Run
+        result = metadata._validate_foreign_keys(data)
+
+        # Assert
+        missing_upravna_enota = [
+            'Relationships:\n'
+            "Error: foreign key column 'upravna_enota' contains unknown references: "
+            '(10, 11, 12, 13, 14, + more). '
+            'All the values in this column must reference a primary key.\n'
+            "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9)."
+            ' All the values in this column must reference a primary key.'
+        ]
+        assert result == missing_upravna_enota
 
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
     def test_add_table(self, table_metadata_mock):
