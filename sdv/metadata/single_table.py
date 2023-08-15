@@ -504,7 +504,7 @@ class SingleTableMetadata:
         if errors:
             raise InvalidDataError(errors)
 
-    def get_primary_and_alternate_keys(self):
+    def _get_primary_and_alternate_keys(self):
         """Get set of primary and alternate keys.
 
         Returns:
@@ -517,7 +517,7 @@ class SingleTableMetadata:
 
         return keys
 
-    def get_set_of_sequence_keys(self):
+    def _get_set_of_sequence_keys(self):
         """Get set with a sequence key.
 
         Returns:
@@ -534,8 +534,8 @@ class SingleTableMetadata:
 
     def _validate_keys_dont_have_missing_values(self, data):
         errors = []
-        keys = self.get_primary_and_alternate_keys()
-        keys.update(self.get_set_of_sequence_keys())
+        keys = self._get_primary_and_alternate_keys()
+        keys.update(self._get_set_of_sequence_keys())
         for key in sorted(keys):
             if pd.isna(data[key]).any():
                 errors.append(f"Key column '{key}' contains missing values.")
@@ -552,7 +552,7 @@ class SingleTableMetadata:
 
     def _validate_key_values_are_unique(self, data):
         errors = []
-        keys = self.get_primary_and_alternate_keys()
+        keys = self._get_primary_and_alternate_keys()
         for key in sorted(keys):
             repeated_values = set(data[key][data[key].duplicated()])
             if repeated_values:

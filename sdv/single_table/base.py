@@ -147,8 +147,8 @@ class BaseSynthesizer:
             raise InvalidDataError(errors)
 
     def _validate_transformers(self, column_name_to_transformer):
-        primary_and_alternate_keys = self.metadata.get_primary_and_alternate_keys()
-        sequence_keys = self.metadata.get_set_of_sequence_keys()
+        primary_and_alternate_keys = self.metadata._get_primary_and_alternate_keys()
+        sequence_keys = self.metadata._get_set_of_sequence_keys()
         keys = primary_and_alternate_keys | sequence_keys
         for column, transformer in column_name_to_transformer.items():
             if transformer is None:
