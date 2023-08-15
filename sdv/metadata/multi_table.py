@@ -541,11 +541,14 @@ class MultiTableMetadata:
 
         return errors
 
-    def _validate_all_tables(self, data, tables_object):
+    def _validate_all_tables(self, data, table_synthesizers=None):
         errors = []
         for table_name, table_data in data.items():
             try:
-                tables_object[table_name].validate(table_data)
+                if table_synthesizers:
+                    table_synthesizers[table_name].validate(table_data)
+                else:
+                    self.tables[table_name].validate_with_data(table_data)
 
             except InvalidDataError as error:
                 error_msg = f"Table: '{table_name}'"
@@ -597,7 +600,7 @@ class MultiTableMetadata:
         """Validate the data matches the metadata."""
         errors = []
         errors += self._validate_missing_tables(data)
-        errors += self._validate_all_tables(data, self.tables)
+        errors += self._validate_all_tables(data)
         errors += self._validate_foreign_keys(data)
 
         if errors:
