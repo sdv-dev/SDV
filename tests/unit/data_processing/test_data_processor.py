@@ -7,7 +7,7 @@ import pytest
 from rdt.errors import ConfigNotSetError
 from rdt.errors import NotFittedError as RDTNotFittedError
 from rdt.transformers import (
-    AnonymizedFaker, FloatFormatter, IDGenerator, LabelEncoder, UnixTimestampEncoder)
+    AnonymizedFaker, FloatFormatter, IDGenerator, UniformEncoder, UnixTimestampEncoder)
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import Positive, ScalarRange
@@ -74,8 +74,8 @@ class TestDataProcessor:
 
         mock_default_transformers.return_value = {
             'numerical': 'FloatFormatter()',
-            'categorical': 'LabelEncoder(add_noise=True)',
-            'boolean': 'LabelEncoder(add_noise=True)',
+            'categorical': 'UniformEncoder()',
+            'boolean': 'UniformEncoder()',
             'datetime': 'UnixTimestampEncoder()',
             'text': 'RegexGenerator()',
             'pii': 'AnonymizedFaker()',
@@ -115,8 +115,8 @@ class TestDataProcessor:
 
         expected_default_transformers = {
             'numerical': 'FloatFormatter()',
-            'categorical': 'LabelEncoder(add_noise=True)',
-            'boolean': 'LabelEncoder(add_noise=True)',
+            'categorical': 'UniformEncoder()',
+            'boolean': 'UniformEncoder()',
             'datetime': 'UnixTimestampEncoder()',
             'id': 'RegexGenerator()',
             'pii': 'AnonymizedFaker()',
@@ -759,7 +759,7 @@ class TestDataProcessor:
         # Setup
         instance = Mock()
         instance._transformers_by_sdtype = {
-            'categorical': 'labelencoder',
+            'categorical': 'UniformEncoder',
             'numerical': 'float',
             'boolean': None
         }
@@ -925,7 +925,7 @@ class TestDataProcessor:
         dp = Mock()
         dp._transformers_by_sdtype = {
             'numerical': 'FloatFormatter',
-            'categorical': 'LabelEncoder'
+            'categorical': 'UniformEncoder'
         }
 
         # Run
@@ -969,7 +969,7 @@ class TestDataProcessor:
             'map_col#cat_col': ['z#a', 'x#b'],
             'low#high': [0.2, 0.5]
         })
-        dp._get_transformer_instance = Mock(return_value='LabelEncoder')
+        dp._get_transformer_instance = Mock(return_value='UniformEncoder')
         mock_rdt.transformers.FloatFormatter.return_value = 'FloatFormatter'
 
         config = {
@@ -978,8 +978,8 @@ class TestDataProcessor:
                 'pii_col': 'FloatFormatter',
                 'low': 'FloatFormatter',
                 'high': 'FloatFormatter',
-                'cat_col': 'LabelEncoder',
-                'map_col': 'LabelEncoder',
+                'cat_col': 'UniformEncoder',
+                'map_col': 'UniformEncoder',
             },
             'sdtypes': {
                 'id_col': 'numerical',
@@ -1002,8 +1002,8 @@ class TestDataProcessor:
                 'pii_col': 'FloatFormatter',
                 'low': 'FloatFormatter',
                 'high': 'FloatFormatter',
-                'map_col': 'LabelEncoder',
-                'map_col#cat_col': 'LabelEncoder',
+                'map_col': 'UniformEncoder',
+                'map_col#cat_col': 'UniformEncoder',
                 'low#high': 'FloatFormatter'
             },
             'sdtypes': {
@@ -1117,10 +1117,10 @@ class TestDataProcessor:
         assert float_transformer.missing_value_replacement == 'mean'
         assert float_transformer.missing_value_generation == 'random'
 
-        assert isinstance(config['transformers']['bool'], LabelEncoder)
-        assert isinstance(config['transformers']['created_bool'], LabelEncoder)
-        assert isinstance(config['transformers']['categorical'], LabelEncoder)
-        assert isinstance(config['transformers']['created_categorical'], LabelEncoder)
+        assert isinstance(config['transformers']['bool'], UniformEncoder)
+        assert isinstance(config['transformers']['created_bool'], UniformEncoder)
+        assert isinstance(config['transformers']['categorical'], UniformEncoder)
+        assert isinstance(config['transformers']['created_categorical'], UniformEncoder)
 
         assert isinstance(config['transformers']['int'], FloatFormatter)
         assert isinstance(config['transformers']['float'], FloatFormatter)

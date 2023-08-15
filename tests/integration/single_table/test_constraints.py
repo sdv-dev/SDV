@@ -252,13 +252,13 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     model.add_constraints([constraint])
     sampled_numeric_data = [
         pd.DataFrame({
-            'city#state': [0, 1, 2, 0, 0],
+            'city#state': [0.1, 1, 0.75, 0.25, 0.25],
             'age': [30, 30, 30, 30, 30]
         }),
         pd.DataFrame({
-            'city#state': [1],
+            'city#state': [0.75],
             'age': [30]
-        })
+        }),
     ]
     gm_mock.return_value.sample.side_effect = sampled_numeric_data
     model.fit(data)
