@@ -1,5 +1,4 @@
 """Miscellaneous utility functions."""
-import warnings
 from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
@@ -68,11 +67,8 @@ def get_datetime_format(value):
 
     value = value[~value.isna()]
     value = value.astype(str).to_numpy()
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', category=UserWarning)
-        result = _guess_datetime_format_for_array(value)
 
-    return result
+    return _guess_datetime_format_for_array(value)
 
 
 def is_datetime_type(value):

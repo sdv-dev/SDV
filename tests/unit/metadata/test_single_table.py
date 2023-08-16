@@ -2,7 +2,7 @@
 
 import json
 import re
-from datetime import datetime
+import warnings
 from unittest.mock import Mock, call, patch
 
 import numpy as np
@@ -785,6 +785,20 @@ class TestSingleTableMetadata:
         assert sdtype_all_unique == 'id'
         assert sdtype_categorical_large == 'categorical'
         assert sdtype_unknown == 'unknown'
+
+    def test__determine_sdtype_for_objects_silence_warning(self):
+        """Test that UserWarning are silenced for ``_determine_sdtype_for_objects``."""
+        # Setup
+        instance = SingleTableMetadata()
+        data = pd.Series(['warning1', 'warning2'])
+
+        # Run
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            instance._determine_sdtype_for_objects(data)
+
+        # Assert
+        assert len(w) == 0
 
     def test_detect_columns(self):
         """Test the ``_detect_columns`` method."""

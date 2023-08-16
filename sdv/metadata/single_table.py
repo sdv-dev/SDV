@@ -279,10 +279,11 @@ class SingleTableMetadata:
         """
         sdtype = None
         try:
-            datetime_format = get_datetime_format(data)
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', category=UserWarning)
+                datetime_format = get_datetime_format(data)
                 pd.to_datetime(data, format=datetime_format, errors='raise')
+
             sdtype = 'datetime'
 
         except Exception:
