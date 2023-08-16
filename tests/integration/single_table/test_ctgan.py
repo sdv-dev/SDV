@@ -113,7 +113,7 @@ def test_categoricals_are_not_preprocessed():
     assert transformers1['therapy'] == transformers1['alcohol'] is None
 
     # Run fit
-    synth2 = CTGANSynthesizer(metadata)
+    synth2 = CTGANSynthesizer(metadata, epochs=1)
     synth2.fit(data)
     transformers2 = synth2.get_transformers()
 
