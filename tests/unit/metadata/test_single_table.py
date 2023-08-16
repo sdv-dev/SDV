@@ -1489,7 +1489,7 @@ class TestSingleTableMetadata:
         instance._validate_sequence_index.assert_called_once_with(instance.sequence_index)
         instance._validate_sequence_index_not_in_sequence_key.assert_called_once()
 
-    def test_validate_with_data_wrong_type(self):
+    def test_validate_data_wrong_type(self):
         """Test error is raised if data is not ``pd.DataFrame``."""
         # Setup
         data = np.ndarray([])
@@ -1498,9 +1498,9 @@ class TestSingleTableMetadata:
         # Run and Assert
         err_msg = "Data must be a DataFrame, not a <class 'numpy.ndarray'>."
         with pytest.raises(ValueError, match=err_msg):
-            metadata.validate_with_data(data)
+            metadata.validate_data(data)
 
-    def test_validate_with_data_data_columns_in_empty_metadata(self):
+    def test_validate_data_data_columns_in_empty_metadata(self):
         """Test error is raised if data is passed and metadata is empty."""
         # Setup
         data = pd.DataFrame({
@@ -1515,9 +1515,9 @@ class TestSingleTableMetadata:
             "\nThe columns ['col1', 'col2'] are not present in the metadata."
         )
         with pytest.raises(InvalidDataError, match=err_msg):
-            metadata.validate_with_data(data)
+            metadata.validate_data(data)
 
-    def test_validate_with_data_data_columns_in_metadata(self):
+    def test_validate_data_data_columns_in_metadata(self):
         """Test error is raised if data columns don't match metadata columns."""
         # Setup
         data = pd.DataFrame({
@@ -1538,9 +1538,9 @@ class TestSingleTableMetadata:
             "\nThe metadata columns ['col4', 'col5'] are not present in the data."
         )
         with pytest.raises(InvalidDataError, match=err_msg):
-            metadata.validate_with_data(data)
+            metadata.validate_data(data)
 
-    def test_validate_with_data_keys_with_missing_values(self):
+    def test_validate_data_keys_with_missing_values(self):
         """Test error is raised if keys contain missing values.
 
         Setup:
@@ -1584,9 +1584,9 @@ class TestSingleTableMetadata:
             "\nKey column 'sk_col2' contains missing values."
         )
         with pytest.raises(InvalidDataError, match=err_msg):
-            metadata.validate_with_data(data)
+            metadata.validate_data(data)
 
-    def test_validate_with_data_keys_with_missing_with_single_sequence_key(self):
+    def test_validate_data_keys_with_missing_with_single_sequence_key(self):
         """Test error is raised if keys contain missing values.
 
         Test the case with a single sequence key.
@@ -1607,9 +1607,9 @@ class TestSingleTableMetadata:
             "\nKey column 'sk_col' contains missing values."
         )
         with pytest.raises(InvalidDataError, match=err_msg):
-            metadata.validate_with_data(data)
+            metadata.validate_data(data)
 
-    def test_validate_with_data_keys_not_unique(self):
+    def test_validate_data_keys_not_unique(self):
         """Test error is raised if primary or alternate keys are not unique."""
         data = pd.DataFrame({
             'pk_col': [0, 1, 1, 0, 2],
@@ -1635,9 +1635,9 @@ class TestSingleTableMetadata:
             "\nKey column 'pk_col' contains repeating values: [0, 1]"
         )
         with pytest.raises(InvalidDataError, match=err_msg):
-            metadata.validate_with_data(data)
+            metadata.validate_data(data)
 
-    def test_validate_with_data_empty(self):
+    def test_validate_data_empty(self):
         """Test method doesn't raise when data is empty.
 
         Setup:
@@ -1663,9 +1663,9 @@ class TestSingleTableMetadata:
         metadata.add_alternate_keys(['ak_col'])
 
         # Run
-        metadata.validate_with_data(data)
+        metadata.validate_data(data)
 
-    def test_validate_with_data_no_keys(self):
+    def test_validate_data_no_keys(self):
         """Test method passes even if no keys are passed."""
         data = pd.DataFrame({
             'bool_col': [1, 2, 3],
@@ -1678,17 +1678,17 @@ class TestSingleTableMetadata:
         metadata.add_column('date_col', sdtype='numerical')
 
         # Run
-        metadata.validate_with_data(data)
+        metadata.validate_data(data)
 
-    def test_validate_with_data_empty_dataframe(self):
+    def test_validate_data_empty_dataframe(self):
         """Test method doesn't raise when data is an empty dataframe."""
         data = pd.DataFrame()
         metadata = SingleTableMetadata()
 
         # Run
-        metadata.validate_with_data(data)
+        metadata.validate_data(data)
 
-    def test_validate_with_data_sdtypes(self):
+    def test_validate_data_sdtypes(self):
         """Test error is raised if column values don't satisfy their sdtype.
 
         Setup:
@@ -1730,9 +1730,9 @@ class TestSingleTableMetadata:
             '[datetime.datetime(1, 1, 1, 0, 0)].'
         )
         with pytest.raises(InvalidDataError, match=err_msg):
-            metadata.validate_with_data(data)
+            metadata.validate_data(data)
 
-    def test_validate_with_data_datetime_sdtype(self):
+    def test_validate_data_datetime_sdtype(self):
         """Test validation for columns with datetime format.
 
         If the datetime format is provided, then the values must match. Otherwise an error should
@@ -1773,9 +1773,9 @@ class TestSingleTableMetadata:
             "\nInvalid values found for datetime column 'bad_date': [2022, 2022090]."
         )
         with pytest.raises(InvalidDataError, match=err_msg):
-            metadata.validate_with_data(data)
+            metadata.validate_data(data)
 
-    def test_validate_with_data(self):
+    def test_validate_data(self):
         """Test the method doesn't crash when the passed data is valid.
 
         Setup:
@@ -1807,7 +1807,7 @@ class TestSingleTableMetadata:
         metadata.add_alternate_keys(['ak_col1', 'ak_col2'])
 
         # Run
-        metadata.validate_with_data(data)
+        metadata.validate_data(data)
 
     def test_to_dict(self):
         """Test the ``to_dict`` method from ``SingleTableMetadata``.

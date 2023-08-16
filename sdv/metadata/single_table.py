@@ -612,7 +612,7 @@ class SingleTableMetadata:
 
         return errors
 
-    def validate_with_data(self, data):
+    def validate_data(self, data):
         """Validate the data matches the metadata.
 
         Checks the metadata follows the following rules:
