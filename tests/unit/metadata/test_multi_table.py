@@ -959,16 +959,16 @@ class TestMultiTableMetadata:
         ]
         assert result == missing_upravna_enota
 
-    def test_validate_with_data(self):
+    def test_validate_data(self):
         """Test that no error is being raised when the data is valid."""
         # Setup
         metadata = get_multi_table_metadata()
         data = get_multi_table_data()
 
         # Run and Assert
-        metadata.validate_with_data(data)
+        metadata.validate_data(data)
 
-    def test_validate_with_data_missing_table(self):
+    def test_validate_data_missing_table(self):
         """Test that an error is being raised when there is a missing table in the dictionary."""
         # Setup
         metadata = get_multi_table_metadata()
@@ -978,9 +978,9 @@ class TestMultiTableMetadata:
         # Run and Assert
         error_msg = "The provided data is missing the tables {'nesreca'}."
         with pytest.raises(InvalidDataError, match=error_msg):
-            metadata.validate_with_data(data)
+            metadata.validate_data(data)
 
-    def test_validate_with_data_key_error(self):
+    def test_validate_data_key_error(self):
         """Test that if a ``KeyError`` is raised the code will continue without erroring."""
         # Setup
         metadata = get_multi_table_metadata()
@@ -988,9 +988,9 @@ class TestMultiTableMetadata:
         metadata.tables.popitem()
 
         # Run and Assert
-        metadata.validate_with_data(data)
+        metadata.validate_data(data)
 
-    def test_validate_with_data_data_is_not_dataframe(self):
+    def test_validate_data_data_is_not_dataframe(self):
         """Test that an error is being raised when the data is not a dataframe."""
         # Setup
         metadata = get_multi_table_metadata()
@@ -1003,9 +1003,9 @@ class TestMultiTableMetadata:
         # Run and Assert
         error_msg = "Data must be a DataFrame, not a <class 'pandas.core.series.Series'>."
         with pytest.raises(InvalidDataError, match=error_msg):
-            metadata.validate_with_data(data)
+            metadata.validate_data(data)
 
-    def test_validate_with_data_data_does_not_match(self):
+    def test_validate_data_data_does_not_match(self):
         """Test that an error is being raised when the data does not match the metadata."""
         # Setup
         metadata = get_multi_table_metadata()
@@ -1040,9 +1040,9 @@ class TestMultiTableMetadata:
             "'+ 7 more']."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
-            metadata.validate_with_data(data)
+            metadata.validate_data(data)
 
-    def test_validate_with_data_missing_foreign_keys(self):
+    def test_validate_data_missing_foreign_keys(self):
         """Test that errors are being raised when there are missing foreign keys."""
         # Setup
         metadata = get_multi_table_metadata()
@@ -1071,7 +1071,7 @@ class TestMultiTableMetadata:
             'All the values in this column must reference a primary key.'
         )
         with pytest.raises(InvalidDataError, match=error_msg):
-            metadata.validate_with_data(data)
+            metadata.validate_data(data)
 
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
     def test_add_table(self, table_metadata_mock):

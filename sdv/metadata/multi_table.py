@@ -548,7 +548,7 @@ class MultiTableMetadata:
                 if table_synthesizers:
                     table_synthesizers[table_name].validate(table_data)
                 else:
-                    self.tables[table_name].validate_with_data(table_data)
+                    self.tables[table_name].validate_data(table_data)
 
             except InvalidDataError as error:
                 error_msg = f"Table: '{table_name}'"
@@ -596,7 +596,7 @@ class MultiTableMetadata:
 
         return [error_msg] if error_msg else []
 
-    def validate_with_data(self, data):
+    def validate_data(self, data):
         """Validate the data matches the metadata."""
         errors = []
         errors += self._validate_missing_tables(data)
