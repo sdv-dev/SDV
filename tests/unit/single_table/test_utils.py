@@ -36,7 +36,7 @@ def test_detect_discrete_columns():
         'join_date': ['2021-02-02', '2022-03-04', '2015-05-06', '2018-09-30'],
         'uses_synthetic': [np.nan, True, False, False],
         'surname': [object(), object(), object(), object()],
-        'bool': [0., 0., 1., np.nan]
+        'bool': [0., 0., 1., np.nan],
     })
 
     # Run
@@ -44,6 +44,25 @@ def test_detect_discrete_columns():
 
     # Assert
     assert result == ['name', 'subscribed', 'uses_synthetic', 'surname', 'bool']
+
+
+def test_detect_discrete_columns_numerical():
+    """Test it for numerical columns."""
+    # Setup
+    metadata = SingleTableMetadata()
+    data = pd.DataFrame({
+        'float': [.1] * 1000,
+        'nan': [np.nan] * 1000,
+        'cat_int': list(range(100)) * 10,
+        'num_int': list(range(125)) * 8,
+        'float_int': [1, np.nan] * 500,
+    })
+
+    # Run
+    result = detect_discrete_columns(metadata, data)
+
+    # Assert
+    assert result == ['cat_int', 'float_int']
 
 
 def test_flatten_array_default():
