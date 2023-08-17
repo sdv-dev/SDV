@@ -1069,7 +1069,7 @@ class TestDataProcessor:
         dp.metadata.primary_key = 'id'
         dp.metadata.alternate_keys = ['id_no_regex', 'id_numeric']
         dp._primary_key = 'id'
-        dp._keys = ['id']
+        dp._keys = ['id', 'id_no_regex', 'id_numeric']
         dp.metadata.columns = {
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},

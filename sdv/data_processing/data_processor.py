@@ -466,7 +466,7 @@ class DataProcessor:
                         is_numeric
                     )
                     sdtypes[column] = 'text'
-                elif column == self.metadata.primary_key or column in self.metadata.alternate_keys:
+                elif column in self._keys:
                     prefix = None
                     if not is_numeric:
                         prefix = 'sdv-id-'
