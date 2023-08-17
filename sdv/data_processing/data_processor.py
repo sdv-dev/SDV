@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 import rdt
 from pandas.api.types import is_float_dtype, is_integer_dtype
-from rdt.transformers import AnonymizedFaker, RegexGenerator, get_default_transformers
+from rdt.transformers import AnonymizedFaker, IDGenerator, RegexGenerator, get_default_transformers
 
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
@@ -458,13 +458,30 @@ class DataProcessor:
 
             if sdtype == 'id':
                 is_numeric = pd.api.types.is_numeric_dtype(data[column].dtype)
-                transformers[column] = self.create_regex_generator(
-                    column,
-                    sdtype,
-                    column_metadata,
-                    is_numeric
-                )
-                sdtypes[column] = 'text'
+                if column_metadata.get('regex_format', False):
+                    transformers[column] = self.create_regex_generator(
+                        column,
+                        sdtype,
+                        column_metadata,
+                        is_numeric
+                    )
+                    sdtypes[column] = 'text'
+
+                elif column in self._keys:
+                    prefix = None
+                    if not is_numeric:
+                        prefix = 'sdv-id-'
+
+                    transformers[column] = IDGenerator(prefix=prefix)
+                    sdtypes[column] = 'text'
+
+                else:
+                    transformers[column] = AnonymizedFaker(
+                        provider_name=None,
+                        function_name='bothify',
+                        function_kwargs={'text': '#####'}
+                    )
+                    sdtypes[column] = 'pii'
 
             elif pii:
                 enforce_uniqueness = bool(column in self._keys)
