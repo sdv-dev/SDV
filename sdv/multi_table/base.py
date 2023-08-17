@@ -192,6 +192,14 @@ class BaseMultiTableSynthesizer:
         if table_name not in self._table_synthesizers:
             raise InvalidDataError([f"Table '{table_name}' is not present in the metadata."])
 
+    def _get_all_foreign_keys(self, table_name):
+        foreign_keys = []
+        for relation in self.metadata.relationships:
+            if table_name == relation['child_table_name']:
+                foreign_keys.append(deepcopy(relation['child_foreign_key']))
+
+        return foreign_keys
+
     def _assign_table_transformers(self, synthesizer, table_name, table_data):
         """Update the ``synthesizer`` to ignore the foreign keys while preprocessing the data."""
         synthesizer.auto_assign_transformers(table_data)
