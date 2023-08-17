@@ -1,5 +1,9 @@
+import pandas as pd
+from rdt.transformers import FloatFormatter
+
 from sdv.datasets.demo import download_demo
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
+from sdv.metadata import SingleTableMetadata
 from sdv.single_table import CTGANSynthesizer
 
 
@@ -81,3 +85,38 @@ def test_synthesize_table_ctgan(tmp_path):
 
     # Assert - custom synthesizer
     assert custom_quality_report.get_score() > 0
+
+
+def test_categoricals_are_not_preprocessed():
+    """"""
+    # Setup
+    data = pd.DataFrame(data={
+        'age': [56, 61, 36, 52, 42],
+        'therapy': [True, False, True, False, True],
+        'alcohol': ['medium', 'medium', 'low', 'high', 'low'],
+    })
+    metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'age': {'sdtype': 'numerical'},
+            'therapy': {'sdtype': 'boolean'},
+            'alcohol': {'sdtype': 'categorical'}
+        }
+    })
+
+    # Run auto_assign_transformers
+    synth1 = CTGANSynthesizer(metadata)
+    synth1.auto_assign_transformers(data)
+    transformers1 = synth1.get_transformers()
+
+    # Assert
+    assert isinstance(transformers1['age'], FloatFormatter)
+    assert transformers1['therapy'] == transformers1['alcohol'] is None
+
+    # Run fit
+    synth2 = CTGANSynthesizer(metadata, epochs=1)
+    synth2.fit(data)
+    transformers2 = synth2.get_transformers()
+
+    # Assert
+    assert isinstance(transformers2['age'], FloatFormatter)
+    assert transformers2['therapy'] == transformers2['alcohol'] is None

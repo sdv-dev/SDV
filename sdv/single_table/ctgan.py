@@ -58,7 +58,10 @@ class CTGANSynthesizer(BaseSingleTableSynthesizer):
             If ``False``, do not use cuda at all.
     """
 
-    _model_sdtype_transformers = {'categorical': None}
+    _model_sdtype_transformers = {
+        'categorical': None,
+        'boolean': None
+    }
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=None,
                  embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
@@ -169,7 +172,10 @@ class TVAESynthesizer(BaseSingleTableSynthesizer):
             If ``False``, do not use cuda at all.
     """
 
-    _model_sdtype_transformers = {'categorical': None}
+    _model_sdtype_transformers = {
+        'categorical': None,
+        'boolean': None
+    }
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
                  embedding_dim=128, compress_dims=(128, 128), decompress_dims=(128, 128),
