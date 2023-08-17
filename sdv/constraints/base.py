@@ -201,7 +201,7 @@ class Constraint(metaclass=ConstraintMeta):
             if not is_valid_data.all():
                 constraint_data = table_data[list(self.constraint_columns)]
                 invalid_rows = constraint_data[~is_valid_data]
-                invalid_rows_str = format_invalid_values_string(invalid_rows)
+                invalid_rows_str = format_invalid_values_string(invalid_rows, 5)
                 err_msg = (
                     f"Data is not valid for the '{self.__class__.__name__}' constraint:\n"
                     f'{invalid_rows_str}'

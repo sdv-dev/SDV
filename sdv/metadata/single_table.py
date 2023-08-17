@@ -547,7 +547,7 @@ class SingleTableMetadata:
         for key in sorted(keys):
             repeated_values = set(data[key][data[key].duplicated()])
             if repeated_values:
-                repeated_values = format_invalid_values_string(repeated_values)
+                repeated_values = format_invalid_values_string(repeated_values, 3)
                 errors.append(f"Key column '{key}' contains repeating values: " + repeated_values)
 
         return errors
@@ -588,7 +588,7 @@ class SingleTableMetadata:
                 )
 
         if invalid_values:
-            invalid_values = format_invalid_values_string(invalid_values)
+            invalid_values = format_invalid_values_string(invalid_values, 3)
             return [f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."]
 
         return []
