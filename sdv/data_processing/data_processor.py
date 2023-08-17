@@ -466,6 +466,7 @@ class DataProcessor:
                         is_numeric
                     )
                     sdtypes[column] = 'text'
+
                 elif column in self._keys:
                     prefix = None
                     if not is_numeric:
@@ -473,6 +474,7 @@ class DataProcessor:
 
                     transformers[column] = IDGenerator(prefix=prefix)
                     sdtypes[column] = 'text'
+
                 else:
                     transformers[column] = AnonymizedFaker(
                         provider_name=None,
