@@ -9,7 +9,6 @@ from datetime import datetime
 
 import pandas as pd
 
-from sdv.constraints.errors import AggregateConstraintsError
 from sdv.errors import InvalidDataError
 from sdv.metadata.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 from sdv.metadata.errors import InvalidMetadataError
@@ -18,8 +17,8 @@ from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import (
-    cast_to_iterable, is_boolean_type, is_datetime_type, is_numerical_type, load_data_from_csv,
-    validate_datetime_format)
+    cast_to_iterable, format_invalid_values_string, is_boolean_type, is_datetime_type,
+    is_numerical_type, load_data_from_csv, validate_datetime_format)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -542,22 +541,14 @@ class SingleTableMetadata:
 
         return errors
 
-    @staticmethod
-    def _format_invalid_values_string(invalid_values):
-        invalid_values = sorted(invalid_values, key=lambda x: str(x))
-        if len(invalid_values) > 3:
-            return invalid_values[:3] + [f'+ {len(invalid_values) - 3} more']
-
-        return invalid_values
-
     def _validate_key_values_are_unique(self, data):
         errors = []
         keys = self._get_primary_and_alternate_keys()
         for key in sorted(keys):
             repeated_values = set(data[key][data[key].duplicated()])
             if repeated_values:
-                repeated_values = self._format_invalid_values_string(repeated_values)
-                errors.append(f"Key column '{key}' contains repeating values: {repeated_values}")
+                repeated_values = format_invalid_values_string(repeated_values)
+                errors.append(f"Key column '{key}' contains repeating values: " + repeated_values)
 
         return errors
 
@@ -597,20 +588,10 @@ class SingleTableMetadata:
                 )
 
         if invalid_values:
-            invalid_values = self._format_invalid_values_string(invalid_values)
+            invalid_values = format_invalid_values_string(invalid_values)
             return [f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."]
 
         return []
-
-    def _validate_constraints(self, data):
-        """Validate that the data satisfies the constraints."""
-        errors = []
-        try:
-            self._data_processor._fit_constraints(data)
-        except AggregateConstraintsError as e:
-            errors.append(e)
-
-        return errors
 
     def validate_data(self, data):
         """Validate the data matches the metadata.
