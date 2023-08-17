@@ -43,15 +43,13 @@ def detect_discrete_columns(metadata, data):
         if column_data.empty:
             continue
 
-        # Non-integer floats and integers with too many unique values cannot be categorical
+        # Non-integer floats and integers with too many unique values are not categorical
         try:
             column_data = column_data.astype('float')
-            rounded_column_data = list(column_data.round())
-            column_data = list(column_data)
-            is_float = column_data != rounded_column_data
-            is_int = column_data == rounded_column_data
+            is_int = column_data.equals(column_data.round())
+            is_float = not is_int
             num_values = len(column_data)
-            num_categories = len(set(column_data))
+            num_categories = column_data.nunique()
             threshold = max(10, num_values * .1)
             has_many_categories = num_categories > threshold
             if is_float or (is_int and has_many_categories):
