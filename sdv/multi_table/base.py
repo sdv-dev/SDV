@@ -141,13 +141,27 @@ class BaseMultiTableSynthesizer:
         """Return the ``MultiTableMetadata`` for this synthesizer."""
         return self.metadata
 
-    def _get_all_foreign_keys(self, table_name):
-        foreign_keys = []
-        for relation in self.metadata.relationships:
-            if table_name == relation['child_table_name']:
-                foreign_keys.append(deepcopy(relation['child_foreign_key']))
+    def _validate_all_tables(self, data):
+        """Validate every table of the data has a valid table/metadata pair."""
+        errors = []
+        for table_name, table_data in data.items():
+            try:
+                self._table_synthesizers[table_name].validate(table_data)
 
-        return foreign_keys
+            except InvalidDataError as error:
+                error_msg = f"Table: '{table_name}'"
+                for _error in error.errors:
+                    error_msg += f'\nError: {_error}'
+
+                errors.append(error_msg)
+
+            except ValueError as error:
+                errors.append(str(error))
+
+            except KeyError:
+                continue
+
+        return errors
 
     def validate(self, data):
         """Validate data.
@@ -170,7 +184,7 @@ class BaseMultiTableSynthesizer:
         """
         errors = []
         errors += self.metadata._validate_missing_tables(data)
-        errors += self.metadata._validate_all_tables(data, self._table_synthesizers)
+        errors += self._validate_all_tables(data)
         errors += self.metadata._validate_foreign_keys(data)
 
         if errors:
@@ -179,6 +193,14 @@ class BaseMultiTableSynthesizer:
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:
             raise InvalidDataError([f"Table '{table_name}' is not present in the metadata."])
+
+    def _get_all_foreign_keys(self, table_name):
+        foreign_keys = []
+        for relation in self.metadata.relationships:
+            if table_name == relation['child_table_name']:
+                foreign_keys.append(deepcopy(relation['child_foreign_key']))
+
+        return foreign_keys
 
     def _assign_table_transformers(self, synthesizer, table_name, table_data):
         """Update the ``synthesizer`` to ignore the foreign keys while preprocessing the data."""

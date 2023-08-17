@@ -534,6 +534,7 @@ class MultiTableMetadata:
             )
 
     def _validate_missing_tables(self, data):
+        """Validate the data doesn't have all the columns in the metadata."""
         errors = []
         missing_tables = set(self.tables) - set(data)
         if missing_tables:
@@ -541,14 +542,12 @@ class MultiTableMetadata:
 
         return errors
 
-    def _validate_all_tables(self, data, table_synthesizers=None):
+    def _validate_all_tables(self, data):
+        """Validate every table of the data has a valid table/metadata pair."""
         errors = []
         for table_name, table_data in data.items():
             try:
-                if table_synthesizers:
-                    table_synthesizers[table_name].validate(table_data)
-                else:
-                    self.tables[table_name].validate_data(table_data)
+                self.tables[table_name].validate_data(table_data)
 
             except InvalidDataError as error:
                 error_msg = f"Table: '{table_name}'"
@@ -566,6 +565,7 @@ class MultiTableMetadata:
         return errors
 
     def _validate_foreign_keys(self, data):
+        """Validate all foreign key relationships."""
         error_msg = None
         errors = []
         for relation in self.relationships:
@@ -597,7 +597,17 @@ class MultiTableMetadata:
         return [error_msg] if error_msg else []
 
     def validate_data(self, data):
-        """Validate the data matches the metadata."""
+        """Validate the data matches the metadata.
+
+        Checks the following rules:
+            * all tables of the metadata are present in the data
+            * every table of the data satisfies its own metadata
+            * all foreign keys belong to a primay key
+
+        Args:
+            data (pd.DataFrame):
+                The data to validate.
+        """
         errors = []
         errors += self._validate_missing_tables(data)
         errors += self._validate_all_tables(data)
