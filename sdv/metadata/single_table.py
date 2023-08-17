@@ -281,8 +281,10 @@ class SingleTableMetadata:
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', category=UserWarning)
-                datetime_format = get_datetime_format(data)
-                pd.to_datetime(data, format=datetime_format, errors='raise')
+
+                data_test = data.sample(10000) if len(data) > 10000 else data
+                datetime_format = get_datetime_format(data_test)
+                pd.to_datetime(data_test, format=datetime_format, errors='raise')
 
             sdtype = 'datetime'
 

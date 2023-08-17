@@ -786,6 +786,20 @@ class TestSingleTableMetadata:
         assert sdtype_categorical_large == 'categorical'
         assert sdtype_unknown == 'unknown'
 
+    @patch.object(pd.Series, 'sample')
+    def test__determine_sdtype_for_objects_subsample_datetime(self, mock_sample):
+        """Test the ``_determine_sdtype_for_objects`` method with large a datetime column."""
+        # Setup
+        instance = SingleTableMetadata()
+
+        data_datetime = pd.Series(['2022-01-01'] * 15000)
+
+        # Run
+        instance._determine_sdtype_for_objects(data_datetime)
+
+        # Assert
+        mock_sample.assert_called_once_with(10000)
+
     def test__determine_sdtype_for_objects_silence_warning(self):
         """Test that UserWarning are silenced for ``_determine_sdtype_for_objects``."""
         # Setup
