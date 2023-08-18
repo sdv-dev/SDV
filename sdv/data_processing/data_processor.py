@@ -753,12 +753,7 @@ class DataProcessor:
             if column in sampled_columns
         ]
         for column_name in sampled_columns:
-            if column_name in missing_columns:
-                column_data = anonymized_data[column_name]
-            elif column_name in self._keys:
-                column_data = generated_keys[column_name]
-            else:
-                column_data = reversed_data[column_name]
+            column_data = reversed_data[column_name]
 
             dtype = self._dtypes[column_name]
             if is_integer_dtype(dtype) and is_float_dtype(column_data.dtype):

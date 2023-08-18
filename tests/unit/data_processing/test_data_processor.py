@@ -1895,7 +1895,13 @@ class TestDataProcessor:
             [np.float64, np.bool_, np.object_, np.object_, np.object_],
             index=['a', 'b', 'c', 'd', 'key']
         )
-        constraint_mock.reverse_transform.return_value = data
+        constraint_mock.reverse_transform.return_value = pd.DataFrame({
+            'a': [1, 4, 3],
+            'b': [True, True, False],
+            'c': ['d', 'e', 'f'],
+            'd': ['a@gmail.com', 'b@gmail.com', 'c@gmail.com'],
+            'key': ['sdv_0', 'sdv_1', 'sdv_2']
+        })
 
         # Run
         reverse_transformed = dp.reverse_transform(data)
@@ -1923,7 +1929,7 @@ class TestDataProcessor:
             call(num_rows=3, column_names=['key'])
         )
         expected_output = pd.DataFrame({
-            'a': [1., 2., 3.],
+            'a': [1., 4., 3.],
             'b': [True, True, False],
             'c': ['d', 'e', 'f'],
             'key': ['sdv_0', 'sdv_1', 'sdv_2'],
