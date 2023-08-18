@@ -20,11 +20,9 @@ from copulas.multivariate import GaussianMultivariate
 
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
-from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
-from sdv.single_table.errors import InvalidDataError
+from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
-from sdv.utils import (
-    groupby_list, is_boolean_type, is_datetime_type, is_numerical_type, validate_datetime_format)
+from sdv.utils import groupby_list
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
@@ -94,116 +92,15 @@ class BaseSynthesizer:
         self._fitted_date = None
         self._fitted_sdv_version = None
 
-    def _validate_metadata_matches_data(self, columns):
+    def _validate_metadata(self, data):
+        """Validate that the data follows the metadata."""
         errors = []
-        metadata_columns = self.metadata.columns or []
-        missing_data_columns = set(columns).difference(metadata_columns)
-        if missing_data_columns:
-            errors.append(
-                f'The columns {sorted(missing_data_columns)} are not present in the metadata.')
-
-        missing_metadata_columns = set(metadata_columns).difference(columns)
-        if missing_metadata_columns:
-            errors.append(
-                f'The metadata columns {sorted(missing_metadata_columns)} '
-                'are not present in the data.'
-            )
-
-        if errors:
-            raise InvalidDataError(errors)
-
-    def _get_primary_and_alternate_keys(self):
-        keys = set(self.metadata.alternate_keys)
-        if self.metadata.primary_key:
-            keys.update({self.metadata.primary_key})
-
-        return keys
-
-    def _get_set_of_sequence_keys(self):
-        if isinstance(self.metadata.sequence_key, tuple):
-            return set(self.metadata.sequence_key)
-
-        if isinstance(self.metadata.sequence_key, str):
-            return {self.metadata.sequence_key}
-
-        return set()
-
-    def _validate_keys_dont_have_missing_values(self, data):
-        errors = []
-        keys = self._get_primary_and_alternate_keys()
-        keys.update(self._get_set_of_sequence_keys())
-        for key in sorted(keys):
-            if pd.isna(data[key]).any():
-                errors.append(f"Key column '{key}' contains missing values.")
+        try:
+            self.metadata.validate_data(data)
+        except InvalidDataError as e:
+            errors += e.errors
 
         return errors
-
-    @staticmethod
-    def _format_invalid_values_string(invalid_values):
-        invalid_values = sorted(invalid_values, key=lambda x: str(x))
-        if len(invalid_values) > 3:
-            return invalid_values[:3] + [f'+ {len(invalid_values) - 3} more']
-
-        return invalid_values
-
-    def _validate_key_values_are_unique(self, data):
-        errors = []
-        keys = self._get_primary_and_alternate_keys()
-        for key in sorted(keys):
-            repeated_values = set(data[key][data[key].duplicated()])
-            if repeated_values:
-                repeated_values = self._format_invalid_values_string(repeated_values)
-                errors.append(f"Key column '{key}' contains repeating values: {repeated_values}")
-
-        return errors
-
-    @staticmethod
-    def _get_invalid_column_values(column, validation_function):
-        valid = column.apply(validation_function)
-        return set(column[~valid])
-
-    def _validate_column(self, column):
-        """Validate values of the column satisfy its sdtype properties."""
-        column_metadata = self.metadata.columns[column.name]
-        sdtype = column_metadata['sdtype']
-        invalid_values = None
-
-        # boolean values must be True/False, None or missing values
-        # int/str are not allowed
-        if sdtype == 'boolean':
-            invalid_values = self._get_invalid_column_values(column, is_boolean_type)
-
-        # numerical values must be int/float, None or missing values
-        # str/bool are not allowed
-        if sdtype == 'numerical':
-            invalid_values = self._get_invalid_column_values(column, is_numerical_type)
-
-        # datetime values must be castable to datetime, None or missing values
-        if sdtype == 'datetime':
-            datetime_format = column_metadata.get('datetime_format')
-            if datetime_format:
-                invalid_values = validate_datetime_format(column, datetime_format)
-            else:
-                # cap number of samples to be validated to improve performance
-                num_samples_to_validate = min(len(column), 1000)
-
-                invalid_values = self._get_invalid_column_values(
-                    column.sample(num_samples_to_validate),
-                    lambda x: pd.isna(x) | is_datetime_type(x)
-                )
-
-        if invalid_values:
-            invalid_values = self._format_invalid_values_string(invalid_values)
-            return [f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."]
-
-        return []
-
-    def _validate(self, data):
-        """Validate any rules that only apply to specific synthesizers.
-
-        This method should be overridden by subclasses.
-        """
-        return []
 
     def _validate_constraints(self, data):
         """Validate that the data satisfies the constraints."""
@@ -214,6 +111,13 @@ class BaseSynthesizer:
             errors.append(e)
 
         return errors
+
+    def _validate(self, data):
+        """Validate any rules that only apply to specific synthesizers.
+
+        This method should be overridden by subclasses.
+        """
+        return []
 
     def validate(self, data):
         """Validate data.
@@ -230,37 +134,22 @@ class BaseSynthesizer:
                     * data columns don't match metadata
                     * keys have missing values
                     * primary or alternate keys are not unique
+                    # constraints are not valid
                     * context columns vary for a sequence key
                     * values of a column don't satisfy their sdtype
         """
-        if not isinstance(data, pd.DataFrame):
-            raise ValueError(f'Data must be a DataFrame, not a {type(data)}.')
-
-        # Both metadata and data must have the same set of columns
-        self._validate_metadata_matches_data(data.columns)
-
         errors = []
-        # Primary, sequence and alternate keys can't have missing values
-        errors += self._validate_keys_dont_have_missing_values(data)
-
-        # Primary and alternate key values must be unique
-        errors += self._validate_key_values_are_unique(data)
-
-        # Validate constraints
+        errors += self._validate_metadata(data)
         errors += self._validate_constraints(data)
-
-        # Any other rules that must be met
-        errors += self._validate(data)
-
-        # Every column must satisfy the properties of their sdtypes
-        for column in data:
-            errors += self._validate_column(data[column])
+        errors += self._validate(data)  # Validate rules specific to each synthesizer
 
         if errors:
             raise InvalidDataError(errors)
 
     def _validate_transformers(self, column_name_to_transformer):
-        keys = self._get_primary_and_alternate_keys() | self._get_set_of_sequence_keys()
+        primary_and_alternate_keys = self.metadata._get_primary_and_alternate_keys()
+        sequence_keys = self.metadata._get_set_of_sequence_keys()
+        keys = primary_and_alternate_keys | sequence_keys
         for column, transformer in column_name_to_transformer.items():
             if transformer is None:
                 continue

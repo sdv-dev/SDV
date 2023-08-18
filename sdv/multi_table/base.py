@@ -11,9 +11,8 @@ import pandas as pd
 import pkg_resources
 from tqdm import tqdm
 
-from sdv.errors import SynthesizerInputError
+from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from sdv.single_table.errors import InvalidDataError
 
 
 class BaseMultiTableSynthesizer:

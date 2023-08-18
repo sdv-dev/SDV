@@ -7,13 +7,18 @@ import warnings
 from copy import deepcopy
 from datetime import datetime
 
+import pandas as pd
+
+from sdv.errors import InvalidDataError
 from sdv.metadata.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
-from sdv.utils import cast_to_iterable, load_data_from_csv
+from sdv.utils import (
+    cast_to_iterable, format_invalid_values_string, is_boolean_type, is_datetime_type,
+    is_numerical_type, load_data_from_csv, validate_datetime_format)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -152,7 +157,7 @@ class SingleTableMetadata:
                 'supported SDV sdtypes.'
             )
 
-    def _validate_column(self, column_name, sdtype, **kwargs):
+    def _validate_column_args(self, column_name, sdtype, **kwargs):
         self._validate_sdtype(sdtype)
         self._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
         if sdtype == 'categorical':
@@ -193,7 +198,7 @@ class SingleTableMetadata:
         if sdtype is None:
             raise InvalidMetadataError(f"Please provide a 'sdtype' for column '{column_name}'.")
 
-        self._validate_column(column_name, **kwargs)
+        self._validate_column_args(column_name, **kwargs)
         column_kwargs = deepcopy(kwargs)
         if sdtype not in self._SDTYPE_KWARGS:
             pii = column_kwargs.get('pii', True)
@@ -234,7 +239,7 @@ class SingleTableMetadata:
             sdtype = self.columns[column_name]['sdtype']
             _kwargs['sdtype'] = sdtype
 
-        self._validate_column(column_name, sdtype, **kwargs)
+        self._validate_column_args(column_name, sdtype, **kwargs)
         self.columns[column_name] = _kwargs
 
     def to_dict(self):
@@ -460,6 +465,7 @@ class SingleTableMetadata:
             - ``InvalidMetadataError`` if the metadata is invalid.
         """
         errors = []
+
         # Validate keys
         self._append_error(errors, self._validate_key, self.primary_key, 'primary')
         self._append_error(errors, self._validate_key, self.sequence_key, 'sequence')
@@ -471,13 +477,154 @@ class SingleTableMetadata:
 
         # Validate columns
         for column, kwargs in self.columns.items():
-            self._append_error(errors, self._validate_column, column, **kwargs)
+            self._append_error(errors, self._validate_column_args, column, **kwargs)
 
         if errors:
             raise InvalidMetadataError(
                 'The following errors were found in the metadata:\n\n'
                 + '\n'.join([str(e) for e in errors])
             )
+
+    def _validate_metadata_matches_data(self, columns):
+        errors = []
+        metadata_columns = self.columns or {}
+        missing_data_columns = set(columns).difference(metadata_columns)
+        if missing_data_columns:
+            errors.append(
+                f'The columns {sorted(missing_data_columns)} are not present in the metadata.')
+
+        missing_metadata_columns = set(metadata_columns).difference(columns)
+        if missing_metadata_columns:
+            errors.append(
+                f'The metadata columns {sorted(missing_metadata_columns)} '
+                'are not present in the data.'
+            )
+
+        if errors:
+            raise InvalidDataError(errors)
+
+    def _get_primary_and_alternate_keys(self):
+        """Get set of primary and alternate keys.
+
+        Returns:
+            set:
+                Set of keys.
+        """
+        keys = set(self.alternate_keys)
+        if self.primary_key:
+            keys.update({self.primary_key})
+
+        return keys
+
+    def _get_set_of_sequence_keys(self):
+        """Get set with a sequence key.
+
+        Returns:
+            set:
+                Set of keys.
+        """
+        if isinstance(self.sequence_key, tuple):
+            return set(self.sequence_key)
+
+        if isinstance(self.sequence_key, str):
+            return {self.sequence_key}
+
+        return set()
+
+    def _validate_keys_dont_have_missing_values(self, data):
+        errors = []
+        keys = self._get_primary_and_alternate_keys()
+        keys.update(self._get_set_of_sequence_keys())
+        for key in sorted(keys):
+            if pd.isna(data[key]).any():
+                errors.append(f"Key column '{key}' contains missing values.")
+
+        return errors
+
+    def _validate_key_values_are_unique(self, data):
+        errors = []
+        keys = self._get_primary_and_alternate_keys()
+        for key in sorted(keys):
+            repeated_values = set(data[key][data[key].duplicated()])
+            if repeated_values:
+                repeated_values = format_invalid_values_string(repeated_values, 3)
+                errors.append(f"Key column '{key}' contains repeating values: " + repeated_values)
+
+        return errors
+
+    @staticmethod
+    def _get_invalid_column_values(column, validation_function):
+        valid = column.apply(validation_function)
+        return set(column[~valid])
+
+    def _validate_column_data(self, column):
+        """Validate values of the column satisfy its sdtype properties."""
+        column_metadata = self.columns[column.name]
+        sdtype = column_metadata['sdtype']
+        invalid_values = None
+
+        # boolean values must be True/False, None or missing values
+        # int/str are not allowed
+        if sdtype == 'boolean':
+            invalid_values = self._get_invalid_column_values(column, is_boolean_type)
+
+        # numerical values must be int/float, None or missing values
+        # str/bool are not allowed
+        if sdtype == 'numerical':
+            invalid_values = self._get_invalid_column_values(column, is_numerical_type)
+
+        # datetime values must be castable to datetime, None or missing values
+        if sdtype == 'datetime':
+            datetime_format = column_metadata.get('datetime_format')
+            if datetime_format:
+                invalid_values = validate_datetime_format(column, datetime_format)
+            else:
+                # cap number of samples to be validated to improve performance
+                num_samples_to_validate = min(len(column), 1000)
+
+                invalid_values = self._get_invalid_column_values(
+                    column.sample(num_samples_to_validate),
+                    lambda x: pd.isna(x) | is_datetime_type(x)
+                )
+
+        if invalid_values:
+            invalid_values = format_invalid_values_string(invalid_values, 3)
+            return [f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."]
+
+        return []
+
+    def validate_data(self, data):
+        """Validate the data matches the metadata.
+
+        Checks the metadata follows the following rules:
+            * data columns match the metadata
+            * keys don't have missing values
+            * primary or alternate keys are unique
+            * values of a column satisfy their sdtype
+
+        Args:
+            data (pd.DataFrame):
+                The data to validate.
+        """
+        if not isinstance(data, pd.DataFrame):
+            raise ValueError(f'Data must be a DataFrame, not a {type(data)}.')
+
+        # Both metadata and data must have the same set of columns
+        self._validate_metadata_matches_data(data.columns)
+
+        errors = []
+        # Primary, sequence and alternate keys can't have missing values
+        errors += self._validate_keys_dont_have_missing_values(data)
+
+        # Primary and alternate key values must be unique
+        errors += self._validate_key_values_are_unique(data)
+
+        # Every column must satisfy the properties of their sdtypes
+        for column in data:
+            errors += self._validate_column_data(data[column])
+
+        if errors:
+            raise InvalidDataError(errors)
 
     def visualize(self, show_table_details='full', output_filepath=None):
         """Create a visualization of the single-table dataset.

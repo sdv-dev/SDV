@@ -193,3 +193,29 @@ def create_unique_name(name, list_names):
         result += '_'
 
     return result
+
+
+def format_invalid_values_string(invalid_values, num_values):
+    """Convert ``invalid_values`` into a string of invalid values.
+
+    Args:
+        invalid_values (pd.DataFrame, set):
+            Object of values to be converted into string.
+        num_values (int):
+            Maximum number of values of the object to show.
+
+    Returns:
+        str:
+            A stringified version of the object.
+    """
+    if isinstance(invalid_values, pd.DataFrame):
+        if len(invalid_values) > num_values:
+            return f'{invalid_values.head(num_values)}\n+{len(invalid_values) - num_values} more'
+
+    if isinstance(invalid_values, set):
+        invalid_values = sorted(invalid_values, key=lambda x: str(x))
+        if len(invalid_values) > num_values:
+            extra_missing_values = [f'+ {len(invalid_values) - num_values} more']
+            return f'{invalid_values[:num_values] + extra_missing_values}'
+
+    return f'{invalid_values}'

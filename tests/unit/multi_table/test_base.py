@@ -7,12 +7,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.errors import SynthesizerInputError
+from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
-from sdv.single_table.errors import InvalidDataError
 from tests.utils import get_multi_table_data, get_multi_table_metadata
 
 
