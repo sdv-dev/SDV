@@ -164,28 +164,26 @@ class BaseMultiTableSynthesizer:
         return errors
 
     def validate(self, data):
-        """Validate data.
+        """Validate the data.
+
+        Validate that the metadata matches the data and thta every table's constraints are valid.
 
         Args:
             data (dict):
-                A dictionary with key as table name and ``pandas.DataFrame`` as value to validate.
-
-        Raises:
-            ValueError:
-                Raised when data is not of type pd.DataFrame.
-            InvalidDataError:
-                Raised if:
-                    * foreign key does not belong to a primay key
-                    * data columns don't match metadata
-                    * keys have missing values
-                    * primary or alternate keys are not unique
-                    * context columns vary for a sequence key
-                    * values of a column don't satisfy their sdtype
+                A dictionary of table names to pd.DataFrames.
         """
         errors = []
-        errors += self.metadata._validate_missing_tables(data)
-        errors += self._validate_all_tables(data)
-        errors += self.metadata._validate_foreign_keys(data)
+        try:
+            self.metadata.validate_data(data)
+        except InvalidDataError as e:
+            errors += e.errors
+
+        for table_name in data:
+            if table_name in self._table_synthesizers:
+                errors += self._table_synthesizers[table_name]._validate_constraints(
+                    data[table_name])
+                # Validate rules specific to each synthesizer
+                errors += self._table_synthesizers[table_name]._validate(data[table_name])
 
         if errors:
             raise InvalidDataError(errors)
@@ -194,18 +192,10 @@ class BaseMultiTableSynthesizer:
         if table_name not in self._table_synthesizers:
             raise InvalidDataError([f"Table '{table_name}' is not present in the metadata."])
 
-    def _get_all_foreign_keys(self, table_name):
-        foreign_keys = []
-        for relation in self.metadata.relationships:
-            if table_name == relation['child_table_name']:
-                foreign_keys.append(deepcopy(relation['child_foreign_key']))
-
-        return foreign_keys
-
     def _assign_table_transformers(self, synthesizer, table_name, table_data):
         """Update the ``synthesizer`` to ignore the foreign keys while preprocessing the data."""
         synthesizer.auto_assign_transformers(table_data)
-        foreign_key_columns = self._get_all_foreign_keys(table_name)
+        foreign_key_columns = self.metadata._get_all_foreign_keys(table_name)
         column_name_to_transformers = {
             column_name: None
             for column_name in foreign_key_columns
@@ -386,7 +376,7 @@ class BaseMultiTableSynthesizer:
         synthesizer = self._table_synthesizers[table_name]
         return synthesizer.get_learned_distributions()
 
-    def _validate_constraints(self, constraints):
+    def _validate_constraints_to_be_added(self, constraints):
         for constraint_dict in constraints:
             if 'table_name' not in constraint_dict.keys():
                 raise SynthesizerInputError(
@@ -419,7 +409,7 @@ class BaseMultiTableSynthesizer:
             SynthesizerInputError:
                 Raises when the ``Unique`` constraint is passed.
         """
-        self._validate_constraints(constraints)
+        self._validate_constraints_to_be_added(constraints)
         for constraint in constraints:
             constraint = deepcopy(constraint)
             synthesizer = self._table_synthesizers[constraint.pop('table_name')]

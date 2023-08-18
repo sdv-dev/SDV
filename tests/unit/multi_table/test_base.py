@@ -237,18 +237,6 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         assert metadata == result
 
-    def test__get_all_foreign_keys(self):
-        """Test that this method returns all the foreign keys for a given table name."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata)
-
-        # Run
-        result = instance._get_all_foreign_keys('nesreca')
-
-        # Assert
-        assert result == ['upravna_enota']
-
     def test_validate(self):
         """Test that no error is being raised when the data is valid."""
         # Setup
@@ -405,7 +393,7 @@ class TestBaseMultiTableSynthesizer:
             'oseba': Mock()
         }
         instance.validate = Mock()
-        instance._get_all_foreign_keys = Mock(return_value=['a', 'b'])
+        instance.metadata._get_all_foreign_keys = Mock(return_value=['a', 'b'])
         nesreca_synthesizer = Mock()
         oseba_synthesizer = Mock()
         instance._table_synthesizers['nesreca'] = nesreca_synthesizer
@@ -525,7 +513,7 @@ class TestBaseMultiTableSynthesizer:
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
         instance.validate = Mock()
-        instance._get_all_foreign_keys = Mock(return_value=['a', 'b'])
+        instance.metadata._get_all_foreign_keys = Mock(return_value=['a', 'b'])
         synthesizer = Mock()
         table_data = Mock()
 
@@ -547,7 +535,7 @@ class TestBaseMultiTableSynthesizer:
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
         instance.validate = Mock()
-        instance._get_all_foreign_keys = Mock(return_value=['a', 'b'])
+        instance.metadata._get_all_foreign_keys = Mock(return_value=['a', 'b'])
         data = {
             'nesreca': pd.DataFrame({
                 'id_nesreca': np.arange(0, 20, 2),
@@ -581,7 +569,7 @@ class TestBaseMultiTableSynthesizer:
             'upravna_enota': synth_upravna_enota._preprocess.return_value
         }
         instance.validate.assert_called_once_with(data)
-        assert instance._get_all_foreign_keys.call_args_list == [
+        assert instance.metadata._get_all_foreign_keys.call_args_list == [
             call('nesreca'),
             call('oseba'),
             call('upravna_enota')
