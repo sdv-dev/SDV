@@ -1057,7 +1057,8 @@ class TestDataProcessor:
             'id_numeric': [0, 1, 2],
             'id_column': ['ID_999', 'ID_999', 'ID_007'],
             'date': ['2021-02-01', '2022-03-05', '2023-01-31'],
-            'unknown': ['a', 'b', 'c']
+            'unknown': ['a', 'b', 'c'],
+            'address': ['123 Main St', '456 Main St', '789 Main St']
         })
         dp = DataProcessor(SingleTableMetadata(), locales=locales)
         dp.metadata = Mock()
@@ -1083,7 +1084,8 @@ class TestDataProcessor:
             'id_numeric': {'sdtype': 'id'},
             'id_column': {'sdtype': 'id'},
             'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'unknown': {'sdtype': 'unknown'}
+            'unknown': {'sdtype': 'unknown'},
+            'address': {'sdtype': 'address', 'pii': False},
         }
 
         # Run
@@ -1107,7 +1109,8 @@ class TestDataProcessor:
             'id_numeric': 'text',
             'id_column': 'pii',
             'date': 'datetime',
-            'unknown': 'pii'
+            'unknown': 'pii',
+            'address': 'categorical'
         }
 
         int_transformer = config['transformers']['created_int']
@@ -1179,6 +1182,9 @@ class TestDataProcessor:
         assert isinstance(unknown_transformer, AnonymizedFaker)
         assert unknown_transformer.function_name == 'bothify'
         assert unknown_transformer.function_kwargs == expected_kwargs
+
+        address_column_transformer = config['transformers']['address']
+        assert isinstance(address_column_transformer, UniformEncoder)
 
     def test_update_transformers_not_fitted(self):
         """Test when ``self._hyper_transformer`` is ``None`` raises a ``NotFittedError``."""
