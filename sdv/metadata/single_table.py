@@ -275,7 +275,7 @@ class SingleTableMetadata:
 
         Args:
             data (pandas.Series):
-                The data to be analyzed.
+                The data to be analyzed.            
         """
         sdtype = None
         try:
@@ -328,12 +328,12 @@ class SingleTableMetadata:
                     f"Unsupported data type for column '{field}' (kind: {dtype})."
                     "The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
                 )
-            column_dict = {'sdtype': deepcopy(sdtype)}
+            column_dict = {'sdtype': sdtype}
 
             if sdtype == 'unknown':
                 column_dict['pii'] = True
-            elif sdtype == 'datetime':
-                datetime_format = get_datetime_format(clean_data)
+            elif sdtype == 'datetime' and dtype == 'O':
+                datetime_format = get_datetime_format(column_data.iloc[:100])
                 column_dict['datetime_format'] = datetime_format
 
             self.columns[field] = deepcopy(column_dict)

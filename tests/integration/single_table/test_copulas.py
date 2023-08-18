@@ -369,8 +369,8 @@ def test_categorical_column_with_numbers():
     # Setup
     data = pd.DataFrame({
         'category_col': [
-            1, 2, 1, 2, 1, 2, np.nan, 1, 1, np.nan, 2, 2, None, 2,
-            1, 1, None, 1, 2, 2
+            1, 2, 1, 2, 1, 2, np.nan, 1, 1, np.nan, 2, 2, np.nan, 2,
+            1, 1, np.nan, 1, 2, 2
         ],
         'numerical_col': np.random.rand(20),
     })

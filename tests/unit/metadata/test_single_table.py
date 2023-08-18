@@ -945,7 +945,7 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.columns == {
             'categorical': {'sdtype': 'categorical'},
-            'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'date': {'sdtype': 'datetime'},
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
             'bool': {'sdtype': 'categorical'}
@@ -1070,7 +1070,7 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.columns == {
             'categorical': {'sdtype': 'categorical'},
-            'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'date': {'sdtype': 'datetime'},
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
             'bool': {'sdtype': 'categorical'}
