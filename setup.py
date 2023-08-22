@@ -13,6 +13,9 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 
 
 install_requires = [
+    'boto3>=1.15.0,<2',
+    'botocore>=1.18,<2',
+    'cloudpickle>=2.1.0,<3.0',
     'Faker>=10,<15',
     'graphviz>=0.13.2,<1',
     "numpy>=1.20.0,<1.25.0;python_version<'3.10'",
@@ -24,11 +27,8 @@ install_requires = [
     'copulas>=0.9.0,<0.10',
     'ctgan>=0.7.4,<0.8',
     'deepecho>=0.4.2,<0.5',
-    'rdt>=1.7.0.dev0',
+    'rdt>=1.7.0,<2',
     'sdmetrics>=0.11.0,<0.12',
-    'cloudpickle>=2.1.0,<3.0',
-    'boto3>=1.15.0,<2',
-    'botocore>=1.18,<2'
 ]
 
 pomegranate_requires = [
