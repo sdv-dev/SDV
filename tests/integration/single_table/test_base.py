@@ -3,7 +3,7 @@ import datetime
 import pandas as pd
 import pkg_resources
 import pytest
-from rdt.transformers import AnonymizedFaker, FloatFormatter, LabelEncoder, RegexGenerator
+from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, UniformEncoder
 
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
@@ -252,7 +252,7 @@ def test_transformers_correctly_auto_assigned():
     assert isinstance(transformers['numerical_col'], FloatFormatter)
     assert isinstance(transformers['pii_col'], AnonymizedFaker)
     assert isinstance(transformers['primary_key'], RegexGenerator)
-    assert isinstance(transformers['categorical_col'], LabelEncoder)
+    assert isinstance(transformers['categorical_col'], UniformEncoder)
 
     assert transformers['numerical_col'].missing_value_replacement == 'mean'
     assert transformers['numerical_col'].missing_value_generation == 'random'
@@ -264,8 +264,6 @@ def test_transformers_correctly_auto_assigned():
 
     assert transformers['primary_key'].regex_format == 'user-[0-9]{3}'
     assert transformers['primary_key'].enforce_uniqueness is True
-
-    assert transformers['categorical_col'].add_noise is True
 
 
 def test_modeling_with_complex_datetimes():

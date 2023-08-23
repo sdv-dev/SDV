@@ -3,7 +3,7 @@ import itertools
 
 import numpy as np
 from rdt.transformers import (
-    AnonymizedFaker, BinaryEncoder, FloatFormatter, LabelEncoder, RegexGenerator,
+    AnonymizedFaker, BinaryEncoder, FloatFormatter, RegexGenerator, UniformEncoder,
     UnixTimestampEncoder)
 
 from sdv.data_processing import DataProcessor
@@ -247,23 +247,23 @@ def test_data_processor_prepare_for_fitting():
     # Assert
     field_transformers = dp._hyper_transformer.field_transformers
     expected_transformers = {
-        'mba_spec': LabelEncoder,
+        'mba_spec': UniformEncoder,
         'employability_perc': FloatFormatter,
-        'placed': LabelEncoder,
+        'placed': UniformEncoder,
         'student_id': RegexGenerator,
         'experience_years': FloatFormatter,
-        'duration': LabelEncoder,
+        'duration': UniformEncoder,
         'salary': FloatFormatter,
         'second_perc': FloatFormatter,
         'start_date': UnixTimestampEncoder,
         'address': AnonymizedFaker,
-        'gender': LabelEncoder,
+        'gender': UniformEncoder,
         'mba_perc': FloatFormatter,
-        'degree_type': LabelEncoder,
+        'degree_type': UniformEncoder,
         'end_date': UnixTimestampEncoder,
-        'high_spec': LabelEncoder,
+        'high_spec': UniformEncoder,
         'high_perc': FloatFormatter,
-        'work_experience': LabelEncoder,
+        'work_experience': UniformEncoder,
         'degree_perc': FloatFormatter
     }
     for column_name, transformer_class in expected_transformers.items():

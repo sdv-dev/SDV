@@ -1,5 +1,28 @@
 # Release Notes
 
+## 1.4.0 - 2023-08-23
+
+This release makes multiple improvements to the metadata. Both the single and multi table metadata classes now have a `validate_data` method. This method runs checks to validate the data against the current specifications in the metadata. The `SingleTableMetadata.visualize` is also improved. The sequence index is now shown in the same section as the sequence key. It also now shows all key and index information (eg. sequence key, primary key, sequence index) in one section.
+
+The `CTGANSynthesizer` has been made more efficient in the following ways:
+1. Boolean columns are now being skipped during `preprocess` like categorial columns are.
+2. It is possible to apply other transformations to categorical columns and have `CTGAN` skip the one-hot encoding step.
+
+Additional changes include that the columns labeled with the sdtype `id` will now go through the `IDGenerator` transformer by default and constraint transformations that were being overwritten during sampling will now be respected.
+
+### New Features
+
+* Add validate_data method to Metadata - Issue [#1518](https://github.com/sdv-dev/SDV/issues/1518) by @fealho
+* Use IDGenerator for ID columns - Issue [#1519](https://github.com/sdv-dev/SDV/issues/1519) by @frances-h
+* Metadata visualization for sequential data: Only create 2 sections - Issue [#1543](https://github.com/sdv-dev/SDV/issues/1543) by @frances-h
+
+### Bugs Fixed
+
+* Inefficient CTGAN modeling when adding categorical transformers - Issue [#1450](https://github.com/sdv-dev/SDV/issues/1450) by @fealho
+* CTGANSynthesizer is assigning LabelEncoder to boolean columns (instead of None) - Issue [#1530](https://github.com/sdv-dev/SDV/issues/1530) by @fealho
+* Metadata visualization for sequential data: Missing sequence index - Issue [#1542](https://github.com/sdv-dev/SDV/issues/1542) by @frances-h
+* Constraint outputs are being overwritten in DataProcessor.reverse_transform - Issue [#1551](https://github.com/sdv-dev/SDV/issues/1551) by @amontanez24
+
 ## 1.3.0 - 2023-08-14
 
 This release adds two new methods to the `MultiTableMetadata`: `detect_from_csvs` and `detect_From_dataframes`. These methods allow you to detect metadata for a whole dataset at once by either loading them from a folder or a dictionary mapping table names to the `pandas.DataFrames`. The `SingleTableMetadata` can now be visualized! Additionally, there is now a `summarized` option in the `show_table_details` parameter of the `visualize` methods. This will print each sdtype in the table and the number of columns that have that sdtype.

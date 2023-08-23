@@ -67,7 +67,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         table_meta = self._table_synthesizers[child_name].get_metadata()
 
         extension_rows = []
-        foreign_key_columns = self._get_all_foreign_keys(child_name)
+        foreign_key_columns = self.metadata._get_all_foreign_keys(child_name)
         foreign_key_values = child_table[foreign_key].unique()
         child_table = child_table.set_index(foreign_key)
 
@@ -185,7 +185,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             keys (dict):
                 A dictionary mapping with the foreign key and it's values within the table.
         """
-        foreign_keys = self._get_all_foreign_keys(table_name)
+        foreign_keys = self.metadata._get_all_foreign_keys(table_name)
         keys = {}
         for fk in foreign_keys:
             keys[fk] = table_data.pop(fk).to_numpy()

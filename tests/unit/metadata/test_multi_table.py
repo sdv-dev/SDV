@@ -5,11 +5,14 @@ import re
 from collections import defaultdict
 from unittest.mock import Mock, call, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
+from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata, SingleTableMetadata
+from tests.utils import get_multi_table_data, get_multi_table_metadata
 
 
 class TestMultiTableMetadata:
@@ -868,7 +871,7 @@ class TestMultiTableMetadata:
             'is not connected to any of the other tables.'
         )
 
-        # Run / Assert
+        # Run and Assert
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.validate()
 
@@ -907,6 +910,168 @@ class TestMultiTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=err_msg):
             metadata.validate()
+
+    def test__validate_foreign_keys(self):
+        """Test that when the data matches as expected there are no errors."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+
+        # Run
+        result = metadata._validate_foreign_keys(data)
+
+        # Assert
+        assert result == []
+
+    def test__validate_foreign_keys_missing_keys(self):
+        """Test that errors are being returned.
+
+        When the values of the foreign keys are not within the values of the parent
+        primary key, a list of errors must be returned indicating the values that are missing.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(0, 20, 2),
+                'upravna_enota': np.arange(10),
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(10, 20),
+                'id_nesreca': np.arange(10),
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(10),
+            }),
+        }
+
+        # Run
+        result = metadata._validate_foreign_keys(data)
+
+        # Assert
+        missing_upravna_enota = [
+            'Relationships:\n'
+            "Error: foreign key column 'upravna_enota' contains unknown references: "
+            '(10, 11, 12, 13, 14, + more). '
+            'All the values in this column must reference a primary key.\n'
+            "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9)."
+            ' All the values in this column must reference a primary key.'
+        ]
+        assert result == missing_upravna_enota
+
+    def test_validate_data(self):
+        """Test that no error is being raised when the data is valid."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+
+        # Run and Assert
+        metadata.validate_data(data)
+
+    def test_validate_data_missing_table(self):
+        """Test that an error is being raised when there is a missing table in the dictionary."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+        data.pop('nesreca')
+
+        # Run and Assert
+        error_msg = "The provided data is missing the tables {'nesreca'}."
+        with pytest.raises(InvalidDataError, match=error_msg):
+            metadata.validate_data(data)
+
+    def test_validate_data_key_error(self):
+        """Test that if a ``KeyError`` is raised the code will continue without erroring."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+        metadata.tables.popitem()
+
+        # Run and Assert
+        metadata.validate_data(data)
+
+    def test_validate_data_data_is_not_dataframe(self):
+        """Test that an error is being raised when the data is not a dataframe."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+        data['nesreca'] = pd.Series({
+            'id_nesreca': np.arange(10),
+            'upravna_enota': np.arange(10),
+        })
+
+        # Run and Assert
+        error_msg = "Data must be a DataFrame, not a <class 'pandas.core.series.Series'>."
+        with pytest.raises(InvalidDataError, match=error_msg):
+            metadata.validate_data(data)
+
+    def test_validate_data_data_does_not_match(self):
+        """Test that an error is being raised when the data does not match the metadata."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(10),
+                'upravna_enota': np.arange(10),
+                'nesreca_val': np.arange(10).astype(str)
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(10),
+                'id_nesreca': np.arange(10),
+                'oseba_val': np.arange(10).astype(str)
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(10),
+                'upravna_val': np.arange(10).astype(str)
+            }),
+        }
+
+        # Run and Assert
+        error_msg = re.escape(
+            'The provided data does not match the metadata:\n'
+            "Table: 'nesreca'\n"
+            "Error: Invalid values found for numerical column 'nesreca_val': ['0', '1', '2', "
+            "'+ 7 more']."
+            "\n\nTable: 'oseba'\n"
+            "Error: Invalid values found for numerical column 'oseba_val': ['0', '1', '2', "
+            "'+ 7 more']."
+            "\n\nTable: 'upravna_enota'\n"
+            "Error: Invalid values found for numerical column 'upravna_val': ['0', '1', '2', "
+            "'+ 7 more']."
+        )
+        with pytest.raises(InvalidDataError, match=error_msg):
+            metadata.validate_data(data)
+
+    def test_validate_data_missing_foreign_keys(self):
+        """Test that errors are being raised when there are missing foreign keys."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(0, 20, 2),
+                'upravna_enota': np.arange(10),
+                'nesreca_val': np.arange(10)
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(10),
+                'id_nesreca': np.arange(10),
+                'oseba_val': np.arange(10)
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(10),
+                'upravna_val': np.arange(10)
+            }),
+        }
+
+        # Run and Assert
+        error_msg = re.escape(
+            'The provided data does not match the metadata:\n'
+            'Relationships:\n'
+            "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
+            'All the values in this column must reference a primary key.'
+        )
+        with pytest.raises(InvalidDataError, match=error_msg):
+            metadata.validate_data(data)
 
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
     def test_add_table(self, table_metadata_mock):

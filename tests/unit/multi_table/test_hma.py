@@ -67,7 +67,7 @@ class TestHMASynthesizer:
         # Setup
         instance = Mock()
         instance._get_pbar_args.return_value = {'desc': "(1/2) Tables 'A' and 'B' ('user_id')"}
-        instance._get_all_foreign_keys.return_value = ['id_upravna_enota']
+        instance.metadata._get_all_foreign_keys.return_value = ['id_upravna_enota']
         instance._table_synthesizers = {'nesreca': Mock()}
         child_table = pd.DataFrame({
             'id_upravna_enota': [0, 1, 2, 3]
@@ -90,18 +90,6 @@ class TestHMASynthesizer:
             desc="(1/2) Tables 'A' and 'B' ('user_id')")
 
         pd.testing.assert_frame_equal(result, expected)
-
-    def test__get_all_foreign_keys(self):
-        """Test that this method returns all the foreign keys for a given table name."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = HMASynthesizer(metadata)
-
-        # Run
-        result = instance._get_all_foreign_keys('nesreca')
-
-        # Assert
-        assert result == ['upravna_enota']
 
     def test__augment_table(self):
         """Test that ``augment_table`` extends the current table with extra columns.
@@ -154,7 +142,7 @@ class TestHMASynthesizer:
         """Test that this method removes the foreign keys from the ``table_data``."""
         # Setup
         instance = Mock()
-        instance._get_all_foreign_keys.return_value = ['a', 'b']
+        instance.metadata._get_all_foreign_keys.return_value = ['a', 'b']
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [2, 3, 4],

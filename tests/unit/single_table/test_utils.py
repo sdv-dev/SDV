@@ -36,7 +36,7 @@ def test_detect_discrete_columns():
         'join_date': ['2021-02-02', '2022-03-04', '2015-05-06', '2018-09-30'],
         'uses_synthetic': [np.nan, True, False, False],
         'surname': [object(), object(), object(), object()],
-        'bool': [0., 0., 1., np.nan]
+        'bool': [0., 0., 1., np.nan],
     })
 
     # Run
@@ -44,6 +44,25 @@ def test_detect_discrete_columns():
 
     # Assert
     assert result == ['name', 'subscribed', 'uses_synthetic', 'surname', 'bool']
+
+
+def test_detect_discrete_columns_numerical():
+    """Test it for numerical columns."""
+    # Setup
+    metadata = SingleTableMetadata()
+    data = pd.DataFrame({
+        'float': [.1] * 1000,
+        'nan': [np.nan] * 1000,
+        'cat_int': list(range(100)) * 10,
+        'num_int': list(range(125)) * 8,
+        'float_int': [1, np.nan] * 500,
+    })
+
+    # Run
+    result = detect_discrete_columns(metadata, data)
+
+    # Assert
+    assert result == ['cat_int', 'float_int']
 
 
 def test_flatten_array_default():
@@ -266,15 +285,16 @@ def test_check_num_rows_non_reject_sampling_warning(warning_mock):
     is_reject_sampling = True
     max_tries = 1
     error_msg = (
-        'Unable to sample any rows for the given conditions. '
-        'Try increasing `max_tries` (currently: 1).'
+        'Only able to sample 2 rows for the given conditions. To sample more rows, try increasing '
+        '`max_tries_per_batch` (currently: 1). Note that increasing this value will also increase '
+        'the sampling time.'
     )
 
     # Run
     check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries)
 
     # Assert
-    warning_mock.warn.called_once_with(error_msg)
+    warning_mock.warn.assert_called_once_with(error_msg)
 
 
 @patch('sdv.single_table.utils.warnings')
