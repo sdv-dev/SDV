@@ -345,14 +345,14 @@ class SingleTableMetadata:
         self._validate_key(column_name, 'primary')
         if column_name in self.alternate_keys:
             warnings.warn(
-                f'{column_name} is currently set as an alternate key and will be removed from '
+                f"'{column_name}' is currently set as an alternate key and will be removed from "
                 'that list.'
             )
             self.alternate_keys.remove(column_name)
 
         if self.primary_key is not None:
             warnings.warn(
-                f'There is an existing primary key {self.primary_key}.'
+                f"There is an existing primary key '{self.primary_key}'."
                 ' This key will be removed.'
             )
 
@@ -368,7 +368,7 @@ class SingleTableMetadata:
         self._validate_key(column_name, 'sequence')
         if self.sequence_key is not None:
             warnings.warn(
-                f'There is an existing sequence key {self.sequence_key}.'
+                f"There is an existing sequence key '{self.sequence_key}'."
                 ' This key will be removed.'
             )
 
@@ -650,16 +650,23 @@ class SingleTableMetadata:
         elif show_table_details == 'summarized':
             node = fr'{create_summarized_columns_node(self.columns)}\l'
 
+        keys_node = ''
         if self.primary_key:
-            node = fr'{node}|Primary key: {self.primary_key}\l'
+            keys_node = fr'{keys_node}Primary key: {self.primary_key}\l'
 
         if self.sequence_key:
-            node = fr'{node}|Sequence key: {self.sequence_key}\l'
+            keys_node = fr'{keys_node}Sequence key: {self.sequence_key}\l'
+
+        if self.sequence_index:
+            keys_node = fr'{keys_node}Sequence index: {self.sequence_index}\l'
 
         if self.alternate_keys:
             alternate_keys = [fr'&nbsp; &nbsp; • {key}\l' for key in self.alternate_keys]
             alternate_keys = ''.join(alternate_keys)
-            node = fr'{node}|Alternate keys:\l {alternate_keys}'
+            keys_node = fr'{keys_node}Alternate keys:\l {alternate_keys}'
+
+        if keys_node != '':
+            node = fr'{node}|{keys_node}'
 
         node = {'': f'{{{node}}}'}
         return visualize_graph(node, [], output_filepath)
