@@ -1102,7 +1102,7 @@ class TestSingleTableMetadata:
 
         # Assert
         warning_msg = "There is an existing primary key 'column0'. This key will be removed."
-        assert warning_mock.warn.called_once_with(warning_msg)
+        warning_mock.warn.assert_called_once_with(warning_msg)
         assert instance.primary_key == 'column1'
 
     @patch('sdv.metadata.single_table.warnings')
@@ -1122,10 +1122,16 @@ class TestSingleTableMetadata:
         instance.set_primary_key('column1')
 
         # Assert
-        warning_msg = (
-            'column1 is currently set as an alternate key and will be removed from that list.'
+        alternate_key_warning_msg = (
+            "'column1' is currently set as an alternate key and will be removed from that list."
         )
-        assert warning_mock.warn.called_once_with(warning_msg)
+        primary_key_warning_msg = (
+            "There is an existing primary key 'column0'. This key will be removed."
+        )
+        warning_mock.warn.assert_has_calls([
+            call(alternate_key_warning_msg),
+            call(primary_key_warning_msg)
+        ])
         assert instance.primary_key == 'column1'
         assert instance.alternate_keys == ['column2']
 
@@ -1240,7 +1246,7 @@ class TestSingleTableMetadata:
 
         # Assert
         warning_msg = "There is an existing sequence key 'column0'. This key will be removed."
-        assert warning_mock.warn.called_once_with(warning_msg)
+        warning_mock.warn.assert_called_once_with(warning_msg)
         assert instance.sequence_key == 'column1'
 
     def test_add_alternate_keys_validation_dtype(self):
@@ -2081,7 +2087,7 @@ class TestSingleTableMetadata:
         expected_node = {
             '': '{name : categorical\\lage : numerical\\lstart_date : datetime\\lphrase : id\\l}'
         }
-        assert mock_visualize_graph.called_once_with(call(expected_node, [], None))
+        mock_visualize_graph.assert_called_once_with(expected_node, [], None)
 
     @patch('sdv.metadata.single_table.visualize_graph')
     def test_visualize_metadata_summarized(self, mock_visualize_graph):
@@ -2105,11 +2111,11 @@ class TestSingleTableMetadata:
             '&nbsp; • id : 1\\l&nbsp; &nbsp; • numerical : 1\\l}'
         )
         expected_node = {'': node}
-        assert mock_visualize_graph.called_once_with(call(expected_node, [], None))
+        mock_visualize_graph.assert_called_once_with(expected_node, [], None)
 
     @patch('sdv.metadata.single_table.visualize_graph')
-    def test_visualize_metadata_with_primary_alternate_and_sequence_key(self,
-                                                                        mock_visualize_graph):
+    def test_visualize_metadata_with_primary_alternate_and_sequence_keys(self,
+                                                                         mock_visualize_graph):
         """Test the ``visualize`` method when there are primary, alternate and sequence keys."""
         # Setup
         instance = SingleTableMetadata()
@@ -2124,6 +2130,7 @@ class TestSingleTableMetadata:
         instance.primary_key = 'passport'
         instance.alternate_keys = ['phrase', 'name']
         instance.sequence_key = 'timestamp'
+        instance.sequence_index = 'start_date'
 
         # Run
         result = instance.visualize('full')
@@ -2131,12 +2138,13 @@ class TestSingleTableMetadata:
         # Assert
         assert result == mock_visualize_graph.return_value
         node = (
-            '{name : categorical\\ltimestamp : datetime\\lage : numerical\\lstart_date : '
-            'datetime\\lphrase : id\\lpassport : id\\l|Primary key: passport\\l|Sequence key: '
-            'timestamp\\l|Alternate keys:\\l &nbsp; &nbsp; • phrase\\l&nbsp; &nbsp; • name\\l}'
+            '{name : categorical\\ltimestamp : datetime\\lage : numerical\\l'
+            'start_date : datetime\\lphrase : id\\lpassport : id\\l|'
+            'Primary key: passport\\lSequence key: timestamp\\lSequence index: start_date\\l'
+            'Alternate keys:\\l &nbsp; &nbsp; • phrase\\l&nbsp; &nbsp; • name\\l}'
         )
         expected_node = {'': node}
-        assert mock_visualize_graph.called_once_with(call(expected_node, [], None))
+        mock_visualize_graph.assert_called_once_with(expected_node, [], None)
 
     @patch('sdv.metadata.single_table.read_json')
     @patch('sdv.metadata.single_table.convert_metadata')

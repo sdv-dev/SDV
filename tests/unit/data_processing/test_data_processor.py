@@ -1918,10 +1918,10 @@ class TestDataProcessor:
         data_from_call = dp._hyper_transformer.reverse_transform_subset.mock_calls[0][1][0]
         pd.testing.assert_frame_equal(input_data, data_from_call)
         dp._hyper_transformer.reverse_transform_subset.assert_called_once()
-        dp._hyper_transformer.create_anonymized_columns.has_calls(
+        dp._hyper_transformer.create_anonymized_columns.assert_has_calls([
             call(num_rows=3, column_names=['d']),
             call(num_rows=3, column_names=['key'])
-        )
+        ])
         expected_output = pd.DataFrame({
             'a': [1., 2., 3.],
             'b': [True, True, False],

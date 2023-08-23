@@ -285,15 +285,16 @@ def test_check_num_rows_non_reject_sampling_warning(warning_mock):
     is_reject_sampling = True
     max_tries = 1
     error_msg = (
-        'Unable to sample any rows for the given conditions. '
-        'Try increasing `max_tries` (currently: 1).'
+        'Only able to sample 2 rows for the given conditions. To sample more rows, try increasing '
+        '`max_tries_per_batch` (currently: 1). Note that increasing this value will also increase '
+        'the sampling time.'
     )
 
     # Run
     check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries)
 
     # Assert
-    warning_mock.warn.called_once_with(error_msg)
+    warning_mock.warn.assert_called_once_with(error_msg)
 
 
 @patch('sdv.single_table.utils.warnings')

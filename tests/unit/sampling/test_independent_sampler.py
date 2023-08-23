@@ -281,10 +281,10 @@ class TestBaseIndependentSampler():
         )
         _sample_table_mock.assert_has_calls([users_call, sessions_call, transactions_call])
 
-        assert instance._connect_tables_mock.called_once_with({
+        _connect_tables_mock.assert_called_once_with({
             key: DataFrameMatcher(table) for key, table in expected_sample.items()
         })
-        assert instance._finalize.called_once_with({
+        instance._finalize.assert_called_once_with({
             'users': DataFrameMatcher(expected_sample['users']),
             'sessions': DataFrameMatcher(expected_sample['sessions']),
             'transactions': DataFrameMatcher(connected_transactions)
