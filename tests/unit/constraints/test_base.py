@@ -320,7 +320,7 @@ class TestConstraint():
         constraint._validate_data_meets_constraint(data)
 
         # Assert
-        constraint.is_valid.assert_not_called
+        constraint.is_valid.assert_not_called()
 
     def test_transform(self):
         """Test the ``Constraint.transform`` method.
