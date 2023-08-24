@@ -67,6 +67,7 @@ def get_datetime_format(value):
 
     value = value[~value.isna()]
     value = value.astype(str).to_numpy()
+
     return _guess_datetime_format_for_array(value)
 
 
