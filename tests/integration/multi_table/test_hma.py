@@ -604,6 +604,21 @@ class TestHMASynthesizer:
             regex_format='HID_[0-9]{3,4}'
         )
         metadata.update_column(
+            table_name='hotels',
+            column_name='city',
+            sdtype='categorical',
+        )
+        metadata.update_column(
+            table_name='hotels',
+            column_name='state',
+            sdtype='categorical',
+        )
+        metadata.update_column(
+            table_name='hotels',
+            column_name='classification',
+            sdtype='categorical',
+        )
+        metadata.update_column(
             table_name='guests',
             column_name='guest_email',
             sdtype='email',
