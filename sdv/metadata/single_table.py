@@ -32,6 +32,7 @@ class SingleTableMetadata:
         'categorical': frozenset(['order', 'order_by']),
         'boolean': frozenset([]),
         'id': frozenset(['regex_format']),
+        'unknown': frozenset([]),
     }
 
     _DTYPES_TO_SDTYPES = {

@@ -483,6 +483,15 @@ class DataProcessor:
                     )
                     sdtypes[column] = 'pii'
 
+            elif sdtype == 'unknown':
+                transformers[column] = AnonymizedFaker(
+                    function_name='bothify',
+                )
+                transformers[column].function_kwargs = {
+                    'text': 'sdv-pii-?????',
+                    'letters': '0123456789abcdefghijklmnopqrstuvwxyz'
+                }
+
             elif pii:
                 enforce_uniqueness = bool(column in self._keys)
                 transformers[column] = self.create_anonymized_transformer(
