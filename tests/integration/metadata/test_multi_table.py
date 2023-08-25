@@ -175,6 +175,7 @@ def test_detect_from_dataframes():
                     'rating': {'sdtype': 'numerical'},
                     'classification': {'sdtype': 'categorical'}
                 },
+                'primary_key': 'hotel_id'
             },
             'guests': {
                 'columns': {
@@ -188,7 +189,8 @@ def test_detect_from_dataframes():
                     'room_rate': {'sdtype': 'numerical'},
                     'billing_address': {'sdtype': 'unknown', 'pii': True},
                     'credit_card_number': {'sdtype': 'id'}
-                }
+                },
+                'primary_key': 'guest_email'
             }
         },
         'relationships': [],
@@ -242,6 +244,7 @@ def test_detect_from_csvs(tmp_path):
                     'rating': {'sdtype': 'numerical'},
                     'classification': {'sdtype': 'categorical'}
                 },
+                'primary_key': 'hotel_id'
             },
             'guests': {
                 'columns': {
@@ -255,7 +258,8 @@ def test_detect_from_csvs(tmp_path):
                     'room_rate': {'sdtype': 'numerical'},
                     'billing_address': {'sdtype': 'unknown', 'pii': True},
                     'credit_card_number': {'sdtype': 'id'}
-                }
+                },
+                'primary_key': 'guest_email'
             }
         },
         'relationships': [],
@@ -307,7 +311,8 @@ def test_detect_table_from_csv(tmp_path):
                     'state': {'sdtype': 'categorical'},
                     'rating': {'sdtype': 'numerical'},
                     'classification': {'sdtype': 'categorical'}
-                }
+                },
+                'primary_key': 'hotel_id'
             }
         },
         'relationships': [],

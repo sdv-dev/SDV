@@ -306,7 +306,7 @@ class SingleTableMetadata:
         return sdtype
 
     def _detect_columns(self, data):
-        """Detect columns sdtype in the data.
+        """Detect the columns' sdtype and the primary key from the data.
 
         Args:
             data (pandas.DataFrame):
@@ -338,6 +338,10 @@ class SingleTableMetadata:
             elif sdtype == 'datetime' and dtype == 'O':
                 datetime_format = get_datetime_format(column_data.iloc[:100])
                 column_dict['datetime_format'] = datetime_format
+
+            # Set the first ID column we detect to be the primary key
+            if self.primary_key is None and sdtype == 'id':
+                self.primary_key = field
 
             self.columns[field] = deepcopy(column_dict)
 
