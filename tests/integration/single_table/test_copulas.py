@@ -401,3 +401,25 @@ def test_categorical_column_with_numbers():
     unique_values = synthetic_data['category_col'].unique()
     assert np.isnan(unique_values).sum() == 1
     assert set(unique_values[~np.isnan(unique_values)]) == {1, 2}
+
+
+def test_unknown_sdtype():
+    """Test the ``unknown`` sdtype handling end to end."""
+    # Setup
+    data = pd.DataFrame({
+        'unknown': ['a', 'b', 'c'],
+        'numerical_col': np.random.rand(3),
+    })
+
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+    metadata.update_column('unknown', sdtype='unknown')
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+
+    # Run
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(5)
+
+    # Assert
+    assert synthetic_data['unknown'].str.startswith('sdv-pii-').all()
