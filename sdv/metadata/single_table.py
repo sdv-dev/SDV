@@ -338,6 +338,9 @@ class SingleTableMetadata:
                 datetime_format = get_datetime_format(column_data.iloc[:100])
                 column_dict['datetime_format'] = datetime_format
 
+            if self.primary_key is None and sdtype == 'id':
+                self.primary_key = field
+
             self.columns[field] = deepcopy(column_dict)
 
     def detect_from_dataframe(self, data):
