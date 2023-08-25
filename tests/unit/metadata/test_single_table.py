@@ -820,11 +820,13 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         data = pd.DataFrame({
+            'id': ['id1', 'id2', 'id3', 'id4', 'id5', 'id6', 'id7', 'id8', 'id9', 'id10', 'id11'],
             'numerical': [1, 2, 3, 2, 5, 6, 7, 8, 9, 10, 11],
             'datetime': [
                 '2022-01-01', '2022-02-01', '2022-03-01', '2022-04-01', '2022-05-01', '2022-06-01',
                 '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01', '2022-11-01'
             ],
+            'alternate_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             'categorical': ['a', 'b', 'a', 'a', 'b', 'b', 'a', 'b', 'a', 'b', 'a'],
             'bool': [True, False, True, False, True, False, True, False, True, False, True],
             'unknown': ['a', 'b', 'c', 'c', 1, 2.2, np.nan, None, 'd', 'e', 'f'],
@@ -836,13 +838,17 @@ class TestSingleTableMetadata:
         instance._detect_columns(data)
 
         # Assert
+        assert instance.columns['id']['sdtype'] == 'id'
         assert instance.columns['numerical']['sdtype'] == 'numerical'
         assert instance.columns['datetime']['sdtype'] == 'datetime'
         assert instance.columns['datetime']['datetime_format'] == expected_datetime_format
+        assert instance.columns['alternate_id']['sdtype'] == 'id'
         assert instance.columns['categorical']['sdtype'] == 'categorical'
         assert instance.columns['unknown']['sdtype'] == 'unknown'
         assert instance.columns['unknown']['pii'] is True
         assert instance.columns['bool']['sdtype'] == 'categorical'
+
+        assert instance.primary_key == 'id'
 
     @patch('sdv.metadata.single_table.get_datetime_format')
     def test_detect_columns_with_error(self, mock_get_datetime_format):
