@@ -613,6 +613,90 @@ class TestMultiTableMetadata:
         with pytest.raises(InvalidMetadataError, match=err_msg):
             metadata.add_relationship('table', 'table2', 'pk', 'pk')
 
+    def test_remove_relationship(self):
+        """Test all relationships are removed using ``remove_relationship``."""
+        # Setup
+        instance = MultiTableMetadata()
+        parent_table = Mock()
+        parent_table.primary_key = 'id'
+        parent_table.columns = {
+            'id': {'sdtype': 'id'},
+            'session': {'sdtype': 'numerical'},
+            'transactions': {'sdtype': 'numerical'},
+        }
+
+        child_table = Mock()
+        child_table.primary_key = 'session_id'
+        child_table.columns = {
+            'user_id': {'sdtype': 'id'},
+            'alternate_id': {'sdtype': 'id'},
+            'session_id': {'sdtype': 'numerical'},
+            'transactions': {'sdtype': 'numerical'},
+        }
+
+        instance.tables = {
+            'users': parent_table,
+            'sessions': child_table,
+        }
+        instance.relationships = [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessions',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'user_id',
+            },
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessions',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'alternate_id',
+            }
+        ]
+
+        # Run
+        instance.remove_relationship('users', 'sessions')
+
+        # Assert
+        instance.relationships == []
+
+    @patch('sdv.metadata.multi_table.warnings')
+    def test_remove_relationship_relationship_not_found(self, warnings_mock):
+        """Test that ``remove_relationship`` warns if no relationship between the tables exists."""
+        # Setup
+        instance = MultiTableMetadata()
+        parent_table = Mock()
+        parent_table.primary_key = 'id'
+        parent_table.columns = {
+            'id': {'sdtype': 'id'},
+            'session': {'sdtype': 'numerical'},
+            'transactions': {'sdtype': 'numerical'},
+        }
+
+        child_table = Mock()
+        child_table.primary_key = 'session_id'
+        child_table.columns = {
+            'user_id': {'sdtype': 'id'},
+            'alternate_id': {'sdtype': 'id'},
+            'session_id': {'sdtype': 'numerical'},
+            'transactions': {'sdtype': 'numerical'},
+        }
+
+        instance.tables = {
+            'users': parent_table,
+            'sessions': child_table,
+        }
+        instance.relationships = []
+
+        # Run
+        instance.remove_relationship('users', 'sessions')
+
+        # Assert
+        warning_msg = (
+            "No existing relationships found between parent table 'users' and "
+            "child table 'sessions'."
+        )
+        warnings_mock.warn.assert_called_once_with(warning_msg)
+
     def test__validate_single_table(self):
         """Test ``_validate_single_table``.
 
@@ -661,7 +745,7 @@ class TestMultiTableMetadata:
         )
         assert errors == ['\n', expected_error_msg, empty_table_error_message]
         instance.tables['users'].validate.assert_called_once()
-
+    
     def test__validate_all_tables_connected_connected(self):
         """Test ``_validate_all_tables_connected``.
 
@@ -1751,6 +1835,119 @@ class TestMultiTableMetadata:
         error_message = re.escape("Unknown table name ('table')")
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.update_column('table', 'column', sdtype='numerical', pii=False)
+    
+    def test__detect_relationships(self):
+        """Test relationships are automatically detected and the foreign key sdtype is updated."""
+        # Setup
+        parent_table = Mock()
+        parent_table.primary_key = 'user_id'
+        parent_table.columns = {
+            'user_id': {'sdtype': 'id'},
+            'user_name': {'sdtype': 'categorical'},
+            'transactions': {'sdtype': 'numerical'},
+        }
+
+        child_table = SingleTableMetadata()
+        child_table.primary_key = 'session_id'
+        child_table.columns = {
+            'user_id': {'sdtype': 'categorical'},
+            'session_id': {'sdtype': 'numerical'},
+            'timestamp': {'sdtype': 'datetime'},
+        }
+
+        instance = MultiTableMetadata()
+        instance.tables = {
+            'users': parent_table,
+            'sessions': child_table,
+        }
+
+        # Run
+        instance._detect_relationships()
+
+        # Assert
+        expected_relationships = [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'sessions',
+                'parent_primary_key': 'user_id',
+                'child_foreign_key': 'user_id'
+            }
+        ]
+        assert instance.relationships == expected_relationships
+        assert instance.tables['sessions'].columns['user_id']['sdtype'] == 'id'
+
+    @patch('sdv.metadata.multi_table.warnings')
+    def test__detect_relationships_missing_warning(self, warnings_mock):
+        """Test that ``_detect_relationships`` warns about tables it could not automatically connect."""
+        # Setup
+        parent_table = Mock()
+        parent_table.primary_key = 'id'
+        parent_table.columns = {
+            'id': {'sdtype': 'id'},
+            'user_name': {'sdtype': 'categorical'},
+            'transactions': {'sdtype': 'numerical'},
+        }
+
+        child_table = SingleTableMetadata()
+        child_table.primary_key = 'session_id'
+        child_table.columns = {
+            'user_id': {'sdtype': 'categorical'},
+            'session_id': {'sdtype': 'numerical'},
+            'timestamp': {'sdtype': 'datetime'},
+        }
+
+        instance = MultiTableMetadata()
+        instance.tables = {
+            'users': parent_table,
+            'sessions': child_table,
+        }
+
+        # Run
+        instance._detect_relationships()
+
+        # Assert
+        expected_warning = (
+            'Could not automatically add relationships for all tables. The relationships in '
+            "the dataset are disjointed. Tables ['users', 'sessions'] are not connected to "
+            'any of the other tables.'
+        )
+        warnings_mock.warn.assert_called_once_with(expected_warning)
+        assert instance.relationships == []
+
+    def test__detect_relationships_circular(self):
+        """Test that relationships that invalidate the metadata are not added."""
+        # Setup
+        parent_table = Mock()
+        parent_table.primary_key = 'user_id'
+        parent_table.columns = {
+            'user_id': {'sdtype': 'id'},
+            'user_name': {'sdtype': 'categorical'},
+            'transactions': {'sdtype': 'numerical'},
+        }
+
+        child_table = SingleTableMetadata()
+        child_table.primary_key = 'session_id'
+        child_table.columns = {
+            'user_id': {'sdtype': 'categorical'},
+            'session_id': {'sdtype': 'numerical'},
+            'timestamp': {'sdtype': 'datetime'},
+        }
+
+        instance = MultiTableMetadata()
+        instance.tables = {
+            'users': parent_table,
+            'sessions': child_table,
+        }
+        instance.add_relationship = Mock()
+        instance.add_relationship.side_effect = InvalidMetadataError('bad relationship')
+
+        # Run
+        instance._detect_relationships()
+
+        # Assert
+        instance.add_relationship.assert_called_once_with('users', 'sessions', 'user_id', 'user_id')
+        assert instance.tables['sessions'].columns['user_id']['sdtype'] == 'categorical'
+        
 
     @patch('sdv.metadata.multi_table.LOGGER')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
@@ -1830,6 +2027,7 @@ class TestMultiTableMetadata:
         # Setup
         instance = MultiTableMetadata()
         instance.detect_table_from_csv = Mock()
+        instance._detect_relationships = Mock()
 
         data1 = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
         data2 = pd.DataFrame({'col1': [5, 6], 'col2': [7, 8]})
@@ -1854,6 +2052,8 @@ class TestMultiTableMetadata:
 
         instance.detect_table_from_csv.assert_has_calls(expected_calls, any_order=True)
         assert instance.detect_table_from_csv.call_count == 2
+
+        instance._detect_relationships.assert_called_once()
 
     def test_detect_from_csvs_no_csv(self, tmp_path):
         """Test the ``detect_from_csvs`` method with no csv file in the folder."""
@@ -1951,6 +2151,7 @@ class TestMultiTableMetadata:
         # Setup
         metadata = MultiTableMetadata()
         metadata.detect_table_from_dataframe = Mock()
+        metadata._detect_relationships = Mock()
 
         guests_table = pd.DataFrame()
         hotels_table = pd.DataFrame()
@@ -1966,6 +2167,7 @@ class TestMultiTableMetadata:
         # Assert
         metadata.detect_table_from_dataframe.assert_any_call('guests', guests_table)
         metadata.detect_table_from_dataframe.assert_any_call('hotels', hotels_table)
+        metadata._detect_relationships.assert_called_once()
 
     def test_detect_from_dataframes_no_dataframes(self):
         """Test ``detect_from_dataframes`` with no dataframes in the input.
