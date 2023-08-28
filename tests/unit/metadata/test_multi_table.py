@@ -745,7 +745,7 @@ class TestMultiTableMetadata:
         )
         assert errors == ['\n', expected_error_msg, empty_table_error_message]
         instance.tables['users'].validate.assert_called_once()
-    
+
     def test__validate_all_tables_connected_connected(self):
         """Test ``_validate_all_tables_connected``.
 
@@ -1835,7 +1835,7 @@ class TestMultiTableMetadata:
         error_message = re.escape("Unknown table name ('table')")
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.update_column('table', 'column', sdtype='numerical', pii=False)
-    
+
     def test__detect_relationships(self):
         """Test relationships are automatically detected and the foreign key sdtype is updated."""
         # Setup
@@ -1878,7 +1878,7 @@ class TestMultiTableMetadata:
 
     @patch('sdv.metadata.multi_table.warnings')
     def test__detect_relationships_missing_warning(self, warnings_mock):
-        """Test that ``_detect_relationships`` warns about tables it could not automatically connect."""
+        """Test that ``_detect_relationships`` warns about tables it could not connect."""
         # Setup
         parent_table = Mock()
         parent_table.primary_key = 'id'
@@ -1945,9 +1945,9 @@ class TestMultiTableMetadata:
         instance._detect_relationships()
 
         # Assert
-        instance.add_relationship.assert_called_once_with('users', 'sessions', 'user_id', 'user_id')
+        instance.add_relationship.assert_called_once_with(
+            'users', 'sessions', 'user_id', 'user_id')
         assert instance.tables['sessions'].columns['user_id']['sdtype'] == 'categorical'
-        
 
     @patch('sdv.metadata.multi_table.LOGGER')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')

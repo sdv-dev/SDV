@@ -277,9 +277,9 @@ class MultiTableMetadata:
         relationships_to_remove = []
         for relation in self.relationships:
             if (relation['parent_table_name'] == parent_table_name and
-                relation['child_table_name'] == child_table_name):
+                    relation['child_table_name'] == child_table_name):
                 relationships_to_remove.append(relation)
-        
+
         if not relationships_to_remove:
             warning_msg = (
                 f"No existing relationships found between parent table '{parent_table_name}' and "
@@ -370,17 +370,20 @@ class MultiTableMetadata:
 
     def _validate_all_tables_connected(self, parent_map, child_map):
         """Get the connection status of all tables.
-        
+
         Args:
             parent_map (dict):
                 Dictionary mapping each parent table to its child tables.
             child_map (dict):
                 Dictionary mapping each child table to its parent tables.
-        
+
         Returns:
             dict specifying whether each table is connected the other tables.
         """
         nodes = list(self.tables.keys())
+        if len(nodes) == 1:
+            return
+
         queue = [nodes[0]]
         explored = set()
         connected = {table_name: False for table_name in nodes}
@@ -399,7 +402,7 @@ class MultiTableMetadata:
                     if eligible_node not in explored:
                         queue.append(eligible_node)
                         break
-        
+
         if not all(connected.values()):
             disconnected_tables = [table for table, value in connected.items() if not value]
             if len(disconnected_tables) > 1:
@@ -437,7 +440,7 @@ class MultiTableMetadata:
                                            primary_key,
                                            sdtype=original_foreign_key_sdtype)
                         continue
-        
+
         try:
             self._validate_all_tables_connected(self._get_parent_map(), self._get_child_map())
         except InvalidMetadataError as invalid_error:
@@ -473,7 +476,7 @@ class MultiTableMetadata:
 
         for table_name, dataframe in data.items():
             self.detect_table_from_dataframe(table_name, dataframe)
-        
+
         self._detect_relationships()
 
     def detect_table_from_csv(self, table_name, filepath):
@@ -513,7 +516,7 @@ class MultiTableMetadata:
         for csv_file in csv_files:
             table_name = csv_file.stem
             self.detect_table_from_csv(table_name, str(csv_file))
-        
+
         self._detect_relationships()
 
     def set_primary_key(self, table_name, column_name):
