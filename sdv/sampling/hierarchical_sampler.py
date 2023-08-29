@@ -114,7 +114,9 @@ class BaseHierarchicalSampler():
                     [previous, sampled_rows]).reset_index(drop=True)
 
     def _sample_table(self, table_name, scale, sampled_data):
-        """Sample a single table and all its children.
+        """Recursively sample every table.
+
+        Sample top level tables first, then their children, and so on.
 
         Args:
             table_name (string):
