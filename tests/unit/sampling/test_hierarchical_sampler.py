@@ -196,8 +196,6 @@ class TestBaseHierarchicalSampler():
                 'session_id': ['a', 'a', 'b']
             })
 
-        Mock()
-
         instance = Mock()
         instance.metadata._get_child_map.return_value = {'users': ['sessions', 'transactions']}
         instance.metadata._get_parent_map.return_value = {'users': []}

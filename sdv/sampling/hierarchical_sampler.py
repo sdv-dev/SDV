@@ -119,8 +119,12 @@ class BaseHierarchicalSampler():
         Args:
             table_name (string):
                 Name of the table to sample.
-            num_rows (int):
-                Number of rows to sample for the table.
+            scale (float):
+                A float representing how much to scale the data by. If scale is set to ``1.0``,
+                this does not scale the sizes of the tables. If ``scale`` is greater than ``1.0``
+                create more rows than the original data by a factor of ``scale``.
+                If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
+                than the original tables.
             sampled_data (dict):
                 A dictionary mapping table names to sampled tables (pd.DataFrame).
         """
