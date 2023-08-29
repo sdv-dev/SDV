@@ -200,7 +200,8 @@ class TestBaseHierarchicalSampler():
 
         instance = Mock()
         instance.metadata._get_child_map.return_value = {'users': ['sessions', 'transactions']}
-        instance._table_sizes = {'users': 10}
+        instance.metadata._get_parent_map.return_value = {'users': []}
+        instance._table_sizes = {'users': 10, 'sessions': 5, 'transactions': 3}
         instance._table_synthesizers = {'users': Mock()}
         instance._sample_children.side_effect = sample_children
         instance._sample_rows.return_value = pd.DataFrame({
@@ -210,7 +211,7 @@ class TestBaseHierarchicalSampler():
 
         # Run
         result = {}
-        BaseHierarchicalSampler._sample_table(instance, table_synthesizer, 'users', 3, result)
+        BaseHierarchicalSampler._sample_table(instance, 'users', 3/10, result)
 
         # Assert
         expected_result = {
@@ -323,7 +324,7 @@ class TestBaseHierarchicalSampler():
             'transactions': pd.DataFrame(dtype='Int64')
         }
 
-        def _sample_table(synthesizer, table_name, num_rows, sampled_data):
+        def _sample_table(table_name, scale, sampled_data):
             sampled_data['users'] = expected_sample['users']
             sampled_data['sessions'] = expected_sample['sessions']
             sampled_data['transactions'] = expected_sample['transactions']
@@ -360,9 +361,8 @@ class TestBaseHierarchicalSampler():
 
         # Assert
         assert result == instance._finalize.return_value
-        instance._sample_table.assert_called_once_with(synthesizer=users_synthesizer,
-                                                       table_name='users',
-                                                       num_rows=3,
+        instance._sample_table.assert_called_once_with(table_name='users',
+                                                       scale=1,
                                                        sampled_data=expected_sample)
         instance._add_foreign_key_columns.assert_called_once_with(
             DataFrameMatcher(expected_sample['sessions']),
