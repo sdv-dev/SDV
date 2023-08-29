@@ -635,7 +635,7 @@ class SingleTableMetadata:
                 shown. If 'summarized', primary, alternate and sequence keys are shown and a
                 count of the different sdtypes. Defaults to 'full'.
             output_filepath (str):
-                Full path of where to savve the visualization. If None, the visualization is not
+                Full path of where to save the visualization. If None, the visualization is not
                 saved. Defaults to None.
 
         Returns:
