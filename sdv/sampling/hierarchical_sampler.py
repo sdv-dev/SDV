@@ -124,28 +124,22 @@ class BaseHierarchicalSampler():
             sampled_data (dict):
                 A dictionary mapping table names to sampled tables (pd.DataFrame).
         """
-        #LOGGER.info(f'Sampling {num_rows} rows from table {table_name}')
-
         for parent_name in self.metadata._get_parent_map()[table_name]:
             if parent_name not in sampled_data:
-                self._sample_table(
-                    table_name=parent_name,
-                    scale=scale,
-                    sampled_data=sampled_data
-                )
+                self._sample_table(table_name=parent_name, scale=scale, sampled_data=sampled_data)
                 return  # Optimization to avoid iterating through the same nodes multiple times
 
         if table_name not in sampled_data:
             num_rows = int(self._table_sizes[table_name] * scale)
             synthesizer = self._table_synthesizers[table_name]
+
+            LOGGER.info(f'Sampling {num_rows} rows from table {table_name}')
             table_rows = self._sample_rows(synthesizer, num_rows)
             sampled_data[table_name] = table_rows
-        
-        table_rows = sampled_data[table_name]
 
         for child_name in self.metadata._get_child_map()[table_name]:
             if child_name not in sampled_data:
-                for _, row in table_rows.iterrows():
+                for _, row in sampled_data[table_name].iterrows():
                     self._add_child_rows(
                         child_name=child_name,
                         parent_name=table_name,
@@ -154,11 +148,7 @@ class BaseHierarchicalSampler():
                     )
 
                 num_rows = int(self._table_sizes[child_name] * scale)
-                self._sample_table(
-                    table_name=child_name,
-                    scale=scale,
-                    sampled_data=sampled_data
-                )
+                self._sample_table(table_name=child_name, scale=scale, sampled_data=sampled_data)
 
     def _finalize(self, sampled_data):
         """Remove extra columns from sampled tables and apply finishing touches.
@@ -207,11 +197,7 @@ class BaseHierarchicalSampler():
         """
         sampled_data = {}
         starting_table = list(self.metadata.tables.keys())[0]  # Start at any table
-        self._sample_table(
-            table_name=starting_table,
-            scale=scale,
-            sampled_data=sampled_data
-        )
+        self._sample_table(table_name=starting_table, scale=scale, sampled_data=sampled_data)
 
         added_relationships = set()
         for relationship in self.metadata.relationships:

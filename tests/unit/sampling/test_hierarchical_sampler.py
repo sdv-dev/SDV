@@ -196,7 +196,7 @@ class TestBaseHierarchicalSampler():
                 'session_id': ['a', 'a', 'b']
             })
 
-        table_synthesizer = Mock()
+        Mock()
 
         instance = Mock()
         instance.metadata._get_child_map.return_value = {'users': ['sessions', 'transactions']}
@@ -211,7 +211,7 @@ class TestBaseHierarchicalSampler():
 
         # Run
         result = {}
-        BaseHierarchicalSampler._sample_table(instance, 'users', 3/10, result)
+        BaseHierarchicalSampler._sample_table(instance, 'users', 3 / 10, result)
 
         # Assert
         expected_result = {
