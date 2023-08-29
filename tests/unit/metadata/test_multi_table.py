@@ -634,9 +634,18 @@ class TestMultiTableMetadata:
             'transactions': {'sdtype': 'numerical'},
         }
 
+        alternate_child_table = Mock()
+        alternate_child_table.primary_key = 'transaction_id'
+        alternate_child_table.columns = {
+            'user_id': {'sdtype': 'id'},
+            'session_id': {'sdtype': 'id'},
+            'transaction_id': {'sdtype': 'id'},
+        }
+
         instance.tables = {
             'users': parent_table,
             'sessions': child_table,
+            'transactions': alternate_child_table
         }
         instance.relationships = [
             {
@@ -650,6 +659,18 @@ class TestMultiTableMetadata:
                 'child_table_name': 'sessions',
                 'parent_primary_key': 'id',
                 'child_foreign_key': 'alternate_id',
+            },
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'transactions',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'user_id',
+            },
+            {
+                'parent_table_name': 'sessions',
+                'child_table_name': 'transactions',
+                'parent_primary_key': 'session_id',
+                'child_foreign_key': 'session_id',
             }
         ]
 
@@ -657,7 +678,20 @@ class TestMultiTableMetadata:
         instance.remove_relationship('users', 'sessions')
 
         # Assert
-        instance.relationships == []
+        assert instance.relationships == [
+            {
+                'parent_table_name': 'users',
+                'child_table_name': 'transactions',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'user_id',
+            },
+            {
+                'parent_table_name': 'sessions',
+                'child_table_name': 'transactions',
+                'parent_primary_key': 'session_id',
+                'child_foreign_key': 'session_id',
+            }
+        ]
 
     @patch('sdv.metadata.multi_table.warnings')
     def test_remove_relationship_relationship_not_found(self, warnings_mock):
@@ -906,6 +940,27 @@ class TestMultiTableMetadata:
         err_msg = re.escape(
             "The relationships in the dataset are disjointed. Tables ['accounts', 'branches'] "
             'are not connected to any of the other tables.'
+        )
+        with pytest.raises(InvalidMetadataError, match=err_msg):
+            MultiTableMetadata._validate_all_tables_connected(instance, parent_map, child_map)
+
+    def test__validate_all_tables_connected_no_connections(self):
+        """Test ``_validate_all_tables_connected`` when no tables are connected."""
+        # Setup
+        instance = Mock()
+        instance.tables = {
+            'users': Mock(),
+            'sessions': Mock(),
+            'transactions': Mock()
+        }
+
+        parent_map = defaultdict(set)
+        child_map = defaultdict(set)
+
+        # Run
+        err_msg = re.escape(
+            "The relationships in the dataset are disjointed. Tables ['users', 'sessions', "
+            "'transactions'] are not connected to any of the other tables."
         )
         with pytest.raises(InvalidMetadataError, match=err_msg):
             MultiTableMetadata._validate_all_tables_connected(instance, parent_map, child_map)
@@ -1877,7 +1932,7 @@ class TestMultiTableMetadata:
         assert instance.tables['sessions'].columns['user_id']['sdtype'] == 'id'
 
     @patch('sdv.metadata.multi_table.warnings')
-    def test__detect_relationships_missing_warning(self, warnings_mock):
+    def test__detect_relationships_disconnected_warning(self, warnings_mock):
         """Test that ``_detect_relationships`` warns about tables it could not connect."""
         # Setup
         parent_table = Mock()

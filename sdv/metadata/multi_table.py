@@ -384,24 +384,16 @@ class MultiTableMetadata:
         if len(nodes) == 1:
             return
 
-        queue = [nodes[0]]
-        explored = set()
+        parent_nodes = list(parent_map.keys())
+        queue = [parent_nodes[0]] if parent_map else []
         connected = {table_name: False for table_name in nodes}
 
         while queue:
             node = queue.pop()
-            explored.add(node)
-            children = list(child_map[node]) + list(parent_map[node])
-            if children:
-                connected[node] = True
-                for child in children:
-                    if not connected[child] and child not in queue:
-                        queue.append(child)
-            elif not queue:  # This was an orphan node, pick a new eligible node
-                for eligible_node in nodes:
-                    if eligible_node not in explored:
-                        queue.append(eligible_node)
-                        break
+            connected[node] = True
+            for child in list(child_map[node]) + list(parent_map[node]):
+                if not connected[child] and child not in queue:
+                    queue.append(child)
 
         if not all(connected.values()):
             disconnected_tables = [table for table, value in connected.items() if not value]
