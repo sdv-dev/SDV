@@ -725,14 +725,14 @@ class TestHMASynthesizer:
         data = {'grandparent': grandparent, 'parent': parent, 'child': child}
         metadata = MultiTableMetadata.load_from_dict({
             'tables': {
-                'A': {
+                'grandparent': {
                     'primary_key': 'grandparent_ID',
                     'columns': {
                         'grandparent_ID': {'sdtype': 'id'},
                         'data': {'sdtype': 'categorical'}
                     }
                 },
-                'B': {
+                'parent': {
                     'primary_key': 'parent_ID',
                     'columns': {
                         'parent_ID': {'sdtype': 'id'},
@@ -740,7 +740,7 @@ class TestHMASynthesizer:
                         'data': {'sdtype': 'categorical'}
                     }
                 },
-                'C': {
+                'child': {
                     'primary_key': 'child_ID',
                     'columns': {
                         'child_ID': {'sdtype': 'id'},
