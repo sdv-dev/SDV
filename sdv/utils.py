@@ -1,5 +1,6 @@
 """Miscellaneous utility functions."""
 from collections.abc import Iterable
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -71,6 +72,8 @@ def get_datetime_format(value):
 
 def is_datetime_type(value):
     """Determine if the input is a datetime type or not.
+
+    Note: dates before the year 1677 will not be detected as datetime.
 
     Args:
         value (pandas.DataFrame, int, str or datetime):
