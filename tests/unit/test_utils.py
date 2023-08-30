@@ -187,26 +187,6 @@ def test_is_datetime_type_with_invalid_str():
     assert is_datetime is False
 
 
-def test_is_datetime_type_with_string():
-    """Test the ``is_datetime_type`` function when a string is passed.
-
-    Expect to return False when a string variable is passed.
-
-    Input:
-    - string
-    Output:
-    - False
-    """
-    # Setup
-    data = 'test'
-
-    # Run
-    is_datetime = is_datetime_type(data)
-
-    # Assert
-    assert is_datetime is False
-
-
 def test_is_datetime_type_with_int_series():
     """Test the ``is_datetime_type`` function when an int series is passed.
 

@@ -1,6 +1,5 @@
 """Miscellaneous utility functions."""
 from collections.abc import Iterable
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -84,12 +83,7 @@ def is_datetime_type(value):
     if isinstance(value, Iterable) and not isinstance(value, str):
         value = get_first_non_nan_value(value)
 
-    return (
-        pd.api.types.is_datetime64_any_dtype(value)
-        or isinstance(value, pd.Timestamp)
-        or isinstance(value, datetime)
-        or bool(get_datetime_format([value]))
-    )
+    return bool(get_datetime_format([value]))
 
 
 def is_numerical_type(value):
