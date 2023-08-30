@@ -107,6 +107,24 @@ def test_is_datetime_type_with_datetime():
     assert is_datetime
 
 
+def test_is_datetime_type_with_timestamp():
+    """Test the ``is_datetime_type`` function when a Timestamp is passed.
+
+    Expect to return True when a datetime variable is passed.
+
+    Input:
+    - datetime.Datetime
+    Output:
+    - True
+    """
+    # Setup
+    data = pd.Timestamp('01-01-01 00:00:01')
+    is_datetime = is_datetime_type(data)
+
+    # Assert
+    assert is_datetime
+
+
 def test_is_datetime_type_with_pandas_datetime():
     """Test the ``is_datetime_type`` function when a pandas.datetime is passed.
 
