@@ -180,7 +180,7 @@ def test_detect_from_dataframes():
             'guests': {
                 'columns': {
                     'guest_email': {'sdtype': 'id'},
-                    'hotel_id': {'sdtype': 'categorical'},
+                    'hotel_id': {'sdtype': 'id'},
                     'has_rewards': {'sdtype': 'categorical'},
                     'room_type': {'sdtype': 'categorical'},
                     'amenities_fee': {'sdtype': 'numerical'},
@@ -193,7 +193,14 @@ def test_detect_from_dataframes():
                 'primary_key': 'guest_email'
             }
         },
-        'relationships': [],
+        'relationships': [
+            {
+                'parent_table_name': 'hotels',
+                'child_table_name': 'guests',
+                'parent_primary_key': 'hotel_id',
+                'child_foreign_key': 'hotel_id'
+            }
+        ],
         'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
     }
 
@@ -249,7 +256,7 @@ def test_detect_from_csvs(tmp_path):
             'guests': {
                 'columns': {
                     'guest_email': {'sdtype': 'id'},
-                    'hotel_id': {'sdtype': 'categorical'},
+                    'hotel_id': {'sdtype': 'id'},
                     'has_rewards': {'sdtype': 'categorical'},
                     'room_type': {'sdtype': 'categorical'},
                     'amenities_fee': {'sdtype': 'numerical'},
@@ -262,7 +269,14 @@ def test_detect_from_csvs(tmp_path):
                 'primary_key': 'guest_email'
             }
         },
-        'relationships': [],
+        'relationships': [
+            {
+                'parent_table_name': 'hotels',
+                'child_table_name': 'guests',
+                'parent_primary_key': 'hotel_id',
+                'child_foreign_key': 'hotel_id'
+            }
+        ],
         'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
     }
 
