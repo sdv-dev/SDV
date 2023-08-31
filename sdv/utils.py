@@ -1,5 +1,6 @@
 """Miscellaneous utility functions."""
 from collections.abc import Iterable
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -72,20 +73,34 @@ def get_datetime_format(value):
 def is_datetime_type(value):
     """Determine if the input is a datetime type or not.
 
-    Note: dates before the year 1677 will not be detected as datetime.
+    If a ``pandas.Series`` or ``list`` is passed, it will return ``True`` if all the values
+    are datetime. Otherwise, it will check if the value is a datetime.
+
+    Note: it will return ``False`` if ``value`` is a string representing
+    a date before the year 1677.
 
     Args:
-        value (pandas.DataFrame, int, str or datetime):
+        value (array-like iterable, int, str or datetime):
             Input to evaluate.
 
     Returns:
         bool:
             True if the input is a datetime type, False if not.
     """
-    if isinstance(value, Iterable) and not isinstance(value, str):
-        value = get_first_non_nan_value(value)
+    if isinstance(value, str) or (not isinstance(value, Iterable)):
+        value = cast_to_iterable(value)
 
-    return bool(get_datetime_format([value]))
+    value = pd.Series(value)
+    value = value[~value.isna()]
+    for item in value:
+        if not (
+            bool(get_datetime_format([item]))
+            or isinstance(item, pd.Timestamp)
+            or isinstance(item, datetime)
+        ):
+            return False
+
+    return True
 
 
 def is_numerical_type(value):

@@ -1705,7 +1705,7 @@ class TestSingleTableMetadata:
         # Setup
         data = pd.DataFrame({
             'date1': ['10', True, 'b', 'bla', None],
-            'date2': ['2021-10-10', '05-10-2021', pd.Timestamp(1), datetime(1800, 1, 1), '2020-1-33'],
+            'date2': ['2021-10-10', '05-10-2021', pd.Timestamp(1), datetime(1, 1, 1), '2020-1-33'],
             'bool1': ['a', 0, '10', True, 'b'],
             'bool2': ['True', False, np.nan, float('nan'), None],
             'num1': ['a', 0, '10', True, False],

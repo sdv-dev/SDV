@@ -87,6 +87,43 @@ def test_is_datetime_type_with_datetime_series():
     assert is_datetime
 
 
+def test_is_datetime_type_with_mixed_array():
+    """Test the ``is_datetime_type`` function with a list of mixed datetime types."""
+    # Setup
+    data = [
+        pd.to_datetime('2020-01-01'),
+        '1890-03-05',
+        pd.Timestamp('01-01 00:00:01'),
+        datetime(2020, 1, 1),
+        np.nan
+    ]
+
+    # Run
+    is_datetime = is_datetime_type(data)
+
+    # Assert
+    assert is_datetime
+
+
+def test_is_datetime_type_with_invalid_strings_in_list():
+    """Test the ``is_datetime_type`` function with a invalid datetime in a list."""
+    # Setup
+    data = [
+        pd.to_datetime('2020-01-01'),
+        '1890-03-05',
+        pd.Timestamp('01-01 00:00:01'),
+        datetime(2020, 1, 1),
+        'invalid',
+        np.nan
+    ]
+
+    # Run
+    is_datetime = is_datetime_type(data)
+
+    # Assert
+    assert is_datetime is False
+
+
 def test_is_datetime_type_with_datetime():
     """Test the ``is_datetime_type`` function when a datetime is passed.
 
@@ -118,7 +155,7 @@ def test_is_datetime_type_with_timestamp():
     - True
     """
     # Setup
-    data = pd.Timestamp('01-01-01 00:00:01')
+    data = pd.Timestamp('01-01 00:00:01')
     is_datetime = is_datetime_type(data)
 
     # Assert
