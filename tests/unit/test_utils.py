@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.utils import (
-    convert_to_timedelta, create_unique_name, get_datetime_format, get_first_non_nan_value,
-    is_datetime_type)
+    convert_to_timedelta, create_unique_name, get_datetime_format, is_datetime_type)
 from tests.utils import SeriesMatcher
 
 
@@ -260,18 +259,6 @@ def test_is_datetime_type_with_int_series():
 
     # Assert
     assert is_datetime is False
-
-
-def test_get_first_non_nan_value():
-    """Test that ``get_first_non_nan_value`` returns the first valid value."""
-    # Setup
-    data = [np.nan, None, '2021-02-01']
-
-    # Run
-    result = get_first_non_nan_value(data)
-
-    # Assert
-    assert result == '2021-02-01'
 
 
 def test_create_unique_name():
