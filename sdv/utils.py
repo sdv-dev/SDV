@@ -15,38 +15,6 @@ def cast_to_iterable(value):
     return [value]
 
 
-def get_first_non_nan_value(input_value):
-    """Return the first not ``nan`` value when possible.
-
-    Convert to ``pandas.Series`` if the ``input_value`` is not already. This helps to detect
-    easier the ``nan`` values. We filter the values that are ``nans`` since pandas does not
-    detect them properly in their ``_guess_datetime_format_for_array``. Also there is a bug in
-    ``pandas`` that does not support ``numpy.str_`` data type, that is why we use
-    ``pandas.Series`` and convert the data type to ``string`` and then to ``numpy.ndarray``.
-
-    Args:
-       input_value (pandas.Series, np.ndarray, list, or str):
-            Input to return the first non ``nan`` value.
-
-    Returns:
-        str or ``nan``:
-            Returns either the first valid value or ``nan``.
-    """
-    value = input_value
-    if not isinstance(value, pd.Series):
-        value = pd.Series(input_value)
-
-    value = value[~value.isna()]
-    value = value.astype(str).to_numpy()
-    if len(value):
-        return value[0]
-
-    if isinstance(input_value, Iterable) and not isinstance(input_value, str):
-        return input_value[0]
-
-    return input_value
-
-
 def get_datetime_format(value):
     """Get the ``strftime`` format for a given ``value``.
 
@@ -73,23 +41,35 @@ def get_datetime_format(value):
 def is_datetime_type(value):
     """Determine if the input is a datetime type or not.
 
+    If a ``pandas.Series`` or ``list`` is passed, it will return ``True`` if the first
+    thousand values are datetime. Otherwise, it will check if the value is a datetime.
+
+    Note: it will return ``False`` if ``value`` is a string representing
+    a date before the year 1677.
+
     Args:
-        value (pandas.DataFrame, int, str or datetime):
+        value (array-like iterable, int, str or datetime):
             Input to evaluate.
 
     Returns:
         bool:
             True if the input is a datetime type, False if not.
     """
-    if isinstance(value, Iterable) and not isinstance(value, str):
-        value = get_first_non_nan_value(value)
+    if isinstance(value, str) or (not isinstance(value, Iterable)):
+        value = cast_to_iterable(value)
 
-    return (
-        pd.api.types.is_datetime64_any_dtype(value)
-        or isinstance(value, pd.Timestamp)
-        or isinstance(value, datetime)
-        or bool(get_datetime_format([value]))
-    )
+    values = pd.Series(value)
+    values = values[~values.isna()]
+    values = values.head(1000)  # only check 1000 values so this method takes less than 1 second
+    for value in values:
+        if not (
+            bool(get_datetime_format([value]))
+            or isinstance(value, pd.Timestamp)
+            or isinstance(value, datetime)
+        ):
+            return False
+
+    return True
 
 
 def is_numerical_type(value):
