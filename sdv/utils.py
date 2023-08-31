@@ -41,8 +41,8 @@ def get_datetime_format(value):
 def is_datetime_type(value):
     """Determine if the input is a datetime type or not.
 
-    If a ``pandas.Series`` or ``list`` is passed, it will return ``True`` if all the values
-    are datetime. Otherwise, it will check if the value is a datetime.
+    If a ``pandas.Series`` or ``list`` is passed, it will return ``True`` if the first
+    thousand values are datetime. Otherwise, it will check if the value is a datetime.
 
     Note: it will return ``False`` if ``value`` is a string representing
     a date before the year 1677.
@@ -58,13 +58,14 @@ def is_datetime_type(value):
     if isinstance(value, str) or (not isinstance(value, Iterable)):
         value = cast_to_iterable(value)
 
-    value = pd.Series(value)
-    value = value[~value.isna()]
-    for item in value:
+    values = pd.Series(value)
+    values = values[~values.isna()]
+    values = values.head(1000)  # only check 1000 values so this method takes less than 1 second
+    for value in values:
         if not (
-            bool(get_datetime_format([item]))
-            or isinstance(item, pd.Timestamp)
-            or isinstance(item, datetime)
+            bool(get_datetime_format([value]))
+            or isinstance(value, pd.Timestamp)
+            or isinstance(value, datetime)
         ):
             return False
 
