@@ -93,7 +93,7 @@ def test_is_datetime_type_with_mixed_array():
     data = [
         pd.to_datetime('2020-01-01'),
         '1890-03-05',
-        pd.Timestamp('01-01 01:00:00'),
+        pd.Timestamp('01-01'),
         datetime(2020, 1, 1),
         np.nan
     ]
@@ -111,7 +111,7 @@ def test_is_datetime_type_with_invalid_strings_in_list():
     data = [
         pd.to_datetime('2020-01-01'),
         '1890-03-05',
-        pd.Timestamp('01-01 01:00:00'),
+        pd.Timestamp('01-01-01'),
         datetime(2020, 1, 1),
         'invalid',
         np.nan
@@ -155,7 +155,7 @@ def test_is_datetime_type_with_timestamp():
     - True
     """
     # Setup
-    data = pd.Timestamp('01-01 01:00:00')
+    data = pd.Timestamp('01-01')
     is_datetime = is_datetime_type(data)
 
     # Assert
