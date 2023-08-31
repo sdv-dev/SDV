@@ -142,8 +142,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
                 Dict mapping column names to transformers to be used for that column.
         """
         for column, transformer in column_name_to_transformer.items():
-            sdtype = self.metadata.columns[column]['sdtype']
-            if sdtype == 'categorical' and isinstance(transformer, OneHotEncoder):
+            if isinstance(transformer, OneHotEncoder):
                 warnings.warn(
                     f"Using a OneHotEncoder transformer for column '{column}' "
                     'may slow down the preprocessing and modeling times.'
