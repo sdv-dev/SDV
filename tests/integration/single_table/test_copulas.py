@@ -3,7 +3,7 @@ from uuid import UUID
 import pandas as pd
 import pytest
 from rdt.transformers import (
-    AnonymizedFaker, CustomLabelEncoder, FloatFormatter, PseudoAnonymizedFaker)
+    AnonymizedFaker, CustomLabelEncoder, FloatFormatter, LabelEncoder, PseudoAnonymizedFaker)
 
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError
@@ -137,6 +137,7 @@ def test_adding_constraints(tmp_path):
         * Use an ``Inequality`` constraint.
         * Load custom constraint class from a file.
         * Add a custom constraint class to the model.
+        * Update the transformer for the custom constraint column
         * Validate that the custom constraint was applied properly.
         * Save, load and sample from the model storing both custom and pre-defined constraints.
     """
@@ -181,12 +182,18 @@ def test_adding_constraints(tmp_path):
     synthesizer.add_constraints([rewards_member_no_fee])
 
     # Re-Fit the model
+    synthesizer.preprocess(real_data)
+    synthesizer.update_transformers({
+        'checkin_date#checkout_date.nan_component': LabelEncoder()
+    })
     synthesizer.fit(real_data)
     synthetic_data_custom_constraint = synthesizer.sample(500)
 
     # Assert
     validation = synthetic_data_custom_constraint[synthetic_data_custom_constraint['has_rewards']]
     assert validation['amenities_fee'].sum() == 0.0
+    assert isinstance(synthesizer.get_transformers()['checkin_date#checkout_date.nan_component'],
+                      LabelEncoder)
 
     # Save and Load
     model_path = tmp_path / 'synthesizer.pkl'
