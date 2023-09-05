@@ -113,7 +113,7 @@ class BaseHierarchicalSampler():
                 sampled_data[child_name] = pd.concat(
                     [previous, sampled_rows]).reset_index(drop=True)
 
-    def _sample_table(self, table_name, scale, sampled_data):
+    def _sample_table(self, table_name, sampled_data):
         """Recursively sample every table.
 
         Sample top level tables first, then their children, and so on.
@@ -121,30 +121,16 @@ class BaseHierarchicalSampler():
         Args:
             table_name (string):
                 Name of the table to sample.
-            scale (float):
-                A float representing how much to scale the data by. If scale is set to ``1.0``,
-                this does not scale the sizes of the tables. If ``scale`` is greater than ``1.0``
-                create more rows than the original data by a factor of ``scale``.
-                If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
-                than the original tables.
             sampled_data (dict):
                 A dictionary mapping table names to sampled tables (pd.DataFrame).
         """
         for parent_name in self.metadata._get_parent_map()[table_name]:
             if parent_name not in sampled_data:
-                self._sample_table(table_name=parent_name, scale=scale, sampled_data=sampled_data)
+                self._sample_table(table_name=parent_name, sampled_data=sampled_data)
                 return  # Optimization to avoid iterating through the same nodes multiple times
 
-        if table_name not in sampled_data:
-            num_rows = int(self._table_sizes[table_name] * scale)
-            synthesizer = self._table_synthesizers[table_name]
-
-            LOGGER.info(f'Sampling {num_rows} rows from table {table_name}')
-            table_rows = self._sample_rows(synthesizer, num_rows)
-            sampled_data[table_name] = table_rows
-
         for child_name in self.metadata._get_child_map()[table_name]:
-            if child_name not in sampled_data:
+            if child_name not in sampled_data:  # Sample based on only 1 parent
                 for _, row in sampled_data[table_name].iterrows():
                     self._add_child_rows(
                         child_name=child_name,
@@ -152,9 +138,7 @@ class BaseHierarchicalSampler():
                         parent_row=row,
                         sampled_data=sampled_data
                     )
-
-                num_rows = int(self._table_sizes[child_name] * scale)
-                self._sample_table(table_name=child_name, scale=scale, sampled_data=sampled_data)
+                self._sample_table(table_name=child_name, sampled_data=sampled_data)
 
     def _finalize(self, sampled_data):
         """Remove extra columns from sampled tables and apply finishing touches.
@@ -202,8 +186,19 @@ class BaseHierarchicalSampler():
                 sampled data tables as ``pandas.DataFrame``.
         """
         sampled_data = {}
-        starting_table = list(self.metadata.tables.keys())[0]  # Start at any table
-        self._sample_table(table_name=starting_table, scale=scale, sampled_data=sampled_data)
+
+        # Sample root tables
+        non_root_parents = set(self.metadata._get_parent_map().keys())
+        root_parents = set(self.metadata.tables.keys()) - non_root_parents
+        for table in root_parents:
+            num_rows = int(self._table_sizes[table] * scale)
+            synthesizer = self._table_synthesizers[table]
+            LOGGER.info(f'Sampling {num_rows} rows from table {table}')
+            sampled_data[table] = self._sample_rows(synthesizer, num_rows)
+
+        # Sample rest of the graph
+        starting_table = root_parents.pop()  # Start at any root table
+        self._sample_table(table_name=starting_table, sampled_data=sampled_data)
 
         added_relationships = set()
         for relationship in self.metadata.relationships:

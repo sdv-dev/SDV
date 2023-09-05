@@ -180,8 +180,10 @@ class TestBaseHierarchicalSampler():
     def test__sample_table(self):
         """Test sampling a table.
 
-        The ``sample_table`` method will call sample children and return the sampled data
+        The ``_sample_table`` method will call sample children and return the sampled data
         dictionary.
+
+        ``_sample_table`` does not sample the root parents of a graph, only the children.
         """
         # Setup
         def sample_children(table_name, sampled_data, table_rows):
@@ -208,15 +210,16 @@ class TestBaseHierarchicalSampler():
         })
 
         # Run
-        result = {}
-        BaseHierarchicalSampler._sample_table(instance, 'users', 3 / 10, result)
+        result = {'users': pd.DataFrame()}
+        BaseHierarchicalSampler._sample_table(
+            self=instance,
+            table_name='users',
+            sampled_data=result
+        )
 
         # Assert
         expected_result = {
-            'users': pd.DataFrame({
-                'user_id': [1, 2, 3],
-                'name': ['John', 'Doe', 'Johanna'],
-            }),
+            'users': pd.DataFrame(),
             'sessions': pd.DataFrame({
                 'user_id': [1, 1, 3],
                 'session_id': ['a', 'b', 'c'],
@@ -322,7 +325,7 @@ class TestBaseHierarchicalSampler():
             'transactions': pd.DataFrame(dtype='Int64')
         }
 
-        def _sample_table(table_name, scale, sampled_data):
+        def _sample_table(table_name, sampled_data):
             sampled_data['users'] = expected_sample['users']
             sampled_data['sessions'] = expected_sample['sessions']
             sampled_data['transactions'] = expected_sample['transactions']
@@ -360,7 +363,6 @@ class TestBaseHierarchicalSampler():
         # Assert
         assert result == instance._finalize.return_value
         instance._sample_table.assert_called_once_with(table_name='users',
-                                                       scale=1,
                                                        sampled_data=expected_sample)
         instance._add_foreign_key_columns.assert_called_once_with(
             DataFrameMatcher(expected_sample['sessions']),

@@ -34,8 +34,8 @@ class TestHMASynthesizer:
         increased_sample = hmasynthesizer.sample(1.5)
 
         # Assert
-        assert list(normal_sample) == ['characters', 'character_families', 'families']
-        assert list(increased_sample) == ['characters', 'character_families', 'families']
+        assert set(normal_sample) == {'characters', 'character_families', 'families'}
+        assert set(increased_sample) == {'characters', 'character_families', 'families'}
         for table_name, table in normal_sample.items():
             assert all(table.columns == data[table_name].columns)
 
