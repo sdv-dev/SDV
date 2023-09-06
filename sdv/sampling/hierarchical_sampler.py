@@ -142,8 +142,7 @@ class BaseHierarchicalSampler():
     def _finalize(self, sampled_data):
         """Remove extra columns from sampled tables and apply finishing touches.
 
-        This method reverts the previous transformations to go back
-        to values in the original space.
+        Converts data to original dtypes and drop extra columns and nans.
 
         Args:
             sampled_data (dict):
