@@ -68,7 +68,7 @@ class BaseHierarchicalSampler():
                 Sampled rows, shape (, num_rows)
         """
         num_rows = num_rows or synthesizer._num_rows
-        return synthesizer._sample_batch(int(num_rows), keep_extra_columns=True)
+        return synthesizer._sample_batch(num_rows, keep_extra_columns=True)
 
     def _get_num_rows_from_parent(self, parent_row, child_name, foreign_key):
         """Get the number of rows to sample for the child from the parent row."""
