@@ -100,19 +100,17 @@ class BaseHierarchicalSampler():
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         num_rows = self._get_num_rows_from_parent(parent_row, child_name, foreign_key)
         child_synthesizer = self._recreate_child_synthesizer(child_name, parent_name, parent_row)
-
         sampled_rows = self._sample_rows(child_synthesizer, num_rows)
 
-        if len(sampled_rows):
-            parent_key = self.metadata.tables[parent_name].primary_key
-            sampled_rows[foreign_key] = parent_row[parent_key]
+        parent_key = self.metadata.tables[parent_name].primary_key
+        sampled_rows[foreign_key] = parent_row[parent_key]
 
-            previous = sampled_data.get(child_name)
-            if previous is None:
-                sampled_data[child_name] = sampled_rows
-            else:
-                sampled_data[child_name] = pd.concat(
-                    [previous, sampled_rows]).reset_index(drop=True)
+        previous = sampled_data.get(child_name)
+        if previous is None:
+            sampled_data[child_name] = sampled_rows
+        else:
+            sampled_data[child_name] = pd.concat(
+                [previous, sampled_rows]).reset_index(drop=True)
 
     def _sample_table(self, table_name, sampled_data):
         """Recursively sample every table.
