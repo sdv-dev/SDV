@@ -121,6 +121,53 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
             table_data[column] = table_data[column].fillna(fill_value)
 
+    def _pop_foreign_keys(self, table_data, table_name):
+        """Remove foreign keys from the ``table_data``.
+
+        Args:
+            table_data (pd.DataFrame):
+                The table that contains the ``foreign_keys``.
+            table_name (str):
+                The name representing the table.
+
+        Returns:
+            keys (dict):
+                A dictionary mapping with the foreign key and it's values within the table.
+        """
+        foreign_keys = self.metadata._get_all_foreign_keys(table_name)
+        keys = {}
+        for fk in foreign_keys:
+            keys[fk] = table_data.pop(fk).to_numpy()
+
+        return keys
+
+    def _model_tables(self, augmented_data):
+        """Model the augmented tables.
+
+        Args:
+            augmented_data (dict):
+                Dictionary mapping each table name to an augmented ``pandas.DataFrame``.
+        """
+        parent_map = self.metadata._get_parent_map()
+        augmented_data_to_model = [
+            (table_name, table)
+            for table_name, table in augmented_data.items()
+            if table_name not in parent_map
+        ]
+        self._print(text='\n', end='')
+        pbar_args = self._get_pbar_args(desc='Modeling Tables')
+        for table_name, table in tqdm(augmented_data_to_model, **pbar_args):
+            keys = self._pop_foreign_keys(table, table_name)
+            self._clear_nans(table)
+            LOGGER.info('Fitting %s for table %s; shape: %s', self._synthesizer.__name__,
+                        table_name, table.shape)
+
+            if not table.empty:
+                self._table_synthesizers[table_name].fit_processed_data(table)
+
+            for name, values in keys.items():
+                table[name] = values
+
     def _augment_table(self, table, tables, table_name):
         """Recursively generate the extension columns for the tables in the graph.
 
@@ -172,53 +219,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         self._augmented_tables.append(table_name)
         self._clear_nans(table)
         return table
-
-    def _pop_foreign_keys(self, table_data, table_name):
-        """Remove foreign keys from the ``table_data``.
-
-        Args:
-            table_data (pd.DataFrame):
-                The table that contains the ``foreign_keys``.
-            table_name (str):
-                The name representing the table.
-
-        Returns:
-            keys (dict):
-                A dictionary mapping with the foreign key and it's values within the table.
-        """
-        foreign_keys = self.metadata._get_all_foreign_keys(table_name)
-        keys = {}
-        for fk in foreign_keys:
-            keys[fk] = table_data.pop(fk).to_numpy()
-
-        return keys
-
-    def _model_tables(self, augmented_data):
-        """Model the augmented tables.
-
-        Args:
-            augmented_data (dict):
-                Dictionary mapping each table name to an augmented ``pandas.DataFrame``.
-        """
-        parent_map = self.metadata._get_parent_map()
-        augmented_data_to_model = [
-            (table_name, table)
-            for table_name, table in augmented_data.items()
-            if table_name not in parent_map
-        ]
-        self._print(text='\n', end='')
-        pbar_args = self._get_pbar_args(desc='Modeling Tables')
-        for table_name, table in tqdm(augmented_data_to_model, **pbar_args):
-            keys = self._pop_foreign_keys(table, table_name)
-            self._clear_nans(table)
-            LOGGER.info('Fitting %s for table %s; shape: %s', self._synthesizer.__name__,
-                        table_name, table.shape)
-
-            if not table.empty:
-                self._table_synthesizers[table_name].fit_processed_data(table)
-
-            for name, values in keys.items():
-                table[name] = values
 
     def _augment_tables(self, processed_data):
         """Fit this ``HMASynthesizer`` instance to the dataset data.
