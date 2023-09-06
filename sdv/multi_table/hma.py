@@ -261,7 +261,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             num_rows = flat_parameters[num_rows_key]
             flat_parameters[num_rows_key] = min(
                 self._max_child_rows[num_rows_key],
-                math.ceil(num_rows)
+                round(num_rows)
             )
 
         return flat_parameters.rename(new_keys).to_dict()
@@ -377,7 +377,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             pandas.Series:
                 The parent ids for the given table data.
         """
-        # Create a copy of the parent table with the primary key as index to calculate likilihoods
+        # Create a copy of the parent table with the primary key as index to calculate likelihoods
         primary_key = self.metadata.tables[parent_name].primary_key
         parent_table = parent_table.set_index(primary_key)
         num_rows = parent_table[f'__{child_name}__{foreign_key}__num_rows'].fillna(0).clip(0)
