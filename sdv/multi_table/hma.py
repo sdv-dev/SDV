@@ -1,7 +1,6 @@
 """Hierarchical Modeling Algorithms."""
 
 import logging
-import math
 from copy import deepcopy
 
 import numpy as np
@@ -183,10 +182,10 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         augmented_data = deepcopy(processed_data)
         self._augmented_tables = []
         self._learned_relationships = 0
-        parent_map = self.metadata._get_parent_map()
+        child_map = self.metadata._get_child_map()
         self._print(text='Learning relationships:')
         for table_name in processed_data:
-            if not parent_map.get(table_name):
+            if not child_map.get(table_name):
                 self._augment_table(augmented_data[table_name], augmented_data, table_name)
 
         LOGGER.info('Augmentation Complete')
