@@ -96,6 +96,7 @@ class BaseHierarchicalSampler():
             sampled_data (dict):
                 A dictionary mapping table names to sampled data (pd.DataFrame).
         """
+        # Because HMA only supports one foreign key per child table, only select the first one
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         num_rows = self._get_num_rows_from_parent(parent_row, child_name, foreign_key)
         child_synthesizer = self._recreate_child_synthesizer(child_name, parent_name, parent_row)
