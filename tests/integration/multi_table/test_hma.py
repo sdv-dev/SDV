@@ -705,7 +705,7 @@ class TestHMASynthesizer:
             match = re.search(pattern, captured.out + captured.err)
             assert match is not None
 
-    def test_hma_three_nodes(self):
+    def test_hma_three_linear_nodes(self):
         """Test it works on a simple 'grandparent-parent-child' dataset."""
         # Setup
         grandparent = pd.DataFrame(data={
@@ -762,6 +762,158 @@ class TestHMASynthesizer:
                     'child_table_name': 'child',
                     'child_foreign_key': 'parent_ID'
                 }
+            ]
+        })
+        synthesizer = HMASynthesizer(metadata)
+
+        # Run
+        synthesizer.fit(data)
+        samples = synthesizer.sample(scale=1)
+
+        # Assert tables are the same
+        assert set(samples) == set(data)
+
+        # Assert columns are the same
+        for table_name, table in samples.items():
+            assert set(table.columns) == set(data[table_name].columns)
+
+        # Assert data values all exist in the original tables
+        for table_name, table in samples.items():
+            assert table['data'].isin(data[table_name]['data']).all()
+
+    def test_hma_one_parent_two_children(self):
+        """Test it works on a simple 'child-parent-child' dataset."""
+        # Setup
+        parent = pd.DataFrame(data={
+            'parent_ID': [0, 1, 2, 3, 4],
+            'data': ['0', '1', '2', '3', '4']
+        })
+        child1 = pd.DataFrame(data={
+            'child_ID': ['a', 'b', 'c', 'd', 'e'],
+            'parent_ID': [0, 0, 1, 1, 3],
+            'data': [True, False, False, False, True]
+        })
+        child2 = pd.DataFrame(data={
+            'child_ID': ['00', '01', '02', '03', '04'],
+            'parent_ID': [0, 1, 2, 3, 4],
+            'data': ['Yes', 'Yes', 'Maybe', 'No', 'No']
+        })
+        data = {'parent': parent, 'child1': child1, 'child2': child2}
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'parent': {
+                    'primary_key': 'parent_ID',
+                    'columns': {
+                        'parent_ID': {'sdtype': 'id'},
+                        'data': {'sdtype': 'categorical'}
+                    }
+                },
+                'child1': {
+                    'primary_key': 'child_ID',
+                    'columns': {
+                        'child_ID': {'sdtype': 'id'},
+                        'parent_ID': {'sdtype': 'id'},
+                        'data': {'sdtype': 'categorical'}
+                    }
+                },
+                'child2': {
+                    'primary_key': 'child_ID',
+                    'columns': {
+                        'child_ID': {'sdtype': 'id'},
+                        'parent_ID': {'sdtype': 'id'},
+                        'data': {'sdtype': 'categorical'}
+                    }
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'parent_ID',
+                    'child_table_name': 'child1',
+                    'child_foreign_key': 'parent_ID'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'parent_ID',
+                    'child_table_name': 'child2',
+                    'child_foreign_key': 'parent_ID'
+                },
+            ]
+        })
+        synthesizer = HMASynthesizer(metadata)
+
+        # Run
+        synthesizer.fit(data)
+        samples = synthesizer.sample(scale=1)
+
+        # Assert tables are the same
+        assert set(samples) == set(data)
+
+        # Assert columns are the same
+        for table_name, table in samples.items():
+            assert set(table.columns) == set(data[table_name].columns)
+
+        # Assert data values all exist in the original tables
+        for table_name, table in samples.items():
+            assert table['data'].isin(data[table_name]['data']).all()
+
+    def test_hma_two_parents_one_child(self):
+        """Test it works on a simple 'parent-child-parent' dataset."""
+        # Setup
+        child = pd.DataFrame(data={
+            'child_ID': ['a', 'b', 'c', 'd', 'e'],
+            'parent_ID1': [0, 1, 2, 3, 3],
+            'parent_ID2': [0, 1, 2, 3, 4],
+            'data': ['0', '1', '2', '3', '4']
+        })
+        parent1 = pd.DataFrame(data={
+            'parent_ID1': [0, 1, 2, 3, 4],
+            'data': [True, False, False, False, True]
+        })
+        parent2 = pd.DataFrame(data={
+            'parent_ID2': [0, 1, 2, 3, 4],
+            'data': ['Yes', 'Yes', 'Maybe', 'No', 'No']
+        })
+        data = {'parent1': parent1, 'child': child, 'parent2': parent2}
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'parent1': {
+                    'primary_key': 'parent_ID1',
+                    'columns': {
+                        'parent_ID1': {'sdtype': 'id'},
+                        'data': {'sdtype': 'categorical'}
+                    }
+                },
+                'parent2': {
+                    'primary_key': 'parent_ID2',
+                    'columns': {
+                        'parent_ID2': {'sdtype': 'id'},
+                        'data': {'sdtype': 'categorical'}
+                    }
+                },
+                'child': {
+                    'primary_key': 'child_ID',
+                    'columns': {
+                        'child_ID': {'sdtype': 'id'},
+                        'parent_ID1': {'sdtype': 'id'},
+                        'parent_ID2': {'sdtype': 'id'},
+                        'data': {'sdtype': 'categorical'}
+                    }
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent1',
+                    'parent_primary_key': 'parent_ID1',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'parent_ID1'
+                },
+                {
+                    'parent_table_name': 'parent2',
+                    'parent_primary_key': 'parent_ID2',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'parent_ID2'
+                },
             ]
         })
         synthesizer = HMASynthesizer(metadata)
