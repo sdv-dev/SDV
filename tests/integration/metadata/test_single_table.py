@@ -5,6 +5,7 @@ import re
 
 import pytest
 
+from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
 
@@ -187,3 +188,32 @@ def test_upgrade_metadata(tmp_path):
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
     }
     assert new_metadata == expected_metadata
+
+
+def test_validate_unknown_sdtype():
+    """Test ``validate`` method works with ``unknown`` sdtype."""
+    # Setup
+    data, _ = download_demo(
+        modality='multi_table',
+        dataset_name='fake_hotels'
+    )
+
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data['hotels'])
+
+    # Run
+    metadata.validate()
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'columns': {
+            'hotel_id': {'sdtype': 'id'},
+            'city': {'sdtype': 'unknown', 'pii': True},
+            'state': {'sdtype': 'unknown', 'pii': True},
+            'rating': {'sdtype': 'numerical'},
+            'classification': {'sdtype': 'unknown', 'pii': True}
+        },
+        'primary_key': 'hotel_id'
+    }
+    assert metadata.to_dict() == expected_metadata
