@@ -93,20 +93,6 @@ class BaseMultiTableSynthesizer:
         self._fitted_date = None
         self._fitted_sdv_version = None
 
-    def get_table_parameters(self, table_name):
-        """Return the parameters that will be used to instantiate the table's synthesizer.
-
-        Args:
-            table_name (str):
-                Table name for which the parameters should be retrieved.
-
-        Returns:
-            parameters (dict):
-                A dictionary representing the parameters that will be used to instantiate the
-                table's synthesizer.
-        """
-        return self._table_parameters.get(table_name, {})
-
     def get_parameters(self, table_name):
         """Return the parameters used to instantiate the table's synthesizer.
 
