@@ -122,10 +122,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             table_data[column] = table_data[column].fillna(fill_value)
 
     def _augment_table(self, table, tables, table_name):
-        """Generate the extension columns for this table.
+        """Recursively generate the extension columns for the tables in the graph.
 
         For each of the table's foreign keys, generate the related extension columns,
-        and extend the provided table.
+        and extend the provided table. Generate them first for the top level tables,
+        then their children, and so on.
 
         Args:
             table (pandas.DataFrame):
