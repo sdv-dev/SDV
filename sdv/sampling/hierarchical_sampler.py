@@ -198,17 +198,14 @@ class BaseHierarchicalSampler():
         starting_table = root_parents.pop()  # Start at any root table
         self._sample_table(table_name=starting_table, sampled_data=sampled_data)
 
-        added_relationships = set()
         for relationship in self.metadata.relationships:
             parent_name = relationship['parent_table_name']
             child_name = relationship['child_table_name']
-            if (parent_name, child_name) not in added_relationships:
-                self._add_foreign_key_columns(
-                    sampled_data[child_name],
-                    sampled_data[parent_name],
-                    child_name,
-                    parent_name
-                )
-                added_relationships.add((parent_name, child_name))
+            self._add_foreign_key_columns(
+                sampled_data[child_name],
+                sampled_data[parent_name],
+                child_name,
+                parent_name
+            )
 
         return self._finalize(sampled_data)

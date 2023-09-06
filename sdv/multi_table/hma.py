@@ -149,24 +149,24 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             else:
                 child_table = tables[child_name]
 
-            foreign_keys = self.metadata._get_foreign_keys(table_name, child_name)
-            for foreign_key in foreign_keys:
-                progress_bar_desc = (
-                    f'({self._learned_relationships + 1}/{len(self.metadata.relationships)}) '
-                    f"Tables '{table_name}' and '{child_name}' ('{foreign_key}')"
-                )
-                extension = self._get_extension(
-                    child_name,
-                    child_table.copy(),
-                    foreign_key,
-                    progress_bar_desc
-                )
-                table = table.merge(extension, how='left', right_index=True, left_index=True)
-                num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
-                table[num_rows_key] = table[num_rows_key].fillna(0)
-                self._max_child_rows[num_rows_key] = table[num_rows_key].max()
-                tables[table_name] = table
-                self._learned_relationships += 1
+            # Because HMA only supports one foreign key per child table, only select the first one
+            foreign_key = self.metadata._get_foreign_keys(table_name, child_name)[0]
+            progress_bar_desc = (
+                f'({self._learned_relationships + 1}/{len(self.metadata.relationships)}) '
+                f"Tables '{table_name}' and '{child_name}' ('{foreign_key}')"
+            )
+            extension = self._get_extension(
+                child_name,
+                child_table.copy(),
+                foreign_key,
+                progress_bar_desc
+            )
+            table = table.merge(extension, how='left', right_index=True, left_index=True)
+            num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
+            table[num_rows_key] = table[num_rows_key].fillna(0)
+            self._max_child_rows[num_rows_key] = table[num_rows_key].max()
+            tables[table_name] = table
+            self._learned_relationships += 1
 
         self._augmented_tables.append(table_name)
         self._clear_nans(table)
