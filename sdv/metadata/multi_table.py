@@ -653,7 +653,7 @@ class MultiTableMetadata:
                 If True, every edge is labeled with the column names (eg. purchaser_id -> user_id).
                 Defaults to True.
             output_filepath (str):
-                Full path of where to savve the visualization. If None, the visualization is not
+                Full path of where to save the visualization. If None, the visualization is not
                 saved. Defaults to None.
 
         Returns:
