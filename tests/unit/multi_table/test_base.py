@@ -1046,13 +1046,14 @@ class TestBaseMultiTableSynthesizer:
             }
 
     @patch('sdv.multi_table.base.cloudpickle')
-    def test_save(self, cloudpickle_mock):
+    def test_save(self, cloudpickle_mock, tmp_path):
         """Test that the synthesizer is saved correctly."""
         # Setup
         synthesizer = Mock()
 
         # Run
-        BaseMultiTableSynthesizer.save(synthesizer, 'output.pkl')
+        filepath = tmp_path / 'output.pkl'
+        BaseMultiTableSynthesizer.save(synthesizer, filepath)
 
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
