@@ -1550,13 +1550,14 @@ class TestBaseSingleTableSynthesizer:
         mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
 
     @patch('sdv.single_table.base.cloudpickle')
-    def test_save(self, cloudpickle_mock):
+    def test_save(self, cloudpickle_mock, tmp_path):
         """Test that the synthesizer is saved correctly."""
         # Setup
         synthesizer = Mock()
 
         # Run
-        BaseSingleTableSynthesizer.save(synthesizer, 'output.pkl')
+        filepath = tmp_path / 'output.pkl'
+        BaseSingleTableSynthesizer.save(synthesizer, filepath)
 
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)

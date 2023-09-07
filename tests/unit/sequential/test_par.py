@@ -760,13 +760,14 @@ class TestPARSynthesizer:
             par.sample_sequential_columns(context_columns, 5)
 
     @patch('sdv.single_table.base.cloudpickle')
-    def test_save(self, cloudpickle_mock):
+    def test_save(self, cloudpickle_mock, tmp_path):
         """Test that the synthesizer is saved correctly."""
         # Setup
         synthesizer = Mock()
 
         # Run
-        PARSynthesizer.save(synthesizer, 'output.pkl')
+        filepath = tmp_path / 'output.pkl'
+        PARSynthesizer.save(synthesizer, filepath)
 
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
