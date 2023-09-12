@@ -1,7 +1,6 @@
 """Hierarchical Modeling Algorithms."""
 
 import logging
-import math
 from copy import deepcopy
 
 import numpy as np
@@ -122,10 +121,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             table_data[column] = table_data[column].fillna(fill_value)
 
     def _augment_table(self, table, tables, table_name):
-        """Generate the extension columns for this table.
+        """Recursively generate the extension columns for the tables in the graph.
 
         For each of the table's foreign keys, generate the related extension columns,
-        and extend the provided table.
+        and extend the provided table. Generate them first for the top level tables,
+        then their children, and so on.
 
         Args:
             table (pandas.DataFrame):
@@ -260,12 +260,13 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             num_rows = flat_parameters[num_rows_key]
             flat_parameters[num_rows_key] = min(
                 self._max_child_rows[num_rows_key],
-                math.ceil(num_rows)
+                max(0, round(num_rows))
             )
 
         return flat_parameters.rename(new_keys).to_dict()
 
     def _recreate_child_synthesizer(self, child_name, parent_name, parent_row):
+        # HMA only supports one foreign key for each parent/child pair
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         parameters = self._extract_parameters(parent_row, child_name, foreign_key)
         table_meta = self.metadata.tables[child_name]
@@ -375,7 +376,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             pandas.Series:
                 The parent ids for the given table data.
         """
-        # Create a copy of the parent table with the primary key as index to calculate likilihoods
+        # Create a copy of the parent table with the primary key as index to calculate likelihoods
         primary_key = self.metadata.tables[parent_name].primary_key
         parent_table = parent_table.set_index(primary_key)
         num_rows = parent_table[f'__{child_name}__{foreign_key}__num_rows'].fillna(0).clip(0)
