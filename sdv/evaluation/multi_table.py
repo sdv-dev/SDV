@@ -98,3 +98,30 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, table_name, column
     real_data = real_data[table_name]
     synthetic_data = synthetic_data[table_name]
     return report.get_column_pair_plot(real_data, synthetic_data, column_names, metadata)
+
+
+def get_cardinality_plot(real_data, synthetic_data, child_table_name, parent_table_name,
+                         child_foreign_key, metadata):
+    """Get a plot of the cardinality of the parent-child relationship.
+
+    Args:
+        real_data (dict):
+            The real data.
+        synthetic_data (dict):
+            The synthetic data.
+        child_table_name (string):
+            The name of the child table.
+        parent_table_name (string):
+            The name of the parent table.
+        child_foreign_key (string):
+            The name of the foreign key column in the child table.
+        metadata (MultiTableMetadata):
+            Metadata describing the data
+
+    Returns:
+        plotly.graph_objects._figure.Figure
+    """
+    metadata = metadata.to_dict()
+    return report.get_cardinality_plot(
+        real_data, synthetic_data, child_table_name, parent_table_name,
+        child_foreign_key, metadata)
