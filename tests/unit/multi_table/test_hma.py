@@ -502,11 +502,11 @@ class TestHMASynthesizer:
         """Test the estimated number of columns is exactly the number of columns to be modeled.
 
         The dataset used follows the structure below:
-            R1   R2
-              \ /
-              GP
-              / \
-             P - C
+            R1 R2
+            | /
+            GP
+            | \
+            P-C
         """
         # Setup
         root1 = pd.DataFrame({'R1': [0, 1, 2]})
