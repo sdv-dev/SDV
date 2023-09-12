@@ -1,5 +1,6 @@
 """Hierarchical Samplers."""
 import logging
+import math
 
 import pandas as pd
 
@@ -67,7 +68,7 @@ class BaseHierarchicalSampler():
                 Sampled rows, shape (, num_rows)
         """
         num_rows = num_rows or synthesizer._num_rows
-        return synthesizer._sample_batch(num_rows, keep_extra_columns=True)
+        return synthesizer._sample_batch(int(num_rows), keep_extra_columns=True)
 
     def _get_num_rows_from_parent(self, parent_row, child_name, foreign_key):
         """Get the number of rows to sample for the child from the parent row."""
@@ -77,7 +78,7 @@ class BaseHierarchicalSampler():
             num_rows = parent_row[num_rows_key]
             num_rows = min(
                 self._max_child_rows[num_rows_key],
-                max(0, round(num_rows))
+                math.ceil(num_rows)
             )
 
         return num_rows
@@ -95,7 +96,6 @@ class BaseHierarchicalSampler():
             sampled_data (dict):
                 A dictionary mapping table names to sampled data (pd.DataFrame).
         """
-        # HMA only supports one foreign key for each parent/child pair
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         num_rows = self._get_num_rows_from_parent(parent_row, child_name, foreign_key)
         child_synthesizer = self._recreate_child_synthesizer(child_name, parent_name, parent_row)
@@ -204,7 +204,6 @@ class BaseHierarchicalSampler():
         for relationship in self.metadata.relationships:
             parent_name = relationship['parent_table_name']
             child_name = relationship['child_table_name']
-            # Only one foreign key is allowed for each parent/child pair
             if (parent_name, child_name) not in added_relationships:
                 self._add_foreign_key_columns(
                     sampled_data[child_name],
