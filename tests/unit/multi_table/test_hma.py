@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import get_multi_table_data, get_multi_table_metadata
@@ -496,3 +497,120 @@ class TestHMASynthesizer:
         })
         pd.testing.assert_frame_equal(expected_parent_table, parent_table)
         pd.testing.assert_frame_equal(expected_child_table, child_table)
+
+    def test__estimate_number_of_columns_to_be_modeled(self):
+        """Test the estimated number of columns is exactly the number of columns to be modeled.
+
+        The dataset used follows the structure below:
+            R1   R2
+              \\ /
+              GP
+              / \
+             P - C
+        """
+        # Setup
+        root1 = pd.DataFrame({'R1': [0, 1, 2]})
+        root2 = pd.DataFrame({'R2': [0, 1, 2], 'data': [0, 1, 2]})
+        grandparent = pd.DataFrame({'GP': [0, 1, 2], 'R1': [0, 1, 2], 'R2': [0, 1, 2]})
+        parent = pd.DataFrame({'P': [0, 1, 2], 'GP': [0, 1, 2]})
+        child = pd.DataFrame({'C': [0, 1, 2], 'P': [0, 1, 2], 'GP': [0, 1, 2]})
+        data = {
+            'root1': root1,
+            'root2': root2,
+            'grandparent': grandparent,
+            'parent': parent,
+            'child': child
+        }
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'root1': {
+                    'primary_key': 'R1',
+                    'columns': {
+                        'R1': {'sdtype': 'id'},
+                    }
+                },
+                'root2': {
+                    'primary_key': 'R2',
+                    'columns': {
+                        'R2': {'sdtype': 'id'},
+                        'data': {'sdtype': 'numerical'}
+                    }
+                },
+                'grandparent': {
+                    'primary_key': 'GP',
+                    'columns': {
+                        'GP': {'sdtype': 'id'},
+                        'R1': {'sdtype': 'id'},
+                        'R2': {'sdtype': 'id'},
+                    }
+                },
+                'parent': {
+                    'primary_key': 'P',
+                    'columns': {
+                        'P': {'sdtype': 'id'},
+                        'GP': {'sdtype': 'id'},
+                    }
+                },
+                'child': {
+                    'primary_key': 'C',
+                    'columns': {
+                        'C': {'sdtype': 'id'},
+                        'P': {'sdtype': 'id'},
+                        'GP': {'sdtype': 'id'},
+                    }
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'root1',
+                    'parent_primary_key': 'R1',
+                    'child_table_name': 'grandparent',
+                    'child_foreign_key': 'R1'
+                },
+                {
+                    'parent_table_name': 'root2',
+                    'parent_primary_key': 'R2',
+                    'child_table_name': 'grandparent',
+                    'child_foreign_key': 'R2'
+                },
+                {
+                    'parent_table_name': 'grandparent',
+                    'parent_primary_key': 'GP',
+                    'child_table_name': 'parent',
+                    'child_foreign_key': 'GP'
+                },
+                {
+                    'parent_table_name': 'grandparent',
+                    'parent_primary_key': 'GP',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'GP'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'P',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'P'
+                },
+            ]
+        })
+        synthesizer = HMASynthesizer(metadata)
+        synthesizer._finalize = Mock()
+
+        # Run estimation
+        estimated_num_columns = synthesizer._estimate_number_of_modeled_columns()
+
+        # Run actual modeling
+        synthesizer.fit(data)
+        synthesizer.sample(scale=1)
+
+        # Assert only root table columns are estimated
+        assert set(estimated_num_columns.keys()) == {'root1', 'root2'}
+
+        # Assert estimated number of columns is correct
+        # Notice we need to subtract 1 because the primary key is not modeled
+        tables = synthesizer._finalize.call_args[0][0]
+        num_root1_cols = len(tables['root1'].columns) - 1
+        assert num_root1_cols == estimated_num_columns['root1'] == 40
+
+        num_root2_cols = len(tables['root2'].columns) - 1
+        assert num_root2_cols == estimated_num_columns['root2'] == 41
