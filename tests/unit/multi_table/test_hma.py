@@ -503,7 +503,7 @@ class TestHMASynthesizer:
 
         The dataset used follows the structure below:
             R1   R2
-              \\ /
+              \ /
               GP
               / \
              P - C
