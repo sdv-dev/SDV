@@ -345,8 +345,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         return flat_parameters.rename(new_keys).to_dict()
 
     def _recreate_child_synthesizer(self, child_name, parent_name, parent_row):
-        # When more than one foreign key exists between two tables, only the first one
-        # will be modeled.
+        # When more than one foreign key exists between two tables, only the first one is modeled.
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         parameters = self._extract_parameters(parent_row, child_name, foreign_key)
         table_meta = self.metadata.tables[child_name]

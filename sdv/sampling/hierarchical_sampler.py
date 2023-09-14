@@ -96,8 +96,7 @@ class BaseHierarchicalSampler():
             sampled_data (dict):
                 A dictionary mapping table names to sampled data (pd.DataFrame).
         """
-        # When more than one foreign key exists between two tables, only the first one
-        # will be modeled.
+        # When more than one foreign key exists between two tables, only the first one is modeled.
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         num_rows = self._get_num_rows_from_parent(parent_row, child_name, foreign_key)
         child_synthesizer = self._recreate_child_synthesizer(child_name, parent_name, parent_row)
@@ -207,8 +206,7 @@ class BaseHierarchicalSampler():
             parent_name = relationship['parent_table_name']
             child_name = relationship['child_table_name']
             # When more than one relationship exists between two tables, only the first one
-            # is modeled. This means that every foreign key besides the first one is already
-            # in the table, since they were never removed and were treated as normal data instead.
+            # is modeled, so that's the only one that needs to be added back.
             if (parent_name, child_name) not in added_relationships:
                 self._add_foreign_key_columns(
                     sampled_data[child_name],
