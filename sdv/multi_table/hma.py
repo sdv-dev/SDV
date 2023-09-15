@@ -56,9 +56,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 - 1 column for parameter scale
                 - 1 column for parameter loc
         """
-        # num_rows columns
-        # Since HMA only supports one relationship between two tables, this should always be 1
-        num_cardinality_columns = len(self.metadata._get_foreign_keys(parent_name, table_name))
+        # The `num_rows` column. Because HMA models at most one relationship between
+        # two tables, this is always 1
+        num_cardinality_columns = 1
 
         # no parameter columns are generated if there are no data columns
         num_data_columns = columns_per_table[table_name]
@@ -73,7 +73,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
     def _estimate_columns_traversal(self, table_name, columns_per_table, visited):
         """Given a table, estimate how many columns each parent will model.
 
-        This method recursiverly models the children of a table all the way to the leaf nodes.
+        This method recursively models the children of a table all the way to the leaf nodes.
         """
         for child_name in self.metadata._get_child_map()[table_name]:
             if child_name not in visited:
