@@ -501,6 +501,9 @@ class TestHMASynthesizer:
     def test__estimate_number_of_columns_to_be_modeled(self):
         """Test the estimated number of columns is exactly the number of columns to be modeled.
 
+        To check that the number columns is correct we Mock the ``_finalize`` method
+        and compare its output (minus the primary key) with the estimated number of columns.
+
         The dataset used follows the structure below:
             R1 R2
             | /
@@ -597,7 +600,7 @@ class TestHMASynthesizer:
         synthesizer._finalize = Mock()
 
         # Run estimation
-        estimated_num_columns = synthesizer._estimate_number_of_modeled_columns()
+        estimated_num_columns = synthesizer.estimate_number_of_root_columns()
 
         # Run actual modeling
         synthesizer.fit(data)
@@ -607,10 +610,123 @@ class TestHMASynthesizer:
         assert set(estimated_num_columns.keys()) == {'root1', 'root2'}
 
         # Assert estimated number of columns is correct
-        # Notice we need to subtract 1 because the primary key is not modeled
+        # We need to subract 1 from the sampled data because the primary key is present
         tables = synthesizer._finalize.call_args[0][0]
         num_root1_cols = len(tables['root1'].columns) - 1
         assert num_root1_cols == estimated_num_columns['root1'] == 40
 
         num_root2_cols = len(tables['root2'].columns) - 1
         assert num_root2_cols == estimated_num_columns['root2'] == 41
+
+    def test__estimate_number_of_columns_to_be_modeled_various_sdtypes(self):
+        """Test the estimated number of columns is correct for various sdtypes.
+
+        To check that the number columns is correct we Mock the ``_finalize`` method
+        and compare its output (minus the primary key) with the estimated number of columns.
+
+        The dataset used follows the structure below:
+            R1 R2
+            | /
+            GP
+            |
+            P
+        """
+        # Setup
+        root1 = pd.DataFrame({'R1': [0, 1, 2]})
+        root2 = pd.DataFrame({'R2': [0, 1, 2], 'data': [0, 1, 2]})
+        grandparent = pd.DataFrame({'GP': [0, 1, 2], 'R1': [0, 1, 2], 'R2': [0, 1, 2]})
+        parent = pd.DataFrame({
+            'P': [0, 1, 2],
+            'GP': [0, 1, 2],
+            'numerical': [.1, .5, np.nan],
+            'categorical': ['a', np.nan, 'c'],
+            'datetime': [None, '2019-01-02', '2019-01-03'],
+            'boolean': [float('nan'), False, True],
+            'id': [0, 1, 2],
+            'text': ['a', 'b', 'c']
+        })
+        data = {
+            'root1': root1,
+            'root2': root2,
+            'grandparent': grandparent,
+            'parent': parent,
+        }
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'root1': {
+                    'primary_key': 'R1',
+                    'columns': {
+                        'R1': {'sdtype': 'id'},
+                    }
+                },
+                'root2': {
+                    'primary_key': 'R2',
+                    'columns': {
+                        'R2': {'sdtype': 'id'},
+                        'data': {'sdtype': 'numerical'}
+                    }
+                },
+                'grandparent': {
+                    'primary_key': 'GP',
+                    'columns': {
+                        'GP': {'sdtype': 'id'},
+                        'R1': {'sdtype': 'id'},
+                        'R2': {'sdtype': 'id'},
+                    }
+                },
+                'parent': {
+                    'primary_key': 'P',
+                    'columns': {
+                        'P': {'sdtype': 'id'},
+                        'GP': {'sdtype': 'id'},
+                        'numerical': {'sdtype': 'numerical'},
+                        'categorical': {'sdtype': 'categorical'},
+                        'datetime': {'sdtype': 'datetime'},
+                        'boolean': {'sdtype': 'boolean'},
+                        'text': {'sdtype': 'text'},
+                        'id': {'sdtype': 'id'},
+                    }
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'root1',
+                    'parent_primary_key': 'R1',
+                    'child_table_name': 'grandparent',
+                    'child_foreign_key': 'R1'
+                },
+                {
+                    'parent_table_name': 'root2',
+                    'parent_primary_key': 'R2',
+                    'child_table_name': 'grandparent',
+                    'child_foreign_key': 'R2'
+                },
+                {
+                    'parent_table_name': 'grandparent',
+                    'parent_primary_key': 'GP',
+                    'child_table_name': 'parent',
+                    'child_foreign_key': 'GP'
+                },
+            ]
+        })
+        synthesizer = HMASynthesizer(metadata)
+        synthesizer._finalize = Mock()
+
+        # Run estimation
+        estimated_num_columns = synthesizer.estimate_number_of_root_columns()
+
+        # Run actual modeling
+        synthesizer.fit(data)
+        synthesizer.sample()
+
+        # Assert only root table columns are estimated
+        assert set(estimated_num_columns.keys()) == {'root1', 'root2'}
+
+        # Assert estimated number of columns is correct
+        # We need to subract 1 from the sampled data because the primary key is present
+        tables = synthesizer._finalize.call_args[0][0]
+        num_root1_cols = len(tables['root1'].columns) - 1
+        assert num_root1_cols == estimated_num_columns['root1'] == 346
+
+        num_root2_cols = len(tables['root2'].columns) - 1
+        assert num_root2_cols == estimated_num_columns['root2'] == 347
