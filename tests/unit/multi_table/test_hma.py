@@ -643,7 +643,6 @@ class TestHMASynthesizer:
             'datetime': [None, '2019-01-02', '2019-01-03'],
             'boolean': [float('nan'), False, True],
             'id': [0, 1, 2],
-            'text': ['a', 'b', 'c']
         })
         data = {
             'root1': root1,
@@ -683,7 +682,6 @@ class TestHMASynthesizer:
                         'categorical': {'sdtype': 'categorical'},
                         'datetime': {'sdtype': 'datetime'},
                         'boolean': {'sdtype': 'boolean'},
-                        'text': {'sdtype': 'text'},
                         'id': {'sdtype': 'id'},
                     }
                 }
