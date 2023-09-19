@@ -498,15 +498,148 @@ class TestHMASynthesizer:
         pd.testing.assert_frame_equal(expected_parent_table, parent_table)
         pd.testing.assert_frame_equal(expected_child_table, child_table)
 
-    def test__estimate_number_of_columns_to_be_modeled(self):
+    def test__estimate_num_columns_to_be_modeled_multiple_foreign_keys(self):
+        """Test it when there are two relationships between a parent and a child tables.
+
+        To check that the number columns is correct we Mock the ``_finalize`` method
+        and compare its output with the estimated number of columns.
+        """
+        # Setup
+        parent = pd.DataFrame({'id': [0, 1, 2]})
+        child = pd.DataFrame({
+            'id': [0, 1, 2], 'id1': [0, 1, 2], 'id2': [0, 1, 2], 'col1': [0, 1, 2]})
+        data = {'parent': parent, 'child': child}
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'parent': {
+                    'primary_key': 'id',
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    }
+                },
+                'child': {
+                    'primary_key': 'id',
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                        'id1': {'sdtype': 'id'},
+                        'id2': {'sdtype': 'id'},
+                        'col1': {'sdtype': 'numerical'},
+                    }
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'id1'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'id2'
+                },
+            ]
+        })
+        synthesizer = HMASynthesizer(metadata)
+        synthesizer._finalize = Mock()
+
+        # Run estimation
+        estimated_num_columns = synthesizer._estimate_num_columns()
+
+        # Run actual modeling
+        synthesizer.fit(data)
+        synthesizer.sample()
+
+        # Assert estimated number of columns is correct
+        tables = synthesizer._finalize.call_args[0][0]
+        for table_name, table in tables.items():
+            # Subract all the id columns present in the data, as those are not estimated
+            num_table_cols = len(table.columns)
+            if table_name == 'parent':
+                num_table_cols -= 1
+            if table_name == 'child':
+                num_table_cols -= 3
+
+            assert num_table_cols == estimated_num_columns[table_name]
+
+    def test__estimate_num_columns_to_be_modeled_multiple_foreign_keys2(self):
+        """Test it when there are two relationships between a parent and a child tables.
+
+        To check that the number columns is correct we Mock the ``_finalize`` method
+        and compare its output with the estimated number of columns.
+        """
+        # Setup
+        parent = pd.DataFrame({'id': [0, 1, 2]})
+        child = pd.DataFrame({'id': [0, 1, 2], 'id1': [0, 1, 2],
+                             'id2': [0, 1, 2], 'col1': [0, 1, 2]})
+        data = {'parent': parent, 'child': child}
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'parent': {
+                    'primary_key': 'id',
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    }
+                },
+                'child': {
+                    'primary_key': 'id',
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                        'id1': {'sdtype': 'id'},
+                        'id2': {'sdtype': 'id'},
+                        'col1': {'sdtype': 'numerical'},
+                    }
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'id1'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'id2'
+                },
+            ]
+        })
+        synthesizer = HMASynthesizer(metadata)
+        synthesizer.set_table_parameters(table_name='child', default_distribution='norm')
+        synthesizer._finalize = Mock()
+
+        # Run estimation
+        estimated_num_columns = synthesizer._estimate_num_columns()
+
+        # Run actual modeling
+        synthesizer.fit(data)
+        synthesizer.sample()
+
+        # Assert estimated number of columns is correct
+        tables = synthesizer._finalize.call_args[0][0]
+        for table_name, table in tables.items():
+            # Subract all the id columns present in the data, as those are not estimated
+            num_table_cols = len(table.columns)
+            if table_name == 'parent':
+                num_table_cols -= 1
+            if table_name == 'child':
+                num_table_cols -= 3
+
+            assert num_table_cols == estimated_num_columns[table_name]
+
+    def test__estimate_num_columns_to_be_modeled(self):
         """Test the estimated number of columns is exactly the number of columns to be modeled.
 
         To check that the number columns is correct we Mock the ``_finalize`` method
-        and compare its output (minus the primary key) with the estimated number of columns.
+        and compare its output with the estimated number of columns.
 
         The dataset used follows the structure below:
             R1 R2
-            | /
+            || /
             GP
             | \
             P-C
@@ -514,7 +647,8 @@ class TestHMASynthesizer:
         # Setup
         root1 = pd.DataFrame({'R1': [0, 1, 2]})
         root2 = pd.DataFrame({'R2': [0, 1, 2], 'data': [0, 1, 2]})
-        grandparent = pd.DataFrame({'GP': [0, 1, 2], 'R1': [0, 1, 2], 'R2': [0, 1, 2]})
+        grandparent = pd.DataFrame({
+            'GP': [0, 1, 2], 'R1_1': [0, 1, 2], 'R1_2': [0, 1, 2], 'R2': [0, 1, 2]})
         parent = pd.DataFrame({'P': [0, 1, 2], 'GP': [0, 1, 2]})
         child = pd.DataFrame({'C': [0, 1, 2], 'P': [0, 1, 2], 'GP': [0, 1, 2]})
         data = {
@@ -543,7 +677,8 @@ class TestHMASynthesizer:
                     'primary_key': 'GP',
                     'columns': {
                         'GP': {'sdtype': 'id'},
-                        'R1': {'sdtype': 'id'},
+                        'R1_1': {'sdtype': 'id'},
+                        'R1_2': {'sdtype': 'id'},
                         'R2': {'sdtype': 'id'},
                     }
                 },
@@ -568,7 +703,13 @@ class TestHMASynthesizer:
                     'parent_table_name': 'root1',
                     'parent_primary_key': 'R1',
                     'child_table_name': 'grandparent',
-                    'child_foreign_key': 'R1'
+                    'child_foreign_key': 'R1_1'
+                },
+                {
+                    'parent_table_name': 'root1',
+                    'parent_primary_key': 'R1',
+                    'child_table_name': 'grandparent',
+                    'child_foreign_key': 'R1_2'
                 },
                 {
                     'parent_table_name': 'root2',
@@ -600,29 +741,33 @@ class TestHMASynthesizer:
         synthesizer._finalize = Mock()
 
         # Run estimation
-        estimated_num_columns = synthesizer.estimate_number_of_root_columns()
+        estimated_num_columns = synthesizer._estimate_num_columns()
 
         # Run actual modeling
         synthesizer.fit(data)
         synthesizer.sample(scale=1)
 
-        # Assert only root table columns are estimated
-        assert set(estimated_num_columns.keys()) == {'root1', 'root2'}
-
         # Assert estimated number of columns is correct
-        # We need to subract 1 from the sampled data because the primary key is present
         tables = synthesizer._finalize.call_args[0][0]
-        num_root1_cols = len(tables['root1'].columns) - 1
-        assert num_root1_cols == estimated_num_columns['root1'] == 40
+        for table_name, table in tables.items():
+            # Subract all the id columns present in the data, as those are not estimated
+            num_table_cols = len(table.columns)
+            if table_name == 'child':
+                num_table_cols -= 3
+            if table_name == 'parent':
+                num_table_cols -= 2
+            if table_name == 'grandparent':
+                num_table_cols -= 4
+            if table_name in {'root1', 'root2'}:
+                num_table_cols -= 1
 
-        num_root2_cols = len(tables['root2'].columns) - 1
-        assert num_root2_cols == estimated_num_columns['root2'] == 41
+            assert num_table_cols == estimated_num_columns[table_name]
 
-    def test__estimate_number_of_columns_to_be_modeled_various_sdtypes(self):
+    def test__estimate_num_columns_to_be_modeled_various_sdtypes(self):
         """Test the estimated number of columns is correct for various sdtypes.
 
         To check that the number columns is correct we Mock the ``_finalize`` method
-        and compare its output (minus the primary key) with the estimated number of columns.
+        and compare its output with the estimated number of columns.
 
         The dataset used follows the structure below:
             R1 R2
@@ -711,20 +856,20 @@ class TestHMASynthesizer:
         synthesizer._finalize = Mock()
 
         # Run estimation
-        estimated_num_columns = synthesizer.estimate_number_of_root_columns()
+        estimated_num_columns = synthesizer._estimate_num_columns()
 
         # Run actual modeling
         synthesizer.fit(data)
         synthesizer.sample()
 
-        # Assert only root table columns are estimated
-        assert set(estimated_num_columns.keys()) == {'root1', 'root2'}
-
         # Assert estimated number of columns is correct
-        # We need to subract 1 from the sampled data because the primary key is present
         tables = synthesizer._finalize.call_args[0][0]
-        num_root1_cols = len(tables['root1'].columns) - 1
-        assert num_root1_cols == estimated_num_columns['root1'] == 346
+        for table_name, table in tables.items():
+            # Subract all the id columns present in the data, as those are not estimated
+            num_table_cols = len(table.columns)
+            if table_name in {'parent', 'grandparent'}:
+                num_table_cols -= 3
+            if table_name in {'root1', 'root2'}:
+                num_table_cols -= 1
 
-        num_root2_cols = len(tables['root2'].columns) - 1
-        assert num_root2_cols == estimated_num_columns['root2'] == 347
+            assert num_table_cols == estimated_num_columns[table_name]

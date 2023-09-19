@@ -44,11 +44,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             self._table_synthesizers,
             self._table_sizes)
 
-    def _num_extended_columns(self, table_name, parent_name, columns_per_table):
+    def _get_num_extended_columns(self, table_name, parent_table, columns_per_table):
         """Get the number of columns that will be generated for table_name.
 
-        A table generates:
-            - 1 num_rows column for each for each foreign key with a specific parent
+        A table generates, for each foreign key:
+            - 1 num_rows column
             - n*(n-1)/2 correlation columns for each data column
             - 4 parameters columns for each data column, with:
                 - 1 column for parameter a
@@ -56,19 +56,17 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 - 1 column for parameter scale
                 - 1 column for parameter loc
         """
-        # The `num_rows` column. Because HMA models at most one relationship between
-        # two tables, this is always 1
-        num_cardinality_columns = 1
+        num_rows_columns = len(self.metadata._get_foreign_keys(parent_table, table_name))
 
         # no parameter columns are generated if there are no data columns
         num_data_columns = columns_per_table[table_name]
         if num_data_columns == 0:
-            return num_cardinality_columns
+            return num_rows_columns
 
-        num_correlation_columns = (num_data_columns - 1) * num_data_columns // 2
-        num_parameters_columns = num_data_columns * 4
+        num_correlation_columns = num_rows_columns * (num_data_columns - 1) * num_data_columns // 2
+        num_parameters_columns = num_rows_columns * num_data_columns * 4
 
-        return num_correlation_columns + num_cardinality_columns + num_parameters_columns
+        return num_correlation_columns + num_rows_columns + num_parameters_columns
 
     def _estimate_columns_traversal(self, table_name, columns_per_table, visited):
         """Given a table, estimate how many columns each parent will model.
@@ -80,7 +78,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 self._estimate_columns_traversal(child_name, columns_per_table, visited)
 
             columns_per_table[table_name] += \
-                self._num_extended_columns(child_name, table_name, columns_per_table)
+                self._get_num_extended_columns(child_name, table_name, columns_per_table)
 
         visited.add(table_name)
 
@@ -93,7 +91,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         return columns_per_table
 
-    def estimate_number_of_root_columns(self):
+    def _estimate_num_columns(self):
         """Estimate the number of columns that will be modeled for each root table.
 
         This method estimates how many extended columns will be generated during the
@@ -123,8 +121,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         for table_name in root_parents:
             self._estimate_columns_traversal(table_name, columns_per_table, visited)
 
-        # Select only the root tables
-        return {table_name: columns_per_table[table_name] for table_name in root_parents}
+        return columns_per_table
 
     def _get_extension(self, child_name, child_table, foreign_key, progress_bar_desc):
         """Generate the extension columns for this child table.
@@ -348,7 +345,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         return flat_parameters.rename(new_keys).to_dict()
 
     def _recreate_child_synthesizer(self, child_name, parent_name, parent_row):
-        # When more than one foreign key exists between two tables, only the first one is modeled.
+        # A child table is created based on only one foreign key.
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         parameters = self._extract_parameters(parent_row, child_name, foreign_key)
         table_meta = self.metadata.tables[child_name]
