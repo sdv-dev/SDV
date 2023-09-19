@@ -564,17 +564,40 @@ class TestHMASynthesizer:
 
             assert num_table_cols == estimated_num_columns[table_name]
 
-    def test__estimate_num_columns_to_be_modeled_multiple_foreign_keys2(self):
-        """Test it when there are two relationships between a parent and a child tables.
+    def test__estimate_num_columns_to_be_modeled_different_distributions(self):
+        """Test it when there the default distributions of the tables have been changed.
+
+        The schema will be 1 parent and 5 children, all of which have different distributions,
+        all of which have two foreign keys to the parent table.
 
         To check that the number columns is correct we Mock the ``_finalize`` method
         and compare its output with the estimated number of columns.
         """
         # Setup
         parent = pd.DataFrame({'id': [0, 1, 2]})
-        child = pd.DataFrame({'id': [0, 1, 2], 'id1': [0, 1, 2],
-                             'id2': [0, 1, 2], 'col1': [0, 1, 2]})
-        data = {'parent': parent, 'child': child}
+        child = pd.DataFrame({
+            'id': [0, 1, 2],
+            'id1': [0, 1, 2],
+            'id2': [0, 1, 2],
+            'col': [.2, .3, .2]
+        })
+        data = {
+            'parent': parent,
+            'child_norm': child,
+            'child_beta': child,
+            'child_gamma': child,
+            'child_truncnorm': child,
+            'child_uniform': child
+        }
+        child_dict = {
+            'primary_key': 'id',
+            'columns': {
+                'id': {'sdtype': 'id'},
+                'id1': {'sdtype': 'id'},
+                'id2': {'sdtype': 'id'},
+                'col': {'sdtype': 'numerical'},
+            }
+        }
         metadata = MultiTableMetadata.load_from_dict({
             'tables': {
                 'parent': {
@@ -583,33 +606,92 @@ class TestHMASynthesizer:
                         'id': {'sdtype': 'id'},
                     }
                 },
-                'child': {
-                    'primary_key': 'id',
-                    'columns': {
-                        'id': {'sdtype': 'id'},
-                        'id1': {'sdtype': 'id'},
-                        'id2': {'sdtype': 'id'},
-                        'col1': {'sdtype': 'numerical'},
-                    }
-                },
+                'child_norm': child_dict,
+                'child_beta': child_dict,
+                'child_gamma': child_dict,
+                'child_truncnorm': child_dict,
+                'child_uniform': child_dict,
             },
             'relationships': [
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
-                    'child_table_name': 'child',
+                    'child_table_name': 'child_norm',
                     'child_foreign_key': 'id1'
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
-                    'child_table_name': 'child',
+                    'child_table_name': 'child_norm',
+                    'child_foreign_key': 'id2'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_beta',
+                    'child_foreign_key': 'id1'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_beta',
+                    'child_foreign_key': 'id2'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_truncnorm',
+                    'child_foreign_key': 'id1'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_truncnorm',
+                    'child_foreign_key': 'id2'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_uniform',
+                    'child_foreign_key': 'id1'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_uniform',
+                    'child_foreign_key': 'id2'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_gamma',
+                    'child_foreign_key': 'id1'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_gamma',
                     'child_foreign_key': 'id2'
                 },
             ]
         })
         synthesizer = HMASynthesizer(metadata)
-        synthesizer.set_table_parameters(table_name='child', default_distribution='norm')
+        synthesizer.set_table_parameters(
+            table_name='child_norm',
+            table_parameters={'default_distribution': 'norm'}
+        )
+        synthesizer.set_table_parameters(
+            table_name='child_gamma',
+            table_parameters={'default_distribution': 'gamma'}
+        )
+        synthesizer.set_table_parameters(
+            table_name='child_truncnorm',
+            table_parameters={'default_distribution': 'truncnorm'}
+        )
+        synthesizer.set_table_parameters(
+            table_name='child_uniform',
+            table_parameters={'default_distribution': 'uniform'}
+        )
         synthesizer._finalize = Mock()
 
         # Run estimation
@@ -626,7 +708,7 @@ class TestHMASynthesizer:
             num_table_cols = len(table.columns)
             if table_name == 'parent':
                 num_table_cols -= 1
-            if table_name == 'child':
+            else:
                 num_table_cols -= 3
 
             assert num_table_cols == estimated_num_columns[table_name]

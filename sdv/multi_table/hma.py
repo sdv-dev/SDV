@@ -50,11 +50,10 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         A table generates, for each foreign key:
             - 1 num_rows column
             - n*(n-1)/2 correlation columns for each data column
-            - 4 parameters columns for each data column, with:
-                - 1 column for parameter a
-                - 1 column for parameter b
-                - 1 column for parameter scale
-                - 1 column for parameter loc
+            - k parameter columns for each data column, where:
+                - k = 4 if the distribution is beta or truncnorm (params are a, b, loc, scale)
+                - k = 3 if the distribution is gamma (params are a, loc, scale)
+                - k = 2 if the distribution is norm or uniform (params are loc, scale)
         """
         num_rows_columns = len(self.metadata._get_foreign_keys(parent_table, table_name))
 
@@ -63,8 +62,16 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         if num_data_columns == 0:
             return num_rows_columns
 
+        distribution = self.get_table_parameters(table_name)['default_distribution']
+        num_parameters_columns = num_rows_columns * num_data_columns
+        if distribution in {'beta', 'truncnorm'}:
+            num_parameters_columns *= 4
+        elif distribution == 'gamma':
+            num_parameters_columns *= 3
+        elif distribution in {'norm', 'uniform'}:
+            num_parameters_columns *= 2
+
         num_correlation_columns = num_rows_columns * (num_data_columns - 1) * num_data_columns // 2
-        num_parameters_columns = num_rows_columns * num_data_columns * 4
 
         return num_correlation_columns + num_rows_columns + num_parameters_columns
 
@@ -72,6 +79,14 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         """Given a table, estimate how many columns each parent will model.
 
         This method recursively models the children of a table all the way to the leaf nodes.
+
+        Args:
+            table_name (str):
+                Name of the table to estimate the number of columns for.
+            columns_per_table (dict):
+                Dict that stores the number of data columns + extended columns for each table.
+            visited (set):
+                Set of table names that have already been visited.
         """
         for child_name in self.metadata._get_child_map()[table_name]:
             if child_name not in visited:
