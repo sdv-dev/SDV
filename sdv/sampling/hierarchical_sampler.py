@@ -217,5 +217,4 @@ class BaseHierarchicalSampler():
                 )
                 added_relationships.add((parent_name, child_name))
 
-        print(sampled_data['parent'].columns)
         return self._finalize(sampled_data)
