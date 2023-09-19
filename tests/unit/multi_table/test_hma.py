@@ -507,7 +507,11 @@ class TestHMASynthesizer:
         # Setup
         parent = pd.DataFrame({'id': [0, 1, 2]})
         child = pd.DataFrame({
-            'id': [0, 1, 2], 'id1': [0, 1, 2], 'id2': [0, 1, 2], 'col1': [0, 1, 2]})
+            'id': [0, 1, 2],
+            'id1': [0, 1, 2],
+            'id2': [0, 1, 2],
+            'col1': [0, 1, 2]
+        })
         data = {'parent': parent, 'child': child}
         metadata = MultiTableMetadata.load_from_dict({
             'tables': {
@@ -730,7 +734,8 @@ class TestHMASynthesizer:
         root1 = pd.DataFrame({'R1': [0, 1, 2]})
         root2 = pd.DataFrame({'R2': [0, 1, 2], 'data': [0, 1, 2]})
         grandparent = pd.DataFrame({
-            'GP': [0, 1, 2], 'R1_1': [0, 1, 2], 'R1_2': [0, 1, 2], 'R2': [0, 1, 2]})
+            'GP': [0, 1, 2], 'R1_1': [0, 1, 2], 'R1_2': [0, 1, 2], 'R2': [0, 1, 2]
+        })
         parent = pd.DataFrame({'P': [0, 1, 2], 'GP': [0, 1, 2]})
         child = pd.DataFrame({'C': [0, 1, 2], 'P': [0, 1, 2], 'GP': [0, 1, 2]})
         data = {
