@@ -107,7 +107,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         return columns_per_table
 
     def _estimate_num_columns(self):
-        """Estimate the number of columns that will be modeled for each root table.
+        """Estimate the number of columns that will be modeled for each table.
 
         This method estimates how many extended columns will be generated during the
         `_augment_tables` method, so it traverses the graph in the same way.
@@ -122,7 +122,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         Returns:
             dict:
                 Dictionary of (table_name: int) mappings, indicating the estimated
-                number of columns that will be modeled for each root table.
+                number of columns that will be modeled for each table.
         """
         # This dict will store the number of data columns + extended columns for each table
         # Initialize it with the number of data columns per table
