@@ -25,7 +25,7 @@ from DockerHub by running:
 where ``<tag>`` is a qualifier for the desired version. You can use:
 
  * ``stable`` to get the latest release
- * ``latest`` (equivalent to not giving any tag at all) to get the latest development version from the master branch
+ * ``latest`` (equivalent to not giving any tag at all) to get the latest development version from the main branch
  * ``<any other tag>`` to get the corresponding version
 
 Run SDGym

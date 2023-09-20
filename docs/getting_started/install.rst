@@ -51,7 +51,7 @@ You can clone the repository and install it from source by running ``make instal
     git checkout stable
     make install
 
-.. note:: The ``master`` branch of the SDV repository contains the latest development version.
+.. note:: The ``main`` branch of the SDV repository contains the latest development version.
           If you want to install the latest stable version, make sure not to omit the
           ``git checkout stable`` indicated above.
 
