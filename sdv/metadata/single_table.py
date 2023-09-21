@@ -264,7 +264,7 @@ class SingleTableMetadata:
             positive_values = (data >= 0).loc[is_not_null].all()
 
             unique_values = data.nunique()
-            unique_lt_categorical_threshold = unique_values <= round(len(data) / 10)
+            unique_lt_categorical_threshold = unique_values <= min(round(len(data) / 10), 10)
 
             if whole_values and positive_values and unique_lt_categorical_threshold:
                 sdtype = 'categorical'
