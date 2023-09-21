@@ -739,6 +739,15 @@ class TestSingleTableMetadata:
         data_less_than_10_percent_unique_values = pd.Series(
             [1, 2, 2, None, 2, 1, 1, 1, 1, 1, 2, 2, np.nan, 2, 1, 1, 2, 1, 2, 2]
         )
+        large_numerical_series = pd.Series([
+            400, 401, 402, 403, 404, 405, 406,
+            500, 501, 502, 503, 504, 505, 506
+        ] * 1000)
+
+        large_categorical_series = pd.Series([
+            400, 401, 402, 403, 404,
+            500, 501, 502, 503, 504
+        ] * 1000)
         data_all_unique = pd.Series([1, 2, 3, 4, 5, 6])
         data_numerical_int = pd.Series([1, np.nan, 3, 4, 5, 6, 7, 8, 9, 10])
         data_numerical_float = pd.Series([1.1, 2.2, 3.3, 4.4, 5.5, 6.6])
@@ -751,6 +760,12 @@ class TestSingleTableMetadata:
         sdtype_all_unique = instance._determine_sdtype_for_numbers(data_all_unique)
         sdtype_numerical_int = instance._determine_sdtype_for_numbers(data_numerical_int)
         sdtype_numerical_float = instance._determine_sdtype_for_numbers(data_numerical_float)
+        sdtype_large_numerical_series = instance._determine_sdtype_for_numbers(
+            large_numerical_series
+        )
+        sdtype_large_categorical_series = instance._determine_sdtype_for_numbers(
+            large_categorical_series
+        )
 
         # Assert
         assert sdtype_less_than_5_rows == 'numerical'
@@ -758,6 +773,8 @@ class TestSingleTableMetadata:
         assert sdtype_all_unique == 'id'
         assert sdtype_numerical_int == 'numerical'
         assert sdtype_numerical_float == 'numerical'
+        assert sdtype_large_numerical_series == 'numerical'
+        assert sdtype_large_categorical_series == 'categorical'
 
     def test__determine_sdtype_for_objects(self):
         """Test the ``_determine_sdtype_for_objects`` method."""
