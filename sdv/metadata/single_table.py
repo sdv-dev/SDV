@@ -321,10 +321,10 @@ class SingleTableMetadata:
             if dtype in self._DTYPES_TO_SDTYPES:
                 sdtype = self._DTYPES_TO_SDTYPES[dtype]
             elif dtype in ['i', 'f']:
-                sdtype = self._determine_sdtype_for_numbers(column_data, field)
+                sdtype = self._determine_sdtype_for_numbers(column_data)
 
             elif dtype == 'O':
-                sdtype = self._determine_sdtype_for_objects(column_data, field)
+                sdtype = self._determine_sdtype_for_objects(column_data)
 
             if sdtype is None:
                 raise InvalidMetadataError(
@@ -333,7 +333,7 @@ class SingleTableMetadata:
                 )
 
             # Set the first ID column we detect to be the primary key
-            if sdtype is 'id':
+            if sdtype == 'id':
                 if self.primary_key is None:
                     self.primary_key = field
                 else:
