@@ -9,7 +9,9 @@ from pathlib import Path
 import pandas as pd
 import rdt
 from pandas.api.types import is_float_dtype, is_integer_dtype
-from rdt.transformers import AnonymizedFaker, IDGenerator, RegexGenerator, get_default_transformers
+from rdt.transformers import (
+    AnonymizedFaker, IDGenerator, RegexGenerator, get_default_transformers,
+    get_multi_column_transformers)
 
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
@@ -90,6 +92,8 @@ class DataProcessor:
         self._transformers_by_sdtype = deepcopy(get_default_transformers())
         self._transformers_by_sdtype['id'] = rdt.transformers.RegexGenerator()
         del self._transformers_by_sdtype['text']
+
+        self._multi_column_transformers = deepcopy(get_multi_column_transformers())
 
         self._update_numerical_transformer(enforce_rounding, enforce_min_max_values)
         self._hyper_transformer = rdt.HyperTransformer()

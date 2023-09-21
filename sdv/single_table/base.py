@@ -194,6 +194,27 @@ class BaseSynthesizer:
             msg = 'For this change to take effect, please refit the synthesizer using `fit`.'
             warnings.warn(msg, UserWarning)
 
+    def set_address_columns(self, column_names, anonymization_level='full'):
+        """Set the address multi-column transformer.
+
+        Args:
+            column_names (tuple[str]):
+                The column names to be used for the address transformer.
+            anonymization_level (str):
+                The anonymization level to use for the address transformer.
+        """
+        if not isinstance(column_names, tuple):
+            column_names = tuple(column_names)
+
+        if anonymization_level == 'full':
+            transformer = self._data_processor._multi_column_transformers['address_full']
+        elif anonymization_level == 'street_address':
+            transformer = self._data_processor._multi_column_transformers['address_street_address']
+
+        transformer.locales = self.locales
+        transformer._validate_sdtypes()
+        self._data_processor.update_transformers({column_names: transformer})
+
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
         parameters = inspect.signature(self.__init__).parameters
