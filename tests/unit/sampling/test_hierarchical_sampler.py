@@ -1,5 +1,5 @@
 from collections import defaultdict
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import numpy as np
 import pandas as pd
@@ -177,16 +177,13 @@ class TestBaseHierarchicalSampler():
         })
         pd.testing.assert_frame_equal(sampled_data['sessions'], expected_result)
 
-    def test__sample_table(self):
-        """Test sampling a table.
-
-        The ``_sample_table`` method will call sample children and return the sampled data
-        dictionary.
+    def test__sample_children(self):
+        """Test sampling the children of a table.
 
         ``_sample_table`` does not sample the root parents of a graph, only the children.
         """
         # Setup
-        def sample_children(table_name, sampled_data, table_rows):
+        def sample_children(table_name, sampled_data):
             sampled_data['sessions'] = pd.DataFrame({
                 'user_id': [1, 1, 3],
                 'session_id': ['a', 'b', 'c'],
@@ -204,14 +201,10 @@ class TestBaseHierarchicalSampler():
         instance._table_sizes = {'users': 10, 'sessions': 5, 'transactions': 3}
         instance._table_synthesizers = {'users': Mock()}
         instance._sample_children.side_effect = sample_children
-        instance._sample_rows.return_value = pd.DataFrame({
-            'user_id': [1, 2, 3],
-            'name': ['John', 'Doe', 'Johanna']
-        })
 
         # Run
         result = {'users': pd.DataFrame()}
-        BaseHierarchicalSampler._sample_table(
+        BaseHierarchicalSampler._sample_children(
             self=instance,
             table_name='users',
             sampled_data=result
@@ -309,26 +302,34 @@ class TestBaseHierarchicalSampler():
             pd.testing.assert_frame_equal(result_frame, expected_frame)
 
     def test__sample(self):
-        """Test that the ``_sample_table`` is called for root tables."""
-        # Setup
-        expected_sample = {
-            'users': pd.DataFrame({
-                'user_id': [1, 2, 3],
-                'name': ['John', 'Doe', 'Johanna']
-            }),
-            'sessions': pd.DataFrame({
-                'user_id': [1, 1, 3],
-                'session_id': ['a', 'b', 'c'],
-                'os': ['windows', 'linux', 'mac'],
-                'country': ['us', 'us', 'es']
-            }),
-            'transactions': pd.DataFrame(dtype='Int64')
-        }
+        """Test that the whole dataset is sampled.
 
-        def _sample_table(table_name, sampled_data):
-            sampled_data['users'] = expected_sample['users']
-            sampled_data['sessions'] = expected_sample['sessions']
-            sampled_data['transactions'] = expected_sample['transactions']
+        Sampling has the following steps:
+        1. The root tables should be sampled first.
+        2. Then the lineage for each root is sampled by calling ``_sample_children``.
+        3. Any missing parent-child relationships are added using ``_add_foreign_key_columns``.
+        4. All extra columns are dropped by calling ``_finalize``.
+        """
+        # Setup
+        users = pd.DataFrame({
+            'id': [1, 2, 3],
+            'name': ['John', 'Doe', 'Johanna']
+        })
+        sessions = pd.DataFrame({
+            'user_id': [1, 1, 3],
+            'session_id': ['a', 'b', 'c'],
+            'os': ['windows', 'linux', 'mac'],
+            'country': ['us', 'us', 'es']
+        })
+        transactions = pd.DataFrame({
+            'user_id': [1, 2, 3],
+            'transaction_id': [1, 2, 3],
+            'transaction_amount': [100, 1000, 200]
+        })
+
+        def _sample_children_dummy(table_name, sampled_data):
+            sampled_data['sessions'] = sessions
+            sampled_data['transactions'] = transactions
 
         instance = Mock()
         instance._table_sizes = {
@@ -341,32 +342,67 @@ class TestBaseHierarchicalSampler():
                 'parent_table_name': 'users',
                 'parent_primary_key': 'id',
                 'child_table_name': 'sessions',
-                'child_foreign_key': 'id'
+                'child_foreign_key': 'user_id'
+            },
+            {
+                'parent_table_name': 'users',
+                'parent_primary_key': 'id',
+                'child_table_name': 'transactions',
+                'child_foreign_key': 'user_id'
             }
         ]
         users_synthesizer = Mock()
         instance._table_synthesizers = defaultdict(Mock, {'users': users_synthesizer})
         instance.metadata._get_parent_map.return_value = {
             'sessions': ['users'],
-            'transactions': ['sessions']
+            'transactions': ['users']
         }
         instance.metadata.tables = {
             'users': Mock(),
             'sessions': Mock(),
             'transactions': Mock(),
         }
-        instance._sample_table.side_effect = _sample_table
+        instance._sample_rows.return_value = users
+        instance._sample_children.side_effect = _sample_children_dummy
 
         # Run
         result = BaseHierarchicalSampler._sample(instance)
 
         # Assert
+        expected_sample = {
+            'users': DataFrameMatcher(pd.DataFrame({
+                'id': [1, 2, 3],
+                'name': ['John', 'Doe', 'Johanna']
+            })),
+            'sessions': DataFrameMatcher(pd.DataFrame({
+                'user_id': [1, 1, 3],
+                'session_id': ['a', 'b', 'c'],
+                'os': ['windows', 'linux', 'mac'],
+                'country': ['us', 'us', 'es']
+            })),
+            'transactions': DataFrameMatcher(pd.DataFrame({
+                'user_id': [1, 2, 3],
+                'transaction_id': [1, 2, 3],
+                'transaction_amount': [100, 1000, 200]
+            }))
+        }
         assert result == instance._finalize.return_value
-        instance._sample_table.assert_called_once_with(table_name='users',
-                                                       sampled_data=expected_sample)
-        instance._add_foreign_key_columns.assert_called_once_with(
-            DataFrameMatcher(expected_sample['sessions']),
-            DataFrameMatcher(expected_sample['users']),
-            'sessions',
-            'users')
+        instance._sample_children.assert_called_once_with(
+            table_name='users',
+            sampled_data=expected_sample
+        )
+        instance._add_foreign_key_columns.assert_has_calls([
+            call(
+                expected_sample['sessions'],
+                expected_sample['users'],
+                'sessions',
+                'users'
+            ),
+            call(
+                expected_sample['transactions'],
+                expected_sample['users'],
+                'transactions',
+                'users'
+            )
+        ])
         instance._finalize.assert_called_once_with(expected_sample)

@@ -117,8 +117,9 @@ class BaseHierarchicalSampler():
     def _sample_children(self, table_name, sampled_data):
         """Recursively sample the children of a table.
 
-        This method will loop through the children of a table and sample rows for that child for 
-        every primary key value in the parent.
+        This method will loop through the children of a table and sample rows for that child for
+        every primary key value in the parent. If the child has already been sampled by another
+        parent, this method will skip it.
 
         Args:
             table_name (string):
@@ -202,8 +203,8 @@ class BaseHierarchicalSampler():
             parent_name = relationship['parent_table_name']
             child_name = relationship['child_table_name']
             # When more than one relationship exists between two tables, only the first one
-            # is used to recreate the child tables, so that's the only one that needs to be
-            # added back.
+            # is used to recreate the child tables, so the rest of the foreign key columns
+            # need to be added.
             if (parent_name, child_name) not in added_relationships:
                 self._add_foreign_key_columns(
                     sampled_data[child_name],
