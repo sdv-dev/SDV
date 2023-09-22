@@ -9,6 +9,7 @@ import pytest
 
 from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.metadata.multi_table import MultiTableMetadata
+from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -129,6 +130,49 @@ class TestBaseMultiTableSynthesizer:
         )
         with pytest.warns(FutureWarning, match=warn_message):
             BaseMultiTableSynthesizer(metadata, synthesizer_kwargs={})
+
+    def test_set_address_columns(self):
+        """Test the ``set_address_columns`` method."""
+        # Setup
+        metadata = MultiTableMetadata().load_from_dict({
+            'tables': {
+                'address_table': {
+                    'columns': {
+                        'country_column': {'sdtype': 'country_code'},
+                        'city_column': {'sdtype': 'city'},
+                        'parent_key': {'sdtype': 'id'},
+                    },
+                    'primary_key': 'parent_key'
+                },
+                'other_table': {
+                    'columns': {
+                        'numerical_column': {'sdtype': 'numerical'},
+                        'child_foreign_key': {'sdtype': 'id'},
+                    }
+                }
+            },
+            'relationships': [{
+                'parent_table_name': 'address_table',
+                'parent_primary_key': 'parent_key',
+                'child_table_name': 'other_table',
+                'child_foreign_key': 'child_foreign_key'
+            }]
+        })
+        columns = ('country_column', 'city_column')
+        metadata.validate = Mock()
+        SingleTableMetadata.validate = Mock()
+        instance = BaseMultiTableSynthesizer(metadata)
+        mock_address_transformer = Mock()
+        instance._table_synthesizers['address_table']._data_processor._multi_column_transformers = {
+            'address_street': mock_address_transformer
+        }
+        # Run
+        instance.set_address_columns('address_table', columns, anonymization_level='street_address')
+
+        # Assert
+        assert instance._table_synthesizers['address_table']._data_processor._address_transformers == {
+            ('country_column', 'city_column'): mock_address_transformer
+        }
 
     def test_get_table_parameters_empty(self):
         """Test that this method returns an empty dictionary when there are no parameters."""
