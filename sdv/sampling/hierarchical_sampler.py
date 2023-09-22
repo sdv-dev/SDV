@@ -114,22 +114,18 @@ class BaseHierarchicalSampler():
                 sampled_data[child_name] = pd.concat(
                     [previous, sampled_rows]).reset_index(drop=True)
 
-    def _sample_table(self, table_name, sampled_data):
-        """Recursively sample every table.
+    def _sample_children(self, table_name, sampled_data):
+        """Recursively sample the children of a table.
 
-        Sample top level tables first, then their children, and so on.
+        This method will loop through the children of a table and sample rows for that child for 
+        every primary key value in the parent.
 
         Args:
             table_name (string):
-                Name of the table to sample.
+                Name of the table to sample children for.
             sampled_data (dict):
                 A dictionary mapping table names to sampled tables (pd.DataFrame).
         """
-        for parent_name in self.metadata._get_parent_map()[table_name]:
-            if parent_name not in sampled_data:
-                self._sample_table(table_name=parent_name, sampled_data=sampled_data)
-                return  # Optimization to avoid iterating through the same nodes multiple times
-
         for child_name in self.metadata._get_child_map()[table_name]:
             if child_name not in sampled_data:  # Sample based on only 1 parent
                 for _, row in sampled_data[table_name].iterrows():
@@ -139,7 +135,7 @@ class BaseHierarchicalSampler():
                         parent_row=row,
                         sampled_data=sampled_data
                     )
-                self._sample_table(table_name=child_name, sampled_data=sampled_data)
+                self._sample_children(table_name=child_name, sampled_data=sampled_data)
 
     def _finalize(self, sampled_data):
         """Remove extra columns from sampled tables and apply finishing touches.
@@ -198,8 +194,8 @@ class BaseHierarchicalSampler():
             sampled_data[table] = self._sample_rows(synthesizer, num_rows)
 
         # Sample rest of the graph
-        starting_table = root_parents.pop()  # Start at any root table
-        self._sample_table(table_name=starting_table, sampled_data=sampled_data)
+        for root_table in root_parents:
+            self._sample_children(table_name=root_table, sampled_data=sampled_data)
 
         added_relationships = set()
         for relationship in self.metadata.relationships:
