@@ -1188,6 +1188,39 @@ class TestDataProcessor:
         address_column_transformer = config['transformers']['address']
         assert isinstance(address_column_transformer, UniformEncoder)
 
+    def test__create_config_with_address_columns(self):
+        """Test the ``_create_config`` method with address columns."""
+        # Setup
+        data = pd.DataFrame({
+            'country_column': ['US', 'ES', 'US'],
+            'city_column': ['New York', 'Madrid', 'New York'],
+        })
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country'},
+                'city_column': {'sdtype': 'city'},
+            },
+        })
+        dp = DataProcessor(metadata)
+        dp._multi_column_transformers = {
+            ('country_column', 'city_column'): 'AddressTransformer',
+        }
+
+        # Run
+        config = dp._create_config(data, set())
+
+        # Assert
+        expected_config = {
+            'sdtypes': {
+                'country_column': 'country',
+                'city_column': 'city',
+            },
+            'transformers': {
+                ('country_column', 'city_column'): 'AddressTransformer',
+            },
+        }
+        assert config == expected_config
+
     def test_update_transformers_not_fitted(self):
         """Test when ``self._hyper_transformer`` is ``None`` raises a ``NotFittedError``."""
         # Setup

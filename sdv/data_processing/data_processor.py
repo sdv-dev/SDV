@@ -94,6 +94,7 @@ class DataProcessor:
         del self._transformers_by_sdtype['text']
 
         self._multi_column_transformers = deepcopy(get_multi_column_transformers())
+        self._address_transformers = {}
 
         self._update_numerical_transformer(enforce_rounding, enforce_min_max_values)
         self._hyper_transformer = rdt.HyperTransformer()
@@ -454,9 +455,15 @@ class DataProcessor:
         sdtypes = {}
         transformers = {}
 
+        columns_in_address = {column for key in self._multi_column_transformers for column in key}
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata.columns.get(column)
             sdtype = column_metadata.get('sdtype')
+
+            if column in columns_in_address:
+                sdtypes[column] = sdtype
+                continue
+
             pii = column_metadata.get('pii', sdtype not in self._transformers_by_sdtype)
             sdtypes[column] = 'pii' if pii else sdtype
 
@@ -514,6 +521,9 @@ class DataProcessor:
                     'categorical',
                     column_metadata
                 )
+
+        for columns, transformer in self._multi_column_transformers.items():
+            transformers[columns] = transformer
 
         config = {'transformers': transformers, 'sdtypes': sdtypes}
         config = self._update_constraint_transformers(data, columns_created_by_constraints, config)
