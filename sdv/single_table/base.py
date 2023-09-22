@@ -92,6 +92,61 @@ class BaseSynthesizer:
         self._fitted_date = None
         self._fitted_sdv_version = None
 
+    def set_address_columns(self, column_names, anonymization_level='full'):
+        """Set the address multi-column transformer.
+
+        Args:
+            column_names (tuple[str]):
+                The column names to be used for the address transformer.
+            anonymization_level (str):
+                The anonymization level to use for the address transformer.
+        """
+        if self._fitted:
+            warnings.warn(
+                'Please refit your synthesizer for the address changes to appear in'
+                ' your synthetic data.'
+            )
+
+        if not isinstance(column_names, tuple):
+            column_names = tuple(column_names)
+
+        is_existing_set = any(
+            set(column_names) == set(existing_address)
+            for existing_address in self._data_processor._address_transformers
+        )
+
+        if not is_existing_set:
+            existing_address = {
+                column for col_tuple in self.address_transformers for column in col_tuple
+            }
+            columns_to_sdtypes = {}
+            list_sdtypes = []
+
+            for column in column_names:
+                if column not in self.metadata.columns:
+                    raise ValueError(f"Column '{column}' not found in metadata.")
+
+                if column in existing_address:
+                    raise ValueError(
+                        f"Column '{column}' is already being used in a set of address column."
+                    )
+
+                sdtype = self.metadata.columns[column]['sdtype']
+                columns_to_sdtypes[column] = sdtype
+                list_sdtypes.append(sdtype)
+
+        if anonymization_level == 'full':
+            transformer = self._data_processor._multi_column_transformers['address_full']
+        elif anonymization_level == 'street_address':
+            transformer = self._data_processor._multi_column_transformers['address_street_address']
+
+        transformer.locales = self.locales
+        transformer.columns_to_sdtypes = columns_to_sdtypes
+        transformer._list_sdtypes = list_sdtypes
+        transformer._validate_sdtypes()
+
+        self._data_processor._address_transformers[column_names] = transformer
+
     def _validate_metadata(self, data):
         """Validate that the data follows the metadata."""
         errors = []
@@ -193,27 +248,6 @@ class BaseSynthesizer:
         if self._fitted:
             msg = 'For this change to take effect, please refit the synthesizer using `fit`.'
             warnings.warn(msg, UserWarning)
-
-    def set_address_columns(self, column_names, anonymization_level='full'):
-        """Set the address multi-column transformer.
-
-        Args:
-            column_names (tuple[str]):
-                The column names to be used for the address transformer.
-            anonymization_level (str):
-                The anonymization level to use for the address transformer.
-        """
-        if not isinstance(column_names, tuple):
-            column_names = tuple(column_names)
-
-        if anonymization_level == 'full':
-            transformer = self._data_processor._multi_column_transformers['address_full']
-        elif anonymization_level == 'street_address':
-            transformer = self._data_processor._multi_column_transformers['address_street_address']
-
-        transformer.locales = self.locales
-        transformer._validate_sdtypes()
-        self._data_processor.update_transformers({column_names: transformer})
 
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
