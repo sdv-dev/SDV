@@ -109,6 +109,233 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=err_msg):
             BaseSingleTableSynthesizer(SingleTableMetadata(), enforce_rounding='invalid')
 
+    def test__check_address_column_missing_metadata(self):
+        """Test ``_check_address_column`` when a column is missing in the metadata."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'}
+            }
+        })
+        metadata.validate = Mock()
+        synthesizer = BaseSingleTableSynthesizer(metadata)
+
+        # Run and Assert
+        err_msg = re.escape(
+            "Column 'address_column' not found in metadata."
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            synthesizer._check_address_column('address_column', None)
+
+    def test__check_address_column_existing_column(self):
+        """Test ``_check_address_column`` when a column is already in address set of columns."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'},
+                'address_column': {'sdtype': 'address'}
+            }
+        })
+        metadata.validate = Mock()
+        synthesizer = BaseSingleTableSynthesizer(metadata)
+        existing_address = {'address_column', 'country_column'}
+
+        # Run and Assert
+        err_msg = re.escape(
+            "Column 'address_column' is already being used in a set of address column."
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            synthesizer._check_address_column('address_column', existing_address)
+
+    def test__get_address_transformer_parameters(self):
+        """Test ``_get_address_transformer_parameters`` method."""
+        # Setup
+        column_names = ('country_column', 'city_column')
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'},
+                'address_column': {'sdtype': 'address'}
+            }
+        })
+        metadata.validate = Mock()
+        synthesizer = BaseSingleTableSynthesizer(metadata)
+        synthesizer._check_address_column = Mock()
+
+        # Run
+        columns_to_sdtypes, sdtypes = synthesizer._get_address_transformer_parameters(column_names)
+
+        # Assert
+        expected_columns_to_sdtypes = {
+            'country_column': 'country_code',
+            'city_column': 'city'
+        }
+        assert columns_to_sdtypes == expected_columns_to_sdtypes
+        assert sdtypes == ['country_code', 'city']
+        synthesizer._check_address_column.call_count == 2
+
+    def test__update_address_transformer(self):
+        """Test the ``_update_address_transformer`` method."""
+        # Setup
+        transformer = Mock()
+        transformer.locales = ['en_US']
+        transformer.columns_to_sdtypes = {}
+        transformer._list_sdtypes = []
+
+        synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
+        synthesizer.locales = ['es_ES']
+        new_columns_to_sdtypes = {'address_column': 'address'}
+        new_list_sdtypes = ['address']
+
+        # Run
+        synthesizer._update_address_transformer(
+            transformer, new_columns_to_sdtypes, new_list_sdtypes
+        )
+
+        # Assert
+        assert transformer.locales == ['es_ES']
+        assert transformer.columns_to_sdtypes == new_columns_to_sdtypes
+        assert transformer._list_sdtypes == new_list_sdtypes
+
+    def test_set_address_column(self):
+        """Test ``set_address_column`` method."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'}
+            }
+        })
+        metadata.validate = Mock()
+        columns = ('country_column', 'city_column')
+        synthesizer = BaseSingleTableSynthesizer(metadata)
+        mock_get_address_transformer_parameters = Mock()
+        mock_get_address_transformer_parameters.side_effect = [
+            ({'country_column': 'country_code', 'city_column': 'city'}, ['country_code', 'city']),
+        ]
+        synthesizer._get_address_transformer_parameters = mock_get_address_transformer_parameters
+        address_full = Mock()
+        address_full._validate_sdtypes = Mock()
+        synthesizer._data_processor._multi_column_transformers = {
+            'address_full': address_full,
+        }
+        synthesizer._update_address_transformer = Mock()
+
+        # Run
+        synthesizer.set_address_columns(columns, anonymization_level='full')
+
+        # Assert
+        synthesizer._get_address_transformer_parameters.assert_called_once_with(columns)
+        address_full._validate_sdtypes.assert_called_once()
+        synthesizer._update_address_transformer.assert_called_once_with(
+            address_full, {'country_column': 'country_code', 'city_column': 'city'},
+            ['country_code', 'city']
+        )
+        assert synthesizer._data_processor._address_transformers == {
+            ('country_column', 'city_column'): address_full
+        }
+
+    def test_set_address_column_without_premium_transformer(self):
+        """Test ``set_address_column`` when no premium transformers are in the data processor."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'}
+            }
+        })
+        metadata.validate = Mock()
+        columns = ('country_column', 'city_column')
+        synthesizer = BaseSingleTableSynthesizer(metadata)
+        mock_get_address_transformer_parameters = Mock()
+        mock_get_address_transformer_parameters.side_effect = [
+            ({'country_column': 'country_code', 'city_column': 'city'}, ['country_code', 'city']),
+        ]
+        synthesizer._get_address_transformer_parameters = mock_get_address_transformer_parameters
+        synthesizer._update_address_transformer = Mock()
+
+        # Run and Assert
+        expected_message = re.escape(
+            'Setting multi-column address data is a premium feature. '
+            'Please contact Datacebo Inc. for more information.'
+        )
+        with pytest.warns(UserWarning, match=expected_message):
+            synthesizer.set_address_columns(columns, anonymization_level='full')
+
+    def test_set_address_column_with_fit_true(self):
+        """Test ``set_address_column`` when the synthesizer has already been fitted."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'}
+            }
+        })
+        metadata.validate = Mock()
+        columns = ('country_column', 'city_column')
+        synthesizer = BaseSingleTableSynthesizer(metadata)
+        synthesizer._fitted = True
+        mock_get_address_transformer_parameters = Mock()
+        mock_get_address_transformer_parameters.side_effect = [
+            ({'country_column': 'country_code', 'city_column': 'city'}, ['country_code', 'city']),
+        ]
+        address_full = Mock()
+        address_full._validate_sdtypes = Mock()
+        synthesizer._data_processor._multi_column_transformers = {
+            'address_full': address_full,
+        }
+        synthesizer._get_address_transformer_parameters = mock_get_address_transformer_parameters
+        synthesizer._update_address_transformer = Mock()
+
+        # Run and Assert
+        expected_message = re.escape(
+            'Please refit your synthesizer for the address changes to appear in'
+            ' your synthetic data.'
+        )
+        with pytest.warns(UserWarning, match=expected_message):
+            synthesizer.set_address_columns(columns, anonymization_level='full')
+
+    def test_set_address_column_with_invalid_anoymization_level(self):
+        """Test ``set_address_column`` crashes when ``anonymization_level`` is not valid."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'}
+            }
+        })
+        metadata.validate = Mock()
+        list_column = ['country_column', 'city_column']
+        synthesizer = BaseSingleTableSynthesizer(metadata)
+        # Run and Assert
+        err_msg = re.escape(
+            "Invalid value 'invalid' for parameter 'anonymization_level'."
+            " Please provide 'full' or 'street_address'."
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            synthesizer.set_address_columns(list_column, anonymization_level='invalid')
+
+    def test_set_address_column_with_invalid_column(self):
+        """Test it crashes when one column is not in the metadata."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'}
+            }
+        })
+        metadata.validate = Mock()
+        list_column = ['country_column', 'invalid_column']
+        synthesizer = BaseSingleTableSynthesizer(metadata)
+        # Run and Assert
+        err_msg = re.escape(
+            "Column 'invalid_column' not found in metadata."
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            synthesizer.set_address_columns(list_column, anonymization_level='full')
+
     @patch('sdv.single_table.base.DataProcessor')
     def test_get_parameters(self, mock_data_processor):
         """Test that it returns every ``init`` parameter without the ``metadata``."""

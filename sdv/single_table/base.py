@@ -92,6 +92,45 @@ class BaseSynthesizer:
         self._fitted_date = None
         self._fitted_sdv_version = None
 
+    def _check_address_column(self, column, existing_address):
+        """Check that the column is valid for the address transformer.
+
+        Args:
+            column (str):
+                The column name to check.
+            existing_address (set):
+                The set of columns that are already being used in a set of address columns.
+        """
+        if column not in self.metadata.columns:
+            raise ValueError(f"Column '{column}' not found in metadata.")
+
+        if column in existing_address:
+            raise ValueError(
+                f"Column '{column}' is already being used in a set of address column."
+            )
+
+    def _update_address_transformer(self, transformer, columns_to_sdtypes, list_sdtypes):
+        """Update the transformer parameters."""
+        transformer.locales = self.locales
+        transformer.columns_to_sdtypes = columns_to_sdtypes
+        transformer._list_sdtypes = list_sdtypes
+
+    def _get_address_transformer_parameters(self, column_names):
+        """Get the parameters for the address transformer."""
+        existing_address = {
+            col for col_tuple in self._data_processor._address_transformers for col in col_tuple
+        }
+        columns_to_sdtypes = {}
+        list_sdtypes = []
+
+        for column in column_names:
+            self._check_address_column(column, existing_address)
+            sdtype = self.metadata.columns[column]['sdtype']
+            columns_to_sdtypes[column] = sdtype
+            list_sdtypes.append(sdtype)
+
+        return columns_to_sdtypes, list_sdtypes
+
     def set_address_columns(self, column_names, anonymization_level='full'):
         """Set the address multi-column transformer.
 
@@ -107,6 +146,12 @@ class BaseSynthesizer:
                 ' your synthetic data.'
             )
 
+        if anonymization_level not in {'full', 'street_address'}:
+            raise ValueError(
+                f"Invalid value '{anonymization_level}' for parameter 'anonymization_level'."
+                " Please provide 'full' or 'street_address'."
+            )
+
         if not isinstance(column_names, tuple):
             column_names = tuple(column_names)
 
@@ -116,36 +161,23 @@ class BaseSynthesizer:
         )
 
         if not is_existing_set:
-            existing_address = {
-                column for col_tuple in self.address_transformers for column in col_tuple
-            }
-            columns_to_sdtypes = {}
-            list_sdtypes = []
-
-            for column in column_names:
-                if column not in self.metadata.columns:
-                    raise ValueError(f"Column '{column}' not found in metadata.")
-
-                if column in existing_address:
-                    raise ValueError(
-                        f"Column '{column}' is already being used in a set of address column."
-                    )
-
-                sdtype = self.metadata.columns[column]['sdtype']
-                columns_to_sdtypes[column] = sdtype
-                list_sdtypes.append(sdtype)
+            columns_to_sdtypes, sdtypes = self._get_address_transformer_parameters(column_names)
 
         if anonymization_level == 'full':
-            transformer = self._data_processor._multi_column_transformers['address_full']
+            transformer = self._data_processor._multi_column_transformers.get('address_full')
         elif anonymization_level == 'street_address':
-            transformer = self._data_processor._multi_column_transformers['address_street_address']
+            transformer = self._data_processor._multi_column_transformers.get('address_street')
 
-        transformer.locales = self.locales
-        transformer.columns_to_sdtypes = columns_to_sdtypes
-        transformer._list_sdtypes = list_sdtypes
-        transformer._validate_sdtypes()
+        if transformer is None:
+            warnings.warn(
+                'Setting multi-column address data is a premium feature. '
+                'Please contact Datacebo Inc. for more information.'
+            )
+        else:
+            self._update_address_transformer(transformer, columns_to_sdtypes, sdtypes)
+            transformer._validate_sdtypes()
 
-        self._data_processor._address_transformers[column_names] = transformer
+            self._data_processor._address_transformers[column_names] = transformer
 
     def _validate_metadata(self, data):
         """Validate that the data follows the metadata."""
