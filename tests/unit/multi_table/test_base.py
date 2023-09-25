@@ -151,26 +151,32 @@ class TestBaseMultiTableSynthesizer:
                     }
                 }
             },
-            'relationships': [{
-                'parent_table_name': 'address_table',
-                'parent_primary_key': 'parent_key',
-                'child_table_name': 'other_table',
-                'child_foreign_key': 'child_foreign_key'
-            }]
+            'relationships': [
+                {
+                    'parent_table_name': 'address_table',
+                    'parent_primary_key': 'parent_key',
+                    'child_table_name': 'other_table',
+                    'child_foreign_key': 'child_foreign_key'
+                }
+            ]
         })
         columns = ('country_column', 'city_column')
         metadata.validate = Mock()
         SingleTableMetadata.validate = Mock()
         instance = BaseMultiTableSynthesizer(metadata)
         mock_address_transformer = Mock()
-        instance._table_synthesizers['address_table']._data_processor._multi_column_transformers = {
+        instance._table_synthesizers[
+            'address_table']._data_processor._multi_column_transformers = {
             'address_street': mock_address_transformer
         }
         # Run
-        instance.set_address_columns('address_table', columns, anonymization_level='street_address')
+        instance.set_address_columns(
+            'address_table', columns, anonymization_level='street_address'
+        )
 
         # Assert
-        assert instance._table_synthesizers['address_table']._data_processor._address_transformers == {
+        assert instance._table_synthesizers[
+            'address_table']._data_processor.columns_to_mutli_col_transformer == {
             ('country_column', 'city_column'): mock_address_transformer
         }
 

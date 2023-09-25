@@ -118,7 +118,8 @@ class BaseSynthesizer:
     def _get_address_transformer_parameters(self, column_names):
         """Get the parameters for the address transformer."""
         existing_address = {
-            col for col_tuple in self._data_processor._address_transformers for col in col_tuple
+            col for col_tuple in self._data_processor.columns_to_mutli_col_transformer
+            for col in col_tuple
         }
         columns_to_sdtypes = {}
         list_sdtypes = []
@@ -157,7 +158,7 @@ class BaseSynthesizer:
 
         is_existing_set = any(
             set(column_names) == set(existing_address)
-            for existing_address in self._data_processor._address_transformers
+            for existing_address in self._data_processor.columns_to_mutli_col_transformer
         )
 
         if not is_existing_set:
@@ -177,7 +178,7 @@ class BaseSynthesizer:
             self._update_address_transformer(transformer, columns_to_sdtypes, sdtypes)
             transformer._validate_sdtypes()
 
-            self._data_processor._address_transformers[column_names] = transformer
+            self._data_processor.columns_to_mutli_col_transformer[column_names] = transformer
 
     def _validate_metadata(self, data):
         """Validate that the data follows the metadata."""

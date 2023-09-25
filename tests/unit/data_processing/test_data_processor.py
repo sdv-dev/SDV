@@ -1202,7 +1202,7 @@ class TestDataProcessor:
             },
         })
         dp = DataProcessor(metadata)
-        dp._multi_column_transformers = {
+        dp.columns_to_mutli_col_transformer = {
             ('country_column', 'city_column'): 'AddressTransformer',
         }
 

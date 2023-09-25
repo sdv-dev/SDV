@@ -233,7 +233,7 @@ class TestBaseSingleTableSynthesizer:
             address_full, {'country_column': 'country_code', 'city_column': 'city'},
             ['country_code', 'city']
         )
-        assert synthesizer._data_processor._address_transformers == {
+        assert synthesizer._data_processor.columns_to_mutli_col_transformer == {
             ('country_column', 'city_column'): address_full
         }
 
