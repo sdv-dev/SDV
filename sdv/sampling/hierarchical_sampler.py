@@ -185,7 +185,7 @@ class BaseHierarchicalSampler():
         """
         sampled_data = {}
 
-        # Sample root tables
+        # DFS to sample roots and then their children
         non_root_parents = set(self.metadata._get_parent_map().keys())
         root_parents = set(self.metadata.tables.keys()) - non_root_parents
         for table in root_parents:
@@ -193,18 +193,14 @@ class BaseHierarchicalSampler():
             synthesizer = self._table_synthesizers[table]
             LOGGER.info(f'Sampling {num_rows} rows from table {table}')
             sampled_data[table] = self._sample_rows(synthesizer, num_rows)
-
-        # Sample rest of the graph
-        for root_table in root_parents:
-            self._sample_children(table_name=root_table, sampled_data=sampled_data)
+            self._sample_children(table_name=table, sampled_data=sampled_data)
 
         added_relationships = set()
         for relationship in self.metadata.relationships:
             parent_name = relationship['parent_table_name']
             child_name = relationship['child_table_name']
             # When more than one relationship exists between two tables, only the first one
-            # is used to recreate the child tables, so the rest of the foreign key columns
-            # need to be added.
+            # is used to recreate the child tables, so the rest can be skipped.
             if (parent_name, child_name) not in added_relationships:
                 self._add_foreign_key_columns(
                     sampled_data[child_name],
