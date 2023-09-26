@@ -188,7 +188,7 @@ def test_detect_from_dataframes():
                     'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
                     'room_rate': {'sdtype': 'numerical'},
                     'billing_address': {'sdtype': 'unknown', 'pii': True},
-                    'credit_card_number': {'sdtype': 'id'}
+                    'credit_card_number': {'sdtype': 'unknown', 'pii': True}
                 },
                 'primary_key': 'guest_email'
             }
@@ -203,7 +203,6 @@ def test_detect_from_dataframes():
         ],
         'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
     }
-
     assert metadata.to_dict() == expected_metadata
 
 
@@ -264,7 +263,7 @@ def test_detect_from_csvs(tmp_path):
                     'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
                     'room_rate': {'sdtype': 'numerical'},
                     'billing_address': {'sdtype': 'unknown', 'pii': True},
-                    'credit_card_number': {'sdtype': 'id'}
+                    'credit_card_number': {'sdtype': 'unknown', 'pii': True}
                 },
                 'primary_key': 'guest_email'
             }

@@ -844,6 +844,7 @@ class TestSingleTableMetadata:
                 '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01', '2022-11-01'
             ],
             'alternate_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            'alternate_id_string': ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
             'categorical': ['a', 'b', 'a', 'a', 'b', 'b', 'a', 'b', 'a', 'b', 'a'],
             'bool': [True, False, True, False, True, False, True, False, True, False, True],
             'unknown': ['a', 'b', 'c', 'c', 1, 2.2, np.nan, None, 'd', 'e', 'f'],
@@ -859,7 +860,10 @@ class TestSingleTableMetadata:
         assert instance.columns['numerical']['sdtype'] == 'numerical'
         assert instance.columns['datetime']['sdtype'] == 'datetime'
         assert instance.columns['datetime']['datetime_format'] == expected_datetime_format
-        assert instance.columns['alternate_id']['sdtype'] == 'id'
+        assert instance.columns['alternate_id']['sdtype'] == 'unknown'
+        assert instance.columns['alternate_id']['pii'] is True
+        assert instance.columns['alternate_id_string']['sdtype'] == 'unknown'
+        assert instance.columns['alternate_id_string']['pii'] is True
         assert instance.columns['categorical']['sdtype'] == 'categorical'
         assert instance.columns['unknown']['sdtype'] == 'unknown'
         assert instance.columns['unknown']['pii'] is True
