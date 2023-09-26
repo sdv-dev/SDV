@@ -331,6 +331,14 @@ class SingleTableMetadata:
                     f"Unsupported data type for column '{field}' (kind: {dtype})."
                     "The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
                 )
+
+            # Set the first ID column we detect to be the primary key
+            if sdtype == 'id':
+                if self.primary_key is None:
+                    self.primary_key = field
+                else:
+                    sdtype = 'unknown'
+
             column_dict = {'sdtype': sdtype}
 
             if sdtype == 'unknown':
@@ -338,10 +346,6 @@ class SingleTableMetadata:
             elif sdtype == 'datetime' and dtype == 'O':
                 datetime_format = get_datetime_format(column_data.iloc[:100])
                 column_dict['datetime_format'] = datetime_format
-
-            # Set the first ID column we detect to be the primary key
-            if self.primary_key is None and sdtype == 'id':
-                self.primary_key = field
 
             self.columns[field] = deepcopy(column_dict)
 
