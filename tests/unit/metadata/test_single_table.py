@@ -832,7 +832,19 @@ class TestSingleTableMetadata:
         # Assert
         assert len(w) == 0
 
-    def test_detect_columns(self):
+    def test__determine_sdtype_for_objects_with_none(self):
+        """Test ``_determine_sdtype_for_objects`` with ``None`` in it."""
+        # Setup
+        instance = SingleTableMetadata()
+        data = pd.Series([None] * 100)
+
+        # Run
+        sdtype = instance._determine_sdtype_for_objects(data)
+
+        # Assert
+        assert sdtype == 'categorical'
+
+    def test__detect_columns(self):
         """Test the ``_detect_columns`` method."""
         # Setup
         instance = SingleTableMetadata()
@@ -871,8 +883,28 @@ class TestSingleTableMetadata:
 
         assert instance.primary_key == 'id'
 
+    def test__detect_columns_with_nans_nones_and_nats(self):
+        """Test the ``_detect_columns`` with ``None``, ``np.nan`` and ``pd.NaT``."""
+        # Setup
+        data = pd.DataFrame({
+            'cat': [None] * 100,
+            'num': [np.nan] * 100,
+            'num2': [float('nan')] * 100,
+            'date': [pd.NaT] * 100
+        })
+        stm = SingleTableMetadata()
+
+        # Run
+        stm._detect_columns(data)
+
+        # Assert
+        stm.columns['cat']['sdtype'] == 'categorical'
+        stm.columns['num']['sdtype'] == 'numerical'
+        stm.columns['num2']['sdtype'] == 'numerical'
+        stm.columns['date']['sdtype'] == 'datetime'
+
     @patch('sdv.metadata.single_table.get_datetime_format')
-    def test_detect_columns_with_error(self, mock_get_datetime_format):
+    def test__detect_columns_with_error(self, mock_get_datetime_format):
         """Test the ``_detect_columns`` method with unsupported dtype."""
         # Setup
         instance = SingleTableMetadata()
