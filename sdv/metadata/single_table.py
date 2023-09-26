@@ -260,10 +260,11 @@ class SingleTableMetadata:
         sdtype = 'numerical'
         if len(data) > 5:
             is_not_null = ~data.isna()
-            if (data == data.round()).loc[is_not_null].empty:
+            clean_data = (data == data.round()).loc[is_not_null]
+            if clean_data.empty:
                 return sdtype
 
-            whole_values = (data == data.round()).loc[is_not_null].all()
+            whole_values = clean_data.all()
             positive_values = (data >= 0).loc[is_not_null].all()
 
             unique_values = data.nunique()
@@ -294,18 +295,18 @@ class SingleTableMetadata:
             else:
                 sdtype = 'unknown'
 
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', category=UserWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=UserWarning)
+            data_test = data.sample(10000) if len(data) > 10000 else data
 
-                data_test = data.sample(10000) if len(data) > 10000 else data
+            try:
                 datetime_format = get_datetime_format(data_test)
                 if datetime_format:
                     pd.to_datetime(data_test, format=datetime_format, errors='raise')
                     sdtype = 'datetime'
 
-        except Exception:
-            pass
+            except Exception:
+                pass
 
         return sdtype
 
