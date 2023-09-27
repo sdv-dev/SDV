@@ -278,10 +278,7 @@ class TestDataProcessor:
         transformer._validate_sdtypes = Mock()
         dp._get_address_transformer_parameters = Mock()
         columns_to_sdtypes = {'country_column': 'country_code', 'city_column': 'city'}
-        list_sdtype = ['country_code', 'city']
-        dp._get_address_transformer_parameters.side_effect = [
-            (columns_to_sdtypes, list_sdtype)
-        ]
+        dp._get_address_transformer_parameters.return_value = columns_to_sdtypes
         dp._get_address_transformer = Mock(return_value=transformer)
         dp._update_address_transformer = Mock()
         columns = ('country_column', 'city_column')
@@ -293,7 +290,7 @@ class TestDataProcessor:
         dp._get_address_transformer.assert_called_once_with('full')
         dp._get_address_transformer_parameters.assert_called_once_with(columns)
         dp._update_address_transformer.assert_called_once_with(
-            transformer, columns_to_sdtypes, list_sdtype
+            transformer, columns_to_sdtypes
         )
         transformer._validate_sdtypes.assert_called_once()
         assert dp.columns_to_multi_col_transformer == {columns: transformer}

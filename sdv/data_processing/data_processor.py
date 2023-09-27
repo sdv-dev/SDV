@@ -195,9 +195,9 @@ class DataProcessor:
             anonymization_level (str):
                 The anonymization level for the address transformer.
         """
-        columns_to_sdtypes, list_sdtypes = self._get_address_transformer_parameters(column_names)
+        columns_to_sdtypes = self._get_address_transformer_parameters(column_names)
         transformer = self._get_address_transformer(anonymization_level)
-        self._update_address_transformer(transformer, columns_to_sdtypes, list_sdtypes)
+        self._update_address_transformer(transformer, columns_to_sdtypes)
         transformer._validate_sdtypes()
 
         self.columns_to_multi_col_transformer[column_names] = transformer
