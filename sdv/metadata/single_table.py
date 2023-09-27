@@ -260,7 +260,11 @@ class SingleTableMetadata:
         sdtype = 'numerical'
         if len(data) > 5:
             is_not_null = ~data.isna()
-            whole_values = (data == data.round()).loc[is_not_null].all()
+            clean_data = (data == data.round()).loc[is_not_null]
+            if clean_data.empty:
+                return sdtype
+
+            whole_values = clean_data.all()
             positive_values = (data >= 0).loc[is_not_null].all()
 
             unique_values = data.nunique()
@@ -280,28 +284,29 @@ class SingleTableMetadata:
             data (pandas.Series):
                 The data to be analyzed.
         """
-        sdtype = None
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', category=UserWarning)
-
-                data_test = data.sample(10000) if len(data) > 10000 else data
-                datetime_format = get_datetime_format(data_test)
-                pd.to_datetime(data_test, format=datetime_format, errors='raise')
-
-            sdtype = 'datetime'
-
-        except Exception:
-            if len(data) <= 5:
+        if len(data) <= 5:
+            sdtype = 'categorical'
+        else:
+            unique_values = data.nunique()
+            if unique_values == len(data):
+                sdtype = 'id'
+            elif unique_values <= round(len(data) / 5):
                 sdtype = 'categorical'
             else:
-                unique_values = data.nunique()
-                if unique_values == len(data):
-                    sdtype = 'id'
-                elif unique_values <= round(len(data) / 5):
-                    sdtype = 'categorical'
-                else:
-                    sdtype = 'unknown'
+                sdtype = 'unknown'
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=UserWarning)
+            data_test = data.sample(10000) if len(data) > 10000 else data
+
+            try:
+                datetime_format = get_datetime_format(data_test)
+                if datetime_format:
+                    pd.to_datetime(data_test, format=datetime_format, errors='raise')
+                    sdtype = 'datetime'
+
+            except Exception:
+                pass
 
         return sdtype
 
