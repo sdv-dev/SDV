@@ -9,9 +9,7 @@ from pathlib import Path
 import pandas as pd
 import rdt
 from pandas.api.types import is_float_dtype, is_integer_dtype
-from rdt.transformers import (
-    AnonymizedFaker, IDGenerator, RegexGenerator, get_default_transformers,
-    get_multi_column_transformers)
+from rdt.transformers import AnonymizedFaker, IDGenerator, RegexGenerator, get_default_transformers
 
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
@@ -92,9 +90,7 @@ class DataProcessor:
         self._transformers_by_sdtype = deepcopy(get_default_transformers())
         self._transformers_by_sdtype['id'] = rdt.transformers.RegexGenerator()
         del self._transformers_by_sdtype['text']
-
-        self._multi_column_transformers = deepcopy(get_multi_column_transformers())
-        self.columns_to_mutli_col_transformer = {}
+        self.columns_to_multi_col_transformer = {}
 
         self._update_numerical_transformer(enforce_rounding, enforce_min_max_values)
         self._hyper_transformer = rdt.HyperTransformer()
@@ -107,6 +103,104 @@ class DataProcessor:
         self._keys = deepcopy(self.metadata.alternate_keys)
         if self._primary_key:
             self._keys.append(self._primary_key)
+
+    def _get_column_in_multi_column_transformer(self):
+        """Get the columns that are part of a multi column transformer.
+
+        Returns:
+            list:
+                A list of columns that are part of a multi column transformer.
+        """
+        return [
+            col for col_tuple in self.columns_to_multi_col_transformer for col in col_tuple
+        ]
+
+    def _import_address_transformers(self):
+        """Try to import the address transformers."""
+        try:
+            from rdt.transformers import RandomLocationGenerator, RegionalAnonymizer
+            self.RandomLocationGenerator = RandomLocationGenerator
+            self.RegionalAnonymizer = RegionalAnonymizer
+        except ImportError:
+            raise ImportError(
+                'You must have SDV Enterprise with the address add-on to use the address features'
+            )
+
+    def _get_columns_in_address_transformer(self):
+        """Get the columns that are part of the address transformer.
+
+        Returns:
+            list:
+                A list of columns that are part of the address transformers.
+        """
+        return [
+            col_tuple for col_tuple, transformer in self.columns_to_multi_col_transformer.items()
+            if isinstance(transformer, (self.RandomLocationGenerator, self.RegionalAnonymizer))
+        ]
+
+    def _get_address_transformer_parameters(self, column_names):
+        """Get the parameters for the address transformer.
+
+        Args:
+            column_names (tuple[str]):
+                The column names to get the parameters for.
+
+        Returns:
+            dict:
+                A dictionary mapping column names to sdtypes.
+        """
+        columns_to_sdtypes = {}
+
+        for column in column_names:
+            sdtype = self.metadata.columns[column]['sdtype']
+            columns_to_sdtypes[column] = sdtype
+
+        return columns_to_sdtypes
+
+    def _get_address_transformer(self, anonymization_level):
+        """Get the address transformer.
+
+        Args:
+            anonymization_level (str):
+                The anonymization level for the address transformer.
+        """
+        transformer = None
+        if anonymization_level == 'full':
+            transformer = self.RandomLocationGenerator()
+        elif anonymization_level == 'street_address':
+            transformer = self.RegionalAnonymizer()
+
+        return transformer
+
+    def _update_address_transformer(self, transformer, columns_to_sdtypes):
+        """Update the transformer parameters.
+
+        Args:
+            transformer (rdt.transformers):
+                The transformer to update.
+            columns_to_sdtypes (dict):
+                A dictionary mapping column names to sdtypes.
+        """
+        list_sdtypes = list(columns_to_sdtypes.values())
+        transformer.locales = self.locales
+        transformer.columns_to_sdtypes = columns_to_sdtypes
+        transformer._list_sdtypes = list_sdtypes
+
+    def _set_address_transformer(self, column_names, anonymization_level):
+        """Set the address transformer.
+
+        Args:
+            column_names (tuple[str]):
+                The column names to set the transformer for.
+            anonymization_level (str):
+                The anonymization level for the address transformer.
+        """
+        columns_to_sdtypes, list_sdtypes = self._get_address_transformer_parameters(column_names)
+        transformer = self._get_address_transformer(anonymization_level)
+        self._update_address_transformer(transformer, columns_to_sdtypes, list_sdtypes)
+        transformer._validate_sdtypes()
+
+        self.columns_to_multi_col_transformer[column_names] = transformer
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -455,9 +549,7 @@ class DataProcessor:
         sdtypes = {}
         transformers = {}
 
-        columns_in_multi_col_transformer = {
-            column for key in self.columns_to_mutli_col_transformer for column in key
-        }
+        columns_in_multi_col_transformer = self._get_column_in_multi_column_transformer()
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata.columns.get(column)
             sdtype = column_metadata.get('sdtype')
@@ -524,7 +616,7 @@ class DataProcessor:
                     column_metadata
                 )
 
-        for columns, transformer in self.columns_to_mutli_col_transformer.items():
+        for columns, transformer in self.columns_to_multi_col_transformer.items():
             transformers[columns] = transformer
 
         config = {'transformers': transformers, 'sdtypes': sdtypes}

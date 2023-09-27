@@ -164,21 +164,17 @@ class TestBaseMultiTableSynthesizer:
         metadata.validate = Mock()
         SingleTableMetadata.validate = Mock()
         instance = BaseMultiTableSynthesizer(metadata)
-        mock_address_transformer = Mock()
-        instance._table_synthesizers[
-            'address_table']._data_processor._multi_column_transformers = {
-            'address_street': mock_address_transformer
-        }
+        instance._table_synthesizers['address_table'].set_address_columns = Mock()
+
         # Run
         instance.set_address_columns(
             'address_table', columns, anonymization_level='street_address'
         )
 
         # Assert
-        assert instance._table_synthesizers[
-            'address_table']._data_processor.columns_to_mutli_col_transformer == {
-            ('country_column', 'city_column'): mock_address_transformer
-        }
+        instance._table_synthesizers['address_table'].set_address_columns.assert_called_once_with(
+            columns, 'street_address'
+        )
 
     def test_get_table_parameters_empty(self):
         """Test that this method returns an empty dictionary when there are no parameters."""

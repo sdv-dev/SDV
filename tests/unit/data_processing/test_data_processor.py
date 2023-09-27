@@ -146,6 +146,158 @@ class TestDataProcessor:
         assert isinstance(instance.metadata, SingleTableMetadata)
         assert instance.metadata.columns == {'col': {'sdtype': 'numerical'}}
 
+    def test__get_column_in_multi_column_transformer(self):
+        """Test the ``_get_column_in_multi_column_transformer`` method."""
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        dp.columns_to_multi_col_transformer = {
+            ('col1', 'col2'): 'transformer_A',
+            ('col3', 'col4'): 'transformer_B'
+        }
+
+        # Run
+        column = dp._get_column_in_multi_column_transformer()
+
+        # Assert
+        expected_list = ['col1', 'col2', 'col3', 'col4']
+        assert column == expected_list
+
+    def test__import_address_transformers_without_premium_feature(self):
+        """Test the ``_import_address_transformers`` when the user doesn't have the feature."""
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+
+        # Run and Assert
+        expected_message = (
+            'You must have SDV Enterprise with the address add-on to use the address features'
+        )
+        with pytest.raises(ImportError, match=expected_message):
+            dp._import_address_transformers()
+
+    def test__get_columns_in_address_transformer(self):
+        """Test the ``_get_columns_in_address_transformer`` method."""
+        # Setup
+        class RandomLocationGeneratorMock:
+            pass
+
+        class RegionalAnonymizerMock:
+            pass
+
+        dp = DataProcessor(SingleTableMetadata())
+
+        dp.RandomLocationGenerator = RandomLocationGeneratorMock
+        dp.RegionalAnonymizer = RegionalAnonymizerMock
+
+        dp.columns_to_multi_col_transformer = {
+            ('col1', 'col2'): RandomLocationGeneratorMock(),
+            ('col3', 'col4'): RegionalAnonymizerMock(),
+            ('col5', 'col6'): 'other_transformer'
+        }
+
+        # Run
+        columns = dp._get_columns_in_address_transformer()
+
+        # Assert
+        expected_columns = [('col1', 'col2'), ('col3', 'col4')]
+        assert columns == expected_columns
+
+    def test__get_address_transformer(self):
+        """Test the ``_get_address_transformer`` method."""
+        # Setup
+        class RandomLocationGeneratorMock:
+            pass
+
+        class RegionalAnonymizerMock:
+            pass
+
+        dp = DataProcessor(SingleTableMetadata())
+
+        dp.RandomLocationGenerator = RandomLocationGeneratorMock
+        dp.RegionalAnonymizer = RegionalAnonymizerMock
+
+        # Run and Assert
+        transformer = dp._get_address_transformer('full')
+        assert isinstance(transformer, RandomLocationGeneratorMock)
+
+        transformer = dp._get_address_transformer('street_address')
+        assert isinstance(transformer, RegionalAnonymizerMock)
+
+        transformer = dp._get_address_transformer('wrong_word')
+        assert transformer is None
+
+    def test__get_address_transformer_parameters(self):
+        """Test ``_get_address_transformer_parameters`` method."""
+        # Setup
+        column_names = ('country_column', 'city_column')
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'},
+                'address_column': {'sdtype': 'address'}
+            }
+        })
+        dp = DataProcessor(metadata)
+        dp._check_address_column = Mock()
+
+        # Run
+        columns_to_sdtypes = dp._get_address_transformer_parameters(column_names)
+
+        # Assert
+        expected_columns_to_sdtypes = {
+            'country_column': 'country_code',
+            'city_column': 'city'
+        }
+        assert columns_to_sdtypes == expected_columns_to_sdtypes
+
+    def test__update_address_transformer(self):
+        """Test the ``_update_address_transformer`` method."""
+        # Setup
+        transformer = Mock()
+        transformer.locales = ['en_US']
+        transformer.columns_to_sdtypes = {}
+
+        dp = DataProcessor(SingleTableMetadata())
+        dp.locales = ['es_ES']
+        new_columns_to_sdtypes = {'address_column': 'address'}
+
+        # Run
+        dp._update_address_transformer(
+            transformer, new_columns_to_sdtypes
+        )
+
+        # Assert
+        assert transformer.locales == ['es_ES']
+        assert transformer.columns_to_sdtypes == new_columns_to_sdtypes
+        assert transformer._list_sdtypes == ['address']
+
+    def test__set_address_transformer(self):
+        """Test the ``_set_address_transformer`` method."""
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        transformer = Mock()
+        transformer._validate_sdtypes = Mock()
+        dp._get_address_transformer_parameters = Mock()
+        columns_to_sdtypes = {'country_column': 'country_code', 'city_column': 'city'}
+        list_sdtype = ['country_code', 'city']
+        dp._get_address_transformer_parameters.side_effect = [
+            (columns_to_sdtypes, list_sdtype)
+        ]
+        dp._get_address_transformer = Mock(return_value=transformer)
+        dp._update_address_transformer = Mock()
+        columns = ('country_column', 'city_column')
+
+        # Run
+        dp._set_address_transformer(columns, 'full')
+
+        # Assert
+        dp._get_address_transformer.assert_called_once_with('full')
+        dp._get_address_transformer_parameters.assert_called_once_with(columns)
+        dp._update_address_transformer.assert_called_once_with(
+            transformer, columns_to_sdtypes, list_sdtype
+        )
+        transformer._validate_sdtypes.assert_called_once()
+        assert dp.columns_to_multi_col_transformer == {columns: transformer}
+
     def test_filter_valid(self):
         """Test that we are calling the ``filter_valid`` of each constraint over the data."""
         # Setup
@@ -1202,7 +1354,7 @@ class TestDataProcessor:
             },
         })
         dp = DataProcessor(metadata)
-        dp.columns_to_mutli_col_transformer = {
+        dp.columns_to_multi_col_transformer = {
             ('country_column', 'city_column'): 'AddressTransformer',
         }
 
