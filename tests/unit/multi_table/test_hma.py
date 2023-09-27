@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv.errors import SynthesizerInputError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -31,6 +32,30 @@ class TestHMASynthesizer:
             'upravna_enota': {'default_distribution': 'beta'},
         }
         instance.metadata.validate.assert_called_once_with()
+
+    def test_set_table_parameters_errors_gaussian_kde(self):
+        """Test that ``set_table_parameters`` errors with 'gaussian_kde'."""
+        # Setup
+        default_table_parameters = {'default_distribution': 'gaussian_kde'}
+        numerical_distribution_parameters = {
+            'numerical_distributions': {
+                'id_nesreca': 'gaussian_kde'
+            }
+        }
+        metadata = get_multi_table_metadata()
+        instance = HMASynthesizer(metadata)
+
+        # Run and Assert
+        err_msg = re.escape(
+            "The 'gaussian_kde' is not compatible with the HMA algorithm. Please choose a "
+            "different distribution such as 'beta' or 'truncnorm'. Or try a different "
+            'algorithm such as HSA.'
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            instance.set_table_parameters('nesreca', default_table_parameters)
+
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            instance.set_table_parameters('nesreca', numerical_distribution_parameters)
 
     def test__get_extension(self):
         """Test the ``_get_extension`` method.

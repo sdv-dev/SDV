@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+from sdv.errors import SynthesizerInputError
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.sampling import BaseHierarchicalSampler
 
@@ -43,6 +44,27 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             self.metadata,
             self._table_synthesizers,
             self._table_sizes)
+
+    def set_table_parameters(self, table_name, table_parameters):
+        """Update the table's synthesizer instantiation parameters.
+
+        Args:
+            table_name (str):
+                Table name for which the parameters should be retrieved.
+            table_parameters (dict):
+                A dictionary with the parameters as keys and the values to be used to instantiate
+                the table's synthesizer.
+        """
+        if (table_parameters.get('default_distribution') == 'gaussian_kde' or
+            any(dist == 'gaussian_kde'
+                for dist in table_parameters.get('numerical_distributions', {}).values())):
+            raise SynthesizerInputError(
+                "The 'gaussian_kde' is not compatible with the HMA algorithm. Please choose a "
+                "different distribution such as 'beta' or 'truncnorm'. Or try a different "
+                'algorithm such as HSA.'
+            )
+
+        BaseMultiTableSynthesizer.set_table_parameters(self, table_name, table_parameters)
 
     def _get_num_extended_columns(self, table_name, parent_table, columns_per_table):
         """Get the number of columns that will be generated for table_name.
