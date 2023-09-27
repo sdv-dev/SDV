@@ -64,7 +64,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 'algorithm such as HSA.'
             )
 
-        BaseMultiTableSynthesizer.set_table_parameters(self, table_name, table_parameters)
+        super().set_table_parameters(table_name, table_parameters)
 
     def _get_num_extended_columns(self, table_name, parent_table, columns_per_table):
         """Get the number of columns that will be generated for table_name.
