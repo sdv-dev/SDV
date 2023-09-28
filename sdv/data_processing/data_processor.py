@@ -182,7 +182,7 @@ class DataProcessor:
                 A dictionary mapping column names to sdtypes.
         """
         list_sdtypes = list(columns_to_sdtypes.values())
-        transformer.locales = self.locales
+        transformer.locales = self._locales
         transformer.columns_to_sdtypes = columns_to_sdtypes
         transformer._list_sdtypes = list_sdtypes
 
@@ -832,6 +832,10 @@ class DataProcessor:
                 )
         except rdt.errors.NotFittedError:
             LOGGER.info(f'HyperTransformer has not been fitted for table {self.table_name}')
+
+        for transformer in self.columns_to_multi_col_transformer.values():
+            if not transformer.output_columns:
+                reversed_data = transformer.reverse_transform(reversed_data)
 
         num_rows = len(reversed_data)
         sampled_columns = list(reversed_data.columns)

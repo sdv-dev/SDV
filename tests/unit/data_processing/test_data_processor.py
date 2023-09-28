@@ -257,7 +257,7 @@ class TestDataProcessor:
         transformer.columns_to_sdtypes = {}
 
         dp = DataProcessor(SingleTableMetadata())
-        dp.locales = ['es_ES']
+        dp._locales = ['es_ES']
         new_columns_to_sdtypes = {'address_column': 'address'}
 
         # Run
