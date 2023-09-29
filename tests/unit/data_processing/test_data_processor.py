@@ -594,6 +594,36 @@ class TestDataProcessor:
         # Assert
         custom_constraint._validate_metadata.assert_called_once_with(metadata, column_name='col1')
 
+    def test__validate_constraint_dict_address_columns(self):
+        """Test that the validation raises an error when one column is an address."""
+        # Setup
+        constraint_column_name = {
+            'constraint_class': 'Name',
+            'constraint_parameters': {
+                'column_name': 'country_column'
+            }
+        }
+
+        metadata = SingleTableMetadata()
+        metadata.add_column('country_column', sdtype='country_code')
+        metadata.add_column('city_column', sdtype='city')
+        custom_constraint = Mock()
+
+        dp = DataProcessor(metadata)
+        dp._custom_constraint_classes
+        dp._get_columns_in_address_transformer = Mock()
+        dp._get_columns_in_address_transformer.return_value = ['country_column', 'city_column']
+
+        dp._custom_constraint_classes = {'Name': custom_constraint}
+
+        # Run and Assert
+        error_msg_1 = re.escape(
+            "The provided constraint is invalid:\nThe 'country_column' column is part of an"
+            ' address. You cannot add constraints to columns that are part of an address group.'
+        )
+        with pytest.raises(InvalidConstraintsError, match=error_msg_1):
+            dp._validate_constraint_dict(constraint_column_name)
+
     @patch('sdv.data_processing.data_processor.Constraint')
     def test__validate_constraint_dict_key_error(self, mock_constraint):
         """Validate that an ``InvalidConstraintsError`` is raised when the class is not found."""
