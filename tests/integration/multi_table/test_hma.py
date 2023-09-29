@@ -121,7 +121,7 @@ class TestHMASynthesizer:
             'fitted_sdv_version': version
         }
 
-    def test_hma_set_parameters(self):
+    def test_hma_set_table_parameters(self):
         """Test the ``set_table_parameters``.
 
         Validate that the ``set_table_parameters`` sets new parameters to the synthesizers.
@@ -1075,3 +1075,26 @@ class TestHMASynthesizer:
         # Assert data values all exist in the original tables
         for table_name, table in samples.items():
             assert table['data'].isin(data[table_name]['data']).all()
+
+    def test_hma_numerical_distributions(self):
+        """Test it runs when 'numerical_distributions' is set (GH#1605)."""
+        # Setup
+        data, metadata = download_demo('multi_table', 'fake_hotels')
+        synthesizer = HMASynthesizer(metadata)
+
+        # Run
+        synthesizer.set_table_parameters(
+            table_name='guests',
+            table_parameters={
+                'numerical_distributions': {
+                    'amenities_fee': 'beta'
+                }
+            }
+        )
+        synthesizer.fit(data)
+        samples = synthesizer.sample(scale=1)
+
+        # Assert - check the data was actually generated
+        assert data.keys() == samples.keys()
+        for table_name, table in samples.items():
+            assert set(data[table_name].columns) == set(table.columns)
