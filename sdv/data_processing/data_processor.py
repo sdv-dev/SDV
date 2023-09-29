@@ -290,6 +290,21 @@ class DataProcessor:
         except KeyError:
             raise InvalidConstraintsError(f"Invalid constraint class ('{constraint_class}').")
 
+        if 'column_name' in constraint_parameters:
+            column_names = [constraint_parameters.get('column_name')]
+        else:
+            column_names = constraint_parameters.get('column_names')
+
+        columns_in_address = self._get_columns_in_address_transformer()
+        if columns_in_address and column_names:
+            address_constraint_columns = set(column_names) & set(columns_in_address)
+            if address_constraint_columns:
+                to_print = "', '".join(address_constraint_columns)
+                raise InvalidConstraintsError(
+                    f"The '{to_print}' column is part of an address. You cannot add constraints "
+                    'to columns that are part of an address group.'
+                )
+
         constraint_class._validate_metadata(self.metadata, **constraint_parameters)
 
     def add_constraints(self, constraints):
