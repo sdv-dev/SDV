@@ -55,9 +55,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 A dictionary with the parameters as keys and the values to be used to instantiate
                 the table's synthesizer.
         """
-        if (table_parameters.get('default_distribution') == 'gaussian_kde' or
-            any(dist == 'gaussian_kde'
-                for dist in table_parameters.get('numerical_distributions', {}).values())):
+        has_gaussian_kde = any(
+            dist == 'gaussian_kde'
+            for dist in table_parameters.get('numerical_distributions', {}).values()
+        )
+        if table_parameters.get('default_distribution') == 'gaussian_kde' or has_gaussian_kde:
             raise SynthesizerInputError(
                 "The 'gaussian_kde' is not compatible with the HMA algorithm. Please choose a "
                 "different distribution such as 'beta' or 'truncnorm'. Or try a different "
