@@ -126,19 +126,19 @@ class TestBaseSingleTableSynthesizer:
         """Test ``_check_address_initialization`` method."""
         # Setup
         synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
-        synthesizer._data_processor._import_address_transformers = Mock()
+        synthesizer._data_processor._check_import_address_transformers = Mock()
 
         # Run
         synthesizer._check_address_initialization(anonymization_level='full')
 
         # Assert
-        synthesizer._data_processor._import_address_transformers.assert_called_once()
+        synthesizer._data_processor._check_import_address_transformers.assert_called_once()
 
     def test__check_address_initialization_fitted_model(self):
         """Test ``_check_address_initialization`` method when the synthesizer has been fitted."""
         # Setup
         synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
-        synthesizer._data_processor._import_address_transformers = Mock()
+        synthesizer._data_processor._check_import_address_transformers = Mock()
         synthesizer._fitted = True
 
         # Run and Assert

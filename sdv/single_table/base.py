@@ -99,7 +99,7 @@ class BaseSynthesizer:
                 " Please provide 'full' or 'street_address'."
             )
 
-        self._data_processor._import_address_transformers()
+        self._data_processor._check_import_address_transformers()
 
         if self._fitted:
             warnings.warn(

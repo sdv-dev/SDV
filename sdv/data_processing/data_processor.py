@@ -115,13 +115,11 @@ class DataProcessor:
             col for col_tuple in self.columns_to_multi_col_transformer for col in col_tuple
         ]
 
-    def _import_address_transformers(self):
-        """Try to import the address transformers."""
-        try:
-            from rdt.transformers import RandomLocationGenerator, RegionalAnonymizer
-            self.RandomLocationGenerator = RandomLocationGenerator
-            self.RegionalAnonymizer = RegionalAnonymizer
-        except ImportError:
+    def _check_import_address_transformers(self):
+        """Check that the address transformers can be imported."""
+        has_randomlocationgenerator = hasattr(rdt.transformers, 'RandomLocationGenerator')
+        has_regionalanonymizer = hasattr(rdt.transformers, 'RegionalAnonymizer')
+        if not has_randomlocationgenerator or not has_regionalanonymizer:
             raise ImportError(
                 'You must have SDV Enterprise with the address add-on to use the address features'
             )
@@ -133,9 +131,15 @@ class DataProcessor:
             list:
                 A list of columns that are part of the address transformers.
         """
+        self._check_import_address_transformers()
         return [
-            col_tuple for col_tuple, transformer in self.columns_to_multi_col_transformer.items()
-            if isinstance(transformer, (self.RandomLocationGenerator, self.RegionalAnonymizer))
+            item for col_tuple, transformer in self.columns_to_multi_col_transformer.items()
+            if isinstance(
+                transformer, (
+                    rdt.transformers.RandomLocationGenerator,
+                    rdt.transformers.RegionalAnonymizer
+                )
+            ) for item in col_tuple
         ]
 
     def _get_address_transformer_parameters(self, column_names):
@@ -164,11 +168,12 @@ class DataProcessor:
             anonymization_level (str):
                 The anonymization level for the address transformer.
         """
+        self._check_import_address_transformers()
         transformer = None
         if anonymization_level == 'full':
-            transformer = self.RandomLocationGenerator()
+            transformer = rdt.transformers.RandomLocationGenerator()
         elif anonymization_level == 'street_address':
-            transformer = self.RegionalAnonymizer()
+            transformer = rdt.transformers.RegionalAnonymizer()
 
         return transformer
 
