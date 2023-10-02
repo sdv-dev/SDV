@@ -131,16 +131,19 @@ class DataProcessor:
             list:
                 A list of columns that are part of the address transformers.
         """
-        self._check_import_address_transformers()
-        return [
-            item for col_tuple, transformer in self.columns_to_multi_col_transformer.items()
-            if isinstance(
-                transformer, (
-                    rdt.transformers.RandomLocationGenerator,
-                    rdt.transformers.RegionalAnonymizer
-                )
-            ) for item in col_tuple
-        ]
+        try:
+            self._check_import_address_transformers()
+            return [
+                item for col_tuple, transformer in self.columns_to_multi_col_transformer.items()
+                if isinstance(
+                    transformer, (
+                        rdt.transformers.RandomLocationGenerator,
+                        rdt.transformers.RegionalAnonymizer
+                    )
+                ) for item in col_tuple
+            ]
+        except ImportError:
+            return []
 
     def _get_address_transformer_parameters(self, column_names):
         """Get the parameters for the address transformer.
