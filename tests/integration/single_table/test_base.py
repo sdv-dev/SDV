@@ -1,4 +1,5 @@
 import datetime
+import re
 
 import pandas as pd
 import pkg_resources
@@ -112,6 +113,35 @@ def test_sample_from_conditions_with_batch_size():
 
     # Assert
     expected = pd.Series([10] * 100 + [50] * 10, name='column1')
+    pd.testing.assert_series_equal(sampled_data['column1'], expected)
+
+
+def test_sample_from_conditions_negative_float():
+    """Test it when the condition is a negative float (GH#1161)."""
+    # Setup
+    data = pd.DataFrame({
+        'column1': [-float(i) for i in range(100)],
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+
+    metadata = SingleTableMetadata()
+    metadata.add_column('column1', sdtype='numerical')
+    metadata.add_column('column2', sdtype='numerical')
+    metadata.add_column('column3', sdtype='numerical')
+
+    model = GaussianCopulaSynthesizer(metadata)
+    model.fit(data)
+    conditions = [
+        Condition({'column1': -10.}, num_rows=100),
+        Condition({'column1': -50}, num_rows=10)
+    ]
+
+    # Run
+    sampled_data = model.sample_from_conditions(conditions)
+
+    # Assert
+    expected = pd.Series([-10.] * 100 + [-50.] * 10, name='column1')
     pd.testing.assert_series_equal(sampled_data['column1'], expected)
 
 
