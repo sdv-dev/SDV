@@ -537,9 +537,9 @@ class DataProcessor:
                     "'RegexGenerator' instead."
                 )
 
-        warnings.filterwarnings('ignore', module='rdt')
-        self._hyper_transformer.update_transformers(column_name_to_transformer)
-        warnings.resetwarnings()
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', message=rdt.HyperTransformer._REFIT_MESSAGE, module='rdt')
+            self._hyper_transformer.update_transformers(column_name_to_transformer)
 
     def _fit_hyper_transformer(self, data):
         """Create and return a new ``rdt.HyperTransformer`` instance.
