@@ -171,12 +171,13 @@ class DataProcessor:
             anonymization_level (str):
                 The anonymization level for the address transformer.
         """
+        locales = self._locales if self._locales else ['en_US']
         self._check_import_address_transformers()
         transformer = None
         if anonymization_level == 'full':
-            transformer = rdt.transformers.RandomLocationGenerator()
+            transformer = rdt.transformers.RandomLocationGenerator(locales=locales)
         elif anonymization_level == 'street_address':
-            transformer = rdt.transformers.RegionalAnonymizer()
+            transformer = rdt.transformers.RegionalAnonymizer(locales=locales)
 
         return transformer
 
@@ -190,7 +191,6 @@ class DataProcessor:
                 A dictionary mapping column names to sdtypes.
         """
         list_sdtypes = list(columns_to_sdtypes.values())
-        transformer.locales = self._locales
         transformer.columns_to_sdtypes = columns_to_sdtypes
         transformer._list_sdtypes = list_sdtypes
 

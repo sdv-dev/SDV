@@ -212,10 +212,12 @@ class TestDataProcessor:
         """Test the ``_get_address_transformer`` method."""
         # Setup
         class RandomLocationGeneratorMock:
-            pass
+            def __init__(self, locales):
+                pass
 
         class RegionalAnonymizerMock:
-            pass
+            def __init__(self, locales):
+                pass
 
         mock_rdt_transformers.RandomLocationGenerator = RandomLocationGeneratorMock
         mock_rdt_transformers.RegionalAnonymizer = RegionalAnonymizerMock
@@ -262,11 +264,9 @@ class TestDataProcessor:
         """Test the ``_update_address_transformer`` method."""
         # Setup
         transformer = Mock()
-        transformer.locales = ['en_US']
         transformer.columns_to_sdtypes = {}
 
         dp = DataProcessor(SingleTableMetadata())
-        dp._locales = ['es_ES']
         new_columns_to_sdtypes = {'address_column': 'address'}
 
         # Run
@@ -275,7 +275,6 @@ class TestDataProcessor:
         )
 
         # Assert
-        assert transformer.locales == ['es_ES']
         assert transformer.columns_to_sdtypes == new_columns_to_sdtypes
         assert transformer._list_sdtypes == ['address']
 
