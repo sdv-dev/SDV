@@ -538,8 +538,7 @@ class DataProcessor:
                 )
 
         with warnings.catch_warnings():
-            msg = rdt.HyperTransformer._REFIT_MESSAGE
-            warnings.filterwarnings('ignore', message=msg, module='rdt')
+            warnings.filterwarnings('ignore', module='rdt.hyper_transformer')
             self._hyper_transformer.update_transformers(column_name_to_transformer)
 
     def _fit_hyper_transformer(self, data):
