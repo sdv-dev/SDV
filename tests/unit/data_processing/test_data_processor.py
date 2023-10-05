@@ -236,59 +236,21 @@ class TestDataProcessor:
         transformer = dp._get_address_transformer('wrong_word')
         assert transformer is None
 
-    def test__get_address_transformer_parameters(self):
-        """Test ``_get_address_transformer_parameters`` method."""
+    def test__set_address_transformer(self):
+        """Test the ``_set_address_transformer`` method."""
         # Setup
-        column_names = ('country_column', 'city_column')
         metadata = SingleTableMetadata().load_from_dict({
             'columns': {
                 'country_column': {'sdtype': 'country_code'},
                 'city_column': {'sdtype': 'city'},
-                'address_column': {'sdtype': 'address'}
             }
         })
         dp = DataProcessor(metadata)
-        dp._check_address_column = Mock()
-
-        # Run
-        columns_to_sdtypes = dp._get_address_transformer_parameters(column_names)
-
-        # Assert
-        expected_columns_to_sdtypes = {
-            'country_column': 'country_code',
-            'city_column': 'city'
-        }
-        assert columns_to_sdtypes == expected_columns_to_sdtypes
-
-    def test__update_address_transformer(self):
-        """Test the ``_update_address_transformer`` method."""
-        # Setup
-        transformer = Mock()
-        transformer.columns_to_sdtypes = {}
-
-        dp = DataProcessor(SingleTableMetadata())
-        new_columns_to_sdtypes = {'address_column': 'address'}
-
-        # Run
-        dp._update_address_transformer(
-            transformer, new_columns_to_sdtypes
-        )
-
-        # Assert
-        assert transformer.columns_to_sdtypes == new_columns_to_sdtypes
-        assert transformer._list_sdtypes == ['address']
-
-    def test__set_address_transformer(self):
-        """Test the ``_set_address_transformer`` method."""
-        # Setup
-        dp = DataProcessor(SingleTableMetadata())
         transformer = Mock()
         transformer._validate_sdtypes = Mock()
         dp._get_address_transformer_parameters = Mock()
         columns_to_sdtypes = {'country_column': 'country_code', 'city_column': 'city'}
-        dp._get_address_transformer_parameters.return_value = columns_to_sdtypes
         dp._get_address_transformer = Mock(return_value=transformer)
-        dp._update_address_transformer = Mock()
         columns = ('country_column', 'city_column')
 
         # Run
@@ -296,11 +258,7 @@ class TestDataProcessor:
 
         # Assert
         dp._get_address_transformer.assert_called_once_with('full')
-        dp._get_address_transformer_parameters.assert_called_once_with(columns)
-        dp._update_address_transformer.assert_called_once_with(
-            transformer, columns_to_sdtypes
-        )
-        transformer._validate_sdtypes.assert_called_once()
+        transformer._validate_sdtypes.assert_called_once_with(columns_to_sdtypes)
         assert dp.columns_to_multi_col_transformer == {columns: transformer}
 
     def test_filter_valid(self):

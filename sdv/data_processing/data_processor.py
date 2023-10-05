@@ -145,25 +145,6 @@ class DataProcessor:
         except ImportError:
             return []
 
-    def _get_address_transformer_parameters(self, column_names):
-        """Get the parameters for the address transformer.
-
-        Args:
-            column_names (tuple[str]):
-                The column names to get the parameters for.
-
-        Returns:
-            dict:
-                A dictionary mapping column names to sdtypes.
-        """
-        columns_to_sdtypes = {}
-
-        for column in column_names:
-            sdtype = self.metadata.columns[column]['sdtype']
-            columns_to_sdtypes[column] = sdtype
-
-        return columns_to_sdtypes
-
     def _get_address_transformer(self, anonymization_level):
         """Get the address transformer.
 
@@ -181,19 +162,6 @@ class DataProcessor:
 
         return transformer
 
-    def _update_address_transformer(self, transformer, columns_to_sdtypes):
-        """Update the transformer parameters.
-
-        Args:
-            transformer (rdt.transformers):
-                The transformer to update.
-            columns_to_sdtypes (dict):
-                A dictionary mapping column names to sdtypes.
-        """
-        list_sdtypes = list(columns_to_sdtypes.values())
-        transformer.columns_to_sdtypes = columns_to_sdtypes
-        transformer._list_sdtypes = list_sdtypes
-
     def _set_address_transformer(self, column_names, anonymization_level):
         """Set the address transformer.
 
@@ -203,10 +171,11 @@ class DataProcessor:
             anonymization_level (str):
                 The anonymization level for the address transformer.
         """
-        columns_to_sdtypes = self._get_address_transformer_parameters(column_names)
+        columns_to_sdtypes = {
+            column: self.metadata.columns[column]['sdtype'] for column in column_names
+        }
         transformer = self._get_address_transformer(anonymization_level)
-        self._update_address_transformer(transformer, columns_to_sdtypes)
-        transformer._validate_sdtypes()
+        transformer._validate_sdtypes(columns_to_sdtypes)
 
         self.columns_to_multi_col_transformer[column_names] = transformer
 
