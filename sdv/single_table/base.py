@@ -129,7 +129,10 @@ class BaseSynthesizer:
 
         if missing_columns_metadata:
             to_print = "', '".join(missing_columns_metadata)
-            raise ValueError(f"Columns '{to_print}' not found in metadata.")
+            raise ValueError(
+                f"Unknown column names ('{to_print}'). Please choose column names listed"
+                ' in the metadata for your table.'
+            )
 
         if columns_in_multi_columns:
             to_print = "', '".join(columns_in_multi_columns)
@@ -147,12 +150,10 @@ class BaseSynthesizer:
                 The anonymization level to use for the address transformer.
         """
         self._check_address_initialization(anonymization_level)
-
         if not isinstance(column_names, tuple):
             column_names = tuple(column_names) if len(column_names) > 1 else (column_names,)
 
         self._check_address_columns(column_names)
-
         self._data_processor._set_address_transformer(column_names, anonymization_level)
 
     def _validate_metadata(self, data):

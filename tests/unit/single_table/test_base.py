@@ -156,9 +156,12 @@ class TestBaseSingleTableSynthesizer:
         columns = ['country_column', 'address_column']
 
         # Run and Assert
-        err_msg = re.escape("Columns 'country_column', 'address_column' not found in metadata.")
+        err_msg = (
+            "Unknown column names ('country_column', 'address_column'). Please"
+            ' choose column names listed in the metadata for your table.'
+        )
 
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(ValueError, match=re.escape(err_msg)):
             synthesizer._check_address_columns(columns)
 
     def test__check_address_columns_in_multi_columns_transformer(self):
