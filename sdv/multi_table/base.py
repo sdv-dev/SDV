@@ -111,6 +111,11 @@ class BaseMultiTableSynthesizer:
             anonymization_level (str):
                 The anonymization level to use for the address transformer.
         """
+        if not self._table_synthesizers.get(table_name):
+            raise ValueError(
+                f"Unknown table name '{table_name}'. Please choose a table name from the metadata."
+            )
+
         self._table_synthesizers[table_name].set_address_columns(column_names, anonymization_level)
 
     def get_table_parameters(self, table_name):

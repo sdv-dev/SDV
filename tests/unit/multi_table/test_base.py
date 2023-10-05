@@ -176,6 +176,24 @@ class TestBaseMultiTableSynthesizer:
             columns, 'street_address'
         )
 
+    def test_set_address_columns_error(self):
+        """Test that ``set_address_columns`` raises an error for unknown table."""
+        # Setup
+        metadata = MultiTableMetadata()
+        columns = ('country_column', 'city_column')
+        metadata.validate = Mock()
+        SingleTableMetadata.validate = Mock()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        expected_error = re.escape(
+            "Unknown table name 'address_table'. Please choose a table name from the metadata."
+        )
+        with pytest.raises(ValueError, match=expected_error):
+            instance.set_address_columns(
+                'address_table', columns, anonymization_level='street_address'
+            )
+
     def test_get_table_parameters_empty(self):
         """Test that this method returns an empty dictionary when there are no parameters."""
         # Setup
