@@ -172,7 +172,7 @@ class TestBaseSingleTableSynthesizer:
             }
         })
         synthesizer = BaseSingleTableSynthesizer(metadata)
-        synthesizer._data_processor.columns_to_multi_col_transformer = {
+        synthesizer._data_processor.grouped_columns_to_transformers = {
             ('country_column', 'city_column'): 'address_full'
         }
         columns = ['country_column', 'city_column', 'valid_column']

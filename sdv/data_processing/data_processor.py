@@ -90,7 +90,7 @@ class DataProcessor:
         self._transformers_by_sdtype = deepcopy(get_default_transformers())
         self._transformers_by_sdtype['id'] = rdt.transformers.RegexGenerator()
         del self._transformers_by_sdtype['text']
-        self.columns_to_multi_col_transformer = {}
+        self.grouped_columns_to_transformers = {}
 
         self._update_numerical_transformer(enforce_rounding, enforce_min_max_values)
         self._hyper_transformer = rdt.HyperTransformer()
@@ -104,7 +104,7 @@ class DataProcessor:
         if self._primary_key:
             self._keys.append(self._primary_key)
 
-    def _get_column_in_multi_column_transformer(self):
+    def _get_grouped_columns(self):
         """Get the columns that are part of a multi column transformer.
 
         Returns:
@@ -112,7 +112,7 @@ class DataProcessor:
                 A list of columns that are part of a multi column transformer.
         """
         return [
-            col for col_tuple in self.columns_to_multi_col_transformer for col in col_tuple
+            col for col_tuple in self.grouped_columns_to_transformers for col in col_tuple
         ]
 
     def _check_import_address_transformers(self):
@@ -134,7 +134,7 @@ class DataProcessor:
         try:
             self._check_import_address_transformers()
             return [
-                item for col_tuple, transformer in self.columns_to_multi_col_transformer.items()
+                item for col_tuple, transformer in self.grouped_columns_to_transformers.items()
                 if isinstance(
                     transformer, (
                         rdt.transformers.RandomLocationGenerator,
@@ -177,7 +177,7 @@ class DataProcessor:
         transformer = self._get_address_transformer(anonymization_level)
         transformer._validate_sdtypes(columns_to_sdtypes)
 
-        self.columns_to_multi_col_transformer[column_names] = transformer
+        self.grouped_columns_to_transformers[column_names] = transformer
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -526,7 +526,7 @@ class DataProcessor:
         sdtypes = {}
         transformers = {}
 
-        columns_in_multi_col_transformer = self._get_column_in_multi_column_transformer()
+        columns_in_multi_col_transformer = self._get_grouped_columns()
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata.columns.get(column)
             sdtype = column_metadata.get('sdtype')
@@ -593,7 +593,7 @@ class DataProcessor:
                     column_metadata
                 )
 
-        for columns, transformer in self.columns_to_multi_col_transformer.items():
+        for columns, transformer in self.grouped_columns_to_transformers.items():
             transformers[columns] = transformer
 
         config = {'transformers': transformers, 'sdtypes': sdtypes}
@@ -810,7 +810,7 @@ class DataProcessor:
         except rdt.errors.NotFittedError:
             LOGGER.info(f'HyperTransformer has not been fitted for table {self.table_name}')
 
-        for transformer in self.columns_to_multi_col_transformer.values():
+        for transformer in self.grouped_columns_to_transformers.values():
             if not transformer.output_columns:
                 reversed_data = transformer.reverse_transform(reversed_data)
 

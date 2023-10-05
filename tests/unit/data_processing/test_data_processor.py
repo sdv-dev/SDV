@@ -147,16 +147,16 @@ class TestDataProcessor:
         assert instance.metadata.columns == {'col': {'sdtype': 'numerical'}}
 
     def test__get_column_in_multi_column_transformer(self):
-        """Test the ``_get_column_in_multi_column_transformer`` method."""
+        """Test the ``_get_grouped_columns`` method."""
         # Setup
         dp = DataProcessor(SingleTableMetadata())
-        dp.columns_to_multi_col_transformer = {
+        dp.grouped_columns_to_transformers = {
             ('col1', 'col2'): 'transformer_A',
             ('col3', 'col4'): 'transformer_B'
         }
 
         # Run
-        column = dp._get_column_in_multi_column_transformer()
+        column = dp._get_grouped_columns()
 
         # Assert
         expected_list = ['col1', 'col2', 'col3', 'col4']
@@ -193,7 +193,7 @@ class TestDataProcessor:
         dp.RandomLocationGenerator = RandomLocationGeneratorMock
         dp.RegionalAnonymizer = RegionalAnonymizerMock
 
-        dp.columns_to_multi_col_transformer = {
+        dp.grouped_columns_to_transformers = {
             ('col1', 'col2'): RandomLocationGeneratorMock(),
             ('col3', 'col4'): RegionalAnonymizerMock(),
             ('col5', 'col6'): 'other_transformer'
@@ -259,7 +259,7 @@ class TestDataProcessor:
         # Assert
         dp._get_address_transformer.assert_called_once_with('full')
         transformer._validate_sdtypes.assert_called_once_with(columns_to_sdtypes)
-        assert dp.columns_to_multi_col_transformer == {columns: transformer}
+        assert dp.grouped_columns_to_transformers == {columns: transformer}
 
     def test_filter_valid(self):
         """Test that we are calling the ``filter_valid`` of each constraint over the data."""
@@ -1317,7 +1317,7 @@ class TestDataProcessor:
             },
         })
         dp = DataProcessor(metadata)
-        dp.columns_to_multi_col_transformer = {
+        dp.grouped_columns_to_transformers = {
             ('country_column', 'city_column'): 'AddressTransformer',
         }
 

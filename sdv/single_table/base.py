@@ -118,7 +118,7 @@ class BaseSynthesizer:
         """
         missing_columns_metadata = []
         columns_in_multi_columns = []
-        multi_columns = self._data_processor._get_column_in_multi_column_transformer()
+        multi_columns = self._data_processor._get_grouped_columns()
 
         for column in column_names:
             if column not in self.metadata.columns:
