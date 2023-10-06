@@ -345,7 +345,7 @@ def test_numerical_columns_gets_pii():
             'numerical': {'sdtype': 'numerical'}
         }
     })
-    synth = GaussianCopulaSynthesizer(metadata)
+    synth = GaussianCopulaSynthesizer(metadata, default_distribution='truncnorm')
     synth.fit(data)
 
     # Run
@@ -366,7 +366,7 @@ def test_numerical_columns_gets_pii():
             8: 'Davidland',
             9: 'Port Christopher'
         },
-        'numerical': {0: 21, 1: 24, 2: 22, 3: 23, 4: 22, 5: 24, 6: 23, 7: 23, 8: 24, 9: 23}
+        'numerical': {0: 22, 1: 24, 2: 22, 3: 23, 4: 22, 5: 24, 6: 23, 7: 24, 8: 24, 9: 24}
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
 
