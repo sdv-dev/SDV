@@ -187,7 +187,8 @@ class TestBaseMultiTableSynthesizer:
 
         # Run and Assert
         expected_error = re.escape(
-            "Unknown table name 'address_table'. Please choose a table name from the metadata."
+            'The provided data does not match the metadata:\n'
+            "Table 'address_table' is not present in the metadata."
         )
         with pytest.raises(ValueError, match=expected_error):
             instance.set_address_columns(
@@ -482,7 +483,7 @@ class TestBaseMultiTableSynthesizer:
             'The provided data does not match the metadata:'
             "\nTable 'not_seen' is not present in the metadata"
         )
-        with pytest.raises(InvalidDataError, match=err_msg):
+        with pytest.raises(ValueError, match=err_msg):
             instance.auto_assign_transformers(data)
 
     def test_get_transformers(self):
@@ -511,7 +512,7 @@ class TestBaseMultiTableSynthesizer:
             'The provided data does not match the metadata:'
             "\nTable 'not_seen' is not present in the metadata."
         )
-        with pytest.raises(InvalidDataError, match=err_msg):
+        with pytest.raises(ValueError, match=err_msg):
             instance.get_transformers('not_seen')
 
     def test_update_transformers(self):
@@ -540,7 +541,7 @@ class TestBaseMultiTableSynthesizer:
             'The provided data does not match the metadata:'
             "\nTable 'not_seen' is not present in the metadata."
         )
-        with pytest.raises(InvalidDataError, match=err_msg):
+        with pytest.raises(ValueError, match=err_msg):
             instance.update_transformers('not_seen', {})
 
     def test__model_tables(self):

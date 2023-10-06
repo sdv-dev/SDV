@@ -111,11 +111,7 @@ class BaseMultiTableSynthesizer:
             anonymization_level (str):
                 The anonymization level to use for the address transformer.
         """
-        if not self._table_synthesizers.get(table_name):
-            raise ValueError(
-                f"Unknown table name '{table_name}'. Please choose a table name from the metadata."
-            )
-
+        self._validate_table_name(table_name)
         self._table_synthesizers[table_name].set_address_columns(column_names, anonymization_level)
 
     def get_table_parameters(self, table_name):
@@ -215,7 +211,10 @@ class BaseMultiTableSynthesizer:
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:
-            raise InvalidDataError([f"Table '{table_name}' is not present in the metadata."])
+            raise ValueError(
+                'The provided data does not match the metadata:'
+                f"\nTable '{table_name}' is not present in the metadata."
+            )
 
     def _assign_table_transformers(self, synthesizer, table_name, table_data):
         """Update the ``synthesizer`` to ignore the foreign keys while preprocessing the data."""
