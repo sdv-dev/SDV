@@ -175,39 +175,6 @@ class TestDataProcessor:
             dp._check_import_address_transformers()
 
     @patch('rdt.transformers')
-    def test__get_columns_in_address_transformer(self, mock_rdt_transformers):
-        """Test the ``_get_columns_in_address_transformer`` method."""
-        # Setup
-        class RandomLocationGeneratorMock:
-            pass
-
-        class RegionalAnonymizerMock:
-            pass
-
-        mock_rdt_transformers.RandomLocationGenerator = RandomLocationGeneratorMock
-        mock_rdt_transformers.RegionalAnonymizer = RegionalAnonymizerMock
-
-        dp = DataProcessor(SingleTableMetadata())
-        dp._check_import_address_transformers = Mock()
-
-        dp.RandomLocationGenerator = RandomLocationGeneratorMock
-        dp.RegionalAnonymizer = RegionalAnonymizerMock
-
-        dp.grouped_columns_to_transformers = {
-            ('col1', 'col2'): RandomLocationGeneratorMock(),
-            ('col3', 'col4'): RegionalAnonymizerMock(),
-            ('col5', 'col6'): 'other_transformer'
-        }
-
-        # Run
-        columns = dp._get_columns_in_address_transformer()
-
-        # Assert
-        expected_columns = ['col1', 'col2', 'col3', 'col4']
-        assert columns == expected_columns
-        dp._check_import_address_transformers.assert_called_once()
-
-    @patch('rdt.transformers')
     def test__get_address_transformer(self, mock_rdt_transformers):
         """Test the ``_get_address_transformer`` method."""
         # Setup

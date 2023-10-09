@@ -124,27 +124,6 @@ class DataProcessor:
                 'You must have SDV Enterprise with the address add-on to use the address features'
             )
 
-    def _get_columns_in_address_transformer(self):
-        """Get the columns that are part of the address transformer.
-
-        Returns:
-            list:
-                A list of columns that are part of the address transformers.
-        """
-        try:
-            self._check_import_address_transformers()
-            return [
-                item for col_tuple, transformer in self.grouped_columns_to_transformers.items()
-                if isinstance(
-                    transformer, (
-                        rdt.transformers.RandomLocationGenerator,
-                        rdt.transformers.RegionalAnonymizer
-                    )
-                ) for item in col_tuple
-            ]
-        except ImportError:
-            return []
-
     def _get_address_transformer(self, anonymization_level):
         """Get the address transformer.
 
@@ -154,13 +133,10 @@ class DataProcessor:
         """
         locales = self._locales if self._locales else ['en_US']
         self._check_import_address_transformers()
-        transformer = None
         if anonymization_level == 'full':
-            transformer = rdt.transformers.RandomLocationGenerator(locales=locales)
+            return rdt.transformers.RandomLocationGenerator(locales=locales)
         elif anonymization_level == 'street_address':
-            transformer = rdt.transformers.RegionalAnonymizer(locales=locales)
-
-        return transformer
+            return rdt.transformers.RegionalAnonymizer(locales=locales)
 
     def _set_address_transformer(self, column_names, anonymization_level):
         """Set the address transformer.
