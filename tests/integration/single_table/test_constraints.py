@@ -534,7 +534,7 @@ def test_scalar_range_constraint_with_datetimes_and_nones():
     })
 
     metadata.validate()
-    synth = GaussianCopulaSynthesizer(metadata)
+    synth = GaussianCopulaSynthesizer(metadata, default_distribution='truncnorm')
     synth.add_constraints([
         {
             'constraint_class': 'ScalarRange',
@@ -555,16 +555,16 @@ def test_scalar_range_constraint_with_datetimes_and_nones():
     # Assert
     expected_sampled = pd.DataFrame({
         'A': {
-            0: '2020-03-03',
+            0: '2020-02-04',
             1: np.nan,
-            2: '2020-03-03',
+            2: '2020-02-07',
             3: np.nan,
             4: np.nan,
-            5: '2020-03-03',
+            5: '2020-02-29',
             6: np.nan,
             7: np.nan,
             8: np.nan,
-            9: '2020-02-27',
+            9: '2020-02-02',
         },
         'B': {
             0: np.nan,
@@ -572,9 +572,9 @@ def test_scalar_range_constraint_with_datetimes_and_nones():
             2: np.nan,
             3: np.nan,
             4: np.nan,
-            5: '2021-04-14',
+            5: '2021-11-22',
             6: np.nan,
-            7: '2021-05-21',
+            7: '2021-06-19',
             8: np.nan,
             9: np.nan,
         }
