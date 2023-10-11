@@ -460,15 +460,24 @@ class DataProcessor:
         return transformer
 
     def _get_transformer_instance(self, sdtype, column_metadata):
+        transformer = self._transformers_by_sdtype[sdtype]
+        if transformer.__class__.__name__ == 'AnonymizedFaker':
+            is_lexify = transformer.function_name == 'lexify'
+            is_baseprovider = transformer.provider_name == 'BaseProvider'
+            if is_lexify and is_baseprovider:  # Defaults settings
+                return self.create_anonymized_transformer(
+                    sdtype, column_metadata, False, self._locales
+                )
+
         kwargs = {
             key: value for key, value in column_metadata.items()
             if key not in ['pii', 'sdtype']
         }
-        if kwargs and self._transformers_by_sdtype[sdtype] is not None:
-            transformer_class = self._transformers_by_sdtype[sdtype].__class__
+        if kwargs and transformer is not None:
+            transformer_class = transformer.__class__
             return transformer_class(**kwargs)
 
-        return deepcopy(self._transformers_by_sdtype[sdtype])
+        return deepcopy(transformer)
 
     def _update_constraint_transformers(self, data, columns_created_by_constraints, config):
         missing_columns = set(columns_created_by_constraints) - config['transformers'].keys()
