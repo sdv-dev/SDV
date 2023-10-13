@@ -130,13 +130,13 @@ for specific needs.
 .. |PyPi Shield| image:: https://img.shields.io/pypi/v/SDV.svg
    :target: https://pypi.python.org/pypi/SDV
 .. |Run Tests| image:: https://github.com/sdv-dev/SDV/workflows/Run%20Tests/badge.svg
-   :target: https://github.com/sdv-dev/SDV/actions?query=workflow%3A%22Run+Tests%22+branch%3Amaster
-.. |Coverage Status| image:: https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg
+   :target: https://github.com/sdv-dev/SDV/actions?query=workflow%3A%22Run+Tests%22+branch%3Amain
+.. |Coverage Status| image:: https://codecov.io/gh/sdv-dev/SDV/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/sdv-dev/SDV
 .. |Downloads| image:: https://pepy.tech/badge/sdv
    :target: https://pepy.tech/project/sdv
 .. |Binder| image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials
+   :target: https://mybinder.org/v2/gh/sdv-dev/SDV/main?filepath=tutorials
 .. |Slack| image:: https://img.shields.io/badge/Slack%20Workspace-Join%20now!-36C5F0?logo=slack
    :target: https://bit.ly/sdv-slack-invite
 

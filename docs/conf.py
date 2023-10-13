@@ -134,7 +134,7 @@ html_context = {
     'display_github': True,
     'github_user': user,
     'github_repo': project,
-    'github_version': 'master',
+    'github_version': 'main',
     'conf_py_path': '/docs/',
 }
 

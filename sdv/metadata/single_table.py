@@ -17,8 +17,8 @@ from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import (
-    cast_to_iterable, format_invalid_values_string, is_boolean_type, is_datetime_type,
-    is_numerical_type, load_data_from_csv, validate_datetime_format)
+    cast_to_iterable, format_invalid_values_string, get_datetime_format, is_boolean_type,
+    is_datetime_type, is_numerical_type, load_data_from_csv, validate_datetime_format)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,13 +32,11 @@ class SingleTableMetadata:
         'categorical': frozenset(['order', 'order_by']),
         'boolean': frozenset([]),
         'id': frozenset(['regex_format']),
+        'unknown': frozenset(['pii']),
     }
 
     _DTYPES_TO_SDTYPES = {
-        'i': 'numerical',
-        'f': 'numerical',
-        'O': 'categorical',
-        'b': 'boolean',
+        'b': 'categorical',
         'M': 'datetime',
     }
 
@@ -252,11 +250,109 @@ class SingleTableMetadata:
 
         return deepcopy(metadata)
 
+    def _determine_sdtype_for_numbers(self, data):
+        """Determine the sdtype for a numerical column.
+
+        Args:
+            data (pandas.Series):
+                The data to be analyzed.
+        """
+        sdtype = 'numerical'
+        if len(data) > 5:
+            is_not_null = ~data.isna()
+            clean_data = (data == data.round()).loc[is_not_null]
+            if clean_data.empty:
+                return sdtype
+
+            whole_values = clean_data.all()
+            positive_values = (data >= 0).loc[is_not_null].all()
+
+            unique_values = data.nunique()
+            unique_lt_categorical_threshold = unique_values <= min(round(len(data) / 10), 10)
+
+            if whole_values and positive_values and unique_lt_categorical_threshold:
+                sdtype = 'categorical'
+            elif unique_values == len(data) and whole_values:
+                sdtype = 'id'
+
+        return sdtype
+
+    def _determine_sdtype_for_objects(self, data):
+        """Determine the sdtype for an object column.
+
+        Args:
+            data (pandas.Series):
+                The data to be analyzed.
+        """
+        if len(data) <= 5:
+            sdtype = 'categorical'
+        else:
+            unique_values = data.nunique()
+            if unique_values == len(data):
+                sdtype = 'id'
+            elif unique_values <= round(len(data) / 5):
+                sdtype = 'categorical'
+            else:
+                sdtype = 'unknown'
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=UserWarning)
+            data_test = data.sample(10000) if len(data) > 10000 else data
+
+            try:
+                datetime_format = get_datetime_format(data_test)
+                if datetime_format:
+                    pd.to_datetime(data_test, format=datetime_format, errors='raise')
+                    sdtype = 'datetime'
+
+            except Exception:
+                pass
+
+        return sdtype
+
     def _detect_columns(self, data):
+        """Detect the columns' sdtype and the primary key from the data.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to be analyzed.
+        """
         for field in data:
-            clean_data = data[field].dropna()
-            kind = clean_data.infer_objects().dtype.kind
-            self.columns[field] = {'sdtype': self._DTYPES_TO_SDTYPES.get(kind, 'categorical')}
+            column_data = data[field]
+            clean_data = column_data.dropna()
+            dtype = clean_data.infer_objects().dtype.kind
+
+            sdtype = None
+            if dtype in self._DTYPES_TO_SDTYPES:
+                sdtype = self._DTYPES_TO_SDTYPES[dtype]
+            elif dtype in ['i', 'f']:
+                sdtype = self._determine_sdtype_for_numbers(column_data)
+
+            elif dtype == 'O':
+                sdtype = self._determine_sdtype_for_objects(column_data)
+
+            if sdtype is None:
+                raise InvalidMetadataError(
+                    f"Unsupported data type for column '{field}' (kind: {dtype})."
+                    "The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
+                )
+
+            # Set the first ID column we detect to be the primary key
+            if sdtype == 'id':
+                if self.primary_key is None:
+                    self.primary_key = field
+                else:
+                    sdtype = 'unknown'
+
+            column_dict = {'sdtype': sdtype}
+
+            if sdtype == 'unknown':
+                column_dict['pii'] = True
+            elif sdtype == 'datetime' and dtype == 'O':
+                datetime_format = get_datetime_format(column_data.iloc[:100])
+                column_dict['datetime_format'] = datetime_format
+
+            self.columns[field] = deepcopy(column_dict)
 
     def detect_from_dataframe(self, data):
         """Detect the metadata from a ``pd.DataFrame`` object.
@@ -635,7 +731,7 @@ class SingleTableMetadata:
                 shown. If 'summarized', primary, alternate and sequence keys are shown and a
                 count of the different sdtypes. Defaults to 'full'.
             output_filepath (str):
-                Full path of where to savve the visualization. If None, the visualization is not
+                Full path of where to save the visualization. If None, the visualization is not
                 saved. Defaults to None.
 
         Returns:

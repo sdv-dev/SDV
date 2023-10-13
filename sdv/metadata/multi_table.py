@@ -182,6 +182,15 @@ class MultiTableMetadata:
             child_foreign_key
         )
 
+    def _get_parent_map(self):
+        parent_map = defaultdict(set)
+        for relation in self.relationships:
+            parent_name = relation['parent_table_name']
+            child_name = relation['child_table_name']
+            parent_map[child_name].add(parent_name)
+
+        return parent_map
+
     def _get_child_map(self):
         child_map = defaultdict(set)
         for relation in self.relationships:
@@ -255,6 +264,32 @@ class MultiTableMetadata:
             'parent_primary_key': deepcopy(parent_primary_key),
             'child_foreign_key': deepcopy(child_foreign_key),
         })
+
+    def remove_relationship(self, parent_table_name, child_table_name):
+        """Remove the relationship between two tables.
+
+        Args:
+            parent_table_name (str):
+                The name of the parent table.
+            child_table_name (str):
+                The name of the child table.
+        """
+        relationships_to_remove = []
+        for relation in self.relationships:
+            if (relation['parent_table_name'] == parent_table_name and
+                    relation['child_table_name'] == child_table_name):
+                relationships_to_remove.append(relation)
+
+        if not relationships_to_remove:
+            warning_msg = (
+                f"No existing relationships found between parent table '{parent_table_name}' and "
+                f"child table '{child_table_name}'."
+            )
+            warnings.warn(warning_msg)
+
+        else:
+            for relation in relationships_to_remove:
+                self.relationships.remove(relation)
 
     def _validate_table_exists(self, table_name):
         if table_name not in self.tables:
@@ -333,6 +368,79 @@ class MultiTableMetadata:
         table_json = json.dumps(table_dict, indent=4)
         LOGGER.info(f'Detected metadata:\n{table_json}')
 
+    def _validate_all_tables_connected(self, parent_map, child_map):
+        """Get the connection status of all tables.
+
+        Args:
+            parent_map (dict):
+                Dictionary mapping each parent table to its child tables.
+            child_map (dict):
+                Dictionary mapping each child table to its parent tables.
+
+        Returns:
+            dict specifying whether each table is connected the other tables.
+        """
+        nodes = list(self.tables.keys())
+        if len(nodes) == 1:
+            return
+
+        parent_nodes = list(parent_map.keys())
+        queue = [parent_nodes[0]] if parent_map else []
+        connected = {table_name: False for table_name in nodes}
+
+        while queue:
+            node = queue.pop()
+            connected[node] = True
+            for child in list(child_map[node]) + list(parent_map[node]):
+                if not connected[child] and child not in queue:
+                    queue.append(child)
+
+        if not all(connected.values()):
+            disconnected_tables = [table for table, value in connected.items() if not value]
+            if len(disconnected_tables) > 1:
+                table_msg = (
+                    f'Tables {disconnected_tables} are not connected to any of the other tables.'
+                )
+            else:
+                table_msg = (
+                    f'Table {disconnected_tables} is not connected to any of the other tables.'
+                )
+
+            raise InvalidMetadataError(
+                f'The relationships in the dataset are disjointed. {table_msg}')
+
+    def _detect_relationships(self):
+        """Automatically detect relationships between tables."""
+        for parent_candidate in self.tables.keys():
+            primary_key = self.tables[parent_candidate].primary_key
+            for child_candidate in self.tables.keys() - {parent_candidate}:
+                child_meta = self.tables[child_candidate]
+                if primary_key in child_meta.columns.keys():
+                    try:
+                        original_foreign_key_sdtype = child_meta.columns[primary_key]['sdtype']
+                        if original_foreign_key_sdtype != 'id':
+                            self.update_column(child_candidate, primary_key, sdtype='id')
+
+                        self.add_relationship(
+                            parent_candidate,
+                            child_candidate,
+                            primary_key,
+                            primary_key
+                        )
+                    except InvalidMetadataError:
+                        self.update_column(child_candidate,
+                                           primary_key,
+                                           sdtype=original_foreign_key_sdtype)
+                        continue
+
+        try:
+            self._validate_all_tables_connected(self._get_parent_map(), self._get_child_map())
+        except InvalidMetadataError as invalid_error:
+            warning_msg = (
+                f'Could not automatically add relationships for all tables. {str(invalid_error)}'
+            )
+            warnings.warn(warning_msg)
+
     def detect_table_from_dataframe(self, table_name, data):
         """Detect the metadata for a table from a dataframe.
 
@@ -360,6 +468,8 @@ class MultiTableMetadata:
 
         for table_name, dataframe in data.items():
             self.detect_table_from_dataframe(table_name, dataframe)
+
+        self._detect_relationships()
 
     def detect_table_from_csv(self, table_name, filepath):
         """Detect the metadata for a table from a csv file.
@@ -398,6 +508,8 @@ class MultiTableMetadata:
         for csv_file in csv_files:
             table_name = csv_file.stem
             self.detect_table_from_csv(table_name, str(csv_file))
+
+        self._detect_relationships()
 
     def set_primary_key(self, table_name, column_name):
         """Set the primary key of a table.
@@ -465,32 +577,6 @@ class MultiTableMetadata:
                     'The following errors were found in the metadata:\n', title)
                 errors.append(error)
 
-    def _validate_all_tables_connected(self, parent_map, child_map):
-        nodes = list(self.tables.keys())
-        queue = [nodes[0]]
-        connected = {table_name: False for table_name in nodes}
-
-        while queue:
-            node = queue.pop()
-            connected[node] = True
-            for child in list(child_map[node]) + list(parent_map[node]):
-                if not connected[child] and child not in queue:
-                    queue.append(child)
-
-        if not all(connected.values()):
-            disconnected_tables = [table for table, value in connected.items() if not value]
-            if len(disconnected_tables) > 1:
-                table_msg = (
-                    f'Tables {disconnected_tables} are not connected to any of the other tables.'
-                )
-            else:
-                table_msg = (
-                    f'Table {disconnected_tables} is not connected to any of the other tables.'
-                )
-
-            raise InvalidMetadataError(
-                f'The relationships in the dataset are disjointed. {table_msg}')
-
     def _append_relationships_errors(self, errors, method, *args, **kwargs):
         try:
             method(*args, **kwargs)
@@ -499,15 +585,6 @@ class MultiTableMetadata:
                 errors.append('\nRelationships:')
 
             errors.append(error)
-
-    def _get_parent_map(self):
-        parent_map = defaultdict(set)
-        for relation in self.relationships:
-            parent_name = relation['parent_table_name']
-            child_name = relation['child_table_name']
-            parent_map[child_name].add(parent_name)
-
-        return parent_map
 
     def validate(self):
         """Validate the metadata.
@@ -653,7 +730,7 @@ class MultiTableMetadata:
                 If True, every edge is labeled with the column names (eg. purchaser_id -> user_id).
                 Defaults to True.
             output_filepath (str):
-                Full path of where to savve the visualization. If None, the visualization is not
+                Full path of where to save the visualization. If None, the visualization is not
                 saved. Defaults to None.
 
         Returns:

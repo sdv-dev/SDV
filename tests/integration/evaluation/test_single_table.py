@@ -12,13 +12,13 @@ def test_evaluation():
     data = pd.DataFrame({'col': [1, 2, 3]})
     metadata = SingleTableMetadata()
     metadata.add_column('col', sdtype='numerical')
-    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer = GaussianCopulaSynthesizer(metadata, default_distribution='truncnorm')
 
     # Run and Assert
     synthesizer.fit(data)
     samples = synthesizer.sample(10)
     score = evaluate_quality(data, samples, metadata).get_score()
-    assert score == 0.8333333333333334
+    assert score == 0.8666666666666667
 
     diagnostic = run_diagnostic(data, samples, metadata).get_results()
     assert diagnostic == {

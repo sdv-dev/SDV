@@ -60,7 +60,7 @@ class BaseHierarchicalSampler():
         Args:
             synthesizer (copula.multivariate.base):
                 The fitted synthesizer for the table.
-            num_rows (int):
+            num_rows (int or float):
                 Number of rows to sample.
 
         Returns:
@@ -96,6 +96,7 @@ class BaseHierarchicalSampler():
             sampled_data (dict):
                 A dictionary mapping table names to sampled data (pd.DataFrame).
         """
+        # A child table is created based on only one foreign key.
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         num_rows = self._get_num_rows_from_parent(parent_row, child_name, foreign_key)
         child_synthesizer = self._recreate_child_synthesizer(child_name, parent_name, parent_row)
@@ -113,32 +114,29 @@ class BaseHierarchicalSampler():
                 sampled_data[child_name] = pd.concat(
                     [previous, sampled_rows]).reset_index(drop=True)
 
-    def _sample_table(self, synthesizer, table_name, num_rows, sampled_data):
-        """Sample a single table and all its children.
+    def _sample_children(self, table_name, sampled_data):
+        """Recursively sample the children of a table.
+
+        This method will loop through the children of a table and sample rows for that child for
+        every primary key value in the parent. If the child has already been sampled by another
+        parent, this method will skip it.
 
         Args:
-            synthesizer (SingleTableSynthesizer):
-                Synthesizer to sample from for the table.
             table_name (string):
-                Name of the table to sample.
-            num_rows (int):
-                Number of rows to sample for the table.
+                Name of the table to sample children for.
             sampled_data (dict):
                 A dictionary mapping table names to sampled tables (pd.DataFrame).
         """
-        LOGGER.info(f'Sampling {num_rows} rows from table {table_name}')
-
-        table_rows = self._sample_rows(synthesizer, num_rows)
-        sampled_data[table_name] = table_rows
         for child_name in self.metadata._get_child_map()[table_name]:
-            if child_name not in sampled_data:
-                for _, row in table_rows.iterrows():
+            if child_name not in sampled_data:  # Sample based on only 1 parent
+                for _, row in sampled_data[table_name].iterrows():
                     self._add_child_rows(
                         child_name=child_name,
                         parent_name=table_name,
                         parent_row=row,
                         sampled_data=sampled_data
                     )
+                self._sample_children(table_name=child_name, sampled_data=sampled_data)
 
     def _finalize(self, sampled_data):
         """Remove extra columns from sampled tables and apply finishing touches.
@@ -186,21 +184,23 @@ class BaseHierarchicalSampler():
                 sampled data tables as ``pandas.DataFrame``.
         """
         sampled_data = {}
-        for table in self.metadata.tables:
-            if not self.metadata._get_parent_map().get(table):
-                num_rows = int(self._table_sizes[table] * scale)
-                synthesizer = self._table_synthesizers[table]
-                self._sample_table(
-                    synthesizer=synthesizer,
-                    table_name=table,
-                    num_rows=num_rows,
-                    sampled_data=sampled_data
-                )
+
+        # DFS to sample roots and then their children
+        non_root_parents = set(self.metadata._get_parent_map().keys())
+        root_parents = set(self.metadata.tables.keys()) - non_root_parents
+        for table in root_parents:
+            num_rows = int(self._table_sizes[table] * scale)
+            synthesizer = self._table_synthesizers[table]
+            LOGGER.info(f'Sampling {num_rows} rows from table {table}')
+            sampled_data[table] = self._sample_rows(synthesizer, num_rows)
+            self._sample_children(table_name=table, sampled_data=sampled_data)
 
         added_relationships = set()
         for relationship in self.metadata.relationships:
             parent_name = relationship['parent_table_name']
             child_name = relationship['child_table_name']
+            # When more than one relationship exists between two tables, only the first one
+            # is used to recreate the child tables, so the rest can be skipped.
             if (parent_name, child_name) not in added_relationships:
                 self._add_foreign_key_columns(
                     sampled_data[child_name],

@@ -1,5 +1,38 @@
 # Release Notes
 
+## 1.5.0 - 2023-10-13
+
+Several improvements and bug fixes were made in this release. Most notably, the metadata detection was substantially improved. Support for the 'unknown' sdtype was added, providing more flexibility in data representation. The software now attempts to intelligently detect primary keys and identify parent-child relationships in the metadata, streamlining the metadata creation process. 
+
+Additionally, issues related to conditional sampling with negative float values, the inability to update transformers for columns created by constraints, and compatibility with numpy version 1.25 and higher were addressed. The default branch was also switched from 'master' to 'main' for better development practices. Various bugs and errors, including those involving HMA and datetime format detection, were also resolved.
+
+### New Features
+
+* Improve metadata detection - Issue [#1515](https://github.com/sdv-dev/SDV/issues/1515) by @R-Palazzo
+* Support 'unknown' sdtype - Issue [#1516](https://github.com/sdv-dev/SDV/issues/1516) by @R-Palazzo
+* Detect primary keys in metadata - Issue [#1521](https://github.com/sdv-dev/SDV/issues/1521) by @frances-h
+* Detect relationships in MultiTableMetadata - Issue [#1522](https://github.com/sdv-dev/SDV/issues/1522) by @frances-h
+* Make function to estimate number of columns HMA produces. - Issue [#1572](https://github.com/sdv-dev/SDV/issues/1572) by @fealho
+* Add wrapper for get_cardinalty_plot - Issue [#1573](https://github.com/sdv-dev/SDV/issues/1573) by @frances-h
+* [Metadata detection] Add a cardinality cap when choosing between categorical vs. numerical  - Issue [#1584](https://github.com/sdv-dev/SDV/issues/1584) by @pvk-developer
+* [Metadata Detection] Only make primary/foreign keys sdtype `id` (leave others as `unknown`) - Issue [#1598](https://github.com/sdv-dev/SDV/issues/1598) by @amontanez24
+* Check and supply a more descriptive error when trying to use `'gaussian_kde'` with HMA - Issue [#1604](https://github.com/sdv-dev/SDV/issues/1604) by @frances-h
+
+### Bugs Fixed
+
+* Conditional sampling with negative float values doesn't work - Issue [#1161](https://github.com/sdv-dev/SDV/issues/1161) by @fealho
+* Cannot update transformers for columns that get created by constraints (`KeyError`) - Issue [#1454](https://github.com/sdv-dev/SDV/issues/1454) by @frances-h
+* HMA produces KeyError for a schema with 3+ levels of depth - Issue [#1558](https://github.com/sdv-dev/SDV/issues/1558) by @fealho
+* Columns consisting of only Nones are being detected as datetime - Issue [#1589](https://github.com/sdv-dev/SDV/issues/1589) by @pvk-developer
+* HMASynthesizer throws an error when sampling multi table models with three levels of depths - Issue [#1600](https://github.com/sdv-dev/SDV/issues/1600) by @amontanez24
+* `ValueError: Invalid distribution specification` when setting numerical_distributions on child table (HMA) - Issue [#1605](https://github.com/sdv-dev/SDV/issues/1605) by @fealho
+* Bug: updating transformers in DataProcessor resets warning filters - Issue [#1618](https://github.com/sdv-dev/SDV/issues/1618) by @rwedge
+
+### Maintenance
+
+* Investigate how to get numpy >1.25 to pass - Issue [#1501](https://github.com/sdv-dev/SDV/issues/1501) by @rwedge
+* Switch default branch from master to main - Issue [#1550](https://github.com/sdv-dev/SDV/issues/1550) by @amontanez24
+
 ## 1.4.0 - 2023-08-23
 
 This release makes multiple improvements to the metadata. Both the single and multi table metadata classes now have a `validate_data` method. This method runs checks to validate the data against the current specifications in the metadata. The `SingleTableMetadata.visualize` is also improved. The sequence index is now shown in the same section as the sequence key. It also now shows all key and index information (eg. sequence key, primary key, sequence index) in one section.

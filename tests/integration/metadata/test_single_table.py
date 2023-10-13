@@ -3,8 +3,11 @@
 import json
 import re
 
+import numpy as np
+import pandas as pd
 import pytest
 
+from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
 
@@ -187,3 +190,55 @@ def test_upgrade_metadata(tmp_path):
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
     }
     assert new_metadata == expected_metadata
+
+
+def test_validate_unknown_sdtype():
+    """Test ``validate`` method works with ``unknown`` sdtype."""
+    # Setup
+    data, _ = download_demo(
+        modality='multi_table',
+        dataset_name='fake_hotels'
+    )
+
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data['hotels'])
+
+    # Run
+    metadata.validate()
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'columns': {
+            'hotel_id': {'sdtype': 'id'},
+            'city': {'sdtype': 'unknown', 'pii': True},
+            'state': {'sdtype': 'unknown', 'pii': True},
+            'rating': {'sdtype': 'numerical'},
+            'classification': {'sdtype': 'unknown', 'pii': True}
+        },
+        'primary_key': 'hotel_id'
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_from_dataframe_with_none_nan_and_nat():
+    """Test ``detect_from_dataframe`` with ``None``, ``np.nan`` and ``pd.NaT``."""
+    # Setup
+    data = pd.DataFrame({
+        'pk2': list(range(100)),
+        'pk1': list(range(100)),
+        'f_nan_data': [float('nan')] * 100,
+        'none_data': [None] * 100,
+        'np_nan_data': [np.nan] * 100,
+        'pd_nat_data': [pd.NaT] * 100
+    })
+    stm = SingleTableMetadata()
+
+    # Run
+    stm.detect_from_dataframe(data)
+
+    # Assert
+    assert stm.columns['f_nan_data']['sdtype'] == 'numerical'
+    assert stm.columns['none_data']['sdtype'] == 'categorical'
+    assert stm.columns['np_nan_data']['sdtype'] == 'numerical'
+    assert stm.columns['pd_nat_data']['sdtype'] == 'datetime'

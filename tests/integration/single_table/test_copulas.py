@@ -1,9 +1,10 @@
 from uuid import UUID
 
+import numpy as np
 import pandas as pd
 import pytest
 from rdt.transformers import (
-    AnonymizedFaker, CustomLabelEncoder, FloatFormatter, PseudoAnonymizedFaker)
+    AnonymizedFaker, CustomLabelEncoder, FloatFormatter, LabelEncoder, PseudoAnonymizedFaker)
 
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError
@@ -137,6 +138,7 @@ def test_adding_constraints(tmp_path):
         * Use an ``Inequality`` constraint.
         * Load custom constraint class from a file.
         * Add a custom constraint class to the model.
+        * Update the transformer for the custom constraint column
         * Validate that the custom constraint was applied properly.
         * Save, load and sample from the model storing both custom and pre-defined constraints.
     """
@@ -181,12 +183,18 @@ def test_adding_constraints(tmp_path):
     synthesizer.add_constraints([rewards_member_no_fee])
 
     # Re-Fit the model
+    synthesizer.preprocess(real_data)
+    synthesizer.update_transformers({
+        'checkin_date#checkout_date.nan_component': LabelEncoder()
+    })
     synthesizer.fit(real_data)
     synthetic_data_custom_constraint = synthesizer.sample(500)
 
     # Assert
     validation = synthetic_data_custom_constraint[synthetic_data_custom_constraint['has_rewards']]
     assert validation['amenities_fee'].sum() == 0.0
+    assert isinstance(synthesizer.get_transformers()['checkin_date#checkout_date.nan_component'],
+                      LabelEncoder)
 
     # Save and Load
     model_path = tmp_path / 'synthesizer.pkl'
@@ -337,7 +345,7 @@ def test_numerical_columns_gets_pii():
             'numerical': {'sdtype': 'numerical'}
         }
     })
-    synth = GaussianCopulaSynthesizer(metadata)
+    synth = GaussianCopulaSynthesizer(metadata, default_distribution='truncnorm')
     synth.fit(data)
 
     # Run
@@ -358,6 +366,60 @@ def test_numerical_columns_gets_pii():
             8: 'Davidland',
             9: 'Port Christopher'
         },
-        'numerical': {0: 21, 1: 24, 2: 22, 3: 23, 4: 22, 5: 24, 6: 23, 7: 23, 8: 24, 9: 23}
+        'numerical': {0: 22, 1: 24, 2: 22, 3: 23, 4: 22, 5: 24, 6: 23, 7: 24, 8: 24, 9: 24}
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
+
+
+def test_categorical_column_with_numbers():
+    """Test that categorical column represented with numbers works end to end."""
+    # Setup
+    data = pd.DataFrame({
+        'category_col': [
+            1, 2, 1, 2, 1, 2, np.nan, 1, 1, np.nan, 2, 2, np.nan, 2,
+            1, 1, np.nan, 1, 2, 2
+        ],
+        'numerical_col': np.random.rand(20),
+    })
+
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+
+    # Run
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(20)
+
+    # Assert
+    expected_dtypes = pd.Series({
+        'category_col': 'float64',
+        'numerical_col': 'float64',
+    })
+    pd.testing.assert_series_equal(synthetic_data.dtypes, expected_dtypes)
+
+    unique_values = synthetic_data['category_col'].unique()
+    assert np.isnan(unique_values).sum() == 1
+    assert set(unique_values[~np.isnan(unique_values)]) == {1, 2}
+
+
+def test_unknown_sdtype():
+    """Test the ``unknown`` sdtype handling end to end."""
+    # Setup
+    data = pd.DataFrame({
+        'unknown': ['a', 'b', 'c'],
+        'numerical_col': np.random.rand(3),
+    })
+
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+    metadata.update_column('unknown', sdtype='unknown')
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+
+    # Run
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(5)
+
+    # Assert
+    assert synthetic_data['unknown'].str.startswith('sdv-pii-').all()

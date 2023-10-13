@@ -6,9 +6,9 @@
 
 [![Dev Status](https://img.shields.io/badge/Dev%20Status-5%20--%20Production%2fStable-green)](https://pypi.org/search/?c=Development+Status+%3A%3A+5+-+Production%2FStable)
 [![PyPi Shield](https://img.shields.io/pypi/v/SDV.svg)](https://pypi.python.org/pypi/SDV)
-[![Unit Tests](https://github.com/sdv-dev/SDV/actions/workflows/unit.yml/badge.svg?branch=master)](https://github.com/sdv-dev/SDV/actions/workflows/unit.yml?query=branch%3Amaster)
-[![Integration Tests](https://github.com/sdv-dev/SDV/actions/workflows/integration.yml/badge.svg?branch=master)](https://github.com/sdv-dev/SDV/actions/workflows/integration.yml?query=branch%3Amaster)
-[![Coverage Status](https://codecov.io/gh/sdv-dev/SDV/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/SDV)
+[![Unit Tests](https://github.com/sdv-dev/SDV/actions/workflows/unit.yml/badge.svg?branch=main)](https://github.com/sdv-dev/SDV/actions/workflows/unit.yml?query=branch%3Amain)
+[![Integration Tests](https://github.com/sdv-dev/SDV/actions/workflows/integration.yml/badge.svg?branch=main)](https://github.com/sdv-dev/SDV/actions/workflows/integration.yml?query=branch%3Amain)
+[![Coverage Status](https://codecov.io/gh/sdv-dev/SDV/branch/main/graph/badge.svg)](https://codecov.io/gh/sdv-dev/SDV)
 [![Downloads](https://static.pepy.tech/personalized-badge/sdv?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads)](https://pepy.tech/project/sdv)
 [![Colab](https://img.shields.io/badge/Tutorials-Try%20now!-orange?logo=googlecolab)](https://docs.sdv.dev/sdv/demos)
 [![Slack](https://img.shields.io/badge/Slack-Join%20now!-36C5F0?logo=slack)](https://bit.ly/sdv-slack-invite)
@@ -17,7 +17,7 @@
 <br/>
 <p align="center">
 <a href="https://github.com/sdv-dev/SDV">
-<img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/master/docs/images/SDV-logo.png"></img>
+<img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/stable/docs/images/SDV-logo.png"></img>
 </a>
 </p>
 </div>
@@ -54,15 +54,15 @@ and define business rules in the form of logical constraints.
 [Blog]: https://datacebo.com/blog
 [Docs]: https://bit.ly/sdv-docs
 [Repository]: https://github.com/sdv-dev/SDV
-[License]: https://github.com/sdv-dev/SDV/blob/master/LICENSE
+[License]: https://github.com/sdv-dev/SDV/blob/main/LICENSE
 [Development Status]: https://pypi.org/search/?c=Development+Status+%3A%3A+5+-+Production%2FStable
-[Slack Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/slack.png
+[Slack Logo]: https://github.com/sdv-dev/SDV/blob/stable/docs/images/slack.png
 [Community]: https://bit.ly/sdv-slack-invite
-[Colab Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/google_colab.png
+[Colab Logo]: https://github.com/sdv-dev/SDV/blob/stable/docs/images/google_colab.png
 [Tutorials]: https://docs.sdv.dev/sdv/demos
 
 # Install
-The SDV is publicly available under the [Business Source License](https://github.com/sdv-dev/SDV/blob/master/LICENSE).
+The SDV is publicly available under the [Business Source License](https://github.com/sdv-dev/SDV/blob/main/LICENSE).
 Install SDV using pip or conda. We recommend using a virtual environment to avoid conflicts with
 other software on your device.
 
@@ -86,7 +86,7 @@ real_data, metadata = download_demo(
     dataset_name='fake_hotel_guests')
 ```
 
-![Single Table Metadata Example](https://github.com/sdv-dev/SDV/blob/master/docs/images/Single-Table-Metadata-Example.png)
+![Single Table Metadata Example](https://github.com/sdv-dev/SDV/blob/stable/docs/images/Single-Table-Metadata-Example.png)
 
 The demo also includes **metadata**, a description of the dataset, including the data types in each
 column and the primary key (`guest_email`).
@@ -154,7 +154,7 @@ fig = get_column_plot(
 fig.show()
 ```
 
-![Real vs. Synthetic Data](https://github.com/sdv-dev/SDV/blob/master/docs/images/Real-vs-Synthetic-Evaluation.png)
+![Real vs. Synthetic Data](https://github.com/sdv-dev/SDV/blob/stable/docs/images/Real-vs-Synthetic-Evaluation.png)
 
 # What's Next?
 Using the SDV library, you can synthesize single table, multi table and sequential data. You can
@@ -192,8 +192,8 @@ If you use SDV for your research, please cite the following paper:
 
 <div align="center">
   <a href="https://datacebo.com"><picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/sdv-dev/SDV/blob/master/docs/images/datacebo-logo-dark-mode.png">
-      <img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/master/docs/images/datacebo-logo.png"></img>
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/sdv-dev/SDV/blob/stable/docs/images/datacebo-logo-dark-mode.png">
+      <img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/stable/docs/images/datacebo-logo.png"></img>
   </picture></a>
 </div>
 <br/>

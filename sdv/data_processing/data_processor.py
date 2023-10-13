@@ -483,6 +483,15 @@ class DataProcessor:
                     )
                     sdtypes[column] = 'pii'
 
+            elif sdtype == 'unknown':
+                transformers[column] = AnonymizedFaker(
+                    function_name='bothify',
+                )
+                transformers[column].function_kwargs = {
+                    'text': 'sdv-pii-?????',
+                    'letters': '0123456789abcdefghijklmnopqrstuvwxyz'
+                }
+
             elif pii:
                 enforce_uniqueness = bool(column in self._keys)
                 transformers[column] = self.create_anonymized_transformer(
@@ -528,9 +537,9 @@ class DataProcessor:
                     "'RegexGenerator' instead."
                 )
 
-        warnings.filterwarnings('ignore', module='rdt')
-        self._hyper_transformer.update_transformers(column_name_to_transformer)
-        warnings.resetwarnings()
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', module='rdt.hyper_transformer')
+            self._hyper_transformer.update_transformers(column_name_to_transformer)
 
     def _fit_hyper_transformer(self, data):
         """Create and return a new ``rdt.HyperTransformer`` instance.

@@ -149,36 +149,60 @@ def test_detect_from_dataframes():
     metadata.detect_from_dataframes(real_data)
 
     # Assert
+    metadata.update_column(
+        table_name='hotels',
+        column_name='city',
+        sdtype='categorical',
+    )
+    metadata.update_column(
+        table_name='hotels',
+        column_name='state',
+        sdtype='categorical',
+    )
+    metadata.update_column(
+        table_name='hotels',
+        column_name='classification',
+        sdtype='categorical',
+    )
+
     expected_metadata = {
         'tables': {
             'hotels': {
                 'columns': {
-                    'hotel_id': {'sdtype': 'categorical'},
+                    'hotel_id': {'sdtype': 'id'},
                     'city': {'sdtype': 'categorical'},
                     'state': {'sdtype': 'categorical'},
                     'rating': {'sdtype': 'numerical'},
                     'classification': {'sdtype': 'categorical'}
-                }
+                },
+                'primary_key': 'hotel_id'
             },
             'guests': {
                 'columns': {
-                    'guest_email': {'sdtype': 'categorical'},
-                    'hotel_id': {'sdtype': 'categorical'},
-                    'has_rewards': {'sdtype': 'boolean'},
+                    'guest_email': {'sdtype': 'id'},
+                    'hotel_id': {'sdtype': 'id'},
+                    'has_rewards': {'sdtype': 'categorical'},
                     'room_type': {'sdtype': 'categorical'},
                     'amenities_fee': {'sdtype': 'numerical'},
-                    'checkin_date': {'sdtype': 'categorical'},
-                    'checkout_date': {'sdtype': 'categorical'},
+                    'checkin_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
+                    'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
                     'room_rate': {'sdtype': 'numerical'},
-                    'billing_address': {'sdtype': 'categorical'},
-                    'credit_card_number': {'sdtype': 'numerical'}
-                }
+                    'billing_address': {'sdtype': 'unknown', 'pii': True},
+                    'credit_card_number': {'sdtype': 'unknown', 'pii': True}
+                },
+                'primary_key': 'guest_email'
             }
         },
-        'relationships': [],
+        'relationships': [
+            {
+                'parent_table_name': 'hotels',
+                'child_table_name': 'guests',
+                'parent_primary_key': 'hotel_id',
+                'child_foreign_key': 'hotel_id'
+            }
+        ],
         'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
     }
-
     assert metadata.to_dict() == expected_metadata
 
 
@@ -200,33 +224,58 @@ def test_detect_from_csvs(tmp_path):
     metadata.detect_from_csvs(folder_name=tmp_path)
 
     # Assert
+    metadata.update_column(
+        table_name='hotels',
+        column_name='city',
+        sdtype='categorical',
+    )
+    metadata.update_column(
+        table_name='hotels',
+        column_name='state',
+        sdtype='categorical',
+    )
+    metadata.update_column(
+        table_name='hotels',
+        column_name='classification',
+        sdtype='categorical',
+    )
+
     expected_metadata = {
         'tables': {
             'hotels': {
                 'columns': {
-                    'hotel_id': {'sdtype': 'categorical'},
+                    'hotel_id': {'sdtype': 'id'},
                     'city': {'sdtype': 'categorical'},
                     'state': {'sdtype': 'categorical'},
                     'rating': {'sdtype': 'numerical'},
                     'classification': {'sdtype': 'categorical'}
-                }
+                },
+                'primary_key': 'hotel_id'
             },
             'guests': {
                 'columns': {
-                    'guest_email': {'sdtype': 'categorical'},
-                    'hotel_id': {'sdtype': 'categorical'},
-                    'has_rewards': {'sdtype': 'boolean'},
+                    'guest_email': {'sdtype': 'id'},
+                    'hotel_id': {'sdtype': 'id'},
+                    'has_rewards': {'sdtype': 'categorical'},
                     'room_type': {'sdtype': 'categorical'},
                     'amenities_fee': {'sdtype': 'numerical'},
-                    'checkin_date': {'sdtype': 'categorical'},
-                    'checkout_date': {'sdtype': 'categorical'},
+                    'checkin_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
+                    'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
                     'room_rate': {'sdtype': 'numerical'},
-                    'billing_address': {'sdtype': 'categorical'},
-                    'credit_card_number': {'sdtype': 'numerical'}
-                }
+                    'billing_address': {'sdtype': 'unknown', 'pii': True},
+                    'credit_card_number': {'sdtype': 'unknown', 'pii': True}
+                },
+                'primary_key': 'guest_email'
             }
         },
-        'relationships': [],
+        'relationships': [
+            {
+                'parent_table_name': 'hotels',
+                'child_table_name': 'guests',
+                'parent_primary_key': 'hotel_id',
+                'child_foreign_key': 'hotel_id'
+            }
+        ],
         'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
     }
 
@@ -251,16 +300,32 @@ def test_detect_table_from_csv(tmp_path):
     metadata.detect_table_from_csv('hotels', tmp_path / 'hotels.csv')
 
     # Assert
+    metadata.update_column(
+        table_name='hotels',
+        column_name='city',
+        sdtype='categorical',
+    )
+    metadata.update_column(
+        table_name='hotels',
+        column_name='state',
+        sdtype='categorical',
+    )
+    metadata.update_column(
+        table_name='hotels',
+        column_name='classification',
+        sdtype='categorical',
+    )
     expected_metadata = {
         'tables': {
             'hotels': {
                 'columns': {
-                    'hotel_id': {'sdtype': 'categorical'},
+                    'hotel_id': {'sdtype': 'id'},
                     'city': {'sdtype': 'categorical'},
                     'state': {'sdtype': 'categorical'},
                     'rating': {'sdtype': 'numerical'},
                     'classification': {'sdtype': 'categorical'}
-                }
+                },
+                'primary_key': 'hotel_id'
             }
         },
         'relationships': [],

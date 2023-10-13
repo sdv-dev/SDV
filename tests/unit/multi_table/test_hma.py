@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv.errors import SynthesizerInputError
+from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import get_multi_table_data, get_multi_table_metadata
@@ -30,6 +32,30 @@ class TestHMASynthesizer:
             'upravna_enota': {'default_distribution': 'beta'},
         }
         instance.metadata.validate.assert_called_once_with()
+
+    def test_set_table_parameters_errors_gaussian_kde(self):
+        """Test that ``set_table_parameters`` errors with 'gaussian_kde'."""
+        # Setup
+        default_table_parameters = {'default_distribution': 'gaussian_kde'}
+        numerical_distribution_parameters = {
+            'numerical_distributions': {
+                'id_nesreca': 'gaussian_kde'
+            }
+        }
+        metadata = get_multi_table_metadata()
+        instance = HMASynthesizer(metadata)
+
+        # Run and Assert
+        err_msg = re.escape(
+            "The 'gaussian_kde' is not compatible with the HMA algorithm. Please choose a "
+            "different distribution such as 'beta' or 'truncnorm'. Or try a different "
+            'algorithm such as HSA.'
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            instance.set_table_parameters('nesreca', default_table_parameters)
+
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            instance.set_table_parameters('nesreca', numerical_distribution_parameters)
 
     def test__get_extension(self):
         """Test the ``_get_extension`` method.
@@ -496,3 +522,466 @@ class TestHMASynthesizer:
         })
         pd.testing.assert_frame_equal(expected_parent_table, parent_table)
         pd.testing.assert_frame_equal(expected_child_table, child_table)
+
+    def test__estimate_num_columns_to_be_modeled_multiple_foreign_keys(self):
+        """Test it when there are two relationships between a parent and a child tables.
+
+        To check that the number columns is correct we Mock the ``_finalize`` method
+        and compare its output with the estimated number of columns.
+        """
+        # Setup
+        parent = pd.DataFrame({'id': [0, 1, 2]})
+        child = pd.DataFrame({
+            'id': [0, 1, 2],
+            'id1': [0, 1, 2],
+            'id2': [0, 1, 2],
+            'col1': [0, 1, 2]
+        })
+        data = {'parent': parent, 'child': child}
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'parent': {
+                    'primary_key': 'id',
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    }
+                },
+                'child': {
+                    'primary_key': 'id',
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                        'id1': {'sdtype': 'id'},
+                        'id2': {'sdtype': 'id'},
+                        'col1': {'sdtype': 'numerical'},
+                    }
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'id1'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'id2'
+                },
+            ]
+        })
+        synthesizer = HMASynthesizer(metadata)
+        synthesizer._finalize = Mock()
+
+        # Run estimation
+        estimated_num_columns = synthesizer._estimate_num_columns()
+
+        # Run actual modeling
+        synthesizer.fit(data)
+        synthesizer.sample()
+
+        # Assert estimated number of columns is correct
+        tables = synthesizer._finalize.call_args[0][0]
+        for table_name, table in tables.items():
+            # Subract all the id columns present in the data, as those are not estimated
+            num_table_cols = len(table.columns)
+            if table_name == 'parent':
+                num_table_cols -= 1
+            if table_name == 'child':
+                num_table_cols -= 3
+
+            assert num_table_cols == estimated_num_columns[table_name]
+
+    def test__estimate_num_columns_to_be_modeled_different_distributions(self):
+        """Test it when there the default distributions of the tables have been changed.
+
+        The schema will be 1 parent and 5 children, all of which have different distributions,
+        all of which have two foreign keys to the parent table.
+
+        To check that the number columns is correct we Mock the ``_finalize`` method
+        and compare its output with the estimated number of columns.
+        """
+        # Setup
+        parent = pd.DataFrame({'id': [0, 1, 2]})
+        child = pd.DataFrame({
+            'id': [0, 1, 2],
+            'id1': [0, 1, 2],
+            'id2': [0, 1, 2],
+            'col': [.2, .3, .2]
+        })
+        data = {
+            'parent': parent,
+            'child_norm': child,
+            'child_beta': child,
+            'child_gamma': child,
+            'child_truncnorm': child,
+            'child_uniform': child
+        }
+        child_dict = {
+            'primary_key': 'id',
+            'columns': {
+                'id': {'sdtype': 'id'},
+                'id1': {'sdtype': 'id'},
+                'id2': {'sdtype': 'id'},
+                'col': {'sdtype': 'numerical'},
+            }
+        }
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'parent': {
+                    'primary_key': 'id',
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    }
+                },
+                'child_norm': child_dict,
+                'child_beta': child_dict,
+                'child_gamma': child_dict,
+                'child_truncnorm': child_dict,
+                'child_uniform': child_dict,
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_norm',
+                    'child_foreign_key': 'id1'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_norm',
+                    'child_foreign_key': 'id2'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_beta',
+                    'child_foreign_key': 'id1'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_beta',
+                    'child_foreign_key': 'id2'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_truncnorm',
+                    'child_foreign_key': 'id1'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_truncnorm',
+                    'child_foreign_key': 'id2'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_uniform',
+                    'child_foreign_key': 'id1'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_uniform',
+                    'child_foreign_key': 'id2'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_gamma',
+                    'child_foreign_key': 'id1'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'id',
+                    'child_table_name': 'child_gamma',
+                    'child_foreign_key': 'id2'
+                },
+            ]
+        })
+        synthesizer = HMASynthesizer(metadata)
+        synthesizer.set_table_parameters(
+            table_name='child_norm',
+            table_parameters={'default_distribution': 'norm'}
+        )
+        synthesizer.set_table_parameters(
+            table_name='child_gamma',
+            table_parameters={'default_distribution': 'gamma'}
+        )
+        synthesizer.set_table_parameters(
+            table_name='child_truncnorm',
+            table_parameters={'default_distribution': 'truncnorm'}
+        )
+        synthesizer.set_table_parameters(
+            table_name='child_uniform',
+            table_parameters={'default_distribution': 'uniform'}
+        )
+        synthesizer._finalize = Mock()
+
+        # Run estimation
+        estimated_num_columns = synthesizer._estimate_num_columns()
+
+        # Run actual modeling
+        synthesizer.fit(data)
+        synthesizer.sample()
+
+        # Assert estimated number of columns is correct
+        tables = synthesizer._finalize.call_args[0][0]
+        for table_name, table in tables.items():
+            # Subract all the id columns present in the data, as those are not estimated
+            num_table_cols = len(table.columns)
+            if table_name == 'parent':
+                num_table_cols -= 1
+            else:
+                num_table_cols -= 3
+
+            assert num_table_cols == estimated_num_columns[table_name]
+
+    def test__estimate_num_columns_to_be_modeled(self):
+        """Test the estimated number of columns is exactly the number of columns to be modeled.
+
+        To check that the number columns is correct we Mock the ``_finalize`` method
+        and compare its output with the estimated number of columns.
+
+        The dataset used follows the structure below:
+            R1 R2
+            || /
+            GP
+            | \
+            P-C
+        """
+        # Setup
+        root1 = pd.DataFrame({'R1': [0, 1, 2]})
+        root2 = pd.DataFrame({'R2': [0, 1, 2], 'data': [0, 1, 2]})
+        grandparent = pd.DataFrame({
+            'GP': [0, 1, 2], 'R1_1': [0, 1, 2], 'R1_2': [0, 1, 2], 'R2': [0, 1, 2]
+        })
+        parent = pd.DataFrame({'P': [0, 1, 2], 'GP': [0, 1, 2]})
+        child = pd.DataFrame({'C': [0, 1, 2], 'P': [0, 1, 2], 'GP': [0, 1, 2]})
+        data = {
+            'root1': root1,
+            'root2': root2,
+            'grandparent': grandparent,
+            'parent': parent,
+            'child': child
+        }
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'root1': {
+                    'primary_key': 'R1',
+                    'columns': {
+                        'R1': {'sdtype': 'id'},
+                    }
+                },
+                'root2': {
+                    'primary_key': 'R2',
+                    'columns': {
+                        'R2': {'sdtype': 'id'},
+                        'data': {'sdtype': 'numerical'}
+                    }
+                },
+                'grandparent': {
+                    'primary_key': 'GP',
+                    'columns': {
+                        'GP': {'sdtype': 'id'},
+                        'R1_1': {'sdtype': 'id'},
+                        'R1_2': {'sdtype': 'id'},
+                        'R2': {'sdtype': 'id'},
+                    }
+                },
+                'parent': {
+                    'primary_key': 'P',
+                    'columns': {
+                        'P': {'sdtype': 'id'},
+                        'GP': {'sdtype': 'id'},
+                    }
+                },
+                'child': {
+                    'primary_key': 'C',
+                    'columns': {
+                        'C': {'sdtype': 'id'},
+                        'P': {'sdtype': 'id'},
+                        'GP': {'sdtype': 'id'},
+                    }
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'root1',
+                    'parent_primary_key': 'R1',
+                    'child_table_name': 'grandparent',
+                    'child_foreign_key': 'R1_1'
+                },
+                {
+                    'parent_table_name': 'root1',
+                    'parent_primary_key': 'R1',
+                    'child_table_name': 'grandparent',
+                    'child_foreign_key': 'R1_2'
+                },
+                {
+                    'parent_table_name': 'root2',
+                    'parent_primary_key': 'R2',
+                    'child_table_name': 'grandparent',
+                    'child_foreign_key': 'R2'
+                },
+                {
+                    'parent_table_name': 'grandparent',
+                    'parent_primary_key': 'GP',
+                    'child_table_name': 'parent',
+                    'child_foreign_key': 'GP'
+                },
+                {
+                    'parent_table_name': 'grandparent',
+                    'parent_primary_key': 'GP',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'GP'
+                },
+                {
+                    'parent_table_name': 'parent',
+                    'parent_primary_key': 'P',
+                    'child_table_name': 'child',
+                    'child_foreign_key': 'P'
+                },
+            ]
+        })
+        synthesizer = HMASynthesizer(metadata)
+        synthesizer._finalize = Mock()
+
+        # Run estimation
+        estimated_num_columns = synthesizer._estimate_num_columns()
+
+        # Run actual modeling
+        synthesizer.fit(data)
+        synthesizer.sample(scale=1)
+
+        # Assert estimated number of columns is correct
+        tables = synthesizer._finalize.call_args[0][0]
+        for table_name, table in tables.items():
+            # Subract all the id columns present in the data, as those are not estimated
+            num_table_cols = len(table.columns)
+            if table_name == 'child':
+                num_table_cols -= 3
+            if table_name == 'parent':
+                num_table_cols -= 2
+            if table_name == 'grandparent':
+                num_table_cols -= 4
+            if table_name in {'root1', 'root2'}:
+                num_table_cols -= 1
+
+            assert num_table_cols == estimated_num_columns[table_name]
+
+    def test__estimate_num_columns_to_be_modeled_various_sdtypes(self):
+        """Test the estimated number of columns is correct for various sdtypes.
+
+        To check that the number columns is correct we Mock the ``_finalize`` method
+        and compare its output with the estimated number of columns.
+
+        The dataset used follows the structure below:
+            R1 R2
+            | /
+            GP
+            |
+            P
+        """
+        # Setup
+        root1 = pd.DataFrame({'R1': [0, 1, 2]})
+        root2 = pd.DataFrame({'R2': [0, 1, 2], 'data': [0, 1, 2]})
+        grandparent = pd.DataFrame({'GP': [0, 1, 2], 'R1': [0, 1, 2], 'R2': [0, 1, 2]})
+        parent = pd.DataFrame({
+            'P': [0, 1, 2],
+            'GP': [0, 1, 2],
+            'numerical': [.1, .5, np.nan],
+            'categorical': ['a', np.nan, 'c'],
+            'datetime': [None, '2019-01-02', '2019-01-03'],
+            'boolean': [float('nan'), False, True],
+            'id': [0, 1, 2],
+        })
+        data = {
+            'root1': root1,
+            'root2': root2,
+            'grandparent': grandparent,
+            'parent': parent,
+        }
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'root1': {
+                    'primary_key': 'R1',
+                    'columns': {
+                        'R1': {'sdtype': 'id'},
+                    }
+                },
+                'root2': {
+                    'primary_key': 'R2',
+                    'columns': {
+                        'R2': {'sdtype': 'id'},
+                        'data': {'sdtype': 'numerical'}
+                    }
+                },
+                'grandparent': {
+                    'primary_key': 'GP',
+                    'columns': {
+                        'GP': {'sdtype': 'id'},
+                        'R1': {'sdtype': 'id'},
+                        'R2': {'sdtype': 'id'},
+                    }
+                },
+                'parent': {
+                    'primary_key': 'P',
+                    'columns': {
+                        'P': {'sdtype': 'id'},
+                        'GP': {'sdtype': 'id'},
+                        'numerical': {'sdtype': 'numerical'},
+                        'categorical': {'sdtype': 'categorical'},
+                        'datetime': {'sdtype': 'datetime'},
+                        'boolean': {'sdtype': 'boolean'},
+                        'id': {'sdtype': 'id'},
+                    }
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'root1',
+                    'parent_primary_key': 'R1',
+                    'child_table_name': 'grandparent',
+                    'child_foreign_key': 'R1'
+                },
+                {
+                    'parent_table_name': 'root2',
+                    'parent_primary_key': 'R2',
+                    'child_table_name': 'grandparent',
+                    'child_foreign_key': 'R2'
+                },
+                {
+                    'parent_table_name': 'grandparent',
+                    'parent_primary_key': 'GP',
+                    'child_table_name': 'parent',
+                    'child_foreign_key': 'GP'
+                },
+            ]
+        })
+        synthesizer = HMASynthesizer(metadata)
+        synthesizer._finalize = Mock()
+
+        # Run estimation
+        estimated_num_columns = synthesizer._estimate_num_columns()
+
+        # Run actual modeling
+        synthesizer.fit(data)
+        synthesizer.sample()
+
+        # Assert estimated number of columns is correct
+        tables = synthesizer._finalize.call_args[0][0]
+        for table_name, table in tables.items():
+            # Subract all the id columns present in the data, as those are not estimated
+            num_table_cols = len(table.columns)
+            if table_name in {'parent', 'grandparent'}:
+                num_table_cols -= 3
+            if table_name in {'root1', 'root2'}:
+                num_table_cols -= 1
+
+            assert num_table_cols == estimated_num_columns[table_name]

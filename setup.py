@@ -18,8 +18,8 @@ install_requires = [
     'cloudpickle>=2.1.0,<3.0',
     'Faker>=10,<15',
     'graphviz>=0.13.2,<1',
-    "numpy>=1.20.0,<1.25.0;python_version<'3.10'",
-    "numpy>=1.23.3,<1.25.0;python_version>='3.10'",
+    "numpy>=1.20.0,<2;python_version<'3.10'",
+    "numpy>=1.23.3,<2;python_version>='3.10'",
     "pandas>=1.1.3;python_version<'3.10'",
     "pandas>=1.3.4;python_version>='3.10' and python_version<'3.11'",
     "pandas>=1.5.0;python_version>='3.11'",
@@ -137,6 +137,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='1.4.0',
+    version='1.5.0.dev1',
     zip_safe=False,
 )

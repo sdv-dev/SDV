@@ -1,4 +1,5 @@
 import re
+import warnings
 from unittest.mock import Mock, call, patch
 
 import numpy as np
@@ -7,7 +8,8 @@ import pytest
 from rdt.errors import ConfigNotSetError
 from rdt.errors import NotFittedError as RDTNotFittedError
 from rdt.transformers import (
-    AnonymizedFaker, FloatFormatter, IDGenerator, UniformEncoder, UnixTimestampEncoder)
+    AnonymizedFaker, FloatFormatter, GaussianNormalizer, IDGenerator, UniformEncoder,
+    UnixTimestampEncoder)
 
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import Positive, ScalarRange
@@ -1056,7 +1058,9 @@ class TestDataProcessor:
             'id_no_regex': ['ID_001', 'ID_002', 'ID_003'],
             'id_numeric': [0, 1, 2],
             'id_column': ['ID_999', 'ID_999', 'ID_007'],
-            'date': ['2021-02-01', '2022-03-05', '2023-01-31']
+            'date': ['2021-02-01', '2022-03-05', '2023-01-31'],
+            'unknown': ['a', 'b', 'c'],
+            'address': ['123 Main St', '456 Main St', '789 Main St']
         })
         dp = DataProcessor(SingleTableMetadata(), locales=locales)
         dp.metadata = Mock()
@@ -1081,7 +1085,9 @@ class TestDataProcessor:
             'id_no_regex': {'sdtype': 'id'},
             'id_numeric': {'sdtype': 'id'},
             'id_column': {'sdtype': 'id'},
-            'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'}
+            'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'unknown': {'sdtype': 'unknown'},
+            'address': {'sdtype': 'address', 'pii': False},
         }
 
         # Run
@@ -1104,7 +1110,9 @@ class TestDataProcessor:
             'id_no_regex': 'text',
             'id_numeric': 'text',
             'id_column': 'pii',
-            'date': 'datetime'
+            'date': 'datetime',
+            'unknown': 'pii',
+            'address': 'categorical'
         }
 
         int_transformer = config['transformers']['created_int']
@@ -1124,13 +1132,15 @@ class TestDataProcessor:
 
         assert isinstance(config['transformers']['int'], FloatFormatter)
         assert isinstance(config['transformers']['float'], FloatFormatter)
+
         anonymized_transformer = config['transformers']['email']
-        primary_regex_generator = config['transformers']['id']
         assert anonymized_transformer == 'AnonymizedFaker'
+
+        primary_regex_generator = config['transformers']['id']
+        assert primary_regex_generator == 'RegexGenerator'
 
         first_name_transformer = config['transformers']['first_name']
         assert first_name_transformer == 'AnonymizedFaker'
-        assert primary_regex_generator == 'RegexGenerator'
 
         datetime_transformer = config['transformers']['date']
         assert isinstance(datetime_transformer, UnixTimestampEncoder)
@@ -1166,6 +1176,18 @@ class TestDataProcessor:
             False
         )
 
+        expected_kwargs = {
+            'text': 'sdv-pii-?????',
+            'letters': '0123456789abcdefghijklmnopqrstuvwxyz'
+        }
+        unknown_transformer = config['transformers']['unknown']
+        assert isinstance(unknown_transformer, AnonymizedFaker)
+        assert unknown_transformer.function_name == 'bothify'
+        assert unknown_transformer.function_kwargs == expected_kwargs
+
+        address_column_transformer = config['transformers']['address']
+        assert isinstance(address_column_transformer, UniformEncoder)
+
     def test_update_transformers_not_fitted(self):
         """Test when ``self._hyper_transformer`` is ``None`` raises a ``NotFittedError``."""
         # Setup
@@ -1178,6 +1200,18 @@ class TestDataProcessor:
         )
         with pytest.raises(NotFittedError, match=error_msg):
             dp.update_transformers({'column': None})
+
+    def test_update_transformers_ignores_rdt_refit_warning(self):
+        """Test silencing hypertransformer refit warning (replaced by SDV warning elsewhere)"""
+        metadata = SingleTableMetadata()
+        metadata.add_column('col1', sdtype='numerical')
+        metadata.add_column('col2', sdtype='numerical')
+
+        dp = DataProcessor(metadata)
+        dp.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
+        with warnings.catch_warnings():
+            warnings.simplefilter('error')
+            dp.update_transformers({'col1': GaussianNormalizer()})
 
     def test_update_transformers_for_key(self):
         """Test when ``transformer`` is not ``AnonymizedFaker`` or ``RegexGenerator`` for keys."""
