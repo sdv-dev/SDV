@@ -280,6 +280,8 @@ class BaseMultiTableSynthesizer:
         pbar_args = self._get_pbar_args(desc='Preprocess Tables')
         for table_name, table_data in tqdm(data.items(), **pbar_args):
             synthesizer = self._table_synthesizers[table_name]
+            print("JLA Printing Synthesizer of table:", table_name)
+            print(synthesizer)
             self._assign_table_transformers(synthesizer, table_name, table_data)
             processed_data[table_name] = synthesizer._preprocess(table_data)
 

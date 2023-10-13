@@ -346,6 +346,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
             if 'scale' in univariate:
                 univariate['scale'] = max(0, univariate['scale'])
+            # TODO Prevent a and b <= 0
 
             univariates.append(univariate)
 

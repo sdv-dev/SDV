@@ -77,6 +77,7 @@ class DataProcessor:
 
     def __init__(self, metadata, enforce_rounding=True, enforce_min_max_values=True,
                  model_kwargs=None, table_name=None, locales=None):
+        #print("Hey this is running locally again")
         self.metadata = metadata
         self._enforce_rounding = enforce_rounding
         self._enforce_min_max_values = enforce_min_max_values
@@ -689,6 +690,7 @@ class DataProcessor:
             data = data.set_index(self._primary_key, drop=False)
 
         try:
+            print("Transform Subset")
             transformed = self._hyper_transformer.transform_subset(data)
         except (rdt.errors.NotFittedError, rdt.errors.ConfigNotSetError):
             transformed = data

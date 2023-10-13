@@ -46,6 +46,7 @@ class TestDataProcessor:
 
         # Instance ``DataProcessor``
         dp = DataProcessor(metadata)
+        assert(False)
 
         # Fit
         dp.fit(data)

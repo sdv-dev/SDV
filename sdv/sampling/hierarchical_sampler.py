@@ -184,6 +184,7 @@ class BaseHierarchicalSampler():
                 sampled data tables as ``pandas.DataFrame``.
         """
         sampled_data = {}
+        print("hierarchical sampler")
 
         # DFS to sample roots and then their children
         non_root_parents = set(self.metadata._get_parent_map().keys())
