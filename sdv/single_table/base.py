@@ -154,7 +154,7 @@ class BaseSynthesizer:
             column_names = tuple(column_names) if len(column_names) > 1 else (column_names,)
 
         self._check_address_columns(column_names)
-        self._data_processor._set_address_transformer(column_names, anonymization_level)
+        self._data_processor.set_address_transformer(column_names, anonymization_level)
 
     def _validate_metadata(self, data):
         """Validate that the data follows the metadata."""

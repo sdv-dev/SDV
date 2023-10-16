@@ -204,7 +204,7 @@ class TestDataProcessor:
         assert transformer is None
 
     def test__set_address_transformer(self):
-        """Test the ``_set_address_transformer`` method."""
+        """Test the ``set_address_transformer`` method."""
         # Setup
         metadata = SingleTableMetadata().load_from_dict({
             'columns': {
@@ -221,7 +221,7 @@ class TestDataProcessor:
         columns = ('country_column', 'city_column')
 
         # Run
-        dp._set_address_transformer(columns, 'full')
+        dp.set_address_transformer(columns, 'full')
 
         # Assert
         dp._get_address_transformer.assert_called_once_with('full')

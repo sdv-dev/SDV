@@ -138,7 +138,7 @@ class DataProcessor:
         elif anonymization_level == 'street_address':
             return rdt.transformers.RegionalAnonymizer(locales=locales)
 
-    def _set_address_transformer(self, column_names, anonymization_level):
+    def set_address_transformer(self, column_names, anonymization_level):
         """Set the address transformer.
 
         Args:

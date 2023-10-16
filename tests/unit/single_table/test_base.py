@@ -194,7 +194,7 @@ class TestBaseSingleTableSynthesizer:
         synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
         synthesizer._check_address_initialization = Mock()
         synthesizer._check_address_columns = Mock()
-        synthesizer._data_processor._set_address_transformer = Mock()
+        synthesizer._data_processor.set_address_transformer = Mock()
 
         # Run
         synthesizer.set_address_columns(
@@ -206,7 +206,7 @@ class TestBaseSingleTableSynthesizer:
         synthesizer._check_address_columns.assert_called_once_with(
             ('country_column', 'city_column')
         )
-        synthesizer._data_processor._set_address_transformer.assert_called_once_with(
+        synthesizer._data_processor.set_address_transformer.assert_called_once_with(
             ('country_column', 'city_column'), 'full'
         )
 
