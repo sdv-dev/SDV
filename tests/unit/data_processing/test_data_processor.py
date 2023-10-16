@@ -215,7 +215,6 @@ class TestDataProcessor:
         dp = DataProcessor(metadata)
         transformer = Mock()
         transformer._validate_sdtypes = Mock()
-        dp._get_address_transformer_parameters = Mock()
         columns_to_sdtypes = {'country_column': 'country_code', 'city_column': 'city'}
         dp._get_address_transformer = Mock(return_value=transformer)
         columns = ('country_column', 'city_column')

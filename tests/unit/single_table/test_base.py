@@ -109,46 +109,6 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=err_msg):
             BaseSingleTableSynthesizer(SingleTableMetadata(), enforce_rounding='invalid')
 
-    def test__check_address_initialization_with_invalid_anoymization_level(self):
-        """Test ``_check_address_initialization`` with an invalid anoymization level."""
-        # Setup
-        synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
-
-        # Run and Assert
-        err_msg = re.escape(
-            "Invalid value 'invalid' for parameter 'anonymization_level'."
-            " Please provide 'full' or 'street_address'."
-        )
-        with pytest.raises(ValueError, match=err_msg):
-            synthesizer._check_address_initialization(anonymization_level='invalid')
-
-    def test__check_address_initialization(self):
-        """Test ``_check_address_initialization`` method."""
-        # Setup
-        synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
-        synthesizer._data_processor._check_import_address_transformers = Mock()
-
-        # Run
-        synthesizer._check_address_initialization(anonymization_level='full')
-
-        # Assert
-        synthesizer._data_processor._check_import_address_transformers.assert_called_once()
-
-    def test__check_address_initialization_fitted_model(self):
-        """Test ``_check_address_initialization`` method when the synthesizer has been fitted."""
-        # Setup
-        synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
-        synthesizer._data_processor._check_import_address_transformers = Mock()
-        synthesizer._fitted = True
-
-        # Run and Assert
-        expected_message = re.escape(
-            'Please refit your synthesizer for the address changes to appear in'
-            ' your synthetic data.'
-        )
-        with pytest.warns(UserWarning, match=expected_message):
-            synthesizer._check_address_initialization(anonymization_level='full')
-
     def test__check_address_columns_missing_columns_metadata(self):
         """Test ``_check_address_columns`` when columns are missing in the metadata."""
         # Setup
@@ -192,7 +152,6 @@ class TestBaseSingleTableSynthesizer:
         """Test ``set_address_columns`` method."""
         # Setup
         synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
-        synthesizer._check_address_initialization = Mock()
         synthesizer._check_address_columns = Mock()
         synthesizer._data_processor.set_address_transformer = Mock()
 
@@ -202,13 +161,47 @@ class TestBaseSingleTableSynthesizer:
         )
 
         # Assert
-        synthesizer._check_address_initialization.assert_called_once_with('full')
         synthesizer._check_address_columns.assert_called_once_with(
             ('country_column', 'city_column')
         )
         synthesizer._data_processor.set_address_transformer.assert_called_once_with(
             ('country_column', 'city_column'), 'full'
         )
+
+    def test_set_address_columns_wrong_anonymization_level(self):
+        """Test ``set_address_columns`` method with an invalid anonymization level."""
+        # Setup
+        synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
+        synthesizer._check_address_columns = Mock()
+        synthesizer._data_processor.set_address_transformer = Mock()
+
+        # Run and Assert
+        err_msg = re.escape(
+            "Invalid value 'invalid' for parameter 'anonymization_level'."
+            " Please provide 'full' or 'street_address'."
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            synthesizer.set_address_columns(
+                ('country_column', 'city_column'), anonymization_level='invalid'
+            )
+
+    def test_set_address_columns_fitted_data(self):
+        """Test ``set_address_columns`` method when the synthesizer has been fitted."""
+        # Setup
+        synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
+        synthesizer._check_address_columns = Mock()
+        synthesizer._data_processor.set_address_transformer = Mock()
+        synthesizer._fitted = True
+
+        # Run and Assert
+        expected_message = re.escape(
+            'Please refit your synthesizer for the address changes to appear in'
+            ' your synthetic data.'
+        )
+        with pytest.warns(UserWarning, match=expected_message):
+            synthesizer.set_address_columns(
+                ('country_column', 'city_column'), anonymization_level='full'
+            )
 
     @patch('sdv.single_table.base.DataProcessor')
     def test_get_parameters(self, mock_data_processor):

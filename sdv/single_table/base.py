@@ -92,21 +92,6 @@ class BaseSynthesizer:
         self._fitted_date = None
         self._fitted_sdv_version = None
 
-    def _check_address_initialization(self, anonymization_level):
-        if anonymization_level not in {'full', 'street_address'}:
-            raise ValueError(
-                f"Invalid value '{anonymization_level}' for parameter 'anonymization_level'."
-                " Please provide 'full' or 'street_address'."
-            )
-
-        self._data_processor._check_import_address_transformers()
-
-        if self._fitted:
-            warnings.warn(
-                'Please refit your synthesizer for the address changes to appear in'
-                ' your synthetic data.'
-            )
-
     def _check_address_columns(self, column_names):
         """Check that the column is valid for the address transformer.
 
@@ -149,12 +134,22 @@ class BaseSynthesizer:
             anonymization_level (str):
                 The anonymization level to use for the address transformer.
         """
-        self._check_address_initialization(anonymization_level)
+        if anonymization_level not in {'full', 'street_address'}:
+            raise ValueError(
+                f"Invalid value '{anonymization_level}' for parameter 'anonymization_level'."
+                " Please provide 'full' or 'street_address'."
+            )
+
         if not isinstance(column_names, tuple):
             column_names = tuple(column_names) if len(column_names) > 1 else (column_names,)
 
         self._check_address_columns(column_names)
         self._data_processor.set_address_transformer(column_names, anonymization_level)
+        if self._fitted:
+            warnings.warn(
+                'Please refit your synthesizer for the address changes to appear in'
+                ' your synthetic data.'
+            )
 
     def _validate_metadata(self, data):
         """Validate that the data follows the metadata."""
