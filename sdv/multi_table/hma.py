@@ -68,13 +68,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         super().set_table_parameters(table_name, table_parameters)
 
-    def _get_root_parents(self):
-        """Get the set of root parents in the graph."""
-        non_root_tables = set(self.metadata._get_parent_map().keys())
-        root_parents = set(self.metadata.tables.keys()) - non_root_tables
-
-        return root_parents
-
     def get_learned_distributions(self, table_name):
         """Get the marginal distributions used by the ``GaussianCopula`` for a table.
 
