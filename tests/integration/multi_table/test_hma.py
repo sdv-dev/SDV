@@ -9,6 +9,7 @@ from faker import Faker
 
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
+from sdv.errors import SynthesizerInputError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
@@ -1098,3 +1099,23 @@ class TestHMASynthesizer:
         assert data.keys() == samples.keys()
         for table_name, table in samples.items():
             assert set(data[table_name].columns) == set(table.columns)
+
+    def test_get_learned_distributions_error_msg(self):
+        """Ensure the error message is correct when calling ``get_learned_distributions``."""
+        # Setup
+        data, metadata = download_demo(
+            modality='multi_table',
+            dataset_name='fake_hotels'
+        )
+        synth = HMASynthesizer(metadata)
+
+        # Run
+        synth.fit(data)
+
+        # Assert
+        error_msg = re.escape(
+            "Learned distributions are not available for the 'guests' table. "
+            'Please choose a table that does not have any parents.'
+        )
+        with pytest.raises(SynthesizerInputError, match=error_msg):
+            synth.get_learned_distributions(table_name='guests')

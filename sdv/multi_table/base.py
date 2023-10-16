@@ -93,6 +93,13 @@ class BaseMultiTableSynthesizer:
         self._fitted_date = None
         self._fitted_sdv_version = None
 
+    def _get_root_parents(self):
+        """Get the set of root parents in the graph."""
+        non_root_tables = set(self.metadata._get_parent_map().keys())
+        root_parents = set(self.metadata.tables.keys()) - non_root_tables
+
+        return root_parents
+
     def get_table_parameters(self, table_name):
         """Return the parameters that will be used to instantiate the table's synthesizer.
 
