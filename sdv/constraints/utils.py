@@ -191,7 +191,7 @@ def get_datetime_diff(high, low, dtype='O'):
         high = cast_to_datetime64(high)
 
     diff_column = high - low
-    nan_mask = np.isnan(diff_column)
+    nan_mask = pd.isna(diff_column)
     diff_column = diff_column.astype(np.float64)
     diff_column[nan_mask] = np.nan
     return diff_column

@@ -808,3 +808,33 @@ def test_custom_constraint_with_key():
 
     # Assert
     synth.validate(sampled)
+
+
+def test_timezone_aware_constraints():
+    """Test that constraints work with timezone aware datetime columns GH#1576."""
+    # Setup
+    data = pd.DataFrame({'col1': ['2020-02-02'], 'col2': ['2020-02-05']})
+    data['col1'] = pd.to_datetime(data['col1']).dt.tz_localize('UTC')
+    data['col2'] = pd.to_datetime(data['col2']).dt.tz_localize('UTC')
+
+    metadata = SingleTableMetadata()
+    metadata.add_column('col1', sdtype='datetime')
+    metadata.add_column('col2', sdtype='datetime')
+
+    my_constraint = {
+        'constraint_class': 'Inequality',
+        'constraint_parameters': {
+            'low_column_name': 'col1',
+            'high_column_name': 'col2',
+            'strict_boundaries': True
+        }
+    }
+
+    # Run
+    synth = GaussianCopulaSynthesizer(metadata)
+    synth.add_constraints(constraints=[my_constraint])
+    synth.fit(data)
+    samples = synth.sample(100)
+
+    # Assert
+    assert all(samples['col1'] < samples['col2'])
