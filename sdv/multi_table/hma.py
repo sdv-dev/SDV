@@ -68,6 +68,29 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         super().set_table_parameters(table_name, table_parameters)
 
+    def get_learned_distributions(self, table_name):
+        """Get the marginal distributions used by the ``GaussianCopula`` for a table.
+
+        Return a dictionary mapping the column names with the distribution name and the learned
+        parameters for those.
+
+        Args:
+            table_name (str):
+                Table name for which the parameters should be retrieved.
+
+        Returns:
+            dict:
+                Dictionary containing the distributions used or detected for each column and the
+                learned parameters for those.
+        """
+        if table_name not in self._get_root_parents():
+            raise SynthesizerInputError(
+                f"Learned distributions are not available for the '{table_name}' table. "
+                'Please choose a table that does not have any parents.'
+            )
+
+        return super().get_learned_distributions(table_name)
+
     def _get_num_extended_columns(self, table_name, parent_table, columns_per_table):
         """Get the number of columns that will be generated for table_name.
 
@@ -155,9 +178,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         # Starting at root tables, recursively estimate the number of columns
         # each table will model
         visited = set()
-        non_root_tables = set(self.metadata._get_parent_map().keys())
-        root_parents = set(self.metadata.tables.keys()) - non_root_tables
-        for table_name in root_parents:
+        for table_name in self._get_root_parents():
             self._estimate_columns_traversal(table_name, columns_per_table, visited)
 
         return columns_per_table
