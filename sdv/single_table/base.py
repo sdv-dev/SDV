@@ -232,7 +232,7 @@ class BaseSynthesizer:
                 Dict mapping column names to transformers to be used for that column.
         """
         for column in column_name_to_transformer:
-            sdtype = self.metadata.columns[column]['sdtype']
+            sdtype = self.metadata.columns.get(column, {}).get('sdtype')
             if sdtype in {'categorical', 'boolean'}:
                 warnings.warn(
                     f"Replacing the default transformer for column '{column}' "
