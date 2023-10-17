@@ -92,6 +92,65 @@ class BaseSynthesizer:
         self._fitted_date = None
         self._fitted_sdv_version = None
 
+    def _check_address_columns(self, column_names):
+        """Check that the column is valid for the address transformer.
+
+        Args:
+            column_names  (tuple[str]):
+                The column name to check.
+            existing_address (set):
+                The set of columns that are already being used in a set of address columns.
+        """
+        missing_columns_metadata = []
+        columns_in_multi_columns = []
+        multi_columns = self._data_processor._get_grouped_columns()
+
+        for column in column_names:
+            if column not in self.metadata.columns:
+                missing_columns_metadata.append(column)
+
+            if column in multi_columns:
+                columns_in_multi_columns.append(column)
+
+        if missing_columns_metadata:
+            to_print = "', '".join(missing_columns_metadata)
+            raise ValueError(
+                f"Unknown column names ('{to_print}'). Please choose column names listed"
+                ' in the metadata for your table.'
+            )
+
+        if columns_in_multi_columns:
+            to_print = "', '".join(columns_in_multi_columns)
+            raise ValueError(
+                f"Columns '{to_print}' are already being used in a multi-column transformer."
+            )
+
+    def set_address_columns(self, column_names, anonymization_level='full'):
+        """Set the address multi-column transformer.
+
+        Args:
+            column_names (tuple[str]):
+                The column names to be used for the address transformer.
+            anonymization_level (str):
+                The anonymization level to use for the address transformer.
+        """
+        if anonymization_level not in {'full', 'street_address'}:
+            raise ValueError(
+                f"Invalid value '{anonymization_level}' for parameter 'anonymization_level'."
+                " Please provide 'full' or 'street_address'."
+            )
+
+        if not isinstance(column_names, tuple):
+            column_names = tuple(column_names) if len(column_names) > 1 else (column_names,)
+
+        self._check_address_columns(column_names)
+        self._data_processor.set_address_transformer(column_names, anonymization_level)
+        if self._fitted:
+            warnings.warn(
+                'Please refit your synthesizer for the address changes to appear in'
+                ' your synthetic data.'
+            )
+
     def _validate_metadata(self, data):
         """Validate that the data follows the metadata."""
         errors = []
