@@ -9,6 +9,7 @@ import pytest
 
 from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.metadata.multi_table import MultiTableMetadata
+from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -130,6 +131,70 @@ class TestBaseMultiTableSynthesizer:
         )
         with pytest.warns(FutureWarning, match=warn_message):
             BaseMultiTableSynthesizer(metadata, synthesizer_kwargs={})
+
+    def test_set_address_columns(self):
+        """Test the ``set_address_columns`` method."""
+        # Setup
+        metadata = MultiTableMetadata().load_from_dict({
+            'tables': {
+                'address_table': {
+                    'columns': {
+                        'country_column': {'sdtype': 'country_code'},
+                        'city_column': {'sdtype': 'city'},
+                        'parent_key': {'sdtype': 'id'},
+                    },
+                    'primary_key': 'parent_key'
+                },
+                'other_table': {
+                    'columns': {
+                        'numerical_column': {'sdtype': 'numerical'},
+                        'child_foreign_key': {'sdtype': 'id'},
+                    }
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'address_table',
+                    'parent_primary_key': 'parent_key',
+                    'child_table_name': 'other_table',
+                    'child_foreign_key': 'child_foreign_key'
+                }
+            ]
+        })
+        columns = ('country_column', 'city_column')
+        metadata.validate = Mock()
+        SingleTableMetadata.validate = Mock()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._table_synthesizers['address_table'].set_address_columns = Mock()
+
+        # Run
+        instance.set_address_columns(
+            'address_table', columns, anonymization_level='street_address'
+        )
+
+        # Assert
+        instance._table_synthesizers['address_table'].set_address_columns.assert_called_once_with(
+            columns, 'street_address'
+        )
+
+    def test_set_address_columns_error(self):
+        """Test that ``set_address_columns`` raises an error for unknown table."""
+        # Setup
+        metadata = MultiTableMetadata()
+        columns = ('country_column', 'city_column')
+        metadata.validate = Mock()
+        SingleTableMetadata.validate = Mock()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        expected_error = re.escape(
+            'The provided data does not match the metadata:\n'
+            "Table 'address_table' is not present in the metadata."
+        )
+        with pytest.raises(ValueError, match=expected_error):
+            instance.set_address_columns(
+                'address_table', columns, anonymization_level='street_address'
+            )
 
     def test_get_table_parameters_empty(self):
         """Test that this method returns an empty dictionary when there are no parameters."""
@@ -419,7 +484,7 @@ class TestBaseMultiTableSynthesizer:
             'The provided data does not match the metadata:'
             "\nTable 'not_seen' is not present in the metadata"
         )
-        with pytest.raises(InvalidDataError, match=err_msg):
+        with pytest.raises(ValueError, match=err_msg):
             instance.auto_assign_transformers(data)
 
     def test_get_transformers(self):
@@ -448,7 +513,7 @@ class TestBaseMultiTableSynthesizer:
             'The provided data does not match the metadata:'
             "\nTable 'not_seen' is not present in the metadata."
         )
-        with pytest.raises(InvalidDataError, match=err_msg):
+        with pytest.raises(ValueError, match=err_msg):
             instance.get_transformers('not_seen')
 
     def test_update_transformers(self):
@@ -477,7 +542,7 @@ class TestBaseMultiTableSynthesizer:
             'The provided data does not match the metadata:'
             "\nTable 'not_seen' is not present in the metadata."
         )
-        with pytest.raises(InvalidDataError, match=err_msg):
+        with pytest.raises(ValueError, match=err_msg):
             instance.update_transformers('not_seen', {})
 
     def test__model_tables(self):
