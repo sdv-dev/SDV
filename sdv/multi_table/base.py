@@ -100,6 +100,20 @@ class BaseMultiTableSynthesizer:
 
         return root_parents
 
+    def set_address_columns(self, table_name, column_names, anonymization_level='full'):
+        """Set the address multi-column transformer.
+
+        Args:
+            table_name (str):
+                The name of the table for which the address transformer should be set.
+            column_names (tuple[str]):
+                The column names to be used for the address transformer.
+            anonymization_level (str):
+                The anonymization level to use for the address transformer.
+        """
+        self._validate_table_name(table_name)
+        self._table_synthesizers[table_name].set_address_columns(column_names, anonymization_level)
+
     def get_table_parameters(self, table_name):
         """Return the parameters that will be used to instantiate the table's synthesizer.
 
@@ -197,7 +211,10 @@ class BaseMultiTableSynthesizer:
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:
-            raise InvalidDataError([f"Table '{table_name}' is not present in the metadata."])
+            raise ValueError(
+                'The provided data does not match the metadata:'
+                f"\nTable '{table_name}' is not present in the metadata."
+            )
 
     def _assign_table_transformers(self, synthesizer, table_name, table_data):
         """Update the ``synthesizer`` to ignore the foreign keys while preprocessing the data."""

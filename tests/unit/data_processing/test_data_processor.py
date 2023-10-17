@@ -146,6 +146,84 @@ class TestDataProcessor:
         assert isinstance(instance.metadata, SingleTableMetadata)
         assert instance.metadata.columns == {'col': {'sdtype': 'numerical'}}
 
+    def test__get_column_in_multi_column_transformer(self):
+        """Test the ``_get_grouped_columns`` method."""
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        dp.grouped_columns_to_transformers = {
+            ('col1', 'col2'): 'transformer_A',
+            ('col3', 'col4'): 'transformer_B'
+        }
+
+        # Run
+        column = dp._get_grouped_columns()
+
+        # Assert
+        expected_list = ['col1', 'col2', 'col3', 'col4']
+        assert column == expected_list
+
+    def test__check_import_address_transformers_without_premium_feature(self):
+        """Test ``_check_import_address_transformers` `when the user doesn't have the feature."""
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+
+        # Run and Assert
+        expected_message = (
+            'You must have SDV Enterprise with the address add-on to use the address features'
+        )
+        with pytest.raises(ImportError, match=expected_message):
+            dp._check_import_address_transformers()
+
+    @patch('rdt.transformers')
+    def test__get_address_transformer(self, mock_rdt_transformers):
+        """Test the ``_get_address_transformer`` method."""
+        # Setup
+        class RandomLocationGeneratorMock:
+            def __init__(self, locales):
+                pass
+
+        class RegionalAnonymizerMock:
+            def __init__(self, locales):
+                pass
+
+        mock_rdt_transformers.RandomLocationGenerator = RandomLocationGeneratorMock
+        mock_rdt_transformers.RegionalAnonymizer = RegionalAnonymizerMock
+
+        dp = DataProcessor(SingleTableMetadata())
+        dp._check_import_address_transformers = Mock()
+
+        # Run and Assert
+        transformer = dp._get_address_transformer('full')
+        assert isinstance(transformer, RandomLocationGeneratorMock)
+        dp._check_import_address_transformers.assert_called_once()
+
+        transformer = dp._get_address_transformer('street_address')
+        assert isinstance(transformer, RegionalAnonymizerMock)
+
+    def test__set_address_transformer(self):
+        """Test the ``set_address_transformer`` method."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'},
+            }
+        })
+        dp = DataProcessor(metadata)
+        transformer = Mock()
+        transformer._validate_sdtypes = Mock()
+        columns_to_sdtypes = {'country_column': 'country_code', 'city_column': 'city'}
+        dp._get_address_transformer = Mock(return_value=transformer)
+        columns = ('country_column', 'city_column')
+
+        # Run
+        dp.set_address_transformer(columns, 'full')
+
+        # Assert
+        dp._get_address_transformer.assert_called_once_with('full')
+        transformer._validate_sdtypes.assert_called_once_with(columns_to_sdtypes)
+        assert dp.grouped_columns_to_transformers == {columns: transformer}
+
     def test_filter_valid(self):
         """Test that we are calling the ``filter_valid`` of each constraint over the data."""
         # Setup
@@ -1187,6 +1265,39 @@ class TestDataProcessor:
 
         address_column_transformer = config['transformers']['address']
         assert isinstance(address_column_transformer, UniformEncoder)
+
+    def test__create_config_with_address_columns(self):
+        """Test the ``_create_config`` method with address columns."""
+        # Setup
+        data = pd.DataFrame({
+            'country_column': ['US', 'ES', 'US'],
+            'city_column': ['New York', 'Madrid', 'New York'],
+        })
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country'},
+                'city_column': {'sdtype': 'city'},
+            },
+        })
+        dp = DataProcessor(metadata)
+        dp.grouped_columns_to_transformers = {
+            ('country_column', 'city_column'): 'AddressTransformer',
+        }
+
+        # Run
+        config = dp._create_config(data, set())
+
+        # Assert
+        expected_config = {
+            'sdtypes': {
+                'country_column': 'country',
+                'city_column': 'city',
+            },
+            'transformers': {
+                ('country_column', 'city_column'): 'AddressTransformer',
+            },
+        }
+        assert config == expected_config
 
     def test_update_transformers_not_fitted(self):
         """Test when ``self._hyper_transformer`` is ``None`` raises a ``NotFittedError``."""
