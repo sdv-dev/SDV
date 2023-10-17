@@ -133,10 +133,10 @@ class DataProcessor:
         """
         locales = self._locales if self._locales else ['en_US']
         self._check_import_address_transformers()
-        if anonymization_level == 'full':
-            return rdt.transformers.RandomLocationGenerator(locales=locales)
-        elif anonymization_level == 'street_address':
+        if anonymization_level == 'street_address':
             return rdt.transformers.RegionalAnonymizer(locales=locales)
+
+        return rdt.transformers.RandomLocationGenerator(locales=locales)
 
     def set_address_transformer(self, column_names, anonymization_level):
         """Set the address transformer.
@@ -461,10 +461,10 @@ class DataProcessor:
 
     def _get_transformer_instance(self, sdtype, column_metadata):
         transformer = self._transformers_by_sdtype[sdtype]
-        if transformer.__class__.__name__ == 'AnonymizedFaker':
+        if isinstance(transformer, AnonymizedFaker):
             is_lexify = transformer.function_name == 'lexify'
             is_baseprovider = transformer.provider_name == 'BaseProvider'
-            if is_lexify and is_baseprovider:  # Defaults settings
+            if is_lexify and is_baseprovider:  # Default settings
                 return self.create_anonymized_transformer(
                     sdtype, column_metadata, False, self._locales
                 )

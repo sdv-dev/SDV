@@ -200,9 +200,6 @@ class TestDataProcessor:
         transformer = dp._get_address_transformer('street_address')
         assert isinstance(transformer, RegionalAnonymizerMock)
 
-        transformer = dp._get_address_transformer('wrong_word')
-        assert transformer is None
-
     def test__set_address_transformer(self):
         """Test the ``set_address_transformer`` method."""
         # Setup
