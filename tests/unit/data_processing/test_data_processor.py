@@ -178,6 +178,39 @@ class TestDataProcessor:
             dp._check_import_address_transformers()
 
     @patch('rdt.transformers')
+    def test__get_columns_in_address_transformer(self, mock_rdt_transformers):
+        """Test the ``_get_columns_in_address_transformer`` method."""
+        # Setup
+        class RandomLocationGeneratorMock:
+            pass
+
+        class RegionalAnonymizerMock:
+            pass
+
+        mock_rdt_transformers.RandomLocationGenerator = RandomLocationGeneratorMock
+        mock_rdt_transformers.RegionalAnonymizer = RegionalAnonymizerMock
+
+        dp = DataProcessor(SingleTableMetadata())
+        dp._check_import_address_transformers = Mock()
+
+        dp.RandomLocationGenerator = RandomLocationGeneratorMock
+        dp.RegionalAnonymizer = RegionalAnonymizerMock
+
+        dp.grouped_columns_to_transformers = {
+            ('col1', 'col2'): RandomLocationGeneratorMock(),
+            ('col3', 'col4'): RegionalAnonymizerMock(),
+            ('col5', 'col6'): 'other_transformer'
+        }
+
+        # Run
+        columns = dp._get_columns_in_address_transformer()
+
+        # Assert
+        expected_columns = ['col1', 'col2', 'col3', 'col4']
+        assert columns == expected_columns
+        dp._check_import_address_transformers.assert_called_once()
+
+    @patch('rdt.transformers')
     def test__get_address_transformer(self, mock_rdt_transformers):
         """Test the ``_get_address_transformer`` method."""
         # Setup
@@ -596,6 +629,36 @@ class TestDataProcessor:
 
         # Assert
         custom_constraint._validate_metadata.assert_called_once_with(metadata, column_name='col1')
+
+    def test__validate_constraint_dict_address_columns(self):
+        """Test that the validation raises an error when one column is an address."""
+        # Setup
+        constraint_column_name = {
+            'constraint_class': 'Name',
+            'constraint_parameters': {
+                'column_name': 'country_column'
+            }
+        }
+
+        metadata = SingleTableMetadata()
+        metadata.add_column('country_column', sdtype='country_code')
+        metadata.add_column('city_column', sdtype='city')
+        custom_constraint = Mock()
+
+        dp = DataProcessor(metadata)
+        dp._custom_constraint_classes
+        dp._get_columns_in_address_transformer = Mock()
+        dp._get_columns_in_address_transformer.return_value = ['country_column', 'city_column']
+
+        dp._custom_constraint_classes = {'Name': custom_constraint}
+
+        # Run and Assert
+        error_msg_1 = re.escape(
+            "The provided constraint is invalid:\nThe 'country_column' columns are part of an"
+            ' address. You cannot add constraints to columns that are part of an address group.'
+        )
+        with pytest.raises(InvalidConstraintsError, match=error_msg_1):
+            dp._validate_constraint_dict(constraint_column_name)
 
     @patch('sdv.data_processing.data_processor.Constraint')
     def test__validate_constraint_dict_key_error(self, mock_constraint):

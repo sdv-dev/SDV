@@ -124,6 +124,30 @@ class DataProcessor:
                 'You must have SDV Enterprise with the address add-on to use the address features'
             )
 
+    def _get_columns_in_address_transformer(self):
+        """Get the columns that are part of an address transformer.
+
+        Returns:
+            list:
+                A list of columns that are part of the address transformers.
+        """
+        try:
+            self._check_import_address_transformers()
+            result = []
+            for col_tuple, transformer in self.grouped_columns_to_transformers.items():
+                is_randomlocationgenerator = isinstance(
+                    transformer, rdt.transformers.RandomLocationGenerator
+                )
+                is_regionalanonymizer = isinstance(
+                    transformer, rdt.transformers.RegionalAnonymizer
+                )
+                if is_randomlocationgenerator or is_regionalanonymizer:
+                    result.extend(list(col_tuple))
+
+            return result
+        except ImportError:
+            return []
+
     def _get_address_transformer(self, anonymization_level):
         """Get the address transformer.
 
@@ -289,6 +313,21 @@ class DataProcessor:
 
         except KeyError:
             raise InvalidConstraintsError(f"Invalid constraint class ('{constraint_class}').")
+
+        if 'column_name' in constraint_parameters:
+            column_names = [constraint_parameters.get('column_name')]
+        else:
+            column_names = constraint_parameters.get('column_names')
+
+        columns_in_address = self._get_columns_in_address_transformer()
+        if columns_in_address and column_names:
+            address_constraint_columns = set(column_names) & set(columns_in_address)
+            if address_constraint_columns:
+                to_print = "', '".join(address_constraint_columns)
+                raise InvalidConstraintsError(
+                    f"The '{to_print}' columns are part of an address. You cannot add constraints "
+                    'to columns that are part of an address group.'
+                )
 
         constraint_class._validate_metadata(self.metadata, **constraint_parameters)
 
