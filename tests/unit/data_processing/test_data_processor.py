@@ -651,7 +651,7 @@ class TestDataProcessor:
 
         # Run and Assert
         error_msg_1 = re.escape(
-            "The provided constraint is invalid:\nThe 'country_column' column is part of an"
+            "The provided constraint is invalid:\nThe 'country_column' columns are part of an"
             ' address. You cannot add constraints to columns that are part of an address group.'
         )
         with pytest.raises(InvalidConstraintsError, match=error_msg_1):

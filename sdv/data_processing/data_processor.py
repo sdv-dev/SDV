@@ -133,15 +133,18 @@ class DataProcessor:
         """
         try:
             self._check_import_address_transformers()
-            return [
-                item for col_tuple, transformer in self.grouped_columns_to_transformers.items()
-                if isinstance(
-                    transformer, (
-                        rdt.transformers.RandomLocationGenerator,
-                        rdt.transformers.RegionalAnonymizer
-                    )
-                ) for item in col_tuple
-            ]
+            result = []
+            for col_tuple, transformer in self.grouped_columns_to_transformers.items():
+                is_randomlocationgenerator = isinstance(
+                    transformer, rdt.transformers.RandomLocationGenerator
+                )
+                is_regionalanonymizer = isinstance(
+                    transformer, rdt.transformers.RegionalAnonymizer
+                )
+                if is_randomlocationgenerator or is_regionalanonymizer:
+                    result.extend(list(col_tuple))
+
+            return result
         except ImportError:
             return []
 
@@ -322,7 +325,7 @@ class DataProcessor:
             if address_constraint_columns:
                 to_print = "', '".join(address_constraint_columns)
                 raise InvalidConstraintsError(
-                    f"The '{to_print}' column is part of an address. You cannot add constraints "
+                    f"The '{to_print}' columns are part of an address. You cannot add constraints "
                     'to columns that are part of an address group.'
                 )
 
