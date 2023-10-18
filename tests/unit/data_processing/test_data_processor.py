@@ -17,7 +17,7 @@ from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
-from sdv.errors import EmptyFitDataError, SynthesizerInputError
+from sdv.errors import SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.base import BaseSynthesizer
 from tests.utils import DataFrameMatcher
@@ -1258,7 +1258,7 @@ class TestDataProcessor:
         ht_mock.return_value.fit.assert_called_once_with(data)
 
     @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
-    def test__fit_hyper_transformer_empty_data(self, ht_mock):
+    def test_fit_empty_data(self, ht_mock):
         """Test the ``_fit_hyper_transformer`` method.
 
         If the data is empty, the ``HyperTransformer`` should not call fit.
@@ -1281,10 +1281,10 @@ class TestDataProcessor:
 
         # Run
         error_msg = (
-            'The fit dataframe is empty, transformer is not fitted.'
+            'The fit dataframe is empty, transformer will not be fitted.'
         )
-        with pytest.raises(EmptyFitDataError, match=error_msg):
-            dp._fit_hyper_transformer(data)
+        with pytest.raises(ValueError, match=error_msg):
+            dp.fit(data)
 
         # Assert
         ht_mock.return_value.fit.assert_not_called()
