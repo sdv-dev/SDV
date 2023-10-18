@@ -1144,7 +1144,7 @@ class TestDataProcessor:
 
         datetime_transformer = config['transformers']['date']
         assert isinstance(datetime_transformer, UnixTimestampEncoder)
-        assert datetime_transformer.missing_value_replacement == 'mean'
+        assert datetime_transformer.missing_value_replacement == 'random'
         assert datetime_transformer.missing_value_generation == 'random'
         assert datetime_transformer.datetime_format == '%Y-%m-%d'
         assert dp._primary_key == 'id'
