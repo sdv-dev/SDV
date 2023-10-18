@@ -171,9 +171,6 @@ def get_available_demos(modality):
             headers = client.head_object(Bucket=BUCKET, Key=item['Key'])['Metadata']
             size_mb = headers.get('size-mb', np.nan)
             tables_info['size_MB'].append(round(float(size_mb), 2))
-            print(headers.get('num-tables', np.nan))
-            print(type(headers.get('num-tables', np.nan)))
-            tables_info['num_tables'].append(int(headers.get('num-tables', np.nan)))
-    print('get available demo complete ===========')
+            tables_info['num_tables'].append(int(headers.get('num-tables', 0)))
 
     return pd.DataFrame(tables_info)
