@@ -1,6 +1,6 @@
 import re
-from unittest import mock
 import warnings
+from unittest import mock
 from unittest.mock import Mock, call, patch
 
 import numpy as np
