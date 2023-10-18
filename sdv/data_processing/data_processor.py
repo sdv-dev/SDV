@@ -19,7 +19,7 @@ from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
-from sdv.errors import SynthesizerInputError
+from sdv.errors import EmptyFitDataError, SynthesizerInputError
 from sdv.metadata.anonymization import get_anonymized_transformer
 from sdv.metadata.single_table import SingleTableMetadata
 
@@ -556,6 +556,8 @@ class DataProcessor:
         """
         if not data.empty:
             self._hyper_transformer.fit(data)
+        else:
+            raise EmptyFitDataError('The fit dataframe is empty, transformer is not fitted')
 
     def _fit_formatters(self, data):
         """Fit ``NumericalFormatter`` and ``DatetimeFormatter`` for each column in the data."""

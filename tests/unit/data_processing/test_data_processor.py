@@ -17,7 +17,7 @@ from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
-from sdv.errors import SynthesizerInputError
+from sdv.errors import EmptyFitDataError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.base import BaseSynthesizer
 from tests.utils import DataFrameMatcher
@@ -1200,6 +1200,24 @@ class TestDataProcessor:
         )
         with pytest.raises(NotFittedError, match=error_msg):
             dp.update_transformers({'column': None})
+
+    def test_transformer_fitted_with_empty_data(self):
+        """Test when the ``self._hyper_transformer`` is fitted with an empty dataframe"""
+        metadata = SingleTableMetadata.load_from_dict({
+            'columns': {
+                'a': {'sdtype': 'numerical'},
+                'b': {'sdtype': 'numerical'},
+                'c': {'sdtype': 'numerical'}
+            }
+        })
+        dp = DataProcessor(metadata)
+        data = pd.DataFrame({'a': [], 'b': [], 'c': []})
+
+        error_msg = (
+            'The fit dataframe is empty, transformer is not fitted'
+        )
+        with pytest.raises(EmptyFitDataError, match=error_msg):
+            dp.fit(data)
 
     def test_update_transformers_ignores_rdt_refit_warning(self):
         """Test silencing hypertransformer refit warning (replaced by SDV warning elsewhere)"""
