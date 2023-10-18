@@ -7,10 +7,10 @@ from copy import deepcopy
 from pathlib import Path
 
 import pandas as pd
-import rdt
 from pandas.api.types import is_float_dtype, is_integer_dtype
-from rdt.transformers import AnonymizedFaker, IDGenerator, RegexGenerator, get_default_transformers
 
+import rdt
+from rdt.transformers import AnonymizedFaker, IDGenerator, RegexGenerator, get_default_transformers
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
 from sdv.constraints.errors import (

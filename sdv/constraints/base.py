@@ -8,9 +8,9 @@ import logging
 import pandas as pd
 from copulas.multivariate.gaussian import GaussianMultivariate
 from copulas.univariate import GaussianUnivariate
+
 from rdt import HyperTransformer
 from rdt.transformers import BinaryEncoder, FloatFormatter, OneHotEncoder, UnixTimestampEncoder
-
 from sdv.constraints.errors import (
     AggregateConstraintsError, ConstraintMetadataError, MissingConstraintColumnError)
 from sdv.errors import ConstraintsNotMetError

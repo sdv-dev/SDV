@@ -4,8 +4,8 @@ from unittest.mock import ANY, Mock, mock_open, patch
 import numpy as np
 import pandas as pd
 import pytest
-from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 
+from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata

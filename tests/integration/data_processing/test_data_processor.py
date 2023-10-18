@@ -3,10 +3,10 @@ import itertools
 
 import numpy as np
 import pandas as pd
+
 from rdt.transformers import (
     AnonymizedFaker, BinaryEncoder, FloatFormatter, RegexGenerator, UniformEncoder,
     UnixTimestampEncoder)
-
 from sdv.data_processing import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter

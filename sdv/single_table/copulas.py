@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 import scipy
 from copulas import multivariate
-from rdt.transformers import OneHotEncoder
 
+from rdt.transformers import OneHotEncoder
 from sdv.errors import NonParametricError
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.single_table.utils import (

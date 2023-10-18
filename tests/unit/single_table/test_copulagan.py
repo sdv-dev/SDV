@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 import pytest
 from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariate
-from rdt.transformers import GaussianNormalizer
 
+from rdt.transformers import GaussianNormalizer
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.copulagan import CopulaGANSynthesizer

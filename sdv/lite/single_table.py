@@ -4,8 +4,8 @@ import logging
 import sys
 
 import cloudpickle
-import rdt.transformers
 
+import rdt.transformers
 from sdv.single_table import GaussianCopulaSynthesizer
 
 LOGGER = logging.getLogger(__name__)

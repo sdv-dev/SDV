@@ -6,6 +6,7 @@ from functools import lru_cache
 
 from faker import Faker
 from faker.config import AVAILABLE_LOCALES
+
 from rdt.transformers import AnonymizedFaker
 
 SDTYPE_ANONYMIZERS = {

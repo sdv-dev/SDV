@@ -1,6 +1,6 @@
 import pandas as pd
-from rdt.transformers import FloatFormatter
 
+from rdt.transformers import FloatFormatter
 from sdv.datasets.demo import download_demo
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata import SingleTableMetadata

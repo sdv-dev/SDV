@@ -3,9 +3,9 @@ from uuid import UUID
 import numpy as np
 import pandas as pd
 import pytest
+
 from rdt.transformers import (
     AnonymizedFaker, CustomLabelEncoder, FloatFormatter, LabelEncoder, PseudoAnonymizedFaker)
-
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot

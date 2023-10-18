@@ -3,8 +3,8 @@ import datetime
 import pandas as pd
 import pkg_resources
 import pytest
-from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, UniformEncoder
 
+from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, UniformEncoder
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table import (

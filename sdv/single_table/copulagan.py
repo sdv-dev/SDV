@@ -3,7 +3,6 @@ import logging
 from copy import deepcopy
 
 import rdt
-
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
 from sdv.single_table.utils import (

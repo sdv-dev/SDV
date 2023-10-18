@@ -5,9 +5,9 @@ from unittest.mock import ANY, MagicMock, Mock, call, mock_open, patch
 import pandas as pd
 import pytest
 from copulas.multivariate import GaussianMultivariate
+
 from rdt.transformers import (
     BinaryEncoder, FloatFormatter, GaussianNormalizer, OneHotEncoder, RegexGenerator)
-
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata

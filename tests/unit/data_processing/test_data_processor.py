@@ -5,12 +5,12 @@ from unittest.mock import Mock, call, patch
 import numpy as np
 import pandas as pd
 import pytest
+
 from rdt.errors import ConfigNotSetError
 from rdt.errors import NotFittedError as RDTNotFittedError
 from rdt.transformers import (
     AnonymizedFaker, FloatFormatter, GaussianNormalizer, IDGenerator, UniformEncoder,
     UnixTimestampEncoder)
-
 from sdv.constraints.errors import MissingConstraintColumnError
 from sdv.constraints.tabular import Positive, ScalarRange
 from sdv.data_processing.data_processor import DataProcessor
