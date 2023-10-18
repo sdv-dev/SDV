@@ -1281,7 +1281,7 @@ class TestDataProcessor:
 
         # Run
         error_msg = (
-            'The fit dataframe is empty, transformer is not fitted'
+            'The fit dataframe is empty, transformer is not fitted.'
         )
         with pytest.raises(EmptyFitDataError, match=error_msg):
             dp._fit_hyper_transformer(data)

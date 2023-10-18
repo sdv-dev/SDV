@@ -557,7 +557,7 @@ class DataProcessor:
         if not data.empty:
             self._hyper_transformer.fit(data)
         else:
-            raise EmptyFitDataError('The fit dataframe is empty, transformer is not fitted')
+            raise EmptyFitDataError('The fit dataframe is empty, transformer is not fitted.')
 
     def _fit_formatters(self, data):
         """Fit ``NumericalFormatter`` and ``DatetimeFormatter`` for each column in the data."""

@@ -24,9 +24,11 @@ class SamplingError(Exception):
 class NonParametricError(Exception):
     """Exception to indicate that a model is not parametric."""
 
+
 class EmptyFitDataError(Exception):
-    """Exception to indicate that the dataframe used for fitting is empty"""
-    
+    """Exception to indicate that the dataframe used for fitting is empty."""
+
+
 class InvalidDataError(Exception):
     """Error to raise when data is not valid."""
 
