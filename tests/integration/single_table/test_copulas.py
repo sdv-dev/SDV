@@ -399,8 +399,8 @@ def test_categorical_column_with_numbers():
     pd.testing.assert_series_equal(synthetic_data.dtypes, expected_dtypes)
 
     unique_values = synthetic_data['category_col'].unique()
-    assert np.isnan(unique_values).sum() == 1
-    assert set(unique_values[~np.isnan(unique_values)]) == {1, 2}
+    assert pd.isna(unique_values).sum() == 1
+    assert set(unique_values[~pd.isna(unique_values)]) == {1, 2}
 
 
 def test_unknown_sdtype():

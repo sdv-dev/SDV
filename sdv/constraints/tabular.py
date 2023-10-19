@@ -455,7 +455,7 @@ class Inequality(Constraint):
             low = cast_to_datetime64(low)
             high = cast_to_datetime64(high)
 
-        valid = np.isnan(low) | np.isnan(high) | self._operator(high, low)
+        valid = pd.isna(low) | pd.isna(high) | self._operator(high, low)
         return valid
 
     def _transform(self, table_data):
@@ -660,7 +660,7 @@ class ScalarInequality(Constraint):
         if self._is_datetime and self._dtype == 'O':
             column = cast_to_datetime64(column)
 
-        valid = np.isnan(column) | self._operator(column, self._value)
+        valid = pd.isna(column) | self._operator(column, self._value)
         return valid
 
     def _transform(self, table_data):
@@ -1124,16 +1124,16 @@ class ScalarRange(Constraint):
 
         satisfy_low_bound = np.logical_or(
             self._operator(self._low_value, data),
-            np.isnan(self._low_value),
+            pd.isna(self._low_value),
         )
         satisfy_high_bound = np.logical_or(
             self._operator(data, self._high_value),
-            np.isnan(self._high_value),
+            pd.isna(self._high_value),
         )
 
         return np.logical_or(
             np.logical_and(satisfy_low_bound, satisfy_high_bound),
-            np.isnan(data),
+            pd.isna(data),
         )
 
     def _transform(self, table_data):

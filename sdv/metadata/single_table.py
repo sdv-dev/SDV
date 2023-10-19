@@ -650,7 +650,8 @@ class SingleTableMetadata:
 
     @staticmethod
     def _get_invalid_column_values(column, validation_function):
-        valid = column.apply(validation_function)
+        valid = column.apply(validation_function).astype(bool)
+
         return set(column[~valid])
 
     def _validate_column_data(self, column):
