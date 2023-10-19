@@ -1,5 +1,6 @@
 import re
 import warnings
+from unittest import mock
 from unittest.mock import Mock, call, patch
 
 import numpy as np
@@ -1258,7 +1259,7 @@ class TestDataProcessor:
         ht_mock.return_value.fit.assert_called_once_with(data)
 
     @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
-    def test__fit_hyper_transformer_empty_data(self, ht_mock):
+    def test_fit_empty_data(self, ht_mock):
         """Test the ``_fit_hyper_transformer`` method.
 
         If the data is empty, the ``HyperTransformer`` should not call fit.
@@ -1280,7 +1281,46 @@ class TestDataProcessor:
         data = pd.DataFrame()
 
         # Run
-        dp._fit_hyper_transformer(data)
+        error_msg = (
+            'The fit dataframe is empty, synthesizer will not be fitted.'
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            dp.fit(data)
+
+        # Assert
+        ht_mock.return_value.fit.assert_not_called()
+
+    @patch('sdv.data_processing.data_processor.rdt.HyperTransformer')
+    def test_fit_empty_data_constrained(self, ht_mock):
+        """Test the ``_fit_hyper_transformer`` method.
+
+        If the constrained data is empty, the ``HyperTransformer`` should not call fit.
+
+        Setup:
+            - Patch the ``HyperTransformer``.
+            - Mock the ``_create_config`` method.
+
+        Input:
+            - A dataframe where the constraints called will get dropped.
+
+        Side effects:
+            - ``HyperTransformer`` should not fit the data.
+        """
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('name', sdtype='categorical')
+        dp = DataProcessor(metadata)
+
+        ht_mock.return_value._fitted = False
+        ht_mock.return_value.field_transformers = {}
+        with mock.patch.object(dp, '_transform_constraints', return_value=pd.DataFrame()):
+            data = pd.DataFrame({'name': ['John Doe']})
+            # Run
+            error_msg = (
+                'The constrained fit dataframe is empty, synthesizer will not be fitted.'
+            )
+            with pytest.raises(ValueError, match=error_msg):
+                dp.fit(data)
 
         # Assert
         ht_mock.return_value.fit.assert_not_called()
