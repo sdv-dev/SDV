@@ -2,6 +2,7 @@
 
 import json
 import logging
+import sys
 import warnings
 from copy import deepcopy
 from pathlib import Path
@@ -316,21 +317,28 @@ class DataProcessor:
             except (MissingConstraintColumnError, FunctionError) as error:
                 if isinstance(error, MissingConstraintColumnError):
                     LOGGER.info(
-                        f'{constraint.__class__.__name__} cannot be transformed because columns: '
-                        f'{error.missing_columns} were not found. Using the reject sampling '
-                        'approach instead.'
+                        'Unable to transform %s with columns %s because they are not all available '
+                        'in the data. This happens due to multiple, overlapping constraints.',
+                        constraint.__class__.__name__,
+                        error.missing_columns
                     )
+                    LOGGER.debug(sys.exc_info()[2])
                 else:
+                    # Error came from custom constraint. We don't want to crash but we do
+                    # want to log it.
                     LOGGER.info(
-                        f'Error transforming {constraint.__class__.__name__}. '
-                        'Using the reject sampling approach instead.'
+                        'Error transforming %s:\n%s\nUsing the reject sampling approach instead.',
+                        constraint.__class__.__name__,
+                        str(error)
                     )
+                    LOGGER.debug(sys.exc_info()[2])
                 if is_condition:
                     indices_to_drop = data.columns.isin(constraint.constraint_columns)
                     columns_to_drop = data.columns.where(indices_to_drop).dropna()
                     data = data.drop(columns_to_drop, axis=1)
 
             except Exception as error:
+                LOGGER.debug(sys.exc_info()[2])
                 errors.append(error)
 
         if errors:
