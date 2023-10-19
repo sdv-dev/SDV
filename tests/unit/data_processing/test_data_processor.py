@@ -1282,7 +1282,7 @@ class TestDataProcessor:
 
         # Run
         error_msg = (
-            'The fit dataframe is empty, transformer will not be fitted.'
+            'The fit dataframe is empty, synthesizer will not be fitted.'
         )
         with pytest.raises(ValueError, match=error_msg):
             dp.fit(data)
@@ -1317,7 +1317,7 @@ class TestDataProcessor:
             data = pd.DataFrame({'name': ['John Doe']})
             # Run
             error_msg = (
-                'The constrained fit dataframe is empty, transformer will not be fitted.'
+                'The constrained fit dataframe is empty, synthesizer will not be fitted.'
             )
             with pytest.raises(ValueError, match=error_msg):
                 dp.fit(data)

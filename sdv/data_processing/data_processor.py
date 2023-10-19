@@ -631,13 +631,13 @@ class DataProcessor:
                 Table to be analyzed.
         """
         if data.empty:
-            raise ValueError('The fit dataframe is empty, transformer will not be fitted.')
+            raise ValueError('The fit dataframe is empty, synthesizer will not be fitted.')
         self._prepared_for_fitting = False
         self.prepare_for_fitting(data)
         constrained = self._transform_constraints(data)
         if constrained.empty:
             raise ValueError(
-                'The constrained fit dataframe is empty, transformer will not be fitted.')
+                'The constrained fit dataframe is empty, synthesizer will not be fitted.')
         LOGGER.info(f'Fitting HyperTransformer for table {self.table_name}')
         self._fit_hyper_transformer(constrained)
         self.fitted = True
