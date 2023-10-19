@@ -16,7 +16,7 @@ install_requires = [
     'boto3>=1.15.0,<2',
     'botocore>=1.18,<2',
     'cloudpickle>=2.1.0,<3.0',
-    'Faker>=17,<19',
+    'Faker>=17,<20',
     'graphviz>=0.13.2,<1',
     "numpy>=1.20.0,<2;python_version<'3.10'",
     "numpy>=1.23.3,<2;python_version>='3.10'",
