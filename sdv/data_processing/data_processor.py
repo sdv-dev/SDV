@@ -10,6 +10,7 @@ import pandas as pd
 import rdt
 from pandas.api.types import is_float_dtype, is_integer_dtype
 from rdt.transformers import AnonymizedFaker, IDGenerator, RegexGenerator, get_default_transformers
+from rdt.transformers.pii.anonymization import get_anonymized_transformer
 
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
@@ -20,7 +21,6 @@ from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
 from sdv.errors import SynthesizerInputError
-from sdv.metadata.anonymization import get_anonymized_transformer
 from sdv.metadata.single_table import SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
