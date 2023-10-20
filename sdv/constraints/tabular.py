@@ -435,6 +435,7 @@ class Inequality(Constraint):
             table_data (pandas.DataFrame):
                 The Table data.
         """
+        raise ValueError('Inequality stubbed exception')
         self._validate_columns_exist(table_data)
         self._is_datetime = self._get_is_datetime(table_data)
         self._dtype = table_data[self._high_column_name].dtypes

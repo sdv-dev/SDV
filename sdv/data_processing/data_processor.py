@@ -2,7 +2,6 @@
 
 import json
 import logging
-import sys
 import warnings
 from copy import deepcopy
 from pathlib import Path
@@ -19,7 +18,7 @@ from sdv.constraints.errors import (
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
-from sdv.data_processing.utils import load_module_from_path
+from sdv.data_processing.utils import load_module_from_path, log_exception
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.anonymization import get_anonymized_transformer
 from sdv.metadata.single_table import SingleTableMetadata
@@ -298,6 +297,7 @@ class DataProcessor:
             try:
                 constraint.fit(data)
             except Exception as e:
+                log_exception(LOGGER)
                 errors.append(e)
 
         if errors:
@@ -317,12 +317,12 @@ class DataProcessor:
             except (MissingConstraintColumnError, FunctionError) as error:
                 if isinstance(error, MissingConstraintColumnError):
                     LOGGER.info(
-                        'Unable to transform %s with columns %s because they are not all available '
-                        'in the data. This happens due to multiple, overlapping constraints.',
+                        'Unable to transform %s with columns %s because they are not all available'
+                        ' in the data. This happens due to multiple, overlapping constraints.',
                         constraint.__class__.__name__,
                         error.missing_columns
                     )
-                    LOGGER.debug(sys.exc_info()[2])
+                    log_exception(LOGGER)
                 else:
                     # Error came from custom constraint. We don't want to crash but we do
                     # want to log it.
@@ -331,14 +331,14 @@ class DataProcessor:
                         constraint.__class__.__name__,
                         str(error)
                     )
-                    LOGGER.debug(sys.exc_info()[2])
+                    log_exception(LOGGER)
                 if is_condition:
                     indices_to_drop = data.columns.isin(constraint.constraint_columns)
                     columns_to_drop = data.columns.where(indices_to_drop).dropna()
                     data = data.drop(columns_to_drop, axis=1)
 
             except Exception as error:
-                LOGGER.debug(sys.exc_info()[2])
+                log_exception(LOGGER)
                 errors.append(error)
 
         if errors:

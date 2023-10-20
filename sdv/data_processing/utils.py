@@ -1,6 +1,8 @@
 """Utility functions for data processing."""
 
 import importlib
+import sys
+import traceback
 
 
 def load_module_from_path(path):
@@ -23,3 +25,15 @@ def load_module_from_path(path):
     spec.loader.exec_module(module)
 
     return module
+
+
+def log_exception(logger):
+    """Log the traceback of a caught exception.
+
+    Args:
+        logger (logging.Logger):
+            A logger object to use for the logging.
+    """
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+    logger.debug(message)
