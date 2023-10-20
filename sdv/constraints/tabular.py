@@ -184,8 +184,8 @@ def create_custom_constraint_class(is_valid_fn, transform_fn=None, reverse_trans
             except InvalidFunctionError as e:
                 raise e
 
-            except Exception:
-                raise FunctionError
+            except Exception as e:
+                raise FunctionError(str(e))
 
         def reverse_transform(self, data):
             """Reverse transform the table data.
@@ -435,7 +435,6 @@ class Inequality(Constraint):
             table_data (pandas.DataFrame):
                 The Table data.
         """
-        raise ValueError('Inequality stubbed exception')
         self._validate_columns_exist(table_data)
         self._is_datetime = self._get_is_datetime(table_data)
         self._dtype = table_data[self._high_column_name].dtypes

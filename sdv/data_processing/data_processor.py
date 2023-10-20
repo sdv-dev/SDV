@@ -327,8 +327,10 @@ class DataProcessor:
                     # Error came from custom constraint. We don't want to crash but we do
                     # want to log it.
                     LOGGER.info(
-                        'Error transforming %s:\n%s\nUsing the reject sampling approach instead.',
+                        'Unable to transform %s with columns %s due to an error in transform: \n'
+                        '%s\nUsing the reject sampling approach instead.',
                         constraint.__class__.__name__,
+                        constraint.column_names,
                         str(error)
                     )
                     log_exception(LOGGER)

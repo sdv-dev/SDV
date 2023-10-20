@@ -1,9 +1,11 @@
 """Module for testing single table synthesizers with constraints."""
 
+import logging
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
 from sdv.constraints import create_custom_constraint_class
@@ -19,6 +21,22 @@ def _isinstance_side_effect(*args, **kwargs):
         return True
     else:
         return isinstance(args[0], args[1])
+
+
+DEMO_DATA, DEMO_METADATA = download_demo(
+    modality='single_table',
+    dataset_name='fake_hotel_guests'
+)
+
+
+@pytest.fixture()
+def demo_data():
+    return DEMO_DATA
+
+
+@pytest.fixture()
+def demo_metadata():
+    return DEMO_METADATA
 
 
 def test_fit_with_unique_constraint_on_data_with_only_index_column():
@@ -375,14 +393,10 @@ def test_custom_constraints_from_object(tmpdir):
     assert all(loaded_sampled['numerical_col'] > 1)
 
 
-def test_synthesizer_with_inequality_constraint():
+def test_synthesizer_with_inequality_constraint(demo_data, demo_metadata):
     """Ensure that the ``Inequality`` constraint can sample from the model."""
     # Setup
-    real_data, metadata = download_demo(
-        modality='single_table',
-        dataset_name='fake_hotel_guests'
-    )
-    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer = GaussianCopulaSynthesizer(demo_metadata)
     checkin_lessthan_checkout = {
         'constraint_class': 'Inequality',
         'constraint_parameters': {
@@ -392,7 +406,7 @@ def test_synthesizer_with_inequality_constraint():
     }
 
     synthesizer.add_constraints([checkin_lessthan_checkout])
-    synthesizer.fit(real_data)
+    synthesizer.fit(demo_data)
 
     # Run and Assert
     sampled = synthesizer.sample(num_rows=500)
@@ -838,3 +852,68 @@ def test_timezone_aware_constraints():
 
     # Assert
     assert all(samples['col1'] < samples['col2'])
+
+def test_custom_and_overlapping_constraint_errors(caplog, demo_data, demo_metadata):
+    """Test a synthesizer when constraints overlap or custom constraints raise an error.
+
+    If a custom constraint raises an error, we want to log it but not crash. If one constraint
+    drops columns that another constraint needs, we also want to log this information but not
+    crash.
+    """
+    # Setup
+    synth = GaussianCopulaSynthesizer(demo_metadata)
+
+    def is_valid(column_names, data):
+        return ~pd.isna(data[column_names[0]])
+
+    def transform(column_names, data):
+        raise ValueError('Transform error')
+
+    def reverse_transform(column_names, data):
+        return data
+
+    custom_constraint = create_custom_constraint_class(
+        is_valid_fn=is_valid,
+        transform_fn=transform,
+        reverse_transform_fn=reverse_transform
+    )
+    synth.add_custom_constraint_class(custom_constraint, 'custom')
+    checkin_checkout_constraint = {
+        'constraint_class': 'Inequality',
+        'constraint_parameters': {
+            'low_column_name': 'checkin_date',
+            'high_column_name': 'checkout_date'
+        }
+    }
+    error_constraint = {
+        'constraint_class': 'custom',
+        'constraint_parameters': {
+            'column_names': ['room_rate'],
+        }
+    }
+    overlapped_constraint = {
+        'constraint_class': 'ScalarInequality',
+        'constraint_parameters': {
+            'column_name': 'checkout_date',
+            'relation': '>',
+            'value': '01 Jan 1990'
+        }
+    }
+    synth.add_constraints(
+        constraints=[checkin_checkout_constraint, error_constraint, overlapped_constraint]
+    )
+
+    # Run
+    with caplog.at_level(logging.INFO, logger='sdv.data_processing.data_processor'):
+        synth.fit(demo_data)
+
+    # Assert
+    expected_logs = [
+        "Unable to transform ScalarInequality with columns ['checkout_date'] because they are not "
+        'all available in the data. This happens due to multiple, overlapping constraints.',
+        "Unable to transform CustomConstraint with columns ['room_rate'] due to an error in "
+        'transform: \nTransform error\nUsing the reject sampling approach instead.'
+    ]
+    log_messages = [record[2] for record in caplog.record_tuples]
+    for log in expected_logs:
+        assert log in log_messages
