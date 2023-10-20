@@ -309,6 +309,6 @@ def test_get_available_demos_missing_metadata(client_mock):
     expected_table = pd.DataFrame({
         'dataset_name': ['dataset1', 'dataset2'],
         'size_MB': [np.nan, 456.00],
-        'num_tables': [pd.NA, 654]
+        'num_tables': [np.nan, 654]
     })
     pd.testing.assert_frame_equal(tables_info, expected_table)
