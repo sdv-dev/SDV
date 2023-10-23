@@ -854,6 +854,7 @@ def test_timezone_aware_constraints():
     # Assert
     assert all(samples['col1'] < samples['col2'])
 
+
 def test_custom_and_overlapping_constraint_errors(caplog, demo_data, demo_metadata):
     """Test a synthesizer when constraints overlap or custom constraints raise an error.
 
