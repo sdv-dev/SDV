@@ -8,7 +8,8 @@ import pandas as pd
 import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
-from sdv.constraints import create_custom_constraint_class
+from sdv.constraints import Constraint, create_custom_constraint_class
+from sdv.constraints.errors import AggregateConstraintsError
 from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
@@ -917,3 +918,29 @@ def test_custom_and_overlapping_constraint_errors(caplog, demo_data, demo_metada
     log_messages = [record[2] for record in caplog.record_tuples]
     for log in expected_logs:
         assert log in log_messages
+
+
+def test_aggregate_constraint_errors(demo_data, demo_metadata):
+    """Test that if there are multiple constraint errors, they are raised together."""
+    class BadConstraint(Constraint):
+        def __init__(self, column_name):
+            self.column_name = column_name
+
+        def _transform(self, table_data):
+            raise ValueError('Bad constraint')
+
+    synth = GaussianCopulaSynthesizer(demo_metadata)
+    bad_constraint1 = {
+        'constraint_class': 'BadConstraint',
+        'constraint_parameters': {'column_name': 'room_rate'}
+    }
+    bad_constraint2 = {
+        'constraint_class': 'BadConstraint',
+        'constraint_parameters': {'column_name': 'checkin_date'}
+    }
+    synth.add_constraints(constraints=[bad_constraint1, bad_constraint2])
+
+    # Run and Assert
+    message = '\nBad constraint\n\nBad constraint'
+    with pytest.raises(AggregateConstraintsError, match=message):
+        synth.fit(demo_data)
