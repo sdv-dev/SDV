@@ -26,7 +26,7 @@ def test_get_available_demos_single_table():
     })
     expected_table['size_MB'] = expected_table['size_MB'].astype(float).round(2)
     expected_table['num_tables'] = pd.to_numeric(expected_table['num_tables'])
-    assert (is_integer_dtype(expected_table['num_tables']))
+    assert (is_integer_dtype(tables_info['num_tables']))
     assert len(expected_table.merge(tables_info)) == len(expected_table)
 
 
@@ -71,5 +71,5 @@ def test_get_available_demos_multi_table():
     })
     expected_table['size_MB'] = expected_table['size_MB'].astype(float).round(2)
     expected_table['num_tables'] = pd.to_numeric(expected_table['num_tables'])
-    assert (is_integer_dtype(expected_table['num_tables']))
+    assert (is_integer_dtype(tables_info['num_tables']))
     assert len(expected_table.merge(tables_info, on='dataset_name')) == len(expected_table)
