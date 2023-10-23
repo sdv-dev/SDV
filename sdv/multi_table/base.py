@@ -381,7 +381,13 @@ class BaseMultiTableSynthesizer:
                 learned parameters for those.
         """
         synthesizer = self._table_synthesizers[table_name]
-        return synthesizer.get_learned_distributions()
+        if hasattr(synthesizer, 'get_learned_distributions'):
+            return synthesizer.get_learned_distributions()
+
+        raise SynthesizerInputError(
+            f"Learned distributions are not available for the '{table_name}' "
+            f"table because it uses the '{synthesizer.__class__.__name__}'."
+        )
 
     def _validate_constraints_to_be_added(self, constraints):
         for constraint_dict in constraints:
