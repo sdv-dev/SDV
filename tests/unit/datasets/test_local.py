@@ -30,7 +30,7 @@ def test_load_csvs(load_mock, warnings_mock, tmp_path):
     users_mock = Mock()
     orders_mock = Mock()
 
-    load_mock.side_effect = lambda file: orders_mock if 'orders.csv' in file else users_mock
+    load_mock.side_effect = lambda file, args: orders_mock if 'orders.csv' in file else users_mock
 
     # Run
     orders_path = tmp_path / 'orders.csv'
@@ -48,8 +48,8 @@ def test_load_csvs(load_mock, warnings_mock, tmp_path):
         'orders': orders_mock,
         'users': users_mock
     }
-    assert call(op.join(tmp_path, 'orders.csv')) in load_mock.mock_calls
-    assert call(op.join(tmp_path, 'users.csv')) in load_mock.mock_calls
+    assert call(op.join(tmp_path, 'orders.csv'), None) in load_mock.mock_calls
+    assert call(op.join(tmp_path, 'users.csv'), None) in load_mock.mock_calls
     warnings_mock.warn.assert_called_once_with(
         f"Ignoring incompatible files ['fake.json'] in folder '{tmp_path}'.")
 

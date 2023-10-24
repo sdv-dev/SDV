@@ -2031,7 +2031,7 @@ class TestMultiTableMetadata:
         metadata.detect_table_from_csv('table', 'path.csv')
 
         # Assert
-        load_csv_mock.assert_called_once_with('path.csv')
+        load_csv_mock.assert_called_once_with('path.csv', None)
         single_table_mock.return_value._detect_columns.assert_called_once_with(fake_data)
         assert metadata.tables == {'table': single_table_mock.return_value}
 
