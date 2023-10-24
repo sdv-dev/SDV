@@ -173,4 +173,6 @@ def get_available_demos(modality):
             tables_info['size_MB'].append(round(float(size_mb), 2))
             tables_info['num_tables'].append(headers.get('num-tables', np.nan))
 
-    return pd.DataFrame(tables_info)
+    df = pd.DataFrame(tables_info)
+    df['num_tables'] = pd.to_numeric(df['num_tables'])
+    return df
