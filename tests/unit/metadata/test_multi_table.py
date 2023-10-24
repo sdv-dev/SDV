@@ -2101,8 +2101,8 @@ class TestMultiTableMetadata:
 
         # Assert
         expected_calls = [
-            call('table1', str(filepath1)),
-            call('table2', str(filepath2))
+            call('table1', str(filepath1), None),
+            call('table2', str(filepath2), None)
         ]
 
         instance.detect_table_from_csv.assert_has_calls(expected_calls, any_order=True)

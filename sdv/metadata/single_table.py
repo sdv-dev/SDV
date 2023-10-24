@@ -374,7 +374,7 @@ class SingleTableMetadata:
         LOGGER.info('Detected metadata:')
         LOGGER.info(json.dumps(self.to_dict(), indent=4))
 
-    def detect_from_csv(self, filepath, pandas_kwargs=None):
+    def detect_from_csv(self, filepath, read_csv_parameters=None):
         """Detect the metadata from a ``csv`` file.
 
         This method automatically detects the ``sdtypes`` for a given ``csv`` file.
@@ -382,7 +382,7 @@ class SingleTableMetadata:
         Args:
             filepath (str):
                 String that represents the ``path`` to the ``csv`` file.
-            pandas_kwargs (dict):
+            read_csv_parameters (dict):
                 A python dictionary of with string and value accepted by ``pandas.read_csv``
                 function. Defaults to ``None``.
         """
@@ -392,7 +392,7 @@ class SingleTableMetadata:
                 'object to detect from other data sources.'
             )
 
-        data = load_data_from_csv(filepath, pandas_kwargs)
+        data = load_data_from_csv(filepath, read_csv_parameters)
         self.detect_from_dataframe(data)
 
     @staticmethod
