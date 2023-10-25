@@ -6,7 +6,6 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
-from tabulate import tabulate
 from tqdm import tqdm
 
 from sdv.errors import SynthesizerInputError
@@ -163,9 +162,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 'schema is not recommended. To model this data, HMA will '
                 f'generate a large number of columns. ({total_est_cols} columns)\n\n')
             self._print(
-                tabulate(
+                pd.DataFrame(
                     print_table,
-                    headers=[
+                    columns=[
                         'Table Name',
                         '# Columns in Metadata',
                         'Est # Columns'

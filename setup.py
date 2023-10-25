@@ -29,7 +29,6 @@ install_requires = [
     'deepecho>=0.4.2,<0.5',
     'rdt>=1.7.0,<2',
     'sdmetrics>=0.11.0,<0.12',
-    'tabulate>=0.8.8',
 ]
 
 pomegranate_requires = [
