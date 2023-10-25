@@ -40,7 +40,7 @@ def test_detect_discrete_columns():
     })
 
     # Run
-    result = detect_discrete_columns(metadata, data)
+    result = detect_discrete_columns(metadata, data, {})
 
     # Assert
     assert result == ['name', 'subscribed', 'uses_synthetic', 'surname', 'bool']
@@ -59,7 +59,7 @@ def test_detect_discrete_columns_numerical():
     })
 
     # Run
-    result = detect_discrete_columns(metadata, data)
+    result = detect_discrete_columns(metadata, data, {})
 
     # Assert
     assert result == ['cat_int', 'float_int']

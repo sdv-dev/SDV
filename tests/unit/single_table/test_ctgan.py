@@ -146,7 +146,11 @@ class TestCTGANSynthesizer:
         instance._fit(processed_data)
 
         # Assert
-        mock_detect_discrete_columns.assert_called_once_with(metadata, processed_data)
+        mock_detect_discrete_columns.assert_called_once_with(
+            metadata,
+            processed_data,
+            instance._data_processor._hyper_transformer.field_transformers
+        )
         mock_ctgan.assert_called_once_with(
             batch_size=500,
             cuda=True,
