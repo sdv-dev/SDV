@@ -6,6 +6,7 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
+from tabulate import tabulate
 from tqdm import tqdm
 
 from sdv.errors import SynthesizerInputError
@@ -44,6 +45,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             self.metadata,
             self._table_synthesizers,
             self._table_sizes)
+        self._print_estimate_warning()
 
     def set_table_parameters(self, table_name, table_parameters):
         """Update the table's synthesizer instantiation parameters.
@@ -143,6 +145,37 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 self._get_num_extended_columns(child_name, table_name, columns_per_table)
 
         visited.add(table_name)
+
+    def _print_estimate_warning(self):
+        total_est_cols = 0
+        metadata_columns = self._get_num_data_columns()
+        print_table = []
+        for table, est_cols in self._estimate_num_columns().items():
+            entry = []
+            entry.append(table)
+            entry.append(metadata_columns[table])
+            total_est_cols += est_cols
+            entry.append(est_cols)
+            print_table.append(entry)
+        if total_est_cols > 1000:
+            self._print(
+                'PerformanceAlert: Using the HMASynthesizer on this metadata '
+                'schema is not recommended. To model this data, HMA will '
+                f'generate a large number of columns. ({total_est_cols} columns)\n\n')
+            self._print(
+                tabulate(
+                    print_table,
+                    headers=[
+                        'Table Name',
+                        '# Columns in Metadata',
+                        'Est # Columns'
+                    ]
+                )
+            )
+            self._print(
+                '\nWe recommend simplifying your metadata schema by dropping '
+                'columns that are not necessary. If this is not possible, '
+                'contact us at info@sdv.dev for enterprise solutions.\n')
 
     def _get_num_data_columns(self):
         """Get the number of data columns, ie colums that are not id, for each table."""
