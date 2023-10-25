@@ -923,6 +923,7 @@ def test_custom_and_overlapping_constraint_errors(caplog, demo_data, demo_metada
 
 def test_aggregate_constraint_errors(demo_data, demo_metadata):
     """Test that if there are multiple constraint errors, they are raised together."""
+    # Setup
     class BadConstraint(Constraint):
         def __init__(self, column_name):
             self.column_name = column_name
