@@ -26,7 +26,7 @@ install_requires = [
     'copulas>=0.9.0,<0.10',
     'ctgan>=0.7.4,<0.8',
     'deepecho>=0.4.2,<0.5',
-    'rdt @ git+https://github.com/sdv-dev/rdt.git@issue-sdv-1439-move-anonymization#egg=rdt',
+    'rdt@git+https://github.com/sdv-dev/rdt.git@main#egg=rdt"',
     'sdmetrics>=0.11.0,<0.12',
 ]
 
