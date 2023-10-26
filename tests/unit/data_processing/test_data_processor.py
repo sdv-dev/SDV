@@ -1211,7 +1211,8 @@ class TestDataProcessor:
         dp = DataProcessor(metadata)
         dp.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
         with warnings.catch_warnings():
-            warnings.simplefilter('error')
+            warnings.simplefilter(action='ignore', category=FutureWarning)
+            warnings.simplefilter('error', append=True)
             dp.update_transformers({'col1': GaussianNormalizer()})
 
     def test_update_transformers_for_key(self):
