@@ -110,7 +110,7 @@ class TestHMASynthesizer:
             assert match is not None
         (_, small_metadata) = download_demo(
             modality='multi_table',
-            dataset_name='fake_hotels'
+            dataset_name='trains_v1'
         )
 
         HMASynthesizer(small_metadata)
