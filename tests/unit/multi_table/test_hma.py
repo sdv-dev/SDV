@@ -1,11 +1,10 @@
 import re
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table.hma import HMASynthesizer
@@ -88,11 +87,8 @@ class TestHMASynthesizer:
 
     def test_warning_message_too_many_cols(self, capsys):
         """Test that a warning appears if there are more than 1000 expected columns"""
-        # Setup
-        (_, metadata) = download_demo(
-            modality='multi_table',
-            dataset_name='NBA_v1'
-        )
+
+        metadata = get_multi_table_metadata()
 
         key_phrases = [
             r'PerformanceAlert:',
@@ -100,7 +96,10 @@ class TestHMASynthesizer:
             r'contact us at info@sdv.dev for enterprise solutions.'
         ]
 
-        HMASynthesizer(metadata)
+        with patch.object(HMASynthesizer,
+                          '_estimate_num_columns',
+                          return_value={'nesreca': 2000}):
+            HMASynthesizer(metadata)
 
         captured = capsys.readouterr()
 
@@ -108,12 +107,12 @@ class TestHMASynthesizer:
         for pattern in key_phrases:
             match = re.search(pattern, captured.out + captured.err)
             assert match is not None
-        (_, small_metadata) = download_demo(
-            modality='multi_table',
-            dataset_name='trains_v1'
-        )
 
-        HMASynthesizer(small_metadata)
+        small_metadata = get_multi_table_metadata()
+        with patch.object(HMASynthesizer,
+                          '_estimate_num_columns',
+                          return_value={'nesreca': 10}):
+            HMASynthesizer(small_metadata)
 
         captured = capsys.readouterr()
 

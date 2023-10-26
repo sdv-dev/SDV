@@ -721,6 +721,42 @@ class TestHMASynthesizer:
             match = re.search(pattern, captured.out + captured.err)
             assert match is not None
 
+    def test_warning_message_too_many_cols(self, capsys):
+        """Test that a warning appears if there are more than 1000 expected columns"""
+        # Setup
+        (_, metadata) = download_demo(
+            modality='multi_table',
+            dataset_name='NBA_v1'
+        )
+
+        key_phrases = [
+            r'PerformanceAlert:',
+            r'large number of columns.',
+            r'contact us at info@sdv.dev for enterprise solutions.'
+        ]
+
+        HMASynthesizer(metadata)
+
+        captured = capsys.readouterr()
+
+        # Assert
+        for pattern in key_phrases:
+            match = re.search(pattern, captured.out + captured.err)
+            assert match is not None
+        (_, small_metadata) = download_demo(
+            modality='multi_table',
+            dataset_name='trains_v1'
+        )
+
+        HMASynthesizer(small_metadata)
+
+        captured = capsys.readouterr()
+
+        # Assert that small amount of columns don't trigger the message
+        for pattern in key_phrases:
+            match = re.search(pattern, captured.out + captured.err)
+            assert match is None
+
     def test_hma_three_linear_nodes(self):
         """Test it works on a simple 'grandparent-parent-child' dataset."""
         # Setup
