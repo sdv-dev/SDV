@@ -1,5 +1,5 @@
 
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -63,6 +63,37 @@ def test_detect_discrete_columns_numerical():
 
     # Assert
     assert result == ['cat_int', 'float_int']
+
+
+def test_detect_discrete_columns_with_categorical_transformer():
+    """Test the ``detect_discrete_columns`` when there is a transformer for the given column.
+
+    When a transformer generates a ``float`` value for a specific column,
+    we validate that the column should not be treated as discrete.
+    """
+    # Setup
+    metadata = SingleTableMetadata.load_from_dict({
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'columns': {
+            'name': {'sdtype': 'categorical'},
+            'age': {'sdtype': 'numerical'},
+            'position': {'sdtype': 'categorical'}
+        }
+    })
+    data = pd.DataFrame({
+        'name': ['John', 'Doe', 'John Doe', 'John Doe Doe'],
+        'age': [1, 2, 3, 4],
+        'position': ['Software', 'Design', 'Marketing', 'Product']
+    })
+    cat_transformer = Mock()
+    cat_transformer.get_output_sdtypes.return_value = {'name': 'float'}
+    transformers = {'name': cat_transformer}
+
+    # Run
+    result = detect_discrete_columns(metadata, data, transformers)
+
+    # Assert
+    assert result == ['position']
 
 
 def test_flatten_array_default():
