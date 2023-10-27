@@ -2031,7 +2031,7 @@ class TestMultiTableMetadata:
         metadata.detect_table_from_csv('table', 'path.csv')
 
         # Assert
-        load_csv_mock.assert_called_once_with('path.csv')
+        load_csv_mock.assert_called_once_with('path.csv', None)
         single_table_mock.return_value._detect_columns.assert_called_once_with(fake_data)
         assert metadata.tables == {'table': single_table_mock.return_value}
 
@@ -2101,8 +2101,8 @@ class TestMultiTableMetadata:
 
         # Assert
         expected_calls = [
-            call('table1', str(filepath1)),
-            call('table2', str(filepath2))
+            call('table1', str(filepath1), None),
+            call('table2', str(filepath2), None)
         ]
 
         instance.detect_table_from_csv.assert_has_calls(expected_calls, any_order=True)
