@@ -1,5 +1,11 @@
 """Constraint Exceptions."""
 
+import logging
+
+from sdv.errors import log_exc_stacktrace
+
+LOGGER = logging.getLogger(__name__)
+
 
 class MissingConstraintColumnError(Exception):
     """Error used when constraint is provided a table with missing columns."""
@@ -13,6 +19,8 @@ class AggregateConstraintsError(Exception):
 
     def __init__(self, errors):
         self.errors = errors
+        for error in self.errors:
+            log_exc_stacktrace(LOGGER, error)
 
     def __str__(self):
         return '\n' + '\n\n'.join(map(str, self.errors))

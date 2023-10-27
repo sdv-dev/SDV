@@ -19,7 +19,7 @@ from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
-from sdv.errors import SynthesizerInputError
+from sdv.errors import SynthesizerInputError, log_exc_stacktrace
 from sdv.metadata.anonymization import get_anonymized_transformer
 from sdv.metadata.single_table import SingleTableMetadata
 
@@ -316,15 +316,23 @@ class DataProcessor:
             except (MissingConstraintColumnError, FunctionError) as error:
                 if isinstance(error, MissingConstraintColumnError):
                     LOGGER.info(
-                        f'{constraint.__class__.__name__} cannot be transformed because columns: '
-                        f'{error.missing_columns} were not found. Using the reject sampling '
-                        'approach instead.'
+                        'Unable to transform %s with columns %s because they are not all available'
+                        ' in the data. This happens due to multiple, overlapping constraints.',
+                        constraint.__class__.__name__,
+                        error.missing_columns
                     )
+                    log_exc_stacktrace(LOGGER, error)
                 else:
+                    # Error came from custom constraint. We don't want to crash but we do
+                    # want to log it.
                     LOGGER.info(
-                        f'Error transforming {constraint.__class__.__name__}. '
-                        'Using the reject sampling approach instead.'
+                        'Unable to transform %s with columns %s due to an error in transform: \n'
+                        '%s\nUsing the reject sampling approach instead.',
+                        constraint.__class__.__name__,
+                        constraint.column_names,
+                        str(error)
                     )
+                    log_exc_stacktrace(LOGGER, error)
                 if is_condition:
                     indices_to_drop = data.columns.isin(constraint.constraint_columns)
                     columns_to_drop = data.columns.where(indices_to_drop).dropna()

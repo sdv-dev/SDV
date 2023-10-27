@@ -336,8 +336,8 @@ class TestBaseSingleTableSynthesizer:
         """Test that ``_validate_constraints`` calls ``fit`` and returns any errors."""
         # Setup
         instance = Mock()
-        msg = 'Invalid data for constraint.'
-        instance._data_processor._fit_constraints.side_effect = AggregateConstraintsError([msg])
+        error = ValueError('Invalid data for constraint.')
+        instance._data_processor._fit_constraints.side_effect = AggregateConstraintsError([error])
         data = object()
 
         # Run

@@ -1,3 +1,4 @@
+import logging
 import re
 import warnings
 from unittest import mock
@@ -12,7 +13,8 @@ from rdt.transformers import (
     AnonymizedFaker, FloatFormatter, GaussianNormalizer, IDGenerator, UniformEncoder,
     UnixTimestampEncoder)
 
-from sdv.constraints.errors import MissingConstraintColumnError
+from sdv.constraints.errors import (
+    AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
 from sdv.constraints.tabular import Positive, ScalarRange
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
@@ -1890,7 +1892,8 @@ class TestDataProcessor:
         assert result.equals(expected_result)
         assert dp._constraints_to_reverse == [constraint_mock]
 
-    def test__transform_constraints_is_condition_false_returns_data(self):
+    @patch('sdv.data_processing.data_processor.log_exc_stacktrace')
+    def test__transform_constraints_is_condition_false_returns_data(self, log_exc_mock, caplog):
         """Test that ``_transform_constraints`` returns data unchanged when necessary.
 
         The method is expected to return data unchanged when the constraint transform
@@ -1907,14 +1910,16 @@ class TestDataProcessor:
             'item 1': [3, 4, 5]
         }, index=[0, 1, 2])
         constraint_mock = Mock()
-        constraint_mock.transform.side_effect = MissingConstraintColumnError(missing_columns=[])
+        error = MissingConstraintColumnError(missing_columns=['item 0'])
+        constraint_mock.transform.side_effect = error
         constraint_mock.constraint_columns = ['item 0']
         dp = DataProcessor(SingleTableMetadata())
         dp._constraints = [constraint_mock]
         dp._constraints_to_reverse = [constraint_mock]
 
         # Run
-        result = dp._transform_constraints(data, False)
+        with caplog.at_level(logging.INFO, logger='sdv.data_processing.data_processor'):
+            result = dp._transform_constraints(data, False)
 
         # Assert
         expected_result = pd.DataFrame({
@@ -1923,6 +1928,71 @@ class TestDataProcessor:
         }, index=[0, 1, 2])
         assert result.equals(expected_result)
         assert dp._constraints_to_reverse == []
+        assert caplog.record_tuples[0][2] == (
+            "Unable to transform Mock with columns ['item 0'] because they are not "
+            'all available in the data. This happens due to multiple, overlapping constraints.'
+        )
+        log_exc_mock.assert_called_once_with(
+            logging.getLogger('sdv.data_processing.data_processor'), error)
+
+    @patch('sdv.data_processing.data_processor.log_exc_stacktrace')
+    def test__transform_constraints_custom_constraint_error(self, log_exc_mock, caplog):
+        """Test that if a custom constraint errors, the error is logged."""
+        # Setup
+        data = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [3, 4, 5]
+        }, index=[0, 1, 2])
+        constraint_mock = Mock()
+        error = FunctionError('Bad custom constraint!')
+        constraint_mock.transform.side_effect = error
+        constraint_mock.column_names = ['item 0']
+        dp = DataProcessor(SingleTableMetadata())
+        dp._constraints = [constraint_mock]
+
+        # Run
+        with caplog.at_level(logging.INFO, logger='sdv.data_processing.data_processor'):
+            result = dp._transform_constraints(data, False)
+
+        # Assert
+        expected_result = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [3, 4, 5]
+        }, index=[0, 1, 2])
+        assert result.equals(expected_result)
+        assert dp._constraints_to_reverse == []
+        assert caplog.record_tuples[0][2] == (
+            "Unable to transform Mock with columns ['item 0'] due to an error in transform: \n"
+            'Bad custom constraint!\nUsing the reject sampling approach instead.'
+        )
+        log_exc_mock.assert_called_once_with(
+            logging.getLogger('sdv.data_processing.data_processor'), error)
+
+    @patch('sdv.constraints.errors.log_exc_stacktrace')
+    def test__transform_constraints_constraint_error(self, log_exc_mock):
+        """Test that if there is a constraint error, we log the stack trace and raise the error.
+
+        Since we want all constraints to run through before surfacing any errors, we catch the
+        errors and raise them all at once. To keep the stack trace accessible, we log it when
+        creating the ``AggregateConstraintsError``.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'item 0': [0, 1, 2],
+            'item 1': [3, 4, 5]
+        }, index=[0, 1, 2])
+        constraint_mock = Mock()
+        error = ValueError('Constraint error')
+        constraint_mock.transform.side_effect = error
+        dp = DataProcessor(SingleTableMetadata())
+        dp._constraints = [constraint_mock]
+
+        # Run and Assert
+        with pytest.raises(AggregateConstraintsError, match='Constraint error'):
+            dp._transform_constraints(data, False)
+
+        log_exc_mock.assert_called_once_with(
+            logging.getLogger('sdv.constraints.errors'), error)
 
     def test_reverse_transform(self):
         """Test the ``reverse_transform`` method.
