@@ -897,7 +897,7 @@ class TestDataProcessor:
         # Run
         error_msg = (
             "The sdtype 'state_abbr' is not compatible with any of the locales. To continue, "
-            "try changing the locales or adding 'en_US' as possible option."
+            "try changing the locales or adding 'en_US' as a possible option."
 
         )
         with pytest.raises(SynthesizerInputError, match=error_msg):

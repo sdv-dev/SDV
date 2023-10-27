@@ -384,7 +384,7 @@ class DataProcessor:
         except AttributeError as error:
             raise SynthesizerInputError(
                 f"The sdtype '{sdtype}' is not compatible with any of the locales. To "
-                "continue, try changing the locales or adding 'en_US' as possible option."
+                "continue, try changing the locales or adding 'en_US' as a possible option."
             ) from error
 
         return transformer
