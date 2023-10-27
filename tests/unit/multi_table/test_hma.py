@@ -85,9 +85,9 @@ class TestHMASynthesizer:
 
         pd.testing.assert_frame_equal(result, expected)
 
-    def test_warning_message_too_many_cols(self, capsys):
+    def test__print_estimate_warning(self, capsys):
         """Test that a warning appears if there are more than 1000 expected columns"""
-
+        # Setup
         metadata = get_multi_table_metadata()
 
         key_phrases = [
@@ -96,6 +96,7 @@ class TestHMASynthesizer:
             r'contact us at info@sdv.dev for enterprise solutions.'
         ]
 
+        # Run
         with patch.object(HMASynthesizer,
                           '_estimate_num_columns',
                           return_value={'nesreca': 2000}):
@@ -108,11 +109,11 @@ class TestHMASynthesizer:
             match = re.search(pattern, captured.out + captured.err)
             assert match is not None
 
-        small_metadata = get_multi_table_metadata()
+        # Run
         with patch.object(HMASynthesizer,
                           '_estimate_num_columns',
                           return_value={'nesreca': 10}):
-            HMASynthesizer(small_metadata)
+            HMASynthesizer(metadata)
 
         captured = capsys.readouterr()
 

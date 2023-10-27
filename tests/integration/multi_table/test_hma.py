@@ -735,6 +735,7 @@ class TestHMASynthesizer:
             r'contact us at info@sdv.dev for enterprise solutions.'
         ]
 
+        # Run
         HMASynthesizer(metadata)
 
         captured = capsys.readouterr()
@@ -748,6 +749,7 @@ class TestHMASynthesizer:
             dataset_name='trains_v1'
         )
 
+        # Run
         HMASynthesizer(small_metadata)
 
         captured = capsys.readouterr()
