@@ -26,6 +26,10 @@ def detect_discrete_columns(metadata, data, transformers):
         data (pandas.DataFrame):
             ``pandas.DataFrame`` that matches the ``metadata``.
 
+        transformers (dict[str: rdt.transformers.BaseTransformer]):
+            A dictionary mapping between column names and the transformers assigned
+            for it.
+
     Returns:
         discrete_columns (list):
             A list of discrete columns to be used with some of ``sdv`` synthesizers.
@@ -46,6 +50,8 @@ def detect_discrete_columns(metadata, data, transformers):
                 discrete_columns.append(column)
                 continue
 
+        # Logic to detect columns produced by transformers outside of the metadata scope
+        # or columns created by constraints.
         column_data = data[column].dropna()
 
         # Ignore columns with only nans and empty datasets
