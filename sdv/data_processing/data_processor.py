@@ -379,7 +379,15 @@ class DataProcessor:
         if enforce_uniqueness:
             kwargs['enforce_uniqueness'] = True
 
-        return get_anonymized_transformer(sdtype, kwargs)
+        try:
+            transformer = get_anonymized_transformer(sdtype, kwargs)
+        except AttributeError as error:
+            raise SynthesizerInputError(
+                f"The sdtype '{sdtype}' is not compatible with any of the locales. To "
+                "continue, try changing the locales or adding 'en_US' as possible option."
+            ) from error
+
+        return transformer
 
     def create_regex_generator(self, column_name, sdtype, column_metadata, is_numeric):
         """Create a ``RegexGenerator`` for the ``id`` columns.
