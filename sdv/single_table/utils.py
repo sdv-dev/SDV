@@ -12,7 +12,7 @@ DISABLE_TMP_FILE = 'disable'
 IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
 
 
-def detect_discrete_columns(metadata, data):
+def detect_discrete_columns(metadata, data, transformers):
     """Detect the discrete columns in a dataset.
 
     Because the metadata doesn't necessarily match the data (we only preprocess the data,
@@ -26,17 +26,32 @@ def detect_discrete_columns(metadata, data):
         data (pandas.DataFrame):
             ``pandas.DataFrame`` that matches the ``metadata``.
 
+        transformers (dict[str: rdt.transformers.BaseTransformer]):
+            A dictionary mapping between column names and the transformers assigned
+            for it.
+
     Returns:
         discrete_columns (list):
             A list of discrete columns to be used with some of ``sdv`` synthesizers.
     """
     discrete_columns = []
     for column in data.columns:
-        # Numerical and datetime columns never get preprocessed into categorical ones
-        if column in metadata.columns and \
-                metadata.columns[column]['sdtype'] in ['numerical', 'datetime']:
-            continue
+        if column in metadata.columns:
+            sdtype = metadata.columns[column]['sdtype']
+            # Numerical and datetime columns never get preprocessed into categorical ones
+            if sdtype in ['numerical', 'datetime']:
+                continue
 
+            elif sdtype in ['categorical', 'boolean']:
+                transformer = transformers.get(column)
+                if transformer and transformer.get_output_sdtypes().get(column) == 'float':
+                    continue
+
+                discrete_columns.append(column)
+                continue
+
+        # Logic to detect columns produced by transformers outside of the metadata scope
+        # or columns created by constraints.
         column_data = data[column].dropna()
 
         # Ignore columns with only nans and empty datasets
