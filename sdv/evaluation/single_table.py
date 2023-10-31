@@ -1,8 +1,11 @@
 """Methods to compare the real and synthetic data for single-table."""
 
-import sdmetrics.reports.utils as report
+import pandas as pd
+from sdmetrics import visualization
 from sdmetrics.reports.single_table.diagnostic_report import DiagnosticReport
 from sdmetrics.reports.single_table.quality_report import QualityReport
+
+from sdv.errors import VisualizationUnavailableError
 
 
 def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
@@ -63,9 +66,11 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=
             The table metadata.
         column_name (str):
             The name of the column.
-        plot_type (string, optional):
-            The plot type to use to plot the cardinality. Must be either 'bar' or 'distplot'.
-            Defaults to 'bar'.
+        plot_type (str or None):
+            The plot to be used. Can choose between ``distplot``, ``bar`` or ``None``. If ``None`
+            select between ``distplot`` or ``bar`` depending on the data that the column contains,
+            ``distplot`` for datetime and numerical values and ``bar`` for categorical.
+            Defaults to ``None``.
 
     Returns:
         plotly.graph_objects._figure.Figure:
@@ -81,7 +86,7 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=
         else:
             raise VisualizationUnavailableError(
                 f"The column '{column_name}' has sdtype '{sdtype}', which does not have a "
-                "supported visualization. To visualize this data anyways, please add a "
+                'supported visualization. To visualize this data anyways, please add a '
                 "'plot_type'."
             )
 
@@ -94,11 +99,10 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=
             column_name: pd.to_datetime(synthetic_data[column_name], format=datetime_format)
         })
 
-    return report.get_column_plot(
+    return visualization.get_column_plot(
         real_data,
         synthetic_data,
         column_name,
-        metadata.to_dict(),
         plot_type=plot_type
     )
 
@@ -126,10 +130,39 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, column_names, plot
             2D bivariate distribution plot (i.e. a scatterplot) of the columns.
     """
     if plot_type is None:
+        plot_type = []
+        for column_name in column_names:
+            sdtype = metadata.columns.get(column_name)['sdtype']
+            if sdtype in ['numerical', 'datetime']:
+                plot_type.append('scatter')
+            elif sdtype in ['categorical', 'boolean']:
+                plot_type.append('heatmap')
+            else:
+                raise VisualizationUnavailableError(
+                    f"The column '{column_name}' has sdtype '{sdtype}', which does not have a "
+                    'supported visualization. To visualize this data anyways, please add a '
+                    "'plot_type'."
+                )
 
-    return report.get_column_pair_plot(
+            if sdtype == 'datetime':
+                datetime_format = metadata.columns.get(column_name).get('datetime_format')
+                real_data[column_name] = pd.to_datetime(
+                    real_data[column_name],
+                    format=datetime_format
+                )
+                synthetic_data[column_name] = pd.to_datetime(
+                    synthetic_data[column_name],
+                    format=datetime_format
+                )
+
+        if len(set(plot_type)) > 1:
+            plot_type = 'box'
+        else:
+            plot_type = plot_type.pop()
+
+    return visualization.get_column_pair_plot(
         real_data,
         synthetic_data,
         column_names,
-        metadata.to_dict()
+        plot_type
     )

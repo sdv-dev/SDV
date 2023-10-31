@@ -54,3 +54,7 @@ class InvalidDataError(Exception):
             'The provided data does not match the metadata:\n' +
             '\n\n'.join(map(str, self.errors))
         )
+
+
+class VisualizationUnavailableError(Exception):
+    """Exception to indicate that a visualization is unavailable."""

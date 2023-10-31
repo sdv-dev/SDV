@@ -1,7 +1,9 @@
 """Methods to compare the real and synthetic data for multi-table."""
-import sdmetrics.reports.utils as report
+from sdmetrics import visualization
 from sdmetrics.reports.multi_table.diagnostic_report import DiagnosticReport
 from sdmetrics.reports.multi_table.quality_report import QualityReport
+
+import sdv.evaluation.single_table as single_table_visualization
 
 
 def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
@@ -50,7 +52,7 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
     return diagnostic_report
 
 
-def get_column_plot(real_data, synthetic_data, metadata, table_name, column_name):
+def get_column_plot(real_data, synthetic_data, metadata, table_name, column_name, plot_type=None):
     """Get a plot of the real and synthetic data for a given column.
 
     Args:
@@ -64,18 +66,28 @@ def get_column_plot(real_data, synthetic_data, metadata, table_name, column_name
             The name of the table.
         column_name (str):
             The name of the column.
+        plot_type (str or None):
+            The plot type to use to plot the cardinality. Must be either 'bar' or 'distplot'.
+            Defaults to ``None``.
 
     Returns:
         plotly.graph_objects._figure.Figure:
             1D marginal distribution plot (i.e. a histogram) of the columns.
     """
-    metadata = metadata.to_dict()['tables'][table_name]
+    metadata = metadata.tables[table_name]
     real_data = real_data[table_name]
     synthetic_data = synthetic_data[table_name]
-    return report.get_column_plot(real_data, synthetic_data, column_name, metadata)
+    return single_table_visualization.get_column_plot(
+        real_data,
+        synthetic_data,
+        metadata,
+        column_name,
+        plot_type,
+    )
 
 
-def get_column_pair_plot(real_data, synthetic_data, metadata, table_name, column_names):
+def get_column_pair_plot(real_data, synthetic_data, metadata,
+                         table_name, column_names, plot_type=None):
     """Get a plot of the real and synthetic data for a given column pair.
 
     Args:
@@ -89,19 +101,30 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, table_name, column
             The name of the table.
         column_names (list[string]):
             The names of the two columns to plot.
+        plot_type (str or None):
+            The plot to be used. Can choose between ``box``, ``heatmap``, ``scatter`` or ``None``.
+            If ``None` select between ``box``, ``heatmap`` or ``scatter`` depending on the data
+            that the column contains, ``scatter`` used for datetime and numerical values,
+            ``heatmap`` for categorical and ``box`` for a mix of both. Defaults to ``None``.
 
     Returns:
         plotly.graph_objects._figure.Figure:
             2D bivariate distribution plot (i.e. a scatterplot) of the columns.
     """
-    metadata = metadata.to_dict()['tables'][table_name]
+    metadata = metadata.tables[table_name]
     real_data = real_data[table_name]
     synthetic_data = synthetic_data[table_name]
-    return report.get_column_pair_plot(real_data, synthetic_data, column_names, metadata)
+    return single_table_visualization.get_column_pair_plot(
+        real_data,
+        synthetic_data,
+        metadata,
+        column_names,
+        plot_type
+    )
 
 
 def get_cardinality_plot(real_data, synthetic_data, child_table_name, parent_table_name,
-                         child_foreign_key, metadata):
+                         child_foreign_key, metadata, plot_type='bar'):
     """Get a plot of the cardinality of the parent-child relationship.
 
     Args:
@@ -116,12 +139,21 @@ def get_cardinality_plot(real_data, synthetic_data, child_table_name, parent_tab
         child_foreign_key (string):
             The name of the foreign key column in the child table.
         metadata (MultiTableMetadata):
-            Metadata describing the data
+            Metadata describing the data.
+        plot_type (str):
+            The plot type to use to plot the cardinality. Must be either 'bar' or 'distplot'.
+            Defaults to 'bar'.
 
     Returns:
         plotly.graph_objects._figure.Figure
     """
-    metadata = metadata.to_dict()
-    return report.get_cardinality_plot(
-        real_data, synthetic_data, child_table_name, parent_table_name,
-        child_foreign_key, metadata)
+    parent_primary_key = metadata.tables[parent_table_name].primary_key
+    return visualization.get_cardinality_plot(
+        real_data,
+        synthetic_data,
+        child_table_name,
+        parent_table_name,
+        child_foreign_key,
+        parent_primary_key,
+        plot_type
+    )
