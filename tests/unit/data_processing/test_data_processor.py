@@ -886,6 +886,28 @@ class TestDataProcessor:
         )
         assert output == mock_get_anonymized_transformer.return_value
 
+    def test_create_anonymized_transformer_locales_missing_attribute(self):
+        """Test the ``create_anonymized_transformer`` method when locales are not supported."""
+        # Setup
+        sdtype = 'state_abbr'
+        column_metadata = {
+            'sdtype': 'state_abbr',
+        }
+
+        # Run
+        error_msg = (
+            "The sdtype 'state_abbr' is not compatible with any of the locales. To continue, "
+            "try changing the locales or adding 'en_US' as a possible option."
+
+        )
+        with pytest.raises(SynthesizerInputError, match=error_msg):
+            DataProcessor.create_anonymized_transformer(
+                sdtype,
+                column_metadata,
+                False,
+                locales=['en_UK']
+            )
+
     @patch('sdv.data_processing.data_processor.get_anonymized_transformer')
     def test_create_anonymized_transformer(self, mock_get_anonymized_transformer):
         """Test the ``create_anonymized_transformer`` method.
