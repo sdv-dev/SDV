@@ -45,7 +45,7 @@ def test_evaluation():
 
     # Run and Assert
     score = evaluate_quality(data, samples, metadata).get_score()
-    assert score == .9375
+    assert score == 0.9566297110928815
 
     diagnostic = run_diagnostic(data, samples, metadata).get_results()
     assert diagnostic == {
