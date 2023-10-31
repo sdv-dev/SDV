@@ -51,7 +51,7 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
     return diagnostic_report
 
 
-def get_column_plot(real_data, synthetic_data, metadata, column_name):
+def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=None):
     """Get a plot of the real and synthetic data for a given column.
 
     Args:
@@ -63,15 +63,47 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name):
             The table metadata.
         column_name (str):
             The name of the column.
+        plot_type (string, optional):
+            The plot type to use to plot the cardinality. Must be either 'bar' or 'distplot'.
+            Defaults to 'bar'.
 
     Returns:
         plotly.graph_objects._figure.Figure:
             1D marginal distribution plot (i.e. a histogram) of the columns.
     """
-    return report.get_column_plot(real_data, synthetic_data, column_name, metadata.to_dict())
+    sdtype = metadata.columns.get(column_name)['sdtype']
+    if plot_type is None:
+        if sdtype in ['datetime', 'numerical']:
+            plot_type = 'distplot'
+        elif sdtype in ['categorical', 'boolean']:
+            plot_type = 'bar'
+
+        else:
+            raise VisualizationUnavailableError(
+                f"The column '{column_name}' has sdtype '{sdtype}', which does not have a "
+                "supported visualization. To visualize this data anyways, please add a "
+                "'plot_type'."
+            )
+
+    if sdtype == 'datetime':
+        datetime_format = metadata.columns.get(column_name).get('datetime_format')
+        real_data = pd.DataFrame({
+            column_name: pd.to_datetime(real_data[column_name], format=datetime_format)
+        })
+        synthetic_data = pd.DataFrame({
+            column_name: pd.to_datetime(synthetic_data[column_name], format=datetime_format)
+        })
+
+    return report.get_column_plot(
+        real_data,
+        synthetic_data,
+        column_name,
+        metadata.to_dict(),
+        plot_type=plot_type
+    )
 
 
-def get_column_pair_plot(real_data, synthetic_data, metadata, column_names):
+def get_column_pair_plot(real_data, synthetic_data, metadata, column_names, plot_type=None):
     """Get a plot of the real and synthetic data for a given column pair.
 
     Args:
@@ -83,9 +115,21 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, column_names):
             The table metadata.
         column_names (list[string]):
             The names of the two columns to plot.
+        plot_type (str or None):
+            The plot to be used. Can choose between ``box``, ``heatmap``, ``scatter`` or ``None``.
+            If ``None` select between ``box``, ``heatmap`` or ``scatter`` depending on the data
+            that the column contains, ``scatter`` used for datetime and numerical values,
+            ``heatmap`` for categorical and ``box`` for a mix of both. Defaults to ``None``.
 
     Returns:
         plotly.graph_objects._figure.Figure:
             2D bivariate distribution plot (i.e. a scatterplot) of the columns.
     """
-    return report.get_column_pair_plot(real_data, synthetic_data, column_names, metadata.to_dict())
+    if plot_type is None:
+
+    return report.get_column_pair_plot(
+        real_data,
+        synthetic_data,
+        column_names,
+        metadata.to_dict()
+    )
