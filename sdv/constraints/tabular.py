@@ -184,8 +184,8 @@ def create_custom_constraint_class(is_valid_fn, transform_fn=None, reverse_trans
             except InvalidFunctionError as e:
                 raise e
 
-            except Exception:
-                raise FunctionError
+            except Exception as e:
+                raise FunctionError(str(e))
 
         def reverse_transform(self, data):
             """Reverse transform the table data.

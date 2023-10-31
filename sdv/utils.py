@@ -146,19 +146,19 @@ def convert_to_timedelta(column):
     return column
 
 
-def load_data_from_csv(filepath, pandas_kwargs=None):
+def load_data_from_csv(filepath, read_csv_parameters=None):
     """Load DataFrame from a filepath.
 
     Args:
         filepath (str):
             String that represents the ``path`` to the ``csv`` file.
-        pandas_kwargs (dict):
+        read_csv_parameters (dict):
             A python dictionary of with string and value accepted by ``pandas.read_csv``
             function. Defaults to ``None``.
     """
     filepath = Path(filepath)
-    pandas_kwargs = pandas_kwargs or {}
-    data = pd.read_csv(filepath, **pandas_kwargs)
+    read_csv_parameters = read_csv_parameters or {}
+    data = pd.read_csv(filepath, **read_csv_parameters)
     return data
 
 

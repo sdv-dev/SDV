@@ -6,12 +6,15 @@ from os import path, walk
 from sdv.utils import load_data_from_csv
 
 
-def load_csvs(folder_name):
+def load_csvs(folder_name, read_csv_parameters=None):
     """Load csv files from specified folder.
 
     Args:
         folder_name (str):
             The full path of the folder with the data to be loaded.
+        read_csv_parameters (dict):
+            A python dictionary of with string and value accepted by ``pandas.read_csv``
+            function. Defaults to ``None``.
     """
     if not path.exists(folder_name):
         raise ValueError(f"The folder '{folder_name}' cannot be found.")
@@ -23,7 +26,7 @@ def load_csvs(folder_name):
         base_name, ext = path.splitext(filename)
         if ext == '.csv':
             filepath = path.join(dirpath, filename)
-            csvs[base_name] = load_data_from_csv(filepath)
+            csvs[base_name] = load_data_from_csv(filepath, read_csv_parameters)
         else:
             other_files.append(filename)
 
