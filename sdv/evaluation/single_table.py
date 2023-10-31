@@ -129,6 +129,8 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, column_names, plot
         plotly.graph_objects._figure.Figure:
             2D bivariate distribution plot (i.e. a scatterplot) of the columns.
     """
+    real_data = real_data.copy()
+    synthetic_data = synthetic_data.copy()
     if plot_type is None:
         plot_type = []
         for column_name in column_names:
@@ -144,21 +146,23 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, column_names, plot
                     "'plot_type'."
                 )
 
-            if sdtype == 'datetime':
-                datetime_format = metadata.columns.get(column_name).get('datetime_format')
-                real_data[column_name] = pd.to_datetime(
-                    real_data[column_name],
-                    format=datetime_format
-                )
-                synthetic_data[column_name] = pd.to_datetime(
-                    synthetic_data[column_name],
-                    format=datetime_format
-                )
-
         if len(set(plot_type)) > 1:
             plot_type = 'box'
         else:
             plot_type = plot_type.pop()
+
+    for column_name in column_names:
+        sdtype = metadata.columns.get(column_name)['sdtype']
+        if sdtype == 'datetime':
+            datetime_format = metadata.columns.get(column_name).get('datetime_format')
+            real_data[column_name] = pd.to_datetime(
+                real_data[column_name],
+                format=datetime_format
+            )
+            synthetic_data[column_name] = pd.to_datetime(
+                synthetic_data[column_name],
+                format=datetime_format
+            )
 
     return visualization.get_column_pair_plot(
         real_data,

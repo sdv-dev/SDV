@@ -1,8 +1,10 @@
-
+import re
 from unittest.mock import Mock, patch
 
 import pandas as pd
+import pytest
 
+from sdv.errors import VisualizationUnavailableError
 from sdv.evaluation.single_table import (
     DiagnosticReport, QualityReport, evaluate_quality, get_column_pair_plot, get_column_plot,
     run_diagnostic)
@@ -41,38 +43,362 @@ def test_run_diagnostic():
     DiagnosticReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
 
 
-@patch('sdmetrics.reports.utils.get_column_plot')
-def test_get_column_plot(mock_plot):
-    """Test it calls ``get_column_plot`` in sdmetrics."""
+@patch('sdmetrics.visualization.get_column_plot')
+def test_get_column_plot_continuous_data(mock_get_plot):
+    """Test the ``get_column_plot`` with continuous data.
+
+    Test that when we call ``get_column_plot`` with continuous data (datetime or numerical)
+    this will choose to use the ``distplot`` as ``plot_type``.
+    """
     # Setup
     data1 = pd.DataFrame({'col': [1, 2, 3]})
     data2 = pd.DataFrame({'col': [2, 1, 3]})
     metadata = SingleTableMetadata()
     metadata.add_column('col', sdtype='numerical')
-    mock_plot.return_value = 'plot'
 
     # Run
     plot = get_column_plot(data1, data2, metadata, 'col')
 
     # Assert
-    mock_plot.assert_called_once_with(data1, data2, 'col', metadata.to_dict())
-    assert plot == 'plot'
+    mock_get_plot.assert_called_once_with(
+        data1,
+        data2,
+        'col',
+        plot_type='distplot'
+    )
+    assert plot == mock_get_plot.return_value
 
 
-@patch('sdmetrics.reports.utils.get_column_pair_plot')
-def test_get_column_pair_plot(mock_plot):
-    """Test it calls ``get_column_pair_plot`` in sdmetrics."""
+@patch('sdmetrics.visualization.get_column_plot')
+def test_get_column_plot_discrete_data(mock_get_plot):
+    """Test the ``get_column_plot`` with discrete data.
+
+    Test that when we call ``get_column_plot`` with discrete data (categorical or boolean)
+    this will choose to use the ``bar`` as ``plot_type``.
+    """
     # Setup
-    data1 = pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]})
-    data2 = pd.DataFrame({'col1': [2, 1, 3], 'col2': [1, 2, 3]})
+    data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
     metadata = SingleTableMetadata()
-    metadata.add_column('col1', sdtype='numerical')
-    metadata.add_column('col2', sdtype='numerical')
-    mock_plot.return_value = 'plot'
+    metadata.add_column('col', sdtype='categorical')
 
     # Run
-    plot = get_column_pair_plot(data1, data2, metadata, ['col1', 'col2'])
+    plot = get_column_plot(data1, data2, metadata, 'col')
 
     # Assert
-    mock_plot.assert_called_once_with(data1, data2, ['col1', 'col2'], metadata.to_dict())
-    assert plot == 'plot'
+    mock_get_plot.assert_called_once_with(
+        data1,
+        data2,
+        'col',
+        plot_type='bar'
+    )
+    assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_plot')
+def test_get_column_plot_discrete_data_with_distplot(mock_get_plot):
+    """Test the ``get_column_plot`` with discrete data.
+
+    Test that when we call ``get_column_plot`` with discrete data (categorical or boolean)
+    and pass in the ``distplot`` it will call the ``sdmetrics.visualization.get_column_plot``
+    with it and not switch to ``bar``.
+    """
+    # Setup
+    data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    metadata = SingleTableMetadata()
+    metadata.add_column('col', sdtype='categorical')
+
+    # Run
+    plot = get_column_plot(data1, data2, metadata, 'col', plot_type='distplot')
+
+    # Assert
+    mock_get_plot.assert_called_once_with(
+        data1,
+        data2,
+        'col',
+        plot_type='distplot'
+    )
+    assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_plot')
+def test_get_column_plot_invalid_sdtype(mock_get_plot):
+    """Test the ``get_column_plot`` with sdtype that can't be plotted.
+
+    Test that when we call ``get_column_plot`` with an sdtype that can't be plotted, this raises
+    an error.
+    """
+    # Setup
+    data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    metadata = SingleTableMetadata()
+    metadata.add_column('col', sdtype='id')
+
+    # Run and Assert
+    error_msg = re.escape(
+        "The column 'col' has sdtype 'id', which does not have a "
+        "supported visualization. To visualize this data anyways, please add a 'plot_type'."
+    )
+    with pytest.raises(VisualizationUnavailableError, match=error_msg):
+        get_column_plot(data1, data2, metadata, 'col')
+
+
+@patch('sdmetrics.visualization.get_column_plot')
+def test_get_column_plot_invalid_sdtype_with_plot_type(mock_get_plot):
+    """Test the ``get_column_plot`` with sdtype that can't be plotted.
+
+    Test that when we call ``get_column_plot`` with an sdtype that can't be plotted, but passing
+    ``plot_type`` it will attempt to plot it using the ``sdmetrics.visualization.get_column_plot``.
+    """
+    # Setup
+    data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    metadata = SingleTableMetadata()
+    metadata.add_column('col', sdtype='id')
+
+    # Run
+    plot = get_column_plot(data1, data2, metadata, 'col', plot_type='bar')
+
+    # Assert
+    mock_get_plot.assert_called_once_with(
+        data1,
+        data2,
+        'col',
+        plot_type='bar'
+    )
+    assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_plot')
+def test_get_column_plot_with_datetime_sdtype(mock_get_plot):
+    """Test the ``get_column_plot`` with datetime sdtype.
+
+    Test that when we call ``get_column_plot`` with ``datetime`` this will parse it using the
+    datetime format provided in the metadata and it will cast it to ``datetime64``.
+    """
+    # Setup
+    real_data = pd.DataFrame({'datetime': ['2021-02-01', '2021-12-01']})
+    synthetic_data = pd.DataFrame({'datetime': ['2023-02-21', '2022-12-13']})
+    metadata = SingleTableMetadata()
+    metadata.add_column('datetime', sdtype='datetime', datetime_format='%Y-%m-%d')
+
+    # Run
+    plot = get_column_plot(real_data, synthetic_data, metadata, 'datetime')
+
+    # Assert
+    expected_real_data = pd.DataFrame({'datetime': pd.to_datetime(['2021-02-01', '2021-12-01'])})
+    expected_synth_data = pd.DataFrame({'datetime': pd.to_datetime(['2023-02-21', '2022-12-13'])})
+
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][0], expected_real_data)
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][1], expected_synth_data)
+    assert mock_get_plot.call_args[0][2] == 'datetime'
+    assert mock_get_plot.call_args[1]['plot_type'] == 'distplot'
+    assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_pair_plot')
+def test_get_column_pair_plot_with_continous_data(mock_get_plot):
+    """Test ``get_column_pair_plot`` with continuous data.
+
+    Test that when we call ``get_column_pair_plot`` with ``continuous`` data, this will
+    automatically choose to use the ``scatter`` plot instead of the ``heatmap``.
+    """
+    # Setup
+    columns = ['amount', 'date']
+    real_data = pd.DataFrame({
+        'amount': [1, 2, 3],
+        'date': ['2021-01-01', '2022-01-01', '2023-01-01'],
+    })
+    synthetic_data = pd.DataFrame({
+        'amount': [1., 2., 3.],
+        'date': ['2021-01-01', '2022-01-01', '2023-01-01'],
+    })
+    metadata = SingleTableMetadata()
+    metadata.add_column('amount', sdtype='numerical')
+    metadata.add_column('date', sdtype='datetime')
+
+    # Run
+    plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns)
+
+    # Assert
+    expected_real_data = pd.DataFrame({
+        'amount': [1, 2, 3],
+        'date': pd.to_datetime(['2021-01-01', '2022-01-01', '2023-01-01']),
+    })
+    expected_synth_data = pd.DataFrame({
+        'amount': [1., 2., 3.],
+        'date': pd.to_datetime(['2021-01-01', '2022-01-01', '2023-01-01']),
+    })
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][0], expected_real_data)
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][1], expected_synth_data)
+    assert mock_get_plot.call_args[0][2] == columns
+    assert mock_get_plot.call_args[0][3] == 'scatter'
+    assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_pair_plot')
+def test_get_column_pair_plot_with_discrete_data(mock_get_plot):
+    """Test the ``get_column_pair_plot`` when using discrete data.
+
+    Test that the ``get_column_pair_plot`` will automatically use ``heatmap`` if the data
+    provided is discrete.
+    """
+    # Setup
+    columns = ['name', 'subscriber']
+    real_data = pd.DataFrame({
+        'name': ['John', 'Emily'],
+        'subscriber': [True, False]
+    })
+    synthetic_data = pd.DataFrame({
+        'name': ['John', 'Johanna'],
+        'subscriber': [False, False]
+    })
+    metadata = SingleTableMetadata()
+    metadata.add_column('name', sdtype='categorical')
+    metadata.add_column('subscriber', sdtype='boolean')
+
+    # Run
+    plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns)
+
+    # Assert
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][0], real_data)
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][1], synthetic_data)
+    assert mock_get_plot.call_args[0][2] == columns
+    assert mock_get_plot.call_args[0][3] == 'heatmap'
+    assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_pair_plot')
+def test_get_column_pair_plot_with_mixed_data(mock_get_plot):
+    """Test the ``get_column_pair_plot`` with mixed data types.
+
+    Test that when using both discrete and continuous data, we will be using automatically the
+    ``box`` plot.
+    """
+    # Setup
+    columns = ['name', 'counts']
+    real_data = pd.DataFrame({
+        'name': ['John', 'Emily'],
+        'counts': [1, 2]
+    })
+    synthetic_data = pd.DataFrame({
+        'name': ['John', 'Johanna'],
+        'counts': [3, 1]
+    })
+    metadata = SingleTableMetadata()
+    metadata.add_column('name', sdtype='categorical')
+    metadata.add_column('counts', sdtype='numerical')
+
+    # Run
+    plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns)
+
+    # Assert
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][0], real_data)
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][1], synthetic_data)
+    assert mock_get_plot.call_args[0][2] == columns
+    assert mock_get_plot.call_args[0][3] == 'box'
+    assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_pair_plot')
+def test_get_column_pair_plot_with_forced_plot_type(mock_get_plot):
+    """Test the ``get_column_pair_plot`` with continuous data and fixed plot type.
+
+    Test that when using ``continuous`` data but asking to plot as ``heatmap`` this will still
+    force the ``sdmetrics.visualization.get_column_pair_plot`` to use this.
+    """
+    # Setup
+    columns = ['amount', 'date']
+    real_data = pd.DataFrame({
+        'amount': [1, 2, 3],
+        'date': ['2021-01-01', '2022-01-01', '2023-01-01'],
+    })
+    synthetic_data = pd.DataFrame({
+        'amount': [1., 2., 3.],
+        'date': ['2021-01-01', '2022-01-01', '2023-01-01'],
+    })
+    metadata = SingleTableMetadata()
+    metadata.add_column('amount', sdtype='numerical')
+    metadata.add_column('date', sdtype='datetime')
+
+    # Run
+    plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns, plot_type='heatmap')
+
+    # Assert
+    expected_real_data = pd.DataFrame({
+        'amount': [1, 2, 3],
+        'date': pd.to_datetime(['2021-01-01', '2022-01-01', '2023-01-01']),
+    })
+    expected_synth_data = pd.DataFrame({
+        'amount': [1., 2., 3.],
+        'date': pd.to_datetime(['2021-01-01', '2022-01-01', '2023-01-01']),
+    })
+
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][0], expected_real_data)
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][1], expected_synth_data)
+    assert mock_get_plot.call_args[0][2] == columns
+    assert mock_get_plot.call_args[0][3] == 'heatmap'
+    assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_pair_plot')
+def test_get_column_pair_plot_with_invalid_sdtype(mock_get_plot):
+    """Test the ``get_column_pair_plot`` with sdtype that can't be plotted.
+
+    Test that when we call ``get_column_pair_plot`` with an sdtype that can't be plotted,
+    this raises an error.
+    """
+    # Setup
+    columns = ['amount', 'id']
+    real_data = pd.DataFrame({
+        'amount': [1, 2, 3],
+        'id': [1, 2, 3],
+    })
+    synthetic_data = pd.DataFrame({
+        'amount': [1., 2., 3.],
+        'id': [1, 2, 3],
+    })
+    metadata = SingleTableMetadata()
+    metadata.add_column('amount', sdtype='numerical')
+    metadata.add_column('id', sdtype='id')
+
+    # Run and Assert
+    error_msg = re.escape(
+        "The column 'id' has sdtype 'id', which does not have a "
+        "supported visualization. To visualize this data anyways, please add a 'plot_type'."
+    )
+    with pytest.raises(VisualizationUnavailableError, match=error_msg):
+        get_column_pair_plot(real_data, synthetic_data, metadata, columns)
+
+
+@patch('sdmetrics.visualization.get_column_pair_plot')
+def test_get_column_pair_plot_with_invalid_sdtype_and_plot_type(mock_get_plot):
+    """Test the ``get_column_pair_plot`` with sdtype that can't be plotted but providing plot type.
+
+    Test that when providing the ``plot_type`` for an sdtype that can't be plotted, this will be
+    plotted.
+    """
+    # Setup
+    columns = ['amount', 'id']
+    real_data = pd.DataFrame({
+        'amount': [1, 2, 3],
+        'id': [1, 2, 3],
+    })
+    synthetic_data = pd.DataFrame({
+        'amount': [1., 2., 3.],
+        'id': [1, 2, 3],
+    })
+    metadata = SingleTableMetadata()
+    metadata.add_column('amount', sdtype='numerical')
+    metadata.add_column('id', sdtype='id')
+
+    # Run
+    plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns, plot_type='heatmap')
+
+    # Assert
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][0], real_data)
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][1], synthetic_data)
+    assert mock_get_plot.call_args[0][2] == columns
+    assert mock_get_plot.call_args[0][3] == 'heatmap'
+    assert plot == mock_get_plot.return_value
