@@ -1,10 +1,46 @@
 import pandas as pd
-from rdt.transformers import FloatFormatter
+from rdt.transformers import FloatFormatter, LabelEncoder
 
 from sdv.datasets.demo import download_demo
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata import SingleTableMetadata
 from sdv.single_table import CTGANSynthesizer
+
+
+def test__estimate_num_columns():
+    """Test the number of columns is estimated correctly."""
+    # Setup
+    metadata = SingleTableMetadata()
+    metadata.add_column('numerical', sdtype='numerical')
+    metadata.add_column('categorical', sdtype='categorical')
+    metadata.add_column('categorical2', sdtype='categorical')
+    metadata.add_column('datetime', sdtype='datetime')
+    metadata.add_column('boolean', sdtype='boolean')
+    metadata.add_column('id', sdtype='id')
+    data = pd.DataFrame({
+        'numerical': [.1, .2, .3],
+        'datetime': ['2020-01-01', '2020-01-02', '2020-01-03'],
+        'categorical': ['a', 'b', 'b'],
+        'categorical2': ['a', 'b', 'b'],
+        'boolean': [True, False, True],
+        'id': [1, 2, 3],
+    })
+    instance = CTGANSynthesizer(metadata)
+
+    # Run
+    instance.auto_assign_transformers(data)
+    instance.update_transformers({'categorical2': LabelEncoder()})
+    result = instance._estimate_num_columns(data)
+
+    # Assert
+    assert result == {
+        'numerical': 11,
+        'datetime': 11,
+        'categorical': 2,
+        'categorical2': 11,
+        'boolean': 2,
+        'id': 0,
+    }
 
 
 def test_synthesize_table_ctgan(tmp_path):
