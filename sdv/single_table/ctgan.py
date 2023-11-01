@@ -133,9 +133,6 @@ class CTGANSynthesizer(BaseSingleTableSynthesizer):
                 else:
                     num_generated_columns[column] = 11
 
-            else:
-                num_generated_columns[column] = 0
-
         return num_generated_columns
 
     def _fit(self, processed_data):

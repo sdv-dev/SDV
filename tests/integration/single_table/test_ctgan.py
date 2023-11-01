@@ -16,14 +16,12 @@ def test__estimate_num_columns():
     metadata.add_column('categorical2', sdtype='categorical')
     metadata.add_column('datetime', sdtype='datetime')
     metadata.add_column('boolean', sdtype='boolean')
-    metadata.add_column('id', sdtype='id')
     data = pd.DataFrame({
         'numerical': [.1, .2, .3],
         'datetime': ['2020-01-01', '2020-01-02', '2020-01-03'],
         'categorical': ['a', 'b', 'b'],
         'categorical2': ['a', 'b', 'b'],
         'boolean': [True, False, True],
-        'id': [1, 2, 3],
     })
     instance = CTGANSynthesizer(metadata)
 
@@ -39,7 +37,6 @@ def test__estimate_num_columns():
         'categorical': 2,
         'categorical2': 11,
         'boolean': 2,
-        'id': 0,
     }
 
 
