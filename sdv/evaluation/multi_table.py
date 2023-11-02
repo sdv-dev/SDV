@@ -67,7 +67,8 @@ def get_column_plot(real_data, synthetic_data, metadata, table_name, column_name
         column_name (str):
             The name of the column.
         plot_type (str or None):
-            The plot type to use to plot the cardinality. Must be either 'bar' or 'distplot'.
+            The plot type to use to plot the cardinality. Must be either 'bar' or 'distplot'. If
+            ``None``, select between 'bar' or displot depending on the data.
             Defaults to ``None``.
 
     Returns:
