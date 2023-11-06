@@ -15,7 +15,7 @@ Multiple bugs were resolved including one that caused new categories to be creat
 * Better error message when trying to get distributions from non-parametric models - PR [#1633](https://github.com/sdv-dev/SDV/pull/1633) by @frances-h
 * Add options to read CSV files - Issue [#1644](https://github.com/sdv-dev/SDV/issues/1644) by @lajohn4747
 * Print alert if HMASynthesizer is likely to be slow - Issue [#1646](https://github.com/sdv-dev/SDV/issues/1646) by @lajohn4747
-* Make SDV compatible with SDMetrics 0.12.0 - Issue [#1650](https://github.com/sdv-dev/SDV/issues/1650) by @pvk-developer
+* Make SDV compatible with SDMetrics 0.12.1 - Issue [#1650](https://github.com/sdv-dev/SDV/issues/1650) by @pvk-developer
 * Make function to estimate number of columns CTGAN produces - Issue [#1657](https://github.com/sdv-dev/SDV/issues/1657) by @fealho
 
 ### Bugs Fixed
