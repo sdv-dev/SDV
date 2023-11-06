@@ -2,6 +2,12 @@
 
 ## 1.6.0 - 2023-11-07
 
+This release improves user messaging in multiple ways. The most notable is that users will now see an alert if the `HMASynthesizer` is likely to be slow for their data's schema. Additionally, the logger messaging for constraints and the error messaging when setting distributions on non-parametric models was made more detailed.
+
+The visualization plots in the `sdv.evaluation` sub-package all got a new parameter called `plot_type`, allowing the users to specify the plot type to use if the one being inferred is not useful. The `sdv.datasets.local.load_csvs` method now has a parameter called `read_csv_parameters`, that allow users to specify how the csvs should be read during loading. The same change was also made to the `sdv.metadata.multi_table.detect_table_from_csv`, `sdv.metadata.multi_table.detect_from_csvs`  and `sdv.metadata.single_table.detect_from_csv` methods.
+
+Multiple bugs were resolved including one that caused new categories to be created during the sample step of `CTGANSynthesizer`.
+
 ### New Features
 
 * Improve debug messages when a constraint falls back to reject sampling approach - Issue [#1478](https://github.com/sdv-dev/SDV/issues/1478) by @amontanez24
