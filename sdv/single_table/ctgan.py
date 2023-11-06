@@ -1,5 +1,5 @@
 """Wrapper around CTGAN model."""
-
+import numpy as np
 from ctgan import CTGAN, TVAE
 
 from sdv.single_table.base import BaseSingleTableSynthesizer
@@ -131,7 +131,7 @@ class CTGANSynthesizer(BaseSingleTableSynthesizer):
 
             elif sdtypes[column] in {'categorical', 'boolean'}:
                 if transformers[column] is None:
-                    num_categories = data[column].nunique(dropna=False)
+                    num_categories = data[column].fillna(np.nan).nunique(dropna=False)
                     num_generated_columns[column] = num_categories
                 else:
                     num_generated_columns[column] = 11

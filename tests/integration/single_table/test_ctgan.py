@@ -23,7 +23,7 @@ def test__estimate_num_columns():
         'datetime': ['2020-01-01', '2020-01-02', '2020-01-03'],
         'categorical': ['a', 'b', 'b'],
         'categorical2': ['a', 'b', 'b'],
-        'categorical3': ['a', np.nan, np.nan],
+        'categorical3': [float('nan'), np.nan, None],
         'boolean': [True, False, True],
     })
     instance = CTGANSynthesizer(metadata)
@@ -39,7 +39,7 @@ def test__estimate_num_columns():
         'datetime': 11,
         'categorical': 2,
         'categorical2': 11,
-        'categorical3': 2,
+        'categorical3': 1,
         'boolean': 2,
     }
 
