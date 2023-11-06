@@ -1,5 +1,5 @@
 """Wrapper around CTGAN model."""
-
+import numpy as np
 from ctgan import CTGAN, TVAE
 
 from sdv.single_table.base import BaseSingleTableSynthesizer
@@ -107,6 +107,36 @@ class CTGANSynthesizer(BaseSingleTableSynthesizer):
             'pac': pac,
             'cuda': cuda
         }
+
+    def _estimate_num_columns(self, data):
+        """Estimate the number of columns that the data will generate.
+
+        Estimates that continuous columns generate 11 columns and categorical ones
+        create n where n is the number of unique categories.
+
+        Args:
+            data (pandas.DataFrame):
+                Data to estimate the number of columns from.
+
+        Returns:
+            int:
+                Number of estimate columns.
+        """
+        sdtypes = self._data_processor.get_sdtypes()
+        transformers = self.get_transformers()
+        num_generated_columns = {}
+        for column in data.columns:
+            if sdtypes[column] in {'numerical', 'datetime'}:
+                num_generated_columns[column] = 11
+
+            elif sdtypes[column] in {'categorical', 'boolean'}:
+                if transformers[column] is None:
+                    num_categories = data[column].fillna(np.nan).nunique(dropna=False)
+                    num_generated_columns[column] = num_categories
+                else:
+                    num_generated_columns[column] = 11
+
+        return num_generated_columns
 
     def _fit(self, processed_data):
         """Fit the model to the table.
