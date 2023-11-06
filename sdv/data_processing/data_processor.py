@@ -177,6 +177,9 @@ class DataProcessor:
         transformer = self._get_address_transformer(anonymization_level)
         transformer._validate_sdtypes(columns_to_sdtypes)
 
+        if self._prepared_for_fitting:
+            self.update_transformers({column_names: transformer})
+
         self.grouped_columns_to_transformers[column_names] = transformer
 
     def get_model_kwargs(self, model_name):
