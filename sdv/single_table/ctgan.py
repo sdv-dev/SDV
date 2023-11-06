@@ -111,6 +111,9 @@ class CTGANSynthesizer(BaseSingleTableSynthesizer):
     def _estimate_num_columns(self, data):
         """Estimate the number of columns that the data will generate.
 
+        Estimates that continuous columns generate 11 columns and categorical ones
+        create n where n is the number of unique categories.
+
         Args:
             data (pandas.DataFrame):
                 Data to estimate the number of columns from.
@@ -128,7 +131,7 @@ class CTGANSynthesizer(BaseSingleTableSynthesizer):
 
             elif sdtypes[column] in {'categorical', 'boolean'}:
                 if transformers[column] is None:
-                    num_categories = data[column].nunique()
+                    num_categories = data[column].nunique(dropna=False)
                     num_generated_columns[column] = num_categories
                 else:
                     num_generated_columns[column] = 11

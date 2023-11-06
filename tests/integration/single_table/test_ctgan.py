@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from rdt.transformers import FloatFormatter, LabelEncoder
 
@@ -14,6 +15,7 @@ def test__estimate_num_columns():
     metadata.add_column('numerical', sdtype='numerical')
     metadata.add_column('categorical', sdtype='categorical')
     metadata.add_column('categorical2', sdtype='categorical')
+    metadata.add_column('categorical3', sdtype='categorical')
     metadata.add_column('datetime', sdtype='datetime')
     metadata.add_column('boolean', sdtype='boolean')
     data = pd.DataFrame({
@@ -21,6 +23,7 @@ def test__estimate_num_columns():
         'datetime': ['2020-01-01', '2020-01-02', '2020-01-03'],
         'categorical': ['a', 'b', 'b'],
         'categorical2': ['a', 'b', 'b'],
+        'categorical3': ['a', np.nan, np.nan],
         'boolean': [True, False, True],
     })
     instance = CTGANSynthesizer(metadata)
@@ -36,6 +39,7 @@ def test__estimate_num_columns():
         'datetime': 11,
         'categorical': 2,
         'categorical2': 11,
+        'categorical3': 2,
         'boolean': 2,
     }
 
