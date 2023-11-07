@@ -1,4 +1,8 @@
+import re
 from unittest.mock import Mock, patch
+
+import numpy as np
+import pandas as pd
 
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer
@@ -127,6 +131,37 @@ class TestCTGANSynthesizer:
             'pac': 10,
             'cuda': True,
         }
+
+    def test_preprocessing_many_categories(self, capfd):
+        """Test a message is printed during preprocess when a column has many categories."""
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('name_longer_than_Original_Column_Name', sdtype='numerical')
+        metadata.add_column('categorical', sdtype='categorical')
+        data = pd.DataFrame({
+            'name_longer_than_Original_Column_Name': np.random.rand(1_001),
+            'categorical': [f'cat_{i}' for i in range(1_001)],
+        })
+        instance = CTGANSynthesizer(metadata)
+
+        # Run
+        instance.auto_assign_transformers(data)
+        instance.preprocess(data)
+
+        # Assert
+        out, err = capfd.readouterr()
+        assert out == re.escape(
+            'PerformanceAlert: Using the CTGANSynthesizer on this data is not recommended. '
+            'To model this data, CTGAN will generate a large number of columns.'
+            ''
+            'Original Column Name                  Est # of Columns (CTGAN)'
+            'name_longer_than_Original_Column_Name 11'
+            'categorical                           1001'
+            ''
+            'We recommend preprocessing discrete columns that can have many values, '
+            "using 'update_transformers'. Or you may drop columns that are not necessary "
+            'to model. (Exit this script using ctrl-C)'
+        )
 
     @patch('sdv.single_table.ctgan.CTGAN')
     @patch('sdv.single_table.ctgan.detect_discrete_columns')

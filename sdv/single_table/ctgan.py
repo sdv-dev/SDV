@@ -138,6 +138,31 @@ class CTGANSynthesizer(BaseSingleTableSynthesizer):
 
         return num_generated_columns
 
+    def _preprocess(self, data):
+        dict_generated_columns = self._estimate_num_columns(data)
+        if sum(dict_generated_columns.values()) > 1000:
+            header = {'Original Column Name  ': 'Est # of Columns (CTGAN)'}
+            dict_generated_columns = {**header, **dict_generated_columns}
+            longest_column_name = len(max(dict_generated_columns, key=len))
+            cap = '<' + str(longest_column_name)
+            lines_to_print = []
+            for column, num_generated_columns in dict_generated_columns.items():
+                lines_to_print.append(f'{column:{cap}} {num_generated_columns}')
+
+            generated_columns_str = '\n'.join(lines_to_print)
+            print(  # noqa: T001
+                'PerformanceAlert: Using the CTGANSynthesizer on this data is not recommended. '
+                'To model this data, CTGAN will generate a large number of columns.'
+                '\n\n'
+                f'{generated_columns_str}'
+                '\n\n'
+                'We recommend preprocessing discrete columns that can have many values, '
+                "using 'update_transformers'. Or you may drop columns that are not necessary "
+                'to model. (Exit this script using ctrl-C)'
+            )
+
+        return super()._preprocess(data)
+
     def _fit(self, processed_data):
         """Fit the model to the table.
 

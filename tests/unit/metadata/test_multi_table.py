@@ -2014,7 +2014,7 @@ class TestMultiTableMetadata:
         should be created and call the ``detect_from_csv`` method.
 
         Setup:
-            - Mock the ``SingleTableMetadata`` class and the print function.
+            - Mock the ``SingleTableMetadata`` class and the logger.
 
         Assert:
             - Table should be added to ``self.tables``.
