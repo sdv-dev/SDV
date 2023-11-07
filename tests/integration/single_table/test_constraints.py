@@ -1,12 +1,15 @@
 """Module for testing single table synthesizers with constraints."""
 
+import logging
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+import pytest
 from copulas.multivariate.gaussian import GaussianMultivariate
 
-from sdv.constraints import create_custom_constraint_class
+from sdv.constraints import Constraint, create_custom_constraint_class
+from sdv.constraints.errors import AggregateConstraintsError
 from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
@@ -19,6 +22,22 @@ def _isinstance_side_effect(*args, **kwargs):
         return True
     else:
         return isinstance(args[0], args[1])
+
+
+DEMO_DATA, DEMO_METADATA = download_demo(
+    modality='single_table',
+    dataset_name='fake_hotel_guests'
+)
+
+
+@pytest.fixture()
+def demo_data():
+    return DEMO_DATA
+
+
+@pytest.fixture()
+def demo_metadata():
+    return DEMO_METADATA
 
 
 def test_fit_with_unique_constraint_on_data_with_only_index_column():
@@ -375,14 +394,10 @@ def test_custom_constraints_from_object(tmpdir):
     assert all(loaded_sampled['numerical_col'] > 1)
 
 
-def test_synthesizer_with_inequality_constraint():
+def test_synthesizer_with_inequality_constraint(demo_data, demo_metadata):
     """Ensure that the ``Inequality`` constraint can sample from the model."""
     # Setup
-    real_data, metadata = download_demo(
-        modality='single_table',
-        dataset_name='fake_hotel_guests'
-    )
-    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer = GaussianCopulaSynthesizer(demo_metadata)
     checkin_lessthan_checkout = {
         'constraint_class': 'Inequality',
         'constraint_parameters': {
@@ -392,7 +407,7 @@ def test_synthesizer_with_inequality_constraint():
     }
 
     synthesizer.add_constraints([checkin_lessthan_checkout])
-    synthesizer.fit(real_data)
+    synthesizer.fit(demo_data)
 
     # Run and Assert
     sampled = synthesizer.sample(num_rows=500)
@@ -440,23 +455,23 @@ def test_inequality_constraint_with_datetimes_and_nones():
         'A': {
             0: '2020-01-02',
             1: '2019-10-30',
-            2: np.nan,
-            3: np.nan,
+            2: '2019-10-30',
+            3: '2019-10-30',
             4: '2020-01-02',
-            5: np.nan,
+            5: '2019-10-30',
             6: '2019-10-30',
-            7: np.nan,
+            7: '2020-01-02',
             8: '2020-01-02',
             9: np.nan
         },
         'B': {
-            0: '2021-12-30',
+            0: np.nan,
             1: '2021-10-27',
             2: '2021-10-27',
             3: '2021-10-27',
             4: np.nan,
             5: '2021-10-27',
-            6: '2021-10-27',
+            6: np.nan,
             7: '2021-12-30',
             8: np.nan,
             9: '2021-10-27'
@@ -623,36 +638,36 @@ def test_range_constraint_with_datetimes_and_nones():
         'A': {
             0: '2020-01-02',
             1: '2020-01-02',
-            2: np.nan,
+            2: '2019-10-30',
             3: '2020-01-02',
             4: '2019-10-30',
-            5: np.nan,
+            5: '2019-10-30',
             6: '2020-01-02',
             7: '2019-10-30',
             8: '2019-10-30',
-            9: np.nan
+            9: '2019-10-30'
         },
         'B': {
-            0: '2021-12-30',
-            1: '2021-12-30',
+            0: np.nan,
+            1: np.nan,
             2: '2021-10-27',
             3: np.nan,
-            4: '2021-10-27',
+            4: np.nan,
             5: '2021-10-27',
             6: np.nan,
-            7: '2021-10-27',
+            7: np.nan,
             8: np.nan,
             9: '2021-10-27'
         },
         'C': {
-            0: '2022-12-30',
-            1: '2022-12-30',
+            0: np.nan,
+            1: np.nan,
             2: '2022-10-27',
             3: np.nan,
-            4: '2022-10-27',
+            4: np.nan,
             5: '2022-10-27',
             6: np.nan,
-            7: '2022-10-27',
+            7: np.nan,
             8: np.nan,
             9: '2022-10-27'
         }
@@ -808,3 +823,126 @@ def test_custom_constraint_with_key():
 
     # Assert
     synth.validate(sampled)
+
+
+def test_timezone_aware_constraints():
+    """Test that constraints work with timezone aware datetime columns GH#1576."""
+    # Setup
+    data = pd.DataFrame({'col1': ['2020-02-02'], 'col2': ['2020-02-05']})
+    data['col1'] = pd.to_datetime(data['col1']).dt.tz_localize('UTC')
+    data['col2'] = pd.to_datetime(data['col2']).dt.tz_localize('UTC')
+
+    metadata = SingleTableMetadata()
+    metadata.add_column('col1', sdtype='datetime')
+    metadata.add_column('col2', sdtype='datetime')
+
+    my_constraint = {
+        'constraint_class': 'Inequality',
+        'constraint_parameters': {
+            'low_column_name': 'col1',
+            'high_column_name': 'col2',
+            'strict_boundaries': True
+        }
+    }
+
+    # Run
+    synth = GaussianCopulaSynthesizer(metadata)
+    synth.add_constraints(constraints=[my_constraint])
+    synth.fit(data)
+    samples = synth.sample(100)
+
+    # Assert
+    assert all(samples['col1'] < samples['col2'])
+
+
+def test_custom_and_overlapping_constraint_errors(caplog, demo_data, demo_metadata):
+    """Test a synthesizer when constraints overlap or custom constraints raise an error.
+
+    If a custom constraint raises an error, we want to log it but not crash. If one constraint
+    drops columns that another constraint needs, we also want to log this information but not
+    crash.
+    """
+    # Setup
+    synth = GaussianCopulaSynthesizer(demo_metadata)
+
+    def is_valid(column_names, data):
+        return ~pd.isna(data[column_names[0]])
+
+    def transform(column_names, data):
+        raise ValueError('Transform error')
+
+    def reverse_transform(column_names, data):
+        return data
+
+    custom_constraint = create_custom_constraint_class(
+        is_valid_fn=is_valid,
+        transform_fn=transform,
+        reverse_transform_fn=reverse_transform
+    )
+    synth.add_custom_constraint_class(custom_constraint, 'custom')
+    checkin_checkout_constraint = {
+        'constraint_class': 'Inequality',
+        'constraint_parameters': {
+            'low_column_name': 'checkin_date',
+            'high_column_name': 'checkout_date'
+        }
+    }
+    error_constraint = {
+        'constraint_class': 'custom',
+        'constraint_parameters': {
+            'column_names': ['room_rate'],
+        }
+    }
+    overlapped_constraint = {
+        'constraint_class': 'ScalarInequality',
+        'constraint_parameters': {
+            'column_name': 'checkout_date',
+            'relation': '>',
+            'value': '01 Jan 1990'
+        }
+    }
+    synth.add_constraints(
+        constraints=[checkin_checkout_constraint, error_constraint, overlapped_constraint]
+    )
+
+    # Run
+    with caplog.at_level(logging.INFO, logger='sdv.data_processing.data_processor'):
+        synth.fit(demo_data)
+
+    # Assert
+    expected_logs = [
+        "Unable to transform ScalarInequality with columns ['checkout_date'] because they are not "
+        'all available in the data. This happens due to multiple, overlapping constraints.',
+        "Unable to transform CustomConstraint with columns ['room_rate'] due to an error in "
+        'transform: \nTransform error\nUsing the reject sampling approach instead.'
+    ]
+    log_messages = [record[2] for record in caplog.record_tuples]
+    for log in expected_logs:
+        assert log in log_messages
+
+
+def test_aggregate_constraint_errors(demo_data, demo_metadata):
+    """Test that if there are multiple constraint errors, they are raised together."""
+    # Setup
+    class BadConstraint(Constraint):
+        def __init__(self, column_name):
+            self.column_name = column_name
+
+        def _transform(self, table_data):
+            raise ValueError('Bad constraint')
+
+    synth = GaussianCopulaSynthesizer(demo_metadata)
+    bad_constraint1 = {
+        'constraint_class': 'BadConstraint',
+        'constraint_parameters': {'column_name': 'room_rate'}
+    }
+    bad_constraint2 = {
+        'constraint_class': 'BadConstraint',
+        'constraint_parameters': {'column_name': 'checkin_date'}
+    }
+    synth.add_constraints(constraints=[bad_constraint1, bad_constraint2])
+
+    # Run and Assert
+    message = '\nBad constraint\n\nBad constraint'
+    with pytest.raises(AggregateConstraintsError, match=message):
+        synth.fit(demo_data)

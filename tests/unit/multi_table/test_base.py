@@ -12,6 +12,7 @@ from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
+from sdv.single_table.ctgan import CTGANSynthesizer
 from tests.utils import get_multi_table_data, get_multi_table_metadata
 
 
@@ -756,8 +757,8 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         instance._sample.assert_called_once_with(scale=1.5)
 
-    def test_get_learned_distributions_raises_an_error(self):
-        """Test that ``get_learned_distributions`` raises an error."""
+    def test_get_learned_distributions_raises_an_unfitted_error(self):
+        """Test that ``get_learned_distributions`` raises an error when model is not fitted."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
@@ -767,6 +768,21 @@ class TestBaseMultiTableSynthesizer:
             "Distributions have not been learned yet. Please fit your model first using 'fit'."
         )
         with pytest.raises(ValueError, match=error_msg):
+            instance.get_learned_distributions('nesreca')
+
+    def test_get_learned_distributions_raises_non_parametric_error(self):
+        """Test that ``get_learned_distributions`` errors for non-parametric synthesizers."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._table_synthesizers['nesreca'] = CTGANSynthesizer(metadata.tables['nesreca'])
+
+        # Run and Assert
+        msg = re.escape(
+            "Learned distributions are not available for the 'nesreca' table because it uses the "
+            "'CTGANSynthesizer'."
+        )
+        with pytest.raises(SynthesizerInputError, match=msg):
             instance.get_learned_distributions('nesreca')
 
     def test_add_constraint_warning(self):

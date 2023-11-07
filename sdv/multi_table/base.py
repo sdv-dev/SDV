@@ -93,6 +93,13 @@ class BaseMultiTableSynthesizer:
         self._fitted_date = None
         self._fitted_sdv_version = None
 
+    def _get_root_parents(self):
+        """Get the set of root parents in the graph."""
+        non_root_tables = set(self.metadata._get_parent_map().keys())
+        root_parents = set(self.metadata.tables.keys()) - non_root_tables
+
+        return root_parents
+
     def get_table_parameters(self, table_name):
         """Return the parameters that will be used to instantiate the table's synthesizer.
 
@@ -374,7 +381,13 @@ class BaseMultiTableSynthesizer:
                 learned parameters for those.
         """
         synthesizer = self._table_synthesizers[table_name]
-        return synthesizer.get_learned_distributions()
+        if hasattr(synthesizer, 'get_learned_distributions'):
+            return synthesizer.get_learned_distributions()
+
+        raise SynthesizerInputError(
+            f"Learned distributions are not available for the '{table_name}' "
+            f"table because it uses the '{synthesizer.__class__.__name__}'."
+        )
 
     def _validate_constraints_to_be_added(self, constraints):
         for constraint_dict in constraints:

@@ -9,6 +9,7 @@ from faker import Faker
 
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
+from sdv.errors import SynthesizerInputError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
@@ -720,6 +721,44 @@ class TestHMASynthesizer:
             match = re.search(pattern, captured.out + captured.err)
             assert match is not None
 
+    def test_warning_message_too_many_cols(self, capsys):
+        """Test that a warning appears if there are more than 1000 expected columns"""
+        # Setup
+        (_, metadata) = download_demo(
+            modality='multi_table',
+            dataset_name='NBA_v1'
+        )
+
+        key_phrases = [
+            r'PerformanceAlert:',
+            r'large number of columns.',
+            r'contact us at info@sdv.dev for enterprise solutions.'
+        ]
+
+        # Run
+        HMASynthesizer(metadata)
+
+        captured = capsys.readouterr()
+
+        # Assert
+        for pattern in key_phrases:
+            match = re.search(pattern, captured.out + captured.err)
+            assert match is not None
+        (_, small_metadata) = download_demo(
+            modality='multi_table',
+            dataset_name='trains_v1'
+        )
+
+        # Run
+        HMASynthesizer(small_metadata)
+
+        captured = capsys.readouterr()
+
+        # Assert that small amount of columns don't trigger the message
+        for pattern in key_phrases:
+            match = re.search(pattern, captured.out + captured.err)
+            assert match is None
+
     def test_hma_three_linear_nodes(self):
         """Test it works on a simple 'grandparent-parent-child' dataset."""
         # Setup
@@ -1098,3 +1137,23 @@ class TestHMASynthesizer:
         assert data.keys() == samples.keys()
         for table_name, table in samples.items():
             assert set(data[table_name].columns) == set(table.columns)
+
+    def test_get_learned_distributions_error_msg(self):
+        """Ensure the error message is correct when calling ``get_learned_distributions``."""
+        # Setup
+        data, metadata = download_demo(
+            modality='multi_table',
+            dataset_name='fake_hotels'
+        )
+        synth = HMASynthesizer(metadata)
+
+        # Run
+        synth.fit(data)
+
+        # Assert
+        error_msg = re.escape(
+            "Learned distributions are not available for the 'guests' table. "
+            'Please choose a table that does not have any parents.'
+        )
+        with pytest.raises(SynthesizerInputError, match=error_msg):
+            synth.get_learned_distributions(table_name='guests')

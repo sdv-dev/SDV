@@ -1,5 +1,5 @@
 import re
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -84,6 +84,43 @@ class TestHMASynthesizer:
         })
 
         pd.testing.assert_frame_equal(result, expected)
+
+    def test__print_estimate_warning(self, capsys):
+        """Test that a warning appears if there are more than 1000 expected columns"""
+        # Setup
+        metadata = get_multi_table_metadata()
+
+        key_phrases = [
+            r'PerformanceAlert:',
+            r'large number of columns.',
+            r'contact us at info@sdv.dev for enterprise solutions.'
+        ]
+
+        # Run
+        with patch.object(HMASynthesizer,
+                          '_estimate_num_columns',
+                          return_value={'nesreca': 2000}):
+            HMASynthesizer(metadata)
+
+        captured = capsys.readouterr()
+
+        # Assert
+        for pattern in key_phrases:
+            match = re.search(pattern, captured.out + captured.err)
+            assert match is not None
+
+        # Run
+        with patch.object(HMASynthesizer,
+                          '_estimate_num_columns',
+                          return_value={'nesreca': 10}):
+            HMASynthesizer(metadata)
+
+        captured = capsys.readouterr()
+
+        # Assert that small amount of columns don't trigger the message
+        for pattern in key_phrases:
+            match = re.search(pattern, captured.out + captured.err)
+            assert match is None
 
     def test__get_extension_foreign_key_only(self):
         """Test the ``_get_extension`` method.

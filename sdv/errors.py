@@ -1,5 +1,23 @@
 """SDV Exceptions."""
 
+import logging
+import traceback
+
+LOGGER = logging.getLogger(__name__)
+
+
+def log_exc_stacktrace(logger, error):
+    """Log the stack trace of an exception.
+
+    Args:
+        logger (logging.Logger):
+            A logger object to use for the logging.
+        error (Exception):
+            The error to log.
+    """
+    message = ''.join(traceback.format_exception(type(error), error, error.__traceback__))
+    logger.debug(message)
+
 
 class NotFittedError(Exception):
     """Error to raise when sample is called and the model is not fitted."""
@@ -36,3 +54,7 @@ class InvalidDataError(Exception):
             'The provided data does not match the metadata:\n' +
             '\n\n'.join(map(str, self.errors))
         )
+
+
+class VisualizationUnavailableError(Exception):
+    """Exception to indicate that a visualization is unavailable."""

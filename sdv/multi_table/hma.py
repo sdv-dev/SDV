@@ -44,6 +44,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             self.metadata,
             self._table_synthesizers,
             self._table_sizes)
+        self._print_estimate_warning()
 
     def set_table_parameters(self, table_name, table_parameters):
         """Update the table's synthesizer instantiation parameters.
@@ -67,6 +68,29 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             )
 
         super().set_table_parameters(table_name, table_parameters)
+
+    def get_learned_distributions(self, table_name):
+        """Get the marginal distributions used by the ``GaussianCopula`` for a table.
+
+        Return a dictionary mapping the column names with the distribution name and the learned
+        parameters for those.
+
+        Args:
+            table_name (str):
+                Table name for which the parameters should be retrieved.
+
+        Returns:
+            dict:
+                Dictionary containing the distributions used or detected for each column and the
+                learned parameters for those.
+        """
+        if table_name not in self._get_root_parents():
+            raise SynthesizerInputError(
+                f"Learned distributions are not available for the '{table_name}' table. "
+                'Please choose a table that does not have any parents.'
+            )
+
+        return super().get_learned_distributions(table_name)
 
     def _get_num_extended_columns(self, table_name, parent_table, columns_per_table):
         """Get the number of columns that will be generated for table_name.
@@ -121,6 +145,37 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         visited.add(table_name)
 
+    def _print_estimate_warning(self):
+        total_est_cols = 0
+        metadata_columns = self._get_num_data_columns()
+        print_table = []
+        for table, est_cols in self._estimate_num_columns().items():
+            entry = []
+            entry.append(table)
+            entry.append(metadata_columns[table])
+            total_est_cols += est_cols
+            entry.append(est_cols)
+            print_table.append(entry)
+        if total_est_cols > 1000:
+            self._print(
+                'PerformanceAlert: Using the HMASynthesizer on this metadata '
+                'schema is not recommended. To model this data, HMA will '
+                f'generate a large number of columns. ({total_est_cols} columns)\n\n')
+            self._print(
+                pd.DataFrame(
+                    print_table,
+                    columns=[
+                        'Table Name',
+                        '# Columns in Metadata',
+                        'Est # Columns'
+                    ]
+                )
+            )
+            self._print(
+                '\nWe recommend simplifying your metadata schema by dropping '
+                'columns that are not necessary. If this is not possible, '
+                'contact us at info@sdv.dev for enterprise solutions.\n')
+
     def _get_num_data_columns(self):
         """Get the number of data columns, ie colums that are not id, for each table."""
         columns_per_table = {}
@@ -155,9 +210,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         # Starting at root tables, recursively estimate the number of columns
         # each table will model
         visited = set()
-        non_root_tables = set(self.metadata._get_parent_map().keys())
-        root_parents = set(self.metadata.tables.keys()) - non_root_tables
-        for table_name in root_parents:
+        for table_name in self._get_root_parents():
             self._estimate_columns_traversal(table_name, columns_per_table, visited)
 
         return columns_per_table

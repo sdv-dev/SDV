@@ -1125,7 +1125,7 @@ class TestSingleTableMetadata:
         # Run
         filepath = tmp_path / 'mydata.csv'
         data.to_csv(filepath, index=False)
-        instance.detect_from_csv(filepath, pandas_kwargs={'parse_dates': ['date']})
+        instance.detect_from_csv(filepath, read_csv_parameters={'parse_dates': ['date']})
 
         # Assert
         assert instance.columns == {

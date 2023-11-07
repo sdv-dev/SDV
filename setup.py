@@ -16,7 +16,6 @@ install_requires = [
     'boto3>=1.15.0,<2',
     'botocore>=1.18,<2',
     'cloudpickle>=2.1.0,<3.0',
-    'Faker>=10,<15',
     'graphviz>=0.13.2,<1',
     "numpy>=1.20.0,<2;python_version<'3.10'",
     "numpy>=1.23.3,<2;python_version>='3.10'",
@@ -27,8 +26,8 @@ install_requires = [
     'copulas>=0.9.0,<0.10',
     'ctgan>=0.7.4,<0.8',
     'deepecho>=0.4.2,<0.5',
-    'rdt>=1.7.0,<2',
-    'sdmetrics>=0.11.0,<0.12',
+    'rdt>=1.8.0,<2',
+    'sdmetrics>=0.12.1,<0.13',
 ]
 
 pomegranate_requires = [
@@ -137,6 +136,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/SDV',
-    version='1.5.0',
+    version='1.6.0.dev2',
     zip_safe=False,
 )
