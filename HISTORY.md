@@ -1,8 +1,37 @@
 # Release Notes
 
+## 1.6.0 - 2023-11-07
+
+This release improves user messaging in multiple ways. The most notable is that users will now see an alert if the `HMASynthesizer` is likely to be slow for their data's schema. Additionally, the logger messaging for constraints and the error messaging when setting distributions on non-parametric models was made more detailed.
+
+The visualization plots in the `sdv.evaluation` sub-package all got a new parameter called `plot_type`, allowing the users to specify the plot type to use if the one being inferred is not useful. The `sdv.datasets.local.load_csvs` method now has a parameter called `read_csv_parameters`, that allow users to specify how the csvs should be read during loading. The same change was also made to the `sdv.metadata.multi_table.detect_table_from_csv`, `sdv.metadata.multi_table.detect_from_csvs`  and `sdv.metadata.single_table.detect_from_csv` methods.
+
+Multiple bugs were resolved including one that caused new categories to be created during the sample step of `CTGANSynthesizer`.
+
+### New Features
+
+* Improve debug messages when a constraint falls back to reject sampling approach - Issue [#1478](https://github.com/sdv-dev/SDV/issues/1478) by @amontanez24
+* Constraints should work with timezone-aware datetime columns - Issue [#1576](https://github.com/sdv-dev/SDV/issues/1576) by @fealho
+* Better error message when trying to get distributions from non-parametric models - PR [#1633](https://github.com/sdv-dev/SDV/pull/1633) by @frances-h
+* Add options to read CSV files - Issue [#1644](https://github.com/sdv-dev/SDV/issues/1644) by @lajohn4747
+* Print alert if HMASynthesizer is likely to be slow - Issue [#1646](https://github.com/sdv-dev/SDV/issues/1646) by @lajohn4747
+* Make SDV compatible with SDMetrics 0.12.1 - Issue [#1650](https://github.com/sdv-dev/SDV/issues/1650) by @pvk-developer
+* Make function to estimate number of columns CTGAN produces - Issue [#1657](https://github.com/sdv-dev/SDV/issues/1657) by @fealho
+
+### Bugs Fixed
+
+* In get_available_demos, the num_tables column should be an int - Issue [#1420](https://github.com/sdv-dev/SDV/issues/1420) by @lajohn4747
+* AttributeError when using specific locale strings (es_AR, fr_BE) - Issue [#1439](https://github.com/sdv-dev/SDV/issues/1439) by @lajohn4747
+* Confusing error when passing in an empty dataframe (with constraints) - Issue [#1455](https://github.com/sdv-dev/SDV/issues/1455) by @lajohn4747
+* HMASynthesizer: Better error message for learned distributions (misleading fit error) - Issue [#1579](https://github.com/sdv-dev/SDV/issues/1579) by @fealho
+* Fix tests in SDV after update in RDT 1.7.1 - Issue [#1638](https://github.com/sdv-dev/SDV/issues/1638) by @lajohn4747
+* CTGAN sometimes creates new categories (int data) - Issue [#1647](https://github.com/sdv-dev/SDV/issues/1647) by @pvk-developer
+* CTGAN sometimes creates new categories (object data) - Issue [#1648](https://github.com/sdv-dev/SDV/issues/1648) by @pvk-developer
+* Better error message if I provide an incompatible sdtype/locale combo - Issue [#1653](https://github.com/sdv-dev/SDV/issues/1653) by @pvk-developer
+
 ## 1.5.0 - 2023-10-13
 
-Several improvements and bug fixes were made in this release. Most notably, the metadata detection was substantially improved. Support for the 'unknown' sdtype was added, providing more flexibility in data representation. The software now attempts to intelligently detect primary keys and identify parent-child relationships in the metadata, streamlining the metadata creation process. 
+Several improvements and bug fixes were made in this release. Most notably, the metadata detection was substantially improved. Support for the 'unknown' sdtype was added, providing more flexibility in data representation. The software now attempts to intelligently detect primary keys and identify parent-child relationships in the metadata, streamlining the metadata creation process.
 
 Additionally, issues related to conditional sampling with negative float values, the inability to update transformers for columns created by constraints, and compatibility with numpy version 1.25 and higher were addressed. The default branch was also switched from 'master' to 'main' for better development practices. Various bugs and errors, including those involving HMA and datetime format detection, were also resolved.
 
