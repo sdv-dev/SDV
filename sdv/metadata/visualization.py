@@ -105,6 +105,7 @@ def visualize_graph(nodes, edges, filepath=None):
     )
 
     for name, label in nodes.items():
+        label = label.replace('<', 'lt').replace('>', 'gt')
         digraph.node(name, label=label)
 
     for parent, child, label in edges:
