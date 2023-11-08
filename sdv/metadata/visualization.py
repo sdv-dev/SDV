@@ -69,8 +69,10 @@ def _get_graphviz_extension(filepath):
 
     return None, None
 
+
 def _replace_special_characters(string):
     return string.replace('<', '_less_than_').replace('>', '_greater_than_')
+
 
 def visualize_graph(nodes, edges, filepath=None):
     """Plot metadata usign graphviz.
