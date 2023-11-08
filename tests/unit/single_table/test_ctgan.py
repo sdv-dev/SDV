@@ -161,6 +161,25 @@ class TestCTGANSynthesizer:
             'to model. (Exit this script using ctrl-C)\n'
         )
 
+    def test_preprocessing_few_categories(self, capfd):
+        """Test a message is not printed during preprocess when a column has few categories."""
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('name_longer_than_Original_Column_Name', sdtype='numerical')
+        metadata.add_column('categorical', sdtype='categorical')
+        data = pd.DataFrame({
+            'name_longer_than_Original_Column_Name': np.random.rand(10),
+            'categorical': [f'cat_{i}' for i in range(10)],
+        })
+        instance = CTGANSynthesizer(metadata)
+
+        # Run
+        instance.preprocess(data)
+
+        # Assert
+        out, err = capfd.readouterr()
+        assert out == ''
+
     @patch('sdv.single_table.ctgan.CTGAN')
     @patch('sdv.single_table.ctgan.detect_discrete_columns')
     def test__fit(self, mock_detect_discrete_columns, mock_ctgan):
