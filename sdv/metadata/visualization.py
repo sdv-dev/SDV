@@ -69,6 +69,8 @@ def _get_graphviz_extension(filepath):
 
     return None, None
 
+def _replace_special_characters(string):
+    return string.replace('<', '_less_than_').replace('>', '_greater_than_')
 
 def visualize_graph(nodes, edges, filepath=None):
     """Plot metadata usign graphviz.
@@ -105,10 +107,10 @@ def visualize_graph(nodes, edges, filepath=None):
     )
 
     for name, label in nodes.items():
-        digraph.node(name, label=graphviz.escape(label))
+        digraph.node(name, label=_replace_special_characters(label))
 
     for parent, child, label in edges:
-        digraph.edge(parent, child, label=graphviz.escape(label), arrowhead='oinv')
+        digraph.edge(parent, child, label=_replace_special_characters(label), arrowhead='oinv')
 
     if filename:
         digraph.render(filename=filename, cleanup=True, format=graphviz_extension)
