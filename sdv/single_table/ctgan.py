@@ -138,7 +138,8 @@ class CTGANSynthesizer(BaseSingleTableSynthesizer):
 
         return num_generated_columns
 
-    def _preprocess(self, data):
+    def _print_warning(self, data):
+        """Print a warning if the number of columns generated is too large."""
         dict_generated_columns = self._estimate_num_columns(data)
         if sum(dict_generated_columns.values()) > 1000:
             header = {'Original Column Name  ': 'Est # of Columns (CTGAN)'}
@@ -161,7 +162,12 @@ class CTGANSynthesizer(BaseSingleTableSynthesizer):
                 'to model. (Exit this script using ctrl-C)'
             )
 
-        return super()._preprocess(data)
+    def _preprocess(self, data):
+        self.validate(data)
+        self._data_processor.fit(data)
+        self._print_warning(data)
+
+        return self._data_processor.transform(data)
 
     def _fit(self, processed_data):
         """Fit the model to the table.

@@ -1,4 +1,3 @@
-import re
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -145,22 +144,21 @@ class TestCTGANSynthesizer:
         instance = CTGANSynthesizer(metadata)
 
         # Run
-        instance.auto_assign_transformers(data)
         instance.preprocess(data)
 
         # Assert
         out, err = capfd.readouterr()
-        assert out == re.escape(
+        assert out == (
             'PerformanceAlert: Using the CTGANSynthesizer on this data is not recommended. '
             'To model this data, CTGAN will generate a large number of columns.'
-            ''
-            'Original Column Name                  Est # of Columns (CTGAN)'
-            'name_longer_than_Original_Column_Name 11'
+            '\n\n'
+            'Original Column Name                  Est # of Columns (CTGAN)\n'
+            'name_longer_than_Original_Column_Name 11\n'
             'categorical                           1001'
-            ''
+            '\n\n'
             'We recommend preprocessing discrete columns that can have many values, '
             "using 'update_transformers'. Or you may drop columns that are not necessary "
-            'to model. (Exit this script using ctrl-C)'
+            'to model. (Exit this script using ctrl-C)\n'
         )
 
     @patch('sdv.single_table.ctgan.CTGAN')
