@@ -406,7 +406,7 @@ def test_get_column_pair_plot_with_invalid_sdtype_and_plot_type(mock_get_plot):
 
 @patch('sdmetrics.visualization.get_column_pair_plot')
 def test_get_column_pair_plot_with_sample_size(mock_get_plot):
-    """Test ``get_column_pair_plot`` with sample_size parameter."""
+    """Test ``get_column_pair_plot`` with ``sample_size`` parameter."""
     # Setup
     columns = ['amount', 'date']
     real_data = pd.DataFrame({
@@ -442,35 +442,27 @@ def test_get_column_pair_plot_with_sample_size(mock_get_plot):
 
 @patch('sdmetrics.visualization.get_column_pair_plot')
 def test_get_column_pair_plot_with_sample_size_too_big(mock_get_plot):
-    """Test ``get_column_pair_plot`` when sample_size is bigger than the lenght of the data."""
+    """Test ``get_column_pair_plot`` when ``sample_size`` is bigger than the length of the data."""
     # Setup
-    columns = ['amount', 'date']
+    columns = ['amount', 'price']
     real_data = pd.DataFrame({
         'amount': [1, 2, 3],
-        'date': ['2021-01-01', '2022-01-01', '2023-01-01'],
+        'price': [10, 20, 30],
     })
     synthetic_data = pd.DataFrame({
         'amount': [1., 2., 3.],
-        'date': ['2021-01-01', '2022-01-01', '2023-01-01'],
+        'price': [11., 22., 33.],
     })
     metadata = SingleTableMetadata()
     metadata.add_column('amount', sdtype='numerical')
-    metadata.add_column('date', sdtype='datetime')
+    metadata.add_column('price', sdtype='numerical')
 
     # Run
     plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns, sample_size=10)
 
     # Assert
-    expected_real_data = pd.DataFrame({
-        'amount': [1, 2, 3],
-        'date': pd.to_datetime(['2021-01-01', '2022-01-01', '2023-01-01']),
-    })
-    expected_synth_data = pd.DataFrame({
-        'amount': [1., 2., 3.],
-        'date': pd.to_datetime(['2021-01-01', '2022-01-01', '2023-01-01']),
-    })
-    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][0], expected_real_data)
-    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][1], expected_synth_data)
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][0], real_data)
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][1], synthetic_data)
     assert mock_get_plot.call_args[0][2] == columns
     assert mock_get_plot.call_args[0][3] == 'scatter'
     assert plot == mock_get_plot.return_value
