@@ -85,7 +85,7 @@ def test_get_column_pair_plot(mock_plot):
 
     # Assert
     call_metadata = metadata.tables['table']
-    mock_plot.assert_called_once_with(table1, table2, call_metadata, ['col1', 'col2'], 2, None)
+    mock_plot.assert_called_once_with(table1, table2, call_metadata, ['col1', 'col2'], None, 2)
     assert plot == 'plot'
 
 
