@@ -107,7 +107,8 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=
     )
 
 
-def get_column_pair_plot(real_data, synthetic_data, metadata, column_names, plot_type=None):
+def get_column_pair_plot(
+        real_data, synthetic_data, metadata, column_names, sample_size=None, plot_type=None):
     """Get a plot of the real and synthetic data for a given column pair.
 
     Args:
@@ -119,6 +120,9 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, column_names, plot
             The table metadata.
         column_names (list[string]):
             The names of the two columns to plot.
+        sample_size (int or None):
+            The number of samples to use for the plot. If ``None`` use the whole dataset.
+            Defaults to ``None``.
         plot_type (str or None):
             The plot to be used. Can choose between ``box``, ``heatmap``, ``scatter`` or ``None``.
             If ``None` select between ``box``, ``heatmap`` or ``scatter`` depending on the data
@@ -163,6 +167,11 @@ def get_column_pair_plot(real_data, synthetic_data, metadata, column_names, plot
                 synthetic_data[column_name],
                 format=datetime_format
             )
+
+    require_subsample = sample_size and sample_size < min(len(real_data), len(synthetic_data))
+    if plot_type == 'scatter' and require_subsample:
+        real_data = real_data.sample(n=sample_size, random_state=42)
+        synthetic_data = synthetic_data.sample(n=sample_size, random_state=55)
 
     return visualization.get_column_pair_plot(
         real_data,
