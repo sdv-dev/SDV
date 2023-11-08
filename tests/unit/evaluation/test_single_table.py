@@ -402,3 +402,75 @@ def test_get_column_pair_plot_with_invalid_sdtype_and_plot_type(mock_get_plot):
     assert mock_get_plot.call_args[0][2] == columns
     assert mock_get_plot.call_args[0][3] == 'heatmap'
     assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_pair_plot')
+def test_get_column_pair_plot_with_sample_size(mock_get_plot):
+    """Test ``get_column_pair_plot`` with sample_size parameter."""
+    # Setup
+    columns = ['amount', 'date']
+    real_data = pd.DataFrame({
+        'amount': [1, 2, 3],
+        'date': ['2021-01-01', '2022-01-01', '2023-01-01'],
+    })
+    synthetic_data = pd.DataFrame({
+        'amount': [1., 2., 3.],
+        'date': ['2021-01-01', '2022-01-01', '2023-01-01'],
+    })
+    metadata = SingleTableMetadata()
+    metadata.add_column('amount', sdtype='numerical')
+    metadata.add_column('date', sdtype='datetime')
+
+    # Run
+    plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns, sample_size=2)
+
+    # Assert
+    expected_real_data = pd.DataFrame({
+        'amount': [1, 2],
+        'date': pd.to_datetime(['2021-01-01', '2022-01-01']),
+    }, index=[0, 1])
+    expected_synth_data = pd.DataFrame({
+        'amount': [3., 1.],
+        'date': pd.to_datetime(['2023-01-01', '2021-01-01']),
+    }, index=[2, 0])
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][0], expected_real_data)
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][1], expected_synth_data)
+    assert mock_get_plot.call_args[0][2] == columns
+    assert mock_get_plot.call_args[0][3] == 'scatter'
+    assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_pair_plot')
+def test_get_column_pair_plot_with_sample_size_too_big(mock_get_plot):
+    """Test ``get_column_pair_plot`` when sample_size is bigger than the lenght of the data."""
+    # Setup
+    columns = ['amount', 'date']
+    real_data = pd.DataFrame({
+        'amount': [1, 2, 3],
+        'date': ['2021-01-01', '2022-01-01', '2023-01-01'],
+    })
+    synthetic_data = pd.DataFrame({
+        'amount': [1., 2., 3.],
+        'date': ['2021-01-01', '2022-01-01', '2023-01-01'],
+    })
+    metadata = SingleTableMetadata()
+    metadata.add_column('amount', sdtype='numerical')
+    metadata.add_column('date', sdtype='datetime')
+
+    # Run
+    plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns, sample_size=10)
+
+    # Assert
+    expected_real_data = pd.DataFrame({
+        'amount': [1, 2, 3],
+        'date': pd.to_datetime(['2021-01-01', '2022-01-01', '2023-01-01']),
+    })
+    expected_synth_data = pd.DataFrame({
+        'amount': [1., 2., 3.],
+        'date': pd.to_datetime(['2021-01-01', '2022-01-01', '2023-01-01']),
+    })
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][0], expected_real_data)
+    pd.testing.assert_frame_equal(mock_get_plot.call_args[0][1], expected_synth_data)
+    assert mock_get_plot.call_args[0][2] == columns
+    assert mock_get_plot.call_args[0][3] == 'scatter'
+    assert plot == mock_get_plot.return_value
