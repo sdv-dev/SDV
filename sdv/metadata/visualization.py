@@ -105,10 +105,11 @@ def visualize_graph(nodes, edges, filepath=None):
     )
 
     for name, label in nodes.items():
-        digraph.node(name, label=graphviz.escape(label))
+        label = label.replace('<', 'lt').replace('>', 'gt')
+        digraph.node(name, label=label)
 
     for parent, child, label in edges:
-        digraph.edge(parent, child, label=graphviz.escape(label), arrowhead='oinv')
+        digraph.edge(parent, child, label=label, arrowhead='oinv')
 
     if filename:
         digraph.render(filename=filename, cleanup=True, format=graphviz_extension)
