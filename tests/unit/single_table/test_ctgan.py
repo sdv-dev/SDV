@@ -1,5 +1,8 @@
 from unittest.mock import Mock, patch
 
+import numpy as np
+import pandas as pd
+
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer
 
@@ -127,6 +130,55 @@ class TestCTGANSynthesizer:
             'pac': 10,
             'cuda': True,
         }
+
+    def test_preprocessing_many_categories(self, capfd):
+        """Test a message is printed during preprocess when a column has many categories."""
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('name_longer_than_Original_Column_Name', sdtype='numerical')
+        metadata.add_column('categorical', sdtype='categorical')
+        data = pd.DataFrame({
+            'name_longer_than_Original_Column_Name': np.random.rand(1_001),
+            'categorical': [f'cat_{i}' for i in range(1_001)],
+        })
+        instance = CTGANSynthesizer(metadata)
+
+        # Run
+        instance.preprocess(data)
+
+        # Assert
+        out, err = capfd.readouterr()
+        assert out == (
+            'PerformanceAlert: Using the CTGANSynthesizer on this data is not recommended. '
+            'To model this data, CTGAN will generate a large number of columns.'
+            '\n\n'
+            'Original Column Name                  Est # of Columns (CTGAN)\n'
+            'name_longer_than_Original_Column_Name 11\n'
+            'categorical                           1001'
+            '\n\n'
+            'We recommend preprocessing discrete columns that can have many values, '
+            "using 'update_transformers'. Or you may drop columns that are not necessary "
+            'to model. (Exit this script using ctrl-C)\n'
+        )
+
+    def test_preprocessing_few_categories(self, capfd):
+        """Test a message is not printed during preprocess when a column has few categories."""
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('name_longer_than_Original_Column_Name', sdtype='numerical')
+        metadata.add_column('categorical', sdtype='categorical')
+        data = pd.DataFrame({
+            'name_longer_than_Original_Column_Name': np.random.rand(10),
+            'categorical': [f'cat_{i}' for i in range(10)],
+        })
+        instance = CTGANSynthesizer(metadata)
+
+        # Run
+        instance.preprocess(data)
+
+        # Assert
+        out, err = capfd.readouterr()
+        assert out == ''
 
     @patch('sdv.single_table.ctgan.CTGAN')
     @patch('sdv.single_table.ctgan.detect_discrete_columns')
