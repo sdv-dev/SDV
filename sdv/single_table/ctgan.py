@@ -126,6 +126,9 @@ class CTGANSynthesizer(BaseSingleTableSynthesizer):
         transformers = self.get_transformers()
         num_generated_columns = {}
         for column in data.columns:
+            if column not in sdtypes:
+                continue
+
             if sdtypes[column] in {'numerical', 'datetime'}:
                 num_generated_columns[column] = 11
 
@@ -139,7 +142,7 @@ class CTGANSynthesizer(BaseSingleTableSynthesizer):
         return num_generated_columns
 
     def _print_warning(self, data):
-        """Print a warning if the number of columns generated is too large."""
+        """Print a warning if the number of columns generated is over 1000."""
         dict_generated_columns = self._estimate_num_columns(data)
         if sum(dict_generated_columns.values()) > 1000:
             header = {'Original Column Name  ': 'Est # of Columns (CTGAN)'}
