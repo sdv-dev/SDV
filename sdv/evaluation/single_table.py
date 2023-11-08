@@ -170,8 +170,8 @@ def get_column_pair_plot(
 
     require_subsample = sample_size and sample_size < min(len(real_data), len(synthetic_data))
     if plot_type == 'scatter' and require_subsample:
-        real_data = real_data.sample(n=sample_size, random_state=42)
-        synthetic_data = synthetic_data.sample(n=sample_size, random_state=55)
+        real_data = real_data.sample(n=sample_size)
+        synthetic_data = synthetic_data.sample(n=sample_size)
 
     return visualization.get_column_pair_plot(
         real_data,
