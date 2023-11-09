@@ -71,7 +71,7 @@ def _get_graphviz_extension(filepath):
 
 
 def _replace_special_characters(string):
-    return string.replace('<', '\<').replace('>', '\>')
+    return string.replace('<', '\<').replace('>', '\>')  # noqa: W605
 
 
 def visualize_graph(nodes, edges, filepath=None):
