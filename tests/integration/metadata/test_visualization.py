@@ -23,7 +23,6 @@ def test_visualize_graph_for_single_table():
 def test_visualize_graph_for_multi_table():
     """Test it runs when a column name contains symbols."""
     # Setup
-    model = HMASynthesizer(metadata)
     data1 = pd.DataFrame({'\\|=/bla@#$324%^,"&*()><...': ['a', 'b', 'c']})
     data2 = pd.DataFrame({'\\|=/bla@#$324%^,"&*()><...': ['a', 'b', 'c']})
     tables = {'1': data1, '2': data2}
@@ -34,6 +33,7 @@ def test_visualize_graph_for_multi_table():
     metadata.set_primary_key('1', '\\|=/bla@#$324%^,"&*()><...')
     metadata.add_relationship(
         '1', '2', '\\|=/bla@#$324%^,"&*()><...', '\\|=/bla@#$324%^,"&*()><...')
+    model = HMASynthesizer(metadata)
 
     # Run
     metadata.visualize()
