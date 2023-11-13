@@ -25,7 +25,7 @@ install_requires = [
     'tqdm>=4.15,<5',
     'copulas>=0.9.0,<0.10',
     'ctgan>=0.7.4,<0.8',
-    'deepecho>=0.4.2,<0.5',
+    'deepecho>=0.5, <0.6',
     'rdt>=1.8.0,<2',
     'sdmetrics>=0.12.1,<0.13',
 ]
