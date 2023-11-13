@@ -81,11 +81,11 @@ def test_get_column_pair_plot(mock_plot):
     mock_plot.return_value = 'plot'
 
     # Run
-    plot = get_column_pair_plot(data1, data2, metadata, 'table', ['col1', 'col2'])
+    plot = get_column_pair_plot(data1, data2, metadata, 'table', ['col1', 'col2'], 2)
 
     # Assert
     call_metadata = metadata.tables['table']
-    mock_plot.assert_called_once_with(table1, table2, call_metadata, ['col1', 'col2'], None)
+    mock_plot.assert_called_once_with(table1, table2, call_metadata, ['col1', 'col2'], None, 2)
     assert plot == 'plot'
 
 
