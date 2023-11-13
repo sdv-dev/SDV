@@ -75,7 +75,7 @@ def _replace_special_characters(string):
 
 
 def visualize_graph(nodes, edges, filepath=None):
-    """Plot metadata usign graphviz.
+    """Plot metadata using graphviz.
 
     Try to generate a plot using graphviz.
     If a ``filepath`` is provided save the output into a file.
