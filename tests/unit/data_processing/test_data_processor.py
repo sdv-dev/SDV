@@ -1259,6 +1259,7 @@ class TestDataProcessor:
         })
         dp = DataProcessor(SingleTableMetadata(), locales=locales)
         dp.metadata = Mock()
+        dp._enforce_min_max_values = True
         dp.create_anonymized_transformer = Mock()
         dp.create_regex_generator = Mock()
         dp.create_id_generator = Mock()
@@ -1342,6 +1343,7 @@ class TestDataProcessor:
         assert datetime_transformer.missing_value_replacement == 'mean'
         assert datetime_transformer.missing_value_generation == 'random'
         assert datetime_transformer.datetime_format == '%Y-%m-%d'
+        assert datetime_transformer.enforce_min_max_values is True
         assert dp._primary_key == 'id'
 
         id_no_regex_transformer = config['transformers']['id_no_regex']

@@ -531,6 +531,9 @@ class DataProcessor:
             key: value for key, value in column_metadata.items()
             if key not in ['pii', 'sdtype']
         }
+        if sdtype == 'datetime':
+            kwargs['enforce_min_max_values'] = self._enforce_min_max_values
+
         if kwargs and transformer is not None:
             transformer_class = transformer.__class__
             return transformer_class(**kwargs)
