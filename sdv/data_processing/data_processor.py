@@ -90,6 +90,7 @@ class DataProcessor:
         self._transformers_by_sdtype = deepcopy(get_default_transformers())
         self._transformers_by_sdtype['id'] = rdt.transformers.RegexGenerator()
         del self._transformers_by_sdtype['text']
+        self.grouped_columns_to_transformers = {}
 
         self._update_numerical_transformer(enforce_rounding, enforce_min_max_values)
         self._hyper_transformer = rdt.HyperTransformer()
@@ -102,6 +103,84 @@ class DataProcessor:
         self._keys = deepcopy(self.metadata.alternate_keys)
         if self._primary_key:
             self._keys.append(self._primary_key)
+
+    def _get_grouped_columns(self):
+        """Get the columns that are part of a multi column transformer.
+
+        Returns:
+            list:
+                A list of columns that are part of a multi column transformer.
+        """
+        return [
+            col for col_tuple in self.grouped_columns_to_transformers for col in col_tuple
+        ]
+
+    def _check_import_address_transformers(self):
+        """Check that the address transformers can be imported."""
+        has_randomlocationgenerator = hasattr(rdt.transformers, 'RandomLocationGenerator')
+        has_regionalanonymizer = hasattr(rdt.transformers, 'RegionalAnonymizer')
+        if not has_randomlocationgenerator or not has_regionalanonymizer:
+            raise ImportError(
+                'You must have SDV Enterprise with the address add-on to use the address features'
+            )
+
+    def _get_columns_in_address_transformer(self):
+        """Get the columns that are part of an address transformer.
+
+        Returns:
+            list:
+                A list of columns that are part of the address transformers.
+        """
+        try:
+            self._check_import_address_transformers()
+            result = []
+            for col_tuple, transformer in self.grouped_columns_to_transformers.items():
+                is_randomlocationgenerator = isinstance(
+                    transformer, rdt.transformers.RandomLocationGenerator
+                )
+                is_regionalanonymizer = isinstance(
+                    transformer, rdt.transformers.RegionalAnonymizer
+                )
+                if is_randomlocationgenerator or is_regionalanonymizer:
+                    result.extend(list(col_tuple))
+
+            return result
+        except ImportError:
+            return []
+
+    def _get_address_transformer(self, anonymization_level):
+        """Get the address transformer.
+
+        Args:
+            anonymization_level (str):
+                The anonymization level for the address transformer.
+        """
+        locales = self._locales if self._locales else ['en_US']
+        self._check_import_address_transformers()
+        if anonymization_level == 'street_address':
+            return rdt.transformers.RegionalAnonymizer(locales=locales)
+
+        return rdt.transformers.RandomLocationGenerator(locales=locales)
+
+    def set_address_transformer(self, column_names, anonymization_level):
+        """Set the address transformer.
+
+        Args:
+            column_names (tuple[str]):
+                The column names to set the transformer for.
+            anonymization_level (str):
+                The anonymization level for the address transformer.
+        """
+        columns_to_sdtypes = {
+            column: self.metadata.columns[column]['sdtype'] for column in column_names
+        }
+        transformer = self._get_address_transformer(anonymization_level)
+        transformer._validate_sdtypes(columns_to_sdtypes)
+
+        if self._prepared_for_fitting:
+            self.update_transformers({column_names: transformer})
+
+        self.grouped_columns_to_transformers[column_names] = transformer
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -237,6 +316,21 @@ class DataProcessor:
 
         except KeyError:
             raise InvalidConstraintsError(f"Invalid constraint class ('{constraint_class}').")
+
+        if 'column_name' in constraint_parameters:
+            column_names = [constraint_parameters.get('column_name')]
+        else:
+            column_names = constraint_parameters.get('column_names')
+
+        columns_in_address = self._get_columns_in_address_transformer()
+        if columns_in_address and column_names:
+            address_constraint_columns = set(column_names) & set(columns_in_address)
+            if address_constraint_columns:
+                to_print = "', '".join(address_constraint_columns)
+                raise InvalidConstraintsError(
+                    f"The '{to_print}' columns are part of an address. You cannot add constraints "
+                    'to columns that are part of an address group.'
+                )
 
         constraint_class._validate_metadata(self.metadata, **constraint_parameters)
 
@@ -424,15 +518,27 @@ class DataProcessor:
         return transformer
 
     def _get_transformer_instance(self, sdtype, column_metadata):
+        transformer = self._transformers_by_sdtype[sdtype]
+        if isinstance(transformer, AnonymizedFaker):
+            is_lexify = transformer.function_name == 'lexify'
+            is_baseprovider = transformer.provider_name == 'BaseProvider'
+            if is_lexify and is_baseprovider:  # Default settings
+                return self.create_anonymized_transformer(
+                    sdtype, column_metadata, False, self._locales
+                )
+
         kwargs = {
             key: value for key, value in column_metadata.items()
             if key not in ['pii', 'sdtype']
         }
-        if kwargs and self._transformers_by_sdtype[sdtype] is not None:
-            transformer_class = self._transformers_by_sdtype[sdtype].__class__
+        if sdtype == 'datetime':
+            kwargs['enforce_min_max_values'] = self._enforce_min_max_values
+
+        if kwargs and transformer is not None:
+            transformer_class = transformer.__class__
             return transformer_class(**kwargs)
 
-        return deepcopy(self._transformers_by_sdtype[sdtype])
+        return deepcopy(transformer)
 
     def _update_constraint_transformers(self, data, columns_created_by_constraints, config):
         missing_columns = set(columns_created_by_constraints) - config['transformers'].keys()
@@ -466,9 +572,15 @@ class DataProcessor:
         sdtypes = {}
         transformers = {}
 
+        columns_in_multi_col_transformer = self._get_grouped_columns()
         for column in set(data.columns) - columns_created_by_constraints:
             column_metadata = self.metadata.columns.get(column)
             sdtype = column_metadata.get('sdtype')
+
+            if column in columns_in_multi_col_transformer:
+                sdtypes[column] = sdtype
+                continue
+
             pii = column_metadata.get('pii', sdtype not in self._transformers_by_sdtype)
             sdtypes[column] = 'pii' if pii else sdtype
 
@@ -526,6 +638,9 @@ class DataProcessor:
                     'categorical',
                     column_metadata
                 )
+
+        for columns, transformer in self.grouped_columns_to_transformers.items():
+            transformers[columns] = transformer
 
         config = {'transformers': transformers, 'sdtypes': sdtypes}
         config = self._update_constraint_transformers(data, columns_created_by_constraints, config)
@@ -744,6 +859,10 @@ class DataProcessor:
                 )
         except rdt.errors.NotFittedError:
             LOGGER.info(f'HyperTransformer has not been fitted for table {self.table_name}')
+
+        for transformer in self.grouped_columns_to_transformers.values():
+            if not transformer.output_columns:
+                reversed_data = transformer.reverse_transform(reversed_data)
 
         num_rows = len(reversed_data)
         sampled_columns = list(reversed_data.columns)

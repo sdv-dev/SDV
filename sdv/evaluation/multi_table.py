@@ -88,7 +88,7 @@ def get_column_plot(real_data, synthetic_data, metadata, table_name, column_name
 
 
 def get_column_pair_plot(real_data, synthetic_data, metadata,
-                         table_name, column_names, plot_type=None):
+                         table_name, column_names, plot_type=None, sample_size=None):
     """Get a plot of the real and synthetic data for a given column pair.
 
     Args:
@@ -107,6 +107,9 @@ def get_column_pair_plot(real_data, synthetic_data, metadata,
             If ``None` select between ``box``, ``heatmap`` or ``scatter`` depending on the data
             that the column contains, ``scatter`` used for datetime and numerical values,
             ``heatmap`` for categorical and ``box`` for a mix of both. Defaults to ``None``.
+        sample_size (int or None):
+            The number of samples to plot. If ``None``, all samples are plotted.
+            Defaults to ``None``.
 
     Returns:
         plotly.graph_objects._figure.Figure:
@@ -120,6 +123,7 @@ def get_column_pair_plot(real_data, synthetic_data, metadata,
         synthetic_data,
         metadata,
         column_names,
+        sample_size,
         plot_type
     )
 

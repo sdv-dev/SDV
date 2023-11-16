@@ -423,3 +423,25 @@ def test_unknown_sdtype():
 
     # Assert
     assert synthetic_data['unknown'].str.startswith('sdv-pii-').all()
+
+
+def test_datetime_values_inside_real_data_range():
+    """Test that the synthetic datetime values are inside the real data rang."""
+    # Setup
+    real_data, metadata = download_demo('single_table', 'fake_hotel_guests')
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+
+    # Run
+    synthesizer.fit(real_data)
+    synthetic_data = synthesizer.sample(len(real_data))
+
+    # Assert
+    check_in_synthetic = pd.to_datetime(synthetic_data['checkin_date'])
+    check_out_synthetic = pd.to_datetime(synthetic_data['checkout_date'])
+    check_in_real = pd.to_datetime(real_data['checkin_date'])
+    check_out_real = pd.to_datetime(real_data['checkout_date'])
+    assert check_in_synthetic.min() >= check_in_real.min()
+    assert check_in_synthetic.max() <= check_in_real.max()
+    assert check_out_synthetic.min() >= check_out_real.min()
+    assert check_out_synthetic.max() <= check_out_real.max()
