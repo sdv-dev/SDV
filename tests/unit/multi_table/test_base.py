@@ -228,15 +228,44 @@ class TestBaseMultiTableSynthesizer:
         instance = BaseMultiTableSynthesizer(metadata, locales='en_CA')
 
         # Run
-        result = instance.get_parameters('oseba')
+        result = instance.get_parameters()
 
         # Assert
         assert result == {
-            'default_distribution': 'beta',
-            'enforce_min_max_values': True,
             'locales': 'en_CA',
-            'enforce_rounding': True,
-            'numerical_distributions': {}
+            'verbose': False,
+            'tables': {
+                'nesreca': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                },
+                'oseba': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                },
+                'upravna_enota': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                }
+            }
         }
 
     def test_set_table_parameters(self):
@@ -254,8 +283,10 @@ class TestBaseMultiTableSynthesizer:
         instance.set_table_parameters('oseba', {'default_distribution': 'gamma'})
 
         # Assert
+        table_parameters = instance.get_parameters()['tables']['oseba']
         assert instance._table_parameters['oseba'] == {'default_distribution': 'gamma'}
-        assert instance.get_parameters('oseba') == {
+        assert table_parameters['table_synthesizer'] == 'GaussianCopulaSynthesizer'
+        assert table_parameters['table_parameters'] == {
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
             'locales': None,
