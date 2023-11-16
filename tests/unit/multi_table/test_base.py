@@ -206,20 +206,36 @@ class TestBaseMultiTableSynthesizer:
         result = instance.get_table_parameters('oseba')
 
         # Assert
-        assert result == {}
+        assert result == {
+            'table_synthesizer': 'GaussianCopulaSynthesizer',
+            'table_parameters': {
+                'default_distribution': 'beta',
+                'enforce_min_max_values': True,
+                'enforce_rounding': True,
+                'locales': None,
+                'numerical_distributions': {}
+            }
+        }
+
 
     def test_get_table_parameters_has_parameters(self):
         """Test that this method returns a dictionary with the parameters."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        instance._table_parameters['oseba'] = {'default_distribution': 'gamma'}
+        instance.set_table_parameters('oseba', {'default_distribution': 'gamma'})
 
         # Run
         result = instance.get_table_parameters('oseba')
 
         # Assert
-        assert result == {'default_distribution': 'gamma'}
+        assert result['table_parameters'] == {
+            'default_distribution': 'gamma',
+            'enforce_min_max_values': True,
+            'enforce_rounding': True,
+            'locales': None,
+            'numerical_distributions': {}
+        }
 
     def test_get_parameters(self):
         """Test that the table's synthesizer parameters are being returned."""

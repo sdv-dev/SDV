@@ -137,12 +137,32 @@ class TestHMASynthesizer:
         hmasynthesizer.set_table_parameters('character_families', {'default_distribution': 'norm'})
 
         # Assert
-        assert hmasynthesizer.get_table_parameters(
-            'characters') == {'default_distribution': 'gamma'}
-        assert hmasynthesizer.get_table_parameters(
-            'families') == {'default_distribution': 'uniform'}
-        assert hmasynthesizer.get_table_parameters('character_families') == {
-            'default_distribution': 'norm'
+        character_params = hmasynthesizer.get_table_parameters('characters')
+        assert character_params['table_synthesizer'] == 'GaussianCopulaSynthesizer'
+        assert character_params['table_parameters'] == {
+            'default_distribution': 'gamma',
+            'enforce_min_max_values': True,
+            'enforce_rounding': True,
+            'locales': None,
+            'numerical_distributions': {}
+        }
+        families_params = hmasynthesizer.get_table_parameters('families')
+        assert families_params['table_synthesizer'] == 'GaussianCopulaSynthesizer'
+        assert families_params['table_parameters'] == {
+            'default_distribution': 'uniform',
+            'enforce_min_max_values': True,
+            'enforce_rounding': True,
+            'locales': None,
+            'numerical_distributions': {}
+        }
+        char_families_params = hmasynthesizer.get_table_parameters('character_families')
+        assert char_families_params['table_synthesizer'] == 'GaussianCopulaSynthesizer'
+        assert char_families_params['table_parameters'] == {
+            'default_distribution': 'norm',
+            'enforce_min_max_values': True,
+            'enforce_rounding': True,
+            'locales': None,
+            'numerical_distributions': {}
         }
 
         assert hmasynthesizer._table_synthesizers['characters'].default_distribution == 'gamma'
