@@ -1,5 +1,24 @@
 # Release Notes
 
+## 1.7.0 - 2023-11-16
+
+This release adds an alert to the `CTGANSynthesizer` during preprocessing. The alert informs the user if the fitting of the synthesizer is likely to be slow on their schema. Additionally, it is now possible to enforce that sampled datetime values stay within the range of the fitted data!
+
+This release also makes internal changes to support address data in SDV Enterprise.
+
+### New Features
+
+* Add set_address_columns method - Issue [#1593](https://github.com/sdv-dev/SDV/issues/1593) by @R-Palazzo
+* Update_transformers should raise error on address columns - Issue [#1594](https://github.com/sdv-dev/SDV/issues/1594) by @R-Palazzo
+* add_constraints should raise error on address columns - Issue [#1595](https://github.com/sdv-dev/SDV/issues/1595) by @R-Palazzo
+* Print alert if CTGANSynthesizer is likely to be slow - Issue [#1658](https://github.com/sdv-dev/SDV/issues/1658) by @fealho
+* Set enforce_min_max_values to True for datetime transformers - Issue [#1676](https://github.com/sdv-dev/SDV/issues/1676) by @R-Palazzo
+
+### Bugs Fixed
+
+* Unable to visualize metadata (`Error: bad label format` and `CalledProcessError`) - Issue [#1625](https://github.com/sdv-dev/SDV/issues/1625) by @fealho
+* Can't set address columns after fitting - Issue [#1661](https://github.com/sdv-dev/SDV/issues/1661) by @R-Palazzo
+
 ## 1.6.0 - 2023-11-07
 
 This release improves user messaging in multiple ways. The most notable is that users will now see an alert if the `HMASynthesizer` is likely to be slow for their data's schema. Additionally, the logger messaging for constraints and the error messaging when setting distributions on non-parametric models was made more detailed.
