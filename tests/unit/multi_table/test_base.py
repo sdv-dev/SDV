@@ -217,7 +217,6 @@ class TestBaseMultiTableSynthesizer:
             }
         }
 
-
     def test_get_table_parameters_has_parameters(self):
         """Test that this method returns a dictionary with the parameters."""
         # Setup
