@@ -21,6 +21,8 @@ from sdv.metadata.single_table import SingleTableMetadata
 LOGGER = logging.getLogger(__name__)
 BUCKET = 'sdv-demo-datasets'
 BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
+ACCESS_KEY = None
+SECRET_ACCESS_KEY = None
 METADATA_FILENAME = 'metadata.json'
 
 
@@ -162,7 +164,12 @@ def get_available_demos(modality):
             * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
     """
     _validate_modalities(modality)
-    client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
+    client = boto3.client(
+        's3',
+        aws_access_key_id=ACCESS_KEY,
+        aws_secret_access_key=SECRET_ACCESS_KEY,
+        config=Config(signature_version=UNSIGNED)
+    )
     tables_info = defaultdict(list)
     for item in client.list_objects(Bucket=BUCKET)['Contents']:
         dataset_modality, dataset = item['Key'].split('/', 1)
