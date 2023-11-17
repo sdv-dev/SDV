@@ -5,7 +5,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import download_demo, get_available_demos
+from sdv.datasets.demo import (
+    _download, _get_data_from_private_bucket, _get_data_from_public_bucket, download_demo,
+    get_available_demos)
 
 
 def test_download_demo_invalid_modality():
@@ -62,6 +64,74 @@ def test_download_demo_single_table(tmpdir):
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
     }
     assert metadata.to_dict() == expected_metadata_dict
+
+
+@patch('boto3.Session')
+@patch('sdv.datasets.demo.ACCESS_KEY', 'access_key')
+@patch('sdv.datasets.demo.SECRET_ACCESS_KEY', 'secret_access_key')
+@patch('sdv.datasets.demo.REGION_NAME', 'region_name')
+@patch('sdv.datasets.demo.BUCKET', 'bucket')
+def test__get_data_from_private_bucket(session_mock):
+    """Test the ``_get_data_from_private_bucket`` method."""
+    # Setup
+    session_mock.return_value.client.return_value.get_object.return_value = {
+        'Body': MagicMock(read=MagicMock(return_value=b''))
+    }
+
+    # Run
+    _get_data_from_private_bucket('object_key')
+
+    # Assert
+    session_mock.assert_called_once_with(
+        aws_access_key_id='access_key', aws_secret_access_key='secret_access_key',
+        region_name='region_name'
+    )
+    session_mock.return_value.client.assert_called_once_with('s3')
+    session_mock.return_value.client.return_value.get_object.assert_called_once_with(
+        Bucket='bucket', Key='object_key'
+    )
+
+
+@patch('urllib.request.urlopen')
+@patch('sdv.datasets.demo.BUCKET', 'bucket')
+def test__get_data_from_public_bucket(url_open_mock):
+    """Test the ``_get_data_from_public_bucket`` method."""
+    # Setup
+    url_open_mock.return_value.read.return_value = b''
+
+    # Run
+    _get_data_from_public_bucket('object_key')
+
+    # Assert
+    url_open_mock.assert_called_once_with('https://bucket.s3.amazonaws.com/object_key')
+    url_open_mock.return_value.read.assert_called_once_with()
+
+
+@patch('sdv.datasets.demo._get_data_from_public_bucket')
+def test__download_public_bucket(mock_get_data_from_public_bucket):
+    """Test the ``_download`` method when the bucket is public."""
+    # Setup
+    mock_get_data_from_public_bucket.return_value = b''
+
+    # Run
+    _download('single_table', 'ring')
+
+    # Assert
+    mock_get_data_from_public_bucket.assert_called_once_with('SINGLE_TABLE/ring.zip')
+
+
+@patch('sdv.datasets.demo.IS_PRIVATE_BUCKET', True)
+@patch('sdv.datasets.demo._get_data_from_private_bucket')
+def test__download_private_bucket(mock_get_data_from_private_bucket):
+    """Test the ``_download`` method when the bucket is private."""
+    # Setup
+    mock_get_data_from_private_bucket.return_value = b''
+
+    # Run
+    _download('single_table', 'ring')
+
+    # Assert
+    mock_get_data_from_private_bucket.assert_called_once_with('SINGLE_TABLE/ring.zip')
 
 
 def test_download_demo_single_table_no_output_folder():
