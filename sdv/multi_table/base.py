@@ -406,6 +406,29 @@ class BaseMultiTableSynthesizer:
             f"table because it uses the '{synthesizer.__class__.__name__}'."
         )
 
+    def get_loss_values(self, table_name):
+        """Get the loss values from a model for a table.
+
+        Return a pandas dataframe mapping of the loss values per epoch of GAN
+        based synthesizers
+
+        Args:
+            table_name (str):
+                Table name for which the parameters should be retrieved.
+
+        Returns:
+            pd.DataFrame:
+                Dataframe of loss values per epoch
+        """
+        synthesizer = self._table_synthesizers[table_name]
+        if hasattr(synthesizer, 'get_loss_values'):
+            return synthesizer.get_loss_values()
+
+        raise SynthesizerInputError(
+            f"Loss values are not available for table '{table_name}' "
+            'because the table does not use a GAN-based model.'
+        )
+
     def _validate_constraints_to_be_added(self, constraints):
         for constraint_dict in constraints:
             if 'table_name' not in constraint_dict.keys():

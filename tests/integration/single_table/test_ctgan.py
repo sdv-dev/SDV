@@ -105,6 +105,12 @@ def test_synthesize_table_ctgan(tmp_path):
     assert len(synthetic_data) == 500
     for column in sensitive_columns:
         assert synthetic_data[column].isin(real_data[column]).sum() == 0
+    loss_values = synthesizer.get_loss_values()
+    assert list(loss_values.columns) == ['Epoch', 'Generator Loss', 'Discriminator Loss']
+    assert len(loss_values) == 300
+    custom_loss_values = custom_synthesizer.get_loss_values()
+    assert list(custom_loss_values.columns) == ['Epoch', 'Generator Loss', 'Discriminator Loss']
+    assert len(custom_loss_values) == 100
 
     # Assert - evaluate
     assert quality_report.get_score() > 0

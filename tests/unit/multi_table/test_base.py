@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.errors import InvalidDataError, SynthesizerInputError
+from sdv.errors import InvalidDataError, NotFittedError, SynthesizerInputError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -849,6 +849,33 @@ class TestBaseMultiTableSynthesizer:
         )
         with pytest.raises(SynthesizerInputError, match=msg):
             instance.get_learned_distributions('nesreca')
+
+    def test_get_loss_values_unfitted_error(self):
+        """Test the ``get_loss_values`` errors if synthesizer has not been fitted."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._table_synthesizers['nesreca'] = CTGANSynthesizer(metadata.tables['nesreca'])
+
+        # Run and Assert
+        error_msg = 'Loss values are not available yet. Please fit your synthesizer first.'
+        with pytest.raises(NotFittedError, match=error_msg):
+            instance.get_loss_values('nesreca')
+
+    def test_get_loss_values_unsupported_synthesizer_error(self):
+        """Test the ``get_loss_values`` errors if synthesizer not GAN-based."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._table_synthesizers['nesreca']._fitted = True
+
+        # Run and Assert
+        msg = re.escape(
+            "Loss values are not available for table 'nesreca' "
+            'because the table does not use a GAN-based model.'
+        )
+        with pytest.raises(SynthesizerInputError, match=msg):
+            instance.get_loss_values('nesreca')
 
     def test_add_constraint_warning(self):
         """Test a warning is raised when the synthesizer had already been fitted."""

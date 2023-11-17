@@ -7,7 +7,7 @@ import pytest
 from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 
 from sdv.data_processing.data_processor import DataProcessor
-from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError
+from sdv.errors import InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sequential.par import PARSynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -504,6 +504,37 @@ class TestPARSynthesizer:
         # Assert
         par._fit_context_model.assert_not_called()
         par._fit_sequence_columns.assert_called_once_with(data)
+
+    def test_get_loss_values(self):
+        """Test the ``get_loss_values`` method from ``PARSynthesizer."""
+        # Setup
+        mock_model = Mock()
+        loss_values = pd.DataFrame({
+            'Epoch': [0, 1, 2],
+            'Loss': [0.8, 0.6, 0.5]
+        })
+        mock_model.loss_values = loss_values
+        metadata = SingleTableMetadata()
+        instance = PARSynthesizer(metadata)
+        instance._model = mock_model
+        instance._fitted = True
+
+        # Run
+        actual_loss_values = instance.get_loss_values()
+
+        # Assert
+        pd.testing.assert_frame_equal(actual_loss_values, loss_values)
+
+    def test_get_loss_values_error(self):
+        """Test the ``get_loss_values`` errors if synthesizer has not been fitted."""
+        # Setup
+        metadata = SingleTableMetadata()
+        instance = PARSynthesizer(metadata)
+
+        # Run / Assert
+        msg = 'Loss values are not available yet. Please fit your synthesizer first.'
+        with pytest.raises(NotFittedError, match=msg):
+            instance.get_loss_values()
 
     @patch('sdv.sequential.par.tqdm')
     def test__sample_from_par(self, tqdm_mock):

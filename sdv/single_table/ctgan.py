@@ -2,6 +2,7 @@
 import numpy as np
 from ctgan import CTGAN, TVAE
 
+from sdv.errors import NotFittedError
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.single_table.utils import detect_discrete_columns
 
@@ -188,6 +189,22 @@ class CTGANSynthesizer(BaseSingleTableSynthesizer):
         self._model = CTGAN(**self._model_kwargs)
         self._model.fit(processed_data, discrete_columns=discrete_columns)
 
+    def get_loss_values(self):
+        """Get the loss values from the model.
+
+        Raises:
+            - ``NotFittedError`` if synthesizer has not been fitted.
+
+        Returns:
+            pd.DataFrame:
+                Dataframe containing the loss values per epoch.
+        """
+        if not self._fitted:
+            err_msg = 'Loss values are not available yet. Please fit your synthesizer first.'
+            raise NotFittedError(err_msg)
+
+        return self._model.loss_values.copy()
+
     def _sample(self, num_rows, conditions=None):
         """Sample the indicated number of rows from the model.
 
@@ -290,6 +307,22 @@ class TVAESynthesizer(BaseSingleTableSynthesizer):
         )
         self._model = TVAE(**self._model_kwargs)
         self._model.fit(processed_data, discrete_columns=discrete_columns)
+
+    def get_loss_values(self):
+        """Get the loss values from the model.
+
+        Raises:
+            - ``NotFittedError`` if synthesizer has not been fitted.
+
+        Returns:
+            pd.DataFrame:
+                Dataframe containing the loss values per epoch.
+        """
+        if not self._fitted:
+            err_msg = 'Loss values are not available yet. Please fit your synthesizer first.'
+            raise NotFittedError(err_msg)
+
+        return self._model.loss_values.copy()
 
     def _sample(self, num_rows, conditions=None):
         """Sample the indicated number of rows from the model.
