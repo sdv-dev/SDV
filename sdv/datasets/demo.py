@@ -19,11 +19,13 @@ from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
+IS_PRIVATE_BUCKET = False
 BUCKET = 'sdv-demo-datasets'
 BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
 ACCESS_KEY = None
 SECRET_ACCESS_KEY = None
 CONFIG = Config(signature_version=UNSIGNED)
+REGION_NAME = None
 METADATA_FILENAME = 'metadata.json'
 
 
@@ -41,11 +43,37 @@ def _validate_output_folder(output_folder_name):
         )
 
 
+def _get_data_from_private_bucket(object_key):
+    session = boto3.Session(
+        aws_access_key_id=ACCESS_KEY,
+        aws_secret_access_key=SECRET_ACCESS_KEY,
+        region_name=REGION_NAME,
+    )
+    s3 = session.client('s3')
+    response = s3.get_object(Bucket=BUCKET, Key=object_key)
+    file_content = response['Body'].read()
+
+    return file_content
+
+
+def _get_data_from_public_bucket(object_key):
+    public_url = f'https://{BUCKET}.s3.amazonaws.com/{object_key}'
+    response = urllib.request.urlopen(public_url)
+    file_content = response.read()
+
+    return file_content
+
+
 def _download(modality, dataset_name):
     dataset_url = f'{BUCKET_URL}/{modality.upper()}/{dataset_name}.zip'
+    object_key = f'{modality.upper()}/{dataset_name}.zip'
     LOGGER.info(f'Downloading dataset {dataset_name} from {dataset_url}')
     try:
-        response = urllib.request.urlopen(dataset_url)
+        if IS_PRIVATE_BUCKET:
+            file_content = _get_data_from_private_bucket(object_key)
+        else:
+            file_content = _get_data_from_public_bucket(object_key)
+
     except urllib.error.HTTPError:
         raise ValueError(
             f"Invalid dataset name '{dataset_name}'. "
@@ -53,7 +81,7 @@ def _download(modality, dataset_name):
             "use 'get_available_demos' to get a list of demo datasets."
         )
 
-    return io.BytesIO(response.read())
+    return io.BytesIO(file_content)
 
 
 def _extract_data(bytes_io, output_folder_name):
