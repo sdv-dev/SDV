@@ -236,8 +236,8 @@ class TestBaseMultiTableSynthesizer:
             'numerical_distributions': {}
         }
 
-    def test_get_parameters(self):
-        """Test that the table's synthesizer parameters are being returned."""
+    def test_get_parameters_missing_table(self):
+        """Test that the synthesizer's parameters are being returned."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata, locales='en_CA')
@@ -259,6 +259,48 @@ class TestBaseMultiTableSynthesizer:
                         'numerical_distributions': {},
                         'default_distribution': 'beta'
                     }
+                },
+                'oseba': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                },
+                'upravna_enota': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                }
+            }
+        }
+
+    def test_get_parameters_empty(self):
+        """Test that ``get_parameters`` handles missing table synthesizers."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata, locales='en_CA')
+        instance._table_synthesizers['nesreca'] = None
+
+        # Run
+        result = instance.get_parameters()
+
+        # Assert
+        assert result == {
+            'locales': 'en_CA',
+            'verbose': False,
+            'tables': {
+                'nesreca': {
+                    'table_synthesizer': None,
+                    'table_parameters': {}
                 },
                 'oseba': {
                     'table_synthesizer': 'GaussianCopulaSynthesizer',
