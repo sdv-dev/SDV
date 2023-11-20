@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 
-from sdv.errors import SynthesizerInputError
+from sdv.errors import NotFittedError, SynthesizerInputError
 
 TMP_FILE_NAME = '.sample.csv.temp'
 DISABLE_TMP_FILE = 'disable'
@@ -349,3 +349,23 @@ def log_numerical_distributions_error(numerical_distributions, processed_data_co
             f"cannot be applied to column '{column}' because it no longer "
             'exists after preprocessing.'
         )
+
+
+class GANMixin:
+    """Mixin class for GAN-based synthesizers."""
+
+    def get_loss_values(self):
+        """Get the loss values from the model.
+
+        Raises:
+            - ``NotFittedError`` if synthesizer has not been fitted.
+
+        Returns:
+            pd.DataFrame:
+                Dataframe containing the loss values per epoch.
+        """
+        if not self._fitted:
+            err_msg = 'Loss values are not available yet. Please fit your synthesizer first.'
+            raise NotFittedError(err_msg)
+
+        return self._model.loss_values.copy()
