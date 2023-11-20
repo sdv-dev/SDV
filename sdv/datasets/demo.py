@@ -4,7 +4,6 @@ import io
 import json
 import logging
 import os
-import urllib.request
 from collections import defaultdict
 from pathlib import Path
 from zipfile import ZipFile
@@ -22,10 +21,6 @@ LOGGER = logging.getLogger(__name__)
 IS_PRIVATE_BUCKET = False
 BUCKET = 'sdv-demo-datasets'
 BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
-ACCESS_KEY = None
-SECRET_ACCESS_KEY = None
-CONFIG = Config(signature_version=UNSIGNED)
-REGION_NAME = None
 METADATA_FILENAME = 'metadata.json'
 
 
@@ -43,25 +38,20 @@ def _validate_output_folder(output_folder_name):
         )
 
 
-def _get_data_from_private_bucket(object_key):
+def _get_data_from_bucket(object_key):
+    access_key = os.environ.get('AWS_ACCESS_KEY_ID')
+    secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    region = os.environ.get('AWS_REGION')
     session = boto3.Session(
-        aws_access_key_id=ACCESS_KEY,
-        aws_secret_access_key=SECRET_ACCESS_KEY,
-        region_name=REGION_NAME,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        region_name=region,
     )
-    s3 = session.client('s3')
+    signature_version = 's3v4' if access_key else UNSIGNED
+    s3 = session.client('s3', config=Config(signature_version=signature_version))
+
     response = s3.get_object(Bucket=BUCKET, Key=object_key)
-    file_content = response['Body'].read()
-
-    return file_content
-
-
-def _get_data_from_public_bucket(object_key):
-    public_url = f'https://{BUCKET}.s3.amazonaws.com/{object_key}'
-    response = urllib.request.urlopen(public_url)
-    file_content = response.read()
-
-    return file_content
+    return response['Body'].read()
 
 
 def _download(modality, dataset_name):
@@ -69,12 +59,8 @@ def _download(modality, dataset_name):
     object_key = f'{modality.upper()}/{dataset_name}.zip'
     LOGGER.info(f'Downloading dataset {dataset_name} from {dataset_url}')
     try:
-        if IS_PRIVATE_BUCKET:
-            file_content = _get_data_from_private_bucket(object_key)
-        else:
-            file_content = _get_data_from_public_bucket(object_key)
-
-    except urllib.error.HTTPError:
+        file_content = _get_data_from_bucket(object_key)
+    except Exception:
         raise ValueError(
             f"Invalid dataset name '{dataset_name}'. "
             'Make sure you have the correct modality for the dataset name or '
@@ -193,11 +179,14 @@ def get_available_demos(modality):
             * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
     """
     _validate_modalities(modality)
+    access_key = os.environ.get('AWS_ACCESS_KEY_ID')
+    secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    signature_version = 's3v4' if access_key else UNSIGNED
     client = boto3.client(
         's3',
-        aws_access_key_id=ACCESS_KEY,
-        aws_secret_access_key=SECRET_ACCESS_KEY,
-        config=CONFIG
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        config=Config(signature_version=signature_version),
     )
     tables_info = defaultdict(list)
     for item in client.list_objects(Bucket=BUCKET)['Contents']:
