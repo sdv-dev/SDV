@@ -11,7 +11,7 @@ import tqdm
 from deepecho import PARModel
 from deepecho.sequences import assemble_sequences
 
-from sdv.errors import NotFittedError, SamplingError, SynthesizerInputError
+from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
@@ -266,22 +266,6 @@ class PARSynthesizer(GANMixin, BaseSynthesizer):
 
         LOGGER.debug(f'Fitting {self.__class__.__name__} model to table')
         self._fit_sequence_columns(processed_data)
-
-    def get_loss_values(self):
-        """Get the loss values from the model.
-
-        Raises:
-            - ``NotFittedError`` if synthesizer has not been fitted.
-
-        Returns:
-            pd.DataFrame:
-                Dataframe containing the loss values per epoch.
-        """
-        if not self._fitted:
-            err_msg = 'Loss values are not available yet. Please fit your synthesizer first.'
-            raise NotFittedError(err_msg)
-
-        return self._model.loss_values.copy()
 
     def _sample_from_par(self, context, sequence_length=None):
         """Sample new sequences.
