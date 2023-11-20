@@ -115,7 +115,7 @@ class BaseMultiTableSynthesizer:
         self._table_synthesizers[table_name].set_address_columns(column_names, anonymization_level)
 
     def get_table_parameters(self, table_name):
-        """Return the parameters that will be used to instantiate the table's synthesizer.
+        """Return the parameters for the given table's synthesizer.
 
         Args:
             table_name (str):
@@ -126,21 +126,33 @@ class BaseMultiTableSynthesizer:
                 A dictionary representing the parameters that will be used to instantiate the
                 table's synthesizer.
         """
-        return self._table_parameters.get(table_name, {})
+        table_synthesizer = self._table_synthesizers.get(table_name)
+        if not table_synthesizer:
+            table_params = {'table_synthesizer': None, 'table_parameters': {}}
+        else:
+            table_params = {
+                'table_synthesizer': type(table_synthesizer).__name__,
+                'table_parameters': table_synthesizer.get_parameters()
+            }
 
-    def get_parameters(self, table_name):
-        """Return the parameters used to instantiate the table's synthesizer.
+        return table_params
 
-        Args:
-            table_name (str):
-                Table name for which the parameters should be retrieved.
+    def get_parameters(self):
+        """Return the parameters used to instantiate the synthesizer and all table synthesizers.
 
         Returns:
             parameters (dict):
-                A dictionary representing the parameters used to instantiate the table's
-                synthesizer.
+                A dictionary representing the parameters used to instantiate the synthesizer.
         """
-        return self._table_synthesizers.get(table_name).get_parameters()
+        parameters_dict = {
+            'locales': self.locales,
+            'verbose': self.verbose,
+            'tables': {
+                table: self.get_table_parameters(table) for table in self.metadata.tables
+            }
+        }
+
+        return parameters_dict
 
     def set_table_parameters(self, table_name, table_parameters):
         """Update the table's synthesizer instantiation parameters.

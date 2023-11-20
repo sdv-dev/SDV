@@ -206,37 +206,123 @@ class TestBaseMultiTableSynthesizer:
         result = instance.get_table_parameters('oseba')
 
         # Assert
-        assert result == {}
+        assert result == {
+            'table_synthesizer': 'GaussianCopulaSynthesizer',
+            'table_parameters': {
+                'default_distribution': 'beta',
+                'enforce_min_max_values': True,
+                'enforce_rounding': True,
+                'locales': None,
+                'numerical_distributions': {}
+            }
+        }
 
     def test_get_table_parameters_has_parameters(self):
         """Test that this method returns a dictionary with the parameters."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        instance._table_parameters['oseba'] = {'default_distribution': 'gamma'}
+        instance.set_table_parameters('oseba', {'default_distribution': 'gamma'})
 
         # Run
         result = instance.get_table_parameters('oseba')
 
         # Assert
-        assert result == {'default_distribution': 'gamma'}
+        assert result['table_parameters'] == {
+            'default_distribution': 'gamma',
+            'enforce_min_max_values': True,
+            'enforce_rounding': True,
+            'locales': None,
+            'numerical_distributions': {}
+        }
 
-    def test_get_parameters(self):
-        """Test that the table's synthesizer parameters are being returned."""
+    def test_get_parameters_missing_table(self):
+        """Test that the synthesizer's parameters are being returned."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata, locales='en_CA')
 
         # Run
-        result = instance.get_parameters('oseba')
+        result = instance.get_parameters()
 
         # Assert
         assert result == {
-            'default_distribution': 'beta',
-            'enforce_min_max_values': True,
             'locales': 'en_CA',
-            'enforce_rounding': True,
-            'numerical_distributions': {}
+            'verbose': False,
+            'tables': {
+                'nesreca': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                },
+                'oseba': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                },
+                'upravna_enota': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                }
+            }
+        }
+
+    def test_get_parameters_empty(self):
+        """Test that ``get_parameters`` handles missing table synthesizers."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata, locales='en_CA')
+        instance._table_synthesizers['nesreca'] = None
+
+        # Run
+        result = instance.get_parameters()
+
+        # Assert
+        assert result == {
+            'locales': 'en_CA',
+            'verbose': False,
+            'tables': {
+                'nesreca': {
+                    'table_synthesizer': None,
+                    'table_parameters': {}
+                },
+                'oseba': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                },
+                'upravna_enota': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                }
+            }
         }
 
     def test_set_table_parameters(self):
@@ -254,8 +340,10 @@ class TestBaseMultiTableSynthesizer:
         instance.set_table_parameters('oseba', {'default_distribution': 'gamma'})
 
         # Assert
+        table_parameters = instance.get_parameters()['tables']['oseba']
         assert instance._table_parameters['oseba'] == {'default_distribution': 'gamma'}
-        assert instance.get_parameters('oseba') == {
+        assert table_parameters['table_synthesizer'] == 'GaussianCopulaSynthesizer'
+        assert table_parameters['table_parameters'] == {
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
             'locales': None,
