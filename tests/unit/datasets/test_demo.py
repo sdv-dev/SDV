@@ -96,7 +96,7 @@ def test__get_data_from_bucket(session_mock):
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
 def test__download(mock_get_data_from_bucket):
-    """Test the ``_download`` method when the bucket is public."""
+    """Test the ``_download`` method."""
     # Setup
     mock_get_data_from_bucket.return_value = b''
 
