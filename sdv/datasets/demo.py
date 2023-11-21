@@ -20,6 +20,7 @@ from sdv.metadata.single_table import SingleTableMetadata
 LOGGER = logging.getLogger(__name__)
 BUCKET = 'sdv-demo-datasets'
 BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
+SIGNATURE_VERSION = UNSIGNED
 METADATA_FILENAME = 'metadata.json'
 
 
@@ -46,8 +47,7 @@ def _get_data_from_bucket(object_key):
         aws_secret_access_key=secret_key,
         region_name=region,
     )
-    signature_version = 's3v4' if access_key else UNSIGNED
-    s3 = session.client('s3', config=Config(signature_version=signature_version))
+    s3 = session.client('s3', config=Config(signature_version=SIGNATURE_VERSION))
 
     response = s3.get_object(Bucket=BUCKET, Key=object_key)
     return response['Body'].read()
@@ -180,12 +180,11 @@ def get_available_demos(modality):
     _validate_modalities(modality)
     access_key = os.environ.get('AWS_ACCESS_KEY_ID')
     secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    signature_version = 's3v4' if access_key else UNSIGNED
     client = boto3.client(
         's3',
         aws_access_key_id=access_key,
         aws_secret_access_key=secret_key,
-        config=Config(signature_version=signature_version),
+        config=Config(signature_version=SIGNATURE_VERSION),
     )
     tables_info = defaultdict(list)
     for item in client.list_objects(Bucket=BUCKET)['Contents']:
