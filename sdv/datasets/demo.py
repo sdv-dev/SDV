@@ -41,7 +41,7 @@ def _validate_output_folder(output_folder_name):
 def _get_data_from_bucket(object_key):
     access_key = os.environ.get('AWS_ACCESS_KEY_ID')
     secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    region = os.environ.get('AWS_REGION')
+    region = os.environ.get('AWS_DEFAULT_REGION')
     session = boto3.Session(
         aws_access_key_id=access_key,
         aws_secret_access_key=secret_key,

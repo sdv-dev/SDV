@@ -69,7 +69,7 @@ def test_download_demo_single_table(tmpdir):
 @patch.dict(os.environ, {
     'AWS_ACCESS_KEY_ID': 'access_key',
     'AWS_SECRET_ACCESS_KEY': 'secret_access_key',
-    'AWS_REGION': 'region_name',
+    'AWS_DEFAULT_REGION': 'region_name',
 })
 @patch('sdv.datasets.demo.BUCKET', 'bucket')
 def test__get_data_from_bucket(session_mock):
