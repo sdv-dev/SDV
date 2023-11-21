@@ -105,7 +105,8 @@ class BaseHierarchicalSampler():
 
         if len(sampled_rows):
             parent_key = self.metadata.tables[parent_name].primary_key
-            sampled_rows[foreign_key] = parent_row[parent_key]
+            condition = sampled_rows.index
+            sampled_rows.loc[condition, foreign_key] = parent_row[parent_key]
 
             previous = sampled_data.get(child_name)
             if previous is None:
