@@ -84,11 +84,7 @@ def test__get_data_from_bucket(session_mock):
 
     # Assert
     assert result == b'data'
-    session_mock.assert_called_once_with(
-        aws_access_key_id='access_key',
-        aws_secret_access_key='secret_access_key',
-        region_name='region_name'
-    )
+    session_mock.assert_called_once()
     mock_s3_client.get_object.assert_called_once_with(
         Bucket='bucket', Key='object_key'
     )

@@ -39,16 +39,8 @@ def _validate_output_folder(output_folder_name):
 
 
 def _get_data_from_bucket(object_key):
-    access_key = os.environ.get('AWS_ACCESS_KEY_ID')
-    secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    region = os.environ.get('AWS_DEFAULT_REGION')
-    session = boto3.Session(
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-        region_name=region,
-    )
+    session = boto3.Session()
     s3 = session.client('s3', config=Config(signature_version=SIGNATURE_VERSION))
-
     response = s3.get_object(Bucket=BUCKET, Key=object_key)
     return response['Body'].read()
 
@@ -178,14 +170,7 @@ def get_available_demos(modality):
             * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
     """
     _validate_modalities(modality)
-    access_key = os.environ.get('AWS_ACCESS_KEY_ID')
-    secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    client = boto3.client(
-        's3',
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-        config=Config(signature_version=SIGNATURE_VERSION),
-    )
+    client = boto3.client('s3', config=Config(signature_version=SIGNATURE_VERSION))
     tables_info = defaultdict(list)
     for item in client.list_objects(Bucket=BUCKET)['Contents']:
         dataset_modality, dataset = item['Key'].split('/', 1)
