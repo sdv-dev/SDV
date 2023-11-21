@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from botocore import UNSIGNED
 from botocore.client import Config
+from botocore.exceptions import ClientError
 
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -51,7 +52,7 @@ def _download(modality, dataset_name):
     LOGGER.info(f'Downloading dataset {dataset_name} from {dataset_url}')
     try:
         file_content = _get_data_from_bucket(object_key)
-    except Exception:
+    except ClientError:
         raise ValueError(
             f"Invalid dataset name '{dataset_name}'. "
             'Make sure you have the correct modality for the dataset name or '

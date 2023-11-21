@@ -1,4 +1,3 @@
-import os
 import re
 from unittest.mock import MagicMock, Mock, patch
 
@@ -66,11 +65,6 @@ def test_download_demo_single_table(tmpdir):
 
 
 @patch('boto3.Session')
-@patch.dict(os.environ, {
-    'AWS_ACCESS_KEY_ID': 'access_key',
-    'AWS_SECRET_ACCESS_KEY': 'secret_access_key',
-    'AWS_DEFAULT_REGION': 'region_name',
-})
 @patch('sdv.datasets.demo.BUCKET', 'bucket')
 def test__get_data_from_bucket(session_mock):
     """Test the ``_get_data_from_bucket`` method."""
