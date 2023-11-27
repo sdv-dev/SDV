@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import download_demo, get_available_demos
+from sdv.datasets.demo import _download, _get_data_from_bucket, download_demo, get_available_demos
 
 
 def test_download_demo_invalid_modality():
@@ -62,6 +62,39 @@ def test_download_demo_single_table(tmpdir):
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
     }
     assert metadata.to_dict() == expected_metadata_dict
+
+
+@patch('boto3.Session')
+@patch('sdv.datasets.demo.BUCKET', 'bucket')
+def test__get_data_from_bucket(session_mock):
+    """Test the ``_get_data_from_bucket`` method."""
+    # Setup
+    mock_s3_client = Mock()
+    session_mock.return_value.client.return_value = mock_s3_client
+    mock_s3_client.get_object.return_value = {'Body': Mock(read=lambda: b'data')}
+
+    # Run
+    result = _get_data_from_bucket('object_key')
+
+    # Assert
+    assert result == b'data'
+    session_mock.assert_called_once()
+    mock_s3_client.get_object.assert_called_once_with(
+        Bucket='bucket', Key='object_key'
+    )
+
+
+@patch('sdv.datasets.demo._get_data_from_bucket')
+def test__download(mock_get_data_from_bucket):
+    """Test the ``_download`` method."""
+    # Setup
+    mock_get_data_from_bucket.return_value = b''
+
+    # Run
+    _download('single_table', 'ring')
+
+    # Assert
+    mock_get_data_from_bucket.assert_called_once_with('SINGLE_TABLE/ring.zip')
 
 
 def test_download_demo_single_table_no_output_folder():
