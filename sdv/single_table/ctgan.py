@@ -2,11 +2,32 @@
 import numpy as np
 from ctgan import CTGAN, TVAE
 
+from sdv.errors import NotFittedError
 from sdv.single_table.base import BaseSingleTableSynthesizer
-from sdv.single_table.utils import GANMixin, detect_discrete_columns
+from sdv.single_table.utils import detect_discrete_columns
 
 
-class CTGANSynthesizer(GANMixin, BaseSingleTableSynthesizer):
+class LossValuesMixin:
+    """Mixin for accessing loss values from synthesizers."""
+
+    def get_loss_values(self):
+        """Get the loss values from the model.
+
+        Raises:
+            - ``NotFittedError`` if synthesizer has not been fitted.
+
+        Returns:
+            pd.DataFrame:
+                Dataframe containing the loss values per epoch.
+        """
+        if not self._fitted:
+            err_msg = 'Loss values are not available yet. Please fit your synthesizer first.'
+            raise NotFittedError(err_msg)
+
+        return self._model.loss_values.copy()
+
+
+class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
     """Model wrapping ``CTGAN`` model.
 
     Args:
@@ -209,7 +230,7 @@ class CTGANSynthesizer(GANMixin, BaseSingleTableSynthesizer):
         raise NotImplementedError("CTGANSynthesizer doesn't support conditional sampling.")
 
 
-class TVAESynthesizer(GANMixin, BaseSingleTableSynthesizer):
+class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
     """Model wrapping ``TVAE`` model.
 
     Args:

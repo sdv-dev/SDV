@@ -420,6 +420,11 @@ class BaseMultiTableSynthesizer:
             pd.DataFrame:
                 Dataframe of loss values per epoch
         """
+        if table_name not in self._table_synthesizers:
+            raise ValueError(
+                f"Table '{table_name}' is not present in the metadata."
+            )
+
         synthesizer = self._table_synthesizers[table_name]
         if hasattr(synthesizer, 'get_loss_values'):
             return synthesizer.get_loss_values()

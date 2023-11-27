@@ -850,6 +850,17 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=msg):
             instance.get_learned_distributions('nesreca')
 
+    def test_get_loss_values_bad_table_name(self):
+        """Test the ``get_loss_values`` errors if bad ``table_name`` provided."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        error_msg = "Table 'bad_table' is not present in the metadata."
+        with pytest.raises(ValueError, match=error_msg):
+            instance.get_loss_values('bad_table')
+
     def test_get_loss_values_unfitted_error(self):
         """Test the ``get_loss_values`` errors if synthesizer has not been fitted."""
         # Setup
