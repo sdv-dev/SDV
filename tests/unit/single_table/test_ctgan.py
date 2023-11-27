@@ -2,7 +2,9 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
+import pytest
 
+from sdv.errors import NotFittedError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer
 
@@ -226,6 +228,37 @@ class TestCTGANSynthesizer:
             discrete_columns=mock_detect_discrete_columns.return_value
         )
 
+    def test_get_loss_values(self):
+        """Test the ``get_loss_values`` method from ``CTGANSynthesizer."""
+        # Setup
+        mock_model = Mock()
+        loss_values = pd.DataFrame({
+            'Epoch': [0, 1, 2],
+            'Loss': [0.8, 0.6, 0.5]
+        })
+        mock_model.loss_values = loss_values
+        metadata = SingleTableMetadata()
+        instance = CTGANSynthesizer(metadata)
+        instance._model = mock_model
+        instance._fitted = True
+
+        # Run
+        actual_loss_values = instance.get_loss_values()
+
+        # Assert
+        pd.testing.assert_frame_equal(actual_loss_values, loss_values)
+
+    def test_get_loss_values_error(self):
+        """Test the ``get_loss_values`` errors if synthesizer has not been fitted."""
+        # Setup
+        metadata = SingleTableMetadata()
+        instance = CTGANSynthesizer(metadata)
+
+        # Run / Assert
+        msg = 'Loss values are not available yet. Please fit your synthesizer first.'
+        with pytest.raises(NotFittedError, match=msg):
+            instance.get_loss_values()
+
 
 class TestTVAESynthesizer:
 
@@ -359,3 +392,34 @@ class TestTVAESynthesizer:
             processed_data,
             discrete_columns=mock_detect_discrete_columns.return_value
         )
+
+    def test_get_loss_values(self):
+        """Test the ``get_loss_values`` method from ``TVAESynthesizer."""
+        # Setup
+        mock_model = Mock()
+        loss_values = pd.DataFrame({
+            'Epoch': [0, 1, 2],
+            'Loss': [0.8, 0.6, 0.5]
+        })
+        mock_model.loss_values = loss_values
+        metadata = SingleTableMetadata()
+        instance = TVAESynthesizer(metadata)
+        instance._model = mock_model
+        instance._fitted = True
+
+        # Run
+        actual_loss_values = instance.get_loss_values()
+
+        # Assert
+        pd.testing.assert_frame_equal(actual_loss_values, loss_values)
+
+    def test_get_loss_values_error(self):
+        """Test the ``get_loss_values`` errors if synthesizer has not been fitted."""
+        # Setup
+        metadata = SingleTableMetadata()
+        instance = TVAESynthesizer(metadata)
+
+        # Run / Assert
+        msg = 'Loss values are not available yet. Please fit your synthesizer first.'
+        with pytest.raises(NotFittedError, match=msg):
+            instance.get_loss_values()

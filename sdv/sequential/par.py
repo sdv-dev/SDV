@@ -15,12 +15,13 @@ from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
+from sdv.single_table.ctgan import LossValuesMixin
 from sdv.utils import cast_to_iterable, groupby_list
 
 LOGGER = logging.getLogger(__name__)
 
 
-class PARSynthesizer(BaseSynthesizer):
+class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
     """Synthesizer for sequential data.
 
     This synthesizer uses the ``deepecho.models.par.PARModel`` class as the core model.
