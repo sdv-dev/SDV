@@ -21,15 +21,10 @@ def test_evaluation():
     score = evaluate_quality(data, samples, metadata).get_score()
     assert score == 0.8666666666666667
 
-    diagnostic = run_diagnostic(data, samples, metadata).get_results()
-    assert diagnostic == {
-        'DANGER': ['More than 50% of the synthetic rows are copies of the real data'],
-        'SUCCESS': [
-            'The synthetic data covers over 90% of the numerical ranges present in the real data',
-            'The synthetic data follows over 90% of the min/max boundaries set by the real data'
-        ],
-        'WARNING': []
-    }
+    report = run_diagnostic(data, samples, metadata)
+    assert report._overall_score == 1
+    assert report._properties['Data Validity']._compute_average() == 1
+    assert report._properties['Data Structure']._compute_average() == 1
 
 
 def test_column_pair_plot_sample_size_parameter():

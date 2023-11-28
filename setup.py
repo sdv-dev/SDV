@@ -27,7 +27,7 @@ install_requires = [
     'ctgan>=0.8,<0.9',
     'deepecho>=0.5,<0.6',
     'rdt>=1.9.0,<2',
-    'sdmetrics>=0.12.1,<0.13',
+    "sdmetrics @ git+https://github.com/sdv-dev/sdmetrics.git@main",
 ]
 
 pomegranate_requires = [
