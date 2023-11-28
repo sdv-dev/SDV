@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from sdv.sampling.hierarchical_sampler import BaseHierarchicalSampler
-from tests.utils import DataFrameMatcher, get_multi_table_metadata
+from tests.utils import DataFrameMatcher, SeriesMatcher, get_multi_table_metadata
 
 
 class TestBaseHierarchicalSampler():
@@ -184,26 +184,46 @@ class TestBaseHierarchicalSampler():
         """
         # Setup
         def sample_children(table_name, sampled_data):
-            sampled_data['sessions'] = pd.DataFrame({
-                'user_id': [1, 1, 3],
-                'session_id': ['a', 'b', 'c'],
-                'os': ['windows', 'linux', 'mac'],
-                'country': ['us', 'us', 'es']
-            })
             sampled_data['transactions'] = pd.DataFrame({
                 'transaction_id': [1, 2, 3],
                 'session_id': ['a', 'a', 'b']
             })
+
+        def _add_child_rows(child_name, parent_name, parent_row, sampled_data):
+            if parent_name == 'users':
+                if parent_row['user_id'] == 1:
+                    sampled_data[child_name] = pd.DataFrame({
+                        'user_id': [1, 1],
+                        'session_id': ['a', 'b'],
+                        'os': ['windows', 'linux'],
+                        'country': ['us', 'us']
+                    })
+
+                if parent_row['user_id'] == 3:
+                    row = pd.DataFrame({
+                        'user_id': [3],
+                        'session_id': ['c'],
+                        'os': ['mac'],
+                        'country': ['es']
+                    })
+                    sampled_data[child_name] = pd.concat(
+                        [sampled_data[child_name], row]
+                    ).reset_index(drop=True)
 
         instance = Mock()
         instance.metadata._get_child_map.return_value = {'users': ['sessions', 'transactions']}
         instance.metadata._get_parent_map.return_value = {'users': []}
         instance._table_sizes = {'users': 10, 'sessions': 5, 'transactions': 3}
         instance._table_synthesizers = {'users': Mock()}
-        instance._sample_children.side_effect = sample_children
+        instance._sample_children = sample_children
+        instance._add_child_rows.side_effect = _add_child_rows
 
         # Run
-        result = {'users': pd.DataFrame()}
+        result = {
+            'users': pd.DataFrame({
+                'user_id': [1, 3]
+            })
+        }
         BaseHierarchicalSampler._sample_children(
             self=instance,
             table_name='users',
@@ -211,8 +231,18 @@ class TestBaseHierarchicalSampler():
         )
 
         # Assert
+        expected_calls = [
+            call(child_name='sessions', parent_name='users',
+                 parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0)),
+                 sampled_data=result),
+            call(child_name='sessions', parent_name='users',
+                 parent_row=SeriesMatcher(pd.Series({'user_id': 3}, name=1)),
+                 sampled_data=result)
+        ]
         expected_result = {
-            'users': pd.DataFrame(),
+            'users': pd.DataFrame({
+                'user_id': [1, 3]
+            }),
             'sessions': pd.DataFrame({
                 'user_id': [1, 1, 3],
                 'session_id': ['a', 'b', 'c'],
@@ -224,6 +254,72 @@ class TestBaseHierarchicalSampler():
                 'session_id': ['a', 'a', 'b']
             })
         }
+        instance._add_child_rows.assert_has_calls(expected_calls)
+        for result_frame, expected_frame in zip(result.values(), expected_result.values()):
+            pd.testing.assert_frame_equal(result_frame, expected_frame)
+
+    def test__sample_children_no_rows_sampled(self):
+        """Test sampling the children of a table where no rows created.
+
+        ``_sample_table`` should
+        """
+        # Setup
+        def sample_children(table_name, sampled_data):
+            sampled_data['transactions'] = pd.DataFrame({
+                'transaction_id': [1, 2],
+                'session_id': ['a', 'a']
+            })
+
+        def _add_child_rows(child_name, parent_name, parent_row, sampled_data, num_rows=None):
+            if num_rows is not None:
+                sampled_data['sessions'] = pd.DataFrame({
+                    'user_id': [1],
+                    'session_id': ['a']
+                })
+
+        instance = Mock()
+        instance.metadata._get_child_map.return_value = {'users': ['sessions', 'transactions']}
+        instance.metadata._get_parent_map.return_value = {'users': []}
+        instance._table_sizes = {'users': 10, 'sessions': 5, 'transactions': 3}
+        instance._table_synthesizers = {'users': Mock()}
+        instance._sample_children = sample_children
+        instance._add_child_rows.side_effect = _add_child_rows
+
+        # Run
+        result = {
+            'users': pd.DataFrame({
+                'user_id': [1]
+            })
+        }
+        BaseHierarchicalSampler._sample_children(
+            self=instance,
+            table_name='users',
+            sampled_data=result
+        )
+
+        # Assert
+        expected_calls = [
+            call(child_name='sessions', parent_name='users',
+                 parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0)),
+                 sampled_data=result),
+            call(child_name='sessions', parent_name='users',
+                 parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0)),
+                 sampled_data=result, num_rows=1)
+        ]
+        expected_result = {
+            'users': pd.DataFrame({
+                'user_id': [1]
+            }),
+            'sessions': pd.DataFrame({
+                'user_id': [1],
+                'session_id': ['a'],
+            }),
+            'transactions': pd.DataFrame({
+                'transaction_id': [1, 2],
+                'session_id': ['a', 'a']
+            })
+        }
+        instance._add_child_rows.assert_has_calls(expected_calls)
         for result_frame, expected_frame in zip(result.values(), expected_result.values()):
             pd.testing.assert_frame_equal(result_frame, expected_frame)
 
