@@ -280,6 +280,7 @@ class TestBaseHierarchicalSampler():
         instance = Mock()
         instance.metadata._get_child_map.return_value = {'users': ['sessions', 'transactions']}
         instance.metadata._get_parent_map.return_value = {'users': []}
+        instance.metadata._get_foreign_keys.return_value = ['user_id']
         instance._table_sizes = {'users': 10, 'sessions': 5, 'transactions': 3}
         instance._table_synthesizers = {'users': Mock()}
         instance._sample_children = sample_children
