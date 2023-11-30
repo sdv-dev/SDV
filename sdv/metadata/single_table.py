@@ -300,7 +300,7 @@ class SingleTableMetadata:
         cleaned_name = re.sub(r'[^a-zA-Z0-9]', '', column_name).lower()
         return next((
             sdtype for reference, sdtype in self._REFERENCE_TO_SDTYPE.items()
-            if cleaned_name == reference or reference in cleaned_name
+            if reference in cleaned_name
         ), None)
 
     def _determine_sdtype_for_numbers(self, data):
@@ -400,9 +400,7 @@ class SingleTableMetadata:
 
             column_dict = {'sdtype': sdtype}
 
-            if sdtype in self._REFERENCE_TO_SDTYPE.values():
-                column_dict['pii'] = True
-            elif sdtype == 'unknown':
+            if sdtype in self._REFERENCE_TO_SDTYPE.values() or sdtype == 'unknown':
                 column_dict['pii'] = True
             elif sdtype == 'datetime' and dtype == 'O':
                 datetime_format = get_datetime_format(column_data.iloc[:100])
