@@ -48,7 +48,11 @@ def test_evaluation():
     assert score == 0.9566297110928815
 
     report = run_diagnostic(data, samples, metadata)
-    assert report._overall_score == 1
-    assert report._properties['Data Validity']._compute_average() == 1
-    assert report._properties['Data Structure']._compute_average() == 1
-    assert report._properties['Relationship Validity']._compute_average() == 1
+    assert report.get_score() == 1
+    pd.testing.assert_frame_equal(
+        report.get_properties(),
+        pd.DataFrame({
+            'Property': ['Data Validity', 'Data Structure', 'Relationship Validity'],
+            'Score': [1., 1., 1.],
+        })
+    )
