@@ -277,7 +277,8 @@ class TestBaseHierarchicalSampler():
     def test__sample_children_no_rows_sampled(self):
         """Test sampling the children of a table where no rows created and no ``num_rows`` column.
 
-        ``_sample_table`` should
+        ``_sample_table`` should select the parent row with the highest ``num_rows``
+        value and force a child to be created from that row.
         """
         # Setup
         def sample_children(table_name, sampled_data):
@@ -349,7 +350,8 @@ class TestBaseHierarchicalSampler():
     def test__sample_children_no_rows_sampled_no_num_rows(self):
         """Test sampling the children of a table where no rows created.
 
-        ``_sample_table`` should
+        ``_sample_table`` should select randomly select a parent row and force
+        a child to be created from that row.
         """
         # Setup
         def sample_children(table_name, sampled_data):
