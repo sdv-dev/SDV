@@ -4,7 +4,6 @@ import logging
 import sys
 
 import cloudpickle
-import rdt.transformers
 
 from sdv.single_table import GaussianCopulaSynthesizer
 
