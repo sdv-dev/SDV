@@ -47,12 +47,12 @@ def test_evaluation():
     score = evaluate_quality(data, samples, metadata).get_score()
     assert score == 0.9566297110928815
 
-    diagnostic = run_diagnostic(data, samples, metadata).get_results()
-    assert diagnostic == {
-        'DANGER': ['More than 50% of the synthetic rows are copies of the real data'],
-        'SUCCESS': [
-            'The synthetic data covers over 90% of the numerical ranges present in the real data',
-            'The synthetic data follows over 90% of the min/max boundaries set by the real data'
-        ],
-        'WARNING': []
-    }
+    report = run_diagnostic(data, samples, metadata)
+    assert report.get_score() == 1
+    pd.testing.assert_frame_equal(
+        report.get_properties(),
+        pd.DataFrame({
+            'Property': ['Data Validity', 'Data Structure', 'Relationship Validity'],
+            'Score': [1., 1., 1.],
+        })
+    )
