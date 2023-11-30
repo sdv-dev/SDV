@@ -38,10 +38,6 @@ class SingleTablePreset:
             enforce_rounding=False,
             locales=locales
         )
-        self._synthesizer._data_processor._update_transformers_by_sdtypes(
-            'categorical',
-            rdt.transformers.FrequencyEncoder(add_noise=True)
-        )
 
     def __init__(self, metadata, name, locales=None):
         if name not in PRESETS:
