@@ -1,7 +1,6 @@
 """Hierarchical Modeling Algorithms."""
 
 import logging
-import math
 from copy import deepcopy
 
 import numpy as np
@@ -432,7 +431,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             num_rows = flat_parameters[num_rows_key]
             flat_parameters[num_rows_key] = min(
                 self._max_child_rows[num_rows_key],
-                math.ceil(num_rows)
+                round(num_rows)
             )
 
         return flat_parameters.rename(new_keys).to_dict()
