@@ -721,6 +721,20 @@ class TestSingleTableMetadata:
         mock__validate_column.assert_called_once_with(
             'age', 'numerical', computer_representation='Float')
 
+    def test__detect_pii_columns(self):
+        """Test the ``_detect_pii_column`` method."""
+        # Setup
+        metadata = SingleTableMetadata()
+
+        # Run and Assert
+        assert metadata._detect_pii_column('user_first_name') == 'first_name'
+        assert metadata._detect_pii_column('User_Last_Name') == 'last_name'
+        assert metadata._detect_pii_column('country^code') == 'country_code'
+        assert metadata._detect_pii_column('city') == 'city'
+        assert metadata._detect_pii_column('address') is None
+        assert metadata._detect_pii_column('first_name_last_name') == 'first_name'
+        assert metadata._detect_pii_column('license') == 'license_plate'
+
     def test__determine_sdtype_for_numbers(self):
         """Test the ``determine_sdtype_for_numbers`` method.
 
@@ -860,6 +874,10 @@ class TestSingleTableMetadata:
             'categorical': ['a', 'b', 'a', 'a', 'b', 'b', 'a', 'b', 'a', 'b', 'a'],
             'bool': [True, False, True, False, True, False, True, False, True, False, True],
             'unknown': ['a', 'b', 'c', 'c', 1, 2.2, np.nan, None, 'd', 'e', 'f'],
+            'first_name': [
+                'John', 'Jane', 'John', 'Jane', 'John', 'Jane', 'John', 'Jane', 'John',
+                'Jane', 'John'
+            ],
         })
 
         expected_datetime_format = '%Y-%m-%d'
@@ -880,6 +898,8 @@ class TestSingleTableMetadata:
         assert instance.columns['unknown']['sdtype'] == 'unknown'
         assert instance.columns['unknown']['pii'] is True
         assert instance.columns['bool']['sdtype'] == 'categorical'
+        assert instance.columns['first_name']['sdtype'] == 'first_name'
+        assert instance.columns['first_name']['pii'] is True
 
         assert instance.primary_key == 'id'
 

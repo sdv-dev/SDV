@@ -151,16 +151,6 @@ def test_detect_from_dataframes():
     # Assert
     metadata.update_column(
         table_name='hotels',
-        column_name='city',
-        sdtype='categorical',
-    )
-    metadata.update_column(
-        table_name='hotels',
-        column_name='state',
-        sdtype='categorical',
-    )
-    metadata.update_column(
-        table_name='hotels',
         column_name='classification',
         sdtype='categorical',
     )
@@ -170,8 +160,8 @@ def test_detect_from_dataframes():
             'hotels': {
                 'columns': {
                     'hotel_id': {'sdtype': 'id'},
-                    'city': {'sdtype': 'categorical'},
-                    'state': {'sdtype': 'categorical'},
+                    'city': {'sdtype': 'city', 'pii': True},
+                    'state': {'sdtype': 'administrative_unit', 'pii': True},
                     'rating': {'sdtype': 'numerical'},
                     'classification': {'sdtype': 'categorical'}
                 },
@@ -179,7 +169,7 @@ def test_detect_from_dataframes():
             },
             'guests': {
                 'columns': {
-                    'guest_email': {'sdtype': 'id'},
+                    'guest_email': {'sdtype': 'email', 'pii': True},
                     'hotel_id': {'sdtype': 'id'},
                     'has_rewards': {'sdtype': 'categorical'},
                     'room_type': {'sdtype': 'categorical'},
@@ -188,9 +178,8 @@ def test_detect_from_dataframes():
                     'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
                     'room_rate': {'sdtype': 'numerical'},
                     'billing_address': {'sdtype': 'unknown', 'pii': True},
-                    'credit_card_number': {'sdtype': 'unknown', 'pii': True}
+                    'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True}
                 },
-                'primary_key': 'guest_email'
             }
         },
         'relationships': [
@@ -226,16 +215,6 @@ def test_detect_from_csvs(tmp_path):
     # Assert
     metadata.update_column(
         table_name='hotels',
-        column_name='city',
-        sdtype='categorical',
-    )
-    metadata.update_column(
-        table_name='hotels',
-        column_name='state',
-        sdtype='categorical',
-    )
-    metadata.update_column(
-        table_name='hotels',
         column_name='classification',
         sdtype='categorical',
     )
@@ -245,8 +224,8 @@ def test_detect_from_csvs(tmp_path):
             'hotels': {
                 'columns': {
                     'hotel_id': {'sdtype': 'id'},
-                    'city': {'sdtype': 'categorical'},
-                    'state': {'sdtype': 'categorical'},
+                    'city': {'sdtype': 'city', 'pii': True},
+                    'state': {'sdtype': 'administrative_unit', 'pii': True},
                     'rating': {'sdtype': 'numerical'},
                     'classification': {'sdtype': 'categorical'}
                 },
@@ -254,7 +233,7 @@ def test_detect_from_csvs(tmp_path):
             },
             'guests': {
                 'columns': {
-                    'guest_email': {'sdtype': 'id'},
+                    'guest_email': {'sdtype': 'email', 'pii': True},
                     'hotel_id': {'sdtype': 'id'},
                     'has_rewards': {'sdtype': 'categorical'},
                     'room_type': {'sdtype': 'categorical'},
@@ -263,9 +242,8 @@ def test_detect_from_csvs(tmp_path):
                     'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
                     'room_rate': {'sdtype': 'numerical'},
                     'billing_address': {'sdtype': 'unknown', 'pii': True},
-                    'credit_card_number': {'sdtype': 'unknown', 'pii': True}
+                    'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True}
                 },
-                'primary_key': 'guest_email'
             }
         },
         'relationships': [
