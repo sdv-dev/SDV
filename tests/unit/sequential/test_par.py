@@ -198,7 +198,7 @@ class TestPARSynthesizer:
         metadata.add_column('sk_col2', sdtype='id')
         metadata.add_column('ct_col1', sdtype='numerical')
         metadata.add_column('ct_col2', sdtype='numerical')
-        metadata.set_sequence_key(('sk_col1', 'sk_col2'))
+        metadata.set_sequence_key('sk_col1')
         instance = PARSynthesizer(
             metadata=metadata,
             context_columns=['ct_col1', 'ct_col2']
@@ -208,13 +208,13 @@ class TestPARSynthesizer:
         err_msg = re.escape(
             'The provided data does not match the metadata:'
             "\nContext column 'ct_col1' is changing inside "
-            "sequence (['sk_col1', 'sk_col2']=(1, 1))."
+            "sequence (['sk_col1']=1)."
             '\n'
             "\nContext column 'ct_col1' is changing inside "
-            "sequence (['sk_col1', 'sk_col2']=(2, 2))."
+            "sequence (['sk_col1']=2)."
             '\n'
             "\nContext column 'ct_col2' is changing inside "
-            "sequence (['sk_col1', 'sk_col2']=(2, 2))."
+            "sequence (['sk_col1']=2)."
         )
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)

@@ -1198,24 +1198,6 @@ class TestSingleTableMetadata:
         # Assert
         assert out is False
 
-    def test__validate_dataype_tuple(self):
-        """Test ``_validate_dataype`` for tuples.
-
-        Input:
-            - A tuple of strings
-
-        Output:
-            - True
-        """
-        # Setup
-        instance = SingleTableMetadata()
-
-        # Run
-        out = instance._validate_datatype(('10', '20'))
-
-        # Assert
-        assert out is True
-
     def test__validate_dataype_invalid_tuple(self):
         """Test ``_validate_dataype`` for tuples of non-strings.
 
@@ -1229,7 +1211,7 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        out = instance._validate_datatype(('10', '20', 30))
+        out = instance._validate_datatype(('10', '20', '30'))
 
         # Assert
         assert out is False
@@ -1247,11 +1229,11 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         err_msg = (
-            "'primary_key' must be a string or tuple of strings."
+            "'primary_key' must be a string."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_primary_key(('1', 2, '3'))
+            instance.set_primary_key(('1', '2', '3'))
 
     def test_set_primary_key_validation_columns(self):
         """Test that ``set_primary_key`` crashes for invalid arguments.
@@ -1275,7 +1257,7 @@ class TestSingleTableMetadata:
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_primary_key(('a', 'b', 'd'))
+            instance.set_primary_key('b')
             # NOTE: used to be ('a', 'b', 'd', 'c')
 
     def test_set_primary_key_validation_categorical(self):
@@ -1294,11 +1276,11 @@ class TestSingleTableMetadata:
         instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The primary_keys ['column1', 'column2'] must be type 'id' or another PII type."
+            "The primary_keys ['column1'] must be type 'id' or another PII type."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_primary_key(('column1', 'column2', 'column3'))
+            instance.set_primary_key('column1')
 
     def test_set_primary_key(self):
         """Test that ``set_primary_key`` sets the ``_primary_key`` value."""
@@ -1311,18 +1293,6 @@ class TestSingleTableMetadata:
 
         # Assert
         assert instance.primary_key == 'column'
-
-    def test_set_primary_key_tuple(self):
-        """Test that ``set_primary_key`` sets the ``_primary_key`` value for tuples."""
-        # Setup
-        instance = SingleTableMetadata()
-        instance.columns = {'col1': {'sdtype': 'id'}, 'col2': {'sdtype': 'id'}}
-
-        # Run
-        instance.set_primary_key(('col1', 'col2'))
-
-        # Assert
-        assert instance.primary_key == ('col1', 'col2')
 
     @patch('sdv.metadata.single_table.warnings')
     def test_set_primary_key_already_exists_warning(self, warning_mock):
@@ -1392,10 +1362,10 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
 
-        err_msg = "'sequence_key' must be a string or tuple of strings."
+        err_msg = "'sequence_key' must be a string."
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_sequence_key(('1', 2, '3'))
+            instance.set_sequence_key(('1', '2', '3'))
 
     def test_set_sequence_key_validation_columns(self):
         """Test that ``set_sequence_key`` crashes for invalid arguments.
@@ -1419,7 +1389,7 @@ class TestSingleTableMetadata:
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_sequence_key(('a', 'b', 'd'))
+            instance.set_sequence_key('b')
             # NOTE: used to be ('a', 'b', 'd', 'c')
 
     def test_set_sequence_key_validation_categorical(self):
@@ -1438,11 +1408,11 @@ class TestSingleTableMetadata:
         instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The sequence_keys ['column1', 'column2'] must be type 'id' or another PII type."
+            "The sequence_keys ['column1'] must be type 'id' or another PII type."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_sequence_key(('column1', 'column2', 'column3'))
+            instance.set_sequence_key('column1')
 
     def test_set_sequence_key(self):
         """Test that ``set_sequence_key`` sets the ``_sequence_key`` value."""
@@ -1462,11 +1432,10 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         instance.columns = {'col1': {'sdtype': 'id'}, 'col2': {'sdtype': 'id'}}
 
-        # Run
-        instance.set_sequence_key(('col1', 'col2'))
-
-        # Assert
-        assert instance.sequence_key == ('col1', 'col2')
+        # Run and Assert
+        msg = "'sequence_key' must be a string."
+        with pytest.raises(InvalidMetadataError, match=msg):
+            instance.set_sequence_key(('col1', 'col2'))
 
     @patch('sdv.metadata.single_table.warnings')
     def test_set_sequence_key_warning(self, warning_mock):
@@ -1506,7 +1475,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
 
-        err_msg = "'alternate_keys' must be a list of strings or a list of tuples of strings."
+        err_msg = "'alternate_keys' must be a list of strings."
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.add_alternate_keys(['col1', ('1', 2, '3'), 'col3'])
@@ -1533,7 +1502,7 @@ class TestSingleTableMetadata:
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.add_alternate_keys(['abc', ('123', '213', '312')])
+            instance.add_alternate_keys(['abc', '123'])
             # NOTE: used to be ['abc', ('123', '213', '312'), 'bca']
 
     def test_add_alternate_keys_validation_categorical(self):
@@ -1556,7 +1525,7 @@ class TestSingleTableMetadata:
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.add_alternate_keys([('column1', 'column2'), 'column3'])
+            instance.add_alternate_keys(['column1', 'column2', 'column3'])
 
     def test_add_alternate_keys_validation_primary_key(self):
         """Test that ``add_alternate_keys`` crashes when the key is a primary key.
@@ -1588,10 +1557,10 @@ class TestSingleTableMetadata:
         }
 
         # Run
-        instance.add_alternate_keys(['column1', ('column2', 'column3')])
+        instance.add_alternate_keys(['column1', 'column2', 'column3'])
 
         # Assert
-        assert instance.alternate_keys == ['column1', ('column2', 'column3')]
+        assert instance.alternate_keys == ['column1', 'column2', 'column3']
 
     @patch('sdv.metadata.single_table.warnings')
     def test_add_alternate_keys_duplicate(self, warnings_mock):
@@ -1818,7 +1787,7 @@ class TestSingleTableMetadata:
         metadata.add_column('ak_col2', sdtype='id')
         metadata.add_column('ak_col3', sdtype='id')
         metadata.set_primary_key('pk_col')
-        metadata.set_sequence_key(('sk_col1', 'sk_col2', 'sk_col3'))
+        metadata.set_sequence_key('sk_col1')
         metadata.add_alternate_keys(['ak_col1', 'ak_col2', 'ak_col3'])
 
         # Run and Assert
@@ -1830,9 +1799,6 @@ class TestSingleTableMetadata:
             '\n'
             "\nKey column 'pk_col' contains missing values."
             '\n'
-            "\nKey column 'sk_col1' contains missing values."
-            '\n'
-            "\nKey column 'sk_col2' contains missing values."
         )
         with pytest.raises(InvalidDataError, match=err_msg):
             metadata.validate_data(data)
@@ -2054,7 +2020,7 @@ class TestSingleTableMetadata:
         metadata.add_column('date_col', sdtype='datetime')
         metadata.add_column('bool_col', sdtype='boolean')
         metadata.set_primary_key('pk_col')
-        metadata.set_sequence_key(('sk_col1', 'sk_col2'))
+        metadata.set_sequence_key('sk_col1')
         metadata.add_alternate_keys(['ak_col1', 'ak_col2'])
 
         # Run

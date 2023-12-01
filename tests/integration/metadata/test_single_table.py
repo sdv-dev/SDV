@@ -44,7 +44,7 @@ def test_validate():
     instance.add_column('col2', sdtype='id')
     instance.add_column('col3', sdtype='numerical')
     instance.set_primary_key('col1')
-    instance.add_alternate_keys([('col1', 'col2')])
+    instance.add_alternate_keys(['col2'])
     instance.set_sequence_index('col3')
     instance.set_sequence_key('col2')
 
@@ -74,12 +74,12 @@ def test_validate_errors():
 
     err_msg = re.escape(
         'The following errors were found in the metadata:'
-        "\n\n'primary_key' must be a string or tuple of strings."
-        "\nUnknown sequence key values {'col3'}. Keys should be columns that exist in the table."
+        "\n\n'primary_key' must be a string."
+        "\n'sequence_key' must be a string."
         "\nUnknown sequence index value {'col3'}. Keys should be columns that exist in the table."
         "\n'sequence_index' and 'sequence_key' have the same value {'col3'}."
         ' These columns must be different.'
-        "\n'alternate_keys' must be a list of strings or a list of tuples of strings."
+        "\n'alternate_keys' must be a list of strings."
         "\nInvalid values '(invalid1)' for categorical column 'col4'."
         "\nInvalid order value provided for categorical column 'col5'."
         " The 'order' must be a list with 1 or more elements."
