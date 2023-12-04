@@ -9,6 +9,7 @@ Additionally, a few bugs were fixed and functionality was improved around synthe
 ### Maintenance
 
 * Address `SettingWithCopyWarning` (HMASynthesizer) - Issue [#1557](https://github.com/sdv-dev/SDV/issues/1557) by @pvk-developer
+* Bump SDMetrics version - Issue [#1702](https://github.com/sdv-dev/SDV/issues/1702) by @amontanez24
 
 ### New Features
 
