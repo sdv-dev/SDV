@@ -1162,8 +1162,8 @@ class TestSingleTableMetadata:
         ]
         mock_log.info.assert_has_calls(expected_log_calls)
 
-    def test__validate_dataype_strings(self):
-        """Test ``_validate_dataype`` for strings.
+    def test__validate_key_dataype_strings(self):
+        """Test ``_validate_key_dataype`` for strings.
 
         Input:
             - A string
@@ -1175,16 +1175,16 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        out = instance._validate_datatype('10')
+        out = instance._validate_key_datatype('10')
 
         # Assert
         assert out is True
 
-    def test__validate_dataype_int(self):
-        """Test ``_validate_dataype`` for invalid datatypes.
+    def test__validate_key_dataype_int(self):
+        """Test ``_validate_key_dataype`` for invalid datatypes.
 
         Input:
-            - A non-string and non-tuple
+            - A non-string
 
         Output:
             - False
@@ -1193,16 +1193,16 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        out = instance._validate_datatype(10)
+        out = instance._validate_key_datatype(10)
 
         # Assert
         assert out is False
 
-    def test__validate_dataype_invalid_tuple(self):
-        """Test ``_validate_dataype`` for tuples of non-strings.
+    def test__validate_key_dataype_invalid_tuple(self):
+        """Test ``_validate_key_dataype`` for tuples.
 
         Input:
-            - A tuple with some non-strings
+            - A tuple with some strings
 
         Output:
             - False
@@ -1211,7 +1211,7 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        out = instance._validate_datatype(('10', '20', '30'))
+        out = instance._validate_key_datatype(('10', '20', '30'))
 
         # Assert
         assert out is False
@@ -1220,7 +1220,7 @@ class TestSingleTableMetadata:
         """Test that ``set_primary_key`` crashes for invalid arguments.
 
         Input:
-            - A tuple with non-string values.
+            - A non-string value.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1233,7 +1233,7 @@ class TestSingleTableMetadata:
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_primary_key(('1', '2', '3'))
+            instance.set_primary_key(1)
 
     def test_set_primary_key_validation_columns(self):
         """Test that ``set_primary_key`` crashes for invalid arguments.
@@ -1242,7 +1242,7 @@ class TestSingleTableMetadata:
             - A ``SingleTableMetadata`` instance with ``_columns`` set.
 
         Input:
-            - A tuple with columns not present in ``_columns``.
+            - A column not present in ``_columns``.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1264,7 +1264,7 @@ class TestSingleTableMetadata:
         """Test that ``set_primary_key`` crashes when its sdtype is categorical.
 
         Input:
-            - A tuple of keys, some of which have sdtype categorical.
+            - A a key with a categorical sdtype.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1354,7 +1354,7 @@ class TestSingleTableMetadata:
         """Test that ``set_sequence_key`` crashes for invalid arguments.
 
         Input:
-            - A tuple with non-string values.
+            - A non-string value.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1365,7 +1365,7 @@ class TestSingleTableMetadata:
         err_msg = "'sequence_key' must be a string."
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_sequence_key(('1', '2', '3'))
+            instance.set_sequence_key(1)
 
     def test_set_sequence_key_validation_columns(self):
         """Test that ``set_sequence_key`` crashes for invalid arguments.
@@ -1374,7 +1374,7 @@ class TestSingleTableMetadata:
             - A ``SingleTableMetadata`` instance with ``_columns`` set.
 
         Input:
-            - A tuple with columns not present in ``_columns``.
+            - A column not present in ``_columns``.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1396,7 +1396,7 @@ class TestSingleTableMetadata:
         """Test that ``set_sequence_key`` crashes when its sdtype is categorical.
 
         Input:
-            - A tuple of keys, some of which have sdtype categorical.
+            - A key with categorical sdtype.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1427,7 +1427,7 @@ class TestSingleTableMetadata:
         assert instance.sequence_key == 'column'
 
     def test_set_sequence_key_tuple(self):
-        """Test that ``set_sequence_key`` sets ``_sequence_key`` for tuples."""
+        """Test that ``set_sequence_key`` errors for tuples."""
         # Setup
         instance = SingleTableMetadata()
         instance.columns = {'col1': {'sdtype': 'id'}, 'col2': {'sdtype': 'id'}}
@@ -1467,7 +1467,7 @@ class TestSingleTableMetadata:
         """Test that ``add_alternate_keys`` crashes for invalid arguments.
 
         Input:
-            - A list with tuples with non-string values.
+            - A list with non-string values.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1487,7 +1487,7 @@ class TestSingleTableMetadata:
             - A ``SingleTableMetadata`` instance with ``_columns`` set.
 
         Input:
-            - A tuple with non-string values.
+            - A list with unknown key column.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
