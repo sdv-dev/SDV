@@ -1,7 +1,6 @@
 """Hierarchical Modeling Algorithms."""
 
 import logging
-import math
 from copy import deepcopy
 
 import numpy as np
@@ -110,7 +109,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         if num_data_columns == 0:
             return num_rows_columns
 
-        distribution = self.get_table_parameters(table_name)['default_distribution']
+        table_parameters = self.get_table_parameters(table_name)['table_parameters']
+        distribution = table_parameters['default_distribution']
         num_parameters_columns = num_rows_columns * num_data_columns
         if distribution in {'beta', 'truncnorm'}:
             num_parameters_columns *= 4
@@ -431,7 +431,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             num_rows = flat_parameters[num_rows_key]
             flat_parameters[num_rows_key] = min(
                 self._max_child_rows[num_rows_key],
-                math.ceil(num_rows)
+                round(num_rows)
             )
 
         return flat_parameters.rename(new_keys).to_dict()

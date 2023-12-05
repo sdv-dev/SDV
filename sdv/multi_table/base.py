@@ -115,7 +115,7 @@ class BaseMultiTableSynthesizer:
         self._table_synthesizers[table_name].set_address_columns(column_names, anonymization_level)
 
     def get_table_parameters(self, table_name):
-        """Return the parameters that will be used to instantiate the table's synthesizer.
+        """Return the parameters for the given table's synthesizer.
 
         Args:
             table_name (str):
@@ -126,21 +126,33 @@ class BaseMultiTableSynthesizer:
                 A dictionary representing the parameters that will be used to instantiate the
                 table's synthesizer.
         """
-        return self._table_parameters.get(table_name, {})
+        table_synthesizer = self._table_synthesizers.get(table_name)
+        if not table_synthesizer:
+            table_params = {'table_synthesizer': None, 'table_parameters': {}}
+        else:
+            table_params = {
+                'table_synthesizer': type(table_synthesizer).__name__,
+                'table_parameters': table_synthesizer.get_parameters()
+            }
 
-    def get_parameters(self, table_name):
-        """Return the parameters used to instantiate the table's synthesizer.
+        return table_params
 
-        Args:
-            table_name (str):
-                Table name for which the parameters should be retrieved.
+    def get_parameters(self):
+        """Return the parameters used to instantiate the synthesizer and all table synthesizers.
 
         Returns:
             parameters (dict):
-                A dictionary representing the parameters used to instantiate the table's
-                synthesizer.
+                A dictionary representing the parameters used to instantiate the synthesizer.
         """
-        return self._table_synthesizers.get(table_name).get_parameters()
+        parameters_dict = {
+            'locales': self.locales,
+            'verbose': self.verbose,
+            'tables': {
+                table: self.get_table_parameters(table) for table in self.metadata.tables
+            }
+        }
+
+        return parameters_dict
 
     def set_table_parameters(self, table_name, table_parameters):
         """Update the table's synthesizer instantiation parameters.
@@ -404,6 +416,34 @@ class BaseMultiTableSynthesizer:
         raise SynthesizerInputError(
             f"Learned distributions are not available for the '{table_name}' "
             f"table because it uses the '{synthesizer.__class__.__name__}'."
+        )
+
+    def get_loss_values(self, table_name):
+        """Get the loss values from a model for a table.
+
+        Return a pandas dataframe mapping of the loss values per epoch of GAN
+        based synthesizers
+
+        Args:
+            table_name (str):
+                Table name for which the parameters should be retrieved.
+
+        Returns:
+            pd.DataFrame:
+                Dataframe of loss values per epoch
+        """
+        if table_name not in self._table_synthesizers:
+            raise ValueError(
+                f"Table '{table_name}' is not present in the metadata."
+            )
+
+        synthesizer = self._table_synthesizers[table_name]
+        if hasattr(synthesizer, 'get_loss_values'):
+            return synthesizer.get_loss_values()
+
+        raise SynthesizerInputError(
+            f"Loss values are not available for table '{table_name}' "
+            'because the table does not use a GAN-based model.'
         )
 
     def _validate_constraints_to_be_added(self, constraints):

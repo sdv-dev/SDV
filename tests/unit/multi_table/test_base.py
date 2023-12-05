@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.errors import InvalidDataError, SynthesizerInputError
+from sdv.errors import InvalidDataError, NotFittedError, SynthesizerInputError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -206,37 +206,123 @@ class TestBaseMultiTableSynthesizer:
         result = instance.get_table_parameters('oseba')
 
         # Assert
-        assert result == {}
+        assert result == {
+            'table_synthesizer': 'GaussianCopulaSynthesizer',
+            'table_parameters': {
+                'default_distribution': 'beta',
+                'enforce_min_max_values': True,
+                'enforce_rounding': True,
+                'locales': None,
+                'numerical_distributions': {}
+            }
+        }
 
     def test_get_table_parameters_has_parameters(self):
         """Test that this method returns a dictionary with the parameters."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        instance._table_parameters['oseba'] = {'default_distribution': 'gamma'}
+        instance.set_table_parameters('oseba', {'default_distribution': 'gamma'})
 
         # Run
         result = instance.get_table_parameters('oseba')
 
         # Assert
-        assert result == {'default_distribution': 'gamma'}
+        assert result['table_parameters'] == {
+            'default_distribution': 'gamma',
+            'enforce_min_max_values': True,
+            'enforce_rounding': True,
+            'locales': None,
+            'numerical_distributions': {}
+        }
 
-    def test_get_parameters(self):
-        """Test that the table's synthesizer parameters are being returned."""
+    def test_get_parameters_missing_table(self):
+        """Test that the synthesizer's parameters are being returned."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata, locales='en_CA')
 
         # Run
-        result = instance.get_parameters('oseba')
+        result = instance.get_parameters()
 
         # Assert
         assert result == {
-            'default_distribution': 'beta',
-            'enforce_min_max_values': True,
             'locales': 'en_CA',
-            'enforce_rounding': True,
-            'numerical_distributions': {}
+            'verbose': False,
+            'tables': {
+                'nesreca': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                },
+                'oseba': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                },
+                'upravna_enota': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                }
+            }
+        }
+
+    def test_get_parameters_empty(self):
+        """Test that ``get_parameters`` handles missing table synthesizers."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata, locales='en_CA')
+        instance._table_synthesizers['nesreca'] = None
+
+        # Run
+        result = instance.get_parameters()
+
+        # Assert
+        assert result == {
+            'locales': 'en_CA',
+            'verbose': False,
+            'tables': {
+                'nesreca': {
+                    'table_synthesizer': None,
+                    'table_parameters': {}
+                },
+                'oseba': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                },
+                'upravna_enota': {
+                    'table_synthesizer': 'GaussianCopulaSynthesizer',
+                    'table_parameters': {
+                        'enforce_min_max_values': True,
+                        'enforce_rounding': True,
+                        'locales': 'en_CA',
+                        'numerical_distributions': {},
+                        'default_distribution': 'beta'
+                    }
+                }
+            }
         }
 
     def test_set_table_parameters(self):
@@ -254,8 +340,10 @@ class TestBaseMultiTableSynthesizer:
         instance.set_table_parameters('oseba', {'default_distribution': 'gamma'})
 
         # Assert
+        table_parameters = instance.get_parameters()['tables']['oseba']
         assert instance._table_parameters['oseba'] == {'default_distribution': 'gamma'}
-        assert instance.get_parameters('oseba') == {
+        assert table_parameters['table_synthesizer'] == 'GaussianCopulaSynthesizer'
+        assert table_parameters['table_parameters'] == {
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
             'locales': None,
@@ -849,6 +937,44 @@ class TestBaseMultiTableSynthesizer:
         )
         with pytest.raises(SynthesizerInputError, match=msg):
             instance.get_learned_distributions('nesreca')
+
+    def test_get_loss_values_bad_table_name(self):
+        """Test the ``get_loss_values`` errors if bad ``table_name`` provided."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        error_msg = "Table 'bad_table' is not present in the metadata."
+        with pytest.raises(ValueError, match=error_msg):
+            instance.get_loss_values('bad_table')
+
+    def test_get_loss_values_unfitted_error(self):
+        """Test the ``get_loss_values`` errors if synthesizer has not been fitted."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._table_synthesizers['nesreca'] = CTGANSynthesizer(metadata.tables['nesreca'])
+
+        # Run and Assert
+        error_msg = 'Loss values are not available yet. Please fit your synthesizer first.'
+        with pytest.raises(NotFittedError, match=error_msg):
+            instance.get_loss_values('nesreca')
+
+    def test_get_loss_values_unsupported_synthesizer_error(self):
+        """Test the ``get_loss_values`` errors if synthesizer not GAN-based."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._table_synthesizers['nesreca']._fitted = True
+
+        # Run and Assert
+        msg = re.escape(
+            "Loss values are not available for table 'nesreca' "
+            'because the table does not use a GAN-based model.'
+        )
+        with pytest.raises(SynthesizerInputError, match=msg):
+            instance.get_loss_values('nesreca')
 
     def test_add_constraint_warning(self):
         """Test a warning is raised when the synthesizer had already been fitted."""

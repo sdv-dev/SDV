@@ -23,9 +23,8 @@ class TestSingleTablePreset:
         with pytest.raises(ValueError, match=r"'name' must be one of *"):
             SingleTablePreset(metadata=SingleTableMetadata(), name='invalid')
 
-    @patch('sdv.lite.single_table.rdt.transformers')
     @patch('sdv.lite.single_table.GaussianCopulaSynthesizer')
-    def test__init__speed_passes_correct_parameters(self, gaussian_copula_mock, transformers_mock):
+    def test__init__speed_passes_correct_parameters(self, gaussian_copula_mock):
         """Tests the method with the speed preset.
 
         The method should pass the parameters to the ``GaussianCopulaSynthesizer`` class.
@@ -44,9 +43,8 @@ class TestSingleTablePreset:
             locales=None
         )
 
-    @patch('sdv.lite.single_table.rdt.transformers')
     @patch('sdv.lite.single_table.GaussianCopulaSynthesizer')
-    def test__init__passes_correct_locales(self, gaussian_copula_mock, transformers_mock):
+    def test__init__passes_correct_locales(self, gaussian_copula_mock):
         """Tests the method with locales.
 
         The method should pass the locales parameter to the ``GaussianCopulaSynthesizer`` class.

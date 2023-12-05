@@ -52,6 +52,46 @@ class SingleTableMetadata:
         'sequence_index',
         'METADATA_SPEC_VERSION'
     ])
+
+    _REFERENCE_TO_SDTYPE = {
+        'phonenumber': 'phone_number',
+        'email': 'email',
+        'ssn': 'ssn',
+        'firstname': 'first_name',
+        'lastname': 'last_name',
+        'countrycode': 'country_code',
+        'administativeunit': 'administrative_unit',
+        'state': 'administrative_unit',
+        'province': 'administrative_unit',
+        'stateabbr': 'state_abbr',
+        'city': 'city',
+        'postalcode': 'postcode',
+        'zipcode': 'postcode',
+        'postcode': 'postcode',
+        'streetaddress': 'street_address',
+        'line1': 'street_address',
+        'secondaryaddress': 'secondary_address',
+        'line2': 'secondary_address',
+        'latitude': 'latitude',
+        'longitude': 'longitude',
+        'ipv4': 'ipv4_address',
+        'ipv4address': 'ipv4_address',
+        'ipv6': 'ipv6_address',
+        'ipv6address': 'ipv6_address',
+        'ipaddress': 'ipv6_address',
+        'macaddress': 'mac_address',
+        'useragent': 'user_agent_string',
+        'useragentstring': 'user_agent_string',
+        'iban': 'iban',
+        'swift': 'swift11',
+        'swift11': 'swift11',
+        'swift8': 'swift8',
+        'creditcardnumber': 'credit_card_number',
+        'vin': 'vin',
+        'licenseplate': 'license_plate',
+        'license': 'license_plate',
+    }
+
     METADATA_SPEC_VERSION = 'SINGLE_TABLE_V1'
     _DEFAULT_SDTYPES = list(_SDTYPE_KWARGS) + list(SDTYPE_ANONYMIZERS)
 
@@ -250,6 +290,19 @@ class SingleTableMetadata:
 
         return deepcopy(metadata)
 
+    def _detect_pii_column(self, column_name):
+        """Detect PII columns.
+
+        Args:
+            column_name (str):
+                The column name to be analyzed.
+        """
+        cleaned_name = re.sub(r'[^a-zA-Z0-9]', '', column_name).lower()
+        return next((
+            sdtype for reference, sdtype in self._REFERENCE_TO_SDTYPE.items()
+            if reference in cleaned_name
+        ), None)
+
     def _determine_sdtype_for_numbers(self, data):
         """Determine the sdtype for a numerical column.
 
@@ -322,31 +375,32 @@ class SingleTableMetadata:
             clean_data = column_data.dropna()
             dtype = clean_data.infer_objects().dtype.kind
 
-            sdtype = None
-            if dtype in self._DTYPES_TO_SDTYPES:
-                sdtype = self._DTYPES_TO_SDTYPES[dtype]
-            elif dtype in ['i', 'f']:
-                sdtype = self._determine_sdtype_for_numbers(column_data)
-
-            elif dtype == 'O':
-                sdtype = self._determine_sdtype_for_objects(column_data)
-
+            sdtype = self._detect_pii_column(field)
             if sdtype is None:
-                raise InvalidMetadataError(
-                    f"Unsupported data type for column '{field}' (kind: {dtype})."
-                    "The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
-                )
+                if dtype in self._DTYPES_TO_SDTYPES:
+                    sdtype = self._DTYPES_TO_SDTYPES[dtype]
+                elif dtype in ['i', 'f']:
+                    sdtype = self._determine_sdtype_for_numbers(column_data)
 
-            # Set the first ID column we detect to be the primary key
-            if sdtype == 'id':
-                if self.primary_key is None:
-                    self.primary_key = field
-                else:
-                    sdtype = 'unknown'
+                elif dtype == 'O':
+                    sdtype = self._determine_sdtype_for_objects(column_data)
+
+                if sdtype is None:
+                    raise InvalidMetadataError(
+                        f"Unsupported data type for column '{field}' (kind: {dtype})."
+                        "The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
+                    )
+
+                # Set the first ID column we detect to be the primary key
+                if sdtype == 'id':
+                    if self.primary_key is None:
+                        self.primary_key = field
+                    else:
+                        sdtype = 'unknown'
 
             column_dict = {'sdtype': sdtype}
 
-            if sdtype == 'unknown':
+            if sdtype in self._REFERENCE_TO_SDTYPE.values() or sdtype == 'unknown':
                 column_dict['pii'] = True
             elif sdtype == 'datetime' and dtype == 'O':
                 datetime_format = get_datetime_format(column_data.iloc[:100])

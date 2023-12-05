@@ -4,7 +4,6 @@ import io
 import json
 import logging
 import os
-import urllib.request
 from collections import defaultdict
 from pathlib import Path
 from zipfile import ZipFile
@@ -14,6 +13,7 @@ import numpy as np
 import pandas as pd
 from botocore import UNSIGNED
 from botocore.client import Config
+from botocore.exceptions import ClientError
 
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -21,6 +21,7 @@ from sdv.metadata.single_table import SingleTableMetadata
 LOGGER = logging.getLogger(__name__)
 BUCKET = 'sdv-demo-datasets'
 BUCKET_URL = 'https://sdv-demo-datasets.s3.amazonaws.com'
+SIGNATURE_VERSION = UNSIGNED
 METADATA_FILENAME = 'metadata.json'
 
 
@@ -38,19 +39,27 @@ def _validate_output_folder(output_folder_name):
         )
 
 
+def _get_data_from_bucket(object_key):
+    session = boto3.Session()
+    s3 = session.client('s3', config=Config(signature_version=SIGNATURE_VERSION))
+    response = s3.get_object(Bucket=BUCKET, Key=object_key)
+    return response['Body'].read()
+
+
 def _download(modality, dataset_name):
     dataset_url = f'{BUCKET_URL}/{modality.upper()}/{dataset_name}.zip'
+    object_key = f'{modality.upper()}/{dataset_name}.zip'
     LOGGER.info(f'Downloading dataset {dataset_name} from {dataset_url}')
     try:
-        response = urllib.request.urlopen(dataset_url)
-    except urllib.error.HTTPError:
+        file_content = _get_data_from_bucket(object_key)
+    except ClientError:
         raise ValueError(
             f"Invalid dataset name '{dataset_name}'. "
             'Make sure you have the correct modality for the dataset name or '
             "use 'get_available_demos' to get a list of demo datasets."
         )
 
-    return io.BytesIO(response.read())
+    return io.BytesIO(file_content)
 
 
 def _extract_data(bytes_io, output_folder_name):
@@ -162,7 +171,7 @@ def get_available_demos(modality):
             * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
     """
     _validate_modalities(modality)
-    client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
+    client = boto3.client('s3', config=Config(signature_version=SIGNATURE_VERSION))
     tables_info = defaultdict(list)
     for item in client.list_objects(Bucket=BUCKET)['Contents']:
         dataset_modality, dataset = item['Key'].split('/', 1)

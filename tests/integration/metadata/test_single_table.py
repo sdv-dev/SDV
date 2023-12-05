@@ -211,8 +211,8 @@ def test_validate_unknown_sdtype():
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         'columns': {
             'hotel_id': {'sdtype': 'id'},
-            'city': {'sdtype': 'unknown', 'pii': True},
-            'state': {'sdtype': 'unknown', 'pii': True},
+            'city': {'sdtype': 'city', 'pii': True},
+            'state': {'sdtype': 'administrative_unit', 'pii': True},
             'rating': {'sdtype': 'numerical'},
             'classification': {'sdtype': 'unknown', 'pii': True}
         },
@@ -242,3 +242,32 @@ def test_detect_from_dataframe_with_none_nan_and_nat():
     assert stm.columns['none_data']['sdtype'] == 'categorical'
     assert stm.columns['np_nan_data']['sdtype'] == 'numerical'
     assert stm.columns['pd_nat_data']['sdtype'] == 'datetime'
+
+
+def test_detect_from_dataframe_with_pii_names():
+    """Test ``detect_from_dataframe`` with pii column names."""
+    # Setup
+    data = pd.DataFrame({
+        'USER PHONE NUMBER': [1, 2, 3],
+        'addr_line_1': [1, 2, 3],
+        'First Name': [1, 2, 3],
+        'guest_email': [1, 2, 3],
+
+    })
+    metadata = SingleTableMetadata()
+
+    # Run
+    metadata.detect_from_dataframe(data)
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'columns': {
+            'USER PHONE NUMBER': {'sdtype': 'phone_number', 'pii': True},
+            'addr_line_1': {'sdtype': 'street_address', 'pii': True},
+            'First Name': {'sdtype': 'first_name', 'pii': True},
+            'guest_email': {'sdtype': 'email', 'pii': True}
+        }
+    }
+
+    assert metadata.to_dict() == expected_metadata
