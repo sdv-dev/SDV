@@ -66,11 +66,17 @@ def test_validate_errors():
         'col8': {'sdtype': 'numerical', 'computer_representation': 'value'},
         'col9': {'sdtype': 'datetime', 'datetime_format': '%1-%Y-%m-%d-%'},
         'col10': {'sdtype': 'id', 'regex_format': '[A-{6}'},
+        'col11': {'sdtype': 'state'},
     }
     instance.primary_key = 10
     instance.alternate_keys = 'col1'
     instance.sequence_key = ('col3', 'col1')
     instance.sequence_index = 'col3'
+    instance.column_relationships = [
+        {'type': 'address', 'column_names': ['col11']},
+        {'type': 'address', 'column_names': ['col1', 'col2']},
+        {'type': 'fake_relationship', 'column_names': ['col3', 'col4']}
+    ]
 
     err_msg = re.escape(
         'The following errors were found in the metadata:'
@@ -90,6 +96,9 @@ def test_validate_errors():
         "\nInvalid value for 'computer_representation' 'value' for column 'col8'."
         "\nInvalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'col9'."
         "\nInvalid regex format string '[A-{6}' for id column 'col10'."
+        "\nColumn relationships have following errors:\nColumns ['col1', 'col2'] have "
+        "unsupported sdtypes for column relationship type 'address'.\nUnknown column "
+        "relationship type 'fake_relationship'. Must be one of ['address']."
     )
     # Run / Assert
     with pytest.raises(InvalidMetadataError, match=err_msg):
