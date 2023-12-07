@@ -450,10 +450,9 @@ class SingleTableMetadata:
         self.detect_from_dataframe(data)
 
     @staticmethod
-    def _validate_datatype(column_name):
-        """Check whether column_name is a string or a tuple of strings."""
-        return isinstance(column_name, str) or \
-            isinstance(column_name, tuple) and all(isinstance(i, str) for i in column_name)
+    def _validate_key_datatype(column_name):
+        """Check whether column_name is a string."""
+        return isinstance(column_name, str)
 
     def _validate_keys_sdtype(self, keys, key_type):
         """Validate that each key is of type 'id' or a valid Faker function."""
@@ -471,9 +470,9 @@ class SingleTableMetadata:
     def _validate_key(self, column_name, key_type):
         """Validate the primary and sequence keys."""
         if column_name is not None:
-            if not self._validate_datatype(column_name):
+            if not self._validate_key_datatype(column_name):
                 raise InvalidMetadataError(
-                    f"'{key_type}_key' must be a string or tuple of strings.")
+                    f"'{key_type}_key' must be a string.")
 
             keys = {column_name} if isinstance(column_name, str) else set(column_name)
             invalid_ids = keys - set(self.columns)
@@ -489,8 +488,8 @@ class SingleTableMetadata:
         """Set the metadata primary key.
 
         Args:
-            column_name (str, tuple):
-                Name (or tuple of names) of the primary key column(s).
+            column_name (str):
+                Name of the primary key column(s).
         """
         self._validate_key(column_name, 'primary')
         if column_name in self.alternate_keys:
@@ -512,8 +511,8 @@ class SingleTableMetadata:
         """Set the metadata sequence key.
 
         Args:
-            column_name (str, tuple):
-                Name (or tuple of names) of the sequence key column(s).
+            column_name (str):
+                Name of the sequence key column(s).
         """
         self._validate_key(column_name, 'sequence')
         if self.sequence_key is not None:
@@ -526,9 +525,9 @@ class SingleTableMetadata:
 
     def _validate_alternate_keys(self, column_names):
         if not isinstance(column_names, list) or \
-           not all(self._validate_datatype(column_name) for column_name in column_names):
+           not all(self._validate_key_datatype(column_name) for column_name in column_names):
             raise InvalidMetadataError(
-                "'alternate_keys' must be a list of strings or a list of tuples of strings."
+                "'alternate_keys' must be a list of strings."
             )
 
         keys = set()
@@ -554,8 +553,8 @@ class SingleTableMetadata:
         """Set the metadata alternate keys.
 
         Args:
-            column_names (list[str], list[tuple]):
-                List of names (or tuple of names) of the alternate key columns.
+            column_names (list[str]):
+                List of names of the alternate key columns.
         """
         self._validate_alternate_keys(column_names)
         for column in column_names:
