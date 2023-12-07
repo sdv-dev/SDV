@@ -23,4 +23,4 @@ def test_validate_address_sdtypes():
         "relationship type 'address'"
     )
     with pytest.raises(InvalidMetadataError, match=err_msg):
-        validate_address_sdtypes(column_metadata, ['col_1', 'col_2', 'col_3'])
+        validate_address_sdtypes(column_metadata, ['col_1', 'col_2', 'col_3', 'col_4'])
