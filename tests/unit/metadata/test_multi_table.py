@@ -829,7 +829,7 @@ class TestMultiTableMetadata:
 
         assert errors == [
             '\n', expected_error_msg, foreign_key_col_relationship_message,
-            empty_table_error_message
+            empty_table_error_message, foreign_key_col_relationship_message
         ]
         instance.tables['users'].validate.assert_called_once()
 

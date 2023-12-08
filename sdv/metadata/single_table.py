@@ -696,7 +696,8 @@ class SingleTableMetadata:
                 errors,
                 self._validate_column_relationship,
                 relationship_type,
-                columns)
+                columns
+            )
 
         if errors:
             raise InvalidMetadataError(
