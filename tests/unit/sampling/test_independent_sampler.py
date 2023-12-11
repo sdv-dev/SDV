@@ -196,6 +196,104 @@ class TestBaseIndependentSampler():
         for result_frame, expected_frame in zip(result.values(), expected_result.values()):
             pd.testing.assert_frame_equal(result_frame, expected_frame)
 
+    def test__finalize_id_being_string(self):
+        """Test that finalize function when an id column is string but dtype is int."""
+        # Setup
+        instance = Mock()
+        metadata = Mock()
+        metadata._get_parent_map.return_value = {
+            'sessions': ['users'],
+            'transactions': ['sessions'],
+            'users': set()
+        }
+        instance.metadata = metadata
+
+        sampled_data = {
+            'users': pd.DataFrame({
+                'user_id': pd.Series(['a', 'b', 'c'], dtype=object),
+                'name': pd.Series(['John', 'Doe', 'Johanna'], dtype=object),
+                'additional_column': pd.Series([0.1, 0.2, 0.3], dtype=float),
+                'another_additional_column': pd.Series([0.1, 0.2, 0.5], dtype=float),
+            }),
+            'sessions': pd.DataFrame({
+                'user_id': pd.Series(['a', 'b', 'c'], dtype=object),
+                'session_id': pd.Series(['a', 'b', 'c'], dtype=object),
+                'os': pd.Series(['linux', 'mac', 'win'], dtype=object),
+                'country': pd.Series(['us', 'us', 'es'], dtype=object),
+            }),
+            'transactions': pd.DataFrame({
+                'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
+                'session_id': pd.Series(['a', 'a', 'b'], dtype=object),
+            }),
+        }
+
+        users_synth = Mock()
+        users_synth._data_processor._dtypes = {'user_id': np.int64, 'name': str}
+        users_synth._data_processor._DTYPE_TO_SDTYPE = {
+            'i': 'numerical',
+            'f': 'numerical',
+            'O': 'categorical',
+            'b': 'boolean',
+            'M': 'datetime',
+        }
+
+        sessions_synth = Mock()
+        sessions_synth._data_processor._dtypes = {
+            'user_id': np.int64,
+            'session_id': str,
+            'os': str,
+            'country': str
+        }
+
+        sessions_synth._data_processor._DTYPE_TO_SDTYPE = {
+            'i': 'numerical',
+            'f': 'numerical',
+            'O': 'categorical',
+            'b': 'boolean',
+            'M': 'datetime',
+        }
+        transactions_synth = Mock()
+        transactions_synth._data_processor._dtypes = {
+            'transaction_id': np.int64,
+            'session_id': str
+        }
+        transactions_synth._data_processor._DTYPE_TO_SDTYPE = {
+            'i': 'numerical',
+            'f': 'numerical',
+            'O': 'categorical',
+            'b': 'boolean',
+            'M': 'datetime',
+        }
+
+        instance._table_synthesizers = {
+            'users': users_synth,
+            'sessions': sessions_synth,
+            'transactions': transactions_synth
+        }
+
+        # Run
+        result = BaseIndependentSampler._finalize(instance, sampled_data)
+
+        # Assert
+        expected_result = {
+            'users': pd.DataFrame({
+                'user_id': pd.Series(['a', 'b', 'c'], dtype=object),
+                'name': pd.Series(['John', 'Doe', 'Johanna'], dtype=object),
+            }),
+            'sessions': pd.DataFrame({
+                'user_id': pd.Series(['a', 'b', 'c'], dtype=object),
+                'session_id': pd.Series(['a', 'b', 'c'], dtype=object),
+                'os': pd.Series(['linux', 'mac', 'win'], dtype=object),
+                'country': pd.Series(['us', 'us', 'es'], dtype=object),
+            }),
+            'transactions': pd.DataFrame({
+                'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
+                'session_id': pd.Series(['a', 'a', 'b'], dtype=object),
+            }),
+        }
+        for result_frame, expected_frame in zip(result.values(), expected_result.values()):
+            pd.testing.assert_frame_equal(result_frame, expected_frame)
+
     def test__sample(self):
         """Test that the ``_sample_table`` is called for root tables."""
         # Setup
