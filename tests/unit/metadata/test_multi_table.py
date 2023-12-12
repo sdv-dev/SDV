@@ -748,6 +748,7 @@ class TestMultiTableMetadata:
 
     def test_add_column_relationship(self):
         """Test ``add_column_relationship`` adds a column relationship."""
+        # Setup
         instance = MultiTableMetadata()
         parent_table = Mock()
 
