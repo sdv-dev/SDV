@@ -1817,6 +1817,37 @@ class TestSingleTableMetadata:
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance._validate_all_column_relationships(column_relationships)
 
+    def test_add_column_relationships(self):
+        """Test ``add_column_relationshps`` adds a column relationship."""
+        # Setup
+        instance = SingleTableMetadata()
+        mock_validate_column_relationships = Mock()
+        instance._validate_all_column_relationships = mock_validate_column_relationships
+
+        # Run
+        instance.add_column_relationship(
+            relationship_type='relationship_A',
+            column_names=['colA', 'colB']
+        )
+        instance.add_column_relationship(
+            relationship_type='relationship_B',
+            column_names=['col1', 'col2', 'col3']
+        )
+        # Assert
+        mock_validate_column_relationships.assert_has_calls([
+            call([
+                {'type': 'relationship_A', 'column_names': ['colA', 'colB']}
+            ]),
+            call([
+                {'type': 'relationship_B', 'column_names': ['col1', 'col2', 'col3']},
+                {'type': 'relationship_A', 'column_names': ['colA', 'colB']}
+            ])
+        ])
+        assert instance.column_relationships == [
+            {'type': 'relationship_A', 'column_names': ['colA', 'colB']},
+            {'type': 'relationship_B', 'column_names': ['col1', 'col2', 'col3']}
+        ]
+
     def test_validate(self):
         """Test the ``validate`` method.
 

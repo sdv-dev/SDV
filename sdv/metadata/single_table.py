@@ -704,6 +704,20 @@ class SingleTableMetadata:
                 '\n'.join([str(e) for e in errors])
             )
 
+    def add_column_relationship(self, relationship_type, column_names):
+        """Add a column relationship to the metadata.
+
+        Args:
+            relationship_type (str):
+                Type of column relationship.
+            column_names (list[str]):
+                List of column names in the relationship.
+        """
+        to_check = [{'type': relationship_type, 'column_names': column_names}] + \
+            self.column_relationships
+        self._validate_all_column_relationships(to_check)
+        self.column_relationships.append({'type': relationship_type, 'column_names': column_names})
+
     def validate(self):
         """Validate the metadata.
 

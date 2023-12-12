@@ -734,20 +734,9 @@ class TestMultiTableMetadata:
     def test__validate_column_relationships_foreign_keys(self):
         """Test ``_validate_column_relationships_foriegn_keys."""
         # Setup
-        table_accounts = SingleTableMetadata.load_from_dict({
-            'columns': {
-                'id': {'sdtype': 'numerical'},
-                'branch_id': {'sdtype': 'numerical'},
-                'amount': {'sdtype': 'numerical'},
-                'start_date': {'sdtype': 'datetime'},
-                'owner': {'sdtype': 'id'},
-            },
-            'column_relationships': [
-                {'type': 'bad_relationship', 'column_names': ['amount', 'owner']}
-            ],
-            'primary_key': 'branches'
-        })
-
+        column_relationships = [
+            {'type': 'bad_relationship', 'column_names': ['amount', 'owner']}
+        ]
         instance = MultiTableMetadata()
 
         # Run and Assert
@@ -755,7 +744,48 @@ class TestMultiTableMetadata:
             "Cannot use foreign keys {'owner'} in column relationship."
         )
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance._validate_column_relationships_foreign_keys(table_accounts, ['owner'])
+            instance._validate_column_relationships_foreign_keys(column_relationships, ['owner'])
+
+    def test_add_column_relationships(self):
+        """Test ``add_column_relationshps`` adds a column relationship."""
+        instance = MultiTableMetadata()
+        parent_table = Mock()
+
+        child_table = Mock()
+        child_table.column_relationships = [
+            {'type': 'relationship_A', 'column_names': ['colA', 'colB']}
+        ]
+        instance.tables = {
+            'parent': parent_table,
+            'child': child_table,
+        }
+        instance.relationships = [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'parent_id',
+                'child_foreign_key': 'foreign_key'
+            }
+        ]
+
+        mock_validate_column_relationships = Mock()
+        instance._validate_column_relationships_foreign_keys = mock_validate_column_relationships
+
+        # Run
+        instance.add_column_relationship('relationship_B', 'child', ['col1', 'col2', 'col3'])
+
+        # Assert
+        mock_validate_column_relationships.assert_called_with(
+            [
+                {'type': 'relationship_B', 'column_names': ['col1', 'col2', 'col3']},
+                {'type': 'relationship_A', 'column_names': ['colA', 'colB']}
+            ],
+            ['foreign_key']
+        )
+        instance.tables['child'].add_column_relationship.assert_called_with(
+            'relationship_B',
+            ['col1', 'col2', 'col3']
+        )
 
     def test__validate_single_table(self):
         """Test ``_validate_single_table``.
