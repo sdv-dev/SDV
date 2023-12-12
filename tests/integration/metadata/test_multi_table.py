@@ -25,7 +25,8 @@ def test_multi_table_metadata():
     assert instance.relationships == []
 
 
-def test_add_column_relationships():
+def test_add_column_relationship():
+    """Test ``add_column_relationship`` method."""
     # Setup
     _, instance = download_demo('multi_table', 'fake_hotels')
     instance.update_column('hotels', 'city', sdtype='city')

@@ -1818,7 +1818,7 @@ class TestSingleTableMetadata:
             instance._validate_all_column_relationships(column_relationships)
 
     def test_add_column_relationships(self):
-        """Test ``add_column_relationshps`` adds a column relationship."""
+        """Test ``add_column_relationship`` adds a column relationship."""
         # Setup
         instance = SingleTableMetadata()
         mock_validate_column_relationships = Mock()

@@ -746,8 +746,8 @@ class TestMultiTableMetadata:
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance._validate_column_relationships_foreign_keys(column_relationships, ['owner'])
 
-    def test_add_column_relationships(self):
-        """Test ``add_column_relationshps`` adds a column relationship."""
+    def test_add_column_relationship(self):
+        """Test ``add_column_relationship`` adds a column relationship."""
         instance = MultiTableMetadata()
         parent_table = Mock()
 
