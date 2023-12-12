@@ -95,10 +95,28 @@ class BaseIndependentSampler():
         """
         final_data = {}
         for table_name, table_rows in sampled_data.items():
+
             synthesizer = self._table_synthesizers.get(table_name)
+            metadata = synthesizer.get_metadata()
             dtypes = synthesizer._data_processor._dtypes
+            dtypes_to_sdtype = synthesizer._data_processor._DTYPE_TO_SDTYPE
+
             for name, dtype in dtypes.items():
-                table_rows[name] = table_rows[name].dropna().astype(dtype)
+                try:
+                    table_rows[name] = table_rows[name].dropna().astype(dtype)
+                except ValueError as e:
+                    column_metadata = metadata.columns.get(name)
+                    sdtype = column_metadata.get('sdtype')
+                    if sdtype not in dtypes_to_sdtype.values():
+                        LOGGER.info(
+                            f"The real data in '{table_name}' and column '{name}' was stored as "
+                            f"'{dtype}' but the synthetic data could not be cast back to "
+                            'this type. If this is a problem, please check your input data '
+                            'and metadata settings.'
+                        )
+
+                    else:
+                        raise ValueError(e)
 
             final_data[table_name] = table_rows[list(dtypes.keys())]
 
