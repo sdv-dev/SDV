@@ -25,6 +25,23 @@ def test_multi_table_metadata():
     assert instance.relationships == []
 
 
+def test_add_column_relationship():
+    """Test ``add_column_relationship`` method."""
+    # Setup
+    _, instance = download_demo('multi_table', 'fake_hotels')
+    instance.update_column('hotels', 'city', sdtype='city')
+    instance.update_column('hotels', 'state', sdtype='state')
+
+    # Run
+    instance.add_column_relationship('address', 'hotels', ['city', 'state'])
+
+    # Assert
+    instance.validate()
+    assert instance.tables['hotels'].column_relationships == [
+        {'type': 'address', 'column_names': ['city', 'state']}
+    ]
+
+
 def test_upgrade_metadata(tmp_path):
     """Test the ``upgrade_metadata`` method."""
     # Setup

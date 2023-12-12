@@ -33,6 +33,25 @@ def test_single_table_metadata():
     assert instance.sequence_index is None
 
 
+def test_add_column_relationship():
+    """Test ``add_column_relationship`` method."""
+    # Setup
+    instance = SingleTableMetadata()
+    instance.add_column('col1', sdtype='id')
+    instance.add_column('col2', sdtype='street_address')
+    instance.add_column('col3', sdtype='state_abbr')
+    instance.set_primary_key('col1')
+
+    # Run
+    instance.add_column_relationship(relationship_type='address', column_names=['col2', 'col3'])
+
+    # Assert
+    instance.validate()
+    assert instance.column_relationships == [
+        {'type': 'address', 'column_names': ['col2', 'col3']}
+    ]
+
+
 def test_validate():
     """Test ``SingleTableMetadata.validate``.
 
@@ -43,10 +62,13 @@ def test_validate():
     instance.add_column('col1', sdtype='id')
     instance.add_column('col2', sdtype='id')
     instance.add_column('col3', sdtype='numerical')
+    instance.add_column('col4', sdtype='street_address')
+    instance.add_column('col5', sdtype='state_abbr')
     instance.set_primary_key('col1')
     instance.add_alternate_keys(['col2'])
     instance.set_sequence_index('col3')
     instance.set_sequence_key('col2')
+    instance.add_column_relationship(relationship_type='address', column_names=['col4', 'col5'])
 
     # Run
     instance.validate()
