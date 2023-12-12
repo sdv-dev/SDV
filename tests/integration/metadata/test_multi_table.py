@@ -37,7 +37,7 @@ def test_add_column_relationship():
 
     # Assert
     instance.validate()
-    instance.tables['hotels'].column_relationships = [
+    assert instance.tables['hotels'].column_relationships == [
         {'type': 'address', 'column_names': ['city', 'state']}
     ]
 
