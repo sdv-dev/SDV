@@ -1,4 +1,4 @@
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -196,7 +196,8 @@ class TestBaseIndependentSampler():
         for result_frame, expected_frame in zip(result.values(), expected_result.values()):
             pd.testing.assert_frame_equal(result_frame, expected_frame)
 
-    def test__finalize_id_being_string(self):
+    @patch('sdv.sampling.independent_sampler.LOGGER')
+    def test__finalize_id_being_string(self, mock_logger):
         """Test that finalize function when an id column is string but dtype is int."""
         # Setup
         instance = Mock()
@@ -293,6 +294,21 @@ class TestBaseIndependentSampler():
         }
         for result_frame, expected_frame in zip(result.values(), expected_result.values()):
             pd.testing.assert_frame_equal(result_frame, expected_frame)
+
+        message_users = (
+            "The real data in 'users' and column 'user_id' was stored as "
+            "'<class 'numpy.int64'>' but the synthetic data "
+            'could not be cast back to this type. If this is a problem, please check your input '
+            'data and metadata settings.'
+        )
+
+        message_sessions = (
+            "The real data in 'sessions' and column 'user_id' was stored as "
+            "'<class 'numpy.int64'>' but the synthetic data "
+            'could not be cast back to this type. If this is a problem, please check your input '
+            'data and metadata settings.'
+        )
+        assert mock_logger.info.call_args_list == [call(message_users), call(message_sessions)]
 
     def test__sample(self):
         """Test that the ``_sample_table`` is called for root tables."""
