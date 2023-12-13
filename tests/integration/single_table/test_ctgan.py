@@ -215,3 +215,31 @@ def test_categorical_metadata_with_int_data():
     assert len(recycled_categories_for_a) == 50
     assert len(new_categories_for_c) == 0
     assert len(recycled_categories_for_c) == 50
+
+
+def test_ctgansynthesizer_with_constraints_generating_categorical_values():
+    """Test that ``CTGANSynthesizer`` does not crash when using constraints.
+
+    Based on the issue [#1717](https://github.com/sdv-dev/SDV/issues/1717) this test
+    ensures that the synthesizer does not crash with a constraint that generates ``categorical``
+    data.
+    """
+    # Setup
+    data, metadata = download_demo('single_table', 'student_placements')
+    my_synthesizer = CTGANSynthesizer(metadata)
+    my_constraint = {
+        'constraint_class': 'FixedCombinations',
+        'constraint_parameters': {
+            'column_names': ['high_spec', 'degree_type']
+        }
+    }
+    my_synthesizer.add_constraints(constraints=[
+        my_constraint
+    ])
+
+    # Run
+    my_synthesizer.fit(data)
+
+    # Assert
+    sampled_data = my_synthesizer.sample(10)
+    assert len(sampled_data) == 10
