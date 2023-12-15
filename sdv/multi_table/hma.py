@@ -511,6 +511,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         data_processor = self._table_synthesizers[table_name]._data_processor
         transformed = data_processor.transform(table_rows)
+        if transformed.index.name:
+            table_rows = table_rows.set_index(transformed.index.name)
+
         table_rows = pd.concat(
             [transformed, table_rows.drop(columns=transformed.columns)],
             axis=1
