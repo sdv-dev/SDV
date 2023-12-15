@@ -507,18 +507,21 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 A DataFrame of the likelihood of each parent id.
         """
         likelihoods = {}
+        table_rows = table_rows.copy()
 
         data_processor = self._table_synthesizers[table_name]._data_processor
-        table_rows = data_processor.transform(table_rows)
-
+        transformed = data_processor.transform(table_rows)
+        table_rows = pd.concat(
+            [transformed, table_rows.drop(columns=transformed.columns)],
+            axis=1
+        )
         for parent_id, row in parent_rows.iterrows():
             parameters = self._extract_parameters(row, table_name, foreign_key)
             table_meta = self._table_synthesizers[table_name].get_metadata()
             synthesizer = self._synthesizer(table_meta, **self._table_parameters[table_name])
             synthesizer._set_parameters(parameters)
             try:
-                with np.random.Generator(np.random.get_state()[1]):
-                    likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)
+                likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)
 
             except (AttributeError, np.linalg.LinAlgError):
                 likelihoods[parent_id] = None
