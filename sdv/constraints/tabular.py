@@ -396,9 +396,8 @@ class Inequality(Constraint):
                 f' {[high, low]}. Both columns must be either numerical or datetime.'
             )
 
-    def __init__(self, low_column_name, high_column_name, metadata=None, strict_boundaries=False):
+    def __init__(self, low_column_name, high_column_name, strict_boundaries=False):
         self._validate_init_inputs(low_column_name, high_column_name, strict_boundaries)
-        self.metadata = metadata
         self._low_column_name = low_column_name
         self._high_column_name = high_column_name
         self._diff_column_name = f'{self._low_column_name}#{self._high_column_name}'
