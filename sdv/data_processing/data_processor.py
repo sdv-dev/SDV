@@ -332,7 +332,7 @@ class DataProcessor:
                     'to columns that are part of an address group.'
                 )
 
-        constraint_class._validate_metadata(self.metadata, **constraint_parameters)
+        constraint_class._validate_metadata(**constraint_parameters)
 
     def add_constraints(self, constraints):
         """Add constraints to the data processor.
@@ -348,6 +348,7 @@ class DataProcessor:
         for constraint_dict in constraints:
             constraint_dict = deepcopy(constraint_dict)
             try:
+                constraint_dict['constraint_parameters'].update({'metadata': self.metadata})
                 self._validate_constraint_dict(constraint_dict)
                 validated_constraints.append(constraint_dict)
             except (AggregateConstraintsError, InvalidConstraintsError) as e:

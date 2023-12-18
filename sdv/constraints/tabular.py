@@ -396,8 +396,9 @@ class Inequality(Constraint):
                 f' {[high, low]}. Both columns must be either numerical or datetime.'
             )
 
-    def __init__(self, low_column_name, high_column_name, strict_boundaries=False):
+    def __init__(self, low_column_name, high_column_name, metadata=None, strict_boundaries=False):
         self._validate_init_inputs(low_column_name, high_column_name, strict_boundaries)
+        self.metadata = metadata
         self._low_column_name = low_column_name
         self._high_column_name = high_column_name
         self._diff_column_name = f'{self._low_column_name}#{self._high_column_name}'
@@ -412,10 +413,9 @@ class Inequality(Constraint):
         high = table_data[self._high_column_name].to_numpy()
         return low, high
 
-    def _get_is_datetime(self, table_data):
-        low, high = self._get_data(table_data)
-        is_low_datetime = is_datetime_type(low)
-        is_high_datetime = is_datetime_type(high)
+    def _get_is_datetime(self):
+        is_low_datetime = self.metadata.columns[self._low_column_name]['sdtype'] == 'datetime'
+        is_high_datetime = self.metadata.columns[self._high_column_name]['sdtype'] == 'datetime'
         is_datetime = is_low_datetime and is_high_datetime
 
         if not is_datetime and any([is_low_datetime, is_high_datetime]):
@@ -436,7 +436,7 @@ class Inequality(Constraint):
                 The Table data.
         """
         self._validate_columns_exist(table_data)
-        self._is_datetime = self._get_is_datetime(table_data)
+        self._is_datetime = self._get_is_datetime()
         self._dtype = table_data[self._high_column_name].dtypes
 
     def is_valid(self, table_data):
