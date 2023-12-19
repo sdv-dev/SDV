@@ -1181,32 +1181,29 @@ class TestHMASynthesizer:
     def test__get_likelihoods(self):
         """Test ``_get_likelihoods`` generates likelihoods for parents."""
         # Setup
-        data, metadata = download_demo('multi_table', 'fake_hotels')
+        data, metadata = download_demo('multi_table', 'got_families')
         hmasynthesizer = HMASynthesizer(metadata)
         hmasynthesizer.fit(data)
 
         sampled_data = {}
-        sampled_data['hotels'] = hmasynthesizer._sample_rows(
-            hmasynthesizer._table_synthesizers['hotels'],
-            len(data['hotels'])
+        sampled_data['characters'] = hmasynthesizer._sample_rows(
+            hmasynthesizer._table_synthesizers['characters'],
+            len(data['characters'])
         )
-        hmasynthesizer._sample_children('hotels', sampled_data)
+        hmasynthesizer._sample_children('characters', sampled_data)
 
         # Run
         likelihoods = hmasynthesizer._get_likelihoods(
-            sampled_data['guests'],
-            sampled_data['hotels'].set_index('hotel_id'),
-            'guests',
-            'hotel_id'
+            sampled_data['character_families'],
+            sampled_data['characters'].set_index('character_id'),
+            'character_families',
+            'character_id'
         )
 
         # Assert
-        not_nan_cols = ['HID_000', 'HID_001', 'HID_003', 'HID_004', 'HID_007', 'HID_009']
-        nan_cols = ['HID_002', 'HID_005', 'HID_006', 'HID_008']
-        assert set(likelihoods.columns) == {
-            'HID_000', 'HID_001', 'HID_002', 'HID_003', 'HID_004',
-            'HID_005', 'HID_006', 'HID_007', 'HID_008', 'HID_009'
-        }
-        assert len(likelihoods) == len(sampled_data['guests'])
+        not_nan_cols = [1, 3, 6]
+        nan_cols = [2, 4, 5, 7]
+        assert set(likelihoods.columns) == {1, 2, 3, 4, 5, 6, 7}
+        assert len(likelihoods) == len(sampled_data['character_families'])
         assert not any(likelihoods[not_nan_cols].isna().any())
         assert all(likelihoods[nan_cols].isna())
