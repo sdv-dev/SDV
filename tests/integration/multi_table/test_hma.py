@@ -1208,5 +1208,5 @@ class TestHMASynthesizer:
             'HID_005', 'HID_006', 'HID_007', 'HID_008', 'HID_009'
         }
         assert len(likelihoods) == 805
-        assert not any(likelihoods[not_nan_cols].isna())
+        assert not any(likelihoods[not_nan_cols].isna().any())
         assert all(likelihoods[nan_cols].isna())
