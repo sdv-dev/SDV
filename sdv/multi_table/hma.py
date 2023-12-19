@@ -215,6 +215,23 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         return columns_per_table
 
+    def preprocess(self, data):
+        """Transform the raw data to numerical space.
+
+        Args:
+            data (dict):
+                Dictionary mapping each table name to a ``pandas.DataFrame``.
+
+        Returns:
+            dict:
+                A dictionary with the preprocessed data.
+        """
+        processed_data = super().preprocess(data)
+        for _, synthesizer in self._table_synthesizers.items():
+            synthesizer.reset_sampling()
+
+        return processed_data
+
     def _get_extension(self, child_name, child_table, foreign_key, progress_bar_desc):
         """Generate the extension columns for this child table.
 

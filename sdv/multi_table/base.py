@@ -318,7 +318,6 @@ class BaseMultiTableSynthesizer:
             synthesizer = self._table_synthesizers[table_name]
             self._assign_table_transformers(synthesizer, table_name, table_data)
             processed_data[table_name] = synthesizer._preprocess(table_data)
-            synthesizer._data_processor.reset_sampling()
 
         return processed_data
 
