@@ -1,6 +1,7 @@
 """Integration tests for Multi Table Metadata."""
 
 import json
+from unittest.mock import patch
 
 from sdv.datasets.demo import download_demo
 from sdv.metadata import MultiTableMetadata
@@ -25,9 +26,16 @@ def test_multi_table_metadata():
     assert instance.relationships == []
 
 
-def test_add_column_relationship():
+@patch('rdt.transformers')
+def test_add_column_relationship(mock_rdt_transformers):
     """Test ``add_column_relationship`` method."""
     # Setup
+    class RandomLocationGeneratorMock:
+        @classmethod
+        def _validate_sdtypes(cls, columns_to_sdtypes):
+            pass
+
+    mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
     _, instance = download_demo('multi_table', 'fake_hotels')
     instance.update_column('hotels', 'city', sdtype='city')
     instance.update_column('hotels', 'state', sdtype='state')
