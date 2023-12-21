@@ -615,7 +615,7 @@ class SingleTableMetadata:
         except InvalidMetadataError as e:
             errors.append(e)
 
-    def _validate_column_relationship(self, relationship_type, column_names):
+    def _validate_column_relationship(self, relationship, index):
         """Validate a column relationship.
 
         Verify that a column relationship has a valid relationship type, has
@@ -623,14 +623,16 @@ class SingleTableMetadata:
         valid sdtypes for the relationship type.
 
         Args:
-            relationship_type (str):
-                Type of column relationship.
-            column_names (list[str]):
-                List of column names in this column relationship.
+            relationship (dict):
+                Column relationship to validate.
+            index (int):
+                Index of the relationship in the list of relationships.
 
         Raises:
             - ``InvalidMetadataError`` if relationship is invalid
         """
+        relationship_type = relationship['type']
+        column_names = relationship['column_names']
         if relationship_type not in self._COLUMN_RELATIONSHIP_TYPES:
             raise InvalidMetadataError(
                 f"Unknown column relationship type '{relationship_type}'. "
@@ -645,8 +647,20 @@ class SingleTableMetadata:
                 errors.append(
                     f"Cannot use primary key '{column}' in column relationship."
                 )
+
+        columns_to_sdtypes = {
+            column: self.columns.get(column, {}).get('sdtype') for column in column_names
+        }
         try:
-            self._COLUMN_RELATIONSHIP_TYPES[relationship_type](self.columns, column_names)
+            self._COLUMN_RELATIONSHIP_TYPES[relationship_type](columns_to_sdtypes)
+        except ImportError:
+            warnings.warn(
+                f"The metadata contains a column relationship of type '{relationship_type}'. "
+                f'which requires the {relationship_type} add-on.'
+                'This relationship will be ignored. For higher quality data in this'
+                ' relationship, please inquire about the SDV Enterprise tier.')
+            del self.column_relationships[index]
+
         except Exception as e:
             errors.append(str(e))
 
@@ -688,14 +702,12 @@ class SingleTableMetadata:
 
         # Validate each individual relationship
         errors = []
-        for relationship in column_relationships:
-            relationship_type = relationship['type']
-            columns = relationship['column_names']
+        for idx, relationship in enumerate(column_relationships):
             self._append_error(
                 errors,
                 self._validate_column_relationship,
-                relationship_type,
-                columns
+                relationship,
+                idx
             )
 
         if errors:
