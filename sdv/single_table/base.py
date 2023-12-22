@@ -134,6 +134,10 @@ class BaseSynthesizer:
             anonymization_level (str):
                 The anonymization level to use for the address transformer.
         """
+        warnings.warn(
+            '`set_address_columns` is deprecated. Please add these columns directly to your'
+            ' metadata using `add_column_relationship`.', DeprecationWarning
+        )
         if anonymization_level not in {'full', 'street_address'}:
             raise ValueError(
                 f"Invalid value '{anonymization_level}' for parameter 'anonymization_level'."

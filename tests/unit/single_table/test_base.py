@@ -148,6 +148,23 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(ValueError, match=err_msg):
             synthesizer._check_address_columns(columns)
 
+    def test_set_address_columns_warning(self):
+        """Test ``set_address_columns`` method when the synthesizer has been fitted."""
+        # Setup
+        synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
+        synthesizer._check_address_columns = Mock()
+        synthesizer._data_processor.set_address_transformer = Mock()
+
+        # Run and Assert
+        expected_message = re.escape(
+            '`set_address_columns` is deprecated. Please add these columns directly to your'
+            ' metadata using `add_column_relationship`.'
+        )
+        with pytest.warns(DeprecationWarning, match=expected_message):
+            synthesizer.set_address_columns(
+                ['country_column', 'city_column'], anonymization_level='full'
+            )
+
     def test_set_address_columns(self):
         """Test ``set_address_columns`` method."""
         # Setup
@@ -156,9 +173,14 @@ class TestBaseSingleTableSynthesizer:
         synthesizer._data_processor.set_address_transformer = Mock()
 
         # Run
-        synthesizer.set_address_columns(
-            ['country_column', 'city_column'], anonymization_level='full'
+        expected_message = re.escape(
+            '`set_address_columns` is deprecated. Please add these columns directly to your'
+            ' metadata using `add_column_relationship`.'
         )
+        with pytest.warns(DeprecationWarning, match=expected_message):
+            synthesizer.set_address_columns(
+                ['country_column', 'city_column'], anonymization_level='full'
+            )
 
         # Assert
         synthesizer._check_address_columns.assert_called_once_with(
