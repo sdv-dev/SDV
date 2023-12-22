@@ -725,10 +725,10 @@ class SingleTableMetadata:
             column_names (list[str]):
                 List of column names in the relationship.
         """
-        to_check = [{'type': relationship_type, 'column_names': column_names}] + \
-            self.column_relationships
+        relationship = {'type': relationship_type, 'column_names': column_names}
+        to_check = [relationship] + self.column_relationships
         self._validate_all_column_relationships(to_check)
-        self.column_relationships.append({'type': relationship_type, 'column_names': column_names})
+        self.column_relationships.append(relationship)
 
     def validate(self):
         """Validate the metadata.

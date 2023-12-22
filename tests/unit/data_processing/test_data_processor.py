@@ -50,12 +50,47 @@ class TestDataProcessor:
         assert transformer.learn_rounding_scheme is False
         assert transformer.enforce_min_max_values is False
 
+    @patch('rdt.transformers')
+    def test__detect_multi_column_transformers_with_address(self, transfomers_mock):
+        """Test the ``_detect_multi_column_transformers`` method with address columns."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'},
+            },
+            'column_relationships': [
+                {
+                    'type': 'address',
+                    'column_names': ['country_column', 'city_column']
+                }
+            ]
+        })
+        dp = DataProcessor(SingleTableMetadata())
+        dp.metadata = metadata
+        dp._locales = ['en_US', 'en_GB']
+        randomlocationgenerator = Mock()
+        transfomers_mock.address.RandomLocationGenerator.return_value = randomlocationgenerator
+
+        # Run
+        result = dp._detect_multi_column_transformers()
+
+        # Assert
+        transfomers_mock.address.RandomLocationGenerator.assert_called_once_with(
+            locales=['en_US', 'en_GB']
+        )
+        assert result == {
+            ('country_column', 'city_column'): randomlocationgenerator
+        }
+
     @patch('sdv.data_processing.data_processor.rdt.transformers.RegexGenerator')
     @patch('sdv.data_processing.data_processor.get_default_transformers')
     @patch('sdv.data_processing.data_processor.rdt')
     @patch('sdv.data_processing.data_processor.DataProcessor._update_numerical_transformer')
+    @patch('sdv.data_processing.data_processor.DataProcessor._detect_multi_column_transformers')
     def test___init__(
-        self, update_transformer_mock, mock_rdt, mock_default_transformers, mock_regex_generator
+        self, detect_multi_column_transformers_mock, update_transformer_mock, mock_rdt,
+        mock_default_transformers, mock_regex_generator
     ):
         """Test the ``__init__`` method.
 
@@ -87,6 +122,8 @@ class TestDataProcessor:
         }
 
         mock_regex_generator.return_value = 'RegexGenerator()'
+
+        detect_multi_column_transformers_mock.return_value = {}
 
         # Run
         data_processor = DataProcessor(
@@ -128,6 +165,8 @@ class TestDataProcessor:
         }
 
         assert data_processor._transformers_by_sdtype == expected_default_transformers
+        detect_multi_column_transformers_mock.assert_called_once()
+        assert data_processor.grouped_columns_to_transformers == {}
 
     def test___init___without_mocks(self):
         """Test the ``__init__`` method without using mocks.
@@ -165,20 +204,9 @@ class TestDataProcessor:
         expected_list = ['col1', 'col2', 'col3', 'col4']
         assert column == expected_list
 
-    def test__check_import_address_transformers_without_premium_feature(self):
-        """Test ``_check_import_address_transformers` `when the user doesn't have the feature."""
-        # Setup
-        dp = DataProcessor(SingleTableMetadata())
-
-        # Run and Assert
-        expected_message = (
-            'You must have SDV Enterprise with the address add-on to use the address features'
-        )
-        with pytest.raises(ImportError, match=expected_message):
-            dp._check_import_address_transformers()
-
     @patch('rdt.transformers')
-    def test__get_columns_in_address_transformer(self, mock_rdt_transformers):
+    @patch('sdv.data_processing.data_processor._check_import_address_transformers')
+    def test__get_columns_in_address_transformer(self, mock_check_import, mock_rdt_transformers):
         """Test the ``_get_columns_in_address_transformer`` method."""
         # Setup
         class RandomLocationGeneratorMock:
@@ -187,11 +215,10 @@ class TestDataProcessor:
         class RegionalAnonymizerMock:
             pass
 
-        mock_rdt_transformers.RandomLocationGenerator = RandomLocationGeneratorMock
-        mock_rdt_transformers.RegionalAnonymizer = RegionalAnonymizerMock
+        mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
+        mock_rdt_transformers.address.RegionalAnonymizer = RegionalAnonymizerMock
 
         dp = DataProcessor(SingleTableMetadata())
-        dp._check_import_address_transformers = Mock()
 
         dp.RandomLocationGenerator = RandomLocationGeneratorMock
         dp.RegionalAnonymizer = RegionalAnonymizerMock
@@ -208,10 +235,11 @@ class TestDataProcessor:
         # Assert
         expected_columns = ['col1', 'col2', 'col3', 'col4']
         assert columns == expected_columns
-        dp._check_import_address_transformers.assert_called_once()
+        mock_check_import.assert_called_once()
 
     @patch('rdt.transformers')
-    def test__get_address_transformer(self, mock_rdt_transformers):
+    @patch('sdv.data_processing.data_processor._check_import_address_transformers')
+    def test__get_address_transformer(self, mock_check_import, mock_rdt_transformers):
         """Test the ``_get_address_transformer`` method."""
         # Setup
         class RandomLocationGeneratorMock:
@@ -222,16 +250,15 @@ class TestDataProcessor:
             def __init__(self, locales):
                 pass
 
-        mock_rdt_transformers.RandomLocationGenerator = RandomLocationGeneratorMock
-        mock_rdt_transformers.RegionalAnonymizer = RegionalAnonymizerMock
+        mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
+        mock_rdt_transformers.address.RegionalAnonymizer = RegionalAnonymizerMock
 
         dp = DataProcessor(SingleTableMetadata())
-        dp._check_import_address_transformers = Mock()
 
         # Run and Assert
         transformer = dp._get_address_transformer('full')
         assert isinstance(transformer, RandomLocationGeneratorMock)
-        dp._check_import_address_transformers.assert_called_once()
+        mock_check_import.assert_called_once()
 
         transformer = dp._get_address_transformer('street_address')
         assert isinstance(transformer, RegionalAnonymizerMock)

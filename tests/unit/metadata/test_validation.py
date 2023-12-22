@@ -1,12 +1,39 @@
 """Test Single Table Metadata."""
 import re
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from rdt.errors import TransformerInputError
 
 from sdv.metadata.errors import InvalidMetadataError
-from sdv.metadata.validation import validate_address_sdtypes
+from sdv.metadata.validation import _check_import_address_transformers, validate_address_sdtypes
+
+
+def test__check_import_address_transformers_without_address_module():
+    """Test ``_check_import_address_transformers`` when address module doesn't exist."""
+    # Run and Assert
+    expected_message = (
+        'You must have SDV Enterprise with the address add-on to use the address features'
+    )
+    with pytest.raises(ImportError, match=expected_message):
+        _check_import_address_transformers()
+
+
+@patch('rdt.transformers')
+def test__check_import_address_transformers_without_premium_features(mock_transformers):
+    """Test ``_check_import_address_transformers`` when the user doesn't have the transformers."""
+    # Setup
+    mock_address = Mock()
+    del mock_address.RandomLocationGenerator
+    del mock_address.RegionalAnonymizer
+    mock_transformers.address = mock_address
+
+    # Run and Assert
+    expected_message = (
+        'You must have SDV Enterprise with the address add-on to use the address features'
+    )
+    with pytest.raises(ImportError, match=expected_message):
+        _check_import_address_transformers()
 
 
 @patch('sdv.metadata.validation._check_import_address_transformers')
