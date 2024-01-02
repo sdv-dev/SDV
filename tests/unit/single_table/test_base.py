@@ -1746,6 +1746,7 @@ class TestBaseSingleTableSynthesizer:
 
         # Run
         instance.add_constraints([positive_constraint, negative_constraint])
+        output = instance.get_constraints()
 
         # Assert
         positive_constraint = {
@@ -1762,7 +1763,7 @@ class TestBaseSingleTableSynthesizer:
                 'strict_boundaries': False
             }
         }
-        assert instance.get_constraints() == [positive_constraint, negative_constraint]
+        assert output == [positive_constraint, negative_constraint]
 
     def test_get_constraints(self):
         """Test a list of constraints is returned by the method."""

@@ -515,13 +515,14 @@ class TestCreateCustomConstraint():
         custom_constraint = custom_constraint(['col'])
 
         # Run
-        reduced_cusom_constraint = custom_constraint.__reduce__()
+        reduced_custom_constraint = custom_constraint.__reduce__()
 
         # Assert
-        assert isinstance(reduced_cusom_constraint[0], _RecreateCustomConstraint)
-        assert (is_valid_fn, transform_fn, reverse_transfom_fn) == reduced_cusom_constraint[1]
-        assert reduced_cusom_constraint[2] == {
+        assert isinstance(reduced_custom_constraint[0], _RecreateCustomConstraint)
+        assert (is_valid_fn, transform_fn, reverse_transfom_fn) == reduced_custom_constraint[1]
+        assert reduced_custom_constraint[2] == {
             '__kwargs__': {'column_names': ['col']},
+            'metadata': None,
             'column_names': ['col'],
             'constraint_columns': ('col',),
             'kwargs': {}
@@ -1234,17 +1235,18 @@ class TestInequality():
         Side Effect:
         - Raises ``ValueError`` if only one of the low/high columns is datetime.
         """
-        # Setupy
-        table_data = pd.DataFrame({
-            'a': pd.to_datetime(['2020-01-01']),
-            'b': ['a']
-        })
+        # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
+        instance.metadata = Mock()
+        instance.metadata.columns = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'categorical'}
+        }
 
         # Run / Assert
         err_msg = 'Both high and low must be datetime.'
         with pytest.raises(ValueError, match=err_msg):
-            instance._get_is_datetime(table_data)
+            instance._get_is_datetime()
 
     def test__validate_columns_exist_incorrect_columns(self):
         """Test the ``Inequality._validate_columns_exist`` method.
@@ -1292,7 +1294,7 @@ class TestInequality():
 
         # Assert
         instance._validate_columns_exist.assert_called_once_with(table_data)
-        instance._get_is_datetime.assert_called_once_with(table_data)
+        instance._get_is_datetime.assert_called_once()
         assert instance._is_datetime == 'abc'
         assert instance._dtype == pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
 
@@ -1312,6 +1314,11 @@ class TestInequality():
             'b': [4., 5., 6.]
         })
         instance = Inequality(low_column_name='a', high_column_name='b')
+        instance.metadata = Mock()
+        instance.metadata.columns = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'datetime'}
+        }
 
         # Run
         instance._fit(table_data)
@@ -1335,6 +1342,11 @@ class TestInequality():
             'b': pd.to_datetime(['2020-01-02'])
         })
         instance = Inequality(low_column_name='a', high_column_name='b')
+        instance.metadata = Mock()
+        instance.metadata.columns = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'datetime'}
+        }
 
         # Run
         instance._fit(table_data)
