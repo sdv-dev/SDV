@@ -1177,3 +1177,33 @@ class TestHMASynthesizer:
         )
         with pytest.raises(SynthesizerInputError, match=error_msg):
             synth.get_learned_distributions(table_name='guests')
+
+    def test__get_likelihoods(self):
+        """Test ``_get_likelihoods`` generates likelihoods for parents."""
+        # Setup
+        data, metadata = download_demo('multi_table', 'got_families')
+        hmasynthesizer = HMASynthesizer(metadata)
+        hmasynthesizer.fit(data)
+
+        sampled_data = {}
+        sampled_data['characters'] = hmasynthesizer._sample_rows(
+            hmasynthesizer._table_synthesizers['characters'],
+            len(data['characters'])
+        )
+        hmasynthesizer._sample_children('characters', sampled_data)
+
+        # Run
+        likelihoods = hmasynthesizer._get_likelihoods(
+            sampled_data['character_families'],
+            sampled_data['characters'].set_index('character_id'),
+            'character_families',
+            'character_id'
+        )
+
+        # Assert
+        not_nan_cols = [1, 3, 6]
+        nan_cols = [2, 4, 5, 7]
+        assert set(likelihoods.columns) == {1, 2, 3, 4, 5, 6, 7}
+        assert len(likelihoods) == len(sampled_data['character_families'])
+        assert not any(likelihoods[not_nan_cols].isna().any())
+        assert all(likelihoods[nan_cols].isna())
