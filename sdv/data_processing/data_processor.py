@@ -80,8 +80,8 @@ class DataProcessor:
         """Detect if there are any multi column transformers in the metadata.
 
         Returns:
-            bool:
-                ``True`` if there are multi column transformers, ``False`` otherwise.
+            dict:
+                A dictionary mapping column names to the multi column transformer.
         """
         result = {}
         for relationship in self.metadata.column_relationships:
