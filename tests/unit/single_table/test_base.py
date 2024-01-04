@@ -113,8 +113,6 @@ class TestBaseSingleTableSynthesizer:
         """Test ``set_address_columns`` method when the synthesizer has been fitted."""
         # Setup
         synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
-        synthesizer._check_address_columns = Mock()
-        synthesizer._data_processor.set_address_transformer = Mock()
 
         # Run and Assert
         expected_message = re.escape(

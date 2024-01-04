@@ -85,7 +85,7 @@ class DataProcessor:
         """
         result = {}
         if self.metadata.column_relationships:
-            for relationship in self.metadata.column_relationships:
+            for relationship in self.metadata._valid_column_relationships:
                 column_names = tuple(relationship['column_names'])
                 relationship_type = relationship['type']
                 if relationship_type == 'address':

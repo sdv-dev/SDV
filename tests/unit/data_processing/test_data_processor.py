@@ -66,6 +66,7 @@ class TestDataProcessor:
                 }
             ]
         })
+        metadata.validate()
         dp = DataProcessor(SingleTableMetadata())
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']

@@ -1683,7 +1683,7 @@ class TestSingleTableMetadata:
         }
 
         # Run
-        instance._validate_column_relationship(relationship, 0)
+        instance._validate_column_relationship(relationship)
 
         # Assert
         expected_columns_to_sdtypes = {
@@ -1712,7 +1712,7 @@ class TestSingleTableMetadata:
             "Must be one of ['mock_relationship']."
         )
         with pytest.raises(InvalidMetadataError, match=msg):
-            instance._validate_column_relationship(relationship, 0)
+            instance._validate_column_relationship(relationship)
 
     def test__validate_column_relationship_bad_columns(self):
         """Test validation fails for invalid columns."""
@@ -1744,7 +1744,7 @@ class TestSingleTableMetadata:
             "Columns ['a', 'b'] have unsupported sdtype."
         )
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance._validate_column_relationship(relationship, 0)
+            instance._validate_column_relationship(relationship)
 
         # Assert
         expected_columns_to_sdtypes = {
@@ -1774,8 +1774,8 @@ class TestSingleTableMetadata:
 
         # Assert
         mock_validate_relationship.assert_has_calls([
-            call(relationship_one, 0),
-            call(relationship_two, 1)
+            call(relationship_one),
+            call(relationship_two)
         ])
 
     def test__validate_all_column_relationships_invalid_relationship_structure(self):
@@ -1817,7 +1817,7 @@ class TestSingleTableMetadata:
     def test__validate_all_column_relationships_bad_relationship(self):
         """Test validation fails if individual relationship validation fails."""
         # Setup
-        def mock_relationship_validate(relationship, idx):
+        def mock_relationship_validate(relationship):
             raise InvalidMetadataError(
                 f"Error in '{relationship['type']}' relationship."
             )
