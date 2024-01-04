@@ -84,12 +84,13 @@ class DataProcessor:
                 A dictionary mapping column names to the multi column transformer.
         """
         result = {}
-        for relationship in self.metadata.column_relationships:
-            column_names = tuple(relationship['column_names'])
-            relationship_type = relationship['type']
-            if relationship_type == 'address':
-                transformer = rdt.transformers.address.RandomLocationGenerator
-                result[column_names] = transformer(locales=self._locales)
+        if self.metadata.column_relationships:
+            for relationship in self.metadata.column_relationships:
+                column_names = tuple(relationship['column_names'])
+                relationship_type = relationship['type']
+                if relationship_type == 'address':
+                    transformer = rdt.transformers.address.RandomLocationGenerator
+                    result[column_names] = transformer(locales=self._locales)
 
         return result
 
@@ -170,26 +171,6 @@ class DataProcessor:
             return rdt.transformers.address.RegionalAnonymizer(locales=locales)
 
         return rdt.transformers.address.RandomLocationGenerator(locales=locales)
-
-    def set_address_transformer(self, column_names, anonymization_level):
-        """Set the address transformer.
-
-        Args:
-            column_names (tuple[str]):
-                The column names to set the transformer for.
-            anonymization_level (str):
-                The anonymization level for the address transformer.
-        """
-        columns_to_sdtypes = {
-            column: self.metadata.columns[column]['sdtype'] for column in column_names
-        }
-        transformer = self._get_address_transformer(anonymization_level)
-        transformer._validate_sdtypes(columns_to_sdtypes)
-
-        if self._prepared_for_fitting:
-            self.update_transformers({column_names: transformer})
-
-        self.grouped_columns_to_transformers[column_names] = transformer
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.

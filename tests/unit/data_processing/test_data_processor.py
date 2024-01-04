@@ -263,59 +263,6 @@ class TestDataProcessor:
         transformer = dp._get_address_transformer('street_address')
         assert isinstance(transformer, RegionalAnonymizerMock)
 
-    def test__set_address_transformer(self):
-        """Test the ``set_address_transformer`` method."""
-        # Setup
-        metadata = SingleTableMetadata().load_from_dict({
-            'columns': {
-                'country_column': {'sdtype': 'country_code'},
-                'city_column': {'sdtype': 'city'},
-            }
-        })
-        dp = DataProcessor(metadata)
-        transformer = Mock()
-        transformer._validate_sdtypes = Mock()
-        columns_to_sdtypes = {'country_column': 'country_code', 'city_column': 'city'}
-        dp._get_address_transformer = Mock(return_value=transformer)
-        columns = ('country_column', 'city_column')
-
-        # Run
-        dp.set_address_transformer(columns, 'full')
-
-        # Assert
-        dp._get_address_transformer.assert_called_once_with('full')
-        transformer._validate_sdtypes.assert_called_once_with(columns_to_sdtypes)
-        assert dp.grouped_columns_to_transformers == {columns: transformer}
-
-    def test__set_address_transformer_prepared_for_fitting_true(self):
-        """Test the ``set_address_transformer`` method when ``_prepared_for_fitting`` is True."""
-        # Setup
-        metadata = SingleTableMetadata().load_from_dict({
-            'columns': {
-                'country_column': {'sdtype': 'country_code'},
-                'city_column': {'sdtype': 'city'},
-            }
-        })
-        dp = DataProcessor(metadata)
-        transformer = Mock()
-        transformer._validate_sdtypes = Mock()
-        columns_to_sdtypes = {'country_column': 'country_code', 'city_column': 'city'}
-        dp._get_address_transformer = Mock(return_value=transformer)
-        columns = ('country_column', 'city_column')
-        dp.update_transformers = Mock()
-        dp._prepared_for_fitting = True
-
-        # Run
-        dp.set_address_transformer(columns, 'full')
-
-        # Assert
-        dp.update_transformers.assert_called_once_with(
-            {('country_column', 'city_column'): transformer}
-        )
-        dp._get_address_transformer.assert_called_once_with('full')
-        transformer._validate_sdtypes.assert_called_once_with(columns_to_sdtypes)
-        assert dp.grouped_columns_to_transformers == {columns: transformer}
-
     def test_filter_valid(self):
         """Test that we are calling the ``filter_valid`` of each constraint over the data."""
         # Setup
