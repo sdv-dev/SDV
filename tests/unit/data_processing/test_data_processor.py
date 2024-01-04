@@ -1380,6 +1380,37 @@ class TestDataProcessor:
         with pytest.raises(NotFittedError, match=error_msg):
             dp.update_transformers({'column': None})
 
+    def test_update_transformer_with_multi_column(self):
+        """Test when a multi-column transformer is updated."""
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        dp.grouped_columns_to_transformers = {
+            ('col_3', 'col_4'): 'transformer_3',
+        }
+        dp._hyper_transformer = Mock()
+        dp._hyper_transformer.field_transformers = {
+            'col_1': 'transformer_1',
+            'col_2': 'transformer_2',
+            ('col_3', 'col_4'): 'transformer_3'
+        }
+
+        def update_transformers_effect(update_dict):
+            dp._hyper_transformer.field_transformers = {
+                'col_2': 'transformer_2',
+                ('col_1', 'col_3'): 'transformer_4',
+                'col_4': 'transformer_3'
+            }
+
+        dp._hyper_transformer.update_transformers.side_effect = update_transformers_effect
+
+        # Run
+        dp.update_transformers({('col_1', 'col_3'): 'transformer_4'})
+
+        # Assert
+        assert dp.grouped_columns_to_transformers == {
+            ('col_1', 'col_3'): 'transformer_4',
+        }
+
     def test_update_transformers_ignores_rdt_refit_warning(self):
         """Test silencing hypertransformer refit warning (replaced by SDV warning elsewhere)"""
         metadata = SingleTableMetadata()

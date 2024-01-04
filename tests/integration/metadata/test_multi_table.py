@@ -41,7 +41,7 @@ def test_add_column_relationship(mock_rdt_transformers):
     instance.update_column('hotels', 'state', sdtype='state')
 
     # Run
-    instance.add_column_relationship('address', 'hotels', ['city', 'state'])
+    instance.add_column_relationship('hotels', 'address', ['city', 'state'])
 
     # Assert
     instance.validate()

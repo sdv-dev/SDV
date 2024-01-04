@@ -648,6 +648,12 @@ class DataProcessor:
             warnings.filterwarnings('ignore', module='rdt.hyper_transformer')
             self._hyper_transformer.update_transformers(column_name_to_transformer)
 
+        self.grouped_columns_to_transformers = {
+            col_tuple: transformer
+            for col_tuple, transformer in self._hyper_transformer.field_transformers.items()
+            if isinstance(col_tuple, tuple)
+        }
+
     def _fit_hyper_transformer(self, data):
         """Create and return a new ``rdt.HyperTransformer`` instance.
 
