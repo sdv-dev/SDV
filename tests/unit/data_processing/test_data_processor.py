@@ -237,32 +237,6 @@ class TestDataProcessor:
         assert columns == expected_columns
         mock_check_import.assert_called_once()
 
-    @patch('rdt.transformers')
-    @patch('sdv.data_processing.data_processor._check_import_address_transformers')
-    def test__get_address_transformer(self, mock_check_import, mock_rdt_transformers):
-        """Test the ``_get_address_transformer`` method."""
-        # Setup
-        class RandomLocationGeneratorMock:
-            def __init__(self, locales):
-                pass
-
-        class RegionalAnonymizerMock:
-            def __init__(self, locales):
-                pass
-
-        mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
-        mock_rdt_transformers.address.RegionalAnonymizer = RegionalAnonymizerMock
-
-        dp = DataProcessor(SingleTableMetadata())
-
-        # Run and Assert
-        transformer = dp._get_address_transformer('full')
-        assert isinstance(transformer, RandomLocationGeneratorMock)
-        mock_check_import.assert_called_once()
-
-        transformer = dp._get_address_transformer('street_address')
-        assert isinstance(transformer, RegionalAnonymizerMock)
-
     def test_filter_valid(self):
         """Test that we are calling the ``filter_valid`` of each constraint over the data."""
         # Setup

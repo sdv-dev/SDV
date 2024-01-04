@@ -158,20 +158,6 @@ class DataProcessor:
         except ImportError:
             return []
 
-    def _get_address_transformer(self, anonymization_level):
-        """Get the address transformer.
-
-        Args:
-            anonymization_level (str):
-                The anonymization level for the address transformer.
-        """
-        locales = self._locales if self._locales else ['en_US']
-        _check_import_address_transformers()
-        if anonymization_level == 'street_address':
-            return rdt.transformers.address.RegionalAnonymizer(locales=locales)
-
-        return rdt.transformers.address.RandomLocationGenerator(locales=locales)
-
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
 
