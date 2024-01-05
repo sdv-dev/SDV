@@ -67,6 +67,10 @@ class DataProcessor:
         'M': 'datetime',
     }
 
+    _COLUMN_RELATIONSHIP_TO_TRANSFORMER = {
+        'address': 'RandomLocationGenerator',
+    }
+
     def _update_numerical_transformer(self, enforce_rounding, enforce_min_max_values):
         custom_float_formatter = rdt.transformers.FloatFormatter(
             missing_value_replacement='mean',
@@ -88,8 +92,10 @@ class DataProcessor:
             for relationship in self.metadata._valid_column_relationships:
                 column_names = tuple(relationship['column_names'])
                 relationship_type = relationship['type']
-                if relationship_type == 'address':
-                    transformer = rdt.transformers.address.RandomLocationGenerator
+                if relationship_type in self._COLUMN_RELATIONSHIP_TO_TRANSFORMER:
+                    transformer_name = self._COLUMN_RELATIONSHIP_TO_TRANSFORMER[relationship_type]
+                    module = getattr(rdt.transformers, relationship_type)
+                    transformer = getattr(module, transformer_name)
                     result[column_names] = transformer(locales=self._locales)
 
         return result
