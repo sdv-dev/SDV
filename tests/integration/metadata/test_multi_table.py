@@ -197,6 +197,7 @@ def test_detect_from_dataframes():
                     'billing_address': {'sdtype': 'unknown', 'pii': True},
                     'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True}
                 },
+                'primary_key': 'guest_email'
             }
         },
         'relationships': [
@@ -261,6 +262,7 @@ def test_detect_from_csvs(tmp_path):
                     'billing_address': {'sdtype': 'unknown', 'pii': True},
                     'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True}
                 },
+                'primary_key': 'guest_email'
             }
         },
         'relationships': [
