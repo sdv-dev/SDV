@@ -618,9 +618,8 @@ class ScalarInequality(Constraint):
         self._dtype = None
         self._operator = INEQUALITY_TO_OPERATION[relation]
 
-    def _get_is_datetime(self, table_data):
-        column = table_data[self._column_name].to_numpy()
-        is_column_datetime = is_datetime_type(column)
+    def _get_is_datetime(self):
+        is_column_datetime = self.metadata.columns[self._column_name]['sdtype'] == 'datetime'
         is_value_datetime = is_datetime_type(self._value)
         is_datetime = is_column_datetime and is_value_datetime
 
@@ -641,7 +640,7 @@ class ScalarInequality(Constraint):
                 The Table data.
         """
         self._validate_columns_exist(table_data)
-        self._is_datetime = self._get_is_datetime(table_data)
+        self._is_datetime = self._get_is_datetime()
         self._dtype = table_data[self._column_name].dtypes
 
     def is_valid(self, table_data):
@@ -842,14 +841,10 @@ class Range(Constraint):
         self.strict_boundaries = strict_boundaries
         self._operator = operator.lt if strict_boundaries else operator.le
 
-    def _get_is_datetime(self, table_data):
-        low = table_data[self.low_column_name]
-        middle = table_data[self.middle_column_name]
-        high = table_data[self.high_column_name]
-
-        is_low_datetime = is_datetime_type(low)
-        is_middle_datetime = is_datetime_type(middle)
-        is_high_datetime = is_datetime_type(high)
+    def _get_is_datetime(self):
+        is_low_datetime = self.metadata.columns[self.low_column_name]['sdtype'] == 'datetime'
+        is_middle_datetime = self.metadata.columns[self.middle_column_name]['sdtype'] == 'datetime'
+        is_high_datetime = self.metadata.columns[self.high_column_name]['sdtype'] == 'datetime'
         is_datetime = is_low_datetime and is_high_datetime and is_middle_datetime
 
         if not is_datetime and any([is_low_datetime, is_middle_datetime, is_high_datetime]):
@@ -865,7 +860,7 @@ class Range(Constraint):
                 The Table data.
         """
         self._dtype = table_data[self.middle_column_name].dtypes
-        self._is_datetime = self._get_is_datetime(table_data)
+        self._is_datetime = self._get_is_datetime()
 
         self.low_diff_column_name = f'{self.low_column_name}#{self.middle_column_name}'
         self.high_diff_column_name = f'{self.middle_column_name}#{self.high_column_name}'
@@ -1078,10 +1073,8 @@ class ScalarRange(Constraint):
 
         return token.join(components)
 
-    def _get_is_datetime(self, table_data):
-        data = table_data[self._column_name]
-
-        is_column_datetime = is_datetime_type(data)
+    def _get_is_datetime(self):
+        is_column_datetime = self.metadata.columns[self._column_name]['sdtype'] == 'datetime'
         is_low_datetime = is_datetime_type(self._low_value)
         is_high_datetime = is_datetime_type(self._high_value)
         is_datetime = is_low_datetime and is_high_datetime and is_column_datetime
@@ -1099,7 +1092,7 @@ class ScalarRange(Constraint):
                 Table data.
         """
         self._dtype = table_data[self._column_name].dtypes
-        self._is_datetime = self._get_is_datetime(table_data)
+        self._is_datetime = self._get_is_datetime()
         self._transformed_column = self._get_diff_column_name(table_data)
         if self._is_datetime:
             self._low_value = cast_to_datetime64(self._low_value)
