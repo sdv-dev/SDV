@@ -773,7 +773,7 @@ class TestMultiTableMetadata:
         instance._validate_column_relationships_foreign_keys = mock_validate_column_relationships
 
         # Run
-        instance.add_column_relationship('relationship_B', 'child', ['col1', 'col2', 'col3'])
+        instance.add_column_relationship('child', 'relationship_B', ['col1', 'col2', 'col3'])
 
         # Assert
         mock_validate_column_relationships.assert_called_with(

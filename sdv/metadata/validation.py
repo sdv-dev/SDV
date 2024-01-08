@@ -1,32 +1,35 @@
 """Column relationship validation functions."""
+import rdt
+from rdt.errors import TransformerInputError
+
 from sdv.metadata.errors import InvalidMetadataError
 
 
-def validate_address_sdtypes(column_metadata, column_names):
+def _check_import_address_transformers():
+    """Check that the address transformers can be imported."""
+    error_message = (
+        'You must have SDV Enterprise with the address add-on to use the address features'
+    )
+    if not hasattr(rdt.transformers, 'address'):
+        raise ImportError(error_message)
+
+    has_randomlocationgenerator = hasattr(rdt.transformers.address, 'RandomLocationGenerator')
+    has_regionalanonymizer = hasattr(rdt.transformers.address, 'RegionalAnonymizer')
+    if not has_randomlocationgenerator or not has_regionalanonymizer:
+        raise ImportError(error_message)
+
+
+def validate_address_sdtypes(columns_to_sdtypes):
     """Validate sdtypes for address column relationship.
 
     Args:
-        column_metadata (dict):
-            Column metadata for the table.
-        column_names (list[str]):
-            List of the column names involved in this relationship.
+        - columns_to_sdtypes (dict): Dictionary mapping column names to sdtypes.
 
     Raises:
         - ``InvalidMetadataError`` if column sdtypes are invalid for the relationship.
     """
-    valid_sdtypes = (
-        'country_code', 'administrative_unit', 'city', 'postcode', 'street_address',
-        'secondary_address', 'state', 'state_abbr'
-    )
-    bad_columns = []
-    for column_name in column_names:
-        if column_name not in column_metadata:
-            continue
-        if column_metadata[column_name].get('sdtype') not in valid_sdtypes:
-            bad_columns.append(column_name)
-
-    if bad_columns:
-        raise InvalidMetadataError(
-            f'Columns {bad_columns} have unsupported sdtypes for column relationship '
-            "type 'address'."
-        )
+    _check_import_address_transformers()
+    try:
+        rdt.transformers.address.RandomLocationGenerator._validate_sdtypes(columns_to_sdtypes)
+    except TransformerInputError as error:
+        raise InvalidMetadataError(str(error))

@@ -22,6 +22,7 @@ from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
 from sdv.errors import SynthesizerInputError, log_exc_stacktrace
 from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata.validation import _check_import_address_transformers
 
 LOGGER = logging.getLogger(__name__)
 
@@ -66,6 +67,10 @@ class DataProcessor:
         'M': 'datetime',
     }
 
+    _COLUMN_RELATIONSHIP_TO_TRANSFORMER = {
+        'address': 'RandomLocationGenerator',
+    }
+
     def _update_numerical_transformer(self, enforce_rounding, enforce_min_max_values):
         custom_float_formatter = rdt.transformers.FloatFormatter(
             missing_value_replacement='mean',
@@ -74,6 +79,26 @@ class DataProcessor:
             enforce_min_max_values=enforce_min_max_values
         )
         self._transformers_by_sdtype.update({'numerical': custom_float_formatter})
+
+    def _detect_multi_column_transformers(self):
+        """Detect if there are any multi column transformers in the metadata.
+
+        Returns:
+            dict:
+                A dictionary mapping column names to the multi column transformer.
+        """
+        result = {}
+        if self.metadata.column_relationships:
+            for relationship in self.metadata._valid_column_relationships:
+                column_names = tuple(relationship['column_names'])
+                relationship_type = relationship['type']
+                if relationship_type in self._COLUMN_RELATIONSHIP_TO_TRANSFORMER:
+                    transformer_name = self._COLUMN_RELATIONSHIP_TO_TRANSFORMER[relationship_type]
+                    module = getattr(rdt.transformers, relationship_type)
+                    transformer = getattr(module, transformer_name)
+                    result[column_names] = transformer(locales=self._locales)
+
+        return result
 
     def __init__(self, metadata, enforce_rounding=True, enforce_min_max_values=True,
                  model_kwargs=None, table_name=None, locales=None):
@@ -90,7 +115,7 @@ class DataProcessor:
         self._transformers_by_sdtype = deepcopy(get_default_transformers())
         self._transformers_by_sdtype['id'] = rdt.transformers.RegexGenerator()
         del self._transformers_by_sdtype['text']
-        self.grouped_columns_to_transformers = {}
+        self.grouped_columns_to_transformers = self._detect_multi_column_transformers()
 
         self._update_numerical_transformer(enforce_rounding, enforce_min_max_values)
         self._hyper_transformer = rdt.HyperTransformer()
@@ -115,15 +140,6 @@ class DataProcessor:
             col for col_tuple in self.grouped_columns_to_transformers for col in col_tuple
         ]
 
-    def _check_import_address_transformers(self):
-        """Check that the address transformers can be imported."""
-        has_randomlocationgenerator = hasattr(rdt.transformers, 'RandomLocationGenerator')
-        has_regionalanonymizer = hasattr(rdt.transformers, 'RegionalAnonymizer')
-        if not has_randomlocationgenerator or not has_regionalanonymizer:
-            raise ImportError(
-                'You must have SDV Enterprise with the address add-on to use the address features'
-            )
-
     def _get_columns_in_address_transformer(self):
         """Get the columns that are part of an address transformer.
 
@@ -132,14 +148,14 @@ class DataProcessor:
                 A list of columns that are part of the address transformers.
         """
         try:
-            self._check_import_address_transformers()
+            _check_import_address_transformers()
             result = []
             for col_tuple, transformer in self.grouped_columns_to_transformers.items():
                 is_randomlocationgenerator = isinstance(
-                    transformer, rdt.transformers.RandomLocationGenerator
+                    transformer, rdt.transformers.address.RandomLocationGenerator
                 )
                 is_regionalanonymizer = isinstance(
-                    transformer, rdt.transformers.RegionalAnonymizer
+                    transformer, rdt.transformers.address.RegionalAnonymizer
                 )
                 if is_randomlocationgenerator or is_regionalanonymizer:
                     result.extend(list(col_tuple))
@@ -147,40 +163,6 @@ class DataProcessor:
             return result
         except ImportError:
             return []
-
-    def _get_address_transformer(self, anonymization_level):
-        """Get the address transformer.
-
-        Args:
-            anonymization_level (str):
-                The anonymization level for the address transformer.
-        """
-        locales = self._locales if self._locales else ['en_US']
-        self._check_import_address_transformers()
-        if anonymization_level == 'street_address':
-            return rdt.transformers.RegionalAnonymizer(locales=locales)
-
-        return rdt.transformers.RandomLocationGenerator(locales=locales)
-
-    def set_address_transformer(self, column_names, anonymization_level):
-        """Set the address transformer.
-
-        Args:
-            column_names (tuple[str]):
-                The column names to set the transformer for.
-            anonymization_level (str):
-                The anonymization level for the address transformer.
-        """
-        columns_to_sdtypes = {
-            column: self.metadata.columns[column]['sdtype'] for column in column_names
-        }
-        transformer = self._get_address_transformer(anonymization_level)
-        transformer._validate_sdtypes(columns_to_sdtypes)
-
-        if self._prepared_for_fitting:
-            self.update_transformers({column_names: transformer})
-
-        self.grouped_columns_to_transformers[column_names] = transformer
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -671,6 +653,12 @@ class DataProcessor:
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', module='rdt.hyper_transformer')
             self._hyper_transformer.update_transformers(column_name_to_transformer)
+
+        self.grouped_columns_to_transformers = {
+            col_tuple: transformer
+            for col_tuple, transformer in self._hyper_transformer.field_transformers.items()
+            if isinstance(col_tuple, tuple)
+        }
 
     def _fit_hyper_transformer(self, data):
         """Create and return a new ``rdt.HyperTransformer`` instance.

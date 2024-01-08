@@ -109,98 +109,19 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=err_msg):
             BaseSingleTableSynthesizer(SingleTableMetadata(), enforce_rounding='invalid')
 
-    def test__check_address_columns_missing_columns_metadata(self):
-        """Test ``_check_address_columns`` when columns are missing in the metadata."""
-        # Setup
-        synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
-        columns = ['country_column', 'address_column']
-
-        # Run and Assert
-        err_msg = (
-            "Unknown column names ('country_column', 'address_column'). Please"
-            ' choose column names listed in the metadata for your table.'
-        )
-
-        with pytest.raises(ValueError, match=re.escape(err_msg)):
-            synthesizer._check_address_columns(columns)
-
-    def test__check_address_columns_in_multi_columns_transformer(self):
-        """Test ``_check_address_columns`` when columns are already in multi column transformer."""
-        # Setup
-        metadata = SingleTableMetadata().load_from_dict({
-            'columns': {
-                'country_column': {'sdtype': 'categorical'},
-                'city_column': {'sdtype': 'categorical'},
-                'valid_column': {'sdtype': 'categorical'}
-            }
-        })
-        synthesizer = BaseSingleTableSynthesizer(metadata)
-        synthesizer._data_processor.grouped_columns_to_transformers = {
-            ('country_column', 'city_column'): 'address_full'
-        }
-        columns = ['country_column', 'city_column', 'valid_column']
-
-        # Run and Assert
-        err_msg = re.escape(
-            "Columns 'country_column', 'city_column' are already being used"
-            ' in a multi-column transformer.'
-        )
-        with pytest.raises(ValueError, match=err_msg):
-            synthesizer._check_address_columns(columns)
-
-    def test_set_address_columns(self):
-        """Test ``set_address_columns`` method."""
-        # Setup
-        synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
-        synthesizer._check_address_columns = Mock()
-        synthesizer._data_processor.set_address_transformer = Mock()
-
-        # Run
-        synthesizer.set_address_columns(
-            ['country_column', 'city_column'], anonymization_level='full'
-        )
-
-        # Assert
-        synthesizer._check_address_columns.assert_called_once_with(
-            ('country_column', 'city_column')
-        )
-        synthesizer._data_processor.set_address_transformer.assert_called_once_with(
-            ('country_column', 'city_column'), 'full'
-        )
-
-    def test_set_address_columns_wrong_anonymization_level(self):
-        """Test ``set_address_columns`` method with an invalid anonymization level."""
-        # Setup
-        synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
-        synthesizer._check_address_columns = Mock()
-        synthesizer._data_processor.set_address_transformer = Mock()
-
-        # Run and Assert
-        err_msg = re.escape(
-            "Invalid value 'invalid' for parameter 'anonymization_level'."
-            " Please provide 'full' or 'street_address'."
-        )
-        with pytest.raises(ValueError, match=err_msg):
-            synthesizer.set_address_columns(
-                ('country_column', 'city_column'), anonymization_level='invalid'
-            )
-
-    def test_set_address_columns_fitted_data(self):
+    def test_set_address_columns_warning(self):
         """Test ``set_address_columns`` method when the synthesizer has been fitted."""
         # Setup
         synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
-        synthesizer._check_address_columns = Mock()
-        synthesizer._data_processor.set_address_transformer = Mock()
-        synthesizer._fitted = True
 
         # Run and Assert
         expected_message = re.escape(
-            'Please refit your synthesizer for the address changes to appear in'
-            ' your synthetic data.'
+            '`set_address_columns` is deprecated. Please add these columns directly to your'
+            ' metadata using `add_column_relationship`.'
         )
-        with pytest.warns(UserWarning, match=expected_message):
+        with pytest.warns(DeprecationWarning, match=expected_message):
             synthesizer.set_address_columns(
-                ('country_column', 'city_column'), anonymization_level='full'
+                ['country_column', 'city_column'], anonymization_level='full'
             )
 
     @patch('sdv.single_table.base.DataProcessor')

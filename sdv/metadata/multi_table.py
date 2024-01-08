@@ -585,14 +585,14 @@ class MultiTableMetadata:
                     f'Cannot use foreign keys {invalid_columns} in column relationship.'
                 )
 
-    def add_column_relationship(self, relationship_type, table_name, column_names):
+    def add_column_relationship(self, table_name, relationship_type, column_names):
         """Add a column relationship to a table in the metadata.
 
         Args:
-            relationship_type (str):
-                The type of the relationship.
             table_name (str):
                 The name of the table to add this relationship to.
+            relationship_type (str):
+                The type of the relationship.
             column_names (list[str]):
                 The list of column names involved in this relationship.
         """

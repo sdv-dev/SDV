@@ -1,7 +1,7 @@
 """Integration tests for Single Table Metadata."""
-
 import json
 import re
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -33,9 +33,16 @@ def test_single_table_metadata():
     assert instance.sequence_index is None
 
 
-def test_add_column_relationship():
+@patch('rdt.transformers')
+def test_add_column_relationship(mock_rdt_transformers):
     """Test ``add_column_relationship`` method."""
     # Setup
+    class RandomLocationGeneratorMock:
+        @classmethod
+        def _validate_sdtypes(cls, columns_to_sdtypes):
+            pass
+
+    mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
     instance = SingleTableMetadata()
     instance.add_column('col1', sdtype='id')
     instance.add_column('col2', sdtype='street_address')
@@ -52,12 +59,19 @@ def test_add_column_relationship():
     ]
 
 
-def test_validate():
+@patch('rdt.transformers')
+def test_validate(mock_rdt_transformers):
     """Test ``SingleTableMetadata.validate``.
 
     Ensure the method doesn't crash for a valid metadata.
     """
     # Setup
+    class RandomLocationGeneratorMock:
+        @classmethod
+        def _validate_sdtypes(cls, columns_to_sdtypes):
+            pass
+
+    mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
     instance = SingleTableMetadata()
     instance.add_column('col1', sdtype='id')
     instance.add_column('col2', sdtype='id')
@@ -74,9 +88,29 @@ def test_validate():
     instance.validate()
 
 
-def test_validate_errors():
+@patch('rdt.transformers')
+def test_validate_errors(mock_rdt_transformers):
     """Test ``SingleTableMetadata.validate`` raises the correct errors."""
     # Setup
+    class RandomLocationGeneratorMock:
+        @classmethod
+        def _validate_sdtypes(cls, columns_to_sdtypes):
+            valid_sdtypes = (
+                'country_code', 'administrative_unit', 'city', 'postcode', 'street_address',
+                'secondary_address', 'state', 'state_abbr'
+            )
+            bad_columns = []
+            for column_name, sdtypes in columns_to_sdtypes.items():
+                if sdtypes not in valid_sdtypes:
+                    bad_columns.append(column_name)
+
+            if bad_columns:
+                raise InvalidMetadataError(
+                    f'Columns {bad_columns} have unsupported sdtypes for column relationship '
+                    "type 'address'."
+                )
+
+    mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
     instance = SingleTableMetadata()
     instance.columns = {
         'col1': {'sdtype': 'id'},
