@@ -327,6 +327,7 @@ def test_detect_from_dataframe_with_pii_names():
     # Assert
     expected_metadata = {
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'primary_key': 'USER PHONE NUMBER',
         'columns': {
             'USER PHONE NUMBER': {'sdtype': 'phone_number', 'pii': True},
             'addr_line_1': {'sdtype': 'street_address', 'pii': True},

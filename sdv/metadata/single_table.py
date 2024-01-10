@@ -378,6 +378,7 @@ class SingleTableMetadata:
             data (pandas.DataFrame):
                 The data to be analyzed.
         """
+        first_pii_field = None
         for field in data:
             column_data = data[field]
             clean_data = column_data.dropna()
@@ -407,14 +408,19 @@ class SingleTableMetadata:
                         sdtype = 'unknown'
 
             column_dict = {'sdtype': sdtype}
-
             if sdtype in self._REFERENCE_TO_SDTYPE.values() or sdtype == 'unknown':
                 column_dict['pii'] = True
-            elif sdtype == 'datetime' and dtype == 'O':
+            if sdtype in self._REFERENCE_TO_SDTYPE.values() and first_pii_field is None:
+                first_pii_field = field
+            if sdtype == 'datetime' and dtype == 'O':
                 datetime_format = get_datetime_format(column_data.iloc[:100])
                 column_dict['datetime_format'] = datetime_format
 
             self.columns[field] = deepcopy(column_dict)
+
+        # When no primary key column was set, choose the first pii field
+        if self.primary_key is None and first_pii_field:
+            self.primary_key = first_pii_field
 
     def detect_from_dataframe(self, data):
         """Detect the metadata from a ``pd.DataFrame`` object.
