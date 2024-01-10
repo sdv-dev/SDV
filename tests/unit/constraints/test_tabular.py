@@ -1288,6 +1288,11 @@ class TestInequality():
         instance = Inequality(low_column_name='a', high_column_name='b')
         instance._validate_columns_exist = Mock()
         instance._get_is_datetime = Mock(return_value='abc')
+        instance.metadata = Mock()
+        instance.metadata.columns = {
+            'a': {'sdtype': 'datetime', 'datetime_format': '%y %m, %d'},
+            'b': {'sdtype': 'datetime', 'datetime_format': '%y %m, %d'},
+        }
 
         # Run
         instance._fit(table_data)
@@ -3981,7 +3986,7 @@ class TestScalarRange():
         instance = ScalarRange('current_age', 20, 28)
         instance._transformed_column = 'current_age#20#28'
         instance._is_datetime = True
-        mock_pd.to_datetime.side_effect = lambda x: pd.to_datetime('2021-02-02 10:10:59')
+        mock_pd.to_datetime.side_effect = lambda x, format: pd.to_datetime('2021-02-02 10:10:59')
 
         # Run
         output = instance.reverse_transform(transformed_data)
