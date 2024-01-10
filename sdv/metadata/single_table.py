@@ -410,11 +410,9 @@ class SingleTableMetadata:
             column_dict = {'sdtype': sdtype}
             if sdtype in self._REFERENCE_TO_SDTYPE.values() or sdtype == 'unknown':
                 column_dict['pii'] = True
-
             if sdtype in self._REFERENCE_TO_SDTYPE.values() and first_pii_field is None:
                 first_pii_field = field
-
-            elif sdtype == 'datetime' and dtype == 'O':
+            if sdtype == 'datetime' and dtype == 'O':
                 datetime_format = get_datetime_format(column_data.iloc[:100])
                 column_dict['datetime_format'] = datetime_format
 
