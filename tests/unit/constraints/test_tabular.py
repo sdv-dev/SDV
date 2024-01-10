@@ -3223,17 +3223,16 @@ class TestRange():
     def test__transform(self):
         """Test the ``_transform`` method for ``Range``."""
         # Setup
-        instance = Range('a', 'b', 'c')
-        instance.low_diff_column_name = 'a#b'
-        instance.high_diff_column_name = 'b#c'
-
-        # Run
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [2, 5, 5],
             'c': [6, 8, 10],
         })
+        instance = Range('a', 'b', 'c')
+        instance.low_diff_column_name = 'a#b'
+        instance.high_diff_column_name = 'b#c'
 
+        # Run
         out = instance._transform(table_data)
 
         # Assert
@@ -3241,6 +3240,33 @@ class TestRange():
             'a': [1, 2, 3],
             'a#b': [np.log(2), np.log(4), np.log(3)],
             'b#c': [np.log(5), np.log(4), np.log(6)],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test__transform_datetime(self):
+        """Test the ``_transform`` method for ``Range`` when columns are datetime."""
+        # Setup
+        table_data = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01', '2020-01-02']),
+            'b': pd.to_datetime(['2020-01-01', '2020-01-02']),
+            'c': pd.to_datetime(['2020-01-01', '2020-01-02']),
+        })
+        instance = Range('a', 'b', 'c')
+        instance.low_diff_column_name = 'a#b'
+        instance.high_diff_column_name = 'b#c'
+        instance._is_datetime = True
+        instance._low_datetime_format = '%Y-%m-%d'
+        instance._middle_datetime_format = '%Y-%m-%d'
+        instance._high_datetime_format = '%Y-%m-%d'
+
+        # Run
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01', '2020-01-02']),
+            'a#b': [0., 0.],
+            'b#c': [0., 0.],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -3272,9 +3298,9 @@ class TestRange():
         """Test the ``reverse_transform`` method for ``Range`` with datetime."""
         # Setup
         table_data = pd.DataFrame({
-            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
-            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
-            'c': pd.to_datetime(['2020-01-01T00:00:02', '2020-01-02T00:00:02']),
+            'a': ['2020-01-01T00:00:00', '2020-01-02T00:00:00'],
+            'b': ['2020-01-01T00:00:01', '2020-01-02T00:00:01'],
+            'c': ['2020-01-01T00:00:02', '2020-01-02T00:00:02'],
         })
 
         transformed_data = pd.DataFrame({
@@ -3285,9 +3311,9 @@ class TestRange():
 
         instance = Range('a', 'b', 'c')
         instance.metadata = Mock(columns={
-            'a': {'sdtype': 'datetime'},
-            'b': {'sdtype': 'datetime'},
-            'c': {'sdtype': 'datetime'},
+            'a': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
+            'b': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
+            'c': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
         })
 
         # Run
@@ -3295,7 +3321,12 @@ class TestRange():
         out = instance.reverse_transform(transformed_data)
 
         # Assert
-        pd.testing.assert_frame_equal(table_data, out)
+        expected_table_data = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
+            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
+            'c': pd.to_datetime(['2020-01-01T00:00:02', '2020-01-02T00:00:02']),
+        })
+        pd.testing.assert_frame_equal(expected_table_data, out, check_dtype=False)
 
 
 class TestScalarRange():
@@ -3862,6 +3893,20 @@ class TestScalarRange():
         # Setup
         table_data = pd.DataFrame({'current_age': [21, 22, 25]})
         instance = ScalarRange('current_age', 21, 25, strict_boundaries=False)
+
+        # Run
+        result = instance.is_valid(table_data)
+
+        # Assert
+        assert all(result)
+
+    def test_is_valid(self):
+        """Test it for datetime."""
+        # Setup
+        table_data = pd.DataFrame({'current_age': [pd.to_datetime('2021-02-02')]})
+        instance = ScalarRange('current_age', '2021-02-01', '2021-02-03')
+        instance._is_datetime = True
+        instance._datetime_format = '%Y-%m-%d'
 
         # Run
         result = instance.is_valid(table_data)
