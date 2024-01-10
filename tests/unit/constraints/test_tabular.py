@@ -3298,9 +3298,9 @@ class TestRange():
         """Test the ``reverse_transform`` method for ``Range`` with datetime."""
         # Setup
         table_data = pd.DataFrame({
-            'a': ['2020-01-01T00:00:00', '2020-01-02T00:00:00'],
-            'b': ['2020-01-01T00:00:01', '2020-01-02T00:00:01'],
-            'c': ['2020-01-01T00:00:02', '2020-01-02T00:00:02'],
+            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
+            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
+            'c': pd.to_datetime(['2020-01-01T00:00:02', '2020-01-02T00:00:02']),
         })
 
         transformed_data = pd.DataFrame({
@@ -3321,12 +3321,7 @@ class TestRange():
         out = instance.reverse_transform(transformed_data)
 
         # Assert
-        expected_table_data = pd.DataFrame({
-            'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
-            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
-            'c': pd.to_datetime(['2020-01-01T00:00:02', '2020-01-02T00:00:02']),
-        })
-        pd.testing.assert_frame_equal(expected_table_data, out, check_dtype=False)
+        pd.testing.assert_frame_equal(table_data, out)
 
 
 class TestScalarRange():
