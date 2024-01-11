@@ -80,6 +80,9 @@ class ConstraintMeta(type):
             if name == class_name:
                 self.__kwargs__ = copy.deepcopy(kwargs)
                 self.__kwargs__.update(dict(zip(arg_names, args)))
+                self.metadata = self.__kwargs__.get('metadata')
+                if 'metadata' in kwargs:
+                    del kwargs['metadata']
 
             old__init__(self, *args, **kwargs)
 

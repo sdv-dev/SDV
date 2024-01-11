@@ -7,23 +7,28 @@ import numpy as np
 import pandas as pd
 
 
-def cast_to_datetime64(value):
+def cast_to_datetime64(value, datetime_format=None):
     """Cast a given value to a ``numpy.datetime64`` format.
 
     Args:
         value (pandas.Series, np.ndarray, list, or str):
             Input data to convert to ``numpy.datetime64``.
+        datetime_format (str):
+            Datetime format of the `value`.
 
     Return:
         ``numpy.datetime64`` value or values.
     """
+    if datetime_format:
+        datetime_format = datetime_format.replace('%-', '%')
+
     if isinstance(value, str):
-        value = pd.to_datetime(value).to_datetime64()
+        value = pd.to_datetime(value, format=datetime_format).to_datetime64()
     elif isinstance(value, pd.Series):
         value = value.astype('datetime64[ns]')
     elif isinstance(value, (np.ndarray, list)):
         value = np.array([
-            pd.to_datetime(item).to_datetime64()
+            pd.to_datetime(item, format=datetime_format).to_datetime64()
             if not pd.isna(item)
             else pd.NaT.to_datetime64()
             for item in value
@@ -169,7 +174,7 @@ def revert_nans_columns(table_data, nan_column_name):
     return table_data.drop(columns=nan_column_name)
 
 
-def get_datetime_diff(high, low, dtype='O'):
+def get_datetime_diff(high, low, high_datetime_format=None, low_datetime_format=None, dtype='O'):
     """Calculate the difference between two datetime columns.
 
     When casting datetimes to float using ``astype``, NaT values are not automatically
@@ -181,14 +186,18 @@ def get_datetime_diff(high, low, dtype='O'):
             The high column values.
         low (numpy.ndarray):
             The low column values.
+        high_datetime_format (str):
+            Datetime format of the `high` column.
+        low_datetime_format (str):
+            Datetime format of the `low` column.
 
     Returns:
         numpy.ndarray:
             The difference between the high and low column values.
     """
     if dtype == 'O':
-        low = cast_to_datetime64(low)
-        high = cast_to_datetime64(high)
+        low = cast_to_datetime64(low, low_datetime_format)
+        high = cast_to_datetime64(high, high_datetime_format)
 
     diff_column = high - low
     nan_mask = pd.isna(diff_column)

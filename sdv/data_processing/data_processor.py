@@ -314,7 +314,7 @@ class DataProcessor:
                     'to columns that are part of an address group.'
                 )
 
-        constraint_class._validate_metadata(self.metadata, **constraint_parameters)
+        constraint_class._validate_metadata(**constraint_parameters)
 
     def add_constraints(self, constraints):
         """Add constraints to the data processor.
@@ -329,6 +329,8 @@ class DataProcessor:
         validated_constraints = []
         for constraint_dict in constraints:
             constraint_dict = deepcopy(constraint_dict)
+            if 'constraint_parameters' in constraint_dict:
+                constraint_dict['constraint_parameters'].update({'metadata': self.metadata})
             try:
                 self._validate_constraint_dict(constraint_dict)
                 validated_constraints.append(constraint_dict)
@@ -349,7 +351,11 @@ class DataProcessor:
             list:
                 List of dictionaries describing the constraints for this data processor.
         """
-        return deepcopy(self._constraints_list)
+        constraints = deepcopy(self._constraints_list)
+        for i in range(len(constraints)):
+            del constraints[i]['constraint_parameters']['metadata']
+
+        return constraints
 
     def _load_constraints(self):
         loaded_constraints = []
@@ -947,7 +953,7 @@ class DataProcessor:
         constraints_to_reverse = [cnt.to_dict() for cnt in self._constraints_to_reverse]
         return {
             'metadata': deepcopy(self.metadata.to_dict()),
-            'constraints_list': deepcopy(self._constraints_list),
+            'constraints_list': self.get_constraints(),
             'constraints_to_reverse': constraints_to_reverse,
             'model_kwargs': deepcopy(self._model_kwargs)
         }

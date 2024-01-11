@@ -336,7 +336,6 @@ class TestDataProcessor:
             }
         ]
         instance.add_constraints(constraints)
-
         instance._constraints_to_reverse = [Positive('col')]
 
         # Run
@@ -584,7 +583,7 @@ class TestDataProcessor:
 
         # Assert
         positive_constraint._validate_metadata.assert_called_once_with(
-            metadata, column_name='col1'
+            column_name='col1'
         )
         mock_constraint._get_class_from_dict.assert_called_once_with('Positive')
 
@@ -606,7 +605,7 @@ class TestDataProcessor:
         dp._validate_constraint_dict(constraint_dict)
 
         # Assert
-        custom_constraint._validate_metadata.assert_called_once_with(metadata, column_name='col1')
+        custom_constraint._validate_metadata.assert_called_once_with(column_name='col1')
 
     def test__validate_constraint_dict_address_columns(self):
         """Test that the validation raises an error when one column is an address."""
@@ -679,6 +678,8 @@ class TestDataProcessor:
         dp.add_constraints(constraints)
 
         # Assert
+        del dp._constraints_list[0]['constraint_parameters']['metadata']
+        del dp._constraints_list[1]['constraint_parameters']['metadata']
         assert dp._constraints_list == constraints
         assert id(dp._constraints_list) != id(constraints)
 
@@ -712,6 +713,8 @@ class TestDataProcessor:
         dp.add_constraints(constraints)
 
         # Assert
+        del dp._constraints_list[1]['constraint_parameters']['metadata']
+        del dp._constraints_list[2]['constraint_parameters']['metadata']
         assert dp._constraints_list == [
             {
                 'constraint_class': 'UniqueCombinations',
@@ -810,7 +813,10 @@ class TestDataProcessor:
         instance._constraints_list = [
             {
                 'constraint_class': 'Positive',
-                'constraint_parameters': {'column_name': 'a'}
+                'constraint_parameters': {
+                    'column_name': 'a',
+                    'metadata': SingleTableMetadata()
+                },
             }
         ]
 
@@ -818,6 +824,7 @@ class TestDataProcessor:
         result = DataProcessor.get_constraints(instance)
 
         # Assert
+        del instance._constraints_list[0]['constraint_parameters']['metadata']
         assert instance._constraints_list == result
         assert id(result) != id(instance._constraints_list)
 
