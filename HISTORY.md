@@ -23,6 +23,7 @@ This release also patches some bugs. An issue messing up the likelihood matching
 * InvalidDataError for Inequality constraint (even though data is valid) - Issue [#1692](https://github.com/sdv-dev/SDV/issues/1692) by @fealho
 * `BaseIndependentSampler` crashes because it tries to cast id columns - Issue [#1712](https://github.com/sdv-dev/SDV/issues/1712) by @pvk-developer
 * KeyError in `CTGANSynthesizer` when applying `FixedCombinations` constraint - Issue [#1717](https://github.com/sdv-dev/SDV/issues/1717) by @pvk-developer
+* Fix _get_likelihoods not generating likelihood values - Issue [#1720](https://github.com/sdv-dev/SDV/pull/1720) by @frances-h
 
 ## 1.8.0 - 2023-12-05
 
