@@ -133,6 +133,31 @@ class TestCTGANSynthesizer:
             'cuda': True,
         }
 
+    def test__estimate_num_columns(self):
+        """Test that ``_estimate_num_columns`` returns without crashing the number of columns."""
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.add_column('id', sdtype='numerical')
+        metadata.add_column('name', sdtype='categorical')
+        metadata.add_column('surname', sdtype='categorical')
+        data = pd.DataFrame({
+            'id': np.random.rand(1_001),
+            'name': [f'cat_{i}' for i in range(1_001)],
+            'surname': [f'cat_{i}' for i in range(1_001)],
+        })
+
+        instance = CTGANSynthesizer(metadata)
+        instance._data_processor.fit(data)
+
+        # Remove the 'surname' transformer to replicate issue #1717
+        instance._data_processor._hyper_transformer.field_transformers.pop('surname')
+
+        # Run
+        result = instance._estimate_num_columns(data)
+
+        # Assert
+        assert result == {'id': 11, 'name': 1001, 'surname': 1001}
+
     def test_preprocessing_many_categories(self, capfd):
         """Test a message is printed during preprocess when a column has many categories."""
         # Setup

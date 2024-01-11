@@ -1162,8 +1162,8 @@ class TestSingleTableMetadata:
         ]
         mock_log.info.assert_has_calls(expected_log_calls)
 
-    def test__validate_dataype_strings(self):
-        """Test ``_validate_dataype`` for strings.
+    def test__validate_key_dataype_strings(self):
+        """Test ``_validate_key_dataype`` for strings.
 
         Input:
             - A string
@@ -1175,16 +1175,16 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        out = instance._validate_datatype('10')
+        out = instance._validate_key_datatype('10')
 
         # Assert
         assert out is True
 
-    def test__validate_dataype_int(self):
-        """Test ``_validate_dataype`` for invalid datatypes.
+    def test__validate_key_dataype_int(self):
+        """Test ``_validate_key_dataype`` for invalid datatypes.
 
         Input:
-            - A non-string and non-tuple
+            - A non-string
 
         Output:
             - False
@@ -1193,34 +1193,16 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        out = instance._validate_datatype(10)
+        out = instance._validate_key_datatype(10)
 
         # Assert
         assert out is False
 
-    def test__validate_dataype_tuple(self):
-        """Test ``_validate_dataype`` for tuples.
+    def test__validate_key_dataype_invalid_tuple(self):
+        """Test ``_validate_key_dataype`` for tuples.
 
         Input:
-            - A tuple of strings
-
-        Output:
-            - True
-        """
-        # Setup
-        instance = SingleTableMetadata()
-
-        # Run
-        out = instance._validate_datatype(('10', '20'))
-
-        # Assert
-        assert out is True
-
-    def test__validate_dataype_invalid_tuple(self):
-        """Test ``_validate_dataype`` for tuples of non-strings.
-
-        Input:
-            - A tuple with some non-strings
+            - A tuple with some strings
 
         Output:
             - False
@@ -1229,7 +1211,7 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run
-        out = instance._validate_datatype(('10', '20', 30))
+        out = instance._validate_key_datatype(('10', '20', '30'))
 
         # Assert
         assert out is False
@@ -1238,7 +1220,7 @@ class TestSingleTableMetadata:
         """Test that ``set_primary_key`` crashes for invalid arguments.
 
         Input:
-            - A tuple with non-string values.
+            - A non-string value.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1247,11 +1229,11 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         err_msg = (
-            "'primary_key' must be a string or tuple of strings."
+            "'primary_key' must be a string."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_primary_key(('1', 2, '3'))
+            instance.set_primary_key(1)
 
     def test_set_primary_key_validation_columns(self):
         """Test that ``set_primary_key`` crashes for invalid arguments.
@@ -1260,7 +1242,7 @@ class TestSingleTableMetadata:
             - A ``SingleTableMetadata`` instance with ``_columns`` set.
 
         Input:
-            - A tuple with columns not present in ``_columns``.
+            - A column not present in ``_columns``.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1275,14 +1257,14 @@ class TestSingleTableMetadata:
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_primary_key(('a', 'b', 'd'))
+            instance.set_primary_key('b')
             # NOTE: used to be ('a', 'b', 'd', 'c')
 
     def test_set_primary_key_validation_categorical(self):
         """Test that ``set_primary_key`` crashes when its sdtype is categorical.
 
         Input:
-            - A tuple of keys, some of which have sdtype categorical.
+            - A a key with a categorical sdtype.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1294,11 +1276,11 @@ class TestSingleTableMetadata:
         instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The primary_keys ['column1', 'column2'] must be type 'id' or another PII type."
+            "The primary_keys ['column1'] must be type 'id' or another PII type."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_primary_key(('column1', 'column2', 'column3'))
+            instance.set_primary_key('column1')
 
     def test_set_primary_key(self):
         """Test that ``set_primary_key`` sets the ``_primary_key`` value."""
@@ -1311,18 +1293,6 @@ class TestSingleTableMetadata:
 
         # Assert
         assert instance.primary_key == 'column'
-
-    def test_set_primary_key_tuple(self):
-        """Test that ``set_primary_key`` sets the ``_primary_key`` value for tuples."""
-        # Setup
-        instance = SingleTableMetadata()
-        instance.columns = {'col1': {'sdtype': 'id'}, 'col2': {'sdtype': 'id'}}
-
-        # Run
-        instance.set_primary_key(('col1', 'col2'))
-
-        # Assert
-        assert instance.primary_key == ('col1', 'col2')
 
     @patch('sdv.metadata.single_table.warnings')
     def test_set_primary_key_already_exists_warning(self, warning_mock):
@@ -1384,7 +1354,7 @@ class TestSingleTableMetadata:
         """Test that ``set_sequence_key`` crashes for invalid arguments.
 
         Input:
-            - A tuple with non-string values.
+            - A non-string value.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1392,10 +1362,10 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
 
-        err_msg = "'sequence_key' must be a string or tuple of strings."
+        err_msg = "'sequence_key' must be a string."
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_sequence_key(('1', 2, '3'))
+            instance.set_sequence_key(1)
 
     def test_set_sequence_key_validation_columns(self):
         """Test that ``set_sequence_key`` crashes for invalid arguments.
@@ -1404,7 +1374,7 @@ class TestSingleTableMetadata:
             - A ``SingleTableMetadata`` instance with ``_columns`` set.
 
         Input:
-            - A tuple with columns not present in ``_columns``.
+            - A column not present in ``_columns``.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1419,14 +1389,14 @@ class TestSingleTableMetadata:
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_sequence_key(('a', 'b', 'd'))
+            instance.set_sequence_key('b')
             # NOTE: used to be ('a', 'b', 'd', 'c')
 
     def test_set_sequence_key_validation_categorical(self):
         """Test that ``set_sequence_key`` crashes when its sdtype is categorical.
 
         Input:
-            - A tuple of keys, some of which have sdtype categorical.
+            - A key with categorical sdtype.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1438,11 +1408,11 @@ class TestSingleTableMetadata:
         instance.add_column('column3', sdtype='id')
 
         err_msg = re.escape(
-            "The sequence_keys ['column1', 'column2'] must be type 'id' or another PII type."
+            "The sequence_keys ['column1'] must be type 'id' or another PII type."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.set_sequence_key(('column1', 'column2', 'column3'))
+            instance.set_sequence_key('column1')
 
     def test_set_sequence_key(self):
         """Test that ``set_sequence_key`` sets the ``_sequence_key`` value."""
@@ -1457,16 +1427,15 @@ class TestSingleTableMetadata:
         assert instance.sequence_key == 'column'
 
     def test_set_sequence_key_tuple(self):
-        """Test that ``set_sequence_key`` sets ``_sequence_key`` for tuples."""
+        """Test that ``set_sequence_key`` errors for tuples."""
         # Setup
         instance = SingleTableMetadata()
         instance.columns = {'col1': {'sdtype': 'id'}, 'col2': {'sdtype': 'id'}}
 
-        # Run
-        instance.set_sequence_key(('col1', 'col2'))
-
-        # Assert
-        assert instance.sequence_key == ('col1', 'col2')
+        # Run and Assert
+        msg = "'sequence_key' must be a string."
+        with pytest.raises(InvalidMetadataError, match=msg):
+            instance.set_sequence_key(('col1', 'col2'))
 
     @patch('sdv.metadata.single_table.warnings')
     def test_set_sequence_key_warning(self, warning_mock):
@@ -1498,7 +1467,7 @@ class TestSingleTableMetadata:
         """Test that ``add_alternate_keys`` crashes for invalid arguments.
 
         Input:
-            - A list with tuples with non-string values.
+            - A list with non-string values.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1506,7 +1475,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
 
-        err_msg = "'alternate_keys' must be a list of strings or a list of tuples of strings."
+        err_msg = "'alternate_keys' must be a list of strings."
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.add_alternate_keys(['col1', ('1', 2, '3'), 'col3'])
@@ -1518,7 +1487,7 @@ class TestSingleTableMetadata:
             - A ``SingleTableMetadata`` instance with ``_columns`` set.
 
         Input:
-            - A tuple with non-string values.
+            - A list with unknown key column.
 
         Side Effect:
             - An ``InvalidMetadataError`` should be raised.
@@ -1533,7 +1502,7 @@ class TestSingleTableMetadata:
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.add_alternate_keys(['abc', ('123', '213', '312')])
+            instance.add_alternate_keys(['abc', '123'])
             # NOTE: used to be ['abc', ('123', '213', '312'), 'bca']
 
     def test_add_alternate_keys_validation_categorical(self):
@@ -1556,7 +1525,7 @@ class TestSingleTableMetadata:
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
-            instance.add_alternate_keys([('column1', 'column2'), 'column3'])
+            instance.add_alternate_keys(['column1', 'column2', 'column3'])
 
     def test_add_alternate_keys_validation_primary_key(self):
         """Test that ``add_alternate_keys`` crashes when the key is a primary key.
@@ -1588,10 +1557,10 @@ class TestSingleTableMetadata:
         }
 
         # Run
-        instance.add_alternate_keys(['column1', ('column2', 'column3')])
+        instance.add_alternate_keys(['column1', 'column2', 'column3'])
 
         # Assert
-        assert instance.alternate_keys == ['column1', ('column2', 'column3')]
+        assert instance.alternate_keys == ['column1', 'column2', 'column3']
 
     @patch('sdv.metadata.single_table.warnings')
     def test_add_alternate_keys_duplicate(self, warnings_mock):
@@ -1695,6 +1664,211 @@ class TestSingleTableMetadata:
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance._validate_sequence_index_not_in_sequence_key()
 
+    def test__validate_column_relationship(self):
+        """Test the ``_validate_column_relationship`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+        mock_relationship_validation = Mock()
+        instance._COLUMN_RELATIONSHIP_TYPES = {
+            'mock_relationship': mock_relationship_validation
+        }
+        relationship = {
+            'type': 'mock_relationship',
+            'column_names': ['a', 'b']
+        }
+        instance.columns = {
+            'a': {'sdtype': 'categorical'},
+            'b': {'sdtype': 'numerical'},
+            'c': {'sdtype': 'datetime'}
+        }
+
+        # Run
+        instance._validate_column_relationship(relationship)
+
+        # Assert
+        expected_columns_to_sdtypes = {
+            'a': 'categorical',
+            'b': 'numerical',
+        }
+        mock_relationship_validation.assert_called_once_with(
+            expected_columns_to_sdtypes
+        )
+
+    def test__validate_column_relationship_bad_relationship_type(self):
+        """Test validation fails for an unknown relationship type."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance._COLUMN_RELATIONSHIP_TYPES = {
+            'mock_relationship': Mock()
+        }
+        relationship = {
+            'type': 'bad_relationship_type',
+            'column_names': ['a', 'b']
+        }
+
+        # Run and Assert
+        msg = re.escape(
+            "Unknown column relationship type 'bad_relationship_type'. "
+            "Must be one of ['mock_relationship']."
+        )
+        with pytest.raises(InvalidMetadataError, match=msg):
+            instance._validate_column_relationship(relationship)
+
+    def test__validate_column_relationship_bad_columns(self):
+        """Test validation fails for invalid columns."""
+        # Setup
+        def validation_side_effect(*args, **kwargs):
+            raise InvalidMetadataError("Columns ['a', 'b'] have unsupported sdtype.")
+
+        instance = SingleTableMetadata()
+        mock_relationship_validation = Mock()
+        mock_relationship_validation.side_effect = validation_side_effect
+        instance._COLUMN_RELATIONSHIP_TYPES = {
+            'mock_relationship': mock_relationship_validation
+        }
+        relationship = {
+            'type': 'mock_relationship',
+            'column_names': ['a', 'b', 'c', 'x']
+        }
+        instance.columns = {
+            'a': {'sdtype': 'id'},
+            'b': {'sdtype': 'categorical'},
+            'c': {'sdtype': 'numerical'},
+        }
+        instance.primary_key = 'a'
+
+        # Run
+        err_msg = re.escape(
+            "Cannot use primary key 'a' in column relationship.\n"
+            "Column 'x' not in metadata.\n"
+            "Columns ['a', 'b'] have unsupported sdtype."
+        )
+        with pytest.raises(InvalidMetadataError, match=err_msg):
+            instance._validate_column_relationship(relationship)
+
+        # Assert
+        expected_columns_to_sdtypes = {
+            'a': 'id',
+            'b': 'categorical',
+            'c': 'numerical',
+            'x': None
+        }
+        mock_relationship_validation.assert_called_once_with(
+            expected_columns_to_sdtypes
+        )
+
+    def test__validate_all_column_relationships(self):
+        """Test ``_validate_all_column_relationships`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+        mock_validate_relationship = Mock()
+        instance._validate_column_relationship = mock_validate_relationship
+        relationship_one = {'type': 'relationship_one', 'column_names': ['a', 'b']}
+        relationship_two = {'type': 'relationship_two', 'column_names': ['c', 'd']}
+        column_relationships = [
+            relationship_one, relationship_two
+        ]
+
+        # Run
+        instance._validate_all_column_relationships(column_relationships)
+
+        # Assert
+        mock_validate_relationship.assert_has_calls([
+            call(relationship_one),
+            call(relationship_two)
+        ])
+
+    def test__validate_all_column_relationships_invalid_relationship_structure(self):
+        """Test validation fails if relationship is malformed."""
+        # Setup
+        instance = SingleTableMetadata()
+        mock_validate_relationship = Mock()
+        instance._validate_column_relationship = mock_validate_relationship
+        column_relationships = [
+            {'type': 'relationship_one', 'column_names': ['a', 'b']},
+            {'type': 'relationship_two', 'bad_key': ['c', 'd']}
+        ]
+
+        # Run and Assert
+        err_msg = re.escape(
+            "Relationship has invalid keys {'bad_key'}."
+        )
+        with pytest.raises(InvalidMetadataError, match=err_msg):
+            instance._validate_all_column_relationships(column_relationships)
+
+    def test__validate_all_column_relationships_repeated_column(self):
+        """Test validation fails if columns are repeated across column relationships."""
+        # Setup
+        instance = SingleTableMetadata()
+        mock_validate_relationship = Mock()
+        instance._validate_column_relationship = mock_validate_relationship
+        column_relationships = [
+            {'type': 'relationship_one', 'column_names': ['a', 'b']},
+            {'type': 'relationship_two', 'column_names': ['b', 'c']}
+        ]
+
+        # Run and Assert
+        err_msg = re.escape(
+            "Columns {'b'} are found in multiple column relationships."
+        )
+        with pytest.raises(InvalidMetadataError, match=err_msg):
+            instance._validate_all_column_relationships(column_relationships)
+
+    def test__validate_all_column_relationships_bad_relationship(self):
+        """Test validation fails if individual relationship validation fails."""
+        # Setup
+        def mock_relationship_validate(relationship):
+            raise InvalidMetadataError(
+                f"Error in '{relationship['type']}' relationship."
+            )
+        instance = SingleTableMetadata()
+        mock_validate_relationship = Mock()
+        mock_validate_relationship.side_effect = mock_relationship_validate
+        instance._validate_column_relationship = mock_validate_relationship
+        column_relationships = [
+            {'type': 'relationship_one', 'column_names': ['a', 'b']},
+            {'type': 'relationship_two', 'column_names': ['c', 'd']}
+        ]
+
+        # Run and Assert
+        err_msg = re.escape(
+            "Error in 'relationship_one' relationship.\n"
+            "Error in 'relationship_two' relationship."
+        )
+        with pytest.raises(InvalidMetadataError, match=err_msg):
+            instance._validate_all_column_relationships(column_relationships)
+
+    def test_add_column_relationships(self):
+        """Test ``add_column_relationship`` adds a column relationship."""
+        # Setup
+        instance = SingleTableMetadata()
+        mock_validate_column_relationships = Mock()
+        instance._validate_all_column_relationships = mock_validate_column_relationships
+
+        # Run
+        instance.add_column_relationship(
+            relationship_type='relationship_A',
+            column_names=['colA', 'colB']
+        )
+        instance.add_column_relationship(
+            relationship_type='relationship_B',
+            column_names=['col1', 'col2', 'col3']
+        )
+        # Assert
+        mock_validate_column_relationships.assert_has_calls([
+            call([
+                {'type': 'relationship_A', 'column_names': ['colA', 'colB']}
+            ]),
+            call([
+                {'type': 'relationship_B', 'column_names': ['col1', 'col2', 'col3']},
+                {'type': 'relationship_A', 'column_names': ['colA', 'colB']}
+            ])
+        ])
+        assert instance.column_relationships == [
+            {'type': 'relationship_A', 'column_names': ['colA', 'colB']},
+            {'type': 'relationship_B', 'column_names': ['col1', 'col2', 'col3']}
+        ]
+
     def test_validate(self):
         """Test the ``validate`` method.
 
@@ -1714,10 +1888,14 @@ class TestSingleTableMetadata:
         instance.alternate_keys = ['col2']
         instance.sequence_key = 'col1'
         instance.sequence_index = 'col2'
+        instance.column_relationships = [
+            {'type': 'relationship_one', 'column_names': ['col1', 'col2']},
+        ]
         instance._validate_key = Mock()
         instance._validate_alternate_keys = Mock()
         instance._validate_sequence_index = Mock()
         instance._validate_sequence_index_not_in_sequence_key = Mock()
+        instance._validate_all_column_relationships = Mock()
         instance._validate_column_args = Mock(side_effect=InvalidMetadataError('column_error'))
 
         err_msg = re.escape(
@@ -1739,6 +1917,9 @@ class TestSingleTableMetadata:
         instance._validate_alternate_keys.assert_called_once_with(instance.alternate_keys)
         instance._validate_sequence_index.assert_called_once_with(instance.sequence_index)
         instance._validate_sequence_index_not_in_sequence_key.assert_called_once()
+        instance._validate_all_column_relationships.assert_called_once_with(
+            [{'type': 'relationship_one', 'column_names': ['col1', 'col2']}]
+        )
 
     def test_validate_data_wrong_type(self):
         """Test error is raised if data is not ``pd.DataFrame``."""
@@ -1818,7 +1999,7 @@ class TestSingleTableMetadata:
         metadata.add_column('ak_col2', sdtype='id')
         metadata.add_column('ak_col3', sdtype='id')
         metadata.set_primary_key('pk_col')
-        metadata.set_sequence_key(('sk_col1', 'sk_col2', 'sk_col3'))
+        metadata.set_sequence_key('sk_col1')
         metadata.add_alternate_keys(['ak_col1', 'ak_col2', 'ak_col3'])
 
         # Run and Assert
@@ -1830,9 +2011,6 @@ class TestSingleTableMetadata:
             '\n'
             "\nKey column 'pk_col' contains missing values."
             '\n'
-            "\nKey column 'sk_col1' contains missing values."
-            '\n'
-            "\nKey column 'sk_col2' contains missing values."
         )
         with pytest.raises(InvalidDataError, match=err_msg):
             metadata.validate_data(data)
@@ -2054,7 +2232,7 @@ class TestSingleTableMetadata:
         metadata.add_column('date_col', sdtype='datetime')
         metadata.add_column('bool_col', sdtype='boolean')
         metadata.set_primary_key('pk_col')
-        metadata.set_sequence_key(('sk_col1', 'sk_col2'))
+        metadata.set_sequence_key('sk_col1')
         metadata.add_alternate_keys(['ak_col1', 'ak_col2'])
 
         # Run

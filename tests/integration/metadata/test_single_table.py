@@ -1,7 +1,7 @@
 """Integration tests for Single Table Metadata."""
-
 import json
 import re
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -33,28 +33,84 @@ def test_single_table_metadata():
     assert instance.sequence_index is None
 
 
-def test_validate():
+@patch('rdt.transformers')
+def test_add_column_relationship(mock_rdt_transformers):
+    """Test ``add_column_relationship`` method."""
+    # Setup
+    class RandomLocationGeneratorMock:
+        @classmethod
+        def _validate_sdtypes(cls, columns_to_sdtypes):
+            pass
+
+    mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
+    instance = SingleTableMetadata()
+    instance.add_column('col1', sdtype='id')
+    instance.add_column('col2', sdtype='street_address')
+    instance.add_column('col3', sdtype='state_abbr')
+    instance.set_primary_key('col1')
+
+    # Run
+    instance.add_column_relationship(relationship_type='address', column_names=['col2', 'col3'])
+
+    # Assert
+    instance.validate()
+    assert instance.column_relationships == [
+        {'type': 'address', 'column_names': ['col2', 'col3']}
+    ]
+
+
+@patch('rdt.transformers')
+def test_validate(mock_rdt_transformers):
     """Test ``SingleTableMetadata.validate``.
 
     Ensure the method doesn't crash for a valid metadata.
     """
     # Setup
+    class RandomLocationGeneratorMock:
+        @classmethod
+        def _validate_sdtypes(cls, columns_to_sdtypes):
+            pass
+
+    mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
     instance = SingleTableMetadata()
     instance.add_column('col1', sdtype='id')
     instance.add_column('col2', sdtype='id')
     instance.add_column('col3', sdtype='numerical')
+    instance.add_column('col4', sdtype='street_address')
+    instance.add_column('col5', sdtype='state_abbr')
     instance.set_primary_key('col1')
-    instance.add_alternate_keys([('col1', 'col2')])
+    instance.add_alternate_keys(['col2'])
     instance.set_sequence_index('col3')
     instance.set_sequence_key('col2')
+    instance.add_column_relationship(relationship_type='address', column_names=['col4', 'col5'])
 
     # Run
     instance.validate()
 
 
-def test_validate_errors():
+@patch('rdt.transformers')
+def test_validate_errors(mock_rdt_transformers):
     """Test ``SingleTableMetadata.validate`` raises the correct errors."""
     # Setup
+    class RandomLocationGeneratorMock:
+        @classmethod
+        def _validate_sdtypes(cls, columns_to_sdtypes):
+            valid_sdtypes = (
+                'country_code', 'administrative_unit', 'city', 'postcode', 'street_address',
+                'secondary_address', 'state', 'state_abbr'
+            )
+            bad_columns = []
+            for column_name, sdtypes in columns_to_sdtypes.items():
+                if sdtypes not in valid_sdtypes:
+                    bad_columns.append(column_name)
+
+            if bad_columns:
+                raise InvalidMetadataError(
+                    f'Columns {bad_columns} have unsupported sdtypes for column relationship '
+                    "type 'address'."
+                )
+
+    mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
     instance = SingleTableMetadata()
     instance.columns = {
         'col1': {'sdtype': 'id'},
@@ -66,20 +122,26 @@ def test_validate_errors():
         'col8': {'sdtype': 'numerical', 'computer_representation': 'value'},
         'col9': {'sdtype': 'datetime', 'datetime_format': '%1-%Y-%m-%d-%'},
         'col10': {'sdtype': 'id', 'regex_format': '[A-{6}'},
+        'col11': {'sdtype': 'state'},
     }
     instance.primary_key = 10
     instance.alternate_keys = 'col1'
     instance.sequence_key = ('col3', 'col1')
     instance.sequence_index = 'col3'
+    instance.column_relationships = [
+        {'type': 'address', 'column_names': ['col11']},
+        {'type': 'address', 'column_names': ['col1', 'col2']},
+        {'type': 'fake_relationship', 'column_names': ['col3', 'col4']}
+    ]
 
     err_msg = re.escape(
         'The following errors were found in the metadata:'
-        "\n\n'primary_key' must be a string or tuple of strings."
-        "\nUnknown sequence key values {'col3'}. Keys should be columns that exist in the table."
+        "\n\n'primary_key' must be a string."
+        "\n'sequence_key' must be a string."
         "\nUnknown sequence index value {'col3'}. Keys should be columns that exist in the table."
         "\n'sequence_index' and 'sequence_key' have the same value {'col3'}."
         ' These columns must be different.'
-        "\n'alternate_keys' must be a list of strings or a list of tuples of strings."
+        "\n'alternate_keys' must be a list of strings."
         "\nInvalid values '(invalid1)' for categorical column 'col4'."
         "\nInvalid order value provided for categorical column 'col5'."
         " The 'order' must be a list with 1 or more elements."
@@ -90,6 +152,9 @@ def test_validate_errors():
         "\nInvalid value for 'computer_representation' 'value' for column 'col8'."
         "\nInvalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'col9'."
         "\nInvalid regex format string '[A-{6}' for id column 'col10'."
+        "\nColumn relationships have following errors:\nColumns ['col1', 'col2'] have "
+        "unsupported sdtypes for column relationship type 'address'.\nUnknown column "
+        "relationship type 'fake_relationship'. Must be one of ['address']."
     )
     # Run / Assert
     with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -262,6 +327,7 @@ def test_detect_from_dataframe_with_pii_names():
     # Assert
     expected_metadata = {
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'primary_key': 'USER PHONE NUMBER',
         'columns': {
             'USER PHONE NUMBER': {'sdtype': 'phone_number', 'pii': True},
             'addr_line_1': {'sdtype': 'street_address', 'pii': True},

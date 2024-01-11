@@ -154,7 +154,7 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
                 num_generated_columns[column] = 11
 
             elif sdtypes[column] in {'categorical', 'boolean'}:
-                if transformers[column] is None:
+                if transformers.get(column) is None:
                     num_categories = data[column].fillna(np.nan).nunique(dropna=False)
                     num_generated_columns[column] = num_categories
                 else:

@@ -1032,8 +1032,11 @@ class TestBaseMultiTableSynthesizer:
                 'strict_boundaries': False
             }
         }
-        assert instance._table_synthesizers['nesreca'].get_constraints() == [positive_constraint]
-        assert instance._table_synthesizers['oseba'].get_constraints() == [negative_constraint]
+        output_nesreca = instance._table_synthesizers['nesreca'].get_constraints()
+        assert output_nesreca == [positive_constraint]
+
+        output_oseba = instance._table_synthesizers['oseba'].get_constraints()
+        assert output_oseba == [negative_constraint]
 
     def test_add_constraints_unique(self):
         """Test an error is raised when a ``Unique`` constraint is passed."""

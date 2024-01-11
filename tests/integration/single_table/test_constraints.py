@@ -906,3 +906,42 @@ def test_aggregate_constraint_errors(demo_data, demo_metadata):
     message = '\nBad constraint\n\nBad constraint'
     with pytest.raises(AggregateConstraintsError, match=message):
         synth.fit(demo_data)
+
+
+def test_constraint_datetime_check():
+    """Test datetime columns are correctly identified in constraints. GH#1692"""
+    # Setup
+    data = pd.DataFrame(data={
+        'low_col': ['21 Sep, 15', '23 Aug, 14', '29 May, 12'],
+        'high_col': ['02 Nov, 15', '12 Oct, 14', '08 Jul, 12']
+    })
+    metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'low_col': {'sdtype': 'datetime', 'datetime_format': '%d %b, %y'},
+            'high_col': {'sdtype': 'datetime', 'datetime_format': '%d %b, %y'}
+        }
+    })
+    my_constraint = {
+        'constraint_class': 'Inequality',
+        'constraint_parameters': {
+            'low_column_name': 'low_col',
+            'high_column_name': 'high_col',
+            'strict_boundaries': False
+        }
+    }
+
+    # Run
+    metadata.validate()
+    metadata.validate_data(data)
+
+    synth = GaussianCopulaSynthesizer(metadata)
+    synth.add_constraints([my_constraint])
+    synth.fit(data)
+    samples = synth.sample(3)
+
+    # Assert
+    expected_dataframe = pd.DataFrame({
+        'low_col': ['18 Jul, 15', '09 Aug, 15', '24 Jun, 15'],
+        'high_col': ['05 Sep, 15', '26 Sep, 15', '12 Aug, 15']
+    })
+    pd.testing.assert_frame_equal(samples, expected_dataframe)

@@ -215,6 +215,23 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         return columns_per_table
 
+    def preprocess(self, data):
+        """Transform the raw data to numerical space.
+
+        Args:
+            data (dict):
+                Dictionary mapping each table name to a ``pandas.DataFrame``.
+
+        Returns:
+            dict:
+                A dictionary with the preprocessed data.
+        """
+        processed_data = super().preprocess(data)
+        for _, synthesizer in self._table_synthesizers.items():
+            synthesizer.reset_sampling()
+
+        return processed_data
+
     def _get_extension(self, child_name, child_table, foreign_key, progress_bar_desc):
         """Generate the extension columns for this child table.
 
@@ -507,18 +524,24 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 A DataFrame of the likelihood of each parent id.
         """
         likelihoods = {}
+        table_rows = table_rows.copy()
 
         data_processor = self._table_synthesizers[table_name]._data_processor
-        table_rows = data_processor.transform(table_rows)
+        transformed = data_processor.transform(table_rows)
+        if transformed.index.name:
+            table_rows = table_rows.set_index(transformed.index.name)
 
+        table_rows = pd.concat(
+            [transformed, table_rows.drop(columns=transformed.columns)],
+            axis=1
+        )
         for parent_id, row in parent_rows.iterrows():
             parameters = self._extract_parameters(row, table_name, foreign_key)
             table_meta = self._table_synthesizers[table_name].get_metadata()
             synthesizer = self._synthesizer(table_meta, **self._table_parameters[table_name])
             synthesizer._set_parameters(parameters)
             try:
-                with np.random.Generator(np.random.get_state()[1]):
-                    likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)
+                likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)
 
             except (AttributeError, np.linalg.LinAlgError):
                 likelihoods[parent_id] = None

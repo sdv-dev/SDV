@@ -50,12 +50,48 @@ class TestDataProcessor:
         assert transformer.learn_rounding_scheme is False
         assert transformer.enforce_min_max_values is False
 
+    @patch('rdt.transformers')
+    def test__detect_multi_column_transformers_with_address(self, transfomers_mock):
+        """Test the ``_detect_multi_column_transformers`` method with address columns."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'},
+            },
+            'column_relationships': [
+                {
+                    'type': 'address',
+                    'column_names': ['country_column', 'city_column']
+                }
+            ]
+        })
+        metadata.validate()
+        dp = DataProcessor(SingleTableMetadata())
+        dp.metadata = metadata
+        dp._locales = ['en_US', 'en_GB']
+        randomlocationgenerator = Mock()
+        transfomers_mock.address.RandomLocationGenerator.return_value = randomlocationgenerator
+
+        # Run
+        result = dp._detect_multi_column_transformers()
+
+        # Assert
+        transfomers_mock.address.RandomLocationGenerator.assert_called_once_with(
+            locales=['en_US', 'en_GB']
+        )
+        assert result == {
+            ('country_column', 'city_column'): randomlocationgenerator
+        }
+
     @patch('sdv.data_processing.data_processor.rdt.transformers.RegexGenerator')
     @patch('sdv.data_processing.data_processor.get_default_transformers')
     @patch('sdv.data_processing.data_processor.rdt')
     @patch('sdv.data_processing.data_processor.DataProcessor._update_numerical_transformer')
+    @patch('sdv.data_processing.data_processor.DataProcessor._detect_multi_column_transformers')
     def test___init__(
-        self, update_transformer_mock, mock_rdt, mock_default_transformers, mock_regex_generator
+        self, detect_multi_column_transformers_mock, update_transformer_mock, mock_rdt,
+        mock_default_transformers, mock_regex_generator
     ):
         """Test the ``__init__`` method.
 
@@ -87,6 +123,8 @@ class TestDataProcessor:
         }
 
         mock_regex_generator.return_value = 'RegexGenerator()'
+
+        detect_multi_column_transformers_mock.return_value = {}
 
         # Run
         data_processor = DataProcessor(
@@ -128,6 +166,8 @@ class TestDataProcessor:
         }
 
         assert data_processor._transformers_by_sdtype == expected_default_transformers
+        detect_multi_column_transformers_mock.assert_called_once()
+        assert data_processor.grouped_columns_to_transformers == {}
 
     def test___init___without_mocks(self):
         """Test the ``__init__`` method without using mocks.
@@ -165,20 +205,9 @@ class TestDataProcessor:
         expected_list = ['col1', 'col2', 'col3', 'col4']
         assert column == expected_list
 
-    def test__check_import_address_transformers_without_premium_feature(self):
-        """Test ``_check_import_address_transformers` `when the user doesn't have the feature."""
-        # Setup
-        dp = DataProcessor(SingleTableMetadata())
-
-        # Run and Assert
-        expected_message = (
-            'You must have SDV Enterprise with the address add-on to use the address features'
-        )
-        with pytest.raises(ImportError, match=expected_message):
-            dp._check_import_address_transformers()
-
     @patch('rdt.transformers')
-    def test__get_columns_in_address_transformer(self, mock_rdt_transformers):
+    @patch('sdv.data_processing.data_processor._check_import_address_transformers')
+    def test__get_columns_in_address_transformer(self, mock_check_import, mock_rdt_transformers):
         """Test the ``_get_columns_in_address_transformer`` method."""
         # Setup
         class RandomLocationGeneratorMock:
@@ -187,11 +216,10 @@ class TestDataProcessor:
         class RegionalAnonymizerMock:
             pass
 
-        mock_rdt_transformers.RandomLocationGenerator = RandomLocationGeneratorMock
-        mock_rdt_transformers.RegionalAnonymizer = RegionalAnonymizerMock
+        mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
+        mock_rdt_transformers.address.RegionalAnonymizer = RegionalAnonymizerMock
 
         dp = DataProcessor(SingleTableMetadata())
-        dp._check_import_address_transformers = Mock()
 
         dp.RandomLocationGenerator = RandomLocationGeneratorMock
         dp.RegionalAnonymizer = RegionalAnonymizerMock
@@ -208,86 +236,7 @@ class TestDataProcessor:
         # Assert
         expected_columns = ['col1', 'col2', 'col3', 'col4']
         assert columns == expected_columns
-        dp._check_import_address_transformers.assert_called_once()
-
-    @patch('rdt.transformers')
-    def test__get_address_transformer(self, mock_rdt_transformers):
-        """Test the ``_get_address_transformer`` method."""
-        # Setup
-        class RandomLocationGeneratorMock:
-            def __init__(self, locales):
-                pass
-
-        class RegionalAnonymizerMock:
-            def __init__(self, locales):
-                pass
-
-        mock_rdt_transformers.RandomLocationGenerator = RandomLocationGeneratorMock
-        mock_rdt_transformers.RegionalAnonymizer = RegionalAnonymizerMock
-
-        dp = DataProcessor(SingleTableMetadata())
-        dp._check_import_address_transformers = Mock()
-
-        # Run and Assert
-        transformer = dp._get_address_transformer('full')
-        assert isinstance(transformer, RandomLocationGeneratorMock)
-        dp._check_import_address_transformers.assert_called_once()
-
-        transformer = dp._get_address_transformer('street_address')
-        assert isinstance(transformer, RegionalAnonymizerMock)
-
-    def test__set_address_transformer(self):
-        """Test the ``set_address_transformer`` method."""
-        # Setup
-        metadata = SingleTableMetadata().load_from_dict({
-            'columns': {
-                'country_column': {'sdtype': 'country_code'},
-                'city_column': {'sdtype': 'city'},
-            }
-        })
-        dp = DataProcessor(metadata)
-        transformer = Mock()
-        transformer._validate_sdtypes = Mock()
-        columns_to_sdtypes = {'country_column': 'country_code', 'city_column': 'city'}
-        dp._get_address_transformer = Mock(return_value=transformer)
-        columns = ('country_column', 'city_column')
-
-        # Run
-        dp.set_address_transformer(columns, 'full')
-
-        # Assert
-        dp._get_address_transformer.assert_called_once_with('full')
-        transformer._validate_sdtypes.assert_called_once_with(columns_to_sdtypes)
-        assert dp.grouped_columns_to_transformers == {columns: transformer}
-
-    def test__set_address_transformer_prepared_for_fitting_true(self):
-        """Test the ``set_address_transformer`` method when ``_prepared_for_fitting`` is True."""
-        # Setup
-        metadata = SingleTableMetadata().load_from_dict({
-            'columns': {
-                'country_column': {'sdtype': 'country_code'},
-                'city_column': {'sdtype': 'city'},
-            }
-        })
-        dp = DataProcessor(metadata)
-        transformer = Mock()
-        transformer._validate_sdtypes = Mock()
-        columns_to_sdtypes = {'country_column': 'country_code', 'city_column': 'city'}
-        dp._get_address_transformer = Mock(return_value=transformer)
-        columns = ('country_column', 'city_column')
-        dp.update_transformers = Mock()
-        dp._prepared_for_fitting = True
-
-        # Run
-        dp.set_address_transformer(columns, 'full')
-
-        # Assert
-        dp.update_transformers.assert_called_once_with(
-            {('country_column', 'city_column'): transformer}
-        )
-        dp._get_address_transformer.assert_called_once_with('full')
-        transformer._validate_sdtypes.assert_called_once_with(columns_to_sdtypes)
-        assert dp.grouped_columns_to_transformers == {columns: transformer}
+        mock_check_import.assert_called_once()
 
     def test_filter_valid(self):
         """Test that we are calling the ``filter_valid`` of each constraint over the data."""
@@ -387,7 +336,6 @@ class TestDataProcessor:
             }
         ]
         instance.add_constraints(constraints)
-
         instance._constraints_to_reverse = [Positive('col')]
 
         # Run
@@ -635,7 +583,7 @@ class TestDataProcessor:
 
         # Assert
         positive_constraint._validate_metadata.assert_called_once_with(
-            metadata, column_name='col1'
+            column_name='col1'
         )
         mock_constraint._get_class_from_dict.assert_called_once_with('Positive')
 
@@ -657,7 +605,7 @@ class TestDataProcessor:
         dp._validate_constraint_dict(constraint_dict)
 
         # Assert
-        custom_constraint._validate_metadata.assert_called_once_with(metadata, column_name='col1')
+        custom_constraint._validate_metadata.assert_called_once_with(column_name='col1')
 
     def test__validate_constraint_dict_address_columns(self):
         """Test that the validation raises an error when one column is an address."""
@@ -730,6 +678,8 @@ class TestDataProcessor:
         dp.add_constraints(constraints)
 
         # Assert
+        del dp._constraints_list[0]['constraint_parameters']['metadata']
+        del dp._constraints_list[1]['constraint_parameters']['metadata']
         assert dp._constraints_list == constraints
         assert id(dp._constraints_list) != id(constraints)
 
@@ -763,6 +713,8 @@ class TestDataProcessor:
         dp.add_constraints(constraints)
 
         # Assert
+        del dp._constraints_list[1]['constraint_parameters']['metadata']
+        del dp._constraints_list[2]['constraint_parameters']['metadata']
         assert dp._constraints_list == [
             {
                 'constraint_class': 'UniqueCombinations',
@@ -861,7 +813,10 @@ class TestDataProcessor:
         instance._constraints_list = [
             {
                 'constraint_class': 'Positive',
-                'constraint_parameters': {'column_name': 'a'}
+                'constraint_parameters': {
+                    'column_name': 'a',
+                    'metadata': SingleTableMetadata()
+                },
             }
         ]
 
@@ -869,6 +824,7 @@ class TestDataProcessor:
         result = DataProcessor.get_constraints(instance)
 
         # Assert
+        del instance._constraints_list[0]['constraint_parameters']['metadata']
         assert instance._constraints_list == result
         assert id(result) != id(instance._constraints_list)
 
@@ -1430,6 +1386,37 @@ class TestDataProcessor:
         )
         with pytest.raises(NotFittedError, match=error_msg):
             dp.update_transformers({'column': None})
+
+    def test_update_transformer_with_multi_column(self):
+        """Test when a multi-column transformer is updated."""
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        dp.grouped_columns_to_transformers = {
+            ('col_3', 'col_4'): 'transformer_3',
+        }
+        dp._hyper_transformer = Mock()
+        dp._hyper_transformer.field_transformers = {
+            'col_1': 'transformer_1',
+            'col_2': 'transformer_2',
+            ('col_3', 'col_4'): 'transformer_3'
+        }
+
+        def update_transformers_effect(update_dict):
+            dp._hyper_transformer.field_transformers = {
+                'col_2': 'transformer_2',
+                ('col_1', 'col_3'): 'transformer_4',
+                'col_4': 'transformer_3'
+            }
+
+        dp._hyper_transformer.update_transformers.side_effect = update_transformers_effect
+
+        # Run
+        dp.update_transformers({('col_1', 'col_3'): 'transformer_4'})
+
+        # Assert
+        assert dp.grouped_columns_to_transformers == {
+            ('col_1', 'col_3'): 'transformer_4',
+        }
 
     def test_update_transformers_ignores_rdt_refit_warning(self):
         """Test silencing hypertransformer refit warning (replaced by SDV warning elsewhere)"""

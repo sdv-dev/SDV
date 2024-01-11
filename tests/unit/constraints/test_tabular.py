@@ -3,7 +3,7 @@
 import operator
 import re
 from datetime import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -515,13 +515,14 @@ class TestCreateCustomConstraint():
         custom_constraint = custom_constraint(['col'])
 
         # Run
-        reduced_cusom_constraint = custom_constraint.__reduce__()
+        reduced_custom_constraint = custom_constraint.__reduce__()
 
         # Assert
-        assert isinstance(reduced_cusom_constraint[0], _RecreateCustomConstraint)
-        assert (is_valid_fn, transform_fn, reverse_transfom_fn) == reduced_cusom_constraint[1]
-        assert reduced_cusom_constraint[2] == {
+        assert isinstance(reduced_custom_constraint[0], _RecreateCustomConstraint)
+        assert (is_valid_fn, transform_fn, reverse_transfom_fn) == reduced_custom_constraint[1]
+        assert reduced_custom_constraint[2] == {
             '__kwargs__': {'column_names': ['col']},
+            'metadata': None,
             'column_names': ['col'],
             'constraint_columns': ('col',),
             'kwargs': {}
@@ -1234,17 +1235,18 @@ class TestInequality():
         Side Effect:
         - Raises ``ValueError`` if only one of the low/high columns is datetime.
         """
-        # Setupy
-        table_data = pd.DataFrame({
-            'a': pd.to_datetime(['2020-01-01']),
-            'b': ['a']
-        })
+        # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
+        instance.metadata = Mock()
+        instance.metadata.columns = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'categorical'}
+        }
 
         # Run / Assert
         err_msg = 'Both high and low must be datetime.'
         with pytest.raises(ValueError, match=err_msg):
-            instance._get_is_datetime(table_data)
+            instance._get_is_datetime()
 
     def test__validate_columns_exist_incorrect_columns(self):
         """Test the ``Inequality._validate_columns_exist`` method.
@@ -1286,13 +1288,18 @@ class TestInequality():
         instance = Inequality(low_column_name='a', high_column_name='b')
         instance._validate_columns_exist = Mock()
         instance._get_is_datetime = Mock(return_value='abc')
+        instance.metadata = Mock()
+        instance.metadata.columns = {
+            'a': {'sdtype': 'datetime', 'datetime_format': '%y %m, %d'},
+            'b': {'sdtype': 'datetime', 'datetime_format': '%y %m, %d'},
+        }
 
         # Run
         instance._fit(table_data)
 
         # Assert
         instance._validate_columns_exist.assert_called_once_with(table_data)
-        instance._get_is_datetime.assert_called_once_with(table_data)
+        instance._get_is_datetime.assert_called_once()
         assert instance._is_datetime == 'abc'
         assert instance._dtype == pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
 
@@ -1312,6 +1319,11 @@ class TestInequality():
             'b': [4., 5., 6.]
         })
         instance = Inequality(low_column_name='a', high_column_name='b')
+        instance.metadata = Mock()
+        instance.metadata.columns = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'datetime'}
+        }
 
         # Run
         instance._fit(table_data)
@@ -1335,6 +1347,11 @@ class TestInequality():
             'b': pd.to_datetime(['2020-01-02'])
         })
         instance = Inequality(low_column_name='a', high_column_name='b')
+        instance.metadata = Mock()
+        instance.metadata.columns = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'datetime'}
+        }
 
         # Run
         instance._fit(table_data)
@@ -2054,15 +2071,13 @@ class TestScalarInequality():
         - Raises ``ValueError`` if only one of column/value is datetime.
         """
         # Setupy
-        table_data = pd.DataFrame({
-            'a': pd.to_datetime(['2020-01-01']),
-        })
         instance = ScalarInequality(column_name='a', value=1, relation='<')
+        instance.metadata = Mock(columns={'a': {'sdtype': 'datetime'}})
 
         # Run / Assert
         err_msg = 'Both column and value must be datetime.'
         with pytest.raises(ValueError, match=err_msg):
-            instance._get_is_datetime(table_data)
+            instance._get_is_datetime()
 
     def test__validate_columns_exist_incorrect_columns(self):
         """Test the ``ScalarInequality._validate_columns_exist`` method.
@@ -2110,7 +2125,7 @@ class TestScalarInequality():
 
         # Assert
         instance._validate_columns_exist.assert_called_once_with(table_data)
-        instance._get_is_datetime.assert_called_once_with(table_data)
+        instance._get_is_datetime.assert_called_once()
         assert not instance._is_datetime
         assert instance._dtype == pd.Series([1]).dtype  # exact dtype (32 or 64) depends on OS
 
@@ -2130,6 +2145,7 @@ class TestScalarInequality():
             'b': [4., 5., 6.]
         })
         instance = ScalarInequality(column_name='b', value=10, relation='>')
+        instance.metadata = MagicMock()
 
         # Run
         instance._fit(table_data)
@@ -2153,6 +2169,10 @@ class TestScalarInequality():
             'b': pd.to_datetime(['2020-01-02'])
         })
         instance = ScalarInequality(column_name='b', value='2020-01-01', relation='>')
+        instance.metadata = Mock(columns={
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'datetime'},
+        })
 
         # Run
         instance._fit(table_data)
@@ -2978,15 +2998,15 @@ class TestRange():
             - The output should be True.
         """
         # Setup
-        table_data = pd.DataFrame({
-            'join_date': pd.to_datetime(['2021-02-10', '2021-05-10', '2021-08-11']),
-            'promotion_date': pd.to_datetime(['2022-05-10', '2022-06-10', '2022-11-17']),
-            'retirement_date': pd.to_datetime(['2050-10-11', '2058-10-04', '2075-11-14'])
-        })
         instance = Range('join_date', 'promotion_date', 'retirement_date')
+        instance.metadata = Mock(columns={
+            'join_date': {'sdtype': 'datetime'},
+            'promotion_date': {'sdtype': 'datetime'},
+            'retirement_date': {'sdtype': 'datetime'},
+        })
 
         # Run
-        is_datetime = instance._get_is_datetime(table_data)
+        is_datetime = instance._get_is_datetime()
 
         # Assert
         assert is_datetime
@@ -3008,15 +3028,11 @@ class TestRange():
             - The output should be false since all the data is ``int``.
         """
         # Setup
-        table_data = pd.DataFrame({
-            'age_when_joined': [18, 19, 20],
-            'current_age': [21, 22, 25],
-            'retirement_age': [65, 68, 75]
-        })
         instance = Range('age_when_joined', 'current_age', 'retirement_age')
+        instance.metadata = MagicMock()
 
         # Run
-        is_datetime = instance._get_is_datetime(table_data)
+        is_datetime = instance._get_is_datetime()
 
         # Assert
         assert not is_datetime
@@ -3039,17 +3055,17 @@ class TestRange():
             - Value error with the expected message should be raised.
         """
         # Setup
-        table_data = pd.DataFrame({
-            'join_date': pd.to_datetime(['2021-02-10', '2021-05-10', '2021-08-11']),
-            'promotion_date': pd.to_datetime(['2022-05-10', '2022-06-10', '2022-11-17']),
-            'current_age': [21, 22, 25],
-        })
         instance = Range('join_date', 'promotion_date', 'current_age')
+        instance.metadata = Mock(columns={
+            'join_date': {'sdtype': 'datetime'},
+            'promotion_date': {'sdtype': 'datetime'},
+            'current_age': {'sdtype': 'numerical'},
+        })
         expected_text = 'The constraint column and bounds must all be datetime.'
 
         # Run
         with pytest.raises(ValueError, match=expected_text):
-            instance._get_is_datetime(table_data)
+            instance._get_is_datetime()
 
     def test__fit(self):
         """Test the ``_fit`` method of ``Range``.
@@ -3075,6 +3091,7 @@ class TestRange():
             'current_age#age_when_joined#retirement_age': [1, 2, 3]
         }, dtype=np.int64)
         instance = Range('age_when_joined', 'current_age', 'retirement_age')
+        instance.metadata = MagicMock()
 
         # Run
         instance._fit(table_data)
@@ -3206,17 +3223,16 @@ class TestRange():
     def test__transform(self):
         """Test the ``_transform`` method for ``Range``."""
         # Setup
-        instance = Range('a', 'b', 'c')
-        instance.low_diff_column_name = 'a#b'
-        instance.high_diff_column_name = 'b#c'
-
-        # Run
         table_data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [2, 5, 5],
             'c': [6, 8, 10],
         })
+        instance = Range('a', 'b', 'c')
+        instance.low_diff_column_name = 'a#b'
+        instance.high_diff_column_name = 'b#c'
 
+        # Run
         out = instance._transform(table_data)
 
         # Assert
@@ -3224,6 +3240,33 @@ class TestRange():
             'a': [1, 2, 3],
             'a#b': [np.log(2), np.log(4), np.log(3)],
             'b#c': [np.log(5), np.log(4), np.log(6)],
+        })
+        pd.testing.assert_frame_equal(out, expected_out)
+
+    def test__transform_datetime(self):
+        """Test the ``_transform`` method for ``Range`` when columns are datetime."""
+        # Setup
+        table_data = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01', '2020-01-02']),
+            'b': pd.to_datetime(['2020-01-01', '2020-01-02']),
+            'c': pd.to_datetime(['2020-01-01', '2020-01-02']),
+        })
+        instance = Range('a', 'b', 'c')
+        instance.low_diff_column_name = 'a#b'
+        instance.high_diff_column_name = 'b#c'
+        instance._is_datetime = True
+        instance._low_datetime_format = '%Y-%m-%d'
+        instance._middle_datetime_format = '%Y-%m-%d'
+        instance._high_datetime_format = '%Y-%m-%d'
+
+        # Run
+        out = instance._transform(table_data)
+
+        # Assert
+        expected_out = pd.DataFrame({
+            'a': pd.to_datetime(['2020-01-01', '2020-01-02']),
+            'a#b': [0., 0.],
+            'b#c': [0., 0.],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -3242,6 +3285,7 @@ class TestRange():
             'b#c': [np.log(5), np.log(4), np.log(6)],
         })
         instance = Range('a', 'b', 'c')
+        instance.metadata = MagicMock()
 
         # Run
         instance.fit(table_data)
@@ -3266,6 +3310,11 @@ class TestRange():
         })
 
         instance = Range('a', 'b', 'c')
+        instance.metadata = Mock(columns={
+            'a': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
+            'b': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
+            'c': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
+        })
 
         # Run
         instance.fit(table_data)
@@ -3649,13 +3698,11 @@ class TestScalarRange():
             - The output should be True.
         """
         # Setup
-        table_data = pd.DataFrame({
-            'promotion_date': pd.to_datetime(['2022-05-10', '2022-06-10', '2022-11-17']),
-        })
         instance = ScalarRange('promotion_date', '2021-02-10', '2050-10-11')
+        instance.metadata = Mock(columns={'promotion_date': {'sdtype': 'datetime'}})
 
         # Run
-        is_datetime = instance._get_is_datetime(table_data)
+        is_datetime = instance._get_is_datetime()
 
         # Assert
         assert is_datetime
@@ -3677,11 +3724,11 @@ class TestScalarRange():
             - The output should be false since all the data is ``int``.
         """
         # Setup
-        table_data = pd.DataFrame({'current_age': [21, 22, 25]})
         instance = ScalarRange('current_age', 21, 30)
+        instance.metadata = MagicMock()
 
         # Run
-        is_datetime = instance._get_is_datetime(table_data)
+        is_datetime = instance._get_is_datetime()
 
         # Assert
         assert not is_datetime
@@ -3703,15 +3750,13 @@ class TestScalarRange():
             - The output should be false since all the data is ``int``.
         """
         # Setup
-        table_data = pd.DataFrame({
-            'promotion_date': pd.to_datetime(['2022-05-10', '2022-06-10', '2022-11-17']),
-        })
         instance = ScalarRange('promotion_date', 18, 25)
+        instance.metadata = Mock(columns={'promotion_date': {'sdtype': 'datetime'}})
         expected_text = 'The constraint column and bounds must all be datetime.'
 
         # Run
         with pytest.raises(ValueError, match=expected_text):
-            instance._get_is_datetime(table_data)
+            instance._get_is_datetime()
 
     def test__get_diff_column_name(self):
         """Test the ``ScalarRange._get_diff_column_name`` method.
@@ -3760,6 +3805,7 @@ class TestScalarRange():
         # Setup
         table_data = pd.DataFrame({'current_age': [21, 22, 25]})
         instance = ScalarRange('current_age', 18, 20)
+        instance.metadata = MagicMock()
 
         # Run
         instance._fit(table_data)
@@ -3788,6 +3834,7 @@ class TestScalarRange():
             ]
         })
         instance = ScalarRange('checkin', '2022-05-05', '2022-06-01')
+        instance.metadata = Mock(columns={'checkin': {'sdtype': 'datetime'}})
 
         # Run
         instance._fit(table_data)
@@ -3848,6 +3895,20 @@ class TestScalarRange():
         # Assert
         assert all(result)
 
+    def test_is_valid(self):
+        """Test it for datetime."""
+        # Setup
+        table_data = pd.DataFrame({'current_age': [pd.to_datetime('2021-02-02')]})
+        instance = ScalarRange('current_age', '2021-02-01', '2021-02-03')
+        instance._is_datetime = True
+        instance._datetime_format = '%Y-%m-%d'
+
+        # Run
+        result = instance.is_valid(table_data)
+
+        # Assert
+        assert all(result)
+
     def test_is_valid_invalid(self):
         """Test the ``ScalarRange.is_valid``.
 
@@ -3891,6 +3952,7 @@ class TestScalarRange():
         table_data = pd.DataFrame({'current_age': [21, 22, 25]})
         instance = ScalarRange('current_age', 20, 28)
         mock_logit.return_value = [1, 2, 3]
+        instance.metadata = MagicMock()
 
         # Run
         instance.fit(table_data)
@@ -3925,6 +3987,7 @@ class TestScalarRange():
         transformed_data = pd.DataFrame({'current_age#20#28': [1, 2, 3]})
         mock_sigmoid.return_value = pd.Series([21, 22, 25])
         instance = ScalarRange('current_age', 20, 28)
+        instance.metadata = MagicMock()
 
         # Run
         instance.fit(table_data)
@@ -3963,7 +4026,7 @@ class TestScalarRange():
         instance = ScalarRange('current_age', 20, 28)
         instance._transformed_column = 'current_age#20#28'
         instance._is_datetime = True
-        mock_pd.to_datetime.side_effect = lambda x: pd.to_datetime('2021-02-02 10:10:59')
+        mock_pd.to_datetime.side_effect = lambda x, format: pd.to_datetime('2021-02-02 10:10:59')
 
         # Run
         output = instance.reverse_transform(transformed_data)

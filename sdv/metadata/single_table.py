@@ -6,6 +6,7 @@ import re
 import warnings
 from copy import deepcopy
 from datetime import datetime
+from itertools import combinations
 
 import pandas as pd
 from rdt.transformers.pii.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
@@ -14,6 +15,7 @@ from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
+from sdv.metadata.validation import validate_address_sdtypes
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import (
@@ -50,6 +52,7 @@ class SingleTableMetadata:
         'alternate_keys',
         'sequence_key',
         'sequence_index',
+        'column_relationships',
         'METADATA_SPEC_VERSION'
     ])
 
@@ -90,6 +93,10 @@ class SingleTableMetadata:
         'vin': 'vin',
         'licenseplate': 'license_plate',
         'license': 'license_plate',
+    }
+
+    _COLUMN_RELATIONSHIP_TYPES = {
+        'address': validate_address_sdtypes,
     }
 
     METADATA_SPEC_VERSION = 'SINGLE_TABLE_V1'
@@ -168,6 +175,7 @@ class SingleTableMetadata:
         self.alternate_keys = []
         self.sequence_key = None
         self.sequence_index = None
+        self.column_relationships = []
         self._version = self.METADATA_SPEC_VERSION
 
     def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
@@ -370,6 +378,7 @@ class SingleTableMetadata:
             data (pandas.DataFrame):
                 The data to be analyzed.
         """
+        first_pii_field = None
         for field in data:
             column_data = data[field]
             clean_data = column_data.dropna()
@@ -399,14 +408,19 @@ class SingleTableMetadata:
                         sdtype = 'unknown'
 
             column_dict = {'sdtype': sdtype}
-
             if sdtype in self._REFERENCE_TO_SDTYPE.values() or sdtype == 'unknown':
                 column_dict['pii'] = True
-            elif sdtype == 'datetime' and dtype == 'O':
+            if sdtype in self._REFERENCE_TO_SDTYPE.values() and first_pii_field is None:
+                first_pii_field = field
+            if sdtype == 'datetime' and dtype == 'O':
                 datetime_format = get_datetime_format(column_data.iloc[:100])
                 column_dict['datetime_format'] = datetime_format
 
             self.columns[field] = deepcopy(column_dict)
+
+        # When no primary key column was set, choose the first pii field
+        if self.primary_key is None and first_pii_field:
+            self.primary_key = first_pii_field
 
     def detect_from_dataframe(self, data):
         """Detect the metadata from a ``pd.DataFrame`` object.
@@ -450,10 +464,9 @@ class SingleTableMetadata:
         self.detect_from_dataframe(data)
 
     @staticmethod
-    def _validate_datatype(column_name):
-        """Check whether column_name is a string or a tuple of strings."""
-        return isinstance(column_name, str) or \
-            isinstance(column_name, tuple) and all(isinstance(i, str) for i in column_name)
+    def _validate_key_datatype(column_name):
+        """Check whether column_name is a string."""
+        return isinstance(column_name, str)
 
     def _validate_keys_sdtype(self, keys, key_type):
         """Validate that each key is of type 'id' or a valid Faker function."""
@@ -471,9 +484,9 @@ class SingleTableMetadata:
     def _validate_key(self, column_name, key_type):
         """Validate the primary and sequence keys."""
         if column_name is not None:
-            if not self._validate_datatype(column_name):
+            if not self._validate_key_datatype(column_name):
                 raise InvalidMetadataError(
-                    f"'{key_type}_key' must be a string or tuple of strings.")
+                    f"'{key_type}_key' must be a string.")
 
             keys = {column_name} if isinstance(column_name, str) else set(column_name)
             invalid_ids = keys - set(self.columns)
@@ -489,8 +502,8 @@ class SingleTableMetadata:
         """Set the metadata primary key.
 
         Args:
-            column_name (str, tuple):
-                Name (or tuple of names) of the primary key column(s).
+            column_name (str):
+                Name of the primary key column(s).
         """
         self._validate_key(column_name, 'primary')
         if column_name in self.alternate_keys:
@@ -512,8 +525,8 @@ class SingleTableMetadata:
         """Set the metadata sequence key.
 
         Args:
-            column_name (str, tuple):
-                Name (or tuple of names) of the sequence key column(s).
+            column_name (str):
+                Name of the sequence key column(s).
         """
         self._validate_key(column_name, 'sequence')
         if self.sequence_key is not None:
@@ -526,9 +539,9 @@ class SingleTableMetadata:
 
     def _validate_alternate_keys(self, column_names):
         if not isinstance(column_names, list) or \
-           not all(self._validate_datatype(column_name) for column_name in column_names):
+           not all(self._validate_key_datatype(column_name) for column_name in column_names):
             raise InvalidMetadataError(
-                "'alternate_keys' must be a list of strings or a list of tuples of strings."
+                "'alternate_keys' must be a list of strings."
             )
 
         keys = set()
@@ -554,8 +567,8 @@ class SingleTableMetadata:
         """Set the metadata alternate keys.
 
         Args:
-            column_names (list[str], list[tuple]):
-                List of names (or tuple of names) of the alternate key columns.
+            column_names (list[str]):
+                List of names of the alternate key columns.
         """
         self._validate_alternate_keys(column_names)
         for column in column_names:
@@ -608,6 +621,124 @@ class SingleTableMetadata:
         except InvalidMetadataError as e:
             errors.append(e)
 
+    def _validate_column_relationship(self, relationship):
+        """Validate a column relationship.
+
+        Verify that a column relationship has a valid relationship type, has
+        columns that are present in the metadata, and that those columns have
+        valid sdtypes for the relationship type.
+
+        Args:
+            relationship (dict):
+                Column relationship to validate.
+
+        Raises:
+            - ``InvalidMetadataError`` if relationship is invalid
+        """
+        relationship_type = relationship['type']
+        column_names = relationship['column_names']
+        if relationship_type not in self._COLUMN_RELATIONSHIP_TYPES:
+            raise InvalidMetadataError(
+                f"Unknown column relationship type '{relationship_type}'. "
+                f'Must be one of {list(self._COLUMN_RELATIONSHIP_TYPES.keys())}.'
+            )
+
+        errors = []
+        for column in column_names:
+            if column not in self.columns:
+                errors.append(f"Column '{column}' not in metadata.")
+            elif self.primary_key == column:
+                errors.append(
+                    f"Cannot use primary key '{column}' in column relationship."
+                )
+
+        columns_to_sdtypes = {
+            column: self.columns.get(column, {}).get('sdtype') for column in column_names
+        }
+        try:
+            self._COLUMN_RELATIONSHIP_TYPES[relationship_type](columns_to_sdtypes)
+
+        except ImportError:
+            warnings.warn(
+                f"The metadata contains a column relationship of type '{relationship_type}'. "
+                f'which requires the {relationship_type} add-on.'
+                'This relationship will be ignored. For higher quality data in this'
+                ' relationship, please inquire about the SDV Enterprise tier.'
+            )
+            raise ImportError
+
+        except Exception as e:
+            errors.append(str(e))
+
+        if errors:
+            raise InvalidMetadataError('\n'.join(errors))
+
+    def _validate_all_column_relationships(self, column_relationships):
+        """Validate all column relationships.
+
+        Validates that all column relationships are well formed and that
+        columns are not used in more than one column relationship.
+
+        Args:
+            column_relationships (list[dict]):
+                List of column relationships to validate.
+
+        Raises:
+            - ``InvalidMetadataError`` if the relationships are invalid.
+        """
+        # Validate relationship keys
+        valid_relationship_keys = {'type', 'column_names'}
+        for relationship in column_relationships:
+            if set(relationship.keys()) != valid_relationship_keys:
+                unknown_keys = set(relationship.keys()).difference(valid_relationship_keys)
+                raise InvalidMetadataError(
+                    f'Relationship has invalid keys {unknown_keys}.'
+                )
+
+        # Validate no repeated columns across different column relationships
+        repeated_columns = set()
+        for relationship_a, relationship_b in combinations(column_relationships, 2):
+            repeated_columns |= set(
+                relationship_a['column_names']) & set(
+                relationship_b['column_names'])
+
+        if repeated_columns:
+            raise InvalidMetadataError(
+                f'Columns {repeated_columns} are found in multiple column relationships.')
+
+        # Validate each individual relationship
+        errors = []
+        self._valid_column_relationships = deepcopy(column_relationships)
+        for idx, relationship in enumerate(column_relationships):
+            try:
+                self._append_error(
+                    errors,
+                    self._validate_column_relationship,
+                    relationship,
+                )
+            except ImportError:
+                self._valid_column_relationships.pop(idx)
+
+        if errors:
+            raise InvalidMetadataError(
+                'Column relationships have following errors:\n' +
+                '\n'.join([str(e) for e in errors])
+            )
+
+    def add_column_relationship(self, relationship_type, column_names):
+        """Add a column relationship to the metadata.
+
+        Args:
+            relationship_type (str):
+                Type of column relationship.
+            column_names (list[str]):
+                List of column names in the relationship.
+        """
+        relationship = {'type': relationship_type, 'column_names': column_names}
+        to_check = [relationship] + self.column_relationships
+        self._validate_all_column_relationships(to_check)
+        self.column_relationships.append(relationship)
+
     def validate(self):
         """Validate the metadata.
 
@@ -628,6 +759,13 @@ class SingleTableMetadata:
         # Validate columns
         for column, kwargs in self.columns.items():
             self._append_error(errors, self._validate_column_args, column, **kwargs)
+
+        # Validate column relationships
+        self._append_error(
+            errors,
+            self._validate_all_column_relationships,
+            self.column_relationships
+        )
 
         if errors:
             raise InvalidMetadataError(

@@ -1,5 +1,30 @@
 # Release Notes
 
+## 1.9.0 - 2024-01-11
+
+This release makes a number of improvements. It introduces a new concept to the metadata known as column relationships! Column relationships can be used to define when certain groups of columns in a table should be treated as a special concept (eg. address). You can add a column relationship by using the new `add_column_relationship` method. The metadata detection was also improved by allowing semantic sdtypes (eg. 'email', 'phone_number') to be detected as primary keys.
+
+This release also patches some bugs. An issue messing up the likelihood matching in the `HMASynthesizer` was resolved. The `CTGANSynthesizer` no longer fails when using the `FixedCombinations` constraint. The `Inequality` constraint was also patched to handle datetimes better.
+
+### Deprecations
+
+* The `set_address_columns` method is deprecated in favor of `add_column_relationship`.
+
+### New Features
+
+* Improve error messages for composite keys - Issue [#1684](https://github.com/sdv-dev/SDV/issues/1684) by @frances-h
+* Add column relationship validation to single table metadata - Issue [#1698](https://github.com/sdv-dev/SDV/issues/1698) by @frances-h
+* Add add_column_relationship method to single table metadata - Issue [#1699](https://github.com/sdv-dev/SDV/issues/1699) by @frances-h
+* Make synthesizers work with column_relationships - Issue [#1700](https://github.com/sdv-dev/SDV/issues/1700) by @R-Palazzo
+* Metadata auto-detection should find primary keys of semantic sdtypes - Issue [#1724](https://github.com/sdv-dev/SDV/issues/1724) by @fealho
+
+### Bugs Fixed
+
+* InvalidDataError for Inequality constraint (even though data is valid) - Issue [#1692](https://github.com/sdv-dev/SDV/issues/1692) by @fealho
+* `BaseIndependentSampler` crashes because it tries to cast id columns - Issue [#1712](https://github.com/sdv-dev/SDV/issues/1712) by @pvk-developer
+* KeyError in `CTGANSynthesizer` when applying `FixedCombinations` constraint - Issue [#1717](https://github.com/sdv-dev/SDV/issues/1717) by @pvk-developer
+* Fix _get_likelihoods not generating likelihood values - Issue [#1720](https://github.com/sdv-dev/SDV/pull/1720) by @frances-h
+
 ## 1.8.0 - 2023-12-05
 
 This release adds support for the new Diagnostic Report from SDMetrics. This report calculates scores for three basic but important properties of your data: data validity, data structure and in the multi table case, relationship validity. Data validity checks that the columns of your data are valid (eg. correct range or values). Data structure makes sure the synthetic data has the correct columns. Relationship validity checks to make sure key references are correct and the cardinality is within ranges seen in the real data.

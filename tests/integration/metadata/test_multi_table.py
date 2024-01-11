@@ -1,6 +1,7 @@
 """Integration tests for Multi Table Metadata."""
 
 import json
+from unittest.mock import patch
 
 from sdv.datasets.demo import download_demo
 from sdv.metadata import MultiTableMetadata
@@ -23,6 +24,30 @@ def test_multi_table_metadata():
     }
     assert instance.tables == {}
     assert instance.relationships == []
+
+
+@patch('rdt.transformers')
+def test_add_column_relationship(mock_rdt_transformers):
+    """Test ``add_column_relationship`` method."""
+    # Setup
+    class RandomLocationGeneratorMock:
+        @classmethod
+        def _validate_sdtypes(cls, columns_to_sdtypes):
+            pass
+
+    mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
+    _, instance = download_demo('multi_table', 'fake_hotels')
+    instance.update_column('hotels', 'city', sdtype='city')
+    instance.update_column('hotels', 'state', sdtype='state')
+
+    # Run
+    instance.add_column_relationship('hotels', 'address', ['city', 'state'])
+
+    # Assert
+    instance.validate()
+    assert instance.tables['hotels'].column_relationships == [
+        {'type': 'address', 'column_names': ['city', 'state']}
+    ]
 
 
 def test_upgrade_metadata(tmp_path):
@@ -180,6 +205,7 @@ def test_detect_from_dataframes():
                     'billing_address': {'sdtype': 'unknown', 'pii': True},
                     'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True}
                 },
+                'primary_key': 'guest_email'
             }
         },
         'relationships': [
@@ -244,6 +270,7 @@ def test_detect_from_csvs(tmp_path):
                     'billing_address': {'sdtype': 'unknown', 'pii': True},
                     'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True}
                 },
+                'primary_key': 'guest_email'
             }
         },
         'relationships': [

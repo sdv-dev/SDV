@@ -405,6 +405,8 @@ class Inequality(Constraint):
         self.constraint_columns = (low_column_name, high_column_name)
         self._dtype = None
         self._is_datetime = None
+        self._low_datetime_format = None
+        self._high_datetime_format = None
         self._nan_column_name = None
 
     def _get_data(self, table_data):
@@ -412,10 +414,9 @@ class Inequality(Constraint):
         high = table_data[self._high_column_name].to_numpy()
         return low, high
 
-    def _get_is_datetime(self, table_data):
-        low, high = self._get_data(table_data)
-        is_low_datetime = is_datetime_type(low)
-        is_high_datetime = is_datetime_type(high)
+    def _get_is_datetime(self):
+        is_low_datetime = self.metadata.columns[self._low_column_name]['sdtype'] == 'datetime'
+        is_high_datetime = self.metadata.columns[self._high_column_name]['sdtype'] == 'datetime'
         is_datetime = is_low_datetime and is_high_datetime
 
         if not is_datetime and any([is_low_datetime, is_high_datetime]):
@@ -436,8 +437,13 @@ class Inequality(Constraint):
                 The Table data.
         """
         self._validate_columns_exist(table_data)
-        self._is_datetime = self._get_is_datetime(table_data)
         self._dtype = table_data[self._high_column_name].dtypes
+        self._is_datetime = self._get_is_datetime()
+        if self._is_datetime:
+            self._low_datetime_format = self.metadata.columns[self._low_column_name].get(
+                'datetime_format')
+            self._high_datetime_format = self.metadata.columns[self._high_column_name].get(
+                'datetime_format')
 
     def is_valid(self, table_data):
         """Check whether ``high`` is greater than ``low`` in each row.
@@ -452,8 +458,8 @@ class Inequality(Constraint):
         """
         low, high = self._get_data(table_data)
         if self._is_datetime and self._dtype == 'O':
-            low = cast_to_datetime64(low)
-            high = cast_to_datetime64(high)
+            low = cast_to_datetime64(low, self._low_datetime_format)
+            high = cast_to_datetime64(high, self._high_datetime_format)
 
         valid = pd.isna(low) | pd.isna(high) | self._operator(high, low)
         return valid
@@ -477,7 +483,12 @@ class Inequality(Constraint):
         """
         low, high = self._get_data(table_data)
         if self._is_datetime:
-            diff_column = get_datetime_diff(high, low)
+            diff_column = get_datetime_diff(
+                high=high,
+                low=low,
+                high_datetime_format=self._high_datetime_format,
+                low_datetime_format=self._low_datetime_format
+            )
         else:
             diff_column = high - low
 
@@ -616,12 +627,12 @@ class ScalarInequality(Constraint):
         self._diff_column_name = f'{self._column_name}#diff'
         self.constraint_columns = (column_name,)
         self._is_datetime = None
+        self._datetime_format = None
         self._dtype = None
         self._operator = INEQUALITY_TO_OPERATION[relation]
 
-    def _get_is_datetime(self, table_data):
-        column = table_data[self._column_name].to_numpy()
-        is_column_datetime = is_datetime_type(column)
+    def _get_is_datetime(self):
+        is_column_datetime = self.metadata.columns[self._column_name]['sdtype'] == 'datetime'
         is_value_datetime = is_datetime_type(self._value)
         is_datetime = is_column_datetime and is_value_datetime
 
@@ -642,8 +653,10 @@ class ScalarInequality(Constraint):
                 The Table data.
         """
         self._validate_columns_exist(table_data)
-        self._is_datetime = self._get_is_datetime(table_data)
         self._dtype = table_data[self._column_name].dtypes
+        self._is_datetime = self._get_is_datetime()
+        if self._is_datetime:
+            self._datetime_format = self.metadata.columns[self._column_name].get('datetime_format')
 
     def is_valid(self, table_data):
         """Say whether ``high`` is greater than ``low`` in each row.
@@ -658,7 +671,7 @@ class ScalarInequality(Constraint):
         """
         column = table_data[self._column_name].to_numpy()
         if self._is_datetime and self._dtype == 'O':
-            column = cast_to_datetime64(column)
+            column = cast_to_datetime64(column, datetime_format=self._datetime_format)
 
         valid = pd.isna(column) | self._operator(column, self._value)
         return valid
@@ -682,7 +695,7 @@ class ScalarInequality(Constraint):
         """
         column = table_data[self._column_name].to_numpy()
         if self._is_datetime:
-            column = cast_to_datetime64(column)
+            column = cast_to_datetime64(column, datetime_format=self._datetime_format)
             diff_column = abs(column - self._value)
             diff_column = diff_column.astype(np.float64)
         else:
@@ -839,18 +852,17 @@ class Range(Constraint):
         self.high_column_name = high_column_name
         self.nan_column_name = None
         self._is_datetime = None
+        self._low_datetime_format = None
+        self._middle_datetime_format = None
+        self._high_datetime_format = None
         self._dtype = None
         self.strict_boundaries = strict_boundaries
         self._operator = operator.lt if strict_boundaries else operator.le
 
-    def _get_is_datetime(self, table_data):
-        low = table_data[self.low_column_name]
-        middle = table_data[self.middle_column_name]
-        high = table_data[self.high_column_name]
-
-        is_low_datetime = is_datetime_type(low)
-        is_middle_datetime = is_datetime_type(middle)
-        is_high_datetime = is_datetime_type(high)
+    def _get_is_datetime(self):
+        is_low_datetime = self.metadata.columns[self.low_column_name]['sdtype'] == 'datetime'
+        is_middle_datetime = self.metadata.columns[self.middle_column_name]['sdtype'] == 'datetime'
+        is_high_datetime = self.metadata.columns[self.high_column_name]['sdtype'] == 'datetime'
         is_datetime = is_low_datetime and is_high_datetime and is_middle_datetime
 
         if not is_datetime and any([is_low_datetime, is_middle_datetime, is_high_datetime]):
@@ -866,7 +878,14 @@ class Range(Constraint):
                 The Table data.
         """
         self._dtype = table_data[self.middle_column_name].dtypes
-        self._is_datetime = self._get_is_datetime(table_data)
+        self._is_datetime = self._get_is_datetime()
+        if self._is_datetime:
+            self._low_datetime_format = self.metadata.columns[self.low_column_name].get(
+                'datetime_format')
+            self._middle_datetime_format = self.metadata.columns[self.middle_column_name].get(
+                'datetime_format')
+            self._high_datetime_format = self.metadata.columns[self.high_column_name].get(
+                'datetime_format')
 
         self.low_diff_column_name = f'{self.low_column_name}#{self.middle_column_name}'
         self.high_diff_column_name = f'{self.middle_column_name}#{self.high_column_name}'
@@ -923,8 +942,21 @@ class Range(Constraint):
         high = table_data[self.high_column_name].to_numpy()
 
         if self._is_datetime:
-            low_diff_column = get_datetime_diff(middle, low, self._dtype)
-            high_diff_column = get_datetime_diff(high, middle, self._dtype)
+            low_diff_column = get_datetime_diff(
+                middle,
+                low,
+                high_datetime_format=self._middle_datetime_format,
+                low_datetime_format=self._low_datetime_format,
+                dtype=self._dtype,
+            )
+            high_diff_column = get_datetime_diff(
+                high,
+                middle,
+                high_datetime_format=self._high_datetime_format,
+                low_datetime_format=self._middle_datetime_format,
+                dtype=self._dtype,
+            )
+
         else:
             low_diff_column = middle - low
             high_diff_column = high - middle
@@ -977,7 +1009,7 @@ class Range(Constraint):
 
         low = table_data[self.low_column_name].to_numpy()
         if self._is_datetime and self._dtype == 'O':
-            low = cast_to_datetime64(low)
+            low = cast_to_datetime64(low, self._low_datetime_format)
 
         middle = pd.Series(low_diff_column + low).astype(self._dtype)
         table_data[self.middle_column_name] = middle
@@ -1079,10 +1111,8 @@ class ScalarRange(Constraint):
 
         return token.join(components)
 
-    def _get_is_datetime(self, table_data):
-        data = table_data[self._column_name]
-
-        is_column_datetime = is_datetime_type(data)
+    def _get_is_datetime(self):
+        is_column_datetime = self.metadata.columns[self._column_name]['sdtype'] == 'datetime'
         is_low_datetime = is_datetime_type(self._low_value)
         is_high_datetime = is_datetime_type(self._high_value)
         is_datetime = is_low_datetime and is_high_datetime and is_column_datetime
@@ -1100,11 +1130,15 @@ class ScalarRange(Constraint):
                 Table data.
         """
         self._dtype = table_data[self._column_name].dtypes
-        self._is_datetime = self._get_is_datetime(table_data)
+        self._is_datetime = self._get_is_datetime()
         self._transformed_column = self._get_diff_column_name(table_data)
         if self._is_datetime:
-            self._low_value = cast_to_datetime64(self._low_value)
-            self._high_value = cast_to_datetime64(self._high_value)
+            self._datetime_format = self.metadata.columns[self._column_name].get(
+                'datetime_format')
+            self._low_value = cast_to_datetime64(
+                self._low_value, datetime_format=self._datetime_format)
+            self._high_value = cast_to_datetime64(
+                self._high_value, datetime_format=self._datetime_format)
 
     def is_valid(self, table_data):
         """Say whether the ``column_name`` is between the ``low`` and ``high`` values.
@@ -1120,7 +1154,7 @@ class ScalarRange(Constraint):
         data = table_data[self._column_name]
 
         if self._is_datetime:
-            data = cast_to_datetime64(data)
+            data = cast_to_datetime64(data, datetime_format=self._datetime_format)
 
         satisfy_low_bound = np.logical_or(
             self._operator(self._low_value, data),
@@ -1153,7 +1187,8 @@ class ScalarRange(Constraint):
         """
         data = table_data[self._column_name]
         if self._is_datetime:
-            data = cast_to_datetime64(table_data[self._column_name])
+            data = cast_to_datetime64(
+                table_data[self._column_name], datetime_format=self._datetime_format)
 
         data = logit(data, self._low_value, self._high_value)
         table_data[self._transformed_column] = data
@@ -1182,7 +1217,11 @@ class ScalarRange(Constraint):
         data = data.clip(self._low_value, self._high_value)
 
         if self._is_datetime:
-            table_data[self._column_name] = pd.to_datetime(data)
+            pandas_datetime_format = None
+            if self._datetime_format:
+                pandas_datetime_format = self._datetime_format.replace('%-', '%')
+            table_data[self._column_name] = pd.to_datetime(data, format=pandas_datetime_format)
+
         else:
             table_data[self._column_name] = data.astype(self._dtype)
 

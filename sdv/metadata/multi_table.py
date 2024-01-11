@@ -564,7 +564,52 @@ class MultiTableMetadata:
         warnings.warn('Sequential modeling is not yet supported on SDV Multi Table models.')
         self.tables[table_name].set_sequence_index(column_name)
 
+    def _validate_column_relationships_foreign_keys(
+            self, table_column_relationships, foreign_keys):
+        """Validate that a table's column relationships do not use any foreign keys.
+
+        Args:
+            table_column_relationships (list[dict]):
+                The list of column relationships for the table.
+            foreign_keys (list):
+                The list of foreign keys in the table.
+
+        Raises:
+            - ``InvalidMetadataError`` if foreign keys are used in any column relationships.
+        """
+        for column_relationship in table_column_relationships:
+            column_names = set(column_relationship.get('column_names', []))
+            invalid_columns = column_names.intersection(foreign_keys)
+            if invalid_columns:
+                raise InvalidMetadataError(
+                    f'Cannot use foreign keys {invalid_columns} in column relationship.'
+                )
+
+    def add_column_relationship(self, table_name, relationship_type, column_names):
+        """Add a column relationship to a table in the metadata.
+
+        Args:
+            table_name (str):
+                The name of the table to add this relationship to.
+            relationship_type (str):
+                The type of the relationship.
+            column_names (list[str]):
+                The list of column names involved in this relationship.
+        """
+        self._validate_table_exists(table_name)
+        foreign_keys = self._get_all_foreign_keys(table_name)
+        relationships = [{'type': relationship_type, 'column_names': column_names}] + \
+            self.tables[table_name].column_relationships
+        self._validate_column_relationships_foreign_keys(relationships, foreign_keys)
+        self.tables[table_name].add_column_relationship(relationship_type, column_names)
+
     def _validate_single_table(self, errors):
+        foreign_key_cols = defaultdict(list)
+        for relationship in self.relationships:
+            child_table = relationship.get('child_table_name')
+            child_foreign_key = relationship.get('child_foreign_key')
+            foreign_key_cols[child_table].append(child_foreign_key)
+
         for table_name, table in self.tables.items():
             if len(table.columns) == 0:
                 error_message = (
@@ -579,6 +624,13 @@ class MultiTableMetadata:
                 error = str(error).replace(
                     'The following errors were found in the metadata:\n', title)
                 errors.append(error)
+
+            try:
+                self._validate_column_relationships_foreign_keys(
+                    table.column_relationships, foreign_key_cols[table_name]
+                )
+            except Exception as col_relationship_error:
+                errors.append(str(col_relationship_error))
 
     def _append_relationships_errors(self, errors, method, *args, **kwargs):
         try:
