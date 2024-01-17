@@ -381,6 +381,7 @@ class SingleTableMetadata:
         first_pii_field = None
         for field in data:
             column_data = data[field]
+            has_nan = column_data.isna().any()
             clean_data = column_data.dropna()
             dtype = clean_data.infer_objects().dtype.kind
 
@@ -402,15 +403,17 @@ class SingleTableMetadata:
 
                 # Set the first ID column we detect to be the primary key
                 if sdtype == 'id':
-                    if self.primary_key is None:
+                    if self.primary_key is None and not has_nan:
                         self.primary_key = field
                     else:
                         sdtype = 'unknown'
 
             column_dict = {'sdtype': sdtype}
-            if sdtype in self._REFERENCE_TO_SDTYPE.values() or sdtype == 'unknown':
+            sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
+
+            if sdtype_in_reference or sdtype == 'unknown':
                 column_dict['pii'] = True
-            if sdtype in self._REFERENCE_TO_SDTYPE.values() and first_pii_field is None:
+            if sdtype_in_reference and first_pii_field is None and not has_nan:
                 first_pii_field = field
             if sdtype == 'datetime' and dtype == 'O':
                 datetime_format = get_datetime_format(column_data.iloc[:100])
