@@ -95,6 +95,9 @@ class SingleTableMetadata:
         'license': 'license_plate',
     }
 
+    # Subset of sdtypes from _REFERENCE_TO_SDTYPE which could be substring of another word
+    _SUBSTRING_SDTYPES = frozenset(['ssn', 'administrative_unit', 'city', 'vin'])
+
     _COLUMN_RELATIONSHIP_TYPES = {
         'address': validate_address_sdtypes,
     }
@@ -305,10 +308,34 @@ class SingleTableMetadata:
             column_name (str):
                 The column name to be analyzed.
         """
-        cleaned_name = re.sub(r'[^a-zA-Z0-9]', '', column_name).lower()
+        # Subset of sdtypes which are unambiguous, ie aren't a substring of another word
+        # For such cases just check if the word is in the column name
+        sdtypes_subset = {
+            reference: sdtype
+            for reference, sdtype in self._REFERENCE_TO_SDTYPE.items()
+            if sdtype not in self._SUBSTRING_SDTYPES
+        }
+        cleaned_name = re.sub(r'[^a-zA-Z0-9]', '', column_name.lower())
+        for reference, sdtype in sdtypes_subset.items():
+            if reference in cleaned_name:
+                return sdtype
+
+        # To handle the cases where the sdtype could be a substring of another word,
+        # tokenize the column name based on (1) symbols and (2) camelCase
+        tokens = column_name.replace(' ', '_').replace('-', '_').split('_')
+        if len(tokens) == 1:
+            tokens = []
+            if column_name.upper() != column_name and column_name[1:].lower() != column_name[1:]:
+                tokens = re.findall('[A-Z][^A-Z]*', column_name)
+
+        tokens = tokens if tokens else [column_name]
+        tokens = [token.lower() for token in tokens]
+
+        substr_sdtypes = dict(set(self._REFERENCE_TO_SDTYPE.items()) - set(sdtypes_subset.items()))
+
         return next((
-            sdtype for reference, sdtype in self._REFERENCE_TO_SDTYPE.items()
-            if reference in cleaned_name
+            sdtype for reference, sdtype in substr_sdtypes.items()
+            if reference in tokens
         ), None)
 
     def _determine_sdtype_for_numbers(self, data):
