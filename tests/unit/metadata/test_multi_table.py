@@ -731,6 +731,52 @@ class TestMultiTableMetadata:
         )
         warnings_mock.warn.assert_called_once_with(warning_msg)
 
+    def test_remove_primary_key(self):
+        """Test that ``remove_primary_key`` removes the primary key for the table."""
+        # Setup
+        instance = MultiTableMetadata()
+        table = Mock()
+        table.primary_key = 'primary_key'
+        instance.tables = {
+            'table': table,
+            'parent': Mock(),
+            'child': Mock()
+        }
+        instance.relationships = [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'table',
+                'parent_primary_key': 'pk',
+                'child_foreign_key': 'primary_key'
+            },
+            {
+                'parent_table_name': 'table',
+                'child_table_name': 'child',
+                'parent_primary_key': 'primary_key',
+                'child_foreign_key': 'fk'
+            },
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk',
+                'child_foreign_key': 'fk'
+            }
+        ]
+
+        # Run
+        instance.remove_primary_key('table')
+
+        # Assert
+        assert instance.relationships == [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk',
+                'child_foreign_key': 'fk'
+            }
+        ]
+        table.remove_primary_key.assert_called_once()
+
     def test__validate_column_relationships_foreign_keys(self):
         """Test ``_validate_column_relationships_foriegn_keys."""
         # Setup
