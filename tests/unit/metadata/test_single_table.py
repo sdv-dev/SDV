@@ -903,6 +903,29 @@ class TestSingleTableMetadata:
 
         assert instance.primary_key == 'id'
 
+    def test__detect_columns_primary_key_detection(self):
+        """Test the ``_detect_columns`` primary key detection."""
+        # Setup
+        metadata_without_primary_key = SingleTableMetadata()
+        metadata_with_primary_key = SingleTableMetadata()
+        data_without_primary_key = pd.DataFrame({
+            'email': ['sdv@sdv.dev', 'info@datacebo.com', 'info@gmail.co.uk', None],
+            'numerical': [0, 1, 2, 1],
+        })  # Not primary key because has NaNs.
+
+        data_with_primary_key = pd.DataFrame({
+            'email': ['sdv@sdv.dev', 'info@datacebo.com', 'info@gmail.co.uk'],
+            'numerical': [0, 1, 2],
+        })
+
+        # Run
+        metadata_with_primary_key._detect_columns(data_with_primary_key)
+        metadata_without_primary_key._detect_columns(data_without_primary_key)
+
+        # Assert
+        assert metadata_with_primary_key.primary_key == 'email'
+        assert metadata_without_primary_key.primary_key is None
+
     def test__detect_columns_with_nans_nones_and_nats(self):
         """Test the ``_detect_columns`` with ``None``, ``np.nan`` and ``pd.NaT``."""
         # Setup
