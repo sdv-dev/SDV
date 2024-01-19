@@ -292,7 +292,8 @@ class SingleTableMetadata:
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
         metadata = {}
         for key in self._KEYS:
-            value = getattr(self, f'{key}') if key != 'METADATA_SPEC_VERSION' else self._version
+            not_version = key != 'METADATA_SPEC_VERSION'
+            value = getattr(self, f'{key}', None) if not_version else self._version
             if value:
                 metadata[key] = value
 
