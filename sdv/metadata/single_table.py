@@ -95,8 +95,14 @@ class SingleTableMetadata:
         'license': 'license_plate',
     }
 
-    # Subset of sdtypes from _REFERENCE_TO_SDTYPE which could be substring of another word
-    _SUBSTRING_SDTYPES = frozenset(['ssn', 'administrative_unit', 'city', 'vin'])
+    _SDTYPES_WITHOUT_SUBSTRINGS = {
+        reference: sdtype
+        for reference, sdtype in _REFERENCE_TO_SDTYPE.items()
+        if sdtype not in {'ssn', 'administrative_unit', 'city', 'vin'}
+    }
+
+    _SDTYPES_WITH_SUBSTRINGS = dict(
+        set(_REFERENCE_TO_SDTYPE.items()) - set(_SDTYPES_WITHOUT_SUBSTRINGS.items()))
 
     _COLUMN_RELATIONSHIP_TYPES = {
         'address': validate_address_sdtypes,
@@ -301,27 +307,13 @@ class SingleTableMetadata:
 
         return deepcopy(metadata)
 
-    def _detect_pii_column(self, column_name):
-        """Detect PII columns.
+    def _tokenize_column_name(self, column_name):
+        """Tokenize a column name.
 
         Args:
             column_name (str):
-                The column name to be analyzed.
+                The column name to be tokenized.
         """
-        # Subset of sdtypes which are unambiguous, ie aren't a substring of another word
-        # For such cases just check if the word is in the column name
-        sdtypes_subset = {
-            reference: sdtype
-            for reference, sdtype in self._REFERENCE_TO_SDTYPE.items()
-            if sdtype not in self._SUBSTRING_SDTYPES
-        }
-        cleaned_name = re.sub(r'[^a-zA-Z0-9]', '', column_name.lower())
-        for reference, sdtype in sdtypes_subset.items():
-            if reference in cleaned_name:
-                return sdtype
-
-        # To handle the cases where the sdtype could be a substring of another word,
-        # tokenize the column name based on (1) symbols and (2) camelCase
         tokens = column_name.replace(' ', '_').replace('-', '_').split('_')
         if len(tokens) == 1:
             tokens = []
@@ -331,10 +323,28 @@ class SingleTableMetadata:
         tokens = tokens if tokens else [column_name]
         tokens = [token.lower() for token in tokens]
 
-        substr_sdtypes = dict(set(self._REFERENCE_TO_SDTYPE.items()) - set(sdtypes_subset.items()))
+        return tokens
+
+    def _detect_pii_column(self, column_name):
+        """Detect PII columns.
+
+        Args:
+            column_name (str):
+                The column name to be analyzed.
+        """
+        # Subset of sdtypes which are unambiguous, ie aren't a substring of another word
+        # For such cases just check if the word is in the column name
+        cleaned_name = re.sub(r'[^a-zA-Z0-9]', '', column_name.lower())
+        for reference, sdtype in self._SDTYPES_WITHOUT_SUBSTRINGS.items():
+            if reference in cleaned_name:
+                return sdtype
+
+        # To handle the cases where the sdtype could be a substring of another word,
+        # tokenize the column name based on (1) symbols and (2) camelCase
+        tokens = self._tokenize_column_name(column_name)
 
         return next((
-            sdtype for reference, sdtype in substr_sdtypes.items()
+            sdtype for reference, sdtype in self._SDTYPES_WITH_SUBSTRINGS.items()
             if reference in tokens
         ), None)
 
