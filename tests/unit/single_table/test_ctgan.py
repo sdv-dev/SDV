@@ -228,7 +228,8 @@ class TestCTGANSynthesizer:
 
     @patch('sdv.single_table.ctgan.CTGAN')
     @patch('sdv.single_table.ctgan.detect_discrete_columns')
-    def test__fit(self, mock_detect_discrete_columns, mock_ctgan):
+    @patch('sdv.single_table.ctgan._validate_no_category_dtype')
+    def test__fit(self, mock_category_validate, mock_detect_discrete_columns, mock_ctgan):
         """Test the ``_fit`` from ``CTGANSynthesizer``.
 
         Test that when we call ``_fit`` a new instance of ``CTGAN`` is created as a model
@@ -244,6 +245,7 @@ class TestCTGANSynthesizer:
         instance._fit(processed_data)
 
         # Assert
+        mock_category_validate.assert_called_once_with(processed_data)
         mock_detect_discrete_columns.assert_called_once_with(
             metadata,
             processed_data,
@@ -399,7 +401,8 @@ class TestTVAESynthesizer:
 
     @patch('sdv.single_table.ctgan.TVAE')
     @patch('sdv.single_table.ctgan.detect_discrete_columns')
-    def test__fit(self, mock_detect_discrete_columns, mock_tvae):
+    @patch('sdv.single_table.ctgan._validate_no_category_dtype')
+    def test__fit(self, mock_category_validate, mock_detect_discrete_columns, mock_tvae):
         """Test the ``_fit`` from ``TVAESynthesizer``.
 
         Test that when we call ``_fit`` a new instance of ``TVAE`` is created as a model
@@ -415,6 +418,7 @@ class TestTVAESynthesizer:
         instance._fit(processed_data)
 
         # Assert
+        mock_category_validate.assert_called_once_with(processed_data)
         mock_detect_discrete_columns.assert_called_once_with(
             metadata,
             processed_data,
