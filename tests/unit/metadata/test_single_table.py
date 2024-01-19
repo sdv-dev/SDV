@@ -728,12 +728,23 @@ class TestSingleTableMetadata:
 
         # Run and Assert
         assert metadata._detect_pii_column('user_first_name') == 'first_name'
+        assert metadata._detect_pii_column('USER_FIRST_NAME') == 'first_name'
         assert metadata._detect_pii_column('User_Last_Name') == 'last_name'
-        assert metadata._detect_pii_column('country^code') == 'country_code'
+        assert metadata._detect_pii_column('countrycode') == 'country_code'
         assert metadata._detect_pii_column('city') == 'city'
+        assert metadata._detect_pii_column('non_cIty') == 'city'
+        assert metadata._detect_pii_column('nonCity') == 'city'
+        assert metadata._detect_pii_column('cIty') is None
         assert metadata._detect_pii_column('address') is None
         assert metadata._detect_pii_column('first_name_last_name') == 'first_name'
         assert metadata._detect_pii_column('license') == 'license_plate'
+        assert metadata._detect_pii_column('resolving_loans') is None
+        assert metadata._detect_pii_column('vin_loans') == 'vin'
+        assert metadata._detect_pii_column('VinLoans') == 'vin'
+        assert metadata._detect_pii_column('VINLOANSVIN') is None
+        assert metadata._detect_pii_column('VIN') == 'vin'
+        assert metadata._detect_pii_column('StateDepartment') == 'administrative_unit'
+        assert metadata._detect_pii_column('STATEDEPARTMENT') is None
 
     def test__determine_sdtype_for_numbers(self):
         """Test the ``determine_sdtype_for_numbers`` method.
