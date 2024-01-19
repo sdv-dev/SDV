@@ -306,17 +306,19 @@ class MultiTableMetadata:
         primary_key = self.tables[table_name].primary_key
         self.tables[table_name].remove_primary_key()
 
-        relationships_to_remove = []
-        for relationship in self.relationships:
+        for relationship in self.relationships[:]:
             parent_table = relationship['parent_table_name']
             child_table = relationship['child_table_name']
             foreign_key = relationship['child_foreign_key']
             if ((child_table == table_name and foreign_key == primary_key) or
                     parent_table == table_name):
-                relationships_to_remove.append(relationship)
-
-        for relationship in relationships_to_remove:
-            self.relationships.remove(relationship)
+                other_table = child_table if parent_table == table_name else parent_table
+                info_msg = (
+                    f"Relationship between '{table_name}' and '{other_table}' removed because "
+                    f"the primary key for '{table_name}' was removed."
+                )
+                LOGGER.info(info_msg)
+                self.relationships.remove(relationship)
 
     def _validate_table_exists(self, table_name):
         if table_name not in self.tables:
