@@ -22,7 +22,7 @@ def test__validate_no_category_dtype():
     # Run and Assert
     expected = re.escape(
         "Columns ['category1', 'category2'] are stored as a 'category' type, which is not "
-        "supported. Please cast this column to an 'object' to continue."
+        "supported. Please cast these columns to an 'object' to continue."
     )
     with pytest.raises(InvalidDataTypeError, match=expected):
         _validate_no_category_dtype(data)

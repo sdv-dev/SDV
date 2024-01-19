@@ -23,7 +23,7 @@ def _validate_no_category_dtype(data):
         ])
         error_msg = (
             f"Columns ['{categoricals}'] are stored as a 'category' type, which is not "
-            "supported. Please cast this column to an 'object' to continue."
+            "supported. Please cast these columns to an 'object' to continue."
         )
         raise InvalidDataTypeError(error_msg)
 

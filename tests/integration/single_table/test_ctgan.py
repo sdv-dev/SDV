@@ -234,7 +234,7 @@ def test_category_dtype_errors():
     # Run and Assert
     expected_msg = re.escape(
         "Columns ['has_rewards', 'room_type'] are stored as a 'category' type, which is not "
-        "supported. Please cast this column to an 'object' to continue."
+        "supported. Please cast these columns to an 'object' to continue."
     )
     with pytest.raises(InvalidDataTypeError, match=expected_msg):
         ctgan.fit(data)
