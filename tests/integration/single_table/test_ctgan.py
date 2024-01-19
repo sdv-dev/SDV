@@ -1,11 +1,15 @@
+import re
+
 import numpy as np
 import pandas as pd
+import pytest
 from rdt.transformers import FloatFormatter, LabelEncoder
 
 from sdv.datasets.demo import download_demo
+from sdv.errors import InvalidDataTypeError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata import SingleTableMetadata
-from sdv.single_table import CTGANSynthesizer
+from sdv.single_table import CTGANSynthesizer, TVAESynthesizer
 
 
 def test__estimate_num_columns():
@@ -215,6 +219,28 @@ def test_categorical_metadata_with_int_data():
     assert len(recycled_categories_for_a) == 50
     assert len(new_categories_for_c) == 0
     assert len(recycled_categories_for_c) == 50
+
+
+def test_category_dtype_errors():
+    """Test CTGAN and TVAE error if data has 'category' dtype."""
+    # Setup
+    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    data['room_type'] = data['room_type'].astype('category')
+    data['has_rewards'] = data['has_rewards'].astype('category')
+
+    ctgan = CTGANSynthesizer(metadata)
+    tvae = TVAESynthesizer(metadata)
+
+    # Run and Assert
+    expected_msg = re.escape(
+        "Columns ['has_rewards', 'room_type'] are stored as a 'category' type, which is not "
+        "supported. Please cast this column to an 'object' to continue."
+    )
+    with pytest.raises(InvalidDataTypeError, match=expected_msg):
+        ctgan.fit(data)
+
+    with pytest.raises(InvalidDataTypeError, match=expected_msg):
+        tvae.fit(data)
 
 
 def test_ctgansynthesizer_with_constraints_generating_categorical_values():

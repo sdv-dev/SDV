@@ -1,12 +1,31 @@
+import re
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.errors import NotFittedError
+from sdv.errors import InvalidDataTypeError, NotFittedError
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer
+from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer, _validate_no_category_dtype
+
+
+def test__validate_no_category_dtype():
+    """Test that 'category' dtype causes error."""
+    # Setup
+    data = pd.DataFrame({
+        'category1': pd.Categorical(['a', 'a', 'b']),
+        'value': [0, 1, 2],
+        'category2': pd.Categorical([0, 1, 2])
+    })
+
+    # Run and Assert
+    expected = re.escape(
+        "Columns ['category1', 'category2'] are stored as a 'category' type, which is not "
+        "supported. Please cast this column to an 'object' to continue."
+    )
+    with pytest.raises(InvalidDataTypeError, match=expected):
+        _validate_no_category_dtype(data)
 
 
 class TestCTGANSynthesizer:
