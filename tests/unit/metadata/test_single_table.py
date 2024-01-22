@@ -2326,6 +2326,27 @@ class TestSingleTableMetadata:
         result['columns']['my_column'] = 1
         assert instance.columns['my_column'] == 'value'
 
+    def test_to_dict_missing_attributes(self):
+        """Test when the class is missing a new attribute.
+
+        If the metadata class was saved on previous versions, it may
+        be missing attributes so we should still be able to convert
+        that old metadata to a dict.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns['my_column'] = 'value'
+        del instance.column_relationships
+
+        # Run
+        result = instance.to_dict()
+
+        # Assert
+        assert result == {
+            'columns': {'my_column': 'value'},
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+        }
+
     def test_load_from_dict(self):
         """Test that ``load_from_dict`` returns a instance with the ``dict`` updated objects."""
         # Setup
