@@ -1,5 +1,6 @@
 """Wrapper around CTGAN model."""
 import numpy as np
+import pandas as pd
 from ctgan import CTGAN, TVAE
 
 from sdv.errors import InvalidDataTypeError, NotFittedError
@@ -17,10 +18,11 @@ def _validate_no_category_dtype(data):
     Raises:
         - ``InvalidDataTypeError`` if any columns in the data have 'category' dtype.
     """
-    if any(data.dtypes == 'category'):
-        categoricals = "', '".join([
-            col for col, dtype in data.dtypes.items() if dtype == 'category'
-        ])
+    category_cols = [
+        col for col, dtype in data.dtypes.items() if pd.api.types.is_categorical_dtype(dtype)
+    ]
+    if category_cols:
+        categoricals = "', '".join(category_cols)
         error_msg = (
             f"Columns ['{categoricals}'] are stored as a 'category' type, which is not "
             "supported. Please cast these columns to an 'object' to continue."
