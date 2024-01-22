@@ -561,6 +561,13 @@ class SingleTableMetadata:
 
         self.primary_key = column_name
 
+    def remove_primary_key(self):
+        """Remove the metadata primary key."""
+        if self.primary_key is None:
+            warnings.warn('No primary key exists to remove.')
+
+        self.primary_key = None
+
     def set_sequence_key(self, column_name):
         """Set the metadata sequence key.
 

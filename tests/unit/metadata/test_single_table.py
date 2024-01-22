@@ -1328,6 +1328,33 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.primary_key == 'column'
 
+    def test_remove_primary_key(self):
+        """Test that ``remove_primary_key`` removes the ``primary_key`` value."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {'id': {'sdtype': 'id'}}
+        instance.primary_key = 'id'
+
+        # Run
+        instance.remove_primary_key()
+
+        # Assert
+        assert instance.primary_key is None
+
+    @patch('sdv.metadata.single_table.warnings')
+    def test_remove_primary_key_warns_no_key_set(self, warning_mock):
+        """Test that ``remove_primary_key`` removes the ``primary_key`` value."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {'id': {'sdtype': 'id'}}
+
+        # Run
+        instance.remove_primary_key()
+
+        # Assert
+        assert instance.primary_key is None
+        warning_mock.warn.assert_called_once_with('No primary key exists to remove.')
+
     @patch('sdv.metadata.single_table.warnings')
     def test_set_primary_key_already_exists_warning(self, warning_mock):
         """Test that ``set_primary_key`` raises a warning when a primary key already exists.
