@@ -262,7 +262,7 @@ class TestDataProcessor:
         assert isinstance(instance.metadata, SingleTableMetadata)
         assert instance.metadata.columns == {'col': {'sdtype': 'numerical'}}
 
-    def test__get_column_in_multi_column_transformer(self):
+    def test__get_grouped_columns(self):
         """Test the ``_get_grouped_columns`` method."""
         # Setup
         dp = DataProcessor(SingleTableMetadata())
@@ -277,39 +277,6 @@ class TestDataProcessor:
         # Assert
         expected_list = ['col1', 'col2', 'col3', 'col4']
         assert column == expected_list
-
-    @patch('rdt.transformers')
-    @patch('sdv.data_processing.data_processor._check_import_address_transformers')
-    def test__get_columns_in_address_transformer(self, mock_check_import, mock_rdt_transformers):
-        """Test the ``_get_columns_in_address_transformer`` method."""
-        # Setup
-        class RandomLocationGeneratorMock:
-            pass
-
-        class RegionalAnonymizerMock:
-            pass
-
-        mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
-        mock_rdt_transformers.address.RegionalAnonymizer = RegionalAnonymizerMock
-
-        dp = DataProcessor(SingleTableMetadata())
-
-        dp.RandomLocationGenerator = RandomLocationGeneratorMock
-        dp.RegionalAnonymizer = RegionalAnonymizerMock
-
-        dp.grouped_columns_to_transformers = {
-            ('col1', 'col2'): RandomLocationGeneratorMock(),
-            ('col3', 'col4'): RegionalAnonymizerMock(),
-            ('col5', 'col6'): 'other_transformer'
-        }
-
-        # Run
-        columns = dp._get_columns_in_address_transformer()
-
-        # Assert
-        expected_columns = ['col1', 'col2', 'col3', 'col4']
-        assert columns == expected_columns
-        mock_check_import.assert_called_once()
 
     def test_filter_valid(self):
         """Test that we are calling the ``filter_valid`` of each constraint over the data."""
