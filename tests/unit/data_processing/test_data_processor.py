@@ -1,4 +1,3 @@
-import inspect
 import logging
 import re
 import warnings
@@ -52,15 +51,9 @@ class TestDataProcessor:
         assert transformer.enforce_min_max_values is False
 
     @patch('rdt.transformers')
-    @patch('inspect.signature')
-    def test__detect_multi_column_transformers_address(self, mock_signature, transformers_mock):
+    def test__detect_multi_column_transformers_address(self, transformers_mock):
         """Test the ``_detect_multi_column_transformers`` method with address relationship."""
         # Setup
-        parameters = [
-            inspect.Parameter('locales', inspect.Parameter.POSITIONAL_OR_KEYWORD)
-        ]
-        mock_signature.return_value = inspect.Signature(parameters=parameters)
-
         metadata = SingleTableMetadata().load_from_dict({
             'columns': {
                 'country_column': {'sdtype': 'country_code'},
@@ -110,13 +103,18 @@ class TestDataProcessor:
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']
         metroareaanonymizer = Mock()
-        transformers_mock.gps.MetroAreaAnonymizer.return_value = metroareaanonymizer
+        transformers_mock.gps.MetroAreaAnonymizer.side_effect = [
+            TypeError(), metroareaanonymizer
+        ]
 
         # Run
         result = dp._detect_multi_column_transformers()
 
         # Assert
-        transformers_mock.gps.MetroAreaAnonymizer.assert_called_once()
+        transformers_mock.gps.MetroAreaAnonymizer.assert_has_calls([
+            call(locales=['en_US', 'en_GB']),
+            call()
+        ])
         assert result == {('latitude_column', 'longitude_column'): metroareaanonymizer}
 
     @patch('rdt.transformers')
