@@ -1,5 +1,6 @@
 """Single table data processing."""
 
+import inspect
 import json
 import logging
 import warnings
@@ -69,6 +70,7 @@ class DataProcessor:
 
     _COLUMN_RELATIONSHIP_TO_TRANSFORMER = {
         'address': 'RandomLocationGenerator',
+        'gps': 'MetroAreaAnonymizer'
     }
 
     def _update_numerical_transformer(self, enforce_rounding, enforce_min_max_values):
@@ -96,7 +98,12 @@ class DataProcessor:
                     transformer_name = self._COLUMN_RELATIONSHIP_TO_TRANSFORMER[relationship_type]
                     module = getattr(rdt.transformers, relationship_type)
                     transformer = getattr(module, transformer_name)
-                    result[column_names] = transformer(locales=self._locales)
+                    init_signature = inspect.signature(transformer.__init__)
+                    has_locales_param = 'locales' in init_signature.parameters
+                    if has_locales_param:
+                        result[column_names] = transformer(locales=self._locales)
+                    else:
+                        result[column_names] = transformer()
 
         return result
 
