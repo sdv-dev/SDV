@@ -647,8 +647,8 @@ class TestDataProcessor:
         # Assert
         custom_constraint._validate_metadata.assert_called_once_with(column_name='col1')
 
-    def test__validate_constraint_dict_address_columns(self):
-        """Test that the validation raises an error when one column is an address."""
+    def test__validate_constraint_dict_columns_in_relationships(self):
+        """Test that the validation raises an error when one column is a column relationship."""
         # Setup
         constraint_column_name = {
             'constraint_class': 'Name',
@@ -663,18 +663,17 @@ class TestDataProcessor:
         custom_constraint = Mock()
 
         dp = DataProcessor(metadata)
-        dp._custom_constraint_classes
         dp._get_grouped_columns = Mock()
         dp._get_grouped_columns.return_value = ['country_column', 'city_column']
 
         dp._custom_constraint_classes = {'Name': custom_constraint}
 
         # Run and Assert
-        error_msg_1 = re.escape(
+        error_msg = re.escape(
             "The 'country_column' columns are part of a column relationship. You "
             'cannot add constraints to columns that are part of a column relationship.'
         )
-        with pytest.raises(SynthesizerInputError, match=error_msg_1):
+        with pytest.raises(SynthesizerInputError, match=error_msg):
             dp._validate_constraint_dict(constraint_column_name)
 
     @patch('sdv.data_processing.data_processor.Constraint')
