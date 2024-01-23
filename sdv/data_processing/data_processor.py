@@ -310,14 +310,14 @@ class DataProcessor:
         else:
             column_names = constraint_parameters.get('column_names')
 
-        columns_in_address = self._get_columns_in_address_transformer()
-        if columns_in_address and column_names:
-            address_constraint_columns = set(column_names) & set(columns_in_address)
-            if address_constraint_columns:
-                to_print = "', '".join(address_constraint_columns)
-                raise InvalidConstraintsError(
-                    f"The '{to_print}' columns are part of an address. You cannot add constraints "
-                    'to columns that are part of an address group.'
+        columns_in_relationship = self._get_grouped_columns()
+        if columns_in_relationship and column_names:
+            relationship_and_constraint = set(column_names) & set(columns_in_relationship)
+            if relationship_and_constraint:
+                to_print = "', '".join(relationship_and_constraint)
+                raise SynthesizerInputError(
+                    f"The '{to_print}' columns are part of a column relationship. You cannot "
+                    'add constraints to columns that are part of a column relationship.'
                 )
 
         constraint_class._validate_metadata(**constraint_parameters)

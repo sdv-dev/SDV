@@ -697,17 +697,17 @@ class TestDataProcessor:
 
         dp = DataProcessor(metadata)
         dp._custom_constraint_classes
-        dp._get_columns_in_address_transformer = Mock()
-        dp._get_columns_in_address_transformer.return_value = ['country_column', 'city_column']
+        dp._get_grouped_columns = Mock()
+        dp._get_grouped_columns.return_value = ['country_column', 'city_column']
 
         dp._custom_constraint_classes = {'Name': custom_constraint}
 
         # Run and Assert
         error_msg_1 = re.escape(
-            "The provided constraint is invalid:\nThe 'country_column' columns are part of an"
-            ' address. You cannot add constraints to columns that are part of an address group.'
+            "The 'country_column' columns are part of a column relationship. You "
+            'cannot add constraints to columns that are part of a column relationship.'
         )
-        with pytest.raises(InvalidConstraintsError, match=error_msg_1):
+        with pytest.raises(SynthesizerInputError, match=error_msg_1):
             dp._validate_constraint_dict(constraint_column_name)
 
     @patch('sdv.data_processing.data_processor.Constraint')
