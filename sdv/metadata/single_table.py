@@ -785,7 +785,10 @@ class SingleTableMetadata:
         """
         relationship = {'type': relationship_type, 'column_names': column_names}
         to_check = [relationship] + self.column_relationships
-        self._validate_all_column_relationships(to_check)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', UserWarning)
+            self._validate_all_column_relationships(to_check)
+
         self.column_relationships.append(relationship)
 
     def validate(self):
