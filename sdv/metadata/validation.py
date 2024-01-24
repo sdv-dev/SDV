@@ -45,9 +45,9 @@ def _check_import_gps_transformers():
         raise ImportError(error_message)
 
     has_randomlocationgenerator = hasattr(rdt.transformers.gps, 'RandomLocationGenerator')
-    has_metroaeraanonymizer = hasattr(rdt.transformers.gps, 'MetroAreaAnonymizer')
+    has_metroareaanonymizer = hasattr(rdt.transformers.gps, 'MetroAreaAnonymizer')
     has_gpsnoiser = hasattr(rdt.transformers.gps, 'GPSNoiser')
-    if not has_randomlocationgenerator or not has_metroaeraanonymizer or not has_gpsnoiser:
+    if not has_randomlocationgenerator or not has_metroareaanonymizer or not has_gpsnoiser:
         raise ImportError(error_message)
 
 
