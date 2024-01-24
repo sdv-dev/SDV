@@ -1930,6 +1930,26 @@ class TestSingleTableMetadata:
             {'type': 'relationship_B', 'column_names': ['col1', 'col2', 'col3']}
         ]
 
+    def test_add_column_relationships_silence_warnings(self):
+        """Test ``add_column_relationship`` silences UserWarnings."""
+        # Setup
+        def raise_user_warning(*args, **kwargs):
+            warnings.warn('This is a warning', UserWarning)
+
+        instance = SingleTableMetadata()
+        mock_validate_column_relationships = Mock(side_effect=raise_user_warning)
+        instance._validate_all_column_relationships = mock_validate_column_relationships
+
+        # Run
+        with pytest.warns(None) as warning_info:
+            instance.add_column_relationship(
+                relationship_type='relationship_A',
+                column_names=['colA', 'colB']
+            )
+
+        # Assert
+        assert len(warning_info) == 0
+
     def test_validate(self):
         """Test the ``validate`` method.
 
