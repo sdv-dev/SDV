@@ -51,8 +51,8 @@ class TestDataProcessor:
         assert transformer.enforce_min_max_values is False
 
     @patch('rdt.transformers')
-    def test__detect_multi_column_transformers_with_address(self, transfomers_mock):
-        """Test the ``_detect_multi_column_transformers`` method with address columns."""
+    def test__detect_multi_column_transformers_address(self, transformers_mock):
+        """Test the ``_detect_multi_column_transformers`` method with address relationship."""
         # Setup
         metadata = SingleTableMetadata().load_from_dict({
             'columns': {
@@ -71,16 +71,89 @@ class TestDataProcessor:
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']
         randomlocationgenerator = Mock()
-        transfomers_mock.address.RandomLocationGenerator.return_value = randomlocationgenerator
+        transformers_mock.address.RandomLocationGenerator.return_value = randomlocationgenerator
 
         # Run
         result = dp._detect_multi_column_transformers()
 
         # Assert
-        transfomers_mock.address.RandomLocationGenerator.assert_called_once_with(
+        transformers_mock.address.RandomLocationGenerator.assert_called_once_with(
             locales=['en_US', 'en_GB']
         )
+        assert result == {('country_column', 'city_column'): randomlocationgenerator}
+
+    @patch('rdt.transformers')
+    def test__detect_multi_column_transformers_gps(self, transformers_mock):
+        """Test the ``_detect_multi_column_transformers`` method with gps relationship."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'latitude_column': {'sdtype': 'latitude'},
+                'longitude_column': {'sdtype': 'longitude'},
+            },
+            'column_relationships': [
+                {
+                    'type': 'gps',
+                    'column_names': ['latitude_column', 'longitude_column']
+                }
+            ]
+        })
+        metadata.validate()
+        dp = DataProcessor(SingleTableMetadata())
+        dp.metadata = metadata
+        dp._locales = ['en_US', 'en_GB']
+        metroareaanonymizer = Mock()
+        transformers_mock.gps.MetroAreaAnonymizer.side_effect = [
+            TypeError(), metroareaanonymizer
+        ]
+
+        # Run
+        result = dp._detect_multi_column_transformers()
+
+        # Assert
+        transformers_mock.gps.MetroAreaAnonymizer.assert_has_calls([
+            call(locales=['en_US', 'en_GB']),
+            call()
+        ])
+        assert result == {('latitude_column', 'longitude_column'): metroareaanonymizer}
+
+    @patch('rdt.transformers')
+    def test__detect_multi_column_transformers_gps_address(self, transformers_mock):
+        """Test the ``_detect_multi_column_transformers`` method with different relationships."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'latitude_column': {'sdtype': 'latitude'},
+                'longitude_column': {'sdtype': 'longitude'},
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'},
+            },
+            'column_relationships': [
+                {
+                    'type': 'gps',
+                    'column_names': ['latitude_column', 'longitude_column']
+                },
+                {
+                    'type': 'address',
+                    'column_names': ['country_column', 'city_column']
+                }
+            ]
+        })
+        metadata.validate()
+        dp = DataProcessor(SingleTableMetadata())
+        dp.metadata = metadata
+        dp._locales = ['en_US', 'en_GB']
+        metroareaanonymizer = Mock()
+        randomlocationgenerator = Mock()
+        transformers_mock.gps.MetroAreaAnonymizer.return_value = metroareaanonymizer
+        transformers_mock.address.RandomLocationGenerator.return_value = randomlocationgenerator
+
+        # Run
+        result = dp._detect_multi_column_transformers()
+
+        # Assert
         assert result == {
+            ('latitude_column', 'longitude_column'): metroareaanonymizer,
             ('country_column', 'city_column'): randomlocationgenerator
         }
 

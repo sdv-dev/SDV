@@ -154,7 +154,7 @@ def test_validate_errors(mock_rdt_transformers):
         "\nInvalid regex format string '[A-{6}' for id column 'col10'."
         "\nColumn relationships have following errors:\nColumns ['col1', 'col2'] have "
         "unsupported sdtypes for column relationship type 'address'.\nUnknown column "
-        "relationship type 'fake_relationship'. Must be one of ['address']."
+        "relationship type 'fake_relationship'. Must be one of ['address', 'gps']."
     )
     # Run / Assert
     with pytest.raises(InvalidMetadataError, match=err_msg):
