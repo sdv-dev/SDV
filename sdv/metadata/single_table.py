@@ -15,7 +15,7 @@ from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
-from sdv.metadata.validation import validate_address_sdtypes
+from sdv.metadata.validation import validate_address_sdtypes, validate_gps_sdtypes
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import (
@@ -106,6 +106,7 @@ class SingleTableMetadata:
 
     _COLUMN_RELATIONSHIP_TYPES = {
         'address': validate_address_sdtypes,
+        'gps': validate_gps_sdtypes,
     }
 
     METADATA_SPEC_VERSION = 'SINGLE_TABLE_V1'

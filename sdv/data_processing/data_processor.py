@@ -69,6 +69,7 @@ class DataProcessor:
 
     _COLUMN_RELATIONSHIP_TO_TRANSFORMER = {
         'address': 'RandomLocationGenerator',
+        'gps': 'MetroAreaAnonymizer'
     }
 
     def _update_numerical_transformer(self, enforce_rounding, enforce_min_max_values):
@@ -95,8 +96,13 @@ class DataProcessor:
                 if relationship_type in self._COLUMN_RELATIONSHIP_TO_TRANSFORMER:
                     transformer_name = self._COLUMN_RELATIONSHIP_TO_TRANSFORMER[relationship_type]
                     module = getattr(rdt.transformers, relationship_type)
-                    transformer = getattr(module, transformer_name)
-                    result[column_names] = transformer(locales=self._locales)
+                    transformer_class = getattr(module, transformer_name)
+                    try:
+                        transformer_instance = transformer_class(locales=self._locales)
+                    except TypeError:  # If the transformer doesn't accept locales
+                        transformer_instance = transformer_class()
+
+                    result[column_names] = transformer_instance
 
         return result
 
