@@ -1,5 +1,5 @@
 import re
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -410,6 +410,27 @@ class TestHMASynthesizer:
         })
         instance = Mock()
         instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
+
+        float_formatter1 = MagicMock()
+        float_formatter1.transform.return_value = {'__sessions__user_id__num_rows': 10}
+        float_formatter2 = MagicMock()
+        float_formatter2.transform.return_value = {'__sessions__user_id__a': 1.0}
+        float_formatter3 = MagicMock()
+        float_formatter3.transform.return_value = {'__sessions__user_id__b': 0.2}
+        float_formatter4 = MagicMock()
+        float_formatter4.transform.return_value = {'__sessions__user_id__loc': 0.5}
+        float_formatter5 = MagicMock()
+        float_formatter5.transform.return_value = {'__sessions__user_id__scale': 0.25}
+
+        instance.extended_columns = {
+            'sessions': {
+                '__sessions__user_id__num_rows': float_formatter1,
+                '__sessions__user_id__a': float_formatter2,
+                '__sessions__user_id__b': float_formatter3,
+                '__sessions__user_id__loc': float_formatter4,
+                '__sessions__user_id__scale': float_formatter5
+            }
+        }
 
         # Run
         result = HMASynthesizer._extract_parameters(instance, parent_row, 'sessions', 'user_id')
