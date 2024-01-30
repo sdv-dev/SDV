@@ -2,6 +2,7 @@
 
 import logging
 from copy import deepcopy
+import math
 
 import numpy as np
 import pandas as pd
@@ -350,7 +351,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     foreign_key,
                     progress_bar_desc
                 )
-                for column in extension.columns:
+                for column in extension.columns: 
+                    if extension[column].isna().all():
+                        extension[column] = pd.Series([1e-6]*len(extension), index=extension.index)
                     self.extended_columns[child_name][column] = FloatFormatter(
                         enforce_min_max_values=True)
                     self.extended_columns[child_name][column].fit(extension, column)
@@ -364,6 +367,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         self._augmented_tables.append(table_name)
         self._clear_nans(table)
+
         return table
 
     def _augment_tables(self, processed_data):
@@ -447,7 +451,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         prefix = f'__{table_name}__{foreign_key}__'
         keys = [key for key in parent_row.keys() if key.startswith(prefix)]
         new_keys = {key: key[len(prefix):] for key in keys}
-        flat_parameters = parent_row[keys].fillna(0)
+        flat_parameters = parent_row[keys].fillna(1e-6)
 
         num_rows_key = f'{prefix}num_rows'
         if num_rows_key in flat_parameters:
@@ -457,12 +461,27 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 round(num_rows)
             )
 
-        parameter_df = pd.DataFrame([list(flat_parameters)], columns=flat_parameters.index)
-        transformers = self.extended_columns[table_name]
+        parameter_df = pd.DataFrame([flat_parameters], columns=flat_parameters.index)
+        new_series = flat_parameters.copy()
         for parameter in flat_parameters.index:
-            flat_parameters[parameter] = transformers[parameter].transform(parameter_df)[parameter]
+            transformer = self.extended_columns[table_name][parameter]
+            c = transformer.reverse_transform(parameter_df)[parameter].iloc[0]
+            if math.isnan(c):
+                c = 0 # with c=0 it doesn't work
+            new_series[parameter] = c
 
-        return flat_parameters.rename(new_keys).to_dict()
+            #if math.isnan(flat_parameters[parameter]):
+            #    print('nan')
+            #if parameter.endswith('__b') and flat_parameters[parameter]<=0:
+            #    print("b: ", flat_parameters[parameter])
+            #if parameter.endswith('__scale') and flat_parameters[parameter]<0:
+            #    print("scale: ", flat_parameters[parameter])
+            #if parameter.endswith('__a') and flat_parameters[parameter]<=0:
+            #    print("a: ", flat_parameters[parameter])
+            #if (not (parameter.endswith('__b') or parameter.endswith('__scale') or parameter.endswith('__a') or parameter.endswith('__loc') or parameter.endswith('__num_rows'))) and (flat_parameters[parameter] >= 1 or flat_parameters[parameter] <= -1):
+            #    print("correlation: ", flat_parameters[parameter])
+
+        return new_series.rename(new_keys).to_dict()
 
     def _recreate_child_synthesizer(self, child_name, parent_name, parent_row):
         # A child table is created based on only one foreign key.
