@@ -2,7 +2,6 @@
 
 import logging
 from copy import deepcopy
-import math
 
 import numpy as np
 import pandas as pd
@@ -439,30 +438,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
             for name, values in keys.items():
                 table[name] = values
-    
-    def clipping():
-        """
-        flat_parameters = parent_row[keys].fillna(1e-6)
-        parameters = flat_parameters.rename(new_keys).to_dict()
-        for parameter_name, parameter in parameters.items():
-
-            if parameter_name.endswith('__a') or parameter_name.endswith('__b'):
-                parameters[parameter_name] = np.clip(parameter, 1e-6, None)
-
-            elif parameter_name.endswith('__scale'):
-                parameters[parameter_name] = np.clip(parameter, 0, None)
-
-            elif parameter_name.startswith('correlation__'):
-                parameters[parameter_name] = np.clip(parameter, -1, 1)
-
-            elif parameter_name == f'{prefix}num_rows':
-                parameters[parameter_name] = min(
-                    self._max_child_rows[parameter_name],
-                    round(parameter)
-                )
-
-        return parameters
-        """
 
     def _extract_parameters(self, parent_row, table_name, foreign_key):
         """Get the params from a generated parent row.
@@ -484,8 +459,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         parameter_df = pd.DataFrame([flat_parameters], columns=flat_parameters.index)
         for parameter in flat_parameters.index:
             float_formatter = self.extended_columns[table_name][parameter]
-            param = float_formatter.reverse_transform(parameter_df)[parameter].iloc[0]
-            flat_parameters[parameter] = param
+            flat_parameters[parameter] = float_formatter.reverse_transform(
+                parameter_df)[parameter].iloc[0]
 
         num_rows_key = f'{prefix}num_rows'
         if num_rows_key in flat_parameters:

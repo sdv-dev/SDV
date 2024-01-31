@@ -6,6 +6,7 @@ import pandas as pd
 import pkg_resources
 import pytest
 from faker import Faker
+from rdt.transformers import FloatFormatter
 
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
@@ -14,7 +15,6 @@ from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, g
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
-from rdt.transformers import FloatFormatter
 
 
 class TestHMASynthesizer:
@@ -1230,7 +1230,7 @@ class TestHMASynthesizer:
             }
         }
         for col, float_formatter in instance.extended_columns['sessions'].items():
-            float_formatter.fit(pd.DataFrame({col: [0, 100]}), col)
+            float_formatter.fit(pd.DataFrame({col: [0., 100.]}), col)
 
         instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
 

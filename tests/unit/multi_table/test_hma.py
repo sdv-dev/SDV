@@ -10,7 +10,6 @@ from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import get_multi_table_data, get_multi_table_metadata
-from rdt.transformers import FloatFormatter
 
 
 class TestHMASynthesizer:
@@ -187,11 +186,11 @@ class TestHMASynthesizer:
             '__oseba__id_nesreca__univariates__oseba_val__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__b': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__loc': [0., 1., 2., 3.],
-            '__oseba__id_nesreca__univariates__oseba_val__scale': [0.] * 4,
+            '__oseba__id_nesreca__univariates__oseba_val__scale': [1e-6] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__b': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__loc': [0., 1., 2., 3.],
-            '__oseba__id_nesreca__univariates__oseba_value__scale': [0.] * 4,
+            '__oseba__id_nesreca__univariates__oseba_value__scale': [1e-6] * 4,
             '__oseba__id_nesreca__num_rows': [1.] * 4,
         })
 
@@ -413,15 +412,25 @@ class TestHMASynthesizer:
         instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
 
         float_formatter1 = MagicMock()
-        float_formatter1.reverse_transform.return_value = {'__sessions__user_id__num_rows': 10}
+        float_formatter1.reverse_transform.return_value = {
+            '__sessions__user_id__num_rows': pd.Series([10])
+        }
         float_formatter2 = MagicMock()
-        float_formatter2.reverse_transform.return_value = {'__sessions__user_id__a': 1.0}
+        float_formatter2.reverse_transform.return_value = {
+            '__sessions__user_id__a': pd.Series([1.])
+        }
         float_formatter3 = MagicMock()
-        float_formatter3.reverse_transform.return_value = {'__sessions__user_id__b': 0.2}
+        float_formatter3.reverse_transform.return_value = {
+            '__sessions__user_id__b': pd.Series([.2])
+        }
         float_formatter4 = MagicMock()
-        float_formatter4.reverse_transform.return_value = {'__sessions__user_id__loc': 0.5}
+        float_formatter4.reverse_transform.return_value = {
+            '__sessions__user_id__loc': pd.Series([.5])
+        }
         float_formatter5 = MagicMock()
-        float_formatter5.reverse_transform.return_value = {'__sessions__user_id__scale': 0.25}
+        float_formatter5.reverse_transform.return_value = {
+            '__sessions__user_id__scale': pd.Series([.25])
+        }
 
         instance.extended_columns = {
             'sessions': {
