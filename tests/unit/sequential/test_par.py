@@ -17,7 +17,7 @@ from tests.utils import DataFrameMatcher
 
 class TestPARSynthesizer:
 
-    def get_metadata(self, add_sequence_key=True):
+    def get_metadata(self, add_sequence_key=True, add_sequence_index=False):
         metadata = SingleTableMetadata()
         metadata.add_column('time', sdtype='datetime')
         metadata.add_column('gender', sdtype='categorical')
@@ -25,6 +25,9 @@ class TestPARSynthesizer:
         metadata.add_column('measurement', sdtype='numerical')
         if add_sequence_key:
             metadata.set_sequence_key('name')
+
+        if add_sequence_index:
+            metadata.set_sequence_index('time')
 
         return metadata
 
@@ -220,6 +223,84 @@ class TestPARSynthesizer:
         with pytest.raises(InvalidDataError, match=err_msg):
             instance.validate(data)
 
+    def test__transform_sequence(self):
+        # Setup
+        metadata = self.get_metadata(add_sequence_index=True)
+        par = PARSynthesizer(
+            metadata=metadata
+        )
+        data = pd.DataFrame({
+            'time': [1, 2, 4, 5],
+            'gender': ['F', 'M', 'M', 'M'],
+            'name': ['Jane', 'John', 'John', 'John'],
+            'measurement': [55, 60, 65, 68]
+        })
+
+        # Run
+        transformed_data = par._transform_sequence_index(data)
+
+        # Assert
+        expected = pd.DataFrame({
+            'time': [1., 2., 2., 1.],
+            'gender': ['F', 'M', 'M', 'M'],
+            'name': ['Jane', 'John', 'John', 'John'],
+            'measurement': [55, 60, 65, 68],
+            'time.context': [1, 2, 2, 2]
+        })
+        pd.testing.assert_frame_equal(transformed_data, expected)
+        assert par._extra_context_columns == {'time.context': {'sdtype': 'numerical'}}
+        assert list(par.extended_columns.keys()) == ['time']
+        assert par.extended_columns['time'].enforce_min_max_values is True
+
+    def test__transform_sequence_index_single_instances(self):
+        # Setup
+        metadata = self.get_metadata(add_sequence_index=True)
+        par = PARSynthesizer(
+            metadata=metadata
+        )
+        data = self.get_data()
+
+        # Run
+        transformed_data = par._transform_sequence_index(data)
+
+        # Assert
+        expected = pd.DataFrame({
+            'time': [0., 0., 0.],
+            'gender': ['F', 'M', 'M'],
+            'name': ['Jane', 'John', 'Doe'],
+            'measurement': [55, 60, 65],
+            'time.context': [1, 2, 3]
+        })
+        pd.testing.assert_frame_equal(transformed_data, expected)
+        assert par._extra_context_columns == {'time.context': {'sdtype': 'numerical'}}
+        assert list(par.extended_columns.keys()) == ['time']
+        assert par.extended_columns['time'].enforce_min_max_values is True
+
+    def test__transform_sequence_index_non_unique_sequence_key(self):
+        # Setup
+        metadata = self.get_metadata(add_sequence_index=True)
+        par = PARSynthesizer(
+            metadata=metadata
+        )
+        data = self.get_data()
+        data = data[data['name'] == 'John'].reset_index(drop=True)
+
+        # Run
+        transformed_data = par._transform_sequence_index(data)
+
+        # Assert
+        expected = pd.DataFrame({
+            'time': [0.],
+            'gender': ['M'],
+            'name': ['John'],
+            'measurement': [60],
+            'time.context': [2]
+        })
+        pd.testing.assert_frame_equal(transformed_data, expected)
+        assert par._extra_context_columns == {'time.context': {'sdtype': 'numerical'}}
+        assert list(par.extended_columns.keys()) == ['time']
+        assert par.extended_columns['time'].enforce_min_max_values is True
+
     @patch('sdv.sequential.par.BaseSynthesizer._preprocess')
     def test_preprocess_transformers_not_assigned(self, base_preprocess_mock):
         """Test that the method auto assigns the transformers if not already done.
@@ -252,10 +333,11 @@ class TestPARSynthesizer:
         To test this, we set the hyper transformer's ``_prepared_for_fitting`` to True.
         """
         # Setup
-        metadata = self.get_metadata()
+        metadata = self.get_metadata(add_sequence_index=True)
         par = PARSynthesizer(
             metadata=metadata
         )
+        par._transform_sequence_index = Mock()
         par.auto_assign_transformers = Mock()
         par.update_transformers = Mock()
         par._data_processor._prepared_for_fitting = True
@@ -269,6 +351,7 @@ class TestPARSynthesizer:
         par.auto_assign_transformers.assert_not_called()
         par.update_transformers.assert_called_once_with(expected_transformers)
         base_preprocess_mock.assert_called_once_with(data)
+        par._transform_sequence_index.assert_called_once_with(base_preprocess_mock.return_value)
 
     def test_update_transformers(self):
         """Test that it updates the transfomer correctly."""

@@ -158,6 +158,41 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
     def _validate(self, data):
         return self._validate_context_columns(data)
 
+    def _transform_sequence_index(self, data):
+        sequence_index = data[self._sequence_key + [self._sequence_index]]
+        sequence_index_context = sequence_index.groupby(self._sequence_key).agg('first')
+        sequence_index_context = sequence_index_context.rename(
+            columns={self._sequence_index: f'{self._sequence_index}.context'}
+        )
+        if all(sequence_index[self._sequence_key].nunique() == 1):
+            sequence_index_sequence = sequence_index[[self._sequence_index]].diff().bfill()
+        else:
+            sequence_index_sequence = sequence_index.groupby(self._sequence_key).apply(
+                lambda x: x[self._sequence_index].diff().bfill()
+            ).droplevel(1).reset_index()
+
+        if all(sequence_index_sequence[self._sequence_index].isna()):
+            fill_value = 0
+        else:
+            fill_value = min(sequence_index_sequence[self._sequence_index].dropna())
+        sequence_index_sequence = sequence_index_sequence.fillna(fill_value)
+
+        data[self._sequence_index] = sequence_index_sequence[self._sequence_index]
+        data = data.merge(
+            sequence_index_context,
+            left_on=self._sequence_key,
+            right_index=True)
+
+        self.extended_columns[self._sequence_index] = FloatFormatter(
+            enforce_min_max_values=True)
+        self.extended_columns[self._sequence_index].fit(
+            sequence_index_sequence, self._sequence_index)
+        self._extra_context_columns[f'{self._sequence_index}.context'] = {
+            'sdtype': 'numerical'
+        }
+
+        return data
+
     def _preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -180,31 +215,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         preprocessed = super()._preprocess(data)
 
         if self._sequence_index:
-            sequence_index = preprocessed[self._sequence_key + [self._sequence_index]]
-            sequence_index_context = sequence_index.groupby(self._sequence_key).agg('first')
-            sequence_index_context = sequence_index_context.rename(
-                columns={self._sequence_index: f'{self._sequence_index}.context'}
-            )
-            if all(sequence_index[self._sequence_key].nunique() == 1):
-                sequence_index_sequence = sequence_index[[self._sequence_index]].diff().bfill()
-            else:
-                sequence_index_sequence = sequence_index.groupby(self._sequence_key).apply(
-                    lambda x: x[self._sequence_index].diff().bfill()
-                ).droplevel(1).reset_index()
-
-            preprocessed[self._sequence_index] = sequence_index_sequence[self._sequence_index]
-            preprocessed = preprocessed.merge(
-                sequence_index_context,
-                left_on=self._sequence_key,
-                right_index=True)
-
-            self.extended_columns[self._sequence_index] = FloatFormatter(
-                enforce_min_max_values=True)
-            self.extended_columns[self._sequence_index].fit(
-                sequence_index_sequence, self._sequence_index)
-            self._extra_context_columns[f'{self._sequence_index}.context'] = {
-                'sdtype': 'numerical'
-            }
+            preprocessed = self._transform_sequence_index(preprocessed)
 
         return preprocessed
 
