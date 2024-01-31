@@ -12,6 +12,7 @@ from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sequential.par import PARSynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import DataFrameMatcher
+from sdv.sampling import Condition
 
 
 class TestPARSynthesizer:
@@ -298,7 +299,8 @@ class TestPARSynthesizer:
         with pytest.raises(SynthesizerInputError, match=err_msg):
             instance.update_transformers({'time': FloatFormatter()})
 
-    def test__fit_context_model_with_context_columns(self):
+    @patch('sdv.sequential.par.GaussianCopulaSynthesizer')
+    def test__fit_context_model_with_context_columns(self, gaussian_copula_mock):
         """Test that the method fits a synthesizer to the context columns.
 
         If there are context columns, the method should create a new DataFrame that groups
@@ -309,21 +311,40 @@ class TestPARSynthesizer:
         metadata = self.get_metadata()
         data = self.get_data()
         par = PARSynthesizer(metadata, context_columns=['gender'])
-        par._context_synthesizer = Mock()
+        initial_synthesizer = Mock()
+        context_metadata = SingleTableMetadata.load_from_dict({
+            "columns": {
+                "gender": {
+                    "sdtype": "categorical"
+                },
+                "name": {
+                    "sdtype": "id"
+                }
+            }
+        })
+        par._context_synthesizer = initial_synthesizer
+        par._get_context_metadata = Mock()
+        par._get_context_metadata.return_value = context_metadata
 
         # Run
         par._fit_context_model(data)
 
         # Assert
-        fitted_data = par._context_synthesizer.fit.mock_calls[0][1][0]
+        gaussian_copula_mock.assert_called_with(
+            context_metadata,
+            enforce_min_max_values=initial_synthesizer.enforce_min_max_values,
+            enforce_rounding=initial_synthesizer.enforce_rounding
+        )
+        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0]
         expected_fitted_data = pd.DataFrame({
             'name': ['Doe', 'Jane', 'John'],
             'gender': ['M', 'F', 'M']
         })
         pd.testing.assert_frame_equal(fitted_data.sort_values(by='name'), expected_fitted_data)
 
+    @patch('sdv.sequential.par.GaussianCopulaSynthesizer')
     @patch('sdv.sequential.par.uuid')
-    def test__fit_context_model_without_context_columns(self, uuid_mock):
+    def test__fit_context_model_without_context_columns(self, uuid_mock, gaussian_copula_mock):
         """Test that the method fits a synthesizer to a constant column.
 
         If there are no context columns, the method should create a constant column and
@@ -412,8 +433,8 @@ class TestPARSynthesizer:
             context_columns=['gender']
         )
         sequences = [
-            {'context': np.array(['F'], dtype=object), 'data': [[1, 2], [55, 60]]},
-            {'context': np.array(['M'], dtype=object), 'data': [[3, 5, 8], [65, 65, 70]]},
+            {'context': np.array(['F'], dtype=object), 'data': [[1, 1], [55, 60], [1, 1]]},
+            {'context': np.array(['M'], dtype=object), 'data': [[2, 2, 3], [65, 65, 70], [3, 3, 3]]},
         ]
         assemble_sequences_mock.return_value = sequences
 
@@ -439,7 +460,7 @@ class TestPARSynthesizer:
         model_mock.return_value.fit_sequences.assert_called_once_with(
             expected_sequences,
             ['categorical'],
-            ['continuous', 'continuous', 'continuous']
+            ['continuous', 'continuous']
         )
 
     @patch('sdv.sequential.par.PARModel')
@@ -642,14 +663,17 @@ class TestPARSynthesizer:
         )
         model_mock = Mock()
         par._model = model_mock
+        mock_transformer = Mock()
+        mock_transformer.reverse_transform.return_value = pd.DataFrame({'time': [1000, 2000, 2000]})
+        par.extended_columns = {'time': mock_transformer}
         par._data_columns = ['time', 'measurement']
         par._output_columns = ['time', 'gender', 'name', 'measurement']
+        par._extra_context_columns = {'time.context': {'sdtype': 'numerical'}}
         model_mock.sample_sequence.return_value = [
             [1000, 2000, 2000],
-            [55, 60, 65],
-            [18000, 18000, 18000]
+            [55, 60, 65]
         ]
-        context_columns = pd.DataFrame({'name': ['John'], 'gender': ['M']})
+        context_columns = pd.DataFrame({'name': ['John'], 'gender': ['M'], 'time.context': [18000]})
         tqdm_mock.tqdm.return_value = context_columns.set_index('name').iterrows()
 
         # Run
@@ -756,8 +780,16 @@ class TestPARSynthesizer:
             metadata=self.get_metadata(),
             context_columns=['gender']
         )
+        par._context_synthesizer = Mock()
+        par._context_synthesizer._model.columns = ['gender', 'extra_col']
+        par._context_synthesizer.sample_from_conditions.return_value = pd.DataFrame({
+            'id_col': ['A', 'A', 'A'],
+            'gender': ['M', 'M', 'F'],
+            'extra_col': [0, 1, 1]
+        })
         par._sample = Mock()
         context_columns = pd.DataFrame({
+            'id_col': ['ID-1', 'ID-2', 'ID-3'],
             'gender': ['M', 'M', 'F']
         })
 
@@ -765,8 +797,22 @@ class TestPARSynthesizer:
         par.sample_sequential_columns(context_columns, 5)
 
         # Assert
+        call_args, _ = par._context_synthesizer.sample_from_conditions.call_args
+        expected_conditions = [
+            Condition({'gender': 'M'}), Condition({'gender': 'M'}), Condition({'gender': 'F'})
+        ]
+        assert len(call_args[0]) == len(expected_conditions)
+        for arg, expected in zip(call_args[0], expected_conditions):
+            assert arg.column_values == expected.column_values
+            assert arg.num_rows == expected.num_rows
+
+        expected_call_arg = pd.DataFrame({
+            'id_col': ['ID-1', 'ID-2', 'ID-3'],
+            'gender': ['M', 'M', 'F'],
+            'extra_col': [0, 1, 1]
+        })
         call_args, _ = par._sample.call_args
-        pd.testing.assert_frame_equal(call_args[0], context_columns)
+        pd.testing.assert_frame_equal(call_args[0], expected_call_arg)
         assert call_args[1] == 5
 
     def test_sample_sequential_columns_no_context_columns(self):

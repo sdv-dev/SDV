@@ -59,9 +59,9 @@ def test_column_after_date_simple():
     # Setup
     date = datetime.datetime.strptime('2020-01-01', '%Y-%m-%d')
     data = pd.DataFrame({
-        'col': [1, 1],
-        'date': [date, date],
-        'col2': ['hello', 'world'],
+        'col': [1, 1, 1, 1],
+        'date': [date, date, date, date],
+        'col2': ['hello', 'world', 'beep', 'boop'],
     })
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
