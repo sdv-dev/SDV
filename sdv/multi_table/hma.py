@@ -351,11 +351,15 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     foreign_key,
                     progress_bar_desc
                 )
-                for column in extension.columns: 
+                for column in extension.columns:
+                    extension[column] = extension[column].astype(float)
                     if extension[column].isna().all():
-                        extension[column] = pd.Series([1e-6]*len(extension), index=extension.index)
+                        extension[column] = extension[column].fillna(1e-6)
+
                     self.extended_columns[child_name][column] = FloatFormatter(
-                        enforce_min_max_values=True)
+                        enforce_min_max_values=True,
+                        missing_value_generation=None
+                    )
                     self.extended_columns[child_name][column].fit(extension, column)
 
                 table = table.merge(extension, how='left', right_index=True, left_index=True)
@@ -435,6 +439,30 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
             for name, values in keys.items():
                 table[name] = values
+    
+    def clipping():
+        """
+        flat_parameters = parent_row[keys].fillna(1e-6)
+        parameters = flat_parameters.rename(new_keys).to_dict()
+        for parameter_name, parameter in parameters.items():
+
+            if parameter_name.endswith('__a') or parameter_name.endswith('__b'):
+                parameters[parameter_name] = np.clip(parameter, 1e-6, None)
+
+            elif parameter_name.endswith('__scale'):
+                parameters[parameter_name] = np.clip(parameter, 0, None)
+
+            elif parameter_name.startswith('correlation__'):
+                parameters[parameter_name] = np.clip(parameter, -1, 1)
+
+            elif parameter_name == f'{prefix}num_rows':
+                parameters[parameter_name] = min(
+                    self._max_child_rows[parameter_name],
+                    round(parameter)
+                )
+
+        return parameters
+        """
 
     def _extract_parameters(self, parent_row, table_name, foreign_key):
         """Get the params from a generated parent row.
@@ -453,6 +481,12 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         new_keys = {key: key[len(prefix):] for key in keys}
         flat_parameters = parent_row[keys].fillna(1e-6)
 
+        parameter_df = pd.DataFrame([flat_parameters], columns=flat_parameters.index)
+        for parameter in flat_parameters.index:
+            float_formatter = self.extended_columns[table_name][parameter]
+            param = float_formatter.reverse_transform(parameter_df)[parameter].iloc[0]
+            flat_parameters[parameter] = param
+
         num_rows_key = f'{prefix}num_rows'
         if num_rows_key in flat_parameters:
             num_rows = flat_parameters[num_rows_key]
@@ -461,27 +495,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 round(num_rows)
             )
 
-        parameter_df = pd.DataFrame([flat_parameters], columns=flat_parameters.index)
-        new_series = flat_parameters.copy()
-        for parameter in flat_parameters.index:
-            transformer = self.extended_columns[table_name][parameter]
-            c = transformer.reverse_transform(parameter_df)[parameter].iloc[0]
-            if math.isnan(c):
-                c = 0 # with c=0 it doesn't work
-            new_series[parameter] = c
-
-            #if math.isnan(flat_parameters[parameter]):
-            #    print('nan')
-            #if parameter.endswith('__b') and flat_parameters[parameter]<=0:
-            #    print("b: ", flat_parameters[parameter])
-            #if parameter.endswith('__scale') and flat_parameters[parameter]<0:
-            #    print("scale: ", flat_parameters[parameter])
-            #if parameter.endswith('__a') and flat_parameters[parameter]<=0:
-            #    print("a: ", flat_parameters[parameter])
-            #if (not (parameter.endswith('__b') or parameter.endswith('__scale') or parameter.endswith('__a') or parameter.endswith('__loc') or parameter.endswith('__num_rows'))) and (flat_parameters[parameter] >= 1 or flat_parameters[parameter] <= -1):
-            #    print("correlation: ", flat_parameters[parameter])
-
-        return new_series.rename(new_keys).to_dict()
+        return flat_parameters.rename(new_keys).to_dict()
 
     def _recreate_child_synthesizer(self, child_name, parent_name, parent_row):
         # A child table is created based on only one foreign key.

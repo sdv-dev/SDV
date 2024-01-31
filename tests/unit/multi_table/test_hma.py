@@ -10,6 +10,7 @@ from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import get_multi_table_data, get_multi_table_metadata
+from rdt.transformers import FloatFormatter
 
 
 class TestHMASynthesizer:
@@ -412,15 +413,15 @@ class TestHMASynthesizer:
         instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
 
         float_formatter1 = MagicMock()
-        float_formatter1.transform.return_value = {'__sessions__user_id__num_rows': 10}
+        float_formatter1.reverse_transform.return_value = {'__sessions__user_id__num_rows': 10}
         float_formatter2 = MagicMock()
-        float_formatter2.transform.return_value = {'__sessions__user_id__a': 1.0}
+        float_formatter2.reverse_transform.return_value = {'__sessions__user_id__a': 1.0}
         float_formatter3 = MagicMock()
-        float_formatter3.transform.return_value = {'__sessions__user_id__b': 0.2}
+        float_formatter3.reverse_transform.return_value = {'__sessions__user_id__b': 0.2}
         float_formatter4 = MagicMock()
-        float_formatter4.transform.return_value = {'__sessions__user_id__loc': 0.5}
+        float_formatter4.reverse_transform.return_value = {'__sessions__user_id__loc': 0.5}
         float_formatter5 = MagicMock()
-        float_formatter5.transform.return_value = {'__sessions__user_id__scale': 0.25}
+        float_formatter5.reverse_transform.return_value = {'__sessions__user_id__scale': 0.25}
 
         instance.extended_columns = {
             'sessions': {
