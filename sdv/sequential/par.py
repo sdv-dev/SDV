@@ -18,6 +18,7 @@ from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
 from sdv.single_table.ctgan import LossValuesMixin
+from sdv.sampling import Condition
 from sdv.utils import cast_to_iterable, groupby_list
 
 LOGGER = logging.getLogger(__name__)
@@ -183,12 +184,15 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             sequence_index = preprocessed[self._sequence_key + [self._sequence_index]]
             sequence_index_context = sequence_index.groupby(self._sequence_key).agg('first')
             sequence_index_context.rename(columns={self._sequence_index: f'{self._sequence_index}.context'}, inplace=True)
-            sequence_index_sequence = sequence_index.groupby(self._sequence_key).apply(
-                lambda x: x.diff().bfill()
-            ).droplevel(1).reset_index()
+            if all(sequence_index[self._sequence_key].nunique() == 1):
+                sequence_index_sequence = sequence_index[[self._sequence_index]].diff().bfill()
+            else:
+                sequence_index_sequence = sequence_index.groupby(self._sequence_key).apply(
+                    lambda x: x[self._sequence_index].diff().bfill()
+                ).droplevel(1).reset_index()
 
             preprocessed[self._sequence_index] = sequence_index_sequence[self._sequence_index]
-            preprocessed = preprocessed.merge(sequence_index_context, left_on='Symbol', right_index=True)
+            preprocessed = preprocessed.merge(sequence_index_context, left_on=self._sequence_key, right_index=True)
 
             self.extended_columns[self._sequence_index] = FloatFormatter(enforce_min_max_values=True)
             self.extended_columns[self._sequence_index].fit(sequence_index_sequence, self._sequence_index)
@@ -401,5 +405,13 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 "This synthesizer does not have any context columns. Please use 'sample()' "
                 'to sample new sequences.'
             )
-
-        return self._sample(context_columns, sequence_length)
+        
+        condition_columns = list(set.intersection(
+            set(context_columns.columns), set(self._context_synthesizer._model.columns)
+        ))
+        condition_columns = context_columns[condition_columns].to_dict('records')
+        context = self._context_synthesizer.sample_from_conditions(
+            [Condition(conditions) for conditions in condition_columns]
+        )
+        context.update(context_columns)
+        return self._sample(context, sequence_length)
