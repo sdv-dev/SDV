@@ -9,10 +9,10 @@ from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
+from sdv.sampling import Condition
 from sdv.sequential.par import PARSynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import DataFrameMatcher
-from sdv.sampling import Condition
 
 
 class TestPARSynthesizer:
@@ -313,12 +313,12 @@ class TestPARSynthesizer:
         par = PARSynthesizer(metadata, context_columns=['gender'])
         initial_synthesizer = Mock()
         context_metadata = SingleTableMetadata.load_from_dict({
-            "columns": {
-                "gender": {
-                    "sdtype": "categorical"
+            'columns': {
+                'gender': {
+                    'sdtype': 'categorical'
                 },
-                "name": {
-                    "sdtype": "id"
+                'name': {
+                    'sdtype': 'id'
                 }
             }
         })
@@ -434,7 +434,10 @@ class TestPARSynthesizer:
         )
         sequences = [
             {'context': np.array(['F'], dtype=object), 'data': [[1, 1], [55, 60], [1, 1]]},
-            {'context': np.array(['M'], dtype=object), 'data': [[2, 2, 3], [65, 65, 70], [3, 3, 3]]},
+            {
+                'context': np.array(['M'], dtype=object),
+                'data': [[2, 2, 3], [65, 65, 70], [3, 3, 3]]
+            },
         ]
         assemble_sequences_mock.return_value = sequences
 
@@ -664,7 +667,8 @@ class TestPARSynthesizer:
         model_mock = Mock()
         par._model = model_mock
         mock_transformer = Mock()
-        mock_transformer.reverse_transform.return_value = pd.DataFrame({'time': [1000, 2000, 2000]})
+        mock_transformer.reverse_transform.return_value = pd.DataFrame(
+            {'time': [1000, 2000, 2000]})
         par.extended_columns = {'time': mock_transformer}
         par._data_columns = ['time', 'measurement']
         par._output_columns = ['time', 'gender', 'name', 'measurement']
@@ -673,7 +677,8 @@ class TestPARSynthesizer:
             [1000, 2000, 2000],
             [55, 60, 65]
         ]
-        context_columns = pd.DataFrame({'name': ['John'], 'gender': ['M'], 'time.context': [18000]})
+        context_columns = pd.DataFrame(
+            {'name': ['John'], 'gender': ['M'], 'time.context': [18000]})
         tqdm_mock.tqdm.return_value = context_columns.set_index('name').iterrows()
 
         # Run

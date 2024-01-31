@@ -4,7 +4,6 @@ import inspect
 import logging
 import uuid
 import warnings
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -15,10 +14,10 @@ from rdt.transformers import FloatFormatter
 
 from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
+from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
 from sdv.single_table.ctgan import LossValuesMixin
-from sdv.sampling import Condition
 from sdv.utils import cast_to_iterable, groupby_list
 
 LOGGER = logging.getLogger(__name__)
@@ -78,7 +77,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
         for column in context_columns:
             context_columns_dict[column] = self.metadata.columns[column]
-        
+
         for column, column_metadata in self._extra_context_columns.items():
             context_columns_dict[column] = column_metadata
 
@@ -178,12 +177,14 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             self.auto_assign_transformers(data)
 
         self.update_transformers(sequence_key_transformers)
-
         preprocessed = super()._preprocess(data)
+
         if self._sequence_index:
             sequence_index = preprocessed[self._sequence_key + [self._sequence_index]]
             sequence_index_context = sequence_index.groupby(self._sequence_key).agg('first')
-            sequence_index_context.rename(columns={self._sequence_index: f'{self._sequence_index}.context'}, inplace=True)
+            sequence_index_context = sequence_index_context.rename(
+                columns={self._sequence_index: f'{self._sequence_index}.context'}
+            )
             if all(sequence_index[self._sequence_key].nunique() == 1):
                 sequence_index_sequence = sequence_index[[self._sequence_index]].diff().bfill()
             else:
@@ -192,12 +193,19 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 ).droplevel(1).reset_index()
 
             preprocessed[self._sequence_index] = sequence_index_sequence[self._sequence_index]
-            preprocessed = preprocessed.merge(sequence_index_context, left_on=self._sequence_key, right_index=True)
+            preprocessed = preprocessed.merge(
+                sequence_index_context,
+                left_on=self._sequence_key,
+                right_index=True)
 
-            self.extended_columns[self._sequence_index] = FloatFormatter(enforce_min_max_values=True)
-            self.extended_columns[self._sequence_index].fit(sequence_index_sequence, self._sequence_index)
-            self._extra_context_columns[f'{self._sequence_index}.context'] = {'sdtype': 'numerical'}
-        
+            self.extended_columns[self._sequence_index] = FloatFormatter(
+                enforce_min_max_values=True)
+            self.extended_columns[self._sequence_index].fit(
+                sequence_index_sequence, self._sequence_index)
+            self._extra_context_columns[f'{self._sequence_index}.context'] = {
+                'sdtype': 'numerical'
+            }
+
         return preprocessed
 
     def update_transformers(self, column_name_to_transformer):
@@ -221,7 +229,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         LOGGER.debug(f'Fitting context synthesizer {self._context_synthesizer.__class__.__name__}')
         if self.context_columns or self._extra_context_columns:
             context_cols = (
-                self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
+                self._sequence_key + self.context_columns +
+                list(self._extra_context_columns.keys())
             )
             context = transformed[context_cols]
         else:
@@ -248,7 +257,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             column
             for column in timeseries_data.columns
             if column not in (
-                self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
+                self._sequence_key + self.context_columns +
+                list(self._extra_context_columns.keys())
             )
         ]
 
@@ -405,7 +415,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 "This synthesizer does not have any context columns. Please use 'sample()' "
                 'to sample new sequences.'
             )
-        
+
         condition_columns = list(set.intersection(
             set(context_columns.columns), set(self._context_synthesizer._model.columns)
         ))
