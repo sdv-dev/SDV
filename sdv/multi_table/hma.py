@@ -452,7 +452,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         prefix = f'__{table_name}__{foreign_key}__'
         keys = [key for key in parent_row.keys() if key.startswith(prefix)]
         new_keys = {key: key[len(prefix):] for key in keys}
-        flat_parameters = parent_row[keys].fillna(1e-6)
+        flat_parameters = parent_row[keys].astype(float).fillna(1e-6)
 
         num_rows_key = f'{prefix}num_rows'
         if num_rows_key in flat_parameters:
