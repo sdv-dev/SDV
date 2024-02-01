@@ -403,34 +403,28 @@ class TestHMASynthesizer:
         # Setup
         parent_row = pd.Series({
             '__sessions__user_id__num_rows': 10,
-            '__sessions__user_id__a': 1.0,
+            '__sessions__user_id__a': -1.0,
             '__sessions__user_id__b': 0.2,
-            '__sessions__user_id__loc': 0.5,
-            '__sessions__user_id__scale': 0.25
+            '__sessions__user_id__loc': 0.3,
         })
         instance = Mock()
         instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
 
         float_formatter1 = MagicMock()
-        float_formatter1.reverse_transform.return_value = {
-            '__sessions__user_id__num_rows': pd.Series([10])
-        }
+        float_formatter1._min_value = 0.
+        float_formatter1._max_value = 5
+
         float_formatter2 = MagicMock()
-        float_formatter2.reverse_transform.return_value = {
-            '__sessions__user_id__a': pd.Series([1.])
-        }
+        float_formatter2._min_value = 0.1
+        float_formatter2._max_value = 5
+
         float_formatter3 = MagicMock()
-        float_formatter3.reverse_transform.return_value = {
-            '__sessions__user_id__b': pd.Series([.2])
-        }
+        float_formatter3._min_value = 0
+        float_formatter3._max_value = 1
+
         float_formatter4 = MagicMock()
-        float_formatter4.reverse_transform.return_value = {
-            '__sessions__user_id__loc': pd.Series([.5])
-        }
-        float_formatter5 = MagicMock()
-        float_formatter5.reverse_transform.return_value = {
-            '__sessions__user_id__scale': pd.Series([.25])
-        }
+        float_formatter4._min_value = 0.3
+        float_formatter4._max_value = 0.7
 
         instance.extended_columns = {
             'sessions': {
@@ -438,7 +432,6 @@ class TestHMASynthesizer:
                 '__sessions__user_id__a': float_formatter2,
                 '__sessions__user_id__b': float_formatter3,
                 '__sessions__user_id__loc': float_formatter4,
-                '__sessions__user_id__scale': float_formatter5
             }
         }
 
@@ -447,11 +440,10 @@ class TestHMASynthesizer:
 
         # Assert
         expected_result = {
-            'a': 1.0,
+            'a': .1,
             'b': 0.2,
-            'loc': 0.5,
-            'num_rows': 10.0,
-            'scale': 0.25
+            'loc': 0.3,
+            'num_rows': 5,
         }
 
         assert result == expected_result

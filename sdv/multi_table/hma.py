@@ -356,9 +356,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                         extension[column] = extension[column].fillna(1e-6)
 
                     self.extended_columns[child_name][column] = FloatFormatter(
-                        enforce_min_max_values=True,
-                        missing_value_generation=None
-                    )
+                        enforce_min_max_values=True)
                     self.extended_columns[child_name][column].fit(extension, column)
 
                 table = table.merge(extension, how='left', right_index=True, left_index=True)
@@ -456,12 +454,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         new_keys = {key: key[len(prefix):] for key in keys}
         flat_parameters = parent_row[keys].fillna(1e-6)
 
-        parameter_df = pd.DataFrame([flat_parameters], columns=flat_parameters.index)
-        for parameter in flat_parameters.index:
-            float_formatter = self.extended_columns[table_name][parameter]
-            flat_parameters[parameter] = float_formatter.reverse_transform(
-                parameter_df)[parameter].iloc[0]
-
         num_rows_key = f'{prefix}num_rows'
         if num_rows_key in flat_parameters:
             num_rows = flat_parameters[num_rows_key]
@@ -470,7 +462,13 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 round(num_rows)
             )
 
-        return flat_parameters.rename(new_keys).to_dict()
+        flat_parameters = flat_parameters.to_dict()
+        for parameter_name, parameter in flat_parameters.items():
+            float_formatter = self.extended_columns[table_name][parameter_name]
+            flat_parameters[parameter_name] = np.clip(
+                parameter, float_formatter._min_value, float_formatter._max_value)
+
+        return {new_keys[key]: value for key, value in flat_parameters.items()}
 
     def _recreate_child_synthesizer(self, child_name, parent_name, parent_row):
         # A child table is created based on only one foreign key.
