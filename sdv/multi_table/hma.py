@@ -465,7 +465,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         flat_parameters = flat_parameters.to_dict()
         for parameter_name, parameter in flat_parameters.items():
             float_formatter = self.extended_columns[table_name][parameter_name]
-            flat_parameters[parameter_name] = np.clip(
+            flat_parameters[parameter_name] = np.clip(  # this should be revisited in GH#1769
                 parameter, float_formatter._min_value, float_formatter._max_value)
 
         return {new_keys[key]: value for key, value in flat_parameters.items()}
