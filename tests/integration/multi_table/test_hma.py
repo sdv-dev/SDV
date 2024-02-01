@@ -6,6 +6,7 @@ import pandas as pd
 import pkg_resources
 import pytest
 from faker import Faker
+from rdt.transformers import FloatFormatter
 
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
@@ -1207,3 +1208,41 @@ class TestHMASynthesizer:
         assert len(likelihoods) == len(sampled_data['character_families'])
         assert not any(likelihoods[not_nan_cols].isna().any())
         assert all(likelihoods[nan_cols].isna())
+
+    def test__extract_parameters(self):
+        """Test it when parameters are out of bounds."""
+        # Setup
+        parent_row = pd.Series({
+            '__sessions__user_id__num_rows': 10,
+            '__sessions__user_id__a': -1,
+            '__sessions__user_id__b': 1000,
+            '__sessions__user_id__loc': 0.5,
+            '__sessions__user_id__scale': -0.25
+        })
+        instance = HMASynthesizer(MultiTableMetadata())
+        instance.extended_columns = {
+            'sessions': {
+                '__sessions__user_id__num_rows': FloatFormatter(enforce_min_max_values=True),
+                '__sessions__user_id__a': FloatFormatter(enforce_min_max_values=True),
+                '__sessions__user_id__b': FloatFormatter(enforce_min_max_values=True),
+                '__sessions__user_id__loc': FloatFormatter(enforce_min_max_values=True),
+                '__sessions__user_id__scale': FloatFormatter(enforce_min_max_values=True)
+            }
+        }
+        for col, float_formatter in instance.extended_columns['sessions'].items():
+            float_formatter.fit(pd.DataFrame({col: [0., 100.]}), col)
+
+        instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
+
+        # Run
+        result = instance._extract_parameters(parent_row, 'sessions', 'user_id')
+
+        # Assert
+        expected_result = {
+            'a': 0.,
+            'b': 100.,
+            'loc': 0.5,
+            'num_rows': 10.,
+            'scale': 0.
+        }
+        assert result == expected_result

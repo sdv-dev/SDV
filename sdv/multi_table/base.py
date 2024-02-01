@@ -74,6 +74,7 @@ class BaseMultiTableSynthesizer:
         self.metadata.validate()
         self.locales = locales
         self.verbose = False
+        self.extended_columns = defaultdict(dict)
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
         if synthesizer_kwargs is not None:

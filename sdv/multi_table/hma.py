@@ -5,6 +5,7 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
+from rdt.transformers import FloatFormatter
 from tqdm import tqdm
 
 from sdv.errors import SynthesizerInputError
@@ -349,6 +350,15 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     foreign_key,
                     progress_bar_desc
                 )
+                for column in extension.columns:
+                    extension[column] = extension[column].astype(float)
+                    if extension[column].isna().all():
+                        extension[column] = extension[column].fillna(1e-6)
+
+                    self.extended_columns[child_name][column] = FloatFormatter(
+                        enforce_min_max_values=True)
+                    self.extended_columns[child_name][column].fit(extension, column)
+
                 table = table.merge(extension, how='left', right_index=True, left_index=True)
                 num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
                 table[num_rows_key] = table[num_rows_key].fillna(0)
@@ -358,6 +368,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         self._augmented_tables.append(table_name)
         self._clear_nans(table)
+
         return table
 
     def _augment_tables(self, processed_data):
@@ -441,7 +452,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         prefix = f'__{table_name}__{foreign_key}__'
         keys = [key for key in parent_row.keys() if key.startswith(prefix)]
         new_keys = {key: key[len(prefix):] for key in keys}
-        flat_parameters = parent_row[keys].fillna(0)
+        flat_parameters = parent_row[keys].astype(float).fillna(1e-6)
 
         num_rows_key = f'{prefix}num_rows'
         if num_rows_key in flat_parameters:
@@ -451,14 +462,20 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 round(num_rows)
             )
 
-        return flat_parameters.rename(new_keys).to_dict()
+        flat_parameters = flat_parameters.to_dict()
+        for parameter_name, parameter in flat_parameters.items():
+            float_formatter = self.extended_columns[table_name][parameter_name]
+            flat_parameters[parameter_name] = np.clip(  # this should be revisited in GH#1769
+                parameter, float_formatter._min_value, float_formatter._max_value)
+
+        return {new_keys[key]: value for key, value in flat_parameters.items()}
 
     def _recreate_child_synthesizer(self, child_name, parent_name, parent_row):
         # A child table is created based on only one foreign key.
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         parameters = self._extract_parameters(parent_row, child_name, foreign_key)
-        table_meta = self.metadata.tables[child_name]
 
+        table_meta = self.metadata.tables[child_name]
         synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
         synthesizer._set_parameters(parameters)
         synthesizer._data_processor = self._table_synthesizers[child_name]._data_processor
