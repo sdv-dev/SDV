@@ -68,7 +68,7 @@ class DataProcessor:
 
     _COLUMN_RELATIONSHIP_TO_TRANSFORMER = {
         'address': 'RandomLocationGenerator',
-        'gps': 'MetroAreaAnonymizer'
+        'gps': 'GPSNoiser'
     }
 
     def _update_numerical_transformer(self, enforce_rounding, enforce_min_max_values):
