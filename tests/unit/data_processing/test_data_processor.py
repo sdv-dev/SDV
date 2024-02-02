@@ -102,20 +102,20 @@ class TestDataProcessor:
         dp = DataProcessor(SingleTableMetadata())
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']
-        metroareaanonymizer = Mock()
-        transformers_mock.gps.MetroAreaAnonymizer.side_effect = [
-            TypeError(), metroareaanonymizer
+        gpsnoiser = Mock()
+        transformers_mock.gps.GPSNoiser.side_effect = [
+            TypeError(), gpsnoiser
         ]
 
         # Run
         result = dp._detect_multi_column_transformers()
 
         # Assert
-        transformers_mock.gps.MetroAreaAnonymizer.assert_has_calls([
+        transformers_mock.gps.GPSNoiser.assert_has_calls([
             call(locales=['en_US', 'en_GB']),
             call()
         ])
-        assert result == {('latitude_column', 'longitude_column'): metroareaanonymizer}
+        assert result == {('latitude_column', 'longitude_column'): gpsnoiser}
 
     @patch('rdt.transformers')
     def test__detect_multi_column_transformers_gps_address(self, transformers_mock):
@@ -143,9 +143,9 @@ class TestDataProcessor:
         dp = DataProcessor(SingleTableMetadata())
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']
-        metroareaanonymizer = Mock()
+        gpsnoiser = Mock()
         randomlocationgenerator = Mock()
-        transformers_mock.gps.MetroAreaAnonymizer.return_value = metroareaanonymizer
+        transformers_mock.gps.GPSNoiser.return_value = gpsnoiser
         transformers_mock.address.RandomLocationGenerator.return_value = randomlocationgenerator
 
         # Run
@@ -153,7 +153,7 @@ class TestDataProcessor:
 
         # Assert
         assert result == {
-            ('latitude_column', 'longitude_column'): metroareaanonymizer,
+            ('latitude_column', 'longitude_column'): gpsnoiser,
             ('country_column', 'city_column'): randomlocationgenerator
         }
 
