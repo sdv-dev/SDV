@@ -118,6 +118,27 @@ class TestBaseMultiTableSynthesizer:
         assert instance._table_parameters == defaultdict(dict)
         instance.metadata.validate.assert_called_once_with()
 
+    def test__init__column_relationship_warning(self):
+        """Test that a warning is raised only once when the metadata has column relationships."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        metadata.add_column('nesreca', 'lat', sdtype='latitude')
+        metadata.add_column('nesreca', 'lon', sdtype='longitude')
+
+        metadata.add_column_relationship('nesreca', 'gps', ['lat', 'lon'])
+
+        # Run
+        expected_warning = (
+            "The metadata contains a column relationship of type 'gps'. "
+            'which requires the gps add-on. This relationship will be ignored. For higher'
+            ' quality data in this relationship, please inquire about the SDV Enterprise tier.'
+        )
+        with pytest.warns(UserWarning, match=expected_warning) as warning_list:
+            BaseMultiTableSynthesizer(metadata)
+
+        # Assert
+        assert len(warning_list) == 1
+
     def test___init___synthesizer_kwargs_deprecated(self):
         """Test that the ``synthesizer_kwargs`` method is deprecated."""
         # Setup
