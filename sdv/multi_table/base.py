@@ -71,7 +71,10 @@ class BaseMultiTableSynthesizer:
 
     def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
         self.metadata = metadata
-        self.metadata.validate()
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', message=r'.*column relationship.*')
+            self.metadata.validate()
+
         self.locales = locales
         self.verbose = False
         self._table_synthesizers = {}
