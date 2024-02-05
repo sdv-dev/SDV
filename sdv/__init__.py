@@ -17,7 +17,7 @@ from pkg_resources import iter_entry_points
 
 from sdv import (
     constraints, data_processing, datasets, evaluation, lite, metadata, metrics, multi_table,
-    sampling, sequential, single_table)
+    sampling, sequential, single_table, version)
 
 __all__ = [
     'constraints',
@@ -30,7 +30,8 @@ __all__ = [
     'multi_table',
     'sampling',
     'sequential',
-    'single_table'
+    'single_table',
+    'version'
 ]
 
 
