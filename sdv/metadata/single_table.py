@@ -710,7 +710,7 @@ class SingleTableMetadata:
         except ImportError:
             warnings.warn(
                 f"The metadata contains a column relationship of type '{relationship_type}'. "
-                f'which requires the {relationship_type} add-on.'
+                f'which requires the {relationship_type} add-on. '
                 'This relationship will be ignored. For higher quality data in this'
                 ' relationship, please inquire about the SDV Enterprise tier.'
             )
