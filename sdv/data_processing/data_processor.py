@@ -569,8 +569,11 @@ class DataProcessor:
                 sdtypes[column] = sdtype
                 continue
 
-            pii = column_metadata.get('pii', sdtype not in self._transformers_by_sdtype)
-            sdtypes[column] = 'pii' if pii else sdtype
+            pii = (
+                sdtype not in self._transformers_by_sdtype
+                and sdtype not in {'unknown', 'id'}
+                and (column_metadata.get('pii', True))
+            )
 
             if sdtype == 'id':
                 is_numeric = pd.api.types.is_numeric_dtype(data[column].dtype)
@@ -600,6 +603,7 @@ class DataProcessor:
                     sdtypes[column] = 'pii'
 
             elif sdtype == 'unknown':
+                sdtypes[column] = 'pii'
                 transformers[column] = AnonymizedFaker(
                     function_name='bothify',
                 )
@@ -609,6 +613,7 @@ class DataProcessor:
                 }
 
             elif pii:
+                sdtypes[column] = 'pii'
                 enforce_uniqueness = bool(column in self._keys)
                 transformers[column] = self.create_anonymized_transformer(
                     sdtype,
@@ -618,6 +623,7 @@ class DataProcessor:
                 )
 
             elif sdtype in self._transformers_by_sdtype:
+                sdtypes[column] = sdtype
                 transformers[column] = self._get_transformer_instance(sdtype, column_metadata)
 
             else:
