@@ -1222,6 +1222,9 @@ class ScalarRange(Constraint):
                 pandas_datetime_format = self._datetime_format.replace('%-', '%')
             table_data[self._column_name] = pd.to_datetime(data, format=pandas_datetime_format)
 
+        elif self._dtype == np.dtype('int'):
+            table_data[self._column_name] = data.round().astype(self._dtype)
+
         else:
             table_data[self._column_name] = data.astype(self._dtype)
 
