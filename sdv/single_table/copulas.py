@@ -70,8 +70,6 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         'gaussian_kde': copulas.univariate.GaussianKDE,
     }
 
-    _model = None
-
     @classmethod
     def get_distribution_class(cls, distribution):
         """Return the corresponding distribution class from ``copulas.univariate``.

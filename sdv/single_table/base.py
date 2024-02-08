@@ -53,6 +53,7 @@ class BaseSynthesizer:
     """
 
     _model_sdtype_transformers = None
+    _model = None
 
     def _validate_inputs(self, enforce_min_max_values, enforce_rounding):
         if not isinstance(enforce_min_max_values, bool):
