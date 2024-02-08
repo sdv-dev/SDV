@@ -528,7 +528,7 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
 
 @patch('sdv.single_table.base.BaseSingleTableSynthesizer._fit')
 def test_metadata_updated_warning_detect(mock__fit):
-    """Test that using ``detect_from_dataframes`` without saving the metadata raise a warning.
+    """Test that using ``detect_from_dataframe`` without saving the metadata raise a warning.
 
     The warning is expected to be raised only once during synthesizer initialization. It should
     not be raised again when calling ``fit``.
@@ -561,10 +561,12 @@ parametrization = [
     (
         'add_column_relationship', {
             'relationship_type': 'address',
-            'column_names': ['col 1', 'col 2']
+            'column_names': ['city', 'country']
         }
     ),
     ('add_alternate_keys', {'column_names': ['col 1', 'col 2']}),
+    ('set_sequence_key', {'column_name': 'col 1'}),
+    ('add_column', {'column_name': 'col 6', 'sdtype': 'numerical'}),
 ]
 
 
@@ -579,6 +581,8 @@ def test_metadata_updated_warning(method, kwargs):
             'col 1': {'sdtype': 'id'},
             'col 2': {'sdtype': 'id'},
             'col 3': {'sdtype': 'categorical'},
+            'col 4': {'sdtype': 'city'},
+            'col 5': {'sdtype': 'country'},
         }
     })
     expected_message = re.escape(
@@ -586,7 +590,10 @@ def test_metadata_updated_warning(method, kwargs):
         ' in future SDV versions.'
     )
 
-    # Run and Assert
+    # Run
+    metadata.__getattribute__(method)(**kwargs)
     with pytest.warns(UserWarning, match=expected_message):
-        metadata.__getattribute__(method)(**kwargs)
         BaseSingleTableSynthesizer(metadata)
+
+    # Assert
+    assert metadata._updated is False
