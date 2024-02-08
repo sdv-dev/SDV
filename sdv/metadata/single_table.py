@@ -187,6 +187,7 @@ class SingleTableMetadata:
         self.sequence_index = None
         self.column_relationships = []
         self._version = self.METADATA_SPEC_VERSION
+        self._updated = None
 
     def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
         expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii'])
@@ -260,6 +261,7 @@ class SingleTableMetadata:
             pii = column_kwargs.get('pii', True)
             column_kwargs['pii'] = pii
 
+        self._updated = True
         self.columns[column_name] = column_kwargs
 
     def _validate_column_exists(self, column_name):
@@ -297,6 +299,7 @@ class SingleTableMetadata:
 
         self._validate_column_args(column_name, sdtype, **kwargs)
         self.columns[column_name] = _kwargs
+        self._updated = True
 
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
@@ -481,6 +484,7 @@ class SingleTableMetadata:
 
         self._detect_columns(data)
 
+        self._updated = True
         LOGGER.info('Detected metadata:')
         LOGGER.info(json.dumps(self.to_dict(), indent=4))
 
@@ -561,6 +565,7 @@ class SingleTableMetadata:
                 ' This key will be removed.'
             )
 
+        self._updated = True
         self.primary_key = column_name
 
     def remove_primary_key(self):
@@ -568,6 +573,7 @@ class SingleTableMetadata:
         if self.primary_key is None:
             warnings.warn('No primary key exists to remove.')
 
+        self._updated = True
         self.primary_key = None
 
     def set_sequence_key(self, column_name):
@@ -584,6 +590,7 @@ class SingleTableMetadata:
                 ' This key will be removed.'
             )
 
+        self._updated = True
         self.sequence_key = column_name
 
     def _validate_alternate_keys(self, column_names):
@@ -626,6 +633,8 @@ class SingleTableMetadata:
             else:
                 self.alternate_keys.append(column)
 
+        self._updated = True
+
     def _validate_sequence_index(self, column_name):
         if not isinstance(column_name, str):
             raise InvalidMetadataError("'sequence_index' must be a string.")
@@ -651,6 +660,7 @@ class SingleTableMetadata:
         """
         self._validate_sequence_index(column_name)
         self.sequence_index = column_name
+        self._updated = True
 
     def _validate_sequence_index_not_in_sequence_key(self):
         """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
@@ -790,6 +800,7 @@ class SingleTableMetadata:
             self._validate_all_column_relationships(to_check)
 
         self.column_relationships.append(relationship)
+        self._updated = True
 
     def validate(self):
         """Validate the metadata.
@@ -1028,6 +1039,8 @@ class SingleTableMetadata:
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)
 
+        self._updated = False
+
     @classmethod
     def load_from_dict(cls, metadata_dict):
         """Create a ``SingleTableMetadata`` instance from a python ``dict``.
@@ -1069,6 +1082,7 @@ class SingleTableMetadata:
                 'class and version.'
             )
 
+        cls._updated = False
         return cls.load_from_dict(metadata)
 
     def __repr__(self):
