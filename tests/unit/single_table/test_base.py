@@ -39,8 +39,27 @@ class TestBaseSingleTableSynthesizer:
         call_list = instance._data_processor._update_transformers_by_sdtypes.call_args_list
         assert call_list == [call('categorical', None), call('numerical', 'FloatTransformer')]
 
+    def test__check_metadata_updated(self):
+        """Test the ``_check_metadata_updated`` method."""
+        # Setup
+        instance = Mock()
+        instance.metadata = Mock()
+        instance.metadata._updated = True
+
+        # Run
+        expected_message = re.escape(
+            "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+            ' in future SDV versions.'
+        )
+        with pytest.warns(UserWarning, match=expected_message):
+            BaseSingleTableSynthesizer._check_metadata_updated(instance)
+
+        # Assert
+        instance.metadata._updated = False
+
     @patch('sdv.single_table.base.DataProcessor')
-    def test___init__(self, mock_data_processor):
+    @patch('sdv.single_table.base.BaseSingleTableSynthesizer._check_metadata_updated')
+    def test___init__(self, mock_check_metadata_updated, mock_data_processor):
         """Test instantiating with default values."""
         # Setup
         metadata = Mock()
@@ -61,6 +80,7 @@ class TestBaseSingleTableSynthesizer:
             locales=instance.locales
         )
         metadata.validate.assert_called_once_with()
+        mock_check_metadata_updated.assert_called_once()
 
     @patch('sdv.single_table.base.DataProcessor')
     def test___init__custom(self, mock_data_processor):
@@ -346,6 +366,7 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reset_sampling.assert_called_once_with()
         instance._preprocess.assert_called_once_with(processed_data)
         instance.fit_processed_data.assert_called_once_with(instance._preprocess.return_value)
+        instance._check_metadata_updated.assert_called_once()
 
     def test__validate_constraints(self):
         """Test that ``_validate_constraints`` calls ``fit`` and returns any errors."""
