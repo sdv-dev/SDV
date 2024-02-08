@@ -29,6 +29,20 @@ class MultiTableMetadata:
     def __init__(self):
         self.tables = {}
         self.relationships = []
+        self._multi_table_updated = None
+        self._updated = None
+
+    def _check_updated_flag(self):
+        is_single_table_updated = any(table._updated for table in self.tables.values())
+        if is_single_table_updated or self._multi_table_updated:
+            self._updated = True
+
+    def _reset_updated_flag(self):
+        for table in self.tables.values():
+            table._updated = False
+
+        self._multi_table_updated = False
+        self._updated = False
 
     def _validate_missing_relationship_keys(self, parent_table_name, parent_primary_key,
                                             child_table_name, child_foreign_key):
@@ -264,6 +278,7 @@ class MultiTableMetadata:
             'parent_primary_key': deepcopy(parent_primary_key),
             'child_foreign_key': deepcopy(child_foreign_key),
         })
+        self._multi_table_updated = True
 
     def remove_relationship(self, parent_table_name, child_table_name):
         """Remove the relationship between two tables.
@@ -290,6 +305,8 @@ class MultiTableMetadata:
         else:
             for relation in relationships_to_remove:
                 self.relationships.remove(relation)
+
+        self._multi_table_updated = True
 
     def remove_primary_key(self, table_name):
         """Remove the primary key from the given table.
@@ -319,6 +336,8 @@ class MultiTableMetadata:
                 )
                 LOGGER.info(info_msg)
                 self.relationships.remove(relationship)
+
+        self._multi_table_updated = True
 
     def _validate_table_exists(self, table_name):
         if table_name not in self.tables:
@@ -482,6 +501,7 @@ class MultiTableMetadata:
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
         table._detect_columns(data)
+        table._updated = True
         self.tables[table_name] = table
         self._log_detected_table(table)
 
@@ -799,6 +819,7 @@ class MultiTableMetadata:
             )
 
         self.tables[table_name] = SingleTableMetadata()
+        self._multi_table_updated = True
 
     def visualize(self, show_table_details='full', show_relationship_labels=True,
                   output_filepath=None):
@@ -946,6 +967,8 @@ class MultiTableMetadata:
         metadata = self.to_dict()
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)
+
+        self._reset_updated_flag()
 
     @classmethod
     def load_from_json(cls, filepath):
