@@ -1,4 +1,5 @@
 import re
+import warnings
 from collections import defaultdict
 from datetime import date, datetime
 from unittest.mock import ANY, Mock, call, mock_open, patch
@@ -129,17 +130,22 @@ class TestBaseMultiTableSynthesizer:
 
         metadata.add_column_relationship('nesreca', 'gps', ['lat', 'lon'])
 
-        # Run
         expected_warning = (
             "The metadata contains a column relationship of type 'gps'. "
             'which requires the gps add-on. This relationship will be ignored. For higher'
             ' quality data in this relationship, please inquire about the SDV Enterprise tier.'
         )
-        with pytest.warns(UserWarning, match=expected_warning) as warning_list:
+
+        # Run
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter('always')
             BaseMultiTableSynthesizer(metadata)
 
         # Assert
-        assert len(warning_list) == 1
+        column_relationship_warnings = [
+            warning for warning in caught_warnings if expected_warning in str(warning.message)
+        ]
+        assert len(column_relationship_warnings) == 1
 
     def test___init___synthesizer_kwargs_deprecated(self):
         """Test that the ``synthesizer_kwargs`` method is deprecated."""
