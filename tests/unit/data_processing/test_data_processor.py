@@ -1380,6 +1380,89 @@ class TestDataProcessor:
         address_column_transformer = config['transformers']['address']
         assert isinstance(address_column_transformer, UniformEncoder)
 
+    def test__create_config_with_different_pii_situations(self):
+        """Test the ``_create_config`` transformer assignment for different pii scenarios.
+
+        Test that the transformers are being assigned properly for different pii scenarios.
+            - If a sdtype has a transformer by default inside the ``_transformers_by_sdtype`` dict,
+            the transformer should be assigned to the column regardless of the ``pii`` key.
+            - If the column is of sdtype ``unknown`` or ``id``, then they have their specific
+            logic, independent of the ``pii`` key.
+            - Otherwise, the ``pii`` key is set to ``True`` by default. If it's True, the column is
+            assigned to AnonymizedFaker. If it's False, the column is assigned to the default
+            categorical transformer.
+        """
+        data = pd.DataFrame({
+            'name_pii': ['John', 'Doe', 'Johanna'],
+            'phone_pii': ['123-456-7890', '123-456-7890', '123-456-7890'],
+            'city_categorical': ['New York', 'Madrid', 'New York'],
+            'example_default': [1, 2, 3],
+            'example_pii_true': [4, 5, 6],
+            'example_pii_false': [7, 8, 9],
+            'unknown_pii_true': ['a', 'b', 'c'],
+            'unknown_pii_false': ['a', 'b', 'c'],
+            'id_pii_true': ['ID_001', 'ID_002', 'ID_003'],
+            'id_pii_false': ['ID_001', 'ID_002', 'ID_003'],
+        })
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'name_pii': {'sdtype': 'name'},
+                'phone_pii': {'sdtype': 'phone_number', 'pii': True},
+                'city_categorical': {'sdtype': 'city', 'pii': False},
+                'example_default': {'sdtype': 'example'},
+                'example_pii_true': {'sdtype': 'example', 'pii': True},
+                'example_pii_false': {'sdtype': 'example', 'pii': False},
+                'unknown_pii_true': {'sdtype': 'unknown', 'pii': True},
+                'unknown_pii_false': {'sdtype': 'unknown', 'pii': False},
+                'id_pii_true': {'sdtype': 'id', 'pii': True},
+                'id_pii_false': {'sdtype': 'id', 'pii': False},
+            },
+        })
+        dp = DataProcessor(metadata)
+        dp._transformers_by_sdtype['example'] = FloatFormatter()
+
+        # Run
+        config = dp._create_config(data, set())
+
+        # Assert
+        assert config['sdtypes'] == {
+            'example_default': 'example',
+            'unknown_pii_true': 'pii',
+            'phone_pii': 'pii',
+            'name_pii': 'pii',
+            'id_pii_true': 'pii',
+            'example_pii_false': 'example',
+            'unknown_pii_false': 'pii',
+            'id_pii_false': 'pii',
+            'example_pii_true': 'example',
+            'city_categorical': 'categorical'
+        }
+        expected_transformers = {
+            'example_default': FloatFormatter,
+            'unknown_pii_true': AnonymizedFaker,
+            'phone_pii': AnonymizedFaker,
+            'name_pii': AnonymizedFaker,
+            'id_pii_true': AnonymizedFaker,
+            'example_pii_false': FloatFormatter,
+            'unknown_pii_false': AnonymizedFaker,
+            'id_pii_false': AnonymizedFaker,
+            'example_pii_true': FloatFormatter,
+            'city_categorical': UniformEncoder
+        }
+        expected_functions = {
+            'unknown_pii_false': 'bothify',
+            'unknown_pii_true': 'bothify',
+            'phone_pii': 'phone_number',
+            'name_pii': 'name',
+            'id_pii_true': 'bothify',
+            'id_pii_false': 'bothify'
+        }
+
+        for column, transformer in config['transformers'].items():
+            assert isinstance(transformer, expected_transformers[column])
+            if isinstance(transformer, AnonymizedFaker):
+                assert transformer.function_name == expected_functions[column]
+
     def test__create_config_with_address_columns(self):
         """Test the ``_create_config`` method with address columns."""
         # Setup
