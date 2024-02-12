@@ -269,3 +269,46 @@ def test_ctgansynthesizer_with_constraints_generating_categorical_values():
     # Assert
     sampled_data = my_synthesizer.sample(10)
     assert len(sampled_data) == 10
+
+
+def test_ctgan_with_dropped_columns():
+    """Test CTGANSynthesizer doesn't crash when applied to columns that will be dropped. GH#1741"""
+    # Setup
+    data = pd.DataFrame(data={
+        'user_id': ['100', '101', '102', '103', '104'],
+        'user_ssn': ['111-11-1111', '222-22-2222', '333-33-3333', '444-44-4444', '555-55-5555']
+    })
+
+    metadata_dict = {
+        'primary_key': 'user_id',
+        'columns': {
+            'user_id': {'sdtype': 'id'},
+            'user_ssn': {'sdtype': 'ssn'}
+        }
+    }
+
+    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+
+    # Run
+    synth = CTGANSynthesizer(metadata)
+    synth.fit(data)
+    samples = synth.sample(10)
+
+    # Assert
+    assert len(samples) == 10
+    assert samples.columns.tolist() == ['user_id', 'user_ssn']
+    pd.testing.assert_series_equal(
+        samples['user_id'],
+        pd.Series([
+            'sdv-id-0',
+            'sdv-id-1',
+            'sdv-id-2',
+            'sdv-id-3',
+            'sdv-id-4',
+            'sdv-id-5',
+            'sdv-id-6',
+            'sdv-id-7',
+            'sdv-id-8',
+            'sdv-id-9'
+        ], name='user_id')
+    )
