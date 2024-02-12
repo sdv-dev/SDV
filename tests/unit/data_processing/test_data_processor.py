@@ -1410,9 +1410,19 @@ class TestDataProcessor:
             'example_pii_true': FloatFormatter,
             'city_categorical': UniformEncoder
         }
+        expected_functions = {
+            'unknown_pii_false': 'bothify',
+            'unknown_pii_true': 'bothify',
+            'phone_pii': 'phone_number',
+            'name_pii': 'name',
+            'id_pii_true': 'bothify',
+            'id_pii_false': 'bothify'
+        }
 
         for column, transformer in config['transformers'].items():
             assert isinstance(transformer, expected_transformers[column])
+            if isinstance(transformer, AnonymizedFaker):
+                assert transformer.function_name == expected_functions[column]
 
     def test__create_config_with_address_columns(self):
         """Test the ``_create_config`` method with address columns."""
