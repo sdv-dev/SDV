@@ -1,4 +1,5 @@
 import re
+import warnings
 from collections import defaultdict
 from datetime import date, datetime
 from unittest.mock import ANY, Mock, call, mock_open, patch
@@ -97,7 +98,8 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         mock_print.assert_called_once_with('Fitting', end='')
 
-    def test___init__(self):
+    @patch('sdv.multi_table.base.BaseMultiTableSynthesizer._check_metadata_updated')
+    def test___init__(self, mock_check_metadata_updated):
         """Test that when creating a new instance this sets the defaults.
 
         Test that the metadata object is being stored and also being validated. Afterwards, this
@@ -117,6 +119,7 @@ class TestBaseMultiTableSynthesizer:
         assert isinstance(instance._table_synthesizers['upravna_enota'], GaussianCopulaSynthesizer)
         assert instance._table_parameters == defaultdict(dict)
         instance.metadata.validate.assert_called_once_with()
+        mock_check_metadata_updated.assert_called_once()
 
     def test__init__column_relationship_warning(self):
         """Test that a warning is raised only once when the metadata has column relationships."""
@@ -127,17 +130,22 @@ class TestBaseMultiTableSynthesizer:
 
         metadata.add_column_relationship('nesreca', 'gps', ['lat', 'lon'])
 
-        # Run
         expected_warning = (
             "The metadata contains a column relationship of type 'gps'. "
             'which requires the gps add-on. This relationship will be ignored. For higher'
             ' quality data in this relationship, please inquire about the SDV Enterprise tier.'
         )
-        with pytest.warns(UserWarning, match=expected_warning) as warning_list:
+
+        # Run
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter('always')
             BaseMultiTableSynthesizer(metadata)
 
         # Assert
-        assert len(warning_list) == 1
+        column_relationship_warnings = [
+            warning for warning in caught_warnings if expected_warning in str(warning.message)
+        ]
+        assert len(column_relationship_warnings) == 1
 
     def test___init___synthesizer_kwargs_deprecated(self):
         """Test that the ``synthesizer_kwargs`` method is deprecated."""
@@ -152,6 +160,26 @@ class TestBaseMultiTableSynthesizer:
         )
         with pytest.warns(FutureWarning, match=warn_message):
             BaseMultiTableSynthesizer(metadata, synthesizer_kwargs={})
+
+    def test__check_metadata_updated(self):
+        """Test the ``_check_metadata_updated`` method."""
+        # Setup
+        instance = Mock()
+        instance.metadata = Mock()
+        instance.metadata._check_updated_flag = Mock()
+        instance.metadata._reset_updated_flag = Mock()
+
+        # Run
+        expected_message = re.escape(
+            "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+            ' in future SDV versions.'
+        )
+        with pytest.warns(UserWarning, match=expected_message):
+            BaseMultiTableSynthesizer._check_metadata_updated(instance)
+
+        # Assert
+        instance.metadata._check_updated_flag.assert_called_once()
+        instance.metadata._reset_updated_flag.assert_called_once()
 
     def test_set_address_columns(self):
         """Test the ``set_address_columns`` method."""
@@ -857,6 +885,7 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
+        instance._check_metadata_updated.assert_called_once()
 
     def test_reset_sampling(self):
         """Test that ``reset_sampling`` resets the numpy seed and the synthesizers."""

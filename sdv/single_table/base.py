@@ -73,10 +73,19 @@ class BaseSynthesizer:
             for sdtype, transformer in self._model_sdtype_transformers.items():
                 self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
 
+    def _check_metadata_updated(self):
+        if self.metadata._updated:
+            self.metadata._updated = False
+            warnings.warn(
+                "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+                ' in future SDV versions.'
+            )
+
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=None):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata = metadata
         self.metadata.validate()
+        self._check_metadata_updated()
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self.locales = locales
@@ -379,6 +388,7 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) to fit the model to.
         """
+        self._check_metadata_updated()
         self._fitted = False
         self._data_processor.reset_sampling()
         self._random_state_set = False

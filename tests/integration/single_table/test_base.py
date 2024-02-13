@@ -1,4 +1,7 @@
 import datetime
+import re
+import warnings
+from unittest.mock import patch
 
 import pandas as pd
 import pkg_resources
@@ -462,3 +465,135 @@ def test_save_and_load(tmp_path):
     assert instance.metadata.sequence_key is None
     assert instance.metadata.sequence_index is None
     assert instance.metadata._version == 'SINGLE_TABLE_V1'
+
+
+@patch('sdv.single_table.base.BaseSingleTableSynthesizer._fit')
+def test_metadata_updated_no_warning(mock__fit, tmp_path):
+    """Test scenario where no warning about metadata should be raised.
+
+    Run 1 - The medata is load from a dict without modifications.
+    Run 2 - The metadata uses ``detect_from_dataframes`` but is saved to a file
+            before defining the syntheiszer.
+    Run 3 - The metadata is updated with a new column after the synthesizer
+            initialization, but is saved to a file before fitting.
+    """
+    # Setup
+    metadata_from_dict = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col 1': {'sdtype': 'numerical'},
+            'col 2': {'sdtype': 'numerical'},
+            'col 3': {'sdtype': 'categorical'},
+        }
+    })
+    data = pd.DataFrame({
+        'col 1': [1, 2, 3],
+        'col 2': [4, 5, 6],
+        'col 3': ['a', 'b', 'c'],
+    })
+
+    # Run 1
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        warnings.simplefilter('always')
+        instance = BaseSingleTableSynthesizer(metadata_from_dict)
+        instance.fit(data)
+
+    # Assert
+    assert len(captured_warnings) == 0
+
+    # Run 2
+    metadata_detect = SingleTableMetadata()
+    metadata_detect.detect_from_dataframe(data)
+    file_name = tmp_path / 'singletable.json'
+    metadata_detect.save_to_json(file_name)
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        warnings.simplefilter('always')
+        instance = BaseSingleTableSynthesizer(metadata_detect)
+        instance.fit(data)
+
+    # Assert
+    assert len(captured_warnings) == 0
+
+    # Run 3
+    instance = BaseSingleTableSynthesizer(metadata_detect)
+    metadata_detect.update_column('col 1', sdtype='categorical')
+    file_name = tmp_path / 'singletable_2.json'
+    metadata_detect.save_to_json(file_name)
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        warnings.simplefilter('always')
+        instance.fit(data)
+
+    # Assert
+    assert len(captured_warnings) == 0
+
+
+@patch('sdv.single_table.base.BaseSingleTableSynthesizer._fit')
+def test_metadata_updated_warning_detect(mock__fit):
+    """Test that using ``detect_from_dataframe`` without saving the metadata raise a warning.
+
+    The warning is expected to be raised only once during synthesizer initialization. It should
+    not be raised again when calling ``fit``.
+    """
+    # Setup
+    data = pd.DataFrame({
+        'col 1': [1, 2, 3],
+        'col 2': [4, 5, 6],
+        'col 3': ['a', 'b', 'c'],
+    })
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+    expected_message = re.escape(
+        "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+        ' in future SDV versions.'
+    )
+
+    # Run
+    with pytest.warns(UserWarning, match=expected_message) as record:
+        instance = BaseSingleTableSynthesizer(metadata)
+        instance.fit(data)
+
+    # Assert
+    assert len(record) == 1
+
+
+parametrization = [
+    ('update_column', {'column_name': 'col 1', 'sdtype': 'categorical'}),
+    ('set_primary_key', {'column_name': 'col 1'}),
+    (
+        'add_column_relationship', {
+            'relationship_type': 'address',
+            'column_names': ['city', 'country']
+        }
+    ),
+    ('add_alternate_keys', {'column_names': ['col 1', 'col 2']}),
+    ('set_sequence_key', {'column_name': 'col 1'}),
+    ('add_column', {'column_name': 'col 6', 'sdtype': 'numerical'}),
+]
+
+
+@pytest.mark.parametrize(('method', 'kwargs'), parametrization)
+def test_metadata_updated_warning(method, kwargs):
+    """Test that modifying metadata without saving it raise a warning.
+
+    The warning should be raised during synthesizer initialization.
+    """
+    metadata = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col 1': {'sdtype': 'id'},
+            'col 2': {'sdtype': 'id'},
+            'col 3': {'sdtype': 'categorical'},
+            'col 4': {'sdtype': 'city'},
+            'col 5': {'sdtype': 'country'},
+        }
+    })
+    expected_message = re.escape(
+        "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+        ' in future SDV versions.'
+    )
+
+    # Run
+    metadata.__getattribute__(method)(**kwargs)
+    with pytest.warns(UserWarning, match=expected_message):
+        BaseSingleTableSynthesizer(metadata)
+
+    # Assert
+    assert metadata._updated is False
