@@ -187,7 +187,7 @@ class SingleTableMetadata:
         self.sequence_index = None
         self.column_relationships = []
         self._version = self.METADATA_SPEC_VERSION
-        self._updated = None
+        self._updated = False
 
     def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
         expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii'])
@@ -1082,7 +1082,6 @@ class SingleTableMetadata:
                 'class and version.'
             )
 
-        cls._updated = False
         return cls.load_from_dict(metadata)
 
     def __repr__(self):
