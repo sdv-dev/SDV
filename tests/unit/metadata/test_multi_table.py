@@ -99,11 +99,11 @@ class TestMultiTableMetadata:
         instance.tables['table_2']._updated = False
 
         # Run
-        instance._check_updated_flag()
+        result = instance._check_updated_flag()
 
         # Assert
         assert instance._multi_table_updated is None
-        assert instance._updated is True
+        assert result is True
 
     def test__check_metadata_updated_multi_metadata_updated(self):
         """Test ``_check_metadata_updated`` method when multi table metadata has been updated."""
@@ -116,11 +116,11 @@ class TestMultiTableMetadata:
         instance._multi_table_updated = True
 
         # Run
-        instance._check_updated_flag()
+        result = instance._check_updated_flag()
 
         # Assert
         assert instance._multi_table_updated is True
-        assert instance._updated is True
+        assert result is True
 
     def test__reset_updated_flag(self):
         """Test the ``_reset_updated_flag`` method."""
@@ -138,7 +138,6 @@ class TestMultiTableMetadata:
 
         # Assert
         assert instance._multi_table_updated is False
-        assert instance._updated is False
         assert instance.tables['table_1']._updated is False
         assert instance.tables['table_2']._updated is False
 

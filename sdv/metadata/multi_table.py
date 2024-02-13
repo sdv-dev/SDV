@@ -30,19 +30,19 @@ class MultiTableMetadata:
         self.tables = {}
         self.relationships = []
         self._multi_table_updated = None
-        self._updated = None
 
     def _check_updated_flag(self):
         is_single_table_updated = any(table._updated for table in self.tables.values())
         if is_single_table_updated or self._multi_table_updated:
-            self._updated = True
+            return True
+
+        return False
 
     def _reset_updated_flag(self):
         for table in self.tables.values():
             table._updated = False
 
         self._multi_table_updated = False
-        self._updated = False
 
     def _validate_missing_relationship_keys(self, parent_table_name, parent_primary_key,
                                             child_table_name, child_foreign_key):

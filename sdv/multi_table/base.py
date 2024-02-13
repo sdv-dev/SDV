@@ -70,8 +70,7 @@ class BaseMultiTableSynthesizer:
             print(text, **kwargs)  # noqa: T001
 
     def _check_metadata_updated(self):
-        self.metadata._check_updated_flag()
-        if self.metadata._updated:
+        if self.metadata._check_updated_flag():
             self.metadata._reset_updated_flag()
             warnings.warn(
                 "We strongly recommend saving the metadata using 'save_to_json' for replicability"

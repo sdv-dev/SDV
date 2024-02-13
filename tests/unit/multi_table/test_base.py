@@ -168,7 +168,6 @@ class TestBaseMultiTableSynthesizer:
         instance.metadata = Mock()
         instance.metadata._check_updated_flag = Mock()
         instance.metadata._reset_updated_flag = Mock()
-        instance.metadata._updated = True
 
         # Run
         expected_message = re.escape(

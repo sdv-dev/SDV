@@ -1399,6 +1399,6 @@ def test_metadata_updated_warning(method, kwargs):
         HMASynthesizer(metadata)
 
     # Assert
-    assert metadata._updated is False
+    assert metadata._multi_table_updated is False
     for table_name, table_metadata in metadata.tables.items():
         assert table_metadata._updated is False
