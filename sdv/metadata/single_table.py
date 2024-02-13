@@ -467,6 +467,8 @@ class SingleTableMetadata:
         if self.primary_key is None and first_pii_field:
             self.primary_key = first_pii_field
 
+        self._updated = True
+
     def detect_from_dataframe(self, data):
         """Detect the metadata from a ``pd.DataFrame`` object.
 
@@ -484,7 +486,6 @@ class SingleTableMetadata:
 
         self._detect_columns(data)
 
-        self._updated = True
         LOGGER.info('Detected metadata:')
         LOGGER.info(json.dumps(self.to_dict(), indent=4))
 

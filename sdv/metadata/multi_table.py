@@ -29,7 +29,7 @@ class MultiTableMetadata:
     def __init__(self):
         self.tables = {}
         self.relationships = []
-        self._multi_table_updated = None
+        self._multi_table_updated = False
 
     def _check_updated_flag(self):
         is_single_table_updated = any(table._updated for table in self.tables.values())
@@ -501,7 +501,6 @@ class MultiTableMetadata:
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
         table._detect_columns(data)
-        table._updated = True
         self.tables[table_name] = table
         self._log_detected_table(table)
 

@@ -914,6 +914,7 @@ class TestSingleTableMetadata:
         assert instance.columns['first_name']['pii'] is True
 
         assert instance.primary_key == 'id'
+        assert instance._updated is True
 
     def test__detect_columns_primary_key_detection(self):
         """Test the ``_detect_columns`` primary key detection."""

@@ -86,8 +86,7 @@ class TestMultiTableMetadata:
         # Assert
         assert instance.tables == {}
         assert instance.relationships == []
-        assert instance._multi_table_updated is None
-        assert instance._multi_table_updated is None
+        assert instance._multi_table_updated is False
 
     def test__check_metadata_updated_single_metadata_updated(self):
         """Test ``_check_metadata_updated`` when a single table metadata has been updated."""
@@ -102,7 +101,7 @@ class TestMultiTableMetadata:
         result = instance._check_updated_flag()
 
         # Assert
-        assert instance._multi_table_updated is None
+        assert instance._multi_table_updated is False
         assert result is True
 
     def test__check_metadata_updated_multi_metadata_updated(self):
