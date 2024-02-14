@@ -992,7 +992,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         self._validate_conditions_unseen_columns(conditions)
         if conditions.dropna().empty:
             self._raise_condition_with_nans()
-        else:
+        elif conditions.isna().any().any():
             warnings.warn(
                 'Missing values are not yet supported. '
                 'Rows with any missing values will not be created.'
