@@ -1279,7 +1279,7 @@ class TestBaseSingleTableSynthesizer:
         )
         assert result == instance._sample_with_progress_bar.return_value
 
-    def test__validate_conditions(self):
+    def test__validate_conditions_unseen_columns(self):
         """Test that conditions are within the ``data_processor`` fields."""
         # Setup
         instance = Mock()
@@ -1290,12 +1290,12 @@ class TestBaseSingleTableSynthesizer:
         conditions = pd.DataFrame({'name': ['Johanna'], 'surname': ['Doe']})
 
         # Run
-        BaseSingleTableSynthesizer._validate_conditions(instance, conditions)
+        BaseSingleTableSynthesizer._validate_conditions_unseen_columns(instance, conditions)
 
         # Assert
         instance._data_processor.get_sdtypes.assert_called()
 
-    def test__validate_conditions_raises_error(self):
+    def test__validate_conditions_unseen_columns_raises_error(self):
         """Test that conditions are not in the ``data_processor`` fields."""
         # Setup
         instance = Mock()
@@ -1311,7 +1311,7 @@ class TestBaseSingleTableSynthesizer:
             'original data.'
         )
         with pytest.raises(ValueError, match=error_msg):
-            BaseSingleTableSynthesizer._validate_conditions(instance, conditions)
+            BaseSingleTableSynthesizer._validate_conditions_unseen_columns(instance, conditions)
 
     def test__sample_with_conditions_constraints_not_met(self):
         """Test when conditions are not met."""
@@ -1523,7 +1523,7 @@ class TestBaseSingleTableSynthesizer:
         instance = BaseSingleTableSynthesizer(metadata)
         known_columns = pd.DataFrame({'name': ['Johanna Doe']})
 
-        instance._validate_conditions = Mock()
+        instance._validate_known_columns = Mock()
         instance._sample_with_conditions = Mock()
         instance._model = GaussianMultivariate()
         instance._sample_with_conditions.return_value = pd.DataFrame({'name': ['John Doe']})
@@ -1563,7 +1563,7 @@ class TestBaseSingleTableSynthesizer:
         instance = BaseSingleTableSynthesizer(metadata)
         known_columns = pd.DataFrame({'name': ['Johanna Doe']})
 
-        instance._validate_conditions = Mock()
+        instance._validate_known_columns = Mock()
         instance._sample_with_conditions = Mock()
         instance._model = GaussianMultivariate()
         keyboard_error = KeyboardInterrupt()

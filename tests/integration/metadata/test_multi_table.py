@@ -190,10 +190,14 @@ def test_upgrade_metadata(tmp_path):
 def test_detect_from_dataframes():
     """Test the ``detect_from_dataframes`` method."""
     # Setup
-    real_data, _ = download_demo(
+    real_data, metadata = download_demo(
         modality='multi_table',
         dataset_name='fake_hotels'
     )
+    for table_name, dataframe in real_data.items():
+        dataframe.to_csv(f'{table_name}.csv', index=False)
+
+    metadata.save_to_json('metadata.json')
 
     metadata = MultiTableMetadata()
 
