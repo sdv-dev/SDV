@@ -2,6 +2,7 @@ import re
 from datetime import date, datetime
 from unittest.mock import ANY, MagicMock, Mock, call, mock_open, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 from copulas.multivariate import GaussianMultivariate
@@ -1313,6 +1314,21 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(ValueError, match=error_msg):
             BaseSingleTableSynthesizer._validate_conditions_unseen_columns(instance, conditions)
 
+    def test__validate_conditions_nans(self):
+        """Test that it raises an error when nans are in the data."""
+        # Setup
+        conditions = [pd.DataFrame({'names': [np.nan], 'surname': ['Doe']})]
+        synthesizer = BaseSingleTableSynthesizer(MagicMock())
+        synthesizer._validate_conditions_unseen_columns = Mock()
+
+        # Run and Assert
+        error_msg = (
+            'Missing values are not yet supported for conditional sampling. '
+            'Please include only non-null values in your Condition objects.'
+        )
+        with pytest.raises(SynthesizerInputError, match=error_msg):
+            synthesizer._validate_conditions(conditions)
+
     def test__sample_with_conditions_constraints_not_met(self):
         """Test when conditions are not met."""
         # Setup
@@ -1584,6 +1600,36 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame())
         mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
+
+    def test__validate_known_columns_nans(self):
+        """Test that it crashes when condition has nans."""
+        # Setup
+        conditions = pd.DataFrame({'names': [np.nan], 'surname': ['Doe']})
+        synthesizer = BaseSingleTableSynthesizer(MagicMock())
+        synthesizer._validate_conditions_unseen_columns = Mock()
+
+        # Run and Assert
+        error_msg = (
+            'Missing values are not yet supported for conditional sampling. '
+            'Please include only non-null values in your Condition objects.'
+        )
+        with pytest.raises(SynthesizerInputError, match=error_msg):
+            synthesizer._validate_known_columns(conditions)
+
+    def test__validate_known_columns_a_few_nans(self):
+        """Test that it warns when condition has a few nans, but at least a valid row."""
+        # Setup
+        conditions = pd.DataFrame({'names': [np.nan, 'Dae'], 'surname': ['Doe', 'Due']})
+        synthesizer = BaseSingleTableSynthesizer(MagicMock())
+        synthesizer._validate_conditions_unseen_columns = Mock()
+
+        # Run and Assert
+        warn_msg = (
+            'Missing values are not yet supported. '
+            'Rows with any missing values will not be created.'
+        )
+        with pytest.warns(UserWarning, match=warn_msg):
+            synthesizer._validate_known_columns(conditions)
 
     @patch('sdv.single_table.base.cloudpickle')
     def test_save(self, cloudpickle_mock, tmp_path):
