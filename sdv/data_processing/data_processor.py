@@ -22,7 +22,6 @@ from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
 from sdv.errors import SynthesizerInputError, log_exc_stacktrace
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.metadata.validation import _check_import_address_transformers
 
 LOGGER = logging.getLogger(__name__)
 
@@ -69,6 +68,7 @@ class DataProcessor:
 
     _COLUMN_RELATIONSHIP_TO_TRANSFORMER = {
         'address': 'RandomLocationGenerator',
+        'gps': 'GPSNoiser'
     }
 
     def _update_numerical_transformer(self, enforce_rounding, enforce_min_max_values):
@@ -95,8 +95,13 @@ class DataProcessor:
                 if relationship_type in self._COLUMN_RELATIONSHIP_TO_TRANSFORMER:
                     transformer_name = self._COLUMN_RELATIONSHIP_TO_TRANSFORMER[relationship_type]
                     module = getattr(rdt.transformers, relationship_type)
-                    transformer = getattr(module, transformer_name)
-                    result[column_names] = transformer(locales=self._locales)
+                    transformer_class = getattr(module, transformer_name)
+                    try:
+                        transformer_instance = transformer_class(locales=self._locales)
+                    except TypeError:  # If the transformer doesn't accept locales
+                        transformer_instance = transformer_class()
+
+                    result[column_names] = transformer_instance
 
         return result
 
@@ -139,30 +144,6 @@ class DataProcessor:
         return [
             col for col_tuple in self.grouped_columns_to_transformers for col in col_tuple
         ]
-
-    def _get_columns_in_address_transformer(self):
-        """Get the columns that are part of an address transformer.
-
-        Returns:
-            list:
-                A list of columns that are part of the address transformers.
-        """
-        try:
-            _check_import_address_transformers()
-            result = []
-            for col_tuple, transformer in self.grouped_columns_to_transformers.items():
-                is_randomlocationgenerator = isinstance(
-                    transformer, rdt.transformers.address.RandomLocationGenerator
-                )
-                is_regionalanonymizer = isinstance(
-                    transformer, rdt.transformers.address.RegionalAnonymizer
-                )
-                if is_randomlocationgenerator or is_regionalanonymizer:
-                    result.extend(list(col_tuple))
-
-            return result
-        except ImportError:
-            return []
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -304,14 +285,14 @@ class DataProcessor:
         else:
             column_names = constraint_parameters.get('column_names')
 
-        columns_in_address = self._get_columns_in_address_transformer()
-        if columns_in_address and column_names:
-            address_constraint_columns = set(column_names) & set(columns_in_address)
-            if address_constraint_columns:
-                to_print = "', '".join(address_constraint_columns)
-                raise InvalidConstraintsError(
-                    f"The '{to_print}' columns are part of an address. You cannot add constraints "
-                    'to columns that are part of an address group.'
+        columns_in_relationship = self._get_grouped_columns()
+        if columns_in_relationship and column_names:
+            relationship_and_constraint = set(column_names) & set(columns_in_relationship)
+            if relationship_and_constraint:
+                to_print = "', '".join(relationship_and_constraint)
+                raise SynthesizerInputError(
+                    f"The '{to_print}' columns are part of a column relationship. You cannot "
+                    'add constraints to columns that are part of a column relationship.'
                 )
 
         constraint_class._validate_metadata(**constraint_parameters)
@@ -569,8 +550,11 @@ class DataProcessor:
                 sdtypes[column] = sdtype
                 continue
 
-            pii = column_metadata.get('pii', sdtype not in self._transformers_by_sdtype)
-            sdtypes[column] = 'pii' if pii else sdtype
+            pii = (
+                sdtype not in self._transformers_by_sdtype
+                and sdtype not in {'unknown', 'id'}
+                and (column_metadata.get('pii', True))
+            )
 
             if sdtype == 'id':
                 is_numeric = pd.api.types.is_numeric_dtype(data[column].dtype)
@@ -600,6 +584,7 @@ class DataProcessor:
                     sdtypes[column] = 'pii'
 
             elif sdtype == 'unknown':
+                sdtypes[column] = 'pii'
                 transformers[column] = AnonymizedFaker(
                     function_name='bothify',
                 )
@@ -609,6 +594,7 @@ class DataProcessor:
                 }
 
             elif pii:
+                sdtypes[column] = 'pii'
                 enforce_uniqueness = bool(column in self._keys)
                 transformers[column] = self.create_anonymized_transformer(
                     sdtype,
@@ -618,6 +604,7 @@ class DataProcessor:
                 )
 
             elif sdtype in self._transformers_by_sdtype:
+                sdtypes[column] = sdtype
                 transformers[column] = self._get_transformer_instance(sdtype, column_metadata)
 
             else:

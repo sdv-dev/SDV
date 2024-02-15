@@ -51,8 +51,8 @@ class TestDataProcessor:
         assert transformer.enforce_min_max_values is False
 
     @patch('rdt.transformers')
-    def test__detect_multi_column_transformers_with_address(self, transfomers_mock):
-        """Test the ``_detect_multi_column_transformers`` method with address columns."""
+    def test__detect_multi_column_transformers_address(self, transformers_mock):
+        """Test the ``_detect_multi_column_transformers`` method with address relationship."""
         # Setup
         metadata = SingleTableMetadata().load_from_dict({
             'columns': {
@@ -71,16 +71,89 @@ class TestDataProcessor:
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']
         randomlocationgenerator = Mock()
-        transfomers_mock.address.RandomLocationGenerator.return_value = randomlocationgenerator
+        transformers_mock.address.RandomLocationGenerator.return_value = randomlocationgenerator
 
         # Run
         result = dp._detect_multi_column_transformers()
 
         # Assert
-        transfomers_mock.address.RandomLocationGenerator.assert_called_once_with(
+        transformers_mock.address.RandomLocationGenerator.assert_called_once_with(
             locales=['en_US', 'en_GB']
         )
+        assert result == {('country_column', 'city_column'): randomlocationgenerator}
+
+    @patch('rdt.transformers')
+    def test__detect_multi_column_transformers_gps(self, transformers_mock):
+        """Test the ``_detect_multi_column_transformers`` method with gps relationship."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'latitude_column': {'sdtype': 'latitude'},
+                'longitude_column': {'sdtype': 'longitude'},
+            },
+            'column_relationships': [
+                {
+                    'type': 'gps',
+                    'column_names': ['latitude_column', 'longitude_column']
+                }
+            ]
+        })
+        metadata.validate()
+        dp = DataProcessor(SingleTableMetadata())
+        dp.metadata = metadata
+        dp._locales = ['en_US', 'en_GB']
+        gpsnoiser = Mock()
+        transformers_mock.gps.GPSNoiser.side_effect = [
+            TypeError(), gpsnoiser
+        ]
+
+        # Run
+        result = dp._detect_multi_column_transformers()
+
+        # Assert
+        transformers_mock.gps.GPSNoiser.assert_has_calls([
+            call(locales=['en_US', 'en_GB']),
+            call()
+        ])
+        assert result == {('latitude_column', 'longitude_column'): gpsnoiser}
+
+    @patch('rdt.transformers')
+    def test__detect_multi_column_transformers_gps_address(self, transformers_mock):
+        """Test the ``_detect_multi_column_transformers`` method with different relationships."""
+        # Setup
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'latitude_column': {'sdtype': 'latitude'},
+                'longitude_column': {'sdtype': 'longitude'},
+                'country_column': {'sdtype': 'country_code'},
+                'city_column': {'sdtype': 'city'},
+            },
+            'column_relationships': [
+                {
+                    'type': 'gps',
+                    'column_names': ['latitude_column', 'longitude_column']
+                },
+                {
+                    'type': 'address',
+                    'column_names': ['country_column', 'city_column']
+                }
+            ]
+        })
+        metadata.validate()
+        dp = DataProcessor(SingleTableMetadata())
+        dp.metadata = metadata
+        dp._locales = ['en_US', 'en_GB']
+        gpsnoiser = Mock()
+        randomlocationgenerator = Mock()
+        transformers_mock.gps.GPSNoiser.return_value = gpsnoiser
+        transformers_mock.address.RandomLocationGenerator.return_value = randomlocationgenerator
+
+        # Run
+        result = dp._detect_multi_column_transformers()
+
+        # Assert
         assert result == {
+            ('latitude_column', 'longitude_column'): gpsnoiser,
             ('country_column', 'city_column'): randomlocationgenerator
         }
 
@@ -189,7 +262,7 @@ class TestDataProcessor:
         assert isinstance(instance.metadata, SingleTableMetadata)
         assert instance.metadata.columns == {'col': {'sdtype': 'numerical'}}
 
-    def test__get_column_in_multi_column_transformer(self):
+    def test__get_grouped_columns(self):
         """Test the ``_get_grouped_columns`` method."""
         # Setup
         dp = DataProcessor(SingleTableMetadata())
@@ -204,39 +277,6 @@ class TestDataProcessor:
         # Assert
         expected_list = ['col1', 'col2', 'col3', 'col4']
         assert column == expected_list
-
-    @patch('rdt.transformers')
-    @patch('sdv.data_processing.data_processor._check_import_address_transformers')
-    def test__get_columns_in_address_transformer(self, mock_check_import, mock_rdt_transformers):
-        """Test the ``_get_columns_in_address_transformer`` method."""
-        # Setup
-        class RandomLocationGeneratorMock:
-            pass
-
-        class RegionalAnonymizerMock:
-            pass
-
-        mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
-        mock_rdt_transformers.address.RegionalAnonymizer = RegionalAnonymizerMock
-
-        dp = DataProcessor(SingleTableMetadata())
-
-        dp.RandomLocationGenerator = RandomLocationGeneratorMock
-        dp.RegionalAnonymizer = RegionalAnonymizerMock
-
-        dp.grouped_columns_to_transformers = {
-            ('col1', 'col2'): RandomLocationGeneratorMock(),
-            ('col3', 'col4'): RegionalAnonymizerMock(),
-            ('col5', 'col6'): 'other_transformer'
-        }
-
-        # Run
-        columns = dp._get_columns_in_address_transformer()
-
-        # Assert
-        expected_columns = ['col1', 'col2', 'col3', 'col4']
-        assert columns == expected_columns
-        mock_check_import.assert_called_once()
 
     def test_filter_valid(self):
         """Test that we are calling the ``filter_valid`` of each constraint over the data."""
@@ -607,8 +647,8 @@ class TestDataProcessor:
         # Assert
         custom_constraint._validate_metadata.assert_called_once_with(column_name='col1')
 
-    def test__validate_constraint_dict_address_columns(self):
-        """Test that the validation raises an error when one column is an address."""
+    def test__validate_constraint_dict_columns_in_relationships(self):
+        """Test that the validation raises an error when one column is a column relationship."""
         # Setup
         constraint_column_name = {
             'constraint_class': 'Name',
@@ -623,18 +663,17 @@ class TestDataProcessor:
         custom_constraint = Mock()
 
         dp = DataProcessor(metadata)
-        dp._custom_constraint_classes
-        dp._get_columns_in_address_transformer = Mock()
-        dp._get_columns_in_address_transformer.return_value = ['country_column', 'city_column']
+        dp._get_grouped_columns = Mock()
+        dp._get_grouped_columns.return_value = ['country_column', 'city_column']
 
         dp._custom_constraint_classes = {'Name': custom_constraint}
 
         # Run and Assert
-        error_msg_1 = re.escape(
-            "The provided constraint is invalid:\nThe 'country_column' columns are part of an"
-            ' address. You cannot add constraints to columns that are part of an address group.'
+        error_msg = re.escape(
+            "The 'country_column' columns are part of a column relationship. You "
+            'cannot add constraints to columns that are part of a column relationship.'
         )
-        with pytest.raises(InvalidConstraintsError, match=error_msg_1):
+        with pytest.raises(SynthesizerInputError, match=error_msg):
             dp._validate_constraint_dict(constraint_column_name)
 
     @patch('sdv.data_processing.data_processor.Constraint')
@@ -1340,6 +1379,89 @@ class TestDataProcessor:
 
         address_column_transformer = config['transformers']['address']
         assert isinstance(address_column_transformer, UniformEncoder)
+
+    def test__create_config_with_different_pii_situations(self):
+        """Test the ``_create_config`` transformer assignment for different pii scenarios.
+
+        Test that the transformers are being assigned properly for different pii scenarios.
+            - If a sdtype has a transformer by default inside the ``_transformers_by_sdtype`` dict,
+            the transformer should be assigned to the column regardless of the ``pii`` key.
+            - If the column is of sdtype ``unknown`` or ``id``, then they have their specific
+            logic, independent of the ``pii`` key.
+            - Otherwise, the ``pii`` key is set to ``True`` by default. If it's True, the column is
+            assigned to AnonymizedFaker. If it's False, the column is assigned to the default
+            categorical transformer.
+        """
+        data = pd.DataFrame({
+            'name_pii': ['John', 'Doe', 'Johanna'],
+            'phone_pii': ['123-456-7890', '123-456-7890', '123-456-7890'],
+            'city_categorical': ['New York', 'Madrid', 'New York'],
+            'example_default': [1, 2, 3],
+            'example_pii_true': [4, 5, 6],
+            'example_pii_false': [7, 8, 9],
+            'unknown_pii_true': ['a', 'b', 'c'],
+            'unknown_pii_false': ['a', 'b', 'c'],
+            'id_pii_true': ['ID_001', 'ID_002', 'ID_003'],
+            'id_pii_false': ['ID_001', 'ID_002', 'ID_003'],
+        })
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'name_pii': {'sdtype': 'name'},
+                'phone_pii': {'sdtype': 'phone_number', 'pii': True},
+                'city_categorical': {'sdtype': 'city', 'pii': False},
+                'example_default': {'sdtype': 'example'},
+                'example_pii_true': {'sdtype': 'example', 'pii': True},
+                'example_pii_false': {'sdtype': 'example', 'pii': False},
+                'unknown_pii_true': {'sdtype': 'unknown', 'pii': True},
+                'unknown_pii_false': {'sdtype': 'unknown', 'pii': False},
+                'id_pii_true': {'sdtype': 'id', 'pii': True},
+                'id_pii_false': {'sdtype': 'id', 'pii': False},
+            },
+        })
+        dp = DataProcessor(metadata)
+        dp._transformers_by_sdtype['example'] = FloatFormatter()
+
+        # Run
+        config = dp._create_config(data, set())
+
+        # Assert
+        assert config['sdtypes'] == {
+            'example_default': 'example',
+            'unknown_pii_true': 'pii',
+            'phone_pii': 'pii',
+            'name_pii': 'pii',
+            'id_pii_true': 'pii',
+            'example_pii_false': 'example',
+            'unknown_pii_false': 'pii',
+            'id_pii_false': 'pii',
+            'example_pii_true': 'example',
+            'city_categorical': 'categorical'
+        }
+        expected_transformers = {
+            'example_default': FloatFormatter,
+            'unknown_pii_true': AnonymizedFaker,
+            'phone_pii': AnonymizedFaker,
+            'name_pii': AnonymizedFaker,
+            'id_pii_true': AnonymizedFaker,
+            'example_pii_false': FloatFormatter,
+            'unknown_pii_false': AnonymizedFaker,
+            'id_pii_false': AnonymizedFaker,
+            'example_pii_true': FloatFormatter,
+            'city_categorical': UniformEncoder
+        }
+        expected_functions = {
+            'unknown_pii_false': 'bothify',
+            'unknown_pii_true': 'bothify',
+            'phone_pii': 'phone_number',
+            'name_pii': 'name',
+            'id_pii_true': 'bothify',
+            'id_pii_false': 'bothify'
+        }
+
+        for column, transformer in config['transformers'].items():
+            assert isinstance(transformer, expected_transformers[column])
+            if isinstance(transformer, AnonymizedFaker):
+                assert transformer.function_name == expected_functions[column]
 
     def test__create_config_with_address_columns(self):
         """Test the ``_create_config`` method with address columns."""

@@ -86,6 +86,59 @@ class TestMultiTableMetadata:
         # Assert
         assert instance.tables == {}
         assert instance.relationships == []
+        assert instance._multi_table_updated is False
+
+    def test__check_metadata_updated_single_metadata_updated(self):
+        """Test ``_check_metadata_updated`` when a single table metadata has been updated."""
+        # Setup
+        instance = MultiTableMetadata()
+        instance.tables['table_1'] = Mock()
+        instance.tables['table_2'] = Mock()
+        instance.tables['table_1']._updated = True
+        instance.tables['table_2']._updated = False
+
+        # Run
+        result = instance._check_updated_flag()
+
+        # Assert
+        assert instance._multi_table_updated is False
+        assert result is True
+
+    def test__check_metadata_updated_multi_metadata_updated(self):
+        """Test ``_check_metadata_updated`` method when multi table metadata has been updated."""
+        # Setup
+        instance = MultiTableMetadata()
+        instance.tables['table_1'] = Mock()
+        instance.tables['table_2'] = Mock()
+        instance.tables['table_1']._updated = False
+        instance.tables['table_2']._updated = False
+        instance._multi_table_updated = True
+
+        # Run
+        result = instance._check_updated_flag()
+
+        # Assert
+        assert instance._multi_table_updated is True
+        assert result is True
+
+    def test__reset_updated_flag(self):
+        """Test the ``_reset_updated_flag`` method."""
+        # Setup
+        instance = MultiTableMetadata()
+        instance.tables['table_1'] = Mock()
+        instance.tables['table_2'] = Mock()
+        instance.tables['table_1']._updated = False
+        instance.tables['table_2']._updated = True
+        instance._multi_table_updated = True
+        instance._updated = True
+
+        # Run
+        instance._reset_updated_flag()
+
+        # Assert
+        assert instance._multi_table_updated is False
+        assert instance.tables['table_1']._updated is False
+        assert instance.tables['table_2']._updated is False
 
     def test__validate_missing_relationship_keys_foreign_key(self):
         """Test the ``_validate_missing_relationship_keys`` method of ``MultiTableMetadata``.
@@ -587,6 +640,7 @@ class TestMultiTableMetadata:
         instance._validate_relationship_does_not_exist.assert_called_once_with(
             'users', 'id', 'sessions', 'user_id'
         )
+        assert instance._multi_table_updated is True
 
     def test_add_relationship_child_key_is_primary_key(self):
         """Test that passing a primary key as ``child_foreign_key`` crashes."""
@@ -692,6 +746,7 @@ class TestMultiTableMetadata:
                 'child_foreign_key': 'session_id',
             }
         ]
+        assert instance._multi_table_updated is True
 
     @patch('sdv.metadata.multi_table.warnings')
     def test_remove_relationship_relationship_not_found(self, warnings_mock):
@@ -730,6 +785,63 @@ class TestMultiTableMetadata:
             "child table 'sessions'."
         )
         warnings_mock.warn.assert_called_once_with(warning_msg)
+
+    @patch('sdv.metadata.multi_table.LOGGER')
+    def test_remove_primary_key(self, logger_mock):
+        """Test that ``remove_primary_key`` removes the primary key for the table."""
+        # Setup
+        instance = MultiTableMetadata()
+        table = Mock()
+        table.primary_key = 'primary_key'
+        instance.tables = {
+            'table': table,
+            'parent': Mock(),
+            'child': Mock()
+        }
+        instance.relationships = [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'table',
+                'parent_primary_key': 'pk',
+                'child_foreign_key': 'primary_key'
+            },
+            {
+                'parent_table_name': 'table',
+                'child_table_name': 'child',
+                'parent_primary_key': 'primary_key',
+                'child_foreign_key': 'fk'
+            },
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk',
+                'child_foreign_key': 'fk'
+            }
+        ]
+
+        # Run
+        instance.remove_primary_key('table')
+
+        # Assert
+        assert instance.relationships == [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk',
+                'child_foreign_key': 'fk'
+            }
+        ]
+        table.remove_primary_key.assert_called_once()
+        msg1 = (
+            "Relationship between 'table' and 'parent' removed because the primary key for "
+            "'table' was removed."
+        )
+        msg2 = (
+            "Relationship between 'table' and 'child' removed because the primary key for "
+            "'table' was removed."
+        )
+        logger_mock.info.assert_has_calls([call(msg1), call(msg2)])
+        assert instance._multi_table_updated is True
 
     def test__validate_column_relationships_foreign_keys(self):
         """Test ``_validate_column_relationships_foriegn_keys."""
@@ -1307,6 +1419,7 @@ class TestMultiTableMetadata:
 
         # Assert
         assert instance.tables == {'users': table_metadata_mock.return_value}
+        assert instance._multi_table_updated is True
 
     def test_add_table_empty_string(self):
         """Test that the method raises an error if the table name is an empty string."""
@@ -2630,6 +2743,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         instance = MultiTableMetadata()
+        instance._reset_updated_flag = Mock()
 
         # Run / Assert
         file_name = tmp_path / 'multitable.json'
@@ -2638,6 +2752,8 @@ class TestMultiTableMetadata:
         with open(file_name, 'rb') as multi_table_file:
             saved_metadata = json.load(multi_table_file)
             assert saved_metadata == instance.to_dict()
+
+        instance._reset_updated_flag.assert_called_once()
 
     def test__convert_relationships(self):
         """Test the ``_convert_relationships`` method.

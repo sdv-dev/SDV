@@ -1,12 +1,31 @@
+import re
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.errors import NotFittedError
+from sdv.errors import InvalidDataTypeError, NotFittedError
 from sdv.metadata.single_table import SingleTableMetadata
-from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer
+from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer, _validate_no_category_dtype
+
+
+def test__validate_no_category_dtype():
+    """Test that 'category' dtype causes error."""
+    # Setup
+    data = pd.DataFrame({
+        'category1': pd.Categorical(['a', 'a', 'b']),
+        'value': [0, 1, 2],
+        'category2': pd.Categorical([0, 1, 2])
+    })
+
+    # Run and Assert
+    expected = re.escape(
+        "Columns ['category1', 'category2'] are stored as a 'category' type, which is not "
+        "supported. Please cast these columns to an 'object' to continue."
+    )
+    with pytest.raises(InvalidDataTypeError, match=expected):
+        _validate_no_category_dtype(data)
 
 
 class TestCTGANSynthesizer:
@@ -209,7 +228,8 @@ class TestCTGANSynthesizer:
 
     @patch('sdv.single_table.ctgan.CTGAN')
     @patch('sdv.single_table.ctgan.detect_discrete_columns')
-    def test__fit(self, mock_detect_discrete_columns, mock_ctgan):
+    @patch('sdv.single_table.ctgan._validate_no_category_dtype')
+    def test__fit(self, mock_category_validate, mock_detect_discrete_columns, mock_ctgan):
         """Test the ``_fit`` from ``CTGANSynthesizer``.
 
         Test that when we call ``_fit`` a new instance of ``CTGAN`` is created as a model
@@ -225,6 +245,7 @@ class TestCTGANSynthesizer:
         instance._fit(processed_data)
 
         # Assert
+        mock_category_validate.assert_called_once_with(processed_data)
         mock_detect_discrete_columns.assert_called_once_with(
             metadata,
             processed_data,
@@ -380,7 +401,8 @@ class TestTVAESynthesizer:
 
     @patch('sdv.single_table.ctgan.TVAE')
     @patch('sdv.single_table.ctgan.detect_discrete_columns')
-    def test__fit(self, mock_detect_discrete_columns, mock_tvae):
+    @patch('sdv.single_table.ctgan._validate_no_category_dtype')
+    def test__fit(self, mock_category_validate, mock_detect_discrete_columns, mock_tvae):
         """Test the ``_fit`` from ``TVAESynthesizer``.
 
         Test that when we call ``_fit`` a new instance of ``TVAE`` is created as a model
@@ -396,6 +418,7 @@ class TestTVAESynthesizer:
         instance._fit(processed_data)
 
         # Assert
+        mock_category_validate.assert_called_once_with(processed_data)
         mock_detect_discrete_columns.assert_called_once_with(
             metadata,
             processed_data,

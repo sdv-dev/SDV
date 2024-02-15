@@ -15,7 +15,7 @@ from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
-from sdv.metadata.validation import validate_address_sdtypes
+from sdv.metadata.validation import validate_address_sdtypes, validate_gps_sdtypes
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import (
@@ -95,8 +95,18 @@ class SingleTableMetadata:
         'license': 'license_plate',
     }
 
+    _SDTYPES_WITHOUT_SUBSTRINGS = {
+        reference: sdtype
+        for reference, sdtype in _REFERENCE_TO_SDTYPE.items()
+        if sdtype not in {'ssn', 'administrative_unit', 'city', 'vin'}
+    }
+
+    _SDTYPES_WITH_SUBSTRINGS = dict(
+        set(_REFERENCE_TO_SDTYPE.items()) - set(_SDTYPES_WITHOUT_SUBSTRINGS.items()))
+
     _COLUMN_RELATIONSHIP_TYPES = {
         'address': validate_address_sdtypes,
+        'gps': validate_gps_sdtypes,
     }
 
     METADATA_SPEC_VERSION = 'SINGLE_TABLE_V1'
@@ -177,6 +187,7 @@ class SingleTableMetadata:
         self.sequence_index = None
         self.column_relationships = []
         self._version = self.METADATA_SPEC_VERSION
+        self._updated = False
 
     def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
         expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii'])
@@ -250,6 +261,7 @@ class SingleTableMetadata:
             pii = column_kwargs.get('pii', True)
             column_kwargs['pii'] = pii
 
+        self._updated = True
         self.columns[column_name] = column_kwargs
 
     def _validate_column_exists(self, column_name):
@@ -287,16 +299,36 @@ class SingleTableMetadata:
 
         self._validate_column_args(column_name, sdtype, **kwargs)
         self.columns[column_name] = _kwargs
+        self._updated = True
 
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
         metadata = {}
         for key in self._KEYS:
-            value = getattr(self, f'{key}') if key != 'METADATA_SPEC_VERSION' else self._version
+            not_version = key != 'METADATA_SPEC_VERSION'
+            value = getattr(self, f'{key}', None) if not_version else self._version
             if value:
                 metadata[key] = value
 
         return deepcopy(metadata)
+
+    def _tokenize_column_name(self, column_name):
+        """Tokenize a column name.
+
+        Args:
+            column_name (str):
+                The column name to be tokenized.
+        """
+        tokens = column_name.replace(' ', '_').replace('-', '_').split('_')
+        if len(tokens) == 1:
+            tokens = []
+            if column_name.upper() != column_name and column_name[1:].lower() != column_name[1:]:
+                tokens = re.findall('[A-Z][^A-Z]*', column_name)
+
+        tokens = tokens if tokens else [column_name]
+        tokens = [token.lower() for token in tokens]
+
+        return tokens
 
     def _detect_pii_column(self, column_name):
         """Detect PII columns.
@@ -305,10 +337,20 @@ class SingleTableMetadata:
             column_name (str):
                 The column name to be analyzed.
         """
-        cleaned_name = re.sub(r'[^a-zA-Z0-9]', '', column_name).lower()
+        # Subset of sdtypes which are unambiguous, ie aren't a substring of another word
+        # For such cases just check if the word is in the column name
+        cleaned_name = re.sub(r'[^a-zA-Z0-9]', '', column_name.lower())
+        for reference, sdtype in self._SDTYPES_WITHOUT_SUBSTRINGS.items():
+            if reference in cleaned_name:
+                return sdtype
+
+        # To handle the cases where the sdtype could be a substring of another word,
+        # tokenize the column name based on (1) symbols and (2) camelCase
+        tokens = self._tokenize_column_name(column_name)
+
         return next((
-            sdtype for reference, sdtype in self._REFERENCE_TO_SDTYPE.items()
-            if reference in cleaned_name
+            sdtype for reference, sdtype in self._SDTYPES_WITH_SUBSTRINGS.items()
+            if reference in tokens
         ), None)
 
     def _determine_sdtype_for_numbers(self, data):
@@ -381,6 +423,7 @@ class SingleTableMetadata:
         first_pii_field = None
         for field in data:
             column_data = data[field]
+            has_nan = column_data.isna().any()
             clean_data = column_data.dropna()
             dtype = clean_data.infer_objects().dtype.kind
 
@@ -402,15 +445,17 @@ class SingleTableMetadata:
 
                 # Set the first ID column we detect to be the primary key
                 if sdtype == 'id':
-                    if self.primary_key is None:
+                    if self.primary_key is None and not has_nan:
                         self.primary_key = field
                     else:
                         sdtype = 'unknown'
 
             column_dict = {'sdtype': sdtype}
-            if sdtype in self._REFERENCE_TO_SDTYPE.values() or sdtype == 'unknown':
+            sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
+
+            if sdtype_in_reference or sdtype == 'unknown':
                 column_dict['pii'] = True
-            if sdtype in self._REFERENCE_TO_SDTYPE.values() and first_pii_field is None:
+            if sdtype_in_reference and first_pii_field is None and not has_nan:
                 first_pii_field = field
             if sdtype == 'datetime' and dtype == 'O':
                 datetime_format = get_datetime_format(column_data.iloc[:100])
@@ -421,6 +466,8 @@ class SingleTableMetadata:
         # When no primary key column was set, choose the first pii field
         if self.primary_key is None and first_pii_field:
             self.primary_key = first_pii_field
+
+        self._updated = True
 
     def detect_from_dataframe(self, data):
         """Detect the metadata from a ``pd.DataFrame`` object.
@@ -519,7 +566,16 @@ class SingleTableMetadata:
                 ' This key will be removed.'
             )
 
+        self._updated = True
         self.primary_key = column_name
+
+    def remove_primary_key(self):
+        """Remove the metadata primary key."""
+        if self.primary_key is None:
+            warnings.warn('No primary key exists to remove.')
+
+        self._updated = True
+        self.primary_key = None
 
     def set_sequence_key(self, column_name):
         """Set the metadata sequence key.
@@ -535,6 +591,7 @@ class SingleTableMetadata:
                 ' This key will be removed.'
             )
 
+        self._updated = True
         self.sequence_key = column_name
 
     def _validate_alternate_keys(self, column_names):
@@ -577,6 +634,8 @@ class SingleTableMetadata:
             else:
                 self.alternate_keys.append(column)
 
+        self._updated = True
+
     def _validate_sequence_index(self, column_name):
         if not isinstance(column_name, str):
             raise InvalidMetadataError("'sequence_index' must be a string.")
@@ -602,6 +661,7 @@ class SingleTableMetadata:
         """
         self._validate_sequence_index(column_name)
         self.sequence_index = column_name
+        self._updated = True
 
     def _validate_sequence_index_not_in_sequence_key(self):
         """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
@@ -661,7 +721,7 @@ class SingleTableMetadata:
         except ImportError:
             warnings.warn(
                 f"The metadata contains a column relationship of type '{relationship_type}'. "
-                f'which requires the {relationship_type} add-on.'
+                f'which requires the {relationship_type} add-on. '
                 'This relationship will be ignored. For higher quality data in this'
                 ' relationship, please inquire about the SDV Enterprise tier.'
             )
@@ -736,8 +796,12 @@ class SingleTableMetadata:
         """
         relationship = {'type': relationship_type, 'column_names': column_names}
         to_check = [relationship] + self.column_relationships
-        self._validate_all_column_relationships(to_check)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', UserWarning)
+            self._validate_all_column_relationships(to_check)
+
         self.column_relationships.append(relationship)
+        self._updated = True
 
     def validate(self):
         """Validate the metadata.
@@ -975,6 +1039,8 @@ class SingleTableMetadata:
         metadata['METADATA_SPEC_VERSION'] = self.METADATA_SPEC_VERSION
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)
+
+        self._updated = False
 
     @classmethod
     def load_from_dict(cls, metadata_dict):

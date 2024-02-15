@@ -69,11 +69,24 @@ class BaseMultiTableSynthesizer:
         if self.verbose:
             print(text, **kwargs)  # noqa: T001
 
+    def _check_metadata_updated(self):
+        if self.metadata._check_updated_flag():
+            self.metadata._reset_updated_flag()
+            warnings.warn(
+                "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+                ' in future SDV versions.'
+            )
+
     def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
         self.metadata = metadata
-        self.metadata.validate()
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', message=r'.*column relationship.*')
+            self.metadata.validate()
+
+        self._check_metadata_updated()
         self.locales = locales
         self.verbose = False
+        self.extended_columns = defaultdict(dict)
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
         if synthesizer_kwargs is not None:
@@ -360,6 +373,7 @@ class BaseMultiTableSynthesizer:
                 Dictionary mapping each table name to a ``pandas.DataFrame`` in the raw format
                 (before any transformations).
         """
+        self._check_metadata_updated()
         self._fitted = False
         processed_data = self.preprocess(data)
         self._print(text='\n', end='')

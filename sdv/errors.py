@@ -56,5 +56,9 @@ class InvalidDataError(Exception):
         )
 
 
+class InvalidDataTypeError(Exception):
+    """Error to raise if data type is not valid."""
+
+
 class VisualizationUnavailableError(Exception):
     """Exception to indicate that a visualization is unavailable."""

@@ -1,5 +1,5 @@
 import re
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -186,11 +186,11 @@ class TestHMASynthesizer:
             '__oseba__id_nesreca__univariates__oseba_val__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__b': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__loc': [0., 1., 2., 3.],
-            '__oseba__id_nesreca__univariates__oseba_val__scale': [0.] * 4,
+            '__oseba__id_nesreca__univariates__oseba_val__scale': [1e-6] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__b': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__loc': [0., 1., 2., 3.],
-            '__oseba__id_nesreca__univariates__oseba_value__scale': [0.] * 4,
+            '__oseba__id_nesreca__univariates__oseba_value__scale': [1e-6] * 4,
             '__oseba__id_nesreca__num_rows': [1.] * 4,
         })
 
@@ -403,24 +403,47 @@ class TestHMASynthesizer:
         # Setup
         parent_row = pd.Series({
             '__sessions__user_id__num_rows': 10,
-            '__sessions__user_id__a': 1.0,
+            '__sessions__user_id__a': -1.0,
             '__sessions__user_id__b': 0.2,
-            '__sessions__user_id__loc': 0.5,
-            '__sessions__user_id__scale': 0.25
+            '__sessions__user_id__loc': 0.3,
         })
         instance = Mock()
         instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
+
+        float_formatter1 = MagicMock()
+        float_formatter1._min_value = 0.
+        float_formatter1._max_value = 5
+
+        float_formatter2 = MagicMock()
+        float_formatter2._min_value = 0.1
+        float_formatter2._max_value = 5
+
+        float_formatter3 = MagicMock()
+        float_formatter3._min_value = 0
+        float_formatter3._max_value = 1
+
+        float_formatter4 = MagicMock()
+        float_formatter4._min_value = 0.3
+        float_formatter4._max_value = 0.7
+
+        instance.extended_columns = {
+            'sessions': {
+                '__sessions__user_id__num_rows': float_formatter1,
+                '__sessions__user_id__a': float_formatter2,
+                '__sessions__user_id__b': float_formatter3,
+                '__sessions__user_id__loc': float_formatter4,
+            }
+        }
 
         # Run
         result = HMASynthesizer._extract_parameters(instance, parent_row, 'sessions', 'user_id')
 
         # Assert
         expected_result = {
-            'a': 1.0,
+            'a': .1,
             'b': 0.2,
-            'loc': 0.5,
-            'num_rows': 10.0,
-            'scale': 0.25
+            'loc': 0.3,
+            'num_rows': 5,
         }
 
         assert result == expected_result

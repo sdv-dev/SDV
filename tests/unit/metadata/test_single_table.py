@@ -81,6 +81,7 @@ class TestSingleTableMetadata:
         assert instance.alternate_keys == []
         assert instance.sequence_index is None
         assert instance._version == 'SINGLE_TABLE_V1'
+        assert instance._updated is False
 
     def test__validate_numerical_default_and_invalid(self):
         """Test the ``_validate_numerical`` method.
@@ -728,12 +729,23 @@ class TestSingleTableMetadata:
 
         # Run and Assert
         assert metadata._detect_pii_column('user_first_name') == 'first_name'
+        assert metadata._detect_pii_column('USER_FIRST_NAME') == 'first_name'
         assert metadata._detect_pii_column('User_Last_Name') == 'last_name'
-        assert metadata._detect_pii_column('country^code') == 'country_code'
+        assert metadata._detect_pii_column('countrycode') == 'country_code'
         assert metadata._detect_pii_column('city') == 'city'
+        assert metadata._detect_pii_column('non_cIty') == 'city'
+        assert metadata._detect_pii_column('nonCity') == 'city'
+        assert metadata._detect_pii_column('cIty') is None
         assert metadata._detect_pii_column('address') is None
         assert metadata._detect_pii_column('first_name_last_name') == 'first_name'
         assert metadata._detect_pii_column('license') == 'license_plate'
+        assert metadata._detect_pii_column('resolving_loans') is None
+        assert metadata._detect_pii_column('vin_loans') == 'vin'
+        assert metadata._detect_pii_column('VinLoans') == 'vin'
+        assert metadata._detect_pii_column('VINLOANSVIN') is None
+        assert metadata._detect_pii_column('VIN') == 'vin'
+        assert metadata._detect_pii_column('StateDepartment') == 'administrative_unit'
+        assert metadata._detect_pii_column('STATEDEPARTMENT') is None
 
     def test__determine_sdtype_for_numbers(self):
         """Test the ``determine_sdtype_for_numbers`` method.
@@ -902,6 +914,30 @@ class TestSingleTableMetadata:
         assert instance.columns['first_name']['pii'] is True
 
         assert instance.primary_key == 'id'
+        assert instance._updated is True
+
+    def test__detect_columns_primary_key_detection(self):
+        """Test the ``_detect_columns`` primary key detection."""
+        # Setup
+        metadata_without_primary_key = SingleTableMetadata()
+        metadata_with_primary_key = SingleTableMetadata()
+        data_without_primary_key = pd.DataFrame({
+            'email': ['sdv@sdv.dev', 'info@datacebo.com', 'info@gmail.co.uk', None],
+            'numerical': [0, 1, 2, 1],
+        })  # Not primary key because has NaNs.
+
+        data_with_primary_key = pd.DataFrame({
+            'email': ['sdv@sdv.dev', 'info@datacebo.com', 'info@gmail.co.uk'],
+            'numerical': [0, 1, 2],
+        })
+
+        # Run
+        metadata_with_primary_key._detect_columns(data_with_primary_key)
+        metadata_without_primary_key._detect_columns(data_without_primary_key)
+
+        # Assert
+        assert metadata_with_primary_key.primary_key == 'email'
+        assert metadata_without_primary_key.primary_key is None
 
     def test__detect_columns_with_nans_nones_and_nats(self):
         """Test the ``_detect_columns`` with ``None``, ``np.nan`` and ``pd.NaT``."""
@@ -1293,6 +1329,33 @@ class TestSingleTableMetadata:
 
         # Assert
         assert instance.primary_key == 'column'
+
+    def test_remove_primary_key(self):
+        """Test that ``remove_primary_key`` removes the ``primary_key`` value."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {'id': {'sdtype': 'id'}}
+        instance.primary_key = 'id'
+
+        # Run
+        instance.remove_primary_key()
+
+        # Assert
+        assert instance.primary_key is None
+
+    @patch('sdv.metadata.single_table.warnings')
+    def test_remove_primary_key_warns_no_key_set(self, warning_mock):
+        """Test that ``remove_primary_key`` removes the ``primary_key`` value."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {'id': {'sdtype': 'id'}}
+
+        # Run
+        instance.remove_primary_key()
+
+        # Assert
+        assert instance.primary_key is None
+        warning_mock.warn.assert_called_once_with('No primary key exists to remove.')
 
     @patch('sdv.metadata.single_table.warnings')
     def test_set_primary_key_already_exists_warning(self, warning_mock):
@@ -1869,6 +1932,27 @@ class TestSingleTableMetadata:
             {'type': 'relationship_B', 'column_names': ['col1', 'col2', 'col3']}
         ]
 
+    def test_add_column_relationships_silence_warnings(self):
+        """Test ``add_column_relationship`` silences UserWarnings."""
+        # Setup
+        def raise_user_warning(*args, **kwargs):
+            warnings.warn('This is a warning', UserWarning)
+
+        instance = SingleTableMetadata()
+        mock_validate_column_relationships = Mock(side_effect=raise_user_warning)
+        instance._validate_all_column_relationships = mock_validate_column_relationships
+
+        # Run
+        with warnings.catch_warnings(record=True) as captured_warnings:
+            warnings.simplefilter('always')
+            instance.add_column_relationship(
+                relationship_type='relationship_A',
+                column_names=['colA', 'colB']
+            )
+
+        # Assert
+        assert len(captured_warnings) == 0
+
     def test_validate(self):
         """Test the ``validate`` method.
 
@@ -2264,6 +2348,27 @@ class TestSingleTableMetadata:
         # Ensure that the output object does not alterate the inside object
         result['columns']['my_column'] = 1
         assert instance.columns['my_column'] == 'value'
+
+    def test_to_dict_missing_attributes(self):
+        """Test when the class is missing a new attribute.
+
+        If the metadata class was saved on previous versions, it may
+        be missing attributes so we should still be able to convert
+        that old metadata to a dict.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns['my_column'] = 'value'
+        del instance.column_relationships
+
+        # Run
+        result = instance.to_dict()
+
+        # Assert
+        assert result == {
+            'columns': {'my_column': 'value'},
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+        }
 
     def test_load_from_dict(self):
         """Test that ``load_from_dict`` returns a instance with the ``dict`` updated objects."""

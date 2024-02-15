@@ -1,11 +1,13 @@
 import datetime
 import re
+import warnings
 
 import numpy as np
 import pandas as pd
 import pkg_resources
 import pytest
 from faker import Faker
+from rdt.transformers import FloatFormatter
 
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
@@ -1207,3 +1209,196 @@ class TestHMASynthesizer:
         assert len(likelihoods) == len(sampled_data['character_families'])
         assert not any(likelihoods[not_nan_cols].isna().any())
         assert all(likelihoods[nan_cols].isna())
+
+    def test__extract_parameters(self):
+        """Test it when parameters are out of bounds."""
+        # Setup
+        parent_row = pd.Series({
+            '__sessions__user_id__num_rows': 10,
+            '__sessions__user_id__a': -1,
+            '__sessions__user_id__b': 1000,
+            '__sessions__user_id__loc': 0.5,
+            '__sessions__user_id__scale': -0.25
+        })
+        instance = HMASynthesizer(MultiTableMetadata())
+        instance.extended_columns = {
+            'sessions': {
+                '__sessions__user_id__num_rows': FloatFormatter(enforce_min_max_values=True),
+                '__sessions__user_id__a': FloatFormatter(enforce_min_max_values=True),
+                '__sessions__user_id__b': FloatFormatter(enforce_min_max_values=True),
+                '__sessions__user_id__loc': FloatFormatter(enforce_min_max_values=True),
+                '__sessions__user_id__scale': FloatFormatter(enforce_min_max_values=True)
+            }
+        }
+        for col, float_formatter in instance.extended_columns['sessions'].items():
+            float_formatter.fit(pd.DataFrame({col: [0., 100.]}), col)
+
+        instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
+
+        # Run
+        result = instance._extract_parameters(parent_row, 'sessions', 'user_id')
+
+        # Assert
+        expected_result = {
+            'a': 0.,
+            'b': 100.,
+            'loc': 0.5,
+            'num_rows': 10.,
+            'scale': 0.
+        }
+        assert result == expected_result
+
+    def test_metadata_updated_no_warning(self, tmp_path):
+        """Test scenario where no warning about metadata should be raised.
+
+        Run 1 - The medata is load from our demo datasets.
+        Run 2 - The metadata uses ``detect_from_dataframes`` but is saved to a file
+                before defining the syntheiszer.
+        Run 3 - The metadata is updated with a new column after the synthesizer
+                initialization, but is saved to a file before fitting.
+        """
+        # Setup
+        data, metadata = download_demo('multi_table', 'got_families')
+
+        # Run 1
+        with warnings.catch_warnings(record=True) as captured_warnings:
+            warnings.simplefilter('always')
+            instance = HMASynthesizer(metadata)
+            instance.fit(data)
+
+        # Assert
+        assert len(captured_warnings) == 0
+
+        # Run 2
+        metadata_detect = MultiTableMetadata()
+        metadata_detect.detect_from_dataframes(data)
+
+        metadata_detect.relationships = metadata.relationships
+        for table_name, table_metadata in metadata.tables.items():
+            metadata_detect.tables[table_name].columns = table_metadata.columns
+            metadata_detect.tables[table_name].primary_key = table_metadata.primary_key
+
+        file_name = tmp_path / 'multitable_1.json'
+        metadata_detect.save_to_json(file_name)
+        with warnings.catch_warnings(record=True) as captured_warnings:
+            warnings.simplefilter('always')
+            instance = HMASynthesizer(metadata_detect)
+            instance.fit(data)
+
+        # Assert
+        assert len(captured_warnings) == 0
+
+        # Run 3
+        instance = HMASynthesizer(metadata_detect)
+        metadata_detect.update_column(
+            table_name='characters', column_name='age', sdtype='categorical')
+        file_name = tmp_path / 'multitable_2.json'
+        metadata_detect.save_to_json(file_name)
+        with warnings.catch_warnings(record=True) as captured_warnings:
+            warnings.simplefilter('always')
+            instance.fit(data)
+
+        # Assert
+        assert len(captured_warnings) == 0
+
+    def test_metadata_updated_warning_detect(self):
+        """Test that using ``detect_from_dataframes`` without saving the metadata raise a warning.
+
+        The warning is expected to be raised only once during synthesizer initialization. It should
+        not be raised again when calling ``fit``.
+        """
+        # Setup
+        data, metadata = download_demo('multi_table', 'got_families')
+        metadata_detect = MultiTableMetadata()
+        metadata_detect.detect_from_dataframes(data)
+
+        metadata_detect.relationships = metadata.relationships
+        for table_name, table_metadata in metadata.tables.items():
+            metadata_detect.tables[table_name].columns = table_metadata.columns
+            metadata_detect.tables[table_name].primary_key = table_metadata.primary_key
+
+        expected_message = re.escape(
+            "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+            ' in future SDV versions.'
+        )
+
+        # Run
+        with pytest.warns(UserWarning, match=expected_message) as record:
+            instance = HMASynthesizer(metadata_detect)
+            instance.fit(data)
+
+        # Assert
+        assert len(record) == 1
+
+
+parametrization = [
+    ('update_column', {
+        'table_name': 'departure', 'column_name': 'city', 'sdtype': 'categorical'
+    }),
+    ('set_primary_key', {'table_name': 'arrival', 'column_name': 'id_flight'}),
+    (
+        'add_column_relationship', {
+            'table_name': 'departure',
+            'relationship_type': 'address',
+            'column_names': ['city', 'country']
+        }
+    ),
+    ('add_alternate_keys', {'table_name': 'departure', 'column_names': ['city', 'country']}),
+    ('set_sequence_key', {'table_name': 'departure', 'column_name': 'city'}),
+    ('add_column', {
+        'table_name': 'departure', 'column_name': 'postal_code', 'sdtype': 'postal_code'
+    }),
+]
+
+
+@pytest.mark.parametrize(('method', 'kwargs'), parametrization)
+def test_metadata_updated_warning(method, kwargs):
+    """Test that modifying metadata without saving it raise a warning.
+
+    The warning should be raised during synthesizer initialization.
+    """
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'departure': {
+                'primary_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'date': {'sdtype': 'datetime'},
+                    'city': {'sdtype': 'city'},
+                    'country': {'sdtype': 'country'}
+                },
+            },
+            'arrival': {
+                'foreign_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'date': {'sdtype': 'datetime'},
+                    'city': {'sdtype': 'city'},
+                    'country': {'sdtype': 'country'},
+                    'id_flight': {'sdtype': 'id'}
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'departure',
+                'parent_primary_key': 'id',
+                'child_table_name': 'arrival',
+                'child_foreign_key': 'id'
+            }
+        ]
+    })
+    expected_message = re.escape(
+        "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+        ' in future SDV versions.'
+    )
+
+    # Run
+    metadata.__getattribute__(method)(**kwargs)
+    with pytest.warns(UserWarning, match=expected_message):
+        HMASynthesizer(metadata)
+
+    # Assert
+    assert metadata._multi_table_updated is False
+    for table_name, table_metadata in metadata.tables.items():
+        assert table_metadata._updated is False

@@ -1,10 +1,33 @@
 """Wrapper around CTGAN model."""
 import numpy as np
+import pandas as pd
 from ctgan import CTGAN, TVAE
 
-from sdv.errors import NotFittedError
+from sdv.errors import InvalidDataTypeError, NotFittedError
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.single_table.utils import detect_discrete_columns
+
+
+def _validate_no_category_dtype(data):
+    """Check that given data has no 'category' dtype columns.
+
+    Args:
+        data (pd.DataFrame):
+            Data to check.
+
+    Raises:
+        - ``InvalidDataTypeError`` if any columns in the data have 'category' dtype.
+    """
+    category_cols = [
+        col for col, dtype in data.dtypes.items() if pd.api.types.is_categorical_dtype(dtype)
+    ]
+    if category_cols:
+        categoricals = "', '".join(category_cols)
+        error_msg = (
+            f"Columns ['{categoricals}'] are stored as a 'category' type, which is not "
+            "supported. Please cast these columns to an 'object' to continue."
+        )
+        raise InvalidDataTypeError(error_msg)
 
 
 class LossValuesMixin:
@@ -200,6 +223,8 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
+        _validate_no_category_dtype(processed_data)
+
         transformers = self._data_processor._hyper_transformer.field_transformers
         discrete_columns = detect_discrete_columns(
             self.get_metadata(),
@@ -303,6 +328,8 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
+        _validate_no_category_dtype(processed_data)
+
         transformers = self._data_processor._hyper_transformer.field_transformers
         discrete_columns = detect_discrete_columns(
             self.get_metadata(),
