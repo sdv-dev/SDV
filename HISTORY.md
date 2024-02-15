@@ -2,33 +2,32 @@
 
 ## 1.10.0 - 2024-02-15
 
-This release adds multiple improvements to handling premium transformers and column relationships, including using the GPSNoiser as the default transformer for GPS column relationships and using premium transformers even if the PII flag is set to true. Additionally, the SDV now warns users to save the metadata after auto-detection has been used. Semantic sdtype detection has also been improved to tokenize column names to prevent unexpected substring matches.
+This release adds multiple improvements to handling premium transformers and column relationships, including using premium transformers even if the PII flag is set to true. Additionally, the SDV now warns users to save the metadata after auto-detection has been used. Semantic sdtype detection has also been improved to tokenize column names to prevent unexpected substring matches.
 
 This release also fixes a few warning bugs and fixes an issue that would cause `metadata.to_dict` to fail for metadata loaded from older versions of the SDV. A few synthesizer bugs were also resolved. The quality of the sequence_index for the `PARSynthesizer` has been improved, and an issue that would cause `CTGANSynthesizer`, `TVAESynthesizer`, and `CopulaGANSynthesizer` to crash if all columns were to be generated from scratch has been fixed.
+
+### Bugs Fixed
+
+* HMASynthesizer sometimes creates null values (out-of-bounds parameters synthesized) - Issue [#1691](https://github.com/sdv-dev/SDV/issues/1691) by @fealho
+* Unable to conditionally sample some rows when using a `ScalarRange` constraint - Issue [#1737](https://github.com/sdv-dev/SDV/issues/1737) by @fealho
+* Metadata.to_dict fails on metadata instances pre 1.9.0 - Issue [#1739](https://github.com/sdv-dev/SDV/issues/1739) by @amontanez24
+* Metadata auto-detection should not assign a primary key if there are NaN values in it - Issue [#1740](https://github.com/sdv-dev/SDV/issues/1740) by @R-Palazzo
+* '<Synthesizer>' object has no attribute '_model' - Issue [#1741](https://github.com/sdv-dev/SDV/issues/1741) by @fealho
+* Column relationship warning should be raised during synthesizer initialization only - Issue [#1750](https://github.com/sdv-dev/SDV/issues/1750) by @R-Palazzo
+* Improve quality of `sequence_index`: Move the start dates into the context model - Issue [#1760](https://github.com/sdv-dev/SDV/issues/1760) by @frances-h
+* Add-ons warning is raised twice for multi table synthesizers.  - Issue [#1768](https://github.com/sdv-dev/SDV/issues/1768) by @R-Palazzo
 
 ### New Features
 
 * Metadata auto-detection should tokenize words before determining PII - Issue [#1725](https://github.com/sdv-dev/SDV/issues/1725) by @fealho
+* Provide a friendlier error if data is stored as dtype `'category'` (CTGAN, TVAE) - Issue [#1735](https://github.com/sdv-dev/SDV/issues/1735) by @frances-h
 * Allow the ability to easily remove primary keys - Issue [#1742](https://github.com/sdv-dev/SDV/issues/1742) by @frances-h
-* Provide a friendlier error if data is stored as dtype 'category' (CTGAN, TVAE) - Issue [#1735](https://github.com/sdv-dev/SDV/issues/1735) by @frances-h
-* Add a version module to align with SDV Enterprise - Issue [#1761](https://github.com/sdv-dev/SDV/issues/1761) by @R-Palazzo
 * Constraint should not be set on columns inside a gps relationship - Issue [#1748](https://github.com/sdv-dev/SDV/issues/1748) by @R-Palazzo
 * Set the default transformer for GPS column relationship - Issue [#1749](https://github.com/sdv-dev/SDV/issues/1749) by @R-Palazzo
-* Set the GPSNoiser as default transformer for GPS column relationship - Issue [#1767](https://github.com/sdv-dev/SDV/issues/1767) by @R-Palazzo
-* Update transformer assignment logic for handling pii - Issue [#1775](https://github.com/sdv-dev/SDV/issues/1775) by @R-Palazzo
+* Add a `version` module to align with SDV Enterprise - Issue [#1761](https://github.com/sdv-dev/SDV/issues/1761) by @R-Palazzo
 * Warn users to save their metadata file after auto-detecting/updating it - Issue [#1762](https://github.com/sdv-dev/SDV/issues/1762) by @R-Palazzo
-
-### Bugs Fixed
-
-* Metadata auto-detection should not assign a primary key if there are NaN values in it - Issue [#1740](https://github.com/sdv-dev/SDV/issues/1740) by @R-Palazzo
-* Metadata.to_dict fails on metadata instances pre 1.9.0 - Issue [#1739](https://github.com/sdv-dev/SDV/issues/1739) by @amontanez24
-* HMASynthesizer sometimes creates null values (out-of-bounds parameters synthesized) - Issue [#1691](https://github.com/sdv-dev/SDV/issues/1691) by @fealho
-* Improve quality of sequence_index: Move the start dates into the context model - Issue [#1760](https://github.com/sdv-dev/SDV/issues/1760) by @frances-h
-* Column relationship warning should be raised during synthesizer initialization only  - Issue [#1750](https://github.com/sdv-dev/SDV/issues/1750) by @R-Palazzo
-* Add-ons warning is raised twice for multi table synthesizers. - Issue [#1768](https://github.com/sdv-dev/SDV/issues/1768) by @R-Palazzo
-* Unable to conditionally sample some rows when using a ScalarRange constraint - Issue[#1737](https://github.com/sdv-dev/SDV/issues/1737) by @fealho
-* '<Synthesizer>' object has no attribute '_model' - Issue [#1741](https://github.com/sdv-dev/SDV/issues/1741) by @fealho
-
+* Set the GPSNoiser as default transformer for GPS column relationship  - Issue [#1767](https://github.com/sdv-dev/SDV/issues/1767) by @R-Palazzo
+* Update transformer assignment logic for handling pii - Issue [#1775](https://github.com/sdv-dev/SDV/issues/1775) by @R-Palazzo
 
 ## 1.9.0 - 2024-01-11
 
