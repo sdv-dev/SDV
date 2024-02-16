@@ -794,13 +794,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             show_progress_bar=show_progress_bar
         )
 
-    def _validate_conditions(self, conditions):
-        """Validate the user-passed conditions."""
-        for column in conditions.columns:
-            if column not in self._data_processor.get_sdtypes():
-                raise ValueError(f"Unexpected column name '{column}'. "
-                                 f'Use a column name that was present in the original data.')
-
     def _sample_with_conditions(self, conditions, max_tries_per_batch, batch_size,
                                 progress_bar=None, output_file_path=None):
         """Sample rows with conditions.
@@ -904,6 +897,27 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return all_sampled_rows
 
+    def _validate_conditions_unseen_columns(self, conditions):
+        """Validate the user-passed conditions."""
+        for column in conditions.columns:
+            if column not in self._data_processor.get_sdtypes():
+                raise ValueError(f"Unexpected column name '{column}'. "
+                                 f'Use a column name that was present in the original data.')
+
+    @staticmethod
+    def _raise_condition_with_nans():
+        raise SynthesizerInputError(
+            'Missing values are not yet supported for conditional sampling. '
+            'Please include only non-null values in your Condition objects.'
+        )
+
+    def _validate_conditions(self, conditions):
+        """Validate the user-passed conditions."""
+        for condition_dataframe in conditions:
+            self._validate_conditions_unseen_columns(condition_dataframe)
+            if condition_dataframe.isna().any().any():
+                self._raise_condition_with_nans()
+
     def sample_from_conditions(self, conditions, max_tries_per_batch=100,
                                batch_size=None, output_file_path=None):
         """Sample rows from this table with the given conditions.
@@ -939,8 +953,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             lambda num_rows, condition: condition.get_num_rows() + num_rows, conditions, 0)
 
         conditions = self._make_condition_dfs(conditions)
-        for condition_dataframe in conditions:
-            self._validate_conditions(condition_dataframe)
+        self._validate_conditions(conditions)
 
         sampled = pd.DataFrame()
         try:
@@ -974,6 +987,17 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return sampled
 
+    def _validate_known_columns(self, conditions):
+        """Validate the user-passed conditions."""
+        self._validate_conditions_unseen_columns(conditions)
+        if conditions.dropna().empty:
+            self._raise_condition_with_nans()
+        elif conditions.isna().any().any():
+            warnings.warn(
+                'Missing values are not yet supported. '
+                'Rows with any missing values will not be created.'
+            )
+
     def sample_remaining_columns(self, known_columns, max_tries_per_batch=100,
                                  batch_size=None, output_file_path=None):
         """Sample remaining rows from already known columns.
@@ -1006,7 +1030,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         output_file_path = validate_file_path(output_file_path)
 
         known_columns = known_columns.copy()
-        self._validate_conditions(known_columns)
+        self._validate_known_columns(known_columns)
         sampled = pd.DataFrame()
         try:
             with tqdm.tqdm(total=len(known_columns)) as progress_bar:
