@@ -18,7 +18,7 @@ from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
 from sdv.single_table.ctgan import LossValuesMixin
-from sdv.utils import cast_to_iterable, groupby_list
+from sdv.utils import _cast_to_iterable, groupby_list
 
 LOGGER = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         )
 
         sequence_key = self.metadata.sequence_key
-        self._sequence_key = list(cast_to_iterable(sequence_key)) if sequence_key else None
+        self._sequence_key = list(_cast_to_iterable(sequence_key)) if sequence_key else None
         if context_columns and not self._sequence_key:
             raise SynthesizerInputError(
                 "No 'sequence_keys' are specified in the metadata. The PARSynthesizer cannot "

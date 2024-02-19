@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
 
-def cast_to_iterable(value):
+def _cast_to_iterable(value):
     """Return a ``list`` if the input object is not a ``list`` or ``tuple``."""
     if isinstance(value, (list, tuple)):
         return value
@@ -57,7 +57,7 @@ def is_datetime_type(value):
             True if the input is a datetime type, False if not.
     """
     if isinstance(value, str) or (not isinstance(value, Iterable)):
-        value = cast_to_iterable(value)
+        value = _cast_to_iterable(value)
 
     values = pd.Series(value)
     values = values[~values.isna()]

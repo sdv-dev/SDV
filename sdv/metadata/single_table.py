@@ -19,7 +19,7 @@ from sdv.metadata.validation import validate_address_sdtypes, validate_gps_sdtyp
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import (
-    cast_to_iterable, format_invalid_values_string, get_datetime_format, is_boolean_type,
+    _cast_to_iterable, format_invalid_values_string, get_datetime_format, is_boolean_type,
     is_datetime_type, is_numerical_type, load_data_from_csv, validate_datetime_format)
 
 LOGGER = logging.getLogger(__name__)
@@ -666,7 +666,7 @@ class SingleTableMetadata:
     def _validate_sequence_index_not_in_sequence_key(self):
         """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
         seq_key = self.sequence_key
-        sequence_key = set(cast_to_iterable(seq_key))
+        sequence_key = set(_cast_to_iterable(seq_key))
         if self.sequence_index in sequence_key or seq_key is None:
             index = {self.sequence_index}
             raise InvalidMetadataError(
