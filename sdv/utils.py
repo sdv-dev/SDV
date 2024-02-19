@@ -73,7 +73,7 @@ def _is_datetime_type(value):
     return True
 
 
-def is_numerical_type(value):
+def _is_numerical_type(value):
     """Determine if the input is numerical or not.
 
     Args:
