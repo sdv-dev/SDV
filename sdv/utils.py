@@ -167,7 +167,7 @@ def _groupby_list(list_to_check):
     return list_to_check[0] if len(list_to_check) == 1 else list_to_check
 
 
-def create_unique_name(name, list_names):
+def _create_unique_name(name, list_names):
     """Modify the ``name`` parameter if it already exists in the list of names."""
     result = name
     while result in list_names:

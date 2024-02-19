@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.utils import (
-    _convert_to_timedelta, _get_datetime_format, _is_datetime_type, create_unique_name)
+    _convert_to_timedelta, _create_unique_name, _get_datetime_format, _is_datetime_type)
 from tests.utils import SeriesMatcher
 
 
@@ -261,14 +261,14 @@ def test__is_datetime_type_with_int_series():
     assert is_datetime is False
 
 
-def test_create_unique_name():
-    """Test the ``create_unique_name`` method."""
+def test__create_unique_name():
+    """Test the ``_create_unique_name`` method."""
     # Setup
     name = 'name'
     existing_names = ['name', 'name_', 'name__']
 
     # Run
-    result = create_unique_name(name, existing_names)
+    result = _create_unique_name(name, existing_names)
 
     # Assert
     assert result == 'name___'
