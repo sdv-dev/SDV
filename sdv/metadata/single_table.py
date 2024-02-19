@@ -19,8 +19,8 @@ from sdv.metadata.validation import validate_address_sdtypes, validate_gps_sdtyp
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import (
-    _cast_to_iterable, _get_datetime_format, _is_datetime_type, _is_numerical_type,
-    format_invalid_values_string, is_boolean_type, load_data_from_csv, validate_datetime_format)
+    _cast_to_iterable, _get_datetime_format, _is_boolean_type, _is_datetime_type,
+    _is_numerical_type, format_invalid_values_string, load_data_from_csv, validate_datetime_format)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -919,7 +919,7 @@ class SingleTableMetadata:
         # boolean values must be True/False, None or missing values
         # int/str are not allowed
         if sdtype == 'boolean':
-            invalid_values = self._get_invalid_column_values(column, is_boolean_type)
+            invalid_values = self._get_invalid_column_values(column, _is_boolean_type)
 
         # numerical values must be int/float, None or missing values
         # str/bool are not allowed

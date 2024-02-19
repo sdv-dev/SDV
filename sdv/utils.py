@@ -87,7 +87,7 @@ def _is_numerical_type(value):
     return pd.isna(value) | pd.api.types.is_float(value) | pd.api.types.is_integer(value)
 
 
-def is_boolean_type(value):
+def _is_boolean_type(value):
     """Determine if the input is a boolean or not.
 
     Args:
