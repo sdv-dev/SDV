@@ -39,7 +39,7 @@ def _get_datetime_format(value):
     return _guess_datetime_format_for_array(value)
 
 
-def is_datetime_type(value):
+def _is_datetime_type(value):
     """Determine if the input is a datetime type or not.
 
     If a ``pandas.Series`` or ``list`` is passed, it will return ``True`` if the first

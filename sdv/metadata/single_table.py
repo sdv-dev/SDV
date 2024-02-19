@@ -19,8 +19,8 @@ from sdv.metadata.validation import validate_address_sdtypes, validate_gps_sdtyp
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import (
-    _cast_to_iterable, _get_datetime_format, format_invalid_values_string, is_boolean_type,
-    is_datetime_type, is_numerical_type, load_data_from_csv, validate_datetime_format)
+    _cast_to_iterable, _get_datetime_format, _is_datetime_type, format_invalid_values_string,
+    is_boolean_type, is_numerical_type, load_data_from_csv, validate_datetime_format)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -937,7 +937,7 @@ class SingleTableMetadata:
 
                 invalid_values = self._get_invalid_column_values(
                     column.sample(num_samples_to_validate),
-                    lambda x: pd.isna(x) | is_datetime_type(x)
+                    lambda x: pd.isna(x) | _is_datetime_type(x)
                 )
 
         if invalid_values:

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.utils import (
-    _get_datetime_format, convert_to_timedelta, create_unique_name, is_datetime_type)
+    _get_datetime_format, _is_datetime_type, convert_to_timedelta, create_unique_name)
 from tests.utils import SeriesMatcher
 
 
@@ -61,8 +61,8 @@ def test__get_datetime_format():
     assert series_out == '%Y-%m-%dT%H:%M:%S'
 
 
-def test_is_datetime_type_with_datetime_series():
-    """Test the ``is_datetime_type`` function when a datetime series is passed.
+def test__is_datetime_type_with_datetime_series():
+    """Test the ``_is_datetime_type`` function when a datetime series is passed.
 
     Expect to return True when a datetime series is passed.
 
@@ -80,14 +80,14 @@ def test_is_datetime_type_with_datetime_series():
     )
 
     # Run
-    is_datetime = is_datetime_type(data)
+    is_datetime = _is_datetime_type(data)
 
     # Assert
     assert is_datetime
 
 
-def test_is_datetime_type_with_mixed_array():
-    """Test the ``is_datetime_type`` function with a list of mixed datetime types."""
+def test__is_datetime_type_with_mixed_array():
+    """Test the ``_is_datetime_type`` function with a list of mixed datetime types."""
     # Setup
     data = [
         pd.to_datetime('2020-01-01'),
@@ -98,14 +98,14 @@ def test_is_datetime_type_with_mixed_array():
     ]
 
     # Run
-    is_datetime = is_datetime_type(data)
+    is_datetime = _is_datetime_type(data)
 
     # Assert
     assert is_datetime
 
 
-def test_is_datetime_type_with_invalid_strings_in_list():
-    """Test the ``is_datetime_type`` function with a invalid datetime in a list."""
+def test__is_datetime_type_with_invalid_strings_in_list():
+    """Test the ``_is_datetime_type`` function with a invalid datetime in a list."""
     # Setup
     data = [
         pd.to_datetime('2020-01-01'),
@@ -117,14 +117,14 @@ def test_is_datetime_type_with_invalid_strings_in_list():
     ]
 
     # Run
-    is_datetime = is_datetime_type(data)
+    is_datetime = _is_datetime_type(data)
 
     # Assert
     assert is_datetime is False
 
 
-def test_is_datetime_type_with_datetime():
-    """Test the ``is_datetime_type`` function when a datetime is passed.
+def test__is_datetime_type_with_datetime():
+    """Test the ``_is_datetime_type`` function when a datetime is passed.
 
     Expect to return True when a datetime variable is passed.
 
@@ -137,14 +137,14 @@ def test_is_datetime_type_with_datetime():
     data = datetime(2020, 1, 1)
 
     # Run
-    is_datetime = is_datetime_type(data)
+    is_datetime = _is_datetime_type(data)
 
     # Assert
     assert is_datetime
 
 
-def test_is_datetime_type_with_timestamp():
-    """Test the ``is_datetime_type`` function when a Timestamp is passed.
+def test__is_datetime_type_with_timestamp():
+    """Test the ``_is_datetime_type`` function when a Timestamp is passed.
 
     Expect to return True when a datetime variable is passed.
 
@@ -155,14 +155,14 @@ def test_is_datetime_type_with_timestamp():
     """
     # Setup
     data = pd.Timestamp('2020-01-10')
-    is_datetime = is_datetime_type(data)
+    is_datetime = _is_datetime_type(data)
 
     # Assert
     assert is_datetime
 
 
-def test_is_datetime_type_with_pandas_datetime():
-    """Test the ``is_datetime_type`` function when a pandas.datetime is passed.
+def test__is_datetime_type_with_pandas_datetime():
+    """Test the ``_is_datetime_type`` function when a pandas.datetime is passed.
 
     Expect to return True when a datetime variable is passed.
 
@@ -175,14 +175,14 @@ def test_is_datetime_type_with_pandas_datetime():
     data = pd.to_datetime('2020-01-01')
 
     # Run
-    is_datetime = is_datetime_type(data)
+    is_datetime = _is_datetime_type(data)
 
     # Assert
     assert is_datetime
 
 
-def test_is_datetime_type_with_int():
-    """Test the ``is_datetime_type`` function when an int is passed.
+def test__is_datetime_type_with_int():
+    """Test the ``_is_datetime_type`` function when an int is passed.
 
     Expect to return False when an int variable is passed.
 
@@ -195,14 +195,14 @@ def test_is_datetime_type_with_int():
     data = 2
 
     # Run
-    is_datetime = is_datetime_type(data)
+    is_datetime = _is_datetime_type(data)
 
     # Assert
     assert is_datetime is False
 
 
-def test_is_datetime_type_with_datetime_str():
-    """Test the ``is_datetime_type`` function when an valid datetime string is passed.
+def test__is_datetime_type_with_datetime_str():
+    """Test the ``_is_datetime_type`` function when an valid datetime string is passed.
 
     Expect to return True when a valid string representing datetime is passed.
 
@@ -215,14 +215,14 @@ def test_is_datetime_type_with_datetime_str():
     value = '2021-02-02'
 
     # Run
-    is_datetime = is_datetime_type(value)
+    is_datetime = _is_datetime_type(value)
 
     # Assert
     assert is_datetime
 
 
-def test_is_datetime_type_with_invalid_str():
-    """Test the ``is_datetime_type`` function when an invalid string is passed.
+def test__is_datetime_type_with_invalid_str():
+    """Test the ``_is_datetime_type`` function when an invalid string is passed.
 
     Expect to return False when an invalid string is passed.
 
@@ -235,14 +235,14 @@ def test_is_datetime_type_with_invalid_str():
     value = 'abcd'
 
     # Run
-    is_datetime = is_datetime_type(value)
+    is_datetime = _is_datetime_type(value)
 
     # Assert
     assert is_datetime is False
 
 
-def test_is_datetime_type_with_int_series():
-    """Test the ``is_datetime_type`` function when an int series is passed.
+def test__is_datetime_type_with_int_series():
+    """Test the ``_is_datetime_type`` function when an int series is passed.
 
     Expect to return False when an int series variable is passed.
 
@@ -255,7 +255,7 @@ def test_is_datetime_type_with_int_series():
     data = pd.Series([1, 2, 3, 4])
 
     # Run
-    is_datetime = is_datetime_type(data)
+    is_datetime = _is_datetime_type(data)
 
     # Assert
     assert is_datetime is False

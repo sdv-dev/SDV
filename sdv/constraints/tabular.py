@@ -42,7 +42,7 @@ from sdv.constraints.errors import (
 from sdv.constraints.utils import (
     cast_to_datetime64, compute_nans_column, get_datetime_diff, logit, matches_datetime_format,
     revert_nans_columns, sigmoid)
-from sdv.utils import convert_to_timedelta, create_unique_name, is_datetime_type
+from sdv.utils import _is_datetime_type, convert_to_timedelta, create_unique_name
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,
@@ -607,7 +607,7 @@ class ScalarInequality(Constraint):
 
     @staticmethod
     def _validate_init_inputs(column_name, value, relation):
-        value_is_datetime = is_datetime_type(value)
+        value_is_datetime = _is_datetime_type(value)
         if not isinstance(column_name, str):
             raise ValueError('`column_name` must be a string.')
 
@@ -622,7 +622,7 @@ class ScalarInequality(Constraint):
 
     def __init__(self, column_name, relation, value):
         self._validate_init_inputs(column_name, value, relation)
-        self._value = cast_to_datetime64(value) if is_datetime_type(value) else value
+        self._value = cast_to_datetime64(value) if _is_datetime_type(value) else value
         self._column_name = column_name
         self._diff_column_name = f'{self._column_name}#diff'
         self.constraint_columns = (column_name,)
@@ -633,7 +633,7 @@ class ScalarInequality(Constraint):
 
     def _get_is_datetime(self):
         is_column_datetime = self.metadata.columns[self._column_name]['sdtype'] == 'datetime'
-        is_value_datetime = is_datetime_type(self._value)
+        is_value_datetime = _is_datetime_type(self._value)
         is_datetime = is_column_datetime and is_value_datetime
 
         if not is_datetime and any([is_value_datetime, is_column_datetime]):
@@ -1044,7 +1044,7 @@ class ScalarRange(Constraint):
 
     @staticmethod
     def _validate_init_inputs(low_value, high_value):
-        values_are_datetimes = is_datetime_type(low_value) and is_datetime_type(high_value)
+        values_are_datetimes = _is_datetime_type(low_value) and _is_datetime_type(high_value)
         values_are_strings = isinstance(low_value, str) and isinstance(high_value, str)
         if values_are_datetimes and not values_are_strings:
             raise ValueError('Datetime must be represented as a string.')
@@ -1113,8 +1113,8 @@ class ScalarRange(Constraint):
 
     def _get_is_datetime(self):
         is_column_datetime = self.metadata.columns[self._column_name]['sdtype'] == 'datetime'
-        is_low_datetime = is_datetime_type(self._low_value)
-        is_high_datetime = is_datetime_type(self._high_value)
+        is_low_datetime = _is_datetime_type(self._low_value)
+        is_high_datetime = _is_datetime_type(self._high_value)
         is_datetime = is_low_datetime and is_high_datetime and is_column_datetime
 
         if not is_datetime and any([is_low_datetime, is_column_datetime, is_high_datetime]):
