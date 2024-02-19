@@ -5,12 +5,12 @@ import numpy as np
 import pandas as pd
 
 from sdv.utils import (
-    _get_datetime_format, _is_datetime_type, convert_to_timedelta, create_unique_name)
+    _convert_to_timedelta, _get_datetime_format, _is_datetime_type, create_unique_name)
 from tests.utils import SeriesMatcher
 
 
 @patch('sdv.utils.pd.to_timedelta')
-def test_convert_to_timedelta(to_timedelta_mock):
+def test__convert_to_timedelta(to_timedelta_mock):
     """Test that nans and values are properly converted to timedeltas."""
     # Setup
     column = pd.Series([7200, 3600, np.nan])
@@ -21,7 +21,7 @@ def test_convert_to_timedelta(to_timedelta_mock):
     ], dtype='timedelta64[ns]')
 
     # Run
-    converted_column = convert_to_timedelta(column)
+    converted_column = _convert_to_timedelta(column)
 
     # Assert
     to_timedelta_mock.assert_called_with(SeriesMatcher(pd.Series([7200, 3600, 0.0])))

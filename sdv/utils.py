@@ -125,7 +125,7 @@ def _validate_datetime_format(column, datetime_format):
     return set(column[~valid])
 
 
-def convert_to_timedelta(column):
+def _convert_to_timedelta(column):
     """Convert a ``pandas.Series`` to one with dtype ``timedelta``.
 
     ``pd.to_timedelta`` does not handle nans, so this function masks the nans, converts and then

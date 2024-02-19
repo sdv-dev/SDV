@@ -42,7 +42,7 @@ from sdv.constraints.errors import (
 from sdv.constraints.utils import (
     cast_to_datetime64, compute_nans_column, get_datetime_diff, logit, matches_datetime_format,
     revert_nans_columns, sigmoid)
-from sdv.utils import _is_datetime_type, convert_to_timedelta, create_unique_name
+from sdv.utils import _convert_to_timedelta, _is_datetime_type, create_unique_name
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,
@@ -531,7 +531,7 @@ class Inequality(Constraint):
             diff_column = diff_column.round()
 
         if self._is_datetime:
-            diff_column = convert_to_timedelta(diff_column)
+            diff_column = _convert_to_timedelta(diff_column)
 
         low = table_data[self._low_column_name].to_numpy()
         if self._is_datetime and self._dtype == 'O':
@@ -725,7 +725,7 @@ class ScalarInequality(Constraint):
             diff_column = diff_column.round()
 
         if self._is_datetime:
-            diff_column = convert_to_timedelta(diff_column)
+            diff_column = _convert_to_timedelta(diff_column)
 
         if self._operator in [np.greater, np.greater_equal]:
             original_column = self._value + diff_column
@@ -1004,8 +1004,8 @@ class Range(Constraint):
             high_diff_column = high_diff_column.round()
 
         if self._is_datetime:
-            low_diff_column = convert_to_timedelta(low_diff_column)
-            high_diff_column = convert_to_timedelta(high_diff_column)
+            low_diff_column = _convert_to_timedelta(low_diff_column)
+            high_diff_column = _convert_to_timedelta(high_diff_column)
 
         low = table_data[self.low_column_name].to_numpy()
         if self._is_datetime and self._dtype == 'O':
