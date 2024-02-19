@@ -101,7 +101,7 @@ def _is_boolean_type(value):
     return True if pd.isna(value) | (value is True) | (value is False) else False
 
 
-def validate_datetime_format(column, datetime_format):
+def _validate_datetime_format(column, datetime_format):
     """Determine the values of the column that match the datetime format.
 
     Args:

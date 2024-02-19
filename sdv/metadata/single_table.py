@@ -20,7 +20,8 @@ from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import (
     _cast_to_iterable, _get_datetime_format, _is_boolean_type, _is_datetime_type,
-    _is_numerical_type, format_invalid_values_string, load_data_from_csv, validate_datetime_format)
+    _is_numerical_type, _validate_datetime_format, format_invalid_values_string,
+    load_data_from_csv)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -930,7 +931,7 @@ class SingleTableMetadata:
         if sdtype == 'datetime':
             datetime_format = column_metadata.get('datetime_format')
             if datetime_format:
-                invalid_values = validate_datetime_format(column, datetime_format)
+                invalid_values = _validate_datetime_format(column, datetime_format)
             else:
                 # cap number of samples to be validated to improve performance
                 num_samples_to_validate = min(len(column), 1000)
