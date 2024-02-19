@@ -18,7 +18,7 @@ from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
 from sdv.single_table.ctgan import LossValuesMixin
-from sdv.utils import _cast_to_iterable, groupby_list
+from sdv.utils import _cast_to_iterable, _groupby_list
 
 LOGGER = logging.getLogger(__name__)
 
@@ -145,7 +145,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
     def _validate_context_columns(self, data):
         errors = []
         if self.context_columns:
-            for sequence_key_value, data_values in data.groupby(groupby_list(self._sequence_key)):
+            for sequence_key_value, data_values in data.groupby(_groupby_list(self._sequence_key)):
                 for context_column in self.context_columns:
                     if len(data_values[context_column].unique()) > 1:
                         errors.append((

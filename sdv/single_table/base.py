@@ -22,7 +22,7 @@ from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
-from sdv.utils import groupby_list
+from sdv.utils import _groupby_list
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
@@ -826,7 +826,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         condition_columns = list(conditions.columns)
         conditions.index.name = COND_IDX
         conditions = conditions.reset_index()
-        grouped_conditions = conditions.groupby(groupby_list(condition_columns))
+        grouped_conditions = conditions.groupby(_groupby_list(condition_columns))
 
         # sample
         all_sampled_rows = []
@@ -869,7 +869,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 all_sampled_rows.append(sampled_rows)
             else:
                 transformed_groups = transformed_conditions.groupby(
-                    groupby_list(transformed_columns)
+                    _groupby_list(transformed_columns)
                 )
                 for transformed_group, transformed_dataframe in transformed_groups:
                     if not isinstance(transformed_group, tuple):
