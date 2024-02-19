@@ -19,9 +19,8 @@ from sdv.metadata.validation import validate_address_sdtypes, validate_gps_sdtyp
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import (
-    _cast_to_iterable, _get_datetime_format, _is_boolean_type, _is_datetime_type,
-    _is_numerical_type, _validate_datetime_format, format_invalid_values_string,
-    load_data_from_csv)
+    _cast_to_iterable, _format_invalid_values_string, _get_datetime_format, _is_boolean_type,
+    _is_datetime_type, _is_numerical_type, _validate_datetime_format, load_data_from_csv)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -900,7 +899,7 @@ class SingleTableMetadata:
         for key in sorted(keys):
             repeated_values = set(data[key][data[key].duplicated()])
             if repeated_values:
-                repeated_values = format_invalid_values_string(repeated_values, 3)
+                repeated_values = _format_invalid_values_string(repeated_values, 3)
                 errors.append(f"Key column '{key}' contains repeating values: " + repeated_values)
 
         return errors
@@ -942,7 +941,7 @@ class SingleTableMetadata:
                 )
 
         if invalid_values:
-            invalid_values = format_invalid_values_string(invalid_values, 3)
+            invalid_values = _format_invalid_values_string(invalid_values, 3)
             return [f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."]
 
         return []

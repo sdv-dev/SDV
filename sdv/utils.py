@@ -176,7 +176,7 @@ def _create_unique_name(name, list_names):
     return result
 
 
-def format_invalid_values_string(invalid_values, num_values):
+def _format_invalid_values_string(invalid_values, num_values):
     """Convert ``invalid_values`` into a string of invalid values.
 
     Args:

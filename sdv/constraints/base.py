@@ -14,7 +14,7 @@ from rdt.transformers import BinaryEncoder, FloatFormatter, OneHotEncoder, UnixT
 from sdv.constraints.errors import (
     AggregateConstraintsError, ConstraintMetadataError, MissingConstraintColumnError)
 from sdv.errors import ConstraintsNotMetError
-from sdv.utils import _groupby_list, format_invalid_values_string
+from sdv.utils import _format_invalid_values_string, _groupby_list
 
 LOGGER = logging.getLogger(__name__)
 
@@ -204,7 +204,7 @@ class Constraint(metaclass=ConstraintMeta):
             if not is_valid_data.all():
                 constraint_data = table_data[list(self.constraint_columns)]
                 invalid_rows = constraint_data[~is_valid_data]
-                invalid_rows_str = format_invalid_values_string(invalid_rows, 5)
+                invalid_rows_str = _format_invalid_values_string(invalid_rows, 5)
                 err_msg = (
                     f"Data is not valid for the '{self.__class__.__name__}' constraint:\n"
                     f'{invalid_rows_str}'
