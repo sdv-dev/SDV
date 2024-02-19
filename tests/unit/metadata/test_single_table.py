@@ -959,8 +959,8 @@ class TestSingleTableMetadata:
         stm.columns['num2']['sdtype'] == 'numerical'
         stm.columns['date']['sdtype'] == 'datetime'
 
-    @patch('sdv.metadata.single_table.get_datetime_format')
-    def test__detect_columns_with_error(self, mock_get_datetime_format):
+    @patch('sdv.metadata.single_table._get_datetime_format')
+    def test__detect_columns_with_error(self, mock__get_datetime_format):
         """Test the ``_detect_columns`` method with unsupported dtype."""
         # Setup
         instance = SingleTableMetadata()
@@ -991,7 +991,7 @@ class TestSingleTableMetadata:
         # Assert
         args_numerical, _ = instance._determine_sdtype_for_numbers.call_args
         args_datetime, _ = instance._determine_sdtype_for_objects.call_args
-        args_datetime_format, _ = mock_get_datetime_format.call_args
+        args_datetime_format, _ = mock__get_datetime_format.call_args
 
         pd.testing.assert_series_equal(args_numerical[0], data['numerical'])
         pd.testing.assert_series_equal(args_datetime[0], data['datetime'])
@@ -999,7 +999,7 @@ class TestSingleTableMetadata:
 
         instance._determine_sdtype_for_numbers.assert_called_once()
         instance._determine_sdtype_for_objects.assert_called_once()
-        mock_get_datetime_format.assert_called_once()
+        mock__get_datetime_format.assert_called_once()
 
     def test_detect_from_dataframe_raises_error(self):
         """Test the ``detect_from_dataframe`` method.

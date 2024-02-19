@@ -15,7 +15,7 @@ def _cast_to_iterable(value):
     return [value]
 
 
-def get_datetime_format(value):
+def _get_datetime_format(value):
     """Get the ``strftime`` format for a given ``value``.
 
     This function returns the ``strftime`` format of a given ``value`` when possible.
@@ -64,7 +64,7 @@ def is_datetime_type(value):
     values = values.head(1000)  # only check 1000 values so this method takes less than 1 second
     for value in values:
         if not (
-            bool(get_datetime_format([value]))
+            bool(_get_datetime_format([value]))
             or isinstance(value, pd.Timestamp)
             or isinstance(value, datetime)
         ):

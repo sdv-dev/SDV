@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from sdv.utils import (
-    convert_to_timedelta, create_unique_name, get_datetime_format, is_datetime_type)
+    _get_datetime_format, convert_to_timedelta, create_unique_name, is_datetime_type)
 from tests.utils import SeriesMatcher
 
 
@@ -33,8 +33,8 @@ def test_convert_to_timedelta(to_timedelta_mock):
     pd.testing.assert_series_equal(converted_column, expected_column)
 
 
-def test_get_datetime_format():
-    """Test the ``get_datetime_format``.
+def test__get_datetime_format():
+    """Test the ``_get_datetime_format``.
 
     Setup:
         - string value representing datetime.
@@ -50,9 +50,9 @@ def test_get_datetime_format():
     series_value = pd.Series(['2021-02-02T12:10:59'])
 
     # Run
-    string_out = get_datetime_format(string_value)
-    list_out = get_datetime_format(list_value)
-    series_out = get_datetime_format(series_value)
+    string_out = _get_datetime_format(string_value)
+    list_out = _get_datetime_format(list_value)
+    series_out = _get_datetime_format(series_value)
 
     # Assert
     expected_output = '%Y-%m-%d'

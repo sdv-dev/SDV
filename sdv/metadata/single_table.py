@@ -19,7 +19,7 @@ from sdv.metadata.validation import validate_address_sdtypes, validate_gps_sdtyp
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import (
-    _cast_to_iterable, format_invalid_values_string, get_datetime_format, is_boolean_type,
+    _cast_to_iterable, _get_datetime_format, format_invalid_values_string, is_boolean_type,
     is_datetime_type, is_numerical_type, load_data_from_csv, validate_datetime_format)
 
 LOGGER = logging.getLogger(__name__)
@@ -403,7 +403,7 @@ class SingleTableMetadata:
             data_test = data.sample(10000) if len(data) > 10000 else data
 
             try:
-                datetime_format = get_datetime_format(data_test)
+                datetime_format = _get_datetime_format(data_test)
                 if datetime_format:
                     pd.to_datetime(data_test, format=datetime_format, errors='raise')
                     sdtype = 'datetime'
@@ -458,7 +458,7 @@ class SingleTableMetadata:
             if sdtype_in_reference and first_pii_field is None and not has_nan:
                 first_pii_field = field
             if sdtype == 'datetime' and dtype == 'O':
-                datetime_format = get_datetime_format(column_data.iloc[:100])
+                datetime_format = _get_datetime_format(column_data.iloc[:100])
                 column_dict['datetime_format'] = datetime_format
 
             self.columns[field] = deepcopy(column_dict)
