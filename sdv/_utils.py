@@ -7,6 +7,8 @@ from pathlib import Path
 import pandas as pd
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
+from sdv.errors import InvalidDataError
+
 
 def _cast_to_iterable(value):
     """Return a ``list`` if the input object is not a ``list`` or ``tuple``."""
@@ -290,5 +292,11 @@ def drop_unknown_references(metadata, data, drop_missing_values=True):
                 relationship = metadata.relationships[idx]
                 child_column = relationship['child_foreign_key']
                 result[table] = result[table].dropna(subset=[child_column])
+
+        if result[table].empty:
+            raise InvalidDataError([
+                f"All references in table '{table}' are unknown and must be dropped."
+                'Try providing different data for this table.'
+            ])
 
     return result
