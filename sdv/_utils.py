@@ -222,6 +222,24 @@ def _get_relationship_idx_for_parent(relationships, parent_table):
 
 
 def _get_rows_to_drop(metadata, data):
+    """Get the rows to drop to ensure referential integrity.
+
+    The logic of this function is to start at the root tables, look at invalid references
+    and then save the index of the rows to drop. Then, we looked at the relationships that
+    we didn't check and repeat the process until there are no more relationships to check.
+    This ensures that we preserve the referential integrity between all the relationships.
+
+    Args:
+        metadata (MultiTableMetadata):
+            Metadata of the datasets.
+        data (dict):
+            Dictionary that maps each table name (string) to the data for that
+            table (pandas.DataFrame).
+
+    Returns:
+        dict:
+            Dictionary with the table names as keys and the indexes of the rows to drop as values.
+    """
     table_to_idx_to_drop = {}
     relationships = deepcopy(metadata.relationships)
     while relationships:
@@ -280,7 +298,7 @@ def drop_unknown_references(metadata, data, drop_missing_values=True):
 
     Returns:
         dict:
-            Dictionary with the dataframes ensurint referential integrity.
+            Dictionary with the dataframes ensuring referential integrity.
     """
     result = data.copy()
     table_to_idx_to_drop = _get_rows_to_drop(metadata, result)
