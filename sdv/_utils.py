@@ -1,5 +1,6 @@
 """Miscellaneous utility functions."""
 from collections.abc import Iterable
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 
@@ -200,3 +201,94 @@ def _format_invalid_values_string(invalid_values, num_values):
             return f'{invalid_values[:num_values] + extra_missing_values}'
 
     return f'{invalid_values}'
+
+
+def _find_root_tables(relationships):
+    parent_tables = {rel['parent_table_name'] for rel in relationships}
+    child_tables = {rel['child_table_name'] for rel in relationships}
+    return parent_tables - child_tables
+
+
+def _get_relationship_idx_for_child(relationships, child_table):
+    return [idx for idx, rel in enumerate(relationships) if rel['child_table_name'] == child_table]
+
+
+def _get_relationship_idx_for_parent(relationships, parent_table):
+    return [
+        idx for idx, rel in enumerate(relationships) if rel['parent_table_name'] == parent_table
+    ]
+
+
+def _get_rows_to_drop(metadata, data):
+    table_to_idx_to_drop = {}
+    relationships = deepcopy(metadata.relationships)
+    while relationships:
+        current_roots = _find_root_tables(relationships)
+        for root in current_roots:
+            relationship_idx = _get_relationship_idx_for_parent(relationships, root)
+            for idx in relationship_idx:
+                relationship = relationships[idx]
+                parent_table = relationship['parent_table_name']
+                child_table = relationship['child_table_name']
+                parent_column = relationship['parent_primary_key']
+                child_column = relationship['child_foreign_key']
+                if child_table not in table_to_idx_to_drop:
+                    table_to_idx_to_drop[child_table] = set()
+
+                is_nan = data[child_table][child_column].isna()
+                valid_parent_idx = [
+                    idx for idx in data[parent_table].index if idx not in table_to_idx_to_drop.get(
+                        parent_table, set()
+                    )
+                ]
+                valid_parent_values = set(data[parent_table].loc[valid_parent_idx, parent_column])
+                invalid_values = set(
+                    data[child_table].loc[~is_nan, child_column]
+                ) - valid_parent_values
+                invalid_rows = data[child_table][
+                    data[child_table][child_column].isin(invalid_values)
+                ]
+                idx_to_drop = set(invalid_rows.index)
+
+                if idx_to_drop:
+                    table_to_idx_to_drop[child_table] = table_to_idx_to_drop[
+                        child_table
+                    ].union(idx_to_drop)
+
+            relationships = [
+                rel for idx, rel in enumerate(relationships) if idx not in relationship_idx
+            ]
+
+    return table_to_idx_to_drop
+
+
+def drop_unknown_references(metadata, data, drop_missing_values=True):
+    """Drop rows with unknown foreign keys.
+
+    Args:
+        metadata (MultiTableMetadata):
+            Metadata of the datasets.
+        data (dict):
+            Dictionary that maps each table name (string) to the data for that
+            table (pandas.DataFrame).
+        drop_missing_values (bool):
+            Boolean describing whether or not to also drop foreign keys with missing values
+            If True, drop rows with missing values in the foreign keys.
+            Defaults to True.
+
+    Returns:
+        dict:
+            Dictionary with the dataframes ensurint referential integrity.
+    """
+    result = data.copy()
+    table_to_idx_to_drop = _get_rows_to_drop(metadata, result)
+    for table, idx_to_drop in table_to_idx_to_drop.items():
+        result[table] = result[table].drop(idx_to_drop)
+        if drop_missing_values:
+            relationship_idx = _get_relationship_idx_for_child(metadata.relationships, table)
+            for idx in relationship_idx:
+                relationship = metadata.relationships[idx]
+                child_column = relationship['child_foreign_key']
+                result[table] = result[table].dropna(subset=[child_column])
+
+    return result
