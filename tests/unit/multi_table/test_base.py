@@ -558,7 +558,7 @@ class TestBaseMultiTableSynthesizer:
             'The provided data does not match the metadata:\n'
             'Relationships:\n'
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
-            'All the values in this column must reference a primary key.'
+            "Please use the utility method 'drop_unknown_references' to clean the data."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)

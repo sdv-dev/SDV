@@ -67,7 +67,7 @@ def test_drop_unknown_references(metadata, data):
         'The provided data does not match the metadata:\n'
         'Relationships:\n'
         "Error: foreign key column 'parent_id' contains unknown references: (5)"
-        '. All the values in this column must reference a primary key.'
+        ". Please use the utility method 'drop_unknown_references' to clean the data."
     )
     with pytest.raises(InvalidDataError, match=expected_message):
         metadata.validate_data(data)
@@ -106,7 +106,7 @@ def test_drop_unknown_references_not_drop_missing_values(metadata, data):
         'The provided data does not match the metadata:\n'
         'Relationships:\n'
         "Error: foreign key column 'parent_id' contains unknown references: (nan)"
-        '. All the values in this column must reference a primary key.'
+        ". Please use the utility method 'drop_unknown_references' to clean the data."
     )
 
     cleaned_data = drop_unknown_references(metadata, data, drop_missing_values=False)

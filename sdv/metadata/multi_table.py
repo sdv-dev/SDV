@@ -766,8 +766,8 @@ class MultiTableMetadata:
 
                     errors.append(
                         f"Error: foreign key column '{relation['child_foreign_key']}' contains "
-                        f'unknown references: {message}. All the values in this column must '
-                        'reference a primary key.'
+                        f'unknown references: {message}. Please use the utility method'
+                        " 'drop_unknown_references' to clean the data."
                     )
 
             if errors:
