@@ -18,11 +18,11 @@ import pkg_resources
 import tqdm
 from copulas.multivariate import GaussianMultivariate
 
+from sdv._utils import _groupby_list
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
-from sdv.utils import _groupby_list
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())

@@ -1,7 +1,7 @@
 """Formatter for datetime data."""
 import pandas as pd
 
-from sdv.utils import _get_datetime_format
+from sdv._utils import _get_datetime_format
 
 
 class DatetimeFormatter:

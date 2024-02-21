@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from sdv._utils import _cast_to_iterable, _load_data_from_csv
 from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
@@ -16,7 +17,6 @@ from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
-from sdv.utils import _cast_to_iterable, _load_data_from_csv
 
 LOGGER = logging.getLogger(__name__)
 

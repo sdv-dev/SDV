@@ -4,12 +4,12 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 
-from sdv.utils import (
+from sdv._utils import (
     _convert_to_timedelta, _create_unique_name, _get_datetime_format, _is_datetime_type)
 from tests.utils import SeriesMatcher
 
 
-@patch('sdv.utils.pd.to_timedelta')
+@patch('sdv._utils.pd.to_timedelta')
 def test__convert_to_timedelta(to_timedelta_mock):
     """Test that nans and values are properly converted to timedeltas."""
     # Setup

@@ -3,7 +3,7 @@
 import warnings
 from os import path, walk
 
-from sdv.utils import _load_data_from_csv
+from sdv._utils import _load_data_from_csv
 
 
 def load_csvs(folder_name, read_csv_parameters=None):

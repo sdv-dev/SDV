@@ -7,12 +7,12 @@ from rdt.transformers import (
     AnonymizedFaker, BinaryEncoder, FloatFormatter, RegexGenerator, UniformEncoder,
     UnixTimestampEncoder)
 
+from sdv._utils import _get_datetime_format
 from sdv.data_processing import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
-from sdv.utils import _get_datetime_format
 
 
 class TestDataProcessor:

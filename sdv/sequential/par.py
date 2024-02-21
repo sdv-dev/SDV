@@ -12,13 +12,13 @@ from deepecho import PARModel
 from deepecho.sequences import assemble_sequences
 from rdt.transformers import FloatFormatter
 
+from sdv._utils import _cast_to_iterable, _groupby_list
 from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
 from sdv.single_table.ctgan import LossValuesMixin
-from sdv.utils import _cast_to_iterable, _groupby_list
 
 LOGGER = logging.getLogger(__name__)
 
