@@ -20,7 +20,7 @@ from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 from sdv.utils import (
     _cast_to_iterable, _format_invalid_values_string, _get_datetime_format, _is_boolean_type,
-    _is_datetime_type, _is_numerical_type, _validate_datetime_format, load_data_from_csv)
+    _is_datetime_type, _is_numerical_type, _load_data_from_csv, _validate_datetime_format)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -507,7 +507,7 @@ class SingleTableMetadata:
                 'object to detect from other data sources.'
             )
 
-        data = load_data_from_csv(filepath, read_csv_parameters)
+        data = _load_data_from_csv(filepath, read_csv_parameters)
         self.detect_from_dataframe(data)
 
     @staticmethod

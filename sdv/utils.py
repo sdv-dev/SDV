@@ -146,7 +146,7 @@ def _convert_to_timedelta(column):
     return column
 
 
-def load_data_from_csv(filepath, read_csv_parameters=None):
+def _load_data_from_csv(filepath, read_csv_parameters=None):
     """Load DataFrame from a filepath.
 
     Args:
