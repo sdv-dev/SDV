@@ -36,6 +36,7 @@ def test_drop_unknown_references(mock_get_rows_to_drop):
 
     metadata = Mock()
     metadata.relationships = relationships
+    metadata.validate_data.side_effect = InvalidDataError('Invalid data')
 
     data = {
         'parent': pd.DataFrame({
@@ -62,6 +63,8 @@ def test_drop_unknown_references(mock_get_rows_to_drop):
     result = drop_unknown_references(metadata, data)
 
     # Assert
+    metadata.validate.assert_called_once()
+    metadata.validate_data.assert_called_once_with(data)
     mock_get_rows_to_drop.assert_called_once()
     expected_result = {
         'parent': pd.DataFrame({
@@ -110,6 +113,7 @@ def test_drop_unknown_references_with_nan(mock_get_rows_to_drop):
 
     metadata = Mock()
     metadata.relationships = relationships
+    metadata.validate_data.side_effect = InvalidDataError('Invalid data')
 
     data = {
         'parent': pd.DataFrame({
@@ -184,6 +188,7 @@ def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop
 
     metadata = Mock()
     metadata.relationships = relationships
+    metadata.validate_data.side_effect = InvalidDataError('Invalid data')
 
     data = {
         'parent': pd.DataFrame({
@@ -258,6 +263,7 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
 
     metadata = Mock()
     metadata.relationships = relationships
+    metadata.validate_data.side_effect = InvalidDataError('Invalid data')
 
     data = {
         'parent': pd.DataFrame({

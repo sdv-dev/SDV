@@ -1,4 +1,5 @@
 import re
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -81,10 +82,25 @@ def test_drop_unknown_references(metadata, data):
     assert len(cleaned_data['child']) == 4
 
 
+def test_drop_unknown_references_valid_data(metadata, data):
+    """Test ``drop_unknown_references`` when data has referential integrity."""
+    # Setup
+    data = deepcopy(data)
+    data['child'].loc[4, 'parent_id'] = 2
+
+    # Run
+    result = drop_unknown_references(metadata, data)
+
+    # Assert
+    pd.testing.assert_frame_equal(result['parent'], data['parent'])
+    pd.testing.assert_frame_equal(result['child'], data['child'])
+
+
 def test_drop_unknown_references_drop_missing_values(metadata, data):
     """Test ``drop_unknown_references`` when there is missing values in the foreign keys."""
     # Setup
-    data['child'].loc[3, 'parent_id'] = np.nan
+    data = deepcopy(data)
+    data['child'].loc[4, 'parent_id'] = np.nan
 
     # Run
     cleaned_data = drop_unknown_references(metadata, data)
@@ -92,8 +108,8 @@ def test_drop_unknown_references_drop_missing_values(metadata, data):
 
     # Assert
     pd.testing.assert_frame_equal(cleaned_data['parent'], data['parent'])
-    pd.testing.assert_frame_equal(cleaned_data['child'], data['child'].iloc[:3])
-    assert len(cleaned_data['child']) == 3
+    pd.testing.assert_frame_equal(cleaned_data['child'], data['child'].iloc[:4])
+    assert len(cleaned_data['child']) == 4
 
 
 def test_drop_unknown_references_not_drop_missing_values(metadata, data):

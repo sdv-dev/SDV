@@ -21,21 +21,26 @@ def drop_unknown_references(metadata, data, drop_missing_values=True):
         dict:
             Dictionary with the dataframes ensuring referential integrity.
     """
-    result = data.copy()
-    table_to_idx_to_drop = _get_rows_to_drop(metadata, result)
-    for table, idx_to_drop in table_to_idx_to_drop.items():
-        result[table] = result[table].drop(idx_to_drop)
-        if drop_missing_values:
-            relationship_idx = _get_relationship_idx_for_child(metadata.relationships, table)
-            for idx in relationship_idx:
-                relationship = metadata.relationships[idx]
-                child_column = relationship['child_foreign_key']
-                result[table] = result[table].dropna(subset=[child_column])
+    metadata.validate()
+    try:
+        metadata.validate_data(data)
+        return data
+    except InvalidDataError:
+        result = data.copy()
+        table_to_idx_to_drop = _get_rows_to_drop(metadata, result)
+        for table, idx_to_drop in table_to_idx_to_drop.items():
+            result[table] = result[table].drop(idx_to_drop)
+            if drop_missing_values:
+                relationship_idx = _get_relationship_idx_for_child(metadata.relationships, table)
+                for idx in relationship_idx:
+                    relationship = metadata.relationships[idx]
+                    child_column = relationship['child_foreign_key']
+                    result[table] = result[table].dropna(subset=[child_column])
 
-        if result[table].empty:
-            raise InvalidDataError([
-                f"All references in table '{table}' are unknown and must be dropped."
-                'Try providing different data for this table.'
-            ])
+            if result[table].empty:
+                raise InvalidDataError([
+                    f"All references in table '{table}' are unknown and must be dropped."
+                    'Try providing different data for this table.'
+                ])
 
-    return result
+        return result
