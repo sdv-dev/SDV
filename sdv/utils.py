@@ -28,7 +28,8 @@ def drop_unknown_references(metadata, data, drop_missing_values=True):
     except InvalidDataError:
         result = data.copy()
         table_to_idx_to_drop = _get_rows_to_drop(metadata, result)
-        for table, idx_to_drop in table_to_idx_to_drop.items():
+        for table in metadata.tables:
+            idx_to_drop = table_to_idx_to_drop[table]
             result[table] = result[table].drop(idx_to_drop)
             if drop_missing_values:
                 relationships = _get_relationship_for_child(metadata.relationships, table)

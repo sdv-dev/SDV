@@ -1,4 +1,5 @@
 """Miscellaneous utility functions."""
+from collections import defaultdict
 from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime
@@ -238,7 +239,7 @@ def _get_rows_to_drop(metadata, data):
         dict:
             Dictionary with the table names as keys and the indexes of the rows to drop as values.
     """
-    table_to_idx_to_drop = {}
+    table_to_idx_to_drop = defaultdict(set)
     relationships = deepcopy(metadata.relationships)
     while relationships:
         current_roots = _get_root_tables(relationships)
@@ -250,8 +251,6 @@ def _get_rows_to_drop(metadata, data):
                 relationship = relationships[idx]
                 child_table = relationship['child_table_name']
                 child_column = relationship['child_foreign_key']
-                if child_table not in table_to_idx_to_drop:
-                    table_to_idx_to_drop[child_table] = set()
 
                 is_nan = data[child_table][child_column].isna()
                 valid_parent_idx = [

@@ -1,4 +1,5 @@
 import re
+from collections import defaultdict
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -36,6 +37,7 @@ def test_drop_unknown_references(mock_get_rows_to_drop):
 
     metadata = Mock()
     metadata.relationships = relationships
+    metadata.tables = {'parent', 'child', 'grandchild'}
     metadata.validate_data.side_effect = InvalidDataError('Invalid data')
 
     data = {
@@ -54,10 +56,10 @@ def test_drop_unknown_references(mock_get_rows_to_drop):
             'C': ['Yes', 'No', 'No', 'No', 'No']
         })
     }
-    mock_get_rows_to_drop.return_value = {
+    mock_get_rows_to_drop.return_value = defaultdict(set, {
         'child': {4},
         'grandchild': {0, 2, 4}
-    }
+    })
 
     # Run
     result = drop_unknown_references(metadata, data)
@@ -113,6 +115,7 @@ def test_drop_unknown_references_with_nan(mock_get_rows_to_drop):
 
     metadata = Mock()
     metadata.relationships = relationships
+    metadata.tables = {'parent', 'child', 'grandchild'}
     metadata.validate_data.side_effect = InvalidDataError('Invalid data')
 
     data = {
@@ -131,10 +134,10 @@ def test_drop_unknown_references_with_nan(mock_get_rows_to_drop):
             'C': ['Yes', 'No', 'No', 'No', 'No', 'No']
         })
     }
-    mock_get_rows_to_drop.return_value = {
+    mock_get_rows_to_drop.return_value = defaultdict(set, {
         'child': {4},
         'grandchild': {0, 3, 4}
-    }
+    })
 
     # Run
     result = drop_unknown_references(metadata, data)
@@ -188,6 +191,7 @@ def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop
 
     metadata = Mock()
     metadata.relationships = relationships
+    metadata.tables = {'parent', 'child', 'grandchild'}
     metadata.validate_data.side_effect = InvalidDataError('Invalid data')
 
     data = {
@@ -206,10 +210,10 @@ def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop
             'C': ['Yes', 'No', 'No', 'No', 'No', 'No']
         })
     }
-    mock_get_rows_to_drop.return_value = {
+    mock_get_rows_to_drop.return_value = defaultdict(set, {
         'child': {4},
         'grandchild': {0, 3, 4}
-    }
+    })
 
     # Run
     result = drop_unknown_references(metadata, data, drop_missing_values=False)
@@ -263,6 +267,7 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
 
     metadata = Mock()
     metadata.relationships = relationships
+    metadata.tables = {'parent', 'child', 'grandchild'}
     metadata.validate_data.side_effect = InvalidDataError('Invalid data')
 
     data = {
@@ -282,9 +287,9 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
         })
     }
 
-    mock_get_rows_to_drop.return_value = {
+    mock_get_rows_to_drop.return_value = defaultdict(set, {
         'child': {0, 1, 2, 3, 4}
-    }
+    })
 
     # Run and Assert
     expected_message = re.escape(
