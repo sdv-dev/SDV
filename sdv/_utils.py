@@ -244,11 +244,11 @@ def _get_rows_to_drop(metadata, data):
         current_roots = _get_root_tables(relationships)
         for root in current_roots:
             relationship_idx = _get_relationship_idx_for_parent(relationships, root)
+            parent_table = root
+            parent_column = metadata.tables[parent_table].primary_key
             for idx in relationship_idx:
                 relationship = relationships[idx]
-                parent_table = relationship['parent_table_name']
                 child_table = relationship['child_table_name']
-                parent_column = relationship['parent_primary_key']
                 child_column = relationship['child_foreign_key']
                 if child_table not in table_to_idx_to_drop:
                     table_to_idx_to_drop[child_table] = set()

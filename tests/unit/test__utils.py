@@ -365,6 +365,11 @@ def test__get_rows_to_drop():
 
     metadata = Mock()
     metadata.relationships = relationships
+    metadata.tables = {
+        'parent': Mock(primary_key='id_parent'),
+        'child': Mock(primary_key='id_child'),
+        'grandchild': Mock(primary_key='id_grandchild')
+    }
 
     data = {
         'parent': pd.DataFrame({
