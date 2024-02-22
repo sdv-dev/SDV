@@ -209,8 +209,8 @@ def _find_root_tables(relationships):
     return parent_tables - child_tables
 
 
-def _get_relationship_idx_for_child(relationships, child_table):
-    return [idx for idx, rel in enumerate(relationships) if rel['child_table_name'] == child_table]
+def _get_relationship_for_child(relationships, child_table):
+    return [rel for rel in relationships if rel['child_table_name'] == child_table]
 
 
 def _get_relationship_idx_for_parent(relationships, parent_table):
