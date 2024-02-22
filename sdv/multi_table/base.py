@@ -10,7 +10,7 @@ import numpy as np
 import pkg_resources
 from tqdm import tqdm
 
-from sdv.errors import InvalidDataError, SynthesizerInputError, SynthesizerInputError
+from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 
