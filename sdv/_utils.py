@@ -247,18 +247,17 @@ def _get_rows_to_drop(metadata, data):
             relationship_idx = _get_relationship_idx_for_parent(relationships, root)
             parent_table = root
             parent_column = metadata.tables[parent_table].primary_key
+            valid_parent_idx = [
+                idx for idx in data[parent_table].index
+                if idx not in table_to_idx_to_drop[parent_table]
+            ]
+            valid_parent_values = set(data[parent_table].loc[valid_parent_idx, parent_column])
             for idx in relationship_idx:
                 relationship = relationships[idx]
                 child_table = relationship['child_table_name']
                 child_column = relationship['child_foreign_key']
 
                 is_nan = data[child_table][child_column].isna()
-                valid_parent_idx = [
-                    idx for idx in data[parent_table].index if idx not in table_to_idx_to_drop.get(
-                        parent_table, set()
-                    )
-                ]
-                valid_parent_values = set(data[parent_table].loc[valid_parent_idx, parent_column])
                 invalid_values = set(
                     data[child_table].loc[~is_nan, child_column]
                 ) - valid_parent_values

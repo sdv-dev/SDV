@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 from unittest.mock import Mock, patch
 
@@ -392,8 +393,9 @@ def test__get_rows_to_drop():
     result = _get_rows_to_drop(metadata, data)
 
     # Assert
-    expected_result = {
+    expected_result = defaultdict(set, {
         'child': {4},
-        'grandchild': {0, 2, 4}
-    }
+        'grandchild': {0, 2, 4},
+        'parent': set()
+    })
     assert result == expected_result
