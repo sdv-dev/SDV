@@ -214,10 +214,8 @@ def _get_relationship_for_child(relationships, child_table):
     return [rel for rel in relationships if rel['child_table_name'] == child_table]
 
 
-def _get_relationship_idx_for_parent(relationships, parent_table):
-    return [
-        idx for idx, rel in enumerate(relationships) if rel['parent_table_name'] == parent_table
-    ]
+def _get_relationship_for_parent(relationships, parent_table):
+    return [rel for rel in relationships if rel['parent_table_name'] == parent_table]
 
 
 def _get_rows_to_drop(metadata, data):
@@ -244,16 +242,15 @@ def _get_rows_to_drop(metadata, data):
     while relationships:
         current_roots = _get_root_tables(relationships)
         for root in current_roots:
-            relationship_idx = _get_relationship_idx_for_parent(relationships, root)
             parent_table = root
+            relationships_parent = _get_relationship_for_parent(relationships, parent_table)
             parent_column = metadata.tables[parent_table].primary_key
             valid_parent_idx = [
                 idx for idx in data[parent_table].index
                 if idx not in table_to_idx_to_drop[parent_table]
             ]
             valid_parent_values = set(data[parent_table].loc[valid_parent_idx, parent_column])
-            for idx in relationship_idx:
-                relationship = relationships[idx]
+            for relationship in relationships_parent:
                 child_table = relationship['child_table_name']
                 child_column = relationship['child_foreign_key']
 
@@ -271,8 +268,6 @@ def _get_rows_to_drop(metadata, data):
                         child_table
                     ].union(idx_to_drop)
 
-            relationships = [
-                rel for idx, rel in enumerate(relationships) if idx not in relationship_idx
-            ]
+            relationships = [rel for rel in relationships if rel not in relationships_parent]
 
     return table_to_idx_to_drop

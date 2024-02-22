@@ -7,7 +7,7 @@ import pandas as pd
 
 from sdv._utils import (
     _convert_to_timedelta, _create_unique_name, _get_datetime_format, _get_relationship_for_child,
-    _get_relationship_idx_for_parent, _get_root_tables, _get_rows_to_drop, _is_datetime_type)
+    _get_relationship_for_parent, _get_root_tables, _get_rows_to_drop, _is_datetime_type)
 from tests.utils import SeriesMatcher
 
 
@@ -312,8 +312,8 @@ def test__get_relationship_for_child():
     assert result == expected_result
 
 
-def test__get_relationship_idx_for_parent():
-    """Test the ``_get_relationship_idx_for_parent`` method."""
+def test__get_relationship_for_parent():
+    """Test the ``_get_relationship_for_parent`` method."""
     # Setup
     relationships = [
         {'parent_table_name': 'parent', 'child_table_name': 'child'},
@@ -322,10 +322,14 @@ def test__get_relationship_idx_for_parent():
     ]
 
     # Run
-    result = _get_relationship_idx_for_parent(relationships, 'parent')
+    result = _get_relationship_for_parent(relationships, 'parent')
 
     # Assert
-    assert result == [0, 2]
+    expected_result = [
+        {'parent_table_name': 'parent', 'child_table_name': 'child'},
+        {'parent_table_name': 'parent', 'child_table_name': 'grandchild'}
+    ]
+    assert result == expected_result
 
 
 def test__get_rows_to_drop():
