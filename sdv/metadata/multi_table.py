@@ -756,6 +756,7 @@ class MultiTableMetadata:
                 child_column = child_table[relation['child_foreign_key']]
                 parent_column = parent_table[relation['parent_primary_key']]
                 missing_values = child_column[~child_column.isin(parent_column)].unique()
+                missing_values = missing_values[~pd.isna(missing_values)]
 
                 if any(missing_values):
                     message = ', '.join(missing_values[:5].astype(str))
