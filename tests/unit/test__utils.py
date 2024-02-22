@@ -5,9 +5,8 @@ import numpy as np
 import pandas as pd
 
 from sdv._utils import (
-    _convert_to_timedelta, _create_unique_name, _find_root_tables, _get_datetime_format,
-    _get_relationship_for_child, _get_relationship_idx_for_parent, _get_rows_to_drop,
-    _is_datetime_type)
+    _convert_to_timedelta, _create_unique_name, _get_datetime_format, _get_relationship_for_child,
+    _get_relationship_idx_for_parent, _get_root_tables, _get_rows_to_drop, _is_datetime_type)
 from tests.utils import SeriesMatcher
 
 
@@ -276,8 +275,8 @@ def test__create_unique_name():
     assert result == 'name___'
 
 
-def test__find_root_tables():
-    """Test the ``_find_root_tables`` method."""
+def test__get_root_tables():
+    """Test the ``_get_root_tables`` method."""
     # Setup
     relationships = [
         {'parent_table_name': 'parent', 'child_table_name': 'child'},
@@ -286,7 +285,7 @@ def test__find_root_tables():
     ]
 
     # Run
-    result = _find_root_tables(relationships)
+    result = _get_root_tables(relationships)
 
     # Assert
     assert result == {'parent'}

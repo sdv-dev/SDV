@@ -203,7 +203,7 @@ def _format_invalid_values_string(invalid_values, num_values):
     return f'{invalid_values}'
 
 
-def _find_root_tables(relationships):
+def _get_root_tables(relationships):
     parent_tables = {rel['parent_table_name'] for rel in relationships}
     child_tables = {rel['child_table_name'] for rel in relationships}
     return parent_tables - child_tables
@@ -241,7 +241,7 @@ def _get_rows_to_drop(metadata, data):
     table_to_idx_to_drop = {}
     relationships = deepcopy(metadata.relationships)
     while relationships:
-        current_roots = _find_root_tables(relationships)
+        current_roots = _get_root_tables(relationships)
         for root in current_roots:
             relationship_idx = _get_relationship_idx_for_parent(relationships, root)
             for idx in relationship_idx:
