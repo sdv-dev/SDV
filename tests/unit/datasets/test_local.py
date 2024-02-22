@@ -12,7 +12,7 @@ from sdv.datasets.local import load_csvs
 
 
 @patch('sdv.datasets.local.warnings')
-@patch('sdv.datasets.local.load_data_from_csv')
+@patch('sdv.datasets.local._load_data_from_csv')
 def test_load_csvs(load_mock, warnings_mock, tmp_path):
     """Test that the function loads only the csv files in a folder.
     If the folder contains files that aren't csvs, they should be ignored.

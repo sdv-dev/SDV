@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
 
-def cast_to_iterable(value):
+def _cast_to_iterable(value):
     """Return a ``list`` if the input object is not a ``list`` or ``tuple``."""
     if isinstance(value, (list, tuple)):
         return value
@@ -15,7 +15,7 @@ def cast_to_iterable(value):
     return [value]
 
 
-def get_datetime_format(value):
+def _get_datetime_format(value):
     """Get the ``strftime`` format for a given ``value``.
 
     This function returns the ``strftime`` format of a given ``value`` when possible.
@@ -39,7 +39,7 @@ def get_datetime_format(value):
     return _guess_datetime_format_for_array(value)
 
 
-def is_datetime_type(value):
+def _is_datetime_type(value):
     """Determine if the input is a datetime type or not.
 
     If a ``pandas.Series`` or ``list`` is passed, it will return ``True`` if the first
@@ -57,14 +57,14 @@ def is_datetime_type(value):
             True if the input is a datetime type, False if not.
     """
     if isinstance(value, str) or (not isinstance(value, Iterable)):
-        value = cast_to_iterable(value)
+        value = _cast_to_iterable(value)
 
     values = pd.Series(value)
     values = values[~values.isna()]
     values = values.head(1000)  # only check 1000 values so this method takes less than 1 second
     for value in values:
         if not (
-            bool(get_datetime_format([value]))
+            bool(_get_datetime_format([value]))
             or isinstance(value, pd.Timestamp)
             or isinstance(value, datetime)
         ):
@@ -73,7 +73,7 @@ def is_datetime_type(value):
     return True
 
 
-def is_numerical_type(value):
+def _is_numerical_type(value):
     """Determine if the input is numerical or not.
 
     Args:
@@ -87,7 +87,7 @@ def is_numerical_type(value):
     return pd.isna(value) | pd.api.types.is_float(value) | pd.api.types.is_integer(value)
 
 
-def is_boolean_type(value):
+def _is_boolean_type(value):
     """Determine if the input is a boolean or not.
 
     Args:
@@ -101,7 +101,7 @@ def is_boolean_type(value):
     return True if pd.isna(value) | (value is True) | (value is False) else False
 
 
-def validate_datetime_format(column, datetime_format):
+def _validate_datetime_format(column, datetime_format):
     """Determine the values of the column that match the datetime format.
 
     Args:
@@ -125,7 +125,7 @@ def validate_datetime_format(column, datetime_format):
     return set(column[~valid])
 
 
-def convert_to_timedelta(column):
+def _convert_to_timedelta(column):
     """Convert a ``pandas.Series`` to one with dtype ``timedelta``.
 
     ``pd.to_timedelta`` does not handle nans, so this function masks the nans, converts and then
@@ -146,7 +146,7 @@ def convert_to_timedelta(column):
     return column
 
 
-def load_data_from_csv(filepath, read_csv_parameters=None):
+def _load_data_from_csv(filepath, read_csv_parameters=None):
     """Load DataFrame from a filepath.
 
     Args:
@@ -162,12 +162,12 @@ def load_data_from_csv(filepath, read_csv_parameters=None):
     return data
 
 
-def groupby_list(list_to_check):
+def _groupby_list(list_to_check):
     """Return the first element of the list if the length is 1 else the entire list."""
     return list_to_check[0] if len(list_to_check) == 1 else list_to_check
 
 
-def create_unique_name(name, list_names):
+def _create_unique_name(name, list_names):
     """Modify the ``name`` parameter if it already exists in the list of names."""
     result = name
     while result in list_names:
@@ -176,7 +176,7 @@ def create_unique_name(name, list_names):
     return result
 
 
-def format_invalid_values_string(invalid_values, num_values):
+def _format_invalid_values_string(invalid_values, num_values):
     """Convert ``invalid_values`` into a string of invalid values.
 
     Args:

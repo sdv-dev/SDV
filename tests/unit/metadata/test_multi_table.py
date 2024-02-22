@@ -2203,7 +2203,7 @@ class TestMultiTableMetadata:
 
     @patch('sdv.metadata.multi_table.LOGGER')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    @patch('sdv.metadata.multi_table.load_data_from_csv')
+    @patch('sdv.metadata.multi_table._load_data_from_csv')
     def test_detect_table_from_csv(self, load_csv_mock, single_table_mock, log_mock):
         """Test the ``detect_table_from_csv`` method.
 

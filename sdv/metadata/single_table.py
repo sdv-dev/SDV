@@ -11,6 +11,9 @@ from itertools import combinations
 import pandas as pd
 from rdt.transformers.pii.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 
+from sdv._utils import (
+    _cast_to_iterable, _format_invalid_values_string, _get_datetime_format, _is_boolean_type,
+    _is_datetime_type, _is_numerical_type, _load_data_from_csv, _validate_datetime_format)
 from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
@@ -18,9 +21,6 @@ from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.validation import validate_address_sdtypes, validate_gps_sdtypes
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
-from sdv.utils import (
-    cast_to_iterable, format_invalid_values_string, get_datetime_format, is_boolean_type,
-    is_datetime_type, is_numerical_type, load_data_from_csv, validate_datetime_format)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -403,7 +403,7 @@ class SingleTableMetadata:
             data_test = data.sample(10000) if len(data) > 10000 else data
 
             try:
-                datetime_format = get_datetime_format(data_test)
+                datetime_format = _get_datetime_format(data_test)
                 if datetime_format:
                     pd.to_datetime(data_test, format=datetime_format, errors='raise')
                     sdtype = 'datetime'
@@ -458,7 +458,7 @@ class SingleTableMetadata:
             if sdtype_in_reference and first_pii_field is None and not has_nan:
                 first_pii_field = field
             if sdtype == 'datetime' and dtype == 'O':
-                datetime_format = get_datetime_format(column_data.iloc[:100])
+                datetime_format = _get_datetime_format(column_data.iloc[:100])
                 column_dict['datetime_format'] = datetime_format
 
             self.columns[field] = deepcopy(column_dict)
@@ -507,7 +507,7 @@ class SingleTableMetadata:
                 'object to detect from other data sources.'
             )
 
-        data = load_data_from_csv(filepath, read_csv_parameters)
+        data = _load_data_from_csv(filepath, read_csv_parameters)
         self.detect_from_dataframe(data)
 
     @staticmethod
@@ -666,7 +666,7 @@ class SingleTableMetadata:
     def _validate_sequence_index_not_in_sequence_key(self):
         """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
         seq_key = self.sequence_key
-        sequence_key = set(cast_to_iterable(seq_key))
+        sequence_key = set(_cast_to_iterable(seq_key))
         if self.sequence_index in sequence_key or seq_key is None:
             index = {self.sequence_index}
             raise InvalidMetadataError(
@@ -899,7 +899,7 @@ class SingleTableMetadata:
         for key in sorted(keys):
             repeated_values = set(data[key][data[key].duplicated()])
             if repeated_values:
-                repeated_values = format_invalid_values_string(repeated_values, 3)
+                repeated_values = _format_invalid_values_string(repeated_values, 3)
                 errors.append(f"Key column '{key}' contains repeating values: " + repeated_values)
 
         return errors
@@ -919,29 +919,29 @@ class SingleTableMetadata:
         # boolean values must be True/False, None or missing values
         # int/str are not allowed
         if sdtype == 'boolean':
-            invalid_values = self._get_invalid_column_values(column, is_boolean_type)
+            invalid_values = self._get_invalid_column_values(column, _is_boolean_type)
 
         # numerical values must be int/float, None or missing values
         # str/bool are not allowed
         if sdtype == 'numerical':
-            invalid_values = self._get_invalid_column_values(column, is_numerical_type)
+            invalid_values = self._get_invalid_column_values(column, _is_numerical_type)
 
         # datetime values must be castable to datetime, None or missing values
         if sdtype == 'datetime':
             datetime_format = column_metadata.get('datetime_format')
             if datetime_format:
-                invalid_values = validate_datetime_format(column, datetime_format)
+                invalid_values = _validate_datetime_format(column, datetime_format)
             else:
                 # cap number of samples to be validated to improve performance
                 num_samples_to_validate = min(len(column), 1000)
 
                 invalid_values = self._get_invalid_column_values(
                     column.sample(num_samples_to_validate),
-                    lambda x: pd.isna(x) | is_datetime_type(x)
+                    lambda x: pd.isna(x) | _is_datetime_type(x)
                 )
 
         if invalid_values:
-            invalid_values = format_invalid_values_string(invalid_values, 3)
+            invalid_values = _format_invalid_values_string(invalid_values, 3)
             return [f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."]
 
         return []

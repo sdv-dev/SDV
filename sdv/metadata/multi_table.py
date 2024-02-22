@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from sdv._utils import _cast_to_iterable, _load_data_from_csv
 from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
@@ -16,7 +17,6 @@ from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
-from sdv.utils import cast_to_iterable, load_data_from_csv
 
 LOGGER = logging.getLogger(__name__)
 
@@ -55,8 +55,8 @@ class MultiTableMetadata:
             )
 
         missing_keys = set()
-        parent_primary_key = cast_to_iterable(parent_primary_key)
-        table_primary_keys = set(cast_to_iterable(parent_table.primary_key))
+        parent_primary_key = _cast_to_iterable(parent_primary_key)
+        table_primary_keys = set(_cast_to_iterable(parent_table.primary_key))
         for key in parent_primary_key:
             if key not in table_primary_keys:
                 missing_keys.add(key)
@@ -67,7 +67,7 @@ class MultiTableMetadata:
                 f'an unknown primary key {missing_keys}.'
             )
 
-        for key in set(cast_to_iterable(child_foreign_key)):
+        for key in set(_cast_to_iterable(child_foreign_key)):
             if key not in child_table.columns:
                 missing_keys.add(key)
 
@@ -91,8 +91,8 @@ class MultiTableMetadata:
     @staticmethod
     def _validate_relationship_key_length(parent_table_name, parent_primary_key,
                                           child_table_name, child_foreign_key):
-        pk_len = len(set(cast_to_iterable(parent_primary_key)))
-        fk_len = len(set(cast_to_iterable(child_foreign_key)))
+        pk_len = len(set(_cast_to_iterable(parent_primary_key)))
+        fk_len = len(set(_cast_to_iterable(child_foreign_key)))
         if pk_len != fk_len:
             raise InvalidMetadataError(
                 f"Relationship between tables ('{parent_table_name}', '{child_table_name}') is "
@@ -104,8 +104,8 @@ class MultiTableMetadata:
                                        child_table_name, child_foreign_key):
         parent_table_columns = self.tables.get(parent_table_name).columns
         child_table_columns = self.tables.get(child_table_name).columns
-        parent_primary_key = cast_to_iterable(parent_primary_key)
-        child_foreign_key = cast_to_iterable(child_foreign_key)
+        parent_primary_key = _cast_to_iterable(parent_primary_key)
+        child_foreign_key = _cast_to_iterable(child_foreign_key)
         for pk, fk in zip(parent_primary_key, child_foreign_key):
             if parent_table_columns[pk]['sdtype'] != child_table_columns[fk]['sdtype']:
                 raise InvalidMetadataError(
@@ -148,8 +148,8 @@ class MultiTableMetadata:
             )
 
     def _validate_foreign_child_key(self, child_table_name, parent_table_name, child_foreign_key):
-        child_primary_key = cast_to_iterable(self.tables[child_table_name].primary_key)
-        child_foreign_key = cast_to_iterable(child_foreign_key)
+        child_primary_key = _cast_to_iterable(self.tables[child_table_name].primary_key)
+        child_foreign_key = _cast_to_iterable(child_foreign_key)
         if set(child_foreign_key).intersection(set(child_primary_key)):
             raise InvalidMetadataError(
                 f"Invalid relationship between table '{parent_table_name}' and table "
@@ -533,7 +533,7 @@ class MultiTableMetadata:
         """
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
-        data = load_data_from_csv(filepath, read_csv_parameters)
+        data = _load_data_from_csv(filepath, read_csv_parameters)
         table._detect_columns(data)
         self.tables[table_name] = table
         self._log_detected_table(table)
