@@ -1820,6 +1820,31 @@ class TestSingleTableMetadata:
             expected_columns_to_sdtypes
         )
 
+    def test__validate_column_relationship_with_other_relationships(self):
+        """Test ``_validate_column_relationship_with_others``."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.column_relationships = [
+            {'type': 'relationship_one', 'column_names': ['a', 'b']},
+        ]
+        relationship_valid = {
+            'type': 'relationship_two',
+            'column_names': ['c', 'd']
+        }
+        relationship_invalid = {
+            'type': 'relationship_two',
+            'column_names': ['b', 'c', 'a']
+        }
+
+        # Run and Assert
+        instance._validate_column_relationship_with_others(relationship_valid)
+        expected_message = re.escape(
+            "Columns 'b', 'a' is already part of a relationship of type"
+            " 'relationship_one'. Columns cannot be part of multiple relationships."
+        )
+        with pytest.raises(InvalidMetadataError, match=expected_message):
+            instance._validate_column_relationship_with_others(relationship_invalid)
+
     def test__validate_all_column_relationships(self):
         """Test ``_validate_all_column_relationships`` method."""
         # Setup
