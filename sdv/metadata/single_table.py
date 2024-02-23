@@ -733,6 +733,29 @@ class SingleTableMetadata:
         if errors:
             raise InvalidMetadataError('\n'.join(errors))
 
+    def _validate_column_relationship_with_others(self, column_relationship):
+        """Validate a column relationship with others.
+
+        Verify that the columns in the relationship are not used in more than one
+        column relationship.
+
+        Args:
+            column_relationship (dict):
+                Column relationship to validate.
+        """
+        for existing_relationship in self.column_relationships:
+            repeated_columns = set(
+                existing_relationship['column_names']) & set(
+                column_relationship['column_names']
+            )
+            if repeated_columns:
+                repeated_columns = "', '".join(repeated_columns)
+                raise InvalidMetadataError(
+                    f"Columns '{repeated_columns}' is already part of a relationship of type"
+                    f" '{existing_relationship['type']}'. Columns cannot be part of multiple"
+                    ' relationships.'
+                )
+
     def _validate_all_column_relationships(self, column_relationships):
         """Validate all column relationships.
 
@@ -798,6 +821,7 @@ class SingleTableMetadata:
         to_check = [relationship] + self.column_relationships
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', UserWarning)
+            self._validate_column_relationship_with_others(relationship)
             self._validate_all_column_relationships(to_check)
 
         self.column_relationships.append(relationship)
