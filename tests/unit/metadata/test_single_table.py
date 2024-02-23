@@ -1824,7 +1824,7 @@ class TestSingleTableMetadata:
         """Test ``_validate_column_relationship_with_others``."""
         # Setup
         instance = SingleTableMetadata()
-        instance.column_relationships = [
+        column_relationships = [
             {'type': 'relationship_one', 'column_names': ['a', 'b']},
         ]
         relationship_valid = {
@@ -1833,17 +1833,20 @@ class TestSingleTableMetadata:
         }
         relationship_invalid = {
             'type': 'relationship_two',
-            'column_names': ['b', 'c', 'a']
+            'column_names': ['b', 'e']
         }
 
         # Run and Assert
-        instance._validate_column_relationship_with_others(relationship_valid)
+        instance._validate_column_relationship_with_others(
+            relationship_valid, column_relationships
+        )
         expected_message = re.escape(
-            "Columns 'b', 'a' is already part of a relationship of type"
+            "Columns 'b' is already part of a relationship of type"
             " 'relationship_one'. Columns cannot be part of multiple relationships."
         )
         with pytest.raises(InvalidMetadataError, match=expected_message):
-            instance._validate_column_relationship_with_others(relationship_invalid)
+            instance._validate_column_relationship_with_others(
+                relationship_invalid, column_relationships)
 
     def test__validate_all_column_relationships(self):
         """Test ``_validate_all_column_relationships`` method."""
@@ -1894,12 +1897,13 @@ class TestSingleTableMetadata:
             {'type': 'relationship_one', 'column_names': ['a', 'b']},
             {'type': 'relationship_two', 'column_names': ['b', 'c']}
         ]
-
+        instance.column_relationships = column_relationships
         # Run and Assert
-        err_msg = re.escape(
-            "Columns {'b'} are found in multiple column relationships."
+        expected_message = re.escape(
+            "Columns 'b' is already part of a relationship of type 'relationship_two'."
+            ' Columns cannot be part of multiple relationships.'
         )
-        with pytest.raises(InvalidMetadataError, match=err_msg):
+        with pytest.raises(InvalidMetadataError, match=expected_message):
             instance._validate_all_column_relationships(column_relationships)
 
     def test__validate_all_column_relationships_bad_relationship(self):
