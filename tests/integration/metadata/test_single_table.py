@@ -59,6 +59,31 @@ def test_add_column_relationship(mock_rdt_transformers):
     ]
 
 
+def test_add_column_relationship_existing_column_in_relationship():
+    """Test ``add_column_relationship`` when some colums are already in a column relationship."""
+    # Setup
+    instance = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col1': {'sdtype': 'id'},
+            'col2': {'sdtype': 'street_address'},
+            'col3': {'sdtype': 'state_abbr'},
+            'col4': {'sdtype': 'country_code'},
+        },
+        'primary_key': 'col1',
+    })
+    instance.add_column_relationship(relationship_type='address', column_names=['col2', 'col3'])
+
+    # Run and Assert
+    expected_message = re.escape(
+        "Columns 'col2' is already part of a relationship of type 'address'."
+        ' Columns cannot be part of multiple relationships.'
+    )
+    with pytest.raises(InvalidMetadataError, match=expected_message):
+        instance.add_column_relationship(
+            relationship_type='address', column_names=['col2', 'col4']
+        )
+
+
 @patch('rdt.transformers')
 def test_validate(mock_rdt_transformers):
     """Test ``SingleTableMetadata.validate``.
