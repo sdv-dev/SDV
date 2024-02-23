@@ -916,7 +916,7 @@ class TestBaseMultiTableSynthesizer:
             BaseMultiTableSynthesizer._validate_foreign_keys(instance, data)
 
     def test__validate_foreign_keys_no_nulls(self):
-        """Test that it doesn't crashes when foreign keys contain no null data."""
+        """Test that it doesn't crash when foreign keys contain no null data."""
         # Setup
         def side_effect_func(value):
             return ['fk'] if value == 'child_table' else []
