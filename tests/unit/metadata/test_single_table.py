@@ -1840,9 +1840,6 @@ class TestSingleTableMetadata:
         instance._validate_column_relationship_with_others(
             relationship_valid, column_relationships
         )
-        instance._validate_column_relationship_with_others(
-            relationship_valid, [relationship_valid]
-        )
         expected_message = re.escape(
             "Columns 'b' is already part of a relationship of type"
             " 'relationship_one'. Columns cannot be part of multiple relationships."

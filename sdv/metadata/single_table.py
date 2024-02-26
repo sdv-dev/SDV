@@ -745,9 +745,6 @@ class SingleTableMetadata:
                 List of other column relationships to compare against.
         """
         for other_relationship in other_relationships:
-            if other_relationship == column_relationship:
-                continue
-
             repeated_columns = set(
                 other_relationship.get('column_names', [])) & set(
                 column_relationship['column_names']
