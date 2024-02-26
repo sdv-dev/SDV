@@ -56,14 +56,14 @@ def test__find_addons_bad_addon(entry_points_mock, warning_mock):
     """Test failing to load an add-on generates a warning."""
     # Setup
     def entry_point_error():
-        raise ValueError()
+        raise ValueError('bad value')
 
     bad_entry_point = Mock()
     bad_entry_point.name = 'bad_entry_point'
     bad_entry_point.module_name = 'bad_module'
     bad_entry_point.load.side_effect = entry_point_error
     entry_points_mock.return_value = [bad_entry_point]
-    msg = 'Failed to load "bad_entry_point" from "bad_module".'
+    msg = 'Failed to load "bad_entry_point" from "bad_module" with error:\nbad value'
 
     # Run
     _find_addons()
