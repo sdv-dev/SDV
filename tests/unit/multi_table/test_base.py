@@ -907,10 +907,12 @@ class TestBaseMultiTableSynthesizer:
         }
 
         # Run and Assert
-        err_msg = (
-            'The data contains null values in foreign key columns. '
-            'This feature is currently unsupported. Please remove '
-            'null values to fit the synthesizer.'
+        err_msg = re.escape(
+            'The data contains null values in foreign key columns. This feature is currently '
+            'unsupported. Please remove null values to fit the synthesizer.\n'
+            '\n'
+            'Affected columns:\n'
+            "Table 'child_table', column(s) ['fk']\n"
         )
         with pytest.raises(SynthesizerInputError, match=err_msg):
             BaseMultiTableSynthesizer._validate_foreign_keys(instance, data)

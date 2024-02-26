@@ -367,14 +367,24 @@ class BaseMultiTableSynthesizer:
 
     def _validate_foreign_keys(self, data):
         """Validate that the foreign keys in the data don't have null values."""
+        invalid_tables = defaultdict(list)
         for table_name, table_data in data.items():
             for foreign_key in self.metadata._get_all_foreign_keys(table_name):
                 if table_data[foreign_key].isna().any():
-                    raise SynthesizerInputError(
-                        'The data contains null values in foreign key columns. '
-                        'This feature is currently unsupported. Please remove '
-                        'null values to fit the synthesizer.'
-                    )
+                    invalid_tables[table_name].append(foreign_key)
+
+        if invalid_tables:
+            err_msg = (
+                'The data contains null values in foreign key columns. '
+                'This feature is currently unsupported. Please remove '
+                'null values to fit the synthesizer.\n'
+                '\n'
+                'Affected columns:\n'
+            )
+            for table_name, invalid_columns in invalid_tables.items():
+                err_msg += f"Table '{table_name}', column(s) {invalid_columns}\n"
+
+            raise SynthesizerInputError(err_msg)
 
     def fit(self, data):
         """Fit this model to the original data.

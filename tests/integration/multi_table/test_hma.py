@@ -1338,25 +1338,50 @@ class TestHMASynthesizer:
         metadata.add_column('parent_table', 'id', sdtype='id')
         metadata.set_primary_key('parent_table', 'id')
 
-        metadata.add_table('child_table')
-        metadata.add_column('child_table', 'id', sdtype='id')
-        metadata.set_primary_key('child_table', 'id')
-        metadata.add_column('child_table', 'fk', sdtype='id')
+        metadata.add_table('child_table1')
+        metadata.add_column('child_table1', 'id', sdtype='id')
+        metadata.set_primary_key('child_table1', 'id')
+        metadata.add_column('child_table1', 'fk', sdtype='id')
+
+        metadata.add_table('child_table2')
+        metadata.add_column('child_table2', 'id', sdtype='id')
+        metadata.set_primary_key('child_table2', 'id')
+        metadata.add_column('child_table2', 'fk1', sdtype='id')
+        metadata.add_column('child_table2', 'fk2', sdtype='id')
 
         metadata.add_relationship(
             parent_table_name='parent_table',
-            child_table_name='child_table',
+            child_table_name='child_table1',
             parent_primary_key='id',
             child_foreign_key='fk'
+        )
+
+        metadata.add_relationship(
+            parent_table_name='parent_table',
+            child_table_name='child_table2',
+            parent_primary_key='id',
+            child_foreign_key='fk1'
+        )
+
+        metadata.add_relationship(
+            parent_table_name='parent_table',
+            child_table_name='child_table2',
+            parent_primary_key='id',
+            child_foreign_key='fk2'
         )
 
         data = {
             'parent_table': pd.DataFrame({
                 'id': [1, 2, 3]
             }),
-            'child_table': pd.DataFrame({
+            'child_table1': pd.DataFrame({
                 'id': [1, 2, 3],
                 'fk': [1, 2, np.nan]
+            }),
+            'child_table2': pd.DataFrame({
+                'id': [1, 2, 3],
+                'fk1': [1, 2, np.nan],
+                'fk2': [1, 2, np.nan]
             })
         }
 
@@ -1367,9 +1392,13 @@ class TestHMASynthesizer:
         metadata.validate_data(data)
 
         # Run and Assert
-        err_msg = (
+        err_msg = re.escape(
             'The data contains null values in foreign key columns. This feature is currently '
-            'unsupported. Please remove null values to fit the synthesizer.'
+            'unsupported. Please remove null values to fit the synthesizer.\n'
+            '\n'
+            'Affected columns:\n'
+            "Table 'child_table1', column(s) ['fk']\n"
+            "Table 'child_table2', column(s) ['fk1', 'fk2']\n"
         )
         with pytest.raises(SynthesizerInputError, match=err_msg):
             synthesizer.fit(data)
