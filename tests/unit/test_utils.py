@@ -88,6 +88,37 @@ def test_drop_unknown_references(mock_get_rows_to_drop):
         pd.testing.assert_frame_equal(table, expected_result[table_name])
 
 
+def test_drop_unknown_references_valid_data_mock():
+    """Test ``drop_unknown_references`` when data has referential integrity."""
+    # Setup
+    metadata = Mock()
+    data = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 3],
+            'id_child': [5, 6, 7, 8, 9],
+            'B': ['Yes', 'No', 'No', 'No', 'No']
+        }),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 3],
+            'child_foreign_key': [6, 5, 7, 6, 9],
+            'C': ['Yes', 'No', 'No', 'No', 'No']
+        })
+    }
+
+    # Run
+    result = drop_unknown_references(metadata, data)
+
+    # Assert
+    metadata.validate.assert_called_once()
+    metadata.validate_data.assert_called_once_with(data)
+    for table_name, table in result.items():
+        pd.testing.assert_frame_equal(table, data[table_name])
+
+
 @patch('sdv.utils._get_rows_to_drop')
 def test_drop_unknown_references_with_nan(mock_get_rows_to_drop):
     """Test ``drop_unknown_references`` whith NaNs and drop_missing_values True."""
