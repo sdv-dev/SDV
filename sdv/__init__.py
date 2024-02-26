@@ -85,8 +85,11 @@ def _find_addons():
     for entry_point in iter_entry_points(group=group):
         try:
             addon = entry_point.load()
-        except Exception:  # pylint: disable=broad-exception-caught
-            msg = f'Failed to load "{entry_point.name}" from "{entry_point.module_name}".'
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            msg = (
+                f'Failed to load "{entry_point.name}" from "{entry_point.module_name}" '
+                f'with error:\n{e}'
+            )
             warnings.warn(msg)
             continue
 
