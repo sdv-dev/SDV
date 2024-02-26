@@ -6,7 +6,6 @@ import re
 import warnings
 from copy import deepcopy
 from datetime import datetime
-from itertools import combinations
 
 import pandas as pd
 from rdt.transformers.pii.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
@@ -733,6 +732,31 @@ class SingleTableMetadata:
         if errors:
             raise InvalidMetadataError('\n'.join(errors))
 
+    def _validate_column_relationship_with_others(self, column_relationship, other_relationships):
+        """Validate a column relationship with others.
+
+        Verify that the columns in the relationship are not used in more than one
+        column relationship.
+
+        Args:
+            column_relationship (dict):
+                Column relationship to validate.
+            other_relationships (list[dict]):
+                List of other column relationships to compare against.
+        """
+        for other_relationship in other_relationships:
+            repeated_columns = set(
+                other_relationship.get('column_names', [])) & set(
+                column_relationship['column_names']
+            )
+            if repeated_columns:
+                repeated_columns = "', '".join(repeated_columns)
+                raise InvalidMetadataError(
+                    f"Columns '{repeated_columns}' is already part of a relationship of type"
+                    f" '{other_relationship['type']}'. Columns cannot be part of multiple"
+                    ' relationships.'
+                )
+
     def _validate_all_column_relationships(self, column_relationships):
         """Validate all column relationships.
 
@@ -748,23 +772,16 @@ class SingleTableMetadata:
         """
         # Validate relationship keys
         valid_relationship_keys = {'type', 'column_names'}
-        for relationship in column_relationships:
+        for idx, relationship in enumerate(column_relationships):
             if set(relationship.keys()) != valid_relationship_keys:
                 unknown_keys = set(relationship.keys()).difference(valid_relationship_keys)
                 raise InvalidMetadataError(
                     f'Relationship has invalid keys {unknown_keys}.'
                 )
 
-        # Validate no repeated columns across different column relationships
-        repeated_columns = set()
-        for relationship_a, relationship_b in combinations(column_relationships, 2):
-            repeated_columns |= set(
-                relationship_a['column_names']) & set(
-                relationship_b['column_names'])
-
-        if repeated_columns:
-            raise InvalidMetadataError(
-                f'Columns {repeated_columns} are found in multiple column relationships.')
+            self._validate_column_relationship_with_others(
+                relationship, column_relationships[idx + 1:]
+            )
 
         # Validate each individual relationship
         errors = []
