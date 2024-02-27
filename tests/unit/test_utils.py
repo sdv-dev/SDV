@@ -92,6 +92,9 @@ def test_drop_unknown_references_valid_data_mock():
     """Test ``drop_unknown_references`` when data has referential integrity."""
     # Setup
     metadata = Mock()
+    metadata._get_all_foreign_keys.side_effect = [
+        [], ['parent_foreign_key'], ['child_foreign_key', 'parent_foreign_key']
+    ]
     data = {
         'parent': pd.DataFrame({
             'id_parent': [0, 1, 2, 3, 4],
@@ -120,7 +123,8 @@ def test_drop_unknown_references_valid_data_mock():
 
 
 @patch('sdv.utils._get_rows_to_drop')
-def test_drop_unknown_references_with_nan(mock_get_rows_to_drop):
+@patch('sdv.utils._validate_foreign_keys')
+def test_drop_unknown_references_with_nan(mock_validate_foreign_keys, mock_get_rows_to_drop):
     """Test ``drop_unknown_references`` whith NaNs and drop_missing_values True."""
     # Setup
     relationships = [
@@ -147,7 +151,7 @@ def test_drop_unknown_references_with_nan(mock_get_rows_to_drop):
     metadata = Mock()
     metadata.relationships = relationships
     metadata.tables = {'parent', 'child', 'grandchild'}
-    metadata.validate_data.side_effect = InvalidDataError('Invalid data')
+    mock_validate_foreign_keys.side_effect = InvalidDataError('Invalid data')
 
     data = {
         'parent': pd.DataFrame({
@@ -174,6 +178,10 @@ def test_drop_unknown_references_with_nan(mock_get_rows_to_drop):
     result = drop_unknown_references(metadata, data)
 
     # Assert
+    metadata.validate.assert_called_once()
+    metadata.validate_data.assert_called_once_with(data)
+    mock_validate_foreign_keys.assert_called_once_with(metadata, data)
+    mock_validate_foreign_keys.assert_called_once_with(metadata, data)
     mock_get_rows_to_drop.assert_called_once()
     expected_result = {
         'parent': pd.DataFrame({
