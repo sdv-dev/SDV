@@ -312,14 +312,14 @@ class SingleTableMetadata:
         for column_name in column_names:
             self.update_column(column_name, **kwargs)
 
-    def update_columns_metadata(self, column_metadata_dict):
+    def update_columns_metadata(self, column_metadata):
         """Update the metadata for multiple columns using metadata from the input dictionary..
 
         Args:
-            column_metadata_dict (dict):
+            column_metadata (dict):
                 A dictionary of column names and their metadata to be updated.
         """
-        for column_name, metadata in column_metadata_dict.items():
+        for column_name, metadata in column_metadata.items():
             self.update_column(column_name, **metadata)
 
     def get_column_names(self, **kwargs):

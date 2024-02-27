@@ -2088,6 +2088,40 @@ class TestMultiTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.update_column('table', 'column', sdtype='numerical', pii=False)
 
+    def test_update_columns(self):
+        """Test the ``update_columns`` method."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._validate_table_exists = Mock()
+        table = Mock()
+        metadata.tables = {'table': table}
+
+        # Run
+        metadata.update_columns('table', ['col_1', 'col_2'], sdtype='numerical')
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table')
+        table.update_columns.assert_called_once_with(['col_1', 'col_2'], sdtype='numerical')
+
+    def test_update_columns_metadata(self):
+        """Test the ``update_columns_metadata`` method."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._validate_table_exists = Mock()
+        table = Mock()
+        metadata.tables = {'table': table}
+        metadata_updates = {
+            'col_1': {'sdtype': 'numerical'},
+            'col_2': {'sdtype': 'categorical'}
+        }
+
+        # Run
+        metadata.update_columns('table', metadata_updates)
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table')
+        table.update_columns.assert_called_once_with(metadata_updates)
+
     def test_get_column_names(self):
         """Test the ``get_column_names`` method."""
         # Setup
