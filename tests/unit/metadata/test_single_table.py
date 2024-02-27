@@ -722,6 +722,94 @@ class TestSingleTableMetadata:
         mock__validate_column.assert_called_once_with(
             'age', 'numerical', computer_representation='Float')
 
+    def test_update_columns_with_mock(self):
+        """Test the ``update_columns`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'age': {'sdtype': 'numerical'},
+            'salary': {'sdtype': 'numerical'}
+        }
+
+        def side_effect(column_name, **kwargs):
+            instance.columns[column_name].update(kwargs)
+
+        instance.update_column = Mock(side_effect=side_effect)
+
+        # Run
+        instance.update_columns(['age', 'salary'], sdtype='categorical')
+
+        # Assert
+        instance.update_column.assert_has_calls([
+            call('age', sdtype='categorical'),
+            call('salary', sdtype='categorical')
+        ])
+        assert instance.columns == {
+            'age': {'sdtype': 'categorical'},
+            'salary': {'sdtype': 'categorical'}
+        }
+
+    def test_update_columns(self):
+        """Test the ``update_columns`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'age': {'sdtype': 'numerical'},
+            'salary': {'sdtype': 'numerical'}
+        }
+
+        # Run
+        instance.update_columns(['age', 'salary'], sdtype='categorical')
+
+        # Assert
+        assert instance.columns == {
+            'age': {'sdtype': 'categorical'},
+            'salary': {'sdtype': 'categorical'}
+        }
+
+    def test_update_columns_metadata_with_mock(self):
+        """Test the ``update_columns_metadata`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'age': {'sdtype': 'numerical'},
+            'salary': {'sdtype': 'numerical'}
+        }
+        instance.update_column = Mock()
+
+        # Run
+        instance.update_columns_metadata({
+            'age': {'sdtype': 'categorical'},
+            'salary': {'computer_representation': 'Int64'}
+        })
+
+        # Assert
+        instance.update_column.assert_has_calls([
+            call('age', sdtype='categorical'),
+            call('salary', computer_representation='Int64')
+        ])
+
+    def test_update_columns_metadata(self):
+        """Test the ``update_columns_metadata`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'age': {'sdtype': 'numerical'},
+            'salary': {'sdtype': 'numerical'}
+        }
+
+        # Run
+        instance.update_columns_metadata({
+            'age': {'sdtype': 'categorical'},
+            'salary': {'computer_representation': 'Int64'}
+        })
+
+        # Assert
+        assert instance.columns == {
+            'age': {'sdtype': 'categorical'},
+            'salary': {'sdtype': 'numerical', 'computer_representation': 'Int64'}
+        }
+
     def test_get_column_names(self):
         """Test the ``get_column_names`` method filters for matching columns."""
         # Setup
