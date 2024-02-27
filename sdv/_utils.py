@@ -8,6 +8,8 @@ from pathlib import Path
 import pandas as pd
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
+from sdv.errors import SynthesizerInputError
+
 
 def _cast_to_iterable(value):
     """Return a ``list`` if the input object is not a ``list`` or ``tuple``."""
@@ -271,3 +273,25 @@ def _get_rows_to_drop(metadata, data):
             relationships = [rel for rel in relationships if rel not in relationships_parent]
 
     return table_to_idx_to_drop
+
+
+def _validate_foreign_keys(metadata, data):
+    """Validate that the foreign keys in the data don't have null values."""
+    invalid_tables = defaultdict(list)
+    for table_name, table_data in data.items():
+        for foreign_key in metadata._get_all_foreign_keys(table_name):
+            if table_data[foreign_key].isna().any():
+                invalid_tables[table_name].append(foreign_key)
+
+    if invalid_tables:
+        err_msg = (
+            'The data contains null values in foreign key columns. '
+            'This feature is currently unsupported. Please remove '
+            'null values to fit the synthesizer.\n'
+            '\n'
+            'Affected columns:\n'
+        )
+        for table_name, invalid_columns in invalid_tables.items():
+            err_msg += f"Table '{table_name}', column(s) {invalid_columns}\n"
+
+        raise SynthesizerInputError(err_msg)

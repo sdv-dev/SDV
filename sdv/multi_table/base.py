@@ -10,6 +10,7 @@ import numpy as np
 import pkg_resources
 from tqdm import tqdm
 
+from sdv._utils import _validate_foreign_keys
 from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
@@ -365,27 +366,6 @@ class BaseMultiTableSynthesizer:
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_sdv_version = pkg_resources.get_distribution('sdv').version
 
-    def _validate_foreign_keys(self, data):
-        """Validate that the foreign keys in the data don't have null values."""
-        invalid_tables = defaultdict(list)
-        for table_name, table_data in data.items():
-            for foreign_key in self.metadata._get_all_foreign_keys(table_name):
-                if table_data[foreign_key].isna().any():
-                    invalid_tables[table_name].append(foreign_key)
-
-        if invalid_tables:
-            err_msg = (
-                'The data contains null values in foreign key columns. '
-                'This feature is currently unsupported. Please remove '
-                'null values to fit the synthesizer.\n'
-                '\n'
-                'Affected columns:\n'
-            )
-            for table_name, invalid_columns in invalid_tables.items():
-                err_msg += f"Table '{table_name}', column(s) {invalid_columns}\n"
-
-            raise SynthesizerInputError(err_msg)
-
     def fit(self, data):
         """Fit this model to the original data.
 
@@ -394,7 +374,7 @@ class BaseMultiTableSynthesizer:
                 Dictionary mapping each table name to a ``pandas.DataFrame`` in the raw format
                 (before any transformations).
         """
-        self._validate_foreign_keys(data)
+        _validate_foreign_keys(self.metadata, data)
         self._check_metadata_updated()
         self._fitted = False
         processed_data = self.preprocess(data)
