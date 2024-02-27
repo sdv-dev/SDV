@@ -300,6 +300,28 @@ class SingleTableMetadata:
         self.columns[column_name] = _kwargs
         self._updated = True
 
+    def update_columns(self, column_names, **kwargs):
+        """Update multiple columns with the same metadata kwargs.
+
+        Args:
+            column_names (list[str]):
+                A list of column names to be updated.
+            **kwargs (type):
+                Any key word arguments that describe metadata for the column.
+        """
+        for column_name in column_names:
+            self.update_column(column_name, **kwargs)
+
+    def update_columns_metadata(self, column_metadata_dict):
+        """Update the metadata for multiple columns using metadata from the input dictionary..
+
+        Args:
+            column_metadata_dict (dict):
+                A dictionary of column names and their metadata to be updated.
+        """
+        for column_name, metadata in column_metadata_dict.items():
+            self.update_column(column_name, **metadata)
+
     def get_column_names(self, **kwargs):
         """Return a list of column names that match the given metadata keyword arguments.
 
