@@ -295,84 +295,8 @@ class TestBaseMultiTableSynthesizer:
         result = instance.get_parameters()
 
         # Assert
-        assert result == {
-            'locales': 'en_CA',
-            'verbose': False,
-            'tables': {
-                'nesreca': {
-                    'table_synthesizer': 'GaussianCopulaSynthesizer',
-                    'table_parameters': {
-                        'enforce_min_max_values': True,
-                        'enforce_rounding': True,
-                        'locales': 'en_CA',
-                        'numerical_distributions': {},
-                        'default_distribution': 'beta'
-                    }
-                },
-                'oseba': {
-                    'table_synthesizer': 'GaussianCopulaSynthesizer',
-                    'table_parameters': {
-                        'enforce_min_max_values': True,
-                        'enforce_rounding': True,
-                        'locales': 'en_CA',
-                        'numerical_distributions': {},
-                        'default_distribution': 'beta'
-                    }
-                },
-                'upravna_enota': {
-                    'table_synthesizer': 'GaussianCopulaSynthesizer',
-                    'table_parameters': {
-                        'enforce_min_max_values': True,
-                        'enforce_rounding': True,
-                        'locales': 'en_CA',
-                        'numerical_distributions': {},
-                        'default_distribution': 'beta'
-                    }
-                }
-            }
-        }
+        assert result == {'locales': 'en_CA', 'verbose': False}
 
-    def test_get_parameters_empty(self):
-        """Test that ``get_parameters`` handles missing table synthesizers."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata, locales='en_CA')
-        instance._table_synthesizers['nesreca'] = None
-
-        # Run
-        result = instance.get_parameters()
-
-        # Assert
-        assert result == {
-            'locales': 'en_CA',
-            'verbose': False,
-            'tables': {
-                'nesreca': {
-                    'table_synthesizer': None,
-                    'table_parameters': {}
-                },
-                'oseba': {
-                    'table_synthesizer': 'GaussianCopulaSynthesizer',
-                    'table_parameters': {
-                        'enforce_min_max_values': True,
-                        'enforce_rounding': True,
-                        'locales': 'en_CA',
-                        'numerical_distributions': {},
-                        'default_distribution': 'beta'
-                    }
-                },
-                'upravna_enota': {
-                    'table_synthesizer': 'GaussianCopulaSynthesizer',
-                    'table_parameters': {
-                        'enforce_min_max_values': True,
-                        'enforce_rounding': True,
-                        'locales': 'en_CA',
-                        'numerical_distributions': {},
-                        'default_distribution': 'beta'
-                    }
-                }
-            }
-        }
 
     def test_set_table_parameters(self):
         """Test that the table's parameters are being updated.
@@ -389,7 +313,7 @@ class TestBaseMultiTableSynthesizer:
         instance.set_table_parameters('oseba', {'default_distribution': 'gamma'})
 
         # Assert
-        table_parameters = instance.get_parameters()['tables']['oseba']
+        table_parameters = instance.get_table_parameters('oseba')
         assert instance._table_parameters['oseba'] == {'default_distribution': 'gamma'}
         assert table_parameters['table_synthesizer'] == 'GaussianCopulaSynthesizer'
         assert table_parameters['table_parameters'] == {

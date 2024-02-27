@@ -158,15 +158,7 @@ class BaseMultiTableSynthesizer:
             parameters (dict):
                 A dictionary representing the parameters used to instantiate the synthesizer.
         """
-        parameters_dict = {
-            'locales': self.locales,
-            'verbose': self.verbose,
-            'tables': {
-                table: self.get_table_parameters(table) for table in self.metadata.tables
-            }
-        }
-
-        return parameters_dict
+        return {'locales': self.locales, 'verbose': self.verbose}
 
     def set_table_parameters(self, table_name, table_parameters):
         """Update the table's synthesizer instantiation parameters.
