@@ -74,14 +74,7 @@ class TestSingleTablePreset:
         parameters = instance.get_parameters()
 
         # Assert
-        assert 'metadata' not in parameters
-        assert parameters == {
-            'default_distribution': 'norm',
-            'enforce_min_max_values': True,
-            'enforce_rounding': False,
-            'locales': None,
-            'numerical_distributions': {}
-        }
+        assert parameters == {'name': 'FAST_ML', 'locales': None}
 
     @patch('sdv.single_table.base.DataProcessor')
     def test_get_metadata(self, mock_data_processor):

@@ -1,5 +1,6 @@
 """Base class for single table model presets."""
 
+import inspect
 import logging
 import sys
 
@@ -63,7 +64,13 @@ class SingleTablePreset:
 
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
-        return self._synthesizer.get_parameters()
+        parameters = inspect.signature(self.__init__).parameters
+        instantiated_parameters = {}
+        for parameter_name in parameters:
+            if parameter_name != 'metadata':
+                instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
+
+        return instantiated_parameters
 
     def fit(self, data):
         """Fit this model to the data.

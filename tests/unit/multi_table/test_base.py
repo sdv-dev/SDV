@@ -297,7 +297,6 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         assert result == {'locales': 'en_CA', 'verbose': False}
 
-
     def test_set_table_parameters(self):
         """Test that the table's parameters are being updated.
 
