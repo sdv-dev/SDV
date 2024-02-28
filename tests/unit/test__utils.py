@@ -1,13 +1,17 @@
+import re
 from collections import defaultdict
 from datetime import datetime
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from sdv._utils import (
     _convert_to_timedelta, _create_unique_name, _get_datetime_format, _get_relationship_for_child,
-    _get_relationship_for_parent, _get_root_tables, _get_rows_to_drop, _is_datetime_type)
+    _get_relationship_for_parent, _get_root_tables, _get_rows_to_drop, _is_datetime_type,
+    _validate_foreign_keys_not_null)
+from sdv.errors import SynthesizerInputError
 from tests.utils import SeriesMatcher
 
 
@@ -403,3 +407,55 @@ def test__get_rows_to_drop():
         'parent': set()
     })
     assert result == expected_result
+
+
+def test__validate_foreign_keys_not_null():
+    """Test that it crashes when foreign keys contain null data."""
+    # Setup
+    def side_effect_func(value):
+        return ['fk'] if value == 'child_table' else []
+
+    metadata = Mock()
+    metadata._get_all_foreign_keys.side_effect = side_effect_func
+    data = {
+        'parent_table': pd.DataFrame({
+            'id': [1, 2, 3]
+        }),
+        'child_table': pd.DataFrame({
+            'id': [1, 2, 3],
+            'fk': [None, 2, np.nan]
+        })
+    }
+
+    # Run and Assert
+    err_msg = re.escape(
+        'The data contains null values in foreign key columns. This feature is currently '
+        'unsupported. Please remove null values to fit the synthesizer.\n'
+        '\n'
+        'Affected columns:\n'
+        "Table 'child_table', column(s) ['fk']\n"
+    )
+    with pytest.raises(SynthesizerInputError, match=err_msg):
+        _validate_foreign_keys_not_null(metadata, data)
+
+
+def test__validate_foreign_keys_not_null_no_nulls():
+    """Test that it doesn't crash when foreign keys contain no null data."""
+    # Setup
+    def side_effect_func(value):
+        return ['fk'] if value == 'child_table' else []
+
+    metadata = Mock()
+    metadata._get_all_foreign_keys.side_effect = side_effect_func
+    data = {
+        'parent_table': pd.DataFrame({
+            'id': [1, 2, 3]
+        }),
+        'child_table': pd.DataFrame({
+            'id': [1, 2, 3],
+            'fk': [1, 2, 3]
+        })
+    }
+
+    # Run
+    _validate_foreign_keys_not_null(metadata, data)

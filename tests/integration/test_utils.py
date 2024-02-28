@@ -118,18 +118,10 @@ def test_drop_unknown_references_not_drop_missing_values(metadata, data):
     data['child'].loc[3, 'parent_id'] = np.nan
 
     # Run
-    expected_message = re.escape(
-        'The provided data does not match the metadata:\n'
-        'Relationships:\n'
-        "Error: foreign key column 'parent_id' contains unknown references: (nan)"
-        ". Please use the utility method 'drop_unknown_references' to clean the data."
-    )
-
     cleaned_data = drop_unknown_references(metadata, data, drop_missing_values=False)
-    with pytest.raises(InvalidDataError, match=expected_message):
-        metadata.validate_data(cleaned_data)
 
     # Assert
     pd.testing.assert_frame_equal(cleaned_data['parent'], data['parent'])
     pd.testing.assert_frame_equal(cleaned_data['child'], data['child'].iloc[:4])
+    assert pd.isna(cleaned_data['child']['parent_id']).any()
     assert len(cleaned_data['child']) == 4

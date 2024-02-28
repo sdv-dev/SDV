@@ -873,70 +873,22 @@ class TestBaseMultiTableSynthesizer:
         assert instance._fitted_date
         assert instance._fitted_sdv_version
 
-    def test_fit(self):
+    @patch('sdv.multi_table.base._validate_foreign_keys_not_null')
+    def test_fit(self, mock_validate_foreign_keys_not_null):
         """Test that it calls the appropriate methods."""
         # Setup
         instance = Mock()
+        instance.metadata = Mock()
         data = Mock()
 
         # Run
         BaseMultiTableSynthesizer.fit(instance, data)
 
         # Assert
-        instance._validate_foreign_keys.assert_called_once_with(data)
+        mock_validate_foreign_keys_not_null.assert_called_once_with(instance.metadata, data)
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()
-
-    def test__validate_foreign_keys(self):
-        """Test that it crashes when foreign keys contain null data."""
-        # Setup
-        def side_effect_func(value):
-            return ['fk'] if value == 'child_table' else []
-
-        instance = Mock()
-        instance.metadata._get_all_foreign_keys.side_effect = side_effect_func
-        data = {
-            'parent_table': pd.DataFrame({
-                'id': [1, 2, 3]
-            }),
-            'child_table': pd.DataFrame({
-                'id': [1, 2, 3],
-                'fk': [None, 2, np.nan]
-            })
-        }
-
-        # Run and Assert
-        err_msg = re.escape(
-            'The data contains null values in foreign key columns. This feature is currently '
-            'unsupported. Please remove null values to fit the synthesizer.\n'
-            '\n'
-            'Affected columns:\n'
-            "Table 'child_table', column(s) ['fk']\n"
-        )
-        with pytest.raises(SynthesizerInputError, match=err_msg):
-            BaseMultiTableSynthesizer._validate_foreign_keys(instance, data)
-
-    def test__validate_foreign_keys_no_nulls(self):
-        """Test that it doesn't crash when foreign keys contain no null data."""
-        # Setup
-        def side_effect_func(value):
-            return ['fk'] if value == 'child_table' else []
-
-        instance = Mock()
-        instance.metadata._get_all_foreign_keys.side_effect = side_effect_func
-        data = {
-            'parent_table': pd.DataFrame({
-                'id': [1, 2, 3]
-            }),
-            'child_table': pd.DataFrame({
-                'id': [1, 2, 3],
-                'fk': [1, 2, 3]
-            })
-        }
-
-        # Run
-        BaseMultiTableSynthesizer._validate_foreign_keys(instance, data)
 
     def test_reset_sampling(self):
         """Test that ``reset_sampling`` resets the numpy seed and the synthesizers."""
