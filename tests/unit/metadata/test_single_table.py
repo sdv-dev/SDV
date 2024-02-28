@@ -722,6 +722,29 @@ class TestSingleTableMetadata:
         mock__validate_column.assert_called_once_with(
             'age', 'numerical', computer_representation='Float')
 
+    def test_get_column_names(self):
+        """Test the ``get_column_names`` method filters for matching columns."""
+        # Setup
+        metadata = SingleTableMetadata()
+        metadata.columns = {
+            'id': {'sdtype': 'id'},
+            'value1': {'sdtype': 'numerical'},
+            'value2': {'sdtype': 'numerical', 'computer_representation': 'Float'}
+        }
+
+        # Run
+        matches_no_filter = metadata.get_column_names()
+        matches_numerical = metadata.get_column_names(sdtype='numerical')
+        matches_extra = metadata.get_column_names(
+            sdtype='numerical',
+            computer_representation='Float'
+        )
+
+        # Assert
+        assert set(matches_no_filter) == {'id', 'value1', 'value2'}
+        assert set(matches_numerical) == {'value1', 'value2'}
+        assert set(matches_extra) == {'value2'}
+
     def test__detect_pii_columns(self):
         """Test the ``_detect_pii_column`` method."""
         # Setup

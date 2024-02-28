@@ -821,6 +821,22 @@ class MultiTableMetadata:
         self.tables[table_name] = SingleTableMetadata()
         self._multi_table_updated = True
 
+    def get_column_names(self, table_name, **metadata_kwargs):
+        """Return a list of columns from the given table that match the metadata keyword arguments.
+
+        Args:
+            table_name (str):
+                The name of the table to get column names for.s
+            **metadata_kwargs:
+                Metadata keywords to filter on, for example sdtype='id' or pii=True.
+
+        Returns:
+            list:
+                The list of columns that match the metadata kwargs for the given table.
+        """
+        self._validate_table_exists(table_name)
+        return self.tables[table_name].get_column_names(**metadata_kwargs)
+
     def visualize(self, show_table_details='full', show_relationship_labels=True,
                   output_filepath=None):
         """Create a visualization of the multi-table dataset.
