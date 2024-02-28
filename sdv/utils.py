@@ -1,10 +1,6 @@
 """Utility functions."""
-<<<<<<< HEAD
 from sdv._utils import (
     _get_relationship_for_child, _get_rows_to_drop, _validate_foreign_keys_not_null)
-=======
-from sdv._utils import _get_relationship_for_child, _get_rows_to_drop, _validate_foreign_keys
->>>>>>> fe18020e (make drop_unknown_references use _validate_foreign_keys)
 from sdv.errors import InvalidDataError, SynthesizerInputError
 
 
@@ -30,11 +26,7 @@ def drop_unknown_references(metadata, data, drop_missing_values=True):
     try:
         metadata.validate_data(data)
         if drop_missing_values:
-<<<<<<< HEAD
             _validate_foreign_keys_not_null(metadata, data)
-=======
-            _validate_foreign_keys(metadata, data)
->>>>>>> fe18020e (make drop_unknown_references use _validate_foreign_keys)
 
         return data
     except (InvalidDataError, SynthesizerInputError):
