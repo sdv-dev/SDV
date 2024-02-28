@@ -873,8 +873,8 @@ class TestBaseMultiTableSynthesizer:
         assert instance._fitted_date
         assert instance._fitted_sdv_version
 
-    @patch('sdv.multi_table.base._validate_foreign_keys')
-    def test_fit(self, mock_validate_foreign_keys):
+    @patch('sdv.multi_table.base._validate_foreign_keys_not_null')
+    def test_fit(self, mock_validate_foreign_keys_not_null):
         """Test that it calls the appropriate methods."""
         # Setup
         instance = Mock()
@@ -885,7 +885,7 @@ class TestBaseMultiTableSynthesizer:
         BaseMultiTableSynthesizer.fit(instance, data)
 
         # Assert
-        mock_validate_foreign_keys.assert_called_once_with(instance.metadata, data)
+        mock_validate_foreign_keys_not_null.assert_called_once_with(instance.metadata, data)
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()

@@ -275,7 +275,7 @@ def _get_rows_to_drop(metadata, data):
     return table_to_idx_to_drop
 
 
-def _validate_foreign_keys(metadata, data):
+def _validate_foreign_keys_not_null(metadata, data):
     """Validate that the foreign keys in the data don't have null values."""
     invalid_tables = defaultdict(list)
     for table_name, table_data in data.items():

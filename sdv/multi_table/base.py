@@ -10,7 +10,7 @@ import numpy as np
 import pkg_resources
 from tqdm import tqdm
 
-from sdv._utils import _validate_foreign_keys
+from sdv._utils import _validate_foreign_keys_not_null
 from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
@@ -374,7 +374,7 @@ class BaseMultiTableSynthesizer:
                 Dictionary mapping each table name to a ``pandas.DataFrame`` in the raw format
                 (before any transformations).
         """
-        _validate_foreign_keys(self.metadata, data)
+        _validate_foreign_keys_not_null(self.metadata, data)
         self._check_metadata_updated()
         self._fitted = False
         processed_data = self.preprocess(data)

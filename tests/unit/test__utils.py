@@ -10,7 +10,7 @@ import pytest
 from sdv._utils import (
     _convert_to_timedelta, _create_unique_name, _get_datetime_format, _get_relationship_for_child,
     _get_relationship_for_parent, _get_root_tables, _get_rows_to_drop, _is_datetime_type,
-    _validate_foreign_keys)
+    _validate_foreign_keys_not_null)
 from sdv.errors import SynthesizerInputError
 from tests.utils import SeriesMatcher
 
@@ -409,7 +409,7 @@ def test__get_rows_to_drop():
     assert result == expected_result
 
 
-def test__validate_foreign_keys():
+def test__validate_foreign_keys_not_null():
     """Test that it crashes when foreign keys contain null data."""
     # Setup
     def side_effect_func(value):
@@ -436,10 +436,10 @@ def test__validate_foreign_keys():
         "Table 'child_table', column(s) ['fk']\n"
     )
     with pytest.raises(SynthesizerInputError, match=err_msg):
-        _validate_foreign_keys(metadata, data)
+        _validate_foreign_keys_not_null(metadata, data)
 
 
-def test__validate_foreign_keys_no_nulls():
+def test__validate_foreign_keys_not_null_no_nulls():
     """Test that it doesn't crash when foreign keys contain no null data."""
     # Setup
     def side_effect_func(value):
@@ -458,4 +458,4 @@ def test__validate_foreign_keys_no_nulls():
     }
 
     # Run
-    _validate_foreign_keys(metadata, data)
+    _validate_foreign_keys_not_null(metadata, data)
