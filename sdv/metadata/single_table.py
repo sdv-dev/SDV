@@ -313,7 +313,7 @@ class SingleTableMetadata:
             self.update_column(column_name, **kwargs)
 
     def update_columns_metadata(self, column_metadata):
-        """Update the metadata for multiple columns using metadata from the input dictionary..
+        """Update the metadata for multiple columns using metadata from the input dictionary.
 
         Args:
             column_metadata (dict):
