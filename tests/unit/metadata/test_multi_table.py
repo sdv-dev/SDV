@@ -2116,11 +2116,11 @@ class TestMultiTableMetadata:
         }
 
         # Run
-        metadata.update_columns('table', metadata_updates)
+        metadata.update_columns_metadata('table', metadata_updates)
 
         # Assert
         metadata._validate_table_exists.assert_called_once_with('table')
-        table.update_columns.assert_called_once_with(metadata_updates)
+        table.update_columns_metadata.assert_called_once_with(metadata_updates)
 
     def test_get_column_names(self):
         """Test the ``get_column_names`` method."""
