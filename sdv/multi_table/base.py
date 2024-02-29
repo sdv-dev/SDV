@@ -136,17 +136,20 @@ class BaseMultiTableSynthesizer:
                 Table name for which the parameters should be retrieved.
 
         Returns:
-            parameters (dict):
-                A dictionary representing the parameters that will be used to instantiate the
-                table's synthesizer.
+            dict:
+                A dictionary with the following structure:
+                {
+                    'synthesizer_name': the string name of the synthesizer for that table,
+                    'synthesizer_parameters': the parameters used to instantiate the synthesizer
+                }
         """
         table_synthesizer = self._table_synthesizers.get(table_name)
         if not table_synthesizer:
-            table_params = {'table_synthesizer': None, 'table_parameters': {}}
+            table_params = {'synthesizer_name': None, 'synthesizer_parameters': {}}
         else:
             table_params = {
-                'table_synthesizer': type(table_synthesizer).__name__,
-                'table_parameters': table_synthesizer.get_parameters()
+                'synthesizer_name': type(table_synthesizer).__name__,
+                'synthesizer_parameters': table_synthesizer.get_parameters()
             }
 
         return table_params
