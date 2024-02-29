@@ -300,11 +300,11 @@ class SingleTableMetadata:
         self.columns[column_name] = _kwargs
         self._updated = True
 
-    def get_column_names(self, **metadata_kwargs):
+    def get_column_names(self, **kwargs):
         """Return a list of column names that match the given metadata keyword arguments.
 
         Args:
-            **metadata_kwargs:
+            **kwargs:
                 Column metadata keyword arguments to filter on, for example sdtype='id'
                 or pii=True.
 
@@ -312,12 +312,12 @@ class SingleTableMetadata:
             list:
                 The list of columns that match the metadata kwargs.
         """
-        if not metadata_kwargs:
+        if not kwargs:
             return list(self.columns.keys())
 
         matches = []
         for col, col_metadata in self.columns.items():
-            if metadata_kwargs.items() <= col_metadata.items():
+            if kwargs.items() <= col_metadata.items():
                 matches.append(col)
 
         return matches
