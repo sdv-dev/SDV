@@ -1,6 +1,7 @@
 """Base Multi Table Synthesizer class."""
 import contextlib
 import datetime
+import inspect
 import warnings
 from collections import defaultdict
 from copy import deepcopy
@@ -158,7 +159,13 @@ class BaseMultiTableSynthesizer:
             parameters (dict):
                 A dictionary representing the parameters used to instantiate the synthesizer.
         """
-        return {'locales': self.locales, 'verbose': self.verbose}
+        parameters = inspect.signature(self.__init__).parameters
+        instantiated_parameters = {}
+        for parameter_name in parameters:
+            if parameter_name != 'metadata':
+                instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
+
+        return instantiated_parameters
 
     def set_table_parameters(self, table_name, table_parameters):
         """Update the table's synthesizer instantiation parameters.

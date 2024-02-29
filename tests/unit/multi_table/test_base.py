@@ -285,7 +285,7 @@ class TestBaseMultiTableSynthesizer:
             'numerical_distributions': {}
         }
 
-    def test_get_parameters_missing_table(self):
+    def test_get_parameters(self):
         """Test that the synthesizer's parameters are being returned."""
         # Setup
         metadata = get_multi_table_metadata()
@@ -295,7 +295,7 @@ class TestBaseMultiTableSynthesizer:
         result = instance.get_parameters()
 
         # Assert
-        assert result == {'locales': 'en_CA', 'verbose': False}
+        assert result == {'locales': 'en_CA', 'synthesizer_kwargs': None}
 
     def test_set_table_parameters(self):
         """Test that the table's parameters are being updated.
