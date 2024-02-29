@@ -416,7 +416,7 @@ def test_update_columns_invalid_kwargs_combination():
 
     # Run / Assert
     expected_message = re.escape(
-        "Invalid values '(pii)' for numerical column 'col1'."
+        "Invalid values '(pii)' for 'numerical' sdtype."
     )
     with pytest.raises(InvalidMetadataError, match=expected_message):
         metadata.update_columns(
@@ -483,11 +483,15 @@ def test_update_columns_metadata_invalid_kwargs_combination():
 
     # Run / Assert
     expected_message = re.escape(
-        "Invalid values '(pii)' for numerical column 'col1'."
+        'The following errors were found when updating columns:\n\n'
+        "Invalid values '(pii)' for numerical column 'col1'.\n"
+        "Invalid values '(pii)' for numerical column 'col2'."
+
     )
     with pytest.raises(InvalidMetadataError, match=expected_message):
         metadata.update_columns_metadata(
             {
-                'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64', 'pii': True}
+                'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64', 'pii': True},
+                'col2': {'pii': True}
             }
         )
