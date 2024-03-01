@@ -2088,6 +2088,19 @@ class TestMultiTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.update_column('table', 'column', sdtype='numerical', pii=False)
 
+    def test_get_column_names(self):
+        """Test the ``get_column_names`` method."""
+        # Setup
+        metadata = MultiTableMetadata()
+        table1 = Mock()
+        metadata.tables = {'table1': table1}
+
+        # Run
+        metadata.get_column_names('table1', sdtype='email', pii=True)
+
+        # Assert
+        table1.get_column_names.assert_called_once_with(sdtype='email', pii=True)
+
     def test__detect_relationships(self):
         """Test relationships are automatically detected and the foreign key sdtype is updated."""
         # Setup
