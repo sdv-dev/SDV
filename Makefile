@@ -80,12 +80,6 @@ install-test: clean-build clean-pyc ## install the package and test dependencies
 install-develop: clean-build clean-pyc ## install the package in editable mode and dependencies for development
 	pip install -e .[dev]
 
-MINIMUM := $(shell sed -n '/install_requires = \[/,/]/p' setup.py | grep -v -e '[][]' | sed 's/ *\(.*\),$?$$/\1/g' | tr '>' '=')
-
-.PHONY: install-minimum
-install-minimum: ## install the minimum supported versions of the package dependencies
-	pip install $(MINIMUM)
-
 
 # LINT TARGETS
 
@@ -167,8 +161,7 @@ serve-docs: ## compile the docs watching for changes
 
 .PHONY: dist
 dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
+	python -m build --wheel --sdist
 	ls -l dist
 
 .PHONY: publish-confirm
