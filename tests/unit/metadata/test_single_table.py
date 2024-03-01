@@ -655,7 +655,7 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.columns['number'] == {'sdtype': 'phone_number', 'pii': True}
 
-    def test__get_unexpcted_kwargs(self):
+    def test__get_unexpected_kwargs(self):
         """Test the ``_get_unexpected_kwargs`` method."""
         # Setup
         instance = SingleTableMetadata()
@@ -796,8 +796,8 @@ class TestSingleTableMetadata:
     def test_update_columns_multiple_erros(self):
         """Test the ``update_columns`` method.
 
-        Test that ``update_columns`` with invalid ``sdtype`` and other ``kwargs`` combination
-        raises an ``InvalidMetadataError``.
+        Test that ``update_columns`` with multiple errors.
+        Should raise an ``InvalidMetadataError`` with a summary of all the errors.
         """
         # Setup
         instance = SingleTableMetadata()
