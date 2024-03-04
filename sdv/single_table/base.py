@@ -48,7 +48,8 @@ class BaseSynthesizer:
             Define rounding scheme for ``numerical`` columns. If ``True``, the data returned
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
 
     """
 
@@ -81,7 +82,8 @@ class BaseSynthesizer:
                 ' in future SDV versions.'
             )
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=None):
+    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
+                 locales=['en_US']):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata = metadata
         self.metadata.validate()

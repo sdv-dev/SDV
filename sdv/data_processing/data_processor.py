@@ -54,8 +54,7 @@ class DataProcessor:
         table_name (str):
             Name of table this processor is for. Optional.
         locales (str or list):
-            Default locales to use for AnonymizedFaker transformers. Optional, defaults to using
-            Faker's default locale.
+            Default locales to use for AnonymizedFaker transformers. Defaults to ['en_US'].
     """
 
     _DTYPE_TO_SDTYPE = {
@@ -106,7 +105,7 @@ class DataProcessor:
         return result
 
     def __init__(self, metadata, enforce_rounding=True, enforce_min_max_values=True,
-                 model_kwargs=None, table_name=None, locales=None):
+                 model_kwargs=None, table_name=None, locales=['en_US']):
         self.metadata = metadata
         self._enforce_rounding = enforce_rounding
         self._enforce_min_max_values = enforce_min_max_values
@@ -413,7 +412,8 @@ class DataProcessor:
         self._transformers_by_sdtype[sdtype] = transformer
 
     @staticmethod
-    def create_anonymized_transformer(sdtype, column_metadata, enforce_uniqueness, locales=None):
+    def create_anonymized_transformer(sdtype, column_metadata, enforce_uniqueness,
+                                      locales=['en_US']):
         """Create an instance of an ``AnonymizedFaker``.
 
         Read the extra keyword arguments from the ``column_metadata`` and use them to create
@@ -428,8 +428,8 @@ class DataProcessor:
                 If ``True`` overwrite ``enforce_uniqueness`` with ``True`` to ensure unique
                 generation for primary keys.
             locales (str or list):
-                Locale or list of locales to use for the AnonymizedFaker transfomer. Optional,
-                defaults to using Faker's default locale.
+                Locale or list of locales to use for the AnonymizedFaker transfomer.
+                Defaults to ['en_US'].
 
         Returns:
             Instance of ``rdt.transformers.pii.AnonymizedFaker``.

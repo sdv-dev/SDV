@@ -1,6 +1,7 @@
 """Base Multi Table Synthesizer class."""
 import contextlib
 import datetime
+import inspect
 import warnings
 from collections import defaultdict
 from copy import deepcopy
@@ -26,7 +27,8 @@ class BaseMultiTableSynthesizer:
             Multi table metadata representing the data tables that this synthesizer will be used
             for.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
         verbose (bool):
             Whether to print progress for fitting or not.
     """
@@ -78,7 +80,7 @@ class BaseMultiTableSynthesizer:
                 ' in future SDV versions.'
             )
 
-    def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
+    def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
         self.metadata = metadata
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', message=r'.*column relationship.*')
@@ -158,15 +160,13 @@ class BaseMultiTableSynthesizer:
             parameters (dict):
                 A dictionary representing the parameters used to instantiate the synthesizer.
         """
-        parameters_dict = {
-            'locales': self.locales,
-            'verbose': self.verbose,
-            'tables': {
-                table: self.get_table_parameters(table) for table in self.metadata.tables
-            }
-        }
+        parameters = inspect.signature(self.__init__).parameters
+        instantiated_parameters = {}
+        for parameter_name in parameters:
+            if parameter_name != 'metadata':
+                instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
 
-        return parameters_dict
+        return instantiated_parameters
 
     def set_table_parameters(self, table_name, table_parameters):
         """Update the table's synthesizer instantiation parameters.

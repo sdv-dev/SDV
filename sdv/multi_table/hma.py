@@ -23,7 +23,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             Multi table metadata representing the data tables that this synthesizer will be used
             for.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
         verbose (bool):
             Whether to print progress for fitting or not.
     """
@@ -32,7 +33,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         'default_distribution': 'beta'
     }
 
-    def __init__(self, metadata, locales=None, verbose=True):
+    def __init__(self, metadata, locales=['en_US'], verbose=True):
         BaseMultiTableSynthesizer.__init__(self, metadata, locales=locales)
         self._table_sizes = {}
         self._max_child_rows = {}

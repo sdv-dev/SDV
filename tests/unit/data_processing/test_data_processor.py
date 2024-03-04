@@ -1020,7 +1020,7 @@ class TestDataProcessor:
 
         # Assert
         mock_get_anonymized_transformer.assert_called_once_with(
-            'ssn', {'enforce_uniqueness': True, 'locales': None}
+            'ssn', {'enforce_uniqueness': True, 'locales': ['en_US']}
         )
         assert output == mock_get_anonymized_transformer.return_value
 
@@ -1104,7 +1104,7 @@ class TestDataProcessor:
         # Assert
         assert output == mock_get_anonymized_transformer.return_value
         mock_get_anonymized_transformer.assert_called_once_with(
-            'email', {'function_kwargs': {'domain': 'gmail.com'}, 'locales': None}
+            'email', {'function_kwargs': {'domain': 'gmail.com'}, 'locales': ['en_US']}
         )
 
     def test__get_transformer_instance_no_kwargs(self):

@@ -145,7 +145,7 @@ class TestHMASynthesizer:
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'locales': None,
+            'locales': ['en_US'],
             'numerical_distributions': {}
         }
         families_params = hmasynthesizer.get_table_parameters('families')
@@ -154,7 +154,7 @@ class TestHMASynthesizer:
             'default_distribution': 'uniform',
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'locales': None,
+            'locales': ['en_US'],
             'numerical_distributions': {}
         }
         char_families_params = hmasynthesizer.get_table_parameters('character_families')
@@ -163,7 +163,7 @@ class TestHMASynthesizer:
             'default_distribution': 'norm',
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'locales': None,
+            'locales': ['en_US'],
             'numerical_distributions': {}
         }
 

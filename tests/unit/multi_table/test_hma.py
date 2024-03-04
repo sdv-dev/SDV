@@ -538,6 +538,18 @@ class TestHMASynthesizer:
         with pytest.raises(ValueError, match=error_msg):
             instance.get_learned_distributions('upravna_enota')
 
+    def test_get_parameters(self):
+        """Test that the synthesizer's parameters are being returned."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = HMASynthesizer(metadata, locales='en_CA')
+
+        # Run
+        result = instance.get_parameters()
+
+        # Assert
+        assert result == {'locales': 'en_CA', 'verbose': True}
+
     def test__add_foreign_key_columns(self):
         """Test that the ``_add_foreign_key_columns`` method adds foreign keys."""
         # Setup
