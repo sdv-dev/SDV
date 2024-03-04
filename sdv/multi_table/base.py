@@ -27,7 +27,8 @@ class BaseMultiTableSynthesizer:
             Multi table metadata representing the data tables that this synthesizer will be used
             for.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
         verbose (bool):
             Whether to print progress for fitting or not.
     """
@@ -79,7 +80,7 @@ class BaseMultiTableSynthesizer:
                 ' in future SDV versions.'
             )
 
-    def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
+    def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
         self.metadata = metadata
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', message=r'.*column relationship.*')

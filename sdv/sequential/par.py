@@ -41,7 +41,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             Define rounding scheme for ``numerical`` columns. If ``True``, the data returned
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
         context_columns (list[str]):
             A list of strings, representing the columns that do not vary in a sequence.
         segment_size (int):
@@ -84,9 +85,9 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         context_metadata_dict = {'columns': context_columns_dict}
         return SingleTableMetadata.load_from_dict(context_metadata_dict)
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=False, locales=None,
-                 context_columns=None, segment_size=None, epochs=128, sample_size=1, cuda=True,
-                 verbose=False):
+    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=False,
+                 locales=['en_US'], context_columns=None, segment_size=None, epochs=128,
+                 sample_size=1, cuda=True, verbose=False):
         super().__init__(
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,

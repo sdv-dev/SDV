@@ -40,7 +40,7 @@ class TestSingleTablePreset:
             metadata=metadata_mock,
             default_distribution='norm',
             enforce_rounding=False,
-            locales=None
+            locales=['en_US']
         )
 
     @patch('sdv.lite.single_table.GaussianCopulaSynthesizer')
@@ -74,7 +74,7 @@ class TestSingleTablePreset:
         parameters = instance.get_parameters()
 
         # Assert
-        assert parameters == {'name': 'FAST_ML', 'locales': None}
+        assert parameters == {'name': 'FAST_ML', 'locales': ['en_US']}
 
     @patch('sdv.single_table.base.DataProcessor')
     def test_get_metadata(self, mock_data_processor):

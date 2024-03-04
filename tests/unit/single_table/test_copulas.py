@@ -127,7 +127,7 @@ class TestGaussianCopulaSynthesizer:
         assert result == {
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'locales': None,
+            'locales': ['en_US'],
             'numerical_distributions': {},
             'default_distribution': 'beta'
         }

@@ -158,7 +158,7 @@ class TestCopulaGANSynthesizer:
         assert result == {
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'locales': None,
+            'locales': ['en_US'],
             'embedding_dim': 128,
             'generator_dim': (256, 256),
             'discriminator_dim': (256, 256),

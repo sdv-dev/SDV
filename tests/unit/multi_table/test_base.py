@@ -261,7 +261,7 @@ class TestBaseMultiTableSynthesizer:
                 'default_distribution': 'beta',
                 'enforce_min_max_values': True,
                 'enforce_rounding': True,
-                'locales': None,
+                'locales': ['en_US'],
                 'numerical_distributions': {}
             }
         }
@@ -281,7 +281,7 @@ class TestBaseMultiTableSynthesizer:
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'locales': None,
+            'locales': ['en_US'],
             'numerical_distributions': {}
         }
 
@@ -318,7 +318,7 @@ class TestBaseMultiTableSynthesizer:
         assert table_parameters['table_parameters'] == {
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
-            'locales': None,
+            'locales': ['en_US'],
             'enforce_rounding': True,
             'numerical_distributions': {}
         }

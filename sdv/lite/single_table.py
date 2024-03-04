@@ -25,7 +25,8 @@ class SingleTablePreset:
         name (str):
             The preset to use.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
     """
 
     _synthesizer = None
@@ -39,13 +40,14 @@ class SingleTablePreset:
             locales=locales
         )
 
-    def __init__(self, metadata, name, locales=None):
+    def __init__(self, metadata, name, locales=['en_US']):
+        self.locales = locales
         if name not in PRESETS:
             raise ValueError(f"'name' must be one of {PRESETS}.")
 
         self.name = name
         if name == FAST_ML_PRESET:
-            self._setup_fast_preset(metadata, locales)
+            self._setup_fast_preset(metadata, self.locales)
 
     def add_constraints(self, constraints):
         """Add constraints to the synthesizer.

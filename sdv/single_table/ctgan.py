@@ -64,7 +64,8 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             Define rounding scheme for ``numerical`` columns. If ``True``, the data returned
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
         embedding_dim (int):
             Size of the random sample passed to the Generator. Defaults to 128.
         generator_dim (tuple or list of ints):
@@ -107,11 +108,12 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
         'boolean': None
     }
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=None,
-                 embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
-                 generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
-                 discriminator_decay=1e-6, batch_size=500, discriminator_steps=1,
-                 log_frequency=True, verbose=False, epochs=300, pac=10, cuda=True):
+    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
+                 locales=['en_US'], embedding_dim=128, generator_dim=(256, 256),
+                 discriminator_dim=(256, 256), generator_lr=2e-4, generator_decay=1e-6,
+                 discriminator_lr=2e-4, discriminator_decay=1e-6, batch_size=500,
+                 discriminator_steps=1, log_frequency=True, verbose=False, epochs=300,
+                 pac=10, cuda=True):
 
         super().__init__(
             metadata=metadata,
