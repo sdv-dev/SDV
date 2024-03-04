@@ -362,3 +362,136 @@ def test_detect_from_dataframe_with_pii_names():
     }
 
     assert metadata.to_dict() == expected_metadata
+
+
+def test_update_columns():
+    """Test ``update_columns`` method."""
+    # Setup
+    metadata = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+            'col2': {'sdtype': 'numerical'},
+            'col3': {'sdtype': 'categorical'},
+            'col4': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'col5': {'sdtype': 'unknown'},
+            'col6': {'sdtype': 'email', 'pii': True}
+        }
+    })
+
+    # Run
+    metadata.update_columns(
+        ['col1', 'col3', 'col4', 'col5', 'col6'],
+        sdtype='numerical',
+        computer_representation='Int64'
+    )
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'columns': {
+            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col2': {'sdtype': 'numerical'},
+            'col3': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col4': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col5': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col6': {'sdtype': 'numerical', 'computer_representation': 'Int64'}
+        }
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_update_columns_invalid_kwargs_combination():
+    """Test ``update_columns`` method with invalid kwargs combination."""
+    # Setup
+    metadata = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+            'col2': {'sdtype': 'numerical'},
+            'col3': {'sdtype': 'categorical'},
+            'col4': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'col5': {'sdtype': 'unknown'},
+            'col6': {'sdtype': 'email', 'pii': True}
+        }
+    })
+
+    # Run / Assert
+    expected_message = re.escape(
+        "Invalid values '(pii)' for 'numerical' sdtype."
+    )
+    with pytest.raises(InvalidMetadataError, match=expected_message):
+        metadata.update_columns(
+            ['col1', 'col3', 'col4', 'col5', 'col6'],
+            sdtype='numerical',
+            computer_representation='Int64',
+            pii=True
+        )
+
+
+def test_update_columns_metadata():
+    """Test ``update_columns_metadata`` method."""
+    # Setup
+    metadata = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+            'col2': {'sdtype': 'numerical'},
+            'col3': {'sdtype': 'categorical'},
+            'col4': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'col5': {'sdtype': 'unknown'},
+            'col6': {'sdtype': 'email', 'pii': True}
+        }
+    })
+
+    # Run
+    metadata.update_columns_metadata(
+        {
+            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col3': {'sdtype': 'email', 'pii': True},
+            'col4': {'sdtype': 'phone_number', 'pii': False},
+            'col5': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'col6': {'sdtype': 'unknown'}
+        }
+    )
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'columns': {
+            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col2': {'sdtype': 'numerical'},
+            'col3': {'sdtype': 'email', 'pii': True},
+            'col4': {'sdtype': 'phone_number', 'pii': False},
+            'col5': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'col6': {'sdtype': 'unknown'}
+        }
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_update_columns_metadata_invalid_kwargs_combination():
+    """Test ``update_columns_metadata`` method with invalid kwargs combination."""
+    # Setup
+    metadata = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+            'col2': {'sdtype': 'numerical'},
+            'col3': {'sdtype': 'categorical'},
+            'col4': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'col5': {'sdtype': 'unknown'},
+            'col6': {'sdtype': 'email', 'pii': True}
+        }
+    })
+
+    # Run / Assert
+    expected_message = re.escape(
+        'The following errors were found when updating columns:\n\n'
+        "Invalid values '(pii)' for numerical column 'col1'.\n"
+        "Invalid values '(pii)' for numerical column 'col2'."
+
+    )
+    with pytest.raises(InvalidMetadataError, match=expected_message):
+        metadata.update_columns_metadata(
+            {
+                'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64', 'pii': True},
+                'col2': {'pii': True}
+            }
+        )

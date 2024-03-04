@@ -188,14 +188,21 @@ class SingleTableMetadata:
         self._version = self.METADATA_SPEC_VERSION
         self._updated = False
 
-    def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
+    def _get_unexpected_kwargs(self, sdtype, **kwargs):
         expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii'])
         unexpected_kwargs = set(kwargs) - set(expected_kwargs)
         if unexpected_kwargs:
             unexpected_kwargs = sorted(unexpected_kwargs)
             unexpected_kwargs = ', '.join(unexpected_kwargs)
+
+        return unexpected_kwargs
+
+    def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
+        unexpected_kwargs = self._get_unexpected_kwargs(sdtype, **kwargs)
+        if unexpected_kwargs:
             raise InvalidMetadataError(
-                f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'.")
+                f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'."
+            )
 
     def _validate_sdtype(self, sdtype):
         if not isinstance(sdtype, str):
@@ -270,6 +277,12 @@ class SingleTableMetadata:
                 "Use 'add_column' to add new column."
             )
 
+    def _validate_update_column(self, column_name, **kwargs):
+        self._validate_column_exists(column_name)
+        sdtype = kwargs.get('sdtype', self.columns[column_name]['sdtype'])
+        kwargs_without_sdtype = {key: value for key, value in kwargs.items() if key != 'sdtype'}
+        self._validate_column_args(column_name, sdtype, **kwargs_without_sdtype)
+
     def update_column(self, column_name, **kwargs):
         """Update an existing column in the ``SingleTableMetadata``.
 
@@ -288,16 +301,83 @@ class SingleTableMetadata:
             - ``InvalidMetadataError`` if the ``pii`` value is not ``True`` or ``False`` when
                present.
         """
-        self._validate_column_exists(column_name)
-        _kwargs = deepcopy(kwargs)
-        if 'sdtype' in kwargs:
-            sdtype = kwargs.pop('sdtype')
-        else:
-            sdtype = self.columns[column_name]['sdtype']
-            _kwargs['sdtype'] = sdtype
+        self._validate_update_column(column_name, **kwargs)
+        if 'sdtype' not in kwargs:
+            kwargs['sdtype'] = self.columns[column_name]['sdtype']
 
-        self._validate_column_args(column_name, sdtype, **kwargs)
-        self.columns[column_name] = _kwargs
+        self.columns[column_name] = kwargs
+        self._updated = True
+
+    def update_columns(self, column_names, **kwargs):
+        """Update multiple columns with the same metadata kwargs.
+
+        Args:
+            column_names (list[str]):
+                A list of column names to be updated.
+            **kwargs (type):
+                Any key word arguments that describe metadata for the column.
+        """
+        errors = []
+        has_sdtype_key = 'sdtype' in kwargs
+        if has_sdtype_key:
+            kwargs_without_sdtype = {
+                key: value for key, value in kwargs.items() if key != 'sdtype'
+            }
+            unexpected_kwargs = self._get_unexpected_kwargs(
+                kwargs['sdtype'], **kwargs_without_sdtype
+            )
+            if unexpected_kwargs:
+                raise InvalidMetadataError(
+                    f"Invalid values '({unexpected_kwargs})' for '{kwargs['sdtype']}' sdtype."
+                )
+
+        for column_name in column_names:
+            try:
+                self._validate_update_column(column_name, **kwargs)
+            except InvalidMetadataError as e:
+                errors.append(e)
+
+        if errors:
+            raise InvalidMetadataError(
+                'The following errors were found when updating columns:\n\n'
+                + '\n'.join([str(e) for e in errors])
+            )
+
+        for column_name in column_names:
+            column_metadata = deepcopy(kwargs)
+            if not has_sdtype_key:
+                column_metadata['sdtype'] = self.columns[column_name]['sdtype']
+
+            self.columns[column_name] = column_metadata
+
+        self._updated = True
+
+    def update_columns_metadata(self, column_metadata):
+        """Update the metadata for multiple columns using metadata from the input dictionary.
+
+        Args:
+            column_metadata (dict):
+                A dictionary of column names and their metadata to be updated.
+        """
+        errors = []
+        for column_name, kwargs in column_metadata.items():
+            try:
+                self._validate_update_column(column_name, **kwargs)
+            except InvalidMetadataError as e:
+                errors.append(e)
+
+        if errors:
+            raise InvalidMetadataError(
+                'The following errors were found when updating columns:\n\n'
+                + '\n'.join([str(e) for e in errors])
+            )
+
+        for column_name, kwargs in column_metadata.items():
+            if 'sdtype' not in kwargs:
+                kwargs['sdtype'] = self.columns[column_name]['sdtype']
+
+            self.columns[column_name] = kwargs
+
         self._updated = True
 
     def get_column_names(self, **kwargs):

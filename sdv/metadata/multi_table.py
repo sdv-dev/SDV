@@ -387,6 +387,34 @@ class MultiTableMetadata:
         table = self.tables.get(table_name)
         table.update_column(column_name, **kwargs)
 
+    def update_columns(self, table_name, column_names, **kwargs):
+        """Update multiple columns with the same metadata kwargs.
+
+        Args:
+            table_name (str):
+                Name of the table to update the columns.
+            column_names (list[str]):
+                List of column names to update.
+            **kwargs:
+                Any key word arguments that describe metadata for the columns.
+        """
+        self._validate_table_exists(table_name)
+        table = self.tables.get(table_name)
+        table.update_columns(column_names, **kwargs)
+
+    def update_columns_metadata(self, table_name, column_metadata):
+        """Update the metadata of multiple columns at once.
+
+        Args:
+            table_name (str):
+                Name of the table to update the columns.
+            column_metadata (dict):
+                Dictionary of column names and their metadata to update.
+        """
+        self._validate_table_exists(table_name)
+        table = self.tables.get(table_name)
+        table.update_columns_metadata(column_metadata)
+
     def add_constraint(self, table_name, constraint_name, **kwargs):
         """Add a constraint to a table in the multi-table metadata.
 

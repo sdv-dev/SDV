@@ -283,9 +283,13 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
+        instance._get_unexpected_kwargs = Mock(return_value=None)
 
-        # Run / Assert
+        # Run
         instance._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
+
+        # Assert
+        instance._get_unexpected_kwargs.assert_called_once_with(sdtype, **kwargs)
 
     @pytest.mark.parametrize(('column_name', 'sdtype', 'kwargs', 'error_msg'), INVALID_KWARGS)
     def test__validate_unexpected_kwargs_invalid(self, column_name, sdtype, kwargs, error_msg):
@@ -651,6 +655,57 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.columns['number'] == {'sdtype': 'phone_number', 'pii': True}
 
+    def test__get_unexpected_kwargs(self):
+        """Test the ``_get_unexpected_kwargs`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance._validate_unexpected_kwargs = Mock()
+
+        # Run
+        with_unexpected_kwargs = instance._get_unexpected_kwargs('numerical', pii=True)
+        without_unexpected_kwargs = instance._get_unexpected_kwargs('latitude', pii=True)
+
+        # Assert
+        assert with_unexpected_kwargs == 'pii'
+        assert without_unexpected_kwargs == set()
+
+    def test__validate_update_column_kwargs_with_sdtype(self):
+        """Test the ``_validate_update_column`` when kwargs has the sdtype key."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance._validate_column_exists = Mock()
+        instance._validate_column_args = Mock()
+        instance.columns = {'age': {'sdtype': 'categorical'}}
+        kwargs = {'sdtype': 'numerical', 'computer_representation': 'Int8'}
+
+        # Run
+        instance._validate_update_column('age', **kwargs)
+
+        # Assert
+        instance._validate_column_exists.assert_called_once_with('age')
+        expected_kwargs = {'computer_representation': 'Int8'}
+        instance._validate_column_args.assert_called_once_with(
+            'age', 'numerical', **expected_kwargs)
+
+    def test_update_column(self):
+        """Test the ``update_column`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance._validate_update_column = Mock()
+        instance.columns = {'age': {'sdtype': 'numerical'}}
+
+        # Run
+        instance.update_column('age', sdtype='categorical', order_by='numerical_value')
+
+        # Assert
+        instance._validate_update_column.assert_called_once_with(
+            'age', sdtype='categorical', order_by='numerical_value'
+        )
+        assert instance.columns['age'] == {
+            'sdtype': 'categorical',
+            'order_by': 'numerical_value'
+        }
+
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_args')
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_exists')
     def test_update_column_sdtype_in_kwargs(self,
@@ -721,6 +776,141 @@ class TestSingleTableMetadata:
         mock__validate_column_exists.assert_called_once_with('age')
         mock__validate_column.assert_called_once_with(
             'age', 'numerical', computer_representation='Float')
+
+    def test_update_columns_sdtype_in_kwargs_error(self):
+        """Test the ``update_columns`` method.
+
+        Test that ``update_columns`` with invalid ``sdtype`` and other ``kwargs`` combination
+        raises an ``InvalidMetadataError``.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+
+        # Run / Assert
+        error_msg = re.escape(
+            "Invalid values '(pii)' for 'numerical' sdtype.")
+
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            instance.update_columns(['col_1', 'col_2'], sdtype='numerical', pii=True)
+
+    def test_update_columns_multiple_erros(self):
+        """Test the ``update_columns`` method.
+
+        Test that ``update_columns`` with multiple errors.
+        Should raise an ``InvalidMetadataError`` with a summary of all the errors.
+        """
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'col_1': {'sdtype': 'country_code'},
+            'col_2': {'sdtype': 'numerical'},
+            'col_3': {'sdtype': 'categorical'}
+        }
+
+        # Run / Assert
+        error_msg = re.escape(
+            'The following errors were found when updating columns:\n\n'
+            "Invalid values '(pii)' for numerical column 'col_2'.\n"
+            "Invalid values '(pii)' for categorical column 'col_3'."
+        )
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            instance.update_columns(['col_1', 'col_2', 'col_3'], pii=True)
+
+    def test_update_columns(self):
+        """Test the ``update_columns`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance._validate_update_column = Mock()
+        instance._get_unexpected_kwargs = Mock(return_value=None)
+        instance.columns = {
+            'age': {'sdtype': 'numerical'},
+            'salary': {'sdtype': 'numerical'}
+        }
+
+        # Run
+        instance.update_columns(['age', 'salary'], sdtype='categorical')
+
+        # Assert
+        instance._get_unexpected_kwargs.assert_called_once_with('categorical')
+        instance._validate_update_column.assert_has_calls([
+            call('age', sdtype='categorical'),
+            call('salary', sdtype='categorical')
+        ])
+        assert instance.columns == {
+            'age': {'sdtype': 'categorical'},
+            'salary': {'sdtype': 'categorical'}
+        }
+
+    def test_update_columns_kwargs_without_sdtype(self):
+        """Test the ``update_columns`` method when there is no ``sdtype`` in the kwargs."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'col_1': {'sdtype': 'country_code'},
+            'col_2': {'sdtype': 'latitude'},
+            'col_3': {'sdtype': 'longitude'}
+        }
+
+        # Run
+        instance.update_columns(['col_1', 'col_2', 'col_3'], pii=True)
+
+        # Assert
+        assert instance.columns == {
+            'col_1': {'sdtype': 'country_code', 'pii': True},
+            'col_2': {'sdtype': 'latitude', 'pii': True},
+            'col_3': {'sdtype': 'longitude', 'pii': True}
+        }
+        assert instance._updated is True
+
+    def test_update_columns_metadata(self):
+        """Test the ``update_columns_metadata`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance._validate_update_column = Mock()
+        instance.columns = {
+            'age': {'sdtype': 'numerical'},
+            'salary': {'sdtype': 'numerical'}
+        }
+
+        # Run
+        instance.update_columns_metadata({
+            'age': {'sdtype': 'categorical'},
+            'salary': {'computer_representation': 'Int64'}
+        })
+
+        # Assert
+        instance._validate_update_column.assert_has_calls([
+            call('age', sdtype='categorical'),
+            call('salary', computer_representation='Int64')
+        ])
+        assert instance.columns == {
+            'age': {'sdtype': 'categorical'},
+            'salary': {'sdtype': 'numerical', 'computer_representation': 'Int64'}
+        }
+
+    def test_update_columns_metadata_multiple_error(self):
+        """Test the ``update_columns_metadata`` method with multiple error."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'age': {'sdtype': 'numerical'},
+            'hours': {'sdtype': 'numerical'}
+        }
+
+        # Run / Assert
+        error_msg = re.escape(
+            'The following errors were found when updating columns:\n\n'
+            "Invalid values '(pii)' for numerical column 'age'.\n"
+            "Invalid values '(datetime_format)' for categorical column 'hours'.\n"
+            "Column name ('salary') does not exist in the table. Use 'add_column' to"
+            ' add new column.'
+        )
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            instance.update_columns_metadata({
+                'age': {'pii': True},
+                'hours': {'sdtype': 'categorical', 'datetime_format': '%Y-%m-%d'},
+                'salary': {'sdtype': 'numerical'}
+            })
 
     def test_get_column_names(self):
         """Test the ``get_column_names`` method filters for matching columns."""
