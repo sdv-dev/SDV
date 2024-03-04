@@ -215,9 +215,9 @@ This will perform the following actions:
 2. Bump the current version to the next release candidate, ``X.Y.Z.dev(N+1)``
 
 After this is done, the new pre-release can be installed by including the ``dev`` section in the
-dependency specification, either in ``setup.py``::
+dependency specification, either in ``pyproject.toml``::
 
-    install_requires = [
+    dependencies = [
         ...
         'sdv>=X.Y.Z.dev',
         ...

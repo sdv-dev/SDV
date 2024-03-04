@@ -1,18 +1,29 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+[build-system]
+requires = ['setuptools', 'wheel']
+build-backend = 'setuptools.build_meta'
 
-"""The setup script."""
-
-from setuptools import setup, find_packages
-
-with open('README.md', encoding='utf-8') as readme_file:
-    readme = readme_file.read()
-
-with open('HISTORY.md', encoding='utf-8') as history_file:
-    history = history_file.read()
-
-
-install_requires = [
+[project]
+name = 'sdv'
+description = 'Generate synthetic data for single table, multi table and sequential data'
+authors = [{ name = 'DataCebo, Inc.', email = 'info@sdv.dev' }]
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Developers',
+    'License :: Free for non-commercial use',
+    'Natural Language :: English',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Topic :: Scientific/Engineering :: Artificial Intelligence',
+]
+keywords = ['sdv', 'synthetic-data', 'synhtetic-data-generation', 'timeseries', 'single-table', 'multi-table']
+version = '1.10.1.dev0'
+license = { text = 'BSL-1.1' }
+requires-python = '>=3.8,<3.12'
+readme = 'README.md'
+dependencies = [
     'boto3>=1.15.0,<2',
     'botocore>=1.18,<2',
     'cloudpickle>=2.1.0,<3.0',
@@ -30,23 +41,30 @@ install_requires = [
     'sdmetrics>=0.13.0,<0.14',
 ]
 
-pomegranate_requires = [
-    "pomegranate>=0.14.3,<0.15",
-]
+[project.urls]
+"Source Code"= "https://github.com/sdv-dev/SDV/"
+"Issue Tracker" = "https://github.com/sdv-dev/SDV/issues"
+"Changes" = "https://github.com/sdv-dev/SDV/blob/main/HISTORY.md"
+"Twitter" = "https://twitter.com/sdv_dev"
+"Chat" = "https://bit.ly/sdv-slack-invite"
 
-setup_requires = [
-    'pytest-runner>=2.11.1',
-]
+[project.entry-points]
+sdv = { main = 'sdv.cli.__main__:main' }
 
-tests_require = [
+[project.optional-dependencies]
+test = [
     'pytest>=3.4.2',
     'pytest-cov>=2.6.0',
     'pytest-rerunfailures>10',
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
+    'pytest-runner >= 2.11.1',
+    'tomli>=2.0.0,<3',
 ]
+pomegranate = ['pomegranate>=0.14.3,<0.15']
+dev = [
+    'sdv[test]',
 
-development_requires = [
     # general
     'bumpversion>=0.5.3,<0.6',
     'pip>=9.0.1',
@@ -102,40 +120,26 @@ development_requires = [
     'invoke'
 ]
 
-setup(
-    author='DataCebo, Inc.',
-    author_email='info@sdv.dev',
-    classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'License :: Free for non-commercial use',
-        'Natural Language :: English',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
-        'Programming Language :: Python :: 3.11',
-        'Topic :: Scientific/Engineering :: Artificial Intelligence',
-    ],
-    description='Generate synthetic data for single table, multi table and sequential data',
-    extras_require={
-        'test': tests_require,
-        'dev': development_requires + tests_require,
-        'pomegranate': pomegranate_requires,
-    },
-    include_package_data=True,
-    install_requires=install_requires,
-    keywords='sdv synthetic-data synhtetic-data-generation timeseries single-table multi-table',
-    license='BSL-1.1',
-    long_description=readme + '\n\n' + history,
-    long_description_content_type='text/markdown',
-    name='sdv',
-    packages=find_packages(include=['sdv', 'sdv.*']),
-    python_requires='>=3.8,<3.12',
-    setup_requires=setup_requires,
-    test_suite='tests',
-    tests_require=tests_require,
-    url='https://github.com/sdv-dev/SDV',
-    version='1.10.1.dev0',
-    zip_safe=False,
-)
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ['sdv', 'sdv.*']
+exclude = ['sdv.transformers.addons.*']
+namespaces = false
+
+[tool.isort]
+line_length = 99
+lines_between_types = 0
+multi_line_output = 4
+not_skip = ['__init__.py']
+use_parentheses = true
+
+[tool.pydocstyle]
+convention = 'google'
+add-ignore = ['D105', 'D107', 'D407', 'D417']
+
+[tool.pytest.ini_options]
+addopts = "--ignore=pyproject.toml"
+
+
