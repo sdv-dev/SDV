@@ -111,7 +111,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         if num_data_columns == 0:
             return num_rows_columns
 
-        table_parameters = self.get_table_parameters(table_name)['table_parameters']
+        table_parameters = self.get_table_parameters(table_name)['synthesizer_parameters']
         distribution = table_parameters['default_distribution']
         num_parameters_columns = num_rows_columns * num_data_columns
         if distribution in {'beta', 'truncnorm'}:

@@ -256,8 +256,8 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         assert result == {
-            'table_synthesizer': 'GaussianCopulaSynthesizer',
-            'table_parameters': {
+            'synthesizer_name': 'GaussianCopulaSynthesizer',
+            'synthesizer_parameters': {
                 'default_distribution': 'beta',
                 'enforce_min_max_values': True,
                 'enforce_rounding': True,
@@ -277,7 +277,7 @@ class TestBaseMultiTableSynthesizer:
         result = instance.get_table_parameters('oseba')
 
         # Assert
-        assert result['table_parameters'] == {
+        assert result['synthesizer_parameters'] == {
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
             'enforce_rounding': True,
@@ -314,8 +314,8 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         table_parameters = instance.get_table_parameters('oseba')
         assert instance._table_parameters['oseba'] == {'default_distribution': 'gamma'}
-        assert table_parameters['table_synthesizer'] == 'GaussianCopulaSynthesizer'
-        assert table_parameters['table_parameters'] == {
+        assert table_parameters['synthesizer_name'] == 'GaussianCopulaSynthesizer'
+        assert table_parameters['synthesizer_parameters'] == {
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
             'locales': ['en_US'],
