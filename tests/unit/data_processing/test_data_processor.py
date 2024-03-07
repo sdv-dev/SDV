@@ -216,7 +216,7 @@ class TestDataProcessor:
         assert data_processor._constraints_list == []
         assert data_processor._constraints == []
         assert data_processor._constraints_to_reverse == []
-        assert data_processor.table_name is None
+        assert data_processor.table_name is ''
         assert data_processor.fitted is False
         assert data_processor._dtypes is None
         assert data_processor.formatters == {}
@@ -1791,45 +1791,6 @@ class TestDataProcessor:
         constraint_call = call('Fitting constraints for table fake_table')
         setting_config_call = call(
             'Setting the configuration for the ``HyperTransformer`` for table fake_table')
-        log_mock.info.assert_has_calls([
-            fitting_call,
-            formatter_call,
-            constraint_call,
-            setting_config_call
-        ])
-
-    @patch('sdv.data_processing.data_processor.LOGGER')
-    def test_prepare_for_fitting_no_name(self, log_mock):
-        """Test the steps before fitting.
-
-        Test that ``dtypes``, numerical formatters and constraints are being fitted before
-        creating the configuration for the ``rdt.HyperTransformer``.
-        """
-        # Setup
-        data = pd.DataFrame({'a': [1, 2, 3]}, dtype=np.int64)
-        transformed_data = pd.DataFrame({'a': [4, 5, 6], 'b': [1, 2, 3]})
-        dp = Mock()
-        dp.table_name = None
-        dp._transform_constraints.return_value = transformed_data
-        dp._prepared_for_fitting = False
-        dp._hyper_transformer.get_config.return_value = {'sdtypes': {}, 'transformers': {}}
-        dp._constraints_list = [1, 2, 3]
-        dp._constraints = []
-
-        # Run
-        DataProcessor.prepare_for_fitting(dp, data)
-
-        # Assert
-        pd.testing.assert_series_equal(dp._dtypes, pd.Series([np.int64], index=['a']))
-        dp._transform_constraints.assert_called_once_with(data)
-        dp._fit_constraints.assert_called_once_with(data)
-        dp._fit_formatters.assert_called_once_with(data)
-        dp._hyper_transformer.set_config.assert_called_with(dp._create_config.return_value)
-        fitting_call = call('Fitting table  metadata')
-        formatter_call = call('Fitting formatters for table ')
-        constraint_call = call('Fitting constraints for table ')
-        setting_config_call = call(
-            'Setting the configuration for the ``HyperTransformer`` for table ')
         log_mock.info.assert_has_calls([
             fitting_call,
             formatter_call,

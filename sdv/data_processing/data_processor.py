@@ -123,7 +123,7 @@ class DataProcessor:
 
         self._update_numerical_transformer(enforce_rounding, enforce_min_max_values)
         self._hyper_transformer = rdt.HyperTransformer()
-        self.table_name = table_name
+        self.table_name = table_name or ''
         self._dtypes = None
         self.fitted = False
         self.formatters = {}
@@ -700,17 +700,14 @@ class DataProcessor:
                 Table data to be learnt.
         """
         if not self._prepared_for_fitting:
-            logger_table_name = self.table_name
-            if logger_table_name is None:
-                logger_table_name = ''
-            LOGGER.info(f'Fitting table {logger_table_name} metadata')
+            LOGGER.info(f'Fitting table {self.table_name} metadata')
             self._dtypes = data[list(data.columns)].dtypes
 
             self.formatters = {}
-            LOGGER.info(f'Fitting formatters for table {logger_table_name}')
+            LOGGER.info(f'Fitting formatters for table {self.table_name}')
             self._fit_formatters(data)
 
-            LOGGER.info(f'Fitting constraints for table {logger_table_name}')
+            LOGGER.info(f'Fitting constraints for table {self.table_name}')
             if len(self._constraints_list) != len(self._constraints):
                 self._fit_constraints(data)
 
@@ -722,7 +719,7 @@ class DataProcessor:
             if not config.get('sdtypes'):
                 LOGGER.info((
                     'Setting the configuration for the ``HyperTransformer`` '
-                    f'for table {logger_table_name}'
+                    f'for table {self.table_name}'
                 ))
                 config = self._create_config(constrained, columns_created_by_constraints)
                 self._hyper_transformer.set_config(config)
@@ -753,10 +750,7 @@ class DataProcessor:
         if constrained.empty:
             raise ValueError(
                 'The constrained fit dataframe is empty, synthesizer will not be fitted.')
-        table_name = self.table_name
-        if table_name is None:
-            table_name = ''
-        LOGGER.info(f'Fitting HyperTransformer for table {table_name}')
+        LOGGER.info(f'Fitting HyperTransformer for table {self.table_name}')
         self._fit_hyper_transformer(constrained)
         self.fitted = True
 
@@ -803,13 +797,10 @@ class DataProcessor:
             column for column in self.get_sdtypes(primary_keys=not is_condition)
             if column in data.columns
         ]
-        table_name = self.table_name
-        if table_name is None:
-            table_name = ''
-        LOGGER.debug(f'Transforming constraints for table {table_name}')
+        LOGGER.debug(f'Transforming constraints for table {self.table_name}')
         data = self._transform_constraints(data[columns], is_condition)
 
-        LOGGER.debug(f'Transforming table {table_name}')
+        LOGGER.debug(f'Transforming table {self.table_name}')
         if self._keys and not is_condition:
             data = data.set_index(self._primary_key, drop=False)
 
@@ -848,10 +839,7 @@ class DataProcessor:
                     data[reversible_columns]
                 )
         except rdt.errors.NotFittedError:
-            table_name = self.table_name
-            if table_name is None:
-                table_name = ''
-            LOGGER.info(f'HyperTransformer has not been fitted for table {table_name}')
+            LOGGER.info(f'HyperTransformer has not been fitted for table {self.table_name}')
 
         for transformer in self.grouped_columns_to_transformers.values():
             if not transformer.output_columns:
