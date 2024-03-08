@@ -123,7 +123,7 @@ class DataProcessor:
 
         self._update_numerical_transformer(enforce_rounding, enforce_min_max_values)
         self._hyper_transformer = rdt.HyperTransformer()
-        self.table_name = table_name
+        self.table_name = table_name or ''
         self._dtypes = None
         self.fitted = False
         self.formatters = {}
