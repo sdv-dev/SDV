@@ -1496,6 +1496,40 @@ class TestDataProcessor:
         }
         assert config == expected_config
 
+    def test__create_config_with_contextual_column_as_primary_key(self):
+        """Test it when a conextual column is a primary key."""
+        # Setup
+        class CustomTransformer:
+            pass
+
+        data = pd.DataFrame({
+            'phone_number': ['+1 (234) 535-2341', '+1 (334) 535-2341'],
+            'email': ['test@gmail.com', 'test2@gmail.com.br'],
+        })
+        metadata = SingleTableMetadata().load_from_dict({
+            'columns': {
+                'email': {'sdtype': 'email'},
+                'phone_number': {'sdtype': 'phone_number'},
+            },
+            'primary_key': 'phone_number',
+        })
+        dp = DataProcessor(metadata)
+        dp._transformers_by_sdtype = {
+            'email': CustomTransformer(),
+            'phone_number': CustomTransformer(),
+        }
+
+        # Run
+        config = dp._create_config(data, set())
+
+        # Assert
+        assert config['sdtypes'] == {
+            'email': 'email',
+            'phone_number': 'phone_number',
+        }
+        assert isinstance(config['transformers']['phone_number'], AnonymizedFaker)
+        assert isinstance(config['transformers']['email'], CustomTransformer)
+
     def test_update_transformers_not_fitted(self):
         """Test when ``self._hyper_transformer`` is ``None`` raises a ``NotFittedError``."""
         # Setup
