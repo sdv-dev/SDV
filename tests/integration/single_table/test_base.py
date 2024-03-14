@@ -373,7 +373,7 @@ def test_transformers_correctly_auto_assigned():
     assert transformers['pii_col'].function_name == 'address'
 
     assert transformers['primary_key'].regex_format == 'user-[0-9]{3}'
-    assert transformers['primary_key'].enforce_uniqueness is True
+    assert transformers['primary_key'].enforce_uniqueness == True
 
 
 def test_modeling_with_complex_datetimes():
@@ -450,11 +450,11 @@ def test_auto_assign_transformers_and_update_with_pii():
     name_transformer = synthesizer.get_transformers()['name']
     assert id_transformer.provider_name == 'person'
     assert id_transformer.function_name == 'first_name'
-    assert id_transformer.enforce_uniqueness is True
+    assert id_transformer.cardinality_rule == 'unique'
 
     assert name_transformer.provider_name == 'person'
     assert name_transformer.function_name == 'name'
-    assert name_transformer.enforce_uniqueness is False
+    assert name_transformer.cardinality_rule is None
 
 
 def test_refitting_a_model():
