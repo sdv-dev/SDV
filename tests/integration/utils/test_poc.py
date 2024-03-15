@@ -7,7 +7,7 @@ import pytest
 
 from sdv.errors import InvalidDataError
 from sdv.metadata import MultiTableMetadata
-from sdv.utils import drop_unknown_references
+from sdv.utils.poc import drop_unknown_references
 
 
 @pytest.fixture()

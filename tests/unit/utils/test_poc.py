@@ -7,10 +7,10 @@ import pandas as pd
 import pytest
 
 from sdv.errors import InvalidDataError
-from sdv.utils import drop_unknown_references
+from sdv.utils.poc import drop_unknown_references
 
 
-@patch('sdv.utils._get_rows_to_drop')
+@patch('sdv.utils.poc._get_rows_to_drop')
 def test_drop_unknown_references(mock_get_rows_to_drop):
     """Test ``drop_unknown_references``."""
     # Setup
@@ -122,8 +122,8 @@ def test_drop_unknown_references_valid_data_mock():
         pd.testing.assert_frame_equal(table, data[table_name])
 
 
-@patch('sdv.utils._get_rows_to_drop')
-@patch('sdv.utils._validate_foreign_keys_not_null')
+@patch('sdv.utils.poc._get_rows_to_drop')
+@patch('sdv.utils.poc._validate_foreign_keys_not_null')
 def test_drop_unknown_references_with_nan(mock_validate_foreign_keys, mock_get_rows_to_drop):
     """Test ``drop_unknown_references`` whith NaNs and drop_missing_values True."""
     # Setup
@@ -203,7 +203,7 @@ def test_drop_unknown_references_with_nan(mock_validate_foreign_keys, mock_get_r
         pd.testing.assert_frame_equal(table, expected_result[table_name])
 
 
-@patch('sdv.utils._get_rows_to_drop')
+@patch('sdv.utils.poc._get_rows_to_drop')
 def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop):
     """Test ``drop_unknown_references`` with NaNs and drop_missing_values False."""
     # Setup
@@ -279,7 +279,7 @@ def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop
         pd.testing.assert_frame_equal(table, expected_result[table_name])
 
 
-@patch('sdv.utils._get_rows_to_drop')
+@patch('sdv.utils.poc._get_rows_to_drop')
 def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
     """Test ``drop_unknown_references`` when all rows are dropped."""
     # Setup
