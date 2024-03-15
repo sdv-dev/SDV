@@ -450,11 +450,11 @@ def test_auto_assign_transformers_and_update_with_pii():
     name_transformer = synthesizer.get_transformers()['name']
     assert id_transformer.provider_name == 'person'
     assert id_transformer.function_name == 'first_name'
-    assert id_transformer.enforce_uniqueness is True
+    assert id_transformer.cardinality_rule == 'unique'
 
     assert name_transformer.provider_name == 'person'
     assert name_transformer.function_name == 'name'
-    assert name_transformer.enforce_uniqueness is False
+    assert name_transformer.cardinality_rule is None
 
 
 def test_refitting_a_model():

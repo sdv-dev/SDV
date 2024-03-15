@@ -33,7 +33,7 @@ dependencies = [
     'copulas>=0.9.0,<0.10',
     'ctgan>=0.9.0,<0.10',
     'deepecho>=0.5,<0.6',
-    'rdt>=1.9.0,<2',
+    'rdt>=1.10.0,<2',
     'sdmetrics>=0.13.0,<0.14',
 ]
 
