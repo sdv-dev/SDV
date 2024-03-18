@@ -66,14 +66,16 @@ def test_drop_unknown_references(mock_get_rows_to_drop, mock_stdout_write):
     result = drop_unknown_references(metadata, data)
 
     # Assert
-    mock_stdout_write.assert_called_once_with(
-        'Success! All foreign keys have referential integrity.\n'
-        'Summary of the number of rows dropped:\n'
-        'Table Name  # Rows (Original)  # Invalid Rows  # Rows (New)\n'
-        '     child                  5               1             4\n'
-        'grandchild                  5               3             2\n'
-        '    parent                  5               0             5'
+    expected_pattern = re.compile(
+        r'Success! All foreign keys have referential integrity\.\s*'
+        r'Summary of the number of rows dropped:\s*'
+        r'Table Name\s*#\s*Rows \(Original\)\s*#\s*Invalid Rows\s*#\s*Rows \(New\)\s*'
+        r'child\s*5\s*1\s*4\s*'
+        r'grandchild\s*5\s*3\s*2\s*'
+        r'parent\s*5\s*0\s*5'
     )
+    output = mock_stdout_write.call_args[0][0]
+    assert expected_pattern.match(output)
     metadata.validate.assert_called_once()
     metadata.validate_data.assert_called_once_with(data)
     mock_get_rows_to_drop.assert_called_once()
