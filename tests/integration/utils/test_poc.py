@@ -61,7 +61,7 @@ def data():
     }
 
 
-def test_drop_unknown_references(metadata, data):
+def test_drop_unknown_references(metadata, data, capsys):
     """Test ``drop_unknown_references`` end to end."""
     # Run
     expected_message = re.escape(
@@ -75,14 +75,23 @@ def test_drop_unknown_references(metadata, data):
 
     cleaned_data = drop_unknown_references(metadata, data)
     metadata.validate_data(cleaned_data)
+    captured = capsys.readouterr()
 
     # Assert
     pd.testing.assert_frame_equal(cleaned_data['parent'], data['parent'])
     pd.testing.assert_frame_equal(cleaned_data['child'], data['child'].iloc[:4])
     assert len(cleaned_data['child']) == 4
+    expected_output = (
+        'Success! All foreign keys have referential integrity.\n'
+        'Summary of the number of rows dropped:\n'
+        'Table Name  # Rows (Original)  # Invalid Rows  # Rows (New)\n'
+        '     child                  5               1             4\n'
+        '    parent                  5               0             5'
+    )
+    assert captured.out.strip() == expected_output
 
 
-def test_drop_unknown_references_valid_data(metadata, data):
+def test_drop_unknown_references_valid_data(metadata, data, capsys):
     """Test ``drop_unknown_references`` when data has referential integrity."""
     # Setup
     data = deepcopy(data)
@@ -90,13 +99,19 @@ def test_drop_unknown_references_valid_data(metadata, data):
 
     # Run
     result = drop_unknown_references(metadata, data)
+    captured = capsys.readouterr()
 
     # Assert
     pd.testing.assert_frame_equal(result['parent'], data['parent'])
     pd.testing.assert_frame_equal(result['child'], data['child'])
+    expected_message = (
+        'Success! All foreign keys have referential integrity.\n'
+        'No rows were dropped.'
+    )
+    assert captured.out.strip() == expected_message
 
 
-def test_drop_unknown_references_drop_missing_values(metadata, data):
+def test_drop_unknown_references_drop_missing_values(metadata, data, capsys):
     """Test ``drop_unknown_references`` when there is missing values in the foreign keys."""
     # Setup
     data = deepcopy(data)
@@ -105,11 +120,20 @@ def test_drop_unknown_references_drop_missing_values(metadata, data):
     # Run
     cleaned_data = drop_unknown_references(metadata, data)
     metadata.validate_data(cleaned_data)
+    captured = capsys.readouterr()
 
     # Assert
     pd.testing.assert_frame_equal(cleaned_data['parent'], data['parent'])
     pd.testing.assert_frame_equal(cleaned_data['child'], data['child'].iloc[:4])
     assert len(cleaned_data['child']) == 4
+    expected_output = (
+        'Success! All foreign keys have referential integrity.\n'
+        'Summary of the number of rows dropped:\n'
+        'Table Name  # Rows (Original)  # Invalid Rows  # Rows (New)\n'
+        '     child                  5               1             4\n'
+        '    parent                  5               0             5'
+    )
+    assert captured.out.strip() == expected_output
 
 
 def test_drop_unknown_references_not_drop_missing_values(metadata, data):
@@ -118,7 +142,9 @@ def test_drop_unknown_references_not_drop_missing_values(metadata, data):
     data['child'].loc[3, 'parent_id'] = np.nan
 
     # Run
-    cleaned_data = drop_unknown_references(metadata, data, drop_missing_values=False)
+    cleaned_data = drop_unknown_references(
+        metadata, data, drop_missing_values=False, verbose=False
+    )
 
     # Assert
     pd.testing.assert_frame_equal(cleaned_data['parent'], data['parent'])
