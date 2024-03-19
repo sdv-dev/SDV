@@ -315,7 +315,7 @@ def check_sdv_versions_and_warn(synthesizer):
     current_enterprise_version = getattr(version, 'enterprise', None)
     public_missmatch = current_public_version != synthesizer._fitted_sdv_version
     enterprise_missmatch = current_enterprise_version != synthesizer._fitted_sdv_enterprise_version
-    if public_missmatch or enterprise_missmatch:
+    if synthesizer._fitted and (public_missmatch or enterprise_missmatch):
         if public_missmatch and enterprise_missmatch:
             message = (
                 'You are currently on SDV version '
