@@ -68,7 +68,6 @@ def test_drop_unknown_references(mock_get_rows_to_drop, mock_stdout_write):
     # Assert
     expected_pattern = re.compile(
         r'Success! All foreign keys have referential integrity\.\s*'
-        r'Summary of the number of rows dropped:\s*'
         r'Table Name\s*#\s*Rows \(Original\)\s*#\s*Invalid Rows\s*#\s*Rows \(New\)\s*'
         r'child\s*5\s*1\s*4\s*'
         r'grandchild\s*5\s*3\s*2\s*'
@@ -107,6 +106,7 @@ def test_drop_unknown_references_valid_data_mock(mock_stdout_write):
     metadata._get_all_foreign_keys.side_effect = [
         [], ['parent_foreign_key'], ['child_foreign_key', 'parent_foreign_key']
     ]
+    metadata.tables = {'parent', 'child', 'grandchild'}
     data = {
         'parent': pd.DataFrame({
             'id_parent': [0, 1, 2, 3, 4],
@@ -128,9 +128,15 @@ def test_drop_unknown_references_valid_data_mock(mock_stdout_write):
     result = drop_unknown_references(metadata, data)
 
     # Assert
-    mock_stdout_write.assert_called_once_with(
-        'Success! All foreign keys have referential integrity.\nNo rows were dropped.'
+    expected_pattern = re.compile(
+        r'Success! All foreign keys have referential integrity\.\s*'
+        r'Table Name\s*#\s*Rows \(Original\)\s*#\s*Invalid Rows\s*#\s*Rows \(New\)\s*'
+        r'child\s*5\s*0\s*5\s*'
+        r'grandchild\s*5\s*0\s*5\s*'
+        r'parent\s*5\s*0\s*5'
     )
+    output = mock_stdout_write.call_args[0][0]
+    assert expected_pattern.match(output)
     metadata.validate.assert_called_once()
     metadata.validate_data.assert_called_once_with(data)
     for table_name, table in result.items():

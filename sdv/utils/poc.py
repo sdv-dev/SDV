@@ -30,6 +30,13 @@ def drop_unknown_references(metadata, data, drop_missing_values=True, verbose=Tr
             Dictionary with the dataframes ensuring referential integrity.
     """
     success_message = 'Success! All foreign keys have referential integrity.'
+    table_names = sorted(metadata.tables)
+    summary_table = pd.DataFrame({
+        'Table Name': table_names,
+        '# Rows (Original)': [len(data[table]) for table in table_names],
+        '# Invalid Rows': [0] * len(table_names),
+        '# Rows (New)': [len(data[table]) for table in table_names]
+    })
     metadata.validate()
     try:
         metadata.validate_data(data)
@@ -37,14 +44,13 @@ def drop_unknown_references(metadata, data, drop_missing_values=True, verbose=Tr
             _validate_foreign_keys_not_null(metadata, data)
 
         if verbose:
-            message = [success_message, 'No rows were dropped.']
-            sys.stdout.write('\n'.join(message))
+            sys.stdout.write('\n'.join([success_message, summary_table.to_string(index=False)]))
 
         return data
     except (InvalidDataError, SynthesizerInputError):
         result = data.copy()
         table_to_idx_to_drop = _get_rows_to_drop(metadata, result)
-        for table in metadata.tables:
+        for table in table_names:
             idx_to_drop = table_to_idx_to_drop[table]
             result[table] = result[table].drop(idx_to_drop)
             if drop_missing_values:
@@ -60,17 +66,10 @@ def drop_unknown_references(metadata, data, drop_missing_values=True, verbose=Tr
                 ])
 
         if verbose:
-            table_names = sorted(metadata.tables)
-            summary_table = pd.DataFrame({
-                'Table Name': table_names,
-                '# Rows (Original)': [len(data[table]) for table in table_names],
-                '# Invalid Rows': [
-                    len(data[table]) - len(result[table]) for table in table_names
-                ],
-                '# Rows (New)': [len(result[table]) for table in table_names]
-            })
-            message = [success_message, 'Summary of the number of rows dropped:']
-            message.append(summary_table.to_string(index=False))
-            sys.stdout.write('\n'.join(message))
+            summary_table['# Invalid Rows'] = [
+                len(data[table]) - len(result[table]) for table in table_names
+            ]
+            summary_table['# Rows (New)'] = [len(result[table]) for table in table_names]
+            sys.stdout.write('\n'.join([success_message, summary_table.to_string(index=False)]))
 
         return result
