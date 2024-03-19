@@ -8,9 +8,9 @@ from copy import deepcopy
 
 import cloudpickle
 import numpy as np
-import pkg_resources
 from tqdm import tqdm
 
+from sdv import version
 from sdv._utils import _validate_foreign_keys_not_null, check_sdv_versions_and_warn
 from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -108,6 +108,7 @@ class BaseMultiTableSynthesizer:
         self._creation_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_date = None
         self._fitted_sdv_version = None
+        self._fitted_sdv_enterprise_version = None
 
     def _get_root_parents(self):
         """Get the set of root parents in the graph."""
@@ -367,7 +368,8 @@ class BaseMultiTableSynthesizer:
         self._model_tables(augmented_data)
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
-        self._fitted_sdv_version = pkg_resources.get_distribution('sdv').version
+        self._fitted_sdv_version = getattr(version, 'public', None)
+        self._fitted_sdv_enterprise_version = getattr(version, 'enterprise', None)
 
     def fit(self, data):
         """Fit this model to the original data.
@@ -556,13 +558,17 @@ class BaseMultiTableSynthesizer:
                 * ``last_fit_date``: date for the last time it was fit
                 * ``fitted_sdv_version``: version of sdv it was on when fitted
         """
-        return {
+        info = {
             'class_name': self.__class__.__name__,
             'creation_date': self._creation_date,
             'is_fit': self._fitted,
             'last_fit_date': self._fitted_date,
             'fitted_sdv_version': self._fitted_sdv_version
         }
+        if self._fitted_sdv_enterprise_version:
+            info['fitted_sdv_enterprise_version'] = self._fitted_sdv_enterprise_version
+
+        return info
 
     def save(self, filepath):
         """Save this instance to the given path using cloudpickle.
