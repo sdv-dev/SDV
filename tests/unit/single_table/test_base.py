@@ -1644,9 +1644,10 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
 
+    @patch('sdv.single_table.base.check_sdv_versions_and_warn')
     @patch('sdv.single_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
-    def test_load(self, mock_file, cloudpickle_mock):
+    def test_load(self, mock_file, cloudpickle_mock, mock_check_sdv_versions_and_warn):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
         synthesizer_mock = Mock()
@@ -1658,6 +1659,7 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         mock_file.assert_called_once_with('synth.pkl', 'rb')
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
+        mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
         assert loaded_instance == synthesizer_mock
 
     def test_load_custom_constraint_classes(self):
@@ -1782,27 +1784,20 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         assert output == constraints
 
-    def _pkg_mock(self, lib):
-        if lib == 'sdv':
-            class Distribution:
-                version = '1.0.0'
-
-            return Distribution
-
-    @patch('pkg_resources.get_distribution')
-    def test_get_info(self, pkg_mock):
+    @patch('sdv.single_table.base.version')
+    def test_get_info_no_enterprise(self, mock_sdv_version):
         """Test the correct dictionary is returned.
 
         Check the return dictionary is valid both before and after fitting the synthesizer.
 
         Mocks:
-            * Mock ``pkg_resources`` so we don't have to rewrite this test for every new release.
             * Unfortunately, ``datetime`` can't be mocked directly. This link explains how to
             do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
         """
         # Setup
         data = pd.DataFrame({'col': [1, 2, 3]})
-        pkg_mock.side_effect = self._pkg_mock
+        mock_sdv_version.public = '1.0.0'
+        mock_sdv_version.enterprise = None
         metadata = SingleTableMetadata()
         metadata.add_column('col', sdtype='numerical')
 
@@ -1834,4 +1829,52 @@ class TestBaseSingleTableSynthesizer:
                 'is_fit': True,
                 'last_fit_date': '2023-01-23',
                 'fitted_sdv_version': '1.0.0'
+            }
+
+    @patch('sdv.single_table.base.version')
+    def test_get_info_with_enterprise(self, mock_sdv_version):
+        """Test the correct dictionary is returned with the enterprise version.
+
+        Check the return dictionary is valid both before and after fitting the synthesizer.
+
+        Mocks:
+            * Unfortunately, ``datetime`` can't be mocked directly. This link explains how to
+            do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
+        """
+        # Setup
+        data = pd.DataFrame({'col': [1, 2, 3]})
+        mock_sdv_version.public = '1.0.0'
+        mock_sdv_version.enterprise = '1.2.0'
+        metadata = SingleTableMetadata()
+        metadata.add_column('col', sdtype='numerical')
+
+        with patch('sdv.single_table.base.datetime.datetime') as mock_date:
+            mock_date.today.return_value = datetime(2023, 1, 23)
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
+            synthesizer = GaussianCopulaSynthesizer(metadata)
+
+            # Run
+            info = synthesizer.get_info()
+
+            # Assert
+            assert info == {
+                'class_name': 'GaussianCopulaSynthesizer',
+                'creation_date': '2023-01-23',
+                'is_fit': False,
+                'last_fit_date': None,
+                'fitted_sdv_version': None
+            }
+
+            # Run
+            synthesizer.fit(data)
+            info = synthesizer.get_info()
+
+            # Assert
+            assert info == {
+                'class_name': 'GaussianCopulaSynthesizer',
+                'creation_date': '2023-01-23',
+                'is_fit': True,
+                'last_fit_date': '2023-01-23',
+                'fitted_sdv_version': '1.0.0',
+                'fitted_sdv_enterprise_version': '1.2.0'
             }

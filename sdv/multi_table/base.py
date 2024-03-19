@@ -11,7 +11,7 @@ import numpy as np
 import pkg_resources
 from tqdm import tqdm
 
-from sdv._utils import _validate_foreign_keys_not_null
+from sdv._utils import _validate_foreign_keys_not_null, check_sdv_versions_and_warn
 from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
@@ -576,12 +576,18 @@ class BaseMultiTableSynthesizer:
 
     @classmethod
     def load(cls, filepath):
-        """Load the multi-table synthesizer from a given path.
+        """Load a multi-table synthesizer from a given path.
 
         Args:
             filepath (str):
-                Path from which to load the instance.
+                A string describing the filepath of your saved synthesizer.
+
+        Returns:
+            MultiTableSynthesizer:
+                The loaded synthesizer.
         """
         with open(filepath, 'rb') as f:
             synthesizer = cloudpickle.load(f)
-            return synthesizer
+
+        check_sdv_versions_and_warn(synthesizer)
+        return synthesizer

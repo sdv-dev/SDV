@@ -7,11 +7,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv import version
 from sdv._utils import (
     _convert_to_timedelta, _create_unique_name, _get_datetime_format, _get_relationship_for_child,
     _get_relationship_for_parent, _get_root_tables, _get_rows_to_drop, _is_datetime_type,
-    _validate_foreign_keys_not_null)
-from sdv.errors import SynthesizerInputError
+    _validate_foreign_keys_not_null, check_sdv_versions_and_warn)
+from sdv.errors import SDVVersionWarning, SynthesizerInputError
 from tests.utils import SeriesMatcher
 
 
@@ -459,3 +460,89 @@ def test__validate_foreign_keys_not_null_no_nulls():
 
     # Run
     _validate_foreign_keys_not_null(metadata, data)
+
+
+@patch('sdv._utils.warnings')
+def test_check_sdv_versions_and_warn_no_missmatch(mock_warnings):
+    """Test that no warnings is raised when no missmatch is produced."""
+    # Setup
+    synthesizer = Mock()
+    synthesizer._fitted_sdv_version = version.public
+    synthesizer._fitted_sdv_enterprise_version = version.enterprise
+
+    # Run
+    check_sdv_versions_and_warn(synthesizer)
+
+    # Assert
+    mock_warnings.warn.assert_not_called()
+
+
+@patch('sdv._utils.warnings')
+def test_check_sdv_versions_and_warn_public_missmatch(mock_warnings):
+    """Test that warnings is raised when public version is missmatched."""
+    # Setup
+    synthesizer = Mock()
+    synthesizer._fitted_sdv_version = '1.0.0'
+    synthesizer._fitted_sdv_enterprise_version = version.enterprise
+
+    # Run
+    check_sdv_versions_and_warn(synthesizer)
+
+    # Assert
+    message = (
+        f'You are currently on SDV version {version.public} but this synthesizer was created on '
+        'version 1.0.0. The latest bug fixes and features may not be available for this '
+        'synthesizer. To see these enhancements, create and train a new synthesizer on this '
+        'version.'
+    )
+    mock_warnings.warn.assert_called_once_with(message, SDVVersionWarning)
+
+
+@patch('sdv._utils.version')
+@patch('sdv._utils.warnings')
+def test_check_sdv_versions_and_warn_enterprise_missmatch(mock_warnings, mock_version):
+    """Test that warnings is raised when enterprise version is missmatched."""
+    # Setup
+    synthesizer = Mock()
+    synthesizer._fitted_sdv_version = version.public
+    synthesizer._fitted_sdv_enterprise_version = '1.2.0'
+
+    mock_version.enterprise = '1.3.0'
+    mock_version.public = version.public
+
+    # Run
+    check_sdv_versions_and_warn(synthesizer)
+
+    # Assert
+    message = (
+        'You are currently on SDV Enterprise version 1.3.0 but this synthesizer was created on '
+        'version 1.2.0. The latest bug fixes and features may not be available for this '
+        'synthesizer. To see these enhancements, create and train a new synthesizer on this '
+        'version.'
+    )
+    mock_warnings.warn.assert_called_once_with(message, SDVVersionWarning)
+
+
+@patch('sdv._utils.version')
+@patch('sdv._utils.warnings')
+def test_check_sdv_versions_and_warn_public_and_enterprise_missmatch(mock_warnings, mock_version):
+    """Test that warnings is raised when both public and enterprise version missmatch."""
+    # Setup
+    synthesizer = Mock()
+    synthesizer._fitted_sdv_version = '1.0.0'
+    synthesizer._fitted_sdv_enterprise_version = '1.2.0'
+
+    mock_version.public = '1.3.0'
+    mock_version.enterprise = '1.3.3'
+
+    # Run
+    check_sdv_versions_and_warn(synthesizer)
+
+    # Assert
+    message = (
+        'You are currently on SDV version 1.3.0 and SDV Enterprise version 1.3.3 but this '
+        'synthesizer was created on SDV version 1.0.0 and SDV Enterprise version 1.2.0. '
+        'The latest bug fixes and features may not be available for this synthesizer. '
+        'To see these enhancements, create and train a new synthesizer on this version.'
+    )
+    mock_warnings.warn.assert_called_once_with(message, SDVVersionWarning)

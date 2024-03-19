@@ -1244,9 +1244,10 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
 
+    @patch('sdv.multi_table.base.check_sdv_versions_and_warn')
     @patch('sdv.multi_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
-    def test_load(self, mock_file, cloudpickle_mock):
+    def test_load(self, mock_file, cloudpickle_mock, mock_check_sdv_versions_and_warn):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
         synthesizer_mock = Mock()
@@ -1257,5 +1258,6 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         mock_file.assert_called_once_with('synth.pkl', 'rb')
+        mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         assert loaded_instance == synthesizer_mock

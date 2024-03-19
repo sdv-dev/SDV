@@ -1,4 +1,5 @@
 """Miscellaneous utility functions."""
+import warnings
 from collections import defaultdict
 from collections.abc import Iterable
 from copy import deepcopy
@@ -8,7 +9,8 @@ from pathlib import Path
 import pandas as pd
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
-from sdv.errors import SynthesizerInputError
+from sdv import version
+from sdv.errors import SDVVersionWarning, SynthesizerInputError
 
 
 def _cast_to_iterable(value):
@@ -295,3 +297,51 @@ def _validate_foreign_keys_not_null(metadata, data):
             err_msg += f"Table '{table_name}', column(s) {invalid_columns}\n"
 
         raise SynthesizerInputError(err_msg)
+
+
+def check_sdv_versions_and_warn(synthesizer):
+    """Check if the current SDV and SDV Enterprise versions mismatch.
+
+    Args:
+        synthesizer (BaseSingleTableSynthesizer or BaseMultiTableSynthesizer):
+            An SDV model instance to check versions against.
+
+    Raises:
+        SDVVersionWarning:
+            If the current SDV or SDV Enterprise version does not match the version used to fit
+            the synthesizer.
+    """
+    current_public_version = getattr(version, 'public', None)
+    current_enterprise_version = getattr(version, 'enterprise', None)
+    public_missmatch = current_public_version != synthesizer._fitted_sdv_version
+    enterprise_missmatch = current_enterprise_version != synthesizer._fitted_sdv_enterprise_version
+    if public_missmatch or enterprise_missmatch:
+        if public_missmatch and enterprise_missmatch:
+            message = (
+                'You are currently on SDV version '
+                f'{current_public_version} and SDV Enterprise version '
+                f'{current_enterprise_version} but this synthesizer was created on '
+                f'SDV version {synthesizer._fitted_sdv_version} and SDV Enterprise version '
+                f'{synthesizer._fitted_sdv_enterprise_version}. The latest bug fixes and features '
+                'may not be available for this synthesizer. To see these enhancements, '
+                'create and train a new synthesizer on this version.'
+            )
+
+        elif public_missmatch:
+            message = (
+                'You are currently on SDV version '
+                f'{current_public_version} but this synthesizer was created on '
+                f'version {synthesizer._fitted_sdv_version}. The latest bug fixes and features '
+                'may not be available for this synthesizer. To see these enhancements, '
+                'create and train a new synthesizer on this version.'
+            )
+        elif enterprise_missmatch:
+            message = (
+                'You are currently on SDV Enterprise version '
+                f'{current_enterprise_version} but this synthesizer was created on '
+                f'version {synthesizer._fitted_sdv_enterprise_version}. The latest bug fixes and '
+                'features may not be available for this synthesizer. To see these '
+                'enhancements, create and train a new synthesizer on this version.'
+            )
+
+        warnings.warn(message, SDVVersionWarning)

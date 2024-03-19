@@ -14,11 +14,11 @@ import cloudpickle
 import copulas
 import numpy as np
 import pandas as pd
-import pkg_resources
 import tqdm
 from copulas.multivariate import GaussianMultivariate
 
-from sdv._utils import _groupby_list
+from sdv import version
+from sdv._utils import _groupby_list, check_sdv_versions_and_warn
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
@@ -103,6 +103,7 @@ class BaseSynthesizer:
         self._creation_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_date = None
         self._fitted_sdv_version = None
+        self._fitted_sdv_enterprise_version = None
 
     def set_address_columns(self, column_names, anonymization_level='full'):
         """Set the address multi-column transformer."""
@@ -322,19 +323,24 @@ class BaseSynthesizer:
 
         Return:
             dict:
-                * ``class_name``: synthesizer class name
-                * ``creation_date``: date of creation
-                * ``is_fit``: whether or not the synthesizer has been fit
-                * ``last_fit_date``: date for the last time it was fit
-                * ``fitted_sdv_version``: version of sdv it was on when fitted
+                * ``class_name``: synthesizer class name.
+                * ``creation_date``: date of creation.
+                * ``is_fit``: whether or not the synthesizer has been fit.
+                * ``last_fit_date``: date for the last time it was fit.
+                * ``fitted_sdv_version``: version of sdv it was on when fitted.
+                * ``fitted_sdv_enterprise_version``: version of sdv enterprsie if available.
         """
-        return {
+        info = {
             'class_name': self.__class__.__name__,
             'creation_date': self._creation_date,
             'is_fit': self._fitted,
             'last_fit_date': self._fitted_date,
             'fitted_sdv_version': self._fitted_sdv_version
         }
+        if self._fitted_sdv_enterprise_version is not None:
+            info['fitted_sdv_enterprise_version'] = self._fitted_sdv_enterprise_version
+
+        return info
 
     def _preprocess(self, data):
         self.validate(data)
@@ -381,7 +387,8 @@ class BaseSynthesizer:
 
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
-        self._fitted_sdv_version = pkg_resources.get_distribution('sdv').version
+        self._fitted_sdv_version = getattr(version, 'public', None)
+        self._fitted_sdv_enterprise_version = getattr(version, 'enterprise', None)
 
     def fit(self, data):
         """Fit this model to the original data.
@@ -409,19 +416,21 @@ class BaseSynthesizer:
 
     @classmethod
     def load(cls, filepath):
-        """Load a TabularModel instance from a given path.
+        """Load a single-table synthesizer from a given path.
 
         Args:
             filepath (str):
-                Path from which to load the serialized synthesizer.
+                A string describing the filepath of your saved synthesizer.
 
         Returns:
             SingleTableSynthesizer:
                 The loaded synthesizer.
         """
         with open(filepath, 'rb') as f:
-            model = cloudpickle.load(f)
-            return model
+            synthesizer = cloudpickle.load(f)
+
+        check_sdv_versions_and_warn(synthesizer)
+        return synthesizer
 
 
 class BaseSingleTableSynthesizer(BaseSynthesizer):
