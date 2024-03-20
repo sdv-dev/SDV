@@ -477,30 +477,26 @@ def test_check_sdv_versions_and_warn_no_missmatch(mock_warnings):
     mock_warnings.warn.assert_not_called()
 
 
-@patch('sdv._utils.warnings')
-def test_check_sdv_versions_and_warn_public_missmatch(mock_warnings):
+def test_check_sdv_versions_and_warn_public_missmatch():
     """Test that warnings is raised when public version is missmatched."""
     # Setup
     synthesizer = Mock()
     synthesizer._fitted_sdv_version = '1.0.0'
     synthesizer._fitted_sdv_enterprise_version = version.enterprise
 
-    # Run
-    check_sdv_versions_and_warn(synthesizer)
-
-    # Assert
+    # Run and Assert
     message = (
         f'You are currently on SDV version {version.public} but this synthesizer was created on '
         'version 1.0.0. The latest bug fixes and features may not be available for this '
         'synthesizer. To see these enhancements, create and train a new synthesizer on this '
         'version.'
     )
-    mock_warnings.warn.assert_called_once_with(message, SDVVersionWarning)
+    with pytest.warns(SDVVersionWarning, match=message):
+        check_sdv_versions_and_warn(synthesizer)
 
 
 @patch('sdv._utils.version')
-@patch('sdv._utils.warnings')
-def test_check_sdv_versions_and_warn_enterprise_missmatch(mock_warnings, mock_version):
+def test_check_sdv_versions_and_warn_enterprise_missmatch(mock_version):
     """Test that warnings is raised when enterprise version is missmatched."""
     # Setup
     synthesizer = Mock()
@@ -510,22 +506,19 @@ def test_check_sdv_versions_and_warn_enterprise_missmatch(mock_warnings, mock_ve
     mock_version.enterprise = '1.3.0'
     mock_version.public = version.public
 
-    # Run
-    check_sdv_versions_and_warn(synthesizer)
-
-    # Assert
+    # Run and Assert
     message = (
         'You are currently on SDV Enterprise version 1.3.0 but this synthesizer was created on '
         'version 1.2.0. The latest bug fixes and features may not be available for this '
         'synthesizer. To see these enhancements, create and train a new synthesizer on this '
         'version.'
     )
-    mock_warnings.warn.assert_called_once_with(message, SDVVersionWarning)
+    with pytest.warns(SDVVersionWarning, match=message):
+        check_sdv_versions_and_warn(synthesizer)
 
 
 @patch('sdv._utils.version')
-@patch('sdv._utils.warnings')
-def test_check_sdv_versions_and_warn_public_and_enterprise_missmatch(mock_warnings, mock_version):
+def test_check_sdv_versions_and_warn_public_and_enterprise_missmatch(mock_version):
     """Test that warnings is raised when both public and enterprise version missmatch."""
     # Setup
     synthesizer = Mock()
@@ -535,14 +528,12 @@ def test_check_sdv_versions_and_warn_public_and_enterprise_missmatch(mock_warnin
     mock_version.public = '1.3.0'
     mock_version.enterprise = '1.3.3'
 
-    # Run
-    check_sdv_versions_and_warn(synthesizer)
-
-    # Assert
+    # Run and Assert
     message = (
         'You are currently on SDV version 1.3.0 and SDV Enterprise version 1.3.3 but this '
         'synthesizer was created on SDV version 1.0.0 and SDV Enterprise version 1.2.0. '
         'The latest bug fixes and features may not be available for this synthesizer. '
         'To see these enhancements, create and train a new synthesizer on this version.'
     )
-    mock_warnings.warn.assert_called_once_with(message, SDVVersionWarning)
+    with pytest.warns(SDVVersionWarning, match=message):
+        check_sdv_versions_and_warn(synthesizer)
