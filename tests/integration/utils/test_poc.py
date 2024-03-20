@@ -82,7 +82,7 @@ def test_drop_unknown_references(metadata, data, capsys):
     pd.testing.assert_frame_equal(cleaned_data['child'], data['child'].iloc[:4])
     assert len(cleaned_data['child']) == 4
     expected_output = (
-        'Success! All foreign keys have referential integrity.\n'
+        'Success! All foreign keys have referential integrity.\n\n'
         'Table Name  # Rows (Original)  # Invalid Rows  # Rows (New)\n'
         '     child                  5               1             4\n'
         '    parent                  5               0             5'
@@ -104,7 +104,7 @@ def test_drop_unknown_references_valid_data(metadata, data, capsys):
     pd.testing.assert_frame_equal(result['parent'], data['parent'])
     pd.testing.assert_frame_equal(result['child'], data['child'])
     expected_message = (
-        'Success! All foreign keys have referential integrity.\n'
+        'Success! All foreign keys have referential integrity.\n\n'
         'Table Name  # Rows (Original)  # Invalid Rows  # Rows (New)\n'
         '     child                  5               0             5\n'
         '    parent                  5               0             5'
@@ -128,7 +128,7 @@ def test_drop_unknown_references_drop_missing_values(metadata, data, capsys):
     pd.testing.assert_frame_equal(cleaned_data['child'], data['child'].iloc[:4])
     assert len(cleaned_data['child']) == 4
     expected_output = (
-        'Success! All foreign keys have referential integrity.\n'
+        'Success! All foreign keys have referential integrity.\n\n'
         'Table Name  # Rows (Original)  # Invalid Rows  # Rows (New)\n'
         '     child                  5               1             4\n'
         '    parent                  5               0             5'
