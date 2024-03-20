@@ -42,3 +42,48 @@ def load_csvs(folder_name, read_csv_parameters=None):
         )
 
     return csvs
+
+
+def save_csvs(data, folder_name, suffix=None, to_csv_parameters=None):
+    """Save dataframes to csv files in a specified folder.
+
+    Args:
+        data (dict):
+            A dictionary that maps each table name (string) to the data for that
+            table (pandas.DataFrame).
+        folder_name (str):
+            The full path of the folder where the data will be saved.
+        suffix (str):
+            A string to be appended to the name of the file. Defaults to ``None``.
+        to_csv_parameters (dict):
+            A python dictionary of with string and value accepted by ``pandas.DataFrame.to_csv``
+            function. Defaults to ``None``.
+    """
+    if not path.exists(folder_name):
+        raise ValueError(f"The folder '{folder_name}' cannot be found.")
+
+    table_name_to_filepath = {}
+    errors = []
+    for table_name in data:
+        filename = f'{table_name}{suffix}.csv' if suffix else f'{table_name}.csv'
+        filepath = path.join(folder_name, filename)
+        if path.exists(filepath):
+            errors.append(filename)
+
+        table_name_to_filepath[table_name] = filepath
+
+    if errors:
+        end_message = 'Please remove them or specify a different suffix.'
+        filename_to_print = '\n'.join(errors[:3])
+        if len(errors) > 3:
+            end_message = ''.join([f'+ {len(errors) - 3} more files.', end_message])
+
+        raise ValueError(
+            f"The following files already exist in '{folder_name}':\n{filename_to_print}"
+            f'\n{end_message}'
+        )
+
+    to_csv_parameters = to_csv_parameters or {}
+    for table_name, filepath in table_name_to_filepath.items():
+        table = data[table_name]
+        table.to_csv(filepath, **to_csv_parameters)
