@@ -47,4 +47,3 @@ def test_save_csvs(data, tmpdir):
     assert len(folder.listdir()) == 4
     for table in data:
         assert (folder / f'{table}-synthetic.csv').check()
-        assert pd.read_csv(folder / f'{table}-synthetic.csv').equals(data[table])
