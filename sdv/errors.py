@@ -62,3 +62,14 @@ class InvalidDataTypeError(Exception):
 
 class VisualizationUnavailableError(Exception):
     """Exception to indicate that a visualization is unavailable."""
+
+
+class SDVVersionWarning(UserWarning):
+    """Warning to be raised if there is a version mismatch.
+
+    Warning to be raised  if there is a version mismatch between the loaded
+    synthesizer and the current version of the SDV software.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.__class__.__name__ = 'SDV Version Warning'

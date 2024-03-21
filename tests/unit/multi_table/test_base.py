@@ -1176,30 +1176,23 @@ class TestBaseMultiTableSynthesizer:
             'custom'
         )
 
-    def _pkg_mock(self, lib):
-        if lib == 'sdv':
-            class Distribution:
-                version = '1.0.0'
-
-            return Distribution
-
-    @patch('pkg_resources.get_distribution')
-    def test_get_info(self, pkg_mock):
+    @patch('sdv.multi_table.base.version')
+    def test_get_info(self, mock_version):
         """Test the correct dictionary is returned.
 
         Check the return dictionary is valid both before and after fitting the synthesizer.
 
         Mocks:
-            * Mock ``pkg_resources`` so we don't have to rewrite this test for every new release.
             * Unfortunately, ``datetime`` can't be mocked directly. This link explains how to
             do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
         """
         # Setup
         data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
-        pkg_mock.side_effect = self._pkg_mock
         metadata = MultiTableMetadata()
         metadata.add_table('tab')
         metadata.add_column('tab', 'col', sdtype='numerical')
+        mock_version.public = '1.0.0'
+        mock_version.enterprise = None
 
         with patch('sdv.multi_table.base.datetime.datetime') as mock_date:
             mock_date.today.return_value = datetime(2023, 1, 23)
@@ -1231,6 +1224,55 @@ class TestBaseMultiTableSynthesizer:
                 'fitted_sdv_version': '1.0.0'
             }
 
+    @patch('sdv.multi_table.base.version')
+    def test_get_info_with_enterprise(self, mock_version):
+        """Test the correct dictionary is returned.
+
+        Check the return dictionary is valid both before and after fitting the synthesizer.
+
+        Mocks:
+            * Unfortunately, ``datetime`` can't be mocked directly. This link explains how to
+            do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
+        """
+        # Setup
+        data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
+        metadata = MultiTableMetadata()
+        metadata.add_table('tab')
+        metadata.add_column('tab', 'col', sdtype='numerical')
+        mock_version.public = '1.0.0'
+        mock_version.enterprise = '1.1.0'
+
+        with patch('sdv.multi_table.base.datetime.datetime') as mock_date:
+            mock_date.today.return_value = datetime(2023, 1, 23)
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
+            synthesizer = HMASynthesizer(metadata)
+
+            # Run
+            info = synthesizer.get_info()
+
+            # Assert
+            assert info == {
+                'class_name': 'HMASynthesizer',
+                'creation_date': '2023-01-23',
+                'is_fit': False,
+                'last_fit_date': None,
+                'fitted_sdv_version': None
+            }
+
+            # Run
+            synthesizer.fit(data)
+            info = synthesizer.get_info()
+
+            # Assert
+            assert info == {
+                'class_name': 'HMASynthesizer',
+                'creation_date': '2023-01-23',
+                'is_fit': True,
+                'last_fit_date': '2023-01-23',
+                'fitted_sdv_version': '1.0.0',
+                'fitted_sdv_enterprise_version': '1.1.0'
+            }
+
     @patch('sdv.multi_table.base.cloudpickle')
     def test_save(self, cloudpickle_mock, tmp_path):
         """Test that the synthesizer is saved correctly."""
@@ -1244,9 +1286,10 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
 
+    @patch('sdv.multi_table.base.check_sdv_versions_and_warn')
     @patch('sdv.multi_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
-    def test_load(self, mock_file, cloudpickle_mock):
+    def test_load(self, mock_file, cloudpickle_mock, mock_check_sdv_versions_and_warn):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
         synthesizer_mock = Mock()
@@ -1257,5 +1300,6 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         mock_file.assert_called_once_with('synth.pkl', 'rb')
+        mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         assert loaded_instance == synthesizer_mock
