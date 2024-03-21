@@ -1,5 +1,41 @@
 # Release Notes
 
+## 1.11.0 - 2024-03-21
+
+This release adds the `poc` utility submodule to help users more easily create a proof-of-concept with multi-table datasets. The `poc` submodule includes the `drop_unknown_references` utility function to automatically drop unknown references in a multi-table dataset. Additionally, multiple columns in the metadata can now be updated at once using the `update_columns` and `update_columns_metadata` methods. The SDV now also warns users when a synthesizer is loaded that was fitted on a different version of the SDV.
+
+### New Features
+
+* Make the `get_parameters` function consistent between synthesizers - Issue [#1756](https://github.com/sdv-dev/SDV/issues/1756) by @fealho
+* Reinstate `get_table_parameters` for the multi-table synthesizers - Issue [#1757](https://github.com/sdv-dev/SDV/issues/1757) by @fealho
+* Validate condition and provide user-friendly messages for NaN/missing values (currently unsupported) - Issue [#1758](https://github.com/sdv-dev/SDV/issues/1758) by @fealho
+* Improved error message if a column is already present in a relationship - Issue [#1770](https://github.com/sdv-dev/SDV/issues/1770) by @R-Palazzo
+* Better error messaging for nullable foreign keys  - Issue [#1780](https://github.com/sdv-dev/SDV/issues/1780) by @fealho
+* Add a utility to drop unknown references (and enforce referential integrity) - Issue [#1792](https://github.com/sdv-dev/SDV/issues/1792) by @R-Palazzo
+* Add `update_columns` and `update_columns_metadata` methods to metadata - Issue [#1804](https://github.com/sdv-dev/SDV/issues/1804) by @R-Palazzo
+* Add `get_column_names` method to metadata - Issue [#1805](https://github.com/sdv-dev/SDV/issues/1805) by @frances-h
+* Show original error message when plugin fails to load - Issue [#1816](https://github.com/sdv-dev/SDV/issues/1816) by @rwedge
+* Show warning when loading a synthesizer on a previously-saved SDV version - Issue [#1836](https://github.com/sdv-dev/SDV/issues/1836) by @pvk-developer
+* Add verbosity to `drop_unknown_references` - Issue [#1845](https://github.com/sdv-dev/SDV/issues/1845) by @R-Palazzo
+* Create a `poc` module for utilities that help with proof-of-concept  - Issue [#1846](https://github.com/sdv-dev/SDV/issues/1846) by @pvk-developer
+
+### Internal
+
+* Cleanup `utils` module: Make internal functions private - Issue [#1793](https://github.com/sdv-dev/SDV/issues/1793) by @R-Palazzo
+* Transition from using setup.py to pyroject.toml to specify project metadata - Issue [#1801](https://github.com/sdv-dev/SDV/issues/1801) by @R-Palazzo
+* Remove bumpversion and use bump-my-version - Issue [#1802](https://github.com/sdv-dev/SDV/issues/1802) by @R-Palazzo
+
+### Maintenance
+
+* Transition from using setup.py to pyroject.toml to specify project metadata - Issue [#1801](https://github.com/sdv-dev/SDV/issues/1801) by @R-Palazzo
+* Remove bumpversion and use bump-my-version - Issue [#1802](https://github.com/sdv-dev/SDV/issues/1802) by @R-Palazzo
+* Add support for RDT 1.10.0 - Issue [#1850](https://github.com/sdv-dev/SDV/issues/1850) by @amontanez24
+
+### Bugs Fixed
+
+* `INFO` logs mention table name as `None` for single table data - Issue [#1814](https://github.com/sdv-dev/SDV/issues/1814) by @lajohn4747
+* Fix drop_unknown_references for null foreign keys - Issue [#1820](https://github.com/sdv-dev/SDV/issues/1820) by @R-Palazzo
+
 ## 1.10.0 - 2024-02-15
 
 This release adds multiple improvements to handling premium transformers and column relationships, including using premium transformers even if the PII flag is set to true. Additionally, the SDV now warns users to save the metadata after auto-detection has been used. Semantic sdtype detection has also been improved to tokenize column names to prevent unexpected substring matches.
