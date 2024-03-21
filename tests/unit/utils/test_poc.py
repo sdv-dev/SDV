@@ -10,8 +10,9 @@ from sdv.errors import InvalidDataError
 from sdv.utils.poc import drop_unknown_references
 
 
+@patch('sys.stdout.write')
 @patch('sdv.utils.poc._get_rows_to_drop')
-def test_drop_unknown_references(mock_get_rows_to_drop):
+def test_drop_unknown_references(mock_get_rows_to_drop, mock_stdout_write):
     """Test ``drop_unknown_references``."""
     # Setup
     relationships = [
@@ -65,6 +66,15 @@ def test_drop_unknown_references(mock_get_rows_to_drop):
     result = drop_unknown_references(metadata, data)
 
     # Assert
+    expected_pattern = re.compile(
+        r'Success! All foreign keys have referential integrity\.\s*'
+        r'Table Name\s*#\s*Rows \(Original\)\s*#\s*Invalid Rows\s*#\s*Rows \(New\)\s*'
+        r'child\s*5\s*1\s*4\s*'
+        r'grandchild\s*5\s*3\s*2\s*'
+        r'parent\s*5\s*0\s*5'
+    )
+    output = mock_stdout_write.call_args[0][0]
+    assert expected_pattern.match(output)
     metadata.validate.assert_called_once()
     metadata.validate_data.assert_called_once_with(data)
     mock_get_rows_to_drop.assert_called_once()
@@ -88,13 +98,15 @@ def test_drop_unknown_references(mock_get_rows_to_drop):
         pd.testing.assert_frame_equal(table, expected_result[table_name])
 
 
-def test_drop_unknown_references_valid_data_mock():
+@patch('sys.stdout.write')
+def test_drop_unknown_references_valid_data_mock(mock_stdout_write):
     """Test ``drop_unknown_references`` when data has referential integrity."""
     # Setup
     metadata = Mock()
     metadata._get_all_foreign_keys.side_effect = [
         [], ['parent_foreign_key'], ['child_foreign_key', 'parent_foreign_key']
     ]
+    metadata.tables = {'parent', 'child', 'grandchild'}
     data = {
         'parent': pd.DataFrame({
             'id_parent': [0, 1, 2, 3, 4],
@@ -116,6 +128,15 @@ def test_drop_unknown_references_valid_data_mock():
     result = drop_unknown_references(metadata, data)
 
     # Assert
+    expected_pattern = re.compile(
+        r'Success! All foreign keys have referential integrity\.\s*'
+        r'Table Name\s*#\s*Rows \(Original\)\s*#\s*Invalid Rows\s*#\s*Rows \(New\)\s*'
+        r'child\s*5\s*0\s*5\s*'
+        r'grandchild\s*5\s*0\s*5\s*'
+        r'parent\s*5\s*0\s*5'
+    )
+    output = mock_stdout_write.call_args[0][0]
+    assert expected_pattern.match(output)
     metadata.validate.assert_called_once()
     metadata.validate_data.assert_called_once_with(data)
     for table_name, table in result.items():
@@ -175,7 +196,7 @@ def test_drop_unknown_references_with_nan(mock_validate_foreign_keys, mock_get_r
     })
 
     # Run
-    result = drop_unknown_references(metadata, data)
+    result = drop_unknown_references(metadata, data, verbose=False)
 
     # Assert
     metadata.validate.assert_called_once()
@@ -255,7 +276,7 @@ def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop
     })
 
     # Run
-    result = drop_unknown_references(metadata, data, drop_missing_values=False)
+    result = drop_unknown_references(metadata, data, drop_missing_values=False, verbose=False)
 
     # Assert
     mock_get_rows_to_drop.assert_called_once()
