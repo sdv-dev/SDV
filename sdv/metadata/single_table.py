@@ -6,11 +6,13 @@ import re
 import warnings
 from copy import deepcopy
 from datetime import datetime
-from itertools import combinations
 
 import pandas as pd
 from rdt.transformers.pii.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 
+from sdv._utils import (
+    _cast_to_iterable, _format_invalid_values_string, _get_datetime_format, _is_boolean_type,
+    _is_datetime_type, _is_numerical_type, _load_data_from_csv, _validate_datetime_format)
 from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
@@ -18,9 +20,6 @@ from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.validation import validate_address_sdtypes, validate_gps_sdtypes
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
-from sdv.utils import (
-    cast_to_iterable, format_invalid_values_string, get_datetime_format, is_boolean_type,
-    is_datetime_type, is_numerical_type, load_data_from_csv, validate_datetime_format)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -189,14 +188,21 @@ class SingleTableMetadata:
         self._version = self.METADATA_SPEC_VERSION
         self._updated = False
 
-    def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
+    def _get_unexpected_kwargs(self, sdtype, **kwargs):
         expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii'])
         unexpected_kwargs = set(kwargs) - set(expected_kwargs)
         if unexpected_kwargs:
             unexpected_kwargs = sorted(unexpected_kwargs)
             unexpected_kwargs = ', '.join(unexpected_kwargs)
+
+        return unexpected_kwargs
+
+    def _validate_unexpected_kwargs(self, column_name, sdtype, **kwargs):
+        unexpected_kwargs = self._get_unexpected_kwargs(sdtype, **kwargs)
+        if unexpected_kwargs:
             raise InvalidMetadataError(
-                f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'.")
+                f"Invalid values '({unexpected_kwargs})' for {sdtype} column '{column_name}'."
+            )
 
     def _validate_sdtype(self, sdtype):
         if not isinstance(sdtype, str):
@@ -271,6 +277,12 @@ class SingleTableMetadata:
                 "Use 'add_column' to add new column."
             )
 
+    def _validate_update_column(self, column_name, **kwargs):
+        self._validate_column_exists(column_name)
+        sdtype = kwargs.get('sdtype', self.columns[column_name]['sdtype'])
+        kwargs_without_sdtype = {key: value for key, value in kwargs.items() if key != 'sdtype'}
+        self._validate_column_args(column_name, sdtype, **kwargs_without_sdtype)
+
     def update_column(self, column_name, **kwargs):
         """Update an existing column in the ``SingleTableMetadata``.
 
@@ -289,17 +301,106 @@ class SingleTableMetadata:
             - ``InvalidMetadataError`` if the ``pii`` value is not ``True`` or ``False`` when
                present.
         """
-        self._validate_column_exists(column_name)
-        _kwargs = deepcopy(kwargs)
-        if 'sdtype' in kwargs:
-            sdtype = kwargs.pop('sdtype')
-        else:
-            sdtype = self.columns[column_name]['sdtype']
-            _kwargs['sdtype'] = sdtype
+        self._validate_update_column(column_name, **kwargs)
+        if 'sdtype' not in kwargs:
+            kwargs['sdtype'] = self.columns[column_name]['sdtype']
 
-        self._validate_column_args(column_name, sdtype, **kwargs)
-        self.columns[column_name] = _kwargs
+        self.columns[column_name] = kwargs
         self._updated = True
+
+    def update_columns(self, column_names, **kwargs):
+        """Update multiple columns with the same metadata kwargs.
+
+        Args:
+            column_names (list[str]):
+                A list of column names to be updated.
+            **kwargs (type):
+                Any key word arguments that describe metadata for the column.
+        """
+        errors = []
+        has_sdtype_key = 'sdtype' in kwargs
+        if has_sdtype_key:
+            kwargs_without_sdtype = {
+                key: value for key, value in kwargs.items() if key != 'sdtype'
+            }
+            unexpected_kwargs = self._get_unexpected_kwargs(
+                kwargs['sdtype'], **kwargs_without_sdtype
+            )
+            if unexpected_kwargs:
+                raise InvalidMetadataError(
+                    f"Invalid values '({unexpected_kwargs})' for '{kwargs['sdtype']}' sdtype."
+                )
+
+        for column_name in column_names:
+            try:
+                self._validate_update_column(column_name, **kwargs)
+            except InvalidMetadataError as e:
+                errors.append(e)
+
+        if errors:
+            raise InvalidMetadataError(
+                'The following errors were found when updating columns:\n\n'
+                + '\n'.join([str(e) for e in errors])
+            )
+
+        for column_name in column_names:
+            column_metadata = deepcopy(kwargs)
+            if not has_sdtype_key:
+                column_metadata['sdtype'] = self.columns[column_name]['sdtype']
+
+            self.columns[column_name] = column_metadata
+
+        self._updated = True
+
+    def update_columns_metadata(self, column_metadata):
+        """Update the metadata for multiple columns using metadata from the input dictionary.
+
+        Args:
+            column_metadata (dict):
+                A dictionary of column names and their metadata to be updated.
+        """
+        errors = []
+        for column_name, kwargs in column_metadata.items():
+            try:
+                self._validate_update_column(column_name, **kwargs)
+            except InvalidMetadataError as e:
+                errors.append(e)
+
+        if errors:
+            raise InvalidMetadataError(
+                'The following errors were found when updating columns:\n\n'
+                + '\n'.join([str(e) for e in errors])
+            )
+
+        for column_name, kwargs in column_metadata.items():
+            if 'sdtype' not in kwargs:
+                kwargs['sdtype'] = self.columns[column_name]['sdtype']
+
+            self.columns[column_name] = kwargs
+
+        self._updated = True
+
+    def get_column_names(self, **kwargs):
+        """Return a list of column names that match the given metadata keyword arguments.
+
+        Args:
+            **kwargs:
+                Column metadata keyword arguments to filter on, for example sdtype='id'
+                or pii=True.
+
+        Returns:
+            list:
+                The list of columns that match the metadata kwargs.
+        """
+        if not kwargs:
+            return list(self.columns.keys())
+
+        matches = []
+        for col, col_metadata in self.columns.items():
+            if kwargs.items() <= col_metadata.items():
+                matches.append(col)
+
+        return matches
 
     def to_dict(self):
         """Return a python ``dict`` representation of the ``SingleTableMetadata``."""
@@ -403,7 +504,7 @@ class SingleTableMetadata:
             data_test = data.sample(10000) if len(data) > 10000 else data
 
             try:
-                datetime_format = get_datetime_format(data_test)
+                datetime_format = _get_datetime_format(data_test)
                 if datetime_format:
                     pd.to_datetime(data_test, format=datetime_format, errors='raise')
                     sdtype = 'datetime'
@@ -458,7 +559,7 @@ class SingleTableMetadata:
             if sdtype_in_reference and first_pii_field is None and not has_nan:
                 first_pii_field = field
             if sdtype == 'datetime' and dtype == 'O':
-                datetime_format = get_datetime_format(column_data.iloc[:100])
+                datetime_format = _get_datetime_format(column_data.iloc[:100])
                 column_dict['datetime_format'] = datetime_format
 
             self.columns[field] = deepcopy(column_dict)
@@ -507,7 +608,7 @@ class SingleTableMetadata:
                 'object to detect from other data sources.'
             )
 
-        data = load_data_from_csv(filepath, read_csv_parameters)
+        data = _load_data_from_csv(filepath, read_csv_parameters)
         self.detect_from_dataframe(data)
 
     @staticmethod
@@ -666,7 +767,7 @@ class SingleTableMetadata:
     def _validate_sequence_index_not_in_sequence_key(self):
         """Check that ``_sequence_index`` and ``_sequence_key`` don't overlap."""
         seq_key = self.sequence_key
-        sequence_key = set(cast_to_iterable(seq_key))
+        sequence_key = set(_cast_to_iterable(seq_key))
         if self.sequence_index in sequence_key or seq_key is None:
             index = {self.sequence_index}
             raise InvalidMetadataError(
@@ -733,6 +834,31 @@ class SingleTableMetadata:
         if errors:
             raise InvalidMetadataError('\n'.join(errors))
 
+    def _validate_column_relationship_with_others(self, column_relationship, other_relationships):
+        """Validate a column relationship with others.
+
+        Verify that the columns in the relationship are not used in more than one
+        column relationship.
+
+        Args:
+            column_relationship (dict):
+                Column relationship to validate.
+            other_relationships (list[dict]):
+                List of other column relationships to compare against.
+        """
+        for other_relationship in other_relationships:
+            repeated_columns = set(
+                other_relationship.get('column_names', [])) & set(
+                column_relationship['column_names']
+            )
+            if repeated_columns:
+                repeated_columns = "', '".join(repeated_columns)
+                raise InvalidMetadataError(
+                    f"Columns '{repeated_columns}' is already part of a relationship of type"
+                    f" '{other_relationship['type']}'. Columns cannot be part of multiple"
+                    ' relationships.'
+                )
+
     def _validate_all_column_relationships(self, column_relationships):
         """Validate all column relationships.
 
@@ -748,23 +874,16 @@ class SingleTableMetadata:
         """
         # Validate relationship keys
         valid_relationship_keys = {'type', 'column_names'}
-        for relationship in column_relationships:
+        for idx, relationship in enumerate(column_relationships):
             if set(relationship.keys()) != valid_relationship_keys:
                 unknown_keys = set(relationship.keys()).difference(valid_relationship_keys)
                 raise InvalidMetadataError(
                     f'Relationship has invalid keys {unknown_keys}.'
                 )
 
-        # Validate no repeated columns across different column relationships
-        repeated_columns = set()
-        for relationship_a, relationship_b in combinations(column_relationships, 2):
-            repeated_columns |= set(
-                relationship_a['column_names']) & set(
-                relationship_b['column_names'])
-
-        if repeated_columns:
-            raise InvalidMetadataError(
-                f'Columns {repeated_columns} are found in multiple column relationships.')
+            self._validate_column_relationship_with_others(
+                relationship, column_relationships[idx + 1:]
+            )
 
         # Validate each individual relationship
         errors = []
@@ -899,7 +1018,7 @@ class SingleTableMetadata:
         for key in sorted(keys):
             repeated_values = set(data[key][data[key].duplicated()])
             if repeated_values:
-                repeated_values = format_invalid_values_string(repeated_values, 3)
+                repeated_values = _format_invalid_values_string(repeated_values, 3)
                 errors.append(f"Key column '{key}' contains repeating values: " + repeated_values)
 
         return errors
@@ -919,29 +1038,29 @@ class SingleTableMetadata:
         # boolean values must be True/False, None or missing values
         # int/str are not allowed
         if sdtype == 'boolean':
-            invalid_values = self._get_invalid_column_values(column, is_boolean_type)
+            invalid_values = self._get_invalid_column_values(column, _is_boolean_type)
 
         # numerical values must be int/float, None or missing values
         # str/bool are not allowed
         if sdtype == 'numerical':
-            invalid_values = self._get_invalid_column_values(column, is_numerical_type)
+            invalid_values = self._get_invalid_column_values(column, _is_numerical_type)
 
         # datetime values must be castable to datetime, None or missing values
         if sdtype == 'datetime':
             datetime_format = column_metadata.get('datetime_format')
             if datetime_format:
-                invalid_values = validate_datetime_format(column, datetime_format)
+                invalid_values = _validate_datetime_format(column, datetime_format)
             else:
                 # cap number of samples to be validated to improve performance
                 num_samples_to_validate = min(len(column), 1000)
 
                 invalid_values = self._get_invalid_column_values(
                     column.sample(num_samples_to_validate),
-                    lambda x: pd.isna(x) | is_datetime_type(x)
+                    lambda x: pd.isna(x) | _is_datetime_type(x)
                 )
 
         if invalid_values:
-            invalid_values = format_invalid_values_string(invalid_values, 3)
+            invalid_values = _format_invalid_values_string(invalid_values, 3)
             return [f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."]
 
         return []

@@ -3,11 +3,14 @@ import re
 import warnings
 from unittest.mock import patch
 
+import numpy as np
 import pandas as pd
 import pkg_resources
 import pytest
 from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, UniformEncoder
 
+from sdv.datasets.demo import download_demo
+from sdv.errors import SynthesizerInputError
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table import (
@@ -145,6 +148,81 @@ def test_sample_from_conditions_negative_float():
     # Assert
     expected = pd.Series([-10.] * 100 + [-50.] * 10, name='column1')
     pd.testing.assert_series_equal(sampled_data['column1'], expected)
+
+
+def test_sample_from_conditions_with_nans():
+    """Test it crashes when condition has nans (GH#1758)."""
+    # Setup
+    data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='fake_hotel_guests'
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    my_condition = Condition(
+        num_rows=250,
+        column_values={'room_type': None, 'has_rewards': False}
+    )
+
+    # Run
+    synthesizer.fit(data)
+
+    # Assert
+    error_msg = (
+        'Missing values are not yet supported for conditional sampling. '
+        'Please include only non-null values in your Condition objects.'
+    )
+    with pytest.raises(SynthesizerInputError, match=error_msg):
+        synthesizer.sample_from_conditions(conditions=[my_condition])
+
+
+def test_sample_remaining_columns_with_all_nans():
+    """Test it crashes when every condition row has a nan (GH#1758)."""
+    # Setup
+    data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='fake_hotel_guests'
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    known_columns = pd.DataFrame(data={
+        'has_rewards': [np.nan, False, True],
+        'amenities_fee': [5.00, np.nan, None]
+    })
+
+    # Run
+    synthesizer.fit(data)
+
+    # Assert
+    error_msg = (
+        'Missing values are not yet supported for conditional sampling. '
+        'Please include only non-null values in your Condition objects.'
+    )
+    with pytest.raises(SynthesizerInputError, match=error_msg):
+        synthesizer.sample_remaining_columns(known_columns=known_columns)
+
+
+def test_sample_remaining_columns_with_some_nans():
+    """Test it warns when some of the condition rows contain nans (GH#1758)."""
+    # Setup
+    data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='fake_hotel_guests'
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    known_columns = pd.DataFrame(data={
+        'has_rewards': [True, False, np.nan],
+        'amenities_fee': [5.00, np.nan, None]
+    })
+
+    # Run
+    synthesizer.fit(data)
+
+    # Assert
+    warn_msg = (
+        'Missing values are not yet supported. '
+        'Rows with any missing values will not be created.'
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        synthesizer.sample_remaining_columns(known_columns=known_columns)
 
 
 def test_multiple_fits():
@@ -372,11 +450,11 @@ def test_auto_assign_transformers_and_update_with_pii():
     name_transformer = synthesizer.get_transformers()['name']
     assert id_transformer.provider_name == 'person'
     assert id_transformer.function_name == 'first_name'
-    assert id_transformer.enforce_uniqueness is True
+    assert id_transformer.cardinality_rule == 'unique'
 
     assert name_transformer.provider_name == 'person'
     assert name_transformer.function_name == 'name'
-    assert name_transformer.enforce_uniqueness is False
+    assert name_transformer.cardinality_rule is None
 
 
 def test_refitting_a_model():

@@ -3,7 +3,7 @@
 import warnings
 from os import path, walk
 
-from sdv.utils import load_data_from_csv
+from sdv._utils import _load_data_from_csv
 
 
 def load_csvs(folder_name, read_csv_parameters=None):
@@ -26,7 +26,7 @@ def load_csvs(folder_name, read_csv_parameters=None):
         base_name, ext = path.splitext(filename)
         if ext == '.csv':
             filepath = path.join(dirpath, filename)
-            csvs[base_name] = load_data_from_csv(filepath, read_csv_parameters)
+            csvs[base_name] = _load_data_from_csv(filepath, read_csv_parameters)
         else:
             other_files.append(filename)
 

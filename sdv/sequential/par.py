@@ -12,13 +12,13 @@ from deepecho import PARModel
 from deepecho.sequences import assemble_sequences
 from rdt.transformers import FloatFormatter
 
+from sdv._utils import _cast_to_iterable, _groupby_list
 from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
 from sdv.single_table.ctgan import LossValuesMixin
-from sdv.utils import cast_to_iterable, groupby_list
 
 LOGGER = logging.getLogger(__name__)
 
@@ -41,7 +41,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             Define rounding scheme for ``numerical`` columns. If ``True``, the data returned
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
         context_columns (list[str]):
             A list of strings, representing the columns that do not vary in a sequence.
         segment_size (int):
@@ -84,9 +85,9 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         context_metadata_dict = {'columns': context_columns_dict}
         return SingleTableMetadata.load_from_dict(context_metadata_dict)
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=False, locales=None,
-                 context_columns=None, segment_size=None, epochs=128, sample_size=1, cuda=True,
-                 verbose=False):
+    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=False,
+                 locales=['en_US'], context_columns=None, segment_size=None, epochs=128,
+                 sample_size=1, cuda=True, verbose=False):
         super().__init__(
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,
@@ -95,7 +96,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         )
 
         sequence_key = self.metadata.sequence_key
-        self._sequence_key = list(cast_to_iterable(sequence_key)) if sequence_key else None
+        self._sequence_key = list(_cast_to_iterable(sequence_key)) if sequence_key else None
         if context_columns and not self._sequence_key:
             raise SynthesizerInputError(
                 "No 'sequence_keys' are specified in the metadata. The PARSynthesizer cannot "
@@ -145,7 +146,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
     def _validate_context_columns(self, data):
         errors = []
         if self.context_columns:
-            for sequence_key_value, data_values in data.groupby(groupby_list(self._sequence_key)):
+            for sequence_key_value, data_values in data.groupby(_groupby_list(self._sequence_key)):
                 for context_column in self.context_columns:
                     if len(data_values[context_column].unique()) > 1:
                         errors.append((

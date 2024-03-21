@@ -1,5 +1,6 @@
 """Base class for single table model presets."""
 
+import inspect
 import logging
 import sys
 
@@ -24,7 +25,8 @@ class SingleTablePreset:
         name (str):
             The preset to use.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
     """
 
     _synthesizer = None
@@ -38,13 +40,14 @@ class SingleTablePreset:
             locales=locales
         )
 
-    def __init__(self, metadata, name, locales=None):
+    def __init__(self, metadata, name, locales=['en_US']):
+        self.locales = locales
         if name not in PRESETS:
             raise ValueError(f"'name' must be one of {PRESETS}.")
 
         self.name = name
         if name == FAST_ML_PRESET:
-            self._setup_fast_preset(metadata, locales)
+            self._setup_fast_preset(metadata, self.locales)
 
     def add_constraints(self, constraints):
         """Add constraints to the synthesizer.
@@ -63,7 +66,13 @@ class SingleTablePreset:
 
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
-        return self._synthesizer.get_parameters()
+        parameters = inspect.signature(self.__init__).parameters
+        instantiated_parameters = {}
+        for parameter_name in parameters:
+            if parameter_name != 'metadata':
+                instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
+
+        return instantiated_parameters
 
     def fit(self, data):
         """Fit this model to the data.

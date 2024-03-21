@@ -1288,9 +1288,9 @@ class TestMultiTableMetadata:
             'Relationships:\n'
             "Error: foreign key column 'upravna_enota' contains unknown references: "
             '(10, 11, 12, 13, 14, + more). '
-            'All the values in this column must reference a primary key.\n'
+            "Please use the utility method 'drop_unknown_references' to clean the data.\n"
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9)."
-            ' All the values in this column must reference a primary key.'
+            " Please use the utility method 'drop_unknown_references' to clean the data."
         ]
         assert result == missing_upravna_enota
 
@@ -1403,7 +1403,7 @@ class TestMultiTableMetadata:
             'The provided data does not match the metadata:\n'
             'Relationships:\n'
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
-            'All the values in this column must reference a primary key.'
+            "Please use the utility method 'drop_unknown_references' to clean the data."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             metadata.validate_data(data)
@@ -2088,6 +2088,53 @@ class TestMultiTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.update_column('table', 'column', sdtype='numerical', pii=False)
 
+    def test_update_columns(self):
+        """Test the ``update_columns`` method."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._validate_table_exists = Mock()
+        table = Mock()
+        metadata.tables = {'table': table}
+
+        # Run
+        metadata.update_columns('table', ['col_1', 'col_2'], sdtype='numerical')
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table')
+        table.update_columns.assert_called_once_with(['col_1', 'col_2'], sdtype='numerical')
+
+    def test_update_columns_metadata(self):
+        """Test the ``update_columns_metadata`` method."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._validate_table_exists = Mock()
+        table = Mock()
+        metadata.tables = {'table': table}
+        metadata_updates = {
+            'col_1': {'sdtype': 'numerical'},
+            'col_2': {'sdtype': 'categorical'}
+        }
+
+        # Run
+        metadata.update_columns_metadata('table', metadata_updates)
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table')
+        table.update_columns_metadata.assert_called_once_with(metadata_updates)
+
+    def test_get_column_names(self):
+        """Test the ``get_column_names`` method."""
+        # Setup
+        metadata = MultiTableMetadata()
+        table1 = Mock()
+        metadata.tables = {'table1': table1}
+
+        # Run
+        metadata.get_column_names('table1', sdtype='email', pii=True)
+
+        # Assert
+        table1.get_column_names.assert_called_once_with(sdtype='email', pii=True)
+
     def test__detect_relationships(self):
         """Test relationships are automatically detected and the foreign key sdtype is updated."""
         # Setup
@@ -2203,7 +2250,7 @@ class TestMultiTableMetadata:
 
     @patch('sdv.metadata.multi_table.LOGGER')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    @patch('sdv.metadata.multi_table.load_data_from_csv')
+    @patch('sdv.metadata.multi_table._load_data_from_csv')
     def test_detect_table_from_csv(self, load_csv_mock, single_table_mock, log_mock):
         """Test the ``detect_table_from_csv`` method.
 

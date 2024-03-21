@@ -7,12 +7,12 @@ from rdt.transformers import (
     AnonymizedFaker, BinaryEncoder, FloatFormatter, RegexGenerator, UniformEncoder,
     UnixTimestampEncoder)
 
+from sdv._utils import _get_datetime_format
 from sdv.data_processing import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
-from sdv.utils import get_datetime_format
 
 
 class TestDataProcessor:
@@ -303,20 +303,20 @@ class TestDataProcessor:
         assert isinstance(dp.formatters['start_date'], DatetimeFormatter)
         assert isinstance(dp.formatters['end_date'], DatetimeFormatter)
 
-        start_date_data_format = get_datetime_format(
+        start_date_data_format = _get_datetime_format(
             data['start_date'][~data['start_date'].isna()][0]
         )
         reversed_start_date = reverse_transformed['start_date'][
             ~reverse_transformed['start_date'].isna()
         ]
-        reversed_start_date_format = get_datetime_format(reversed_start_date.iloc[0])
+        reversed_start_date_format = _get_datetime_format(reversed_start_date.iloc[0])
         assert start_date_data_format == reversed_start_date_format
 
-        end_date_data_format = get_datetime_format(data['end_date'][~data['end_date'].isna()][0])
+        end_date_data_format = _get_datetime_format(data['end_date'][~data['end_date'].isna()][0])
         reversed_end_date = reverse_transformed['end_date'][
             ~reverse_transformed['end_date'].isna()
         ]
-        reversed_end_date_format = get_datetime_format(reversed_end_date.iloc[0])
+        reversed_end_date_format = _get_datetime_format(reversed_end_date.iloc[0])
         assert end_date_data_format == reversed_end_date_format
 
     def test_refit_hypertransformer(self):

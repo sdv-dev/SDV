@@ -1,15 +1,17 @@
 """Base Multi Table Synthesizer class."""
 import contextlib
 import datetime
+import inspect
 import warnings
 from collections import defaultdict
 from copy import deepcopy
 
 import cloudpickle
 import numpy as np
-import pkg_resources
 from tqdm import tqdm
 
+from sdv import version
+from sdv._utils import _validate_foreign_keys_not_null, check_sdv_versions_and_warn
 from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
@@ -25,7 +27,8 @@ class BaseMultiTableSynthesizer:
             Multi table metadata representing the data tables that this synthesizer will be used
             for.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
         verbose (bool):
             Whether to print progress for fitting or not.
     """
@@ -77,7 +80,7 @@ class BaseMultiTableSynthesizer:
                 ' in future SDV versions.'
             )
 
-    def __init__(self, metadata, locales=None, synthesizer_kwargs=None):
+    def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
         self.metadata = metadata
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', message=r'.*column relationship.*')
@@ -105,6 +108,7 @@ class BaseMultiTableSynthesizer:
         self._creation_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_date = None
         self._fitted_sdv_version = None
+        self._fitted_sdv_enterprise_version = None
 
     def _get_root_parents(self):
         """Get the set of root parents in the graph."""
@@ -136,16 +140,19 @@ class BaseMultiTableSynthesizer:
 
         Returns:
             parameters (dict):
-                A dictionary representing the parameters that will be used to instantiate the
-                table's synthesizer.
+                A dictionary with the following structure:
+                {
+                    'synthesizer_name': the string name of the synthesizer for that table,
+                    'synthesizer_parameters': the parameters used to instantiate the synthesizer
+                }
         """
         table_synthesizer = self._table_synthesizers.get(table_name)
         if not table_synthesizer:
-            table_params = {'table_synthesizer': None, 'table_parameters': {}}
+            table_params = {'synthesizer_name': None, 'synthesizer_parameters': {}}
         else:
             table_params = {
-                'table_synthesizer': type(table_synthesizer).__name__,
-                'table_parameters': table_synthesizer.get_parameters()
+                'synthesizer_name': type(table_synthesizer).__name__,
+                'synthesizer_parameters': table_synthesizer.get_parameters()
             }
 
         return table_params
@@ -157,15 +164,13 @@ class BaseMultiTableSynthesizer:
             parameters (dict):
                 A dictionary representing the parameters used to instantiate the synthesizer.
         """
-        parameters_dict = {
-            'locales': self.locales,
-            'verbose': self.verbose,
-            'tables': {
-                table: self.get_table_parameters(table) for table in self.metadata.tables
-            }
-        }
+        parameters = inspect.signature(self.__init__).parameters
+        instantiated_parameters = {}
+        for parameter_name in parameters:
+            if parameter_name != 'metadata':
+                instantiated_parameters[parameter_name] = self.__dict__.get(parameter_name)
 
-        return parameters_dict
+        return instantiated_parameters
 
     def set_table_parameters(self, table_name, table_parameters):
         """Update the table's synthesizer instantiation parameters.
@@ -363,7 +368,8 @@ class BaseMultiTableSynthesizer:
         self._model_tables(augmented_data)
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
-        self._fitted_sdv_version = pkg_resources.get_distribution('sdv').version
+        self._fitted_sdv_version = getattr(version, 'public', None)
+        self._fitted_sdv_enterprise_version = getattr(version, 'enterprise', None)
 
     def fit(self, data):
         """Fit this model to the original data.
@@ -373,6 +379,7 @@ class BaseMultiTableSynthesizer:
                 Dictionary mapping each table name to a ``pandas.DataFrame`` in the raw format
                 (before any transformations).
         """
+        _validate_foreign_keys_not_null(self.metadata, data)
         self._check_metadata_updated()
         self._fitted = False
         processed_data = self.preprocess(data)
@@ -551,13 +558,17 @@ class BaseMultiTableSynthesizer:
                 * ``last_fit_date``: date for the last time it was fit
                 * ``fitted_sdv_version``: version of sdv it was on when fitted
         """
-        return {
+        info = {
             'class_name': self.__class__.__name__,
             'creation_date': self._creation_date,
             'is_fit': self._fitted,
             'last_fit_date': self._fitted_date,
             'fitted_sdv_version': self._fitted_sdv_version
         }
+        if self._fitted_sdv_enterprise_version:
+            info['fitted_sdv_enterprise_version'] = self._fitted_sdv_enterprise_version
+
+        return info
 
     def save(self, filepath):
         """Save this instance to the given path using cloudpickle.
@@ -571,12 +582,18 @@ class BaseMultiTableSynthesizer:
 
     @classmethod
     def load(cls, filepath):
-        """Load the multi-table synthesizer from a given path.
+        """Load a multi-table synthesizer from a given path.
 
         Args:
             filepath (str):
-                Path from which to load the instance.
+                A string describing the filepath of your saved synthesizer.
+
+        Returns:
+            MultiTableSynthesizer:
+                The loaded synthesizer.
         """
         with open(filepath, 'rb') as f:
             synthesizer = cloudpickle.load(f)
-            return synthesizer
+
+        check_sdv_versions_and_warn(synthesizer)
+        return synthesizer

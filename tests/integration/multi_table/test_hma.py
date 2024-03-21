@@ -140,30 +140,30 @@ class TestHMASynthesizer:
 
         # Assert
         character_params = hmasynthesizer.get_table_parameters('characters')
-        assert character_params['table_synthesizer'] == 'GaussianCopulaSynthesizer'
-        assert character_params['table_parameters'] == {
+        assert character_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
+        assert character_params['synthesizer_parameters'] == {
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'locales': None,
+            'locales': ['en_US'],
             'numerical_distributions': {}
         }
         families_params = hmasynthesizer.get_table_parameters('families')
-        assert families_params['table_synthesizer'] == 'GaussianCopulaSynthesizer'
-        assert families_params['table_parameters'] == {
+        assert families_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
+        assert families_params['synthesizer_parameters'] == {
             'default_distribution': 'uniform',
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'locales': None,
+            'locales': ['en_US'],
             'numerical_distributions': {}
         }
         char_families_params = hmasynthesizer.get_table_parameters('character_families')
-        assert char_families_params['table_synthesizer'] == 'GaussianCopulaSynthesizer'
-        assert char_families_params['table_parameters'] == {
+        assert char_families_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
+        assert char_families_params['synthesizer_parameters'] == {
             'default_distribution': 'norm',
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'locales': None,
+            'locales': ['en_US'],
             'numerical_distributions': {}
         }
 
@@ -1329,6 +1329,79 @@ class TestHMASynthesizer:
 
         # Assert
         assert len(record) == 1
+
+    def test_null_foreign_keys(self):
+        """Test that the synthesizer crashes when there are null foreign keys."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata.add_table('parent_table')
+        metadata.add_column('parent_table', 'id', sdtype='id')
+        metadata.set_primary_key('parent_table', 'id')
+
+        metadata.add_table('child_table1')
+        metadata.add_column('child_table1', 'id', sdtype='id')
+        metadata.set_primary_key('child_table1', 'id')
+        metadata.add_column('child_table1', 'fk', sdtype='id')
+
+        metadata.add_table('child_table2')
+        metadata.add_column('child_table2', 'id', sdtype='id')
+        metadata.set_primary_key('child_table2', 'id')
+        metadata.add_column('child_table2', 'fk1', sdtype='id')
+        metadata.add_column('child_table2', 'fk2', sdtype='id')
+
+        metadata.add_relationship(
+            parent_table_name='parent_table',
+            child_table_name='child_table1',
+            parent_primary_key='id',
+            child_foreign_key='fk'
+        )
+
+        metadata.add_relationship(
+            parent_table_name='parent_table',
+            child_table_name='child_table2',
+            parent_primary_key='id',
+            child_foreign_key='fk1'
+        )
+
+        metadata.add_relationship(
+            parent_table_name='parent_table',
+            child_table_name='child_table2',
+            parent_primary_key='id',
+            child_foreign_key='fk2'
+        )
+
+        data = {
+            'parent_table': pd.DataFrame({
+                'id': [1, 2, 3]
+            }),
+            'child_table1': pd.DataFrame({
+                'id': [1, 2, 3],
+                'fk': [1, 2, np.nan]
+            }),
+            'child_table2': pd.DataFrame({
+                'id': [1, 2, 3],
+                'fk1': [1, 2, np.nan],
+                'fk2': [1, 2, np.nan]
+            })
+        }
+
+        synthesizer = HMASynthesizer(metadata)
+
+        # Run
+        metadata.validate()
+        metadata.validate_data(data)
+
+        # Run and Assert
+        err_msg = re.escape(
+            'The data contains null values in foreign key columns. This feature is currently '
+            'unsupported. Please remove null values to fit the synthesizer.\n'
+            '\n'
+            'Affected columns:\n'
+            "Table 'child_table1', column(s) ['fk']\n"
+            "Table 'child_table2', column(s) ['fk1', 'fk2']\n"
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            synthesizer.fit(data)
 
 
 parametrization = [

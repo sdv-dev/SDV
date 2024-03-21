@@ -365,3 +365,15 @@ def test_detect_table_from_csv(tmp_path):
     }
 
     assert metadata.to_dict() == expected_metadata
+
+
+def test_get_column_names():
+    """Test the ``get_column_names`` method."""
+    # Setup
+    metadata = get_multi_table_metadata()
+
+    # Run
+    matches = metadata.get_column_names('nesreca', sdtype='id')
+
+    # Assert
+    assert set(matches) == {'upravna_enota', 'id_nesreca'}
