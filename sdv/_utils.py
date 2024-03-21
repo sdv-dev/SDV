@@ -313,34 +313,38 @@ def check_sdv_versions_and_warn(synthesizer):
     """
     current_public_version = getattr(version, 'public', None)
     current_enterprise_version = getattr(version, 'enterprise', None)
-    public_missmatch = current_public_version != synthesizer._fitted_sdv_version
-    enterprise_missmatch = current_enterprise_version != synthesizer._fitted_sdv_enterprise_version
-    if synthesizer._fitted and (public_missmatch or enterprise_missmatch):
-        static_message = (
-            'The latest bug fixes and features may not be available for this synthesizer. '
-            'To see these enhancements, create and train a new synthesizer on this version.'
-        )
-        if public_missmatch and enterprise_missmatch:
-            message = (
-                'You are currently on SDV version '
-                f'{current_public_version} and SDV Enterprise version '
-                f'{current_enterprise_version} but this synthesizer was created on '
-                f'SDV version {synthesizer._fitted_sdv_version} and SDV Enterprise version '
-                f'{synthesizer._fitted_sdv_enterprise_version}.'
-            )
+    if synthesizer._fitted:
+        fitted_public_version = getattr(synthesizer, '_fitted_sdv_version', None)
+        fitted_enterprise_version = getattr(synthesizer, '_fitted_sdv_enterprise_version', None)
+        public_missmatch = current_public_version != fitted_public_version
+        enterprise_missmatch = current_enterprise_version != fitted_enterprise_version
 
-        elif public_missmatch:
-            message = (
-                'You are currently on SDV version '
-                f'{current_public_version} but this synthesizer was created on '
-                f'version {synthesizer._fitted_sdv_version}.'
+        if (public_missmatch or enterprise_missmatch):
+            static_message = (
+                'The latest bug fixes and features may not be available for this synthesizer. '
+                'To see these enhancements, create and train a new synthesizer on this version.'
             )
-        elif enterprise_missmatch:
-            message = (
-                'You are currently on SDV Enterprise version '
-                f'{current_enterprise_version} but this synthesizer was created on '
-                f'version {synthesizer._fitted_sdv_enterprise_version}.'
-            )
+            if public_missmatch and enterprise_missmatch:
+                message = (
+                    'You are currently on SDV version '
+                    f'{current_public_version} and SDV Enterprise version '
+                    f'{current_enterprise_version} but this synthesizer was created on '
+                    f'SDV version {synthesizer._fitted_sdv_version} and SDV Enterprise version '
+                    f'{synthesizer._fitted_sdv_enterprise_version}.'
+                )
 
-        message = f'{message} {static_message}'
-        warnings.warn(message, SDVVersionWarning)
+            elif public_missmatch:
+                message = (
+                    'You are currently on SDV version '
+                    f'{current_public_version} but this synthesizer was created on '
+                    f'version {synthesizer._fitted_sdv_version}.'
+                )
+            elif enterprise_missmatch:
+                message = (
+                    'You are currently on SDV Enterprise version '
+                    f'{current_enterprise_version} but this synthesizer was created on '
+                    f'version {synthesizer._fitted_sdv_enterprise_version}.'
+                )
+
+            message = f'{message} {static_message}'
+            warnings.warn(message, SDVVersionWarning)
