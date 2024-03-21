@@ -486,6 +486,23 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)
 
+    def test_validate_constraints_not_met(self):
+        """Test that errors are being raised when there are constraints not met."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        error_msg = re.escape(
+            'The provided data does not match the metadata:\n'
+            'Relationships:\n'
+            "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
+            "Please use the utility method 'drop_unknown_references' to clean the data."
+        )
+        with pytest.raises(InvalidDataError, match=error_msg):
+            instance.validate(data)
+
     def test_auto_assign_transformers(self):
         """Test that each table of the data calls its single table auto assign method."""
         # Setup

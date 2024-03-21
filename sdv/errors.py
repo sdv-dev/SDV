@@ -27,8 +27,11 @@ class ConstraintsNotMetError(ValueError):
     """Exception raised when the given data is not valid for the constraints."""
 
     def __init__(self, message=''):
-        self.message = message
+        self.message = [message] if not isinstance(message, list) else message
         super().__init__(self.message)
+
+    def __str__(self):
+        return '\n'.join(map(str, self.message))
 
 
 class SynthesizerInputError(Exception):

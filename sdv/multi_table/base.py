@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from sdv import version
 from sdv._utils import _validate_foreign_keys_not_null, check_sdv_versions_and_warn
-from sdv.errors import InvalidDataError, SynthesizerInputError
+from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 
@@ -224,19 +224,22 @@ class BaseMultiTableSynthesizer:
                 A dictionary of table names to pd.DataFrames.
         """
         errors = []
-        try:
-            self.metadata.validate_data(data)
-        except InvalidDataError as e:
-            errors += e.errors
-
+        constraints_errors = []
+        self.metadata.validate_data(data)
         for table_name in data:
             if table_name in self._table_synthesizers:
-                errors += self._table_synthesizers[table_name]._validate_constraints(
-                    data[table_name])
+                try:
+                    self._table_synthesizers[table_name]._validate_constraints(data[table_name])
+                except ConstraintsNotMetError as error:
+                    constraints_errors.append(error)
+
                 # Validate rules specific to each synthesizer
                 errors += self._table_synthesizers[table_name]._validate(data[table_name])
 
-        if errors:
+        if constraints_errors:
+            raise ConstraintsNotMetError(constraints_errors)
+
+        elif errors:
             raise InvalidDataError(errors)
 
     def _validate_table_name(self, table_name):

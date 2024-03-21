@@ -7,7 +7,7 @@ from rdt.transformers import (
     AnonymizedFaker, CustomLabelEncoder, FloatFormatter, LabelEncoder, PseudoAnonymizedFaker)
 
 from sdv.datasets.demo import download_demo
-from sdv.errors import InvalidDataError
+from sdv.errors import ConstraintsNotMetError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
@@ -318,14 +318,13 @@ def test_validate_with_failing_constraint():
     ])
 
     error_msg = (
-        'The provided data does not match the metadata:'
-        "\n\nData is not valid for the 'Inequality' constraint:"
+        "Data is not valid for the 'Inequality' constraint:"
         '\n  checkin_date checkout_date'
         '\n0  02 Jan 2021   29 Dec 2020'
     )
 
     # Run / Assert
-    with pytest.raises(InvalidDataError, match=error_msg):
+    with pytest.raises(ConstraintsNotMetError, match=error_msg):
         gc.validate(real_data)
 
 

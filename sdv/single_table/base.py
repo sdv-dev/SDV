@@ -117,10 +117,11 @@ class BaseSynthesizer:
         errors = []
         try:
             self.metadata.validate_data(data)
-        except InvalidDataError as e:
-            errors += e.errors
+        except InvalidDataError as error:
+            errors += error.errors
 
-        return errors
+        if errors:
+            raise InvalidDataError(errors)
 
     def _validate_constraints(self, data):
         """Validate that the data satisfies the constraints."""
@@ -130,7 +131,8 @@ class BaseSynthesizer:
         except AggregateConstraintsError as e:
             errors.append(e)
 
-        return errors
+        if errors:
+            raise ConstraintsNotMetError(errors)
 
     def _validate(self, data):
         """Validate any rules that only apply to specific synthesizers.
@@ -149,22 +151,24 @@ class BaseSynthesizer:
         Raises:
             ValueError:
                 Raised when data is not of type pd.DataFrame.
+            ConstraintsNotMetError:
+                If the conditions are not valid for the given constraints.
             InvalidDataError:
                 Raised if:
                     * data columns don't match metadata
                     * keys have missing values
                     * primary or alternate keys are not unique
-                    # constraints are not valid
                     * context columns vary for a sequence key
                     * values of a column don't satisfy their sdtype
         """
-        errors = []
-        errors += self._validate_metadata(data)
-        errors += self._validate_constraints(data)
-        errors += self._validate(data)  # Validate rules specific to each synthesizer
+        self._validate_metadata(data)
+        self._validate_constraints(data)
 
-        if errors:
-            raise InvalidDataError(errors)
+        # Retaining the logic of returning errors and raising them here to maintain consistency
+        # with the existing workflow with synthesizers
+        synthesizer_errors = self._validate(data)  # Validate rules specific to each synthesizer
+        if synthesizer_errors:
+            raise InvalidDataError(synthesizer_errors)
 
     def _validate_transformers(self, column_name_to_transformer):
         primary_and_alternate_keys = self.metadata._get_primary_and_alternate_keys()
