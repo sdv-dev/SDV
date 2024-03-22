@@ -1,11 +1,9 @@
 """Utility functions."""
-import sys
-
-import pandas as pd
-
-from sdv._utils import (
-    _get_relationship_for_child, _get_rows_to_drop, _validate_foreign_keys_not_null)
+from sdv._utils import _validate_foreign_keys_not_null
 from sdv.errors import InvalidDataError, SynthesizerInputError
+from sdv.multi_table.utils import (
+    _get_relationship_for_child, _get_rows_to_drop, _get_total_estimated_columns, _simplify_data,
+    _simplify_metadata)
 
 
 def drop_unknown_references(metadata, data, drop_missing_values=True, verbose=True):
@@ -77,3 +75,29 @@ def drop_unknown_references(metadata, data, drop_missing_values=True, verbose=Tr
             ]))
 
         return result
+
+
+def simplify_schema(data, metadata):
+    """Simplify the schema of the data and metadata.
+
+    Args:
+        data (dict):
+            Dictionary that maps each table name (string) to the data for that
+            table (pandas.DataFrame).
+        metadata (MultiTableMetadata):
+            Metadata of the datasets.
+
+    Returns:
+        dict:
+            Dictionary with the simplified dataframes.
+        MultiTableMetadata:
+            Simplified metadata.
+    """
+    total_estimated_columns = _get_total_estimated_columns(metadata)
+    if total_estimated_columns < 1000:
+        return data, metadata
+
+    simple_metadata = _simplify_metadata(metadata)
+    simple_data = _simplify_data(data, simple_metadata)
+
+    return simple_data, simple_metadata
