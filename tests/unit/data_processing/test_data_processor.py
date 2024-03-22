@@ -1497,7 +1497,7 @@ class TestDataProcessor:
         assert config == expected_config
 
     def test__create_config_with_contextual_column_as_primary_key(self):
-        """Test it when a conextual column is a primary key."""
+        """Test it when a contextual column is a primary key."""
         # Setup
         class CustomTransformer:
             pass
