@@ -525,6 +525,59 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         return synthesizer
 
+    def _match_cardinality(self, table, num_rows_key, num_rows):
+        """Update ``table`` to have cardinality match ``num_rows``.
+
+        Ensure the total sum of ``num_rows_key`` matches the given number of rows by
+        randomly increasing or decreasing the number of rows per primary key. Also avoid
+        changing the overall min/max number of rows when possible.
+
+        Args:
+            table (pd.DataFrame):
+                The table to update.
+            num_rows_key (str):
+                The name of the column specifying the number of rows per primary key.
+            num_rows (int):
+                The total number of rows the ``num_rows_key`` column should sum to.
+        """
+        num_rows_col = table[num_rows_key].to_numpy()
+        num_rows_difference = table[num_rows_key].sum() - num_rows
+        max_cardinality = max(table[num_rows_key])
+        min_cardinality = min(table[num_rows_key])
+        while num_rows_difference != 0:
+            if num_rows_difference < 0:
+                eligible_rows = np.argwhere(num_rows_col < max_cardinality).T[0]
+                delta = 1
+            else:
+                eligible_rows = np.argwhere(num_rows_col > min_cardinality).T[0]
+                delta = -1
+
+            if eligible_rows.size > abs(num_rows_difference):
+                eligible_rows = np.random.choice(
+                    eligible_rows, size=int(abs(num_rows_difference)),
+                    replace=False
+                )
+            elif eligible_rows.size == 0:
+                LOGGER.info(
+                    'No remaining parents with between min and max cardinality, '
+                    'changing min/max cardinality.'
+                )
+                eligible_rows = np.random.choice(
+                    range(0, len(num_rows_col)),
+                    size=int(min(abs(num_rows_difference), len(num_rows_col))),
+                    replace=False
+                )
+                if delta == -1:
+                    min_cardinality += delta
+                else:
+                    max_cardinality += delta
+
+            num_rows_col[eligible_rows] += delta
+            num_rows_difference += len(eligible_rows) * delta
+
+        assert sum(table[num_rows_key]) == num_rows
+        table[num_rows_key] = num_rows_col
+
     @staticmethod
     def _find_parent_id(likelihoods, num_rows):
         """Find the parent id for one row based on the likelihoods of parent id values.
@@ -541,6 +594,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             int:
                 The parent id for this row, chosen based on likelihoods.
         """
+        """
         mean = likelihoods.mean()
         if (likelihoods == 0).all():
             # All rows got 0 likelihood, fallback to num_rows
@@ -554,7 +608,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             # at least one row got a valid likelihood, so fill the
             # rows that got a singular matrix error with the mean
             likelihoods = likelihoods.fillna(mean)
-
+        """
+        likelihoods = num_rows
         total = likelihoods.sum()
         if total == 0:
             # Worse case scenario: we have no likelihoods
@@ -564,7 +619,12 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         else:
             weights = likelihoods.to_numpy() / total
 
-        return np.random.choice(likelihoods.index.to_list(), p=weights)
+        chosen_parent = np.random.choice(likelihoods.index.to_list(), p=weights)
+
+        #assert num_rows[chosen_parent] > 0
+        num_rows[chosen_parent] -= 1
+
+        return chosen_parent
 
     def _get_likelihoods(self, table_rows, parent_rows, table_name, foreign_key):
         """Calculate the likelihood of each parent id value appearing in the data.
@@ -633,10 +693,16 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         # Create a copy of the parent table with the primary key as index to calculate likelihoods
         primary_key = self.metadata.tables[parent_name].primary_key
         parent_table = parent_table.set_index(primary_key)
-        num_rows = parent_table[f'__{child_name}__{foreign_key}__num_rows'].fillna(0).clip(0)
+        num_rows_column = f'__{child_name}__{foreign_key}__num_rows'
+        parent_table[num_rows_column] = parent_table[num_rows_column].fillna(0).clip(0).round()
+        self._match_cardinality(parent_table, num_rows_column, len(child_table))
 
+        num_rows = parent_table[num_rows_column].fillna(0).clip(0).round()
         likelihoods = self._get_likelihoods(child_table, parent_table, child_name, foreign_key)
-        return likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)
+
+        ids = likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)
+
+        return ids
 
     def _add_foreign_key_columns(self, child_table, parent_table, child_name, parent_name):
         for foreign_key in self.metadata._get_foreign_keys(parent_name, child_name):
@@ -649,3 +715,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     foreign_key=foreign_key
                 )
                 child_table[foreign_key] = parent_ids.to_numpy()
+                
+            if parent_name == 'person' and child_name == 'wife' and foreign_key == 'name2':
+                with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+                    print('FK: ', child_table['name2'])
