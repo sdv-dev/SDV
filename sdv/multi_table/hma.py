@@ -499,6 +499,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             int:
                 The parent id for this row, chosen based on likelihoods.
         """
+        """
         mean = likelihoods.mean()
         if (likelihoods == 0).all():
             # All rows got 0 likelihood, fallback to num_rows
@@ -512,7 +513,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             # at least one row got a valid likelihood, so fill the
             # rows that got a singular matrix error with the mean
             likelihoods = likelihoods.fillna(mean)
-
+        """
+        likelihoods = num_rows
         total = likelihoods.sum()
         if total == 0:
             # Worse case scenario: we have no likelihoods
@@ -522,7 +524,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         else:
             weights = likelihoods.to_numpy() / total
 
-        return np.random.choice(likelihoods.index.to_list(), p=weights)
+        chosen_parent = np.random.choice(likelihoods.index.to_list(), p=weights)
+
+        num_rows[chosen_parent] -= 1
+
+        return chosen_parent
 
     def _get_likelihoods(self, table_rows, parent_rows, table_name, foreign_key):
         """Calculate the likelihood of each parent id value appearing in the data.
@@ -591,10 +597,10 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         # Create a copy of the parent table with the primary key as index to calculate likelihoods
         primary_key = self.metadata.tables[parent_name].primary_key
         parent_table = parent_table.set_index(primary_key)
-        num_rows = parent_table[f'__{child_name}__{foreign_key}__num_rows'].fillna(0).clip(0)
-
+        num_rows_column = f'__{child_name}__{foreign_key}__num_rows'
         likelihoods = self._get_likelihoods(child_table, parent_table, child_name, foreign_key)
-        return likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)
+
+        return likelihoods.apply(self._find_parent_id, axis=1, num_rows=parent_table[num_rows_column])
 
     def _add_foreign_key_columns(self, child_table, parent_table, child_name, parent_name):
         for foreign_key in self.metadata._get_foreign_keys(parent_name, child_name):
