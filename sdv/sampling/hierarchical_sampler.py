@@ -70,15 +70,6 @@ class BaseHierarchicalSampler():
             num_rows = synthesizer._num_rows
         return synthesizer._sample_batch(int(num_rows), keep_extra_columns=True)
 
-    def _get_num_rows_from_parent(self, parent_row, child_name, foreign_key):
-        """Get the number of rows to sample for the child from the parent row."""
-        num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
-        num_rows = 0
-        if num_rows_key in parent_row.keys():
-            num_rows = parent_row[num_rows_key]
-
-        return num_rows
-
     def _add_child_rows(self, child_name, parent_name, parent_row, sampled_data, num_rows=None):
         """Sample the child rows that reference the parent row.
 
@@ -97,10 +88,9 @@ class BaseHierarchicalSampler():
         """
         # A child table is created based on only one foreign key.
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
-        if num_rows is None:
-            num_rows = self._get_num_rows_from_parent(parent_row, child_name, foreign_key)
+        num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
+        num_rows = parent_row[num_rows_key]
         child_synthesizer = self._recreate_child_synthesizer(child_name, parent_name, parent_row)
-
         sampled_rows = self._sample_rows(child_synthesizer, num_rows)
 
         if len(sampled_rows):
