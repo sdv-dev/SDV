@@ -76,10 +76,6 @@ class BaseHierarchicalSampler():
         num_rows = 0
         if num_rows_key in parent_row.keys():
             num_rows = parent_row[num_rows_key]
-            num_rows = min(
-                self._max_child_rows[num_rows_key],
-                round(num_rows)
-            )
 
         return num_rows
 
@@ -110,7 +106,7 @@ class BaseHierarchicalSampler():
         if len(sampled_rows):
             parent_key = self.metadata.tables[parent_name].primary_key
             if foreign_key in sampled_rows:
-                # If foreign key is in sampeld rows raises `SettingWithCopyWarning
+                # If foreign key is in sampeld rows raises `SettingWithCopyWarning`
                 row_indices = sampled_rows.index
                 sampled_rows[foreign_key].iloc[row_indices] = parent_row[parent_key]
             else:
@@ -123,7 +119,55 @@ class BaseHierarchicalSampler():
                 sampled_data[child_name] = pd.concat(
                     [previous, sampled_rows]).reset_index(drop=True)
 
-    def _sample_children(self, table_name, sampled_data):
+    def _enforce_table_sizes(self, child_name, table_name, scale, sampled_data):
+        total_num_rows = int(self._table_sizes[child_name] * scale)
+        for foreign_key in self.metadata._get_foreign_keys(table_name, child_name):
+            num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
+            sampled_data[table_name][num_rows_key] = sampled_data[table_name][num_rows_key].fillna(0).round().clip(0, self._max_child_rows[num_rows_key])
+            if child_name == 'wife' and table_name == 'person':
+                print(sampled_data[table_name][num_rows_key])
+
+            while sum(sampled_data[table_name][num_rows_key]) != total_num_rows:
+                x = sampled_data[table_name][num_rows_key].argsort()
+                if sum(sampled_data[table_name][num_rows_key]) < total_num_rows:
+                    for i in x:
+                        if sampled_data[table_name][num_rows_key][i] >= self._max_child_rows[num_rows_key]:
+                            break
+                        sampled_data[table_name][num_rows_key][i] += 1
+                        if sum(sampled_data[table_name][num_rows_key]) == total_num_rows:
+                            break
+                else:
+                    for i in x[::-1]:
+                        if sampled_data[table_name][num_rows_key][i] <= 0:
+                            break
+                        sampled_data[table_name][num_rows_key][i] -= 1
+                        if sum(sampled_data[table_name][num_rows_key]) == total_num_rows:
+                            break
+
+            assert sum(sampled_data[table_name][num_rows_key]) == total_num_rows
+            assert sampled_data[table_name][num_rows_key].to_list() == sampled_data[table_name][num_rows_key].clip(0, self._max_child_rows[num_rows_key]).to_list()
+
+        """
+        while sum(sampled_data[table_name][num_rows_key]) != total_num_rows:
+            # Select indices to increase or decrease the number of rows
+            idx = sampled_data[table_name][num_rows_key].argsort().values
+            if sum(sampled_data[table_name][num_rows_key]) < total_num_rows:
+                # Filter to indices where we can add 1 without exceeding the max
+                filtered_idx = idx[sampled_data[table_name][num_rows_key][idx] < self._max_child_rows[num_rows_key]]
+                # Figure out how many of the indices we need to use
+                delta = int(total_num_rows - sum(sampled_data[table_name][num_rows_key]))
+                # Add 1 to the first delta indices
+                sampled_data[table_name].iloc[num_rows_key,filtered_idx[:delta]] += 1
+            else:
+                # Filter to indices where we can subtract 1 without going below 0
+                filtered_idx = idx[sampled_data[table_name][num_rows_key][idx] > 0]
+                # Figure out how many of the indices we need to use
+                delta = int(sum(sampled_data[table_name][num_rows_key]) - total_num_rows)
+                # Subtract 1 from the last delta indices
+                sampled_data[table_name].iloc[num_rows_key,filtered_idx[-delta:]] -= 1
+        """
+
+    def _sample_children(self, table_name, sampled_data, scale=1.0):
         """Recursively sample the children of a table.
 
         This method will loop through the children of a table and sample rows for that child for
@@ -138,30 +182,15 @@ class BaseHierarchicalSampler():
         """
         for child_name in self.metadata._get_child_map()[table_name]:
             if child_name not in sampled_data:  # Sample based on only 1 parent
+                self._enforce_table_sizes(child_name, table_name, scale, sampled_data)
                 for _, row in sampled_data[table_name].iterrows():
                     self._add_child_rows(
                         child_name=child_name,
                         parent_name=table_name,
                         parent_row=row,
-                        sampled_data=sampled_data
-                    )
-
-                if child_name not in sampled_data:  # No child rows sampled, force row creation
-                    foreign_key = self.metadata._get_foreign_keys(table_name, child_name)[0]
-                    num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
-                    if num_rows_key in sampled_data[table_name].columns:
-                        max_num_child_index = sampled_data[table_name][num_rows_key].idxmax()
-                        parent_row = sampled_data[table_name].iloc[max_num_child_index]
-                    else:
-                        parent_row = sampled_data[table_name].sample().iloc[0]
-
-                    self._add_child_rows(
-                        child_name=child_name,
-                        parent_name=table_name,
-                        parent_row=parent_row,
                         sampled_data=sampled_data,
-                        num_rows=1
                     )
+
                 self._sample_children(table_name=child_name, sampled_data=sampled_data)
 
     def _finalize(self, sampled_data):
@@ -219,7 +248,7 @@ class BaseHierarchicalSampler():
             synthesizer = self._table_synthesizers[table]
             LOGGER.info(f'Sampling {num_rows} rows from table {table}')
             sampled_data[table] = self._sample_rows(synthesizer, num_rows)
-            self._sample_children(table_name=table, sampled_data=sampled_data)
+            self._sample_children(table_name=table, sampled_data=sampled_data, scale=scale)
 
         added_relationships = set()
         for relationship in self.metadata.relationships:
