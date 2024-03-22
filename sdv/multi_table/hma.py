@@ -525,59 +525,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         return synthesizer
 
-    def _match_cardinality(self, table, num_rows_key, num_rows):
-        """Update ``table`` to have cardinality match ``num_rows``.
-
-        Ensure the total sum of ``num_rows_key`` matches the given number of rows by
-        randomly increasing or decreasing the number of rows per primary key. Also avoid
-        changing the overall min/max number of rows when possible.
-
-        Args:
-            table (pd.DataFrame):
-                The table to update.
-            num_rows_key (str):
-                The name of the column specifying the number of rows per primary key.
-            num_rows (int):
-                The total number of rows the ``num_rows_key`` column should sum to.
-        """
-        num_rows_col = table[num_rows_key].to_numpy()
-        num_rows_difference = table[num_rows_key].sum() - num_rows
-        max_cardinality = max(table[num_rows_key])
-        min_cardinality = min(table[num_rows_key])
-        while num_rows_difference != 0:
-            if num_rows_difference < 0:
-                eligible_rows = np.argwhere(num_rows_col < max_cardinality).T[0]
-                delta = 1
-            else:
-                eligible_rows = np.argwhere(num_rows_col > min_cardinality).T[0]
-                delta = -1
-
-            if eligible_rows.size > abs(num_rows_difference):
-                eligible_rows = np.random.choice(
-                    eligible_rows, size=int(abs(num_rows_difference)),
-                    replace=False
-                )
-            elif eligible_rows.size == 0:
-                LOGGER.info(
-                    'No remaining parents with between min and max cardinality, '
-                    'changing min/max cardinality.'
-                )
-                eligible_rows = np.random.choice(
-                    range(0, len(num_rows_col)),
-                    size=int(min(abs(num_rows_difference), len(num_rows_col))),
-                    replace=False
-                )
-                if delta == -1:
-                    min_cardinality += delta
-                else:
-                    max_cardinality += delta
-
-            num_rows_col[eligible_rows] += delta
-            num_rows_difference += len(eligible_rows) * delta
-
-        assert sum(table[num_rows_key]) == num_rows
-        table[num_rows_key] = num_rows_col
-
     @staticmethod
     def _find_parent_id(likelihoods, num_rows):
         """Find the parent id for one row based on the likelihoods of parent id values.
@@ -621,7 +568,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         chosen_parent = np.random.choice(likelihoods.index.to_list(), p=weights)
 
-        #assert num_rows[chosen_parent] > 0
         num_rows[chosen_parent] -= 1
 
         return chosen_parent
@@ -694,15 +640,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         primary_key = self.metadata.tables[parent_name].primary_key
         parent_table = parent_table.set_index(primary_key)
         num_rows_column = f'__{child_name}__{foreign_key}__num_rows'
-        parent_table[num_rows_column] = parent_table[num_rows_column].fillna(0).clip(0).round()
-        self._match_cardinality(parent_table, num_rows_column, len(child_table))
-
-        num_rows = parent_table[num_rows_column].fillna(0).clip(0).round()
         likelihoods = self._get_likelihoods(child_table, parent_table, child_name, foreign_key)
 
-        ids = likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)
-
-        return ids
+        return likelihoods.apply(self._find_parent_id, axis=1, num_rows=parent_table[num_rows_column])
 
     def _add_foreign_key_columns(self, child_table, parent_table, child_name, parent_name):
         for foreign_key in self.metadata._get_foreign_keys(parent_name, child_name):
@@ -715,7 +655,3 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     foreign_key=foreign_key
                 )
                 child_table[foreign_key] = parent_ids.to_numpy()
-                
-            if parent_name == 'person' and child_name == 'wife' and foreign_key == 'name2':
-                with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-                    print('FK: ', child_table['name2'])
