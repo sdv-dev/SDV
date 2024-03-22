@@ -124,8 +124,6 @@ class BaseHierarchicalSampler():
         for foreign_key in self.metadata._get_foreign_keys(table_name, child_name):
             num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
             sampled_data[table_name][num_rows_key] = sampled_data[table_name][num_rows_key].fillna(0).round().clip(0, self._max_child_rows[num_rows_key])
-            if child_name == 'wife' and table_name == 'person':
-                print(sampled_data[table_name][num_rows_key])
 
             while sum(sampled_data[table_name][num_rows_key]) != total_num_rows:
                 x = sampled_data[table_name][num_rows_key].argsort()
