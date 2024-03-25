@@ -128,7 +128,7 @@ def test_sythesize_sequences(tmp_path):
         modality='sequential',
         dataset_name='nasdaq100_2019'
     )
-    real_data[real_data['Symbol'] == 'AMZN']['Sector'].unique()
+    assert real_data[real_data['Symbol'] == 'AMZN']['Sector'].unique()
     synthesizer = PARSynthesizer(
         metadata,
         epochs=5,
