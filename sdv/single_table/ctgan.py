@@ -2,6 +2,8 @@
 import numpy as np
 import pandas as pd
 from ctgan import CTGAN, TVAE
+import plotly.express as px
+from sdmetrics import visualization
 
 from sdv.errors import InvalidDataTypeError, NotFittedError
 from sdv.single_table.base import BaseSingleTableSynthesizer
@@ -48,6 +50,45 @@ class LossValuesMixin:
             raise NotFittedError(err_msg)
 
         return self._model.loss_values.copy()
+
+    def get_loss_values_plot(self, title='CTGAN loss function'):
+        """Create a loss values plot from the model.
+
+        Raises:
+            - ``NotFittedError`` if synthesizer has not been fitted.
+
+        Returns:
+            plotly.graph_objects._figure.Figure:
+                1D marginal distribution plot (i.e. a histogram) of the columns.
+        """
+        if not self._fitted:
+            err_msg = 'Loss values are not available yet. Please fit your synthesizer first.'
+            raise NotFittedError(err_msg)
+
+        # Tidy up the loss values data
+        loss_df = self._model.loss_values.copy()
+        loss_df['Generator Loss'] = loss_df['Generator Loss'].apply(lambda x: x.item())
+        loss_df['Discriminator Loss'] = loss_df['Discriminator Loss'].apply(lambda x: x.item())
+
+        # Create a pretty chart using Plotly Express
+        fig = px.line(
+            loss_df, x='Epoch',
+            y=['Generator Loss', 'Discriminator Loss'],
+            color_discrete_map={
+                'Generator Loss': visualization.PlotConfig.DATACEBO_DARK,
+                'Discriminator Loss': visualization.PlotConfig.DATACEBO_GREEN
+            },
+
+        )
+        fig.update_layout(
+            template='plotly_white',
+            legend_title_text='',
+            legend_orientation="v",
+            plot_bgcolor=visualization.PlotConfig.BACKGROUND_COLOR,
+            font={'size': visualization.PlotConfig.FONT_SIZE}
+        )
+        fig.update_layout(title=title, xaxis_title='Epoch', yaxis_title='Loss')
+        return fig
 
 
 class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
