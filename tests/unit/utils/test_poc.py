@@ -7,7 +7,8 @@ import pandas as pd
 import pytest
 
 from sdv.errors import InvalidDataError
-from sdv.utils.poc import drop_unknown_references
+from sdv.utils.poc import drop_unknown_references, simplify_schema
+from sdv.metadata import MultiTableMetadata
 
 
 @patch('sys.stdout.write')
@@ -359,3 +360,47 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
     )
     with pytest.raises(InvalidDataError, match=expected_message):
         drop_unknown_references(metadata, data)
+
+
+@patch('sdv.utils.poc._get_total_estimated_columns')
+def test_simplify_schema_nothing_to_simplify(mock_get_total_estimated_columns):
+    """Test ``simplify_schema`` when the schema is already simple."""
+    # Setup
+    data = Mock()
+    metadata = Mock()
+    mock_get_total_estimated_columns.return_value = 5
+
+    # Run
+    result_data, result_metadata = simplify_schema(data, metadata)
+
+    # Assert
+    mock_get_total_estimated_columns.assert_called_once_with(metadata)
+    assert result_data is data
+    assert result_metadata is metadata
+
+
+@patch('sdv.utils.poc._simplify_metadata')
+@patch('sdv.utils.poc._simplify_data')
+@patch('sdv.utils.poc._get_total_estimated_columns')
+def test_simplify_schema(mock_get_total_estimated_columns, mock_simplify_data, mock_simplify_metadata):
+    """Test ``simplify_schema``."""
+    # Setup
+    data = Mock()
+    metadata = Mock()
+    simplified_metatadata = MultiTableMetadata()
+    mock_get_total_estimated_columns.return_value = 2000
+    mock_simplify_metadata.return_value = simplified_metatadata
+    mock_simplify_data.return_value = {
+        'table1': pd.DataFrame({'column1': [1, 2, 3]}),
+    }
+
+    # Run
+    result_data, result_metadata = simplify_schema(data, metadata)
+
+    # Assert
+    mock_get_total_estimated_columns.assert_called_once_with(metadata)
+    mock_simplify_metadata.assert_called_once_with(metadata)
+    mock_simplify_data.assert_called_once_with(data, simplified_metatadata)
+    pd.testing.assert_frame_equal(result_data['table1'], pd.DataFrame({'column1': [1, 2, 3]}))
+    assert result_data.keys() == {'table1'}
+    assert result_metadata == simplified_metatadata
