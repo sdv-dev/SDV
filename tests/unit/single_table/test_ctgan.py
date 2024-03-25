@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from sdmetrics import visualization
 
 from sdv.errors import InvalidDataTypeError, NotFittedError
 from sdv.metadata.single_table import SingleTableMetadata
@@ -304,6 +305,34 @@ class TestCTGANSynthesizer:
         msg = 'Loss values are not available yet. Please fit your synthesizer first.'
         with pytest.raises(NotFittedError, match=msg):
             instance.get_loss_values()
+
+    @patch('sdv.single_table.ctgan.px.line')
+    def test_get_loss_values_plot(self, mock_line_plot):
+        """Test the ``get_loss_values_plot`` method from ``CTGANSynthesizer."""
+        # Setup
+        metadata = SingleTableMetadata()
+        instance = CTGANSynthesizer(metadata)
+        mock_loss_value = Mock()
+        mock_loss_value.item.return_value = 0.1
+        mock_model = Mock()
+        loss_values = pd.DataFrame({
+            'Epoch': [0, 1, 2],
+            'Generator Loss': [mock_loss_value, mock_loss_value, mock_loss_value],
+            'Discriminator Loss': [mock_loss_value, mock_loss_value, mock_loss_value]
+        })
+        mock_model.loss_values = loss_values
+        instance._model = mock_model
+        instance._fitted = True
+
+        # Run
+        instance.get_loss_values_plot()
+        fig = mock_line_plot.call_args[1]
+        assert (fig['x'] == 'Epoch')
+        assert (fig['y'] == ['Generator Loss', 'Discriminator Loss'])
+        assert (fig['color_discrete_map'] == {
+            'Generator Loss': visualization.PlotConfig.DATACEBO_BLUE,
+            'Discriminator Loss': visualization.PlotConfig.DATACEBO_GREEN
+        })
 
 
 class TestTVAESynthesizer:

@@ -1,8 +1,8 @@
 """Wrapper around CTGAN model."""
 import numpy as np
 import pandas as pd
-from ctgan import CTGAN, TVAE
 import plotly.express as px
+from ctgan import CTGAN, TVAE
 from sdmetrics import visualization
 
 from sdv.errors import InvalidDataTypeError, NotFittedError
@@ -78,12 +78,11 @@ class LossValuesMixin:
                 'Generator Loss': visualization.PlotConfig.DATACEBO_BLUE,
                 'Discriminator Loss': visualization.PlotConfig.DATACEBO_GREEN
             },
-
         )
         fig.update_layout(
             template='plotly_white',
             legend_title_text='',
-            legend_orientation="v",
+            legend_orientation='v',
             plot_bgcolor=visualization.PlotConfig.BACKGROUND_COLOR,
             font={'size': visualization.PlotConfig.FONT_SIZE}
         )
