@@ -605,7 +605,15 @@ class DataProcessor:
 
             elif sdtype in self._transformers_by_sdtype:
                 sdtypes[column] = sdtype
-                transformers[column] = self._get_transformer_instance(sdtype, column_metadata)
+                if column != self._primary_key:
+                    transformers[column] = self._get_transformer_instance(sdtype, column_metadata)
+                else:
+                    transformers[column] = self.create_anonymized_transformer(
+                        sdtype=sdtype,
+                        column_metadata=column_metadata,
+                        enforce_uniqueness=True,
+                        locales=self._locales
+                    )
 
             else:
                 sdtypes[column] = 'categorical'
