@@ -75,7 +75,7 @@ class LossValuesMixin:
             loss_df, x='Epoch',
             y=['Generator Loss', 'Discriminator Loss'],
             color_discrete_map={
-                'Generator Loss': visualization.PlotConfig.DATACEBO_DARK,
+                'Generator Loss': visualization.PlotConfig.DATACEBO_BLUE,
                 'Discriminator Loss': visualization.PlotConfig.DATACEBO_GREEN
             },
 
