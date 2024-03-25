@@ -67,9 +67,9 @@ def _extract_data(bytes_io, output_folder_name):
         if output_folder_name:
             os.makedirs(output_folder_name, exist_ok=True)
             zf.extractall(output_folder_name)
-            metadata_v1_filepath = os.path.join(output_folder_name, 'metadata_v0.json')
-            if os.path.isfile(metadata_v1_filepath):
-                os.remove(metadata_v1_filepath)
+            metadata_v0_filepath = os.path.join(output_folder_name, 'metadata_v0.json')
+            if os.path.isfile(metadata_v0_filepath):
+                os.remove(metadata_v0_filepath)
             os.rename(
                 os.path.join(output_folder_name, 'metadata_v1.json'),
                 os.path.join(output_folder_name, METADATA_FILENAME)
