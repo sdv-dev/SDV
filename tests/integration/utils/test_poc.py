@@ -181,7 +181,7 @@ def test_simplify_schema(capsys):
         'If this is not possible, contact us at info@sdv.dev for enterprise solutions.'
     )
     expected_message_after = (
-        'Succes! The schema has been simplified.\n\n'
+        'Success! The schema has been simplified.\n\n'
         ' Table Name  # Columns (Before)  # Columns (After)\n'
         'match_stats                  29                  4\n'
         '    matches                  48                 21\n'
