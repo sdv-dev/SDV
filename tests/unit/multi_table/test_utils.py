@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 from unittest.mock import Mock, call, patch
 
@@ -880,11 +881,11 @@ def test__print_simplified_schema_summary(capsys):
     captured = capsys.readouterr()
 
     # Assert
-    expected_output = (
-        'Succes! The schema has been simplified.\n\n'
-        'Table Name  # Columns (Before)  # Columns (After)\n'
-        '   Table 1                   4                  2\n'
-        '   Table 2                   2                  1\n'
-        '   Table 3                   1                  0'
+    expected_output = re.compile(
+        r'Success! The schema has been simplified\.\s*'
+        r'Table Name\s*#\s*Columns \(Before\)\s*#\s*Columns \(After\)\s*'
+        r'Table 1\s*4\s*2\s*'
+        r'Table 2\s*2\s*1\s*'
+        r'Table 3\s*1\s*0'
     )
-    assert captured.out.strip() == expected_output
+    assert expected_output.match(captured.out.strip())

@@ -353,7 +353,7 @@ def _simplify_data(data, metadata):
 
 def _print_simplified_schema_summary(data_before, data_after):
     """Print the summary of the simplified schema."""
-    message = ['Succes! The schema has been simplified.\n']
+    message = ['Success! The schema has been simplified.\n']
     tables = sorted(data_before.keys())
     summary = pd.DataFrame({
         'Table Name': tables,
@@ -363,7 +363,7 @@ def _print_simplified_schema_summary(data_before, data_after):
         ]
     })
     message.append(summary.to_string(index=False))
-    print('\n'.join(message))
+    print('\n'.join(message))  # noqa: T001
 
 
 def _get_rows_to_drop(metadata, data):
