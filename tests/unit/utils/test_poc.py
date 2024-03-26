@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 
 from sdv.errors import InvalidDataError
-from sdv.utils.poc import drop_unknown_references, simplify_schema
 from sdv.metadata import MultiTableMetadata
+from sdv.utils.poc import drop_unknown_references, simplify_schema
 
 
 @patch('sys.stdout.write')
@@ -382,7 +382,8 @@ def test_simplify_schema_nothing_to_simplify(mock_get_total_estimated_columns):
 @patch('sdv.utils.poc._simplify_metadata')
 @patch('sdv.utils.poc._simplify_data')
 @patch('sdv.utils.poc._get_total_estimated_columns')
-def test_simplify_schema(mock_get_total_estimated_columns, mock_simplify_data, mock_simplify_metadata):
+def test_simplify_schema(mock_get_total_estimated_columns,
+                         mock_simplify_data, mock_simplify_metadata):
     """Test ``simplify_schema``."""
     # Setup
     data = Mock()

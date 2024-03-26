@@ -5,9 +5,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError
 from sdv.metadata import MultiTableMetadata
-from sdv.utils.poc import drop_unknown_references
+from sdv.multi_table.utils import _get_total_estimated_columns
+from sdv.utils.poc import drop_unknown_references, simplify_schema
 
 
 @pytest.fixture()
@@ -151,3 +153,53 @@ def test_drop_unknown_references_not_drop_missing_values(metadata, data):
     pd.testing.assert_frame_equal(cleaned_data['child'], data['child'].iloc[:4])
     assert pd.isna(cleaned_data['child']['parent_id']).any()
     assert len(cleaned_data['child']) == 4
+
+
+def test_simplify_schema():
+    """Test ``simplify_schema`` end to end."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'AustralianFootball_v1')
+    num_estimated_column_before_simplification = _get_total_estimated_columns(metadata)
+
+    # Run
+    data_simplify, metadata_simplify = simplify_schema(data, metadata)
+
+    # Assert
+    metadata_simplify.validate()
+    metadata_simplify.validate_data(data_simplify)
+    num_estimated_column_after_simplification = _get_total_estimated_columns(metadata_simplify)
+    assert num_estimated_column_before_simplification == 203427
+    assert num_estimated_column_after_simplification == 617
+
+
+def test_simpliy_nothing_to_simplify():
+    """Test ``simplify_schema`` end to end when no simplification is required."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'Biodegradability_v1')
+
+    # Run
+    data_simplify, metadata_simplify = simplify_schema(data, metadata)
+
+    # Assert
+    metadata_simplify.validate()
+    metadata_simplify.validate_data(data_simplify)
+    assert metadata.to_dict() == metadata_simplify.to_dict()
+    for table in data:
+        pd.testing.assert_frame_equal(data[table], data_simplify[table])
+
+
+def test_simplify_no_grandchild():
+    """Test ``simplify_schema`` end to end when there is no grandchild table."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'MuskSmall_v1')
+    num_estimated_column_before_simplification = _get_total_estimated_columns(metadata)
+
+    # Run
+    data_simplify, metadata_simplify = simplify_schema(data, metadata)
+
+    # Assert
+    metadata_simplify.validate()
+    metadata_simplify.validate_data(data_simplify)
+    num_estimated_column_after_simplification = _get_total_estimated_columns(metadata_simplify)
+    assert num_estimated_column_before_simplification == 14528
+    assert num_estimated_column_after_simplification == 983

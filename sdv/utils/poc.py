@@ -1,4 +1,8 @@
 """Utility functions."""
+import sys
+
+import pandas as pd
+
 from sdv._utils import _validate_foreign_keys_not_null
 from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
