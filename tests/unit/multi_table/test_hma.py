@@ -652,7 +652,7 @@ class TestHMASynthesizer:
         synthesizer._finalize = Mock()
 
         # Run estimation
-        estimated_num_columns = synthesizer._estimate_num_columns()
+        estimated_num_columns = synthesizer._estimate_num_columns(metadata)
 
         # Run actual modeling
         synthesizer.fit(data)
