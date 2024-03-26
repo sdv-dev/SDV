@@ -76,3 +76,11 @@ class SDVVersionWarning(UserWarning):
 
     def __init__(self, *args, **kwargs):
         self.__class__.__name__ = 'SDV Version Warning'
+
+
+class VersionError(ValueError):
+    """Raised when loading a synthesizer from a newer version into an older one."""
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)

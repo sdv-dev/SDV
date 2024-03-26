@@ -10,7 +10,7 @@ import pandas as pd
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
 from sdv import version
-from sdv.errors import SDVVersionWarning, SynthesizerInputError
+from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
 
 
 def _cast_to_iterable(value):
@@ -348,3 +348,83 @@ def check_sdv_versions_and_warn(synthesizer):
 
             message = f'{message} {static_message}'
             warnings.warn(message, SDVVersionWarning)
+
+
+def _check_greater_version(current_version, synthesizer_version):
+    """Check if the synthesizer version is greater than the current version.
+
+    Args:
+        current_version (str):
+            The current version to compare against, formatted as a string with major, minor, and
+            revision parts separated by periods (e.g., "1.0.0").
+        synthesizer_version (str):
+            The synthesizer version to compare, formatted as a string with major, minor, and
+            revision parts separated by periods (e.g., "1.0.0")
+
+    Returns:
+        bool:
+            True if the synthesizer version is greater than the current version, False otherwise.
+    """
+    current_version = current_version.split('.')
+    synthesizer_version = synthesizer_version.split('.')
+    for current_v, synth_v in zip(current_version, synthesizer_version):
+        try:
+            current_v = int(current_v)
+            synth_v = int(synth_v)
+            if current_v > synth_v:
+                return False
+
+            if synth_v > current_v:
+                return True
+        except Exception:
+            pass
+
+    return False
+
+
+def check_synthesizer_version(synthesizer):
+    """Check if the current synthesizer version is greater than the package version.
+
+    Args:
+        synthesizer (BaseSingleTableSynthesizer or BaseMultiTableSynthesizer):
+            An SDV model instance to check versions against.
+
+    Raises:
+        VersionError:
+            If the current version of the software is lower than the synthesizer's version.
+    """
+    current_public_version = getattr(version, 'public', None)
+    current_enterprise_version = getattr(version, 'enterprise', None)
+    if synthesizer._fitted:
+        downgrade_message = 'Downgrading your SDV version is not supported.'
+        fit_public_version = getattr(synthesizer, '_fitted_sdv_version', None)
+        fit_enterprise_version = getattr(synthesizer, '_fitted_sdv_enterprise_version', None)
+
+        is_public_lower = _check_greater_version(current_public_version, fit_public_version)
+        is_enterprise_lower = False
+        if None not in (current_enterprise_version, fit_enterprise_version):
+            is_enterprise_lower = _check_greater_version(
+                current_enterprise_version,
+                fit_enterprise_version
+            )
+
+        if is_public_lower and is_enterprise_lower:
+            raise VersionError(
+                f'You are currently on SDV version {current_public_version} and SDV Enterprise '
+                f'version {current_enterprise_version} but this '
+                f'synthesizer was created on SDV version {fit_public_version} and SDV '
+                f'Enterprise version {fit_enterprise_version}. {downgrade_message}'
+            )
+
+        if is_public_lower:
+            raise VersionError(
+                f'You are currently on SDV version {current_public_version} but this '
+                f'synthesizer was created on version {fit_public_version}. {downgrade_message}'
+            )
+
+        if is_enterprise_lower:
+            raise VersionError(
+                f'You are currently on SDV Enterprise version {current_enterprise_version} but '
+                f'this synthesizer was created on version {fit_enterprise_version}. '
+                f'{downgrade_message}'
+            )

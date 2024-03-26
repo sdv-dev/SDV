@@ -1694,13 +1694,15 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
 
+    @patch('sdv.single_table.base.check_synthesizer_version')
     @patch('sdv.single_table.base.check_sdv_versions_and_warn')
     @patch('sdv.single_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
-    def test_load(self, mock_file, cloudpickle_mock, mock_check_sdv_versions_and_warn):
+    def test_load(self, mock_file, cloudpickle_mock,
+                  mock_check_sdv_versions_and_warn, mock_check_synthesizer_version):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
-        synthesizer_mock = Mock()
+        synthesizer_mock = Mock(_fitted=False)
         cloudpickle_mock.load.return_value = synthesizer_mock
 
         # Run
@@ -1711,6 +1713,7 @@ class TestBaseSingleTableSynthesizer:
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
         assert loaded_instance == synthesizer_mock
+        mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
 
     def test_load_custom_constraint_classes(self):
         """Test that ``load_custom_constraint_classes`` calls the ``DataProcessor``'s method."""
