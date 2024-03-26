@@ -9,8 +9,8 @@ import pytest
 from sdv import version
 from sdv._utils import (
     _convert_to_timedelta, _create_unique_name, _get_datetime_format, _is_datetime_type,
-    _validate_foreign_keys_not_null)
-from sdv.errors import SynthesizerInputError
+    _validate_foreign_keys_not_null, check_sdv_versions_and_warn)
+from sdv.errors import SDVVersionWarning, SynthesizerInputError
 from tests.utils import SeriesMatcher
 
 
