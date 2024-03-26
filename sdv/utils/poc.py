@@ -1,6 +1,7 @@
 """Utility functions."""
 from sdv._utils import _validate_foreign_keys_not_null
 from sdv.errors import InvalidDataError, SynthesizerInputError
+from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 from sdv.multi_table.utils import (
     _get_relationship_for_child, _get_rows_to_drop, _get_total_estimated_columns, _simplify_data,
     _simplify_metadata)
@@ -94,7 +95,7 @@ def simplify_schema(data, metadata):
             Simplified metadata.
     """
     total_estimated_columns = _get_total_estimated_columns(metadata)
-    if total_estimated_columns < 1000:
+    if total_estimated_columns <= MAX_NUMBER_OF_COLUMNS:
         return data, metadata
 
     simple_metadata = _simplify_metadata(metadata)
