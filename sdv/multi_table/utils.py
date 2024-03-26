@@ -4,6 +4,7 @@ from collections import defaultdict
 from copy import deepcopy
 
 import numpy as np
+import pandas as pd
 
 from sdv.multi_table import HMASynthesizer
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
@@ -348,6 +349,21 @@ def _simplify_data(data, metadata):
     metadata.validate_data(simplify_data)
 
     return simplify_data
+
+
+def _print_simplified_schema_summary(data_before, data_after):
+    """Print the summary of the simplified schema."""
+    message = ['Succes! The schema has been simplified.\n']
+    tables = sorted(data_before.keys())
+    summary = pd.DataFrame({
+        'Table Name': tables,
+        '# Columns (Before)': [len(data_before[table].columns) for table in tables],
+        '# Columns (After)': [
+            len(data_after[table].columns) if table in data_after else 0 for table in tables
+        ]
+    })
+    message.append(summary.to_string(index=False))
+    print('\n'.join(message))
 
 
 def _get_rows_to_drop(metadata, data):

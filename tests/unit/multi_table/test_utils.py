@@ -7,9 +7,10 @@ from sdv.metadata import MultiTableMetadata
 from sdv.multi_table.utils import (
     _get_all_descendant_per_root_at_order_n, _get_columns_to_drop_child, _get_n_order_descendants,
     _get_num_column_to_drop, _get_relationship_for_child, _get_relationship_for_parent,
-    _get_root_tables, _get_rows_to_drop, _get_total_estimated_columns, _simplify_child,
-    _simplify_children, _simplify_data, _simplify_grandchilds, _simplify_metadata,
-    _simplify_non_descendants_tables, _simplify_relationships)
+    _get_root_tables, _get_rows_to_drop, _get_total_estimated_columns,
+    _print_simplified_schema_summary, _simplify_child, _simplify_children, _simplify_data,
+    _simplify_grandchilds, _simplify_metadata, _simplify_non_descendants_tables,
+    _simplify_relationships)
 
 
 def test__get_root_tables():
@@ -837,3 +838,53 @@ def test__simplify_data():
     }
     for table_name in metadata.tables:
         pd.testing.assert_frame_equal(data_result[table_name], expected_results[table_name])
+
+
+def test__print_simplified_schema_summary(capsys):
+    """Test the ``_print_simplified_schema_summary`` method."""
+    # Setup
+    data_before_1 = pd.DataFrame({
+        'col_1': [1, 2, 3],
+        'col_2': [2, 2, 3],
+        'col_3': [7, 8, 9],
+        'col_4': [3, 2, 1],
+    })
+    data_before_2 = pd.DataFrame({
+        'col_5': [10, 11, 12],
+        'col_6': [13, 14, 15],
+    })
+    data_before_3 = pd.DataFrame({
+        'col_7': [10, 11, 12]
+    })
+    data_before = {
+        'Table 1': data_before_1,
+        'Table 2': data_before_2,
+        'Table 3': data_before_3,
+    }
+
+    data_after_1 = pd.DataFrame({
+        'col_1': [1, 2, 3],
+        'col_2': [2, 2, 3],
+    })
+    data_after_2 = pd.DataFrame({
+        'col_5': [2, 2, 3],
+
+    })
+    data_after = {
+        'Table 1': data_after_1,
+        'Table 2': data_after_2,
+    }
+
+    # Run
+    _print_simplified_schema_summary(data_before, data_after)
+    captured = capsys.readouterr()
+
+    # Assert
+    expected_output = (
+        'Succes! The schema has been simplified.\n\n'
+        'Table Name  # Columns (Before)  # Columns (After)\n'
+        '   Table 1                   4                  2\n'
+        '   Table 2                   2                  1\n'
+        '   Table 3                   1                  0'
+    )
+    assert captured.out.strip() == expected_output
