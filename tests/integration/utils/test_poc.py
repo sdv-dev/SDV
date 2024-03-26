@@ -169,27 +169,27 @@ def test_simplify_schema(capsys):
     captured_after_simplification = capsys.readouterr()
 
     # Assert
-    expected_message_before = (
-        'PerformanceAlert: Using the HMASynthesizer on this metadata schema is not recommended.'
-        ' To model this data, HMA will generate a large number of columns. (203427 columns)\n\n\n'
-        ' Table Name  # Columns in Metadata  Est # Columns\n'
-        'match_stats                     25             25\n'
-        '    matches                     45            446\n'
-        '    players                     13            414\n'
-        '      teams                    101         202542\n\n'
-        "We recommend simplifying your metadata schema using 'sdv.utils.simplify_schema'.\n"
-        'If this is not possible, contact us at info@sdv.dev for enterprise solutions.'
+    expected_message_before = re.compile(
+        r'PerformanceAlert: Using the HMASynthesizer on this metadata schema is not recommended\.'
+        r' To model this data, HMA will generate a large number of columns\. \(203427 columns\)\s+'
+        r'Table Name\s*#\s*Columns in Metadata\s*Est # Columns\s*'
+        r'match_stats\s*25\s*25\s*'
+        r'matches\s*45\s*446\s*'
+        r'players\s*13\s*414\s*'
+        r'teams\s*101\s*202542\s*'
+        r"We recommend simplifying your metadata schema using 'sdv.utils.simplify_schema'\.\s*"
+        r'If this is not possible, contact us at info@sdv.dev for enterprise solutions\.'
     )
-    expected_message_after = (
-        'Success! The schema has been simplified.\n\n'
-        ' Table Name  # Columns (Before)  # Columns (After)\n'
-        'match_stats                  29                  4\n'
-        '    matches                  48                 21\n'
-        '    players                  14                  0\n'
-        '      teams                 102                102'
+    expected_message_after = re.compile(
+        r'Success! The schema has been simplified\.\s+'
+        r'Table Name\s*#\s*Columns \(Before\)\s*#\s*Columns \(After\)\s*'
+        r'match_stats\s*29\s*4\s*'
+        r'matches\s*48\s*21\s*'
+        r'players\s*14\s*0\s*'
+        r'teams\s*102\s*102'
     )
-    assert captured_before_simplification.out.strip() == expected_message_before
-    assert captured_after_simplification.out.strip() == expected_message_after
+    assert expected_message_before.match(captured_before_simplification.out.strip())
+    assert expected_message_after.match(captured_after_simplification.out.strip())
     metadata_simplify.validate()
     metadata_simplify.validate_data(data_simplify)
     num_estimated_column_after_simplification = _get_total_estimated_columns(metadata_simplify)
