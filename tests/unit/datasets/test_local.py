@@ -80,6 +80,37 @@ def test_load_csvs_folder_does_not_exist():
 
 
 @patch('sdv.datasets.local.path.exists')
+@patch('sdv.datasets.local.makedirs')
+def test_save_csvs_folder_does_not_exist(mock_makedirs, mock_exists, tmp_path):
+    """Test that ``save_csvs`` creates the folder if it does not exist."""
+    # Setup
+    mock_exists.return_value = False
+    folder = tmp_path / 'data'
+
+    parent_mock = Mock()
+    child_mock = Mock()
+    data = {
+        'parent': parent_mock,
+        'child': child_mock
+    }
+
+    # Run
+    save_csvs(data, folder)
+
+    # Assert
+    mock_makedirs.assert_called_once_with(folder)
+    mock_exists.assert_has_calls([
+        call(folder),
+        call(op.join(folder, 'parent.csv')),
+        call(op.join(folder, 'child.csv'))
+    ])
+    parent_mock.to_csv.assert_called_once_with(
+        op.join(folder, 'parent.csv')
+    )
+    child_mock.to_csv.assert_called_once_with(op.join(folder, 'child.csv'))
+
+
+@patch('sdv.datasets.local.path.exists')
 def test_save_csvs(mock_exists, tmp_path):
     """Test ``save_csvs``."""
     # Setup
@@ -109,14 +140,6 @@ def test_save_csvs(mock_exists, tmp_path):
     child_mock.to_csv.assert_called_once_with(op.join(folder, 'child-synthetic.csv'), index=False)
 
 
-def test_save_csvs_invalid_folder():
-    """Test that ``save_csvs`` raises an error if the folder does not exist."""
-    # Run and Assert
-    error_message = re.escape("The folder 'wrong_folder' cannot be found.")
-    with pytest.raises(ValueError, match=error_message):
-        save_csvs(None, 'wrong_folder')
-
-
 def test_save_csvs_existing_files(tmp_path):
     """Test ``save_csvs`` raises an error with the names of the existing files."""
     # Setup
@@ -140,7 +163,7 @@ def test_save_csvs_existing_files(tmp_path):
         'parent-synthetic.csv\n'
         'Please remove them or specify a different suffix.'
     )
-    with pytest.raises(ValueError, match=error_message):
+    with pytest.raises(FileExistsError, match=error_message):
         save_csvs(data, folder, suffix='-synthetic')
 
 
@@ -171,5 +194,5 @@ def test_save_csvs_existing_files_more_files(tmp_path):
         '+ 1 more files.'
         'Please remove them or specify a different suffix.'
     )
-    with pytest.raises(ValueError, match=error_message):
+    with pytest.raises(FileExistsError, match=error_message):
         save_csvs(data, folder)

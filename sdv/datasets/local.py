@@ -1,7 +1,7 @@
 """Methods to load local datasets."""
 
 import warnings
-from os import path, walk
+from os import makedirs, path, walk
 
 from sdv._utils import _load_data_from_csv
 
@@ -60,7 +60,7 @@ def save_csvs(data, folder_name, suffix=None, to_csv_parameters=None):
             function. Defaults to ``None``.
     """
     if not path.exists(folder_name):
-        raise ValueError(f"The folder '{folder_name}' cannot be found.")
+        makedirs(folder_name)
 
     table_name_to_filepath = {}
     errors = []
@@ -78,7 +78,7 @@ def save_csvs(data, folder_name, suffix=None, to_csv_parameters=None):
         if len(errors) > 3:
             end_message = ''.join([f'+ {len(errors) - 3} more files.', end_message])
 
-        raise ValueError(
+        raise FileExistsError(
             f"The following files already exist in '{folder_name}':\n{filename_to_print}"
             f'\n{end_message}'
         )
