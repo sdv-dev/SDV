@@ -79,6 +79,32 @@ def test_load_csvs_folder_does_not_exist():
         load_csvs('demo/')
 
 
+def test_save_csvs_data_not_dict():
+    """Test that ``save_csvs`` raises an error if the data is not a dictionary."""
+    # Run and Assert
+    expected_message = re.escape(
+        "'data' must be a dictionary that maps table names to pandas DataFrames."
+    )
+    with pytest.raises(ValueError, match=expected_message):
+        save_csvs('data', 'folder')
+
+
+def test_save_csvs_data_not_dict_of_dataframes():
+    """Test that ``save_csvs`` raises an error if the data is not a dictionary of dataframes."""
+    # Setup
+    data = {
+        'parent': 'dataframe',
+        'child': 'dataframe'
+    }
+
+    # Run and Assert
+    expected_message = re.escape(
+        "'data' must be a dictionary that maps table names to pandas DataFrames."
+    )
+    with pytest.raises(ValueError, match=expected_message):
+        save_csvs(data, 'folder')
+
+
 @patch('sdv.datasets.local.path.exists')
 @patch('sdv.datasets.local.makedirs')
 def test_save_csvs_folder_does_not_exist(mock_makedirs, mock_exists, tmp_path):
@@ -87,8 +113,8 @@ def test_save_csvs_folder_does_not_exist(mock_makedirs, mock_exists, tmp_path):
     mock_exists.return_value = False
     folder = tmp_path / 'data'
 
-    parent_mock = Mock()
-    child_mock = Mock()
+    parent_mock = Mock(spec=pd.DataFrame)
+    child_mock = Mock(spec=pd.DataFrame)
     data = {
         'parent': parent_mock,
         'child': child_mock
@@ -118,8 +144,8 @@ def test_save_csvs(mock_exists, tmp_path):
     folder.mkdir()
     mock_exists.side_effect = [True, False, False]
 
-    parent_mock = Mock()
-    child_mock = Mock()
+    parent_mock = Mock(spec=pd.DataFrame)
+    child_mock = Mock(spec=pd.DataFrame)
     data = {
         'parent': parent_mock,
         'child': child_mock
@@ -179,10 +205,10 @@ def test_save_csvs_existing_files_more_files(tmp_path):
     (folder / 'grandchild2.csv').touch()
 
     data = {
-        'parent': Mock(),
-        'child': Mock(),
-        'grandchild': Mock(),
-        'grandchild2': Mock()
+        'parent': Mock(spec=pd.DataFrame),
+        'child': Mock(spec=pd.DataFrame),
+        'grandchild': Mock(spec=pd.DataFrame),
+        'grandchild2': Mock(spec=pd.DataFrame)
     }
 
     # Run and Assert

@@ -3,6 +3,8 @@
 import warnings
 from os import makedirs, path, walk
 
+import pandas as pd
+
 from sdv._utils import _load_data_from_csv
 
 
@@ -59,6 +61,14 @@ def save_csvs(data, folder_name, suffix=None, to_csv_parameters=None):
             A python dictionary of with string and value accepted by ``pandas.DataFrame.to_csv``
             function. Defaults to ``None``.
     """
+    error_message_data = "'data' must be a dictionary that maps table names to pandas DataFrames."
+    if not isinstance(data, dict):
+        raise ValueError(error_message_data)
+
+    for table_name, table in data.items():
+        if not isinstance(table, pd.DataFrame):
+            raise ValueError(error_message_data)
+
     if not path.exists(folder_name):
         makedirs(folder_name)
 
