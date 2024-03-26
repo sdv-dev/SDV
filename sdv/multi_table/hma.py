@@ -250,12 +250,12 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                         '# Columns in Metadata',
                         'Est # Columns'
                     ]
-                )
+                ).to_string(index=False) + '\n'
             )
             self._print(
-                '\nWe recommend simplifying your metadata schema by dropping '
-                'columns that are not necessary. If this is not possible, '
-                'contact us at info@sdv.dev for enterprise solutions.\n')
+                "We recommend simplifying your metadata schema using 'sdv.utils.simplify_schema'."
+                '\nIf this is not possible, contact us at info@sdv.dev for enterprise solutions.\n'
+            )
 
     def preprocess(self, data):
         """Transform the raw data to numerical space.
