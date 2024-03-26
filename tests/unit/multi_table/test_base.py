@@ -518,6 +518,24 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(ConstraintsNotMetError, match=error_msg):
             instance.validate(data)
 
+    def test_validate_table_synthesizers_errors(self):
+        """Test that errors are being raised when the table synthesizer is erroring."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+        instance = BaseMultiTableSynthesizer(metadata)
+        nesreca_synthesizer = Mock()
+        nesreca_synthesizer._validate.return_value = ['Invalid data for PAR synthesizer.']
+        instance._table_synthesizers['nesreca'] = nesreca_synthesizer
+
+        # Run and Assert
+        error_msg = (
+            'The provided data does not match the metadata:\n'
+            'Invalid data for PAR synthesizer.'
+        )
+        with pytest.raises(InvalidDataError, match=error_msg):
+            instance.validate(data)
+
     def test_auto_assign_transformers(self):
         """Test that each table of the data calls its single table auto assign method."""
         # Setup
