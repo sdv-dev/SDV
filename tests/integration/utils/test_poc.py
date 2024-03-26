@@ -8,6 +8,7 @@ import pytest
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError
 from sdv.metadata import MultiTableMetadata
+from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS, HMASynthesizer
 from sdv.multi_table.utils import _get_total_estimated_columns
 from sdv.utils.poc import drop_unknown_references, simplify_schema
 
@@ -155,16 +156,40 @@ def test_drop_unknown_references_not_drop_missing_values(metadata, data):
     assert len(cleaned_data['child']) == 4
 
 
-def test_simplify_schema():
+def test_simplify_schema(capsys):
     """Test ``simplify_schema`` end to end."""
     # Setup
     data, metadata = download_demo('multi_table', 'AustralianFootball_v1')
     num_estimated_column_before_simplification = _get_total_estimated_columns(metadata)
+    HMASynthesizer(metadata)
+    captured_before_simplification = capsys.readouterr()
 
     # Run
     data_simplify, metadata_simplify = simplify_schema(data, metadata)
+    captured_after_simplification = capsys.readouterr()
 
     # Assert
+    expected_message_before = (
+        'PerformanceAlert: Using the HMASynthesizer on this metadata schema is not recommended.'
+        ' To model this data, HMA will generate a large number of columns. (203427 columns)\n\n\n'
+        ' Table Name  # Columns in Metadata  Est # Columns\n'
+        'match_stats                     25             25\n'
+        '    matches                     45            446\n'
+        '    players                     13            414\n'
+        '      teams                    101         202542\n\n'
+        "We recommend simplifying your metadata schema using 'sdv.utils.simplify_schema'.\n"
+        'If this is not possible, contact us at info@sdv.dev for enterprise solutions.'
+    )
+    expected_message_after = (
+        'Succes! The schema has been simplified.\n\n'
+        ' Table Name  # Columns (Before)  # Columns (After)\n'
+        'match_stats                  29                  4\n'
+        '    matches                  48                 21\n'
+        '    players                  14                  0\n'
+        '      teams                 102                102'
+    )
+    assert captured_before_simplification.out.strip() == expected_message_before
+    assert captured_after_simplification.out.strip() == expected_message_after
     metadata_simplify.validate()
     metadata_simplify.validate_data(data_simplify)
     num_estimated_column_after_simplification = _get_total_estimated_columns(metadata_simplify)
@@ -203,3 +228,32 @@ def test_simplify_no_grandchild():
     num_estimated_column_after_simplification = _get_total_estimated_columns(metadata_simplify)
     assert num_estimated_column_before_simplification == 14528
     assert num_estimated_column_after_simplification == 983
+
+
+def test_simplify_schema_big_demo_datasets():
+    """Test ``simplify_schema`` end to end for demo datasets that require simplification.
+
+    This test will fail if the number of estimated columns after simplification is greater than
+    the maximum number of columns allowed for any dataset.
+    """
+    # Setup
+    list_datasets = [
+        'AustralianFootball_v1',
+        'MuskSmall_v1',
+        'Countries_v1',
+        'NBA_v1',
+        'NCAA_v1',
+        'PremierLeague_v1',
+        'financial_v1'
+    ]
+    for dataset in list_datasets:
+        real_data, metadata = download_demo('multi_table', dataset)
+
+        # Run
+        data_simplify, metadata_simplify = simplify_schema(real_data, metadata)
+
+        # Assert
+        estimate_column_before = _get_total_estimated_columns(metadata)
+        estimate_column_after = _get_total_estimated_columns(metadata_simplify)
+        assert estimate_column_before > MAX_NUMBER_OF_COLUMNS
+        assert estimate_column_after <= MAX_NUMBER_OF_COLUMNS

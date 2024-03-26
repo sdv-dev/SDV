@@ -363,7 +363,8 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
 
 
 @patch('sdv.utils.poc._get_total_estimated_columns')
-def test_simplify_schema_nothing_to_simplify(mock_get_total_estimated_columns):
+@patch('sdv.utils.poc._print_simplified_schema_summary')
+def test_simplify_schema_nothing_to_simplify(mock_print_summary, mock_get_total_estimated_columns):
     """Test ``simplify_schema`` when the schema is already simple."""
     # Setup
     data = Mock()
@@ -374,6 +375,7 @@ def test_simplify_schema_nothing_to_simplify(mock_get_total_estimated_columns):
     result_data, result_metadata = simplify_schema(data, metadata)
 
     # Assert
+    mock_print_summary.assert_called_once_with(data, data)
     mock_get_total_estimated_columns.assert_called_once_with(metadata)
     assert result_data is data
     assert result_metadata is metadata
@@ -382,7 +384,8 @@ def test_simplify_schema_nothing_to_simplify(mock_get_total_estimated_columns):
 @patch('sdv.utils.poc._simplify_metadata')
 @patch('sdv.utils.poc._simplify_data')
 @patch('sdv.utils.poc._get_total_estimated_columns')
-def test_simplify_schema(mock_get_total_estimated_columns,
+@patch('sdv.utils.poc._print_simplified_schema_summary')
+def test_simplify_schema(mock_print_summary, mock_get_total_estimated_columns,
                          mock_simplify_data, mock_simplify_metadata):
     """Test ``simplify_schema``."""
     # Setup
@@ -399,6 +402,7 @@ def test_simplify_schema(mock_get_total_estimated_columns,
     result_data, result_metadata = simplify_schema(data, metadata)
 
     # Assert
+    mock_print_summary.assert_called_once_with(data, result_data)
     mock_get_total_estimated_columns.assert_called_once_with(metadata)
     mock_simplify_metadata.assert_called_once_with(metadata)
     mock_simplify_data.assert_called_once_with(data, simplified_metatadata)
