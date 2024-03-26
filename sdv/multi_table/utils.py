@@ -1,10 +1,12 @@
 """Utility functions for the MultiTable models."""
+import math
 from collections import defaultdict
 from copy import deepcopy
 
 import numpy as np
 
 from sdv.multi_table import HMASynthesizer
+from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 
 MODELABLE_SDTYPE = ['categorical', 'numerical', 'datetime', 'boolean']
 
@@ -102,19 +104,19 @@ def _simplify_relationships(metadata, root_table, descendants_to_keep):
             else:
                 grandchilds.append(child_table)
 
-    return metadata, set(childs), set(grandchilds)
+    return metadata, sorted(set(childs)), sorted(set(grandchilds))
 
 
-def _simplify_non_descendants_tables(metadata, descendants_to_keep, root_table):
+def _simplify_non_descendants_tables(metadata, root_table, descendants_to_keep):
     """Simplify the tables that are not direct child or grandchild of the root table.
 
     Args:
         metadata (MultiTableMetadata):
             Metadata of the datasets.
-        descendants_to_keep (set):
-            Set of the descendants of the root table that will be kept.
         root_table (str):
             Name of the root table.
+        descendants_to_keep (set):
+            Set of the descendants of the root table that will be kept.
     """
     tables = deepcopy(metadata.tables)
     for table in tables:
@@ -148,8 +150,9 @@ def _simplify_grandchilds(metadata, grandchilds):
 
 
 def _get_num_column_to_drop(
-        metadata, child_table, max_col_per_relationships, num_relationship, estimate_column):
+        metadata, child_table, max_col_per_relationships):
     """Get the number of columns to drop from the child table."""
+    num_column_parameter = 4  # for beta distribution
     columns = metadata.tables[child_table].columns
     columns_to_sdtypes = {
         column: columns[column]['sdtype'] for column in columns
@@ -162,22 +165,24 @@ def _get_num_column_to_drop(
         key: value for key, value in sdtypes_to_columns.items() if key in MODELABLE_SDTYPE
     }
     num_modelable_colum = sum([len(value) for value in modelable_columns.values()])
-    numerator = estimate_column - max_col_per_relationships * num_relationship
-    denomenator = (num_modelable_colum + 3) * num_relationship
-    num_cols_to_drop = round(numerator / denomenator) + 1
+    num_cols_to_drop = math.ceil(
+        num_modelable_colum + num_column_parameter - np.sqrt(
+            num_column_parameter ** 2 + 1 + 2 * max_col_per_relationships
+        )
+    )
 
     return num_cols_to_drop, modelable_columns
 
 
 def _get_columns_to_drop_child(
-        metadata, child_table, max_col_per_relationships, num_relationship, estimate_column):
+        metadata, child_table, max_col_per_relationships):
     """Get the list of columns to drop from the child table."""
     num_col_to_drop, modelable_columns = _get_num_column_to_drop(
-        metadata, child_table, max_col_per_relationships, num_relationship, estimate_column
+        metadata, child_table, max_col_per_relationships
     )
     num_modelable_colum = sum([len(value) for value in modelable_columns.values()])
     if num_col_to_drop >= num_modelable_colum:
-        return modelable_columns
+        return [column for value in modelable_columns.values() for column in value]
 
     columns_to_drop = []
     sdtypes_frequency = {
@@ -202,7 +207,7 @@ def _get_columns_to_drop_child(
 
 
 def _simplify_child(
-        metadata, child_table, max_col_per_relationships, num_relationship, estimate_column):
+        metadata, child_table, max_col_per_relationships):
     """Simplify the child table.
 
     Args:
@@ -218,7 +223,7 @@ def _simplify_child(
             Number of columns that will be added to the root table based on the child table.
     """
     columns_to_drop = _get_columns_to_drop_child(
-        metadata, child_table, max_col_per_relationships, num_relationship, estimate_column
+        metadata, child_table, max_col_per_relationships
     )
     columns = metadata.tables[child_table].columns
     for column in columns_to_drop:
@@ -227,11 +232,11 @@ def _simplify_child(
     return metadata
 
 
-def _simplify_childs(metadata, childs, root_table, num_data_column):
+def _simplify_children(metadata, childs, root_table, num_data_column):
     """Simplify the children of the root table.
 
     The logic to simplify the children is to:
-     - Drop some modelable columns to have at most 1000 columns to model.
+     - Drop some modelable columns to have at most MAX_NUMBER_OF_COLUMNS columns to model.
 
     Args:
         metadata (MultiTableMetadata):
@@ -244,7 +249,7 @@ def _simplify_childs(metadata, childs, root_table, num_data_column):
             Dictionary that maps each table name to the number of data columns.
     """
     relationships = metadata.relationships
-    max_col_per_relationships = 1000 // len(relationships)
+    max_col_per_relationships = MAX_NUMBER_OF_COLUMNS // len(relationships)
     for child_table in childs:
         estimate_column = HMASynthesizer._get_num_extended_columns(
             metadata, child_table, root_table, num_data_column
@@ -252,7 +257,7 @@ def _simplify_childs(metadata, childs, root_table, num_data_column):
         num_relationship = len(_get_relationship_for_child(relationships, child_table))
         if estimate_column > max_col_per_relationships * num_relationship:
             metadata = _simplify_child(
-                metadata, child_table, max_col_per_relationships, num_relationship, estimate_column
+                metadata, child_table, max_col_per_relationships
             )
 
     return metadata
@@ -284,8 +289,11 @@ def _simplify_metadata(metadata):
     simplify_metadata = deepcopy(metadata)
     relationships = simplify_metadata.relationships
     all_descendants_per_root = _get_all_descendant_per_root_at_order_n(relationships, order=2)
+    len_all_descendants_per_root = {
+        root: len(all_descendants_per_root[root]) for root in all_descendants_per_root
+    }
     root_with_max_descendants = max(
-        all_descendants_per_root, key=lambda x: len(all_descendants_per_root[x])
+        len_all_descendants_per_root, key=len_all_descendants_per_root.get
     )
     all_descendants_to_keep = all_descendants_per_root[root_with_max_descendants]
 
@@ -294,7 +302,7 @@ def _simplify_metadata(metadata):
     )
 
     simplify_metadata = _simplify_non_descendants_tables(
-        simplify_metadata, all_descendants_to_keep, root_with_max_descendants
+        simplify_metadata, root_with_max_descendants, all_descendants_to_keep
     )
 
     if grandchilds:
@@ -302,11 +310,11 @@ def _simplify_metadata(metadata):
 
     estimate_columns_per_table = HMASynthesizer._estimate_num_columns(simplify_metadata)
     total_est_column = sum(estimate_columns_per_table.values())
-    if total_est_column < 1000:
+    if total_est_column <= MAX_NUMBER_OF_COLUMNS:
         return simplify_metadata
 
     num_data_column = HMASynthesizer._get_num_data_columns(simplify_metadata)
-    simplify_metadata = _simplify_childs(
+    simplify_metadata = _simplify_children(
         simplify_metadata, childs, root_with_max_descendants, num_data_column
     )
     simplify_metadata.validate()

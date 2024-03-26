@@ -13,6 +13,7 @@ from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.sampling import BaseHierarchicalSampler
 
 LOGGER = logging.getLogger(__name__)
+MAX_NUMBER_OF_COLUMNS = 1000
 
 
 class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
@@ -236,7 +237,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             entry.append(est_cols)
             print_table.append(entry)
 
-        if total_est_cols > 1000:
+        if total_est_cols > MAX_NUMBER_OF_COLUMNS:
             self._print(
                 'PerformanceAlert: Using the HMASynthesizer on this metadata '
                 'schema is not recommended. To model this data, HMA will '
