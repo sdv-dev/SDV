@@ -10,7 +10,7 @@ from rdt.transformers import (
     BinaryEncoder, FloatFormatter, GaussianNormalizer, OneHotEncoder, RegexGenerator)
 
 from sdv.constraints.errors import AggregateConstraintsError
-from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
+from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
 from sdv.single_table import (
@@ -377,38 +377,88 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor._fit_constraints.side_effect = AggregateConstraintsError([error])
         data = object()
 
-        # Run
-        errors = BaseSingleTableSynthesizer._validate_constraints(instance, data)
+        # Run and Assert
+        message = '\nInvalid data for constraint.'
+        with pytest.raises(ConstraintsNotMetError, match=message):
+            BaseSingleTableSynthesizer._validate_constraints(instance, data)
 
         # Assert
-        assert str(errors[0]) == '\nInvalid data for constraint.'
-        assert len(errors) == 1
         instance._data_processor._fit_constraints.assert_called_once_with(data)
 
     def test_validate(self):
         """Test the appropriate methods are called.
+
+        Mock _validate_metadata, _validate_constraints and _validate, with no errors being raised.
+        """
+        # Setup
+        data = pd.DataFrame()
+        metadata = SingleTableMetadata()
+        instance = BaseSingleTableSynthesizer(metadata)
+        instance._validate_metadata = Mock()
+        instance._validate_constraints = Mock()
+        instance._validate = Mock(return_value=[])
+
+        # Run
+        instance.validate(data)
+
+        # Assert
+        instance._validate_metadata.assert_called_once_with(data)
+        instance._validate_constraints.assert_called_once_with(data)
+        instance._validate.assert_called_once_with(data)
+
+    def test_validate_raises_constraints_error(self):
+        """Test that a ``ConstraintsNotMetError`` is being raised.
+
+        Make sure that ``ConstraintsNotMetError`` is raised when ``_validate_constraints``
+        fails to validate.
+        """
+        # Setup
+        data = pd.DataFrame()
+        metadata = SingleTableMetadata()
+        instance = BaseSingleTableSynthesizer(metadata)
+        instance._validate_metadata = Mock(return_value=[])
+        instance._validate_constraints = Mock()
+        instance._validate_constraints.side_effect = ConstraintsNotMetError(
+            '\nThe provided data does not match the constraints.'
+        )
+        instance._validate = Mock(return_value=[])
+
+        # Run and Assert
+        err_msg = 'The provided data does not match the constraints.'
+        with pytest.raises(ConstraintsNotMetError, match=err_msg):
+            instance.validate(data)
+
+        # Assert auxiliary methods are called
+        instance._validate_metadata.assert_called_once_with(data)
+        instance._validate_constraints.assert_called_once_with(data)
+        instance._validate.assert_not_called()
+
+    def test_validate_raises_invalid_data_for_metadata(self):
+        """Test that if ``metadata`` validation fails we raise an error for it.
 
         Mock _validate_metadata, _validate_constraints and _validate, with at least one of them
         returning an error, and ensure that they are all called and the error is surfaced.
         """
         # Setup
         data = pd.DataFrame()
-        errors = [ValueError('test')]
         metadata = SingleTableMetadata()
         instance = BaseSingleTableSynthesizer(metadata)
         instance._validate_metadata = Mock(return_value=[])
-        instance._validate_constraints = Mock(return_value=errors)
+        instance._validate_constraints = Mock()
+        instance._validate_constraints.side_effect = ConstraintsNotMetError(
+            '\nThe provided data does not match the constraints.'
+        )
         instance._validate = Mock(return_value=[])
 
         # Run and Assert
-        err_msg = 'The provided data does not match the metadata:\ntest'
-        with pytest.raises(InvalidDataError, match=err_msg):
+        err_msg = 'The provided data does not match the constraints.'
+        with pytest.raises(ConstraintsNotMetError, match=err_msg):
             instance.validate(data)
 
         # Assert auxiliary methods are called
         instance._validate_metadata.assert_called_once_with(data)
         instance._validate_constraints.assert_called_once_with(data)
-        instance._validate.assert_called_once_with(data)
+        instance._validate.assert_not_called()
 
     def test_update_transformers_invalid_keys(self):
         """Test error is raised if passed transformer doesn't match key column.

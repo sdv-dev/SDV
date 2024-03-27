@@ -8,7 +8,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.errors import InvalidDataError, NotFittedError, SynthesizerInputError
+from sdv.errors import (
+    ConstraintsNotMetError, InvalidDataError, NotFittedError, SynthesizerInputError)
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -482,6 +483,55 @@ class TestBaseMultiTableSynthesizer:
             'Relationships:\n'
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
             "Please use the utility method 'drop_unknown_references' to clean the data."
+        )
+        with pytest.raises(InvalidDataError, match=error_msg):
+            instance.validate(data)
+
+    def test_validate_constraints_not_met(self):
+        """Test that errors are being raised when there are constraints not met."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+        data['nesreca']['val'] = list(range(4))
+        metadata.add_column('nesreca', 'val', sdtype='numerical')
+        instance = BaseMultiTableSynthesizer(metadata)
+        inequality_constraint = {
+            'constraint_class': 'Inequality',
+            'table_name': 'nesreca',
+            'constraint_parameters': {
+                'low_column_name': 'nesreca_val',
+                'high_column_name': 'val',
+                'strict_boundaries': True
+            }
+        }
+        instance.add_constraints([inequality_constraint])
+
+        # Run and Assert
+        error_msg = (
+            "\nData is not valid for the 'Inequality' constraint:\n"
+            '   nesreca_val  val\n'
+            '0            0    0\n'
+            '1            1    1\n'
+            '2            2    2\n'
+            '3            3    3'
+        )
+        with pytest.raises(ConstraintsNotMetError, match=error_msg):
+            instance.validate(data)
+
+    def test_validate_table_synthesizers_errors(self):
+        """Test that errors are being raised when the table synthesizer is erroring."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+        instance = BaseMultiTableSynthesizer(metadata)
+        nesreca_synthesizer = Mock()
+        nesreca_synthesizer._validate.return_value = ['Invalid data for PAR synthesizer.']
+        instance._table_synthesizers['nesreca'] = nesreca_synthesizer
+
+        # Run and Assert
+        error_msg = (
+            'The provided data does not match the metadata:\n'
+            'Invalid data for PAR synthesizer.'
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)
