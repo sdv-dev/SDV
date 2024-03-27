@@ -364,6 +364,27 @@ def test_detect_from_dataframe_with_pii_names():
     assert metadata.to_dict() == expected_metadata
 
 
+def test_detect_from_dataframe_with_pii_non_unique():
+    """Test ``detect_from_dataframe`` with pii column names that are not unique.
+
+    The metadata shhould not detect any primray key.
+    """
+    # Setup
+    data = pd.DataFrame(data={
+        'Age': [int(i) for i in np.random.uniform(low=0, high=100, size=100)],
+        'Sex': np.random.choice(['Male', 'Female'], size=100),
+        'latitude': [round(i, 2) for i in np.random.uniform(low=-90, high=+90, size=50)] * 2
+    })
+    metadata = SingleTableMetadata()
+
+    # Run
+    metadata.detect_from_dataframe(data)
+    metadata.validate_data(data)
+
+    # Assert
+    assert metadata.primary_key is None
+
+
 def test_update_columns():
     """Test ``update_columns`` method."""
     # Setup
