@@ -54,6 +54,10 @@ class LossValuesMixin:
     def get_loss_values_plot(self, title='CTGAN loss function'):
         """Create a loss values plot from the model.
 
+        Args:
+            title (pd.DataFrame):
+                Title string for the graph created.
+
         Raises:
             - ``NotFittedError`` if synthesizer has not been fitted.
 
