@@ -105,8 +105,8 @@ def test_save_csvs_data_not_dict_of_dataframes():
         save_csvs(data, 'folder')
 
 
-@patch('sdv.datasets.local.path.exists')
-@patch('sdv.datasets.local.makedirs')
+@patch('sdv.datasets.local.os.path.exists')
+@patch('sdv.datasets.local.os.makedirs')
 def test_save_csvs_folder_does_not_exist(mock_makedirs, mock_exists, tmp_path):
     """Test that ``save_csvs`` creates the folder if it does not exist."""
     # Setup
@@ -136,7 +136,7 @@ def test_save_csvs_folder_does_not_exist(mock_makedirs, mock_exists, tmp_path):
     child_mock.to_csv.assert_called_once_with(op.join(folder, 'child.csv'))
 
 
-@patch('sdv.datasets.local.path.exists')
+@patch('sdv.datasets.local.os.path.exists')
 def test_save_csvs(mock_exists, tmp_path):
     """Test ``save_csvs``."""
     # Setup

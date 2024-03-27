@@ -1,7 +1,7 @@
 """Methods to load local datasets."""
 
+import os
 import warnings
-from os import makedirs, path, walk
 
 import pandas as pd
 
@@ -18,16 +18,16 @@ def load_csvs(folder_name, read_csv_parameters=None):
             A python dictionary of with string and value accepted by ``pandas.read_csv``
             function. Defaults to ``None``.
     """
-    if not path.exists(folder_name):
+    if not os.path.exists(folder_name):
         raise ValueError(f"The folder '{folder_name}' cannot be found.")
 
-    dirpath, _, filenames = list(walk(folder_name))[0]
+    dirpath, _, filenames = list(os.walk(folder_name))[0]
     csvs = {}
     other_files = []
     for filename in filenames:
-        base_name, ext = path.splitext(filename)
+        base_name, ext = os.path.splitext(filename)
         if ext == '.csv':
-            filepath = path.join(dirpath, filename)
+            filepath = os.path.join(dirpath, filename)
             csvs[base_name] = _load_data_from_csv(filepath, read_csv_parameters)
         else:
             other_files.append(filename)
@@ -69,15 +69,15 @@ def save_csvs(data, folder_name, suffix=None, to_csv_parameters=None):
         if not isinstance(table, pd.DataFrame):
             raise ValueError(error_message_data)
 
-    if not path.exists(folder_name):
-        makedirs(folder_name)
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
 
     table_name_to_filepath = {}
     errors = []
     for table_name in data:
         filename = f'{table_name}{suffix}.csv' if suffix else f'{table_name}.csv'
-        filepath = path.join(folder_name, filename)
-        if path.exists(filepath):
+        filepath = os.path.join(folder_name, filename)
+        if os.path.exists(filepath):
             errors.append(filename)
 
         table_name_to_filepath[table_name] = filepath
