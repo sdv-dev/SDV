@@ -324,7 +324,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         return cls._get_nearest_correlation_matrix(correlation).tolist()
 
-    def _rebuild_gaussian_copula(self, model_parameters, default_params={}):
+    def _rebuild_gaussian_copula(self, model_parameters, default_params=None):
         """Rebuild the model params to recreate a Gaussian Multivariate instance.
 
         Args:
@@ -337,6 +337,9 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             dict:
                 Model parameters ready to recreate the model.
         """
+        if default_params is None:
+            default_params = {}
+
         columns = []
         univariates = []
         for column, univariate in model_parameters['univariates'].items():
@@ -388,7 +391,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
     def _get_likelihood(self, table_rows):
         return self._model.probability_density(table_rows)
 
-    def _set_parameters(self, parameters, default_params={}):
+    def _set_parameters(self, parameters, default_params=None):
         """Set copula model parameters.
 
         Args:
@@ -398,8 +401,10 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
                 Flattened list of parameters to fall back to if `params` are invalid.
 
         """
-        if default_params:
+        if default_params is not None:
             default_params = unflatten_dict(default_params)
+        else:
+            default_params = {}
 
         parameters = unflatten_dict(parameters)
         if 'num_rows' in parameters:
