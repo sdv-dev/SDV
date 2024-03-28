@@ -246,30 +246,32 @@ class TestHMASynthesizer:
         any null values by using the ``_clear_nans`` method. Then, fitting the table model by
         calling ``fit_processed_data``,  adding back the foreign keys, updating the ``tables`` and
         marking the table name as modeled within the ``instance._augmented_tables``. This
-        task has to be performed only on the root tables, the childs are being skipped
-        since each row is being re-created from the parent.
+        task has to be performed for all tables to generate default parameters if sampled
+        parameters are invalid.
         """
         # Setup
         upravna_enota_model = Mock()
+        upravna_enota_model._get_parameters.return_value = {
+            'col__univariates': 'univariate_param',
+            'corr': 'correlation_param'
+        }
         instance = Mock()
         instance._synthesizer = GaussianCopulaSynthesizer
         instance._get_pbar_args.return_value = {'desc': 'Modeling Tables'}
+        instance._default_parameters = {}
 
         metadata = get_multi_table_metadata()
         instance.metadata = metadata
-        instance._augmented_tables = ['upravna_enota']
         instance._table_sizes = {'upravna_enota': 3}
-        instance._table_synthesizers = {'upravna_enota': upravna_enota_model}
+        instance._table_synthesizers = {
+            'upravna_enota': upravna_enota_model,
+        }
         instance._pop_foreign_keys.return_value = {'fk': [1, 2, 3]}
         input_data = {
             'upravna_enota': pd.DataFrame({
                 'id_nesreca': [0, 1, 2],
                 'upravna_enota': [0, 1, 2],
                 'extended': ['a', 'b', 'c']
-            }),
-            'oseba': pd.DataFrame({
-                'id_oseba': [0, 1, 2],
-                'note': [0, 1, 2],
             })
         }
         augmented_data = input_data.copy()
@@ -294,6 +296,11 @@ class TestHMASynthesizer:
         upravna_enota_model.fit_processed_data.assert_called_once_with(
             augmented_data['upravna_enota']
         )
+
+        upravna_enota_model._get_parameters.assert_called_once()
+        assert instance._default_parameters['upravna_enota'] == {
+            'col__univariates': 'univariate_param'
+        }
 
     def test__augment_tables(self):
         """Test that ``_fit`` calls ``_model_tables`` only if the table has no parents."""
@@ -461,6 +468,9 @@ class TestHMASynthesizer:
         instance.metadata._get_foreign_keys.return_value = ['session_id']
         instance._table_parameters = {'users': {'a': 1}}
         instance._table_synthesizers = {'users': table_synthesizer}
+        instance._default_parameters = {
+            'users': {'colA': 'default_param', 'colB': 'default_param'}
+        }
 
         # Run
         synthesizer = HMASynthesizer._recreate_child_synthesizer(
@@ -475,7 +485,8 @@ class TestHMASynthesizer:
         assert synthesizer._data_processor == table_synthesizer._data_processor
         instance._synthesizer.assert_called_once_with(table_meta, a=1)
         synthesizer._set_parameters.assert_called_once_with(
-            instance._extract_parameters.return_value
+            instance._extract_parameters.return_value,
+            {'colA': 'default_param', 'colB': 'default_param'}
         )
         instance._extract_parameters.assert_called_once_with(parent_row, table_name, 'session_id')
 

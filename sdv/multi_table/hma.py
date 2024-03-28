@@ -39,6 +39,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         self._max_child_rows = {}
         self._augmented_tables = []
         self._learned_relationships = 0
+        self._default_parameters = {}
         self.verbose = verbose
         BaseHierarchicalSampler.__init__(
             self,
@@ -418,11 +419,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             augmented_data (dict):
                 Dictionary mapping each table name to an augmented ``pandas.DataFrame``.
         """
-        parent_map = self.metadata._get_parent_map()
         augmented_data_to_model = [
             (table_name, table)
             for table_name, table in augmented_data.items()
-            if table_name not in parent_map
         ]
         self._print(text='\n', end='')
         pbar_args = self._get_pbar_args(desc='Modeling Tables')
@@ -434,6 +433,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
             if not table.empty:
                 self._table_synthesizers[table_name].fit_processed_data(table)
+                table_parameters = self._table_synthesizers[table_name]._get_parameters()
+                self._default_parameters[table_name] = {
+                    parameter: value for parameter, value in table_parameters.items()
+                    if 'univariates' in parameter
+                }
 
             for name, values in keys.items():
                 table[name] = values
@@ -475,10 +479,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         # A child table is created based on only one foreign key.
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         parameters = self._extract_parameters(parent_row, child_name, foreign_key)
+        default_parameters = getattr(self, '_default_parameters', {}).get(child_name, {})
 
         table_meta = self.metadata.tables[child_name]
         synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
-        synthesizer._set_parameters(parameters)
+        synthesizer._set_parameters(parameters, default_parameters)
         synthesizer._data_processor = self._table_synthesizers[child_name]._data_processor
 
         return synthesizer
