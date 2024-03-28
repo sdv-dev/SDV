@@ -525,8 +525,7 @@ class SingleTableMetadata:
         for field in data:
             column_data = data[field]
             has_nan = column_data.isna().any()
-            is_unique = column_data.nunique() == len(column_data)
-            valid_potential_primary_key = is_unique and not has_nan
+            valid_potential_primary_key = column_data.is_unique and not has_nan
             clean_data = column_data.dropna()
             dtype = clean_data.infer_objects().dtype.kind
 
