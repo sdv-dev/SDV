@@ -303,7 +303,7 @@ def check_sdv_versions_and_warn(synthesizer):
     """Check if the current SDV and SDV Enterprise versions mismatch.
 
     Args:
-        synthesizer (BaseSingleTableSynthesizer or BaseMultiTableSynthesizer):
+        synthesizer (BaseSynthesizer or BaseMultiTableSynthesizer):
             An SDV model instance to check versions against.
 
     Raises:
@@ -386,7 +386,7 @@ def check_synthesizer_version(synthesizer):
     """Check if the current synthesizer version is greater than the package version.
 
     Args:
-        synthesizer (BaseSingleTableSynthesizer or BaseMultiTableSynthesizer):
+        synthesizer (BaseSynthesizer or BaseMultiTableSynthesizer):
             An SDV model instance to check versions against.
 
     Raises:
