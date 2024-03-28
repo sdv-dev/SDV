@@ -525,6 +525,7 @@ class SingleTableMetadata:
         for field in data:
             column_data = data[field]
             has_nan = column_data.isna().any()
+            valid_potential_primary_key = column_data.is_unique and not has_nan
             clean_data = column_data.dropna()
             dtype = clean_data.infer_objects().dtype.kind
 
@@ -546,7 +547,7 @@ class SingleTableMetadata:
 
                 # Set the first ID column we detect to be the primary key
                 if sdtype == 'id':
-                    if self.primary_key is None and not has_nan:
+                    if self.primary_key is None and valid_potential_primary_key:
                         self.primary_key = field
                     else:
                         sdtype = 'unknown'
@@ -565,7 +566,7 @@ class SingleTableMetadata:
             self.columns[field] = deepcopy(column_dict)
 
         # When no primary key column was set, choose the first pii field
-        if self.primary_key is None and first_pii_field:
+        if self.primary_key is None and first_pii_field and valid_potential_primary_key:
             self.primary_key = first_pii_field
 
         self._updated = True
