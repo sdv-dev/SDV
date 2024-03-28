@@ -18,7 +18,7 @@ import tqdm
 from copulas.multivariate import GaussianMultivariate
 
 from sdv import version
-from sdv._utils import _groupby_list, check_sdv_versions_and_warn
+from sdv._utils import _groupby_list, check_sdv_versions_and_warn, check_synthesizer_version
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
@@ -433,6 +433,7 @@ class BaseSynthesizer:
         with open(filepath, 'rb') as f:
             synthesizer = cloudpickle.load(f)
 
+        check_synthesizer_version(synthesizer)
         check_sdv_versions_and_warn(synthesizer)
         return synthesizer
 

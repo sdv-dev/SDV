@@ -11,7 +11,8 @@ import numpy as np
 from tqdm import tqdm
 
 from sdv import version
-from sdv._utils import _validate_foreign_keys_not_null, check_sdv_versions_and_warn
+from sdv._utils import (
+    _validate_foreign_keys_not_null, check_sdv_versions_and_warn, check_synthesizer_version)
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
@@ -598,5 +599,6 @@ class BaseMultiTableSynthesizer:
         with open(filepath, 'rb') as f:
             synthesizer = cloudpickle.load(f)
 
+        check_synthesizer_version(synthesizer)
         check_sdv_versions_and_warn(synthesizer)
         return synthesizer
