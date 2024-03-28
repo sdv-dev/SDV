@@ -9,7 +9,7 @@ import pytest
 
 from sdv import version
 from sdv._utils import (
-    _check_greater_version, _convert_to_timedelta, _create_unique_name, _get_datetime_format,
+    _check_is_lower_version, _convert_to_timedelta, _create_unique_name, _get_datetime_format,
     _get_relationship_for_child, _get_relationship_for_parent, _get_root_tables, _get_rows_to_drop,
     _is_datetime_type, _validate_foreign_keys_not_null, check_sdv_versions_and_warn,
     check_synthesizer_version)
@@ -540,40 +540,40 @@ def test_check_sdv_versions_and_warn_public_and_enterprise_missmatch(mock_versio
         check_sdv_versions_and_warn(synthesizer)
 
 
-def test__check_greater_version():
-    """Test that _check_greater_version returns True if synthesizer version is greater."""
+def test__check_is_lower_version():
+    """Test that _check_is_lower_version returns True if synthesizer version is greater."""
     # Setup
     synthesizer_version = '1.2.3'
     current_version = '1.2.1'
 
     # Run
-    result = _check_greater_version(current_version, synthesizer_version)
+    result = _check_is_lower_version(current_version, synthesizer_version)
 
     # Assert
     assert result is True
 
 
-def test__check_greater_version_equal():
-    """Test that _check_greater_version returns False if synthesizer version is equal."""
+def test__check_is_lower_version_equal():
+    """Test that _check_is_lower_version returns False if synthesizer version is equal."""
     # Setup
     synthesizer_version = '1.2.3'
     current_version = '1.2.3'
 
     # Run
-    result = _check_greater_version(current_version, synthesizer_version)
+    result = _check_is_lower_version(current_version, synthesizer_version)
 
     # Assert
     assert result is False
 
 
-def test__check_greater_version_lower():
-    """Test that _check_greater_version returns False if synthesizer version is lower."""
+def test__check_is_lower_version_lower():
+    """Test that _check_is_lower_version returns False if synthesizer version is lower."""
     # Setup
     synthesizer_version = '1.0.3'
     current_version = '1.2.1'
 
     # Run
-    result = _check_greater_version(current_version, synthesizer_version)
+    result = _check_is_lower_version(current_version, synthesizer_version)
 
     # Assert
     assert result is False

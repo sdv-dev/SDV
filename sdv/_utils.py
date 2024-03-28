@@ -350,8 +350,8 @@ def check_sdv_versions_and_warn(synthesizer):
             warnings.warn(message, SDVVersionWarning)
 
 
-def _check_greater_version(current_version, synthesizer_version):
-    """Check if the synthesizer version is greater than the current version.
+def _check_is_lower_version(current_version, synthesizer_version):
+    """Check if the current version is lower than the synthesizer version.
 
     Args:
         current_version (str):
@@ -400,10 +400,10 @@ def check_synthesizer_version(synthesizer):
         fit_public_version = getattr(synthesizer, '_fitted_sdv_version', None)
         fit_enterprise_version = getattr(synthesizer, '_fitted_sdv_enterprise_version', None)
 
-        is_public_lower = _check_greater_version(current_public_version, fit_public_version)
+        is_public_lower = _check_is_lower_version(current_public_version, fit_public_version)
         is_enterprise_lower = False
         if None not in (current_enterprise_version, fit_enterprise_version):
-            is_enterprise_lower = _check_greater_version(
+            is_enterprise_lower = _check_is_lower_version(
                 current_enterprise_version,
                 fit_enterprise_version
             )
