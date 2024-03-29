@@ -6,8 +6,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError
 from sdv.metadata import MultiTableMetadata
+from sdv.metadata.errors import InvalidMetadataError
 from sdv.utils.poc import drop_unknown_references, simplify_schema
 
 
@@ -409,3 +411,33 @@ def test_simplify_schema(mock_print_summary, mock_get_total_estimated_columns,
     pd.testing.assert_frame_equal(result_data['table1'], pd.DataFrame({'column1': [1, 2, 3]}))
     assert result_data.keys() == {'table1'}
     assert result_metadata == simplified_metatadata
+
+
+def test_simplify_schema_invalid_metadata():
+    """Test ``simplify_schema`` when the metadata is not invalid."""
+    # Setup
+    real_data, metadata = download_demo('multi_table', 'fake_hotels')
+    del metadata.tables['guests']
+
+    # Run and Assert
+    expected_message = re.escape(
+        'The provided data/metadata combination is not valid. Please make sure that the'
+        ' data/metadata combination is valid before trying to simplify the schema.'
+    )
+    with pytest.raises(InvalidMetadataError, match=expected_message):
+        simplify_schema(real_data, metadata)
+
+
+def test_simplify_schema_invalid_data():
+    """Test ``simplify_schema`` when the data is not valid."""
+    # Setup
+    real_data, metadata = download_demo('multi_table', 'fake_hotels')
+    real_data['hotels'].loc[0, 'hotel_id'] = np.nan
+
+    # Run and Assert
+    expected_message = re.escape(
+        'The provided data/metadata combination is not valid. Please make sure that the'
+        ' data/metadata combination is valid before trying to simplify the schema.'
+    )
+    with pytest.raises(InvalidDataError, match=expected_message):
+        simplify_schema(real_data, metadata)
