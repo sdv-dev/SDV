@@ -358,3 +358,9 @@ def check_synthesizer_version(synthesizer):
                 f'this synthesizer was created on version {fit_enterprise_version}. '
                 f'{downgrade_message}'
             )
+
+
+def _get_root_tables(relationships):
+    parent_tables = {rel['parent_table_name'] for rel in relationships}
+    child_tables = {rel['child_table_name'] for rel in relationships}
+    return parent_tables - child_tables

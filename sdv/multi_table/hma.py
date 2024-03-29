@@ -8,6 +8,7 @@ import pandas as pd
 from rdt.transformers import FloatFormatter
 from tqdm import tqdm
 
+from sdv._utils import _get_root_tables
 from sdv.errors import SynthesizerInputError
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.sampling import BaseHierarchicalSampler
@@ -33,12 +34,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
     DEFAULT_SYNTHESIZER_KWARGS = {
         'default_distribution': 'beta'
     }
-
-    @staticmethod
-    def _get_root_tables(relationships):
-        parent_tables = {rel['parent_table_name'] for rel in relationships}
-        child_tables = {rel['child_table_name'] for rel in relationships}
-        return parent_tables - child_tables
 
     @staticmethod
     def _get_num_data_columns(metadata):
@@ -147,7 +142,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         # Starting at root tables, recursively estimate the number of columns
         # each table will model
         visited = set()
-        for table_name in cls._get_root_tables(metadata.relationships):
+        for table_name in _get_root_tables(metadata.relationships):
             cls._estimate_columns_traversal(
                 metadata, table_name, columns_per_table, visited, distributions
             )

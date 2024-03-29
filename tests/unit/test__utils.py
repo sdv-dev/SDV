@@ -527,3 +527,19 @@ def test_check_synthesizer_version_enterprise_is_none(mock_version):
 
     # Run and Assert
     check_synthesizer_version(synthesizer)
+
+
+def test__get_root_tables():
+    """Test the ``_get_root_tables`` method."""
+    # Setup
+    relationships = [
+        {'parent_table_name': 'parent', 'child_table_name': 'child'},
+        {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
+        {'parent_table_name': 'parent', 'child_table_name': 'grandchild'}
+    ]
+
+    # Run
+    result = _get_root_tables(relationships)
+
+    # Assert
+    assert result == {'parent'}

@@ -8,26 +8,9 @@ from sdv.metadata import MultiTableMetadata
 from sdv.multi_table.utils import (
     _get_all_descendant_per_root_at_order_n, _get_columns_to_drop_child, _get_n_order_descendants,
     _get_num_column_to_drop, _get_relationship_for_child, _get_relationship_for_parent,
-    _get_root_tables, _get_rows_to_drop, _get_total_estimated_columns,
-    _print_simplified_schema_summary, _simplify_child, _simplify_children, _simplify_data,
-    _simplify_grandchildren, _simplify_metadata, _simplify_relationships,
-    remove_non_descendant_tables)
-
-
-def test__get_root_tables():
-    """Test the ``_get_root_tables`` method."""
-    # Setup
-    relationships = [
-        {'parent_table_name': 'parent', 'child_table_name': 'child'},
-        {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
-        {'parent_table_name': 'parent', 'child_table_name': 'grandchild'}
-    ]
-
-    # Run
-    result = _get_root_tables(relationships)
-
-    # Assert
-    assert result == {'parent'}
+    _get_rows_to_drop, _get_total_estimated_columns, _print_simplified_schema_summary,
+    _simplify_child, _simplify_children, _simplify_data, _simplify_grandchildren,
+    _simplify_metadata, _simplify_relationships, remove_non_descendant_tables)
 
 
 def test__get_relationship_for_child():
