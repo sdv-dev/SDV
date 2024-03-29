@@ -10,8 +10,8 @@ from sdv.multi_table.utils import (
     _get_num_column_to_drop, _get_relationship_for_child, _get_relationship_for_parent,
     _get_root_tables, _get_rows_to_drop, _get_total_estimated_columns,
     _print_simplified_schema_summary, _simplify_child, _simplify_children, _simplify_data,
-    _simplify_grandchilds, _simplify_metadata, _simplify_non_descendants_tables,
-    _simplify_relationships)
+    _simplify_grandchildren, _simplify_metadata, _simplify_relationships,
+    remove_non_descendant_tables)
 
 
 def test__get_root_tables():
@@ -219,7 +219,7 @@ def test__simplify_relationships():
     descendant_to_keep = ['parent', 'child']
 
     # Run
-    metadata_result, childs, grandchilds = _simplify_relationships(
+    metadata_result, children, grandchildren = _simplify_relationships(
         metadata, 'grandparent', descendant_to_keep
     )
 
@@ -229,12 +229,12 @@ def test__simplify_relationships():
         {'parent_table_name': 'parent', 'child_table_name': 'child'},
     ]
     assert metadata_result.relationships == expected_result
-    assert childs == ['parent']
-    assert grandchilds == ['child']
+    assert children == ['parent']
+    assert grandchildren == ['child']
 
 
-def test__simplify_non_descendants_tables():
-    """Test the ``_simplify_non_descendants_tables`` method."""
+def test_remove_non_descendant_tables():
+    """Test the ``remove_non_descendant_tables`` method."""
     # Setup
     metadata = MultiTableMetadata().load_from_dict({
         'tables': {
@@ -250,14 +250,14 @@ def test__simplify_non_descendants_tables():
     descendant_to_keep = ['parent', 'child']
 
     # Run
-    metadata_result = _simplify_non_descendants_tables(metadata, root_table, descendant_to_keep)
+    metadata_result = remove_non_descendant_tables(metadata, root_table, descendant_to_keep)
 
     # Assert
     assert metadata_result.tables.keys() == {'grandparent', 'parent', 'child'}
 
 
-def test__simplify_grandchilds():
-    """Test the ``_simplify_grandchilds`` method."""
+def test__simplify_grandchildren():
+    """Test the ``_simplify_grandchildren`` method."""
     # Setup
     metadata = MultiTableMetadata().load_from_dict({
         'tables': {
@@ -282,10 +282,10 @@ def test__simplify_grandchilds():
             },
         }
     })
-    grandchilds = {'child_1', 'child_2'}
+    grandchildren = {'child_1', 'child_2'}
 
     # Run
-    metadata_result = _simplify_grandchilds(metadata, grandchilds)
+    metadata_result = _simplify_grandchildren(metadata, grandchildren)
 
     # Assert
     expected_child_1 = {
@@ -333,7 +333,7 @@ def test__get_num_column_to_drop():
 
     child_table = 'child'
     max_col_per_relationship = 500
-    num_modelable_column = (len(metadata.tables[child_table].columns) - 20)
+    num_modelable_columnn = (len(metadata.tables[child_table].columns) - 20)
 
     # Run
     num_col_to_drop, modelable_columns = _get_num_column_to_drop(
@@ -341,9 +341,9 @@ def test__get_num_column_to_drop():
     )
 
     # Assert
-    actual_num_modelable_column = sum([len(value) for value in modelable_columns.values()])
+    actual_num_modelable_columnn = sum([len(value) for value in modelable_columns.values()])
     assert num_col_to_drop == 873
-    assert actual_num_modelable_column == num_modelable_column
+    assert actual_num_modelable_columnn == num_modelable_columnn
 
 
 @patch('sdv.multi_table.utils._get_num_column_to_drop')
