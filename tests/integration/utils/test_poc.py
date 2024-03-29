@@ -160,7 +160,8 @@ def test_drop_unknown_references_not_drop_missing_values(metadata, data):
 def test_simplify_schema_invalid_metadata():
     """Test ``simplify_schema`` when the metadata is not invalid."""
     # Setup
-    real_data, metadata = download_demo('multi_table', 'Bupa_v1')
+    real_data, metadata = download_demo('multi_table', 'fake_hotels')
+    metadata.tables['guests'].columns['checkin_date']['invalid key'] = 'invalid value'
 
     # Run and Assert
     expected_message = re.escape(

@@ -64,10 +64,10 @@ def _get_all_descendant_per_root_at_order_n(relationships, order):
     root_tables = _get_root_tables(relationships)
     all_descendants = {}
     for root in root_tables:
-        order_descendances = _get_n_order_descendants(relationships, root, order)
+        order_descendants = _get_n_order_descendants(relationships, root, order)
         all_descendant_root = set()
-        for order_key in order_descendances:
-            all_descendant_root.update(order_descendances[order_key])
+        for order_key in order_descendants:
+            all_descendant_root.update(order_descendants[order_key])
 
         all_descendants[root] = all_descendant_root
 
@@ -211,18 +211,13 @@ def _get_columns_to_drop_child(
     }
     for sdtype, frequency in sdtypes_frequency.items():
         num_col_to_drop_per_sdtype = round(num_col_to_drop * frequency)
-        if num_col_to_drop_per_sdtype < 1:
-            continue
-        elif num_col_to_drop_per_sdtype >= len(modelable_columns[sdtype]):
-            columns_to_drop.extend(modelable_columns[sdtype])
-        else:
-            columns_to_drop.extend(
-                np.random.choice(
-                    modelable_columns[sdtype],
-                    num_col_to_drop_per_sdtype,
-                    replace=False
-                )
+        columns_to_drop.extend(
+            np.random.choice(
+                modelable_columns[sdtype],
+                num_col_to_drop_per_sdtype,
+                replace=False
             )
+        )
 
     return columns_to_drop
 
