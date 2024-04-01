@@ -85,8 +85,8 @@ class TestHMASynthesizer:
 
         pd.testing.assert_frame_equal(result, expected)
 
-    def test_get_distributions(self):
-        """Test ``get_distributions``."""
+    def test__get_distributions(self):
+        """Test the ``_get_distributions`` method."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = HMASynthesizer(metadata)
