@@ -6,11 +6,12 @@ import pandas as pd
 
 from sdv.metadata import MultiTableMetadata
 from sdv.multi_table.utils import (
-    _get_all_descendant_per_root_at_order_n, _get_columns_to_drop_child, _get_n_order_descendants,
-    _get_num_column_to_drop, _get_relationship_for_child, _get_relationship_for_parent,
-    _get_rows_to_drop, _get_total_estimated_columns, _print_simplified_schema_summary,
+    _get_all_descendant_per_root_at_order_n, _get_children_and_grandchildren,
+    _get_columns_to_drop_child, _get_n_order_descendants, _get_num_column_to_drop,
+    _get_relationship_for_child, _get_relationship_for_parent, _get_rows_to_drop,
+    _get_total_estimated_columns, _print_simplified_schema_summary, _remove_tables_metadata,
     _simplify_child, _simplify_children, _simplify_data, _simplify_grandchildren,
-    _simplify_metadata, _simplify_relationships, remove_non_descendant_tables)
+    _simplify_metadata, _simplify_relationships)
 
 
 def test__get_relationship_for_child():
@@ -187,6 +188,29 @@ def test__get_all_descendant_per_root_at_order_n():
     assert result == expected_result
 
 
+def test__get_children_and_grandchildren():
+    """Test the ``_get_children_and_grandchildren`` method."""
+    # Setup
+    relationships = [
+        {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
+        {'parent_table_name': 'parent', 'child_table_name': 'child'},
+        {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
+        {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
+        {'parent_table_name': 'other_root', 'child_table_name': 'child'},
+    ]
+    root_table = 'grandparent'
+    descendants_to_keep = {'parent', 'child', 'other_table'}
+
+    # Run
+    children, grandchildren = _get_children_and_grandchildren(
+        relationships, root_table, descendants_to_keep
+    )
+
+    # Assert
+    assert children == ['other_table', 'parent']
+    assert grandchildren == ['child']
+
+
 def test__simplify_relationships():
     """Test the ``_simplify_relationships`` method."""
     # Setup
@@ -199,12 +223,10 @@ def test__simplify_relationships():
             {'parent_table_name': 'other_root', 'child_table_name': 'child'},
         ]
     })
-    descendant_to_keep = ['parent', 'child']
+    tables_to_drop = {'grandchild', 'other_table', 'other_root'}
 
     # Run
-    metadata_result, children, grandchildren = _simplify_relationships(
-        metadata, 'grandparent', descendant_to_keep
-    )
+    metadata_result = _simplify_relationships(metadata, tables_to_drop)
 
     # Assert
     expected_result = [
@@ -212,12 +234,10 @@ def test__simplify_relationships():
         {'parent_table_name': 'parent', 'child_table_name': 'child'},
     ]
     assert metadata_result.relationships == expected_result
-    assert children == ['parent']
-    assert grandchildren == ['child']
 
 
-def test_remove_non_descendant_tables():
-    """Test the ``remove_non_descendant_tables`` method."""
+def test__remove_tables_metadata():
+    """Test the ``_remove_tables_metadata`` method."""
     # Setup
     metadata = MultiTableMetadata().load_from_dict({
         'tables': {
@@ -229,11 +249,10 @@ def test_remove_non_descendant_tables():
             'other_root': {'columns': {'col_6': {'sdtype': 'numerical'}}}
         }
     })
-    root_table = 'grandparent'
-    descendant_to_keep = ['parent', 'child']
+    tables_to_drop = {'grandchild', 'other_table', 'other_root'}
 
     # Run
-    metadata_result = remove_non_descendant_tables(metadata, root_table, descendant_to_keep)
+    metadata_result = _remove_tables_metadata(metadata, tables_to_drop)
 
     # Assert
     assert metadata_result.tables.keys() == {'grandparent', 'parent', 'child'}

@@ -6,16 +6,11 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
+from sdv._utils import _get_root_tables
 from sdv.multi_table import HMASynthesizer
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 
 MODELABLE_SDTYPE = ['categorical', 'numerical', 'datetime', 'boolean']
-
-
-def _get_root_tables(relationships):
-    parent_tables = {rel['parent_table_name'] for rel in relationships}
-    child_tables = {rel['child_table_name'] for rel in relationships}
-    return parent_tables - child_tables
 
 
 def _get_relationship_for_child(relationships, child_table):
@@ -74,20 +69,17 @@ def _get_all_descendant_per_root_at_order_n(relationships, order):
     return all_descendants
 
 
-def _simplify_relationships(metadata, root_table, descendants_to_keep):
-    """Simplify the relationships of the metadata.
-
-    Removes the relationships that are not direct child or grandchild of the root table.
+def _get_children_and_grandchildren(relationships, root_table, descendants_to_keep):
+    """Get the children and grandchildren of the root table.
 
     Args:
-        metadata (MultiTableMetadata):
-            Metadata of the datasets.
+        relationships (list[dict]):
+            List of relationships between the tables.
         root_table (str):
             Name of the root table.
         descendants_to_keep (set):
             Set of the descendants of the root table that will be kept.
     """
-    relationships = deepcopy(metadata.relationships)
     children = []
     grandchildren = []
     for relationship in relationships:
@@ -97,31 +89,50 @@ def _simplify_relationships(metadata, root_table, descendants_to_keep):
         is_parent_in_descendants = parent_table in descendants_to_keep
         is_valid_parent = is_parent_root or is_parent_in_descendants
         is_valid_child = child_table in descendants_to_keep
-        if not is_valid_parent or not is_valid_child:
-            metadata.remove_relationship(parent_table, child_table)
-        else:
+        if is_valid_parent and is_valid_child:
             if is_parent_root:
                 children.append(child_table)
             else:
                 grandchildren.append(child_table)
 
-    return metadata, sorted(set(children)), sorted(set(grandchildren))
+    return sorted(set(children)), sorted(set(grandchildren))
 
 
-def remove_non_descendant_tables(metadata, root_table, descendants_to_keep):
+def _simplify_relationships(metadata, tables_to_drop):
+    """Simplify the relationships of the metadata.
+
+    Removes the relationships that are not direct child or grandchild of the root table.
+
+    Args:
+        metadata (MultiTableMetadata):
+            Metadata of the datasets.
+        tables_to_drop (set):
+            Set of the tables that relationships will be removed.
+    """
+    relationships = deepcopy(metadata.relationships)
+    for relationship in relationships:
+        parent_table = relationship['parent_table_name']
+        child_table = relationship['child_table_name']
+        is_parent_to_drop = parent_table in tables_to_drop
+        is_child_to_drop = child_table in tables_to_drop
+        if is_parent_to_drop or is_child_to_drop:
+            metadata.relationships.remove(relationship)
+
+    return metadata
+
+
+def _remove_tables_metadata(metadata, tables_to_drop):
     """Simplify the tables that are not direct child or grandchild of the root table.
 
     Args:
         metadata (MultiTableMetadata):
             Metadata of the datasets.
-        root_table (str):
-            Name of the root table.
-        descendants_to_keep (set):
-            Set of the descendants of the root table that will be kept.
+        tables_to_drop (set):
+            Set of the tables to remove from the metadata.
     """
     tables = deepcopy(metadata.tables)
     for table in tables:
-        if table not in descendants_to_keep and table != root_table:
+        if table in tables_to_drop:
             del metadata.tables[table]
 
     return metadata
@@ -150,8 +161,7 @@ def _simplify_grandchildren(metadata, grandchildren):
     return metadata
 
 
-def _get_num_column_to_drop(
-        metadata, child_table, max_col_per_relationships):
+def _get_num_column_to_drop(metadata, child_table, max_col_per_relationships):
     """Get the number of columns to drop from the child table.
 
     Formula to determine how many columns to drop for a child
@@ -195,8 +205,7 @@ def _get_num_column_to_drop(
     return num_cols_to_drop, modelable_columns
 
 
-def _get_columns_to_drop_child(
-        metadata, child_table, max_col_per_relationships):
+def _get_columns_to_drop_child(metadata, child_table, max_col_per_relationships):
     """Get the list of columns to drop from the child table."""
     num_col_to_drop, modelable_columns = _get_num_column_to_drop(
         metadata, child_table, max_col_per_relationships
@@ -222,8 +231,7 @@ def _get_columns_to_drop_child(
     return columns_to_drop
 
 
-def _simplify_child(
-        metadata, child_table, max_col_per_relationships):
+def _simplify_child(metadata, child_table, max_col_per_relationships):
     """Simplify the child table.
 
     Args:
@@ -233,10 +241,6 @@ def _simplify_child(
             Name of the child table.
         max_col_per_relationships (int):
             Maximum number of columns to model per relationship.
-        num_relationship (int):
-            Number of relationships of the child table with the root table.
-        estimate_column (int):
-            Number of columns that will be added to the root table based on the child table.
     """
     columns_to_drop = _get_columns_to_drop_child(
         metadata, child_table, max_col_per_relationships
@@ -308,19 +312,19 @@ def _simplify_metadata(metadata):
     len_all_descendants_per_root = {
         root: len(all_descendants_per_root[root]) for root in all_descendants_per_root
     }
-    root_with_max_descendants = max(
+    root_to_keep = max(
         len_all_descendants_per_root, key=len_all_descendants_per_root.get
     )
-    all_descendants_to_keep = all_descendants_per_root[root_with_max_descendants]
+    all_descendants_to_keep = all_descendants_per_root[root_to_keep]
+    tables_to_keep = set(all_descendants_to_keep) | {root_to_keep}
+    table_to_drop = set(simplified_metadata.tables.keys()) - tables_to_keep
 
-    simplified_metadata, children, grandchildren = _simplify_relationships(
-        simplified_metadata, root_with_max_descendants, all_descendants_to_keep
+    simplified_metadata = _simplify_relationships(simplified_metadata, table_to_drop)
+    simplified_metadata = _remove_tables_metadata(simplified_metadata, table_to_drop)
+
+    children, grandchildren = _get_children_and_grandchildren(
+        relationships, root_to_keep, all_descendants_to_keep
     )
-
-    simplified_metadata = remove_non_descendant_tables(
-        simplified_metadata, root_with_max_descendants, all_descendants_to_keep
-    )
-
     if grandchildren:
         simplified_metadata = _simplify_grandchildren(simplified_metadata, grandchildren)
 
@@ -331,7 +335,7 @@ def _simplify_metadata(metadata):
 
     num_data_column = HMASynthesizer._get_num_data_columns(simplified_metadata)
     simplified_metadata = _simplify_children(
-        simplified_metadata, children, root_with_max_descendants, num_data_column
+        simplified_metadata, children, root_to_keep, num_data_column
     )
     simplified_metadata.validate()
 
