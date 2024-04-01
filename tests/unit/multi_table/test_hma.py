@@ -85,8 +85,32 @@ class TestHMASynthesizer:
 
         pd.testing.assert_frame_equal(result, expected)
 
+    def test_get_distributions(self):
+        """Test ``get_distributions``."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = HMASynthesizer(metadata)
+        instance.get_table_parameters = Mock()
+        instance.get_table_parameters.side_effect = [
+            {'synthesizer_parameters': {'default_distribution': 'gamma'}},
+            {'wrong_key': {'default_distribution': 'gamma'}},
+            {'synthesizer_parameters': {'not_default_distribution': 'wrong'}}
+        ]
+
+        # Run
+        result = instance._get_distributions()
+
+        # Assert
+        expected = {
+            'nesreca': 'gamma',
+            'oseba': None,
+            'upravna_enota': None
+        }
+        assert result == expected
+
     @patch('sdv.multi_table.hma.HMASynthesizer._estimate_num_columns')
-    def test__print_estimate_warning(self, estimate_mock, capsys):
+    @patch('sdv.multi_table.hma.HMASynthesizer._get_distributions')
+    def test__print_estimate_warning(self, get_distributions_mock, estimate_mock, capsys):
         """Test that a warning appears if there are more than 1000 expected columns"""
         # Setup
         metadata = get_multi_table_metadata()
@@ -103,6 +127,7 @@ class TestHMASynthesizer:
         captured = capsys.readouterr()
 
         # Assert
+        get_distributions_mock.assert_called_once()
         for pattern in key_phrases:
             match = re.search(pattern, captured.out + captured.err)
             assert match is not None

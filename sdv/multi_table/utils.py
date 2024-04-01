@@ -276,9 +276,7 @@ def _simplify_children(metadata, children, root_table, num_data_column):
         )
         num_relationship = len(_get_relationship_for_child(relationships, child_table))
         if estimate_column > max_col_per_relationships * num_relationship:
-            metadata = _simplify_child(
-                metadata, child_table, max_col_per_relationships
-            )
+            metadata = _simplify_child(metadata, child_table, max_col_per_relationships)
 
     return metadata
 
