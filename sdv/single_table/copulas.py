@@ -1,4 +1,5 @@
 """Wrappers around copulas models."""
+import inspect
 import logging
 import warnings
 from copy import deepcopy
@@ -323,25 +324,53 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         return cls._get_nearest_correlation_matrix(correlation).tolist()
 
-    def _rebuild_gaussian_copula(self, model_parameters):
+    def _rebuild_gaussian_copula(self, model_parameters, default_params=None):
         """Rebuild the model params to recreate a Gaussian Multivariate instance.
 
         Args:
             model_parameters (dict):
                 Sampled and reestructured model parameters.
+            default_parameters (dict):
+                Fall back parameters if sampled params are invalid.
 
         Returns:
             dict:
                 Model parameters ready to recreate the model.
         """
+        if default_params is None:
+            default_params = {}
+
         columns = []
         univariates = []
         for column, univariate in model_parameters['univariates'].items():
             columns.append(column)
             if column in self._numerical_distributions:
-                univariate['type'] = self._numerical_distributions[column]
+                univariate_type = self._numerical_distributions[column]
             else:
-                univariate['type'] = self.get_distribution_class(self.default_distribution)
+                univariate_type = self.get_distribution_class(self.default_distribution)
+
+            univariate['type'] = univariate_type
+            model = univariate_type.MODEL_CLASS
+            if hasattr(model, '_argcheck'):
+                to_check = {
+                    parameter: univariate[parameter]
+                    for parameter in inspect.signature(model._argcheck).parameters.keys()
+                    if parameter in univariate
+                }
+                if not model._argcheck(**to_check):
+                    if column in default_params.get('univariates', []):
+                        LOGGER.info(
+                            f"Invalid parameters sampled for column '{column}', "
+                            'using default parameters.'
+                        )
+                        univariate = default_params['univariates'][column]
+                        univariate['type'] = univariate_type
+                    else:
+                        LOGGER.debug(
+                            f"Column '{column}' has invalid parameters."
+                        )
+            else:
+                LOGGER.debug(f"Univariate for col '{column}' does not have _argcheck method.")
 
             if 'scale' in univariate:
                 univariate['scale'] = max(0, univariate['scale'])
@@ -362,18 +391,26 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
     def _get_likelihood(self, table_rows):
         return self._model.probability_density(table_rows)
 
-    def _set_parameters(self, parameters):
+    def _set_parameters(self, parameters, default_params=None):
         """Set copula model parameters.
 
         Args:
-            dict:
+            params [dict]:
                 Copula flatten parameters.
+            default_params [list]:
+                Flattened list of parameters to fall back to if `params` are invalid.
+
         """
+        if default_params is not None:
+            default_params = unflatten_dict(default_params)
+        else:
+            default_params = {}
+
         parameters = unflatten_dict(parameters)
         if 'num_rows' in parameters:
             num_rows = parameters.pop('num_rows')
             self._num_rows = 0 if pd.isna(num_rows) else max(0, int(round(num_rows)))
 
         if parameters:
-            parameters = self._rebuild_gaussian_copula(parameters)
+            parameters = self._rebuild_gaussian_copula(parameters, default_params)
             self._model = multivariate.GaussianMultivariate.from_dict(parameters)

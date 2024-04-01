@@ -1,11 +1,12 @@
 import re
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 import scipy
-from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariate
+from copulas.univariate import (
+    BetaUnivariate, GammaUnivariate, TruncatedGaussian, UniformUnivariate)
 
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
@@ -383,6 +384,97 @@ class TestGaussianCopulaSynthesizer:
         }
         assert result == expected
 
+    @patch('sdv.single_table.copulas.LOGGER')
+    def test__rebuild_gaussian_copula_with_defaults(self, logger_mock):
+        """Test the method with invalid parameters and default fallbacks."""
+        # Setup
+        metadata = SingleTableMetadata()
+        gaussian_copula = GaussianCopulaSynthesizer(metadata, default_distribution='truncnorm')
+        distribution_mock = Mock()
+        delattr(distribution_mock.MODEL_CLASS, '_argcheck')
+        gaussian_copula._numerical_distributions = {'baz': distribution_mock}
+        model_parameters = {
+            'univariates': {
+                'foo': {
+                    'a': 10,
+                    'b': 1,
+                    'scale': 0.0,
+                    'loc': 0.0
+                },
+                'bar': {
+                    'a': 10,
+                    'b': 1,
+                    'scale': 1.0,
+                    'loc': 1.0
+                },
+                'baz': {
+                    'a': 1,
+                    'b': 10,
+                    'scale': 2.0,
+                    'loc': 2.0
+                },
+            },
+            'correlation': [[0.1], [0.2, 0.3]],
+        }
+        default_parameters = {
+            'univariates': {
+                'foo': {
+                    'a': 2,
+                    'b': 8,
+                    'scale': 0.0,
+                    'loc': 0.0
+                }
+            }
+        }
+
+        # Run
+        result = GaussianCopulaSynthesizer._rebuild_gaussian_copula(
+            gaussian_copula,
+            model_parameters,
+            default_parameters
+        )
+
+        # Asserts
+        expected = {
+            'univariates': [
+                {
+                    'a': 2,
+                    'b': 8,
+                    'scale': 0.0,
+                    'loc': 0.0,
+                    'type': TruncatedGaussian
+                },
+                {
+                    'a': 10,
+                    'b': 1,
+                    'scale': 1.0,
+                    'loc': 1.0,
+                    'type': TruncatedGaussian
+                },
+                {
+                    'a': 1,
+                    'b': 10,
+                    'scale': 2.0,
+                    'loc': 2.0,
+                    'type': distribution_mock
+                },
+            ],
+            'correlation': [
+                [1.0, 0.1, 0.2],
+                [0.1, 1.0, 0.3],
+                [0.2, 0.3, 1.0]
+            ],
+            'columns': ['foo', 'bar', 'baz'],
+        }
+        assert result == expected
+        logger_mock.info.assert_called_once_with(
+            "Invalid parameters sampled for column 'foo', using default parameters."
+        )
+        logger_mock.debug.assert_has_calls([
+            call("Column 'bar' has invalid parameters."),
+            call("Univariate for col 'baz' does not have _argcheck method.")
+        ])
+
     @patch('sdv.single_table.copulas.multivariate')
     @patch('sdv.single_table.copulas.unflatten_dict')
     def test___set_parameters(self, mock_unflatten_dict, mock_multivariate):
@@ -438,7 +530,7 @@ class TestGaussianCopulaSynthesizer:
             }
         }
 
-        instance._rebuild_gaussian_copula.assert_called_once_with(expected_parameters)
+        instance._rebuild_gaussian_copula.assert_called_once_with(expected_parameters, {})
         model = mock_multivariate.GaussianMultivariate.from_dict.return_value
         assert instance._model == model
         assert instance._num_rows == 5

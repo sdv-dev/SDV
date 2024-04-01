@@ -1248,6 +1248,78 @@ class TestHMASynthesizer:
         }
         assert result == expected_result
 
+    def test__recreate_child_synthesizer_with_default_parameters(self):
+        """Test HMA when sampled parameters invalid."""
+        # Setup
+        prefix = '__sessions__user_id__'
+        parent_row = pd.Series({
+            f'{prefix}num_rows': 10,
+            f'{prefix}univariates__brand__a': 100,
+            f'{prefix}univariates__brand__b': 10,
+            f'{prefix}univariates__brand__loc': 0.5,
+            f'{prefix}univariates__brand__scale': -0.25
+        })
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'users': {
+                    'columns': {
+                        'user_id': {'sdtype': 'id'}
+                    },
+                    'primary_key': 'user_id'
+                },
+                'sessions': {
+                    'columns': {
+                        'user_id': {'sdtype': 'id'},
+                        'brand': {'sdtype': 'categorical'}
+                    }
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'users',
+                    'child_table_name': 'sessions',
+                    'parent_primary_key': 'user_id',
+                    'child_foreign_key': 'user_id'
+                }
+            ]
+        })
+        instance = HMASynthesizer(metadata)
+        instance.set_table_parameters('sessions', {'default_distribution': 'truncnorm'})
+        instance._max_child_rows = {f'{prefix}num_rows': 10}
+        instance.extended_columns = {
+            'sessions': {
+                f'{prefix}num_rows': FloatFormatter(enforce_min_max_values=True),
+                f'{prefix}univariates__brand__a': FloatFormatter(enforce_min_max_values=True),
+                f'{prefix}univariates__brand__b': FloatFormatter(enforce_min_max_values=True),
+                f'{prefix}univariates__brand__loc': FloatFormatter(enforce_min_max_values=True),
+                f'{prefix}univariates__brand__scale': FloatFormatter(enforce_min_max_values=True)
+            }
+        }
+        for col, float_formatter in instance.extended_columns['sessions'].items():
+            float_formatter.fit(pd.DataFrame({col: [0., 100.]}), col)
+
+        instance._default_parameters = {
+            'sessions': {
+                'univariates__brand__a': 5,
+                'univariates__brand__b': 84,
+                'univariates__brand__loc': 1,
+                'univariates__brand__scale': 1
+            }
+        }
+
+        # Run
+        child_synthesizer = instance._recreate_child_synthesizer('sessions', 'users', parent_row)
+
+        # Assert
+        expected_result = {
+            'univariates__brand__a': 5,
+            'univariates__brand__b': 84,
+            'univariates__brand__loc': 1,
+            'univariates__brand__scale': 1,
+            'num_rows': 10
+        }
+        assert child_synthesizer._get_parameters() == expected_result
+
     def test_metadata_updated_no_warning(self, tmp_path):
         """Test scenario where no warning about metadata should be raised.
 
