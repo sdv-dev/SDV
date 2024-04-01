@@ -645,7 +645,7 @@ def test_check_synthesizer_version_enterprise_is_lower(mock_version):
 
 @patch('sdv._utils.version')
 def test_check_synthesizer_version_enterprise_is_none(mock_version):
-    """Test that VersionError is raised when only enterprise version is lower."""
+    """Test that no VersionError is raised enterprise is None on the synthesizer."""
     # Setup
     synthesizer = Mock(
         _fitted_sdv_version='1.3.0',

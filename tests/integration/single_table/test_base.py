@@ -9,8 +9,9 @@ import pkg_resources
 import pytest
 from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, UniformEncoder
 
+from sdv import version
 from sdv.datasets.demo import download_demo
-from sdv.errors import SynthesizerInputError
+from sdv.errors import SynthesizerInputError, VersionError
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table import (
@@ -543,6 +544,26 @@ def test_save_and_load(tmp_path):
     assert instance.metadata.sequence_key is None
     assert instance.metadata.sequence_index is None
     assert instance.metadata._version == 'SINGLE_TABLE_V1'
+
+
+def test_save_and_load_with_downgraded_version(tmp_path):
+    """Test that synthesizers are raising errors if loaded on a downgraded version."""
+    # Setup
+    metadata = SingleTableMetadata()
+    instance = BaseSingleTableSynthesizer(metadata)
+    instance._fitted = True
+    instance._fitted_sdv_version = '10.0.0'
+    synthesizer_path = tmp_path / 'synthesizer.pkl'
+    instance.save(synthesizer_path)
+
+    # Run and Assert
+    error_msg = (
+        f'You are currently on SDV version {version.public} but this '
+        'synthesizer was created on version 10.0.0. '
+        'Downgrading your SDV version is not supported.'
+    )
+    with pytest.raises(VersionError, match=error_msg):
+        BaseSingleTableSynthesizer.load(synthesizer_path)
 
 
 @patch('sdv.single_table.base.BaseSingleTableSynthesizer._fit')
