@@ -9,9 +9,10 @@ import pytest
 from faker import Faker
 from rdt.transformers import FloatFormatter
 
+from sdv import version
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
-from sdv.errors import SynthesizerInputError
+from sdv.errors import SynthesizerInputError, VersionError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
@@ -1547,3 +1548,54 @@ def test_metadata_updated_warning(method, kwargs):
     assert metadata._multi_table_updated is False
     for table_name, table_metadata in metadata.tables.items():
         assert table_metadata._updated is False
+
+
+def test_save_and_load_with_downgraded_version(tmp_path):
+    """Test that synthesizers are raising errors if loaded on a downgraded version."""
+    # Setup
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'departure': {
+                'primary_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'date': {'sdtype': 'datetime'},
+                    'city': {'sdtype': 'city'},
+                    'country': {'sdtype': 'country'}
+                },
+            },
+            'arrival': {
+                'foreign_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'date': {'sdtype': 'datetime'},
+                    'city': {'sdtype': 'city'},
+                    'country': {'sdtype': 'country'},
+                    'id_flight': {'sdtype': 'id'}
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'departure',
+                'parent_primary_key': 'id',
+                'child_table_name': 'arrival',
+                'child_foreign_key': 'id'
+            }
+        ]
+    })
+
+    instance = HMASynthesizer(metadata)
+    instance._fitted = True
+    instance._fitted_sdv_version = '10.0.0'
+    synthesizer_path = tmp_path / 'synthesizer.pkl'
+    instance.save(synthesizer_path)
+
+    # Run and Assert
+    error_msg = (
+        f'You are currently on SDV version {version.public} but this '
+        'synthesizer was created on version 10.0.0. '
+        'Downgrading your SDV version is not supported.'
+    )
+    with pytest.raises(VersionError, match=error_msg):
+        HMASynthesizer.load(synthesizer_path)
