@@ -99,7 +99,7 @@ def _get_children_and_grandchildren(relationships, root_table, descendants_to_ke
 
 
 def _simplify_relationships_and_tables(metadata, tables_to_drop):
-    """Simplify the relationships of the metadata.
+    """Simplify the relationships and tables of the metadata.
 
     Removes the relationships that are not direct child or grandchild of the root table.
     Removes the tables that are not direct child or grandchild of the root table.
