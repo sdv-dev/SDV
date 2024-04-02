@@ -9,9 +9,9 @@ from sdv.multi_table.utils import (
     _get_all_descendant_per_root_at_order_n, _get_children_and_grandchildren,
     _get_columns_to_drop_child, _get_n_order_descendants, _get_num_column_to_drop,
     _get_relationship_for_child, _get_relationship_for_parent, _get_rows_to_drop,
-    _get_total_estimated_columns, _print_simplified_schema_summary, _remove_tables_metadata,
-    _simplify_child, _simplify_children, _simplify_data, _simplify_grandchildren,
-    _simplify_metadata, _simplify_relationships)
+    _get_total_estimated_columns, _print_simplified_schema_summary, _simplify_child,
+    _simplify_children, _simplify_data, _simplify_grandchildren, _simplify_metadata,
+    _simplify_relationships_and_tables)
 
 
 def test__get_relationship_for_child():
@@ -211,33 +211,8 @@ def test__get_children_and_grandchildren():
     assert grandchildren == ['child']
 
 
-def test__simplify_relationships():
+def test__simplify_relationships_and_tables():
     """Test the ``_simplify_relationships`` method."""
-    # Setup
-    metadata = MultiTableMetadata().load_from_dict({
-        'relationships': [
-            {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
-            {'parent_table_name': 'parent', 'child_table_name': 'child'},
-            {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
-            {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
-            {'parent_table_name': 'other_root', 'child_table_name': 'child'},
-        ]
-    })
-    tables_to_drop = {'grandchild', 'other_table', 'other_root'}
-
-    # Run
-    metadata_result = _simplify_relationships(metadata, tables_to_drop)
-
-    # Assert
-    expected_result = [
-        {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
-        {'parent_table_name': 'parent', 'child_table_name': 'child'},
-    ]
-    assert metadata_result.relationships == expected_result
-
-
-def test__remove_tables_metadata():
-    """Test the ``_remove_tables_metadata`` method."""
     # Setup
     metadata = MultiTableMetadata().load_from_dict({
         'tables': {
@@ -246,16 +221,35 @@ def test__remove_tables_metadata():
             'child': {'columns': {'col_3': {'sdtype': 'numerical'}}},
             'grandchild': {'columns': {'col_4': {'sdtype': 'numerical'}}},
             'other_table': {'columns': {'col_5': {'sdtype': 'numerical'}}},
-            'other_root': {'columns': {'col_6': {'sdtype': 'numerical'}}}
-        }
+            'other_root': {'columns': {'col_6': {'sdtype': 'numerical'}}},
+        },
+        'relationships': [
+            {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
+            {'parent_table_name': 'parent', 'child_table_name': 'child'},
+            {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
+            {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
+            {'parent_table_name': 'other_root', 'child_table_name': 'child'},
+        ]
     })
-    tables_to_drop = {'grandchild', 'other_table', 'other_root'}
+    tables_to_drop = {'grandchild', 'other_root'}
 
     # Run
-    metadata_result = _remove_tables_metadata(metadata, tables_to_drop)
+    metadata_result = _simplify_relationships_and_tables(metadata, tables_to_drop)
 
     # Assert
-    assert metadata_result.tables.keys() == {'grandparent', 'parent', 'child'}
+    expected_relationships = [
+        {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
+        {'parent_table_name': 'parent', 'child_table_name': 'child'},
+        {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
+    ]
+    expected_tables = {
+        'grandparent': {'columns': {'col_1': {'sdtype': 'numerical'}}},
+        'parent': {'columns': {'col_2': {'sdtype': 'numerical'}}},
+        'child': {'columns': {'col_3': {'sdtype': 'numerical'}}},
+        'other_table': {'columns': {'col_5': {'sdtype': 'numerical'}}},
+    }
+    assert metadata_result.relationships == expected_relationships
+    assert metadata_result.to_dict()['tables'] == expected_tables
 
 
 def test__simplify_grandchildren():

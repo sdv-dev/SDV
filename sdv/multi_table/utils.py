@@ -98,16 +98,21 @@ def _get_children_and_grandchildren(relationships, root_table, descendants_to_ke
     return sorted(set(children)), sorted(set(grandchildren))
 
 
-def _simplify_relationships(metadata, tables_to_drop):
+def _simplify_relationships_and_tables(metadata, tables_to_drop):
     """Simplify the relationships of the metadata.
 
     Removes the relationships that are not direct child or grandchild of the root table.
+    Removes the tables that are not direct child or grandchild of the root table.
 
     Args:
         metadata (MultiTableMetadata):
             Metadata of the datasets.
         tables_to_drop (set):
             Set of the tables that relationships will be removed.
+
+    Returns:
+        MultiTableMetadata:
+            Simplified metadata.
     """
     relationships = deepcopy(metadata.relationships)
     for relationship in relationships:
@@ -117,23 +122,10 @@ def _simplify_relationships(metadata, tables_to_drop):
         is_child_to_drop = child_table in tables_to_drop
         if is_parent_to_drop or is_child_to_drop:
             metadata.relationships.remove(relationship)
-
-    return metadata
-
-
-def _remove_tables_metadata(metadata, tables_to_drop):
-    """Simplify the tables that are not direct child or grandchild of the root table.
-
-    Args:
-        metadata (MultiTableMetadata):
-            Metadata of the datasets.
-        tables_to_drop (set):
-            Set of the tables to remove from the metadata.
-    """
-    tables = deepcopy(metadata.tables)
-    for table in tables:
-        if table in tables_to_drop:
-            del metadata.tables[table]
+            if is_parent_to_drop and parent_table in metadata.tables:
+                del metadata.tables[parent_table]
+            elif is_child_to_drop and child_table in metadata.tables:
+                del metadata.tables[child_table]
 
     return metadata
 
@@ -180,8 +172,9 @@ def _get_num_column_to_drop(metadata, child_table, max_col_per_relationships):
             Maximum number of columns to model per relationship.
 
     Returns:
-        int:
-            Number of columns to drop.
+        tuple:
+            - num_cols_to_drop (int): Number of columns to drop from the child table.
+            - modelable_columns (dict): Dictionary that maps the modelable sdtype to their columns.
     """
     num_column_parameter = 4  # for beta distribution
     columns = metadata.tables[child_table].columns
@@ -317,9 +310,9 @@ def _simplify_metadata(metadata):
     tables_to_keep = set(all_descendants_to_keep) | {root_to_keep}
     table_to_drop = set(simplified_metadata.tables.keys()) - tables_to_keep
 
-    simplified_metadata = _simplify_relationships(simplified_metadata, table_to_drop)
-    simplified_metadata = _remove_tables_metadata(simplified_metadata, table_to_drop)
-
+    simplified_metadata = _simplify_relationships_and_tables(
+        simplified_metadata, table_to_drop
+    )
     children, grandchildren = _get_children_and_grandchildren(
         relationships, root_to_keep, all_descendants_to_keep
     )

@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError
 from sdv.metadata import MultiTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
@@ -416,8 +415,27 @@ def test_simplify_schema(mock_print_summary, mock_get_total_estimated_columns,
 def test_simplify_schema_invalid_metadata():
     """Test ``simplify_schema`` when the metadata is not invalid."""
     # Setup
-    real_data, metadata = download_demo('multi_table', 'fake_hotels')
-    del metadata.tables['guests']
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'column1': {'sdtype': 'categorical'}
+                }
+            }
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table2',
+                'parent_primary_key': 'column1',
+                'child_foreign_key': 'column2'
+            }
+        ]
+    })
+    real_data = {
+        'table1': pd.DataFrame({'column1': [1, 2, 3]}),
+        'table2': pd.DataFrame({'column2': [4, 5, 6]}),
+    }
 
     # Run and Assert
     expected_message = re.escape(
@@ -431,8 +449,33 @@ def test_simplify_schema_invalid_metadata():
 def test_simplify_schema_invalid_data():
     """Test ``simplify_schema`` when the data is not valid."""
     # Setup
-    real_data, metadata = download_demo('multi_table', 'fake_hotels')
-    real_data['hotels'].loc[0, 'hotel_id'] = np.nan
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'column1': {'sdtype': 'id'}
+                },
+                'primary_key': 'column1'
+            },
+            'table2': {
+                'columns': {
+                    'column2': {'sdtype': 'id'}
+                },
+            }
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table2',
+                'parent_primary_key': 'column1',
+                'child_foreign_key': 'column2'
+            }
+        ]
+    })
+    real_data = {
+        'table1': pd.DataFrame({'column1': [np.nan, 1, 2]}),
+        'table2': pd.DataFrame({'column2': [1, 1, 2]}),
+    }
 
     # Run and Assert
     expected_message = re.escape(

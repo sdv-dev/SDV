@@ -86,6 +86,13 @@ def drop_unknown_references(metadata, data, drop_missing_values=True, verbose=Tr
 def simplify_schema(data, metadata):
     """Simplify the schema of the data and metadata.
 
+    This function simplifies the schema of the data and metadata by:
+    - Removing tables that are not child or grandchild of the main root table.
+    - Removing all modelable columns for grandchild tables.
+    - Reomving some modelable columns for child tables.
+    - Removing all relationships that are not between the main root table and its children
+    or grandchildren.
+
     Args:
         data (dict):
             Dictionary that maps each table name (string) to the data for that
@@ -94,10 +101,11 @@ def simplify_schema(data, metadata):
             Metadata of the datasets.
 
     Returns:
-        dict:
-            Dictionary with the simplified dataframes.
-        MultiTableMetadata:
-            Simplified metadata.
+        tuple:
+            dict:
+                Dictionary with the simplified dataframes.
+            MultiTableMetadata:
+                Simplified metadata.
     """
     try:
         error_message = (
