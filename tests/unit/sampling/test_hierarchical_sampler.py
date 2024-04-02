@@ -199,7 +199,7 @@ class TestBaseHierarchicalSampler():
         ``_sample_table`` does not sample the root parents of a graph, only the children.
         """
         # Setup
-        def sample_children(table_name, sampled_data):
+        def sample_children(table_name, sampled_data, scale):
             sampled_data['transactions'] = pd.DataFrame({
                 'transaction_id': [1, 2, 3],
                 'session_id': ['a', 'a', 'b']
@@ -281,7 +281,7 @@ class TestBaseHierarchicalSampler():
         value and force a child to be created from that row.
         """
         # Setup
-        def sample_children(table_name, sampled_data):
+        def sample_children(table_name, sampled_data, scale):
             sampled_data['transactions'] = pd.DataFrame({
                 'transaction_id': [1, 2],
                 'session_id': ['a', 'a']
@@ -354,7 +354,7 @@ class TestBaseHierarchicalSampler():
         a child to be created from that row.
         """
         # Setup
-        def sample_children(table_name, sampled_data):
+        def sample_children(table_name, sampled_data, scale):
             sampled_data['transactions'] = pd.DataFrame({
                 'transaction_id': [1, 2],
                 'session_id': ['a', 'a']
@@ -514,7 +514,7 @@ class TestBaseHierarchicalSampler():
             'transaction_amount': [100, 1000, 200]
         })
 
-        def _sample_children_dummy(table_name, sampled_data):
+        def _sample_children_dummy(table_name, sampled_data, scale):
             sampled_data['sessions'] = sessions
             sampled_data['transactions'] = transactions
 
@@ -576,7 +576,8 @@ class TestBaseHierarchicalSampler():
         assert result == instance._finalize.return_value
         instance._sample_children.assert_called_once_with(
             table_name='users',
-            sampled_data=expected_sample
+            sampled_data=expected_sample,
+            scale=1.0
         )
         instance._add_foreign_key_columns.assert_has_calls([
             call(

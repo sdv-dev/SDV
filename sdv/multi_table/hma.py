@@ -155,6 +155,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         BaseMultiTableSynthesizer.__init__(self, metadata, locales=locales)
         self._table_sizes = {}
         self._max_child_rows = {}
+        self._min_child_rows = {}
         self._augmented_tables = []
         self._learned_relationships = 0
         self._default_parameters = {}
@@ -402,6 +403,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
                 table[num_rows_key] = table[num_rows_key].fillna(0)
                 self._max_child_rows[num_rows_key] = table[num_rows_key].max()
+                self._min_child_rows[num_rows_key] = table[num_rows_key].min()
                 tables[table_name] = table
                 self._learned_relationships += 1
 
@@ -541,7 +543,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             int:
                 The parent id for this row, chosen based on likelihoods.
         """
-        """
         mean = likelihoods.mean()
         if (likelihoods == 0).all():
             # All rows got 0 likelihood, fallback to num_rows
@@ -555,8 +556,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             # at least one row got a valid likelihood, so fill the
             # rows that got a singular matrix error with the mean
             likelihoods = likelihoods.fillna(mean)
-        """
-        likelihoods = num_rows
+
         total = likelihoods.sum()
         if total == 0:
             # Worse case scenario: we have no likelihoods
@@ -566,8 +566,14 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         else:
             weights = likelihoods.to_numpy() / total
 
-        chosen_parent = np.random.choice(likelihoods.index.to_list(), p=weights)
+        candidates, candidate_weights = [], []
+        for parent, weight in zip(likelihoods.index.to_list(), weights):
+            if num_rows[parent] > 0:
+                candidates.append(parent)
+                candidate_weights.append(weight)
 
+        candidate_weights = np.array(candidate_weights) / np.sum(candidate_weights)
+        chosen_parent = np.random.choice(candidates, p=candidate_weights)
         num_rows[chosen_parent] -= 1
 
         return chosen_parent
@@ -642,7 +648,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         num_rows_column = f'__{child_name}__{foreign_key}__num_rows'
         likelihoods = self._get_likelihoods(child_table, parent_table, child_name, foreign_key)
 
-        return likelihoods.apply(self._find_parent_id, axis=1, num_rows=parent_table[num_rows_column])
+        return likelihoods.apply(self._find_parent_id, axis=1,
+                                 num_rows=parent_table[num_rows_column].copy())
 
     def _add_foreign_key_columns(self, child_table, parent_table, child_name, parent_name):
         for foreign_key in self.metadata._get_foreign_keys(parent_name, child_name):
