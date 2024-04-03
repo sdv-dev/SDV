@@ -3,6 +3,7 @@ name: Static Code Analysis
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   code-analysis:
@@ -23,7 +24,7 @@ jobs:
       id: cpr
       uses: peter-evans/create-pull-request@v4
       with:
-        token: ${{ secrets.GH_ACCESS_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
         commit-message: Update static code analysis
         title: Latest Code Analysis
         body: "This is an auto-generated PR with the **latest** code analysis results."
