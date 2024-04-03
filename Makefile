@@ -260,3 +260,10 @@ release-minor: check-release bumpversion-minor release
 
 .PHONY: release-major
 release-major: check-release bumpversion-major release
+
+# Dependency targets
+
+.PHONY: check-deps
+check-deps:
+	$(eval allow_list='boto3=|botocore=|cloudpickle=|graphviz=|numpy=|pandas=|tqdm=|copulas=|ctgan=|deepecho=|rdt=|sdmetrics=')
+	pip freeze | grep -v "CTGAN.git" | grep -E $(allow_list) > $(OUTPUT_FILEPATH)

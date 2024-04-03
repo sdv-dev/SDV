@@ -1,0 +1,29 @@
+name: Dependency Checker
+on:
+  schedule:
+    - cron: '0 0 * * 1-5'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install .[dev]
+        make check-deps OUTPUT_FILEPATH=latest_requirements.txt
+    - name: Create pull request
+      id: cpr
+      uses: peter-evans/create-pull-request@v4
+      with:
+        token: ${{ secrets.GH_ACCESS_TOKEN }}
+        commit-message: Update latest dependencies
+        title: Automated Latest Dependency Updates
+        body: "This is an auto-generated PR with **latest** dependency updates."
+        branch: latest-dependency-update
+        branch-suffix: short-commit-hash
+        base: main
