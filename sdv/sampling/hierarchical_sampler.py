@@ -157,8 +157,8 @@ class BaseHierarchicalSampler():
                 A dictionary mapping table names to sampled tables (pd.DataFrame).
         """
         for child_name in self.metadata._get_child_map()[table_name]:
+            self._enforce_table_sizes(child_name, table_name, scale, sampled_data)
             if child_name not in sampled_data:  # Sample based on only 1 parent
-                self._enforce_table_sizes(child_name, table_name, scale, sampled_data)
                 for _, row in sampled_data[table_name].iterrows():
                     self._add_child_rows(
                         child_name=child_name,

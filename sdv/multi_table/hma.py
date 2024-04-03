@@ -572,6 +572,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 candidates.append(parent)
                 candidate_weights.append(weight)
 
+        candidate_weights = np.nan_to_num(candidate_weights, nan=1e-6)
         candidate_weights = np.array(candidate_weights) / np.sum(candidate_weights)
         chosen_parent = np.random.choice(candidates, p=candidate_weights)
         num_rows[chosen_parent] -= 1
@@ -645,11 +646,10 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         # Create a copy of the parent table with the primary key as index to calculate likelihoods
         primary_key = self.metadata.tables[parent_name].primary_key
         parent_table = parent_table.set_index(primary_key)
-        num_rows_column = f'__{child_name}__{foreign_key}__num_rows'
+        num_rows = parent_table[f'__{child_name}__{foreign_key}__num_rows'].copy()
         likelihoods = self._get_likelihoods(child_table, parent_table, child_name, foreign_key)
 
-        return likelihoods.apply(self._find_parent_id, axis=1,
-                                 num_rows=parent_table[num_rows_column].copy())
+        return likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)
 
     def _add_foreign_key_columns(self, child_table, parent_table, child_name, parent_name):
         for foreign_key in self.metadata._get_foreign_keys(parent_name, child_name):
