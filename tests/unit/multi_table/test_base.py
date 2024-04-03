@@ -132,7 +132,7 @@ class TestBaseMultiTableSynthesizer:
         metadata.add_column_relationship('nesreca', 'gps', ['lat', 'lon'])
 
         expected_warning = (
-            "The metadata contains a column relationship of type 'gps'. "
+            "The metadata contains a column relationship of type 'gps' "
             'which requires the gps add-on. This relationship will be ignored. For higher'
             ' quality data in this relationship, please inquire about the SDV Enterprise tier.'
         )

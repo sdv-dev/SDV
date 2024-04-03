@@ -67,6 +67,7 @@ class TestDataProcessor:
             ]
         })
         metadata.validate()
+        metadata._valid_column_relationships = metadata.column_relationships
         dp = DataProcessor(SingleTableMetadata())
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']
@@ -99,6 +100,7 @@ class TestDataProcessor:
             ]
         })
         metadata.validate()
+        metadata._valid_column_relationships = metadata.column_relationships
         dp = DataProcessor(SingleTableMetadata())
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']
@@ -140,6 +142,7 @@ class TestDataProcessor:
             ]
         })
         metadata.validate()
+        metadata._valid_column_relationships = metadata.column_relationships
         dp = DataProcessor(SingleTableMetadata())
         dp.metadata = metadata
         dp._locales = ['en_US', 'en_GB']

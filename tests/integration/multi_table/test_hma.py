@@ -1511,7 +1511,7 @@ def test_metadata_updated_warning(method, kwargs):
                     'id': {'sdtype': 'id'},
                     'date': {'sdtype': 'datetime'},
                     'city': {'sdtype': 'city'},
-                    'country': {'sdtype': 'country'}
+                    'country': {'sdtype': 'country_code'}
                 },
             },
             'arrival': {

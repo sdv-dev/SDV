@@ -177,9 +177,11 @@ def test_validate_errors(mock_rdt_transformers):
         "\nInvalid value for 'computer_representation' 'value' for column 'col8'."
         "\nInvalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'col9'."
         "\nInvalid regex format string '[A-{6}' for id column 'col10'."
-        "\nColumn relationships have following errors:\nColumns ['col1', 'col2'] have "
-        "unsupported sdtypes for column relationship type 'address'.\nUnknown column "
-        "relationship type 'fake_relationship'. Must be one of ['address', 'gps']."
+        '\nColumn relationships have following errors:\n'
+        "Column 'col1' has an unsupported sdtype 'id'.\n"
+        "Column 'col2' has an unsupported sdtype 'numerical'.\n"
+        'Please provide a column that is compatible with Address data.\n'
+        "Unknown column relationship type 'fake_relationship'. Must be one of ['address', 'gps']."
     )
     # Run / Assert
     with pytest.raises(InvalidMetadataError, match=err_msg):
