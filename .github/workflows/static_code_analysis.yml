@@ -19,7 +19,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install bandit==1.7.7
     - name: Save code analysis
-      run: python -m bandit -r . -x ./tests -f txt -o static_code_analysis.txt
+      run: bandit -r . -x ./tests -f txt -o static_code_analysis.txt --exit-zero
     - name: Create pull request
       id: cpr
       uses: peter-evans/create-pull-request@v4
