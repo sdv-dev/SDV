@@ -386,6 +386,7 @@ class BaseSynthesizer:
             processed_data (pandas.DataFrame):
                 The transformed data used to fit the model to.
         """
+        check_synthesizer_version(self, is_fit_method=True, check_synthesizer_is_greater=True)
         if not processed_data.empty:
             self._fit(processed_data)
 
@@ -401,6 +402,7 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) to fit the model to.
         """
+        check_synthesizer_version(self, is_fit_method=True, check_synthesizer_is_greater=True)
         self._check_metadata_updated()
         self._fitted = False
         self._data_processor.reset_sampling()

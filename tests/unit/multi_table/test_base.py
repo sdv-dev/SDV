@@ -8,8 +8,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sdv import version
 from sdv.errors import (
-    ConstraintsNotMetError, InvalidDataError, NotFittedError, SynthesizerInputError)
+    ConstraintsNotMetError, InvalidDataError, NotFittedError, SynthesizerInputError, VersionError)
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -819,7 +820,10 @@ class TestBaseMultiTableSynthesizer:
         the ``_model_tables`` method. Then sets the state to fitted.
         """
         # Setup
-        instance = Mock()
+        instance = Mock(
+            _fitted_sdv_version=None,
+            _fitted_sdv_enterprise_version=None
+        )
         data = Mock()
         data.copy.return_value = data
 
@@ -834,7 +838,10 @@ class TestBaseMultiTableSynthesizer:
     def test_fit_processed_data_empty_table(self):
         """Test attributes are properly set when data is empty and that _fit is not called."""
         # Setup
-        instance = Mock()
+        instance = Mock(
+            _fitted_sdv_version=None,
+            _fitted_sdv_enterprise_version=None
+        )
         data = pd.DataFrame()
 
         # Run
@@ -846,11 +853,38 @@ class TestBaseMultiTableSynthesizer:
         assert instance._fitted_date
         assert instance._fitted_sdv_version
 
+    def test_fit_processed_data_raises_version_error(self):
+        """Test that fit_processed data  will raise a ``VersionError``."""
+        # Setup
+        instance = Mock(
+            _fitted_sdv_version='1.0.0',
+            _fitted_sdv_enterprise_version=None
+        )
+        instance.metadata = Mock()
+        data = Mock()
+
+        # Run and Assert
+        error_msg = (
+            f'You are currently on SDV version {version.public} but this synthesizer '
+            'was created on version 1.0.0. Fitting this synthesizer again is not supported. '
+            'Please create a new synthesizer.'
+        )
+        with pytest.raises(VersionError, match=error_msg):
+            BaseMultiTableSynthesizer.fit_processed_data(instance, data)
+
+        # Assert
+        instance.preprocess.assert_not_called()
+        instance.fit_processed_data.assert_not_called()
+        instance._check_metadata_updated.assert_not_called()
+
     @patch('sdv.multi_table.base._validate_foreign_keys_not_null')
     def test_fit(self, mock_validate_foreign_keys_not_null):
         """Test that it calls the appropriate methods."""
         # Setup
-        instance = Mock()
+        instance = Mock(
+            _fitted_sdv_version=None,
+            _fitted_sdv_enterprise_version=None
+        )
         instance.metadata = Mock()
         data = Mock()
 
@@ -862,6 +896,30 @@ class TestBaseMultiTableSynthesizer:
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()
+
+    def test_fit_raises_version_error(self):
+        """Test that fit will raise a ``VersionError`` if the current version is bigger."""
+        # Setup
+        instance = Mock(
+            _fitted_sdv_version='1.0.0',
+            _fitted_sdv_enterprise_version=None
+        )
+        instance.metadata = Mock()
+        data = Mock()
+
+        # Run and Assert
+        error_msg = (
+            f'You are currently on SDV version {version.public} but this synthesizer '
+            'was created on version 1.0.0. Fitting this synthesizer again is not supported. '
+            'Please create a new synthesizer.'
+        )
+        with pytest.raises(VersionError, match=error_msg):
+            BaseMultiTableSynthesizer.fit(instance, data)
+
+        # Assert
+        instance.preprocess.assert_not_called()
+        instance.fit_processed_data.assert_not_called()
+        instance._check_metadata_updated.assert_not_called()
 
     def test_reset_sampling(self):
         """Test that ``reset_sampling`` resets the numpy seed and the synthesizers."""

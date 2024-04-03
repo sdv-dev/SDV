@@ -942,7 +942,10 @@ class TestPARSynthesizer:
     def test_load(self, mock_file, cloudpickle_mock):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
-        synthesizer_mock = Mock(_fitted=False)
+        synthesizer_mock = Mock(
+            _fitted_sdv_version=None,
+            _fitted_sdv_enterprise_version=None,
+        )
         cloudpickle_mock.load.return_value = synthesizer_mock
 
         # Run

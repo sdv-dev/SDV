@@ -280,7 +280,8 @@ def check_sdv_versions_and_warn(synthesizer):
             warnings.warn(message, SDVVersionWarning)
 
 
-def _check_is_lower_version(current_version, synthesizer_version):
+def _check_is_lower_version(current_version, synthesizer_version,
+                            check_synthesizer_is_greater=False):
     """Check if the current version is lower than the synthesizer version.
 
     Args:
@@ -290,6 +291,8 @@ def _check_is_lower_version(current_version, synthesizer_version):
         synthesizer_version (str):
             The synthesizer version to compare, formatted as a string with major, minor, and
             revision parts separated by periods (e.g., "1.0.0")
+        check_synthesizer_is_greater (bool):
+            If ``True`` invert the check.
 
     Returns:
         bool:
@@ -302,17 +305,18 @@ def _check_is_lower_version(current_version, synthesizer_version):
             current_v = int(current_v)
             synth_v = int(synth_v)
             if current_v > synth_v:
-                return False
+                return False if not check_synthesizer_is_greater else True
 
             if synth_v > current_v:
-                return True
+                return True if not check_synthesizer_is_greater else False
         except Exception:
             pass
 
     return False
 
 
-def check_synthesizer_version(synthesizer):
+def check_synthesizer_version(synthesizer, is_fit_method=False,
+                              check_synthesizer_is_greater=False):
     """Check if the current synthesizer version is greater than the package version.
 
     Args:
@@ -325,39 +329,51 @@ def check_synthesizer_version(synthesizer):
     """
     current_public_version = getattr(version, 'public', None)
     current_enterprise_version = getattr(version, 'enterprise', None)
-    if synthesizer._fitted:
-        downgrade_message = 'Downgrading your SDV version is not supported.'
-        fit_public_version = getattr(synthesizer, '_fitted_sdv_version', None)
-        fit_enterprise_version = getattr(synthesizer, '_fitted_sdv_enterprise_version', None)
+    static_message = 'Downgrading your SDV version is not supported.'
+    if is_fit_method:
+        static_message = (
+            'Fitting this synthesizer again is not supported. '
+            'Please create a new synthesizer.'
+        )
 
-        is_public_lower = _check_is_lower_version(current_public_version, fit_public_version)
-        is_enterprise_lower = False
-        if None not in (current_enterprise_version, fit_enterprise_version):
-            is_enterprise_lower = _check_is_lower_version(
-                current_enterprise_version,
-                fit_enterprise_version
-            )
+    fit_public_version = getattr(synthesizer, '_fitted_sdv_version', None)
+    fit_enterprise_version = getattr(synthesizer, '_fitted_sdv_enterprise_version', None)
 
-        if is_public_lower and is_enterprise_lower:
-            raise VersionError(
-                f'You are currently on SDV version {current_public_version} and SDV Enterprise '
-                f'version {current_enterprise_version} but this '
-                f'synthesizer was created on SDV version {fit_public_version} and SDV '
-                f'Enterprise version {fit_enterprise_version}. {downgrade_message}'
-            )
+    is_public_lower = False
+    if None not in (current_public_version, fit_public_version):
+        is_public_lower = _check_is_lower_version(
+            current_public_version,
+            fit_public_version,
+            check_synthesizer_is_greater
+        )
+    is_enterprise_lower = False
+    if None not in (current_enterprise_version, fit_enterprise_version):
+        is_enterprise_lower = _check_is_lower_version(
+            current_enterprise_version,
+            fit_enterprise_version,
+            check_synthesizer_is_greater
+        )
 
-        if is_public_lower:
-            raise VersionError(
-                f'You are currently on SDV version {current_public_version} but this '
-                f'synthesizer was created on version {fit_public_version}. {downgrade_message}'
-            )
+    if is_public_lower and is_enterprise_lower:
+        raise VersionError(
+            f'You are currently on SDV version {current_public_version} and SDV Enterprise '
+            f'version {current_enterprise_version} but this '
+            f'synthesizer was created on SDV version {fit_public_version} and SDV '
+            f'Enterprise version {fit_enterprise_version}. {static_message}'
+        )
 
-        if is_enterprise_lower:
-            raise VersionError(
-                f'You are currently on SDV Enterprise version {current_enterprise_version} but '
-                f'this synthesizer was created on version {fit_enterprise_version}. '
-                f'{downgrade_message}'
-            )
+    if is_public_lower:
+        raise VersionError(
+            f'You are currently on SDV version {current_public_version} but this '
+            f'synthesizer was created on version {fit_public_version}. {static_message}'
+        )
+
+    if is_enterprise_lower:
+        raise VersionError(
+            f'You are currently on SDV Enterprise version {current_enterprise_version} but '
+            f'this synthesizer was created on version {fit_enterprise_version}. '
+            f'{static_message}'
+        )
 
 
 def _get_root_tables(relationships):

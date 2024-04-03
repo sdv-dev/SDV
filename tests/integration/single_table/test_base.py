@@ -675,6 +675,7 @@ def test_metadata_updated_warning(method, kwargs):
 
     The warning should be raised during synthesizer initialization.
     """
+    # Setup
     metadata = SingleTableMetadata().load_from_dict({
         'columns': {
             'col 1': {'sdtype': 'id'},
@@ -696,3 +697,26 @@ def test_metadata_updated_warning(method, kwargs):
 
     # Assert
     assert metadata._updated is False
+
+
+def test_fit_raises_version_error():
+    """Test that a ``VersionError`` is being raised if the current version is newer."""
+    # Setup
+    data = pd.DataFrame({
+        'col 1': [1, 2, 3],
+        'col 2': [4, 5, 6],
+        'col 3': ['a', 'b', 'c'],
+    })
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+    instance = BaseSingleTableSynthesizer(metadata)
+    instance._fitted_sdv_version = '1.0.0'
+
+    # Run and Assert
+    expected_message = (
+        f'You are currently on SDV version {version.public} but this synthesizer was created on '
+        'version 1.0.0. Fitting this synthesizer again is not supported. Please create a new '
+        'synthesizer.'
+    )
+    with pytest.raises(VersionError, match=expected_message):
+        instance.fit(data)

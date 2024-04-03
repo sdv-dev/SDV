@@ -9,8 +9,9 @@ from copulas.multivariate import GaussianMultivariate
 from rdt.transformers import (
     BinaryEncoder, FloatFormatter, GaussianNormalizer, OneHotEncoder, RegexGenerator)
 
+from sdv import version
 from sdv.constraints.errors import AggregateConstraintsError
-from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
+from sdv.errors import ConstraintsNotMetError, SynthesizerInputError, VersionError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
 from sdv.single_table import (
@@ -337,7 +338,10 @@ class TestBaseSingleTableSynthesizer:
     def test_fit_processed_data(self):
         """Test that ``fit_processed_data`` calls the ``_fit``."""
         # Setup
-        instance = Mock()
+        instance = Mock(
+            _fitted_sdv_version=None,
+            _fitted_sdv_enterprise_version=None,
+        )
         processed_data = Mock()
         processed_data.empty = False
 
@@ -347,6 +351,30 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         instance._fit.assert_called_once_with(processed_data)
 
+    def test_fit_processed_data_raises_version_error(self):
+        """Test that ``fit`` raises ``VersionError``
+
+        When attempting to refit a model that was created on a previous version of the software
+        this will raise an error.
+        """
+        # Setup
+        instance = Mock(
+            _fitted_sdv_version='1.0.0',
+            _fitted_sdv_enterprise_version=None,
+        )
+        processed_data = Mock()
+        instance._random_state_set = True
+        instance._fitted = True
+
+        # Run and Assert
+        error_msg = (
+            f'You are currently on SDV version {version.public} but this synthesizer was created '
+            'on version 1.0.0. Fitting this synthesizer again is not supported. Please '
+            'create a new synthesizer.'
+        )
+        with pytest.raises(VersionError, match=error_msg):
+            BaseSingleTableSynthesizer.fit_processed_data(instance, processed_data)
+
     def test_fit(self):
         """Test that ``fit`` calls ``preprocess`` and the ``fit_processed_data``.
 
@@ -354,7 +382,10 @@ class TestBaseSingleTableSynthesizer:
         of this method, call the ``fit_processed_data``
         """
         # Setup
-        instance = Mock()
+        instance = Mock(
+            _fitted_sdv_version=None,
+            _fitted_sdv_enterprise_version=None,
+        )
         processed_data = Mock()
         instance._random_state_set = True
         instance._fitted = True
@@ -368,6 +399,30 @@ class TestBaseSingleTableSynthesizer:
         instance._preprocess.assert_called_once_with(processed_data)
         instance.fit_processed_data.assert_called_once_with(instance._preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()
+
+    def test_fit_raises_version_error(self):
+        """Test that ``fit`` raises ``VersionError``
+
+        When attempting to refit a model that was created on a previous version of the software
+        this will raise an error.
+        """
+        # Setup
+        instance = Mock(
+            _fitted_sdv_version='1.0.0',
+            _fitted_sdv_enterprise_version=None,
+        )
+        processed_data = Mock()
+        instance._random_state_set = True
+        instance._fitted = True
+
+        # Run and Assert
+        error_msg = (
+            f'You are currently on SDV version {version.public} but this synthesizer was created '
+            'on version 1.0.0. Fitting this synthesizer again is not supported. Please '
+            'create a new synthesizer.'
+        )
+        with pytest.raises(VersionError, match=error_msg):
+            BaseSingleTableSynthesizer.fit(instance, processed_data)
 
     def test__validate_constraints(self):
         """Test that ``_validate_constraints`` calls ``fit`` and returns any errors."""
