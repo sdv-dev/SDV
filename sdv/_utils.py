@@ -346,6 +346,7 @@ def check_synthesizer_version(synthesizer, is_fit_method=False,
             fit_public_version,
             check_synthesizer_is_greater
         )
+
     is_enterprise_lower = False
     if None not in (current_enterprise_version, fit_enterprise_version):
         is_enterprise_lower = _check_is_lower_version(
