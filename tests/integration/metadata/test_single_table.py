@@ -518,3 +518,32 @@ def test_update_columns_metadata_invalid_kwargs_combination():
                 'col2': {'pii': True}
             }
         )
+
+
+def test_column_relationship_validation():
+    """Test that column relationships are validated correctly."""
+    # Setup
+    metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'user_city': {'sdtype': 'city'},
+            'user_zip': {'sdtype': 'postcode'},
+            'user_value': {'sdtype': 'unknown'}
+        },
+        'column_relationships': [
+            {
+                'type': 'address',
+                'column_names': ['user_city', 'user_zip', 'user_value']
+            }
+        ]
+    })
+
+    expected_message = re.escape(
+        'The following errors were found in the metadata:\n\n'
+        'Column relationships have following errors:\n'
+        "Column 'user_value' has an unsupported sdtype 'unknown'.\n"
+        'Please provide a column that is compatible with Address data.'
+    )
+
+    # Run and Assert
+    with pytest.raises(InvalidMetadataError, match=expected_message):
+        metadata.validate()
