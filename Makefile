@@ -266,4 +266,4 @@ release-major: check-release bumpversion-major release
 .PHONY: check-deps
 check-deps:
 	$(eval allow_list='boto3=|botocore=|cloudpickle=|graphviz=|numpy=|pandas=|tqdm=|copulas=|ctgan=|deepecho=|rdt=|sdmetrics=')
-	pip freeze | grep -v "SDV.git" | grep -E $(allow_list) > $(OUTPUT_FILEPATH)
+	pip freeze | grep -v "SDV.git" | grep -E $(allow_list) | sort > $(OUTPUT_FILEPATH)

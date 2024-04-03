@@ -22,7 +22,7 @@ readme = 'README.md'
 dependencies = [
     'boto3>=1.15.0',
     'botocore>=1.18',
-    'cloudpickle>=2.1.0,
+    'cloudpickle>=2.1.0',
     'graphviz>=0.13.2',
     "numpy>=1.20.0;python_version<'3.10'",
     "numpy>=1.23.3;python_version>='3.10'",
