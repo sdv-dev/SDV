@@ -1588,7 +1588,10 @@ class TestDataProcessor:
             dp.update_transformers({'col1': GaussianNormalizer()})
 
     def test_update_transformers_for_key(self):
-        """Test when ``transformer`` is not ``AnonymizedFaker`` or ``RegexGenerator`` for keys."""
+        """
+        Test when ``transformer`` is not ``AnonymizedFaker``, ``IDGenerator,
+        or ``RegexGenerator`` for keys.
+        """
         # Setup
         dp = DataProcessor(SingleTableMetadata())
         dp._keys = ['pk_column', 'b']
@@ -1597,7 +1600,7 @@ class TestDataProcessor:
         # Run and Assert
         error_msg = re.escape(
             "Invalid transformer 'FloatFormatter' for a primary or alternate key 'pk_column'. "
-            "Please use 'AnonymizedFaker' or 'RegexGenerator' instead."
+            "Please use 'AnonymizedFaker', 'IDGenerator', or 'RegexGenerator' instead."
         )
         with pytest.raises(SynthesizerInputError, match=error_msg):
             dp.update_transformers({'pk_column': FloatFormatter()})

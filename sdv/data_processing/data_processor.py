@@ -644,11 +644,12 @@ class DataProcessor:
             )
 
         for column, transformer in column_name_to_transformer.items():
-            if column in self._keys and not type(transformer) in (AnonymizedFaker, RegexGenerator):
+            if column in self._keys and not type(transformer) \
+                    in (AnonymizedFaker, RegexGenerator, IDGenerator):
                 raise SynthesizerInputError(
                     f"Invalid transformer '{transformer.__class__.__name__}' for a primary "
-                    f"or alternate key '{column}'. Please use 'AnonymizedFaker' or "
-                    "'RegexGenerator' instead."
+                    f"or alternate key '{column}'. Please use 'AnonymizedFaker', "
+                    "'IDGenerator', or 'RegexGenerator' instead."
                 )
 
         with warnings.catch_warnings():
