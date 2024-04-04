@@ -177,7 +177,7 @@ def test_simplify_schema(capsys):
         r'matches\s*45\s*446\s*'
         r'players\s*13\s*414\s*'
         r'teams\s*101\s*202542\s*'
-        r"We recommend simplifying your metadata schema using 'sdv.utils.simplify_schema'\.\s*"
+        r"We recommend simplifying your metadata schema using 'sdv.utils.poc.simplify_schema'\.\s*"
         r'If this is not possible, contact us at info@sdv.dev for enterprise solutions\.'
     )
     expected_message_after = re.compile(

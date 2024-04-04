@@ -1,5 +1,6 @@
 import re
 from collections import defaultdict
+from copy import deepcopy
 from unittest.mock import Mock, call, patch
 
 import pandas as pd
@@ -216,7 +217,7 @@ def test__simplify_relationships_and_tables():
     tables_to_drop = {'grandchild', 'other_root'}
 
     # Run
-    metadata_result = _simplify_relationships_and_tables(metadata, tables_to_drop)
+    _simplify_relationships_and_tables(metadata, tables_to_drop)
 
     # Assert
     expected_relationships = [
@@ -230,8 +231,8 @@ def test__simplify_relationships_and_tables():
         'child': {'columns': {'col_3': {'sdtype': 'numerical'}}},
         'other_table': {'columns': {'col_5': {'sdtype': 'numerical'}}},
     }
-    assert metadata_result.relationships == expected_relationships
-    assert metadata_result.to_dict()['tables'] == expected_tables
+    assert metadata.relationships == expected_relationships
+    assert metadata.to_dict()['tables'] == expected_tables
 
 
 def test__simplify_grandchildren():
@@ -263,7 +264,7 @@ def test__simplify_grandchildren():
     grandchildren = {'child_1', 'child_2'}
 
     # Run
-    metadata_result = _simplify_grandchildren(metadata, grandchildren)
+    _simplify_grandchildren(metadata, grandchildren)
 
     # Assert
     expected_child_1 = {
@@ -275,8 +276,8 @@ def test__simplify_grandchildren():
         'col_10': {'sdtype': 'id'},
         'col_11': {'sdtype': 'phone_number'},
     }
-    assert metadata_result.tables['child_1'].columns == expected_child_1
-    assert metadata_result.tables['child_2'].columns == expected_child_2
+    assert metadata.tables['child_1'].columns == expected_child_1
+    assert metadata.tables['child_2'].columns == expected_child_2
 
 
 def test__get_num_column_to_drop():
@@ -427,13 +428,13 @@ def test__simplify_child(mock_get_columns_to_drop_child):
     mock_get_columns_to_drop_child.return_value = ['col_1', 'col_2', 'col_3']
 
     # Run
-    metadata_result = _simplify_child(metadata, 'child', max_col_per_relationship)
+    _simplify_child(metadata, 'child', max_col_per_relationship)
 
     # Assert
     mock_get_columns_to_drop_child.assert_called_once_with(
         metadata, 'child', max_col_per_relationship
     )
-    assert metadata_result.tables['child'].columns == {
+    assert metadata.tables['child'].columns == {
         'col_4': {'sdtype': 'categorical'},
         'col_5': {'sdtype': 'numerical'},
         'col_6': {'sdtype': 'categorical'},
@@ -456,19 +457,18 @@ def test__simplify_children_valid_children(mock_hma):
     mock_hma._get_num_extended_columns.side_effect = [250, 499]
 
     # Run
-    metadata_result = _simplify_children(metadata, children, 'parent', num_data_column)
+    _simplify_children(metadata, children, 'parent', num_data_column)
 
     # Assert
     mock_hma._get_num_extended_columns.assert_has_calls([
         call(metadata, 'child_1', 'parent', 3),
         call(metadata, 'child_2', 'parent', 3)
     ])
-    assert metadata_result == metadata
 
 
 @patch('sdv.multi_table.utils.HMASynthesizer')
-@patch('sdv.multi_table.utils._simplify_child')
-def test__simplify_children(mock_simplify_child, mock_hma):
+@patch('sdv.multi_table.utils._get_columns_to_drop_child')
+def test__simplify_children(mock_get_columns_to_drop_child, mock_hma):
     """Test the ``_simplify_children`` method."""
     # Setup
     children = ['child_1', 'child_2']
@@ -491,22 +491,14 @@ def test__simplify_children(mock_simplify_child, mock_hma):
             'col_7': {'sdtype': 'numerical'},
         }
     }
-    child_1_before_simplify = child_1.copy()
+    child_1_before_simplify = deepcopy(child_1)
     child_1_before_simplify['columns']['col_4'] = {'sdtype': 'categorical'}
-    child_2_before_simplify = child_2.copy()
+    child_2_before_simplify = deepcopy(child_2)
     child_2_before_simplify['columns']['col_8'] = {'sdtype': 'categorical'}
     metadata = MultiTableMetadata().load_from_dict({
         'relationships': relatioships,
         'tables': {
             'child_1': child_1_before_simplify,
-            'child_2': child_2_before_simplify
-        }
-    })
-
-    metadata_after_simplify_1 = MultiTableMetadata().load_from_dict({
-        'relationships': relatioships,
-        'tables': {
-            'child_1': child_1,
             'child_2': child_2_before_simplify
         }
     })
@@ -518,21 +510,21 @@ def test__simplify_children(mock_simplify_child, mock_hma):
         }
     })
     mock_hma._get_num_extended_columns.side_effect = [800, 700]
-    mock_simplify_child.side_effect = [metadata_after_simplify_1, metadata_after_simplify_2]
+    mock_get_columns_to_drop_child.side_effect = [['col_4'], ['col_8']]
 
     # Run
-    metadata_result = _simplify_children(metadata, children, 'parent', num_data_column)
+    _simplify_children(metadata, children, 'parent', num_data_column)
 
     # Assert
+    assert metadata.to_dict()['tables'] == metadata_after_simplify_2.to_dict()['tables']
     mock_hma._get_num_extended_columns.assert_has_calls([
         call(metadata, 'child_1', 'parent', 3),
-        call(metadata_after_simplify_1, 'child_2', 'parent', 3)
+        call(metadata, 'child_2', 'parent', 3)
     ])
-    mock_simplify_child.assert_has_calls([
+    mock_get_columns_to_drop_child.assert_has_calls([
         call(metadata, 'child_1', 500),
-        call(metadata_after_simplify_1, 'child_2', 500)
+        call(metadata, 'child_2', 500)
     ])
-    assert metadata_result.tables == metadata_after_simplify_2.tables
 
 
 @patch('sdv.multi_table.utils.HMASynthesizer')
