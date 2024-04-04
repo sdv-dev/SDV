@@ -13,11 +13,11 @@ from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 MODELABLE_SDTYPE = ['categorical', 'numerical', 'datetime', 'boolean']
 
 
-def _get_relationship_for_child(relationships, child_table):
+def _get_relationships_for_child(relationships, child_table):
     return [rel for rel in relationships if rel['child_table_name'] == child_table]
 
 
-def _get_relationship_for_parent(relationships, parent_table):
+def _get_relationships_for_parent(relationships, parent_table):
     return [rel for rel in relationships if rel['parent_table_name'] == parent_table]
 
 
@@ -33,13 +33,13 @@ def _get_n_order_descendants(relationships, parent_table, order):
             Order of the descendants.
     """
     descendants = {}
-    order_1_descendants = _get_relationship_for_parent(relationships, parent_table)
+    order_1_descendants = _get_relationships_for_parent(relationships, parent_table)
     descendants['order_1'] = [rel['child_table_name'] for rel in order_1_descendants]
     for i in range(2, order+1):
         descendants[f'order_{i}'] = []
         prov_descendants = []
         for child_table in descendants[f'order_{i-1}']:
-            order_i_descendants = _get_relationship_for_parent(relationships, child_table)
+            order_i_descendants = _get_relationships_for_parent(relationships, child_table)
             prov_descendants.extend([rel['child_table_name'] for rel in order_i_descendants])
 
         descendants[f'order_{i}'] = prov_descendants
@@ -59,43 +59,16 @@ def _get_all_descendant_per_root_at_order_n(relationships, order):
     root_tables = _get_root_tables(relationships)
     all_descendants = {}
     for root in root_tables:
+        all_descendants[root] = {}
         order_descendants = _get_n_order_descendants(relationships, root, order)
         all_descendant_root = set()
         for order_key in order_descendants:
             all_descendant_root.update(order_descendants[order_key])
 
-        all_descendants[root] = all_descendant_root
+        all_descendants[root] = order_descendants
+        all_descendants[root]['num_descendants'] = len(all_descendant_root)
 
     return all_descendants
-
-
-def _get_children_and_grandchildren(relationships, root_table, descendants_to_keep):
-    """Get the children and grandchildren of the root table.
-
-    Args:
-        relationships (list[dict]):
-            List of relationships between the tables.
-        root_table (str):
-            Name of the root table.
-        descendants_to_keep (set):
-            Set of the descendants of the root table that will be kept.
-    """
-    children = []
-    grandchildren = []
-    for relationship in relationships:
-        parent_table = relationship['parent_table_name']
-        child_table = relationship['child_table_name']
-        is_parent_root = parent_table == root_table
-        is_parent_in_descendants = parent_table in descendants_to_keep
-        is_valid_parent = is_parent_root or is_parent_in_descendants
-        is_valid_child = child_table in descendants_to_keep
-        if is_valid_parent and is_valid_child:
-            if is_parent_root:
-                children.append(child_table)
-            else:
-                grandchildren.append(child_table)
-
-    return sorted(set(children)), sorted(set(grandchildren))
 
 
 def _simplify_relationships_and_tables(metadata, tables_to_drop):
@@ -267,7 +240,7 @@ def _simplify_children(metadata, children, root_table, num_data_column):
         estimate_column = HMASynthesizer._get_num_extended_columns(
             metadata, child_table, root_table, num_data_column
         )
-        num_relationship = len(_get_relationship_for_child(relationships, child_table))
+        num_relationship = len(_get_relationships_for_child(relationships, child_table))
         if estimate_column > max_col_per_relationships * num_relationship:
             metadata = _simplify_child(metadata, child_table, max_col_per_relationships)
 
@@ -299,22 +272,18 @@ def _simplify_metadata(metadata):
     """
     simplified_metadata = deepcopy(metadata)
     relationships = simplified_metadata.relationships
-    all_descendants_per_root = _get_all_descendant_per_root_at_order_n(relationships, order=2)
-    len_all_descendants_per_root = {
-        root: len(all_descendants_per_root[root]) for root in all_descendants_per_root
+    descendants_per_root = _get_all_descendant_per_root_at_order_n(relationships, order=2)
+    num_descendants_per_root = {
+        root: descendants_per_root[root]['num_descendants'] for root in descendants_per_root
     }
-    root_to_keep = max(
-        len_all_descendants_per_root, key=len_all_descendants_per_root.get
-    )
-    all_descendants_to_keep = all_descendants_per_root[root_to_keep]
-    tables_to_keep = set(all_descendants_to_keep) | {root_to_keep}
+    root_to_keep = max(num_descendants_per_root, key=num_descendants_per_root.get)
+    children = descendants_per_root[root_to_keep]['order_1']
+    grandchildren = descendants_per_root[root_to_keep]['order_2']
+    tables_to_keep = set(children) | set(grandchildren) | {root_to_keep}
     table_to_drop = set(simplified_metadata.tables.keys()) - tables_to_keep
 
     simplified_metadata = _simplify_relationships_and_tables(
         simplified_metadata, table_to_drop
-    )
-    children, grandchildren = _get_children_and_grandchildren(
-        relationships, root_to_keep, all_descendants_to_keep
     )
     if grandchildren:
         simplified_metadata = _simplify_grandchildren(simplified_metadata, grandchildren)
@@ -401,7 +370,7 @@ def _get_rows_to_drop(metadata, data):
         current_roots = _get_root_tables(relationships)
         for root in current_roots:
             parent_table = root
-            relationships_parent = _get_relationship_for_parent(relationships, parent_table)
+            relationships_parent = _get_relationships_for_parent(relationships, parent_table)
             parent_column = metadata.tables[parent_table].primary_key
             valid_parent_idx = [
                 idx for idx in data[parent_table].index

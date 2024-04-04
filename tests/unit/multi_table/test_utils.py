@@ -6,16 +6,15 @@ import pandas as pd
 
 from sdv.metadata import MultiTableMetadata
 from sdv.multi_table.utils import (
-    _get_all_descendant_per_root_at_order_n, _get_children_and_grandchildren,
-    _get_columns_to_drop_child, _get_n_order_descendants, _get_num_column_to_drop,
-    _get_relationship_for_child, _get_relationship_for_parent, _get_rows_to_drop,
-    _get_total_estimated_columns, _print_simplified_schema_summary, _simplify_child,
-    _simplify_children, _simplify_data, _simplify_grandchildren, _simplify_metadata,
-    _simplify_relationships_and_tables)
+    _get_all_descendant_per_root_at_order_n, _get_columns_to_drop_child, _get_n_order_descendants,
+    _get_num_column_to_drop, _get_relationships_for_child, _get_relationships_for_parent,
+    _get_rows_to_drop, _get_total_estimated_columns, _print_simplified_schema_summary,
+    _simplify_child, _simplify_children, _simplify_data, _simplify_grandchildren,
+    _simplify_metadata, _simplify_relationships_and_tables)
 
 
-def test__get_relationship_for_child():
-    """Test the ``_get_relationship_for_child`` method."""
+def test__get_relationships_for_child():
+    """Test the ``_get_relationships_for_child`` method."""
     # Setup
     relationships = [
         {'parent_table_name': 'parent', 'child_table_name': 'child'},
@@ -24,7 +23,7 @@ def test__get_relationship_for_child():
     ]
 
     # Run
-    result = _get_relationship_for_child(relationships, 'grandchild')
+    result = _get_relationships_for_child(relationships, 'grandchild')
 
     # Assert
     expected_result = [
@@ -34,8 +33,8 @@ def test__get_relationship_for_child():
     assert result == expected_result
 
 
-def test__get_relationship_for_parent():
-    """Test the ``_get_relationship_for_parent`` method."""
+def test__get_relationships_for_parent():
+    """Test the ``_get_relationships_for_parent`` method."""
     # Setup
     relationships = [
         {'parent_table_name': 'parent', 'child_table_name': 'child'},
@@ -44,7 +43,7 @@ def test__get_relationship_for_parent():
     ]
 
     # Run
-    result = _get_relationship_for_parent(relationships, 'parent')
+    result = _get_relationships_for_parent(relationships, 'parent')
 
     # Assert
     expected_result = [
@@ -182,33 +181,16 @@ def test__get_all_descendant_per_root_at_order_n():
 
     # Assert
     expected_result = {
-        'grandparent': {'other_table', 'child', 'parent', 'grandchild'},
-        'other_root': {'child', 'grandchild'}
+        'other_root': {
+            'order_1': ['child'], 'order_2': ['grandchild'], 'order_3': [],
+            'num_descendants': 2
+        },
+        'grandparent': {
+            'order_1': ['parent', 'other_table'], 'order_2': ['child'], 'order_3': ['grandchild'],
+            'num_descendants': 4
+        }
     }
     assert result == expected_result
-
-
-def test__get_children_and_grandchildren():
-    """Test the ``_get_children_and_grandchildren`` method."""
-    # Setup
-    relationships = [
-        {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
-        {'parent_table_name': 'parent', 'child_table_name': 'child'},
-        {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
-        {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
-        {'parent_table_name': 'other_root', 'child_table_name': 'child'},
-    ]
-    root_table = 'grandparent'
-    descendants_to_keep = {'parent', 'child', 'other_table'}
-
-    # Run
-    children, grandchildren = _get_children_and_grandchildren(
-        relationships, root_table, descendants_to_keep
-    )
-
-    # Assert
-    assert children == ['other_table', 'parent']
-    assert grandchildren == ['child']
 
 
 def test__simplify_relationships_and_tables():
@@ -709,9 +691,8 @@ def test__simplify_metadata(mock_get_columns_to_drop_child, mock_hma):
     }
     mock_hma._get_num_extended_columns.side_effect = [500, 700, 10]
     mock_get_columns_to_drop_child.side_effect = [
-        [],
         ['col_2', 'col_3'],
-        ['col_6', 'col_9'],
+        ['col_8'],
     ]
 
     # Run
@@ -744,7 +725,6 @@ def test__simplify_metadata(mock_get_columns_to_drop_child, mock_hma):
         },
         'other_table': {
             'columns': {
-                'col_8': {'sdtype': 'numerical'},
                 'col_9': {'sdtype': 'id'},
                 'col_10': {'sdtype': 'categorical'},
             }

@@ -8,7 +8,7 @@ from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 from sdv.multi_table.utils import (
-    _get_relationship_for_child, _get_rows_to_drop, _get_total_estimated_columns,
+    _get_relationships_for_child, _get_rows_to_drop, _get_total_estimated_columns,
     _print_simplified_schema_summary, _simplify_data, _simplify_metadata)
 
 
@@ -60,7 +60,7 @@ def drop_unknown_references(metadata, data, drop_missing_values=True, verbose=Tr
             idx_to_drop = table_to_idx_to_drop[table]
             result[table] = result[table].drop(idx_to_drop)
             if drop_missing_values:
-                relationships = _get_relationship_for_child(metadata.relationships, table)
+                relationships = _get_relationships_for_child(metadata.relationships, table)
                 for relationship in relationships:
                     child_column = relationship['child_foreign_key']
                     result[table] = result[table].dropna(subset=[child_column])
