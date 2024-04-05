@@ -1043,7 +1043,6 @@ class SingleTableMetadata:
                 The data to validate against.
             sdtype_warnings (defaultdict[list]):
                 A ``defaultdict`` with ``list`` to add warning messages to.
-
         """
         column_metadata = self.columns[column.name]
         sdtype = column_metadata['sdtype']
