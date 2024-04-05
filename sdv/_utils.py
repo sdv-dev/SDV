@@ -2,7 +2,6 @@
 import warnings
 from collections import defaultdict
 from collections.abc import Iterable
-from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 
@@ -208,75 +207,6 @@ def _format_invalid_values_string(invalid_values, num_values):
     return f'{invalid_values}'
 
 
-def _get_root_tables(relationships):
-    parent_tables = {rel['parent_table_name'] for rel in relationships}
-    child_tables = {rel['child_table_name'] for rel in relationships}
-    return parent_tables - child_tables
-
-
-def _get_relationship_for_child(relationships, child_table):
-    return [rel for rel in relationships if rel['child_table_name'] == child_table]
-
-
-def _get_relationship_for_parent(relationships, parent_table):
-    return [rel for rel in relationships if rel['parent_table_name'] == parent_table]
-
-
-def _get_rows_to_drop(metadata, data):
-    """Get the rows to drop to ensure referential integrity.
-
-    The logic of this function is to start at the root tables, look at invalid references
-    and then save the index of the rows to drop. Then, we looked at the relationships that
-    we didn't check and repeat the process until there are no more relationships to check.
-    This ensures that we preserve the referential integrity between all the relationships.
-
-    Args:
-        metadata (MultiTableMetadata):
-            Metadata of the datasets.
-        data (dict):
-            Dictionary that maps each table name (string) to the data for that
-            table (pandas.DataFrame).
-
-    Returns:
-        dict:
-            Dictionary with the table names as keys and the indexes of the rows to drop as values.
-    """
-    table_to_idx_to_drop = defaultdict(set)
-    relationships = deepcopy(metadata.relationships)
-    while relationships:
-        current_roots = _get_root_tables(relationships)
-        for root in current_roots:
-            parent_table = root
-            relationships_parent = _get_relationship_for_parent(relationships, parent_table)
-            parent_column = metadata.tables[parent_table].primary_key
-            valid_parent_idx = [
-                idx for idx in data[parent_table].index
-                if idx not in table_to_idx_to_drop[parent_table]
-            ]
-            valid_parent_values = set(data[parent_table].loc[valid_parent_idx, parent_column])
-            for relationship in relationships_parent:
-                child_table = relationship['child_table_name']
-                child_column = relationship['child_foreign_key']
-
-                is_nan = data[child_table][child_column].isna()
-                invalid_values = set(
-                    data[child_table].loc[~is_nan, child_column]
-                ) - valid_parent_values
-                invalid_rows = data[child_table][
-                    data[child_table][child_column].isin(invalid_values)
-                ]
-                idx_to_drop = set(invalid_rows.index)
-
-                if idx_to_drop:
-                    table_to_idx_to_drop[child_table] = table_to_idx_to_drop[
-                        child_table
-                    ].union(idx_to_drop)
-
-            relationships = [rel for rel in relationships if rel not in relationships_parent]
-
-    return table_to_idx_to_drop
-
-
 def _validate_foreign_keys_not_null(metadata, data):
     """Validate that the foreign keys in the data don't have null values."""
     invalid_tables = defaultdict(list)
@@ -428,3 +358,9 @@ def check_synthesizer_version(synthesizer):
                 f'this synthesizer was created on version {fit_enterprise_version}. '
                 f'{downgrade_message}'
             )
+
+
+def _get_root_tables(relationships):
+    parent_tables = {rel['parent_table_name'] for rel in relationships}
+    child_tables = {rel['child_table_name'] for rel in relationships}
+    return parent_tables - child_tables

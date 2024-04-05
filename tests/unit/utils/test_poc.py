@@ -7,7 +7,9 @@ import pandas as pd
 import pytest
 
 from sdv.errors import InvalidDataError
-from sdv.utils.poc import drop_unknown_references
+from sdv.metadata import MultiTableMetadata
+from sdv.metadata.errors import InvalidMetadataError
+from sdv.utils.poc import drop_unknown_references, simplify_schema
 
 
 @patch('sys.stdout.write')
@@ -359,3 +361,126 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
     )
     with pytest.raises(InvalidDataError, match=expected_message):
         drop_unknown_references(metadata, data)
+
+
+@patch('sdv.utils.poc._get_total_estimated_columns')
+@patch('sdv.utils.poc._print_simplified_schema_summary')
+def test_simplify_schema_nothing_to_simplify(mock_print_summary, mock_get_total_estimated_columns):
+    """Test ``simplify_schema`` when the schema is already simple."""
+    # Setup
+    data = Mock()
+    metadata = Mock()
+    mock_get_total_estimated_columns.return_value = 5
+
+    # Run
+    result_data, result_metadata = simplify_schema(data, metadata)
+
+    # Assert
+    mock_print_summary.assert_called_once_with(data, data)
+    mock_get_total_estimated_columns.assert_called_once_with(metadata)
+    assert result_data is data
+    assert result_metadata is metadata
+
+
+@patch('sdv.utils.poc._simplify_metadata')
+@patch('sdv.utils.poc._simplify_data')
+@patch('sdv.utils.poc._get_total_estimated_columns')
+@patch('sdv.utils.poc._print_simplified_schema_summary')
+def test_simplify_schema(mock_print_summary, mock_get_total_estimated_columns,
+                         mock_simplify_data, mock_simplify_metadata):
+    """Test ``simplify_schema``."""
+    # Setup
+    data = Mock()
+    metadata = Mock()
+    simplified_metatadata = MultiTableMetadata()
+    mock_get_total_estimated_columns.return_value = 2000
+    mock_simplify_metadata.return_value = simplified_metatadata
+    mock_simplify_data.return_value = {
+        'table1': pd.DataFrame({'column1': [1, 2, 3]}),
+    }
+
+    # Run
+    result_data, result_metadata = simplify_schema(data, metadata)
+
+    # Assert
+    mock_print_summary.assert_called_once_with(data, result_data)
+    mock_get_total_estimated_columns.assert_called_once_with(metadata)
+    mock_simplify_metadata.assert_called_once_with(metadata)
+    mock_simplify_data.assert_called_once_with(data, simplified_metatadata)
+    pd.testing.assert_frame_equal(result_data['table1'], pd.DataFrame({'column1': [1, 2, 3]}))
+    assert result_data.keys() == {'table1'}
+    assert result_metadata == simplified_metatadata
+
+
+def test_simplify_schema_invalid_metadata():
+    """Test ``simplify_schema`` when the metadata is not invalid."""
+    # Setup
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'column1': {'sdtype': 'categorical'}
+                }
+            }
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table2',
+                'parent_primary_key': 'column1',
+                'child_foreign_key': 'column2'
+            }
+        ]
+    })
+    real_data = {
+        'table1': pd.DataFrame({'column1': [1, 2, 3]}),
+        'table2': pd.DataFrame({'column2': [4, 5, 6]}),
+    }
+
+    # Run and Assert
+    expected_message = re.escape(
+        'The provided data/metadata combination is not valid. Please make sure that the'
+        ' data/metadata combination is valid before trying to simplify the schema.'
+    )
+    with pytest.raises(InvalidMetadataError, match=expected_message):
+        simplify_schema(real_data, metadata)
+
+
+def test_simplify_schema_invalid_data():
+    """Test ``simplify_schema`` when the data is not valid."""
+    # Setup
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'column1': {'sdtype': 'id'}
+                },
+                'primary_key': 'column1'
+            },
+            'table2': {
+                'columns': {
+                    'column2': {'sdtype': 'id'}
+                },
+            }
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table2',
+                'parent_primary_key': 'column1',
+                'child_foreign_key': 'column2'
+            }
+        ]
+    })
+    real_data = {
+        'table1': pd.DataFrame({'column1': [np.nan, 1, 2]}),
+        'table2': pd.DataFrame({'column2': [1, 1, 2]}),
+    }
+
+    # Run and Assert
+    expected_message = re.escape(
+        'The provided data/metadata combination is not valid. Please make sure that the'
+        ' data/metadata combination is valid before trying to simplify the schema.'
+    )
+    with pytest.raises(InvalidDataError, match=expected_message):
+        simplify_schema(real_data, metadata)

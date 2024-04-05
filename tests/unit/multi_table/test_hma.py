@@ -85,10 +85,36 @@ class TestHMASynthesizer:
 
         pd.testing.assert_frame_equal(result, expected)
 
-    def test__print_estimate_warning(self, capsys):
+    def test__get_distributions(self):
+        """Test the ``_get_distributions`` method."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = HMASynthesizer(metadata)
+        instance.get_table_parameters = Mock()
+        instance.get_table_parameters.side_effect = [
+            {'synthesizer_parameters': {'default_distribution': 'gamma'}},
+            {'wrong_key': {'default_distribution': 'gamma'}},
+            {'synthesizer_parameters': {'not_default_distribution': 'wrong'}}
+        ]
+
+        # Run
+        result = instance._get_distributions()
+
+        # Assert
+        expected = {
+            'nesreca': 'gamma',
+            'oseba': None,
+            'upravna_enota': None
+        }
+        assert result == expected
+
+    @patch('sdv.multi_table.hma.HMASynthesizer._estimate_num_columns')
+    @patch('sdv.multi_table.hma.HMASynthesizer._get_distributions')
+    def test__print_estimate_warning(self, get_distributions_mock, estimate_mock, capsys):
         """Test that a warning appears if there are more than 1000 expected columns"""
         # Setup
         metadata = get_multi_table_metadata()
+        estimate_mock.side_effect = [{'nesreca': 2000}, {'nesreca': 10}]
 
         key_phrases = [
             r'PerformanceAlert:',
@@ -97,24 +123,17 @@ class TestHMASynthesizer:
         ]
 
         # Run
-        with patch.object(HMASynthesizer,
-                          '_estimate_num_columns',
-                          return_value={'nesreca': 2000}):
-            HMASynthesizer(metadata)
-
+        HMASynthesizer(metadata)
         captured = capsys.readouterr()
 
         # Assert
+        get_distributions_mock.assert_called_once()
         for pattern in key_phrases:
             match = re.search(pattern, captured.out + captured.err)
             assert match is not None
 
         # Run
-        with patch.object(HMASynthesizer,
-                          '_estimate_num_columns',
-                          return_value={'nesreca': 10}):
-            HMASynthesizer(metadata)
-
+        HMASynthesizer(metadata)
         captured = capsys.readouterr()
 
         # Assert that small amount of columns don't trigger the message
@@ -658,7 +677,7 @@ class TestHMASynthesizer:
         synthesizer._finalize = Mock()
 
         # Run estimation
-        estimated_num_columns = synthesizer._estimate_num_columns()
+        estimated_num_columns = synthesizer._estimate_num_columns(metadata)
 
         # Run actual modeling
         synthesizer.fit(data)
@@ -805,9 +824,10 @@ class TestHMASynthesizer:
             table_parameters={'default_distribution': 'uniform'}
         )
         synthesizer._finalize = Mock()
+        distributions = synthesizer._get_distributions()
 
         # Run estimation
-        estimated_num_columns = synthesizer._estimate_num_columns()
+        estimated_num_columns = synthesizer._estimate_num_columns(metadata, distributions)
 
         # Run actual modeling
         synthesizer.fit(data)
@@ -936,7 +956,7 @@ class TestHMASynthesizer:
         synthesizer._finalize = Mock()
 
         # Run estimation
-        estimated_num_columns = synthesizer._estimate_num_columns()
+        estimated_num_columns = synthesizer._estimate_num_columns(metadata)
 
         # Run actual modeling
         synthesizer.fit(data)
@@ -1051,7 +1071,7 @@ class TestHMASynthesizer:
         synthesizer._finalize = Mock()
 
         # Run estimation
-        estimated_num_columns = synthesizer._estimate_num_columns()
+        estimated_num_columns = synthesizer._estimate_num_columns(metadata)
 
         # Run actual modeling
         synthesizer.fit(data)
