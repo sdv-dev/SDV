@@ -149,18 +149,16 @@ def _get_num_column_to_drop(metadata, child_table, max_col_per_relationships):
             - num_cols_to_drop (int): Number of columns to drop from the child table.
             - modelable_columns (dict): Dictionary that maps the modelable sdtype to their columns.
     """
-    num_column_parameter = 4  # for beta distribution
+    default_distribution = HMASynthesizer.DEFAULT_SYNTHESIZER_KWARGS['default_distribution']
+    num_column_parameter = HMASynthesizer.DISTRIBUTIONS_TO_NUM_PARAMETER_COLUMNS[
+        default_distribution
+    ]
     columns = metadata.tables[child_table].columns
-    columns_to_sdtypes = {
-        column: columns[column]['sdtype'] for column in columns
-    }
-    sdtypes_to_columns = defaultdict(list)
-    for col, sdtype in columns_to_sdtypes.items():
-        sdtypes_to_columns[sdtype].append(col)
+    modelable_columns = defaultdict(list)
+    for column, column_metadata in columns.items():
+        if column_metadata['sdtype'] in MODELABLE_SDTYPE:
+            modelable_columns[column_metadata['sdtype']].append(column)
 
-    modelable_columns = {
-        key: value for key, value in sdtypes_to_columns.items() if key in MODELABLE_SDTYPE
-    }
     num_modelable_column = sum([len(value) for value in modelable_columns.values()])
     num_cols_to_drop = math.ceil(
         num_modelable_column + num_column_parameter - np.sqrt(

@@ -34,6 +34,13 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
     DEFAULT_SYNTHESIZER_KWARGS = {
         'default_distribution': 'beta'
     }
+    DISTRIBUTIONS_TO_NUM_PARAMETER_COLUMNS = {
+        'beta': 4,
+        'truncnorm': 4,
+        'gamma': 3,
+        'norm': 2,
+        'uniform': 2
+    }
 
     @staticmethod
     def _get_num_data_columns(metadata):
@@ -70,12 +77,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 table_name, cls.DEFAULT_SYNTHESIZER_KWARGS['default_distribution']
             )
 
-        if distribution in {'beta', 'truncnorm'}:
-            num_parameters = 4
-        elif distribution == 'gamma':
-            num_parameters = 3
-        elif distribution in {'norm', 'uniform'}:
-            num_parameters = 2
+        num_parameters = cls.DISTRIBUTIONS_TO_NUM_PARAMETER_COLUMNS[distribution]
 
         num_rows_columns = len(metadata._get_foreign_keys(parent_table, table_name))
 
