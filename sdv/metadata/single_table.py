@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import warnings
+from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
 
@@ -1034,8 +1035,16 @@ class SingleTableMetadata:
 
         return set(column[~valid])
 
-    def _validate_column_data(self, column):
-        """Validate values of the column satisfy its sdtype properties."""
+    def _validate_column_data(self, column, sdtype_warnings):
+        """Validate values of the column satisfy its sdtype properties.
+
+        Args:
+            column (pd.Series):
+                The data to validate against.
+            sdtype_warnings (defaultdict[list]):
+                A ``defaultdict`` with ``list`` to add warning messages to.
+
+        """
         column_metadata = self.columns[column.name]
         sdtype = column_metadata['sdtype']
         invalid_values = None
@@ -1064,13 +1073,18 @@ class SingleTableMetadata:
                     lambda x: pd.isna(x) | _is_datetime_type(x)
                 )
 
+            if datetime_format is None and column.dtype == 'O':
+                sdtype_warnings['Column Name'].append(column.name)
+                sdtype_warnings['sdtype'].append(sdtype)
+                sdtype_warnings['datetime_format'].append(datetime_format)
+
         if invalid_values:
             invalid_values = _format_invalid_values_string(invalid_values, 3)
             return [f"Invalid values found for {sdtype} column '{column.name}': {invalid_values}."]
 
         return []
 
-    def validate_data(self, data):
+    def validate_data(self, data, sdtype_warnings=None):
         """Validate the data matches the metadata.
 
         Checks the metadata follows the following rules:
@@ -1083,6 +1097,7 @@ class SingleTableMetadata:
             data (pd.DataFrame):
                 The data to validate.
         """
+        sdtype_warnings = sdtype_warnings if sdtype_warnings is not None else defaultdict(list)
         if not isinstance(data, pd.DataFrame):
             raise ValueError(f'Data must be a DataFrame, not a {type(data)}.')
 
@@ -1098,7 +1113,18 @@ class SingleTableMetadata:
 
         # Every column must satisfy the properties of their sdtypes
         for column in data:
-            errors += self._validate_column_data(data[column])
+            errors += self._validate_column_data(data[column], sdtype_warnings)
+
+        if sdtype_warnings is not None and len(sdtype_warnings):
+            df = pd.DataFrame(sdtype_warnings)
+            message = (
+                "No 'datetime_format' is present in the metadata for the following columns:\n"
+                f'{df.to_string(index=False)}\n'
+                'Without this specification, SDV may not be able to accurately parse the data. '
+                "We recommend adding datetime formats using 'update_column'."
+            )
+
+            warnings.warn(message)
 
         if errors:
             raise InvalidDataError(errors)
