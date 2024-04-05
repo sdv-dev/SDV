@@ -3,6 +3,7 @@
 import inspect
 import logging
 import sys
+import warnings
 
 import cloudpickle
 
@@ -14,6 +15,10 @@ FAST_ML_PRESET = 'FAST_ML'
 PRESETS = {
     FAST_ML_PRESET: 'Use this preset to minimize the time needed to create a synthetic data model.'
 }
+DEPRECATION_MSG = (
+    "The 'SingleTablePreset' is deprecated. For equivalent Fast ML "
+    "functionality, please use the 'GaussianCopulaSynthesizer'."
+)
 
 
 class SingleTablePreset:
@@ -41,6 +46,7 @@ class SingleTablePreset:
         )
 
     def __init__(self, metadata, name, locales=['en_US']):
+        warnings.warn(DEPRECATION_MSG, FutureWarning)
         self.locales = locales
         if name not in PRESETS:
             raise ValueError(f"'name' must be one of {PRESETS}.")
@@ -58,14 +64,17 @@ class SingleTablePreset:
                     * ``constraint_class``: Name of the constraint to apply.
                     * ``constraint_parameters``: A dictionary with the constraint parameters.
         """
+        warnings.warn(DEPRECATION_MSG, FutureWarning)
         self._synthesizer.add_constraints(constraints)
 
     def get_metadata(self):
         """Return the ``SingleTableMetadata`` for this synthesizer."""
+        warnings.warn(DEPRECATION_MSG, FutureWarning)
         return self._synthesizer.get_metadata()
 
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
+        warnings.warn(DEPRECATION_MSG, FutureWarning)
         parameters = inspect.signature(self.__init__).parameters
         instantiated_parameters = {}
         for parameter_name in parameters:
@@ -81,6 +90,7 @@ class SingleTablePreset:
             data (pandas.DataFrame):
                 Data to fit the model to.
         """
+        warnings.warn(DEPRECATION_MSG, FutureWarning)
         self._synthesizer.fit(data)
 
     def sample(self, num_rows, max_tries_per_batch=100, batch_size=None, output_file_path=None):
@@ -101,6 +111,7 @@ class SingleTablePreset:
             pandas.DataFrame:
                 Sampled data.
         """
+        warnings.warn(DEPRECATION_MSG, FutureWarning)
         sampled = self._synthesizer.sample(
             num_rows,
             max_tries_per_batch,
@@ -132,6 +143,7 @@ class SingleTablePreset:
             pandas.DataFrame:
                 Sampled data.
         """
+        warnings.warn(DEPRECATION_MSG, FutureWarning)
         sampled = self._synthesizer.sample_from_conditions(
             conditions,
             max_tries_per_batch,
@@ -163,6 +175,7 @@ class SingleTablePreset:
             pandas.DataFrame:
                 Sampled data.
         """
+        warnings.warn(DEPRECATION_MSG, FutureWarning)
         sampled = self._synthesizer.sample_remaining_columns(
             known_columns,
             max_tries_per_batch,
@@ -179,6 +192,7 @@ class SingleTablePreset:
             filepath (str):
                 Path where the SDV instance will be serialized.
         """
+        warnings.warn(DEPRECATION_MSG, FutureWarning)
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
 
@@ -194,6 +208,7 @@ class SingleTablePreset:
             SingleTableSynthesizer:
                 The loaded synthesizer.
         """
+        warnings.warn(DEPRECATION_MSG, FutureWarning)
         with open(filepath, 'rb') as f:
             model = cloudpickle.load(f)
             return model
@@ -201,6 +216,7 @@ class SingleTablePreset:
     @classmethod
     def list_available_presets(cls, out=sys.stdout):
         """List the available presets and their descriptions."""
+        warnings.warn(DEPRECATION_MSG, FutureWarning)
         out.write(f'Available presets:\n{PRESETS}\n\n'
                   'Supply the desired preset using the `name` parameter.\n\n'
                   'Have any requests for custom presets? Contact the SDV team to learn '
