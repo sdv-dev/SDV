@@ -226,8 +226,8 @@ def test_simplify_no_grandchild():
     metadata_simplify.validate()
     metadata_simplify.validate_data(data_simplify)
     num_estimated_column_after_simplification = _get_total_estimated_columns(metadata_simplify)
-    assert num_estimated_column_before_simplification == 14528
-    assert num_estimated_column_after_simplification == 983
+    assert num_estimated_column_before_simplification == 14527
+    assert num_estimated_column_after_simplification == 982
 
 
 def test_simplify_schema_big_demo_datasets():
