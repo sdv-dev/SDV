@@ -8,7 +8,7 @@ from copy import deepcopy
 from datetime import datetime
 
 import pandas as pd
-from rdt.transformers._validations import AddressValidator, GPSValidator
+from rdt.transformers._validators import AddressValidator, GPSValidator
 from rdt.transformers.pii.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 
 from sdv._utils import (
