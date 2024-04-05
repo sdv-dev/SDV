@@ -2538,6 +2538,56 @@ class TestSingleTableMetadata:
         with pytest.raises(InvalidDataError, match=err_msg):
             metadata.validate_data(data)
 
+    def test_validate_data_datetime_warning(self):
+        """Test validation for columns with datetime.
+
+        If the datetime format is not provided, a warning should be shwon if the ``dtype`` is
+        object.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'warning_date_str': [
+                '2022-09-02',
+                '2022-09-16',
+                '2022-08-26',
+                '2022-08-26',
+                '2022-09-29'
+            ],
+            'valid_date': [
+                '20220902110443000000',
+                '20220916230356000000',
+                '20220826173917000000',
+                '20220826212135000000',
+                '20220929111311000000'
+            ],
+            'datetime': pd.to_datetime([
+                '20220902',
+                '20220916',
+                '20220826',
+                '20220826',
+                '20220929'
+            ])
+        })
+        metadata = SingleTableMetadata()
+        metadata.add_column('warning_date_str', sdtype='datetime')
+        metadata.add_column('valid_date', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f')
+        metadata.add_column('datetime', sdtype='datetime')
+
+        # Run and Assert
+        warning_frame = pd.DataFrame({
+            'Column Name': ['warning_date_str'],
+            'sdtype': ['datetime'],
+            'datetime_format': [None]
+        })
+        warning_msg = (
+            "No 'datetime_format' is present in the metadata for the following columns:\n"
+            f'{warning_frame.to_string(index=False)}\n'
+            'Without this specification, SDV may not be able to accurately parse the data. '
+            "We recommend adding datetime formats using 'update_column'."
+        )
+        with pytest.warns(UserWarning, match=warning_msg):
+            metadata.validate_data(data)
+
     def test_validate_data(self):
         """Test the method doesn't crash when the passed data is valid.
 

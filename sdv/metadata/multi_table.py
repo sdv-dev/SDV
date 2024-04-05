@@ -784,13 +784,14 @@ class MultiTableMetadata:
                     warning_dataframes.append(df)
 
         if warning_dataframes:
-            df = pd.concat(warning_dataframes)
-            warnings.warn(
+            warning_df = pd.concat(warning_dataframes)
+            warning_msg = (
                 "No 'datetime_format' is present in the metadata for the following columns:\n "
-                f'{df.to_string(index=False)}\n\n'
+                f'{warning_df.to_string(index=False)}\n'
                 'Without this specification, SDV may not be able to accurately parse the data. '
                 "We recommend adding datetime formats using 'update_column'."
             )
+            warnings.warn(warning_msg)
 
         return errors
 
