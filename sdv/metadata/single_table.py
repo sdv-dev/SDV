@@ -8,6 +8,7 @@ from copy import deepcopy
 from datetime import datetime
 
 import pandas as pd
+from rdt.transformers._validators import AddressValidator, GPSValidator
 from rdt.transformers.pii.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 
 from sdv._utils import (
@@ -17,7 +18,6 @@ from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
-from sdv.metadata.validation import validate_address_sdtypes, validate_gps_sdtypes
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 
@@ -104,8 +104,8 @@ class SingleTableMetadata:
         set(_REFERENCE_TO_SDTYPE.items()) - set(_SDTYPES_WITHOUT_SUBSTRINGS.items()))
 
     _COLUMN_RELATIONSHIP_TYPES = {
-        'address': validate_address_sdtypes,
-        'gps': validate_gps_sdtypes,
+        'address': AddressValidator.validate,
+        'gps': GPSValidator.validate,
     }
 
     METADATA_SPEC_VERSION = 'SINGLE_TABLE_V1'
@@ -822,7 +822,7 @@ class SingleTableMetadata:
 
         except ImportError:
             warnings.warn(
-                f"The metadata contains a column relationship of type '{relationship_type}'. "
+                f"The metadata contains a column relationship of type '{relationship_type}' "
                 f'which requires the {relationship_type} add-on. '
                 'This relationship will be ignored. For higher quality data in this'
                 ' relationship, please inquire about the SDV Enterprise tier.'
@@ -889,6 +889,7 @@ class SingleTableMetadata:
         # Validate each individual relationship
         errors = []
         self._valid_column_relationships = deepcopy(column_relationships)
+        invalid_indexes = []
         for idx, relationship in enumerate(column_relationships):
             try:
                 self._append_error(
@@ -897,7 +898,10 @@ class SingleTableMetadata:
                     relationship,
                 )
             except ImportError:
-                self._valid_column_relationships.pop(idx)
+                invalid_indexes.append(idx)
+
+        for idx in reversed(invalid_indexes):
+            del self._valid_column_relationships[idx]
 
         if errors:
             raise InvalidMetadataError(

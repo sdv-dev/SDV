@@ -177,9 +177,11 @@ def test_validate_errors(mock_rdt_transformers):
         "\nInvalid value for 'computer_representation' 'value' for column 'col8'."
         "\nInvalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'col9'."
         "\nInvalid regex format string '[A-{6}' for id column 'col10'."
-        "\nColumn relationships have following errors:\nColumns ['col1', 'col2'] have "
-        "unsupported sdtypes for column relationship type 'address'.\nUnknown column "
-        "relationship type 'fake_relationship'. Must be one of ['address', 'gps']."
+        '\nColumn relationships have following errors:\n'
+        "Column 'col1' has an unsupported sdtype 'id'.\n"
+        "Column 'col2' has an unsupported sdtype 'numerical'.\n"
+        'Please provide a column that is compatible with Address data.\n'
+        "Unknown column relationship type 'fake_relationship'. Must be one of ['address', 'gps']."
     )
     # Run / Assert
     with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -516,3 +518,32 @@ def test_update_columns_metadata_invalid_kwargs_combination():
                 'col2': {'pii': True}
             }
         )
+
+
+def test_column_relationship_validation():
+    """Test that column relationships are validated correctly."""
+    # Setup
+    metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'user_city': {'sdtype': 'city'},
+            'user_zip': {'sdtype': 'postcode'},
+            'user_value': {'sdtype': 'unknown'}
+        },
+        'column_relationships': [
+            {
+                'type': 'address',
+                'column_names': ['user_city', 'user_zip', 'user_value']
+            }
+        ]
+    })
+
+    expected_message = re.escape(
+        'The following errors were found in the metadata:\n\n'
+        'Column relationships have following errors:\n'
+        "Column 'user_value' has an unsupported sdtype 'unknown'.\n"
+        'Please provide a column that is compatible with Address data.'
+    )
+
+    # Run and Assert
+    with pytest.raises(InvalidMetadataError, match=expected_message):
+        metadata.validate()

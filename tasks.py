@@ -44,7 +44,7 @@ def _get_minimum_versions(dependencies, python_version):
     for dependency in dependencies:
         if '@' in dependency:
             name, url = dependency.split(' @ ')
-            min_versions[name] = f'{name} @ {url}'
+            min_versions[name] = f'{url}#egg={name}'
             continue
 
         req = Requirement(dependency)

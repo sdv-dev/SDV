@@ -680,8 +680,8 @@ def test_metadata_updated_warning(method, kwargs):
             'col 1': {'sdtype': 'id'},
             'col 2': {'sdtype': 'id'},
             'col 3': {'sdtype': 'categorical'},
-            'col 4': {'sdtype': 'city'},
-            'col 5': {'sdtype': 'country'},
+            'city': {'sdtype': 'city'},
+            'country': {'sdtype': 'country_code'},
         }
     })
     expected_message = re.escape(
