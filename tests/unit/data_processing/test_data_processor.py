@@ -1600,7 +1600,7 @@ class TestDataProcessor:
         # Run and Assert
         error_msg = re.escape(
             "Invalid transformer 'FloatFormatter' for a primary or alternate key 'pk_column'. "
-            "Please use 'AnonymizedFaker', 'IDGenerator', or 'RegexGenerator' instead."
+            'Please use a generator transformer instead.'
         )
         with pytest.raises(SynthesizerInputError, match=error_msg):
             dp.update_transformers({'pk_column': FloatFormatter()})

@@ -647,8 +647,7 @@ class DataProcessor:
             if column in self._keys and not transformer.is_generator():
                 raise SynthesizerInputError(
                     f"Invalid transformer '{transformer.__class__.__name__}' for a primary "
-                    f"or alternate key '{column}'. Please use 'AnonymizedFaker', "
-                    "'IDGenerator', or 'RegexGenerator' instead."
+                    f"or alternate key '{column}'. Please use a generator transformer instead."
                 )
 
         with warnings.catch_warnings():
