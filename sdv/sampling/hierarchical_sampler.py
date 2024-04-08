@@ -59,7 +59,7 @@ class BaseHierarchicalSampler():
         Args:
             synthesizer (copula.multivariate.base):
                 The fitted synthesizer for the table.
-            num_rows (int or float):
+            num_rows (int):
                 Number of rows to sample.
 
         Returns:
@@ -68,7 +68,8 @@ class BaseHierarchicalSampler():
         """
         if num_rows is None:
             num_rows = synthesizer._num_rows
-        return synthesizer._sample_batch(int(num_rows), keep_extra_columns=True)
+
+        return synthesizer._sample_batch(num_rows, keep_extra_columns=True)
 
     def _get_num_rows_from_parent(self, parent_row, child_name, foreign_key):
         """Get the number of rows to sample for the child from the parent row."""
@@ -77,7 +78,7 @@ class BaseHierarchicalSampler():
         if num_rows_key in parent_row.keys():
             num_rows = parent_row[num_rows_key]
 
-        return num_rows
+        return round(num_rows)
 
     def _add_child_rows(self, child_name, parent_name, parent_row, sampled_data, num_rows=None):
         """Sample the child rows that reference the parent row.
@@ -95,8 +96,9 @@ class BaseHierarchicalSampler():
                 Number of rows to sample. If None, infers number of child rows to sample
                 from the parent row. Defaults to None.
         """
-        # A child table is created based on only one foreign key.
+        # A child table is created based on only one foreign key
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
+
         num_rows = self._get_num_rows_from_parent(parent_row, child_name, foreign_key)
         child_synthesizer = self._recreate_child_synthesizer(child_name, parent_name, parent_row)
         sampled_rows = self._sample_rows(child_synthesizer, num_rows)
@@ -117,29 +119,68 @@ class BaseHierarchicalSampler():
                 sampled_data[child_name] = pd.concat(
                     [previous, sampled_rows]).reset_index(drop=True)
 
-    def _enforce_table_sizes(self, child_name, table_name, scale, sampled_data):
-        total_num_rows = int(self._table_sizes[child_name] * scale)
+    def _enforce_table_size(self, child_name, table_name, scale, sampled_data):
+        """Ensure the child table has the same size as in the real data times the scale factor.
+
+        This is accomplished by adjusting the number of rows to sample for each parent row.
+        If the sum of the values of the `__num_rows` column in the parent table is greater than
+        the real data table size * scale, the values are decreased. If the sum is lower, the
+        values are increased.
+
+        The values are changed with the following algorithm:
+
+        1. Sort the `__num_rows` column.
+        2. If the sum of the values is lower than the target, add 1 to the values from the lowest
+           to the highest until the sum is reached, while respecting the maximum values obsverved
+           in the real data when possible.
+        3. If the sum of the values is higher than the target, subtract 1 from the values from the
+           highest to the lowest until the sum is reached, while respecting the minimum values
+           observed in the real data when possible.
+
+        Args:
+            child_name (str):
+                The name of the child table.
+            table_name (str):
+                The name of the parent table.
+            scale (float):
+                The scale factor to apply to the table size.
+            sampled_data (dict):
+                A dictionary mapping table names to sampled data (pd.DataFrame).
+        """
+        total_num_rows = round(self._table_sizes[child_name] * scale)
         for foreign_key in self.metadata._get_foreign_keys(table_name, child_name):
             num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
-            min_rows = self._min_child_rows[num_rows_key]
-            max_rows = self._max_child_rows[num_rows_key]
             key_data = sampled_data[table_name][num_rows_key].fillna(0).round()
+            min_rows = getattr(self, '_min_child_rows', {num_rows_key: 0})[num_rows_key]
+            max_rows = self._max_child_rows[num_rows_key]
             sampled_data[table_name][num_rows_key] = key_data.clip(min_rows, max_rows)
 
             while sum(sampled_data[table_name][num_rows_key]) != total_num_rows:
                 num_rows_column = sampled_data[table_name][num_rows_key].argsort()
+
                 if sum(sampled_data[table_name][num_rows_key]) < total_num_rows:
                     for i in num_rows_column:
-                        if sampled_data[table_name][num_rows_key][i] >= max_rows:
+                        # If the number of rows is already at the maximum, skip
+                        # The exception is when the smallest value is already at the maximum,
+                        # in which case we ignore the boundary
+                        if sampled_data[table_name].loc[i, num_rows_key] >= max_rows and \
+                           sampled_data[table_name][num_rows_key].min() < max_rows:
                             break
-                        sampled_data[table_name][num_rows_key][i] += 1
+
+                        sampled_data[table_name].loc[i, num_rows_key] += 1
                         if sum(sampled_data[table_name][num_rows_key]) == total_num_rows:
                             break
+
                 else:
                     for i in num_rows_column[::-1]:
-                        if sampled_data[table_name][num_rows_key][i] <= min_rows:
+                        # If the number of rows is already at the minimum, skip
+                        # The exception is when the highest value is already at the minimum,
+                        # in which case we ignore the boundary
+                        if sampled_data[table_name].loc[i, num_rows_key] <= min_rows and \
+                           sampled_data[table_name][num_rows_key].max() > min_rows:
                             break
-                        sampled_data[table_name][num_rows_key][i] -= 1
+
+                        sampled_data[table_name].loc[i, num_rows_key] -= 1
                         if sum(sampled_data[table_name][num_rows_key]) == total_num_rows:
                             break
 
@@ -157,7 +198,8 @@ class BaseHierarchicalSampler():
                 A dictionary mapping table names to sampled tables (pd.DataFrame).
         """
         for child_name in self.metadata._get_child_map()[table_name]:
-            self._enforce_table_sizes(child_name, table_name, scale, sampled_data)
+            self._enforce_table_size(child_name, table_name, scale, sampled_data)
+
             if child_name not in sampled_data:  # Sample based on only 1 parent
                 for _, row in sampled_data[table_name].iterrows():
                     self._add_child_rows(
@@ -241,7 +283,7 @@ class BaseHierarchicalSampler():
         non_root_parents = set(self.metadata._get_parent_map().keys())
         root_parents = set(self.metadata.tables.keys()) - non_root_parents
         for table in root_parents:
-            num_rows = int(self._table_sizes[table] * scale)
+            num_rows = round(self._table_sizes[table] * scale)
             synthesizer = self._table_synthesizers[table]
             LOGGER.info(f'Sampling {num_rows} rows from table {table}')
             sampled_data[table] = self._sample_rows(synthesizer, num_rows)
