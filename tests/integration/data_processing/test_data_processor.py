@@ -1,10 +1,13 @@
 """Integration tests for the ``DataProcessor``."""
 import itertools
+import re
 
 import numpy as np
 import pandas as pd
+import pytest
 from rdt.transformers import (
-    AnonymizedFaker, BinaryEncoder, FloatFormatter, RegexGenerator, UniformEncoder,
+    AnonymizedFaker, BinaryEncoder, FloatFormatter,
+    IDGenerator, RegexGenerator, UniformEncoder,
     UnixTimestampEncoder)
 
 from sdv._utils import _get_datetime_format
@@ -12,6 +15,7 @@ from sdv.data_processing import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.datasets.demo import download_demo
+from sdv.errors import SynthesizerInputError
 from sdv.metadata import SingleTableMetadata
 
 
@@ -376,3 +380,33 @@ class TestDataProcessor:
 
         # Assert
         assert isinstance(dp._hyper_transformer.field_transformers['category_col'], UniformEncoder)
+
+    def test_update_transformers_id_generator(self):
+        """ Test that updating to transformer to id generator is valid"""
+        # Setup
+        data = pd.DataFrame({
+            'user_id': list(range(4)),
+            'user_cat': ['a', 'b', 'c', 'd']
+        })
+        metadata = SingleTableMetadata()
+        metadata.detect_from_dataframe(data)
+        metadata.update_column('user_id', sdtype='id')
+        metadata.set_primary_key('user_id')
+        dp = DataProcessor(metadata)
+        id_gen = IDGenerator(starting_value=5)
+        dp.fit(data)
+
+        # Run
+        dp.update_transformers({'user_id': id_gen})
+        transformers = dp._hyper_transformer.get_config()['transformers']
+
+        # Assert
+        assert transformers['user_id'] == id_gen
+        assert type(transformers['user_cat']).__name__ == 'UniformEncoder'
+
+        error_msg = re.escape(
+            "Invalid transformer 'UniformEncoder' for a primary or alternate key 'user_id'. "
+            'Please use a generator transformer instead.'
+        )
+        with pytest.raises(SynthesizerInputError, match=error_msg):
+            dp.update_transformers({'user_id': UniformEncoder()})
