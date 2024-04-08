@@ -5,6 +5,7 @@ import functools
 import inspect
 import logging
 import math
+import operator
 import os
 import uuid
 import warnings
@@ -386,7 +387,7 @@ class BaseSynthesizer:
             processed_data (pandas.DataFrame):
                 The transformed data used to fit the model to.
         """
-        check_synthesizer_version(self, is_fit_method=True, check_synthesizer_is_greater=True)
+        check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         if not processed_data.empty:
             self._fit(processed_data)
 
@@ -402,7 +403,7 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) to fit the model to.
         """
-        check_synthesizer_version(self, is_fit_method=True, check_synthesizer_is_greater=True)
+        check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         self._check_metadata_updated()
         self._fitted = False
         self._data_processor.reset_sampling()

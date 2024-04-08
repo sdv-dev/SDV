@@ -1,3 +1,4 @@
+import operator
 import re
 from datetime import datetime
 from unittest.mock import Mock, patch
@@ -8,7 +9,7 @@ import pytest
 
 from sdv import version
 from sdv._utils import (
-    _check_is_lower_version, _convert_to_timedelta, _create_unique_name, _get_datetime_format,
+    _compare_versions, _convert_to_timedelta, _create_unique_name, _get_datetime_format,
     _get_root_tables, _is_datetime_type, _validate_foreign_keys_not_null,
     check_sdv_versions_and_warn, check_synthesizer_version)
 from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
@@ -409,40 +410,40 @@ def test_check_sdv_versions_and_warn_public_and_enterprise_missmatch(mock_versio
         check_sdv_versions_and_warn(synthesizer)
 
 
-def test__check_is_lower_version():
-    """Test that _check_is_lower_version returns True if synthesizer version is greater."""
+def test__compare_versions():
+    """Test that _compare_versions returns True if synthesizer version is greater."""
     # Setup
-    synthesizer_version = '1.2.3'
     current_version = '1.2.1'
+    synthesizer_version = '1.2.3'
 
     # Run
-    result = _check_is_lower_version(current_version, synthesizer_version)
+    result = _compare_versions(current_version, synthesizer_version)
 
     # Assert
     assert result is True
 
 
-def test__check_is_lower_version_equal():
-    """Test that _check_is_lower_version returns False if synthesizer version is equal."""
+def test__compare_versions_equal():
+    """Test that _compare_versions returns False if synthesizer version is equal."""
     # Setup
     synthesizer_version = '1.2.3'
     current_version = '1.2.3'
 
     # Run
-    result = _check_is_lower_version(current_version, synthesizer_version)
+    result = _compare_versions(current_version, synthesizer_version)
 
     # Assert
     assert result is False
 
 
-def test__check_is_lower_version_lower():
-    """Test that _check_is_lower_version returns False if synthesizer version is lower."""
+def test__compare_versions_lower():
+    """Test that _compare_versions returns False if synthesizer version is lower."""
     # Setup
     synthesizer_version = '1.0.3'
     current_version = '1.2.1'
 
     # Run
-    result = _check_is_lower_version(current_version, synthesizer_version)
+    result = _compare_versions(current_version, synthesizer_version)
 
     # Assert
     assert result is False
@@ -570,7 +571,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater(mock_version):
         check_synthesizer_version(
             synthesizer,
             is_fit_method=True,
-            check_synthesizer_is_greater=True
+            compare_operator=operator.lt
         )
 
 
@@ -587,7 +588,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_equal(mock_versi
     mock_version.enterprise = '1.3.0'
 
     # Run and Assert
-    check_synthesizer_version(synthesizer, is_fit_method=True, check_synthesizer_is_greater=True)
+    check_synthesizer_version(synthesizer, is_fit_method=True, compare_operator=operator.lt)
 
 
 @patch('sdv._utils.version')
@@ -613,11 +614,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_public_missmatch
         'Please create a new synthesizer.'
     )
     with pytest.raises(VersionError, match=message):
-        check_synthesizer_version(
-            synthesizer,
-            is_fit_method=True,
-            check_synthesizer_is_greater=True
-        )
+        check_synthesizer_version(synthesizer, is_fit_method=True, compare_operator=operator.lt)
 
 
 @patch('sdv._utils.version')
@@ -643,8 +640,4 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_both_missmatch(m
         'Fitting this synthesizer again is not supported. Please create a new synthesizer.'
     )
     with pytest.raises(VersionError, match=message):
-        check_synthesizer_version(
-            synthesizer,
-            is_fit_method=True,
-            check_synthesizer_is_greater=True
-        )
+        check_synthesizer_version(synthesizer, is_fit_method=True, compare_operator=operator.lt)

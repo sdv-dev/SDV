@@ -2,6 +2,7 @@
 import contextlib
 import datetime
 import inspect
+import operator
 import warnings
 from collections import defaultdict
 from copy import deepcopy
@@ -368,7 +369,7 @@ class BaseMultiTableSynthesizer:
             processed_data (dict):
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
         """
-        check_synthesizer_version(self, is_fit_method=True, check_synthesizer_is_greater=True)
+        check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         augmented_data = self._augment_tables(processed_data)
         self._model_tables(augmented_data)
         self._fitted = True
@@ -384,7 +385,7 @@ class BaseMultiTableSynthesizer:
                 Dictionary mapping each table name to a ``pandas.DataFrame`` in the raw format
                 (before any transformations).
         """
-        check_synthesizer_version(self, is_fit_method=True, check_synthesizer_is_greater=True)
+        check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         _validate_foreign_keys_not_null(self.metadata, data)
         self._check_metadata_updated()
         self._fitted = False

@@ -1,4 +1,5 @@
 """Miscellaneous utility functions."""
+import operator
 import warnings
 from collections import defaultdict
 from collections.abc import Iterable
@@ -280,9 +281,11 @@ def check_sdv_versions_and_warn(synthesizer):
             warnings.warn(message, SDVVersionWarning)
 
 
-def _check_is_lower_version(current_version, synthesizer_version,
-                            check_synthesizer_is_greater=False):
-    """Check if the current version is lower than the synthesizer version.
+def _compare_versions(current_version, synthesizer_version, compare_operator=operator.gt):
+    """Compare two versions.
+
+    Given a ``compare_operator`` compare two versions using that operator to determine if one is
+    greater than the other or vice-versa.
 
     Args:
         current_version (str):
@@ -291,8 +294,8 @@ def _check_is_lower_version(current_version, synthesizer_version,
         synthesizer_version (str):
             The synthesizer version to compare, formatted as a string with major, minor, and
             revision parts separated by periods (e.g., "1.0.0")
-        check_synthesizer_is_greater (bool):
-            If ``True`` invert the check.
+        compare_operator (operator):
+            Operator function to evaluate with. Defaults to ``operator.gt``.
 
     Returns:
         bool:
@@ -304,24 +307,28 @@ def _check_is_lower_version(current_version, synthesizer_version,
         try:
             current_v = int(current_v)
             synth_v = int(synth_v)
-            if current_v > synth_v:
-                return False if not check_synthesizer_is_greater else True
+            if compare_operator(current_v, synth_v):
+                return False
 
-            if synth_v > current_v:
-                return True if not check_synthesizer_is_greater else False
+            if compare_operator(synth_v, current_v):
+                return True
+
         except Exception:
             pass
 
     return False
 
 
-def check_synthesizer_version(synthesizer, is_fit_method=False,
-                              check_synthesizer_is_greater=False):
+def check_synthesizer_version(synthesizer, is_fit_method=False, compare_operator=operator.gt):
     """Check if the current synthesizer version is greater than the package version.
 
     Args:
         synthesizer (BaseSynthesizer or BaseMultiTableSynthesizer):
             An SDV model instance to check versions against.
+        is_fit_method (bool):
+            Whether or not this function is being called by a ``fit`` function.
+        compare_operator (operator):
+            Operator function to evaluate with. Defaults to ``operator.gt``.
 
     Raises:
         VersionError:
@@ -341,18 +348,18 @@ def check_synthesizer_version(synthesizer, is_fit_method=False,
 
     is_public_lower = False
     if None not in (current_public_version, fit_public_version):
-        is_public_lower = _check_is_lower_version(
+        is_public_lower = _compare_versions(
             current_public_version,
             fit_public_version,
-            check_synthesizer_is_greater
+            compare_operator
         )
 
     is_enterprise_lower = False
     if None not in (current_enterprise_version, fit_enterprise_version):
-        is_enterprise_lower = _check_is_lower_version(
+        is_enterprise_lower = _compare_versions(
             current_enterprise_version,
             fit_enterprise_version,
-            check_synthesizer_is_greater
+            compare_operator
         )
 
     if is_public_lower and is_enterprise_lower:
