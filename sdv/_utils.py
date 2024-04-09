@@ -1,5 +1,6 @@
 """Miscellaneous utility functions."""
 import operator
+import uuid
 import warnings
 from collections import defaultdict
 from collections.abc import Iterable
@@ -388,3 +389,23 @@ def _get_root_tables(relationships):
     parent_tables = {rel['parent_table_name'] for rel in relationships}
     child_tables = {rel['child_table_name'] for rel in relationships}
     return parent_tables - child_tables
+
+
+def generate_synthesizer_id(synthesizer):
+    """Generate a unique identifier for the synthesizer instance.
+
+    This method creates a unique identifier by combining the class name, the public SDV version
+    and the last part of a UUID4 composed by 12 random characters.
+
+    Args:
+        synthesizer (BaseSynthesizer or BaseMultiTableSynthesizer):
+            An SDV model instance to check versions against.
+
+    Returns:
+        ID:
+            A unique identifier for this synthesizer.
+    """
+    class_name = synthesizer.__class__.__name__
+    synth_version = version.public
+    unique_id = str(uuid.uuid4()).split('-')[-1]
+    return f'{class_name}_{synth_version}_{unique_id}'

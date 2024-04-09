@@ -100,14 +100,16 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         mock_print.assert_called_once_with('Fitting', end='')
 
+    @patch('sdv.multi_table.base.generate_synthesizer_id')
     @patch('sdv.multi_table.base.BaseMultiTableSynthesizer._check_metadata_updated')
-    def test___init__(self, mock_check_metadata_updated):
+    def test___init__(self, mock_check_metadata_updated, mock_generate_synthesizer_id):
         """Test that when creating a new instance this sets the defaults.
 
         Test that the metadata object is being stored and also being validated. Afterwards, this
         calls the ``self._initialize_models`` which creates the initial instances of those.
         """
         # Setup
+        mock_generate_synthesizer_id.return_value = 'BaseMultiTableSynthesizer_1.0.0_123456789abc'
         metadata = get_multi_table_metadata()
         metadata.validate = Mock()
 
@@ -122,6 +124,8 @@ class TestBaseMultiTableSynthesizer:
         assert instance._table_parameters == defaultdict(dict)
         instance.metadata.validate.assert_called_once_with()
         mock_check_metadata_updated.assert_called_once()
+        mock_generate_synthesizer_id.assert_called_once_with(instance)
+        assert instance._synthesizer_id == 'BaseMultiTableSynthesizer_1.0.0_123456789abc'
 
     def test__init__column_relationship_warning(self):
         """Test that a warning is raised only once when the metadata has column relationships."""
@@ -1394,15 +1398,18 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
 
+    @patch('sdv.multi_table.base.generate_synthesizer_id')
     @patch('sdv.multi_table.base.check_synthesizer_version')
     @patch('sdv.multi_table.base.check_sdv_versions_and_warn')
     @patch('sdv.multi_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
     def test_load(self, mock_file, cloudpickle_mock,
-                  mock_check_sdv_versions_and_warn, mock_check_synthesizer_version):
+                  mock_check_sdv_versions_and_warn, mock_check_synthesizer_version,
+                  mock_generate_synthesizer_id):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
-        synthesizer_mock = Mock(_fitted=False)
+        mock_generate_synthesizer_id.return_value = 'BaseMultiTableSynthesizer_1.0.0_123456789abc'
+        synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
         cloudpickle_mock.load.return_value = synthesizer_mock
 
         # Run
@@ -1414,3 +1421,5 @@ class TestBaseMultiTableSynthesizer:
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         assert loaded_instance == synthesizer_mock
         mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
+        assert loaded_instance._synthesizer_id == 'BaseMultiTableSynthesizer_1.0.0_123456789abc'
+        mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
