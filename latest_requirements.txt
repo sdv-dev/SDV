@@ -1,5 +1,5 @@
-boto3==1.34.79
-botocore==1.34.79
+boto3==1.34.80
+botocore==1.34.80
 cloudpickle==3.0.0
 copulas==0.10.1
 ctgan==0.9.1
