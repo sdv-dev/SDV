@@ -69,16 +69,7 @@ class BaseHierarchicalSampler():
         if num_rows is None:
             num_rows = synthesizer._num_rows
 
-        return synthesizer._sample_batch(num_rows, keep_extra_columns=True)
-
-    def _get_num_rows_from_parent(self, parent_row, child_name, foreign_key):
-        """Get the number of rows to sample for the child from the parent row."""
-        num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
-        num_rows = 0
-        if num_rows_key in parent_row.keys():
-            num_rows = parent_row[num_rows_key]
-
-        return round(num_rows)
+        return synthesizer._sample_batch(round(num_rows), keep_extra_columns=True)
 
     def _add_child_rows(self, child_name, parent_name, parent_row, sampled_data, num_rows=None):
         """Sample the child rows that reference the parent row.
@@ -96,10 +87,10 @@ class BaseHierarchicalSampler():
                 Number of rows to sample. If None, infers number of child rows to sample
                 from the parent row. Defaults to None.
         """
-        # A child table is created based on only one foreign key
+        # A child table is created based on only one foreign key.
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
-
-        num_rows = self._get_num_rows_from_parent(parent_row, child_name, foreign_key)
+        if num_rows is None:
+            num_rows = parent_row[f'__{child_name}__{foreign_key}__num_rows']
         child_synthesizer = self._recreate_child_synthesizer(child_name, parent_name, parent_row)
         sampled_rows = self._sample_rows(child_synthesizer, num_rows)
 
@@ -150,10 +141,10 @@ class BaseHierarchicalSampler():
         total_num_rows = round(self._table_sizes[child_name] * scale)
         for foreign_key in self.metadata._get_foreign_keys(table_name, child_name):
             num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
-            key_data = sampled_data[table_name][num_rows_key].fillna(0).round()
             min_rows = getattr(self, '_min_child_rows', {num_rows_key: 0})[num_rows_key]
             max_rows = self._max_child_rows[num_rows_key]
-            sampled_data[table_name][num_rows_key] = key_data.clip(min_rows, max_rows)
+            key_data = sampled_data[table_name][num_rows_key].fillna(0).round()
+            sampled_data[table_name][num_rows_key] = key_data.clip(min_rows, max_rows).astype(int)
 
             while sum(sampled_data[table_name][num_rows_key]) != total_num_rows:
                 num_rows_column = sampled_data[table_name][num_rows_key].argsort()
@@ -206,7 +197,7 @@ class BaseHierarchicalSampler():
                         child_name=child_name,
                         parent_name=table_name,
                         parent_row=row,
-                        sampled_data=sampled_data,
+                        sampled_data=sampled_data
                     )
 
                 if child_name not in sampled_data:  # No child rows sampled, force row creation

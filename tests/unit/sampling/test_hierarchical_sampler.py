@@ -78,28 +78,10 @@ class TestBaseHierarchicalSampler():
             keep_extra_columns=True
         )
 
-    def test__get_num_rows_from_parent(self):
-        """Test that the number of child rows is extracted from the parent row."""
-        # Setup
-        parent_row = pd.Series({
-            '__sessions__user_id__num_rows': 10,
-        })
-        instance = Mock()
-        instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
-
-        # Run
-        result = BaseHierarchicalSampler._get_num_rows_from_parent(
-            instance, parent_row, 'sessions', 'user_id')
-
-        # Assert
-        expected_result = 10.0
-        assert result == expected_result
-
     def test__add_child_rows(self):
         """Test adding child rows when sampled data is empty."""
         # Setup
         instance = Mock()
-        instance._get_num_rows_from_parent.return_value = 10
         child_synthesizer_mock = Mock()
         instance._recreate_child_synthesizer.return_value = child_synthesizer_mock
 
@@ -121,7 +103,8 @@ class TestBaseHierarchicalSampler():
         })
         parent_row = pd.DataFrame({
             'user_id': [1, 2, 3],
-            'name': ['John', 'Doe', 'Johanna']
+            'name': ['John', 'Doe', 'Johanna'],
+            '__sessions__user_id__num_rows': [10, 10, 10]
         })
         sampled_data = {}
 
@@ -146,7 +129,6 @@ class TestBaseHierarchicalSampler():
         """
         # Setup
         instance = Mock()
-        instance._get_num_rows_from_parent.return_value = 10
         child_synthesizer_mock = Mock()
         instance._recreate_child_synthesizer.return_value = child_synthesizer_mock
 
@@ -169,7 +151,8 @@ class TestBaseHierarchicalSampler():
         })
         parent_row = pd.DataFrame({
             'user_id': [1, 2, 3],
-            'name': ['John', 'Doe', 'Johanna']
+            'name': ['John', 'Doe', 'Johanna'],
+            '__sessions__user_id__num_rows': [10, 10, 10]
         })
         sampled_data = {
             'sessions': pd.DataFrame({
