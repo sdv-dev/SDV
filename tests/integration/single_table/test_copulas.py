@@ -297,7 +297,9 @@ def test_custom_processing_anonymization():
     assert any(anonymized_sample['billing_address'].value_counts() > 1)
 
 
-def test_update_transformers_id_generator():
+def test_update_transformers_with_id_generator():
+    """Test using the ID Generator for a primary key"""
+    # Setup
     min_value_id = 5
     sample_num = 20
     data = pd.DataFrame({
@@ -314,13 +316,15 @@ def test_update_transformers_id_generator():
     custom_id = IDGenerator(starting_value=min_value_id)
     gc.auto_assign_transformers(data)
 
+    # Run
     gc.update_transformers({'user_id': custom_id})
-    transformers = gc.get_transformers()
-    assert transformers['user_id'] == custom_id
-    assert type(transformers['user_cat']).__name__ == 'UniformEncoder'
-
     gc.fit(data)
     samples = gc.sample(sample_num)
+    transformers = gc.get_transformers()
+
+    # Assert
+    assert transformers['user_id'] == custom_id
+    assert type(transformers['user_cat']).__name__ == 'UniformEncoder'
     assert len(samples) == sample_num
     assert samples['user_id'].min() == min_value_id
 
