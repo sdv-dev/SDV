@@ -171,30 +171,30 @@ def test_simplify_schema(capsys):
     # Assert
     expected_message_before = re.compile(
         r'PerformanceAlert: Using the HMASynthesizer on this metadata schema is not recommended\.'
-        r' To model this data, HMA will generate a large number of columns\. \(203427 columns\)\s+'
+        r' To model this data, HMA will generate a large number of columns\. \(173818 columns\)\s+'
         r'Table Name\s*#\s*Columns in Metadata\s*Est # Columns\s*'
-        r'match_stats\s*25\s*25\s*'
-        r'matches\s*45\s*446\s*'
-        r'players\s*13\s*414\s*'
-        r'teams\s*101\s*202542\s*'
+        r'match_stats\s*24\s*24\s*'
+        r'matches\s*39\s*412\s*'
+        r'players\s*5\s*378\s*'
+        r'teams\s*1\s*173004\s*'
         r"We recommend simplifying your metadata schema using 'sdv.utils.poc.simplify_schema'\.\s*"
         r'If this is not possible, contact us at info@sdv.dev for enterprise solutions\.'
     )
     expected_message_after = re.compile(
         r'Success! The schema has been simplified\.\s+'
         r'Table Name\s*#\s*Columns \(Before\)\s*#\s*Columns \(After\)\s*'
-        r'match_stats\s*29\s*4\s*'
-        r'matches\s*48\s*21\s*'
-        r'players\s*14\s*0\s*'
-        r'teams\s*102\s*102'
+        r'match_stats\s*28\s*4\s*'
+        r'matches\s*42\s*21\s*'
+        r'players\s*6\s*0\s*'
+        r'teams\s*2\s*2'
     )
     assert expected_message_before.match(captured_before_simplification.out.strip())
     assert expected_message_after.match(captured_after_simplification.out.strip())
     metadata_simplify.validate()
     metadata_simplify.validate_data(data_simplify)
     num_estimated_column_after_simplification = _get_total_estimated_columns(metadata_simplify)
-    assert num_estimated_column_before_simplification == 203427
-    assert num_estimated_column_after_simplification == 617
+    assert num_estimated_column_before_simplification == 173818
+    assert num_estimated_column_after_simplification == 517
 
 
 def test_simpliy_nothing_to_simplify():
