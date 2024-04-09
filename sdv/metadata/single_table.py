@@ -1036,13 +1036,22 @@ class SingleTableMetadata:
         return set(column[~valid])
 
     def _validate_column_data(self, column, sdtype_warnings):
-        """Validate values of the column satisfy its sdtype properties.
+        """Validate the values of the given column against its specified sdtype properties.
+
+        The function checks the sdtype of the column and validates the data accordingly. If there
+        are any errors, those are being appended to a list of errors that will be returned.
+        Additionally ``sdtype_warnings`` is being updated with ``datetime_format`` warnings
+        to be raised later.
 
         Args:
             column (pd.Series):
                 The data to validate against.
             sdtype_warnings (defaultdict[list]):
-                A ``defaultdict`` with ``list`` to add warning messages to.
+                A ``defaultdict`` with ``list`` to add warning messages.
+
+        Returns:
+            list:
+                A list containing any validation error messages found during the process.
         """
         column_metadata = self.columns[column.name]
         sdtype = column_metadata['sdtype']
@@ -1091,10 +1100,21 @@ class SingleTableMetadata:
             * keys don't have missing values
             * primary or alternate keys are unique
             * values of a column satisfy their sdtype
+            * datetimes represented as objects have ``datetime_format`` (warning only).
 
         Args:
             data (pd.DataFrame):
                 The data to validate.
+            sdtype_warnings (defaultdict[list] or None):
+                A ``defaultdict`` with ``list`` to add warning messages.
+
+        Raises:
+            InvalidDataError:
+                This error is being raised if the data is not matching its sdtype requirements.
+
+        Warns:
+            A warning is being raised if ``datetime_format`` is missing from a column represented
+            as ``object`` in the dataframe and its sdtype is ``datetime``.
         """
         sdtype_warnings = sdtype_warnings if sdtype_warnings is not None else defaultdict(list)
         if not isinstance(data, pd.DataFrame):

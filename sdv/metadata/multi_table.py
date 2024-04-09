@@ -839,6 +839,14 @@ class MultiTableMetadata:
         Args:
             data (pd.DataFrame):
                 The data to validate.
+
+        Raises:
+            InvalidDataError:
+                This error is being raised if the data is not matching its sdtype requirements.
+
+        Warns:
+            A warning is being raised if ``datetime_format`` is missing from a column represented
+            as ``object`` in the dataframe and its sdtype is ``datetime``.
         """
         errors = []
         errors += self._validate_missing_tables(data)
