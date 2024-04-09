@@ -30,12 +30,12 @@ DEMO_DATA, DEMO_METADATA = download_demo(
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def demo_data():
     return DEMO_DATA
 
 
-@pytest.fixture()
+@pytest.fixture
 def demo_metadata():
     return DEMO_METADATA
 

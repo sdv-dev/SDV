@@ -1,11 +1,11 @@
 import datetime
+import importlib.metadata
 import re
 import warnings
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-import pkg_resources
 import pytest
 from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, UniformEncoder
 
@@ -515,7 +515,7 @@ def test_get_info():
     info = synthesizer.get_info()
 
     # Assert
-    version = pkg_resources.get_distribution('sdv').version
+    version = importlib.metadata.version('sdv')
     assert info == {
         'class_name': 'GaussianCopulaSynthesizer',
         'creation_date': today,

@@ -194,8 +194,7 @@ def test_save_csvs_existing_files(tmp_path):
 
 
 def test_save_csvs_existing_files_more_files(tmp_path):
-    """Test ``save_csvs`` raises an error with a summary of the existing files when there are more than
-    three existing files."""
+    """Test it errors with a summary of the existing files if more than three existing files."""
     # Setup
     folder = tmp_path / 'data'
     folder.mkdir()

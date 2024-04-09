@@ -1,10 +1,10 @@
 import datetime
+import importlib.metadata
 import re
 import warnings
 
 import numpy as np
 import pandas as pd
-import pkg_resources
 import pytest
 from faker import Faker
 from rdt.transformers import FloatFormatter
@@ -116,7 +116,7 @@ class TestHMASynthesizer:
         info = synthesizer.get_info()
 
         # Assert
-        version = pkg_resources.get_distribution('sdv').version
+        version = importlib.metadata.version('sdv')
         assert info == {
             'class_name': 'HMASynthesizer',
             'creation_date': today,
