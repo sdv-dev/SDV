@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 from rdt.transformers import (
-    AnonymizedFaker, CustomLabelEncoder, FloatFormatter, LabelEncoder, PseudoAnonymizedFaker)
+    AnonymizedFaker, CustomLabelEncoder, FloatFormatter, IDGenerator, LabelEncoder,
+    PseudoAnonymizedFaker)
 
 from sdv.datasets.demo import download_demo
 from sdv.errors import ConstraintsNotMetError
@@ -294,6 +295,38 @@ def test_custom_processing_anonymization():
     assert anonymized_transformers['billing_address'] == billing_address_transformer
     assert [UUID(uuid) for uuid in anonymized_sample['guest_email']]
     assert any(anonymized_sample['billing_address'].value_counts() > 1)
+
+
+def test_update_transformers_with_id_generator():
+    """Test using the ID Generator for a primary key"""
+    # Setup
+    min_value_id = 5
+    sample_num = 20
+    data = pd.DataFrame({
+        'user_id': list(range(4)),
+        'user_cat': ['a', 'b', 'c', 'd']
+    })
+
+    stm = SingleTableMetadata()
+    stm.detect_from_dataframe(data)
+    stm.update_column('user_id', sdtype='id')
+    stm.set_primary_key('user_id')
+
+    gc = GaussianCopulaSynthesizer(stm)
+    custom_id = IDGenerator(starting_value=min_value_id)
+    gc.auto_assign_transformers(data)
+
+    # Run
+    gc.update_transformers({'user_id': custom_id})
+    gc.fit(data)
+    samples = gc.sample(sample_num)
+    transformers = gc.get_transformers()
+
+    # Assert
+    assert transformers['user_id'] == custom_id
+    assert type(transformers['user_cat']).__name__ == 'UniformEncoder'
+    assert len(samples) == sample_num
+    assert samples['user_id'].min() == min_value_id
 
 
 def test_validate_with_failing_constraint():

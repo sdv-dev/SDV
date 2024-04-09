@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 import rdt
 from pandas.api.types import is_float_dtype, is_integer_dtype
-from rdt.transformers import AnonymizedFaker, IDGenerator, RegexGenerator, get_default_transformers
+from rdt.transformers import AnonymizedFaker, IDGenerator, get_default_transformers
 from rdt.transformers.pii.anonymization import get_anonymized_transformer
 
 from sdv.constraints import Constraint
@@ -644,11 +644,10 @@ class DataProcessor:
             )
 
         for column, transformer in column_name_to_transformer.items():
-            if column in self._keys and not type(transformer) in (AnonymizedFaker, RegexGenerator):
+            if column in self._keys and not transformer.is_generator():
                 raise SynthesizerInputError(
                     f"Invalid transformer '{transformer.__class__.__name__}' for a primary "
-                    f"or alternate key '{column}'. Please use 'AnonymizedFaker' or "
-                    "'RegexGenerator' instead."
+                    f"or alternate key '{column}'. Please use a generator transformer instead."
                 )
 
         with warnings.catch_warnings():
