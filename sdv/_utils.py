@@ -299,8 +299,12 @@ def _compare_versions(current_version, synthesizer_version, compare_operator=ope
 
     Returns:
         bool:
-            True if the synthesizer version is greater than the current version, False otherwise.
+            Depending on the ``operator`` function it will return ``True`` or ``False`` if
+            ``current_version`` is bigger or lower than ``synthesizer_version``.
     """
+    if None in (current_version, synthesizer_version):
+        return False
+
     current_version = current_version.split('.')
     synthesizer_version = synthesizer_version.split('.')
     for current_v, synth_v in zip(current_version, synthesizer_version):
@@ -346,21 +350,17 @@ def check_synthesizer_version(synthesizer, is_fit_method=False, compare_operator
     fit_public_version = getattr(synthesizer, '_fitted_sdv_version', None)
     fit_enterprise_version = getattr(synthesizer, '_fitted_sdv_enterprise_version', None)
 
-    is_public_lower = False
-    if None not in (current_public_version, fit_public_version):
-        is_public_lower = _compare_versions(
-            current_public_version,
-            fit_public_version,
-            compare_operator
-        )
+    is_public_lower = _compare_versions(
+        current_public_version,
+        fit_public_version,
+        compare_operator
+    )
 
-    is_enterprise_lower = False
-    if None not in (current_enterprise_version, fit_enterprise_version):
-        is_enterprise_lower = _compare_versions(
-            current_enterprise_version,
-            fit_enterprise_version,
-            compare_operator
-        )
+    is_enterprise_lower = _compare_versions(
+        current_enterprise_version,
+        fit_enterprise_version,
+        compare_operator
+    )
 
     if is_public_lower and is_enterprise_lower:
         raise VersionError(
