@@ -97,10 +97,10 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
         sequence_key = self.metadata.sequence_key
         self._sequence_key = list(_cast_to_iterable(sequence_key)) if sequence_key else None
-        if context_columns and not self._sequence_key:
+        if not self._sequence_key:
             raise SynthesizerInputError(
-                "No 'sequence_keys' are specified in the metadata. The PARSynthesizer cannot "
-                "model 'context_columns' in this case."
+                'The PARSythesizer is designed for multi-sequence data, identifiable through a '
+                'sequence key. Your metadata does not include a sequence key.'
             )
 
         self._sequence_index = self.metadata.sequence_index
