@@ -33,11 +33,11 @@ dependencies = [
     "pandas>=1.5.0;python_version>='3.11' and python_version<'3.12'",
     "pandas>=2.0.2;python_version>='3.12'",
     'tqdm>=4.29',
-    'copulas @ git+https://github.com/sdv-dev/Copulas@main',
-    'ctgan @ git+https://github.com/sdv-dev/CTGAN@main',
-    'deepecho @ git+https://github.com/sdv-dev/DeepEcho@main',
-    'rdt @ git+https://github.com/sdv-dev/RDT@main',
-    'sdmetrics @ git+https://github.com/sdv-dev/SDMetrics@main',
+    'copulas>=0.11.0',
+    'ctgan>=0.10.0.dev0',
+    'deepecho>=0.6.0',
+    'rdt>=1.11.0',
+    'sdmetrics>=0.14.0.dev0',
 ]
 
 [project.urls]
