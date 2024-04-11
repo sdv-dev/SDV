@@ -1,3 +1,4 @@
+import operator
 import re
 from datetime import datetime
 from unittest.mock import Mock, patch
@@ -8,7 +9,7 @@ import pytest
 
 from sdv import version
 from sdv._utils import (
-    _check_is_lower_version, _convert_to_timedelta, _create_unique_name, _get_datetime_format,
+    _compare_versions, _convert_to_timedelta, _create_unique_name, _get_datetime_format,
     _get_root_tables, _is_datetime_type, _validate_foreign_keys_not_null,
     check_sdv_versions_and_warn, check_synthesizer_version)
 from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
@@ -409,40 +410,40 @@ def test_check_sdv_versions_and_warn_public_and_enterprise_missmatch(mock_versio
         check_sdv_versions_and_warn(synthesizer)
 
 
-def test__check_is_lower_version():
-    """Test that _check_is_lower_version returns True if synthesizer version is greater."""
+def test__compare_versions():
+    """Test that _compare_versions returns True if synthesizer version is greater."""
     # Setup
-    synthesizer_version = '1.2.3'
     current_version = '1.2.1'
+    synthesizer_version = '1.2.3'
 
     # Run
-    result = _check_is_lower_version(current_version, synthesizer_version)
+    result = _compare_versions(current_version, synthesizer_version)
 
     # Assert
     assert result is True
 
 
-def test__check_is_lower_version_equal():
-    """Test that _check_is_lower_version returns False if synthesizer version is equal."""
+def test__compare_versions_equal():
+    """Test that _compare_versions returns False if synthesizer version is equal."""
     # Setup
     synthesizer_version = '1.2.3'
     current_version = '1.2.3'
 
     # Run
-    result = _check_is_lower_version(current_version, synthesizer_version)
+    result = _compare_versions(current_version, synthesizer_version)
 
     # Assert
     assert result is False
 
 
-def test__check_is_lower_version_lower():
-    """Test that _check_is_lower_version returns False if synthesizer version is lower."""
+def test__compare_versions_lower():
+    """Test that _compare_versions returns False if synthesizer version is lower."""
     # Setup
     synthesizer_version = '1.0.3'
     current_version = '1.2.1'
 
     # Run
-    result = _check_is_lower_version(current_version, synthesizer_version)
+    result = _compare_versions(current_version, synthesizer_version)
 
     # Assert
     assert result is False
@@ -542,3 +543,101 @@ def test__get_root_tables():
 
     # Assert
     assert result == {'parent'}
+
+
+@patch('sdv._utils.version')
+def test_check_synthesizer_version_check_synthesizer_is_greater(mock_version):
+    """Test that ``VersionError`` is raised when checking if synthesizer is greater.
+
+    Ensure that this test will raise a ``VersionError`` when the synthesizer version is lower
+    than the current package version.
+    """
+    # Setup
+    synthesizer = Mock(
+        _fitted_sdv_version='1.3.0',
+        _fitted_sdv_enterprise_version='1.3.0'
+    )
+
+    mock_version.public = '1.3.0'
+    mock_version.enterprise = '1.4.0'
+
+    # Run and Assert
+    message = (
+        'You are currently on SDV Enterprise version 1.4.0 but this synthesizer was created on '
+        'version 1.3.0. Fitting this synthesizer again is not supported. '
+        'Please create a new synthesizer.'
+    )
+    with pytest.raises(VersionError, match=message):
+        check_synthesizer_version(
+            synthesizer,
+            is_fit_method=True,
+            compare_operator=operator.lt
+        )
+
+
+@patch('sdv._utils.version')
+def test_check_synthesizer_version_check_synthesizer_is_greater_equal(mock_version):
+    """Test that no ``VersionError`` is raised when versions match."""
+    # Setup
+    synthesizer = Mock(
+        _fitted_sdv_version='1.3.0',
+        _fitted_sdv_enterprise_version='1.3.0'
+    )
+
+    mock_version.public = '1.3.0'
+    mock_version.enterprise = '1.3.0'
+
+    # Run and Assert
+    check_synthesizer_version(synthesizer, is_fit_method=True, compare_operator=operator.lt)
+
+
+@patch('sdv._utils.version')
+def test_check_synthesizer_version_check_synthesizer_is_greater_public_missmatch(mock_version):
+    """Test that ``VersionError`` is raised when checking if synthesizer is greater.
+
+    Ensure that this test will raise a ``VersionError`` when the synthesizer version is lower
+    than the current package version.
+    """
+    # Setup
+    synthesizer = Mock(
+        _fitted_sdv_version='1.3.0',
+        _fitted_sdv_enterprise_version='1.4.0'
+    )
+
+    mock_version.public = '1.5.0'
+    mock_version.enterprise = '1.4.0'
+
+    # Run and Assert
+    message = (
+        'You are currently on SDV version 1.5.0 but this synthesizer was created on '
+        'version 1.3.0. Fitting this synthesizer again is not supported. '
+        'Please create a new synthesizer.'
+    )
+    with pytest.raises(VersionError, match=message):
+        check_synthesizer_version(synthesizer, is_fit_method=True, compare_operator=operator.lt)
+
+
+@patch('sdv._utils.version')
+def test_check_synthesizer_version_check_synthesizer_is_greater_both_missmatch(mock_version):
+    """Test that ``VersionError`` is raised when public and enterprise are greater.
+
+    Ensure that this test will raise a ``VersionError`` when the synthesizer version is lower
+    than the current package version.
+    """
+    # Setup
+    synthesizer = Mock(
+        _fitted_sdv_version='1.3.0',
+        _fitted_sdv_enterprise_version='1.3.2'
+    )
+
+    mock_version.public = '1.5.0'
+    mock_version.enterprise = '1.4.0'
+
+    # Run and Assert
+    message = (
+        'You are currently on SDV version 1.5.0 and SDV Enterprise version 1.4.0 but this '
+        'synthesizer was created on SDV version 1.3.0 and SDV Enterprise version 1.3.2. '
+        'Fitting this synthesizer again is not supported. Please create a new synthesizer.'
+    )
+    with pytest.raises(VersionError, match=message):
+        check_synthesizer_version(synthesizer, is_fit_method=True, compare_operator=operator.lt)

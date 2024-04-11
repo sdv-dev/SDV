@@ -1599,3 +1599,51 @@ def test_save_and_load_with_downgraded_version(tmp_path):
     )
     with pytest.raises(VersionError, match=error_msg):
         HMASynthesizer.load(synthesizer_path)
+
+
+def test_fit_raises_version_error():
+    """Test that a ``VersionError`` is being raised if the current version is newer."""
+    # Setup
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'departure': {
+                'primary_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'date': {'sdtype': 'datetime'},
+                    'city': {'sdtype': 'city'},
+                    'country': {'sdtype': 'country'}
+                },
+            },
+            'arrival': {
+                'foreign_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'date': {'sdtype': 'datetime'},
+                    'city': {'sdtype': 'city'},
+                    'country': {'sdtype': 'country'},
+                    'id_flight': {'sdtype': 'id'}
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'departure',
+                'parent_primary_key': 'id',
+                'child_table_name': 'arrival',
+                'child_foreign_key': 'id'
+            }
+        ]
+    })
+
+    instance = HMASynthesizer(metadata)
+    instance._fitted_sdv_version = '1.0.0'
+
+    # Run and Assert
+    expected_message = (
+        f'You are currently on SDV version {version.public} but this synthesizer was created on '
+        'version 1.0.0. Fitting this synthesizer again is not supported. Please create a new '
+        'synthesizer.'
+    )
+    with pytest.raises(VersionError, match=expected_message):
+        instance.fit({})
