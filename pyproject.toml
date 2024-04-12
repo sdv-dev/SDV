@@ -33,7 +33,7 @@ dependencies = [
     'copulas>=0.9.0',
     'ctgan>=0.9.0',
     'deepecho>=0.5',
-    'rdt @ git+https://github.com/sdv-dev/RDT@main',
+    'rdt>=1.11.0',
     'sdmetrics>=0.13.0',
 ]
 
