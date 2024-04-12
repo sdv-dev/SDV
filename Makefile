@@ -86,13 +86,13 @@ install-develop: clean-build clean-pyc ## install the package in editable mode a
 .PHONY: lint-sdv
 lint-sdv: ## check style with flake8 and isort
 	flake8 sdv
-	isort -c --recursive sdv
+	isort -c sdv
 	pydocstyle sdv
 
 .PHONY: lint-tests
 lint-tests: ## check style with flake8 and isort
 	flake8 --ignore=D,SFS2 tests
-	isort -c --recursive tests
+	isort -c tests
 
 .PHONY: check-dependencies
 check-dependencies: ## test if there are any broken dependencies
@@ -106,7 +106,7 @@ lint: ## check style with flake8 and isort
 fix-lint: ## fix lint issues using autoflake, autopep8, and isort
 	find sdv tests -name '*.py' | xargs autoflake --in-place --remove-all-unused-imports --remove-unused-variables
 	autopep8 --in-place --recursive --aggressive sdv tests
-	isort --apply --atomic --recursive sdv tests
+	isort --apply --atomic sdv tests
 
 
 # TEST TARGETS

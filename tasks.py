@@ -118,7 +118,7 @@ def lint(c):
     check_dependencies(c)
     c.run('flake8 sdv')
     c.run('flake8 tests --ignore=D,SFS2')
-    c.run('isort -c --recursive sdv tests')
+    c.run('isort -c sdv tests')
     c.run('pydocstyle sdv')
 
 

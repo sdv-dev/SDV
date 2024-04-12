@@ -12,29 +12,32 @@ classifiers = [
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
     'Topic :: Scientific/Engineering :: Artificial Intelligence',
 ]
 keywords = ['sdv', 'synthetic-data', 'synhtetic-data-generation', 'timeseries', 'single-table', 'multi-table']
 dynamic = ['version']
 license = { text = 'BSL-1.1' }
-requires-python = '>=3.8,<3.12'
+requires-python = '>=3.8,<3.13'
 readme = 'README.md'
 dependencies = [
-    'boto3>=1.15.0,<2',
-    'botocore>=1.18,<2',
+    'boto3>=1.28',
+    'botocore>=1.31',
     'cloudpickle>=2.1.0',
     'graphviz>=0.13.2',
     "numpy>=1.20.0;python_version<'3.10'",
-    "numpy>=1.23.3;python_version>='3.10'",
+    "numpy>=1.23.3,<2;python_version>='3.10' and python_version<'3.12'",
+    "numpy>=1.26.0,<2;python_version>='3.12'",
     "pandas>=1.1.3;python_version<'3.10'",
     "pandas>=1.3.4;python_version>='3.10' and python_version<'3.11'",
-    "pandas>=1.5.0;python_version>='3.11'",
-    'tqdm>=4.15',
-    'copulas>=0.9.0',
-    'ctgan>=0.9.0',
-    'deepecho>=0.5',
-    'rdt @ git+https://github.com/sdv-dev/RDT@main',
-    'sdmetrics>=0.13.0',
+    "pandas>=1.5.0;python_version>='3.11' and python_version<'3.12'",
+    "pandas>=2.1.1;python_version>='3.12'",
+    'tqdm>=4.29',
+    'copulas>=0.11.0',
+    'ctgan>=0.10.0',
+    'deepecho>=0.6.0',
+    'rdt>=1.11.0',
+    'sdmetrics>=0.14.0',
 ]
 
 [project.urls]
@@ -51,7 +54,7 @@ sdv = { main = 'sdv.cli.__main__:main' }
 test = [
     'pytest>=3.4.2',
     'pytest-cov>=2.6.0',
-    'pytest-rerunfailures>10',
+    'pytest-rerunfailures>=10.3,<15',
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
     'pytest-runner >= 2.11.1',
@@ -65,55 +68,55 @@ dev = [
     'build>=1.0.0,<2',
     'bump-my-version>=0.18.3,<1',
     'pip>=9.0.1',
-    'watchdog>=0.8.3,<0.9',
+    'watchdog>=1.0.1,<5',
 
     # docs
-    'docutils>=0.12,<0.18',
-    'm2r2>=0.2.5,<0.3',
-    'nbsphinx>=0.5.0,<0.7',
-    'sphinx_toolbox>=2.5,<3',
-    'Sphinx>=3,<3.3',
-    'pydata-sphinx-theme<0.5',
-    'markupsafe<2.1.0',
+    'docutils>=0.12,<1',
+    'm2r2>=0.2.5,<1',
+    'nbsphinx>=0.5.0,<1',
+    'sphinx_toolbox>=2.5,<4',
+    'Sphinx>=3,<8',
+    'pydata-sphinx-theme<1',
+    'markupsafe<3',
 
     # Jinja2>=3 makes the sphinx theme fail
-    'Jinja2>=2,<3',
+    'Jinja2>=2,<4',
 
     # style check
-    'flake8>=3.7.7,<4',
+    'flake8>=3.7.7,<8',
     'flake8-absolute-import>=1.0,<2',
-    'flake8-builtins>=1.5.3,<1.6',
-    'flake8-comprehensions>=3.6.1,<3.7',
-    'flake8-debugger>=4.0.0,<4.1',
+    'flake8-builtins>=1.5.3,<3',
+    'flake8-comprehensions>=3.6.1,<4',
+    'flake8-debugger>=4.0.0,<5',
     'flake8-docstrings>=1.5.0,<2',
-    'flake8-eradicate>=1.1.0,<1.2',
+    'flake8-eradicate>=1.1.0,<2',
     'flake8-fixme>=1.1.1,<1.2',
-    'flake8-mock>=0.3,<0.4',
+    'flake8-mock>=0.3,<1',
     'flake8-multiline-containers>=0.0.18,<0.1',
     'flake8-mutable>=1.2.0,<1.3',
     'flake8-expression-complexity>=0.0.9,<0.1',
     'flake8-print>=4.0.0,<4.1',
-    'flake8-pytest-style>=1.5.0,<2',
+    'flake8-pytest-style>=1.5.0,<3',
     'flake8-quotes>=3.3.0,<4',
-    'flake8-sfs>=0.0.3,<0.1',
+    'flake8-sfs>=0.0.3,<2',
     'flake8-variables-names>=0.0.4,<0.1',
-    'dlint>=0.11.0,<0.12',
-    'isort>=4.3.4,<5',
-    'pandas-vet>=0.2.3,<0.3',
-    'pep8-naming>=0.12.1,<0.13',
-    'pydocstyle>=6.1.1,<6.2',
+    'dlint>=0.11.0,<1',
+    'isort>=4.3.4,<6',
+    'pandas-vet>=0.2.3,<2024',
+    'pep8-naming>=0.12.1,<1',
+    'pydocstyle>=6.1.1,<7',
 
     # fix style issues
-    'autoflake>=1.1,<2',
-    'autopep8>=1.4.3,<1.6',
+    'autoflake>=1.1,<3',
+    'autopep8>=1.4.3,<3',
 
     # distribute on PyPI
-    'twine>=1.10.0,<4',
+    'twine>=1.10.0,<6',
     'wheel>=0.30.0',
 
     # Advanced testing
-    'coverage>=4.5.1,<6',
-    'tox>=2.9.1,<4',
+    'coverage>=4.5.12,<8',
+    'tox>=2.9.1,<5',
     'invoke'
 ]
 
@@ -139,7 +142,6 @@ namespaces = false
     '*.png',
     '*.gif'
 ]
-'tests' = ['*']
 
 [tool.setuptools.exclude-package-data]
 '*' = [
@@ -188,7 +190,6 @@ replace = "__version__ = '{new_version}'"
 line_length = 99
 lines_between_types = 0
 multi_line_output = 4
-not_skip = ['__init__.py']
 use_parentheses = true
 
 [tool.pydocstyle]

@@ -250,7 +250,7 @@ class TestMultiTableMetadata:
             )
 
     def test__validate_no_missing_tables_in_relationship(self):
-        """Test the ``_validate_no_missing_tables_in_relationship`` method of ``MultiTableMetadata``.
+        """Test ``_validate_no_missing_tables_in_relationship`` of ``MultiTableMetadata``.
 
         Setup:
             - Create a list of ``tables``.

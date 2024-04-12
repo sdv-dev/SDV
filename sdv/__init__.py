@@ -11,9 +11,8 @@ __version__ = '1.11.1.dev0'
 
 import sys
 import warnings
+from importlib.metadata import entry_points
 from operator import attrgetter
-
-from pkg_resources import iter_entry_points
 
 from sdv import (
     constraints, data_processing, datasets, evaluation, lite, metadata, metrics, multi_table,
@@ -82,7 +81,13 @@ def _get_addon_target(addon_path_name):
 def _find_addons():
     """Find and load all sdv add-ons."""
     group = 'sdv_modules'
-    for entry_point in iter_entry_points(group=group):
+    try:
+        eps = entry_points(group=group)
+    except TypeError:
+        # Load-time selection requires Python >= 3.10 or importlib_metadata >= 3.6
+        eps = entry_points().get(group, [])
+
+    for entry_point in eps:
         try:
             addon = entry_point.load()
         except Exception as e:  # pylint: disable=broad-exception-caught
