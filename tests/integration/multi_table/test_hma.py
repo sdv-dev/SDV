@@ -8,6 +8,7 @@ import pkg_resources
 import pytest
 from faker import Faker
 from rdt.transformers import FloatFormatter
+from sdmetrics.reports.multi_table import DiagnosticReport
 
 from sdv import version
 from sdv.datasets.demo import download_demo
@@ -1647,3 +1648,19 @@ def test_fit_raises_version_error():
     )
     with pytest.raises(VersionError, match=expected_message):
         instance.fit({})
+
+
+def test_hma_relationship_validity():
+    """Test the quality of the HMA synthesizer GH#1834."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'Dunur_v1')
+    synthesizer = HMASynthesizer(metadata)
+    report = DiagnosticReport()
+
+    # Run
+    synthesizer.fit(data)
+    sample = synthesizer.sample()
+    report.generate(data, sample, metadata.to_dict(), verbose=False)
+
+    # Assert
+    assert report.get_details('Relationship Validity')['Score'].mean() == 1.0

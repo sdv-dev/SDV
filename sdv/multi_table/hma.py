@@ -155,6 +155,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         BaseMultiTableSynthesizer.__init__(self, metadata, locales=locales)
         self._table_sizes = {}
         self._max_child_rows = {}
+        self._min_child_rows = {}
         self._augmented_tables = []
         self._learned_relationships = 0
         self._default_parameters = {}
@@ -402,6 +403,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
                 table[num_rows_key] = table[num_rows_key].fillna(0)
                 self._max_child_rows[num_rows_key] = table[num_rows_key].max()
+                self._min_child_rows[num_rows_key] = table[num_rows_key].min()
                 tables[table_name] = table
                 self._learned_relationships += 1
 
@@ -564,7 +566,22 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         else:
             weights = likelihoods.to_numpy() / total
 
-        return np.random.choice(likelihoods.index.to_list(), p=weights)
+        candidates, candidate_weights = [], []
+        for parent, weight in zip(likelihoods.index.to_list(), weights):
+            if num_rows[parent] > 0:
+                candidates.append(parent)
+                candidate_weights.append(weight)
+
+        # All available candidates were assigned 0 likelihood of being the parent id
+        if sum(candidate_weights) == 0:
+            chosen_parent = np.random.choice(candidates)
+        else:
+            candidate_weights = np.array(candidate_weights) / np.sum(candidate_weights)
+            chosen_parent = np.random.choice(candidates, p=candidate_weights)
+
+        num_rows[chosen_parent] -= 1
+
+        return chosen_parent
 
     def _get_likelihoods(self, table_rows, parent_rows, table_name, foreign_key):
         """Calculate the likelihood of each parent id value appearing in the data.
@@ -633,7 +650,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         # Create a copy of the parent table with the primary key as index to calculate likelihoods
         primary_key = self.metadata.tables[parent_name].primary_key
         parent_table = parent_table.set_index(primary_key)
-        num_rows = parent_table[f'__{child_name}__{foreign_key}__num_rows'].fillna(0).clip(0)
+        num_rows = parent_table[f'__{child_name}__{foreign_key}__num_rows'].copy()
 
         likelihoods = self._get_likelihoods(child_table, parent_table, child_name, foreign_key)
         return likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)
