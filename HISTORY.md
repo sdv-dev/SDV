@@ -1,8 +1,8 @@
 # Release Notes
 
-## 1.12.0 - 2024-04-12
+## 1.12.0 - 2024-04-16
 
-This release adds support for Python 3.12! It also adds a number of feature improvements. It adds a `simplify_schema` utility function the the `sdv.utils.poc` module which simplifies multi-table schemas so they can be run using `HMASynthesizer`. Multi-table data dictionaries can now be saved directly to CSVs using the `sdv.datasets.local.save_csvs` utility function. Additionally, generator-discriminator loss values can now be plotted directly from CTGAN using the `get_loss_values_plot` method. This release also adds error messages when trying to load an SDV synthesizer on an older version of the SDV, or when trying to re-fit a synthesizer from an older version of the SDV.
+This release adds support for Python 3.12! It also adds a number of feature improvements. It adds a `simplify_schema` utility function to the `sdv.utils.poc` module which simplifies multi-table schemas so they can be run using `HMASynthesizer`. Multi-table data dictionaries can now be saved directly to CSVs using the `sdv.datasets.local.save_csvs` utility function. Additionally, generator-discriminator loss values can now be plotted directly from CTGAN using the `get_loss_values_plot` method. This release also adds error messages when trying to load an SDV synthesizer on an older version of the SDV, or when trying to re-fit a synthesizer from an older version of the SDV.
 
 This release also fixes a number of bugs. Metadata auto-detection now validates that all primary keys are unique, and the metadata correctly validates sdtypes in a column relationship. Bugs in the `HMASynthesizer` that would cause the diagnostic score to not be equal to 1.0 for cardinality and data validity were fixed. Finally, errors in constraints now correctly raise a `ConstraintsNotMetError` instead of an `InvalidData` error.
 
