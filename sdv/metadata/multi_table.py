@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from sdv._utils import _cast_to_iterable, _load_data_from_csv
 from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
@@ -16,9 +17,9 @@ from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
-from sdv.utils import cast_to_iterable, load_data_from_csv
 
 LOGGER = logging.getLogger(__name__)
+WARNINGS_COLUMN_ORDER = ['Table Name', 'Column Name', 'sdtype', 'datetime_format']
 
 
 class MultiTableMetadata:
@@ -29,6 +30,20 @@ class MultiTableMetadata:
     def __init__(self):
         self.tables = {}
         self.relationships = []
+        self._multi_table_updated = False
+
+    def _check_updated_flag(self):
+        is_single_table_updated = any(table._updated for table in self.tables.values())
+        if is_single_table_updated or self._multi_table_updated:
+            return True
+
+        return False
+
+    def _reset_updated_flag(self):
+        for table in self.tables.values():
+            table._updated = False
+
+        self._multi_table_updated = False
 
     def _validate_missing_relationship_keys(self, parent_table_name, parent_primary_key,
                                             child_table_name, child_foreign_key):
@@ -41,8 +56,8 @@ class MultiTableMetadata:
             )
 
         missing_keys = set()
-        parent_primary_key = cast_to_iterable(parent_primary_key)
-        table_primary_keys = set(cast_to_iterable(parent_table.primary_key))
+        parent_primary_key = _cast_to_iterable(parent_primary_key)
+        table_primary_keys = set(_cast_to_iterable(parent_table.primary_key))
         for key in parent_primary_key:
             if key not in table_primary_keys:
                 missing_keys.add(key)
@@ -53,7 +68,7 @@ class MultiTableMetadata:
                 f'an unknown primary key {missing_keys}.'
             )
 
-        for key in set(cast_to_iterable(child_foreign_key)):
+        for key in set(_cast_to_iterable(child_foreign_key)):
             if key not in child_table.columns:
                 missing_keys.add(key)
 
@@ -77,8 +92,8 @@ class MultiTableMetadata:
     @staticmethod
     def _validate_relationship_key_length(parent_table_name, parent_primary_key,
                                           child_table_name, child_foreign_key):
-        pk_len = len(set(cast_to_iterable(parent_primary_key)))
-        fk_len = len(set(cast_to_iterable(child_foreign_key)))
+        pk_len = len(set(_cast_to_iterable(parent_primary_key)))
+        fk_len = len(set(_cast_to_iterable(child_foreign_key)))
         if pk_len != fk_len:
             raise InvalidMetadataError(
                 f"Relationship between tables ('{parent_table_name}', '{child_table_name}') is "
@@ -90,8 +105,8 @@ class MultiTableMetadata:
                                        child_table_name, child_foreign_key):
         parent_table_columns = self.tables.get(parent_table_name).columns
         child_table_columns = self.tables.get(child_table_name).columns
-        parent_primary_key = cast_to_iterable(parent_primary_key)
-        child_foreign_key = cast_to_iterable(child_foreign_key)
+        parent_primary_key = _cast_to_iterable(parent_primary_key)
+        child_foreign_key = _cast_to_iterable(child_foreign_key)
         for pk, fk in zip(parent_primary_key, child_foreign_key):
             if parent_table_columns[pk]['sdtype'] != child_table_columns[fk]['sdtype']:
                 raise InvalidMetadataError(
@@ -134,8 +149,8 @@ class MultiTableMetadata:
             )
 
     def _validate_foreign_child_key(self, child_table_name, parent_table_name, child_foreign_key):
-        child_primary_key = cast_to_iterable(self.tables[child_table_name].primary_key)
-        child_foreign_key = cast_to_iterable(child_foreign_key)
+        child_primary_key = _cast_to_iterable(self.tables[child_table_name].primary_key)
+        child_foreign_key = _cast_to_iterable(child_foreign_key)
         if set(child_foreign_key).intersection(set(child_primary_key)):
             raise InvalidMetadataError(
                 f"Invalid relationship between table '{parent_table_name}' and table "
@@ -264,6 +279,7 @@ class MultiTableMetadata:
             'parent_primary_key': deepcopy(parent_primary_key),
             'child_foreign_key': deepcopy(child_foreign_key),
         })
+        self._multi_table_updated = True
 
     def remove_relationship(self, parent_table_name, child_table_name):
         """Remove the relationship between two tables.
@@ -290,6 +306,39 @@ class MultiTableMetadata:
         else:
             for relation in relationships_to_remove:
                 self.relationships.remove(relation)
+
+        self._multi_table_updated = True
+
+    def remove_primary_key(self, table_name):
+        """Remove the primary key from the given table.
+
+        Removes the primary key from the given table. Also removes any relationships that
+        reference that table's primary key, including all relationships in which the given
+        table is a parent table.
+
+        Args:
+            table_name (str):
+                The name of the table to remove the primary key from.
+        """
+        self._validate_table_exists(table_name)
+        primary_key = self.tables[table_name].primary_key
+        self.tables[table_name].remove_primary_key()
+
+        for relationship in self.relationships[:]:
+            parent_table = relationship['parent_table_name']
+            child_table = relationship['child_table_name']
+            foreign_key = relationship['child_foreign_key']
+            if ((child_table == table_name and foreign_key == primary_key) or
+                    parent_table == table_name):
+                other_table = child_table if parent_table == table_name else parent_table
+                info_msg = (
+                    f"Relationship between '{table_name}' and '{other_table}' removed because "
+                    f"the primary key for '{table_name}' was removed."
+                )
+                LOGGER.info(info_msg)
+                self.relationships.remove(relationship)
+
+        self._multi_table_updated = True
 
     def _validate_table_exists(self, table_name):
         if table_name not in self.tables:
@@ -338,6 +387,34 @@ class MultiTableMetadata:
         self._validate_table_exists(table_name)
         table = self.tables.get(table_name)
         table.update_column(column_name, **kwargs)
+
+    def update_columns(self, table_name, column_names, **kwargs):
+        """Update multiple columns with the same metadata kwargs.
+
+        Args:
+            table_name (str):
+                Name of the table to update the columns.
+            column_names (list[str]):
+                List of column names to update.
+            **kwargs:
+                Any key word arguments that describe metadata for the columns.
+        """
+        self._validate_table_exists(table_name)
+        table = self.tables.get(table_name)
+        table.update_columns(column_names, **kwargs)
+
+    def update_columns_metadata(self, table_name, column_metadata):
+        """Update the metadata of multiple columns at once.
+
+        Args:
+            table_name (str):
+                Name of the table to update the columns.
+            column_metadata (dict):
+                Dictionary of column names and their metadata to update.
+        """
+        self._validate_table_exists(table_name)
+        table = self.tables.get(table_name)
+        table.update_columns_metadata(column_metadata)
 
     def add_constraint(self, table_name, constraint_name, **kwargs):
         """Add a constraint to a table in the multi-table metadata.
@@ -485,7 +562,7 @@ class MultiTableMetadata:
         """
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
-        data = load_data_from_csv(filepath, read_csv_parameters)
+        data = _load_data_from_csv(filepath, read_csv_parameters)
         table._detect_columns(data)
         self.tables[table_name] = table
         self._log_detected_table(table)
@@ -618,6 +695,7 @@ class MultiTableMetadata:
                 errors.append(error_message)
             try:
                 table.validate()
+
             except Exception as error:
                 errors.append('\n')
                 title = f'Table: {table_name}'
@@ -677,9 +755,12 @@ class MultiTableMetadata:
     def _validate_all_tables(self, data):
         """Validate every table of the data has a valid table/metadata pair."""
         errors = []
+        warning_dataframes = []
         for table_name, table_data in data.items():
+            table_sdtype_warnings = defaultdict(list)
             try:
-                self.tables[table_name].validate_data(table_data)
+                with warnings.catch_warnings(record=True):
+                    self.tables[table_name].validate_data(table_data, table_sdtype_warnings)
 
             except InvalidDataError as error:
                 error_msg = f"Table: '{table_name}'"
@@ -693,6 +774,24 @@ class MultiTableMetadata:
 
             except KeyError:
                 continue
+
+            finally:
+                if table_sdtype_warnings:
+                    table_sdtype_warnings['Table Name'].extend(
+                        [table_name] * len(table_sdtype_warnings['Column Name'])
+                    )
+                    df = pd.DataFrame(table_sdtype_warnings, columns=WARNINGS_COLUMN_ORDER)
+                    warning_dataframes.append(df)
+
+        if warning_dataframes:
+            warning_df = pd.concat(warning_dataframes)
+            warning_msg = (
+                "No 'datetime_format' is present in the metadata for the following columns:\n "
+                f'{warning_df.to_string(index=False)}\n'
+                'Without this specification, SDV may not be able to accurately parse the data. '
+                "We recommend adding datetime formats using 'update_column'."
+            )
+            warnings.warn(warning_msg)
 
         return errors
 
@@ -708,6 +807,7 @@ class MultiTableMetadata:
                 child_column = child_table[relation['child_foreign_key']]
                 parent_column = parent_table[relation['parent_primary_key']]
                 missing_values = child_column[~child_column.isin(parent_column)].unique()
+                missing_values = missing_values[~pd.isna(missing_values)]
 
                 if any(missing_values):
                     message = ', '.join(missing_values[:5].astype(str))
@@ -718,8 +818,8 @@ class MultiTableMetadata:
 
                     errors.append(
                         f"Error: foreign key column '{relation['child_foreign_key']}' contains "
-                        f'unknown references: {message}. All the values in this column must '
-                        'reference a primary key.'
+                        f'unknown references: {message}. Please use the utility method'
+                        " 'drop_unknown_references' to clean the data."
                     )
 
             if errors:
@@ -739,6 +839,14 @@ class MultiTableMetadata:
         Args:
             data (pd.DataFrame):
                 The data to validate.
+
+        Raises:
+            InvalidDataError:
+                This error is being raised if the data is not matching its sdtype requirements.
+
+        Warns:
+            A warning is being raised if ``datetime_format`` is missing from a column represented
+            as ``object`` in the dataframe and its sdtype is ``datetime``.
         """
         errors = []
         errors += self._validate_missing_tables(data)
@@ -770,6 +878,23 @@ class MultiTableMetadata:
             )
 
         self.tables[table_name] = SingleTableMetadata()
+        self._multi_table_updated = True
+
+    def get_column_names(self, table_name, **kwargs):
+        """Return a list of columns from the given table that match the metadata keyword arguments.
+
+        Args:
+            table_name (str):
+                The name of the table to get column names for.s
+            **kwargs:
+                Metadata keywords to filter on, for example sdtype='id' or pii=True.
+
+        Returns:
+            list:
+                The list of columns that match the metadata kwargs for the given table.
+        """
+        self._validate_table_exists(table_name)
+        return self.tables[table_name].get_column_names(**kwargs)
 
     def visualize(self, show_table_details='full', show_relationship_labels=True,
                   output_filepath=None):
@@ -917,6 +1042,8 @@ class MultiTableMetadata:
         metadata = self.to_dict()
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)
+
+        self._reset_updated_flag()
 
     @classmethod
     def load_from_json(cls, filepath):

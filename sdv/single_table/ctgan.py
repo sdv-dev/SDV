@@ -1,10 +1,35 @@
 """Wrapper around CTGAN model."""
 import numpy as np
+import pandas as pd
+import plotly.express as px
 from ctgan import CTGAN, TVAE
+from sdmetrics import visualization
 
-from sdv.errors import NotFittedError
+from sdv.errors import InvalidDataTypeError, NotFittedError
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.single_table.utils import detect_discrete_columns
+
+
+def _validate_no_category_dtype(data):
+    """Check that given data has no 'category' dtype columns.
+
+    Args:
+        data (pd.DataFrame):
+            Data to check.
+
+    Raises:
+        - ``InvalidDataTypeError`` if any columns in the data have 'category' dtype.
+    """
+    category_cols = [
+        col for col, dtype in data.dtypes.items() if pd.api.types.is_categorical_dtype(dtype)
+    ]
+    if category_cols:
+        categoricals = "', '".join(category_cols)
+        error_msg = (
+            f"Columns ['{categoricals}'] are stored as a 'category' type, which is not "
+            "supported. Please cast these columns to an 'object' to continue."
+        )
+        raise InvalidDataTypeError(error_msg)
 
 
 class LossValuesMixin:
@@ -26,6 +51,48 @@ class LossValuesMixin:
 
         return self._model.loss_values.copy()
 
+    def get_loss_values_plot(self, title='CTGAN loss function'):
+        """Create a loss values plot from the model.
+
+        Args:
+            title (pd.DataFrame):
+                Title string for the graph created.
+
+        Raises:
+            - ``NotFittedError`` if synthesizer has not been fitted.
+
+        Returns:
+            plotly.graph_objects._figure.Figure:
+                1D marginal distribution plot (i.e. a histogram) of the columns.
+        """
+        if not self._fitted:
+            err_msg = 'Loss values are not available yet. Please fit your synthesizer first.'
+            raise NotFittedError(err_msg)
+
+        # Tidy up the loss values data
+        loss_df = self._model.loss_values.copy()
+        loss_df['Generator Loss'] = loss_df['Generator Loss'].apply(lambda x: x.item())
+        loss_df['Discriminator Loss'] = loss_df['Discriminator Loss'].apply(lambda x: x.item())
+
+        # Create a pretty chart using Plotly Express
+        fig = px.line(
+            loss_df, x='Epoch',
+            y=['Generator Loss', 'Discriminator Loss'],
+            color_discrete_map={
+                'Generator Loss': visualization.PlotConfig.DATACEBO_BLUE,
+                'Discriminator Loss': visualization.PlotConfig.DATACEBO_GREEN
+            },
+        )
+        fig.update_layout(
+            template='plotly_white',
+            legend_title_text='',
+            legend_orientation='v',
+            plot_bgcolor=visualization.PlotConfig.BACKGROUND_COLOR,
+            font={'size': visualization.PlotConfig.FONT_SIZE}
+        )
+        fig.update_layout(title=title, xaxis_title='Epoch', yaxis_title='Loss')
+        return fig
+
 
 class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
     """Model wrapping ``CTGAN`` model.
@@ -41,7 +108,8 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             Define rounding scheme for ``numerical`` columns. If ``True``, the data returned
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
         embedding_dim (int):
             Size of the random sample passed to the Generator. Defaults to 128.
         generator_dim (tuple or list of ints):
@@ -84,11 +152,12 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
         'boolean': None
     }
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=None,
-                 embedding_dim=128, generator_dim=(256, 256), discriminator_dim=(256, 256),
-                 generator_lr=2e-4, generator_decay=1e-6, discriminator_lr=2e-4,
-                 discriminator_decay=1e-6, batch_size=500, discriminator_steps=1,
-                 log_frequency=True, verbose=False, epochs=300, pac=10, cuda=True):
+    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
+                 locales=['en_US'], embedding_dim=128, generator_dim=(256, 256),
+                 discriminator_dim=(256, 256), generator_lr=2e-4, generator_decay=1e-6,
+                 discriminator_lr=2e-4, discriminator_decay=1e-6, batch_size=500,
+                 discriminator_steps=1, log_frequency=True, verbose=False, epochs=300,
+                 pac=10, cuda=True):
 
         super().__init__(
             metadata=metadata,
@@ -200,6 +269,8 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
+        _validate_no_category_dtype(processed_data)
+
         transformers = self._data_processor._hyper_transformer.field_transformers
         discrete_columns = detect_discrete_columns(
             self.get_metadata(),
@@ -303,6 +374,8 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
+        _validate_no_category_dtype(processed_data)
+
         transformers = self._data_processor._hyper_transformer.field_transformers
         discrete_columns = detect_discrete_columns(
             self.get_metadata(),

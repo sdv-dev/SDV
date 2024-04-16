@@ -10,13 +10,15 @@ import pandas as pd
 import tqdm
 from deepecho import PARModel
 from deepecho.sequences import assemble_sequences
+from rdt.transformers import FloatFormatter
 
+from sdv._utils import _cast_to_iterable, _groupby_list
 from sdv.errors import SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
+from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
 from sdv.single_table.ctgan import LossValuesMixin
-from sdv.utils import cast_to_iterable, groupby_list
 
 LOGGER = logging.getLogger(__name__)
 
@@ -39,7 +41,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             Define rounding scheme for ``numerical`` columns. If ``True``, the data returned
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
         context_columns (list[str]):
             A list of strings, representing the columns that do not vary in a sequence.
         segment_size (int):
@@ -76,12 +79,15 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         for column in context_columns:
             context_columns_dict[column] = self.metadata.columns[column]
 
+        for column, column_metadata in self._extra_context_columns.items():
+            context_columns_dict[column] = column_metadata
+
         context_metadata_dict = {'columns': context_columns_dict}
         return SingleTableMetadata.load_from_dict(context_metadata_dict)
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=False, locales=None,
-                 context_columns=None, segment_size=None, epochs=128, sample_size=1, cuda=True,
-                 verbose=False):
+    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=False,
+                 locales=['en_US'], context_columns=None, segment_size=None, epochs=128,
+                 sample_size=1, cuda=True, verbose=False):
         super().__init__(
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,
@@ -90,15 +96,17 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         )
 
         sequence_key = self.metadata.sequence_key
-        self._sequence_key = list(cast_to_iterable(sequence_key)) if sequence_key else None
-        if context_columns and not self._sequence_key:
+        self._sequence_key = list(_cast_to_iterable(sequence_key)) if sequence_key else None
+        if not self._sequence_key:
             raise SynthesizerInputError(
-                "No 'sequence_keys' are specified in the metadata. The PARSynthesizer cannot "
-                "model 'context_columns' in this case."
+                'The PARSythesizer is designed for multi-sequence data, identifiable through a '
+                'sequence key. Your metadata does not include a sequence key.'
             )
 
         self._sequence_index = self.metadata.sequence_index
         self.context_columns = context_columns or []
+        self._extra_context_columns = {}
+        self.extended_columns = {}
         self.segment_size = segment_size
         self._model_kwargs = {
             'epochs': epochs,
@@ -138,7 +146,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
     def _validate_context_columns(self, data):
         errors = []
         if self.context_columns:
-            for sequence_key_value, data_values in data.groupby(groupby_list(self._sequence_key)):
+            for sequence_key_value, data_values in data.groupby(_groupby_list(self._sequence_key)):
                 for context_column in self.context_columns:
                     if len(data_values[context_column].unique()) > 1:
                         errors.append((
@@ -150,6 +158,41 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
     def _validate(self, data):
         return self._validate_context_columns(data)
+
+    def _transform_sequence_index(self, data):
+        sequence_index = data[self._sequence_key + [self._sequence_index]]
+        sequence_index_context = sequence_index.groupby(self._sequence_key).agg('first')
+        sequence_index_context = sequence_index_context.rename(
+            columns={self._sequence_index: f'{self._sequence_index}.context'}
+        )
+        if all(sequence_index[self._sequence_key].nunique() == 1):
+            sequence_index_sequence = sequence_index[[self._sequence_index]].diff().bfill()
+        else:
+            sequence_index_sequence = sequence_index.groupby(self._sequence_key).apply(
+                lambda x: x[self._sequence_index].diff().bfill()
+            ).droplevel(1).reset_index()
+
+        if all(sequence_index_sequence[self._sequence_index].isna()):
+            fill_value = 0
+        else:
+            fill_value = min(sequence_index_sequence[self._sequence_index].dropna())
+        sequence_index_sequence = sequence_index_sequence.fillna(fill_value)
+
+        data[self._sequence_index] = sequence_index_sequence[self._sequence_index]
+        data = data.merge(
+            sequence_index_context,
+            left_on=self._sequence_key,
+            right_index=True)
+
+        self.extended_columns[self._sequence_index] = FloatFormatter(
+            enforce_min_max_values=True)
+        self.extended_columns[self._sequence_index].fit(
+            sequence_index_sequence, self._sequence_index)
+        self._extra_context_columns[f'{self._sequence_index}.context'] = {
+            'sdtype': 'numerical'
+        }
+
+        return data
 
     def _preprocess(self, data):
         """Transform the raw data to numerical space.
@@ -164,12 +207,18 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             pandas.DataFrame:
                 The preprocessed data.
         """
+        self._extra_context_columns = {}
         sequence_key_transformers = {sequence_key: None for sequence_key in self._sequence_key}
         if not self._data_processor._prepared_for_fitting:
             self.auto_assign_transformers(data)
 
         self.update_transformers(sequence_key_transformers)
-        return super()._preprocess(data)
+        preprocessed = super()._preprocess(data)
+
+        if self._sequence_index:
+            preprocessed = self._transform_sequence_index(preprocessed)
+
+        return preprocessed
 
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
@@ -190,26 +239,27 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
     def _fit_context_model(self, transformed):
         LOGGER.debug(f'Fitting context synthesizer {self._context_synthesizer.__class__.__name__}')
-        if self.context_columns:
-            context = transformed[self._sequence_key + self.context_columns]
+        if self.context_columns or self._extra_context_columns:
+            context_cols = (
+                self._sequence_key + self.context_columns +
+                list(self._extra_context_columns.keys())
+            )
+            context = transformed[context_cols]
         else:
             context = transformed[self._sequence_key].copy()
             # Add constant column to allow modeling
             constant_column = str(uuid.uuid4())
             context[constant_column] = 0
-            self._context_synthesizer.metadata.add_column(constant_column, sdtype='numerical')
+            self._extra_context_columns[constant_column] = {'sdtype': 'numerical'}
 
+        context_metadata = self._get_context_metadata()
+        self._context_synthesizer = GaussianCopulaSynthesizer(
+            context_metadata,
+            enforce_min_max_values=self._context_synthesizer.enforce_min_max_values,
+            enforce_rounding=self._context_synthesizer.enforce_rounding
+        )
         context = context.groupby(self._sequence_key).first().reset_index()
         self._context_synthesizer.fit(context)
-
-    def _transform_sequence_index(self, sequences):
-        sequence_index_idx = self._data_columns.index(self._sequence_index)
-        for sequence in sequences:
-            data = sequence['data']
-            sequence_index = data[sequence_index_idx]
-            diffs = np.diff(sequence_index).tolist()
-            data[sequence_index_idx] = diffs[0:1] + diffs
-            data.append(sequence_index[0:1] * len(sequence_index))
 
     def _fit_sequence_columns(self, timeseries_data):
         self._model = PARModel(**self._model_kwargs)
@@ -218,13 +268,16 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         self._data_columns = [
             column
             for column in timeseries_data.columns
-            if column not in self._sequence_key + self.context_columns
+            if column not in (
+                self._sequence_key + self.context_columns +
+                list(self._extra_context_columns.keys())
+            )
         ]
 
         sequences = assemble_sequences(
             timeseries_data,
             self._sequence_key,
-            self.context_columns,
+            self.context_columns + list(self._extra_context_columns.keys()),
             self.segment_size,
             self._sequence_index,
             drop_sequence_index=False
@@ -243,12 +296,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
             if field in self._data_columns:
                 data_types.append(data_type)
-            elif field in self.context_columns:
+            elif field in self.context_columns or field in self._extra_context_columns.keys():
                 context_types.append(data_type)
-
-        if self._sequence_index:
-            self._transform_sequence_index(sequences)
-            data_types.append('continuous')
 
         # Validate and fit
         self._model.fit_sequences(sequences, context_types, data_types)
@@ -287,7 +336,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         if self._sequence_key:
             context = context.set_index(self._sequence_key)
             # reorder context columns
-            context = context[self.context_columns]
+            context_columns = self.context_columns + list(self._extra_context_columns.keys())
+            context = context[context_columns]
 
         should_disable = not self._model_kwargs['verbose']
         iterator = tqdm.tqdm(context.iterrows(), disable=should_disable, total=len(context))
@@ -299,7 +349,12 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             if self._sequence_index:
                 sequence_index_idx = self._data_columns.index(self._sequence_index)
                 diffs = sequence[sequence_index_idx]
-                start = sequence.pop(-1)
+                float_formatter = self.extended_columns[self._sequence_index]
+                diffs = float_formatter.reverse_transform(
+                    pd.DataFrame({self._sequence_index: diffs})
+                )[self._sequence_index].to_numpy()
+                start_index = context_columns.index(f'{self._sequence_index}.context')
+                start = context_values[start_index]
                 sequence[sequence_index_idx] = np.cumsum(diffs) - diffs[0] + start
 
             # Reformat as a DataFrame
@@ -308,7 +363,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 columns=self._data_columns
             )
             sequence_df[self._sequence_key] = sequence_key_values
-            for column, value in zip(self.context_columns, context_values):
+            context_columns = self.context_columns + list(self._extra_context_columns.keys())
+            for column, value in zip(context_columns, context_values):
                 sequence_df[column] = value
 
             output.append(sequence_df)
@@ -372,4 +428,12 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 'to sample new sequences.'
             )
 
-        return self._sample(context_columns, sequence_length)
+        condition_columns = list(set.intersection(
+            set(context_columns.columns), set(self._context_synthesizer._model.columns)
+        ))
+        condition_columns = context_columns[condition_columns].to_dict('records')
+        context = self._context_synthesizer.sample_from_conditions(
+            [Condition(conditions) for conditions in condition_columns]
+        )
+        context.update(context_columns)
+        return self._sample(context, sequence_length)

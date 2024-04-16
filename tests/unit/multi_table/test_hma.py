@@ -1,5 +1,5 @@
 import re
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -85,10 +85,36 @@ class TestHMASynthesizer:
 
         pd.testing.assert_frame_equal(result, expected)
 
-    def test__print_estimate_warning(self, capsys):
+    def test__get_distributions(self):
+        """Test the ``_get_distributions`` method."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = HMASynthesizer(metadata)
+        instance.get_table_parameters = Mock()
+        instance.get_table_parameters.side_effect = [
+            {'synthesizer_parameters': {'default_distribution': 'gamma'}},
+            {'wrong_key': {'default_distribution': 'gamma'}},
+            {'synthesizer_parameters': {'not_default_distribution': 'wrong'}}
+        ]
+
+        # Run
+        result = instance._get_distributions()
+
+        # Assert
+        expected = {
+            'nesreca': 'gamma',
+            'oseba': None,
+            'upravna_enota': None
+        }
+        assert result == expected
+
+    @patch('sdv.multi_table.hma.HMASynthesizer._estimate_num_columns')
+    @patch('sdv.multi_table.hma.HMASynthesizer._get_distributions')
+    def test__print_estimate_warning(self, get_distributions_mock, estimate_mock, capsys):
         """Test that a warning appears if there are more than 1000 expected columns"""
         # Setup
         metadata = get_multi_table_metadata()
+        estimate_mock.side_effect = [{'nesreca': 2000}, {'nesreca': 10}]
 
         key_phrases = [
             r'PerformanceAlert:',
@@ -97,24 +123,17 @@ class TestHMASynthesizer:
         ]
 
         # Run
-        with patch.object(HMASynthesizer,
-                          '_estimate_num_columns',
-                          return_value={'nesreca': 2000}):
-            HMASynthesizer(metadata)
-
+        HMASynthesizer(metadata)
         captured = capsys.readouterr()
 
         # Assert
+        get_distributions_mock.assert_called_once()
         for pattern in key_phrases:
             match = re.search(pattern, captured.out + captured.err)
             assert match is not None
 
         # Run
-        with patch.object(HMASynthesizer,
-                          '_estimate_num_columns',
-                          return_value={'nesreca': 10}):
-            HMASynthesizer(metadata)
-
+        HMASynthesizer(metadata)
         captured = capsys.readouterr()
 
         # Assert that small amount of columns don't trigger the message
@@ -186,11 +205,11 @@ class TestHMASynthesizer:
             '__oseba__id_nesreca__univariates__oseba_val__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__b': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_val__loc': [0., 1., 2., 3.],
-            '__oseba__id_nesreca__univariates__oseba_val__scale': [0.] * 4,
+            '__oseba__id_nesreca__univariates__oseba_val__scale': [1e-6] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__a': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__b': [1.] * 4,
             '__oseba__id_nesreca__univariates__oseba_value__loc': [0., 1., 2., 3.],
-            '__oseba__id_nesreca__univariates__oseba_value__scale': [0.] * 4,
+            '__oseba__id_nesreca__univariates__oseba_value__scale': [1e-6] * 4,
             '__oseba__id_nesreca__num_rows': [1.] * 4,
         })
 
@@ -246,30 +265,32 @@ class TestHMASynthesizer:
         any null values by using the ``_clear_nans`` method. Then, fitting the table model by
         calling ``fit_processed_data``,  adding back the foreign keys, updating the ``tables`` and
         marking the table name as modeled within the ``instance._augmented_tables``. This
-        task has to be performed only on the root tables, the childs are being skipped
-        since each row is being re-created from the parent.
+        task has to be performed for all tables to generate default parameters if sampled
+        parameters are invalid.
         """
         # Setup
         upravna_enota_model = Mock()
+        upravna_enota_model._get_parameters.return_value = {
+            'col__univariates': 'univariate_param',
+            'corr': 'correlation_param'
+        }
         instance = Mock()
         instance._synthesizer = GaussianCopulaSynthesizer
         instance._get_pbar_args.return_value = {'desc': 'Modeling Tables'}
+        instance._default_parameters = {}
 
         metadata = get_multi_table_metadata()
         instance.metadata = metadata
-        instance._augmented_tables = ['upravna_enota']
         instance._table_sizes = {'upravna_enota': 3}
-        instance._table_synthesizers = {'upravna_enota': upravna_enota_model}
+        instance._table_synthesizers = {
+            'upravna_enota': upravna_enota_model,
+        }
         instance._pop_foreign_keys.return_value = {'fk': [1, 2, 3]}
         input_data = {
             'upravna_enota': pd.DataFrame({
                 'id_nesreca': [0, 1, 2],
                 'upravna_enota': [0, 1, 2],
                 'extended': ['a', 'b', 'c']
-            }),
-            'oseba': pd.DataFrame({
-                'id_oseba': [0, 1, 2],
-                'note': [0, 1, 2],
             })
         }
         augmented_data = input_data.copy()
@@ -294,6 +315,11 @@ class TestHMASynthesizer:
         upravna_enota_model.fit_processed_data.assert_called_once_with(
             augmented_data['upravna_enota']
         )
+
+        upravna_enota_model._get_parameters.assert_called_once()
+        assert instance._default_parameters['upravna_enota'] == {
+            'col__univariates': 'univariate_param'
+        }
 
     def test__augment_tables(self):
         """Test that ``_fit`` calls ``_model_tables`` only if the table has no parents."""
@@ -403,24 +429,47 @@ class TestHMASynthesizer:
         # Setup
         parent_row = pd.Series({
             '__sessions__user_id__num_rows': 10,
-            '__sessions__user_id__a': 1.0,
+            '__sessions__user_id__a': -1.0,
             '__sessions__user_id__b': 0.2,
-            '__sessions__user_id__loc': 0.5,
-            '__sessions__user_id__scale': 0.25
+            '__sessions__user_id__loc': 0.3,
         })
         instance = Mock()
         instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
+
+        float_formatter1 = MagicMock()
+        float_formatter1._min_value = 0.
+        float_formatter1._max_value = 5
+
+        float_formatter2 = MagicMock()
+        float_formatter2._min_value = 0.1
+        float_formatter2._max_value = 5
+
+        float_formatter3 = MagicMock()
+        float_formatter3._min_value = 0
+        float_formatter3._max_value = 1
+
+        float_formatter4 = MagicMock()
+        float_formatter4._min_value = 0.3
+        float_formatter4._max_value = 0.7
+
+        instance.extended_columns = {
+            'sessions': {
+                '__sessions__user_id__num_rows': float_formatter1,
+                '__sessions__user_id__a': float_formatter2,
+                '__sessions__user_id__b': float_formatter3,
+                '__sessions__user_id__loc': float_formatter4,
+            }
+        }
 
         # Run
         result = HMASynthesizer._extract_parameters(instance, parent_row, 'sessions', 'user_id')
 
         # Assert
         expected_result = {
-            'a': 1.0,
+            'a': .1,
             'b': 0.2,
-            'loc': 0.5,
-            'num_rows': 10.0,
-            'scale': 0.25
+            'loc': 0.3,
+            'num_rows': 5,
         }
 
         assert result == expected_result
@@ -438,6 +487,9 @@ class TestHMASynthesizer:
         instance.metadata._get_foreign_keys.return_value = ['session_id']
         instance._table_parameters = {'users': {'a': 1}}
         instance._table_synthesizers = {'users': table_synthesizer}
+        instance._default_parameters = {
+            'users': {'colA': 'default_param', 'colB': 'default_param'}
+        }
 
         # Run
         synthesizer = HMASynthesizer._recreate_child_synthesizer(
@@ -452,7 +504,8 @@ class TestHMASynthesizer:
         assert synthesizer._data_processor == table_synthesizer._data_processor
         instance._synthesizer.assert_called_once_with(table_meta, a=1)
         synthesizer._set_parameters.assert_called_once_with(
-            instance._extract_parameters.return_value
+            instance._extract_parameters.return_value,
+            {'colA': 'default_param', 'colB': 'default_param'}
         )
         instance._extract_parameters.assert_called_once_with(parent_row, table_name, 'session_id')
 
@@ -514,6 +567,18 @@ class TestHMASynthesizer:
         )
         with pytest.raises(ValueError, match=error_msg):
             instance.get_learned_distributions('upravna_enota')
+
+    def test_get_parameters(self):
+        """Test that the synthesizer's parameters are being returned."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = HMASynthesizer(metadata, locales='en_CA')
+
+        # Run
+        result = instance.get_parameters()
+
+        # Assert
+        assert result == {'locales': 'en_CA', 'verbose': True}
 
     def test__add_foreign_key_columns(self):
         """Test that the ``_add_foreign_key_columns`` method adds foreign keys."""
@@ -612,7 +677,7 @@ class TestHMASynthesizer:
         synthesizer._finalize = Mock()
 
         # Run estimation
-        estimated_num_columns = synthesizer._estimate_num_columns()
+        estimated_num_columns = synthesizer._estimate_num_columns(metadata)
 
         # Run actual modeling
         synthesizer.fit(data)
@@ -759,9 +824,10 @@ class TestHMASynthesizer:
             table_parameters={'default_distribution': 'uniform'}
         )
         synthesizer._finalize = Mock()
+        distributions = synthesizer._get_distributions()
 
         # Run estimation
-        estimated_num_columns = synthesizer._estimate_num_columns()
+        estimated_num_columns = synthesizer._estimate_num_columns(metadata, distributions)
 
         # Run actual modeling
         synthesizer.fit(data)
@@ -890,7 +956,7 @@ class TestHMASynthesizer:
         synthesizer._finalize = Mock()
 
         # Run estimation
-        estimated_num_columns = synthesizer._estimate_num_columns()
+        estimated_num_columns = synthesizer._estimate_num_columns(metadata)
 
         # Run actual modeling
         synthesizer.fit(data)
@@ -1005,7 +1071,7 @@ class TestHMASynthesizer:
         synthesizer._finalize = Mock()
 
         # Run estimation
-        estimated_num_columns = synthesizer._estimate_num_columns()
+        estimated_num_columns = synthesizer._estimate_num_columns(metadata)
 
         # Run actual modeling
         synthesizer.fit(data)

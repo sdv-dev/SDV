@@ -30,12 +30,12 @@ DEMO_DATA, DEMO_METADATA = download_demo(
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def demo_data():
     return DEMO_DATA
 
 
-@pytest.fixture()
+@pytest.fixture
 def demo_metadata():
     return DEMO_METADATA
 
@@ -223,6 +223,49 @@ def test_fit_with_unique_constraint_on_data_subset():
     # Assert
     assert len(samples) == 2
     assert samples['test_column'].is_unique
+
+
+def test_conditional_sampling_with_constraints():
+    """Test constraints with conditional sampling. GH#1737"""
+    # Setup
+    data = pd.DataFrame(data={
+        'A': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
+        'B': [round(i) for i in np.random.uniform(low=0, high=10, size=100)],
+        'C': np.random.choice(['Yes', 'No', 'Maybe'], size=100)
+    })
+
+    metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'numerical'},
+            'B': {'sdtype': 'numerical'},
+            'C': {'sdtype': 'categorical'}
+        }
+    })
+
+    synth = GaussianCopulaSynthesizer(metadata)
+
+    constraint = {
+        'constraint_class': 'ScalarRange',
+        'constraint_parameters': {
+            'column_name': 'B',
+            'low_value': 0,
+            'high_value': 10,
+            'strict_boundaries': False
+        }
+    }
+
+    my_condition = Condition(num_rows=250, column_values={'B': 1})
+
+    # Run
+    synth.add_constraints([constraint])
+    synth.fit(data)
+    samples = synth.sample_from_conditions([my_condition])
+
+    # Assert
+    assert samples.columns.tolist() == ['A', 'B', 'C']
+    assert samples['A'].between(0, 10).all()
+    assert samples['B'].unique() == [1]
+    assert samples['C'].isin(['Yes', 'No', 'Maybe']).all()
 
 
 @patch('sdv.single_table.base.isinstance')

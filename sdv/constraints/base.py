@@ -11,10 +11,10 @@ from copulas.univariate import GaussianUnivariate
 from rdt import HyperTransformer
 from rdt.transformers import BinaryEncoder, FloatFormatter, OneHotEncoder, UnixTimestampEncoder
 
+from sdv._utils import _format_invalid_values_string, _groupby_list
 from sdv.constraints.errors import (
     AggregateConstraintsError, ConstraintMetadataError, MissingConstraintColumnError)
 from sdv.errors import ConstraintsNotMetError
-from sdv.utils import format_invalid_values_string, groupby_list
 
 LOGGER = logging.getLogger(__name__)
 
@@ -204,7 +204,7 @@ class Constraint(metaclass=ConstraintMeta):
             if not is_valid_data.all():
                 constraint_data = table_data[list(self.constraint_columns)]
                 invalid_rows = constraint_data[~is_valid_data]
-                invalid_rows_str = format_invalid_values_string(invalid_rows, 5)
+                invalid_rows_str = _format_invalid_values_string(invalid_rows, 5)
                 err_msg = (
                     f"Data is not valid for the '{self.__class__.__name__}' constraint:\n"
                     f'{invalid_rows_str}'
@@ -500,7 +500,9 @@ class ColumnsModel:
                 Table data with additional ``constraint_columns``.
         """
         condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
-        grouped_conditions = table_data[condition_columns].groupby(groupby_list(condition_columns))
+        grouped_conditions = table_data[condition_columns].groupby(
+            _groupby_list(condition_columns)
+        )
         all_sampled_rows = []
         for group, dataframe in grouped_conditions:
             if not isinstance(group, tuple):

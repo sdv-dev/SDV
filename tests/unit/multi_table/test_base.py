@@ -1,4 +1,5 @@
 import re
+import warnings
 from collections import defaultdict
 from datetime import date, datetime
 from unittest.mock import ANY, Mock, call, mock_open, patch
@@ -7,7 +8,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.errors import InvalidDataError, NotFittedError, SynthesizerInputError
+from sdv import version
+from sdv.errors import (
+    ConstraintsNotMetError, InvalidDataError, NotFittedError, SynthesizerInputError, VersionError)
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -97,7 +100,8 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         mock_print.assert_called_once_with('Fitting', end='')
 
-    def test___init__(self):
+    @patch('sdv.multi_table.base.BaseMultiTableSynthesizer._check_metadata_updated')
+    def test___init__(self, mock_check_metadata_updated):
         """Test that when creating a new instance this sets the defaults.
 
         Test that the metadata object is being stored and also being validated. Afterwards, this
@@ -117,6 +121,33 @@ class TestBaseMultiTableSynthesizer:
         assert isinstance(instance._table_synthesizers['upravna_enota'], GaussianCopulaSynthesizer)
         assert instance._table_parameters == defaultdict(dict)
         instance.metadata.validate.assert_called_once_with()
+        mock_check_metadata_updated.assert_called_once()
+
+    def test__init__column_relationship_warning(self):
+        """Test that a warning is raised only once when the metadata has column relationships."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        metadata.add_column('nesreca', 'lat', sdtype='latitude')
+        metadata.add_column('nesreca', 'lon', sdtype='longitude')
+
+        metadata.add_column_relationship('nesreca', 'gps', ['lat', 'lon'])
+
+        expected_warning = (
+            "The metadata contains a column relationship of type 'gps' "
+            'which requires the gps add-on. This relationship will be ignored. For higher'
+            ' quality data in this relationship, please inquire about the SDV Enterprise tier.'
+        )
+
+        # Run
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter('always')
+            BaseMultiTableSynthesizer(metadata)
+
+        # Assert
+        column_relationship_warnings = [
+            warning for warning in caught_warnings if expected_warning in str(warning.message)
+        ]
+        assert len(column_relationship_warnings) == 1
 
     def test___init___synthesizer_kwargs_deprecated(self):
         """Test that the ``synthesizer_kwargs`` method is deprecated."""
@@ -131,6 +162,26 @@ class TestBaseMultiTableSynthesizer:
         )
         with pytest.warns(FutureWarning, match=warn_message):
             BaseMultiTableSynthesizer(metadata, synthesizer_kwargs={})
+
+    def test__check_metadata_updated(self):
+        """Test the ``_check_metadata_updated`` method."""
+        # Setup
+        instance = Mock()
+        instance.metadata = Mock()
+        instance.metadata._check_updated_flag = Mock()
+        instance.metadata._reset_updated_flag = Mock()
+
+        # Run
+        expected_message = re.escape(
+            "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+            ' in future SDV versions.'
+        )
+        with pytest.warns(UserWarning, match=expected_message):
+            BaseMultiTableSynthesizer._check_metadata_updated(instance)
+
+        # Assert
+        instance.metadata._check_updated_flag.assert_called_once()
+        instance.metadata._reset_updated_flag.assert_called_once()
 
     def test_set_address_columns(self):
         """Test the ``set_address_columns`` method."""
@@ -207,12 +258,12 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         assert result == {
-            'table_synthesizer': 'GaussianCopulaSynthesizer',
-            'table_parameters': {
+            'synthesizer_name': 'GaussianCopulaSynthesizer',
+            'synthesizer_parameters': {
                 'default_distribution': 'beta',
                 'enforce_min_max_values': True,
                 'enforce_rounding': True,
-                'locales': None,
+                'locales': ['en_US'],
                 'numerical_distributions': {}
             }
         }
@@ -228,15 +279,15 @@ class TestBaseMultiTableSynthesizer:
         result = instance.get_table_parameters('oseba')
 
         # Assert
-        assert result['table_parameters'] == {
+        assert result['synthesizer_parameters'] == {
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'locales': None,
+            'locales': ['en_US'],
             'numerical_distributions': {}
         }
 
-    def test_get_parameters_missing_table(self):
+    def test_get_parameters(self):
         """Test that the synthesizer's parameters are being returned."""
         # Setup
         metadata = get_multi_table_metadata()
@@ -246,84 +297,7 @@ class TestBaseMultiTableSynthesizer:
         result = instance.get_parameters()
 
         # Assert
-        assert result == {
-            'locales': 'en_CA',
-            'verbose': False,
-            'tables': {
-                'nesreca': {
-                    'table_synthesizer': 'GaussianCopulaSynthesizer',
-                    'table_parameters': {
-                        'enforce_min_max_values': True,
-                        'enforce_rounding': True,
-                        'locales': 'en_CA',
-                        'numerical_distributions': {},
-                        'default_distribution': 'beta'
-                    }
-                },
-                'oseba': {
-                    'table_synthesizer': 'GaussianCopulaSynthesizer',
-                    'table_parameters': {
-                        'enforce_min_max_values': True,
-                        'enforce_rounding': True,
-                        'locales': 'en_CA',
-                        'numerical_distributions': {},
-                        'default_distribution': 'beta'
-                    }
-                },
-                'upravna_enota': {
-                    'table_synthesizer': 'GaussianCopulaSynthesizer',
-                    'table_parameters': {
-                        'enforce_min_max_values': True,
-                        'enforce_rounding': True,
-                        'locales': 'en_CA',
-                        'numerical_distributions': {},
-                        'default_distribution': 'beta'
-                    }
-                }
-            }
-        }
-
-    def test_get_parameters_empty(self):
-        """Test that ``get_parameters`` handles missing table synthesizers."""
-        # Setup
-        metadata = get_multi_table_metadata()
-        instance = BaseMultiTableSynthesizer(metadata, locales='en_CA')
-        instance._table_synthesizers['nesreca'] = None
-
-        # Run
-        result = instance.get_parameters()
-
-        # Assert
-        assert result == {
-            'locales': 'en_CA',
-            'verbose': False,
-            'tables': {
-                'nesreca': {
-                    'table_synthesizer': None,
-                    'table_parameters': {}
-                },
-                'oseba': {
-                    'table_synthesizer': 'GaussianCopulaSynthesizer',
-                    'table_parameters': {
-                        'enforce_min_max_values': True,
-                        'enforce_rounding': True,
-                        'locales': 'en_CA',
-                        'numerical_distributions': {},
-                        'default_distribution': 'beta'
-                    }
-                },
-                'upravna_enota': {
-                    'table_synthesizer': 'GaussianCopulaSynthesizer',
-                    'table_parameters': {
-                        'enforce_min_max_values': True,
-                        'enforce_rounding': True,
-                        'locales': 'en_CA',
-                        'numerical_distributions': {},
-                        'default_distribution': 'beta'
-                    }
-                }
-            }
-        }
+        assert result == {'locales': 'en_CA', 'synthesizer_kwargs': None}
 
     def test_set_table_parameters(self):
         """Test that the table's parameters are being updated.
@@ -340,13 +314,13 @@ class TestBaseMultiTableSynthesizer:
         instance.set_table_parameters('oseba', {'default_distribution': 'gamma'})
 
         # Assert
-        table_parameters = instance.get_parameters()['tables']['oseba']
+        table_parameters = instance.get_table_parameters('oseba')
         assert instance._table_parameters['oseba'] == {'default_distribution': 'gamma'}
-        assert table_parameters['table_synthesizer'] == 'GaussianCopulaSynthesizer'
-        assert table_parameters['table_parameters'] == {
+        assert table_parameters['synthesizer_name'] == 'GaussianCopulaSynthesizer'
+        assert table_parameters['synthesizer_parameters'] == {
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
-            'locales': None,
+            'locales': ['en_US'],
             'enforce_rounding': True,
             'numerical_distributions': {}
         }
@@ -509,7 +483,56 @@ class TestBaseMultiTableSynthesizer:
             'The provided data does not match the metadata:\n'
             'Relationships:\n'
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
-            'All the values in this column must reference a primary key.'
+            "Please use the utility method 'drop_unknown_references' to clean the data."
+        )
+        with pytest.raises(InvalidDataError, match=error_msg):
+            instance.validate(data)
+
+    def test_validate_constraints_not_met(self):
+        """Test that errors are being raised when there are constraints not met."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+        data['nesreca']['val'] = list(range(4))
+        metadata.add_column('nesreca', 'val', sdtype='numerical')
+        instance = BaseMultiTableSynthesizer(metadata)
+        inequality_constraint = {
+            'constraint_class': 'Inequality',
+            'table_name': 'nesreca',
+            'constraint_parameters': {
+                'low_column_name': 'nesreca_val',
+                'high_column_name': 'val',
+                'strict_boundaries': True
+            }
+        }
+        instance.add_constraints([inequality_constraint])
+
+        # Run and Assert
+        error_msg = (
+            "\nData is not valid for the 'Inequality' constraint:\n"
+            '   nesreca_val  val\n'
+            '0            0    0\n'
+            '1            1    1\n'
+            '2            2    2\n'
+            '3            3    3'
+        )
+        with pytest.raises(ConstraintsNotMetError, match=error_msg):
+            instance.validate(data)
+
+    def test_validate_table_synthesizers_errors(self):
+        """Test that errors are being raised when the table synthesizer is erroring."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+        instance = BaseMultiTableSynthesizer(metadata)
+        nesreca_synthesizer = Mock()
+        nesreca_synthesizer._validate.return_value = ['Invalid data for PAR synthesizer.']
+        instance._table_synthesizers['nesreca'] = nesreca_synthesizer
+
+        # Run and Assert
+        error_msg = (
+            'The provided data does not match the metadata:\n'
+            'Invalid data for PAR synthesizer.'
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)
@@ -797,7 +820,10 @@ class TestBaseMultiTableSynthesizer:
         the ``_model_tables`` method. Then sets the state to fitted.
         """
         # Setup
-        instance = Mock()
+        instance = Mock(
+            _fitted_sdv_version=None,
+            _fitted_sdv_enterprise_version=None
+        )
         data = Mock()
         data.copy.return_value = data
 
@@ -812,7 +838,10 @@ class TestBaseMultiTableSynthesizer:
     def test_fit_processed_data_empty_table(self):
         """Test attributes are properly set when data is empty and that _fit is not called."""
         # Setup
-        instance = Mock()
+        instance = Mock(
+            _fitted_sdv_version=None,
+            _fitted_sdv_enterprise_version=None
+        )
         data = pd.DataFrame()
 
         # Run
@@ -824,18 +853,73 @@ class TestBaseMultiTableSynthesizer:
         assert instance._fitted_date
         assert instance._fitted_sdv_version
 
-    def test_fit(self):
-        """Test that ``fit`` calls ``preprocess`` and then ``fit_processed_data``."""
+    def test_fit_processed_data_raises_version_error(self):
+        """Test that fit_processed data  will raise a ``VersionError``."""
         # Setup
-        instance = Mock()
+        instance = Mock(
+            _fitted_sdv_version='1.0.0',
+            _fitted_sdv_enterprise_version=None
+        )
+        instance.metadata = Mock()
+        data = Mock()
+
+        # Run and Assert
+        error_msg = (
+            f'You are currently on SDV version {version.public} but this synthesizer '
+            'was created on version 1.0.0. Fitting this synthesizer again is not supported. '
+            'Please create a new synthesizer.'
+        )
+        with pytest.raises(VersionError, match=error_msg):
+            BaseMultiTableSynthesizer.fit_processed_data(instance, data)
+
+        # Assert
+        instance.preprocess.assert_not_called()
+        instance.fit_processed_data.assert_not_called()
+        instance._check_metadata_updated.assert_not_called()
+
+    @patch('sdv.multi_table.base._validate_foreign_keys_not_null')
+    def test_fit(self, mock_validate_foreign_keys_not_null):
+        """Test that it calls the appropriate methods."""
+        # Setup
+        instance = Mock(
+            _fitted_sdv_version=None,
+            _fitted_sdv_enterprise_version=None
+        )
+        instance.metadata = Mock()
         data = Mock()
 
         # Run
         BaseMultiTableSynthesizer.fit(instance, data)
 
         # Assert
+        mock_validate_foreign_keys_not_null.assert_called_once_with(instance.metadata, data)
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
+        instance._check_metadata_updated.assert_called_once()
+
+    def test_fit_raises_version_error(self):
+        """Test that fit will raise a ``VersionError`` if the current version is bigger."""
+        # Setup
+        instance = Mock(
+            _fitted_sdv_version='1.0.0',
+            _fitted_sdv_enterprise_version=None
+        )
+        instance.metadata = Mock()
+        data = Mock()
+
+        # Run and Assert
+        error_msg = (
+            f'You are currently on SDV version {version.public} but this synthesizer '
+            'was created on version 1.0.0. Fitting this synthesizer again is not supported. '
+            'Please create a new synthesizer.'
+        )
+        with pytest.raises(VersionError, match=error_msg):
+            BaseMultiTableSynthesizer.fit(instance, data)
+
+        # Assert
+        instance.preprocess.assert_not_called()
+        instance.fit_processed_data.assert_not_called()
+        instance._check_metadata_updated.assert_not_called()
 
     def test_reset_sampling(self):
         """Test that ``reset_sampling`` resets the numpy seed and the synthesizers."""
@@ -1200,30 +1284,23 @@ class TestBaseMultiTableSynthesizer:
             'custom'
         )
 
-    def _pkg_mock(self, lib):
-        if lib == 'sdv':
-            class Distribution:
-                version = '1.0.0'
-
-            return Distribution
-
-    @patch('pkg_resources.get_distribution')
-    def test_get_info(self, pkg_mock):
+    @patch('sdv.multi_table.base.version')
+    def test_get_info(self, mock_version):
         """Test the correct dictionary is returned.
 
         Check the return dictionary is valid both before and after fitting the synthesizer.
 
         Mocks:
-            * Mock ``pkg_resources`` so we don't have to rewrite this test for every new release.
             * Unfortunately, ``datetime`` can't be mocked directly. This link explains how to
             do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
         """
         # Setup
         data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
-        pkg_mock.side_effect = self._pkg_mock
         metadata = MultiTableMetadata()
         metadata.add_table('tab')
         metadata.add_column('tab', 'col', sdtype='numerical')
+        mock_version.public = '1.0.0'
+        mock_version.enterprise = None
 
         with patch('sdv.multi_table.base.datetime.datetime') as mock_date:
             mock_date.today.return_value = datetime(2023, 1, 23)
@@ -1255,6 +1332,55 @@ class TestBaseMultiTableSynthesizer:
                 'fitted_sdv_version': '1.0.0'
             }
 
+    @patch('sdv.multi_table.base.version')
+    def test_get_info_with_enterprise(self, mock_version):
+        """Test the correct dictionary is returned.
+
+        Check the return dictionary is valid both before and after fitting the synthesizer.
+
+        Mocks:
+            * Unfortunately, ``datetime`` can't be mocked directly. This link explains how to
+            do it: https://docs.python.org/3/library/unittest.mock-examples.html#partial-mocking
+        """
+        # Setup
+        data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
+        metadata = MultiTableMetadata()
+        metadata.add_table('tab')
+        metadata.add_column('tab', 'col', sdtype='numerical')
+        mock_version.public = '1.0.0'
+        mock_version.enterprise = '1.1.0'
+
+        with patch('sdv.multi_table.base.datetime.datetime') as mock_date:
+            mock_date.today.return_value = datetime(2023, 1, 23)
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
+            synthesizer = HMASynthesizer(metadata)
+
+            # Run
+            info = synthesizer.get_info()
+
+            # Assert
+            assert info == {
+                'class_name': 'HMASynthesizer',
+                'creation_date': '2023-01-23',
+                'is_fit': False,
+                'last_fit_date': None,
+                'fitted_sdv_version': None
+            }
+
+            # Run
+            synthesizer.fit(data)
+            info = synthesizer.get_info()
+
+            # Assert
+            assert info == {
+                'class_name': 'HMASynthesizer',
+                'creation_date': '2023-01-23',
+                'is_fit': True,
+                'last_fit_date': '2023-01-23',
+                'fitted_sdv_version': '1.0.0',
+                'fitted_sdv_enterprise_version': '1.1.0'
+            }
+
     @patch('sdv.multi_table.base.cloudpickle')
     def test_save(self, cloudpickle_mock, tmp_path):
         """Test that the synthesizer is saved correctly."""
@@ -1268,12 +1394,15 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
 
+    @patch('sdv.multi_table.base.check_synthesizer_version')
+    @patch('sdv.multi_table.base.check_sdv_versions_and_warn')
     @patch('sdv.multi_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
-    def test_load(self, mock_file, cloudpickle_mock):
+    def test_load(self, mock_file, cloudpickle_mock,
+                  mock_check_sdv_versions_and_warn, mock_check_synthesizer_version):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
-        synthesizer_mock = Mock()
+        synthesizer_mock = Mock(_fitted=False)
         cloudpickle_mock.load.return_value = synthesizer_mock
 
         # Run
@@ -1281,5 +1410,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         mock_file.assert_called_once_with('synth.pkl', 'rb')
+        mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         assert loaded_instance == synthesizer_mock
+        mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)

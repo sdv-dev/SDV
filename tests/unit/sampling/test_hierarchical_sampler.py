@@ -1,5 +1,5 @@
 from collections import defaultdict
-from unittest.mock import Mock, call
+from unittest.mock import MagicMock, Mock, call
 
 import numpy as np
 import pandas as pd
@@ -78,28 +78,10 @@ class TestBaseHierarchicalSampler():
             keep_extra_columns=True
         )
 
-    def test__get_num_rows_from_parent(self):
-        """Test that the number of child rows is extracted from the parent row."""
-        # Setup
-        parent_row = pd.Series({
-            '__sessions__user_id__num_rows': 10,
-        })
-        instance = Mock()
-        instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
-
-        # Run
-        result = BaseHierarchicalSampler._get_num_rows_from_parent(
-            instance, parent_row, 'sessions', 'user_id')
-
-        # Assert
-        expected_result = 10.0
-        assert result == expected_result
-
     def test__add_child_rows(self):
         """Test adding child rows when sampled data is empty."""
         # Setup
         instance = Mock()
-        instance._get_num_rows_from_parent.return_value = 10
         child_synthesizer_mock = Mock()
         instance._recreate_child_synthesizer.return_value = child_synthesizer_mock
 
@@ -121,7 +103,8 @@ class TestBaseHierarchicalSampler():
         })
         parent_row = pd.DataFrame({
             'user_id': [1, 2, 3],
-            'name': ['John', 'Doe', 'Johanna']
+            'name': ['John', 'Doe', 'Johanna'],
+            '__sessions__user_id__num_rows': [10, 10, 10]
         })
         sampled_data = {}
 
@@ -146,7 +129,6 @@ class TestBaseHierarchicalSampler():
         """
         # Setup
         instance = Mock()
-        instance._get_num_rows_from_parent.return_value = 10
         child_synthesizer_mock = Mock()
         instance._recreate_child_synthesizer.return_value = child_synthesizer_mock
 
@@ -169,7 +151,8 @@ class TestBaseHierarchicalSampler():
         })
         parent_row = pd.DataFrame({
             'user_id': [1, 2, 3],
-            'name': ['John', 'Doe', 'Johanna']
+            'name': ['John', 'Doe', 'Johanna'],
+            '__sessions__user_id__num_rows': [10, 10, 10]
         })
         sampled_data = {
             'sessions': pd.DataFrame({
@@ -199,7 +182,7 @@ class TestBaseHierarchicalSampler():
         ``_sample_table`` does not sample the root parents of a graph, only the children.
         """
         # Setup
-        def sample_children(table_name, sampled_data):
+        def sample_children(table_name, sampled_data, scale):
             sampled_data['transactions'] = pd.DataFrame({
                 'transaction_id': [1, 2, 3],
                 'session_id': ['a', 'a', 'b']
@@ -281,7 +264,7 @@ class TestBaseHierarchicalSampler():
         value and force a child to be created from that row.
         """
         # Setup
-        def sample_children(table_name, sampled_data):
+        def sample_children(table_name, sampled_data, scale):
             sampled_data['transactions'] = pd.DataFrame({
                 'transaction_id': [1, 2],
                 'session_id': ['a', 'a']
@@ -354,7 +337,7 @@ class TestBaseHierarchicalSampler():
         a child to be created from that row.
         """
         # Setup
-        def sample_children(table_name, sampled_data):
+        def sample_children(table_name, sampled_data, scale):
             sampled_data['transactions'] = pd.DataFrame({
                 'transaction_id': [1, 2],
                 'session_id': ['a', 'a']
@@ -514,7 +497,7 @@ class TestBaseHierarchicalSampler():
             'transaction_amount': [100, 1000, 200]
         })
 
-        def _sample_children_dummy(table_name, sampled_data):
+        def _sample_children_dummy(table_name, sampled_data, scale):
             sampled_data['sessions'] = sessions
             sampled_data['transactions'] = transactions
 
@@ -576,7 +559,8 @@ class TestBaseHierarchicalSampler():
         assert result == instance._finalize.return_value
         instance._sample_children.assert_called_once_with(
             table_name='users',
-            sampled_data=expected_sample
+            sampled_data=expected_sample,
+            scale=1.0
         )
         instance._add_foreign_key_columns.assert_has_calls([
             call(
@@ -593,3 +577,93 @@ class TestBaseHierarchicalSampler():
             )
         ])
         instance._finalize.assert_called_once_with(expected_sample)
+
+    def test___enforce_table_size_too_many_rows(self):
+        """Test it enforces the sampled data to have the same size as the real data.
+
+        If the sampled data has more rows than the real data, _num_rows is decreased.
+        """
+        # Setup
+        instance = MagicMock()
+        data = {
+            'parent': pd.DataFrame({
+                'fk': ['a', 'b', 'c'],
+                '__child__fk__num_rows': [1, 2, 3]
+            })
+        }
+        instance.metadata._get_foreign_keys.return_value = ['fk']
+        instance._min_child_rows = {'__child__fk__num_rows': 1}
+        instance._max_child_rows = {'__child__fk__num_rows': 3}
+        instance._table_sizes = {'child': 4}
+
+        # Run
+        BaseHierarchicalSampler._enforce_table_size(
+            instance,
+            'child',
+            'parent',
+            1.0,
+            data
+        )
+
+        # Assert
+        assert data['parent']['__child__fk__num_rows'].to_list() == [1, 1, 2]
+
+    def test___enforce_table_size_not_enough_rows(self):
+        """Test it enforces the sampled data to have the same size as the real data.
+
+        If the sampled data has less rows than the real data, _num_rows is increased.
+        """
+        # Setup
+        instance = MagicMock()
+        data = {
+            'parent': pd.DataFrame({
+                'fk': ['a', 'b', 'c'],
+                '__child__fk__num_rows': [1, 1, 1]
+            })
+        }
+        instance.metadata._get_foreign_keys.return_value = ['fk']
+        instance._min_child_rows = {'__child__fk__num_rows': 1}
+        instance._max_child_rows = {'__child__fk__num_rows': 3}
+        instance._table_sizes = {'child': 4}
+
+        # Run
+        BaseHierarchicalSampler._enforce_table_size(
+            instance,
+            'child',
+            'parent',
+            1.0,
+            data
+        )
+
+        # Assert
+        assert data['parent']['__child__fk__num_rows'].to_list() == [2, 1, 1]
+
+    def test___enforce_table_size_clipping(self):
+        """Test it enforces the sampled data to have the same size as the real data.
+
+        When the sampled num_rows is outside the min and max range, it should be clipped.
+        """
+        # Setup
+        instance = MagicMock()
+        data = {
+            'parent': pd.DataFrame({
+                'fk': ['a', 'b', 'c'],
+                '__child__fk__num_rows': [1, 2, 5]
+            })
+        }
+        instance.metadata._get_foreign_keys.return_value = ['fk']
+        instance._min_child_rows = {'__child__fk__num_rows': 2}
+        instance._max_child_rows = {'__child__fk__num_rows': 4}
+        instance._table_sizes = {'child': 8}
+
+        # Run
+        BaseHierarchicalSampler._enforce_table_size(
+            instance,
+            'child',
+            'parent',
+            1.0,
+            data
+        )
+
+        # Assert
+        assert data['parent']['__child__fk__num_rows'].to_list() == [2, 2, 4]

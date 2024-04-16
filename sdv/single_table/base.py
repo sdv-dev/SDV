@@ -5,6 +5,7 @@ import functools
 import inspect
 import logging
 import math
+import operator
 import os
 import uuid
 import warnings
@@ -14,15 +15,15 @@ import cloudpickle
 import copulas
 import numpy as np
 import pandas as pd
-import pkg_resources
 import tqdm
 from copulas.multivariate import GaussianMultivariate
 
+from sdv import version
+from sdv._utils import _groupby_list, check_sdv_versions_and_warn, check_synthesizer_version
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
-from sdv.utils import groupby_list
 
 LOGGER = logging.getLogger(__name__)
 COND_IDX = str(uuid.uuid4())
@@ -48,11 +49,13 @@ class BaseSynthesizer:
             Define rounding scheme for ``numerical`` columns. If ``True``, the data returned
             by ``reverse_transform`` will be rounded as in the original data. Defaults to ``True``.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
 
     """
 
     _model_sdtype_transformers = None
+    _model = None
 
     def _validate_inputs(self, enforce_min_max_values, enforce_rounding):
         if not isinstance(enforce_min_max_values, bool):
@@ -72,10 +75,20 @@ class BaseSynthesizer:
             for sdtype, transformer in self._model_sdtype_transformers.items():
                 self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=None):
+    def _check_metadata_updated(self):
+        if self.metadata._updated:
+            self.metadata._updated = False
+            warnings.warn(
+                "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+                ' in future SDV versions.'
+            )
+
+    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
+                 locales=['en_US']):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata = metadata
         self.metadata.validate()
+        self._check_metadata_updated()
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self.locales = locales
@@ -91,6 +104,7 @@ class BaseSynthesizer:
         self._creation_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_date = None
         self._fitted_sdv_version = None
+        self._fitted_sdv_enterprise_version = None
 
     def set_address_columns(self, column_names, anonymization_level='full'):
         """Set the address multi-column transformer."""
@@ -104,10 +118,11 @@ class BaseSynthesizer:
         errors = []
         try:
             self.metadata.validate_data(data)
-        except InvalidDataError as e:
-            errors += e.errors
+        except InvalidDataError as error:
+            errors += error.errors
 
-        return errors
+        if errors:
+            raise InvalidDataError(errors)
 
     def _validate_constraints(self, data):
         """Validate that the data satisfies the constraints."""
@@ -117,7 +132,8 @@ class BaseSynthesizer:
         except AggregateConstraintsError as e:
             errors.append(e)
 
-        return errors
+        if errors:
+            raise ConstraintsNotMetError(errors)
 
     def _validate(self, data):
         """Validate any rules that only apply to specific synthesizers.
@@ -136,22 +152,24 @@ class BaseSynthesizer:
         Raises:
             ValueError:
                 Raised when data is not of type pd.DataFrame.
+            ConstraintsNotMetError:
+                If the conditions are not valid for the given constraints.
             InvalidDataError:
                 Raised if:
                     * data columns don't match metadata
                     * keys have missing values
                     * primary or alternate keys are not unique
-                    # constraints are not valid
                     * context columns vary for a sequence key
                     * values of a column don't satisfy their sdtype
         """
-        errors = []
-        errors += self._validate_metadata(data)
-        errors += self._validate_constraints(data)
-        errors += self._validate(data)  # Validate rules specific to each synthesizer
+        self._validate_metadata(data)
+        self._validate_constraints(data)
 
-        if errors:
-            raise InvalidDataError(errors)
+        # Retaining the logic of returning errors and raising them here to maintain consistency
+        # with the existing workflow with synthesizers
+        synthesizer_errors = self._validate(data)  # Validate rules specific to each synthesizer
+        if synthesizer_errors:
+            raise InvalidDataError(synthesizer_errors)
 
     def _validate_transformers(self, column_name_to_transformer):
         primary_and_alternate_keys = self.metadata._get_primary_and_alternate_keys()
@@ -310,19 +328,24 @@ class BaseSynthesizer:
 
         Return:
             dict:
-                * ``class_name``: synthesizer class name
-                * ``creation_date``: date of creation
-                * ``is_fit``: whether or not the synthesizer has been fit
-                * ``last_fit_date``: date for the last time it was fit
-                * ``fitted_sdv_version``: version of sdv it was on when fitted
+                * ``class_name``: synthesizer class name.
+                * ``creation_date``: date of creation.
+                * ``is_fit``: whether or not the synthesizer has been fit.
+                * ``last_fit_date``: date for the last time it was fit.
+                * ``fitted_sdv_version``: version of sdv it was on when fitted.
+                * ``fitted_sdv_enterprise_version``: version of sdv enterprsie if available.
         """
-        return {
+        info = {
             'class_name': self.__class__.__name__,
             'creation_date': self._creation_date,
             'is_fit': self._fitted,
             'last_fit_date': self._fitted_date,
             'fitted_sdv_version': self._fitted_sdv_version
         }
+        if self._fitted_sdv_enterprise_version is not None:
+            info['fitted_sdv_enterprise_version'] = self._fitted_sdv_enterprise_version
+
+        return info
 
     def _preprocess(self, data):
         self.validate(data)
@@ -364,12 +387,14 @@ class BaseSynthesizer:
             processed_data (pandas.DataFrame):
                 The transformed data used to fit the model to.
         """
+        check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         if not processed_data.empty:
             self._fit(processed_data)
 
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
-        self._fitted_sdv_version = pkg_resources.get_distribution('sdv').version
+        self._fitted_sdv_version = getattr(version, 'public', None)
+        self._fitted_sdv_enterprise_version = getattr(version, 'enterprise', None)
 
     def fit(self, data):
         """Fit this model to the original data.
@@ -378,6 +403,8 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) to fit the model to.
         """
+        check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
+        self._check_metadata_updated()
         self._fitted = False
         self._data_processor.reset_sampling()
         self._random_state_set = False
@@ -396,19 +423,22 @@ class BaseSynthesizer:
 
     @classmethod
     def load(cls, filepath):
-        """Load a TabularModel instance from a given path.
+        """Load a single-table synthesizer from a given path.
 
         Args:
             filepath (str):
-                Path from which to load the serialized synthesizer.
+                A string describing the filepath of your saved synthesizer.
 
         Returns:
             SingleTableSynthesizer:
                 The loaded synthesizer.
         """
         with open(filepath, 'rb') as f:
-            model = cloudpickle.load(f)
-            return model
+            synthesizer = cloudpickle.load(f)
+
+        check_synthesizer_version(synthesizer)
+        check_sdv_versions_and_warn(synthesizer)
+        return synthesizer
 
 
 class BaseSingleTableSynthesizer(BaseSynthesizer):
@@ -783,13 +813,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             show_progress_bar=show_progress_bar
         )
 
-    def _validate_conditions(self, conditions):
-        """Validate the user-passed conditions."""
-        for column in conditions.columns:
-            if column not in self._data_processor.get_sdtypes():
-                raise ValueError(f"Unexpected column name '{column}'. "
-                                 f'Use a column name that was present in the original data.')
-
     def _sample_with_conditions(self, conditions, max_tries_per_batch, batch_size,
                                 progress_bar=None, output_file_path=None):
         """Sample rows with conditions.
@@ -822,7 +845,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         condition_columns = list(conditions.columns)
         conditions.index.name = COND_IDX
         conditions = conditions.reset_index()
-        grouped_conditions = conditions.groupby(groupby_list(condition_columns))
+        grouped_conditions = conditions.groupby(_groupby_list(condition_columns))
 
         # sample
         all_sampled_rows = []
@@ -865,7 +888,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 all_sampled_rows.append(sampled_rows)
             else:
                 transformed_groups = transformed_conditions.groupby(
-                    groupby_list(transformed_columns)
+                    _groupby_list(transformed_columns)
                 )
                 for transformed_group, transformed_dataframe in transformed_groups:
                     if not isinstance(transformed_group, tuple):
@@ -892,6 +915,27 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         all_sampled_rows = all_sampled_rows.sort_index()
 
         return all_sampled_rows
+
+    def _validate_conditions_unseen_columns(self, conditions):
+        """Validate the user-passed conditions."""
+        for column in conditions.columns:
+            if column not in self._data_processor.get_sdtypes():
+                raise ValueError(f"Unexpected column name '{column}'. "
+                                 f'Use a column name that was present in the original data.')
+
+    @staticmethod
+    def _raise_condition_with_nans():
+        raise SynthesizerInputError(
+            'Missing values are not yet supported for conditional sampling. '
+            'Please include only non-null values in your Condition objects.'
+        )
+
+    def _validate_conditions(self, conditions):
+        """Validate the user-passed conditions."""
+        for condition_dataframe in conditions:
+            self._validate_conditions_unseen_columns(condition_dataframe)
+            if condition_dataframe.isna().any().any():
+                self._raise_condition_with_nans()
 
     def sample_from_conditions(self, conditions, max_tries_per_batch=100,
                                batch_size=None, output_file_path=None):
@@ -928,8 +972,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             lambda num_rows, condition: condition.get_num_rows() + num_rows, conditions, 0)
 
         conditions = self._make_condition_dfs(conditions)
-        for condition_dataframe in conditions:
-            self._validate_conditions(condition_dataframe)
+        self._validate_conditions(conditions)
 
         sampled = pd.DataFrame()
         try:
@@ -963,6 +1006,17 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return sampled
 
+    def _validate_known_columns(self, conditions):
+        """Validate the user-passed conditions."""
+        self._validate_conditions_unseen_columns(conditions)
+        if conditions.dropna().empty:
+            self._raise_condition_with_nans()
+        elif conditions.isna().any().any():
+            warnings.warn(
+                'Missing values are not yet supported. '
+                'Rows with any missing values will not be created.'
+            )
+
     def sample_remaining_columns(self, known_columns, max_tries_per_batch=100,
                                  batch_size=None, output_file_path=None):
         """Sample remaining rows from already known columns.
@@ -995,7 +1049,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         output_file_path = validate_file_path(output_file_path)
 
         known_columns = known_columns.copy()
-        self._validate_conditions(known_columns)
+        self._validate_known_columns(known_columns)
         sampled = pd.DataFrame()
         try:
             with tqdm.tqdm(total=len(known_columns)) as progress_bar:

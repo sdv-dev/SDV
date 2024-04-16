@@ -1,7 +1,7 @@
 """Formatter for datetime data."""
 import pandas as pd
 
-from sdv.utils import get_datetime_format
+from sdv._utils import _get_datetime_format
 
 
 class DatetimeFormatter:
@@ -26,7 +26,7 @@ class DatetimeFormatter:
         """
         self._dtype = column.dtype
         if self.datetime_format is None:
-            self.datetime_format = get_datetime_format(column)
+            self.datetime_format = _get_datetime_format(column)
 
     def format_data(self, column):
         """Format a column according to the learned format.

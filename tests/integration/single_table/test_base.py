@@ -1,10 +1,17 @@
 import datetime
+import importlib.metadata
+import re
+import warnings
+from unittest.mock import patch
 
+import numpy as np
 import pandas as pd
-import pkg_resources
 import pytest
 from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, UniformEncoder
 
+from sdv import version
+from sdv.datasets.demo import download_demo
+from sdv.errors import SynthesizerInputError, VersionError
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table import (
@@ -142,6 +149,81 @@ def test_sample_from_conditions_negative_float():
     # Assert
     expected = pd.Series([-10.] * 100 + [-50.] * 10, name='column1')
     pd.testing.assert_series_equal(sampled_data['column1'], expected)
+
+
+def test_sample_from_conditions_with_nans():
+    """Test it crashes when condition has nans (GH#1758)."""
+    # Setup
+    data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='fake_hotel_guests'
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    my_condition = Condition(
+        num_rows=250,
+        column_values={'room_type': None, 'has_rewards': False}
+    )
+
+    # Run
+    synthesizer.fit(data)
+
+    # Assert
+    error_msg = (
+        'Missing values are not yet supported for conditional sampling. '
+        'Please include only non-null values in your Condition objects.'
+    )
+    with pytest.raises(SynthesizerInputError, match=error_msg):
+        synthesizer.sample_from_conditions(conditions=[my_condition])
+
+
+def test_sample_remaining_columns_with_all_nans():
+    """Test it crashes when every condition row has a nan (GH#1758)."""
+    # Setup
+    data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='fake_hotel_guests'
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    known_columns = pd.DataFrame(data={
+        'has_rewards': [np.nan, False, True],
+        'amenities_fee': [5.00, np.nan, None]
+    })
+
+    # Run
+    synthesizer.fit(data)
+
+    # Assert
+    error_msg = (
+        'Missing values are not yet supported for conditional sampling. '
+        'Please include only non-null values in your Condition objects.'
+    )
+    with pytest.raises(SynthesizerInputError, match=error_msg):
+        synthesizer.sample_remaining_columns(known_columns=known_columns)
+
+
+def test_sample_remaining_columns_with_some_nans():
+    """Test it warns when some of the condition rows contain nans (GH#1758)."""
+    # Setup
+    data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='fake_hotel_guests'
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    known_columns = pd.DataFrame(data={
+        'has_rewards': [True, False, np.nan],
+        'amenities_fee': [5.00, np.nan, None]
+    })
+
+    # Run
+    synthesizer.fit(data)
+
+    # Assert
+    warn_msg = (
+        'Missing values are not yet supported. '
+        'Rows with any missing values will not be created.'
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        synthesizer.sample_remaining_columns(known_columns=known_columns)
 
 
 def test_multiple_fits():
@@ -369,11 +451,11 @@ def test_auto_assign_transformers_and_update_with_pii():
     name_transformer = synthesizer.get_transformers()['name']
     assert id_transformer.provider_name == 'person'
     assert id_transformer.function_name == 'first_name'
-    assert id_transformer.enforce_uniqueness is True
+    assert id_transformer.cardinality_rule == 'unique'
 
     assert name_transformer.provider_name == 'person'
     assert name_transformer.function_name == 'name'
-    assert name_transformer.enforce_uniqueness is False
+    assert name_transformer.cardinality_rule is None
 
 
 def test_refitting_a_model():
@@ -433,7 +515,7 @@ def test_get_info():
     info = synthesizer.get_info()
 
     # Assert
-    version = pkg_resources.get_distribution('sdv').version
+    version = importlib.metadata.version('sdv')
     assert info == {
         'class_name': 'GaussianCopulaSynthesizer',
         'creation_date': today,
@@ -462,3 +544,179 @@ def test_save_and_load(tmp_path):
     assert instance.metadata.sequence_key is None
     assert instance.metadata.sequence_index is None
     assert instance.metadata._version == 'SINGLE_TABLE_V1'
+
+
+def test_save_and_load_with_downgraded_version(tmp_path):
+    """Test that synthesizers are raising errors if loaded on a downgraded version."""
+    # Setup
+    metadata = SingleTableMetadata()
+    instance = BaseSingleTableSynthesizer(metadata)
+    instance._fitted = True
+    instance._fitted_sdv_version = '10.0.0'
+    synthesizer_path = tmp_path / 'synthesizer.pkl'
+    instance.save(synthesizer_path)
+
+    # Run and Assert
+    error_msg = (
+        f'You are currently on SDV version {version.public} but this '
+        'synthesizer was created on version 10.0.0. '
+        'Downgrading your SDV version is not supported.'
+    )
+    with pytest.raises(VersionError, match=error_msg):
+        BaseSingleTableSynthesizer.load(synthesizer_path)
+
+
+@patch('sdv.single_table.base.BaseSingleTableSynthesizer._fit')
+def test_metadata_updated_no_warning(mock__fit, tmp_path):
+    """Test scenario where no warning about metadata should be raised.
+
+    Run 1 - The medata is load from a dict without modifications.
+    Run 2 - The metadata uses ``detect_from_dataframes`` but is saved to a file
+            before defining the syntheiszer.
+    Run 3 - The metadata is updated with a new column after the synthesizer
+            initialization, but is saved to a file before fitting.
+    """
+    # Setup
+    metadata_from_dict = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col 1': {'sdtype': 'numerical'},
+            'col 2': {'sdtype': 'numerical'},
+            'col 3': {'sdtype': 'categorical'},
+        }
+    })
+    data = pd.DataFrame({
+        'col 1': [1, 2, 3],
+        'col 2': [4, 5, 6],
+        'col 3': ['a', 'b', 'c'],
+    })
+
+    # Run 1
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        warnings.simplefilter('always')
+        instance = BaseSingleTableSynthesizer(metadata_from_dict)
+        instance.fit(data)
+
+    # Assert
+    assert len(captured_warnings) == 0
+
+    # Run 2
+    metadata_detect = SingleTableMetadata()
+    metadata_detect.detect_from_dataframe(data)
+    file_name = tmp_path / 'singletable.json'
+    metadata_detect.save_to_json(file_name)
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        warnings.simplefilter('always')
+        instance = BaseSingleTableSynthesizer(metadata_detect)
+        instance.fit(data)
+
+    # Assert
+    assert len(captured_warnings) == 0
+
+    # Run 3
+    instance = BaseSingleTableSynthesizer(metadata_detect)
+    metadata_detect.update_column('col 1', sdtype='categorical')
+    file_name = tmp_path / 'singletable_2.json'
+    metadata_detect.save_to_json(file_name)
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        warnings.simplefilter('always')
+        instance.fit(data)
+
+    # Assert
+    assert len(captured_warnings) == 0
+
+
+@patch('sdv.single_table.base.BaseSingleTableSynthesizer._fit')
+def test_metadata_updated_warning_detect(mock__fit):
+    """Test that using ``detect_from_dataframe`` without saving the metadata raise a warning.
+
+    The warning is expected to be raised only once during synthesizer initialization. It should
+    not be raised again when calling ``fit``.
+    """
+    # Setup
+    data = pd.DataFrame({
+        'col 1': [1, 2, 3],
+        'col 2': [4, 5, 6],
+        'col 3': ['a', 'b', 'c'],
+    })
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+    expected_message = re.escape(
+        "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+        ' in future SDV versions.'
+    )
+
+    # Run
+    with pytest.warns(UserWarning, match=expected_message) as record:
+        instance = BaseSingleTableSynthesizer(metadata)
+        instance.fit(data)
+
+    # Assert
+    assert len(record) == 1
+
+
+parametrization = [
+    ('update_column', {'column_name': 'col 1', 'sdtype': 'categorical'}),
+    ('set_primary_key', {'column_name': 'col 1'}),
+    (
+        'add_column_relationship', {
+            'relationship_type': 'address',
+            'column_names': ['city', 'country']
+        }
+    ),
+    ('add_alternate_keys', {'column_names': ['col 1', 'col 2']}),
+    ('set_sequence_key', {'column_name': 'col 1'}),
+    ('add_column', {'column_name': 'col 6', 'sdtype': 'numerical'}),
+]
+
+
+@pytest.mark.parametrize(('method', 'kwargs'), parametrization)
+def test_metadata_updated_warning(method, kwargs):
+    """Test that modifying metadata without saving it raise a warning.
+
+    The warning should be raised during synthesizer initialization.
+    """
+    # Setup
+    metadata = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col 1': {'sdtype': 'id'},
+            'col 2': {'sdtype': 'id'},
+            'col 3': {'sdtype': 'categorical'},
+            'city': {'sdtype': 'city'},
+            'country': {'sdtype': 'country_code'},
+        }
+    })
+    expected_message = re.escape(
+        "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+        ' in future SDV versions.'
+    )
+
+    # Run
+    metadata.__getattribute__(method)(**kwargs)
+    with pytest.warns(UserWarning, match=expected_message):
+        BaseSingleTableSynthesizer(metadata)
+
+    # Assert
+    assert metadata._updated is False
+
+
+def test_fit_raises_version_error():
+    """Test that a ``VersionError`` is being raised if the current version is newer."""
+    # Setup
+    data = pd.DataFrame({
+        'col 1': [1, 2, 3],
+        'col 2': [4, 5, 6],
+        'col 3': ['a', 'b', 'c'],
+    })
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+    instance = BaseSingleTableSynthesizer(metadata)
+    instance._fitted_sdv_version = '1.0.0'
+
+    # Run and Assert
+    expected_message = (
+        f'You are currently on SDV version {version.public} but this synthesizer was created on '
+        'version 1.0.0. Fitting this synthesizer again is not supported. Please create a new '
+        'synthesizer.'
+    )
+    with pytest.raises(VersionError, match=expected_message):
+        instance.fit(data)

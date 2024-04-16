@@ -1,18 +1,21 @@
 """Integration tests for the ``DataProcessor``."""
 import itertools
+import re
 
 import numpy as np
 import pandas as pd
+import pytest
 from rdt.transformers import (
-    AnonymizedFaker, BinaryEncoder, FloatFormatter, RegexGenerator, UniformEncoder,
+    AnonymizedFaker, BinaryEncoder, FloatFormatter, IDGenerator, RegexGenerator, UniformEncoder,
     UnixTimestampEncoder)
 
+from sdv._utils import _get_datetime_format
 from sdv.data_processing import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.datasets.demo import download_demo
+from sdv.errors import SynthesizerInputError
 from sdv.metadata import SingleTableMetadata
-from sdv.utils import get_datetime_format
 
 
 class TestDataProcessor:
@@ -303,20 +306,20 @@ class TestDataProcessor:
         assert isinstance(dp.formatters['start_date'], DatetimeFormatter)
         assert isinstance(dp.formatters['end_date'], DatetimeFormatter)
 
-        start_date_data_format = get_datetime_format(
+        start_date_data_format = _get_datetime_format(
             data['start_date'][~data['start_date'].isna()][0]
         )
         reversed_start_date = reverse_transformed['start_date'][
             ~reverse_transformed['start_date'].isna()
         ]
-        reversed_start_date_format = get_datetime_format(reversed_start_date.iloc[0])
+        reversed_start_date_format = _get_datetime_format(reversed_start_date.iloc[0])
         assert start_date_data_format == reversed_start_date_format
 
-        end_date_data_format = get_datetime_format(data['end_date'][~data['end_date'].isna()][0])
+        end_date_data_format = _get_datetime_format(data['end_date'][~data['end_date'].isna()][0])
         reversed_end_date = reverse_transformed['end_date'][
             ~reverse_transformed['end_date'].isna()
         ]
-        reversed_end_date_format = get_datetime_format(reversed_end_date.iloc[0])
+        reversed_end_date_format = _get_datetime_format(reversed_end_date.iloc[0])
         assert end_date_data_format == reversed_end_date_format
 
     def test_refit_hypertransformer(self):
@@ -376,3 +379,33 @@ class TestDataProcessor:
 
         # Assert
         assert isinstance(dp._hyper_transformer.field_transformers['category_col'], UniformEncoder)
+
+    def test_update_transformers_id_generator(self):
+        """ Test that updating to transformer to id generator is valid"""
+        # Setup
+        data = pd.DataFrame({
+            'user_id': list(range(4)),
+            'user_cat': ['a', 'b', 'c', 'd']
+        })
+        metadata = SingleTableMetadata()
+        metadata.detect_from_dataframe(data)
+        metadata.update_column('user_id', sdtype='id')
+        metadata.set_primary_key('user_id')
+        dp = DataProcessor(metadata)
+        id_gen = IDGenerator(starting_value=5)
+        dp.fit(data)
+
+        # Run
+        dp.update_transformers({'user_id': id_gen})
+        transformers = dp._hyper_transformer.get_config()['transformers']
+
+        # Assert
+        assert transformers['user_id'] == id_gen
+        assert type(transformers['user_cat']).__name__ == 'UniformEncoder'
+
+        error_msg = re.escape(
+            "Invalid transformer 'UniformEncoder' for a primary or alternate key 'user_id'. "
+            'Please use a generator transformer instead.'
+        )
+        with pytest.raises(SynthesizerInputError, match=error_msg):
+            dp.update_transformers({'user_id': UniformEncoder()})

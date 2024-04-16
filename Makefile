@@ -80,25 +80,19 @@ install-test: clean-build clean-pyc ## install the package and test dependencies
 install-develop: clean-build clean-pyc ## install the package in editable mode and dependencies for development
 	pip install -e .[dev]
 
-MINIMUM := $(shell sed -n '/install_requires = \[/,/]/p' setup.py | grep -v -e '[][]' | sed 's/ *\(.*\),$?$$/\1/g' | tr '>' '=')
-
-.PHONY: install-minimum
-install-minimum: ## install the minimum supported versions of the package dependencies
-	pip install $(MINIMUM)
-
 
 # LINT TARGETS
 
 .PHONY: lint-sdv
 lint-sdv: ## check style with flake8 and isort
 	flake8 sdv
-	isort -c --recursive sdv
+	isort -c sdv
 	pydocstyle sdv
 
 .PHONY: lint-tests
 lint-tests: ## check style with flake8 and isort
 	flake8 --ignore=D,SFS2 tests
-	isort -c --recursive tests
+	isort -c tests
 
 .PHONY: check-dependencies
 check-dependencies: ## test if there are any broken dependencies
@@ -112,7 +106,7 @@ lint: ## check style with flake8 and isort
 fix-lint: ## fix lint issues using autoflake, autopep8, and isort
 	find sdv tests -name '*.py' | xargs autoflake --in-place --remove-all-unused-imports --remove-unused-variables
 	autopep8 --in-place --recursive --aggressive sdv tests
-	isort --apply --atomic --recursive sdv tests
+	isort --apply --atomic sdv tests
 
 
 # TEST TARGETS
@@ -167,8 +161,7 @@ serve-docs: ## compile the docs watching for changes
 
 .PHONY: dist
 dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
+	python -m build --wheel --sdist
 	ls -l dist
 
 .PHONY: publish-confirm
@@ -190,34 +183,34 @@ publish: dist publish-confirm ## package and upload a release
 bumpversion-release: ## Merge main to stable and bumpversion release
 	git checkout stable || git checkout -b stable
 	git merge --no-ff main -m"make release-tag: Merge branch 'main' into stable"
-	bumpversion release
+	bump-my-version bump release
 	git push --tags origin stable
 
 .PHONY: bumpversion-release-test
 bumpversion-release-test: ## Merge main to stable and bumpversion release
 	git checkout stable || git checkout -b stable
 	git merge --no-ff main -m"make release-tag: Merge branch 'main' into stable"
-	bumpversion release --no-tag
+	bump-my-version bump release --no-tag
 	@echo git push --tags origin stable
 
 .PHONY: bumpversion-patch
 bumpversion-patch: ## Merge stable to main and bumpversion patch
 	git checkout main
 	git merge stable
-	bumpversion --no-tag patch
+	bump-my-version bump --no-tag patch
 	git push
 
 .PHONY: bumpversion-candidate
 bumpversion-candidate: ## Bump the version to the next candidate
-	bumpversion candidate --no-tag
+	bump-my-version bump candidate --no-tag
 
 .PHONY: bumpversion-minor
 bumpversion-minor: ## Bump the version the next minor skipping the release
-	bumpversion --no-tag minor
+	bump-my-version bump --no-tag minor
 
 .PHONY: bumpversion-major
 bumpversion-major: ## Bump the version the next major skipping the release
-	bumpversion --no-tag major
+	bump-my-version bump --no-tag major
 
 .PHONY: bumpversion-revert
 bumpversion-revert: ## Undo a previous bumpversion-release
@@ -267,3 +260,10 @@ release-minor: check-release bumpversion-minor release
 
 .PHONY: release-major
 release-major: check-release bumpversion-major release
+
+# Dependency targets
+
+.PHONY: check-deps
+check-deps:
+	$(eval allow_list='cloudpickle=|graphviz=|numpy=|pandas=|tqdm=|copulas=|ctgan=|deepecho=|rdt=|sdmetrics=')
+	pip freeze | grep -v "SDV.git" | grep -E $(allow_list) | sort > $(OUTPUT_FILEPATH)

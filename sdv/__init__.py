@@ -6,18 +6,17 @@
 
 __author__ = 'DataCebo, Inc.'
 __email__ = 'info@sdv.dev'
-__version__ = '1.9.0'
+__version__ = '1.12.0.dev1'
 
 
 import sys
 import warnings
+from importlib.metadata import entry_points
 from operator import attrgetter
-
-from pkg_resources import iter_entry_points
 
 from sdv import (
     constraints, data_processing, datasets, evaluation, lite, metadata, metrics, multi_table,
-    sampling, sequential, single_table)
+    sampling, sequential, single_table, version)
 
 __all__ = [
     'constraints',
@@ -30,7 +29,8 @@ __all__ = [
     'multi_table',
     'sampling',
     'sequential',
-    'single_table'
+    'single_table',
+    'version'
 ]
 
 
@@ -81,11 +81,20 @@ def _get_addon_target(addon_path_name):
 def _find_addons():
     """Find and load all sdv add-ons."""
     group = 'sdv_modules'
-    for entry_point in iter_entry_points(group=group):
+    try:
+        eps = entry_points(group=group)
+    except TypeError:
+        # Load-time selection requires Python >= 3.10 or importlib_metadata >= 3.6
+        eps = entry_points().get(group, [])
+
+    for entry_point in eps:
         try:
             addon = entry_point.load()
-        except Exception:  # pylint: disable=broad-exception-caught
-            msg = f'Failed to load "{entry_point.name}" from "{entry_point.module_name}".'
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            msg = (
+                f'Failed to load "{entry_point.name}" from "{entry_point.module_name}" '
+                f'with error:\n{e}'
+            )
             warnings.warn(msg)
             continue
 

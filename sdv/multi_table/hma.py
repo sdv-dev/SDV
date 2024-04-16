@@ -5,13 +5,16 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
+from rdt.transformers import FloatFormatter
 from tqdm import tqdm
 
+from sdv._utils import _get_root_tables
 from sdv.errors import SynthesizerInputError
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.sampling import BaseHierarchicalSampler
 
 LOGGER = logging.getLogger(__name__)
+MAX_NUMBER_OF_COLUMNS = 1000
 
 
 class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
@@ -22,7 +25,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             Multi table metadata representing the data tables that this synthesizer will be used
             for.
         locales (list or str):
-            The default locale(s) to use for AnonymizedFaker transformers. Defaults to ``None``.
+            The default locale(s) to use for AnonymizedFaker transformers.
+            Defaults to ``['en_US']``.
         verbose (bool):
             Whether to print progress for fitting or not.
     """
@@ -30,13 +34,131 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
     DEFAULT_SYNTHESIZER_KWARGS = {
         'default_distribution': 'beta'
     }
+    DISTRIBUTIONS_TO_NUM_PARAMETER_COLUMNS = {
+        'beta': 4,
+        'truncnorm': 4,
+        'gamma': 3,
+        'norm': 2,
+        'uniform': 2
+    }
 
-    def __init__(self, metadata, locales=None, verbose=True):
+    @staticmethod
+    def _get_num_data_columns(metadata):
+        """Get the number of data columns, ie colums that are not id, for each table.
+
+        Args:
+            metadata (MultiTableMetadata):
+                Metadata of the datasets.
+        """
+        columns_per_table = {}
+        for table_name, table in metadata.tables.items():
+            columns_per_table[table_name] = \
+                sum([1 for col in table.columns.values() if col['sdtype'] != 'id'])
+
+        return columns_per_table
+
+    @classmethod
+    def _get_num_extended_columns(cls, metadata, table_name,
+                                  parent_table, columns_per_table, distributions=None):
+        """Get the number of columns that will be generated for table_name.
+
+        A table generates, for each foreign key:
+            - 1 num_rows column
+            - n*(n-1)/2 correlation columns for each data column
+            - k parameter columns for each data column, where:
+                - k = 4 if the distribution is beta or truncnorm (params are a, b, loc, scale)
+                - k = 3 if the distribution is gamma (params are a, loc, scale)
+                - k = 2 if the distribution is norm or uniform (params are loc, scale)
+        """
+        if distributions is None:
+            distribution = cls.DEFAULT_SYNTHESIZER_KWARGS['default_distribution']
+        else:
+            distribution = distributions.get(
+                table_name, cls.DEFAULT_SYNTHESIZER_KWARGS['default_distribution']
+            )
+
+        num_parameters = cls.DISTRIBUTIONS_TO_NUM_PARAMETER_COLUMNS[distribution]
+
+        num_rows_columns = len(metadata._get_foreign_keys(parent_table, table_name))
+
+        # no parameter columns are generated if there are no data columns
+        num_data_columns = columns_per_table[table_name]
+        if num_data_columns == 0:
+            return num_rows_columns
+
+        num_parameters_columns = num_rows_columns * num_data_columns * num_parameters
+
+        num_correlation_columns = num_rows_columns * (num_data_columns - 1) * num_data_columns // 2
+
+        return num_correlation_columns + num_rows_columns + num_parameters_columns
+
+    @classmethod
+    def _estimate_columns_traversal(cls, metadata, table_name,
+                                    columns_per_table, visited, distributions=None):
+        """Given a table, estimate how many columns each parent will model.
+
+        This method recursively models the children of a table all the way to the leaf nodes.
+
+        Args:
+            table_name (str):
+                Name of the table to estimate the number of columns for.
+            columns_per_table (dict):
+                Dict that stores the number of data columns + extended columns for each table.
+            visited (set):
+                Set of table names that have already been visited.
+        """
+        for child_name in metadata._get_child_map()[table_name]:
+            if child_name not in visited:
+                cls._estimate_columns_traversal(metadata, child_name, columns_per_table, visited)
+
+            columns_per_table[table_name] += \
+                cls._get_num_extended_columns(
+                    metadata, child_name, table_name, columns_per_table, distributions
+                )
+
+        visited.add(table_name)
+
+    @classmethod
+    def _estimate_num_columns(cls, metadata, distributions=None):
+        """Estimate the number of columns that will be modeled for each table.
+
+        This method estimates how many extended columns will be generated during the
+        `_augment_tables` method, so it traverses the graph in the same way.
+        If that method is ever changed, this should be updated to match.
+
+        After running this method, `columns_per_table` will store an estimate of the
+        total number of columns that each table has after running `_augment_tables`,
+        that is, the number of extended columns generated by the child tables as well
+        as the number of data columns in the table itself. `id` columns, like foreign
+        and primary keys, are not counted since they are not modeled.
+
+        Returns:
+            dict:
+                Dictionary of (table_name: int) mappings, indicating the estimated
+                number of columns that will be modeled for each table.
+        """
+        # This dict will store the number of data columns + extended columns for each table
+        # Initialize it with the number of data columns per table
+        columns_per_table = cls._get_num_data_columns(metadata)
+
+        # Starting at root tables, recursively estimate the number of columns
+        # each table will model
+        visited = set()
+        for table_name in _get_root_tables(metadata.relationships):
+            cls._estimate_columns_traversal(
+                metadata, table_name, columns_per_table, visited, distributions
+            )
+
+        return columns_per_table
+
+    def __init__(self, metadata, locales=['en_US'], verbose=True):
         BaseMultiTableSynthesizer.__init__(self, metadata, locales=locales)
         self._table_sizes = {}
         self._max_child_rows = {}
+        self._min_child_rows = {}
         self._augmented_tables = []
         self._learned_relationships = 0
+        self._default_parameters = {}
         self.verbose = verbose
         BaseHierarchicalSampler.__init__(
             self,
@@ -91,72 +213,29 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         return super().get_learned_distributions(table_name)
 
-    def _get_num_extended_columns(self, table_name, parent_table, columns_per_table):
-        """Get the number of columns that will be generated for table_name.
+    def _get_distributions(self):
+        distributions = {}
+        for table in self.metadata.tables:
+            parameters = self.get_table_parameters(table)
+            sythesizer_parameter = parameters.get('synthesizer_parameters', {})
+            distributions[table] = sythesizer_parameter.get('default_distribution', None)
 
-        A table generates, for each foreign key:
-            - 1 num_rows column
-            - n*(n-1)/2 correlation columns for each data column
-            - k parameter columns for each data column, where:
-                - k = 4 if the distribution is beta or truncnorm (params are a, b, loc, scale)
-                - k = 3 if the distribution is gamma (params are a, loc, scale)
-                - k = 2 if the distribution is norm or uniform (params are loc, scale)
-        """
-        num_rows_columns = len(self.metadata._get_foreign_keys(parent_table, table_name))
-
-        # no parameter columns are generated if there are no data columns
-        num_data_columns = columns_per_table[table_name]
-        if num_data_columns == 0:
-            return num_rows_columns
-
-        table_parameters = self.get_table_parameters(table_name)['table_parameters']
-        distribution = table_parameters['default_distribution']
-        num_parameters_columns = num_rows_columns * num_data_columns
-        if distribution in {'beta', 'truncnorm'}:
-            num_parameters_columns *= 4
-        elif distribution == 'gamma':
-            num_parameters_columns *= 3
-        elif distribution in {'norm', 'uniform'}:
-            num_parameters_columns *= 2
-
-        num_correlation_columns = num_rows_columns * (num_data_columns - 1) * num_data_columns // 2
-
-        return num_correlation_columns + num_rows_columns + num_parameters_columns
-
-    def _estimate_columns_traversal(self, table_name, columns_per_table, visited):
-        """Given a table, estimate how many columns each parent will model.
-
-        This method recursively models the children of a table all the way to the leaf nodes.
-
-        Args:
-            table_name (str):
-                Name of the table to estimate the number of columns for.
-            columns_per_table (dict):
-                Dict that stores the number of data columns + extended columns for each table.
-            visited (set):
-                Set of table names that have already been visited.
-        """
-        for child_name in self.metadata._get_child_map()[table_name]:
-            if child_name not in visited:
-                self._estimate_columns_traversal(child_name, columns_per_table, visited)
-
-            columns_per_table[table_name] += \
-                self._get_num_extended_columns(child_name, table_name, columns_per_table)
-
-        visited.add(table_name)
+        return distributions
 
     def _print_estimate_warning(self):
         total_est_cols = 0
-        metadata_columns = self._get_num_data_columns()
+        metadata_columns = self._get_num_data_columns(self.metadata)
         print_table = []
-        for table, est_cols in self._estimate_num_columns().items():
+        distributions = self._get_distributions()
+        for table, est_cols in self._estimate_num_columns(self.metadata, distributions).items():
             entry = []
             entry.append(table)
             entry.append(metadata_columns[table])
             total_est_cols += est_cols
             entry.append(est_cols)
             print_table.append(entry)
-        if total_est_cols > 1000:
+
+        if total_est_cols > MAX_NUMBER_OF_COLUMNS:
             self._print(
                 'PerformanceAlert: Using the HMASynthesizer on this metadata '
                 'schema is not recommended. To model this data, HMA will '
@@ -169,51 +248,13 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                         '# Columns in Metadata',
                         'Est # Columns'
                     ]
-                )
+                ).to_string(index=False) + '\n'
             )
             self._print(
-                '\nWe recommend simplifying your metadata schema by dropping '
-                'columns that are not necessary. If this is not possible, '
-                'contact us at info@sdv.dev for enterprise solutions.\n')
-
-    def _get_num_data_columns(self):
-        """Get the number of data columns, ie colums that are not id, for each table."""
-        columns_per_table = {}
-        for table_name, table in self.metadata.tables.items():
-            columns_per_table[table_name] = \
-                sum([1 for col in table.columns.values() if col['sdtype'] != 'id'])
-
-        return columns_per_table
-
-    def _estimate_num_columns(self):
-        """Estimate the number of columns that will be modeled for each table.
-
-        This method estimates how many extended columns will be generated during the
-        `_augment_tables` method, so it traverses the graph in the same way.
-        If that method is ever changed, this should be updated to match.
-
-        After running this method, `columns_per_table` will store an estimate of the
-        total number of columns that each table has after running `_augment_tables`,
-        that is, the number of extended columns generated by the child tables as well
-        as the number of data columns in the table itself. `id` columns, like foreign
-        and primary keys, are not counted since they are not modeled.
-
-        Returns:
-            dict:
-                Dictionary of (table_name: int) mappings, indicating the estimated
-                number of columns that will be modeled for each table.
-        """
-        # This dict will store the number of data columns + extended columns for each table
-        # Initialize it with the number of data columns per table
-        columns_per_table = self._get_num_data_columns()
-
-        # Starting at root tables, recursively estimate the number of columns
-        # each table will model
-        visited = set()
-        for table_name in self._get_root_parents():
-            self._estimate_columns_traversal(table_name, columns_per_table, visited)
-
-        return columns_per_table
+                "We recommend simplifying your metadata schema using 'sdv.utils.poc.simplify_sch"
+                "ema'.\nIf this is not possible, contact us at info@sdv.dev for enterprise solut"
+                'ions.\n'
+            )
 
     def preprocess(self, data):
         """Transform the raw data to numerical space.
@@ -349,15 +390,26 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     foreign_key,
                     progress_bar_desc
                 )
+                for column in extension.columns:
+                    extension[column] = extension[column].astype(float)
+                    if extension[column].isna().all():
+                        extension[column] = extension[column].fillna(1e-6)
+
+                    self.extended_columns[child_name][column] = FloatFormatter(
+                        enforce_min_max_values=True)
+                    self.extended_columns[child_name][column].fit(extension, column)
+
                 table = table.merge(extension, how='left', right_index=True, left_index=True)
                 num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
                 table[num_rows_key] = table[num_rows_key].fillna(0)
                 self._max_child_rows[num_rows_key] = table[num_rows_key].max()
+                self._min_child_rows[num_rows_key] = table[num_rows_key].min()
                 tables[table_name] = table
                 self._learned_relationships += 1
 
         self._augmented_tables.append(table_name)
         self._clear_nans(table)
+
         return table
 
     def _augment_tables(self, processed_data):
@@ -406,11 +458,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             augmented_data (dict):
                 Dictionary mapping each table name to an augmented ``pandas.DataFrame``.
         """
-        parent_map = self.metadata._get_parent_map()
         augmented_data_to_model = [
             (table_name, table)
             for table_name, table in augmented_data.items()
-            if table_name not in parent_map
         ]
         self._print(text='\n', end='')
         pbar_args = self._get_pbar_args(desc='Modeling Tables')
@@ -422,6 +472,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
             if not table.empty:
                 self._table_synthesizers[table_name].fit_processed_data(table)
+                table_parameters = self._table_synthesizers[table_name]._get_parameters()
+                self._default_parameters[table_name] = {
+                    parameter: value for parameter, value in table_parameters.items()
+                    if 'univariates' in parameter
+                }
 
             for name, values in keys.items():
                 table[name] = values
@@ -441,7 +496,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         prefix = f'__{table_name}__{foreign_key}__'
         keys = [key for key in parent_row.keys() if key.startswith(prefix)]
         new_keys = {key: key[len(prefix):] for key in keys}
-        flat_parameters = parent_row[keys].fillna(0)
+        flat_parameters = parent_row[keys].astype(float).fillna(1e-6)
 
         num_rows_key = f'{prefix}num_rows'
         if num_rows_key in flat_parameters:
@@ -451,16 +506,23 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 round(num_rows)
             )
 
-        return flat_parameters.rename(new_keys).to_dict()
+        flat_parameters = flat_parameters.to_dict()
+        for parameter_name, parameter in flat_parameters.items():
+            float_formatter = self.extended_columns[table_name][parameter_name]
+            flat_parameters[parameter_name] = np.clip(  # this should be revisited in GH#1769
+                parameter, float_formatter._min_value, float_formatter._max_value)
+
+        return {new_keys[key]: value for key, value in flat_parameters.items()}
 
     def _recreate_child_synthesizer(self, child_name, parent_name, parent_row):
         # A child table is created based on only one foreign key.
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         parameters = self._extract_parameters(parent_row, child_name, foreign_key)
-        table_meta = self.metadata.tables[child_name]
+        default_parameters = getattr(self, '_default_parameters', {}).get(child_name, {})
 
+        table_meta = self.metadata.tables[child_name]
         synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
-        synthesizer._set_parameters(parameters)
+        synthesizer._set_parameters(parameters, default_parameters)
         synthesizer._data_processor = self._table_synthesizers[child_name]._data_processor
 
         return synthesizer
@@ -504,7 +566,22 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         else:
             weights = likelihoods.to_numpy() / total
 
-        return np.random.choice(likelihoods.index.to_list(), p=weights)
+        candidates, candidate_weights = [], []
+        for parent, weight in zip(likelihoods.index.to_list(), weights):
+            if num_rows[parent] > 0:
+                candidates.append(parent)
+                candidate_weights.append(weight)
+
+        # All available candidates were assigned 0 likelihood of being the parent id
+        if sum(candidate_weights) == 0:
+            chosen_parent = np.random.choice(candidates)
+        else:
+            candidate_weights = np.array(candidate_weights) / np.sum(candidate_weights)
+            chosen_parent = np.random.choice(candidates, p=candidate_weights)
+
+        num_rows[chosen_parent] -= 1
+
+        return chosen_parent
 
     def _get_likelihoods(self, table_rows, parent_rows, table_name, foreign_key):
         """Calculate the likelihood of each parent id value appearing in the data.
@@ -573,7 +650,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         # Create a copy of the parent table with the primary key as index to calculate likelihoods
         primary_key = self.metadata.tables[parent_name].primary_key
         parent_table = parent_table.set_index(primary_key)
-        num_rows = parent_table[f'__{child_name}__{foreign_key}__num_rows'].fillna(0).clip(0)
+        num_rows = parent_table[f'__{child_name}__{foreign_key}__num_rows'].copy()
 
         likelihoods = self._get_likelihoods(child_table, parent_table, child_name, foreign_key)
         return likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)

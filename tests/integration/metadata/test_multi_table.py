@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from sdv.datasets.demo import download_demo
 from sdv.metadata import MultiTableMetadata
+from tests.utils import get_multi_table_metadata
 
 
 def test_multi_table_metadata():
@@ -48,6 +49,32 @@ def test_add_column_relationship(mock_rdt_transformers):
     assert instance.tables['hotels'].column_relationships == [
         {'type': 'address', 'column_names': ['city', 'state']}
     ]
+
+
+def test_remove_primary_key():
+    # Setup
+    metadata = get_multi_table_metadata()
+
+    # Run
+    metadata.remove_primary_key('nesreca')
+
+    # Assert
+    expected_relationships = [
+        {
+            'parent_table_name': 'upravna_enota',
+            'parent_primary_key': 'id_upravna_enota',
+            'child_table_name': 'nesreca',
+            'child_foreign_key': 'upravna_enota'
+        },
+        {
+            'parent_table_name': 'upravna_enota',
+            'parent_primary_key': 'id_upravna_enota',
+            'child_table_name': 'oseba',
+            'child_foreign_key': 'upravna_enota'
+        }
+    ]
+    assert metadata.tables['nesreca'].primary_key is None
+    assert metadata.relationships == expected_relationships
 
 
 def test_upgrade_metadata(tmp_path):
@@ -338,3 +365,15 @@ def test_detect_table_from_csv(tmp_path):
     }
 
     assert metadata.to_dict() == expected_metadata
+
+
+def test_get_column_names():
+    """Test the ``get_column_names`` method."""
+    # Setup
+    metadata = get_multi_table_metadata()
+
+    # Run
+    matches = metadata.get_column_names('nesreca', sdtype='id')
+
+    # Assert
+    assert set(matches) == {'upravna_enota', 'id_nesreca'}

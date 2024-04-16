@@ -86,6 +86,59 @@ class TestMultiTableMetadata:
         # Assert
         assert instance.tables == {}
         assert instance.relationships == []
+        assert instance._multi_table_updated is False
+
+    def test__check_metadata_updated_single_metadata_updated(self):
+        """Test ``_check_metadata_updated`` when a single table metadata has been updated."""
+        # Setup
+        instance = MultiTableMetadata()
+        instance.tables['table_1'] = Mock()
+        instance.tables['table_2'] = Mock()
+        instance.tables['table_1']._updated = True
+        instance.tables['table_2']._updated = False
+
+        # Run
+        result = instance._check_updated_flag()
+
+        # Assert
+        assert instance._multi_table_updated is False
+        assert result is True
+
+    def test__check_metadata_updated_multi_metadata_updated(self):
+        """Test ``_check_metadata_updated`` method when multi table metadata has been updated."""
+        # Setup
+        instance = MultiTableMetadata()
+        instance.tables['table_1'] = Mock()
+        instance.tables['table_2'] = Mock()
+        instance.tables['table_1']._updated = False
+        instance.tables['table_2']._updated = False
+        instance._multi_table_updated = True
+
+        # Run
+        result = instance._check_updated_flag()
+
+        # Assert
+        assert instance._multi_table_updated is True
+        assert result is True
+
+    def test__reset_updated_flag(self):
+        """Test the ``_reset_updated_flag`` method."""
+        # Setup
+        instance = MultiTableMetadata()
+        instance.tables['table_1'] = Mock()
+        instance.tables['table_2'] = Mock()
+        instance.tables['table_1']._updated = False
+        instance.tables['table_2']._updated = True
+        instance._multi_table_updated = True
+        instance._updated = True
+
+        # Run
+        instance._reset_updated_flag()
+
+        # Assert
+        assert instance._multi_table_updated is False
+        assert instance.tables['table_1']._updated is False
+        assert instance.tables['table_2']._updated is False
 
     def test__validate_missing_relationship_keys_foreign_key(self):
         """Test the ``_validate_missing_relationship_keys`` method of ``MultiTableMetadata``.
@@ -197,7 +250,7 @@ class TestMultiTableMetadata:
             )
 
     def test__validate_no_missing_tables_in_relationship(self):
-        """Test the ``_validate_no_missing_tables_in_relationship`` method of ``MultiTableMetadata``.
+        """Test ``_validate_no_missing_tables_in_relationship`` of ``MultiTableMetadata``.
 
         Setup:
             - Create a list of ``tables``.
@@ -587,6 +640,7 @@ class TestMultiTableMetadata:
         instance._validate_relationship_does_not_exist.assert_called_once_with(
             'users', 'id', 'sessions', 'user_id'
         )
+        assert instance._multi_table_updated is True
 
     def test_add_relationship_child_key_is_primary_key(self):
         """Test that passing a primary key as ``child_foreign_key`` crashes."""
@@ -692,6 +746,7 @@ class TestMultiTableMetadata:
                 'child_foreign_key': 'session_id',
             }
         ]
+        assert instance._multi_table_updated is True
 
     @patch('sdv.metadata.multi_table.warnings')
     def test_remove_relationship_relationship_not_found(self, warnings_mock):
@@ -730,6 +785,63 @@ class TestMultiTableMetadata:
             "child table 'sessions'."
         )
         warnings_mock.warn.assert_called_once_with(warning_msg)
+
+    @patch('sdv.metadata.multi_table.LOGGER')
+    def test_remove_primary_key(self, logger_mock):
+        """Test that ``remove_primary_key`` removes the primary key for the table."""
+        # Setup
+        instance = MultiTableMetadata()
+        table = Mock()
+        table.primary_key = 'primary_key'
+        instance.tables = {
+            'table': table,
+            'parent': Mock(),
+            'child': Mock()
+        }
+        instance.relationships = [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'table',
+                'parent_primary_key': 'pk',
+                'child_foreign_key': 'primary_key'
+            },
+            {
+                'parent_table_name': 'table',
+                'child_table_name': 'child',
+                'parent_primary_key': 'primary_key',
+                'child_foreign_key': 'fk'
+            },
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk',
+                'child_foreign_key': 'fk'
+            }
+        ]
+
+        # Run
+        instance.remove_primary_key('table')
+
+        # Assert
+        assert instance.relationships == [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk',
+                'child_foreign_key': 'fk'
+            }
+        ]
+        table.remove_primary_key.assert_called_once()
+        msg1 = (
+            "Relationship between 'table' and 'parent' removed because the primary key for "
+            "'table' was removed."
+        )
+        msg2 = (
+            "Relationship between 'table' and 'child' removed because the primary key for "
+            "'table' was removed."
+        )
+        logger_mock.info.assert_has_calls([call(msg1), call(msg2)])
+        assert instance._multi_table_updated is True
 
     def test__validate_column_relationships_foreign_keys(self):
         """Test ``_validate_column_relationships_foriegn_keys."""
@@ -1176,9 +1288,9 @@ class TestMultiTableMetadata:
             'Relationships:\n'
             "Error: foreign key column 'upravna_enota' contains unknown references: "
             '(10, 11, 12, 13, 14, + more). '
-            'All the values in this column must reference a primary key.\n'
+            "Please use the utility method 'drop_unknown_references' to clean the data.\n"
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9)."
-            ' All the values in this column must reference a primary key.'
+            " Please use the utility method 'drop_unknown_references' to clean the data."
         ]
         assert result == missing_upravna_enota
 
@@ -1291,9 +1403,62 @@ class TestMultiTableMetadata:
             'The provided data does not match the metadata:\n'
             'Relationships:\n'
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
-            'All the values in this column must reference a primary key.'
+            "Please use the utility method 'drop_unknown_references' to clean the data."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
+            metadata.validate_data(data)
+
+    def test_validate_data_datetime_warning(self):
+        """Test validation for columns with datetime.
+
+        If the datetime format is not provided, a warning should be shwon if the ``dtype`` is
+        object.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        data = get_multi_table_data()
+
+        data['upravna_enota']['warning_date_str'] = [
+            '2022-09-02',
+            '2022-09-16',
+            '2022-08-26',
+            '2022-08-26'
+        ]
+        data['upravna_enota']['valid_date'] = [
+            '20220902110443000000',
+            '20220916230356000000',
+            '20220826173917000000',
+            '20220929111311000000'
+        ]
+        data['upravna_enota']['datetime'] = pd.to_datetime([
+            '20220902',
+            '20220916',
+            '20220826',
+            '20220826'
+        ])
+        metadata.add_column('upravna_enota', 'warning_date_str', sdtype='datetime')
+        metadata.add_column(
+            'upravna_enota',
+            'valid_date',
+            sdtype='datetime',
+            datetime_format='%Y%m%d%H%M%S%f'
+        )
+        metadata.add_column('upravna_enota', 'datetime', sdtype='datetime')
+
+        # Run and Assert
+        warning_df = pd.DataFrame({
+            'Table Name': ['upravna_enota'],
+            'Column Name': ['warning_date_str'],
+            'sdtype': ['datetime'],
+            'datetime_format': [None]
+        })
+        warning_msg = (
+            "No 'datetime_format' is present in the metadata for the following columns:\n "
+            f'{warning_df.to_string(index=False)}\n'
+            'Without this specification, SDV may not be able to accurately parse the data. '
+            "We recommend adding datetime formats using 'update_column'."
+        )
+        with pytest.warns(UserWarning, match=warning_msg):
             metadata.validate_data(data)
 
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
@@ -1307,6 +1472,7 @@ class TestMultiTableMetadata:
 
         # Assert
         assert instance.tables == {'users': table_metadata_mock.return_value}
+        assert instance._multi_table_updated is True
 
     def test_add_table_empty_string(self):
         """Test that the method raises an error if the table name is an empty string."""
@@ -1975,6 +2141,53 @@ class TestMultiTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.update_column('table', 'column', sdtype='numerical', pii=False)
 
+    def test_update_columns(self):
+        """Test the ``update_columns`` method."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._validate_table_exists = Mock()
+        table = Mock()
+        metadata.tables = {'table': table}
+
+        # Run
+        metadata.update_columns('table', ['col_1', 'col_2'], sdtype='numerical')
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table')
+        table.update_columns.assert_called_once_with(['col_1', 'col_2'], sdtype='numerical')
+
+    def test_update_columns_metadata(self):
+        """Test the ``update_columns_metadata`` method."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._validate_table_exists = Mock()
+        table = Mock()
+        metadata.tables = {'table': table}
+        metadata_updates = {
+            'col_1': {'sdtype': 'numerical'},
+            'col_2': {'sdtype': 'categorical'}
+        }
+
+        # Run
+        metadata.update_columns_metadata('table', metadata_updates)
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table')
+        table.update_columns_metadata.assert_called_once_with(metadata_updates)
+
+    def test_get_column_names(self):
+        """Test the ``get_column_names`` method."""
+        # Setup
+        metadata = MultiTableMetadata()
+        table1 = Mock()
+        metadata.tables = {'table1': table1}
+
+        # Run
+        metadata.get_column_names('table1', sdtype='email', pii=True)
+
+        # Assert
+        table1.get_column_names.assert_called_once_with(sdtype='email', pii=True)
+
     def test__detect_relationships(self):
         """Test relationships are automatically detected and the foreign key sdtype is updated."""
         # Setup
@@ -2090,7 +2303,7 @@ class TestMultiTableMetadata:
 
     @patch('sdv.metadata.multi_table.LOGGER')
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    @patch('sdv.metadata.multi_table.load_data_from_csv')
+    @patch('sdv.metadata.multi_table._load_data_from_csv')
     def test_detect_table_from_csv(self, load_csv_mock, single_table_mock, log_mock):
         """Test the ``detect_table_from_csv`` method.
 
@@ -2630,6 +2843,7 @@ class TestMultiTableMetadata:
         """
         # Setup
         instance = MultiTableMetadata()
+        instance._reset_updated_flag = Mock()
 
         # Run / Assert
         file_name = tmp_path / 'multitable.json'
@@ -2638,6 +2852,8 @@ class TestMultiTableMetadata:
         with open(file_name, 'rb') as multi_table_file:
             saved_metadata = json.load(multi_table_file)
             assert saved_metadata == instance.to_dict()
+
+        instance._reset_updated_flag.assert_called_once()
 
     def test__convert_relationships(self):
         """Test the ``_convert_relationships`` method.

@@ -59,6 +59,31 @@ def test_add_column_relationship(mock_rdt_transformers):
     ]
 
 
+def test_add_column_relationship_existing_column_in_relationship():
+    """Test ``add_column_relationship`` when some colums are already in a column relationship."""
+    # Setup
+    instance = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col1': {'sdtype': 'id'},
+            'col2': {'sdtype': 'street_address'},
+            'col3': {'sdtype': 'state_abbr'},
+            'col4': {'sdtype': 'country_code'},
+        },
+        'primary_key': 'col1',
+    })
+    instance.add_column_relationship(relationship_type='address', column_names=['col2', 'col3'])
+
+    # Run and Assert
+    expected_message = re.escape(
+        "Columns 'col2' is already part of a relationship of type 'address'."
+        ' Columns cannot be part of multiple relationships.'
+    )
+    with pytest.raises(InvalidMetadataError, match=expected_message):
+        instance.add_column_relationship(
+            relationship_type='address', column_names=['col2', 'col4']
+        )
+
+
 @patch('rdt.transformers')
 def test_validate(mock_rdt_transformers):
     """Test ``SingleTableMetadata.validate``.
@@ -152,9 +177,11 @@ def test_validate_errors(mock_rdt_transformers):
         "\nInvalid value for 'computer_representation' 'value' for column 'col8'."
         "\nInvalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'col9'."
         "\nInvalid regex format string '[A-{6}' for id column 'col10'."
-        "\nColumn relationships have following errors:\nColumns ['col1', 'col2'] have "
-        "unsupported sdtypes for column relationship type 'address'.\nUnknown column "
-        "relationship type 'fake_relationship'. Must be one of ['address']."
+        '\nColumn relationships have following errors:\n'
+        "Column 'col1' has an unsupported sdtype 'id'.\n"
+        "Column 'col2' has an unsupported sdtype 'numerical'.\n"
+        'Please provide a column that is compatible with Address data.\n'
+        "Unknown column relationship type 'fake_relationship'. Must be one of ['address', 'gps']."
     )
     # Run / Assert
     with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -337,3 +364,186 @@ def test_detect_from_dataframe_with_pii_names():
     }
 
     assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_from_dataframe_with_pii_non_unique():
+    """Test ``detect_from_dataframe`` with pii column names that are not unique.
+
+    The metadata should not detect any primray key.
+    """
+    # Setup
+    data = pd.DataFrame(data={
+        'Age': [int(i) for i in np.random.uniform(low=0, high=100, size=100)],
+        'Sex': np.random.choice(['Male', 'Female'], size=100),
+        'latitude': [round(i, 2) for i in np.random.uniform(low=-90, high=+90, size=50)] * 2
+    })
+    metadata = SingleTableMetadata()
+
+    # Run
+    metadata.detect_from_dataframe(data)
+    metadata.validate_data(data)
+
+    # Assert
+    assert metadata.primary_key is None
+
+
+def test_update_columns():
+    """Test ``update_columns`` method."""
+    # Setup
+    metadata = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+            'col2': {'sdtype': 'numerical'},
+            'col3': {'sdtype': 'categorical'},
+            'col4': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'col5': {'sdtype': 'unknown'},
+            'col6': {'sdtype': 'email', 'pii': True}
+        }
+    })
+
+    # Run
+    metadata.update_columns(
+        ['col1', 'col3', 'col4', 'col5', 'col6'],
+        sdtype='numerical',
+        computer_representation='Int64'
+    )
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'columns': {
+            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col2': {'sdtype': 'numerical'},
+            'col3': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col4': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col5': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col6': {'sdtype': 'numerical', 'computer_representation': 'Int64'}
+        }
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_update_columns_invalid_kwargs_combination():
+    """Test ``update_columns`` method with invalid kwargs combination."""
+    # Setup
+    metadata = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+            'col2': {'sdtype': 'numerical'},
+            'col3': {'sdtype': 'categorical'},
+            'col4': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'col5': {'sdtype': 'unknown'},
+            'col6': {'sdtype': 'email', 'pii': True}
+        }
+    })
+
+    # Run / Assert
+    expected_message = re.escape(
+        "Invalid values '(pii)' for 'numerical' sdtype."
+    )
+    with pytest.raises(InvalidMetadataError, match=expected_message):
+        metadata.update_columns(
+            ['col1', 'col3', 'col4', 'col5', 'col6'],
+            sdtype='numerical',
+            computer_representation='Int64',
+            pii=True
+        )
+
+
+def test_update_columns_metadata():
+    """Test ``update_columns_metadata`` method."""
+    # Setup
+    metadata = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+            'col2': {'sdtype': 'numerical'},
+            'col3': {'sdtype': 'categorical'},
+            'col4': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'col5': {'sdtype': 'unknown'},
+            'col6': {'sdtype': 'email', 'pii': True}
+        }
+    })
+
+    # Run
+    metadata.update_columns_metadata(
+        {
+            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col3': {'sdtype': 'email', 'pii': True},
+            'col4': {'sdtype': 'phone_number', 'pii': False},
+            'col5': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'col6': {'sdtype': 'unknown'}
+        }
+    )
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'columns': {
+            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'col2': {'sdtype': 'numerical'},
+            'col3': {'sdtype': 'email', 'pii': True},
+            'col4': {'sdtype': 'phone_number', 'pii': False},
+            'col5': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'col6': {'sdtype': 'unknown'}
+        }
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_update_columns_metadata_invalid_kwargs_combination():
+    """Test ``update_columns_metadata`` method with invalid kwargs combination."""
+    # Setup
+    metadata = SingleTableMetadata().load_from_dict({
+        'columns': {
+            'col1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+            'col2': {'sdtype': 'numerical'},
+            'col3': {'sdtype': 'categorical'},
+            'col4': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'col5': {'sdtype': 'unknown'},
+            'col6': {'sdtype': 'email', 'pii': True}
+        }
+    })
+
+    # Run / Assert
+    expected_message = re.escape(
+        'The following errors were found when updating columns:\n\n'
+        "Invalid values '(pii)' for numerical column 'col1'.\n"
+        "Invalid values '(pii)' for numerical column 'col2'."
+
+    )
+    with pytest.raises(InvalidMetadataError, match=expected_message):
+        metadata.update_columns_metadata(
+            {
+                'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64', 'pii': True},
+                'col2': {'pii': True}
+            }
+        )
+
+
+def test_column_relationship_validation():
+    """Test that column relationships are validated correctly."""
+    # Setup
+    metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'user_city': {'sdtype': 'city'},
+            'user_zip': {'sdtype': 'postcode'},
+            'user_value': {'sdtype': 'unknown'}
+        },
+        'column_relationships': [
+            {
+                'type': 'address',
+                'column_names': ['user_city', 'user_zip', 'user_value']
+            }
+        ]
+    })
+
+    expected_message = re.escape(
+        'The following errors were found in the metadata:\n\n'
+        'Column relationships have following errors:\n'
+        "Column 'user_value' has an unsupported sdtype 'unknown'.\n"
+        'Please provide a column that is compatible with Address data.'
+    )
+
+    # Run and Assert
+    with pytest.raises(InvalidMetadataError, match=expected_message):
+        metadata.validate()

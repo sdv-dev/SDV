@@ -27,8 +27,11 @@ class ConstraintsNotMetError(ValueError):
     """Exception raised when the given data is not valid for the constraints."""
 
     def __init__(self, message=''):
-        self.message = message
+        self.message = [message] if not isinstance(message, list) else message
         super().__init__(self.message)
+
+    def __str__(self):
+        return '\n'.join(map(str, self.message))
 
 
 class SynthesizerInputError(Exception):
@@ -56,5 +59,28 @@ class InvalidDataError(Exception):
         )
 
 
+class InvalidDataTypeError(Exception):
+    """Error to raise if data type is not valid."""
+
+
 class VisualizationUnavailableError(Exception):
     """Exception to indicate that a visualization is unavailable."""
+
+
+class SDVVersionWarning(UserWarning):
+    """Warning to be raised if there is a version mismatch.
+
+    Warning to be raised  if there is a version mismatch between the loaded
+    synthesizer and the current version of the SDV software.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.__class__.__name__ = 'SDV Version Warning'
+
+
+class VersionError(ValueError):
+    """Raised when loading a synthesizer from a newer version into an older one."""
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)

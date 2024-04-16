@@ -1,5 +1,109 @@
 # Release Notes
 
+## 1.12.0 - 2024-04-16
+
+This release adds support for Python 3.12! It also adds a number of feature improvements. It adds a `simplify_schema` utility function to the `sdv.utils.poc` module which simplifies multi-table schemas so they can be run using `HMASynthesizer`. Multi-table data dictionaries can now be saved directly to CSVs using the `sdv.datasets.local.save_csvs` utility function. Additionally, generator-discriminator loss values can now be plotted directly from CTGAN using the `get_loss_values_plot` method. This release also adds error messages when trying to load an SDV synthesizer on an older version of the SDV, or when trying to re-fit a synthesizer from an older version of the SDV.
+
+This release also fixes a number of bugs. Metadata auto-detection now validates that all primary keys are unique, and the metadata correctly validates sdtypes in a column relationship. Bugs in the `HMASynthesizer` that would cause the diagnostic score to not be equal to 1.0 for cardinality and data validity were fixed. Finally, errors in constraints now correctly raise a `ConstraintsNotMetError` instead of an `InvalidData` error.
+
+### New Features
+
+* sdv helper function for generating generator-discriminator loss charts - Issue [#1828](https://github.com/sdv-dev/SDV/issues/1828) by @lajohn4747
+* Add utility function to simplify multi-table schemas - Issue [#1832](https://github.com/sdv-dev/SDV/issues/1832) by @R-Palazzo
+* Show an error if I accidentally load an SDV synthesizer on an older version of SDV - Issue [#1837](https://github.com/sdv-dev/SDV/issues/1837) by @pvk-developer
+* Show an error when attempting to re-train a synthesizer that was created on a previous SDV version - Issue [#1838](https://github.com/sdv-dev/SDV/issues/1838) by @pvk-developer
+* Add warning when user tries to train a model using datetime values without a datetime_format set - Issue [#1847](https://github.com/sdv-dev/SDV/issues/1847) by @pvk-developer
+* Add a function to save my multi-table data as CSVs - Issue [#1849](https://github.com/sdv-dev/SDV/issues/1849) by @R-Palazzo
+* Deprecate `SingleTablePreset` (including `FastML` Preset) - Issue [#1855](https://github.com/sdv-dev/SDV/issues/1855) by @lajohn4747
+* Missing error message if the user forgets to add a `sequence_key` when using PARSynthesizer - Issue [#1883](https://github.com/sdv-dev/SDV/issues/1883) by @frances-h
+
+### Internal
+
+* Add dependency checker - Issue [#1818](https://github.com/sdv-dev/SDV/issues/1818) by @frances-h
+
+### Bugs Fixed
+
+* Metadata isn't validating sdtypes in a column relationship (public SDV only) - Issue [#1781](https://github.com/sdv-dev/SDV/issues/1781) by @R-Palazzo
+* Contextual Anonymization transformers shouldn't be used for primary keys - Issue [#1807](https://github.com/sdv-dev/SDV/issues/1807) by @fealho
+* HMASynthesizer diagnostic score is not 1.0 when using `'truncnorm'` distribution - Issue [#1831](https://github.com/sdv-dev/SDV/issues/1831) by @frances-h
+* InvalidDataError: The provided data does not match the metadata (although it matches) - Issue [#1833](https://github.com/sdv-dev/SDV/issues/1833) by @pvk-developer
+* HMA likelihood match should respect cardinality - Issue [#1834](https://github.com/sdv-dev/SDV/issues/1834) by @fealho
+* When inappropriately applying ScalarRange constraint, InvalidDataError is being returned instead of ConstraintsNotMetError - Issue [#1842](https://github.com/sdv-dev/SDV/issues/1842) by @pvk-developer
+* When inappropriately applying a CustomConstraint, an InvalidDataError is being returned instead of ConstraintsNotMetError - Issue [#1856](https://github.com/sdv-dev/SDV/issues/1856) by @pvk-developer
+* Error in Setting `IDGenerator` for Primary Key columns - Issue [#1862](https://github.com/sdv-dev/SDV/issues/1862) by @lajohn4747
+* Metadata auto-detection should ensure primary keys are unique (special sdtypes are not exempt from this rule!) - Issue [#1871](https://github.com/sdv-dev/SDV/issues/1871) by @R-Palazzo
+
+### Maintenance
+
+* Support Python 3.12 - Issue [#1704](https://github.com/sdv-dev/SDV/issues/1704) by @fealho
+* Add dependency checker - Issue [#1818](https://github.com/sdv-dev/SDV/issues/1818) by @frances-h
+* Add bandit workflow - Issue [#1881](https://github.com/sdv-dev/SDV/issues/1881) by @amontanez24
+
+## 1.11.0 - 2024-03-21
+
+This release adds the `poc` utility submodule to help users more easily create a proof-of-concept with multi-table datasets. The `poc` submodule includes the `drop_unknown_references` utility function to automatically drop unknown references in a multi-table dataset. Additionally, multiple columns in the metadata can now be updated at once using the `update_columns` and `update_columns_metadata` methods. The SDV now also warns users when a synthesizer is loaded that was fitted on a different version of the SDV.
+
+### New Features
+
+* Make the `get_parameters` function consistent between synthesizers - Issue [#1756](https://github.com/sdv-dev/SDV/issues/1756) by @fealho
+* Reinstate `get_table_parameters` for the multi-table synthesizers - Issue [#1757](https://github.com/sdv-dev/SDV/issues/1757) by @fealho
+* Validate condition and provide user-friendly messages for NaN/missing values (currently unsupported) - Issue [#1758](https://github.com/sdv-dev/SDV/issues/1758) by @fealho
+* Improved error message if a column is already present in a relationship - Issue [#1770](https://github.com/sdv-dev/SDV/issues/1770) by @R-Palazzo
+* Better error messaging for nullable foreign keys  - Issue [#1780](https://github.com/sdv-dev/SDV/issues/1780) by @fealho
+* Add a utility to drop unknown references (and enforce referential integrity) - Issue [#1792](https://github.com/sdv-dev/SDV/issues/1792) by @R-Palazzo
+* Add `update_columns` and `update_columns_metadata` methods to metadata - Issue [#1804](https://github.com/sdv-dev/SDV/issues/1804) by @R-Palazzo
+* Add `get_column_names` method to metadata - Issue [#1805](https://github.com/sdv-dev/SDV/issues/1805) by @frances-h
+* Show original error message when plugin fails to load - Issue [#1816](https://github.com/sdv-dev/SDV/issues/1816) by @rwedge
+* Show warning when loading a synthesizer on a previously-saved SDV version - Issue [#1836](https://github.com/sdv-dev/SDV/issues/1836) by @pvk-developer
+* Add verbosity to `drop_unknown_references` - Issue [#1845](https://github.com/sdv-dev/SDV/issues/1845) by @R-Palazzo
+* Create a `poc` module for utilities that help with proof-of-concept  - Issue [#1846](https://github.com/sdv-dev/SDV/issues/1846) by @pvk-developer
+
+### Internal
+
+* Cleanup `utils` module: Make internal functions private - Issue [#1793](https://github.com/sdv-dev/SDV/issues/1793) by @R-Palazzo
+* Transition from using setup.py to pyroject.toml to specify project metadata - Issue [#1801](https://github.com/sdv-dev/SDV/issues/1801) by @R-Palazzo
+* Remove bumpversion and use bump-my-version - Issue [#1802](https://github.com/sdv-dev/SDV/issues/1802) by @R-Palazzo
+
+### Maintenance
+
+* Transition from using setup.py to pyroject.toml to specify project metadata - Issue [#1801](https://github.com/sdv-dev/SDV/issues/1801) by @R-Palazzo
+* Remove bumpversion and use bump-my-version - Issue [#1802](https://github.com/sdv-dev/SDV/issues/1802) by @R-Palazzo
+* Add support for RDT 1.10.0 - Issue [#1850](https://github.com/sdv-dev/SDV/issues/1850) by @amontanez24
+
+### Bugs Fixed
+
+* `INFO` logs mention table name as `None` for single table data - Issue [#1814](https://github.com/sdv-dev/SDV/issues/1814) by @lajohn4747
+* Fix drop_unknown_references for null foreign keys - Issue [#1820](https://github.com/sdv-dev/SDV/issues/1820) by @R-Palazzo
+
+## 1.10.0 - 2024-02-15
+
+This release adds multiple improvements to handling premium transformers and column relationships, including using premium transformers even if the PII flag is set to true. Additionally, the SDV now warns users to save the metadata after auto-detection has been used. Semantic sdtype detection has also been improved to tokenize column names to prevent unexpected substring matches.
+
+This release also fixes a few warning bugs and fixes an issue that would cause `metadata.to_dict` to fail for metadata loaded from older versions of the SDV. A few synthesizer bugs were also resolved. The quality of the sequence_index for the `PARSynthesizer` has been improved, and an issue that would cause `CTGANSynthesizer`, `TVAESynthesizer`, and `CopulaGANSynthesizer` to crash if all columns were to be generated from scratch has been fixed.
+
+### Bugs Fixed
+
+* HMASynthesizer sometimes creates null values (out-of-bounds parameters synthesized) - Issue [#1691](https://github.com/sdv-dev/SDV/issues/1691) by @fealho
+* Unable to conditionally sample some rows when using a `ScalarRange` constraint - Issue [#1737](https://github.com/sdv-dev/SDV/issues/1737) by @fealho
+* Metadata.to_dict fails on metadata instances pre 1.9.0 - Issue [#1739](https://github.com/sdv-dev/SDV/issues/1739) by @amontanez24
+* Metadata auto-detection should not assign a primary key if there are NaN values in it - Issue [#1740](https://github.com/sdv-dev/SDV/issues/1740) by @R-Palazzo
+* '<Synthesizer>' object has no attribute '_model' - Issue [#1741](https://github.com/sdv-dev/SDV/issues/1741) by @fealho
+* Column relationship warning should be raised during synthesizer initialization only - Issue [#1750](https://github.com/sdv-dev/SDV/issues/1750) by @R-Palazzo
+* Improve quality of `sequence_index`: Move the start dates into the context model - Issue [#1760](https://github.com/sdv-dev/SDV/issues/1760) by @frances-h
+* Add-ons warning is raised twice for multi table synthesizers.  - Issue [#1768](https://github.com/sdv-dev/SDV/issues/1768) by @R-Palazzo
+
+### New Features
+
+* Metadata auto-detection should tokenize words before determining PII - Issue [#1725](https://github.com/sdv-dev/SDV/issues/1725) by @fealho
+* Provide a friendlier error if data is stored as dtype `'category'` (CTGAN, TVAE) - Issue [#1735](https://github.com/sdv-dev/SDV/issues/1735) by @frances-h
+* Allow the ability to easily remove primary keys - Issue [#1742](https://github.com/sdv-dev/SDV/issues/1742) by @frances-h
+* Constraint should not be set on columns inside a gps relationship - Issue [#1748](https://github.com/sdv-dev/SDV/issues/1748) by @R-Palazzo
+* Set the default transformer for GPS column relationship - Issue [#1749](https://github.com/sdv-dev/SDV/issues/1749) by @R-Palazzo
+* Add a `version` module to align with SDV Enterprise - Issue [#1761](https://github.com/sdv-dev/SDV/issues/1761) by @R-Palazzo
+* Warn users to save their metadata file after auto-detecting/updating it - Issue [#1762](https://github.com/sdv-dev/SDV/issues/1762) by @R-Palazzo
+* Set the GPSNoiser as default transformer for GPS column relationship  - Issue [#1767](https://github.com/sdv-dev/SDV/issues/1767) by @R-Palazzo
+* Update transformer assignment logic for handling pii - Issue [#1775](https://github.com/sdv-dev/SDV/issues/1775) by @R-Palazzo
+
 ## 1.9.0 - 2024-01-11
 
 This release makes a number of improvements. It introduces a new concept to the metadata known as column relationships! Column relationships can be used to define when certain groups of columns in a table should be treated as a special concept (eg. address). You can add a column relationship by using the new `add_column_relationship` method. The metadata detection was also improved by allowing semantic sdtypes (eg. 'email', 'phone_number') to be detected as primary keys.

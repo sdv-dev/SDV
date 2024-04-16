@@ -1,15 +1,19 @@
 import datetime
+import importlib.metadata
 import re
+import warnings
 
 import numpy as np
 import pandas as pd
-import pkg_resources
 import pytest
 from faker import Faker
+from rdt.transformers import FloatFormatter
+from sdmetrics.reports.multi_table import DiagnosticReport
 
+from sdv import version
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
-from sdv.errors import SynthesizerInputError
+from sdv.errors import SynthesizerInputError, VersionError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
@@ -113,7 +117,7 @@ class TestHMASynthesizer:
         info = synthesizer.get_info()
 
         # Assert
-        version = pkg_resources.get_distribution('sdv').version
+        version = importlib.metadata.version('sdv')
         assert info == {
             'class_name': 'HMASynthesizer',
             'creation_date': today,
@@ -138,30 +142,30 @@ class TestHMASynthesizer:
 
         # Assert
         character_params = hmasynthesizer.get_table_parameters('characters')
-        assert character_params['table_synthesizer'] == 'GaussianCopulaSynthesizer'
-        assert character_params['table_parameters'] == {
+        assert character_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
+        assert character_params['synthesizer_parameters'] == {
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'locales': None,
+            'locales': ['en_US'],
             'numerical_distributions': {}
         }
         families_params = hmasynthesizer.get_table_parameters('families')
-        assert families_params['table_synthesizer'] == 'GaussianCopulaSynthesizer'
-        assert families_params['table_parameters'] == {
+        assert families_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
+        assert families_params['synthesizer_parameters'] == {
             'default_distribution': 'uniform',
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'locales': None,
+            'locales': ['en_US'],
             'numerical_distributions': {}
         }
         char_families_params = hmasynthesizer.get_table_parameters('character_families')
-        assert char_families_params['table_synthesizer'] == 'GaussianCopulaSynthesizer'
-        assert char_families_params['table_parameters'] == {
+        assert char_families_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
+        assert char_families_params['synthesizer_parameters'] == {
             'default_distribution': 'norm',
             'enforce_min_max_values': True,
             'enforce_rounding': True,
-            'locales': None,
+            'locales': ['en_US'],
             'numerical_distributions': {}
         }
 
@@ -1207,3 +1211,456 @@ class TestHMASynthesizer:
         assert len(likelihoods) == len(sampled_data['character_families'])
         assert not any(likelihoods[not_nan_cols].isna().any())
         assert all(likelihoods[nan_cols].isna())
+
+    def test__extract_parameters(self):
+        """Test it when parameters are out of bounds."""
+        # Setup
+        parent_row = pd.Series({
+            '__sessions__user_id__num_rows': 10,
+            '__sessions__user_id__a': -1,
+            '__sessions__user_id__b': 1000,
+            '__sessions__user_id__loc': 0.5,
+            '__sessions__user_id__scale': -0.25
+        })
+        instance = HMASynthesizer(MultiTableMetadata())
+        instance.extended_columns = {
+            'sessions': {
+                '__sessions__user_id__num_rows': FloatFormatter(enforce_min_max_values=True),
+                '__sessions__user_id__a': FloatFormatter(enforce_min_max_values=True),
+                '__sessions__user_id__b': FloatFormatter(enforce_min_max_values=True),
+                '__sessions__user_id__loc': FloatFormatter(enforce_min_max_values=True),
+                '__sessions__user_id__scale': FloatFormatter(enforce_min_max_values=True)
+            }
+        }
+        for col, float_formatter in instance.extended_columns['sessions'].items():
+            float_formatter.fit(pd.DataFrame({col: [0., 100.]}), col)
+
+        instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
+
+        # Run
+        result = instance._extract_parameters(parent_row, 'sessions', 'user_id')
+
+        # Assert
+        expected_result = {
+            'a': 0.,
+            'b': 100.,
+            'loc': 0.5,
+            'num_rows': 10.,
+            'scale': 0.
+        }
+        assert result == expected_result
+
+    def test__recreate_child_synthesizer_with_default_parameters(self):
+        """Test HMA when sampled parameters invalid."""
+        # Setup
+        prefix = '__sessions__user_id__'
+        parent_row = pd.Series({
+            f'{prefix}num_rows': 10,
+            f'{prefix}univariates__brand__a': 100,
+            f'{prefix}univariates__brand__b': 10,
+            f'{prefix}univariates__brand__loc': 0.5,
+            f'{prefix}univariates__brand__scale': -0.25
+        })
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'users': {
+                    'columns': {
+                        'user_id': {'sdtype': 'id'}
+                    },
+                    'primary_key': 'user_id'
+                },
+                'sessions': {
+                    'columns': {
+                        'user_id': {'sdtype': 'id'},
+                        'brand': {'sdtype': 'categorical'}
+                    }
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'users',
+                    'child_table_name': 'sessions',
+                    'parent_primary_key': 'user_id',
+                    'child_foreign_key': 'user_id'
+                }
+            ]
+        })
+        instance = HMASynthesizer(metadata)
+        instance.set_table_parameters('sessions', {'default_distribution': 'truncnorm'})
+        instance._max_child_rows = {f'{prefix}num_rows': 10}
+        instance.extended_columns = {
+            'sessions': {
+                f'{prefix}num_rows': FloatFormatter(enforce_min_max_values=True),
+                f'{prefix}univariates__brand__a': FloatFormatter(enforce_min_max_values=True),
+                f'{prefix}univariates__brand__b': FloatFormatter(enforce_min_max_values=True),
+                f'{prefix}univariates__brand__loc': FloatFormatter(enforce_min_max_values=True),
+                f'{prefix}univariates__brand__scale': FloatFormatter(enforce_min_max_values=True)
+            }
+        }
+        for col, float_formatter in instance.extended_columns['sessions'].items():
+            float_formatter.fit(pd.DataFrame({col: [0., 100.]}), col)
+
+        instance._default_parameters = {
+            'sessions': {
+                'univariates__brand__a': 5,
+                'univariates__brand__b': 84,
+                'univariates__brand__loc': 1,
+                'univariates__brand__scale': 1
+            }
+        }
+
+        # Run
+        child_synthesizer = instance._recreate_child_synthesizer('sessions', 'users', parent_row)
+
+        # Assert
+        expected_result = {
+            'univariates__brand__a': 5,
+            'univariates__brand__b': 84,
+            'univariates__brand__loc': 1,
+            'univariates__brand__scale': 1,
+            'num_rows': 10
+        }
+        assert child_synthesizer._get_parameters() == expected_result
+
+    def test_metadata_updated_no_warning(self, tmp_path):
+        """Test scenario where no warning about metadata should be raised.
+
+        Run 1 - The medata is load from our demo datasets.
+        Run 2 - The metadata uses ``detect_from_dataframes`` but is saved to a file
+                before defining the syntheiszer.
+        Run 3 - The metadata is updated with a new column after the synthesizer
+                initialization, but is saved to a file before fitting.
+        """
+        # Setup
+        data, metadata = download_demo('multi_table', 'got_families')
+
+        # Run 1
+        with warnings.catch_warnings(record=True) as captured_warnings:
+            warnings.simplefilter('always')
+            instance = HMASynthesizer(metadata)
+            instance.fit(data)
+
+        # Assert
+        assert len(captured_warnings) == 0
+
+        # Run 2
+        metadata_detect = MultiTableMetadata()
+        metadata_detect.detect_from_dataframes(data)
+
+        metadata_detect.relationships = metadata.relationships
+        for table_name, table_metadata in metadata.tables.items():
+            metadata_detect.tables[table_name].columns = table_metadata.columns
+            metadata_detect.tables[table_name].primary_key = table_metadata.primary_key
+
+        file_name = tmp_path / 'multitable_1.json'
+        metadata_detect.save_to_json(file_name)
+        with warnings.catch_warnings(record=True) as captured_warnings:
+            warnings.simplefilter('always')
+            instance = HMASynthesizer(metadata_detect)
+            instance.fit(data)
+
+        # Assert
+        assert len(captured_warnings) == 0
+
+        # Run 3
+        instance = HMASynthesizer(metadata_detect)
+        metadata_detect.update_column(
+            table_name='characters', column_name='age', sdtype='categorical')
+        file_name = tmp_path / 'multitable_2.json'
+        metadata_detect.save_to_json(file_name)
+        with warnings.catch_warnings(record=True) as captured_warnings:
+            warnings.simplefilter('always')
+            instance.fit(data)
+
+        # Assert
+        assert len(captured_warnings) == 0
+
+    def test_metadata_updated_warning_detect(self):
+        """Test that using ``detect_from_dataframes`` without saving the metadata raise a warning.
+
+        The warning is expected to be raised only once during synthesizer initialization. It should
+        not be raised again when calling ``fit``.
+        """
+        # Setup
+        data, metadata = download_demo('multi_table', 'got_families')
+        metadata_detect = MultiTableMetadata()
+        metadata_detect.detect_from_dataframes(data)
+
+        metadata_detect.relationships = metadata.relationships
+        for table_name, table_metadata in metadata.tables.items():
+            metadata_detect.tables[table_name].columns = table_metadata.columns
+            metadata_detect.tables[table_name].primary_key = table_metadata.primary_key
+
+        expected_message = re.escape(
+            "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+            ' in future SDV versions.'
+        )
+
+        # Run
+        with pytest.warns(UserWarning, match=expected_message) as record:
+            instance = HMASynthesizer(metadata_detect)
+            instance.fit(data)
+
+        # Assert
+        assert len(record) == 1
+
+    def test_null_foreign_keys(self):
+        """Test that the synthesizer crashes when there are null foreign keys."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata.add_table('parent_table')
+        metadata.add_column('parent_table', 'id', sdtype='id')
+        metadata.set_primary_key('parent_table', 'id')
+
+        metadata.add_table('child_table1')
+        metadata.add_column('child_table1', 'id', sdtype='id')
+        metadata.set_primary_key('child_table1', 'id')
+        metadata.add_column('child_table1', 'fk', sdtype='id')
+
+        metadata.add_table('child_table2')
+        metadata.add_column('child_table2', 'id', sdtype='id')
+        metadata.set_primary_key('child_table2', 'id')
+        metadata.add_column('child_table2', 'fk1', sdtype='id')
+        metadata.add_column('child_table2', 'fk2', sdtype='id')
+
+        metadata.add_relationship(
+            parent_table_name='parent_table',
+            child_table_name='child_table1',
+            parent_primary_key='id',
+            child_foreign_key='fk'
+        )
+
+        metadata.add_relationship(
+            parent_table_name='parent_table',
+            child_table_name='child_table2',
+            parent_primary_key='id',
+            child_foreign_key='fk1'
+        )
+
+        metadata.add_relationship(
+            parent_table_name='parent_table',
+            child_table_name='child_table2',
+            parent_primary_key='id',
+            child_foreign_key='fk2'
+        )
+
+        data = {
+            'parent_table': pd.DataFrame({
+                'id': [1, 2, 3]
+            }),
+            'child_table1': pd.DataFrame({
+                'id': [1, 2, 3],
+                'fk': [1, 2, np.nan]
+            }),
+            'child_table2': pd.DataFrame({
+                'id': [1, 2, 3],
+                'fk1': [1, 2, np.nan],
+                'fk2': [1, 2, np.nan]
+            })
+        }
+
+        synthesizer = HMASynthesizer(metadata)
+
+        # Run
+        metadata.validate()
+        metadata.validate_data(data)
+
+        # Run and Assert
+        err_msg = re.escape(
+            'The data contains null values in foreign key columns. This feature is currently '
+            'unsupported. Please remove null values to fit the synthesizer.\n'
+            '\n'
+            'Affected columns:\n'
+            "Table 'child_table1', column(s) ['fk']\n"
+            "Table 'child_table2', column(s) ['fk1', 'fk2']\n"
+        )
+        with pytest.raises(SynthesizerInputError, match=err_msg):
+            synthesizer.fit(data)
+
+
+parametrization = [
+    ('update_column', {
+        'table_name': 'departure', 'column_name': 'city', 'sdtype': 'categorical'
+    }),
+    ('set_primary_key', {'table_name': 'arrival', 'column_name': 'id_flight'}),
+    (
+        'add_column_relationship', {
+            'table_name': 'departure',
+            'relationship_type': 'address',
+            'column_names': ['city', 'country']
+        }
+    ),
+    ('add_alternate_keys', {'table_name': 'departure', 'column_names': ['city', 'country']}),
+    ('set_sequence_key', {'table_name': 'departure', 'column_name': 'city'}),
+    ('add_column', {
+        'table_name': 'departure', 'column_name': 'postal_code', 'sdtype': 'postal_code'
+    }),
+]
+
+
+@pytest.mark.parametrize(('method', 'kwargs'), parametrization)
+def test_metadata_updated_warning(method, kwargs):
+    """Test that modifying metadata without saving it raise a warning.
+
+    The warning should be raised during synthesizer initialization.
+    """
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'departure': {
+                'primary_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'date': {'sdtype': 'datetime'},
+                    'city': {'sdtype': 'city'},
+                    'country': {'sdtype': 'country_code'}
+                },
+            },
+            'arrival': {
+                'foreign_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'date': {'sdtype': 'datetime'},
+                    'city': {'sdtype': 'city'},
+                    'country': {'sdtype': 'country'},
+                    'id_flight': {'sdtype': 'id'}
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'departure',
+                'parent_primary_key': 'id',
+                'child_table_name': 'arrival',
+                'child_foreign_key': 'id'
+            }
+        ]
+    })
+    expected_message = re.escape(
+        "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+        ' in future SDV versions.'
+    )
+
+    # Run
+    metadata.__getattribute__(method)(**kwargs)
+    with pytest.warns(UserWarning, match=expected_message):
+        HMASynthesizer(metadata)
+
+    # Assert
+    assert metadata._multi_table_updated is False
+    for table_name, table_metadata in metadata.tables.items():
+        assert table_metadata._updated is False
+
+
+def test_save_and_load_with_downgraded_version(tmp_path):
+    """Test that synthesizers are raising errors if loaded on a downgraded version."""
+    # Setup
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'departure': {
+                'primary_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'date': {'sdtype': 'datetime'},
+                    'city': {'sdtype': 'city'},
+                    'country': {'sdtype': 'country'}
+                },
+            },
+            'arrival': {
+                'foreign_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'date': {'sdtype': 'datetime'},
+                    'city': {'sdtype': 'city'},
+                    'country': {'sdtype': 'country'},
+                    'id_flight': {'sdtype': 'id'}
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'departure',
+                'parent_primary_key': 'id',
+                'child_table_name': 'arrival',
+                'child_foreign_key': 'id'
+            }
+        ]
+    })
+
+    instance = HMASynthesizer(metadata)
+    instance._fitted = True
+    instance._fitted_sdv_version = '10.0.0'
+    synthesizer_path = tmp_path / 'synthesizer.pkl'
+    instance.save(synthesizer_path)
+
+    # Run and Assert
+    error_msg = (
+        f'You are currently on SDV version {version.public} but this '
+        'synthesizer was created on version 10.0.0. '
+        'Downgrading your SDV version is not supported.'
+    )
+    with pytest.raises(VersionError, match=error_msg):
+        HMASynthesizer.load(synthesizer_path)
+
+
+def test_fit_raises_version_error():
+    """Test that a ``VersionError`` is being raised if the current version is newer."""
+    # Setup
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'departure': {
+                'primary_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'date': {'sdtype': 'datetime'},
+                    'city': {'sdtype': 'city'},
+                    'country': {'sdtype': 'country'}
+                },
+            },
+            'arrival': {
+                'foreign_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'date': {'sdtype': 'datetime'},
+                    'city': {'sdtype': 'city'},
+                    'country': {'sdtype': 'country'},
+                    'id_flight': {'sdtype': 'id'}
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'departure',
+                'parent_primary_key': 'id',
+                'child_table_name': 'arrival',
+                'child_foreign_key': 'id'
+            }
+        ]
+    })
+
+    instance = HMASynthesizer(metadata)
+    instance._fitted_sdv_version = '1.0.0'
+
+    # Run and Assert
+    expected_message = (
+        f'You are currently on SDV version {version.public} but this synthesizer was created on '
+        'version 1.0.0. Fitting this synthesizer again is not supported. Please create a new '
+        'synthesizer.'
+    )
+    with pytest.raises(VersionError, match=expected_message):
+        instance.fit({})
+
+
+def test_hma_relationship_validity():
+    """Test the quality of the HMA synthesizer GH#1834."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'Dunur_v1')
+    synthesizer = HMASynthesizer(metadata)
+    report = DiagnosticReport()
+
+    # Run
+    synthesizer.fit(data)
+    sample = synthesizer.sample()
+    report.generate(data, sample, metadata.to_dict(), verbose=False)
+
+    # Assert
+    assert report.get_details('Relationship Validity')['Score'].mean() == 1.0
