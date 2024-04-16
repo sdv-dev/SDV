@@ -7,10 +7,17 @@ import numpy as np
 import pandas as pd
 
 from sdv._utils import _get_root_tables
+from sdv.errors import InvalidDataError
 from sdv.multi_table import HMASynthesizer
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 
 MODELABLE_SDTYPE = ['categorical', 'numerical', 'datetime', 'boolean']
+
+
+def _get_child_tables(relationships):
+    parent_tables = {rel['parent_table_name'] for rel in relationships}
+    child_tables = {rel['child_table_name'] for rel in relationships}
+    return child_tables - parent_tables
 
 
 def _get_relationships_for_child(relationships, child_table):
@@ -77,6 +84,34 @@ def _get_all_descendant_per_root_at_order_n(relationships, order):
         all_descendants[root]['num_descendants'] = len(all_descendant_root)
 
     return all_descendants
+
+
+def _get_ancestors(relationships, child_table):
+    """Get the ancestors of the child table."""
+    ancestors = set()
+    parent_relationships = _get_relationships_for_child(relationships, child_table)
+    for relationship in parent_relationships:
+        parent_table = relationship['parent_table_name']
+        ancestors.add(parent_table)
+        ancestors.update(_get_ancestors(relationships, parent_table))
+
+    return ancestors
+
+
+def _get_disconnected_roots_from_table(relationship, table):
+    """Get the disconnected roots table from the given table."""
+    roots_table = _get_root_tables(relationship)
+    child_tables = _get_child_tables(relationship)
+    if table in child_tables:
+        return roots_table - _get_ancestors(relationship, table)
+
+    connected_roots = set()
+    for child in child_tables:
+        child_ancestor = _get_ancestors(relationship, child)
+        if table in child_ancestor:
+            connected_roots.update(roots_table.intersection(child_ancestor))
+
+    return roots_table - connected_roots
 
 
 def _simplify_relationships_and_tables(metadata, tables_to_drop):
@@ -392,3 +427,123 @@ def _get_rows_to_drop(metadata, data):
             relationships = [rel for rel in relationships if rel not in relationships_parent]
 
     return table_to_idx_to_drop
+
+
+def _drop_rows(metadata, data, drop_missing_values):
+    table_to_idx_to_drop = _get_rows_to_drop(metadata, data)
+    for table in sorted(metadata.tables):
+        idx_to_drop = table_to_idx_to_drop[table]
+        data[table] = data[table].drop(idx_to_drop)
+        if drop_missing_values:
+            relationships = _get_relationships_for_child(metadata.relationships, table)
+            for relationship in relationships:
+                child_column = relationship['child_foreign_key']
+                data[table] = data[table].dropna(subset=[child_column])
+
+        if data[table].empty:
+            raise InvalidDataError([
+                f"All references in table '{table}' are unknown and must be dropped."
+                'Try providing different data for this table.'
+            ])
+
+
+def _subsample_disconnected_roots(metadata, data, table, ratio_to_keep):
+    """Subsample the disconnected roots tables."""
+    relationships = metadata.relationships
+    roots = _get_disconnected_roots_from_table(relationships, table)
+    for root in roots:
+        data[root] = data[root].sample(frac=ratio_to_keep)
+
+    _drop_rows(metadata, data, drop_missing_values=False)
+
+
+def _subsample_table_and_descendants(metadata, data, table, num_rows):
+    """Subsample the table and its descendants."""
+    data[table] = data[table].sample(num_rows)
+    _drop_rows(metadata, data, drop_missing_values=False)
+
+
+def _get_primary_keys_referenced(metadata, data):
+    relationships = metadata.relationships
+    primary_keys_referenced = defaultdict(set)
+    for relationship in relationships:
+        parent_table = relationship['parent_table_name']
+        child_table = relationship['child_table_name']
+        foreign_key = relationship['child_foreign_key']
+        primary_keys_referenced[parent_table] = set(data[child_table][foreign_key].unique())
+
+    return primary_keys_referenced
+
+
+def _subsample_parent(data, parent, parent_primary_key, pk_referenced_before,
+                      unreferenced_primary_keys):
+    total_referenced = len(pk_referenced_before)
+    total_dropped = len(unreferenced_primary_keys)
+    drop_proportion = total_dropped / total_referenced if total_referenced else 0
+
+    parent_data = data[parent]
+    unreferenced_data = parent_data[~parent_data[parent_primary_key].isin(pk_referenced_before)]
+    data[parent] = parent_data[~parent_data[parent_primary_key].isin(unreferenced_primary_keys)]
+
+    # Randomly drop a proportional amount of never-referenced rows
+    drop_count = int(drop_proportion * len(unreferenced_data))
+    rows_to_drop = unreferenced_data.sample(n=drop_count, random_state=42)
+    data[parent] = parent_data[~parent_data.index.isin(rows_to_drop.index)]
+
+
+def _subsample_ancestors(metadata, data, table, primary_keys_referenced):
+    """Subsample the ancestors of the table."""
+    relationships = metadata.relationships
+    ancestors = _get_ancestors(relationships, table)
+    pk_referenced = _get_primary_keys_referenced(metadata, data)
+
+    while ancestors:
+        direct_relationships = _get_relationships_for_child(relationships, table)
+        direct_parents = {rel['parent_table_name'] for rel in direct_relationships}
+        for parent in direct_parents:
+            parent_primary_key = metadata.tables[parent].primary_key
+            pk_referenced_before = primary_keys_referenced[parent]
+            unreferenced_primary_keys = pk_referenced_before - pk_referenced[parent]
+            _subsample_parent(
+                data, parent, parent_primary_key, pk_referenced_before,
+                unreferenced_primary_keys
+            )
+
+            if unreferenced_primary_keys:
+                primary_keys_referenced[parent] = pk_referenced[parent]
+                _subsample_ancestors(metadata, data, parent, primary_keys_referenced)
+
+
+def _subsample_data(metadata, data, main_table_name, num_rows):
+    """Subsample multi-table table based on a table and a number of rows.
+
+    The strategy is to:
+    - Subsample the disconnected roots tables by keeping a similar proportion of data
+      than the maint table. Ensure referential integrity.
+    - Subsample the main table and its descendants to ensure referential integrity.
+    - Subsample the ancestors of the main table by removing primary key rows that are no longer
+      referenced by the descendants and some unreferenced rows.
+
+    Args:
+        metadata (MultiTableMetadata):
+            Metadata of the datasets.
+        data (dict):
+            Dictionary that maps each table name (string) to the data for that
+            table (pandas.DataFrame).
+        main_table_name (str):
+            Name of the main table.
+        num_rows (int):
+            Number of rows to keep in the main table.
+
+    Returns:
+        dict:
+            Dictionary with the subsampled dataframes.
+    """
+    result = deepcopy(data)
+    primary_keys_referenced = _get_primary_keys_referenced(metadata, result)
+    ratio_to_keep = num_rows / len(result[main_table_name])
+    _subsample_disconnected_roots(metadata, result, main_table_name, ratio_to_keep)
+    _subsample_table_and_descendants(metadata, result, main_table_name, num_rows)
+    _subsample_ancestors(metadata, result, main_table_name, primary_keys_referenced)
+
+    return result

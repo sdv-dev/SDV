@@ -1,5 +1,4 @@
 import re
-from collections import defaultdict
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -12,9 +11,8 @@ from sdv.metadata.errors import InvalidMetadataError
 from sdv.utils.poc import drop_unknown_references, simplify_schema
 
 
-@patch('sys.stdout.write')
-@patch('sdv.utils.poc._get_rows_to_drop')
-def test_drop_unknown_references(mock_get_rows_to_drop, mock_stdout_write):
+@patch('sdv.utils.poc._drop_rows')
+def test_drop_unknown_references(mock_drop_rows):
     """Test ``drop_unknown_references``."""
     # Setup
     relationships = [
@@ -59,27 +57,17 @@ def test_drop_unknown_references(mock_get_rows_to_drop, mock_stdout_write):
             'C': ['Yes', 'No', 'No', 'No', 'No']
         })
     }
-    mock_get_rows_to_drop.return_value = defaultdict(set, {
-        'child': {4},
-        'grandchild': {0, 2, 4}
-    })
+
+    def _drop_rows(metadata, data, drop_missing_values):
+        data['child'] = data['child'].iloc[:4]
+        data['grandchild'] = data['grandchild'].iloc[[1, 3]]
+
+    mock_drop_rows.side_effect = _drop_rows
 
     # Run
     result = drop_unknown_references(data, metadata)
 
     # Assert
-    expected_pattern = re.compile(
-        r'Success! All foreign keys have referential integrity\.\s*'
-        r'Table Name\s*#\s*Rows \(Original\)\s*#\s*Invalid Rows\s*#\s*Rows \(New\)\s*'
-        r'child\s*5\s*1\s*4\s*'
-        r'grandchild\s*5\s*3\s*2\s*'
-        r'parent\s*5\s*0\s*5'
-    )
-    output = mock_stdout_write.call_args[0][0]
-    assert expected_pattern.match(output)
-    metadata.validate.assert_called_once()
-    metadata.validate_data.assert_called_once_with(data)
-    mock_get_rows_to_drop.assert_called_once()
     expected_result = {
         'parent': pd.DataFrame({
             'id_parent': [0, 1, 2, 3, 4],
@@ -96,6 +84,9 @@ def test_drop_unknown_references(mock_get_rows_to_drop, mock_stdout_write):
             'C': ['No', 'No']
         }, index=[1, 3])
     }
+    metadata.validate.assert_called_once()
+    metadata.validate_data.assert_called_once_with(data)
+    mock_drop_rows.assert_called_once_with(metadata, result, True)
     for table_name, table in result.items():
         pd.testing.assert_frame_equal(table, expected_result[table_name])
 

@@ -3,11 +3,15 @@ from collections import defaultdict
 from copy import deepcopy
 from unittest.mock import Mock, call, patch
 
+import numpy as np
 import pandas as pd
+import pytest
 
+from sdv.errors import InvalidDataError
 from sdv.metadata import MultiTableMetadata
 from sdv.multi_table.utils import (
-    _get_all_descendant_per_root_at_order_n, _get_columns_to_drop_child, _get_n_order_descendants,
+    _drop_rows, _get_all_descendant_per_root_at_order_n, _get_ancestors,
+    _get_columns_to_drop_child, _get_disconnected_roots_from_table, _get_n_order_descendants,
     _get_num_column_to_drop, _get_relationships_for_child, _get_relationships_for_parent,
     _get_rows_to_drop, _get_total_estimated_columns, _print_simplified_schema_summary,
     _simplify_child, _simplify_children, _simplify_data, _simplify_grandchildren,
@@ -127,6 +131,297 @@ def test__get_rows_to_drop():
     assert result == expected_result
 
 
+@patch('sdv.multi_table.utils._get_rows_to_drop')
+def test__drop_rows(mock_get_rows_to_drop):
+    """Test the ``_drop_rows`` method."""
+    # Setup
+    relationships = [
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        },
+        {
+            'parent_table_name': 'child',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_child',
+            'child_foreign_key': 'child_foreign_key'
+        },
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        }
+    ]
+
+    metadata = Mock()
+    metadata.relationships = relationships
+    metadata.tables = {
+        'parent': Mock(primary_key='id_parent'),
+        'child': Mock(primary_key='id_child'),
+        'grandchild': Mock(primary_key='id_grandchild')
+    }
+    data = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 5],
+            'id_child': [5, 6, 7, 8, 9],
+            'B': ['Yes', 'No', 'No', 'No', 'No']
+        }),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 6],
+            'child_foreign_key': [9, 5, 11, 6, 4],
+            'C': ['Yes', 'No', 'No', 'No', 'No']
+        })
+    }
+
+    mock_get_rows_to_drop.return_value = defaultdict(set, {
+        'child': {4},
+        'grandchild': {0, 2, 4}
+    })
+
+    # Run
+    _drop_rows(metadata, data, False)
+
+    # Assert
+    mock_get_rows_to_drop.assert_called_once_with(metadata, data)
+    expected_result = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2],
+            'id_child': [5, 6, 7, 8],
+            'B': ['Yes', 'No', 'No', 'No']
+        }, index=[0, 1, 2, 3]),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [1, 2],
+            'child_foreign_key': [5, 6],
+            'C': ['No', 'No']
+        }, index=[1, 3])
+    }
+    for table_name, table in data.items():
+        pd.testing.assert_frame_equal(table, expected_result[table_name])
+
+
+@patch('sdv.multi_table.utils._get_rows_to_drop')
+def test_drop_unknown_references_with_nan(mock_get_rows_to_drop):
+    """Test ``drop_unknown_references`` whith NaNs and drop_missing_values True."""
+    # Setup
+    relationships = [
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        },
+        {
+            'parent_table_name': 'child',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_child',
+            'child_foreign_key': 'child_foreign_key'
+        },
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        }
+    ]
+
+    metadata = Mock()
+    metadata.relationships = relationships
+    metadata.tables = {'parent', 'child', 'grandchild'}
+
+    data = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 5, None],
+            'id_child': [5, 6, 7, 8, 9, 10],
+            'B': ['Yes', 'No', 'No', 'No', 'No', 'No']
+        }),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 6, 4],
+            'child_foreign_key': [9, np.nan, 5, 11, 6, 4],
+            'C': ['Yes', 'No', 'No', 'No', 'No', 'No']
+        })
+    }
+    mock_get_rows_to_drop.return_value = defaultdict(set, {
+        'child': {4},
+        'grandchild': {0, 3, 4}
+    })
+
+    # Run
+    _drop_rows(metadata, data, True)
+
+    # Assert
+    mock_get_rows_to_drop.assert_called_once()
+    expected_result = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0., 1., 2., 2.],
+            'id_child': [5, 6, 7, 8],
+            'B': ['Yes', 'No', 'No', 'No']
+        }, index=[0, 1, 2, 3]),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [2, 4],
+            'child_foreign_key': [5., 4.],
+            'C': ['No', 'No']
+        }, index=[2, 5])
+    }
+    for table_name, table in data.items():
+        pd.testing.assert_frame_equal(table, expected_result[table_name])
+
+
+@patch('sdv.multi_table.utils._get_rows_to_drop')
+def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop):
+    """Test ``drop_unknown_references`` with NaNs and drop_missing_values False."""
+    # Setup
+    relationships = [
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        },
+        {
+            'parent_table_name': 'child',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_child',
+            'child_foreign_key': 'child_foreign_key'
+        },
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        }
+    ]
+
+    metadata = Mock()
+    metadata.relationships = relationships
+    metadata.tables = {'parent', 'child', 'grandchild'}
+    metadata.validate_data.side_effect = InvalidDataError('Invalid data')
+
+    data = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 5, None],
+            'id_child': [5, 6, 7, 8, 9, 10],
+            'B': ['Yes', 'No', 'No', 'No', 'No', 'No']
+        }),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 6, 4],
+            'child_foreign_key': [9, np.nan, 5, 11, 6, 4],
+            'C': ['Yes', 'No', 'No', 'No', 'No', 'No']
+        })
+    }
+    mock_get_rows_to_drop.return_value = defaultdict(set, {
+        'child': {4},
+        'grandchild': {0, 3, 4}
+    })
+
+    # Run
+    _drop_rows(metadata, data, drop_missing_values=False)
+
+    # Assert
+    mock_get_rows_to_drop.assert_called_once()
+    expected_result = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0., 1., 2., 2., None],
+            'id_child': [5, 6, 7, 8, 10],
+            'B': ['Yes', 'No', 'No', 'No', 'No']
+        }, index=[0, 1, 2, 3, 5]),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [1, 2, 4],
+            'child_foreign_key': [np.nan, 5, 4.],
+            'C': ['No', 'No', 'No']
+        }, index=[1, 2, 5])
+    }
+    for table_name, table in data.items():
+        pd.testing.assert_frame_equal(table, expected_result[table_name])
+
+
+@patch('sdv.multi_table.utils._get_rows_to_drop')
+def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
+    """Test ``drop_unknown_references`` when all rows are dropped."""
+    # Setup
+    relationships = [
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        },
+        {
+            'parent_table_name': 'child',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_child',
+            'child_foreign_key': 'child_foreign_key'
+        },
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        }
+    ]
+
+    metadata = Mock()
+    metadata.relationships = relationships
+    metadata.tables = {'parent', 'child', 'grandchild'}
+    metadata.validate_data.side_effect = InvalidDataError('Invalid data')
+
+    data = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 5],
+            'id_child': [5, 6, 7, 8, 9],
+            'B': ['Yes', 'No', 'No', 'No', 'No']
+        }),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 6],
+            'child_foreign_key': [9, 5, 11, 6, 4],
+            'C': ['Yes', 'No', 'No', 'No', 'No']
+        })
+    }
+
+    mock_get_rows_to_drop.return_value = defaultdict(set, {
+        'child': {0, 1, 2, 3, 4}
+    })
+
+    # Run and Assert
+    expected_message = re.escape(
+        'The provided data does not match the metadata:\n'
+        "All references in table 'child' are unknown and must be dropped."
+        'Try providing different data for this table.'
+    )
+    with pytest.raises(InvalidDataError, match=expected_message):
+        _drop_rows(metadata, data, False)
+
+
 def test__get_n_order_descendants():
     """Test the ``_get_n_order_descendants`` method."""
     # Setup
@@ -191,6 +486,61 @@ def test__get_all_descendant_per_root_at_order_n():
             'num_descendants': 4
         }
     }
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(('table_name', 'expected_result'), [
+    ('grandchild', {'child', 'parent', 'grandparent', 'other_root'}),
+    ('child', {'parent', 'grandparent', 'other_root'}),
+    ('parent', {'grandparent'}),
+    ('other_table', {'grandparent'}),
+    ('grandparent', set()),
+    ('other_root', set()),
+])
+def test__get_ancestors(table_name, expected_result):
+    """Test the ``_get_ancestors`` method."""
+    # Setup
+    relationships = [
+        {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
+        {'parent_table_name': 'parent', 'child_table_name': 'child'},
+        {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
+        {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
+        {'parent_table_name': 'other_root', 'child_table_name': 'child'},
+    ]
+
+    # Run
+    result = _get_ancestors(relationships, table_name)
+
+    # Assert
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(('table_name', 'expected_result'), [
+    ('grandchild', {'disconnected_root'}),
+    ('child', {'disconnected_root'}),
+    ('parent', {'disconnected_root'}),
+    ('other_table', {'disconnected_root', 'other_root'}),
+    ('grandparent', {'disconnected_root'}),
+    ('other_root', {'disconnected_root'}),
+    ('disconnected_root', {'grandparent', 'other_root'}),
+    ('disconnect_child', {'grandparent', 'other_root'}),
+])
+def test__get_disconnected_roots_from_table(table_name, expected_result):
+    """Test the ``_get_disconnected_roots_from_table`` method."""
+    # Setup
+    relationships = [
+        {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
+        {'parent_table_name': 'parent', 'child_table_name': 'child'},
+        {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
+        {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
+        {'parent_table_name': 'other_root', 'child_table_name': 'child'},
+        {'parent_table_name': 'disconnected_root', 'child_table_name': 'disconnect_child'},
+    ]
+
+    # Run
+    result = _get_disconnected_roots_from_table(relationships, table_name)
+
+    # Assert
     assert result == expected_result
 
 
