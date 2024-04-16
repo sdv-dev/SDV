@@ -1,15 +1,15 @@
-Run started:2024-04-03 21:26:55.293630
+Run started:2024-04-16 22:26:14.110085
 
 Test results:
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/_utils.py:379:8
-378	                return True
-379	        except Exception:
-380	            pass
-381	
+   Location: ./sdv/_utils.py:320:8
+319	
+320	        except Exception:
+321	            pass
+322	
 
 --------------------------------------------------
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '#'
@@ -36,28 +36,28 @@ Test results:
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/metadata/single_table.py:512:12
-511	
-512	            except Exception:
-513	                pass
-514	
+   Location: ./sdv/metadata/single_table.py:513:12
+512	
+513	            except Exception:
+514	                pass
+515	
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/multi_table/hma.py:298:12
-297	                index.append(foreign_key_value)
-298	            except Exception:
-299	                # Skip children rows subsets that fail
-300	                pass
-301	
+   Location: ./sdv/multi_table/hma.py:336:12
+335	                index.append(foreign_key_value)
+336	            except Exception:
+337	                # Skip children rows subsets that fail
+338	                pass
+339	
 
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 10421
+	Total lines of code: 10878
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
