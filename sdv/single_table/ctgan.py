@@ -71,15 +71,17 @@ class LossValuesMixin:
 
         # Tidy up the loss values data
         loss_df = self._model.loss_values.copy()
-        loss_df['Generator Loss'] = loss_df['Generator Loss'].apply(lambda x: x.item())
-        loss_df['Discriminator Loss'] = loss_df['Discriminator Loss'].apply(lambda x: x.item())
+        loss_df['Generator Loss'] = loss_df['Generator Loss'].apply(
+            lambda x: x.item() if isinstance(x, pd.Series) else x)
+        loss_df['Discriminator Loss'] = loss_df['Discriminator Loss'].apply(
+            lambda x: x.item() if isinstance(x, pd.Series) else x)
 
         # Create a pretty chart using Plotly Express
         fig = px.line(
             loss_df, x='Epoch',
             y=['Generator Loss', 'Discriminator Loss'],
             color_discrete_map={
-                'Generator Loss': visualization.PlotConfig.DATACEBO_BLUE,
+                'Generator Loss': visualization.PlotConfig.DATACEBO_DARK,
                 'Discriminator Loss': visualization.PlotConfig.DATACEBO_GREEN
             },
         )
