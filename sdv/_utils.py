@@ -395,7 +395,7 @@ def generate_synthesizer_id(synthesizer):
     """Generate a unique identifier for the synthesizer instance.
 
     This method creates a unique identifier by combining the class name, the public SDV version
-    and the last part of a UUID4 composed by 12 random characters.
+    and the last part of a UUID4 composed by 36 random characters.
 
     Args:
         synthesizer (BaseSynthesizer or BaseMultiTableSynthesizer):
@@ -407,5 +407,5 @@ def generate_synthesizer_id(synthesizer):
     """
     class_name = synthesizer.__class__.__name__
     synth_version = version.public
-    unique_id = str(uuid.uuid4()).split('-')[-1]
+    unique_id = ''.join(str(uuid.uuid4()).split('-'))
     return f'{class_name}_{synth_version}_{unique_id}'

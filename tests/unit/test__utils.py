@@ -659,4 +659,4 @@ def test_generate_synthesizer_id(mock_version, mock_uuid):
     result = generate_synthesizer_id(synthesizer)
 
     # Assert
-    assert result == 'BaseSingleTableSynthesizer_1.0.0_990d1231a5f5'
+    assert result == 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'

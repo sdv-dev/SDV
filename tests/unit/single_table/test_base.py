@@ -67,7 +67,8 @@ class TestBaseSingleTableSynthesizer:
         """Test instantiating with default values."""
         # Setup
         metadata = Mock()
-        mock_generate_synthesizer_id.return_value = 'BaseSingleTableSynthesizer_1.0.0_123456789abc'
+        synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        mock_generate_synthesizer_id.return_value = synthesizer_id
 
         # Run
         instance = BaseSingleTableSynthesizer(metadata)
@@ -78,7 +79,7 @@ class TestBaseSingleTableSynthesizer:
         assert instance._data_processor == mock_data_processor.return_value
         assert instance._random_state_set is False
         assert instance._fitted is False
-        assert instance._synthesizer_id == 'BaseSingleTableSynthesizer_1.0.0_123456789abc'
+        assert instance._synthesizer_id == synthesizer_id
         mock_data_processor.assert_called_once_with(
             metadata=metadata,
             enforce_rounding=instance.enforce_rounding,
@@ -1764,7 +1765,8 @@ class TestBaseSingleTableSynthesizer:
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
         synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
-        mock_generate_synthesizer_id.return_value = 'BaseSingleTableSynthesizer_1.0.0_123456789abc'
+        synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        mock_generate_synthesizer_id.return_value = synthesizer_id
         cloudpickle_mock.load.return_value = synthesizer_mock
 
         # Run
@@ -1775,7 +1777,7 @@ class TestBaseSingleTableSynthesizer:
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
         assert loaded_instance == synthesizer_mock
-        assert loaded_instance._synthesizer_id == 'BaseSingleTableSynthesizer_1.0.0_123456789abc'
+        assert loaded_instance._synthesizer_id == synthesizer_id
         mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
         mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
 

@@ -109,7 +109,8 @@ class TestBaseMultiTableSynthesizer:
         calls the ``self._initialize_models`` which creates the initial instances of those.
         """
         # Setup
-        mock_generate_synthesizer_id.return_value = 'BaseMultiTableSynthesizer_1.0.0_123456789abc'
+        synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        mock_generate_synthesizer_id.return_value = synthesizer_id
         metadata = get_multi_table_metadata()
         metadata.validate = Mock()
 
@@ -125,7 +126,7 @@ class TestBaseMultiTableSynthesizer:
         instance.metadata.validate.assert_called_once_with()
         mock_check_metadata_updated.assert_called_once()
         mock_generate_synthesizer_id.assert_called_once_with(instance)
-        assert instance._synthesizer_id == 'BaseMultiTableSynthesizer_1.0.0_123456789abc'
+        assert instance._synthesizer_id == synthesizer_id
 
     def test__init__column_relationship_warning(self):
         """Test that a warning is raised only once when the metadata has column relationships."""
@@ -1408,7 +1409,8 @@ class TestBaseMultiTableSynthesizer:
                   mock_generate_synthesizer_id):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
-        mock_generate_synthesizer_id.return_value = 'BaseMultiTableSynthesizer_1.0.0_123456789abc'
+        synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        mock_generate_synthesizer_id.return_value = synthesizer_id
         synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
         cloudpickle_mock.load.return_value = synthesizer_mock
 
@@ -1421,5 +1423,5 @@ class TestBaseMultiTableSynthesizer:
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         assert loaded_instance == synthesizer_mock
         mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
-        assert loaded_instance._synthesizer_id == 'BaseMultiTableSynthesizer_1.0.0_123456789abc'
+        assert loaded_instance._synthesizer_id == synthesizer_id
         mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
