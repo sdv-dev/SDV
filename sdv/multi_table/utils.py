@@ -12,6 +12,7 @@ from sdv.multi_table import HMASynthesizer
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 
 MODELABLE_SDTYPE = ['categorical', 'numerical', 'datetime', 'boolean']
+RANDON_STATE = 42
 
 
 def _get_child_tables(relationships):
@@ -452,14 +453,14 @@ def _subsample_disconnected_roots(metadata, data, table, ratio_to_keep):
     relationships = metadata.relationships
     roots = _get_disconnected_roots_from_table(relationships, table)
     for root in roots:
-        data[root] = data[root].sample(frac=ratio_to_keep)
+        data[root] = data[root].sample(frac=ratio_to_keep, random_state=RANDON_STATE)
 
     _drop_rows(metadata, data, drop_missing_values=False)
 
 
 def _subsample_table_and_descendants(metadata, data, table, num_rows):
     """Subsample the table and its descendants."""
-    data[table] = data[table].sample(num_rows)
+    data[table] = data[table].sample(num_rows, random_state=RANDON_STATE)
     _drop_rows(metadata, data, drop_missing_values=False)
 
 
@@ -470,48 +471,49 @@ def _get_primary_keys_referenced(metadata, data):
         parent_table = relationship['parent_table_name']
         child_table = relationship['child_table_name']
         foreign_key = relationship['child_foreign_key']
-        primary_keys_referenced[parent_table] = set(data[child_table][foreign_key].unique())
+        primary_keys_referenced[parent_table].update(set(data[child_table][foreign_key].unique()))
 
     return primary_keys_referenced
 
 
-def _subsample_parent(data, parent, parent_primary_key, pk_referenced_before,
-                      unreferenced_primary_keys):
-    total_referenced = len(pk_referenced_before)
-    total_dropped = len(unreferenced_primary_keys)
-    drop_proportion = total_dropped / total_referenced if total_referenced else 0
+def _subsample_parent(parent_table, parent_primary_key, pk_referenced_before_parent,
+                      unreferenced_pk_parent):
+    total_referenced = len(pk_referenced_before_parent)
+    total_dropped = len(unreferenced_pk_parent)
+    drop_proportion = total_dropped / total_referenced
 
-    parent_data = data[parent]
-    unreferenced_data = parent_data[~parent_data[parent_primary_key].isin(pk_referenced_before)]
-    data[parent] = parent_data[~parent_data[parent_primary_key].isin(unreferenced_primary_keys)]
+    parent_table = parent_table[~parent_table[parent_primary_key].isin(unreferenced_pk_parent)]
+    unreferenced_data = parent_table[
+        ~parent_table[parent_primary_key].isin(pk_referenced_before_parent)
+    ]
 
     # Randomly drop a proportional amount of never-referenced rows
-    drop_count = int(drop_proportion * len(unreferenced_data))
-    rows_to_drop = unreferenced_data.sample(n=drop_count, random_state=42)
-    data[parent] = parent_data[~parent_data.index.isin(rows_to_drop.index)]
+    unreferenced_data_to_drop = unreferenced_data.sample(
+        frac=drop_proportion, random_state=RANDON_STATE
+    )
+    parent_table = parent_table.drop(unreferenced_data_to_drop.index)
+
+    return parent_table
 
 
 def _subsample_ancestors(metadata, data, table, primary_keys_referenced):
     """Subsample the ancestors of the table."""
     relationships = metadata.relationships
-    ancestors = _get_ancestors(relationships, table)
     pk_referenced = _get_primary_keys_referenced(metadata, data)
+    direct_relationships = _get_relationships_for_child(relationships, table)
+    direct_parents = {rel['parent_table_name'] for rel in direct_relationships}
+    for parent in sorted(direct_parents):
+        parent_primary_key = metadata.tables[parent].primary_key
+        pk_referenced_before = primary_keys_referenced[parent]
+        unreferenced_primary_keys = pk_referenced_before - pk_referenced[parent]
+        data[parent] = _subsample_parent(
+            data[parent], parent_primary_key, pk_referenced_before,
+            unreferenced_primary_keys
+        )
+        if unreferenced_primary_keys:
+            primary_keys_referenced[parent] = pk_referenced[parent]
 
-    while ancestors:
-        direct_relationships = _get_relationships_for_child(relationships, table)
-        direct_parents = {rel['parent_table_name'] for rel in direct_relationships}
-        for parent in direct_parents:
-            parent_primary_key = metadata.tables[parent].primary_key
-            pk_referenced_before = primary_keys_referenced[parent]
-            unreferenced_primary_keys = pk_referenced_before - pk_referenced[parent]
-            _subsample_parent(
-                data, parent, parent_primary_key, pk_referenced_before,
-                unreferenced_primary_keys
-            )
-
-            if unreferenced_primary_keys:
-                primary_keys_referenced[parent] = pk_referenced[parent]
-                _subsample_ancestors(metadata, data, parent, primary_keys_referenced)
+        _subsample_ancestors(metadata, data, parent, primary_keys_referenced)
 
 
 def _subsample_data(metadata, data, main_table_name, num_rows):
@@ -547,3 +549,17 @@ def _subsample_data(metadata, data, main_table_name, num_rows):
     _subsample_ancestors(metadata, result, main_table_name, primary_keys_referenced)
 
     return result
+
+def _print_subsample_summary(data_before, data_after):
+    """Print the summary of the subsampled data."""
+    tables = sorted(data_before.keys())
+    summary = pd.DataFrame({
+        'Table Name': tables,
+        '# Rows (Before)': [len(data_before[table]) for table in tables],
+        '# Rows (After)': [
+            len(data_after[table]) if table in data_after else 0 for table in tables
+        ]
+    })
+    message = ['Success! The data has been subsampled.\n']
+    message.append(summary.to_string(index=False))
+    print('\n'.join(message))  # noqa: T001
