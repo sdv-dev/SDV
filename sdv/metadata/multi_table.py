@@ -1,5 +1,6 @@
 """Multi Table Metadata."""
 
+import datetime
 import json
 import logging
 import warnings
@@ -1040,6 +1041,21 @@ class MultiTableMetadata:
         """
         validate_file_does_not_exist(filepath)
         metadata = self.to_dict()
+        total_columns = 0
+        for table in self.tables:
+            total_columns += len(table.columns)
+
+        LOGGER.info(
+            '\nMetadata Save:\n'
+            '  Timestamp: %s\n'
+            '  Statistics about the metadata:\n'
+            '    Total number of tables: %s',
+            '    Total number of columns: %s'
+            '    Total number of relationships: %s',
+            datetime.datetime.now(),
+            total_columns,
+            len(self.relationships)
+        )
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)
 

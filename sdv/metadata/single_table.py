@@ -1206,6 +1206,16 @@ class SingleTableMetadata:
         validate_file_does_not_exist(filepath)
         metadata = self.to_dict()
         metadata['METADATA_SPEC_VERSION'] = self.METADATA_SPEC_VERSION
+        LOGGER.info(
+            '\nMetadata Save:\n'
+            '  Timestamp: %s\n'
+            '  Statistics about the metadata:\n'
+            '    Total number of tables: 1',
+            '    Total number of columns: %s'
+            '    Total number of relationships: 0',
+            datetime.now(),
+            len(self.columns)
+        )
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)
 

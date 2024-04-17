@@ -2,13 +2,16 @@
 import contextlib
 import datetime
 import inspect
+import logging
 import operator
 import warnings
 from collections import defaultdict
 from copy import deepcopy
+from pathlib import Path
 
 import cloudpickle
 import numpy as np
+import yaml
 from tqdm import tqdm
 
 from sdv import version
@@ -17,6 +20,13 @@ from sdv._utils import (
     generate_synthesizer_id)
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
+
+logger_config_file = Path(__file__).parent.parent
+with open(logger_config_file / 'sdv_logger.yml', 'r') as f:
+    logger_conf = yaml.safe_load(f)
+
+logging.config.dictConfig(logger_conf)
+LOGGER = logging.getLogger('BaseMultiTableSynthesizer')
 
 
 class BaseMultiTableSynthesizer:
@@ -113,6 +123,15 @@ class BaseMultiTableSynthesizer:
         self._fitted_sdv_version = None
         self._fitted_sdv_enterprise_version = None
         self._synthesizer_id = generate_synthesizer_id(self)
+        LOGGER.info(
+            '\nInstance:\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            self.__class__.__name__,
+            self._synthesizer_id
+        )
 
     def _get_root_parents(self):
         """Get the set of root parents in the graph."""
@@ -371,6 +390,28 @@ class BaseMultiTableSynthesizer:
             processed_data (dict):
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
         """
+        total_rows = 0
+        total_columns = 0
+        for table in processed_data.values():
+            total_rows += len(table)
+            total_columns += len(table.columns)
+
+        LOGGER.info(
+            '\nFit processed data\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Statistics of the fit data:\n'
+            '    Total number of tables: %s\n'
+            '    Table number of rows: %s\n'
+            '    Table number of columns: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            self.__class__.__name__,
+            len(processed_data),
+            total_rows,
+            total_columns,
+            self._synthesizer_id,
+        )
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         augmented_data = self._augment_tables(processed_data)
         self._model_tables(augmented_data)
@@ -387,6 +428,28 @@ class BaseMultiTableSynthesizer:
                 Dictionary mapping each table name to a ``pandas.DataFrame`` in the raw format
                 (before any transformations).
         """
+        total_rows = 0
+        total_columns = 0
+        for table in data.values():
+            total_rows += len(table)
+            total_columns += len(table.columns)
+
+        LOGGER.info(
+            '\nFit\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Statistics of the fit data:\n'
+            '    Total number of tables: %s\n'
+            '    Table number of rows: %s\n'
+            '    Table number of columns: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            self.__class__.__name__,
+            len(data),
+            total_rows,
+            total_columns,
+            self._synthesizer_id,
+        )
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         _validate_foreign_keys_not_null(self.metadata, data)
         self._check_metadata_updated()
@@ -422,6 +485,28 @@ class BaseMultiTableSynthesizer:
         with self._set_temp_numpy_seed():
             sampled_data = self._sample(scale=scale)
 
+        total_rows = 0
+        total_columns = 0
+        for table in sampled_data.values():
+            total_rows += len(table)
+            total_columns += len(table.columns)
+
+        LOGGER.info(
+            '\nSample:\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Statistics of the fit data:\n'
+            '    Total number of tables: %s\n'
+            '    Table number of rows: %s\n'
+            '    Table number of columns: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            self.__class__.__name__,
+            len(sampled_data),
+            total_rows,
+            total_columns,
+            self._synthesizer_id,
+        )
         return sampled_data
 
     def get_learned_distributions(self, table_name):
@@ -589,6 +674,16 @@ class BaseMultiTableSynthesizer:
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
 
+        LOGGER.info(
+            '\nSave:\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            self.__class__.__name__,
+            self._synthesizer_id,
+        )
+
     @classmethod
     def load(cls, filepath):
         """Load a multi-table synthesizer from a given path.
@@ -609,4 +704,13 @@ class BaseMultiTableSynthesizer:
         if getattr(synthesizer, '_synthesizer_id', None) is None:
             synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
 
+        LOGGER.info(
+            '\nLoad\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            synthesizer.__class__.__name__,
+            synthesizer._synthesizer_id,
+        )
         return synthesizer

@@ -4,18 +4,21 @@ import datetime
 import functools
 import inspect
 import logging
+import logging.config
 import math
 import operator
 import os
 import uuid
 import warnings
 from collections import defaultdict
+from pathlib import Path
 
 import cloudpickle
 import copulas
 import numpy as np
 import pandas as pd
 import tqdm
+import yaml
 from copulas.multivariate import GaussianMultivariate
 
 from sdv import version
@@ -26,7 +29,13 @@ from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
-LOGGER = logging.getLogger(__name__)
+logger_config_file = Path(__file__).parent.parent
+with open(logger_config_file / 'sdv_logger.yml', 'r') as f:
+    logger_conf = yaml.safe_load(f)
+
+logging.config.dictConfig(logger_conf)
+LOGGER = logging.getLogger('BaseSingleTableSynthesizer')
+
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
 TMP_FILE_NAME = '.sample.csv.temp'
@@ -107,6 +116,15 @@ class BaseSynthesizer:
         self._fitted_sdv_version = None
         self._fitted_sdv_enterprise_version = None
         self._synthesizer_id = generate_synthesizer_id(self)
+        LOGGER.info(
+            '\nInstance:\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            self.__class__.__name__,
+            self._synthesizer_id
+        )
 
     def set_address_columns(self, column_names, anonymization_level='full'):
         """Set the address multi-column transformer."""
@@ -389,6 +407,21 @@ class BaseSynthesizer:
             processed_data (pandas.DataFrame):
                 The transformed data used to fit the model to.
         """
+        LOGGER.info(
+            '\nFit processed data\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Statistics of the fit data:\n'
+            '    Total number of tables: 1\n'
+            '    Table number of rows: %s\n'
+            '    Table number of columns: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            self.__class__.__name__,
+            len(processed_data.columns),
+            len(processed_data),
+            self._synthesizer_id,
+        )
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         if not processed_data.empty:
             self._fit(processed_data)
@@ -405,6 +438,21 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) to fit the model to.
         """
+        LOGGER.info(
+            '\nFit\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Statistics of the fit data:\n'
+            '    Total number of tables: 1\n'
+            '    Table number of rows: %s\n'
+            '    Table number of columns: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            self.__class__.__name__,
+            len(data.columns),
+            len(data),
+            self._synthesizer_id,
+        )
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         self._check_metadata_updated()
         self._fitted = False
@@ -420,6 +468,15 @@ class BaseSynthesizer:
             filepath (str):
                 Path where the synthesizer instance will be serialized.
         """
+        LOGGER.info(
+            '\nSave:\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            self.__class__.__name__,
+            self._synthesizer_id,
+        )
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
 
@@ -443,6 +500,15 @@ class BaseSynthesizer:
         if getattr(synthesizer, '_synthesizer_id', None) is None:
             synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
 
+        LOGGER.info(
+            '\nLoad\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            synthesizer.__class__.__name__,
+            synthesizer._synthesizer_id,
+        )
         return synthesizer
 
 
@@ -806,16 +872,32 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             pandas.DataFrame:
                 Sampled data.
         """
+        sample_timestamp = datetime.datetime.now()
         has_constraints = bool(self._data_processor._constraints)
         has_batches = batch_size is not None and batch_size != num_rows
         show_progress_bar = has_constraints or has_batches
 
-        return self._sample_with_progress_bar(
+        sampled_data = self._sample_with_progress_bar(
             num_rows,
             max_tries_per_batch,
             batch_size,
             output_file_path,
             show_progress_bar=show_progress_bar
+        )
+        LOGGER.info(
+            '\nSample:\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Statistics of the sample size:\n'
+            '    Total number of tables: 1\n'
+            '    Total number of rows: %s\n'
+            '    Total number of columns: %s\n'
+            '  Synthesizer id: %s',
+            sample_timestamp,
+            self.__class__.__name__,
+            len(sampled_data),
+            len(sampled_data.columns),
+            self._synthesizer_id,
         )
 
     def _sample_with_conditions(self, conditions, max_tries_per_batch, batch_size,
