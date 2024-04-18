@@ -11,8 +11,10 @@ from sdv import version
 from sdv._utils import (
     _compare_versions, _convert_to_timedelta, _create_unique_name, _get_datetime_format,
     _get_root_tables, _is_datetime_type, _validate_foreign_keys_not_null,
-    check_sdv_versions_and_warn, check_synthesizer_version)
+    check_sdv_versions_and_warn, check_synthesizer_version, generate_synthesizer_id)
 from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
+from sdv.metadata.single_table import SingleTableMetadata
+from sdv.single_table.base import BaseSingleTableSynthesizer
 from tests.utils import SeriesMatcher
 
 
@@ -641,3 +643,20 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_both_missmatch(m
     )
     with pytest.raises(VersionError, match=message):
         check_synthesizer_version(synthesizer, is_fit_method=True, compare_operator=operator.lt)
+
+
+@patch('sdv._utils.uuid')
+@patch('sdv._utils.version')
+def test_generate_synthesizer_id(mock_version, mock_uuid):
+    """Test that ``generate_synthesizer_id`` returns the expected id."""
+    # Setup
+    mock_version.public = '1.0.0'
+    mock_uuid.uuid4.return_value = '92aff11e-9a56-49d1-a280-990d1231a5f5'
+    metadata = SingleTableMetadata()
+    synthesizer = BaseSingleTableSynthesizer(metadata)
+
+    # Run
+    result = generate_synthesizer_id(synthesizer)
+
+    # Assert
+    assert result == 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'

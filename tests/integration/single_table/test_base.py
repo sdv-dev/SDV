@@ -538,12 +538,39 @@ def test_save_and_load(tmp_path):
 
     # Assert
     assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
-    assert instance.metadata.columns == {}
-    assert instance.metadata.primary_key is None
-    assert instance.metadata.alternate_keys == []
-    assert instance.metadata.sequence_key is None
-    assert instance.metadata.sequence_index is None
-    assert instance.metadata._version == 'SINGLE_TABLE_V1'
+    assert loaded_instance.metadata.columns == {}
+    assert loaded_instance.metadata.primary_key is None
+    assert loaded_instance.metadata.alternate_keys == []
+    assert loaded_instance.metadata.sequence_key is None
+    assert loaded_instance.metadata.sequence_index is None
+    assert loaded_instance.metadata._version == 'SINGLE_TABLE_V1'
+    assert instance._synthesizer_id == loaded_instance._synthesizer_id
+
+
+def test_save_and_load_no_id(tmp_path):
+    """Test that synthesizers can be saved and loaded properly."""
+    # Setup
+    metadata = SingleTableMetadata()
+    instance = BaseSingleTableSynthesizer(metadata)
+    synthesizer_path = tmp_path / 'synthesizer.pkl'
+    delattr(instance, '_synthesizer_id')
+
+    instance.save(synthesizer_path)
+
+    # Run
+    loaded_instance = BaseSingleTableSynthesizer.load(synthesizer_path)
+
+    # Assert
+    assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
+    assert loaded_instance.metadata.columns == {}
+    assert loaded_instance.metadata.primary_key is None
+    assert loaded_instance.metadata.alternate_keys == []
+    assert loaded_instance.metadata.sequence_key is None
+    assert loaded_instance.metadata.sequence_index is None
+    assert loaded_instance.metadata._version == 'SINGLE_TABLE_V1'
+    assert hasattr(instance, '_synthesizer_id') is False
+    assert hasattr(loaded_instance, '_synthesizer_id') is True
+    assert isinstance(loaded_instance._synthesizer_id, str) is True
 
 
 def test_save_and_load_with_downgraded_version(tmp_path):

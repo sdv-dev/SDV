@@ -59,12 +59,16 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         instance.metadata._updated = False
 
+    @patch('sdv.single_table.base.generate_synthesizer_id')
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.BaseSingleTableSynthesizer._check_metadata_updated')
-    def test___init__(self, mock_check_metadata_updated, mock_data_processor):
+    def test___init__(self, mock_check_metadata_updated, mock_data_processor,
+                      mock_generate_synthesizer_id):
         """Test instantiating with default values."""
         # Setup
         metadata = Mock()
+        synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        mock_generate_synthesizer_id.return_value = synthesizer_id
 
         # Run
         instance = BaseSingleTableSynthesizer(metadata)
@@ -75,6 +79,7 @@ class TestBaseSingleTableSynthesizer:
         assert instance._data_processor == mock_data_processor.return_value
         assert instance._random_state_set is False
         assert instance._fitted is False
+        assert instance._synthesizer_id == synthesizer_id
         mock_data_processor.assert_called_once_with(
             metadata=metadata,
             enforce_rounding=instance.enforce_rounding,
@@ -83,6 +88,7 @@ class TestBaseSingleTableSynthesizer:
         )
         metadata.validate.assert_called_once_with()
         mock_check_metadata_updated.assert_called_once()
+        mock_generate_synthesizer_id.assert_called_once_with(instance)
 
     @patch('sdv.single_table.base.DataProcessor')
     def test___init__custom(self, mock_data_processor):
@@ -1749,15 +1755,18 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
 
+    @patch('sdv.single_table.base.generate_synthesizer_id')
     @patch('sdv.single_table.base.check_synthesizer_version')
     @patch('sdv.single_table.base.check_sdv_versions_and_warn')
     @patch('sdv.single_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
-    def test_load(self, mock_file, cloudpickle_mock,
-                  mock_check_sdv_versions_and_warn, mock_check_synthesizer_version):
+    def test_load(self, mock_file, cloudpickle_mock, mock_check_sdv_versions_and_warn,
+                  mock_check_synthesizer_version, mock_generate_synthesizer_id):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
-        synthesizer_mock = Mock(_fitted=False)
+        synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
+        synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        mock_generate_synthesizer_id.return_value = synthesizer_id
         cloudpickle_mock.load.return_value = synthesizer_mock
 
         # Run
@@ -1768,7 +1777,9 @@ class TestBaseSingleTableSynthesizer:
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         mock_check_sdv_versions_and_warn.assert_called_once_with(loaded_instance)
         assert loaded_instance == synthesizer_mock
+        assert loaded_instance._synthesizer_id == synthesizer_id
         mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
+        mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
 
     def test_load_custom_constraint_classes(self):
         """Test that ``load_custom_constraint_classes`` calls the ``DataProcessor``'s method."""
