@@ -1,5 +1,6 @@
 import re
 from copy import deepcopy
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -10,10 +11,10 @@ from sdv.errors import InvalidDataError
 from sdv.metadata import MultiTableMetadata
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS, HMASynthesizer
 from sdv.multi_table.utils import _get_total_estimated_columns
-from sdv.utils.poc import drop_unknown_references, simplify_schema
+from sdv.utils.poc import drop_unknown_references, get_random_subset, simplify_schema
 
 
-@pytest.fixture
+@pytest.fixture()
 def metadata():
     return MultiTableMetadata.load_from_dict(
         {
@@ -45,7 +46,7 @@ def metadata():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def data():
     parent = pd.DataFrame(data={
         'id': [0, 1, 2, 3, 4],
@@ -257,3 +258,73 @@ def test_simplify_schema_big_demo_datasets():
         estimate_column_after = _get_total_estimated_columns(metadata_simplify)
         assert estimate_column_before > MAX_NUMBER_OF_COLUMNS
         assert estimate_column_after <= MAX_NUMBER_OF_COLUMNS
+
+
+@pytest.mark.parametrize(
+    ('dataset_name', 'main_table_1', 'main_table_2', 'num_rows_1', 'num_rows_2'),
+    [
+        ('AustralianFootball_v1', 'matches', 'players', 1000, 1000),
+        ('MuskSmall_v1', 'molecule', 'conformation', 50, 150),
+        ('NBA_v1', 'Team', 'Actions', 10, 200),
+        ('NCAA_v1', 'tourney_slots', 'tourney_compact_results', 1000, 1000),
+    ]
+)
+def test_get_random_subset(dataset_name, main_table_1, main_table_2, num_rows_1, num_rows_2):
+    """Test ``get_random_subset`` end to end.
+
+    The goal here is test that the function works for various schema and also by subsampling
+    different main tables.
+
+    For `AustralianFootball_v1` (parent with child and grandparent):
+    - main table 1 = `matches` which is the child of `teams` and the parent of `match_stats`.
+    - main table 2 = `players` which is the parent of `matches`.
+
+    For `MuskSmall_v1` (1 parent - 1 child relationship):
+    - main table 1 = `molecule` which is the parent of `conformation`.
+    - main table 2 = `conformation` which is the child of `molecule`.
+
+    For `NBA_v1` (child with parents and grandparent):
+    - main table 1 = `Team` which is the root table.
+    - main table 2 = `Actions` which is the last child. It has relationships with `Game` and `Team`
+      and `Player`.
+
+    For `NCAA_v1` (child with multiple parents):
+    - main table 1 = `tourney_slots` which is only the child of `seasons`.
+    - main table 2 = `tourney_compact_results` which is the child of `teams` with two relationships
+      and of `seasons` with one relationship.
+    """
+    # Setup
+    real_data, metadata = download_demo('multi_table', dataset_name)
+
+    # Run
+    result_1 = get_random_subset(real_data, metadata, main_table_1, num_rows_1, verbose=False)
+    result_2 = get_random_subset(real_data, metadata, main_table_2, num_rows_2, verbose=False)
+
+    # Assert
+    assert len(result_1[main_table_1]) == num_rows_1
+    assert len(result_2[main_table_2]) == num_rows_2
+
+
+def test_get_random_subset_disconnected_schema():
+    """Test ``get_random_subset`` end to end for a disconnected schema.
+
+    Here we break the schema so there is only parent-child relationships between
+    `Player`-`Action` and `Team`-`Game`.
+    The part that is not connected to the main table (`Player`) should be subsampled also
+    in a similar proportion.
+    """
+    # Setup
+    real_data, metadata = download_demo('multi_table', 'NBA_v1')
+    metadata.remove_relationship('Game', 'Actions')
+    metadata.remove_relationship('Team', 'Actions')
+    metadata.validate = Mock()
+    metadata.validate_data = Mock()
+    proportion_to_keep = 0.6
+    num_rows_to_keep = int(len(real_data['Player']) * proportion_to_keep)
+
+    # Run
+    result = get_random_subset(real_data, metadata, 'Player', num_rows_to_keep, verbose=False)
+
+    # Assert
+    assert len(result['Player']) == num_rows_to_keep
+    assert len(result['Team']) == int(len(real_data['Team']) * proportion_to_keep)
