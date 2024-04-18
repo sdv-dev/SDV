@@ -12,6 +12,7 @@ import pandas as pd
 
 from sdv._utils import _cast_to_iterable, _load_data_from_csv
 from sdv.errors import InvalidDataError
+from sdv.logging import get_logger
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -20,6 +21,7 @@ from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 
 LOGGER = logging.getLogger(__name__)
+MULTITABLEMETADATA_LOGGER = get_logger('MultiTableMetadata')
 WARNINGS_COLUMN_ORDER = ['Table Name', 'Column Name', 'sdtype', 'datetime_format']
 
 
@@ -1042,10 +1044,10 @@ class MultiTableMetadata:
         validate_file_does_not_exist(filepath)
         metadata = self.to_dict()
         total_columns = 0
-        for table in self.tables:
+        for table in self.tables.values():
             total_columns += len(table.columns)
 
-        LOGGER.info(
+        MULTITABLEMETADATA_LOGGER.info(
             '\nMetadata Save:\n'
             '  Timestamp: %s\n'
             '  Statistics about the metadata:\n'

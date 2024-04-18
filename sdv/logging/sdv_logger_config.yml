@@ -13,3 +13,15 @@ loggers:
     handlers:
       class: logging.FileHandler
       filename: sdv_logs.log
+    MultiTableMetadata:
+      level: INFO
+      propagate: false
+      handlers:
+        class: logging.FileHandler
+        filename: sdv_logs.log
+    SingleTableMetadata:
+      level: INFO
+      propagate: false
+      handlers:
+        class: logging.FileHandler
+        filename: sdv_logs.log
