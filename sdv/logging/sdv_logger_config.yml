@@ -1,0 +1,15 @@
+log_registry: 'local'
+version: 1
+loggers:
+  SingleTableSynthesizer:
+    level: INFO
+    propagate: false
+    handlers:
+      class: logging.FileHandler
+      filename: sdv_logs.log
+  MultiTableSynthesizer:
+    level: INFO
+    propagate: false
+    handlers:
+      class: logging.FileHandler
+      filename: sdv_logs.log

@@ -829,14 +829,16 @@ class TestBaseMultiTableSynthesizer:
             _fitted_sdv_version=None,
             _fitted_sdv_enterprise_version=None
         )
-        data = Mock()
-        data.copy.return_value = data
+        processed_data = {
+            'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
+            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})
+        }
 
         # Run
-        BaseMultiTableSynthesizer.fit_processed_data(instance, data)
+        BaseMultiTableSynthesizer.fit_processed_data(instance, processed_data)
 
         # Assert
-        instance._augment_tables.assert_called_once_with(data)
+        instance._augment_tables.assert_called_once_with(processed_data)
         instance._model_tables.assert_called_once_with(instance._augment_tables.return_value)
         assert instance._fitted
 
@@ -847,10 +849,13 @@ class TestBaseMultiTableSynthesizer:
             _fitted_sdv_version=None,
             _fitted_sdv_enterprise_version=None
         )
-        data = pd.DataFrame()
+        processed_data = {
+            'table1': pd.DataFrame(),
+            'table2': pd.DataFrame()
+        }
 
         # Run
-        BaseMultiTableSynthesizer.fit_processed_data(instance, data)
+        BaseMultiTableSynthesizer.fit_processed_data(instance, processed_data)
 
         # Assert
         instance._fit.assert_not_called()
@@ -866,7 +871,10 @@ class TestBaseMultiTableSynthesizer:
             _fitted_sdv_enterprise_version=None
         )
         instance.metadata = Mock()
-        data = Mock()
+        processed_data = {
+            'table1': pd.DataFrame(),
+            'table2': pd.DataFrame()
+        }
 
         # Run and Assert
         error_msg = (
@@ -875,7 +883,7 @@ class TestBaseMultiTableSynthesizer:
             'Please create a new synthesizer.'
         )
         with pytest.raises(VersionError, match=error_msg):
-            BaseMultiTableSynthesizer.fit_processed_data(instance, data)
+            BaseMultiTableSynthesizer.fit_processed_data(instance, processed_data)
 
         # Assert
         instance.preprocess.assert_not_called()
@@ -891,7 +899,10 @@ class TestBaseMultiTableSynthesizer:
             _fitted_sdv_enterprise_version=None
         )
         instance.metadata = Mock()
-        data = Mock()
+        data = {
+            'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
+            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})
+        }
 
         # Run
         BaseMultiTableSynthesizer.fit(instance, data)
@@ -910,7 +921,10 @@ class TestBaseMultiTableSynthesizer:
             _fitted_sdv_enterprise_version=None
         )
         instance.metadata = Mock()
-        data = Mock()
+        data = {
+            'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
+            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})
+        }
 
         # Run and Assert
         error_msg = (
@@ -991,7 +1005,11 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        instance._sample = Mock()
+        data = {
+            'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
+            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})
+        }
+        instance._sample = Mock(return_value=data)
 
         # Run
         instance.sample(scale=1.5)

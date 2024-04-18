@@ -19,14 +19,10 @@ from sdv._utils import (
     _validate_foreign_keys_not_null, check_sdv_versions_and_warn, check_synthesizer_version,
     generate_synthesizer_id)
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
+from sdv.logging.utils import get_logger, disable_single_table_logger
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
-logger_config_file = Path(__file__).parent.parent
-with open(logger_config_file / 'sdv_logger.yml', 'r') as f:
-    logger_conf = yaml.safe_load(f)
-
-logging.config.dictConfig(logger_conf)
-LOGGER = logging.getLogger('BaseMultiTableSynthesizer')
+SYNTHESIZER_LOGGER = get_logger('MultiTableSynthesizer')
 
 
 class BaseMultiTableSynthesizer:
@@ -66,13 +62,14 @@ class BaseMultiTableSynthesizer:
             np.random.set_state(initial_state)
 
     def _initialize_models(self):
-        for table_name, table_metadata in self.metadata.tables.items():
-            synthesizer_parameters = self._table_parameters.get(table_name, {})
-            self._table_synthesizers[table_name] = self._synthesizer(
-                metadata=table_metadata,
-                locales=self.locales,
-                **synthesizer_parameters
-            )
+        with disable_single_table_logger():
+            for table_name, table_metadata in self.metadata.tables.items():
+                synthesizer_parameters = self._table_parameters.get(table_name, {})
+                self._table_synthesizers[table_name] = self._synthesizer(
+                    metadata=table_metadata,
+                    locales=self.locales,
+                    **synthesizer_parameters
+                )
 
     def _get_pbar_args(self, **kwargs):
         """Return a dictionary with the updated keyword args for a progress bar."""
@@ -123,7 +120,7 @@ class BaseMultiTableSynthesizer:
         self._fitted_sdv_version = None
         self._fitted_sdv_enterprise_version = None
         self._synthesizer_id = generate_synthesizer_id(self)
-        LOGGER.info(
+        SYNTHESIZER_LOGGER.info(
             '\nInstance:\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
@@ -396,7 +393,7 @@ class BaseMultiTableSynthesizer:
             total_rows += len(table)
             total_columns += len(table.columns)
 
-        LOGGER.info(
+        SYNTHESIZER_LOGGER.info(
             '\nFit processed data\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
@@ -413,8 +410,10 @@ class BaseMultiTableSynthesizer:
             self._synthesizer_id,
         )
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
-        augmented_data = self._augment_tables(processed_data)
-        self._model_tables(augmented_data)
+        with disable_single_table_logger():
+            augmented_data = self._augment_tables(processed_data)
+            self._model_tables(augmented_data)
+
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_sdv_version = getattr(version, 'public', None)
@@ -434,7 +433,7 @@ class BaseMultiTableSynthesizer:
             total_rows += len(table)
             total_columns += len(table.columns)
 
-        LOGGER.info(
+        SYNTHESIZER_LOGGER.info(
             '\nFit\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
@@ -482,7 +481,7 @@ class BaseMultiTableSynthesizer:
             raise SynthesizerInputError(
                 f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0.")
 
-        with self._set_temp_numpy_seed():
+        with self._set_temp_numpy_seed(), disable_single_table_logger():
             sampled_data = self._sample(scale=scale)
 
         total_rows = 0
@@ -491,7 +490,7 @@ class BaseMultiTableSynthesizer:
             total_rows += len(table)
             total_columns += len(table.columns)
 
-        LOGGER.info(
+        SYNTHESIZER_LOGGER.info(
             '\nSample:\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
@@ -674,7 +673,7 @@ class BaseMultiTableSynthesizer:
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
 
-        LOGGER.info(
+        SYNTHESIZER_LOGGER.info(
             '\nSave:\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
@@ -704,7 +703,7 @@ class BaseMultiTableSynthesizer:
         if getattr(synthesizer, '_synthesizer_id', None) is None:
             synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
 
-        LOGGER.info(
+        SYNTHESIZER_LOGGER.info(
             '\nLoad\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'

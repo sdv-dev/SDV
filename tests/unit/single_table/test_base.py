@@ -348,8 +348,7 @@ class TestBaseSingleTableSynthesizer:
             _fitted_sdv_version=None,
             _fitted_sdv_enterprise_version=None,
         )
-        processed_data = Mock()
-        processed_data.empty = False
+        processed_data = pd.DataFrame({'column_a': [1, 2, 3]})
 
         # Run
         BaseSingleTableSynthesizer.fit_processed_data(instance, processed_data)
@@ -368,7 +367,7 @@ class TestBaseSingleTableSynthesizer:
             _fitted_sdv_version='1.0.0',
             _fitted_sdv_enterprise_version=None,
         )
-        processed_data = Mock()
+        processed_data = pd.DataFrame({'column_a': [1, 2, 3]})
         instance._random_state_set = True
         instance._fitted = True
 
@@ -392,17 +391,17 @@ class TestBaseSingleTableSynthesizer:
             _fitted_sdv_version=None,
             _fitted_sdv_enterprise_version=None,
         )
-        processed_data = Mock()
+        data = pd.DataFrame({'column_a': [1, 2, 3], 'name': ['John', 'Doe', 'Johanna']})
         instance._random_state_set = True
         instance._fitted = True
 
         # Run
-        BaseSingleTableSynthesizer.fit(instance, processed_data)
+        BaseSingleTableSynthesizer.fit(instance, data)
 
         # Assert
         assert instance._random_state_set is False
         instance._data_processor.reset_sampling.assert_called_once_with()
-        instance._preprocess.assert_called_once_with(processed_data)
+        instance._preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance._preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()
 
@@ -417,7 +416,7 @@ class TestBaseSingleTableSynthesizer:
             _fitted_sdv_version='1.0.0',
             _fitted_sdv_enterprise_version=None,
         )
-        processed_data = Mock()
+        data = pd.DataFrame({'column_a': [1, 2, 3]})
         instance._random_state_set = True
         instance._fitted = True
 
@@ -428,7 +427,7 @@ class TestBaseSingleTableSynthesizer:
             'create a new synthesizer.'
         )
         with pytest.raises(VersionError, match=error_msg):
-            BaseSingleTableSynthesizer.fit(instance, processed_data)
+            BaseSingleTableSynthesizer.fit(instance, data)
 
     def test__validate_constraints(self):
         """Test that ``_validate_constraints`` calls ``fit`` and returns any errors."""
@@ -1371,6 +1370,7 @@ class TestBaseSingleTableSynthesizer:
         output_file_path = 'temp.csv'
         instance = Mock()
         instance.get_metadata.return_value._constraints = False
+        instance._sample_with_progress_bar.return_value = pd.DataFrame({'col': [1, 2, 3]})
 
         # Run
         result = BaseSingleTableSynthesizer.sample(
@@ -1389,7 +1389,7 @@ class TestBaseSingleTableSynthesizer:
             'temp.csv',
             show_progress_bar=True
         )
-        assert result == instance._sample_with_progress_bar.return_value
+        pd.testing.assert_frame_equal(result, pd.DataFrame({'col': [1, 2, 3]}))
 
     def test__validate_conditions_unseen_columns(self):
         """Test that conditions are within the ``data_processor`` fields."""

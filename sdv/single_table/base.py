@@ -4,7 +4,6 @@ import datetime
 import functools
 import inspect
 import logging
-import logging.config
 import math
 import operator
 import os
@@ -18,7 +17,6 @@ import copulas
 import numpy as np
 import pandas as pd
 import tqdm
-import yaml
 from copulas.multivariate import GaussianMultivariate
 
 from sdv import version
@@ -27,14 +25,12 @@ from sdv._utils import (
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
+from sdv.logging.utils import get_logger
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
-logger_config_file = Path(__file__).parent.parent
-with open(logger_config_file / 'sdv_logger.yml', 'r') as f:
-    logger_conf = yaml.safe_load(f)
 
-logging.config.dictConfig(logger_conf)
-LOGGER = logging.getLogger('BaseSingleTableSynthesizer')
+LOGGER = logging.getLogger(__name__)
+SYNTHESIZER_LOGGER = get_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
@@ -116,7 +112,7 @@ class BaseSynthesizer:
         self._fitted_sdv_version = None
         self._fitted_sdv_enterprise_version = None
         self._synthesizer_id = generate_synthesizer_id(self)
-        LOGGER.info(
+        SYNTHESIZER_LOGGER.info(
             '\nInstance:\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
@@ -407,7 +403,7 @@ class BaseSynthesizer:
             processed_data (pandas.DataFrame):
                 The transformed data used to fit the model to.
         """
-        LOGGER.info(
+        SYNTHESIZER_LOGGER.info(
             '\nFit processed data\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
@@ -438,7 +434,7 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) to fit the model to.
         """
-        LOGGER.info(
+        SYNTHESIZER_LOGGER.info(
             '\nFit\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
@@ -468,7 +464,7 @@ class BaseSynthesizer:
             filepath (str):
                 Path where the synthesizer instance will be serialized.
         """
-        LOGGER.info(
+        SYNTHESIZER_LOGGER.info(
             '\nSave:\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
@@ -500,7 +496,7 @@ class BaseSynthesizer:
         if getattr(synthesizer, '_synthesizer_id', None) is None:
             synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
 
-        LOGGER.info(
+        SYNTHESIZER_LOGGER.info(
             '\nLoad\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
@@ -884,7 +880,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             output_file_path,
             show_progress_bar=show_progress_bar
         )
-        LOGGER.info(
+        SYNTHESIZER_LOGGER.info(
             '\nSample:\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
@@ -899,6 +895,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             len(sampled_data.columns),
             self._synthesizer_id,
         )
+
+        return sampled_data
 
     def _sample_with_conditions(self, conditions, max_tries_per_batch, batch_size,
                                 progress_bar=None, output_file_path=None):

@@ -1,4 +1,5 @@
 """Miscellaneous utility functions."""
+import contextlib
 import operator
 import uuid
 import warnings
@@ -8,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
+import yaml
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
 from sdv import version
