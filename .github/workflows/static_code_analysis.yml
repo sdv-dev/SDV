@@ -26,6 +26,8 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         commit-message: Update static code analysis
+        author: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+        committer: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
         title: Latest Code Analysis
         body: "This is an auto-generated PR with the **latest** code analysis results."
         branch: static-code-analysis
