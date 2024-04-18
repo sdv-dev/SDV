@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 import rdt
 from pandas.api.types import is_float_dtype, is_integer_dtype
-from rdt.transformers import AnonymizedFaker, IDGenerator, get_default_transformers
+from rdt.transformers import AnonymizedFaker, get_default_transformers
 from rdt.transformers.pii.anonymization import get_anonymized_transformer
 
 from sdv.constraints import Constraint
@@ -567,21 +567,22 @@ class DataProcessor:
                     )
                     sdtypes[column] = 'text'
 
-                elif column in self._keys:
-                    prefix = None
-                    if not is_numeric:
-                        prefix = 'sdv-id-'
-
-                    transformers[column] = IDGenerator(prefix=prefix)
-                    sdtypes[column] = 'text'
-
                 else:
+                    bothify_format = 'sdv-id-??????'
+                    if is_numeric:
+                        bothify_format = '##########'
+
+                    cardinality_rule = None
+                    if column in self._keys:
+                        cardinality_rule = 'unique'
+
                     transformers[column] = AnonymizedFaker(
                         provider_name=None,
                         function_name='bothify',
-                        function_kwargs={'text': '#####'}
+                        function_kwargs={'text': bothify_format},
+                        cardinality_rule=cardinality_rule
                     )
-                    sdtypes[column] = 'pii'
+                    sdtypes[column] = 'text'
 
             elif sdtype == 'unknown':
                 sdtypes[column] = 'pii'

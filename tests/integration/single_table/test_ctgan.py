@@ -297,18 +297,4 @@ def test_ctgan_with_dropped_columns():
     # Assert
     assert len(samples) == 10
     assert samples.columns.tolist() == ['user_id', 'user_ssn']
-    pd.testing.assert_series_equal(
-        samples['user_id'],
-        pd.Series([
-            'sdv-id-0',
-            'sdv-id-1',
-            'sdv-id-2',
-            'sdv-id-3',
-            'sdv-id-4',
-            'sdv-id-5',
-            'sdv-id-6',
-            'sdv-id-7',
-            'sdv-id-8',
-            'sdv-id-9'
-        ], name='user_id')
-    )
+    assert all(id_val.startswith('sdv-id-') for id_val in samples['user_id'])

@@ -10,8 +10,7 @@ import pytest
 from rdt.errors import ConfigNotSetError
 from rdt.errors import NotFittedError as RDTNotFittedError
 from rdt.transformers import (
-    AnonymizedFaker, FloatFormatter, GaussianNormalizer, IDGenerator, UniformEncoder,
-    UnixTimestampEncoder)
+    AnonymizedFaker, FloatFormatter, GaussianNormalizer, UniformEncoder, UnixTimestampEncoder)
 
 from sdv.constraints.errors import (
     AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
@@ -1260,10 +1259,8 @@ class TestDataProcessor:
         dp._enforce_min_max_values = True
         dp.create_anonymized_transformer = Mock()
         dp.create_regex_generator = Mock()
-        dp.create_id_generator = Mock()
         dp.create_anonymized_transformer.return_value = 'AnonymizedFaker'
         dp.create_regex_generator.return_value = 'RegexGenerator'
-        dp.create_id_generator.return_value = 'IDGenerator'
         dp.metadata.primary_key = 'id'
         dp.metadata.alternate_keys = ['id_no_regex', 'id_numeric']
         dp._primary_key = 'id'
@@ -1303,7 +1300,7 @@ class TestDataProcessor:
             'id': 'text',
             'id_no_regex': 'text',
             'id_numeric': 'text',
-            'id_column': 'pii',
+            'id_column': 'text',
             'date': 'datetime',
             'unknown': 'pii',
             'address': 'categorical'
@@ -1345,19 +1342,22 @@ class TestDataProcessor:
         assert dp._primary_key == 'id'
 
         id_no_regex_transformer = config['transformers']['id_no_regex']
-        assert isinstance(id_no_regex_transformer, IDGenerator)
-        assert id_no_regex_transformer.prefix == 'sdv-id-'
-        assert id_no_regex_transformer.starting_value == 0
+        assert isinstance(id_no_regex_transformer, AnonymizedFaker)
+        assert id_no_regex_transformer.function_name == 'bothify'
+        assert id_no_regex_transformer.function_kwargs == {'text': 'sdv-id-??????'}
+        assert id_no_regex_transformer.cardinality_rule == 'unique'
 
         id_numeric_transformer = config['transformers']['id_numeric']
-        assert isinstance(id_numeric_transformer, IDGenerator)
-        assert id_numeric_transformer.prefix is None
-        assert id_numeric_transformer.starting_value == 0
+        assert isinstance(id_numeric_transformer, AnonymizedFaker)
+        assert id_numeric_transformer.function_name == 'bothify'
+        assert id_numeric_transformer.function_kwargs == {'text': '##########'}
+        assert id_numeric_transformer.cardinality_rule == 'unique'
 
         id_column_transformer = config['transformers']['id_column']
         assert isinstance(id_column_transformer, AnonymizedFaker)
         assert id_column_transformer.function_name == 'bothify'
-        assert id_column_transformer.function_kwargs == {'text': '#####'}
+        assert id_column_transformer.function_kwargs == {'text': 'sdv-id-??????'}
+        assert id_column_transformer.cardinality_rule is None
 
         dp.create_anonymized_transformer.calls == [
             call('email', {'sdtype': 'email', 'pii': True, 'locales': locales}),
@@ -1433,10 +1433,10 @@ class TestDataProcessor:
             'unknown_pii_true': 'pii',
             'phone_pii': 'pii',
             'name_pii': 'pii',
-            'id_pii_true': 'pii',
+            'id_pii_true': 'text',
             'example_pii_false': 'example',
             'unknown_pii_false': 'pii',
-            'id_pii_false': 'pii',
+            'id_pii_false': 'text',
             'example_pii_true': 'example',
             'city_categorical': 'categorical'
         }

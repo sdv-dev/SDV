@@ -365,14 +365,11 @@ def test_numerical_columns_gets_pii():
     """Test that the synthesizer works when a ``numerical`` column gets converted to ``PII``."""
     # Setup
     data = pd.DataFrame(data={
-        'id': [0, 1, 2, 3, 4],
         'city': [0, 0, 0, 0, 0],
         'numerical': [21, 22, 23, 24, 25]
     })
     metadata = SingleTableMetadata.load_from_dict({
-        'primary_key': 'id',
         'columns': {
-            'id': {'sdtype': 'id'},
             'city': {'sdtype': 'city'},
             'numerical': {'sdtype': 'numerical'}
         }
@@ -385,7 +382,6 @@ def test_numerical_columns_gets_pii():
 
     # Assert
     expected_sampled = pd.DataFrame({
-        'id': {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9},
         'city': {
             0: 'Danielfort',
             1: 'Glendaside',
