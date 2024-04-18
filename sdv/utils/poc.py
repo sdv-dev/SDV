@@ -164,7 +164,7 @@ def get_random_subset(data, metadata, main_table_name, num_rows, verbose=True):
         raise InvalidDataError([error_message]) from error
 
     error_message_num_rows = (
-        '``num_rows`` must be a positive integer'
+        '``num_rows`` must be a positive integer.'
     )
     if not isinstance(num_rows, (int, float)) or num_rows != int(num_rows):
         raise ValueError(error_message_num_rows)

@@ -478,7 +478,7 @@ def test_simplify_schema_invalid_data():
 
 
 def test_get_random_subset_invalid_metadata():
-    """Test ``get_random_subset`` when the metadata is not invalid."""
+    """Test ``get_random_subset`` when the metadata is invalid."""
     # Setup
     metadata = MultiTableMetadata().load_from_dict({
         'tables': {
@@ -558,11 +558,11 @@ def test_get_random_subset_invalid_num_rows():
     metadata = Mock()
 
     # Run and Assert
-    with pytest.raises(ValueError, match='``num_rows`` must be a positive integer'):
+    with pytest.raises(ValueError, match='``num_rows`` must be a positive integer.'):
         get_random_subset(data, metadata, 'table1', -1)
-    with pytest.raises(ValueError, match='``num_rows`` must be a positive integer'):
+    with pytest.raises(ValueError, match='``num_rows`` must be a positive integer.'):
         get_random_subset(data, metadata, 'table1', 0)
-    with pytest.raises(ValueError, match='``num_rows`` must be a positive integer'):
+    with pytest.raises(ValueError, match='``num_rows`` must be a positive integer.'):
         get_random_subset(data, metadata, 'table1', 0.5)
 
 

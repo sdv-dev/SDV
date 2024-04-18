@@ -1507,8 +1507,8 @@ def test__subsample_parent_not_all_referenced_before():
 
     In this example:
     - The primary key ``5`` is no longer referenced and should be dropped.
-    - One unreferenced primary key must be dropped to keep the same ration of reference/unreference
-      primary keys. Here primary key ``6`` is dropped.
+    - One unreferenced primary key must be dropped to keep the same ratio of
+    referenced/unreferenced primary keys. Here primary key ``6`` is dropped.
     """
     # Setup
     data = {
@@ -1698,6 +1698,7 @@ def test__subsample_ancestors():
 
 
 def test__subsample_ancestors_schema_diamond_shape():
+    """Test the ``_subsample_ancestors`` method with a diamond shape schema."""
     # Setup
     data = {
         'grandparent': pd.DataFrame({
@@ -1871,7 +1872,7 @@ def test__subsample_data(
 @patch('sdv.multi_table.utils._get_primary_keys_referenced')
 def test__subsample_data_empty_dataset(mock_get_primary_keys_referenced,
                                        mock_subsample_disconnected_roots):
-    """Test the ``subsample_data`` method when the dataset is empty."""
+    """Test the ``subsample_data`` method when a dataset is empty."""
     # Setup
     data = {
         'main_table': [1] * 10,
@@ -1881,7 +1882,7 @@ def test__subsample_data_empty_dataset(mock_get_primary_keys_referenced,
     main_table = 'main_table'
     mock_subsample_disconnected_roots.side_effect = InvalidDataError('All references in table')
 
-    # Run
+    # Run and Assert
     expected_message = re.escape(
         'Subsampling main_table with 5 rows leads to some empty tables. '
         'Please try again with a bigger number of rows.'
@@ -1891,6 +1892,7 @@ def test__subsample_data_empty_dataset(mock_get_primary_keys_referenced,
 
 
 def test__print_subsample_summary(capsys):
+    """Test the ``_print_subsample_summary`` method."""
     # Setup
     data_before = {
         'grandparent': pd.DataFrame({

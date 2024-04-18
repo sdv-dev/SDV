@@ -449,7 +449,7 @@ def _drop_rows(data, metadata, drop_missing_values):
 
 
 def _subsample_disconnected_roots(data, metadata, table, ratio_to_keep):
-    """Subsample the disconnected roots tables."""
+    """Subsample the disconnected roots tables and their descendants."""
     relationships = metadata.relationships
     roots = _get_disconnected_roots_from_table(relationships, table)
     for root in roots:
@@ -465,6 +465,19 @@ def _subsample_table_and_descendants(data, metadata, table, num_rows):
 
 
 def _get_primary_keys_referenced(data, metadata):
+    """Get the primary keys referenced by the relationships.
+
+    Args:
+        data (dict):
+            Dictionary that maps each table name (string) to the data for that
+            table (pandas.DataFrame).
+        metadata (MultiTableMetadata):
+            Metadata of the datasets.
+
+    Returns:
+        dict:
+            Dictionary that maps the table name to a set of their primary keys referenced.
+    """
     relationships = metadata.relationships
     primary_keys_referenced = defaultdict(set)
     for relationship in relationships:
@@ -478,6 +491,26 @@ def _get_primary_keys_referenced(data, metadata):
 
 def _subsample_parent(parent_table, parent_primary_key, pk_referenced_before_parent,
                       unreferenced_pk_parent):
+    """Subsample the parent table.
+
+    The strategy here is to:
+    - Drop the rows that are no longer referenced by the descendants.
+    - Drop a proportional amount of never-referenced rows.
+
+    Args:
+        parent_table (pandas.DataFrame):
+            Parent table to subsample.
+        parent_primary_key (str):
+            Name of the primary key of the parent table.
+        pk_referenced_before_parent (set):
+            Set of the primary keys referenced before any subsampling.
+        unreferenced_pk_parent (set):
+            Set of the primary keys that are no longer referenced by the descendants.
+
+    Returns:
+        pandas.DataFrame:
+            Subsampled parent table.
+    """
     total_referenced = len(pk_referenced_before_parent)
     total_dropped = len(unreferenced_pk_parent)
     drop_proportion = total_dropped / total_referenced
@@ -502,7 +535,23 @@ def _subsample_parent(parent_table, parent_primary_key, pk_referenced_before_par
 
 
 def _subsample_ancestors(data, metadata, table, primary_keys_referenced):
-    """Subsample the ancestors of the table."""
+    """Subsample the ancestors of the table.
+
+    The strategy here is to recursively subsample the direct parents of the table until the
+    root tables are reached.
+
+    Args:
+        data (dict):
+            Dictionary that maps each table name (string) to the data for that
+            table (pandas.DataFrame).
+        metadata (MultiTableMetadata):
+            Metadata of the datasets.
+        table (str):
+            Name of the table.
+        primary_keys_referenced (dict):
+            Dictionary that maps the table name to a set of their primary keys referenced
+            before any subsampling.
+    """
     relationships = metadata.relationships
     pk_referenced = _get_primary_keys_referenced(data, metadata)
     direct_relationships = _get_relationships_for_child(relationships, table)
