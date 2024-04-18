@@ -226,6 +226,26 @@ def test_sample_remaining_columns_with_some_nans():
         synthesizer.sample_remaining_columns(known_columns=known_columns)
 
 
+def test_sample_keys_are_scrambled():
+    """Test that the keys are scrambled in the sampled data."""
+    # Setup
+    data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='fake_hotel_guests'
+    )
+    metadata.update_column('guest_email', sdtype='id', regex_format='[A-Z]{3}')
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.fit(data)
+
+    # Run
+    sampled = synthesizer.sample(1000)
+
+    # Assert
+    ids = sampled['guest_email'].head()
+    expected_keys = pd.Series(['ARH', 'BBH', 'BAP', 'AIF', 'AQP'], name='guest_email')
+    pd.testing.assert_series_equal(ids, expected_keys)
+
+
 def test_multiple_fits():
     """Test the synthesizer refits correctly on new data.
 
@@ -267,9 +287,19 @@ def test_multiple_fits():
 @pytest.mark.parametrize('synthesizer', SYNTHESIZERS)
 def test_sampling(synthesizer):
     """Test that samples are different when ``reset_sampling`` is not called."""
+    # Setup
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+    synthesizer.fit(data)
+
+    # Run
     sample_1 = synthesizer.sample(10)
     sample_2 = synthesizer.sample(10)
 
+    # Assert
     with pytest.raises(AssertionError):
         pd.testing.assert_frame_equal(sample_1, sample_2)
 
