@@ -330,7 +330,7 @@ class TestCTGANSynthesizer:
         assert (fig['x'] == 'Epoch')
         assert (fig['y'] == ['Generator Loss', 'Discriminator Loss'])
         assert (fig['color_discrete_map'] == {
-            'Generator Loss': visualization.PlotConfig.DATACEBO_BLUE,
+            'Generator Loss': visualization.PlotConfig.DATACEBO_DARK,
             'Discriminator Loss': visualization.PlotConfig.DATACEBO_GREEN
         })
 
