@@ -8,7 +8,7 @@ import pytest
 from sdv.errors import InvalidDataError
 from sdv.metadata import MultiTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
-from sdv.utils.poc import drop_unknown_references, simplify_schema
+from sdv.utils.poc import drop_unknown_references, simplify_schema, get_random_subset
 
 
 @patch('sdv.utils.poc._drop_rows')
@@ -475,3 +475,139 @@ def test_simplify_schema_invalid_data():
     )
     with pytest.raises(InvalidDataError, match=expected_message):
         simplify_schema(real_data, metadata)
+
+
+def test_get_random_subset_invalid_metadata():
+    """Test ``get_random_subset`` when the metadata is not invalid."""
+    # Setup
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'column1': {'sdtype': 'categorical'}
+                }
+            }
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table2',
+                'parent_primary_key': 'column1',
+                'child_foreign_key': 'column2'
+            }
+        ]
+    })
+    real_data = {
+        'table1': pd.DataFrame({'column1': [1, 2, 3]}),
+        'table2': pd.DataFrame({'column2': [4, 5, 6]}),
+    }
+
+    # Run and Assert
+    expected_message = re.escape(
+        'The provided data/metadata combination is not valid. Please make sure that the'
+        ' data/metadata combination is valid before trying to simplify the schema.'
+    )
+    with pytest.raises(InvalidMetadataError, match=expected_message):
+        get_random_subset(real_data, metadata, 'table1', 2)
+
+
+def test_get_random_subset_invalid_data():
+    """Test ``get_random_subset`` when the data is not valid."""
+    # Setup
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'table1': {
+                'columns': {
+                    'column1': {'sdtype': 'id'}
+                },
+                'primary_key': 'column1'
+            },
+            'table2': {
+                'columns': {
+                    'column2': {'sdtype': 'id'}
+                },
+            }
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'table1',
+                'child_table_name': 'table2',
+                'parent_primary_key': 'column1',
+                'child_foreign_key': 'column2'
+            }
+        ]
+    })
+    real_data = {
+        'table1': pd.DataFrame({'column1': [np.nan, 1, 2]}),
+        'table2': pd.DataFrame({'column2': [1, 1, 2]}),
+    }
+
+    # Run and Assert
+    expected_message = re.escape(
+        'The provided data/metadata combination is not valid. Please make sure that the'
+        ' data/metadata combination is valid before trying to simplify the schema.'
+    )
+    with pytest.raises(InvalidDataError, match=expected_message):
+        get_random_subset(real_data, metadata, 'table1', 2)
+
+
+def test_get_random_subset_invalid_num_rows():
+    """Test ``get_random_subset`` when ``num_rows`` is invalid."""
+    # Setup
+    data = Mock()
+    metadata = Mock()
+
+    # Run and Assert
+    with pytest.raises(ValueError, match='``num_rows`` must be a positive integer'):
+        get_random_subset(data, metadata, 'table1', -1)
+    with pytest.raises(ValueError, match='``num_rows`` must be a positive integer'):
+        get_random_subset(data, metadata, 'table1', 0)
+    with pytest.raises(ValueError, match='``num_rows`` must be a positive integer'):
+        get_random_subset(data, metadata, 'table1', 0.5)
+
+
+def test_get_random_subset_nothing_to_sample():
+    """Test ``get_random_subset`` when there is nothing to sample."""
+    # Setup
+    data = {
+        'table1': pd.DataFrame({'column1': [1, 2, 3]}),
+        'table2': pd.DataFrame({'column2': [4, 5, 6]}),
+    }
+    metadata = Mock()
+
+    # Run
+    result = get_random_subset(data, metadata, 'table1', 5)
+
+    # Assert
+    pd.testing.assert_frame_equal(result['table1'], data['table1'])
+    pd.testing.assert_frame_equal(result['table2'], data['table2'])
+
+
+@patch('sdv.utils.poc._subsample_data')
+@patch('sdv.utils.poc._print_subsample_summary')
+def test_get_random_subset(mock_print_summary, mock_subsample_data):
+    """Test ``get_random_subset``."""
+    # Setup
+    data = {
+        'table1': pd.DataFrame({'column1': [1, 2, 3, 4, 5]}),
+        'table2': pd.DataFrame({'column2': [6, 7, 8, 9, 10]}),
+    }
+    metadata = Mock()
+    output = {
+        'table1': pd.DataFrame({'column1': [1, 2, 3]}),
+        'table2': pd.DataFrame({'column2': [6, 7, 8]}),
+    }
+    mock_subsample_data.return_value = output
+
+    # Run
+    get_random_subset(data, metadata, 'table1', 3)
+    result = get_random_subset(data, metadata, 'table2', 3, verbose=False)
+
+    # Assert
+    pd.testing.assert_frame_equal(result['table1'], output['table1'])
+    pd.testing.assert_frame_equal(result['table2'], output['table2'])
+    mock_subsample_data.assert_has_calls([
+        ((data, metadata, 'table1', 3),),
+        ((data, metadata, 'table2', 3),),
+    ])
+    mock_print_summary.call_count == 1

@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sdv.errors import InvalidDataError
+from sdv.errors import InvalidDataError, SamplingError
 from sdv.metadata import MultiTableMetadata
 from sdv.multi_table.utils import (
     _drop_rows, _get_all_descendant_per_root_at_order_n, _get_ancestors,
@@ -17,7 +17,7 @@ from sdv.multi_table.utils import (
     _simplify_child, _simplify_children, _simplify_data, _simplify_grandchildren,
     _simplify_metadata, _simplify_relationships_and_tables, _subsample_disconnected_roots,
     _subsample_table_and_descendants, _get_primary_keys_referenced, _subsample_parent,
-    _subsample_ancestors, _subsample_data)
+    _subsample_ancestors, _subsample_data, _print_subsample_summary)
 
 
 def test__get_relationships_for_child():
@@ -122,7 +122,7 @@ def test__get_rows_to_drop():
     }
 
     # Run
-    result = _get_rows_to_drop(metadata, data)
+    result = _get_rows_to_drop(data, metadata)
 
     # Assert
     expected_result = defaultdict(set, {
@@ -188,10 +188,10 @@ def test__drop_rows(mock_get_rows_to_drop):
     })
 
     # Run
-    _drop_rows(metadata, data, False)
+    _drop_rows(data, metadata, False)
 
     # Assert
-    mock_get_rows_to_drop.assert_called_once_with(metadata, data)
+    mock_get_rows_to_drop.assert_called_once_with(data, metadata)
     expected_result = {
         'parent': pd.DataFrame({
             'id_parent': [0, 1, 2, 3, 4],
@@ -263,7 +263,7 @@ def test_drop_unknown_references_with_nan(mock_get_rows_to_drop):
     })
 
     # Run
-    _drop_rows(metadata, data, True)
+    _drop_rows(data, metadata, True)
 
     # Assert
     mock_get_rows_to_drop.assert_called_once()
@@ -339,7 +339,7 @@ def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop
     })
 
     # Run
-    _drop_rows(metadata, data, drop_missing_values=False)
+    _drop_rows(data, metadata, drop_missing_values=False)
 
     # Assert
     mock_get_rows_to_drop.assert_called_once()
@@ -421,7 +421,7 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
         'Try providing different data for this table.'
     )
     with pytest.raises(InvalidDataError, match=expected_message):
-        _drop_rows(metadata, data, False)
+        _drop_rows(data, metadata, False)
 
 
 def test__get_n_order_descendants():
@@ -1295,13 +1295,13 @@ def test__subsample_disconnected_roots(mock_drop_rows, mock_get_disconnected_roo
     expected_result = deepcopy(data)
 
     # Run
-    _subsample_disconnected_roots(metadata, data, 'disconnected_root', ratio_to_keep)
+    _subsample_disconnected_roots(data, metadata, 'disconnected_root', ratio_to_keep)
 
     # Assert
     mock_get_disconnected_roots_from_table.assert_called_once_with(
         metadata.relationships, 'disconnected_root'
     )
-    mock_drop_rows.assert_called_once_with(metadata, data, drop_missing_values=False)
+    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=False)
     for table_name in metadata.tables:
         if table_name not in {'grandparent', 'other_root'}:
             pd.testing.assert_frame_equal(data[table_name], expected_result[table_name])
@@ -1334,10 +1334,10 @@ def test__subsample_table_and_descendants(mock_drop_rows):
     metadata = Mock()
 
     # Run
-    _subsample_table_and_descendants(metadata, data, 'parent', 3)
+    _subsample_table_and_descendants(data, metadata, 'parent', 3)
 
     # Assert
-    mock_drop_rows.assert_called_once_with(metadata, data, drop_missing_values=False)
+    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=False)
     assert len(data['parent']) == 3
 
 
@@ -1452,7 +1452,7 @@ def test__get_primary_keys_referenced():
     })
 
     # Run
-    result = _get_primary_keys_referenced(metadata, data)
+    result = _get_primary_keys_referenced(data, metadata)
 
     # Assert
     expected_result = {
@@ -1661,7 +1661,7 @@ def test__subsample_ancestors():
     })
 
     # Run
-    _subsample_ancestors(metadata, data, 'grandchild', primary_key_referenced)
+    _subsample_ancestors(data, metadata, 'grandchild', primary_key_referenced)
 
     # Assert
     expected_result = {
@@ -1795,7 +1795,7 @@ def test__subsample_ancestors_schema_diamond_shape():
     })
 
     # Run
-    _subsample_ancestors(metadata, data, 'child', primary_key_referenced)
+    _subsample_ancestors(data, metadata, 'child', primary_key_referenced)
 
     # Assert
     expected_result = {
@@ -1827,3 +1827,138 @@ def test__subsample_ancestors_schema_diamond_shape():
     }
     for table_name in ['grandparent', 'parent_1', 'parent_2', 'child']:
         pd.testing.assert_frame_equal(data[table_name], expected_result[table_name])
+
+
+@patch('sdv.multi_table.utils._subsample_disconnected_roots')
+@patch('sdv.multi_table.utils._subsample_table_and_descendants')
+@patch('sdv.multi_table.utils._subsample_ancestors')
+@patch('sdv.multi_table.utils._get_primary_keys_referenced')
+def test__subsample_data(
+    mock_get_primary_keys_referenced,
+    mock_subsample_ancestors,
+    mock_subsample_table_and_descendants,
+    mock_subsample_disconnected_roots
+):
+    """Test the ``_subsample_data`` method."""
+    # Setup
+    data = {
+        'main_table': [1] * 10,
+    }
+    metadata = Mock()
+    num_rows = 5
+    main_table = 'main_table'
+    primary_key_reference = {
+        'main_table': {1, 2, 4}
+    }
+    mock_get_primary_keys_referenced.return_value = primary_key_reference
+
+    # Run
+    result = _subsample_data(data, metadata, main_table, num_rows)
+
+    # Assert
+    mock_get_primary_keys_referenced.assert_called_once_with(data, metadata)
+    mock_subsample_disconnected_roots.assert_called_once_with(data, metadata, main_table, 0.5)
+    mock_subsample_table_and_descendants.assert_called_once_with(
+        data, metadata, main_table, num_rows
+    )
+    mock_subsample_ancestors.assert_called_once_with(
+        data, metadata, main_table, primary_key_reference
+    )
+    assert result == data
+
+
+@patch('sdv.multi_table.utils._subsample_disconnected_roots')
+@patch('sdv.multi_table.utils._get_primary_keys_referenced')
+def test__subsample_data_empty_dataset(mock_get_primary_keys_referenced,
+                                       mock_subsample_disconnected_roots):
+    """Test the ``subsample_data`` method when the dataset is empty."""
+    # Setup
+    data = {
+        'main_table': [1] * 10,
+    }
+    metadata = Mock()
+    num_rows = 5
+    main_table = 'main_table'
+    mock_subsample_disconnected_roots.side_effect = InvalidDataError('All references in table')
+
+    # Run
+    expected_message = re.escape(
+        'Subsampling main_table with 5 rows leads to some empty tables. '
+        'Please try again with a bigger number of rows.'
+    )
+    with pytest.raises(SamplingError, match=expected_message):
+        _subsample_data(data, metadata, main_table, num_rows)
+
+
+def test__print_subsample_summary(capsys):
+    # Setup
+    data_before = {
+        'grandparent': pd.DataFrame({
+            'pk_gp': [
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+            ],
+            'col_1': [
+                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+                'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'
+            ],
+        }),
+        'parent_1': pd.DataFrame({
+            'fk_gp': [1, 2, 3, 4, 5, 6],
+            'pk_p': [21, 22, 23, 24, 25, 26],
+            'col_2': ['k', 'l', 'm', 'n', 'o', 'p'],
+        }),
+        'parent_2': pd.DataFrame({
+            'fk_gp': [7, 8, 9, 10, 11],
+            'pk_p': [31, 32, 33, 34, 35],
+            'col_3': ['k', 'l', 'm', 'n', 'o'],
+        }),
+        'child': pd.DataFrame({
+            'fk_p_1': [21, 22, 23, 23, 23],
+            'fk_p_2': [31, 32, 33, 34, 34],
+            'col_4': ['q', 'r', 's', 't', 'u'],
+        })
+    }
+
+    data_after = {
+        'grandparent': pd.DataFrame({
+            'pk_gp': [
+                1, 2, 3, 6, 7, 8, 9, 10, 14, 15,
+                16, 17, 18, 20
+            ],
+            'col_1': [
+                'a', 'b', 'c', 'f', 'g', 'h', 'i', 'j', 'n', 'o',
+                'p', 'q', 'r', 't'
+            ],
+        }, index=[0, 1, 2, 5, 6, 7, 8, 9, 13, 14, 15, 16, 17, 19]),
+        'parent_1': pd.DataFrame({
+            'fk_gp': [1, 2, 3, 6],
+            'pk_p': [21, 22, 23, 26],
+            'col_2': ['k', 'l', 'm', 'p'],
+        }, index=[0, 1, 2, 5]),
+        'parent_2': pd.DataFrame({
+            'fk_gp': [7, 8, 9, 10],
+            'pk_p': [31, 32, 33, 34],
+            'col_3': ['k', 'l', 'm', 'n'],
+        }, index=[0, 1, 2, 3]),
+        'child': pd.DataFrame({
+            'fk_p_1': [21, 22, 23, 23, 23],
+            'fk_p_2': [31, 32, 33, 34, 34],
+            'col_4': ['q', 'r', 's', 't', 'u'],
+        }, index=[0, 1, 2, 3, 4]),
+    }
+
+    # Run
+    _print_subsample_summary(data_before, data_after)
+    captured = capsys.readouterr()
+
+    # Assert
+    expected_output = re.compile(
+        r'Success! Your subset has 25% less rows than the original\.\s*'
+        r'Table Name\s*#\s*Rows \(Before\)\s*#\s*Rows \(After\)\s*'
+        r'child\s*5\s*5\s*'
+        r'grandparent\s*20\s*14\s*'
+        r'parent_1\s*6\s*4\s*'
+        r'parent_2\s*5\s*4'
+    )
+    assert expected_output.match(captured.out.strip())
