@@ -1,4 +1,5 @@
 import sys
+from types import ModuleType
 from unittest.mock import Mock, patch
 
 import pytest
@@ -11,6 +12,7 @@ from sdv import _find_addons
 def mock_sdv():
     sdv_module = sys.modules['sdv']
     sdv_mock = Mock()
+    sdv_mock.submodule.__name__ = 'sdv.submodule'
     sys.modules['sdv'] = sdv_mock
     yield sdv_mock
     sys.modules['sdv'] = sdv_module
@@ -20,9 +22,10 @@ def mock_sdv():
 def test__find_addons_module(entry_points_mock, mock_sdv):
     """Test loading an add-on."""
     # Setup
+    add_on_mock = Mock(spec=ModuleType)
     entry_point = Mock()
     entry_point.name = 'sdv.submodule.entry_name'
-    entry_point.load.return_value = 'entry_point'
+    entry_point.load.return_value = add_on_mock
     entry_points_mock.return_value = [entry_point]
 
     # Run
@@ -30,7 +33,8 @@ def test__find_addons_module(entry_points_mock, mock_sdv):
 
     # Assert
     entry_points_mock.assert_called_once_with(group='sdv_modules')
-    assert mock_sdv.submodule.entry_name == 'entry_point'
+    assert mock_sdv.submodule.entry_name == add_on_mock
+    assert sys.modules['sdv.submodule.entry_name'] == add_on_mock
 
 
 @patch.object(sdv, 'entry_points')
