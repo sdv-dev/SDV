@@ -8,7 +8,7 @@ import pytest
 from sdv.errors import InvalidDataError
 from sdv.metadata import MultiTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
-from sdv.utils.poc import drop_unknown_references, simplify_schema, get_random_subset
+from sdv.utils.poc import drop_unknown_references, get_random_subset, simplify_schema
 
 
 @patch('sdv.utils.poc._drop_rows')
@@ -58,7 +58,7 @@ def test_drop_unknown_references(mock_drop_rows):
         })
     }
 
-    def _drop_rows(metadata, data, drop_missing_values):
+    def _drop_rows(data, metadata, drop_missing_values):
         data['child'] = data['child'].iloc[:4]
         data['grandchild'] = data['grandchild'].iloc[[1, 3]]
 
@@ -86,7 +86,7 @@ def test_drop_unknown_references(mock_drop_rows):
     }
     metadata.validate.assert_called_once()
     metadata.validate_data.assert_called_once_with(data)
-    mock_drop_rows.assert_called_once_with(metadata, result, True)
+    mock_drop_rows.assert_called_once_with(result, metadata, True)
     for table_name, table in result.items():
         pd.testing.assert_frame_equal(table, expected_result[table_name])
 

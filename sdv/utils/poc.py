@@ -9,8 +9,8 @@ from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 from sdv.multi_table.utils import (
-    _drop_rows, _get_total_estimated_columns, _print_simplified_schema_summary, _simplify_data,
-    _simplify_metadata, _subsample_data, _print_subsample_summary)
+    _drop_rows, _get_total_estimated_columns, _print_simplified_schema_summary,
+    _print_subsample_summary, _simplify_data, _simplify_metadata, _subsample_data)
 
 
 def drop_unknown_references(data, metadata, drop_missing_values=True, verbose=True):

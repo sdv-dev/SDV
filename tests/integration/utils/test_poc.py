@@ -14,7 +14,7 @@ from sdv.multi_table.utils import _get_total_estimated_columns
 from sdv.utils.poc import drop_unknown_references, get_random_subset, simplify_schema
 
 
-@pytest.fixture()
+@pytest.fixture
 def metadata():
     return MultiTableMetadata.load_from_dict(
         {
@@ -46,7 +46,7 @@ def metadata():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def data():
     parent = pd.DataFrame(data={
         'id': [0, 1, 2, 3, 4],
