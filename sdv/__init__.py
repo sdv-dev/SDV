@@ -13,6 +13,7 @@ import sys
 import warnings
 from importlib.metadata import entry_points
 from operator import attrgetter
+from types import ModuleType
 
 from sdv import (
     constraints, data_processing, datasets, evaluation, lite, metadata, metrics, multi_table,
@@ -104,6 +105,11 @@ def _find_addons():
             msg = f"Failed to set '{entry_point.name}': {error}."
             warnings.warn(msg)
             continue
+
+        if isinstance(addon, ModuleType):
+            addon_module_name = f'{addon_target.__name__}.{addon_name}'
+            if addon_module_name not in sys.modules:
+                sys.modules[addon_module_name] = addon
 
         setattr(addon_target, addon_name, addon)
 
