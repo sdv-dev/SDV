@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sdv._utils import _get_root_tables
-from sdv.errors import InvalidDataError
+from sdv.errors import InvalidDataError, SamplingError
 from sdv.multi_table import HMASynthesizer
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 
@@ -375,7 +375,7 @@ def _print_simplified_schema_summary(data_before, data_after):
     print('\n'.join(message))  # noqa: T001
 
 
-def _get_rows_to_drop(metadata, data):
+def _get_rows_to_drop(data, metadata):
     """Get the rows to drop to ensure referential integrity.
 
     The logic of this function is to start at the root tables, look at invalid references
@@ -430,8 +430,8 @@ def _get_rows_to_drop(metadata, data):
     return table_to_idx_to_drop
 
 
-def _drop_rows(metadata, data, drop_missing_values):
-    table_to_idx_to_drop = _get_rows_to_drop(metadata, data)
+def _drop_rows(data, metadata, drop_missing_values):
+    table_to_idx_to_drop = _get_rows_to_drop(data, metadata)
     for table in sorted(metadata.tables):
         idx_to_drop = table_to_idx_to_drop[table]
         data[table] = data[table].drop(idx_to_drop)
@@ -448,23 +448,23 @@ def _drop_rows(metadata, data, drop_missing_values):
             ])
 
 
-def _subsample_disconnected_roots(metadata, data, table, ratio_to_keep):
+def _subsample_disconnected_roots(data, metadata, table, ratio_to_keep):
     """Subsample the disconnected roots tables."""
     relationships = metadata.relationships
     roots = _get_disconnected_roots_from_table(relationships, table)
     for root in roots:
         data[root] = data[root].sample(frac=ratio_to_keep, random_state=RANDON_STATE)
 
-    _drop_rows(metadata, data, drop_missing_values=False)
+    _drop_rows(data, metadata, drop_missing_values=False)
 
 
-def _subsample_table_and_descendants(metadata, data, table, num_rows):
+def _subsample_table_and_descendants(data, metadata, table, num_rows):
     """Subsample the table and its descendants."""
     data[table] = data[table].sample(num_rows, random_state=RANDON_STATE)
-    _drop_rows(metadata, data, drop_missing_values=False)
+    _drop_rows(data, metadata, drop_missing_values=False)
 
 
-def _get_primary_keys_referenced(metadata, data):
+def _get_primary_keys_referenced(data, metadata):
     relationships = metadata.relationships
     primary_keys_referenced = defaultdict(set)
     for relationship in relationships:
@@ -492,14 +492,19 @@ def _subsample_parent(parent_table, parent_primary_key, pk_referenced_before_par
         frac=drop_proportion, random_state=RANDON_STATE
     )
     parent_table = parent_table.drop(unreferenced_data_to_drop.index)
+    if parent_table.empty:
+        raise InvalidDataError([
+            f"All references in table '{parent_primary_key}' are unknown and must be dropped."
+            'Try providing different data for this table.'
+        ])
 
     return parent_table
 
 
-def _subsample_ancestors(metadata, data, table, primary_keys_referenced):
+def _subsample_ancestors(data, metadata, table, primary_keys_referenced):
     """Subsample the ancestors of the table."""
     relationships = metadata.relationships
-    pk_referenced = _get_primary_keys_referenced(metadata, data)
+    pk_referenced = _get_primary_keys_referenced(data, metadata)
     direct_relationships = _get_relationships_for_child(relationships, table)
     direct_parents = {rel['parent_table_name'] for rel in direct_relationships}
     for parent in sorted(direct_parents):
@@ -513,10 +518,10 @@ def _subsample_ancestors(metadata, data, table, primary_keys_referenced):
         if unreferenced_primary_keys:
             primary_keys_referenced[parent] = pk_referenced[parent]
 
-        _subsample_ancestors(metadata, data, parent, primary_keys_referenced)
+        _subsample_ancestors(data, metadata, parent, primary_keys_referenced)
 
 
-def _subsample_data(metadata, data, main_table_name, num_rows):
+def _subsample_data(data, metadata, main_table_name, num_rows):
     """Subsample multi-table table based on a table and a number of rows.
 
     The strategy is to:
@@ -542,13 +547,23 @@ def _subsample_data(metadata, data, main_table_name, num_rows):
             Dictionary with the subsampled dataframes.
     """
     result = deepcopy(data)
-    primary_keys_referenced = _get_primary_keys_referenced(metadata, result)
+    primary_keys_referenced = _get_primary_keys_referenced(result, metadata)
     ratio_to_keep = num_rows / len(result[main_table_name])
-    _subsample_disconnected_roots(metadata, result, main_table_name, ratio_to_keep)
-    _subsample_table_and_descendants(metadata, result, main_table_name, num_rows)
-    _subsample_ancestors(metadata, result, main_table_name, primary_keys_referenced)
+    try:
+        _subsample_disconnected_roots(result, metadata, main_table_name, ratio_to_keep)
+        _subsample_table_and_descendants(result, metadata, main_table_name, num_rows)
+        _subsample_ancestors(result, metadata, main_table_name, primary_keys_referenced)
+    except InvalidDataError as error:
+        if 'All references in table' not in str(error.args[0]):
+            raise error
+        else:
+            raise SamplingError(
+                f'Subsampling {main_table_name} with {num_rows} rows leads to some empty tables. '
+                'Please try again with a bigger number of rows.'
+            )
 
     return result
+
 
 def _print_subsample_summary(data_before, data_after):
     """Print the summary of the subsampled data."""
@@ -560,6 +575,7 @@ def _print_subsample_summary(data_before, data_after):
             len(data_after[table]) if table in data_after else 0 for table in tables
         ]
     })
-    message = ['Success! The data has been subsampled.\n']
+    subsample_rows = 100 * (1 - summary['# Rows (After)'].sum() / summary['# Rows (Before)'].sum())
+    message = [f'Success! Your subset has {round(subsample_rows)}% less rows than the original.\n']
     message.append(summary.to_string(index=False))
     print('\n'.join(message))  # noqa: T001
