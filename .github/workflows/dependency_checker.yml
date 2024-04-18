@@ -1,7 +1,7 @@
 name: Dependency Checker
 on:
   schedule:
-    - cron: '0 0 * * 1-5'
+    - cron: '0 0 * * 1'
   workflow_dispatch:
 jobs:
   build:
@@ -22,6 +22,8 @@ jobs:
       with:
         token: ${{ secrets.GH_ACCESS_TOKEN }}
         commit-message: Update latest dependencies
+        author: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+        committer: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
         title: Automated Latest Dependency Updates
         body: "This is an auto-generated PR with **latest** dependency updates."
         branch: latest-dependency-update
