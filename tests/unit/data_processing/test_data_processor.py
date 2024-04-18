@@ -1433,7 +1433,7 @@ class TestDataProcessor:
             'unknown_pii_true': 'pii',
             'phone_pii': 'pii',
             'name_pii': 'pii',
-            'id_pii_true': 'text',
+            'id_pii_true': 'pii',
             'example_pii_false': 'example',
             'unknown_pii_false': 'pii',
             'id_pii_false': 'text',

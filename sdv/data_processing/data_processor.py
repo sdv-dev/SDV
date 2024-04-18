@@ -582,7 +582,8 @@ class DataProcessor:
                         function_kwargs={'text': bothify_format},
                         cardinality_rule=cardinality_rule
                     )
-                    sdtypes[column] = 'text'
+
+                    sdtypes[column] = 'pii' if column_metadata.get('pii') else 'text'
 
             elif sdtype == 'unknown':
                 sdtypes[column] = 'pii'
