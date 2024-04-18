@@ -1,3 +1,5 @@
+"""Utilities for configuring logging within the SDV library."""
+
 import contextlib
 import logging
 import logging.config

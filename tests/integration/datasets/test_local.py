@@ -4,7 +4,7 @@ import pytest
 from sdv.datasets.local import save_csvs
 
 
-@pytest.fixture
+@pytest.fixture()
 def data():
     parent = pd.DataFrame(data={
         'id': [0, 1, 2, 3, 4],

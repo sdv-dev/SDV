@@ -2,16 +2,13 @@
 import contextlib
 import datetime
 import inspect
-import logging
 import operator
 import warnings
 from collections import defaultdict
 from copy import deepcopy
-from pathlib import Path
 
 import cloudpickle
 import numpy as np
-import yaml
 from tqdm import tqdm
 
 from sdv import version
@@ -19,7 +16,7 @@ from sdv._utils import (
     _validate_foreign_keys_not_null, check_sdv_versions_and_warn, check_synthesizer_version,
     generate_synthesizer_id)
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
-from sdv.logging.utils import get_logger, disable_single_table_logger
+from sdv.logging import disable_single_table_logger, get_logger
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 SYNTHESIZER_LOGGER = get_logger('MultiTableSynthesizer')

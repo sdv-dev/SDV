@@ -8,7 +8,7 @@ import sdv
 from sdv import _find_addons
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_sdv():
     sdv_module = sys.modules['sdv']
     sdv_mock = Mock()

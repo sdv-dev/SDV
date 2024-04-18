@@ -10,7 +10,6 @@ import os
 import uuid
 import warnings
 from collections import defaultdict
-from pathlib import Path
 
 import cloudpickle
 import copulas
@@ -27,7 +26,6 @@ from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
 from sdv.logging.utils import get_logger
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
-
 
 LOGGER = logging.getLogger(__name__)
 SYNTHESIZER_LOGGER = get_logger('SingleTableSynthesizer')
