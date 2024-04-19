@@ -571,7 +571,7 @@ class DataProcessor:
                 else:
                     bothify_format = 'sdv-id-??????'
                     if is_numeric:
-                        bothify_format = '##########'
+                        bothify_format = '#########'
 
                     cardinality_rule = None
                     if column in self._keys:

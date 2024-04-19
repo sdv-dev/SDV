@@ -1348,7 +1348,7 @@ class TestDataProcessor:
         id_numeric_transformer = config['transformers']['id_numeric']
         assert isinstance(id_numeric_transformer, AnonymizedFaker)
         assert id_numeric_transformer.function_name == 'bothify'
-        assert id_numeric_transformer.function_kwargs == {'text': '##########'}
+        assert id_numeric_transformer.function_kwargs == {'text': '#########'}
         assert id_numeric_transformer.cardinality_rule == 'unique'
 
         id_column_transformer = config['transformers']['id_column']
