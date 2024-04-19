@@ -9,7 +9,7 @@ from pathlib import Path
 import yaml
 
 
-def get_logger_config():
+def get_sdv_logger_config():
     """Return a dictionary with the logging configuration."""
     logging_path = Path(__file__).parent
     with open(logging_path / 'sdv_logger_config.yml', 'r') as f:
@@ -47,7 +47,7 @@ def disable_single_table_logger():
 
 
 @lru_cache()
-def get_logger(logger_name):
+def get_sdv_logger(logger_name):
     """Get a logger instance with the specified name and configuration.
 
     This function retrieves or creates a logger instance with the specified name
@@ -63,7 +63,7 @@ def get_logger(logger_name):
             A logger instance configured according to the logging configuration
             and the specific settings for the given logger name.
     """
-    logger_conf = get_logger_config()
+    logger_conf = get_sdv_logger_config()
     logger = logging.getLogger(logger_name)
     if logger_name in logger_conf.get('loggers'):
         formatter = None

@@ -24,11 +24,11 @@ from sdv._utils import (
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
-from sdv.logging.utils import get_logger
+from sdv.logging.utils import get_sdv_logger
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
 LOGGER = logging.getLogger(__name__)
-SYNTHESIZER_LOGGER = get_logger('SingleTableSynthesizer')
+SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
@@ -462,6 +462,7 @@ class BaseSynthesizer:
             filepath (str):
                 Path where the synthesizer instance will be serialized.
         """
+        synthesizer_id = getattr(self, '_synthesizer_id', None)
         SYNTHESIZER_LOGGER.info(
             '\nSave:\n'
             '  Timestamp: %s\n'
@@ -469,7 +470,7 @@ class BaseSynthesizer:
             '  Synthesizer id: %s',
             datetime.datetime.now(),
             self.__class__.__name__,
-            self._synthesizer_id,
+            synthesizer_id
         )
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)

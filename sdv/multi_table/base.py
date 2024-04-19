@@ -16,10 +16,10 @@ from sdv._utils import (
     _validate_foreign_keys_not_null, check_sdv_versions_and_warn, check_synthesizer_version,
     generate_synthesizer_id)
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
-from sdv.logging import disable_single_table_logger, get_logger
+from sdv.logging import disable_single_table_logger, get_sdv_logger
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
-SYNTHESIZER_LOGGER = get_logger('MultiTableSynthesizer')
+SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
 
 
 class BaseMultiTableSynthesizer:
@@ -667,9 +667,7 @@ class BaseMultiTableSynthesizer:
             filepath (str):
                 Path where the instance will be serialized.
         """
-        with open(filepath, 'wb') as output:
-            cloudpickle.dump(self, output)
-
+        synthesizer_id = getattr(self, '_synthesizer_id', None)
         SYNTHESIZER_LOGGER.info(
             '\nSave:\n'
             '  Timestamp: %s\n'
@@ -677,8 +675,10 @@ class BaseMultiTableSynthesizer:
             '  Synthesizer id: %s',
             datetime.datetime.now(),
             self.__class__.__name__,
-            self._synthesizer_id,
+            synthesizer_id
         )
+        with open(filepath, 'wb') as output:
+            cloudpickle.dump(self, output)
 
     @classmethod
     def load(cls, filepath):
