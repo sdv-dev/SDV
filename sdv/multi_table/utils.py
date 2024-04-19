@@ -12,7 +12,7 @@ from sdv.multi_table import HMASynthesizer
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 
 MODELABLE_SDTYPE = ['categorical', 'numerical', 'datetime', 'boolean']
-RANDON_STATE = 42
+RANDOM_STATE = 42
 
 
 def _get_child_tables(relationships):
@@ -453,14 +453,14 @@ def _subsample_disconnected_roots(data, metadata, table, ratio_to_keep):
     relationships = metadata.relationships
     roots = _get_disconnected_roots_from_table(relationships, table)
     for root in roots:
-        data[root] = data[root].sample(frac=ratio_to_keep, random_state=RANDON_STATE)
+        data[root] = data[root].sample(frac=ratio_to_keep, random_state=RANDOM_STATE)
 
     _drop_rows(data, metadata, drop_missing_values=False)
 
 
 def _subsample_table_and_descendants(data, metadata, table, num_rows):
     """Subsample the table and its descendants."""
-    data[table] = data[table].sample(num_rows, random_state=RANDON_STATE)
+    data[table] = data[table].sample(num_rows, random_state=RANDOM_STATE)
     _drop_rows(data, metadata, drop_missing_values=False)
 
 
@@ -522,7 +522,7 @@ def _subsample_parent(parent_table, parent_primary_key, pk_referenced_before_par
 
     # Randomly drop a proportional amount of never-referenced rows
     unreferenced_data_to_drop = unreferenced_data.sample(
-        frac=drop_proportion, random_state=RANDON_STATE
+        frac=drop_proportion, random_state=RANDOM_STATE
     )
     parent_table = parent_table.drop(unreferenced_data_to_drop.index)
     if parent_table.empty:
