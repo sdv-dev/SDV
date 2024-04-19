@@ -1051,10 +1051,11 @@ class MultiTableMetadata:
             '\nMetadata Save:\n'
             '  Timestamp: %s\n'
             '  Statistics about the metadata:\n'
-            '    Total number of tables: %s',
-            '    Total number of columns: %s'
+            '    Total number of tables: %s\n'
+            '    Total number of columns: %s\n'
             '    Total number of relationships: %s',
             datetime.datetime.now(),
+            len(self.tables),
             total_columns,
             len(self.relationships)
         )

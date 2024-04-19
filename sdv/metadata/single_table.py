@@ -1212,7 +1212,7 @@ class SingleTableMetadata:
             '\nMetadata Save:\n'
             '  Timestamp: %s\n'
             '  Statistics about the metadata:\n'
-            '    Total number of tables: 1',
+            '    Total number of tables: 1'
             '    Total number of columns: %s'
             '    Total number of relationships: 0',
             datetime.now(),

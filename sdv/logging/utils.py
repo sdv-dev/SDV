@@ -36,9 +36,7 @@ def disable_single_table_logger():
     # Logging without ``SingleTableSynthesizer``
     single_table_logger = logging.getLogger('SingleTableSynthesizer')
     handlers = single_table_logger.handlers
-    for handler in handlers:
-        single_table_logger.removeHandler(handler)
-
+    single_table_logger.handlers = []
     try:
         yield
     finally:
@@ -84,7 +82,7 @@ def get_sdv_logger(logger_name):
                 file_handler.setLevel(log_level)
                 file_handler.setFormatter(formatter)
                 logger.addHandler(file_handler)
-            elif handler in ('consoleHandler', 'StreamingHandler'):
+            elif handler_class in ('logging.consoleHandler', 'logging.StreamHandler'):
                 ch = logging.StreamHandler()
                 ch.setLevel(log_level)
                 ch.setFormatter(formatter)

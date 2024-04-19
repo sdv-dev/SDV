@@ -402,18 +402,18 @@ class BaseSynthesizer:
                 The transformed data used to fit the model to.
         """
         SYNTHESIZER_LOGGER.info(
-            '\nFit processed data\n'
+            '\nFit processed data:\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
-            '  Statistics of the fit data:\n'
+            '  Statistics of the fit processed data:\n'
             '    Total number of tables: 1\n'
-            '    Table number of rows: %s\n'
-            '    Table number of columns: %s\n'
+            '    Total number of rows: %s\n'
+            '    Total number of columns: %s\n'
             '  Synthesizer id: %s',
             datetime.datetime.now(),
             self.__class__.__name__,
-            len(processed_data.columns),
             len(processed_data),
+            len(processed_data.columns),
             self._synthesizer_id,
         )
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
@@ -433,18 +433,18 @@ class BaseSynthesizer:
                 The raw data (before any transformations) to fit the model to.
         """
         SYNTHESIZER_LOGGER.info(
-            '\nFit\n'
+            '\nFit:\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
             '  Statistics of the fit data:\n'
             '    Total number of tables: 1\n'
-            '    Table number of rows: %s\n'
-            '    Table number of columns: %s\n'
+            '    Total number of rows: %s\n'
+            '    Total number of columns: %s\n'
             '  Synthesizer id: %s',
             datetime.datetime.now(),
             self.__class__.__name__,
-            len(data.columns),
             len(data),
+            len(data.columns),
             self._synthesizer_id,
         )
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
@@ -496,7 +496,7 @@ class BaseSynthesizer:
             synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
 
         SYNTHESIZER_LOGGER.info(
-            '\nLoad\n'
+            '\nLoad:\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
             '  Synthesizer id: %s',

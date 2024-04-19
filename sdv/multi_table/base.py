@@ -391,13 +391,13 @@ class BaseMultiTableSynthesizer:
             total_columns += len(table.columns)
 
         SYNTHESIZER_LOGGER.info(
-            '\nFit processed data\n'
+            '\nFit processed data:\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
-            '  Statistics of the fit data:\n'
+            '  Statistics of the fit processed data:\n'
             '    Total number of tables: %s\n'
-            '    Table number of rows: %s\n'
-            '    Table number of columns: %s\n'
+            '    Total number of rows: %s\n'
+            '    Total number of columns: %s\n'
             '  Synthesizer id: %s',
             datetime.datetime.now(),
             self.__class__.__name__,
@@ -431,13 +431,13 @@ class BaseMultiTableSynthesizer:
             total_columns += len(table.columns)
 
         SYNTHESIZER_LOGGER.info(
-            '\nFit\n'
+            '\nFit:\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
             '  Statistics of the fit data:\n'
             '    Total number of tables: %s\n'
-            '    Table number of rows: %s\n'
-            '    Table number of columns: %s\n'
+            '    Total number of rows: %s\n'
+            '    Total number of columns: %s\n'
             '  Synthesizer id: %s',
             datetime.datetime.now(),
             self.__class__.__name__,
@@ -491,10 +491,10 @@ class BaseMultiTableSynthesizer:
             '\nSample:\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
-            '  Statistics of the fit data:\n'
+            '  Statistics of the sample size:\n'
             '    Total number of tables: %s\n'
-            '    Table number of rows: %s\n'
-            '    Table number of columns: %s\n'
+            '    Total number of rows: %s\n'
+            '    Total number of columns: %s\n'
             '  Synthesizer id: %s',
             datetime.datetime.now(),
             self.__class__.__name__,
@@ -701,7 +701,7 @@ class BaseMultiTableSynthesizer:
             synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
 
         SYNTHESIZER_LOGGER.info(
-            '\nLoad\n'
+            '\nLoad:\n'
             '  Timestamp: %s\n'
             '  Synthesizer class name: %s\n'
             '  Synthesizer id: %s',
