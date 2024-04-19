@@ -1,5 +1,25 @@
 # Release Notes
 
+## 1.12.1 - 2024-04-19
+
+This release makes a number of changes to how id columns are generated. By default, id columns with a regex will now have their values scrambled in the output. Id columns without a regex that are numeric will be created randomly. If they're not numeric, they will have a random suffix.
+
+Additionally, improvements were made to the visibility of the `get_loss_values_plot`.
+
+### New Features
+
+* Create unique id for each synthesizer - Issue [#1902](https://github.com/sdv-dev/SDV/issues/1902) by @pvk-developer
+* Generator Discriminator Loss Chart Color Change - Issue [#1916](https://github.com/sdv-dev/SDV/issues/1916) by @lajohn4747
+* If using regex to generate values, scramble them - Issue [#1921](https://github.com/sdv-dev/SDV/issues/1921) by @amontanez24
+* When generating ids without a regex, create them randomly - Issue [#1922](https://github.com/sdv-dev/SDV/issues/1922) by @frances-h
+
+### Maintenance
+
+* Cleanup automated PR workflows - Issue [#1926](https://github.com/sdv-dev/SDV/issues/1926) by @R-Palazzo
+
+### Internal
+* Add add-on modules to sys.modules  - Issue [#1924](https://github.com/sdv-dev/SDV/issues/1924) by @amontanez24
+
 ## 1.12.0 - 2024-04-16
 
 This release adds support for Python 3.12! It also adds a number of feature improvements. It adds a `simplify_schema` utility function to the `sdv.utils.poc` module which simplifies multi-table schemas so they can be run using `HMASynthesizer`. Multi-table data dictionaries can now be saved directly to CSVs using the `sdv.datasets.local.save_csvs` utility function. Additionally, generator-discriminator loss values can now be plotted directly from CTGAN using the `get_loss_values_plot` method. This release also adds error messages when trying to load an SDV synthesizer on an older version of the SDV, or when trying to re-fit a synthesizer from an older version of the SDV.

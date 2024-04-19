@@ -250,7 +250,7 @@ release: check-release bumpversion-release publish bumpversion-patch
 release-test: check-release bumpversion-release-test publish-test bumpversion-revert
 
 .PHONY: release-candidate
-release-candidate: check-main publish bumpversion-candidate
+release-candidate: check-main publish bumpversion-candidate git-push
 
 .PHONY: release-candidate-test
 release-candidate-test: check-clean check-main publish-test

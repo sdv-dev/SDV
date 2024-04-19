@@ -226,6 +226,26 @@ def test_sample_remaining_columns_with_some_nans():
         synthesizer.sample_remaining_columns(known_columns=known_columns)
 
 
+def test_sample_keys_are_scrambled():
+    """Test that the keys are scrambled in the sampled data."""
+    # Setup
+    data, metadata = download_demo(
+        modality='single_table',
+        dataset_name='fake_hotel_guests'
+    )
+    metadata.update_column('guest_email', sdtype='id', regex_format='[A-Z]{3}')
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.fit(data)
+
+    # Run
+    sampled = synthesizer.sample(1000)
+
+    # Assert
+    ids = sampled['guest_email'].head()
+    expected_keys = pd.Series(['ARH', 'BBH', 'BAP', 'AIF', 'AQP'], name='guest_email')
+    pd.testing.assert_series_equal(ids, expected_keys)
+
+
 def test_multiple_fits():
     """Test the synthesizer refits correctly on new data.
 
@@ -267,9 +287,19 @@ def test_multiple_fits():
 @pytest.mark.parametrize('synthesizer', SYNTHESIZERS)
 def test_sampling(synthesizer):
     """Test that samples are different when ``reset_sampling`` is not called."""
+    # Setup
+    data = pd.DataFrame({
+        'column1': list(range(100)),
+        'column2': list(range(100)),
+        'column3': list(range(100))
+    })
+    synthesizer.fit(data)
+
+    # Run
     sample_1 = synthesizer.sample(10)
     sample_2 = synthesizer.sample(10)
 
+    # Assert
     with pytest.raises(AssertionError):
         pd.testing.assert_frame_equal(sample_1, sample_2)
 
@@ -538,12 +568,39 @@ def test_save_and_load(tmp_path):
 
     # Assert
     assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
-    assert instance.metadata.columns == {}
-    assert instance.metadata.primary_key is None
-    assert instance.metadata.alternate_keys == []
-    assert instance.metadata.sequence_key is None
-    assert instance.metadata.sequence_index is None
-    assert instance.metadata._version == 'SINGLE_TABLE_V1'
+    assert loaded_instance.metadata.columns == {}
+    assert loaded_instance.metadata.primary_key is None
+    assert loaded_instance.metadata.alternate_keys == []
+    assert loaded_instance.metadata.sequence_key is None
+    assert loaded_instance.metadata.sequence_index is None
+    assert loaded_instance.metadata._version == 'SINGLE_TABLE_V1'
+    assert instance._synthesizer_id == loaded_instance._synthesizer_id
+
+
+def test_save_and_load_no_id(tmp_path):
+    """Test that synthesizers can be saved and loaded properly."""
+    # Setup
+    metadata = SingleTableMetadata()
+    instance = BaseSingleTableSynthesizer(metadata)
+    synthesizer_path = tmp_path / 'synthesizer.pkl'
+    delattr(instance, '_synthesizer_id')
+
+    instance.save(synthesizer_path)
+
+    # Run
+    loaded_instance = BaseSingleTableSynthesizer.load(synthesizer_path)
+
+    # Assert
+    assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
+    assert loaded_instance.metadata.columns == {}
+    assert loaded_instance.metadata.primary_key is None
+    assert loaded_instance.metadata.alternate_keys == []
+    assert loaded_instance.metadata.sequence_key is None
+    assert loaded_instance.metadata.sequence_index is None
+    assert loaded_instance.metadata._version == 'SINGLE_TABLE_V1'
+    assert hasattr(instance, '_synthesizer_id') is False
+    assert hasattr(loaded_instance, '_synthesizer_id') is True
+    assert isinstance(loaded_instance._synthesizer_id, str) is True
 
 
 def test_save_and_load_with_downgraded_version(tmp_path):

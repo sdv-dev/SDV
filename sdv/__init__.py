@@ -6,16 +6,17 @@
 
 __author__ = 'DataCebo, Inc.'
 __email__ = 'info@sdv.dev'
-__version__ = '1.12.0'
+__version__ = '1.12.1.dev2'
 
 
 import sys
 import warnings
 from importlib.metadata import entry_points
 from operator import attrgetter
+from types import ModuleType
 
 from sdv import (
-    constraints, data_processing, datasets, evaluation, lite, metadata, metrics, multi_table,
+    constraints, data_processing, datasets, evaluation, io, lite, metadata, metrics, multi_table,
     sampling, sequential, single_table, version)
 
 __all__ = [
@@ -23,6 +24,7 @@ __all__ = [
     'data_processing',
     'datasets',
     'evaluation',
+    'io',
     'lite',
     'metadata',
     'metrics',
@@ -92,7 +94,7 @@ def _find_addons():
             addon = entry_point.load()
         except Exception as e:  # pylint: disable=broad-exception-caught
             msg = (
-                f'Failed to load "{entry_point.name}" from "{entry_point.module_name}" '
+                f'Failed to load "{entry_point.name}" from "{entry_point.version}" '
                 f'with error:\n{e}'
             )
             warnings.warn(msg)
@@ -104,6 +106,11 @@ def _find_addons():
             msg = f"Failed to set '{entry_point.name}': {error}."
             warnings.warn(msg)
             continue
+
+        if isinstance(addon, ModuleType):
+            addon_module_name = f'{addon_target.__name__}.{addon_name}'
+            if addon_module_name not in sys.modules:
+                sys.modules[addon_module_name] = addon
 
         setattr(addon_target, addon_name, addon)
 

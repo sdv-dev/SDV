@@ -13,7 +13,8 @@ from tqdm import tqdm
 
 from sdv import version
 from sdv._utils import (
-    _validate_foreign_keys_not_null, check_sdv_versions_and_warn, check_synthesizer_version)
+    _validate_foreign_keys_not_null, check_sdv_versions_and_warn, check_synthesizer_version,
+    generate_synthesizer_id)
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
@@ -111,6 +112,7 @@ class BaseMultiTableSynthesizer:
         self._fitted_date = None
         self._fitted_sdv_version = None
         self._fitted_sdv_enterprise_version = None
+        self._synthesizer_id = generate_synthesizer_id(self)
 
     def _get_root_parents(self):
         """Get the set of root parents in the graph."""
@@ -604,4 +606,7 @@ class BaseMultiTableSynthesizer:
 
         check_synthesizer_version(synthesizer)
         check_sdv_versions_and_warn(synthesizer)
+        if getattr(synthesizer, '_synthesizer_id', None) is None:
+            synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
+
         return synthesizer

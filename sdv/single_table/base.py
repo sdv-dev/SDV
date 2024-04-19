@@ -19,7 +19,8 @@ import tqdm
 from copulas.multivariate import GaussianMultivariate
 
 from sdv import version
-from sdv._utils import _groupby_list, check_sdv_versions_and_warn, check_synthesizer_version
+from sdv._utils import (
+    _groupby_list, check_sdv_versions_and_warn, check_synthesizer_version, generate_synthesizer_id)
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
@@ -105,6 +106,7 @@ class BaseSynthesizer:
         self._fitted_date = None
         self._fitted_sdv_version = None
         self._fitted_sdv_enterprise_version = None
+        self._synthesizer_id = generate_synthesizer_id(self)
 
     def set_address_columns(self, column_names, anonymization_level='full'):
         """Set the address multi-column transformer."""
@@ -438,6 +440,9 @@ class BaseSynthesizer:
 
         check_synthesizer_version(synthesizer)
         check_sdv_versions_and_warn(synthesizer)
+        if getattr(synthesizer, '_synthesizer_id', None) is None:
+            synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
+
         return synthesizer
 
 
