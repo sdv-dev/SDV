@@ -481,7 +481,8 @@ class DataProcessor:
         regex_format = column_metadata.get('regex_format', default_regex_format)
         transformer = rdt.transformers.RegexGenerator(
             regex_format=regex_format,
-            enforce_uniqueness=(column_name in self._keys)
+            enforce_uniqueness=(column_name in self._keys),
+            generation_order='scrambled'
         )
 
         return transformer

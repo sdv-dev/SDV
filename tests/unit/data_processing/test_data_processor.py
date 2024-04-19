@@ -65,7 +65,6 @@ class TestDataProcessor:
                 }
             ]
         })
-        metadata.validate()
         metadata._valid_column_relationships = metadata.column_relationships
         dp = DataProcessor(SingleTableMetadata())
         dp.metadata = metadata
@@ -98,7 +97,6 @@ class TestDataProcessor:
                 }
             ]
         })
-        metadata.validate()
         metadata._valid_column_relationships = metadata.column_relationships
         dp = DataProcessor(SingleTableMetadata())
         dp.metadata = metadata
@@ -140,7 +138,6 @@ class TestDataProcessor:
                 }
             ]
         })
-        metadata.validate()
         metadata._valid_column_relationships = metadata.column_relationships
         dp = DataProcessor(SingleTableMetadata())
         dp.metadata = metadata
@@ -985,7 +982,8 @@ class TestDataProcessor:
         assert output == mock_rdt.transformers.RegexGenerator.return_value
         mock_rdt.transformers.RegexGenerator.assert_called_once_with(
             regex_format='ID_00',
-            enforce_uniqueness=True
+            enforce_uniqueness=True,
+            generation_order='scrambled'
         )
 
     @patch('sdv.data_processing.data_processor.get_anonymized_transformer')
