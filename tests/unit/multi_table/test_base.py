@@ -1494,6 +1494,7 @@ class TestBaseMultiTableSynthesizer:
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
         synthesizer_id = 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         mock_generate_synthesizer_id.return_value = synthesizer_id
         synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
         cloudpickle_mock.load.return_value = synthesizer_mock
