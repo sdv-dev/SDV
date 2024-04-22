@@ -127,13 +127,6 @@ class BaseMultiTableSynthesizer:
             self._synthesizer_id
         )
 
-    def _get_root_parents(self):
-        """Get the set of root parents in the graph."""
-        non_root_tables = set(self.metadata._get_parent_map().keys())
-        root_parents = set(self.metadata.tables.keys()) - non_root_tables
-
-        return root_parents
-
     def set_address_columns(self, table_name, column_names, anonymization_level='full'):
         """Set the address multi-column transformer.
 

@@ -101,18 +101,18 @@ def _get_ancestors(relationships, child_table):
 
 def _get_disconnected_roots_from_table(relationship, table):
     """Get the disconnected roots table from the given table."""
-    roots_table = _get_root_tables(relationship)
+    root_tables = _get_root_tables(relationship)
     child_tables = _get_child_tables(relationship)
     if table in child_tables:
-        return roots_table - _get_ancestors(relationship, table)
+        return root_tables - _get_ancestors(relationship, table)
 
     connected_roots = set()
     for child in child_tables:
         child_ancestor = _get_ancestors(relationship, child)
         if table in child_ancestor:
-            connected_roots.update(roots_table.intersection(child_ancestor))
+            connected_roots.update(root_tables.intersection(child_ancestor))
 
-    return roots_table - connected_roots
+    return root_tables - connected_roots
 
 
 def _simplify_relationships_and_tables(metadata, tables_to_drop):
@@ -575,7 +575,7 @@ def _subsample_data(data, metadata, main_table_name, num_rows):
 
     The strategy is to:
     - Subsample the disconnected roots tables by keeping a similar proportion of data
-      than the maint table. Ensure referential integrity.
+      than the main table. Ensure referential integrity.
     - Subsample the main table and its descendants to ensure referential integrity.
     - Subsample the ancestors of the main table by removing primary key rows that are no longer
       referenced by the descendants and some unreferenced rows.

@@ -133,11 +133,11 @@ def get_random_subset(data, metadata, main_table_name, num_rows, verbose=True):
       referenced by the descendants and drop also some unreferenced rows.
 
     Args:
-        metadata (MultiTableMetadata):
-            Metadata of the datasets.
         data (dict):
             Dictionary that maps each table name (string) to the data for that
             table (pandas.DataFrame).
+        metadata (MultiTableMetadata):
+            Metadata of the datasets.
         main_table_name (str):
             Name of the main table.
         num_rows (int):
