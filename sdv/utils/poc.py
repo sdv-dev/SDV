@@ -12,15 +12,15 @@ from sdv.multi_table.utils import (
     _print_simplified_schema_summary, _simplify_data, _simplify_metadata)
 
 
-def drop_unknown_references(metadata, data, drop_missing_values=True, verbose=True):
+def drop_unknown_references(data, metadata, drop_missing_values=True, verbose=True):
     """Drop rows with unknown foreign keys.
 
     Args:
-        metadata (MultiTableMetadata):
-            Metadata of the datasets.
         data (dict):
             Dictionary that maps each table name (string) to the data for that
             table (pandas.DataFrame).
+        metadata (MultiTableMetadata):
+            Metadata of the datasets.
         drop_missing_values (bool):
             Boolean describing whether or not to also drop foreign keys with missing values
             If True, drop rows with missing values in the foreign keys.
