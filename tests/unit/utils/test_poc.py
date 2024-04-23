@@ -65,7 +65,7 @@ def test_drop_unknown_references(mock_get_rows_to_drop, mock_stdout_write):
     })
 
     # Run
-    result = drop_unknown_references(metadata, data)
+    result = drop_unknown_references(data, metadata)
 
     # Assert
     expected_pattern = re.compile(
@@ -127,7 +127,7 @@ def test_drop_unknown_references_valid_data_mock(mock_stdout_write):
     }
 
     # Run
-    result = drop_unknown_references(metadata, data)
+    result = drop_unknown_references(data, metadata)
 
     # Assert
     expected_pattern = re.compile(
@@ -198,7 +198,7 @@ def test_drop_unknown_references_with_nan(mock_validate_foreign_keys, mock_get_r
     })
 
     # Run
-    result = drop_unknown_references(metadata, data, verbose=False)
+    result = drop_unknown_references(data, metadata, verbose=False)
 
     # Assert
     metadata.validate.assert_called_once()
@@ -278,7 +278,7 @@ def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop
     })
 
     # Run
-    result = drop_unknown_references(metadata, data, drop_missing_values=False, verbose=False)
+    result = drop_unknown_references(data, metadata, drop_missing_values=False, verbose=False)
 
     # Assert
     mock_get_rows_to_drop.assert_called_once()
@@ -360,7 +360,7 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
         'Try providing different data for this table.'
     )
     with pytest.raises(InvalidDataError, match=expected_message):
-        drop_unknown_references(metadata, data)
+        drop_unknown_references(data, metadata)
 
 
 @patch('sdv.utils.poc._get_total_estimated_columns')

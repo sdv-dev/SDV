@@ -76,7 +76,7 @@ def test_drop_unknown_references(metadata, data, capsys):
     with pytest.raises(InvalidDataError, match=expected_message):
         metadata.validate_data(data)
 
-    cleaned_data = drop_unknown_references(metadata, data)
+    cleaned_data = drop_unknown_references(data, metadata)
     metadata.validate_data(cleaned_data)
     captured = capsys.readouterr()
 
@@ -100,7 +100,7 @@ def test_drop_unknown_references_valid_data(metadata, data, capsys):
     data['child'].loc[4, 'parent_id'] = 2
 
     # Run
-    result = drop_unknown_references(metadata, data)
+    result = drop_unknown_references(data, metadata)
     captured = capsys.readouterr()
 
     # Assert
@@ -122,7 +122,7 @@ def test_drop_unknown_references_drop_missing_values(metadata, data, capsys):
     data['child'].loc[4, 'parent_id'] = np.nan
 
     # Run
-    cleaned_data = drop_unknown_references(metadata, data)
+    cleaned_data = drop_unknown_references(data, metadata)
     metadata.validate_data(cleaned_data)
     captured = capsys.readouterr()
 
@@ -146,7 +146,7 @@ def test_drop_unknown_references_not_drop_missing_values(metadata, data):
 
     # Run
     cleaned_data = drop_unknown_references(
-        metadata, data, drop_missing_values=False, verbose=False
+        data, metadata, drop_missing_values=False, verbose=False
     )
 
     # Assert
