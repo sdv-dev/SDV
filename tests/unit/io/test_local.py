@@ -1,5 +1,6 @@
 """Unit tests for local file handlers."""
 import os
+import re
 from pathlib import Path
 from unittest.mock import patch
 
@@ -151,7 +152,8 @@ class TestCSVHandler:
         handler = CSVHandler()
 
         # Run
-        with pytest.raises(FileExistsError, match=f"{tmpdir / 'synthetic_data' / 'table1.csv'}"):
+        error_msg = re.escape(f"{tmpdir / 'synthetic_data' / 'table1.csv'}")
+        with pytest.raises(FileExistsError, match=error_msg):
             handler.write(synthetic_data, tmpdir / 'synthetic_data')
 
     def test_write_file_exists_mode_is_a(self, tmpdir):
