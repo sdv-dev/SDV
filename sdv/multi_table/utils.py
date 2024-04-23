@@ -12,7 +12,6 @@ from sdv.multi_table import HMASynthesizer
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 
 MODELABLE_SDTYPE = ['categorical', 'numerical', 'datetime', 'boolean']
-RANDOM_STATE = 42
 
 
 def _get_child_tables(relationships):
@@ -99,16 +98,16 @@ def _get_ancestors(relationships, child_table):
     return ancestors
 
 
-def _get_disconnected_roots_from_table(relationship, table):
+def _get_disconnected_roots_from_table(relationships, table):
     """Get the disconnected roots table from the given table."""
-    root_tables = _get_root_tables(relationship)
-    child_tables = _get_child_tables(relationship)
+    root_tables = _get_root_tables(relationships)
+    child_tables = _get_child_tables(relationships)
     if table in child_tables:
-        return root_tables - _get_ancestors(relationship, table)
+        return root_tables - _get_ancestors(relationships, table)
 
     connected_roots = set()
     for child in child_tables:
-        child_ancestor = _get_ancestors(relationship, child)
+        child_ancestor = _get_ancestors(relationships, child)
         if table in child_ancestor:
             connected_roots.update(root_tables.intersection(child_ancestor))
 
@@ -453,14 +452,14 @@ def _subsample_disconnected_roots(data, metadata, table, ratio_to_keep):
     relationships = metadata.relationships
     roots = _get_disconnected_roots_from_table(relationships, table)
     for root in roots:
-        data[root] = data[root].sample(frac=ratio_to_keep, random_state=RANDOM_STATE)
+        data[root] = data[root].sample(frac=ratio_to_keep)
 
     _drop_rows(data, metadata, drop_missing_values=False)
 
 
 def _subsample_table_and_descendants(data, metadata, table, num_rows):
     """Subsample the table and its descendants."""
-    data[table] = data[table].sample(num_rows, random_state=RANDOM_STATE)
+    data[table] = data[table].sample(num_rows)
     _drop_rows(data, metadata, drop_missing_values=False)
 
 
@@ -489,7 +488,7 @@ def _get_primary_keys_referenced(data, metadata):
     return primary_keys_referenced
 
 
-def _subsample_parent(parent_table, parent_primary_key, pk_referenced_before_parent,
+def _subsample_parent(parent_table, parent_primary_key, parent_pk_referenced_before,
                       unreferenced_pk_parent):
     """Subsample the parent table.
 
@@ -502,7 +501,7 @@ def _subsample_parent(parent_table, parent_primary_key, pk_referenced_before_par
             Parent table to subsample.
         parent_primary_key (str):
             Name of the primary key of the parent table.
-        pk_referenced_before_parent (set):
+        parent_pk_referenced_before (set):
             Set of the primary keys referenced before any subsampling.
         unreferenced_pk_parent (set):
             Set of the primary keys that are no longer referenced by the descendants.
@@ -511,19 +510,17 @@ def _subsample_parent(parent_table, parent_primary_key, pk_referenced_before_par
         pandas.DataFrame:
             Subsampled parent table.
     """
-    total_referenced = len(pk_referenced_before_parent)
+    total_referenced = len(parent_pk_referenced_before)
     total_dropped = len(unreferenced_pk_parent)
     drop_proportion = total_dropped / total_referenced
 
     parent_table = parent_table[~parent_table[parent_primary_key].isin(unreferenced_pk_parent)]
     unreferenced_data = parent_table[
-        ~parent_table[parent_primary_key].isin(pk_referenced_before_parent)
+        ~parent_table[parent_primary_key].isin(parent_pk_referenced_before)
     ]
 
     # Randomly drop a proportional amount of never-referenced rows
-    unreferenced_data_to_drop = unreferenced_data.sample(
-        frac=drop_proportion, random_state=RANDOM_STATE
-    )
+    unreferenced_data_to_drop = unreferenced_data.sample(frac=drop_proportion)
     parent_table = parent_table.drop(unreferenced_data_to_drop.index)
     if parent_table.empty:
         raise InvalidDataError([
