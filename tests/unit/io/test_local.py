@@ -135,10 +135,8 @@ class TestCSVHandler:
         handler.write(synthetic_data, tmpdir / 'synthetic_data', file_name_suffix='_synthetic')
 
         # Assert
-        assert os.listdir(tmpdir / 'synthetic_data') == [
-            'table2_synthetic.csv',
-            'table1_synthetic.csv'
-        ]
+        assert 'table1_synthetic.csv' in os.listdir(tmpdir / 'synthetic_data')
+        assert 'table2_synthetic.csv' in os.listdir(tmpdir / 'synthetic_data')
 
     def test_write_file_exists(self, tmpdir):
         """Test that an error is raised when it exists and the mode is `x`."""
