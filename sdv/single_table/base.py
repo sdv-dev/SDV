@@ -112,16 +112,15 @@ class BaseSynthesizer:
         self._fitted_sdv_version = None
         self._fitted_sdv_enterprise_version = None
         self._synthesizer_id = generate_synthesizer_id(self)
-        if self.table_name is None:
-            SYNTHESIZER_LOGGER.info(
-                '\nInstance:\n'
-                '  Timestamp: %s\n'
-                '  Synthesizer class name: %s\n'
-                '  Synthesizer id: %s',
-                datetime.datetime.now(),
-                self.__class__.__name__,
-                self._synthesizer_id
-            )
+        SYNTHESIZER_LOGGER.info(
+            '\nInstance:\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            self.__class__.__name__,
+            self._synthesizer_id
+        )
 
     def set_address_columns(self, column_names, anonymization_level='full'):
         """Set the address multi-column transformer."""
@@ -404,22 +403,21 @@ class BaseSynthesizer:
             processed_data (pandas.DataFrame):
                 The transformed data used to fit the model to.
         """
-        if self.table_name is None:
-            SYNTHESIZER_LOGGER.info(
-                '\nFit processed data:\n'
-                '  Timestamp: %s\n'
-                '  Synthesizer class name: %s\n'
-                '  Statistics of the fit processed data:\n'
-                '    Total number of tables: 1\n'
-                '    Total number of rows: %s\n'
-                '    Total number of columns: %s\n'
-                '  Synthesizer id: %s',
-                datetime.datetime.now(),
-                self.__class__.__name__,
-                len(processed_data),
-                len(processed_data.columns),
-                self._synthesizer_id,
-            )
+        SYNTHESIZER_LOGGER.info(
+            '\nFit processed data:\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Statistics of the fit processed data:\n'
+            '    Total number of tables: 1\n'
+            '    Total number of rows: %s\n'
+            '    Total number of columns: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            self.__class__.__name__,
+            len(processed_data),
+            len(processed_data.columns),
+            self._synthesizer_id,
+        )
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         if not processed_data.empty:
@@ -437,22 +435,21 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) to fit the model to.
         """
-        if self.table_name is None:
-            SYNTHESIZER_LOGGER.info(
-                '\nFit:\n'
-                '  Timestamp: %s\n'
-                '  Synthesizer class name: %s\n'
-                '  Statistics of the fit data:\n'
-                '    Total number of tables: 1\n'
-                '    Total number of rows: %s\n'
-                '    Total number of columns: %s\n'
-                '  Synthesizer id: %s',
-                datetime.datetime.now(),
-                self.__class__.__name__,
-                len(data),
-                len(data.columns),
-                self._synthesizer_id,
-            )
+        SYNTHESIZER_LOGGER.info(
+            '\nFit:\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Statistics of the fit data:\n'
+            '    Total number of tables: 1\n'
+            '    Total number of rows: %s\n'
+            '    Total number of columns: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            self.__class__.__name__,
+            len(data),
+            len(data.columns),
+            self._synthesizer_id,
+        )
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         self._check_metadata_updated()
@@ -470,16 +467,15 @@ class BaseSynthesizer:
                 Path where the synthesizer instance will be serialized.
         """
         synthesizer_id = getattr(self, '_synthesizer_id', None)
-        if self.table_name is None:
-            SYNTHESIZER_LOGGER.info(
-                '\nSave:\n'
-                '  Timestamp: %s\n'
-                '  Synthesizer class name: %s\n'
-                '  Synthesizer id: %s',
-                datetime.datetime.now(),
-                self.__class__.__name__,
-                synthesizer_id
-            )
+        SYNTHESIZER_LOGGER.info(
+            '\nSave:\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            self.__class__.__name__,
+            synthesizer_id
+        )
 
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
@@ -891,22 +887,21 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             show_progress_bar=show_progress_bar
         )
 
-        if self.table_name is None:
-            SYNTHESIZER_LOGGER.info(
-                '\nSample:\n'
-                '  Timestamp: %s\n'
-                '  Synthesizer class name: %s\n'
-                '  Statistics of the sample size:\n'
-                '    Total number of tables: 1\n'
-                '    Total number of rows: %s\n'
-                '    Total number of columns: %s\n'
-                '  Synthesizer id: %s',
-                sample_timestamp,
-                self.__class__.__name__,
-                len(sampled_data),
-                len(sampled_data.columns),
-                self._synthesizer_id,
-            )
+        SYNTHESIZER_LOGGER.info(
+            '\nSample:\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Statistics of the sample size:\n'
+            '    Total number of tables: 1\n'
+            '    Total number of rows: %s\n'
+            '    Total number of columns: %s\n'
+            '  Synthesizer id: %s',
+            sample_timestamp,
+            self.__class__.__name__,
+            len(sampled_data),
+            len(sampled_data.columns),
+            self._synthesizer_id,
+        )
 
         return sampled_data
 

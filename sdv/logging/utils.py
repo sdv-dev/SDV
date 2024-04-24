@@ -1,5 +1,6 @@
 """Utilities for configuring logging within the SDV library."""
 
+import contextlib
 import logging
 from functools import lru_cache
 from pathlib import Path
@@ -23,6 +24,26 @@ def get_sdv_logger_config():
             handler['filename'] = store_path / handler['filename']
 
     return logger_conf
+
+
+@contextlib.contextmanager
+def disable_single_table_logger():
+    """Temporarily disables logging for the single table synthesizers.
+
+    This context manager temporarily removes all handlers associated with
+    the ``SingleTableSynthesizer`` logger, disabling logging for that module
+    within the current context. After the context exits, the
+    removed handlers are restored to the logger.
+    """
+    # Logging without ``SingleTableSynthesizer``
+    single_table_logger = logging.getLogger('SingleTableSynthesizer')
+    handlers = single_table_logger.handlers
+    single_table_logger.handlers = []
+    try:
+        yield
+    finally:
+        for handler in handlers:
+            single_table_logger.addHandler(handler)
 
 
 @lru_cache()
