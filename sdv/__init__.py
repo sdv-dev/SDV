@@ -16,8 +16,8 @@ from operator import attrgetter
 from types import ModuleType
 
 from sdv import (
-    constraints, data_processing, datasets, evaluation, io, lite, metadata, metrics, multi_table,
-    sampling, sequential, single_table, version)
+    constraints, data_processing, datasets, evaluation, io, lite, logging, metadata, metrics,
+    multi_table, sampling, sequential, single_table, version)
 
 __all__ = [
     'constraints',
@@ -26,6 +26,7 @@ __all__ = [
     'evaluation',
     'io',
     'lite',
+    'logging',
     'metadata',
     'metrics',
     'multi_table',
