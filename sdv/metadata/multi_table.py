@@ -896,6 +896,20 @@ class MultiTableMetadata:
         self._validate_table_exists(table_name)
         return self.tables[table_name].get_column_names(**kwargs)
 
+    def get_table_metadata(self, table_name):
+        """Return the metadata for a table.
+
+        Args:
+            table_name (str):
+                The name of the table to get the metadata for.
+
+        Returns:
+            SingleTableMetadata:
+                The metadata for the given table.
+        """
+        self._validate_table_exists(table_name)
+        return deepcopy(self.tables[table_name])
+
     def visualize(self, show_table_details='full', show_relationship_labels=True,
                   output_filepath=None):
         """Create a visualization of the multi-table dataset.

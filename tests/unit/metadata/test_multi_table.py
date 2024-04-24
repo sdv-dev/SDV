@@ -2188,6 +2188,22 @@ class TestMultiTableMetadata:
         # Assert
         table1.get_column_names.assert_called_once_with(sdtype='email', pii=True)
 
+    @patch('sdv.metadata.multi_table.deepcopy')
+    def test_get_table_metadata(self, deepcopy_mock):
+        """Test the ``get_table_metadata`` method."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._validate_table_exists = Mock()
+        table1 = Mock()
+        metadata.tables = {'table1': table1}
+
+        # Run
+        metadata.get_table_metadata('table1')
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table1')
+        deepcopy_mock.assert_called_once_with(table1)
+
     def test__detect_relationships(self):
         """Test relationships are automatically detected and the foreign key sdtype is updated."""
         # Setup
