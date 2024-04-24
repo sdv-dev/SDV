@@ -1,8 +1,6 @@
 """Utilities for configuring logging within the SDV library."""
 
 import logging
-import logging.config
-from functools import lru_cache
 from pathlib import Path
 
 import platformdirs
@@ -26,7 +24,6 @@ def get_sdv_logger_config():
     return logger_conf
 
 
-@lru_cache()
 def get_sdv_logger(logger_name):
     """Get a logger instance with the specified name and configuration.
 
