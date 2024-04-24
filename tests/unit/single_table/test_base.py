@@ -89,7 +89,8 @@ class TestBaseSingleTableSynthesizer:
             metadata=metadata,
             enforce_rounding=instance.enforce_rounding,
             enforce_min_max_values=instance.enforce_min_max_values,
-            locales=instance.locales
+            locales=instance.locales,
+            table_name=None
         )
         metadata.validate.assert_called_once_with()
         mock_check_metadata_updated.assert_called_once()
@@ -123,7 +124,8 @@ class TestBaseSingleTableSynthesizer:
             metadata=metadata,
             enforce_rounding=instance.enforce_rounding,
             enforce_min_max_values=instance.enforce_min_max_values,
-            locales=instance.locales
+            locales=instance.locales,
+            table_name=None
         )
         metadata.validate.assert_called_once_with()
 
@@ -182,7 +184,8 @@ class TestBaseSingleTableSynthesizer:
         assert parameters == {
             'enforce_min_max_values': False,
             'enforce_rounding': False,
-            'locales': 'en_CA'
+            'locales': 'en_CA',
+            'table_name': None
         }
 
     @patch('sdv.single_table.base.DataProcessor')
@@ -359,7 +362,8 @@ class TestBaseSingleTableSynthesizer:
         instance = Mock(
             _fitted_sdv_version=None,
             _fitted_sdv_enterprise_version=None,
-            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            table_name=None
         )
         processed_data = pd.DataFrame({'column_a': [1, 2, 3]})
 
@@ -390,6 +394,7 @@ class TestBaseSingleTableSynthesizer:
         instance = Mock(
             _fitted_sdv_version='1.0.0',
             _fitted_sdv_enterprise_version=None,
+            table_name=None
         )
         processed_data = pd.DataFrame({'column_a': [1, 2, 3]})
         instance._random_state_set = True
@@ -416,7 +421,8 @@ class TestBaseSingleTableSynthesizer:
         instance = Mock(
             _fitted_sdv_version=None,
             _fitted_sdv_enterprise_version=None,
-            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            table_name=None
         )
         data = pd.DataFrame({'column_a': [1, 2, 3], 'name': ['John', 'Doe', 'Johanna']})
         instance._random_state_set = True
@@ -453,6 +459,7 @@ class TestBaseSingleTableSynthesizer:
         instance = Mock(
             _fitted_sdv_version='1.0.0',
             _fitted_sdv_enterprise_version=None,
+            table_name=None
         )
         data = pd.DataFrame({'column_a': [1, 2, 3]})
         instance._random_state_set = True
@@ -1409,7 +1416,8 @@ class TestBaseSingleTableSynthesizer:
         batch_size = 5
         output_file_path = 'temp.csv'
         instance = Mock(
-            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            table_name=None
         )
         instance.get_metadata.return_value._constraints = False
         instance._sample_with_progress_bar.return_value = pd.DataFrame({'col': [1, 2, 3]})
@@ -1801,7 +1809,8 @@ class TestBaseSingleTableSynthesizer:
         """Test that the synthesizer is saved correctly."""
         # Setup
         synthesizer = Mock(
-            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            table_name=None
         )
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
 
@@ -1830,7 +1839,7 @@ class TestBaseSingleTableSynthesizer:
                   mock_datetime, caplog):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
-        synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
+        synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None, table_name=None)
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         mock_generate_synthesizer_id.return_value = synthesizer_id

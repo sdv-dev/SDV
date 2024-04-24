@@ -52,9 +52,10 @@ class TestBaseMultiTableSynthesizer:
         }
         instance._synthesizer.assert_has_calls([
             call(metadata=instance.metadata.tables['nesreca'], default_distribution='gamma',
-                 locales=locales),
-            call(metadata=instance.metadata.tables['oseba'], locales=locales),
-            call(metadata=instance.metadata.tables['upravna_enota'], locales=locales)
+                 locales=locales, table_name='nesreca'),
+            call(metadata=instance.metadata.tables['oseba'], locales=locales, table_name='oseba'),
+            call(metadata=instance.metadata.tables['upravna_enota'], locales=locales,
+                 table_name='upravna_enota')
         ])
 
     def test__get_pbar_args(self):
@@ -279,6 +280,7 @@ class TestBaseMultiTableSynthesizer:
                 'enforce_min_max_values': True,
                 'enforce_rounding': True,
                 'locales': ['en_US'],
+                'table_name': 'oseba',
                 'numerical_distributions': {}
             }
         }
@@ -299,6 +301,7 @@ class TestBaseMultiTableSynthesizer:
             'enforce_min_max_values': True,
             'enforce_rounding': True,
             'locales': ['en_US'],
+            'table_name': 'oseba',
             'numerical_distributions': {}
         }
 
@@ -330,13 +333,17 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         table_parameters = instance.get_table_parameters('oseba')
-        assert instance._table_parameters['oseba'] == {'default_distribution': 'gamma'}
+        assert instance._table_parameters['oseba'] == {
+            'default_distribution': 'gamma',
+            'table_name': 'oseba'
+        }
         assert table_parameters['synthesizer_name'] == 'GaussianCopulaSynthesizer'
         assert table_parameters['synthesizer_parameters'] == {
             'default_distribution': 'gamma',
             'enforce_min_max_values': True,
             'locales': ['en_US'],
             'enforce_rounding': True,
+            'table_name': 'oseba',
             'numerical_distributions': {}
         }
 

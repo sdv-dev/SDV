@@ -148,7 +148,8 @@ class TestHMASynthesizer:
             'enforce_min_max_values': True,
             'enforce_rounding': True,
             'locales': ['en_US'],
-            'numerical_distributions': {}
+            'numerical_distributions': {},
+            'table_name': 'characters'
         }
         families_params = hmasynthesizer.get_table_parameters('families')
         assert families_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
@@ -157,7 +158,8 @@ class TestHMASynthesizer:
             'enforce_min_max_values': True,
             'enforce_rounding': True,
             'locales': ['en_US'],
-            'numerical_distributions': {}
+            'numerical_distributions': {},
+            'table_name': 'families'
         }
         char_families_params = hmasynthesizer.get_table_parameters('character_families')
         assert char_families_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
@@ -166,7 +168,8 @@ class TestHMASynthesizer:
             'enforce_min_max_values': True,
             'enforce_rounding': True,
             'locales': ['en_US'],
-            'numerical_distributions': {}
+            'numerical_distributions': {},
+            'table_name': 'character_families'
         }
 
         assert hmasynthesizer._table_synthesizers['characters'].default_distribution == 'gamma'
@@ -551,7 +554,7 @@ class TestHMASynthesizer:
         custom_synthesizer.set_table_parameters(
             table_name='hotels',
             table_parameters={
-                'default_distribution': 'truncnorm'
+                'default_distribution': 'truncnorm',
             }
         )
 

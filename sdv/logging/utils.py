@@ -1,11 +1,11 @@
 """Utilities for configuring logging within the SDV library."""
 
-import contextlib
 import logging
 import logging.config
 from functools import lru_cache
 from pathlib import Path
 
+import platformdirs
 import yaml
 
 
@@ -16,32 +16,14 @@ def get_sdv_logger_config():
         logger_conf = yaml.safe_load(f)
 
     # Logfile to be in this same directory
+    store_path = Path(platformdirs.user_data_dir('sdv', 'sdv-dev'))
+    store_path.mkdir(parents=True, exist_ok=True)
     for logger in logger_conf.get('loggers', {}).values():
         handler = logger.get('handlers', {})
         if handler.get('filename') == 'sdv_logs.log':
-            handler['filename'] = logging_path / handler['filename']
+            handler['filename'] = store_path / handler['filename']
 
     return logger_conf
-
-
-@contextlib.contextmanager
-def disable_single_table_logger():
-    """Temporarily disables logging for the single table synthesizers.
-
-    This context manager temporarily removes all handlers associated with
-    the ``SingleTableSynthesizer`` logger, disabling logging for that module
-    within the current context. After the context exits, the
-    removed handlers are restored to the logger.
-    """
-    # Logging without ``SingleTableSynthesizer``
-    single_table_logger = logging.getLogger('SingleTableSynthesizer')
-    handlers = single_table_logger.handlers
-    single_table_logger.handlers = []
-    try:
-        yield
-    finally:
-        for handler in handlers:
-            single_table_logger.addHandler(handler)
 
 
 @lru_cache()
@@ -62,30 +44,35 @@ def get_sdv_logger(logger_name):
             and the specific settings for the given logger name.
     """
     logger_conf = get_sdv_logger_config()
-    logger = logging.getLogger(logger_name)
-    if logger_name in logger_conf.get('loggers'):
-        formatter = None
-        config = logger_conf.get('loggers').get(logger_name)
-        log_level = getattr(logging, config.get('level', 'INFO'))
-        if config.get('format'):
-            formatter = logging.Formatter(config.get('format'))
+    if logger_conf.get('log_registry') is None:
+        # Return a logger without any extra settings and avoid writing into files or other streams
+        return logging.getLogger(logger_name)
 
-        logger.setLevel(log_level)
-        logger.propagate = config.get('propagate', False)
-        handler = config.get('handlers')
-        handlers = handler.get('class')
-        handlers = [handlers] if isinstance(handlers, str) else handlers
-        for handler_class in handlers:
-            if handler_class == 'logging.FileHandler':
-                logfile = handler.get('filename')
-                file_handler = logging.FileHandler(logfile)
-                file_handler.setLevel(log_level)
-                file_handler.setFormatter(formatter)
-                logger.addHandler(file_handler)
-            elif handler_class in ('logging.consoleHandler', 'logging.StreamHandler'):
-                ch = logging.StreamHandler()
-                ch.setLevel(log_level)
-                ch.setFormatter(formatter)
-                logger.addHandler(ch)
+    if logger_conf.get('log_registry') == 'local':
+        logger = logging.getLogger(logger_name)
+        if logger_name in logger_conf.get('loggers'):
+            formatter = None
+            config = logger_conf.get('loggers').get(logger_name)
+            log_level = getattr(logging, config.get('level', 'INFO'))
+            if config.get('format'):
+                formatter = logging.Formatter(config.get('format'))
 
-    return logger
+            logger.setLevel(log_level)
+            logger.propagate = config.get('propagate', False)
+            handler = config.get('handlers')
+            handlers = handler.get('class')
+            handlers = [handlers] if isinstance(handlers, str) else handlers
+            for handler_class in handlers:
+                if handler_class == 'logging.FileHandler':
+                    logfile = handler.get('filename')
+                    file_handler = logging.FileHandler(logfile)
+                    file_handler.setLevel(log_level)
+                    file_handler.setFormatter(formatter)
+                    logger.addHandler(file_handler)
+                elif handler_class in ('logging.consoleHandler', 'logging.StreamHandler'):
+                    ch = logging.StreamHandler()
+                    ch.setLevel(log_level)
+                    ch.setFormatter(formatter)
+                    logger.addHandler(ch)
+
+        return logger

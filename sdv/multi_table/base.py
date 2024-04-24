@@ -16,7 +16,7 @@ from sdv._utils import (
     _validate_foreign_keys_not_null, check_sdv_versions_and_warn, check_synthesizer_version,
     generate_synthesizer_id)
 from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
-from sdv.logging import disable_single_table_logger, get_sdv_logger
+from sdv.logging import get_sdv_logger
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
@@ -59,14 +59,14 @@ class BaseMultiTableSynthesizer:
             np.random.set_state(initial_state)
 
     def _initialize_models(self):
-        with disable_single_table_logger():
-            for table_name, table_metadata in self.metadata.tables.items():
-                synthesizer_parameters = self._table_parameters.get(table_name, {})
-                self._table_synthesizers[table_name] = self._synthesizer(
-                    metadata=table_metadata,
-                    locales=self.locales,
-                    **synthesizer_parameters
-                )
+        for table_name, table_metadata in self.metadata.tables.items():
+            synthesizer_parameters = self._table_parameters.get(table_name, {})
+            self._table_synthesizers[table_name] = self._synthesizer(
+                metadata=table_metadata,
+                locales=self.locales,
+                table_name=table_name,
+                **synthesizer_parameters
+            )
 
     def _get_pbar_args(self, **kwargs):
         """Return a dictionary with the updated keyword args for a progress bar."""
@@ -199,6 +199,8 @@ class BaseMultiTableSynthesizer:
                 A dictionary with the parameters as keys and the values to be used to instantiate
                 the table's synthesizer.
         """
+        # Ensure that we set the name of the table no matter what
+        table_parameters.update({'table_name': table_name})
         self._table_synthesizers[table_name] = self._synthesizer(
             metadata=self.metadata.tables[table_name],
             **table_parameters
@@ -407,9 +409,8 @@ class BaseMultiTableSynthesizer:
             self._synthesizer_id,
         )
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
-        with disable_single_table_logger():
-            augmented_data = self._augment_tables(processed_data)
-            self._model_tables(augmented_data)
+        augmented_data = self._augment_tables(processed_data)
+        self._model_tables(augmented_data)
 
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
@@ -478,7 +479,7 @@ class BaseMultiTableSynthesizer:
             raise SynthesizerInputError(
                 f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0.")
 
-        with self._set_temp_numpy_seed(), disable_single_table_logger():
+        with self._set_temp_numpy_seed():
             sampled_data = self._sample(scale=scale)
 
         total_rows = 0

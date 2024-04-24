@@ -151,6 +151,7 @@ class TestCTGANSynthesizer:
             'epochs': 300,
             'pac': 10,
             'cuda': True,
+            'table_name': None
         }
 
     def test__estimate_num_columns(self):
@@ -426,6 +427,7 @@ class TestTVAESynthesizer:
             'epochs': 300,
             'loss_factor': 2,
             'cuda': True,
+            'table_name': None
         }
 
     @patch('sdv.single_table.ctgan.TVAE')
