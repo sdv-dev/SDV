@@ -314,6 +314,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 else:
                     synthesizer = self._synthesizer(
                         table_meta,
+                        table_name=child_name,
                         **self._table_parameters[child_name]
                     )
                     synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
@@ -521,7 +522,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         default_parameters = getattr(self, '_default_parameters', {}).get(child_name, {})
 
         table_meta = self.metadata.tables[child_name]
-        synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
+        synthesizer = self._synthesizer(
+            table_meta,
+            table_name=child_name,
+            **self._table_parameters[child_name]
+        )
         synthesizer._set_parameters(parameters, default_parameters)
         synthesizer._data_processor = self._table_synthesizers[child_name]._data_processor
 
@@ -615,7 +620,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         for parent_id, row in parent_rows.iterrows():
             parameters = self._extract_parameters(row, table_name, foreign_key)
             table_meta = self._table_synthesizers[table_name].get_metadata()
-            synthesizer = self._synthesizer(table_meta, **self._table_parameters[table_name])
+            synthesizer = self._synthesizer(
+                table_meta,
+                table_name=table_name,
+                **self._table_parameters[table_name]
+            )
             synthesizer._set_parameters(parameters)
             try:
                 likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)
