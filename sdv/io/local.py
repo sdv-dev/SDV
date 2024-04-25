@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pandas as pd
 
-from sdv._utils import _cast_to_iterable
 from sdv.metadata import MultiTableMetadata
 
 
@@ -88,7 +87,7 @@ class CSVHandler(BaseLocalHandler):
         Args:
             folder_name (str):
                 The name of the folder containing CSV files.
-            file_names (str or list of str, optional):
+            file_names (list of str, optional):
                 The names of CSV files to read. If None, all files ending with '.csv'
                 in the folder are read.
 
@@ -111,7 +110,7 @@ class CSVHandler(BaseLocalHandler):
             file_paths = folder_path.glob('*.csv')
         else:
             # Validate if the given files exist in the folder
-            file_names = _cast_to_iterable(file_names)
+            file_names = file_names
             missing_files = [
                 file
                 for file in file_names

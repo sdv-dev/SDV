@@ -92,7 +92,7 @@ class TestCSVHandler:
         handler = CSVHandler()
 
         # Run
-        data, metadata = handler.read(tmpdir, file_names='parent.csv')
+        data, metadata = handler.read(tmpdir, file_names=['parent.csv'])
 
         # Assert
         assert 'parent' in data
