@@ -152,7 +152,7 @@ class TestCSVHandler:
         handler = CSVHandler()
 
         # Run
-        error_msg = re.escape(f"{tmpdir / 'synthetic_data' / 'table1.csv'}")
+        error_msg = re.escape(f"{FileExistsError(tmpdir / 'synthetic_data' / 'table1.csv')}")
         with pytest.raises(FileExistsError, match=error_msg):
             handler.write(synthetic_data, tmpdir / 'synthetic_data')
 

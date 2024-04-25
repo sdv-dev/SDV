@@ -133,7 +133,8 @@ class CSVHandler(BaseLocalHandler):
                 encoding=self.encoding,
                 parse_dates=False,
                 low_memory=False,
-                decimal=self.decimal
+                decimal=self.decimal,
+                on_bad_lines='warn'
             )
 
         metadata = self._infer_metadata(data)
@@ -168,5 +169,5 @@ class CSVHandler(BaseLocalHandler):
                 encoding=self.encoding,
                 index=False,
                 float_format=self.float_format,
-                mode=mode
+                mode=mode,
             )
