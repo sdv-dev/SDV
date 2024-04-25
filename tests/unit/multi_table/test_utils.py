@@ -11,13 +11,14 @@ from sdv.errors import InvalidDataError, SamplingError
 from sdv.metadata import MultiTableMetadata
 from sdv.multi_table.utils import (
     _drop_rows, _get_all_descendant_per_root_at_order_n, _get_ancestors,
-    _get_columns_to_drop_child, _get_disconnected_roots_from_table, _get_n_order_descendants,
-    _get_num_column_to_drop, _get_primary_keys_referenced, _get_relationships_for_child,
-    _get_relationships_for_parent, _get_rows_to_drop, _get_total_estimated_columns,
-    _print_simplified_schema_summary, _print_subsample_summary, _simplify_child,
-    _simplify_children, _simplify_data, _simplify_grandchildren, _simplify_metadata,
-    _simplify_relationships_and_tables, _subsample_ancestors, _subsample_data,
-    _subsample_disconnected_roots, _subsample_parent, _subsample_table_and_descendants)
+    _get_columns_to_drop_child, _get_disconnected_roots_from_table,
+    _get_idx_to_drop_nan_foreign_key_table, _get_n_order_descendants, _get_num_column_to_drop,
+    _get_primary_keys_referenced, _get_relationships_for_child, _get_relationships_for_parent,
+    _get_rows_to_drop, _get_total_estimated_columns, _print_simplified_schema_summary,
+    _print_subsample_summary, _simplify_child, _simplify_children, _simplify_data,
+    _simplify_grandchildren, _simplify_metadata, _simplify_relationships_and_tables,
+    _subsample_ancestors, _subsample_data, _subsample_disconnected_roots, _subsample_parent,
+    _subsample_table_and_descendants)
 
 
 def test__get_relationships_for_child():
@@ -131,6 +132,44 @@ def test__get_rows_to_drop():
         'parent': set()
     })
     assert result == expected_result
+
+
+def test__get_idx_to_drop_nan_foreign_key_table():
+    """Test the ``_get_idx_to_drop_nan_foreign_key_table`` method."""
+    # Setup
+    relationships = [
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        },
+        {
+            'parent_table_name': 'child',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_child',
+            'child_foreign_key': 'child_foreign_key'
+        },
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        }
+    ]
+    data = {
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [np.nan, 1, 2, 2, np.nan],
+            'child_foreign_key': [9, np.nan, 11, 6, 4],
+            'C': ['Yes', 'No', 'No', 'No', 'No']
+        })
+    }
+
+    # Run
+    result = _get_idx_to_drop_nan_foreign_key_table(data, relationships, 'grandchild')
+
+    # Assert
+    assert result == {0, 1, 4}
 
 
 @patch('sdv.multi_table.utils._get_rows_to_drop')
@@ -1301,7 +1340,7 @@ def test__subsample_disconnected_roots(mock_drop_rows, mock_get_disconnected_roo
     mock_get_disconnected_roots_from_table.assert_called_once_with(
         metadata.relationships, 'disconnected_root'
     )
-    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=False)
+    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=True)
     for table_name in metadata.tables:
         if table_name not in {'grandparent', 'other_root'}:
             pd.testing.assert_frame_equal(data[table_name], expected_result[table_name])
@@ -1310,7 +1349,9 @@ def test__subsample_disconnected_roots(mock_drop_rows, mock_get_disconnected_roo
 
 
 @patch('sdv.multi_table.utils._drop_rows')
-def test__subsample_table_and_descendants(mock_drop_rows):
+@patch('sdv.multi_table.utils._get_idx_to_drop_nan_foreign_key_table')
+def test__subsample_table_and_descendants(mock_get_idx_to_drop_nan_foreign_key_table,
+                                          mock_drop_rows):
     """Test the ``_subsample_table_and_descendants`` method."""
     # Setup
     data = {
@@ -1331,14 +1372,42 @@ def test__subsample_table_and_descendants(mock_drop_rows):
             'col_8': [6, 7, 8, 9, 10],
         }),
     }
+    mock_get_idx_to_drop_nan_foreign_key_table.return_value = {0}
     metadata = Mock()
+    metadata.relationships = Mock()
 
     # Run
     _subsample_table_and_descendants(data, metadata, 'parent', 3)
 
     # Assert
-    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=False)
+    mock_get_idx_to_drop_nan_foreign_key_table.assert_called_once_with(
+        data, metadata.relationships, 'parent'
+    )
+    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=True)
     assert len(data['parent']) == 3
+
+
+@patch('sdv.multi_table.utils._get_idx_to_drop_nan_foreign_key_table')
+def test__subsample_table_and_descendants_nan_fk(mock_get_idx_to_drop_nan_foreign_key_table):
+    """Test the ``_subsample_table_and_descendants`` when there is too many NaN foreign keys."""
+    # Setup
+    data = {'parent': [1, 2, 3, 4, 5, 6]}
+    mock_get_idx_to_drop_nan_foreign_key_table.return_value = {0, 1, 2, 3, 4}
+    metadata = Mock()
+    metadata.relationships = Mock()
+    expected_message = re.escape(
+        "Referential integrity cannot be reached for table 'parent' while keeping "
+        '3 rows. Please try again with a bigger number of rows.'
+    )
+
+    # Run
+    with pytest.raises(SamplingError, match=expected_message):
+        _subsample_table_and_descendants(data, metadata, 'parent', 3)
+
+    # Assert
+    mock_get_idx_to_drop_nan_foreign_key_table.assert_called_once_with(
+        data, metadata.relationships, 'parent'
+    )
 
 
 def test__get_primary_keys_referenced():
@@ -1821,7 +1890,9 @@ def test__subsample_ancestors_schema_diamond_shape():
 @patch('sdv.multi_table.utils._subsample_table_and_descendants')
 @patch('sdv.multi_table.utils._subsample_ancestors')
 @patch('sdv.multi_table.utils._get_primary_keys_referenced')
+@patch('sdv.multi_table.utils._drop_rows')
 def test__subsample_data(
+    mock_drop_rows,
     mock_get_primary_keys_referenced,
     mock_subsample_ancestors,
     mock_subsample_table_and_descendants,
@@ -1852,6 +1923,7 @@ def test__subsample_data(
     mock_subsample_ancestors.assert_called_once_with(
         data, metadata, main_table, primary_key_reference
     )
+    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=True)
     assert result == data
 
 

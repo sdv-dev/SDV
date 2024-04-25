@@ -328,3 +328,17 @@ def test_get_random_subset_disconnected_schema():
     # Assert
     assert len(result['Player']) == num_rows_to_keep
     assert len(result['Team']) == int(len(real_data['Team']) * proportion_to_keep)
+
+
+def test_get_random_subset_with_missing_values(metadata, data):
+    """Test ``get_random_subset`` when there is missing values in the foreign keys."""
+    # Setup
+    data = deepcopy(data)
+    data['child'].loc[4, 'parent_id'] = np.nan
+
+    # Run
+    cleaned_data = get_random_subset(data, metadata, 'child', 3)
+
+    # Assert
+    assert len(cleaned_data['child']) == 3
+    assert not pd.isna(cleaned_data['child']['parent_id']).any()

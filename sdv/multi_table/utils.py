@@ -429,16 +429,29 @@ def _get_rows_to_drop(data, metadata):
     return table_to_idx_to_drop
 
 
+def _get_idx_to_drop_nan_foreign_key_table(data, relationships, table):
+    """Get the indexes of the rows to drop that have NaN foreign keys."""
+    idx_with_nan_foreign_key = set()
+    relationships_for_table = _get_relationships_for_child(relationships, table)
+    for relationship in relationships_for_table:
+        child_column = relationship['child_foreign_key']
+        idx_with_nan_foreign_key.update(
+            data[table][data[table][child_column].isna()].index
+        )
+
+    return idx_with_nan_foreign_key
+
+
 def _drop_rows(data, metadata, drop_missing_values):
     table_to_idx_to_drop = _get_rows_to_drop(data, metadata)
     for table in sorted(metadata.tables):
         idx_to_drop = table_to_idx_to_drop[table]
         data[table] = data[table].drop(idx_to_drop)
         if drop_missing_values:
-            relationships = _get_relationships_for_child(metadata.relationships, table)
-            for relationship in relationships:
-                child_column = relationship['child_foreign_key']
-                data[table] = data[table].dropna(subset=[child_column])
+            idx_with_nan_fk = _get_idx_to_drop_nan_foreign_key_table(
+                data, metadata.relationships, table
+            )
+            data[table] = data[table].drop(idx_with_nan_fk)
 
         if data[table].empty:
             raise InvalidDataError([
@@ -454,13 +467,37 @@ def _subsample_disconnected_roots(data, metadata, table, ratio_to_keep):
     for root in roots:
         data[root] = data[root].sample(frac=ratio_to_keep)
 
-    _drop_rows(data, metadata, drop_missing_values=False)
+    _drop_rows(data, metadata, drop_missing_values=True)
 
 
 def _subsample_table_and_descendants(data, metadata, table, num_rows):
-    """Subsample the table and its descendants."""
+    """Subsample the table and its descendants.
+
+    The logic is to first subsample all the NaN foreign key of the table.
+    We raise an error if we cannot reach referential integrity while keeping the number of rows.
+    Then, we drop rows of the descendants to ensure referential integrity.
+
+    Args:
+        data (dict):
+            Dictionary that maps each table name (string) to the data for that
+            table (pandas.DataFrame).
+        metadata (MultiTableMetadata):
+            Metadata of the datasets.
+        table (str):
+            Name of the table.
+    """
+    idx_nan_fk = _get_idx_to_drop_nan_foreign_key_table(data, metadata.relationships, table)
+    num_rows_to_drop = len(data[table]) - num_rows
+    if len(idx_nan_fk) > num_rows_to_drop:
+        raise SamplingError(
+            f"Referential integrity cannot be reached for table '{table}' while keeping "
+            f'{num_rows} rows. Please try again with a bigger number of rows.'
+        )
+    else:
+        data[table] = data[table].drop(idx_nan_fk)
+
     data[table] = data[table].sample(num_rows)
-    _drop_rows(data, metadata, drop_missing_values=False)
+    _drop_rows(data, metadata, drop_missing_values=True)
 
 
 def _get_primary_keys_referenced(data, metadata):
@@ -489,7 +526,7 @@ def _get_primary_keys_referenced(data, metadata):
 
 
 def _subsample_parent(parent_table, parent_primary_key, parent_pk_referenced_before,
-                      unreferenced_pk_parent):
+                      dereferenced_pk_parent):
     """Subsample the parent table.
 
     The strategy here is to:
@@ -503,7 +540,7 @@ def _subsample_parent(parent_table, parent_primary_key, parent_pk_referenced_bef
             Name of the primary key of the parent table.
         parent_pk_referenced_before (set):
             Set of the primary keys referenced before any subsampling.
-        unreferenced_pk_parent (set):
+        dereferenced_pk_parent (set):
             Set of the primary keys that are no longer referenced by the descendants.
 
     Returns:
@@ -511,10 +548,10 @@ def _subsample_parent(parent_table, parent_primary_key, parent_pk_referenced_bef
             Subsampled parent table.
     """
     total_referenced = len(parent_pk_referenced_before)
-    total_dropped = len(unreferenced_pk_parent)
+    total_dropped = len(dereferenced_pk_parent)
     drop_proportion = total_dropped / total_referenced
 
-    parent_table = parent_table[~parent_table[parent_primary_key].isin(unreferenced_pk_parent)]
+    parent_table = parent_table[~parent_table[parent_primary_key].isin(dereferenced_pk_parent)]
     unreferenced_data = parent_table[
         ~parent_table[parent_primary_key].isin(parent_pk_referenced_before)
     ]
@@ -556,12 +593,12 @@ def _subsample_ancestors(data, metadata, table, primary_keys_referenced):
     for parent in sorted(direct_parents):
         parent_primary_key = metadata.tables[parent].primary_key
         pk_referenced_before = primary_keys_referenced[parent]
-        unreferenced_primary_keys = pk_referenced_before - pk_referenced[parent]
+        dereferenced_primary_keys = pk_referenced_before - pk_referenced[parent]
         data[parent] = _subsample_parent(
             data[parent], parent_primary_key, pk_referenced_before,
-            unreferenced_primary_keys
+            dereferenced_primary_keys
         )
-        if unreferenced_primary_keys:
+        if dereferenced_primary_keys:
             primary_keys_referenced[parent] = pk_referenced[parent]
 
         _subsample_ancestors(data, metadata, parent, primary_keys_referenced)
@@ -599,6 +636,7 @@ def _subsample_data(data, metadata, main_table_name, num_rows):
         _subsample_disconnected_roots(result, metadata, main_table_name, ratio_to_keep)
         _subsample_table_and_descendants(result, metadata, main_table_name, num_rows)
         _subsample_ancestors(result, metadata, main_table_name, primary_keys_referenced)
+        _drop_rows(result, metadata, drop_missing_values=True)  # Drop remaining NaN foreign keys
     except InvalidDataError as error:
         if 'All references in table' not in str(error.args[0]):
             raise error
