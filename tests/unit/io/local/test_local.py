@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
-from sdv.io.local import CSVHandler
+from sdv.io.local.local import CSVHandler
 from sdv.metadata.multi_table import MultiTableMetadata
 
 
@@ -41,7 +41,7 @@ class TestCSVHandler:
         with pytest.raises(ValueError, match=error_msg):
             CSVHandler(sep=';', encoding='sdvutf-8', decimal=',', float_format='%.2f')
 
-    @patch('sdv.io.local.Path.glob')
+    @patch('sdv.io.local.local.Path.glob')
     @patch('pandas.read_csv')
     def test_read(self, mock_read_csv, mock_glob):
         """Test the read method of CSVHandler class with a folder."""
