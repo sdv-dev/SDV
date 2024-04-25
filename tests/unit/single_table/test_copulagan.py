@@ -175,6 +175,7 @@ class TestCopulaGANSynthesizer:
             'cuda': True,
             'numerical_distributions': {},
             'default_distribution': 'beta',
+            'table_name': None
         }
 
     @patch('sdv.single_table.copulagan.rdt')

@@ -155,13 +155,14 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
                  discriminator_dim=(256, 256), generator_lr=2e-4, generator_decay=1e-6,
                  discriminator_lr=2e-4, discriminator_decay=1e-6, batch_size=500,
                  discriminator_steps=1, log_frequency=True, verbose=False, epochs=300,
-                 pac=10, cuda=True):
+                 pac=10, cuda=True, table_name=None):
 
         super().__init__(
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
-            locales=locales
+            locales=locales,
+            table_name=table_name
         )
 
         self.embedding_dim = embedding_dim
@@ -338,12 +339,14 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
                  embedding_dim=128, compress_dims=(128, 128), decompress_dims=(128, 128),
-                 l2scale=1e-5, batch_size=500, epochs=300, loss_factor=2, cuda=True):
+                 l2scale=1e-5, batch_size=500, epochs=300, loss_factor=2, cuda=True,
+                 table_name=None):
 
         super().__init__(
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
+            table_name=table_name
         )
         self.embedding_dim = embedding_dim
         self.compress_dims = compress_dims

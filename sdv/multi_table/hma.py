@@ -312,9 +312,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     row = pd.Series({'num_rows': len(child_rows)})
                     row.index = f'__{child_name}__{foreign_key}__' + row.index
                 else:
+                    synthesizer_parameters = self._table_parameters[child_name]
+                    synthesizer_parameters.update({'table_name': child_name})
                     synthesizer = self._synthesizer(
                         table_meta,
-                        **self._table_parameters[child_name]
+                        **synthesizer_parameters
                     )
                     synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
                     row = synthesizer._get_parameters()
@@ -521,7 +523,12 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         default_parameters = getattr(self, '_default_parameters', {}).get(child_name, {})
 
         table_meta = self.metadata.tables[child_name]
-        synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
+        synthesizer_parameters = self._table_parameters[child_name]
+        synthesizer_parameters.update({'table_name': child_name})
+        synthesizer = self._synthesizer(
+            table_meta,
+            **synthesizer_parameters
+        )
         synthesizer._set_parameters(parameters, default_parameters)
         synthesizer._data_processor = self._table_synthesizers[child_name]._data_processor
 
@@ -615,7 +622,12 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         for parent_id, row in parent_rows.iterrows():
             parameters = self._extract_parameters(row, table_name, foreign_key)
             table_meta = self._table_synthesizers[table_name].get_metadata()
-            synthesizer = self._synthesizer(table_meta, **self._table_parameters[table_name])
+            synthesizer_parameters = self._table_parameters[table_name]
+            synthesizer_parameters.update({'table_name': table_name})
+            synthesizer = self._synthesizer(
+                table_meta,
+                **synthesizer_parameters
+            )
             synthesizer._set_parameters(parameters)
             try:
                 likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)

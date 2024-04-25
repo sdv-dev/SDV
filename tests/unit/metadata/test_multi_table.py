@@ -1,6 +1,7 @@
 """Test Multi Table Metadata."""
 
 import json
+import logging
 import re
 from collections import defaultdict
 from unittest.mock import Mock, call, patch
@@ -12,7 +13,7 @@ import pytest
 from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata, SingleTableMetadata
-from tests.utils import get_multi_table_data, get_multi_table_metadata
+from tests.utils import catch_sdv_logs, get_multi_table_data, get_multi_table_metadata
 
 
 class TestMultiTableMetadata:
@@ -2843,7 +2844,8 @@ class TestMultiTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             instance.save_to_json('filepath.json')
 
-    def test_save_to_json(self, tmp_path):
+    @patch('sdv.metadata.multi_table.datetime')
+    def test_save_to_json(self, mock_datetime, tmp_path, caplog):
         """Test the ``save_to_json`` method.
 
         Test that ``save_to_json`` stores a ``json`` file and dumps the instance dict into
@@ -2860,16 +2862,26 @@ class TestMultiTableMetadata:
         # Setup
         instance = MultiTableMetadata()
         instance._reset_updated_flag = Mock()
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
 
         # Run / Assert
         file_name = tmp_path / 'multitable.json'
-        instance.save_to_json(file_name)
+        with catch_sdv_logs(caplog, logging.INFO, logger='MultiTableMetadata'):
+            instance.save_to_json(file_name)
 
         with open(file_name, 'rb') as multi_table_file:
             saved_metadata = json.load(multi_table_file)
             assert saved_metadata == instance.to_dict()
 
         instance._reset_updated_flag.assert_called_once()
+        assert caplog.messages[0] == (
+            '\nMetadata Save:\n'
+            '  Timestamp: 2024-04-19 16:20:10.037183\n'
+            '  Statistics about the metadata:\n'
+            '    Total number of tables: 0\n'
+            '    Total number of columns: 0\n'
+            '    Total number of relationships: 0'
+        )
 
     def test__convert_relationships(self):
         """Test the ``_convert_relationships`` method.

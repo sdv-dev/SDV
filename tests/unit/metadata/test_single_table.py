@@ -1,6 +1,7 @@
 """Test Single Table Metadata."""
 
 import json
+import logging
 import re
 import warnings
 from datetime import datetime
@@ -13,6 +14,7 @@ import pytest
 from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
+from tests.utils import catch_sdv_logs
 
 
 class TestSingleTableMetadata:
@@ -2835,7 +2837,8 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             instance.save_to_json('filepath.json')
 
-    def test_save_to_json(self, tmp_path):
+    @patch('sdv.metadata.single_table.datetime')
+    def test_save_to_json(self, mock_datetime, tmp_path, caplog):
         """Test the ``save_to_json`` method.
 
         Test that ``save_to_json`` stores a ``json`` file and dumps the instance dict into
@@ -2850,12 +2853,23 @@ class TestSingleTableMetadata:
             - Creates a json representation of the instance.
         """
         # Setup
+        mock_datetime.now.return_value = '2024-04-19 16:20:10.037183'
         instance = SingleTableMetadata()
 
-        # Run / Assert
+        # Run
         file_name = tmp_path / 'singletable.json'
-        instance.save_to_json(file_name)
+        with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableMetadata'):
+            instance.save_to_json(file_name)
 
+        # Assert
+        assert caplog.messages[0] == (
+            '\nMetadata Save:\n'
+            '  Timestamp: 2024-04-19 16:20:10.037183\n'
+            '  Statistics about the metadata:\n'
+            '    Total number of tables: 1'
+            '    Total number of columns: 0'
+            '    Total number of relationships: 0'
+        )
         with open(file_name, 'rb') as single_table_file:
             saved_metadata = json.load(single_table_file)
             assert saved_metadata == instance.to_dict()

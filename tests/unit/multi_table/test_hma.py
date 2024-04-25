@@ -502,7 +502,7 @@ class TestHMASynthesizer:
         # Assert
         assert synthesizer == instance._synthesizer.return_value
         assert synthesizer._data_processor == table_synthesizer._data_processor
-        instance._synthesizer.assert_called_once_with(table_meta, a=1)
+        instance._synthesizer.assert_called_once_with(table_meta, table_name='users', a=1)
         synthesizer._set_parameters.assert_called_once_with(
             instance._extract_parameters.return_value,
             {'colA': 'default_param', 'colB': 'default_param'}
@@ -674,7 +674,7 @@ class TestHMASynthesizer:
             ]
         })
         synthesizer = HMASynthesizer(metadata)
-        synthesizer._finalize = Mock()
+        synthesizer._finalize = Mock(return_value=data)
 
         # Run estimation
         estimated_num_columns = synthesizer._estimate_num_columns(metadata)
@@ -823,7 +823,7 @@ class TestHMASynthesizer:
             table_name='child_uniform',
             table_parameters={'default_distribution': 'uniform'}
         )
-        synthesizer._finalize = Mock()
+        synthesizer._finalize = Mock(return_value=data)
         distributions = synthesizer._get_distributions()
 
         # Run estimation
@@ -953,7 +953,7 @@ class TestHMASynthesizer:
             ]
         })
         synthesizer = HMASynthesizer(metadata)
-        synthesizer._finalize = Mock()
+        synthesizer._finalize = Mock(return_value=data)
 
         # Run estimation
         estimated_num_columns = synthesizer._estimate_num_columns(metadata)
@@ -1068,7 +1068,7 @@ class TestHMASynthesizer:
             ]
         })
         synthesizer = HMASynthesizer(metadata)
-        synthesizer._finalize = Mock()
+        synthesizer._finalize = Mock(return_value=data)
 
         # Run estimation
         estimated_num_columns = synthesizer._estimate_num_columns(metadata)
