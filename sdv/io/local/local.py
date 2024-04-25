@@ -192,3 +192,71 @@ class CSVHandler(BaseLocalHandler):
                 quoting=self.quoting,
                 mode=mode,
             )
+
+
+class ExcelHandler(BaseLocalHandler):
+    """A class for handling Excel files."""
+
+    def read(self, file_path, sheet_names=None):
+        """Read data from Excel files and returns it along with metadata.
+
+        Args:
+            file_path (str):
+                The path to the Excel file to read.
+            sheet_names (list of str, optional):
+                The names of sheets to read. If None, all sheets are read.
+
+        Returns:
+            tuple:
+                A tuple containing the data as a dictionary and metadata. The dictionary maps
+                table names to pandas DataFrames. The metadata is an object describing the data.
+        """
+        data = {}
+        metadata = MultiTableMetadata()
+        if sheet_names is not None and not isinstance(sheet_names, list):
+            raise ValueError("'sheet_names' must be None or a list of strings.")
+
+        if sheet_names is None:
+            xl_file = pd.ExcelFile(file_path)
+            sheet_names = xl_file.sheet_names
+
+        for sheet_name in sheet_names:
+            data[sheet_name] = pd.read_excel(
+                file_path,
+                sheet_name=sheet_name,
+                parse_dates=False,
+                decimal=self.decimal,
+                index_col=None
+            )
+
+        metadata = self._infer_metadata(data)
+        return data, metadata
+
+    def write(self, synthetic_data, file_name, sheet_name_suffix=None, mode='w'):
+        """Write synthetic data to an Excel File.
+
+        Args:
+            synthetic_data (dict):
+                A dictionary mapping table names to pandas DataFrames containing synthetic data.
+            file_name (str):
+                The name of the Excel file to write.
+            sheet_name_suffix (str, optional):
+                A suffix to add to each sheet name.
+            mode (str, optional):
+                The mode of writing to use. Defaults to 'w'.
+                'w': Write sheets to a new file, clearing any existing file that may exist.
+                'a': Append new sheets within the existing file.
+                     Note: You cannot append data to existing sheets.
+        """
+        writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
+
+        for table_name, table_data in synthetic_data.items():
+            sheet_name = f'{table_name}{sheet_name_suffix}' if sheet_name_suffix else table_name
+            table_data.to_excel(
+                writer,
+                sheet_name=sheet_name,
+                float_format=self.float_format,
+                index=False
+            )
+
+        writer.close()
