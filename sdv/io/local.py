@@ -1,5 +1,6 @@
 """Local file handlers."""
 import codecs
+import inspect
 import os
 from pathlib import Path
 
@@ -124,16 +125,25 @@ class CSVHandler(BaseLocalHandler):
             file_paths = [folder_path / file for file in file_names]
 
         # Read CSV files
+        kwargs = {
+            'sep': self.sep,
+            'encoding': self.encoding,
+            'parse_dates': False,
+            'low_memory': False,
+            'decimal': self.decimal,
+            'on_bad_lines': 'warn'
+        }
+
+        args = inspect.getfullargspec(pd.read_csv)
+        if 'on_bad_lines' not in args.kwonlyargs:
+            kwargs.pop('on_bad_lines')
+            kwargs['error_bad_lines'] = False
+
         for file_path in file_paths:
             table_name = file_path.stem  # Remove file extension to get table name
             data[table_name] = pd.read_csv(
                 file_path,
-                sep=self.sep,
-                encoding=self.encoding,
-                parse_dates=False,
-                low_memory=False,
-                decimal=self.decimal,
-                on_bad_lines='warn'
+                **kwargs
             )
 
         metadata = self._infer_metadata(data)
