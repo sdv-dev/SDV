@@ -22,17 +22,28 @@ class TestCSVHandler:
         assert instance.float_format is None
         assert instance.encoding == 'UTF'
         assert instance.sep == ','
+        assert instance.quotechar == '"'
+        assert instance.quoting == 0
 
     def test___init___custom(self):
         """Test custom initialization of the class."""
         # Run
-        instance = CSVHandler(sep=';', encoding='utf-8', decimal=',', float_format='%.2f')
+        instance = CSVHandler(
+            sep=';',
+            encoding='utf-8',
+            decimal=',',
+            float_format='%.2f',
+            quotechar="'",
+            quoting=2
+        )
 
         # Assert
         assert instance.decimal == ','
         assert instance.float_format == '%.2f'
         assert instance.encoding == 'utf-8'
         assert instance.sep == ';'
+        assert instance.quotechar == "'"
+        assert instance.quoting == 2
 
     def test___init___error_encoding(self):
         """Test custom initialization of the class."""

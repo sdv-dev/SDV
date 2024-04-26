@@ -64,13 +64,19 @@ class CSVHandler(BaseLocalHandler):
             The character used to denote the decimal point. Defaults to ``.``.
         float_format (str or None):
             The formatting string for floating-point numbers. Optional.
+        quotechar (str):
+            Character used to denote the start and end of a quoted item.
+            Quoted items can include the delimiter and it will be ignored. Defaults to '"'.
+        quoting (int or None):
+            Control field quoting behavior. Default is 0.
 
     Raises:
         ValueError:
             If the provided encoding is not available in the system.
     """
 
-    def __init__(self, sep=',', encoding='UTF', decimal='.', float_format=None):
+    def __init__(self, sep=',', encoding='UTF', decimal='.', float_format=None,
+                 quotechar='"', quoting=0):
         super().__init__(decimal, float_format)
         try:
             codecs.lookup(encoding)
@@ -81,6 +87,8 @@ class CSVHandler(BaseLocalHandler):
 
         self.sep = sep
         self.encoding = encoding
+        self.quotechar = quotechar
+        self.quoting = quoting
 
     def read(self, folder_name, file_names=None):
         """Read data from CSV files and returns it along with metadata.
@@ -131,7 +139,9 @@ class CSVHandler(BaseLocalHandler):
             'parse_dates': False,
             'low_memory': False,
             'decimal': self.decimal,
-            'on_bad_lines': 'warn'
+            'on_bad_lines': 'warn',
+            'quotechar': self.quotechar,
+            'quoting': self.quoting
         }
 
         args = inspect.getfullargspec(pd.read_csv)
@@ -178,5 +188,7 @@ class CSVHandler(BaseLocalHandler):
                 encoding=self.encoding,
                 index=False,
                 float_format=self.float_format,
+                quotechar=self.quotechar,
+                quoting=self.quoting,
                 mode=mode,
             )
