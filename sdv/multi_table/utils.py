@@ -1,13 +1,14 @@
 """Utility functions for the MultiTable models."""
 import math
+import warnings
 from collections import defaultdict
 from copy import deepcopy
 
 import numpy as np
 import pandas as pd
 
-from sdv._utils import _get_root_tables
-from sdv.errors import InvalidDataError, SamplingError
+from sdv._utils import _get_root_tables, _validate_foreign_keys_not_null
+from sdv.errors import InvalidDataError, SamplingError, SynthesizerInputError
 from sdv.multi_table import HMASynthesizer
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 
@@ -632,6 +633,15 @@ def _subsample_data(data, metadata, main_table_name, num_rows):
     result = deepcopy(data)
     primary_keys_referenced = _get_primary_keys_referenced(result, metadata)
     ratio_to_keep = num_rows / len(result[main_table_name])
+    try:
+        _validate_foreign_keys_not_null(metadata, result)
+    except SynthesizerInputError:
+        warnings.warn(
+            'The data contains null values in foreign key columns. '
+            'We recommend using ``drop_unknown_foreign_keys`` method from sdv.utils.poc'
+            ' to drop these rows before using ``get_random_subset``.'
+        )
+
     try:
         _subsample_disconnected_roots(result, metadata, main_table_name, ratio_to_keep)
         _subsample_table_and_descendants(result, metadata, main_table_name, num_rows)

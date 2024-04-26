@@ -1891,7 +1891,9 @@ def test__subsample_ancestors_schema_diamond_shape():
 @patch('sdv.multi_table.utils._subsample_ancestors')
 @patch('sdv.multi_table.utils._get_primary_keys_referenced')
 @patch('sdv.multi_table.utils._drop_rows')
+@patch('sdv.multi_table.utils._validate_foreign_keys_not_null')
 def test__subsample_data(
+    mock_validate_foreign_keys_not_null,
     mock_drop_rows,
     mock_get_primary_keys_referenced,
     mock_subsample_ancestors,
@@ -1915,6 +1917,7 @@ def test__subsample_data(
     result = _subsample_data(data, metadata, main_table, num_rows)
 
     # Assert
+    mock_validate_foreign_keys_not_null.assert_called_once_with(metadata, data)
     mock_get_primary_keys_referenced.assert_called_once_with(data, metadata)
     mock_subsample_disconnected_roots.assert_called_once_with(data, metadata, main_table, 0.5)
     mock_subsample_table_and_descendants.assert_called_once_with(
@@ -1929,8 +1932,12 @@ def test__subsample_data(
 
 @patch('sdv.multi_table.utils._subsample_disconnected_roots')
 @patch('sdv.multi_table.utils._get_primary_keys_referenced')
-def test__subsample_data_empty_dataset(mock_get_primary_keys_referenced,
-                                       mock_subsample_disconnected_roots):
+@patch('sdv.multi_table.utils._validate_foreign_keys_not_null')
+def test__subsample_data_empty_dataset(
+    mock_validate_foreign_keys_not_null,
+    mock_get_primary_keys_referenced,
+    mock_subsample_disconnected_roots
+):
     """Test the ``subsample_data`` method when a dataset is empty."""
     # Setup
     data = {

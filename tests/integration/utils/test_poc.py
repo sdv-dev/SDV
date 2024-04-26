@@ -335,9 +335,15 @@ def test_get_random_subset_with_missing_values(metadata, data):
     # Setup
     data = deepcopy(data)
     data['child'].loc[4, 'parent_id'] = np.nan
+    expected_warning = re.escape(
+        'The data contains null values in foreign key columns. '
+        'We recommend using ``drop_unknown_foreign_keys`` method from sdv.utils.poc'
+        ' to drop these rows before using ``get_random_subset``.'
+    )
 
     # Run
-    cleaned_data = get_random_subset(data, metadata, 'child', 3)
+    with pytest.warns(UserWarning, match=expected_warning):
+        cleaned_data = get_random_subset(data, metadata, 'child', 3)
 
     # Assert
     assert len(cleaned_data['child']) == 3
