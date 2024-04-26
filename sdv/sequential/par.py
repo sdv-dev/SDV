@@ -87,12 +87,13 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=False,
                  locales=['en_US'], context_columns=None, segment_size=None, epochs=128,
-                 sample_size=1, cuda=True, verbose=False):
+                 sample_size=1, cuda=True, verbose=False, table_name=None):
         super().__init__(
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
-            locales=locales
+            locales=locales,
+            table_name=table_name
         )
 
         sequence_key = self.metadata.sequence_key

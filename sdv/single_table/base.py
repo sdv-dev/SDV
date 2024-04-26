@@ -500,16 +500,15 @@ class BaseSynthesizer:
         if getattr(synthesizer, '_synthesizer_id', None) is None:
             synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
 
-        if synthesizer.table_name is None:
-            SYNTHESIZER_LOGGER.info(
-                '\nLoad:\n'
-                '  Timestamp: %s\n'
-                '  Synthesizer class name: %s\n'
-                '  Synthesizer id: %s',
-                datetime.datetime.now(),
-                synthesizer.__class__.__name__,
-                synthesizer._synthesizer_id,
-            )
+        SYNTHESIZER_LOGGER.info(
+            '\nLoad:\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            synthesizer.__class__.__name__,
+            synthesizer._synthesizer_id,
+        )
 
         return synthesizer
 
