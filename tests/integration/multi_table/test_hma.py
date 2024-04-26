@@ -151,8 +151,7 @@ class TestHMASynthesizer:
             'enforce_min_max_values': True,
             'enforce_rounding': True,
             'locales': ['en_US'],
-            'numerical_distributions': {},
-            'table_name': 'characters'
+            'numerical_distributions': {}
         }
         families_params = hmasynthesizer.get_table_parameters('families')
         assert families_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
@@ -161,8 +160,7 @@ class TestHMASynthesizer:
             'enforce_min_max_values': True,
             'enforce_rounding': True,
             'locales': ['en_US'],
-            'numerical_distributions': {},
-            'table_name': 'families'
+            'numerical_distributions': {}
         }
         char_families_params = hmasynthesizer.get_table_parameters('character_families')
         assert char_families_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
@@ -171,8 +169,7 @@ class TestHMASynthesizer:
             'enforce_min_max_values': True,
             'enforce_rounding': True,
             'locales': ['en_US'],
-            'numerical_distributions': {},
-            'table_name': 'character_families'
+            'numerical_distributions': {}
         }
 
         assert hmasynthesizer._table_synthesizers['characters'].default_distribution == 'gamma'

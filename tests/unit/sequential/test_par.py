@@ -158,8 +158,7 @@ class TestPARSynthesizer:
             'epochs': 10,
             'sample_size': 5,
             'cuda': False,
-            'verbose': False,
-            'table_name': None
+            'verbose': False
         }
 
     def test_get_metadata(self):
