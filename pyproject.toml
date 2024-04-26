@@ -141,7 +141,8 @@ namespaces = false
     'make.bat',
     '*.jpg',
     '*.png',
-    '*.gif'
+    '*.gif',
+    'sdv_logger_config.yml'
 ]
 
 [tool.setuptools.exclude-package-data]
