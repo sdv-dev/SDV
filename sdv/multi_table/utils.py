@@ -430,7 +430,7 @@ def _get_rows_to_drop(data, metadata):
     return table_to_idx_to_drop
 
 
-def _get_idx_to_drop_nan_foreign_key_table(data, relationships, table):
+def _get_nan_fk_indices_table(data, relationships, table):
     """Get the indexes of the rows to drop that have NaN foreign keys."""
     idx_with_nan_foreign_key = set()
     relationships_for_table = _get_relationships_for_child(relationships, table)
@@ -449,7 +449,7 @@ def _drop_rows(data, metadata, drop_missing_values):
         idx_to_drop = table_to_idx_to_drop[table]
         data[table] = data[table].drop(idx_to_drop)
         if drop_missing_values:
-            idx_with_nan_fk = _get_idx_to_drop_nan_foreign_key_table(
+            idx_with_nan_fk = _get_nan_fk_indices_table(
                 data, metadata.relationships, table
             )
             data[table] = data[table].drop(idx_with_nan_fk)
@@ -474,7 +474,7 @@ def _subsample_disconnected_roots(data, metadata, table, ratio_to_keep):
 def _subsample_table_and_descendants(data, metadata, table, num_rows):
     """Subsample the table and its descendants.
 
-    The logic is to first subsample all the NaN foreign key of the table.
+    The logic is to first subsample all the NaN foreign keys of the table.
     We raise an error if we cannot reach referential integrity while keeping the number of rows.
     Then, we drop rows of the descendants to ensure referential integrity.
 
@@ -487,7 +487,7 @@ def _subsample_table_and_descendants(data, metadata, table, num_rows):
         table (str):
             Name of the table.
     """
-    idx_nan_fk = _get_idx_to_drop_nan_foreign_key_table(data, metadata.relationships, table)
+    idx_nan_fk = _get_nan_fk_indices_table(data, metadata.relationships, table)
     num_rows_to_drop = len(data[table]) - num_rows
     if len(idx_nan_fk) > num_rows_to_drop:
         raise SamplingError(

@@ -11,14 +11,13 @@ from sdv.errors import InvalidDataError, SamplingError
 from sdv.metadata import MultiTableMetadata
 from sdv.multi_table.utils import (
     _drop_rows, _get_all_descendant_per_root_at_order_n, _get_ancestors,
-    _get_columns_to_drop_child, _get_disconnected_roots_from_table,
-    _get_idx_to_drop_nan_foreign_key_table, _get_n_order_descendants, _get_num_column_to_drop,
-    _get_primary_keys_referenced, _get_relationships_for_child, _get_relationships_for_parent,
-    _get_rows_to_drop, _get_total_estimated_columns, _print_simplified_schema_summary,
-    _print_subsample_summary, _simplify_child, _simplify_children, _simplify_data,
-    _simplify_grandchildren, _simplify_metadata, _simplify_relationships_and_tables,
-    _subsample_ancestors, _subsample_data, _subsample_disconnected_roots, _subsample_parent,
-    _subsample_table_and_descendants)
+    _get_columns_to_drop_child, _get_disconnected_roots_from_table, _get_n_order_descendants,
+    _get_nan_fk_indices_table, _get_num_column_to_drop, _get_primary_keys_referenced,
+    _get_relationships_for_child, _get_relationships_for_parent, _get_rows_to_drop,
+    _get_total_estimated_columns, _print_simplified_schema_summary, _print_subsample_summary,
+    _simplify_child, _simplify_children, _simplify_data, _simplify_grandchildren,
+    _simplify_metadata, _simplify_relationships_and_tables, _subsample_ancestors, _subsample_data,
+    _subsample_disconnected_roots, _subsample_parent, _subsample_table_and_descendants)
 
 
 def test__get_relationships_for_child():
@@ -134,8 +133,8 @@ def test__get_rows_to_drop():
     assert result == expected_result
 
 
-def test__get_idx_to_drop_nan_foreign_key_table():
-    """Test the ``_get_idx_to_drop_nan_foreign_key_table`` method."""
+def test__get_nan_fk_indices_table():
+    """Test the ``_get_nan_fk_indices_table`` method."""
     # Setup
     relationships = [
         {
@@ -166,7 +165,7 @@ def test__get_idx_to_drop_nan_foreign_key_table():
     }
 
     # Run
-    result = _get_idx_to_drop_nan_foreign_key_table(data, relationships, 'grandchild')
+    result = _get_nan_fk_indices_table(data, relationships, 'grandchild')
 
     # Assert
     assert result == {0, 1, 4}
@@ -1349,8 +1348,8 @@ def test__subsample_disconnected_roots(mock_drop_rows, mock_get_disconnected_roo
 
 
 @patch('sdv.multi_table.utils._drop_rows')
-@patch('sdv.multi_table.utils._get_idx_to_drop_nan_foreign_key_table')
-def test__subsample_table_and_descendants(mock_get_idx_to_drop_nan_foreign_key_table,
+@patch('sdv.multi_table.utils._get_nan_fk_indices_table')
+def test__subsample_table_and_descendants(mock_get_nan_fk_indices_table,
                                           mock_drop_rows):
     """Test the ``_subsample_table_and_descendants`` method."""
     # Setup
@@ -1372,7 +1371,7 @@ def test__subsample_table_and_descendants(mock_get_idx_to_drop_nan_foreign_key_t
             'col_8': [6, 7, 8, 9, 10],
         }),
     }
-    mock_get_idx_to_drop_nan_foreign_key_table.return_value = {0}
+    mock_get_nan_fk_indices_table.return_value = {0}
     metadata = Mock()
     metadata.relationships = Mock()
 
@@ -1380,19 +1379,19 @@ def test__subsample_table_and_descendants(mock_get_idx_to_drop_nan_foreign_key_t
     _subsample_table_and_descendants(data, metadata, 'parent', 3)
 
     # Assert
-    mock_get_idx_to_drop_nan_foreign_key_table.assert_called_once_with(
+    mock_get_nan_fk_indices_table.assert_called_once_with(
         data, metadata.relationships, 'parent'
     )
     mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=True)
     assert len(data['parent']) == 3
 
 
-@patch('sdv.multi_table.utils._get_idx_to_drop_nan_foreign_key_table')
-def test__subsample_table_and_descendants_nan_fk(mock_get_idx_to_drop_nan_foreign_key_table):
-    """Test the ``_subsample_table_and_descendants`` when there is too many NaN foreign keys."""
+@patch('sdv.multi_table.utils._get_nan_fk_indices_table')
+def test__subsample_table_and_descendants_nan_fk(mock_get_nan_fk_indices_table):
+    """Test the ``_subsample_table_and_descendants`` when there are too many NaN foreign keys."""
     # Setup
     data = {'parent': [1, 2, 3, 4, 5, 6]}
-    mock_get_idx_to_drop_nan_foreign_key_table.return_value = {0, 1, 2, 3, 4}
+    mock_get_nan_fk_indices_table.return_value = {0, 1, 2, 3, 4}
     metadata = Mock()
     metadata.relationships = Mock()
     expected_message = re.escape(
@@ -1405,7 +1404,7 @@ def test__subsample_table_and_descendants_nan_fk(mock_get_idx_to_drop_nan_foreig
         _subsample_table_and_descendants(data, metadata, 'parent', 3)
 
     # Assert
-    mock_get_idx_to_drop_nan_foreign_key_table.assert_called_once_with(
+    mock_get_nan_fk_indices_table.assert_called_once_with(
         data, metadata.relationships, 'parent'
     )
 
