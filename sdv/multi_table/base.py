@@ -65,7 +65,6 @@ class BaseMultiTableSynthesizer:
                 self._table_synthesizers[table_name] = self._synthesizer(
                     metadata=table_metadata,
                     locales=self.locales,
-                    table_name=table_name,
                     **synthesizer_parameters
                 )
 
@@ -200,8 +199,6 @@ class BaseMultiTableSynthesizer:
                 A dictionary with the parameters as keys and the values to be used to instantiate
                 the table's synthesizer.
         """
-        # Ensure that we set the name of the table no matter what
-        table_parameters.update({'table_name': table_name})
         self._table_synthesizers[table_name] = self._synthesizer(
             metadata=self.metadata.tables[table_name],
             **table_parameters

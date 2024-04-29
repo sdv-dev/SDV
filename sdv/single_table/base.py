@@ -88,7 +88,7 @@ class BaseSynthesizer:
             )
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
-                 locales=['en_US'], table_name=None):
+                 locales=['en_US']):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata = metadata
         self.metadata.validate()
@@ -96,13 +96,11 @@ class BaseSynthesizer:
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self.locales = locales
-        self.table_name = table_name
         self._data_processor = DataProcessor(
             metadata=self.metadata,
             enforce_rounding=self.enforce_rounding,
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
-            table_name=self.table_name
         )
         self._fitted = False
         self._random_state_set = False
@@ -500,16 +498,15 @@ class BaseSynthesizer:
         if getattr(synthesizer, '_synthesizer_id', None) is None:
             synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
 
-        if synthesizer.table_name is None:
-            SYNTHESIZER_LOGGER.info(
-                '\nLoad:\n'
-                '  Timestamp: %s\n'
-                '  Synthesizer class name: %s\n'
-                '  Synthesizer id: %s',
-                datetime.datetime.now(),
-                synthesizer.__class__.__name__,
-                synthesizer._synthesizer_id,
-            )
+        SYNTHESIZER_LOGGER.info(
+            '\nLoad:\n'
+            '  Timestamp: %s\n'
+            '  Synthesizer class name: %s\n'
+            '  Synthesizer id: %s',
+            datetime.datetime.now(),
+            synthesizer.__class__.__name__,
+            synthesizer._synthesizer_id,
+        )
 
         return synthesizer
 

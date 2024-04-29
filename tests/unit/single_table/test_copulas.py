@@ -130,8 +130,7 @@ class TestGaussianCopulaSynthesizer:
             'enforce_rounding': True,
             'locales': ['en_US'],
             'numerical_distributions': {},
-            'default_distribution': 'beta',
-            'table_name': None
+            'default_distribution': 'beta'
         }
 
     @patch('sdv.single_table.copulas.LOGGER')

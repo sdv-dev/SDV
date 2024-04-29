@@ -91,14 +91,12 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         return cls._DISTRIBUTIONS[distribution]
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
-                 locales=['en_US'], numerical_distributions=None, default_distribution=None,
-                 table_name=None):
+                 locales=['en_US'], numerical_distributions=None, default_distribution=None):
         super().__init__(
             metadata,
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
             locales=locales,
-            table_name=table_name
         )
         validate_numerical_distributions(numerical_distributions, self.metadata.columns)
         self.numerical_distributions = numerical_distributions or {}

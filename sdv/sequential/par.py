@@ -92,7 +92,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
-            locales=locales
+            locales=locales,
         )
 
         sequence_key = self.metadata.sequence_key

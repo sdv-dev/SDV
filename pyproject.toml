@@ -25,11 +25,11 @@ dependencies = [
     'botocore>=1.31',
     'cloudpickle>=2.1.0',
     'graphviz>=0.13.2',
-    "numpy>=1.20.0;python_version<'3.10'",
+    "numpy>=1.21.0;python_version<'3.10'",
     "numpy>=1.23.3,<2;python_version>='3.10' and python_version<'3.12'",
     "numpy>=1.26.0,<2;python_version>='3.12'",
-    "pandas>=1.1.3;python_version<'3.10'",
-    "pandas>=1.3.4;python_version>='3.10' and python_version<'3.11'",
+    "pandas>=1.4.0;python_version<'3.10'",
+    "pandas>=1.4.0;python_version>='3.10' and python_version<'3.11'",
     "pandas>=1.5.0;python_version>='3.11' and python_version<'3.12'",
     "pandas>=2.1.1;python_version>='3.12'",
     'tqdm>=4.29',
@@ -141,7 +141,8 @@ namespaces = false
     'make.bat',
     '*.jpg',
     '*.png',
-    '*.gif'
+    '*.gif',
+    'sdv_logger_config.yml'
 ]
 
 [tool.setuptools.exclude-package-data]

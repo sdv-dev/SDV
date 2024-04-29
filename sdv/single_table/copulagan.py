@@ -121,8 +121,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
                  discriminator_dim=(256, 256), generator_lr=2e-4, generator_decay=1e-6,
                  discriminator_lr=2e-4, discriminator_decay=1e-6, batch_size=500,
                  discriminator_steps=1, log_frequency=True, verbose=False, epochs=300,
-                 pac=10, cuda=True, numerical_distributions=None, default_distribution=None,
-                 table_name=None):
+                 pac=10, cuda=True, numerical_distributions=None, default_distribution=None):
 
         super().__init__(
             metadata,
@@ -143,7 +142,6 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             epochs=epochs,
             pac=pac,
             cuda=cuda,
-            table_name=table_name
         )
 
         validate_numerical_distributions(numerical_distributions, self.metadata.columns)
