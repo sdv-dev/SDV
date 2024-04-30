@@ -33,7 +33,7 @@ class BaseLocalHandler:
         return metadata
 
     def read(self):
-        """Read data from files and returns it along with metadata.
+        """Read data from files and return it along with metadata.
 
         This method must be implemented by subclasses.
 
@@ -91,7 +91,7 @@ class CSVHandler(BaseLocalHandler):
         self.quoting = quoting
 
     def read(self, folder_name, file_names=None):
-        """Read data from CSV files and returns it along with metadata.
+        """Read data from CSV files and return it along with metadata.
 
         Args:
             folder_name (str):
@@ -197,25 +197,9 @@ class CSVHandler(BaseLocalHandler):
 class ExcelHandler(BaseLocalHandler):
     """A class for handling Excel files."""
 
-    def read(self, file_path, sheet_names=None):
-        """Read data from Excel files and returns it along with metadata.
-
-        Args:
-            file_path (str):
-                The path to the Excel file to read.
-            sheet_names (list of str, optional):
-                The names of sheets to read. If None, all sheets are read.
-
-        Returns:
-            tuple:
-                A tuple containing the data as a dictionary and metadata. The dictionary maps
-                table names to pandas DataFrames. The metadata is an object describing the data.
-        """
+    def _read_excel(self, file_path, sheet_names=None):
+        """Read data from Excel File and return just the data as a dictionary."""
         data = {}
-        metadata = MultiTableMetadata()
-        if sheet_names is not None and not isinstance(sheet_names, list):
-            raise ValueError("'sheet_names' must be None or a list of strings.")
-
         if sheet_names is None:
             xl_file = pd.ExcelFile(file_path)
             sheet_names = xl_file.sheet_names
@@ -229,6 +213,27 @@ class ExcelHandler(BaseLocalHandler):
                 index_col=None
             )
 
+        return data
+
+    def read(self, file_path, sheet_names=None):
+        """Read data from Excel files and return it along with metadata.
+
+        Args:
+            file_path (str):
+                The path to the Excel file to read.
+            sheet_names (list of str, optional):
+                The names of sheets to read. If None, all sheets are read.
+
+        Returns:
+            tuple:
+                A tuple containing the data as a dictionary and metadata. The dictionary maps
+                table names to pandas DataFrames. The metadata is an object describing the data.
+        """
+        metadata = MultiTableMetadata()
+        if sheet_names is not None and not isinstance(sheet_names, list):
+            raise ValueError("'sheet_names' must be None or a list of strings.")
+
+        data = self._read_excel(file_path, sheet_names)
         metadata = self._infer_metadata(data)
         return data, metadata
 
@@ -248,13 +253,27 @@ class ExcelHandler(BaseLocalHandler):
                 'a': Append new sheets within the existing file.
                      Note: You cannot append data to existing sheets.
         """
-        writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
+        temp_data = synthetic_data
+        suffix_added = False
 
-        for table_name, table_data in synthetic_data.items():
-            sheet_name = f'{table_name}{sheet_name_suffix}' if sheet_name_suffix else table_name
+        if mode == 'a':
+            temp_data = self._read_excel(file_name)
+            for table_name, table in synthetic_data.items():
+                sheet_name = table_name
+                if sheet_name_suffix:
+                    sheet_name = f'{table_name}{sheet_name_suffix}'
+                    suffix_added = True
+
+                temp_data[sheet_name] = table
+
+        writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
+        for table_name, table_data in temp_data.items():
+            if sheet_name_suffix and not suffix_added:
+                table_name += sheet_name_suffix
+
             table_data.to_excel(
                 writer,
-                sheet_name=sheet_name,
+                sheet_name=table_name,
                 float_format=self.float_format,
                 index=False
             )

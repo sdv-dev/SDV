@@ -321,6 +321,7 @@ class TestExcelHandler:
 
     @patch('sdv.io.local.local.pd')
     def test_write(self, mock_pd):
+        """Test the write functionality of the ExcelHandler."""
         # Setup
         sheet_one = Mock()
         sheet_two = Mock()
@@ -341,6 +342,51 @@ class TestExcelHandler:
             index=False
         )
         sheet_two.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet2_synthetic',
+            float_format=None,
+            index=False
+        )
+        mock_pd.ExcelWriter.return_value.close.assert_called_once_with()
+
+    @patch('sdv.io.local.local.pd')
+    def test_write_mode_append(self, mock_pd):
+        """Test the write functionality of the ExcelHandler when mode is `a``."""
+        # Setup
+        sheet_one = Mock()
+        sheet_two = Mock()
+        synth_sheet_one = Mock()
+        synth_sheet_two = Mock()
+        synthetic_data = {'Sheet1': synth_sheet_one, 'Sheet2': synth_sheet_two}
+
+        file_name = 'output_file.xlsx'
+        sheet_name_suffix = '_synthetic'
+        instance = ExcelHandler()
+        instance._read_excel = Mock(return_value={'Sheet1': sheet_one, 'Sheet2': sheet_two})
+
+        # Run
+        instance.write(synthetic_data, file_name, sheet_name_suffix, mode='a')
+
+        # Assert
+        sheet_one.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet1',
+            float_format=None,
+            index=False
+        )
+        sheet_two.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet2',
+            float_format=None,
+            index=False
+        )
+        synth_sheet_one.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet1_synthetic',
+            float_format=None,
+            index=False
+        )
+        synth_sheet_two.to_excel.assert_called_once_with(
             mock_pd.ExcelWriter.return_value,
             sheet_name='Sheet2_synthetic',
             float_format=None,
