@@ -205,7 +205,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 Dictionary containing the distributions used or detected for each column and the
                 learned parameters for those.
         """
-        if table_name not in self._get_root_parents():
+        if table_name not in _get_root_tables(self.metadata.relationships):
             raise SynthesizerInputError(
                 f"Learned distributions are not available for the '{table_name}' table. "
                 'Please choose a table that does not have any parents.'

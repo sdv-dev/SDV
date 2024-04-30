@@ -3,15 +3,21 @@ from collections import defaultdict
 from copy import deepcopy
 from unittest.mock import Mock, call, patch
 
+import numpy as np
 import pandas as pd
+import pytest
 
+from sdv.errors import InvalidDataError, SamplingError
 from sdv.metadata import MultiTableMetadata
 from sdv.multi_table.utils import (
-    _get_all_descendant_per_root_at_order_n, _get_columns_to_drop_child, _get_n_order_descendants,
-    _get_num_column_to_drop, _get_relationships_for_child, _get_relationships_for_parent,
-    _get_rows_to_drop, _get_total_estimated_columns, _print_simplified_schema_summary,
+    _drop_rows, _get_all_descendant_per_root_at_order_n, _get_ancestors,
+    _get_columns_to_drop_child, _get_disconnected_roots_from_table, _get_n_order_descendants,
+    _get_nan_fk_indices_table, _get_num_column_to_drop, _get_primary_keys_referenced,
+    _get_relationships_for_child, _get_relationships_for_parent, _get_rows_to_drop,
+    _get_total_estimated_columns, _print_simplified_schema_summary, _print_subsample_summary,
     _simplify_child, _simplify_children, _simplify_data, _simplify_grandchildren,
-    _simplify_metadata, _simplify_relationships_and_tables)
+    _simplify_metadata, _simplify_relationships_and_tables, _subsample_ancestors, _subsample_data,
+    _subsample_disconnected_roots, _subsample_parent, _subsample_table_and_descendants)
 
 
 def test__get_relationships_for_child():
@@ -116,7 +122,7 @@ def test__get_rows_to_drop():
     }
 
     # Run
-    result = _get_rows_to_drop(metadata, data)
+    result = _get_rows_to_drop(data, metadata)
 
     # Assert
     expected_result = defaultdict(set, {
@@ -125,6 +131,335 @@ def test__get_rows_to_drop():
         'parent': set()
     })
     assert result == expected_result
+
+
+def test__get_nan_fk_indices_table():
+    """Test the ``_get_nan_fk_indices_table`` method."""
+    # Setup
+    relationships = [
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        },
+        {
+            'parent_table_name': 'child',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_child',
+            'child_foreign_key': 'child_foreign_key'
+        },
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        }
+    ]
+    data = {
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [np.nan, 1, 2, 2, np.nan],
+            'child_foreign_key': [9, np.nan, 11, 6, 4],
+            'C': ['Yes', 'No', 'No', 'No', 'No']
+        })
+    }
+
+    # Run
+    result = _get_nan_fk_indices_table(data, relationships, 'grandchild')
+
+    # Assert
+    assert result == {0, 1, 4}
+
+
+@patch('sdv.multi_table.utils._get_rows_to_drop')
+def test__drop_rows(mock_get_rows_to_drop):
+    """Test the ``_drop_rows`` method."""
+    # Setup
+    relationships = [
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        },
+        {
+            'parent_table_name': 'child',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_child',
+            'child_foreign_key': 'child_foreign_key'
+        },
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        }
+    ]
+
+    metadata = Mock()
+    metadata.relationships = relationships
+    metadata.tables = {
+        'parent': Mock(primary_key='id_parent'),
+        'child': Mock(primary_key='id_child'),
+        'grandchild': Mock(primary_key='id_grandchild')
+    }
+    data = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 5],
+            'id_child': [5, 6, 7, 8, 9],
+            'B': ['Yes', 'No', 'No', 'No', 'No']
+        }),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 6],
+            'child_foreign_key': [9, 5, 11, 6, 4],
+            'C': ['Yes', 'No', 'No', 'No', 'No']
+        })
+    }
+
+    mock_get_rows_to_drop.return_value = defaultdict(set, {
+        'child': {4},
+        'grandchild': {0, 2, 4}
+    })
+
+    # Run
+    _drop_rows(data, metadata, False)
+
+    # Assert
+    mock_get_rows_to_drop.assert_called_once_with(data, metadata)
+    expected_result = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2],
+            'id_child': [5, 6, 7, 8],
+            'B': ['Yes', 'No', 'No', 'No']
+        }, index=[0, 1, 2, 3]),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [1, 2],
+            'child_foreign_key': [5, 6],
+            'C': ['No', 'No']
+        }, index=[1, 3])
+    }
+    for table_name, table in data.items():
+        pd.testing.assert_frame_equal(table, expected_result[table_name])
+
+
+@patch('sdv.multi_table.utils._get_rows_to_drop')
+def test_drop_unknown_references_with_nan(mock_get_rows_to_drop):
+    """Test ``drop_unknown_references`` whith NaNs and drop_missing_values True."""
+    # Setup
+    relationships = [
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        },
+        {
+            'parent_table_name': 'child',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_child',
+            'child_foreign_key': 'child_foreign_key'
+        },
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        }
+    ]
+
+    metadata = Mock()
+    metadata.relationships = relationships
+    metadata.tables = {'parent', 'child', 'grandchild'}
+
+    data = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 5, None],
+            'id_child': [5, 6, 7, 8, 9, 10],
+            'B': ['Yes', 'No', 'No', 'No', 'No', 'No']
+        }),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 6, 4],
+            'child_foreign_key': [9, np.nan, 5, 11, 6, 4],
+            'C': ['Yes', 'No', 'No', 'No', 'No', 'No']
+        })
+    }
+    mock_get_rows_to_drop.return_value = defaultdict(set, {
+        'child': {4},
+        'grandchild': {0, 3, 4}
+    })
+
+    # Run
+    _drop_rows(data, metadata, True)
+
+    # Assert
+    mock_get_rows_to_drop.assert_called_once()
+    expected_result = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0., 1., 2., 2.],
+            'id_child': [5, 6, 7, 8],
+            'B': ['Yes', 'No', 'No', 'No']
+        }, index=[0, 1, 2, 3]),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [2, 4],
+            'child_foreign_key': [5., 4.],
+            'C': ['No', 'No']
+        }, index=[2, 5])
+    }
+    for table_name, table in data.items():
+        pd.testing.assert_frame_equal(table, expected_result[table_name])
+
+
+@patch('sdv.multi_table.utils._get_rows_to_drop')
+def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop):
+    """Test ``drop_unknown_references`` with NaNs and drop_missing_values False."""
+    # Setup
+    relationships = [
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        },
+        {
+            'parent_table_name': 'child',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_child',
+            'child_foreign_key': 'child_foreign_key'
+        },
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        }
+    ]
+
+    metadata = Mock()
+    metadata.relationships = relationships
+    metadata.tables = {'parent', 'child', 'grandchild'}
+    metadata.validate_data.side_effect = InvalidDataError('Invalid data')
+
+    data = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 5, None],
+            'id_child': [5, 6, 7, 8, 9, 10],
+            'B': ['Yes', 'No', 'No', 'No', 'No', 'No']
+        }),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 6, 4],
+            'child_foreign_key': [9, np.nan, 5, 11, 6, 4],
+            'C': ['Yes', 'No', 'No', 'No', 'No', 'No']
+        })
+    }
+    mock_get_rows_to_drop.return_value = defaultdict(set, {
+        'child': {4},
+        'grandchild': {0, 3, 4}
+    })
+
+    # Run
+    _drop_rows(data, metadata, drop_missing_values=False)
+
+    # Assert
+    mock_get_rows_to_drop.assert_called_once()
+    expected_result = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0., 1., 2., 2., None],
+            'id_child': [5, 6, 7, 8, 10],
+            'B': ['Yes', 'No', 'No', 'No', 'No']
+        }, index=[0, 1, 2, 3, 5]),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [1, 2, 4],
+            'child_foreign_key': [np.nan, 5, 4.],
+            'C': ['No', 'No', 'No']
+        }, index=[1, 2, 5])
+    }
+    for table_name, table in data.items():
+        pd.testing.assert_frame_equal(table, expected_result[table_name])
+
+
+@patch('sdv.multi_table.utils._get_rows_to_drop')
+def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
+    """Test ``drop_unknown_references`` when all rows are dropped."""
+    # Setup
+    relationships = [
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        },
+        {
+            'parent_table_name': 'child',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_child',
+            'child_foreign_key': 'child_foreign_key'
+        },
+        {
+            'parent_table_name': 'parent',
+            'child_table_name': 'grandchild',
+            'parent_primary_key': 'id_parent',
+            'child_foreign_key': 'parent_foreign_key'
+        }
+    ]
+
+    metadata = Mock()
+    metadata.relationships = relationships
+    metadata.tables = {'parent', 'child', 'grandchild'}
+    metadata.validate_data.side_effect = InvalidDataError('Invalid data')
+
+    data = {
+        'parent': pd.DataFrame({
+            'id_parent': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+        }),
+        'child': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 5],
+            'id_child': [5, 6, 7, 8, 9],
+            'B': ['Yes', 'No', 'No', 'No', 'No']
+        }),
+        'grandchild': pd.DataFrame({
+            'parent_foreign_key': [0, 1, 2, 2, 6],
+            'child_foreign_key': [9, 5, 11, 6, 4],
+            'C': ['Yes', 'No', 'No', 'No', 'No']
+        })
+    }
+
+    mock_get_rows_to_drop.return_value = defaultdict(set, {
+        'child': {0, 1, 2, 3, 4}
+    })
+
+    # Run and Assert
+    expected_message = re.escape(
+        'The provided data does not match the metadata:\n'
+        "All references in table 'child' are unknown and must be dropped."
+        'Try providing different data for this table.'
+    )
+    with pytest.raises(InvalidDataError, match=expected_message):
+        _drop_rows(data, metadata, False)
 
 
 def test__get_n_order_descendants():
@@ -191,6 +526,61 @@ def test__get_all_descendant_per_root_at_order_n():
             'num_descendants': 4
         }
     }
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(('table_name', 'expected_result'), [
+    ('grandchild', {'child', 'parent', 'grandparent', 'other_root'}),
+    ('child', {'parent', 'grandparent', 'other_root'}),
+    ('parent', {'grandparent'}),
+    ('other_table', {'grandparent'}),
+    ('grandparent', set()),
+    ('other_root', set()),
+])
+def test__get_ancestors(table_name, expected_result):
+    """Test the ``_get_ancestors`` method."""
+    # Setup
+    relationships = [
+        {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
+        {'parent_table_name': 'parent', 'child_table_name': 'child'},
+        {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
+        {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
+        {'parent_table_name': 'other_root', 'child_table_name': 'child'},
+    ]
+
+    # Run
+    result = _get_ancestors(relationships, table_name)
+
+    # Assert
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(('table_name', 'expected_result'), [
+    ('grandchild', {'disconnected_root'}),
+    ('child', {'disconnected_root'}),
+    ('parent', {'disconnected_root'}),
+    ('other_table', {'disconnected_root', 'other_root'}),
+    ('grandparent', {'disconnected_root'}),
+    ('other_root', {'disconnected_root'}),
+    ('disconnected_root', {'grandparent', 'other_root'}),
+    ('disconnect_child', {'grandparent', 'other_root'}),
+])
+def test__get_disconnected_roots_from_table(table_name, expected_result):
+    """Test the ``_get_disconnected_roots_from_table`` method."""
+    # Setup
+    relationships = [
+        {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
+        {'parent_table_name': 'parent', 'child_table_name': 'child'},
+        {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
+        {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
+        {'parent_table_name': 'other_root', 'child_table_name': 'child'},
+        {'parent_table_name': 'disconnected_root', 'child_table_name': 'disconnect_child'},
+    ]
+
+    # Run
+    result = _get_disconnected_roots_from_table(relationships, table_name)
+
+    # Assert
     assert result == expected_result
 
 
@@ -855,5 +1245,787 @@ def test__print_simplified_schema_summary(capsys):
         r'Table 1\s*4\s*2\s*'
         r'Table 2\s*2\s*1\s*'
         r'Table 3\s*1\s*0'
+    )
+    assert expected_output.match(captured.out.strip())
+
+
+@patch('sdv.multi_table.utils._get_disconnected_roots_from_table')
+@patch('sdv.multi_table.utils._drop_rows')
+def test__subsample_disconnected_roots(mock_drop_rows, mock_get_disconnected_roots_from_table):
+    """Test the ``_subsample_disconnected_roots`` method."""
+    # Setup
+    data = {
+        'disconnected_root': pd.DataFrame({
+            'col_1': [1, 2, 3, 4, 5],
+            'col_2': [6, 7, 8, 9, 10],
+        }),
+        'grandparent': pd.DataFrame({
+            'col_3': [1, 2, 3, 4, 5],
+            'col_4': [6, 7, 8, 9, 10],
+        }),
+        'other_root': pd.DataFrame({
+            'col_5': [1, 2, 3, 4, 5],
+            'col_6': [6, 7, 8, 9, 10],
+        }),
+        'child': pd.DataFrame({
+            'col_7': [1, 2, 3, 4, 5],
+            'col_8': [6, 7, 8, 9, 10],
+        }),
+        'other_table': pd.DataFrame({
+            'col_9': [1, 2, 3, 4, 5],
+            'col_10': [6, 7, 8, 9, 10],
+        }),
+        'parent': pd.DataFrame({
+            'col_11': [1, 2, 3, 4, 5],
+            'col_12': [6, 7, 8, 9, 10],
+        }),
+    }
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'disconnected_root': {
+                'columns': {
+                    'col_1': {'sdtype': 'numerical'},
+                    'col_2': {'sdtype': 'numerical'},
+                },
+            },
+            'grandparent': {
+                'columns': {
+                    'col_3': {'sdtype': 'numerical'},
+                    'col_4': {'sdtype': 'numerical'},
+                },
+            },
+            'other_root': {
+                'columns': {
+                    'col_5': {'sdtype': 'numerical'},
+                    'col_6': {'sdtype': 'numerical'},
+                },
+            },
+            'child': {
+                'columns': {
+                    'col_7': {'sdtype': 'numerical'},
+                    'col_8': {'sdtype': 'numerical'},
+                },
+            },
+            'other_table': {
+                'columns': {
+                    'col_9': {'sdtype': 'numerical'},
+                    'col_10': {'sdtype': 'numerical'},
+                },
+            },
+            'parent': {
+                'columns': {
+                    'col_11': {'sdtype': 'numerical'},
+                    'col_12': {'sdtype': 'numerical'},
+                },
+            },
+        },
+        'relationships': [
+            {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
+            {'parent_table_name': 'parent', 'child_table_name': 'child'},
+            {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
+            {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
+            {'parent_table_name': 'other_root', 'child_table_name': 'child'},
+            {'parent_table_name': 'disconnected_root', 'child_table_name': 'disconnect_child'},
+        ]
+    })
+    mock_get_disconnected_roots_from_table.return_value = {'grandparent', 'other_root'}
+    ratio_to_keep = 0.6
+    expected_result = deepcopy(data)
+
+    # Run
+    _subsample_disconnected_roots(data, metadata, 'disconnected_root', ratio_to_keep)
+
+    # Assert
+    mock_get_disconnected_roots_from_table.assert_called_once_with(
+        metadata.relationships, 'disconnected_root'
+    )
+    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=True)
+    for table_name in metadata.tables:
+        if table_name not in {'grandparent', 'other_root'}:
+            pd.testing.assert_frame_equal(data[table_name], expected_result[table_name])
+        else:
+            assert len(data[table_name]) == 3
+
+
+@patch('sdv.multi_table.utils._drop_rows')
+@patch('sdv.multi_table.utils._get_nan_fk_indices_table')
+def test__subsample_table_and_descendants(mock_get_nan_fk_indices_table,
+                                          mock_drop_rows):
+    """Test the ``_subsample_table_and_descendants`` method."""
+    # Setup
+    data = {
+        'grandparent': pd.DataFrame({
+            'col_1': [1, 2, 3, 4, 5],
+            'col_2': [6, 7, 8, 9, 10],
+        }),
+        'parent': pd.DataFrame({
+            'col_3': [1, 2, 3, 4, 5],
+            'col_4': [6, 7, 8, 9, 10],
+        }),
+        'child': pd.DataFrame({
+            'col_5': [1, 2, 3, 4, 5],
+            'col_6': [6, 7, 8, 9, 10],
+        }),
+        'grandchild': pd.DataFrame({
+            'col_7': [1, 2, 3, 4, 5],
+            'col_8': [6, 7, 8, 9, 10],
+        }),
+    }
+    mock_get_nan_fk_indices_table.return_value = {0}
+    metadata = Mock()
+    metadata.relationships = Mock()
+
+    # Run
+    _subsample_table_and_descendants(data, metadata, 'parent', 3)
+
+    # Assert
+    mock_get_nan_fk_indices_table.assert_called_once_with(
+        data, metadata.relationships, 'parent'
+    )
+    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=True)
+    assert len(data['parent']) == 3
+
+
+@patch('sdv.multi_table.utils._get_nan_fk_indices_table')
+def test__subsample_table_and_descendants_nan_fk(mock_get_nan_fk_indices_table):
+    """Test the ``_subsample_table_and_descendants`` when there are too many NaN foreign keys."""
+    # Setup
+    data = {'parent': [1, 2, 3, 4, 5, 6]}
+    mock_get_nan_fk_indices_table.return_value = {0, 1, 2, 3, 4}
+    metadata = Mock()
+    metadata.relationships = Mock()
+    expected_message = re.escape(
+        "Referential integrity cannot be reached for table 'parent' while keeping "
+        '3 rows. Please try again with a bigger number of rows.'
+    )
+
+    # Run
+    with pytest.raises(SamplingError, match=expected_message):
+        _subsample_table_and_descendants(data, metadata, 'parent', 3)
+
+    # Assert
+    mock_get_nan_fk_indices_table.assert_called_once_with(
+        data, metadata.relationships, 'parent'
+    )
+
+
+def test__get_primary_keys_referenced():
+    """Test the ``_get_primary_keys_referenced`` method."""
+    data = {
+        'grandparent': pd.DataFrame({
+            'pk_gp': [1, 2, 3, 4, 5],
+            'col_1': [6, 7, 8, 9, 10],
+        }),
+        'parent': pd.DataFrame({
+            'fk_gp': [1, 2, 2, 3, 1],
+            'pk_p': [11, 12, 13, 14, 15],
+            'col_2': [16, 17, 18, 19, 20],
+        }),
+        'child': pd.DataFrame({
+            'fk_gp': [5, 2, 2, 3, 1],
+            'fk_p_1': [11, 11, 11, 11, 11],
+            'fk_p_2': [12, 12, 12, 12, 12],
+            'pk_c': [21, 22, 23, 24, 25],
+            'col_3': [26, 27, 28, 29, 30],
+        }),
+        'grandchild': pd.DataFrame({
+            'fk_p_3': [13, 14, 13, 13, 13],
+            'fk_p_4': [14, 13, 14, 14, 14],
+            'fk_c': [21, 22, 23, 24, 25],
+            'col_4': [36, 37, 38, 39, 40],
+        }),
+    }
+
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'grandparent': {
+                'columns': {
+                    'pk_gp': {'type': 'id'},
+                    'col_1': {'type': 'numerical'},
+                },
+                'primary_key': 'pk_gp'
+            },
+            'parent': {
+                'columns': {
+                    'fk_gp': {'type': 'id'},
+                    'pk_p': {'type': 'id'},
+                    'col_2': {'type': 'numerical'},
+                },
+                'primary_key': 'pk_p'
+            },
+            'child': {
+                'columns': {
+                    'fk_gp': {'type': 'id'},
+                    'fk_p_1': {'type': 'id'},
+                    'fk_p_2': {'type': 'id'},
+                    'pk_c': {'type': 'id'},
+                    'col_3': {'type': 'numerical'},
+                },
+                'primary_key': 'pk_c'
+            },
+            'grandchild': {
+                'columns': {
+                    'fk_p_3': {'type': 'id'},
+                    'fk_p_4': {'type': 'id'},
+                    'fk_c': {'type': 'id'},
+                    'col_4': {'type': 'numerical'},
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'grandparent',
+                'child_table_name': 'parent',
+                'parent_primary_key': 'pk_gp',
+                'child_foreign_key': 'fk_gp',
+            },
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk_p',
+                'child_foreign_key': 'fk_p_1',
+            },
+            {
+                'parent_table_name': 'grandparent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk_p',
+                'child_foreign_key': 'fk_gp',
+
+            },
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk_p',
+                'child_foreign_key': 'fk_p_2',
+            },
+            {
+                'parent_table_name': 'child',
+                'child_table_name': 'grandchild',
+                'parent_primary_key': 'pk_c',
+                'child_foreign_key': 'fk_c',
+            },
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'grandchild',
+                'parent_primary_key': 'pk_p',
+                'child_foreign_key': 'fk_p_3',
+            },
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'grandchild',
+                'parent_primary_key': 'pk_p',
+                'child_foreign_key': 'fk_p_4',
+            }
+        ]
+    })
+
+    # Run
+    result = _get_primary_keys_referenced(data, metadata)
+
+    # Assert
+    expected_result = {
+        'grandparent': {1, 2, 3, 5},
+        'parent': {11, 12, 13, 14},
+        'child': {21, 22, 23, 24, 25},
+    }
+    assert result == expected_result
+
+
+def test__subsample_parent_all_reeferenced_before():
+    """Test the ``_subsample_parent`` when all primary key were referenced before.
+
+    Here the primary keys ``4`` and ``5`` are no longer referenced and should be dropped.
+    """
+    # Setup
+    data = {
+        'parent': pd.DataFrame({
+            'pk_p': [1, 2, 3, 4, 5],
+            'col_2': [16, 17, 18, 19, 20],
+        }),
+        'child': pd.DataFrame({
+            'fk_p_1': [1, 2, 2, 2, 3],
+        }),
+    }
+
+    pk_referenced_before = defaultdict(set)
+    pk_referenced_before['parent'] = {1, 2, 3, 4, 5}
+    unreferenced_pk = {4, 5}
+
+    # Run
+    data['parent'] = _subsample_parent(
+        data['parent'], 'pk_p', pk_referenced_before['parent'], unreferenced_pk
+    )
+
+    # Assert
+    expected_result = {
+        'parent': pd.DataFrame({
+            'pk_p': [1, 2, 3],
+            'col_2': [16, 17, 18],
+        }),
+        'child': pd.DataFrame({
+            'fk_p_1': [1, 2, 2, 2, 3],
+        }),
+    }
+    pd.testing.assert_frame_equal(data['parent'], expected_result['parent'])
+    pd.testing.assert_frame_equal(data['child'], expected_result['child'])
+
+
+def test__subsample_parent_not_all_referenced_before():
+    """Test the ``_subsample_parent`` when not all primary key were referenced before.
+
+    In this example:
+    - The primary key ``5`` is no longer referenced and should be dropped.
+    - One unreferenced primary key must be dropped to keep the same ratio of
+    referenced/unreferenced primary keys.
+    """
+    # Setup
+    data = {
+        'parent': pd.DataFrame({
+            'pk_p': [1, 2, 3, 4, 5, 6, 7, 8],
+            'col_2': [16, 17, 18, 19, 20, 21, 22, 23],
+        }),
+        'child': pd.DataFrame({
+            'fk_p_1': [1, 2, 2, 2, 3],
+        }),
+    }
+
+    pk_referenced_before = defaultdict(set)
+    pk_referenced_before['parent'] = {1, 2, 3, 5}
+    unreferenced_pk = {5}
+
+    # Run
+    data['parent'] = _subsample_parent(
+        data['parent'], 'pk_p', pk_referenced_before['parent'], unreferenced_pk
+    )
+
+    # Assert
+    assert len(data['parent']) == 6
+    assert set(data['parent']['pk_p']).issubset({
+        1, 2, 3, 4, 6, 7, 8
+    })
+
+
+def test__subsample_ancestors():
+    """Test the ``_subsample_ancestors`` method."""
+    # Setup
+    data = {
+        'grandparent': pd.DataFrame({
+            'pk_gp': [
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+            ],
+            'col_1': [
+                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+                'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'
+            ],
+        }),
+        'parent': pd.DataFrame({
+            'fk_gp': [1, 2, 3, 4, 9, 6],
+            'pk_p': [11, 12, 13, 14, 15, 16],
+            'col_2': ['k', 'l', 'm', 'n', 'o', 'p'],
+        }),
+        'child': pd.DataFrame({
+            'fk_gp': [4, 5, 6, 7, 8],
+            'fk_p_1': [11, 11, 11, 14, 11],
+            'fk_p_2': [12, 12, 12, 12, 15],
+            'pk_c': [21, 22, 23, 24, 25],
+            'col_3': ['q', 'r', 's', 't', 'u'],
+        }),
+        'grandchild': pd.DataFrame({
+            'fk_p_3': [11, 12, 13, 11, 13],
+            'fk_c': [21, 22, 23, 21, 22],
+            'col_4': [36, 37, 38, 39, 40],
+        }),
+    }
+
+    primary_key_referenced = {
+        'grandparent': {1, 2, 3, 4, 5, 6, 7, 8, 9},
+        'parent': {11, 12, 13, 14, 15},
+        'child': {21, 22, 23, 24, 25},
+    }
+
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'grandparent': {
+                'columns': {
+                    'pk_gp': {'type': 'id'},
+                    'col_1': {'type': 'numerical'},
+                },
+                'primary_key': 'pk_gp'
+            },
+            'parent': {
+                'columns': {
+                    'fk_gp': {'type': 'id'},
+                    'pk_p': {'type': 'id'},
+                    'col_2': {'type': 'numerical'},
+                },
+                'primary_key': 'pk_p'
+            },
+            'child': {
+                'columns': {
+                    'fk_gp': {'type': 'id'},
+                    'fk_p_1': {'type': 'id'},
+                    'fk_p_2': {'type': 'id'},
+                    'pk_c': {'type': 'id'},
+                    'col_3': {'type': 'numerical'},
+                },
+                'primary_key': 'pk_c'
+            },
+            'grandchild': {
+                'columns': {
+                    'fk_p_3': {'type': 'id'},
+                    'fk_p_4': {'type': 'id'},
+                    'fk_c': {'type': 'id'},
+                    'col_4': {'type': 'numerical'},
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'grandparent',
+                'child_table_name': 'parent',
+                'parent_primary_key': 'pk_gp',
+                'child_foreign_key': 'fk_gp',
+            },
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk_p',
+                'child_foreign_key': 'fk_p_1',
+            },
+            {
+                'parent_table_name': 'grandparent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk_p',
+                'child_foreign_key': 'fk_gp',
+
+            },
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk_p',
+                'child_foreign_key': 'fk_p_2',
+            },
+            {
+                'parent_table_name': 'child',
+                'child_table_name': 'grandchild',
+                'parent_primary_key': 'pk_c',
+                'child_foreign_key': 'fk_c',
+            },
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'grandchild',
+                'parent_primary_key': 'pk_p',
+                'child_foreign_key': 'fk_p_3',
+            }
+        ]
+    })
+
+    # Run
+    _subsample_ancestors(data, metadata, 'grandchild', primary_key_referenced)
+
+    # Assert
+    expected_result = {
+        'parent': pd.DataFrame({
+            'fk_gp': [1, 2, 3, 6],
+            'pk_p': [11, 12, 13, 16],
+            'col_2': ['k', 'l', 'm', 'p'],
+        }, index=[0, 1, 2, 5]),
+        'child': pd.DataFrame({
+            'fk_gp': [4, 5, 6],
+            'fk_p_1': [11, 11, 11],
+            'fk_p_2': [12, 12, 12],
+            'pk_c': [21, 22, 23],
+            'col_3': ['q', 'r', 's'],
+        }, index=[0, 1, 2]),
+        'grandchild': pd.DataFrame({
+            'fk_p_3': [11, 12, 13, 11, 13],
+            'fk_c': [21, 22, 23, 21, 22],
+            'col_4': [36, 37, 38, 39, 40],
+        }, index=[0, 1, 2, 3, 4]),
+    }
+    assert len(data['grandparent']) == 14
+    assert set(data['grandparent']['pk_gp']).issubset(
+        {
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+            12, 13, 14, 15, 16, 17, 18, 19, 20
+        }
+    )
+    for table_name in ['parent', 'child', 'grandchild']:
+        pd.testing.assert_frame_equal(data[table_name], expected_result[table_name])
+
+
+def test__subsample_ancestors_schema_diamond_shape():
+    """Test the ``_subsample_ancestors`` method with a diamond shape schema."""
+    # Setup
+    data = {
+        'grandparent': pd.DataFrame({
+            'pk_gp': [
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+            ],
+            'col_1': [
+                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+                'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'
+            ],
+        }),
+        'parent_1': pd.DataFrame({
+            'fk_gp': [1, 2, 3, 4, 5, 6],
+            'pk_p': [21, 22, 23, 24, 25, 26],
+            'col_2': ['k', 'l', 'm', 'n', 'o', 'p'],
+        }),
+        'parent_2': pd.DataFrame({
+            'fk_gp': [7, 8, 9, 10, 11],
+            'pk_p': [31, 32, 33, 34, 35],
+            'col_3': ['k', 'l', 'm', 'n', 'o'],
+        }),
+        'child': pd.DataFrame({
+            'fk_p_1': [21, 22, 23, 23, 23],
+            'fk_p_2': [31, 32, 33, 34, 34],
+            'col_4': ['q', 'r', 's', 't', 'u'],
+        })
+    }
+
+    primary_key_referenced = {
+        'grandparent': {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+        'parent_1': {21, 22, 23, 24, 25},
+        'parent_2': {31, 32, 33, 34, 35},
+    }
+
+    metadata = MultiTableMetadata().load_from_dict({
+        'tables': {
+            'grandparent': {
+                'columns': {
+                    'pk_gp': {'type': 'id'},
+                    'col_1': {'type': 'numerical'},
+                },
+                'primary_key': 'pk_gp'
+            },
+            'parent_1': {
+                'columns': {
+                    'fk_gp': {'type': 'id'},
+                    'pk_p': {'type': 'id'},
+                    'col_2': {'type': 'numerical'},
+                },
+                'primary_key': 'pk_p'
+            },
+            'parent_2': {
+                'columns': {
+                    'fk_gp': {'type': 'id'},
+                    'pk_p': {'type': 'id'},
+                    'col_3': {'type': 'numerical'},
+                },
+                'primary_key': 'pk_p'
+            },
+            'child': {
+                'columns': {
+                    'fk_p_1': {'type': 'id'},
+                    'fk_p_2': {'type': 'id'},
+                    'col_4': {'type': 'numerical'},
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'grandparent',
+                'child_table_name': 'parent_1',
+                'parent_primary_key': 'pk_gp',
+                'child_foreign_key': 'fk_gp',
+            },
+            {
+                'parent_table_name': 'grandparent',
+                'child_table_name': 'parent_2',
+                'parent_primary_key': 'pk_gp',
+                'child_foreign_key': 'fk_gp',
+            },
+            {
+                'parent_table_name': 'parent_1',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk_p',
+                'child_foreign_key': 'fk_p_1',
+            },
+            {
+                'parent_table_name': 'parent_2',
+                'child_table_name': 'child',
+                'parent_primary_key': 'pk_p',
+                'child_foreign_key': 'fk_p_2',
+            },
+        ]
+    })
+
+    # Run
+    _subsample_ancestors(data, metadata, 'child', primary_key_referenced)
+
+    # Assert
+    expected_result = {
+        'parent_1': pd.DataFrame({
+            'fk_gp': [1, 2, 3, 6],
+            'pk_p': [21, 22, 23, 26],
+            'col_2': ['k', 'l', 'm', 'p'],
+        }, index=[0, 1, 2, 5]),
+        'parent_2': pd.DataFrame({
+            'fk_gp': [7, 8, 9, 10],
+            'pk_p': [31, 32, 33, 34],
+            'col_3': ['k', 'l', 'm', 'n'],
+        }, index=[0, 1, 2, 3]),
+        'child': pd.DataFrame({
+            'fk_p_1': [21, 22, 23, 23, 23],
+            'fk_p_2': [31, 32, 33, 34, 34],
+            'col_4': ['q', 'r', 's', 't', 'u'],
+        }, index=[0, 1, 2, 3, 4]),
+    }
+    assert len(data['grandparent']) == 14
+    assert set(data['grandparent']['pk_gp']).issubset(
+        {
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+            12, 13, 14, 15, 16, 17, 18, 19, 20
+        }
+    )
+    for table_name in ['parent_1', 'parent_2', 'child']:
+        pd.testing.assert_frame_equal(data[table_name], expected_result[table_name])
+
+
+@patch('sdv.multi_table.utils._subsample_disconnected_roots')
+@patch('sdv.multi_table.utils._subsample_table_and_descendants')
+@patch('sdv.multi_table.utils._subsample_ancestors')
+@patch('sdv.multi_table.utils._get_primary_keys_referenced')
+@patch('sdv.multi_table.utils._drop_rows')
+@patch('sdv.multi_table.utils._validate_foreign_keys_not_null')
+def test__subsample_data(
+    mock_validate_foreign_keys_not_null,
+    mock_drop_rows,
+    mock_get_primary_keys_referenced,
+    mock_subsample_ancestors,
+    mock_subsample_table_and_descendants,
+    mock_subsample_disconnected_roots
+):
+    """Test the ``_subsample_data`` method."""
+    # Setup
+    data = {
+        'main_table': [1] * 10,
+    }
+    metadata = Mock()
+    num_rows = 5
+    main_table = 'main_table'
+    primary_key_reference = {
+        'main_table': {1, 2, 4}
+    }
+    mock_get_primary_keys_referenced.return_value = primary_key_reference
+
+    # Run
+    result = _subsample_data(data, metadata, main_table, num_rows)
+
+    # Assert
+    mock_validate_foreign_keys_not_null.assert_called_once_with(metadata, data)
+    mock_get_primary_keys_referenced.assert_called_once_with(data, metadata)
+    mock_subsample_disconnected_roots.assert_called_once_with(data, metadata, main_table, 0.5)
+    mock_subsample_table_and_descendants.assert_called_once_with(
+        data, metadata, main_table, num_rows
+    )
+    mock_subsample_ancestors.assert_called_once_with(
+        data, metadata, main_table, primary_key_reference
+    )
+    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=True)
+    assert result == data
+
+
+@patch('sdv.multi_table.utils._subsample_disconnected_roots')
+@patch('sdv.multi_table.utils._get_primary_keys_referenced')
+@patch('sdv.multi_table.utils._validate_foreign_keys_not_null')
+def test__subsample_data_empty_dataset(
+    mock_validate_foreign_keys_not_null,
+    mock_get_primary_keys_referenced,
+    mock_subsample_disconnected_roots
+):
+    """Test the ``subsample_data`` method when a dataset is empty."""
+    # Setup
+    data = {
+        'main_table': [1] * 10,
+    }
+    metadata = Mock()
+    num_rows = 5
+    main_table = 'main_table'
+    mock_subsample_disconnected_roots.side_effect = InvalidDataError('All references in table')
+
+    # Run and Assert
+    expected_message = re.escape(
+        'Subsampling main_table with 5 rows leads to some empty tables. '
+        'Please try again with a bigger number of rows.'
+    )
+    with pytest.raises(SamplingError, match=expected_message):
+        _subsample_data(data, metadata, main_table, num_rows)
+
+
+def test__print_subsample_summary(capsys):
+    """Test the ``_print_subsample_summary`` method."""
+    # Setup
+    data_before = {
+        'grandparent': pd.DataFrame({
+            'pk_gp': [
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+            ],
+            'col_1': [
+                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+                'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'
+            ],
+        }),
+        'parent_1': pd.DataFrame({
+            'fk_gp': [1, 2, 3, 4, 5, 6],
+            'pk_p': [21, 22, 23, 24, 25, 26],
+            'col_2': ['k', 'l', 'm', 'n', 'o', 'p'],
+        }),
+        'parent_2': pd.DataFrame({
+            'fk_gp': [7, 8, 9, 10, 11],
+            'pk_p': [31, 32, 33, 34, 35],
+            'col_3': ['k', 'l', 'm', 'n', 'o'],
+        }),
+        'child': pd.DataFrame({
+            'fk_p_1': [21, 22, 23, 23, 23],
+            'fk_p_2': [31, 32, 33, 34, 34],
+            'col_4': ['q', 'r', 's', 't', 'u'],
+        })
+    }
+
+    data_after = {
+        'grandparent': pd.DataFrame({
+            'pk_gp': [
+                1, 2, 3, 6, 7, 8, 9, 10, 14, 15,
+                16, 17, 18, 20
+            ],
+            'col_1': [
+                'a', 'b', 'c', 'f', 'g', 'h', 'i', 'j', 'n', 'o',
+                'p', 'q', 'r', 't'
+            ],
+        }, index=[0, 1, 2, 5, 6, 7, 8, 9, 13, 14, 15, 16, 17, 19]),
+        'parent_1': pd.DataFrame({
+            'fk_gp': [1, 2, 3, 6],
+            'pk_p': [21, 22, 23, 26],
+            'col_2': ['k', 'l', 'm', 'p'],
+        }, index=[0, 1, 2, 5]),
+        'parent_2': pd.DataFrame({
+            'fk_gp': [7, 8, 9, 10],
+            'pk_p': [31, 32, 33, 34],
+            'col_3': ['k', 'l', 'm', 'n'],
+        }, index=[0, 1, 2, 3]),
+        'child': pd.DataFrame({
+            'fk_p_1': [21, 22, 23, 23, 23],
+            'fk_p_2': [31, 32, 33, 34, 34],
+            'col_4': ['q', 'r', 's', 't', 'u'],
+        }, index=[0, 1, 2, 3, 4]),
+    }
+
+    # Run
+    _print_subsample_summary(data_before, data_after)
+    captured = capsys.readouterr()
+
+    # Assert
+    expected_output = re.compile(
+        r'Success! Your subset has 25% less rows than the original\.\s*'
+        r'Table Name\s*#\s*Rows \(Before\)\s*#\s*Rows \(After\)\s*'
+        r'child\s*5\s*5\s*'
+        r'grandparent\s*20\s*14\s*'
+        r'parent_1\s*6\s*4\s*'
+        r'parent_2\s*5\s*4'
     )
     assert expected_output.match(captured.out.strip())

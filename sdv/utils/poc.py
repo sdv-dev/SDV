@@ -1,5 +1,6 @@
 """Utility functions."""
 import sys
+from copy import deepcopy
 
 import pandas as pd
 
@@ -8,8 +9,8 @@ from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 from sdv.multi_table.utils import (
-    _get_relationships_for_child, _get_rows_to_drop, _get_total_estimated_columns,
-    _print_simplified_schema_summary, _simplify_data, _simplify_metadata)
+    _drop_rows, _get_total_estimated_columns, _print_simplified_schema_summary,
+    _print_subsample_summary, _simplify_data, _simplify_metadata, _subsample_data)
 
 
 def drop_unknown_references(data, metadata, drop_missing_values=True, verbose=True):
@@ -54,23 +55,8 @@ def drop_unknown_references(data, metadata, drop_missing_values=True, verbose=Tr
 
         return data
     except (InvalidDataError, SynthesizerInputError):
-        result = data.copy()
-        table_to_idx_to_drop = _get_rows_to_drop(metadata, result)
-        for table in table_names:
-            idx_to_drop = table_to_idx_to_drop[table]
-            result[table] = result[table].drop(idx_to_drop)
-            if drop_missing_values:
-                relationships = _get_relationships_for_child(metadata.relationships, table)
-                for relationship in relationships:
-                    child_column = relationship['child_foreign_key']
-                    result[table] = result[table].dropna(subset=[child_column])
-
-            if result[table].empty:
-                raise InvalidDataError([
-                    f"All references in table '{table}' are unknown and must be dropped."
-                    'Try providing different data for this table.'
-                ])
-
+        result = deepcopy(data)
+        _drop_rows(result, metadata, drop_missing_values)
         if verbose:
             summary_table['# Invalid Rows'] = [
                 len(data[table]) - len(result[table]) for table in table_names
@@ -83,7 +69,7 @@ def drop_unknown_references(data, metadata, drop_missing_values=True, verbose=Tr
         return result
 
 
-def simplify_schema(data, metadata):
+def simplify_schema(data, metadata, verbose=True):
     """Simplify the schema of the data and metadata.
 
     This function simplifies the schema of the data and metadata by:
@@ -99,6 +85,9 @@ def simplify_schema(data, metadata):
             table (pandas.DataFrame).
         metadata (MultiTableMetadata):
             Metadata of the datasets.
+        verbose (bool):
+            If True, print information about the simplification process.
+            Defaults to True.
 
     Returns:
         tuple:
@@ -127,6 +116,71 @@ def simplify_schema(data, metadata):
 
     simple_metadata = _simplify_metadata(metadata)
     simple_data = _simplify_data(data, simple_metadata)
-    _print_simplified_schema_summary(data, simple_data)
+    if verbose:
+        _print_simplified_schema_summary(data, simple_data)
 
     return simple_data, simple_metadata
+
+
+def get_random_subset(data, metadata, main_table_name, num_rows, verbose=True):
+    """Subsample multi-table table based on a table and a number of rows.
+
+    The strategy is to:
+    - Subsample the disconnected roots tables by keeping a similar proportion of data
+      than the main table. Ensure referential integrity.
+    - Subsample the main table and its descendants to ensure referential integrity.
+    - Subsample the ancestors of the main table by removing primary key rows that are no longer
+      referenced by the descendants and drop also some unreferenced rows.
+
+    Args:
+        data (dict):
+            Dictionary that maps each table name (string) to the data for that
+            table (pandas.DataFrame).
+        metadata (MultiTableMetadata):
+            Metadata of the datasets.
+        main_table_name (str):
+            Name of the main table.
+        num_rows (int):
+            Number of rows to keep in the main table.
+        verbose (bool):
+            If True, print information about the subsampling process.
+            Defaults to True.
+
+    Returns:
+        dict:
+            Dictionary with the subsampled dataframes.
+    """
+    try:
+        error_message = (
+            'The provided data/metadata combination is not valid.'
+            ' Please make sure that the data/metadata combination is valid'
+            ' before trying to simplify the schema.'
+        )
+        metadata.validate()
+        metadata.validate_data(data)
+    except InvalidMetadataError as error:
+        raise InvalidMetadataError(error_message) from error
+    except InvalidDataError as error:
+        raise InvalidDataError([error_message]) from error
+
+    error_message_num_rows = (
+        '``num_rows`` must be a positive integer.'
+    )
+    if not isinstance(num_rows, (int, float)) or num_rows != int(num_rows):
+        raise ValueError(error_message_num_rows)
+
+    if num_rows <= 0:
+        raise ValueError(error_message_num_rows)
+
+    if len(data[main_table_name]) <= num_rows:
+        if verbose:
+            _print_subsample_summary(data, data)
+
+        return data
+
+    result = _subsample_data(data, metadata, main_table_name, num_rows)
+    if verbose:
+        _print_subsample_summary(data, result)
+
+    metadata.validate_data(result)
+    return result
