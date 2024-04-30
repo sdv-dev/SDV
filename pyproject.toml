@@ -52,11 +52,9 @@ dependencies = [
 sdv = { main = 'sdv.cli.__main__:main' }
 
 [project.optional-dependencies]
-excel_handler = [
-    'pandas[excel]'
-]
+excel = ['pandas[excel]']
 test = [
-    'sdv[excel_handler]',
+    'sdv[excel]',
     'pytest>=3.4.2',
     'pytest-cov>=2.6.0',
     'pytest-rerunfailures>=10.3,<15',

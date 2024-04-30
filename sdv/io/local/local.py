@@ -266,7 +266,7 @@ class ExcelHandler(BaseLocalHandler):
 
                 temp_data[sheet_name] = table
 
-        writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
+        writer = pd.ExcelWriter(file_name)
         for table_name, table_data in temp_data.items():
             if sheet_name_suffix and not suffix_added:
                 table_name += sheet_name_suffix
