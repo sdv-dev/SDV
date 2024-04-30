@@ -39,8 +39,6 @@ dependencies = [
     'rdt>=1.12.0',
     'sdmetrics>=0.14.0',
     'platformdirs>=4.0',
-    'xlsxwriter>=3.1.0',
-    'openpyxl>=3.1.0'
 ]
 
 [project.urls]
@@ -54,7 +52,11 @@ dependencies = [
 sdv = { main = 'sdv.cli.__main__:main' }
 
 [project.optional-dependencies]
+excel_handler = [
+    'pandas[excel]'
+]
 test = [
+    'sdv[excel_handler]',
     'pytest>=3.4.2',
     'pytest-cov>=2.6.0',
     'pytest-rerunfailures>=10.3,<15',
