@@ -855,3 +855,37 @@ def test_synthesizer_logger(mock_datetime, mock_generate_id):
         '    Total number of columns: 3\n'
         '  Synthesizer id: GaussianCopulaSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5\n'
     )
+
+
+def test_fit_and_sample_numerical_col_names():
+    """Test fit and sampling when column names are integers"""
+    # Setup
+    num_rows = 50
+    num_cols = 10
+    values = {
+        i: np.random.randint(0, 100, size=num_rows) for i in range(num_cols)
+    }
+    data = pd.DataFrame(values)
+    metadata = SingleTableMetadata()
+    metadata_dict = {'columns': {}}
+    for i in range(num_cols):
+        metadata_dict['columns'][i] = {'sdtype': 'numerical'}
+    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+
+    # Run
+
+    synthesizers = [
+        CTGANSynthesizer,
+        TVAESynthesizer,
+        GaussianCopulaSynthesizer,
+        CopulaGANSynthesizer
+    ]
+    for synthesizer_class in synthesizers:
+        synth = synthesizer_class(metadata)
+        synth.fit(data)
+        sample_1 = synth.sample(10)
+        sample_2 = synth.sample(10)
+
+        # Assert
+        with pytest.raises(AssertionError):
+            pd.testing.assert_frame_equal(sample_1, sample_2)

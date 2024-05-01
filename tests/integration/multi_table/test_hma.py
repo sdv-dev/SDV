@@ -1738,3 +1738,48 @@ def test_synthesizer_logger(mock_datetime, mock_generate_id):
         '    Total number of columns: 15\n'
         '  Synthesizer id: HMASynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5\n'
     )
+
+
+def test_fit_and_sample_numerical_col_names():
+    """Test fit and sampling when column names are integers"""
+    # Setup data
+    num_rows = 50
+    num_cols = 10
+    num_tables = 2
+    data = {}
+    for i in range(num_tables):
+        values = {j: np.random.randint(0, 100, size=num_rows) for j in range(num_cols)}
+        data[i] = pd.DataFrame(values)
+
+    primary_key = pd.DataFrame({1: range(num_rows)})
+    primary_key_2 = pd.DataFrame({2: range(num_rows)})
+    data[0][1] = primary_key
+    data[1][1] = primary_key
+    data[1][2] = primary_key_2
+    metadata = MultiTableMetadata()
+    metadata_dict = {'tables': {}}
+    for table_idx in range(num_tables):
+        metadata_dict['tables'][table_idx] = {'columns': {}}
+        for i in range(num_cols):
+            metadata_dict['tables'][table_idx]['columns'][i] = {'sdtype': 'numerical'}
+    metadata_dict['tables'][0]['columns'][1] = {'sdtype': 'id'}
+    metadata_dict['tables'][1]['columns'][2] = {'sdtype': 'id'}
+    metadata_dict['relationships'] = [
+        {
+            'parent_table_name': 0,
+            'parent_primary_key': 1,
+            'child_table_name': 1,
+            'child_foreign_key': 2
+        }
+    ]
+    metadata = MultiTableMetadata.load_from_dict(metadata_dict)
+    metadata.set_primary_key('0', '1')
+
+    # Run
+    synth = HMASynthesizer(metadata)
+    synth.fit(data)
+    first_sample = synth.sample()
+    second_sample = synth.sample()
+
+    with pytest.raises(AssertionError):
+        pd.testing.assert_frame_equal(first_sample['0'], second_sample['0'])
