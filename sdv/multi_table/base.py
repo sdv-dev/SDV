@@ -417,7 +417,9 @@ class BaseMultiTableSynthesizer:
                 Dictionary mapping each table name to a ``pandas.DataFrame`` in the raw format
                 (before any transformations).
         """
-        type_safe_data = {str(key) if not isinstance(key, str) else key: value for key, value in data.items()}
+        type_safe_data = {
+            str(key) if not isinstance(key, str) else key: value for key, value in data.items()
+        }
         total_rows = 0
         total_columns = 0
         for table, dataframe in type_safe_data.items():

@@ -1028,7 +1028,11 @@ class MultiTableMetadata:
             self.tables[str(table_name)] = SingleTableMetadata.load_from_dict(table_dict)
 
         for relationship in metadata.get('relationships', []):
-            type_safe_relationships = {key: str(value) if not isinstance(value, str) else value for key, value in relationship.items()}
+            type_safe_relationships = {
+                key: str(value)
+                if not isinstance(value, str)
+                else value for key, value in relationship.items()
+            }
             self.relationships.append(type_safe_relationships)
 
     @classmethod
