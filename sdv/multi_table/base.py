@@ -417,9 +417,14 @@ class BaseMultiTableSynthesizer:
                 Dictionary mapping each table name to a ``pandas.DataFrame`` in the raw format
                 (before any transformations).
         """
+        type_safe_data = {str(key) if not isinstance(key, str) else key: value for key, value in data.items()}
         total_rows = 0
         total_columns = 0
-        for table in data.values():
+        for table, dataframe in type_safe_data.items():
+            dataframe.columns = dataframe.columns.astype(str)
+            type_safe_data[table] = dataframe
+
+        for table in type_safe_data.values():
             total_rows += len(table)
             total_columns += len(table.columns)
 
@@ -440,10 +445,10 @@ class BaseMultiTableSynthesizer:
             self._synthesizer_id,
         )
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
-        _validate_foreign_keys_not_null(self.metadata, data)
+        _validate_foreign_keys_not_null(self.metadata, type_safe_data)
         self._check_metadata_updated()
         self._fitted = False
-        processed_data = self.preprocess(data)
+        processed_data = self.preprocess(type_safe_data)
         self._print(text='\n', end='')
         self.fit_processed_data(processed_data)
 

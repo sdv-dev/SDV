@@ -1238,7 +1238,8 @@ class SingleTableMetadata:
         for key in instance._KEYS:
             value = deepcopy(metadata_dict.get(key))
             if value:
-                setattr(instance, f'{key}', value)
+                type_safe_value = {str(key) if not isinstance(key, str) else key: value for key, value in value.items()}
+                setattr(instance, f'{key}', type_safe_value)
 
         return instance
 

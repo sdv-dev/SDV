@@ -448,7 +448,7 @@ class BaseSynthesizer:
             len(data.columns),
             self._synthesizer_id,
         )
-
+        data.columns = data.columns.astype(str)
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         self._check_metadata_updated()
         self._fitted = False
