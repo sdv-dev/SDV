@@ -303,7 +303,7 @@ def unflatten_dict(flat):
 
             else:
                 subdict = unflattened.setdefault(key, {})
-                if subkey.isdigit():
+                if subkey.isdigit() and key != 'univariates':
                     subkey = int(subkey)
 
                 inner = subdict.setdefault(subkey, {})
