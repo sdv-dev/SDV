@@ -606,10 +606,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             self._set_random_state(FIXED_RNG_SEED)
 
         need_sample = self._data_processor.get_sdtypes(primary_keys=False) or keep_extra_columns
+        print(f'need_sample: {need_sample}')
         if self._model and need_sample:
 
             if conditions is None:
                 raw_sampled = self._sample(num_rows)
+                print(f'sampled rows: {raw_sampled.columns}')
             else:
                 try:
                     raw_sampled = self._sample(num_rows, transformed_conditions)

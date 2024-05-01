@@ -841,8 +841,11 @@ class DataProcessor:
             for column in self._hyper_transformer._output_columns
             if column in data.columns
         ]
-
+        print(f'All columns: {self._hyper_transformer._output_columns}')
+        print(f'columns in data: {data.columns}')
+        print(f'data into reverse_transformer: {data}')
         reversed_data = data
+        print(f'reversible_columns before : {reversible_columns}')
         try:
             if not data.empty:
                 reversed_data = self._hyper_transformer.reverse_transform_subset(
@@ -850,6 +853,8 @@ class DataProcessor:
                 )
         except rdt.errors.NotFittedError:
             LOGGER.info(f'HyperTransformer has not been fitted for table {self.table_name}')
+
+        print(f'reversed_data.columns : {reversed_data.columns}')
 
         for transformer in self.grouped_columns_to_transformers.values():
             if not transformer.output_columns:
@@ -862,7 +867,8 @@ class DataProcessor:
             for column in self.metadata.columns.keys() - set(sampled_columns + self._keys)
             if self._hyper_transformer.field_transformers.get(column)
         ]
-        print(missing_columns)
+        for col in missing_columns:
+            print(f'Col: {col} : {self._hyper_transformer.field_transformers.get(col)}')
         if missing_columns and num_rows:
             anonymized_data = self._hyper_transformer.create_anonymized_columns(
                 num_rows=num_rows,
