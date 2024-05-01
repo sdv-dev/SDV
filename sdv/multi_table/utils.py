@@ -638,7 +638,7 @@ def _subsample_data(data, metadata, main_table_name, num_rows):
     except SynthesizerInputError:
         warnings.warn(
             'The data contains null values in foreign key columns. '
-            'We recommend using ``drop_unknown_foreign_keys`` method from sdv.utils.poc'
+            'We recommend using ``drop_unknown_foreign_keys`` method from sdv.utils'
             ' to drop these rows before using ``get_random_subset``.'
         )
 
