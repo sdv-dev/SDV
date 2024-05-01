@@ -841,6 +841,7 @@ class DataProcessor:
             for column in self._hyper_transformer._output_columns
             if column in data.columns
         ]
+
         reversed_data = data
         try:
             if not data.empty:
