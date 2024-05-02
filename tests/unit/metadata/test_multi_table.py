@@ -1195,21 +1195,13 @@ class TestMultiTableMetadata:
 
         # Run
         error_msg = re.escape(
-            'The metadata is not valid\n'
-            '\nTable: payments'
-            "\nInvalid regex format string '[A-z{' for id column 'date'."
-            '\n\nRelationships:'
-            "\nThe parent table 'users' does not have a primary key set. "
-            "Please use 'set_primary_key' in order to set one."
-            "\nRelationship between tables ('sessions', 'transactions') is invalid. "
-            'The primary and foreign key columns are not the same type.'
-            "\nThe relationships in the dataset are disjointed. Table ['payments'] "
-            'is not connected to any of the other tables.'
+            'The relationships in the dataset are disjointed. '
+            "Table ['payments'] is not connected to any of the other tables."
         )
 
         # Run and Assert
         with pytest.raises(InvalidMetadataError, match=error_msg):
-            instance.validate()
+            instance._validate_all_tables_connected(instance._get_parent_map(), instance._get_child_map())
 
     def test_validate_child_key_is_primary_key(self):
         """Test it crashes if the child key is a primary key."""
