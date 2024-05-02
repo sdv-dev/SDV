@@ -475,19 +475,19 @@ class MultiTableMetadata:
                 if not connected[child] and child not in queue:
                     queue.append(child)
 
-        if not all(connected.values()):
-            disconnected_tables = [table for table, value in connected.items() if not value]
-            if len(disconnected_tables) > 1:
-                table_msg = (
-                    f'Tables {disconnected_tables} are not connected to any of the other tables.'
-                )
-            else:
-                table_msg = (
-                    f'Table {disconnected_tables} is not connected to any of the other tables.'
-                )
+        # if not all(connected.values()):
+        #     disconnected_tables = [table for table, value in connected.items() if not value]
+        #     if len(disconnected_tables) > 1:
+        #         table_msg = (
+        #             f'Tables {disconnected_tables} are not connected to any of the other tables.'
+        #         )
+        #     else:
+        #         table_msg = (
+        #             f'Table {disconnected_tables} is not connected to any of the other tables.'
+        #         )
 
-            raise InvalidMetadataError(
-                f'The relationships in the dataset are disjointed. {table_msg}')
+        #     raise InvalidMetadataError(
+        #         f'The relationships in the dataset are disjointed. {table_msg}')
 
     def _detect_relationships(self):
         """Automatically detect relationships between tables."""
