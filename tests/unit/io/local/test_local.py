@@ -393,3 +393,35 @@ class TestExcelHandler:
             index=False
         )
         mock_pd.ExcelWriter.return_value.close.assert_called_once_with()
+
+    @patch('sdv.io.local.local.pd')
+    def test_write_mode_append_no_suffix(self, mock_pd):
+        """Test the write functionality of the ExcelHandler when mode is `a`` and no suffix."""
+        # Setup
+        sheet_one = Mock()
+        sheet_two = Mock()
+        synth_sheet_one = Mock()
+        synthetic_data = {'Sheet1': synth_sheet_one}
+        file_name = 'output_file.xlsx'
+        instance = ExcelHandler()
+        instance._read_excel = Mock(return_value={'Sheet1': sheet_one, 'Sheet2': sheet_two})
+
+        # Run
+        instance.write(synthetic_data, file_name, mode='a')
+
+        # Assert
+        mock_pd.concat.assert_called_once_with([sheet_one, synth_sheet_one])
+        mock_pd.concat.return_value.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet1',
+            float_format=None,
+            index=False
+        )
+
+        sheet_two.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet2',
+            float_format=None,
+            index=False
+        )
+        mock_pd.ExcelWriter.return_value.close.assert_called_once_with()
