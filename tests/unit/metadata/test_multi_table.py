@@ -1201,7 +1201,10 @@ class TestMultiTableMetadata:
 
         # Run and Assert
         with pytest.raises(InvalidMetadataError, match=error_msg):
-            instance._validate_all_tables_connected(instance._get_parent_map(), instance._get_child_map())
+            instance._validate_all_tables_connected(
+                instance._get_parent_map(),
+                instance._get_child_map()
+            )
 
     def test_validate_child_key_is_primary_key(self):
         """Test it crashes if the child key is a primary key."""
