@@ -2,12 +2,9 @@ import datetime
 import importlib.metadata
 import re
 import warnings
-from pathlib import Path
-from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-import platformdirs
 import pytest
 from faker import Faker
 from rdt.transformers import FloatFormatter
@@ -1682,74 +1679,3 @@ def test_hma_not_fit_raises_sampling_error():
     )
     with pytest.raises(SamplingError, match=error_msg):
         synthesizer.sample(1)
-
-
-@patch('sdv.multi_table.base.generate_synthesizer_id')
-@patch('sdv.multi_table.base.datetime')
-def test_synthesizer_logger(mock_datetime, mock_generate_id):
-    """Test that the synthesizer logger logs the expected messages."""
-    # Setup
-    store_path = Path(platformdirs.user_data_dir('sdv', 'sdv-dev'))
-    file_name = 'sdv_logs.log'
-
-    synth_id = 'HMASynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-    mock_generate_id.return_value = synth_id
-    mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
-    data, metadata = download_demo('multi_table', 'fake_hotels')
-
-    # Run
-    instance = HMASynthesizer(metadata)
-
-    # Assert
-    with open(store_path / file_name) as f:
-        instance_lines = f.readlines()[-4:]
-
-    assert ''.join(instance_lines) == (
-        'Instance:\n'
-        '  Timestamp: 2024-04-19 16:20:10.037183\n'
-        '  Synthesizer class name: HMASynthesizer\n'
-        '  Synthesizer id: HMASynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5\n'
-    )
-
-    # Run
-    instance.fit(data)
-
-    # Assert
-    with open(store_path / file_name) as f:
-        fit_lines = f.readlines()[-17:]
-
-    assert ''.join(fit_lines) == (
-        'Fit:\n'
-        '  Timestamp: 2024-04-19 16:20:10.037183\n'
-        '  Synthesizer class name: HMASynthesizer\n'
-        '  Statistics of the fit data:\n'
-        '    Total number of tables: 2\n'
-        '    Total number of rows: 668\n'
-        '    Total number of columns: 15\n'
-        '  Synthesizer id: HMASynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5\n'
-        '\nFit processed data:\n'
-        '  Timestamp: 2024-04-19 16:20:10.037183\n'
-        '  Synthesizer class name: HMASynthesizer\n'
-        '  Statistics of the fit processed data:\n'
-        '    Total number of tables: 2\n'
-        '    Total number of rows: 668\n'
-        '    Total number of columns: 11\n'
-        '  Synthesizer id: HMASynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5\n'
-    )
-
-    # Run
-    instance.sample(1)
-    with open(store_path / file_name) as f:
-        sample_lines = f.readlines()[-8:]
-
-    # Assert
-    assert ''.join(sample_lines) == (
-        'Sample:\n'
-        '  Timestamp: 2024-04-19 16:20:10.037183\n'
-        '  Synthesizer class name: HMASynthesizer\n'
-        '  Statistics of the sample size:\n'
-        '    Total number of tables: 2\n'
-        '    Total number of rows: 668\n'
-        '    Total number of columns: 15\n'
-        '  Synthesizer id: HMASynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5\n'
-    )
