@@ -265,10 +265,10 @@ class ExcelHandler(BaseLocalHandler):
                     suffix_added = True
 
                 if temp_data.get(sheet_name) is not None:
-                    temp_data[sheet_name] = pd.concat([
-                        temp_data[sheet_name],
-                        synthetic_data[sheet_name]
-                    ])
+                    temp_data[sheet_name] = pd.concat(
+                        [temp_data[sheet_name], synthetic_data[sheet_name]],
+                        ignore_index=True
+                    )
 
                 else:
                     temp_data[sheet_name] = table
