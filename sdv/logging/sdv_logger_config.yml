@@ -1,4 +1,4 @@
-log_registry: 'local'
+log_registry: null
 version: 1
 loggers:
   SingleTableSynthesizer:
