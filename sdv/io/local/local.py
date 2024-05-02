@@ -264,7 +264,7 @@ class ExcelHandler(BaseLocalHandler):
                     sheet_name = f'{table_name}{sheet_name_suffix}'
                     suffix_added = True
 
-                if temp_data.get(sheet_name):
+                if temp_data.get(sheet_name) is not None:
                     temp_data[sheet_name] = pd.concat([
                         temp_data[sheet_name],
                         synthetic_data[sheet_name]
