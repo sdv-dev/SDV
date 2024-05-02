@@ -410,7 +410,7 @@ class TestExcelHandler:
         instance.write(synthetic_data, file_name, mode='a')
 
         # Assert
-        mock_pd.concat.assert_called_once_with([sheet_one, synth_sheet_one])
+        mock_pd.concat.assert_called_once_with([sheet_one, synth_sheet_one], ignore_index=True)
         mock_pd.concat.return_value.to_excel.assert_called_once_with(
             mock_pd.ExcelWriter.return_value,
             sheet_name='Sheet1',
