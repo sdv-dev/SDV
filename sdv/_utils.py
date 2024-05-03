@@ -214,6 +214,8 @@ def _validate_foreign_keys_not_null(metadata, data):
     invalid_tables = defaultdict(list)
     for table_name, table_data in data.items():
         for foreign_key in metadata._get_all_foreign_keys(table_name):
+            if foreign_key not in table_data and int(foreign_key) in table_data:
+                foreign_key = int(foreign_key)
             if table_data[foreign_key].isna().any():
                 invalid_tables[table_name].append(foreign_key)
 

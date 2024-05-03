@@ -99,6 +99,7 @@ class BaseMultiTableSynthesizer:
         self.extended_columns = defaultdict(dict)
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
+        self._original_table_columns = {}
         if synthesizer_kwargs is not None:
             warn_message = (
                 'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
@@ -325,17 +326,26 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].update_transformers(column_name_to_transformer)
 
-    def preprocess(self, data):
+    def preprocess(self, unprocessed_data):
         """Transform the raw data to numerical space.
 
         Args:
-            data (dict):
+            unprocessed_data (dict):
                 Dictionary mapping each table name to a ``pandas.DataFrame``.
 
         Returns:
             dict:
                 A dictionary with the preprocessed data.
         """
+        data = {
+            str(key) if not isinstance(key, str) else key: value for key, value in unprocessed_data.items()
+        }
+
+        for table, dataframe in data.items():
+            self._original_table_columns[table] = dataframe.columns
+            dataframe.columns = dataframe.columns.astype(str)
+            data[table] = dataframe
+
         self.validate(data)
         if self._fitted:
             warnings.warn(
@@ -349,6 +359,9 @@ class BaseMultiTableSynthesizer:
             synthesizer = self._table_synthesizers[table_name]
             self._assign_table_transformers(synthesizer, table_name, table_data)
             processed_data[table_name] = synthesizer._preprocess(table_data)
+
+        for table, dataframe in data.items():
+            dataframe.columns = self._original_table_columns[table]
 
         return processed_data
 
@@ -417,16 +430,9 @@ class BaseMultiTableSynthesizer:
                 Dictionary mapping each table name to a ``pandas.DataFrame`` in the raw format
                 (before any transformations).
         """
-        type_safe_data = {
-            str(key) if not isinstance(key, str) else key: value for key, value in data.items()
-        }
         total_rows = 0
         total_columns = 0
-        for table, dataframe in type_safe_data.items():
-            dataframe.columns = dataframe.columns.astype(str)
-            type_safe_data[table] = dataframe
-
-        for table in type_safe_data.values():
+        for table in data.values():
             total_rows += len(table)
             total_columns += len(table.columns)
 
@@ -447,10 +453,10 @@ class BaseMultiTableSynthesizer:
             self._synthesizer_id,
         )
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
-        _validate_foreign_keys_not_null(self.metadata, type_safe_data)
+        _validate_foreign_keys_not_null(self.metadata, data)
         self._check_metadata_updated()
         self._fitted = False
-        processed_data = self.preprocess(type_safe_data)
+        processed_data = self.preprocess(data)
         self._print(text='\n', end='')
         self.fit_processed_data(processed_data)
 
@@ -486,6 +492,10 @@ class BaseMultiTableSynthesizer:
         for table in sampled_data.values():
             total_rows += len(table)
             total_columns += len(table.columns)
+
+        for table in sampled_data:
+            if table in self._original_table_columns:
+                sampled_data[table].columns = self._original_table_columns[table]
 
         SYNTHESIZER_LOGGER.info(
             '\nSample:\n'
