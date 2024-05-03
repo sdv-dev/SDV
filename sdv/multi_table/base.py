@@ -338,7 +338,10 @@ class BaseMultiTableSynthesizer:
                 A dictionary with the preprocessed data.
         """
         data = {
-            str(key) if not isinstance(key, str) else key: value for key, value in unprocessed_data.items()
+            str(key)
+            if not isinstance(key, str)
+            else key: value
+            for key, value in unprocessed_data.items()
         }
 
         for table, dataframe in data.items():
