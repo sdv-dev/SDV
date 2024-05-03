@@ -618,7 +618,7 @@ class SingleTableMetadata:
     @staticmethod
     def _validate_key_datatype(column_name):
         """Check whether column_name is a string."""
-        return isinstance(column_name, str)
+        return isinstance(column_name, str) or isinstance(column_name, int)
 
     def _validate_keys_sdtype(self, keys, key_type):
         """Validate that each key is of type 'id' or a valid Faker function."""
@@ -638,9 +638,13 @@ class SingleTableMetadata:
         if column_name is not None:
             if not self._validate_key_datatype(column_name):
                 raise InvalidMetadataError(
-                    f"'{key_type}_key' must be a string.")
+                    f"'{key_type}_key' must be a string or integer.")
 
-            keys = {column_name} if isinstance(column_name, str) else set(column_name)
+            keys = (
+                {column_name}
+                if isinstance(column_name, str) or isinstance(column_name, int)
+                else set(column_name)
+            )
             invalid_ids = keys - set(self.columns)
             if invalid_ids:
                 raise InvalidMetadataError(
