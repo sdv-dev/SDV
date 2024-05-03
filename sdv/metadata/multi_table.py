@@ -1025,15 +1025,10 @@ class MultiTableMetadata:
                 Python dictionary representing a ``MultiTableMetadata`` object.
         """
         for table_name, table_dict in metadata.get('tables', {}).items():
-            self.tables[str(table_name)] = SingleTableMetadata.load_from_dict(table_dict)
+            self.tables[table_name] = SingleTableMetadata.load_from_dict(table_dict)
 
         for relationship in metadata.get('relationships', []):
-            type_safe_relationships = {
-                key: str(value)
-                if not isinstance(value, str)
-                else value for key, value in relationship.items()
-            }
-            self.relationships.append(type_safe_relationships)
+            self.relationships.append(relationship)
 
     @classmethod
     def load_from_dict(cls, metadata_dict):

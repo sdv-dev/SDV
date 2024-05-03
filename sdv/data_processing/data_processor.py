@@ -755,7 +755,6 @@ class DataProcessor:
         if data.empty:
             raise ValueError('The fit dataframe is empty, synthesizer will not be fitted.')
         self._prepared_for_fitting = False
-        print(f'Data: {data.columns}')
         self.prepare_for_fitting(data)
         constrained = self._transform_constraints(data)
         if constrained.empty:

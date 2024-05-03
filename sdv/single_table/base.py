@@ -106,7 +106,6 @@ class BaseSynthesizer:
         self._random_state_set = False
         self._update_default_transformers()
         self._creation_date = datetime.datetime.today().strftime('%Y-%m-%d')
-        self._original_columns = None
         self._fitted_date = None
         self._fitted_sdv_version = None
         self._fitted_sdv_enterprise_version = None
@@ -177,8 +176,6 @@ class BaseSynthesizer:
                     * context columns vary for a sequence key
                     * values of a column don't satisfy their sdtype
         """
-        # self._original_columns = data.columns
-        # data.columns = data.columns.astype(str)
         self._validate_metadata(data)
         self._validate_constraints(data)
 
@@ -187,7 +184,6 @@ class BaseSynthesizer:
         synthesizer_errors = self._validate(data)  # Validate rules specific to each synthesizer
         if synthesizer_errors:
             raise InvalidDataError(synthesizer_errors)
-        # data.columns = self._original_columns
 
     def _validate_transformers(self, column_name_to_transformer):
         primary_and_alternate_keys = self.metadata._get_primary_and_alternate_keys()
@@ -420,7 +416,6 @@ class BaseSynthesizer:
             len(processed_data.columns),
             self._synthesizer_id,
         )
-        self._original_columns = processed_data.columns
         processed_data.columns = processed_data.columns.astype(str)
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         if not processed_data.empty:
@@ -888,8 +883,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             output_file_path,
             show_progress_bar=show_progress_bar
         )
-
-        sampled_data.columns = self._original_columns
 
         SYNTHESIZER_LOGGER.info(
             '\nSample:\n'
