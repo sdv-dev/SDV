@@ -389,7 +389,13 @@ class BaseSynthesizer:
                 self._original_columns = data.columns
                 data.columns = data.columns.astype(str)
                 break
-        return self._preprocess(data)
+
+        preprocess_data = self._preprocess(data)
+
+        if not self._original_columns.empty:
+            data.columns = self._original_columns
+
+        return preprocess_data
 
     def _fit(self, processed_data):
         """Fit the model to the table.
@@ -462,8 +468,6 @@ class BaseSynthesizer:
         self._random_state_set = False
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
-        if not self._original_columns.empty:
-            data.columns = self._original_columns
 
     def save(self, filepath):
         """Save this model instance to the given path using cloudpickle.

@@ -339,6 +339,33 @@ class TestBaseSingleTableSynthesizer:
         mock_warnings.warn.assert_called_once_with(expected_warning)
         instance._preprocess.assert_called_once_with(data)
 
+    def test_preprocess_int_columns(self):
+        """Test the preprocess method.
+
+        Ensure that data with column names as integers are not changed by
+        preprocess.
+        """
+        # Setup
+        instance = Mock()
+        instance._fitted = False
+        data = pd.DataFrame({
+            1: ['John', 'Doe', 'John Doe'],
+            2: ['John', 'Doe', 'John Doe'],
+            'str': ['John', 'Doe', 'John Doe'],
+        })
+
+        # Run
+        BaseSingleTableSynthesizer.preprocess(instance, data)
+
+        # Assert
+        corrected_frame = pd.DataFrame({
+            1: ['John', 'Doe', 'John Doe'],
+            2: ['John', 'Doe', 'John Doe'],
+            'str': ['John', 'Doe', 'John Doe'],
+        })
+
+        pd.testing.assert_frame_equal(data, corrected_frame)
+
     @patch('sdv.single_table.base.DataProcessor')
     def test__fit(self, mock_data_processor):
         """Test that ``NotImplementedError`` is being raised."""

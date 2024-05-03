@@ -779,7 +779,78 @@ class TestBaseMultiTableSynthesizer:
         synth_upravna_enota._preprocess.assert_called_once_with(data['upravna_enota'])
         synth_upravna_enota.update_transformers.assert_called_once_with({'a': None, 'b': None})
 
-    @patch('sdv.multi_table.base.warnings')
+    def test_preprocess_int_columns(self):
+        """Test the preprocess method.
+
+        Ensure that data with column names as integers are not changed by
+        preprocess.
+        """
+        # Setup
+        metadata_dict = {
+            'tables': {
+                'first_table': {
+                    'primary_key': '1',
+                    'columns': {
+                        '1': {'sdtype': 'id'},
+                        '2': {'sdtype': 'categorical'},
+                        'str': {'sdtype': 'categorical'}
+                    }
+                },
+                'second_table': {
+                    'columns': {
+                        '3': {'sdtype': 'id'},
+                        'str': {'sdtype': 'categorical'}
+                    }
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'first_table',
+                    'parent_primary_key': '1',
+                    'child_table_name': 'second_table',
+                    'child_foreign_key': '3'
+                }
+            ]
+        }
+        metadata = MultiTableMetadata.load_from_dict(metadata_dict)
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance.validate = Mock()
+        instance._table_synthesizers = {
+            'first_table': Mock(),
+            'second_table': Mock()
+        }
+        multi_data = {
+            'first_table': pd.DataFrame({
+                1: ['abc', 'def', 'ghi'],
+                2: ['x', 'a', 'b'],
+                'str': ['John', 'Doe', 'John Doe'],
+            }),
+            'second_table': pd.DataFrame({
+                3: ['abc', 'def', 'ghi'],
+                'another': ['John', 'Doe', 'John Doe'],
+            }),
+        }
+
+        # Run
+        instance.preprocess(multi_data)
+
+        # Assert
+        corrected_frame = {
+            'first_table': pd.DataFrame({
+                1: ['abc', 'def', 'ghi'],
+                2: ['x', 'a', 'b'],
+                'str': ['John', 'Doe', 'John Doe'],
+            }),
+            'second_table': pd.DataFrame({
+                3: ['abc', 'def', 'ghi'],
+                'another': ['John', 'Doe', 'John Doe'],
+            }),
+        }
+
+        pd.testing.assert_frame_equal(multi_data['first_table'], corrected_frame['first_table'])
+        pd.testing.assert_frame_equal(multi_data['second_table'], corrected_frame['second_table'])
+
+    @ patch('sdv.multi_table.base.warnings')
     def test_preprocess_warning(self, mock_warnings):
         """Test that ``preprocess`` warns the user if the model has already been fitted."""
         # Setup
@@ -828,7 +899,7 @@ class TestBaseMultiTableSynthesizer:
             "please refit the model using 'fit' or 'fit_processed_data'."
         )
 
-    @patch('sdv.multi_table.base.datetime')
+    @ patch('sdv.multi_table.base.datetime')
     def test_fit_processed_data(self, mock_datetime, caplog):
         """Test that fit processed data calls ``_augment_tables`` and ``_model_tables``.
 
@@ -914,8 +985,8 @@ class TestBaseMultiTableSynthesizer:
         instance.fit_processed_data.assert_not_called()
         instance._check_metadata_updated.assert_not_called()
 
-    @patch('sdv.multi_table.base.datetime')
-    @patch('sdv.multi_table.base._validate_foreign_keys_not_null')
+    @ patch('sdv.multi_table.base.datetime')
+    @ patch('sdv.multi_table.base._validate_foreign_keys_not_null')
     def test_fit(self, mock_validate_foreign_keys_not_null, mock_datetime, caplog):
         """Test that it calls the appropriate methods."""
         # Setup
@@ -1038,7 +1109,7 @@ class TestBaseMultiTableSynthesizer:
             with pytest.raises(SynthesizerInputError, match=msg):
                 instance.sample(scale=scale)
 
-    @patch('sdv.multi_table.base.datetime')
+    @ patch('sdv.multi_table.base.datetime')
     def test_sample(self, mock_datetime, caplog):
         """Test that ``sample`` calls the ``_sample`` with the given arguments."""
         # Setup
@@ -1361,7 +1432,7 @@ class TestBaseMultiTableSynthesizer:
             'custom'
         )
 
-    @patch('sdv.multi_table.base.version')
+    @ patch('sdv.multi_table.base.version')
     def test_get_info(self, mock_version):
         """Test the correct dictionary is returned.
 
@@ -1409,7 +1480,7 @@ class TestBaseMultiTableSynthesizer:
                 'fitted_sdv_version': '1.0.0'
             }
 
-    @patch('sdv.multi_table.base.version')
+    @ patch('sdv.multi_table.base.version')
     def test_get_info_with_enterprise(self, mock_version):
         """Test the correct dictionary is returned.
 
@@ -1458,8 +1529,8 @@ class TestBaseMultiTableSynthesizer:
                 'fitted_sdv_enterprise_version': '1.1.0'
             }
 
-    @patch('sdv.multi_table.base.datetime')
-    @patch('sdv.multi_table.base.cloudpickle')
+    @ patch('sdv.multi_table.base.datetime')
+    @ patch('sdv.multi_table.base.cloudpickle')
     def test_save(self, cloudpickle_mock, mock_datetime, tmp_path, caplog):
         """Test that the synthesizer is saved correctly."""
         # Setup
@@ -1482,12 +1553,12 @@ class TestBaseMultiTableSynthesizer:
             '  Synthesizer id: BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         )
 
-    @patch('sdv.multi_table.base.datetime')
-    @patch('sdv.multi_table.base.generate_synthesizer_id')
-    @patch('sdv.multi_table.base.check_synthesizer_version')
-    @patch('sdv.multi_table.base.check_sdv_versions_and_warn')
-    @patch('sdv.multi_table.base.cloudpickle')
-    @patch('builtins.open', new_callable=mock_open)
+    @ patch('sdv.multi_table.base.datetime')
+    @ patch('sdv.multi_table.base.generate_synthesizer_id')
+    @ patch('sdv.multi_table.base.check_synthesizer_version')
+    @ patch('sdv.multi_table.base.check_sdv_versions_and_warn')
+    @ patch('sdv.multi_table.base.cloudpickle')
+    @ patch('builtins.open', new_callable=mock_open)
     def test_load(self, mock_file, cloudpickle_mock,
                   mock_check_sdv_versions_and_warn, mock_check_synthesizer_version,
                   mock_generate_synthesizer_id, mock_datetime, caplog):
