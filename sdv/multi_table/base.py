@@ -326,24 +326,17 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].update_transformers(column_name_to_transformer)
 
-    def preprocess(self, unprocessed_data):
+    def preprocess(self, data):
         """Transform the raw data to numerical space.
 
         Args:
-            unprocessed_data (dict):
+            data (dict):
                 Dictionary mapping each table name to a ``pandas.DataFrame``.
 
         Returns:
             dict:
                 A dictionary with the preprocessed data.
         """
-        data = {
-            str(key)
-            if not isinstance(key, str)
-            else key: value
-            for key, value in unprocessed_data.items()
-        }
-
         for table, dataframe in data.items():
             self._original_table_columns[table] = dataframe.columns
             dataframe.columns = dataframe.columns.astype(str)
