@@ -363,11 +363,6 @@ class BaseSynthesizer:
         return info
 
     def _preprocess(self, data):
-        # for column in data.columns:
-        #     if isinstance(column, int):
-        #         self._original_columns = data.columns
-        #         data.columns = data.columns.astype(str)
-        #         break
         self.validate(data)
         self._data_processor.fit(data)
         return self._data_processor.transform(data)
@@ -389,6 +384,11 @@ class BaseSynthesizer:
                 "please refit the model using 'fit' or 'fit_processed_data'."
             )
 
+        for column in data.columns:
+            if isinstance(column, int):
+                self._original_columns = data.columns
+                data.columns = data.columns.astype(str)
+                break
         return self._preprocess(data)
 
     def _fit(self, processed_data):
@@ -459,7 +459,7 @@ class BaseSynthesizer:
         self._fitted = False
         self._data_processor.reset_sampling()
         self._random_state_set = False
-        processed_data = self._preprocess(data)
+        processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
         if not self._original_columns.empty:
             data.columns = self._original_columns

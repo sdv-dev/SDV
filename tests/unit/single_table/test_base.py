@@ -429,8 +429,8 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         assert instance._random_state_set is False
         instance._data_processor.reset_sampling.assert_called_once_with()
-        instance._preprocess.assert_called_once_with(data)
-        instance.fit_processed_data.assert_called_once_with(instance._preprocess.return_value)
+        instance.preprocess.assert_called_once_with(data)
+        instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()
         assert caplog.messages[0] == (
             '\nFit:\n'
