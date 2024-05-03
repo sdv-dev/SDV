@@ -416,7 +416,6 @@ class BaseSynthesizer:
             len(processed_data.columns),
             self._synthesizer_id,
         )
-        processed_data.columns = processed_data.columns.astype(str)
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         if not processed_data.empty:
             self._fit(processed_data)

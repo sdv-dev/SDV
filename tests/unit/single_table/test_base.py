@@ -1410,7 +1410,6 @@ class TestBaseSingleTableSynthesizer:
         output_file_path = 'temp.csv'
         instance = Mock(
             _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
-            _original_columns=pd.Index(['col'])
         )
         instance.get_metadata.return_value._constraints = False
         instance._sample_with_progress_bar.return_value = pd.DataFrame({'col': [1, 2, 3]})
