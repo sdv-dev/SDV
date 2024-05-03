@@ -968,10 +968,9 @@ class SingleTableMetadata:
                 + '\n'.join([str(e) for e in errors])
             )
 
-    def _validate_metadata_matches_data(self, data_columns):
+    def _validate_metadata_matches_data(self, columns):
         errors = []
         metadata_columns = self.columns or {}
-        columns = data_columns.astype(str)
         missing_data_columns = set(columns).difference(metadata_columns)
         if missing_data_columns:
             errors.append(
@@ -1060,7 +1059,7 @@ class SingleTableMetadata:
             list:
                 A list containing any validation error messages found during the process.
         """
-        column_metadata = self.columns[str(column.name)]
+        column_metadata = self.columns[column.name]
         sdtype = column_metadata['sdtype']
         invalid_values = None
 
