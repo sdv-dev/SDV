@@ -269,7 +269,9 @@ class TestDataProcessor:
             'degree_perc': FloatFormatter
         }
         for column_name, transformer_class in expected_transformers.items():
+            print(f'Transformer Class: {transformer_class}, {column_name}={field_transformers[column_name]}')
             if transformer_class is not None:
+                print("Before Check")
                 assert isinstance(field_transformers[column_name], transformer_class)
             else:
                 assert field_transformers[column_name] is None

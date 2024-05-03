@@ -857,8 +857,16 @@ def test_synthesizer_logger(mock_datetime, mock_generate_id):
     )
 
 
-def test_fit_and_sample_numerical_col_names():
-    """Test fit and sampling when column names are integers"""
+SYNTHESIZERS_CLASSES = [
+    pytest.param(CTGANSynthesizer, id='CTGANSynthesizer'),
+    pytest.param(TVAESynthesizer, id='TVAESynthesizer'),
+    pytest.param(GaussianCopulaSynthesizer, id='GaussianCopulaSynthesizer'),
+    pytest.param(CopulaGANSynthesizer, id='CopulaGANSynthesizer'),
+]
+
+@pytest.mark.parametrize('synthesizer_class', SYNTHESIZERS_CLASSES)
+def test_fit_and_sample_numerical_col_names(synthesizer_class):
+    """Test fitting/sampling when column names are integers"""
     # Setup
     num_rows = 50
     num_cols = 10
@@ -873,19 +881,14 @@ def test_fit_and_sample_numerical_col_names():
     metadata = SingleTableMetadata.load_from_dict(metadata_dict)
 
     # Run
+    synth = synthesizer_class(metadata)
+    synth.fit(data)
+    sample_1 = synth.sample(10)
+    sample_2 = synth.sample(10)
 
-    synthesizers = [
-        CTGANSynthesizer,
-        TVAESynthesizer,
-        GaussianCopulaSynthesizer,
-        CopulaGANSynthesizer
-    ]
-    for synthesizer_class in synthesizers:
-        synth = synthesizer_class(metadata)
-        synth.fit(data)
-        sample_1 = synth.sample(10)
-        sample_2 = synth.sample(10)
+    assert sample_1.columns.tolist() == data.columns.tolist()
+    assert sample_2.columns.tolist() == data.columns.tolist()
 
-        # Assert
-        with pytest.raises(AssertionError):
-            pd.testing.assert_frame_equal(sample_1, sample_2)
+    # Assert
+    with pytest.raises(AssertionError):
+        pd.testing.assert_frame_equal(sample_1, sample_2)

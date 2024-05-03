@@ -1741,7 +1741,7 @@ def test_synthesizer_logger(mock_datetime, mock_generate_id):
 
 
 def test_fit_and_sample_numerical_col_names():
-    """Test fit and sampling when column names are integers"""
+    """Test fitting/sampling when column names are integers"""
     # Setup data
     num_rows = 50
     num_cols = 10
@@ -1780,6 +1780,9 @@ def test_fit_and_sample_numerical_col_names():
     synth.fit(data)
     first_sample = synth.sample()
     second_sample = synth.sample()
+    assert first_sample.columns.tolist() == data.columns.tolist()
+    assert second_sample.columns.tolist() == data.columns.tolist()
 
+    # Assert
     with pytest.raises(AssertionError):
         pd.testing.assert_frame_equal(first_sample['0'], second_sample['0'])
