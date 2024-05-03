@@ -494,7 +494,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 parent child relationship.
         """
         prefix = f'__{table_name}__{foreign_key}__'
-        keys = [key for key in parent_row.keys() if str(key).startswith(prefix)]
+        keys = [key for key in parent_row.keys() if key.startswith(prefix)]
         new_keys = {key: key[len(prefix):] for key in keys}
         flat_parameters = parent_row[keys].astype(float).fillna(1e-6)
 
