@@ -1741,7 +1741,7 @@ def test_synthesizer_logger(mock_datetime, mock_generate_id):
 
 
 def test_fit_and_sample_numerical_col_names():
-    """Test fit and sampling when column names are integers"""
+    """Test fitting/sampling when column names are integers"""
     # Setup data
     num_rows = 50
     num_cols = 10
@@ -1749,13 +1749,13 @@ def test_fit_and_sample_numerical_col_names():
     data = {}
     for i in range(num_tables):
         values = {j: np.random.randint(0, 100, size=num_rows) for j in range(num_cols)}
-        data[i] = pd.DataFrame(values)
+        data[str(i)] = pd.DataFrame(values)
 
     primary_key = pd.DataFrame({1: range(num_rows)})
     primary_key_2 = pd.DataFrame({2: range(num_rows)})
-    data[0][1] = primary_key
-    data[1][1] = primary_key
-    data[1][2] = primary_key_2
+    data['0'][1] = primary_key
+    data['1'][1] = primary_key
+    data['1'][2] = primary_key_2
     metadata = MultiTableMetadata()
     metadata_dict = {'tables': {}}
     for table_idx in range(num_tables):
@@ -1766,9 +1766,9 @@ def test_fit_and_sample_numerical_col_names():
     metadata_dict['tables'][1]['columns'][2] = {'sdtype': 'id'}
     metadata_dict['relationships'] = [
         {
-            'parent_table_name': 0,
+            'parent_table_name': '0',
             'parent_primary_key': 1,
-            'child_table_name': 1,
+            'child_table_name': '1',
             'child_foreign_key': 2
         }
     ]
@@ -1780,6 +1780,10 @@ def test_fit_and_sample_numerical_col_names():
     synth.fit(data)
     first_sample = synth.sample()
     second_sample = synth.sample()
-
+    assert first_sample['0'].columns.tolist() == data['0'].columns.tolist()
+    assert first_sample['1'].columns.tolist() == data['1'].columns.tolist()
+    assert second_sample['0'].columns.tolist() == data['0'].columns.tolist()
+    assert second_sample['1'].columns.tolist() == data['1'].columns.tolist()
+    # Assert
     with pytest.raises(AssertionError):
         pd.testing.assert_frame_equal(first_sample['0'], second_sample['0'])

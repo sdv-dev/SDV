@@ -864,9 +864,10 @@ SYNTHESIZERS_CLASSES = [
     pytest.param(CopulaGANSynthesizer, id='CopulaGANSynthesizer'),
 ]
 
+
 @pytest.mark.parametrize('synthesizer_class', SYNTHESIZERS_CLASSES)
 def test_fit_and_sample_numerical_col_names(synthesizer_class):
-    """Test fit and sampling when column names are integers"""
+    """Test fitting/sampling when column names are integers"""
     # Setup
     num_rows = 50
     num_cols = 10

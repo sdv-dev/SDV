@@ -1,8 +1,9 @@
 """Local I/O module."""
 
-from sdv.io.local.local import BaseLocalHandler, CSVHandler
+from sdv.io.local.local import BaseLocalHandler, CSVHandler, ExcelHandler
 
 __all__ = (
     'BaseLocalHandler',
-    'CSVHandler'
+    'CSVHandler',
+    'ExcelHandler'
 )
