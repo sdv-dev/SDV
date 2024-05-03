@@ -1759,11 +1759,11 @@ def test_fit_and_sample_numerical_col_names():
     metadata = MultiTableMetadata()
     metadata_dict = {'tables': {}}
     for table_idx in range(num_tables):
-        metadata_dict['tables'][table_idx] = {'columns': {}}
+        metadata_dict['tables'][str(table_idx)] = {'columns': {}}
         for i in range(num_cols):
-            metadata_dict['tables'][table_idx]['columns'][i] = {'sdtype': 'numerical'}
-    metadata_dict['tables'][0]['columns'][1] = {'sdtype': 'id'}
-    metadata_dict['tables'][1]['columns'][2] = {'sdtype': 'id'}
+            metadata_dict['tables'][str(table_idx)]['columns'][i] = {'sdtype': 'numerical'}
+    metadata_dict['tables']['0']['columns'][1] = {'sdtype': 'id'}
+    metadata_dict['tables']['1']['columns'][2] = {'sdtype': 'id'}
     metadata_dict['relationships'] = [
         {
             'parent_table_name': '0',
