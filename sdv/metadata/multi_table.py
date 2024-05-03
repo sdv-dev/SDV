@@ -821,8 +821,8 @@ class MultiTableMetadata:
 
                     errors.append(
                         f"Error: foreign key column '{relation['child_foreign_key']}' contains "
-                        f'unknown references: {message}. Please use the utility method'
-                        " 'drop_unknown_references' to clean the data."
+                        f'unknown references: {message}. Please use the method'
+                        " 'drop_unknown_references' from sdv.utils to clean the data."
                     )
 
             if errors:

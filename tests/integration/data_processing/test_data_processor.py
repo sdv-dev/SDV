@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from rdt.transformers import (
-    AnonymizedFaker, BinaryEncoder, FloatFormatter, IDGenerator, RegexGenerator, UniformEncoder,
+    AnonymizedFaker, BinaryEncoder, FloatFormatter, IDGenerator, UniformEncoder,
     UnixTimestampEncoder)
 
 from sdv._utils import _get_datetime_format
@@ -252,7 +252,7 @@ class TestDataProcessor:
             'mba_spec': UniformEncoder,
             'employability_perc': FloatFormatter,
             'placed': UniformEncoder,
-            'student_id': RegexGenerator,
+            'student_id': AnonymizedFaker,
             'experience_years': FloatFormatter,
             'duration': UniformEncoder,
             'salary': FloatFormatter,

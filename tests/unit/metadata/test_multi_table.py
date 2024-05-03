@@ -1289,9 +1289,9 @@ class TestMultiTableMetadata:
             'Relationships:\n'
             "Error: foreign key column 'upravna_enota' contains unknown references: "
             '(10, 11, 12, 13, 14, + more). '
-            "Please use the utility method 'drop_unknown_references' to clean the data.\n"
+            "Please use the method 'drop_unknown_references' from sdv.utils to clean the data.\n"
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9)."
-            " Please use the utility method 'drop_unknown_references' to clean the data."
+            " Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
         ]
         assert result == missing_upravna_enota
 
@@ -1404,7 +1404,7 @@ class TestMultiTableMetadata:
             'The provided data does not match the metadata:\n'
             'Relationships:\n'
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
-            "Please use the utility method 'drop_unknown_references' to clean the data."
+            "Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             metadata.validate_data(data)
