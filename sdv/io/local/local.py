@@ -16,7 +16,7 @@ class BaseLocalHandler:
         self.decimal = decimal
         self.float_format = float_format
 
-    def _infer_metadata(self, data):
+    def create_metadata(self, data):
         """Detect the metadata for all tables in a dictionary of dataframes.
 
         Args:
@@ -110,8 +110,6 @@ class CSVHandler(BaseLocalHandler):
                 If the specified files do not exist in the folder.
         """
         data = {}
-        metadata = MultiTableMetadata()
-
         folder_path = Path(folder_name)
 
         if file_names is None:
@@ -156,8 +154,7 @@ class CSVHandler(BaseLocalHandler):
                 **kwargs
             )
 
-        metadata = self._infer_metadata(data)
-        return data, metadata
+        return data
 
     def write(self, synthetic_data, folder_name, file_name_suffix=None, mode='x'):
         """Write synthetic data to CSV files.
@@ -229,13 +226,10 @@ class ExcelHandler(BaseLocalHandler):
                 A tuple containing the data as a dictionary and metadata. The dictionary maps
                 table names to pandas DataFrames. The metadata is an object describing the data.
         """
-        metadata = MultiTableMetadata()
         if sheet_names is not None and not isinstance(sheet_names, list):
             raise ValueError("'sheet_names' must be None or a list of strings.")
 
-        data = self._read_excel(file_path, sheet_names)
-        metadata = self._infer_metadata(data)
-        return data, metadata
+        return self._read_excel(file_path, sheet_names)
 
     def write(self, synthetic_data, file_name, sheet_name_suffix=None, mode='w'):
         """Write synthetic data to an Excel File.

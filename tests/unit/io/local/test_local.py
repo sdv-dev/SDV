@@ -6,8 +6,59 @@ from unittest.mock import Mock, call, patch
 import pandas as pd
 import pytest
 
-from sdv.io.local.local import CSVHandler, ExcelHandler
+from sdv.io.local.local import BaseLocalHandler, CSVHandler, ExcelHandler
 from sdv.metadata.multi_table import MultiTableMetadata
+
+
+class TestBaseLocalHandler:
+
+    def test___init__(self):
+        """Test the dafault initialization of the class."""
+        # Run
+        instance = BaseLocalHandler()
+
+        # Assert
+        assert instance.decimal == '.'
+        assert instance.float_format is None
+
+    def test_create_metadata(self):
+        """Test that ``create_metadata`` will infer the metadata."""
+        # Setup
+        data = {
+            'hotel': pd.DataFrame({
+                'hotel_id': [1, 2, 3, 4, 5],
+                'stars': [3, 4, 5, 3, 4]
+            }),
+            'guests': pd.DataFrame({
+                'guest_id': [1, 2, 3, 4, 5],
+                'hotel_id': [1, 1, 3, 2, 3]
+            })
+        }
+        instance = BaseLocalHandler()
+
+        # Run
+        metadata = instance.create_metadata(data)
+
+        # Assert
+        assert isinstance(metadata, MultiTableMetadata) is True
+        assert metadata.to_dict() == {
+            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+            'relationships': [],
+            'tables': {
+                'guests': {
+                    'columns': {
+                        'guest_id': {'sdtype': 'numerical'},
+                        'hotel_id': {'sdtype': 'numerical'}
+                    }
+                },
+                'hotel': {
+                    'columns': {
+                        'hotel_id': {'sdtype': 'numerical'},
+                        'stars': {'sdtype': 'numerical'}
+                    }
+                }
+            }
+        }
 
 
 class TestCSVHandler:
@@ -69,13 +120,12 @@ class TestCSVHandler:
         handler = CSVHandler()
 
         # Run
-        data, metadata = handler.read('/path/to/data')
+        data = handler.read('/path/to/data')
 
         # Assert
         assert len(data) == 2
         assert 'parent' in data
         assert 'child' in data
-        assert isinstance(metadata, MultiTableMetadata)
         assert mock_read_csv.call_count == 2
         pd.testing.assert_frame_equal(
             data['parent'],
@@ -102,7 +152,7 @@ class TestCSVHandler:
         handler = CSVHandler()
 
         # Run
-        data, metadata = handler.read(tmpdir, file_names=['parent.csv'])
+        data = handler.read(tmpdir, file_names=['parent.csv'])
 
         # Assert
         assert 'parent' in data
@@ -246,7 +296,7 @@ class TestExcelHandler:
         instance = ExcelHandler()
 
         # Run
-        data, metadata = instance.read(file_path)
+        data = instance.read(file_path)
 
         # Assert
         sheet_1_call = call(
@@ -271,7 +321,6 @@ class TestExcelHandler:
             data['Sheet2'],
             pd.DataFrame({'C': [5, 6], 'D': [7, 8]})
         )
-        assert isinstance(metadata, MultiTableMetadata)
         assert mock_pd.read_excel.call_args_list == [sheet_1_call, sheet_2_call]
 
     @patch('sdv.io.local.local.pd')
@@ -289,7 +338,7 @@ class TestExcelHandler:
         instance = ExcelHandler()
 
         # Run
-        data, metadata = instance.read(file_path, sheet_names)
+        data = instance.read(file_path, sheet_names)
 
         # Assert
         sheet_1_call = call(
@@ -303,7 +352,6 @@ class TestExcelHandler:
             data['Sheet1'],
             pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
         )
-        assert isinstance(metadata, MultiTableMetadata)
         assert mock_pd.read_excel.call_args_list == [sheet_1_call]
         assert list(data) == ['Sheet1']
 
