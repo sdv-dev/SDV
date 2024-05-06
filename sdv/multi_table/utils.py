@@ -47,7 +47,7 @@ def _get_n_order_descendants(relationships, parent_table, order):
     descendants = {}
     order_1_descendants = _get_relationships_for_parent(relationships, parent_table)
     descendants['order_1'] = [rel['child_table_name'] for rel in order_1_descendants]
-    for i in range(2, order + 1):
+    for i in range(2, order+1):
         descendants[f'order_{i}'] = []
         prov_descendants = []
         for child_table in descendants[f'order_{i-1}']:
