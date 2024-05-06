@@ -588,8 +588,10 @@ class SingleTableMetadata:
                 'Metadata already exists. Create a new ``SingleTableMetadata`` '
                 'object to detect from other data sources.'
             )
-
+        old_columns = data.columns
+        data.columns = data.columns.astype(str)
         self._detect_columns(data)
+        data.columns = old_columns
 
         LOGGER.info('Detected metadata:')
         LOGGER.info(json.dumps(self.to_dict(), indent=4))
