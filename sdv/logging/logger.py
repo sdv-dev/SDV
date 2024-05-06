@@ -24,12 +24,16 @@ def get_sdv_logger(logger_name):
             and the specific settings for the given logger name.
     """
     logger_conf = get_sdv_logger_config()
+    logger = logging.getLogger(logger_name)
     if logger_conf.get('log_registry') is None:
         # Return a logger without any extra settings and avoid writing into files or other streams
-        return logging.getLogger(logger_name)
+        return logger
 
     if logger_conf.get('log_registry') == 'local':
-        logger = logging.getLogger(logger_name)
+        for handler in logger.handlers:
+            # Remove handlers that could exist previously
+            logger.removeHandler(handler)
+
         if logger_name in logger_conf.get('loggers'):
             formatter = None
             config = logger_conf.get('loggers').get(logger_name)
