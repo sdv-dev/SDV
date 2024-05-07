@@ -12,7 +12,7 @@ from rdt.transformers import (
 
 from sdv import version
 from sdv.constraints.errors import AggregateConstraintsError
-from sdv.errors import ConstraintsNotMetError, SynthesizerInputError, VersionError
+from sdv.errors import ConstraintsNotMetError, SamplingError, SynthesizerInputError, VersionError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
 from sdv.single_table import (
@@ -1398,6 +1398,20 @@ class TestBaseSingleTableSynthesizer:
         )
         mock_os.remove.assert_called_once_with('.sample.csv.temp')
         mock_os.path.exists.assert_called_once_with('.sample.csv.temp')
+
+    def test_sample_not_fitted(self):
+        """Test that ``sample`` raises an error when the synthesizer is not fitted."""
+        # Setup
+        instance = Mock()
+        instance._fitted = False
+        expected_message = re.escape(
+            'This synthesizer has not been fitted. Please fit your synthesizer first before'
+            ' sampling synthetic data.'
+        )
+
+        # Run and Assert
+        with pytest.raises(SamplingError, match=expected_message):
+            BaseSingleTableSynthesizer.sample(instance, 10)
 
     @patch('sdv.single_table.base.datetime')
     def test_sample(self, mock_datetime, caplog):
