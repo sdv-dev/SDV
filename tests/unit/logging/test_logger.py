@@ -23,6 +23,7 @@ def test_get_sdv_logger(mock_get_sdv_logger_config, mock_getlogger, mock_streamh
     }
     mock_get_sdv_logger_config.return_value = mock_logger_conf
     mock_logger_instance = Mock()
+    mock_logger_instance.handlers = []
     mock_getlogger.return_value = mock_logger_instance
 
     # Run
