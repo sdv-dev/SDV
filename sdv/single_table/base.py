@@ -367,6 +367,16 @@ class BaseSynthesizer:
         self._data_processor.fit(data)
         return self._data_processor.transform(data)
 
+    def _store_and_convert_original_cols(self, data):
+        # Transform in place to avoid possible large copy of data
+        for column in data.columns:
+            if isinstance(column, int):
+                self._original_columns = data.columns
+                data.columns = data.columns.astype(str)
+                return True
+
+        return False
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -384,15 +394,11 @@ class BaseSynthesizer:
                 "please refit the model using 'fit' or 'fit_processed_data'."
             )
 
-        for column in data.columns:
-            if isinstance(column, int):
-                self._original_columns = data.columns
-                data.columns = data.columns.astype(str)
-                break
+        is_converted = self._store_and_convert_original_cols(data)
 
         preprocess_data = self._preprocess(data)
 
-        if not self._original_columns.empty:
+        if is_converted:
             data.columns = self._original_columns
 
         return preprocess_data

@@ -326,6 +326,19 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].update_transformers(column_name_to_transformer)
 
+    def _store_and_convert_original_cols(self, data):
+        list_of_changed_tables = []
+        for table, dataframe in data.items():
+            self._original_table_columns[table] = dataframe.columns
+            for column in dataframe.columns:
+                if isinstance(column, int):
+                    dataframe.columns = dataframe.columns.astype(str)
+                    list_of_changed_tables.append(table)
+                    break
+
+            data[table] = dataframe
+        return list_of_changed_tables
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -337,10 +350,7 @@ class BaseMultiTableSynthesizer:
             dict:
                 A dictionary with the preprocessed data.
         """
-        for table, dataframe in data.items():
-            self._original_table_columns[table] = dataframe.columns
-            dataframe.columns = dataframe.columns.astype(str)
-            data[table] = dataframe
+        list_of_chnaged_tables = self._store_and_convert_original_cols(data)
 
         self.validate(data)
         if self._fitted:
@@ -356,8 +366,8 @@ class BaseMultiTableSynthesizer:
             self._assign_table_transformers(synthesizer, table_name, table_data)
             processed_data[table_name] = synthesizer._preprocess(table_data)
 
-        for table, dataframe in data.items():
-            dataframe.columns = self._original_table_columns[table]
+        for table in list_of_chnaged_tables:
+            data[table].columns = self._original_table_columns[table]
 
         return processed_data
 

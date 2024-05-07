@@ -324,6 +324,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         instance = Mock()
         instance._fitted = True
+        instance._store_and_convert_original_cols.return_value = False
         data = pd.DataFrame({
             'name': ['John', 'Doe', 'John Doe']
         })
@@ -348,6 +349,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         instance = Mock()
         instance._fitted = False
+        instance._original_columns = pd.Index([1, 2, 'str'])
         data = pd.DataFrame({
             1: ['John', 'Doe', 'John Doe'],
             2: ['John', 'Doe', 'John Doe'],
