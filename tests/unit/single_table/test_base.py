@@ -12,7 +12,7 @@ from rdt.transformers import (
 
 from sdv import version
 from sdv.constraints.errors import AggregateConstraintsError
-from sdv.errors import ConstraintsNotMetError, SynthesizerInputError, VersionError
+from sdv.errors import ConstraintsNotMetError, SamplingError, SynthesizerInputError, VersionError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
 from sdv.single_table import (
@@ -1724,6 +1724,20 @@ class TestBaseSingleTableSynthesizer:
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
         mock_os.remove.assert_called_once_with('.sample.csv.temp')
         mock_os.path.exists.assert_called_once_with('.sample.csv.temp')
+
+    def test_sample_raises_sampling_error(self):
+        """Test that ``sample`` will raise ``SamplingError`` when not fitted."""
+        # Setup
+        metadata = Mock(column_relationships=[])
+        instance = BaseSingleTableSynthesizer(metadata)
+
+        # Run and Assert
+        error_msg = (
+            'This synthesizer has not been fitted. Please fit your synthesizer first before '
+            'sampling synthetic data.'
+        )
+        with pytest.raises(SamplingError, match=error_msg):
+            instance.sample(1)
 
     @patch('sdv.single_table.base.handle_sampling_error')
     @patch('sdv.single_table.base.check_num_rows')
