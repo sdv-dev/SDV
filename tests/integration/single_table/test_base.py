@@ -13,7 +13,7 @@ from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, Un
 
 from sdv import version
 from sdv.datasets.demo import download_demo
-from sdv.errors import SynthesizerInputError, VersionError
+from sdv.errors import SamplingError, SynthesizerInputError, VersionError
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table import (
@@ -855,3 +855,19 @@ def test_synthesizer_logger(mock_datetime, mock_generate_id):
         '    Total number of columns: 3\n'
         '  Synthesizer id: GaussianCopulaSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5\n'
     )
+
+
+@pytest.mark.parametrize('synthesizer', SYNTHESIZERS)
+def test_sample_not_fitted(synthesizer):
+    """Test that a synthesizer raises an error when trying to sample without fitting."""
+    # Setup
+    metadata = SingleTableMetadata()
+    synthesizer = synthesizer.__class__(metadata)
+    expected_message = re.escape(
+        'This synthesizer has not been fitted. Please fit your synthesizer first before'
+        ' sampling synthetic data.'
+    )
+
+    # Run and Assert
+    with pytest.raises(SamplingError, match=expected_message):
+        synthesizer.sample(10)
