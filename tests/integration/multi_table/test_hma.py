@@ -16,7 +16,7 @@ from sdmetrics.reports.multi_table import DiagnosticReport
 from sdv import version
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
-from sdv.errors import SynthesizerInputError, VersionError
+from sdv.errors import SamplingError, SynthesizerInputError, VersionError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
@@ -1667,6 +1667,21 @@ def test_hma_relationship_validity():
 
     # Assert
     assert report.get_details('Relationship Validity')['Score'].mean() == 1.0
+
+
+def test_hma_not_fit_raises_sampling_error():
+    """Test that ``HMA`` will raise a ``SamplingError`` if it wasn't fit."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'Dunur_v1')
+    synthesizer = HMASynthesizer(metadata)
+
+    # Run and Assert
+    error_msg = (
+        'This synthesizer has not been fitted. Please fit your synthesizer first before '
+        'sampling synthetic data.'
+    )
+    with pytest.raises(SamplingError, match=error_msg):
+        synthesizer.sample(1)
 
 
 @patch('sdv.multi_table.base.generate_synthesizer_id')
