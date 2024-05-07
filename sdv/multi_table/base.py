@@ -350,7 +350,7 @@ class BaseMultiTableSynthesizer:
             dict:
                 A dictionary with the preprocessed data.
         """
-        list_of_chnaged_tables = self._store_and_convert_original_cols(data)
+        list_of_changed_tables = self._store_and_convert_original_cols(data)
 
         self.validate(data)
         if self._fitted:
@@ -366,7 +366,7 @@ class BaseMultiTableSynthesizer:
             self._assign_table_transformers(synthesizer, table_name, table_data)
             processed_data[table_name] = synthesizer._preprocess(table_data)
 
-        for table in list_of_chnaged_tables:
+        for table in list_of_changed_tables:
             data[table].columns = self._original_table_columns[table]
 
         return processed_data
