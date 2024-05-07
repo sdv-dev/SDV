@@ -13,7 +13,7 @@ from sdv.metadata.multi_table import MultiTableMetadata
 class TestBaseLocalHandler:
 
     def test___init__(self):
-        """Test the dafault initialization of the class."""
+        """Test the default initialization of the class."""
         # Run
         instance = BaseLocalHandler()
 
@@ -40,7 +40,7 @@ class TestBaseLocalHandler:
         metadata = instance.create_metadata(data)
 
         # Assert
-        assert isinstance(metadata, MultiTableMetadata) is True
+        assert isinstance(metadata, MultiTableMetadata)
         assert metadata.to_dict() == {
             'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
             'relationships': [],

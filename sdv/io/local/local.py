@@ -38,9 +38,8 @@ class BaseLocalHandler:
         This method must be implemented by subclasses.
 
         Returns:
-            tuple:
-                A tuple containing the read data as a dictionary and metadata. The dictionary maps
-                table names to pandas DataFrames. The metadata is an object describing the data.
+            dict:
+                The dictionary maps table names to pandas DataFrames.
         """
         raise NotImplementedError()
 
@@ -101,9 +100,8 @@ class CSVHandler(BaseLocalHandler):
                 in the folder are read.
 
         Returns:
-            tuple:
-                A tuple containing the data as a dictionary and metadata. The dictionary maps
-                table names to pandas DataFrames. The metadata is an object describing the data.
+            dict:
+                The dictionary maps table names to pandas DataFrames.
 
         Raises:
             FileNotFoundError:
@@ -222,9 +220,8 @@ class ExcelHandler(BaseLocalHandler):
                 The names of sheets to read. If None, all sheets are read.
 
         Returns:
-            tuple:
-                A tuple containing the data as a dictionary and metadata. The dictionary maps
-                table names to pandas DataFrames. The metadata is an object describing the data.
+            dict:
+                The dictionary maps table names to pandas DataFrames.
         """
         if sheet_names is not None and not isinstance(sheet_names, list):
             raise ValueError("'sheet_names' must be None or a list of strings.")
