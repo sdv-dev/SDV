@@ -1,8 +1,7 @@
 """Test ``SDV`` logging utilities."""
-import logging
 from unittest.mock import Mock, mock_open, patch
 
-from sdv.logging.utils import disable_single_table_logger, get_sdv_logger, get_sdv_logger_config
+from sdv.logging.utils import disable_single_table_logger, get_sdv_logger_config
 
 
 def test_get_sdv_logger_config():
@@ -55,31 +54,3 @@ def test_disable_single_table_logger(mock_getlogger):
 
     # Assert
     assert len(mock_logger.handlers) == 1
-
-
-@patch('sdv.logging.utils.logging.StreamHandler')
-@patch('sdv.logging.utils.logging.getLogger')
-@patch('sdv.logging.utils.get_sdv_logger_config')
-def test_get_sdv_logger(mock_get_sdv_logger_config, mock_getlogger, mock_streamhandler):
-    # Setup
-    mock_logger_conf = {
-        'log_registry': 'local',
-        'loggers': {
-            'test_logger': {
-                'level': 'DEBUG',
-                'handlers': {
-                    'class': 'logging.StreamHandler'
-                }
-            }
-        }
-    }
-    mock_get_sdv_logger_config.return_value = mock_logger_conf
-    mock_logger_instance = Mock()
-    mock_getlogger.return_value = mock_logger_instance
-
-    # Run
-    get_sdv_logger('test_logger')
-
-    # Assert
-    mock_logger_instance.setLevel.assert_called_once_with(logging.DEBUG)
-    mock_logger_instance.addHandler.assert_called_once()
