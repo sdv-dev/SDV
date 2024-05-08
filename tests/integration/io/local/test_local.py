@@ -19,7 +19,10 @@ class TestCSVHandler:
         handler.write(synthetic_data, tmpdir)
 
         # Read data from CSV files
-        data, metadata = handler.read(tmpdir)
+        data = handler.read(tmpdir)
+
+        # Detect metadata
+        metadata = handler.create_metadata(data)
 
         # Check if data was read correctly
         assert len(data) == 2
@@ -47,7 +50,10 @@ class TestExcelHandler:
         handler.write(synthetic_data, tmpdir / 'excel.xslx')
 
         # Read data from xslx file
-        data, metadata = handler.read(tmpdir / 'excel.xslx')
+        data = handler.read(tmpdir / 'excel.xslx')
+
+        # Detect metadata
+        metadata = handler.create_metadata(data)
 
         # Check if data was read correctly
         assert len(data) == 2
@@ -72,13 +78,16 @@ class TestExcelHandler:
         handler.write(synthetic_data, tmpdir / 'excel.xslx')
 
         # Read data from xslx file
-        data, metadata = handler.read(tmpdir / 'excel.xslx')
+        data = handler.read(tmpdir / 'excel.xslx')
 
         # Write using append mode
         handler.write(synthetic_data, tmpdir / 'excel.xslx', mode='a')
 
         # Read data from xslx file
-        data, metadata = handler.read(tmpdir / 'excel.xslx')
+        data = handler.read(tmpdir / 'excel.xslx')
+
+        # Detect metadata
+        metadata = handler.create_metadata(data)
 
         # Check if data was read correctly
         assert len(data) == 2

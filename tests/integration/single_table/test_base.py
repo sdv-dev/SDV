@@ -2,12 +2,10 @@ import datetime
 import importlib.metadata
 import re
 import warnings
-from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-import platformdirs
 import pytest
 from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, UniformEncoder
 

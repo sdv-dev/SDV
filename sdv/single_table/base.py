@@ -25,7 +25,7 @@ from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import (
     ConstraintsNotMetError, InvalidDataError, SamplingError, SynthesizerInputError)
-from sdv.logging.utils import get_sdv_logger
+from sdv.logging import get_sdv_logger
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
 LOGGER = logging.getLogger(__name__)
