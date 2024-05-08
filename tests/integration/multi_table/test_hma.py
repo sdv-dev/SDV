@@ -1729,3 +1729,41 @@ def test_fit_and_sample_numerical_col_names():
     # Assert
     with pytest.raises(AssertionError):
         pd.testing.assert_frame_equal(first_sample['0'], second_sample['0'])
+
+
+def test_detect_from_dataframe_numerical_col():
+    """Test that metadata detection of integer columns work."""
+    parent_data = pd.DataFrame({
+        1: [1000, 1001, 1002],
+        2: [2, 3, 4],
+        'categorical_col': ['a', 'b', 'a'],
+    })
+    child_data = pd.DataFrame({
+        3: [1000, 1001, 1000],
+        4: [1, 2, 3]
+    })
+
+    data = {
+        'parent_data': parent_data,
+        'child_data': child_data,
+    }
+
+    metadata = MultiTableMetadata()
+    metadata.detect_table_from_dataframe('parent_data', parent_data)
+    metadata.update_column('parent_data', '1', sdtype='id')
+    metadata.detect_table_from_dataframe('child_data', child_data)
+    metadata.update_column('child_data', '3', sdtype='id')
+    metadata.add_relationship(
+        parent_primary_key='1',
+        parent_table_name='parent_data',
+        child_foreign_key='3',
+        child_table_name='child_data'
+    )
+
+    # test_metadata = MultiTableMetadata()
+    # test_metadata.detect_from_dataframes(data)
+
+    instance = HMASynthesizer(metadata)
+    instance.fit(data)
+    sample = instance.sample(5)
+    assert sample.columns.tolist() == data.columns.tolist()

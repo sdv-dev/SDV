@@ -523,6 +523,7 @@ class MultiTableMetadata:
 
     def detect_table_from_dataframe(self, table_name, data):
         """Detect the metadata for a table from a dataframe.
+        All data columns are converted to strings
 
         Args:
             table_name (str):
@@ -538,6 +539,7 @@ class MultiTableMetadata:
 
     def detect_from_dataframes(self, data):
         """Detect the metadata for all tables in a dictionary of dataframes.
+        All data columns are converted to strings
 
         Args:
             data (dict):

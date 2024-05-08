@@ -833,8 +833,9 @@ def test_sample_not_fitted(synthesizer):
         synthesizer.sample(10)
 
 
-def test_detect_from_dataframe_numerical_col():
-    """Test that a ``VersionError`` is being raised if the current version is newer."""
+@pytest.mark.parametrize('synthesizer_class', SYNTHESIZERS_CLASSES)
+def test_detect_from_dataframe_numerical_col(synthesizer_class):
+    """Test that metadata detection of integer columns work."""
     # Setup
     data = pd.DataFrame({
         1: [1, 2, 3],
@@ -843,10 +844,7 @@ def test_detect_from_dataframe_numerical_col():
     })
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
-    instance = BaseSingleTableSynthesizer(metadata)
-
+    instance = synthesizer_class(metadata)
     instance.fit(data)
     sample = instance.sample(5)
-    print(sample)
-
-    assert False
+    assert sample.columns.tolist() == data.columns.tolist()
