@@ -988,7 +988,7 @@ class TestDataProcessor:
 
     @patch('sdv.data_processing.data_processor.get_anonymized_transformer')
     def test_create_anonymized_transformer_cardinality_rule_unique(
-        self, mock_get_anonymized_transformer):
+            self, mock_get_anonymized_transformer):
         """Test the ``create_anonymized_transformer`` method.
 
         Test that when calling with ``cardinality_rule`` set to ``'unique'``, this
