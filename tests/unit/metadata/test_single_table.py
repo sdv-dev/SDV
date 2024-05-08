@@ -2695,6 +2695,34 @@ class TestSingleTableMetadata:
         assert instance.sequence_index is None
         assert instance._version == 'SINGLE_TABLE_V1'
 
+    def test_load_from_dict_integer(self):
+        """Test that ``load_from_dict`` returns a instance with the ``dict`` updated objects.
+
+        If the metadata dict contains columns with integers for certain reasons
+        (e.g. due to missing column names from CSV) make sure they are correctly typed
+        to strings to ensure metadata is parsed properly.
+        """
+        # Setup
+        my_metadata = {
+            'columns': {1: 'value'},
+            'primary_key': 'pk',
+            'alternate_keys': [],
+            'sequence_key': None,
+            'sequence_index': None,
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+        }
+
+        # Run
+        instance = SingleTableMetadata.load_from_dict(my_metadata)
+
+        # Assert
+        assert instance.columns == {'1': 'value'}
+        assert instance.primary_key == 'pk'
+        assert instance.sequence_key is None
+        assert instance.alternate_keys == []
+        assert instance.sequence_index is None
+        assert instance._version == 'SINGLE_TABLE_V1'
+
     @patch('sdv.metadata.utils.Path')
     def test_load_from_json_path_does_not_exist(self, mock_path):
         """Test the ``load_from_json`` method.
