@@ -23,8 +23,9 @@ from sdv._utils import (
     _groupby_list, check_sdv_versions_and_warn, check_synthesizer_version, generate_synthesizer_id)
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
-from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
-from sdv.logging.utils import get_sdv_logger
+from sdv.errors import (
+    ConstraintsNotMetError, InvalidDataError, SamplingError, SynthesizerInputError)
+from sdv.logging import get_sdv_logger
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
 LOGGER = logging.getLogger(__name__)
@@ -871,6 +872,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             pandas.DataFrame:
                 Sampled data.
         """
+        if not self._fitted:
+            raise SamplingError(
+                'This synthesizer has not been fitted. Please fit your synthesizer first before'
+                ' sampling synthetic data.'
+            )
+
         sample_timestamp = datetime.datetime.now()
         has_constraints = bool(self._data_processor._constraints)
         has_batches = batch_size is not None and batch_size != num_rows

@@ -11,7 +11,8 @@ import pytest
 
 from sdv import version
 from sdv.errors import (
-    ConstraintsNotMetError, InvalidDataError, NotFittedError, SynthesizerInputError, VersionError)
+    ConstraintsNotMetError, InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError,
+    VersionError)
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -1016,6 +1017,7 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
+        instance._fitted = True
         instance._sample = Mock()
         scales = ['Test', True, -1.2, np.nan]
 
@@ -1038,6 +1040,20 @@ class TestBaseMultiTableSynthesizer:
             with pytest.raises(SynthesizerInputError, match=msg):
                 instance.sample(scale=scale)
 
+    def test_sample_raises_sampling_error(self):
+        """Test that ``sample`` will raise ``SamplingError`` when not fitted."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        error_msg = (
+            'This synthesizer has not been fitted. Please fit your synthesizer first before '
+            'sampling synthetic data.'
+        )
+        with pytest.raises(SamplingError, match=error_msg):
+            instance.sample(1)
+
     @patch('sdv.multi_table.base.datetime')
     def test_sample(self, mock_datetime, caplog):
         """Test that ``sample`` calls the ``_sample`` with the given arguments."""
@@ -1045,6 +1061,7 @@ class TestBaseMultiTableSynthesizer:
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
+        instance._fitted = True
         data = {
             'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
             'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})

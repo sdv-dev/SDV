@@ -2,18 +2,16 @@ import datetime
 import importlib.metadata
 import re
 import warnings
-from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-import platformdirs
 import pytest
 from rdt.transformers import AnonymizedFaker, FloatFormatter, RegexGenerator, UniformEncoder
 
 from sdv import version
 from sdv.datasets.demo import download_demo
-from sdv.errors import SynthesizerInputError, VersionError
+from sdv.errors import SamplingError, SynthesizerInputError, VersionError
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table import (
@@ -781,77 +779,17 @@ def test_fit_raises_version_error():
         instance.fit(data)
 
 
-@patch('sdv.single_table.base.generate_synthesizer_id')
-@patch('sdv.single_table.base.datetime')
-def test_synthesizer_logger(mock_datetime, mock_generate_id):
-    """Test that the synthesizer logger logs the expected messages."""
+@pytest.mark.parametrize('synthesizer', SYNTHESIZERS)
+def test_sample_not_fitted(synthesizer):
+    """Test that a synthesizer raises an error when trying to sample without fitting."""
     # Setup
-    store_path = Path(platformdirs.user_data_dir('sdv', 'sdv-dev'))
-    file_name = 'sdv_logs.log'
-
-    synth_id = 'GaussianCopulaSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-    mock_generate_id.return_value = synth_id
-    mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
-    data = pd.DataFrame({
-        'col 1': [1, 2, 3],
-        'col 2': [4, 5, 6],
-        'col 3': ['a', 'b', 'c'],
-    })
     metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
-
-    # Run
-    instance = GaussianCopulaSynthesizer(metadata)
-
-    # Assert
-    with open(store_path / file_name) as f:
-        instance_lines = f.readlines()[-4:]
-
-    assert ''.join(instance_lines) == (
-        'Instance:\n'
-        '  Timestamp: 2024-04-19 16:20:10.037183\n'
-        '  Synthesizer class name: GaussianCopulaSynthesizer\n'
-        '  Synthesizer id: GaussianCopulaSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5\n'
+    synthesizer = synthesizer.__class__(metadata)
+    expected_message = re.escape(
+        'This synthesizer has not been fitted. Please fit your synthesizer first before'
+        ' sampling synthetic data.'
     )
 
-    # Run
-    instance.fit(data)
-
-    # Assert
-    with open(store_path / file_name) as f:
-        fit_lines = f.readlines()[-17:]
-
-    assert ''.join(fit_lines) == (
-        'Fit:\n'
-        '  Timestamp: 2024-04-19 16:20:10.037183\n'
-        '  Synthesizer class name: GaussianCopulaSynthesizer\n'
-        '  Statistics of the fit data:\n'
-        '    Total number of tables: 1\n'
-        '    Total number of rows: 3\n'
-        '    Total number of columns: 3\n'
-        '  Synthesizer id: GaussianCopulaSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5\n'
-        '\nFit processed data:\n'
-        '  Timestamp: 2024-04-19 16:20:10.037183\n'
-        '  Synthesizer class name: GaussianCopulaSynthesizer\n'
-        '  Statistics of the fit processed data:\n'
-        '    Total number of tables: 1\n'
-        '    Total number of rows: 3\n'
-        '    Total number of columns: 3\n'
-        '  Synthesizer id: GaussianCopulaSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5\n'
-    )
-
-    # Run
-    instance.sample(100)
-    with open(store_path / file_name) as f:
-        sample_lines = f.readlines()[-8:]
-
-    assert ''.join(sample_lines) == (
-        'Sample:\n'
-        '  Timestamp: 2024-04-19 16:20:10.037183\n'
-        '  Synthesizer class name: GaussianCopulaSynthesizer\n'
-        '  Statistics of the sample size:\n'
-        '    Total number of tables: 1\n'
-        '    Total number of rows: 100\n'
-        '    Total number of columns: 3\n'
-        '  Synthesizer id: GaussianCopulaSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5\n'
-    )
+    # Run and Assert
+    with pytest.raises(SamplingError, match=expected_message):
+        synthesizer.sample(10)
