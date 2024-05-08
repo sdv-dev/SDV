@@ -987,40 +987,23 @@ class TestDataProcessor:
         )
 
     @patch('sdv.data_processing.data_processor.get_anonymized_transformer')
-    def test_create_anonymized_transformer_enforce_uniqueness(self,
-                                                              mock_get_anonymized_transformer):
-        """Test the ``create_regex_generator`` method.
+    def test_create_anonymized_transformer_cardinality_rule_unique(
+        self, mock_get_anonymized_transformer):
+        """Test the ``create_anonymized_transformer`` method.
 
-        Test that when given an ``sdtype`` and ``column_metadata`` that does not contain a
-        ``regex_format`` this calls ``create_anonymized_transformer`` with ``enforce_uniqueness``
-        set to ``True``.
-
-        Input:
-            - String representing an ``sdtype``.
-            - Dictionary with ``column_metadata`` that contains ``sdtype``.
-
-        Mock:
-            - Mock the ``create_anonymized_transformer``.
-
-        Output:
-            - The return value of ``create_anonymized_transformer``.
+        Test that when calling with ``cardinality_rule`` set to ``'unique'``, this
+        calls ``get_anonymized_transformer`` with the given parameters.
         """
         # Setup
         sdtype = 'ssn'
-        column_metadata = {
-            'sdtype': 'ssn',
-        }
+        column_metadata = {'sdtype': 'ssn'}
 
         # Run
-        output = DataProcessor.create_anonymized_transformer(
-            sdtype,
-            column_metadata,
-            True
-        )
+        output = DataProcessor.create_anonymized_transformer(sdtype, column_metadata, 'unique')
 
         # Assert
         mock_get_anonymized_transformer.assert_called_once_with(
-            'ssn', {'enforce_uniqueness': True, 'locales': ['en_US']}
+            'ssn', {'cardinality_rule': 'unique', 'locales': ['en_US']}
         )
         assert output == mock_get_anonymized_transformer.return_value
 
@@ -1033,21 +1016,19 @@ class TestDataProcessor:
         """
         # Setup
         sdtype = 'ssn'
-        column_metadata = {
-            'sdtype': 'ssn',
-        }
+        column_metadata = {'sdtype': 'ssn'}
 
         # Run
         output = DataProcessor.create_anonymized_transformer(
             sdtype,
             column_metadata,
-            False,
+            None,
             locales=['en_US', 'en_CA']
         )
 
         # Assert
         mock_get_anonymized_transformer.assert_called_once_with(
-            'ssn', {'locales': ['en_US', 'en_CA']}
+            'ssn', {'locales': ['en_US', 'en_CA'], 'cardinality_rule': None}
         )
         assert output == mock_get_anonymized_transformer.return_value
 
@@ -1069,7 +1050,7 @@ class TestDataProcessor:
             DataProcessor.create_anonymized_transformer(
                 sdtype,
                 column_metadata,
-                False,
+                None,
                 locales=['en_UK']
             )
 
@@ -1099,13 +1080,18 @@ class TestDataProcessor:
         }
 
         # Run
-        output = DataProcessor.create_anonymized_transformer(sdtype, column_metadata, False)
+        output = DataProcessor.create_anonymized_transformer(sdtype, column_metadata, 'unique')
 
         # Assert
         assert output == mock_get_anonymized_transformer.return_value
-        mock_get_anonymized_transformer.assert_called_once_with(
-            'email', {'function_kwargs': {'domain': 'gmail.com'}, 'locales': ['en_US']}
-        )
+        expected_kwargs = {
+            'function_kwargs': {
+                'domain': 'gmail.com'
+            },
+            'locales': ['en_US'],
+            'cardinality_rule': 'unique'
+        }
+        mock_get_anonymized_transformer.assert_called_once_with('email', expected_kwargs)
 
     def test__get_transformer_instance_no_kwargs(self):
         """Test the ``_get_transformer_instance`` without keyword args.
