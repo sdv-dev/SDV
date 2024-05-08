@@ -103,6 +103,7 @@ class BaseSynthesizer:
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
         )
+        self._original_columns = pd.Index([])
         self._fitted = False
         self._random_state_set = False
         self._update_default_transformers()
@@ -367,6 +368,16 @@ class BaseSynthesizer:
         self._data_processor.fit(data)
         return self._data_processor.transform(data)
 
+    def _store_and_convert_original_cols(self, data):
+        # Transform in place to avoid possible large copy of data
+        for column in data.columns:
+            if isinstance(column, int):
+                self._original_columns = data.columns
+                data.columns = data.columns.astype(str)
+                return True
+
+        return False
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -384,7 +395,14 @@ class BaseSynthesizer:
                 "please refit the model using 'fit' or 'fit_processed_data'."
             )
 
-        return self._preprocess(data)
+        is_converted = self._store_and_convert_original_cols(data)
+
+        preprocess_data = self._preprocess(data)
+
+        if is_converted:
+            data.columns = self._original_columns
+
+        return preprocess_data
 
     def _fit(self, processed_data):
         """Fit the model to the table.
@@ -455,7 +473,7 @@ class BaseSynthesizer:
         self._fitted = False
         self._data_processor.reset_sampling()
         self._random_state_set = False
-        processed_data = self._preprocess(data)
+        processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
 
     def save(self, filepath):
@@ -890,6 +908,10 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             output_file_path,
             show_progress_bar=show_progress_bar
         )
+
+        original_columns = getattr(self, '_original_columns', pd.Index([]))
+        if not original_columns.empty:
+            sampled_data.columns = self._original_columns
 
         SYNTHESIZER_LOGGER.info(
             '\nSample:\n'

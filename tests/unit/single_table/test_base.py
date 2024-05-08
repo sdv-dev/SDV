@@ -324,6 +324,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         instance = Mock()
         instance._fitted = True
+        instance._store_and_convert_original_cols.return_value = False
         data = pd.DataFrame({
             'name': ['John', 'Doe', 'John Doe']
         })
@@ -338,6 +339,34 @@ class TestBaseSingleTableSynthesizer:
         )
         mock_warnings.warn.assert_called_once_with(expected_warning)
         instance._preprocess.assert_called_once_with(data)
+
+    def test_preprocess_int_columns(self):
+        """Test the preprocess method.
+
+        Ensure that data with column names as integers are not changed by
+        preprocess.
+        """
+        # Setup
+        instance = Mock()
+        instance._fitted = False
+        instance._original_columns = pd.Index([1, 2, 'str'])
+        data = pd.DataFrame({
+            1: ['John', 'Doe', 'John Doe'],
+            2: ['John', 'Doe', 'John Doe'],
+            'str': ['John', 'Doe', 'John Doe'],
+        })
+
+        # Run
+        BaseSingleTableSynthesizer.preprocess(instance, data)
+
+        # Assert
+        corrected_frame = pd.DataFrame({
+            1: ['John', 'Doe', 'John Doe'],
+            2: ['John', 'Doe', 'John Doe'],
+            'str': ['John', 'Doe', 'John Doe'],
+        })
+
+        pd.testing.assert_frame_equal(data, corrected_frame)
 
     @patch('sdv.single_table.base.DataProcessor')
     def test__fit(self, mock_data_processor):
@@ -429,8 +458,8 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         assert instance._random_state_set is False
         instance._data_processor.reset_sampling.assert_called_once_with()
-        instance._preprocess.assert_called_once_with(data)
-        instance.fit_processed_data.assert_called_once_with(instance._preprocess.return_value)
+        instance.preprocess.assert_called_once_with(data)
+        instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()
         assert caplog.messages[0] == (
             '\nFit:\n'

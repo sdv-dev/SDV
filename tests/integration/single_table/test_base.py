@@ -779,6 +779,44 @@ def test_fit_raises_version_error():
         instance.fit(data)
 
 
+SYNTHESIZERS_CLASSES = [
+    pytest.param(CTGANSynthesizer, id='CTGANSynthesizer'),
+    pytest.param(TVAESynthesizer, id='TVAESynthesizer'),
+    pytest.param(GaussianCopulaSynthesizer, id='GaussianCopulaSynthesizer'),
+    pytest.param(CopulaGANSynthesizer, id='CopulaGANSynthesizer'),
+]
+
+
+@pytest.mark.parametrize('synthesizer_class', SYNTHESIZERS_CLASSES)
+def test_fit_and_sample_numerical_col_names(synthesizer_class):
+    """Test fitting/sampling when column names are integers"""
+    # Setup
+    num_rows = 50
+    num_cols = 10
+    values = {
+        i: np.random.randint(0, 100, size=num_rows) for i in range(num_cols)
+    }
+    data = pd.DataFrame(values)
+    metadata = SingleTableMetadata()
+    metadata_dict = {'columns': {}}
+    for i in range(num_cols):
+        metadata_dict['columns'][i] = {'sdtype': 'numerical'}
+    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+
+    # Run
+    synth = synthesizer_class(metadata)
+    synth.fit(data)
+    sample_1 = synth.sample(10)
+    sample_2 = synth.sample(10)
+
+    assert sample_1.columns.tolist() == data.columns.tolist()
+    assert sample_2.columns.tolist() == data.columns.tolist()
+
+    # Assert
+    with pytest.raises(AssertionError):
+        pd.testing.assert_frame_equal(sample_1, sample_2)
+
+
 @pytest.mark.parametrize('synthesizer', SYNTHESIZERS)
 def test_sample_not_fitted(synthesizer):
     """Test that a synthesizer raises an error when trying to sample without fitting."""

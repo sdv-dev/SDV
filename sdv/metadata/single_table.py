@@ -1240,6 +1240,12 @@ class SingleTableMetadata:
         for key in instance._KEYS:
             value = deepcopy(metadata_dict.get(key))
             if value:
+                if key == 'columns':
+                    value = {
+                        str(key)
+                        if not isinstance(key, str)
+                        else key: col for key, col in value.items()
+                    }
                 setattr(instance, f'{key}', value)
 
         return instance
