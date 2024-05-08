@@ -389,7 +389,7 @@ class MultiTableMetadata:
         """
         self._validate_table_exists(table_name)
         table = self.tables.get(table_name)
-        table.update_column(column_name, **kwargs)
+        table.update_column(str(column_name), **kwargs)
 
     def update_columns(self, table_name, column_names, **kwargs):
         """Update multiple columns with the same metadata kwargs.
@@ -523,7 +523,9 @@ class MultiTableMetadata:
 
     def detect_table_from_dataframe(self, table_name, data):
         """Detect the metadata for a table from a dataframe.
-        All data columns are converted to strings
+
+        This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``,
+        for a specified table. All data columns are converted to strings.
 
         Args:
             table_name (str):
@@ -539,7 +541,9 @@ class MultiTableMetadata:
 
     def detect_from_dataframes(self, data):
         """Detect the metadata for all tables in a dictionary of dataframes.
-        All data columns are converted to strings
+
+        This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
+        All data columns are converted to strings.
 
         Args:
             data (dict):

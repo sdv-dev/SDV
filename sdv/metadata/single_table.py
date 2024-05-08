@@ -581,7 +581,7 @@ class SingleTableMetadata:
         """Detect the metadata from a ``pd.DataFrame`` object.
 
         This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
-        All data columns are converted to strings
+        All data columns are converted to strings.
 
         Args:
             data (pandas.DataFrame):
@@ -1236,7 +1236,8 @@ class SingleTableMetadata:
                 Python dictionary representing a ``SingleTableMetadata`` object.
 
         Returns:
-            Instance of ``SingleTableMetadata``.
+            Instance of ``SingleTableMetadata``. Column names are converted to
+            string type.
         """
         instance = cls()
         for key in instance._KEYS:
