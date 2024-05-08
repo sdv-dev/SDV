@@ -389,7 +389,7 @@ class MultiTableMetadata:
         """
         self._validate_table_exists(table_name)
         table = self.tables.get(table_name)
-        table.update_column(str(column_name), **kwargs)
+        table.update_column(column_name, **kwargs)
 
     def update_columns(self, table_name, column_names, **kwargs):
         """Update multiple columns with the same metadata kwargs.
