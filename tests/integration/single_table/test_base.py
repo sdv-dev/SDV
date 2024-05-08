@@ -793,3 +793,22 @@ def test_sample_not_fitted(synthesizer):
     # Run and Assert
     with pytest.raises(SamplingError, match=expected_message):
         synthesizer.sample(10)
+
+
+def test_detect_from_dataframe_numerical_col():
+    """Test that a ``VersionError`` is being raised if the current version is newer."""
+    # Setup
+    data = pd.DataFrame({
+        1: [1, 2, 3],
+        2: [4, 5, 6],
+        3: ['a', 'b', 'c'],
+    })
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+    instance = BaseSingleTableSynthesizer(metadata)
+
+    instance.fit(data)
+    sample = instance.sample(5)
+    print(sample)
+
+    assert False
