@@ -499,9 +499,10 @@ class BaseMultiTableSynthesizer:
             total_rows += len(table)
             total_columns += len(table.columns)
 
+        table_columns = getattr(self, '_original_table_columns', {})
         for table in sampled_data:
-            if table in self._original_table_columns:
-                sampled_data[table].columns = self._original_table_columns[table]
+            if table in table_columns:
+                sampled_data[table].columns = table_columns[table]
 
         SYNTHESIZER_LOGGER.info(
             '\nSample:\n'

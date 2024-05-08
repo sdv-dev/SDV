@@ -909,7 +909,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             show_progress_bar=show_progress_bar
         )
 
-        if not self._original_columns.empty:
+        original_columns = getattr(self, '_original_columns', pd.Index([]))
+        if not original_columns.empty:
             sampled_data.columns = self._original_columns
 
         SYNTHESIZER_LOGGER.info(
