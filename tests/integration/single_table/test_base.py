@@ -843,8 +843,12 @@ def test_detect_from_dataframe_numerical_col(synthesizer_class):
         3: ['a', 'b', 'c'],
     })
     metadata = SingleTableMetadata()
+
+    # Run
     metadata.detect_from_dataframe(data)
     instance = synthesizer_class(metadata)
     instance.fit(data)
     sample = instance.sample(5)
+
+    # Assert
     assert sample.columns.tolist() == data.columns.tolist()
