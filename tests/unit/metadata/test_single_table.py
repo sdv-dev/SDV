@@ -1296,6 +1296,87 @@ class TestSingleTableMetadata:
         ]
         mock_log.info.assert_has_calls(expected_log_calls)
 
+    @patch('sdv.metadata.single_table.LOGGER')
+    def test_detect_from_dataframe_numerical_columns(self, mock_log):
+        """Test the detect from dataframe with columns that are integers"""
+        # Setup
+        num_rows = 100
+        num_cols = 20
+        values = {i + 1: np.random.randint(0, 100, size=num_rows) for i in range(num_cols)}
+        data = pd.DataFrame(values)
+        correct_metadata = {
+            'columns': {
+                '1': {
+                    'sdtype': 'numerical'
+                },
+                '2': {
+                    'sdtype': 'numerical'
+                },
+                '3': {
+                    'sdtype': 'numerical'
+                },
+                '4': {
+                    'sdtype': 'numerical'
+                },
+                '5': {
+                    'sdtype': 'numerical'
+                },
+                '6': {
+                    'sdtype': 'numerical'
+                },
+                '7': {
+                    'sdtype': 'numerical'
+                },
+                '8': {
+                    'sdtype': 'numerical'
+                },
+                '9': {
+                    'sdtype': 'numerical'
+                },
+                '10': {
+                    'sdtype': 'numerical'
+                },
+                '11': {
+                    'sdtype': 'numerical'
+                },
+                '12': {
+                    'sdtype': 'numerical'
+                },
+                '13': {
+                    'sdtype': 'numerical'
+                },
+                '14': {
+                    'sdtype': 'numerical'
+                },
+                '15': {
+                    'sdtype': 'numerical'
+                },
+                '16': {
+                    'sdtype': 'numerical'
+                },
+                '17': {
+                    'sdtype': 'numerical'
+                },
+                '18': {
+                    'sdtype': 'numerical'
+                },
+                '19': {
+                    'sdtype': 'numerical'
+                },
+                '20': {
+                    'sdtype': 'numerical'
+                }
+            },
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+        }
+
+        # Run
+        metadata = SingleTableMetadata()
+        metadata.detect_from_dataframe(data)
+
+        # Assert
+        assert correct_metadata == metadata.to_dict()
+
     def test_detect_from_csv_raises_error(self):
         """Test the ``detect_from_csv`` method.
 

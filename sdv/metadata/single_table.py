@@ -524,6 +524,8 @@ class SingleTableMetadata:
             data (pandas.DataFrame):
                 The data to be analyzed.
         """
+        old_columns = data.columns
+        data.columns = data.columns.astype(str)
         first_pii_field = None
         for field in data:
             column_data = data[field]
@@ -573,11 +575,13 @@ class SingleTableMetadata:
             self.primary_key = first_pii_field
 
         self._updated = True
+        data.columns = old_columns
 
     def detect_from_dataframe(self, data):
         """Detect the metadata from a ``pd.DataFrame`` object.
 
         This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
+        All data column names are converted to strings.
 
         Args:
             data (pandas.DataFrame):
@@ -1232,7 +1236,8 @@ class SingleTableMetadata:
                 Python dictionary representing a ``SingleTableMetadata`` object.
 
         Returns:
-            Instance of ``SingleTableMetadata``.
+            Instance of ``SingleTableMetadata``. Column names are converted to
+            string type.
         """
         instance = cls()
         for key in instance._KEYS:

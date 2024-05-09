@@ -524,6 +524,9 @@ class MultiTableMetadata:
     def detect_table_from_dataframe(self, table_name, data):
         """Detect the metadata for a table from a dataframe.
 
+        This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``,
+        for a specified table. All data column names are converted to strings.
+
         Args:
             table_name (str):
                 Name of the table to detect.
@@ -538,6 +541,9 @@ class MultiTableMetadata:
 
     def detect_from_dataframes(self, data):
         """Detect the metadata for all tables in a dictionary of dataframes.
+
+        This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
+        All data column names are converted to strings.
 
         Args:
             data (dict):
