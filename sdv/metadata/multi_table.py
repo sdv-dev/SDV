@@ -525,7 +525,7 @@ class MultiTableMetadata:
         """Detect the metadata for a table from a dataframe.
 
         This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``,
-        for a specified table. All data columns are converted to strings.
+        for a specified table. All data column names are converted to strings.
 
         Args:
             table_name (str):
@@ -543,7 +543,7 @@ class MultiTableMetadata:
         """Detect the metadata for all tables in a dictionary of dataframes.
 
         This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
-        All data columns are converted to strings.
+        All data column names are converted to strings.
 
         Args:
             data (dict):
