@@ -16,7 +16,7 @@ class BaseLocalHandler:
         self.decimal = decimal
         self.float_format = float_format
 
-    def _infer_metadata(self, data):
+    def create_metadata(self, data):
         """Detect the metadata for all tables in a dictionary of dataframes.
 
         Args:
@@ -33,14 +33,13 @@ class BaseLocalHandler:
         return metadata
 
     def read(self):
-        """Read data from files and returns it along with metadata.
+        """Read data from files and return it along with metadata.
 
         This method must be implemented by subclasses.
 
         Returns:
-            tuple:
-                A tuple containing the read data as a dictionary and metadata. The dictionary maps
-                table names to pandas DataFrames. The metadata is an object describing the data.
+            dict:
+                The dictionary maps table names to pandas DataFrames.
         """
         raise NotImplementedError()
 
@@ -91,7 +90,7 @@ class CSVHandler(BaseLocalHandler):
         self.quoting = quoting
 
     def read(self, folder_name, file_names=None):
-        """Read data from CSV files and returns it along with metadata.
+        """Read data from CSV files and return it along with metadata.
 
         Args:
             folder_name (str):
@@ -101,17 +100,14 @@ class CSVHandler(BaseLocalHandler):
                 in the folder are read.
 
         Returns:
-            tuple:
-                A tuple containing the data as a dictionary and metadata. The dictionary maps
-                table names to pandas DataFrames. The metadata is an object describing the data.
+            dict:
+                The dictionary maps table names to pandas DataFrames.
 
         Raises:
             FileNotFoundError:
                 If the specified files do not exist in the folder.
         """
         data = {}
-        metadata = MultiTableMetadata()
-
         folder_path = Path(folder_name)
 
         if file_names is None:
@@ -156,8 +152,7 @@ class CSVHandler(BaseLocalHandler):
                 **kwargs
             )
 
-        metadata = self._infer_metadata(data)
-        return data, metadata
+        return data
 
     def write(self, synthetic_data, folder_name, file_name_suffix=None, mode='x'):
         """Write synthetic data to CSV files.
@@ -192,3 +187,93 @@ class CSVHandler(BaseLocalHandler):
                 quoting=self.quoting,
                 mode=mode,
             )
+
+
+class ExcelHandler(BaseLocalHandler):
+    """A class for handling Excel files."""
+
+    def _read_excel(self, file_path, sheet_names=None):
+        """Read data from Excel File and return just the data as a dictionary."""
+        data = {}
+        if sheet_names is None:
+            xl_file = pd.ExcelFile(file_path)
+            sheet_names = xl_file.sheet_names
+
+        for sheet_name in sheet_names:
+            data[sheet_name] = pd.read_excel(
+                file_path,
+                sheet_name=sheet_name,
+                parse_dates=False,
+                decimal=self.decimal,
+                index_col=None
+            )
+
+        return data
+
+    def read(self, file_path, sheet_names=None):
+        """Read data from Excel files and return it along with metadata.
+
+        Args:
+            file_path (str):
+                The path to the Excel file to read.
+            sheet_names (list of str, optional):
+                The names of sheets to read. If None, all sheets are read.
+
+        Returns:
+            dict:
+                The dictionary maps table names to pandas DataFrames.
+        """
+        if sheet_names is not None and not isinstance(sheet_names, list):
+            raise ValueError("'sheet_names' must be None or a list of strings.")
+
+        return self._read_excel(file_path, sheet_names)
+
+    def write(self, synthetic_data, file_name, sheet_name_suffix=None, mode='w'):
+        """Write synthetic data to an Excel File.
+
+        Args:
+            synthetic_data (dict):
+                A dictionary mapping table names to pandas DataFrames containing synthetic data.
+            file_name (str):
+                The name of the Excel file to write.
+            sheet_name_suffix (str, optional):
+                A suffix to add to each sheet name.
+            mode (str, optional):
+                The mode of writing to use. Defaults to 'w'.
+                'w': Write sheets to a new file, clearing any existing file that may exist.
+                'a': Append new sheets within the existing file.
+                     Note: You cannot append data to existing sheets.
+        """
+        temp_data = synthetic_data
+        suffix_added = False
+
+        if mode == 'a':
+            temp_data = self._read_excel(file_name)
+            for table_name, table in synthetic_data.items():
+                sheet_name = table_name
+                if sheet_name_suffix:
+                    sheet_name = f'{table_name}{sheet_name_suffix}'
+                    suffix_added = True
+
+                if temp_data.get(sheet_name) is not None:
+                    temp_data[sheet_name] = pd.concat(
+                        [temp_data[sheet_name], synthetic_data[sheet_name]],
+                        ignore_index=True
+                    )
+
+                else:
+                    temp_data[sheet_name] = table
+
+        writer = pd.ExcelWriter(file_name)
+        for table_name, table_data in temp_data.items():
+            if sheet_name_suffix and not suffix_added:
+                table_name += sheet_name_suffix
+
+            table_data.to_excel(
+                writer,
+                sheet_name=table_name,
+                float_format=self.float_format,
+                index=False
+            )
+
+        writer.close()

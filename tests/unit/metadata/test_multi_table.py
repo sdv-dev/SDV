@@ -1715,6 +1715,85 @@ class TestMultiTableMetadata:
             }
         ]
 
+    @patch('sdv.metadata.multi_table.SingleTableMetadata')
+    def test_load_from_dict_integer(self, mock_singletablemetadata):
+        """Test that ``load_from_dict`` returns a instance of ``MultiTableMetadata``.
+
+        Test that when calling the ``load_from_dict`` method a new instance with the passed
+        python ``dict`` details should be created. Make sure that integers passed in are
+        turned into strings to ensure metadata is properly typed.
+
+        Setup:
+            - A dict representing a ``MultiTableMetadata``.
+
+        Mock:
+            - Mock ``SingleTableMetadata`` from ``sdv.metadata.multi_table``
+
+        Output:
+            - ``instance`` that contains ``instance.tables`` and ``instance.relationships``.
+
+        Side Effects:
+            - ``SingleTableMetadata.load_from_dict`` has been called.
+        """
+        # Setup
+        multitable_metadata = {
+            'tables': {
+                'accounts': {
+                    1: {'sdtype': 'numerical'},
+                    2: {'sdtype': 'numerical'},
+                    'amount': {'sdtype': 'numerical'},
+                    'start_date': {'sdtype': 'datetime'},
+                    'owner': {'sdtype': 'id'},
+                },
+                'branches': {
+                    1: {'sdtype': 'numerical'},
+                    'name': {'sdtype': 'id'},
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'accounts',
+                    'parent_primary_key': 1,
+                    'child_table_name': 'branches',
+                    'child_foreign_key': 1,
+                }
+            ]
+        }
+
+        single_table_accounts = {
+            '1': {'sdtype': 'numerical'},
+            '2': {'sdtype': 'numerical'},
+            'amount': {'sdtype': 'numerical'},
+            'start_date': {'sdtype': 'datetime'},
+            'owner': {'sdtype': 'id'},
+        }
+        single_table_branches = {
+            '1': {'sdtype': 'numerical'},
+            'name': {'sdtype': 'id'},
+        }
+        mock_singletablemetadata.load_from_dict.side_effect = [
+            single_table_accounts,
+            single_table_branches
+        ]
+
+        # Run
+        instance = MultiTableMetadata.load_from_dict(multitable_metadata)
+
+        # Assert
+        assert instance.tables == {
+            'accounts': single_table_accounts,
+            'branches': single_table_branches
+        }
+
+        assert instance.relationships == [
+            {
+                'parent_table_name': 'accounts',
+                'parent_primary_key': '1',
+                'child_table_name': 'branches',
+                'child_foreign_key': '1',
+            }
+        ]
+
     @patch('sdv.metadata.multi_table.json')
     def test___repr__(self, mock_json):
         """Test that the ``__repr__`` method.

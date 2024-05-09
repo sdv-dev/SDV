@@ -1,13 +1,64 @@
 """Unit tests for local file handlers."""
 import os
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, call, patch
 
 import pandas as pd
 import pytest
 
-from sdv.io.local.local import CSVHandler
+from sdv.io.local.local import BaseLocalHandler, CSVHandler, ExcelHandler
 from sdv.metadata.multi_table import MultiTableMetadata
+
+
+class TestBaseLocalHandler:
+
+    def test___init__(self):
+        """Test the default initialization of the class."""
+        # Run
+        instance = BaseLocalHandler()
+
+        # Assert
+        assert instance.decimal == '.'
+        assert instance.float_format is None
+
+    def test_create_metadata(self):
+        """Test that ``create_metadata`` will infer the metadata."""
+        # Setup
+        data = {
+            'hotel': pd.DataFrame({
+                'hotel_id': [1, 2, 3, 4, 5],
+                'stars': [3, 4, 5, 3, 4]
+            }),
+            'guests': pd.DataFrame({
+                'guest_id': [1, 2, 3, 4, 5],
+                'hotel_id': [1, 1, 3, 2, 3]
+            })
+        }
+        instance = BaseLocalHandler()
+
+        # Run
+        metadata = instance.create_metadata(data)
+
+        # Assert
+        assert isinstance(metadata, MultiTableMetadata)
+        assert metadata.to_dict() == {
+            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+            'relationships': [],
+            'tables': {
+                'guests': {
+                    'columns': {
+                        'guest_id': {'sdtype': 'numerical'},
+                        'hotel_id': {'sdtype': 'numerical'}
+                    }
+                },
+                'hotel': {
+                    'columns': {
+                        'hotel_id': {'sdtype': 'numerical'},
+                        'stars': {'sdtype': 'numerical'}
+                    }
+                }
+            }
+        }
 
 
 class TestCSVHandler:
@@ -69,13 +120,12 @@ class TestCSVHandler:
         handler = CSVHandler()
 
         # Run
-        data, metadata = handler.read('/path/to/data')
+        data = handler.read('/path/to/data')
 
         # Assert
         assert len(data) == 2
         assert 'parent' in data
         assert 'child' in data
-        assert isinstance(metadata, MultiTableMetadata)
         assert mock_read_csv.call_count == 2
         pd.testing.assert_frame_equal(
             data['parent'],
@@ -102,7 +152,7 @@ class TestCSVHandler:
         handler = CSVHandler()
 
         # Run
-        data, metadata = handler.read(tmpdir, file_names=['parent.csv'])
+        data = handler.read(tmpdir, file_names=['parent.csv'])
 
         # Assert
         assert 'parent' in data
@@ -210,3 +260,216 @@ class TestCSVHandler:
             'col2': ['a', 'b', 'c']
         })
         pd.testing.assert_frame_equal(dataframe, expected_dataframe)
+
+
+class TestExcelHandler:
+
+    def test___init__(self):
+        """Test the init parameters with default values."""
+        # Run
+        instance = ExcelHandler()
+
+        # Assert
+        assert instance.decimal == '.'
+        assert instance.float_format is None
+
+    def test___init___custom(self):
+        """Test custom initialization of the class."""
+        # Run
+        instance = ExcelHandler(decimal=',', float_format='%.2f')
+
+        # Assert
+        assert instance.decimal == ','
+        assert instance.float_format == '%.2f'
+
+    @patch('sdv.io.local.local.pd')
+    def test_read(self, mock_pd):
+        """Test the read method of ExcelHandler class."""
+        # Setup
+        file_path = 'test_file.xlsx'
+        mock_pd.ExcelFile.return_value = Mock(sheet_names=['Sheet1', 'Sheet2'])
+        mock_pd.read_excel.side_effect = [
+            pd.DataFrame({'A': [1, 2], 'B': [3, 4]}),
+            pd.DataFrame({'C': [5, 6], 'D': [7, 8]})
+        ]
+
+        instance = ExcelHandler()
+
+        # Run
+        data = instance.read(file_path)
+
+        # Assert
+        sheet_1_call = call(
+            'test_file.xlsx',
+            sheet_name='Sheet1',
+            parse_dates=False,
+            decimal='.',
+            index_col=None
+        )
+        sheet_2_call = call(
+            'test_file.xlsx',
+            sheet_name='Sheet2',
+            parse_dates=False,
+            decimal='.',
+            index_col=None
+        )
+        pd.testing.assert_frame_equal(
+            data['Sheet1'],
+            pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
+        )
+        pd.testing.assert_frame_equal(
+            data['Sheet2'],
+            pd.DataFrame({'C': [5, 6], 'D': [7, 8]})
+        )
+        assert mock_pd.read_excel.call_args_list == [sheet_1_call, sheet_2_call]
+
+    @patch('sdv.io.local.local.pd')
+    def test_read_sheet_names(self, mock_pd):
+        """Test the read method when provided sheet names."""
+        # Setup
+        file_path = 'test_file.xlsx'
+        sheet_names = ['Sheet1']
+        mock_pd.ExcelFile.return_value = Mock(sheet_names=['Sheet1', 'Sheet2'])
+        mock_pd.read_excel.side_effect = [
+            pd.DataFrame({'A': [1, 2], 'B': [3, 4]}),
+            pd.DataFrame({'C': [5, 6], 'D': [7, 8]})
+        ]
+
+        instance = ExcelHandler()
+
+        # Run
+        data = instance.read(file_path, sheet_names)
+
+        # Assert
+        sheet_1_call = call(
+            'test_file.xlsx',
+            sheet_name='Sheet1',
+            parse_dates=False,
+            decimal='.',
+            index_col=None
+        )
+        pd.testing.assert_frame_equal(
+            data['Sheet1'],
+            pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
+        )
+        assert mock_pd.read_excel.call_args_list == [sheet_1_call]
+        assert list(data) == ['Sheet1']
+
+    def test_read_sheet_names_string(self):
+        """Test the read method when provided sheet names but they are string."""
+        # Setup
+        file_path = 'test_file.xlsx'
+        sheet_names = 'Sheet1'
+        instance = ExcelHandler()
+
+        # Run and Assert
+        error_msg = "'sheet_names' must be None or a list of strings."
+        with pytest.raises(ValueError, match=error_msg):
+            instance.read(file_path, sheet_names)
+
+    @patch('sdv.io.local.local.pd')
+    def test_write(self, mock_pd):
+        """Test the write functionality of the ExcelHandler."""
+        # Setup
+        sheet_one = Mock()
+        sheet_two = Mock()
+        synthetic_data = {'Sheet1': sheet_one, 'Sheet2': sheet_two}
+
+        file_name = 'output_file.xlsx'
+        sheet_name_suffix = '_synthetic'
+        instance = ExcelHandler()
+
+        # Run
+        instance.write(synthetic_data, file_name, sheet_name_suffix)
+
+        # Assert
+        sheet_one.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet1_synthetic',
+            float_format=None,
+            index=False
+        )
+        sheet_two.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet2_synthetic',
+            float_format=None,
+            index=False
+        )
+        mock_pd.ExcelWriter.return_value.close.assert_called_once_with()
+
+    @patch('sdv.io.local.local.pd')
+    def test_write_mode_append(self, mock_pd):
+        """Test the write functionality of the ExcelHandler when mode is `a``."""
+        # Setup
+        sheet_one = Mock()
+        sheet_two = Mock()
+        synth_sheet_one = Mock()
+        synth_sheet_two = Mock()
+        synthetic_data = {'Sheet1': synth_sheet_one, 'Sheet2': synth_sheet_two}
+
+        file_name = 'output_file.xlsx'
+        sheet_name_suffix = '_synthetic'
+        instance = ExcelHandler()
+        instance._read_excel = Mock(return_value={'Sheet1': sheet_one, 'Sheet2': sheet_two})
+
+        # Run
+        instance.write(synthetic_data, file_name, sheet_name_suffix, mode='a')
+
+        # Assert
+        sheet_one.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet1',
+            float_format=None,
+            index=False
+        )
+        sheet_two.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet2',
+            float_format=None,
+            index=False
+        )
+        synth_sheet_one.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet1_synthetic',
+            float_format=None,
+            index=False
+        )
+        synth_sheet_two.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet2_synthetic',
+            float_format=None,
+            index=False
+        )
+        mock_pd.ExcelWriter.return_value.close.assert_called_once_with()
+
+    @patch('sdv.io.local.local.pd')
+    def test_write_mode_append_no_suffix(self, mock_pd):
+        """Test the write functionality of the ExcelHandler when mode is `a`` and no suffix."""
+        # Setup
+        sheet_one = Mock()
+        sheet_two = Mock()
+        synth_sheet_one = Mock()
+        synthetic_data = {'Sheet1': synth_sheet_one}
+        file_name = 'output_file.xlsx'
+        instance = ExcelHandler()
+        instance._read_excel = Mock(return_value={'Sheet1': sheet_one, 'Sheet2': sheet_two})
+
+        # Run
+        instance.write(synthetic_data, file_name, mode='a')
+
+        # Assert
+        mock_pd.concat.assert_called_once_with([sheet_one, synth_sheet_one], ignore_index=True)
+        mock_pd.concat.return_value.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet1',
+            float_format=None,
+            index=False
+        )
+
+        sheet_two.to_excel.assert_called_once_with(
+            mock_pd.ExcelWriter.return_value,
+            sheet_name='Sheet2',
+            float_format=None,
+            index=False
+        )
+        mock_pd.ExcelWriter.return_value.close.assert_called_once_with()

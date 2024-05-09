@@ -23,8 +23,9 @@ from sdv._utils import (
     _groupby_list, check_sdv_versions_and_warn, check_synthesizer_version, generate_synthesizer_id)
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
-from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
-from sdv.logging.utils import get_sdv_logger
+from sdv.errors import (
+    ConstraintsNotMetError, InvalidDataError, SamplingError, SynthesizerInputError)
+from sdv.logging import get_sdv_logger
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
 LOGGER = logging.getLogger(__name__)
@@ -102,6 +103,7 @@ class BaseSynthesizer:
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
         )
+        self._original_columns = pd.Index([])
         self._fitted = False
         self._random_state_set = False
         self._update_default_transformers()
@@ -366,6 +368,16 @@ class BaseSynthesizer:
         self._data_processor.fit(data)
         return self._data_processor.transform(data)
 
+    def _store_and_convert_original_cols(self, data):
+        # Transform in place to avoid possible large copy of data
+        for column in data.columns:
+            if isinstance(column, int):
+                self._original_columns = data.columns
+                data.columns = data.columns.astype(str)
+                return True
+
+        return False
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -383,7 +395,14 @@ class BaseSynthesizer:
                 "please refit the model using 'fit' or 'fit_processed_data'."
             )
 
-        return self._preprocess(data)
+        is_converted = self._store_and_convert_original_cols(data)
+
+        preprocess_data = self._preprocess(data)
+
+        if is_converted:
+            data.columns = self._original_columns
+
+        return preprocess_data
 
     def _fit(self, processed_data):
         """Fit the model to the table.
@@ -454,7 +473,7 @@ class BaseSynthesizer:
         self._fitted = False
         self._data_processor.reset_sampling()
         self._random_state_set = False
-        processed_data = self._preprocess(data)
+        processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
 
     def save(self, filepath):
@@ -871,6 +890,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             pandas.DataFrame:
                 Sampled data.
         """
+        if not self._fitted:
+            raise SamplingError(
+                'This synthesizer has not been fitted. Please fit your synthesizer first before'
+                ' sampling synthetic data.'
+            )
+
         sample_timestamp = datetime.datetime.now()
         has_constraints = bool(self._data_processor._constraints)
         has_batches = batch_size is not None and batch_size != num_rows
@@ -883,6 +908,10 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             output_file_path,
             show_progress_bar=show_progress_bar
         )
+
+        original_columns = getattr(self, '_original_columns', pd.Index([]))
+        if not original_columns.empty:
+            sampled_data.columns = self._original_columns
 
         SYNTHESIZER_LOGGER.info(
             '\nSample:\n'

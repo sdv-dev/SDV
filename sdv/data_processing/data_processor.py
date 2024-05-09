@@ -412,7 +412,7 @@ class DataProcessor:
         self._transformers_by_sdtype[sdtype] = transformer
 
     @staticmethod
-    def create_anonymized_transformer(sdtype, column_metadata, enforce_uniqueness,
+    def create_anonymized_transformer(sdtype, column_metadata, cardinality_rule,
                                       locales=['en_US']):
         """Create an instance of an ``AnonymizedFaker``.
 
@@ -424,9 +424,11 @@ class DataProcessor:
                 Sematic data type or a ``Faker`` function name.
             column_metadata (dict):
                 A dictionary representing the rest of the metadata for the given ``sdtype``.
-            enforce_uniqueness (bool):
-                If ``True`` overwrite ``enforce_uniqueness`` with ``True`` to ensure unique
-                generation for primary keys.
+            cardinality_rule (str):
+                If ``'unique'`` enforce that every created value is unique.
+                If ``'match'`` match the cardinality of the data seen during fit.
+                If ``None`` do not consider cardinality.
+                Defaults to ``None``.
             locales (str or list):
                 Locale or list of locales to use for the AnonymizedFaker transfomer.
                 Defaults to ['en_US'].
@@ -434,13 +436,13 @@ class DataProcessor:
         Returns:
             Instance of ``rdt.transformers.pii.AnonymizedFaker``.
         """
-        kwargs = {'locales': locales}
+        kwargs = {
+            'locales': locales,
+            'cardinality_rule': cardinality_rule
+        }
         for key, value in column_metadata.items():
             if key not in ['pii', 'sdtype']:
                 kwargs[key] = value
-
-        if enforce_uniqueness:
-            kwargs['enforce_uniqueness'] = True
 
         try:
             transformer = get_anonymized_transformer(sdtype, kwargs)
@@ -494,7 +496,7 @@ class DataProcessor:
             is_baseprovider = transformer.provider_name == 'BaseProvider'
             if is_lexify and is_baseprovider:  # Default settings
                 return self.create_anonymized_transformer(
-                    sdtype, column_metadata, False, self._locales
+                    sdtype, column_metadata, None, self._locales
                 )
 
         kwargs = {
@@ -598,11 +600,11 @@ class DataProcessor:
 
             elif pii:
                 sdtypes[column] = 'pii'
-                enforce_uniqueness = bool(column in self._keys)
+                cardinality_rule = 'unique' if bool(column in self._keys) else None
                 transformers[column] = self.create_anonymized_transformer(
                     sdtype,
                     column_metadata,
-                    enforce_uniqueness,
+                    cardinality_rule,
                     self._locales
                 )
 
@@ -614,7 +616,7 @@ class DataProcessor:
                     transformers[column] = self.create_anonymized_transformer(
                         sdtype=sdtype,
                         column_metadata=column_metadata,
-                        enforce_uniqueness=True,
+                        cardinality_rule='unique',
                         locales=self._locales
                     )
 

@@ -15,7 +15,8 @@ from sdv import version
 from sdv._utils import (
     _validate_foreign_keys_not_null, check_sdv_versions_and_warn, check_synthesizer_version,
     generate_synthesizer_id)
-from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
+from sdv.errors import (
+    ConstraintsNotMetError, InvalidDataError, SamplingError, SynthesizerInputError)
 from sdv.logging import disable_single_table_logger, get_sdv_logger
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
@@ -99,6 +100,7 @@ class BaseMultiTableSynthesizer:
         self.extended_columns = defaultdict(dict)
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
+        self._original_table_columns = {}
         if synthesizer_kwargs is not None:
             warn_message = (
                 'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
@@ -325,6 +327,19 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].update_transformers(column_name_to_transformer)
 
+    def _store_and_convert_original_cols(self, data):
+        list_of_changed_tables = []
+        for table, dataframe in data.items():
+            self._original_table_columns[table] = dataframe.columns
+            for column in dataframe.columns:
+                if isinstance(column, int):
+                    dataframe.columns = dataframe.columns.astype(str)
+                    list_of_changed_tables.append(table)
+                    break
+
+            data[table] = dataframe
+        return list_of_changed_tables
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -336,6 +351,8 @@ class BaseMultiTableSynthesizer:
             dict:
                 A dictionary with the preprocessed data.
         """
+        list_of_changed_tables = self._store_and_convert_original_cols(data)
+
         self.validate(data)
         if self._fitted:
             warnings.warn(
@@ -349,6 +366,9 @@ class BaseMultiTableSynthesizer:
             synthesizer = self._table_synthesizers[table_name]
             self._assign_table_transformers(synthesizer, table_name, table_data)
             processed_data[table_name] = synthesizer._preprocess(table_data)
+
+        for table in list_of_changed_tables:
+            data[table].columns = self._original_table_columns[table]
 
         return processed_data
 
@@ -467,6 +487,12 @@ class BaseMultiTableSynthesizer:
                 If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
                 than the original tables. Defaults to ``1.0``.
         """
+        if not self._fitted:
+            raise SamplingError(
+                'This synthesizer has not been fitted. Please fit your synthesizer first before '
+                'sampling synthetic data.'
+            )
+
         if not type(scale) in (float, int) or not scale > 0:
             raise SynthesizerInputError(
                 f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0.")
@@ -479,6 +505,11 @@ class BaseMultiTableSynthesizer:
         for table in sampled_data.values():
             total_rows += len(table)
             total_columns += len(table.columns)
+
+        table_columns = getattr(self, '_original_table_columns', {})
+        for table in sampled_data:
+            if table in table_columns:
+                sampled_data[table].columns = table_columns[table]
 
         SYNTHESIZER_LOGGER.info(
             '\nSample:\n'

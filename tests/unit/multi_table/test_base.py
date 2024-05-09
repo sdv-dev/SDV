@@ -11,7 +11,8 @@ import pytest
 
 from sdv import version
 from sdv.errors import (
-    ConstraintsNotMetError, InvalidDataError, NotFittedError, SynthesizerInputError, VersionError)
+    ConstraintsNotMetError, InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError,
+    VersionError)
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -779,6 +780,77 @@ class TestBaseMultiTableSynthesizer:
         synth_upravna_enota._preprocess.assert_called_once_with(data['upravna_enota'])
         synth_upravna_enota.update_transformers.assert_called_once_with({'a': None, 'b': None})
 
+    def test_preprocess_int_columns(self):
+        """Test the preprocess method.
+
+        Ensure that data with column names as integers are not changed by
+        preprocess.
+        """
+        # Setup
+        metadata_dict = {
+            'tables': {
+                'first_table': {
+                    'primary_key': '1',
+                    'columns': {
+                        '1': {'sdtype': 'id'},
+                        '2': {'sdtype': 'categorical'},
+                        'str': {'sdtype': 'categorical'}
+                    }
+                },
+                'second_table': {
+                    'columns': {
+                        '3': {'sdtype': 'id'},
+                        'str': {'sdtype': 'categorical'}
+                    }
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'first_table',
+                    'parent_primary_key': '1',
+                    'child_table_name': 'second_table',
+                    'child_foreign_key': '3'
+                }
+            ]
+        }
+        metadata = MultiTableMetadata.load_from_dict(metadata_dict)
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance.validate = Mock()
+        instance._table_synthesizers = {
+            'first_table': Mock(),
+            'second_table': Mock()
+        }
+        multi_data = {
+            'first_table': pd.DataFrame({
+                1: ['abc', 'def', 'ghi'],
+                2: ['x', 'a', 'b'],
+                'str': ['John', 'Doe', 'John Doe'],
+            }),
+            'second_table': pd.DataFrame({
+                3: ['abc', 'def', 'ghi'],
+                'another': ['John', 'Doe', 'John Doe'],
+            }),
+        }
+
+        # Run
+        instance.preprocess(multi_data)
+
+        # Assert
+        corrected_frame = {
+            'first_table': pd.DataFrame({
+                1: ['abc', 'def', 'ghi'],
+                2: ['x', 'a', 'b'],
+                'str': ['John', 'Doe', 'John Doe'],
+            }),
+            'second_table': pd.DataFrame({
+                3: ['abc', 'def', 'ghi'],
+                'another': ['John', 'Doe', 'John Doe'],
+            }),
+        }
+
+        pd.testing.assert_frame_equal(multi_data['first_table'], corrected_frame['first_table'])
+        pd.testing.assert_frame_equal(multi_data['second_table'], corrected_frame['second_table'])
+
     @patch('sdv.multi_table.base.warnings')
     def test_preprocess_warning(self, mock_warnings):
         """Test that ``preprocess`` warns the user if the model has already been fitted."""
@@ -1016,6 +1088,7 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
+        instance._fitted = True
         instance._sample = Mock()
         scales = ['Test', True, -1.2, np.nan]
 
@@ -1038,6 +1111,20 @@ class TestBaseMultiTableSynthesizer:
             with pytest.raises(SynthesizerInputError, match=msg):
                 instance.sample(scale=scale)
 
+    def test_sample_raises_sampling_error(self):
+        """Test that ``sample`` will raise ``SamplingError`` when not fitted."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+
+        # Run and Assert
+        error_msg = (
+            'This synthesizer has not been fitted. Please fit your synthesizer first before '
+            'sampling synthetic data.'
+        )
+        with pytest.raises(SamplingError, match=error_msg):
+            instance.sample(1)
+
     @patch('sdv.multi_table.base.datetime')
     def test_sample(self, mock_datetime, caplog):
         """Test that ``sample`` calls the ``_sample`` with the given arguments."""
@@ -1045,6 +1132,7 @@ class TestBaseMultiTableSynthesizer:
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
+        instance._fitted = True
         data = {
             'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
             'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})
