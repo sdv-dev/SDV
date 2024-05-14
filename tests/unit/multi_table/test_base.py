@@ -133,11 +133,12 @@ class TestBaseMultiTableSynthesizer:
         mock_check_metadata_updated.assert_called_once()
         mock_generate_synthesizer_id.assert_called_once_with(instance)
         assert instance._synthesizer_id == synthesizer_id
-        assert caplog.messages[0] == (
-            '\nInstance:\n  Timestamp: 2024-04-19 16:20:10.037183\n  Synthesizer class name: '
-            'BaseMultiTableSynthesizer\n  Synthesizer id: '
-            'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        )
+        assert caplog.messages[0] == str({
+            'EVENT': 'Instance',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'BaseMultiTableSynthesizer',
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        })
 
     def test__init__column_relationship_warning(self):
         """Test that a warning is raised only once when the metadata has column relationships."""
@@ -927,16 +928,15 @@ class TestBaseMultiTableSynthesizer:
         instance._augment_tables.assert_called_once_with(processed_data)
         instance._model_tables.assert_called_once_with(instance._augment_tables.return_value)
         assert instance._fitted
-        assert caplog.messages[0] == (
-            '\nFit processed data:\n'
-            '  Timestamp: 2024-04-19 16:20:10.037183\n'
-            '  Synthesizer class name: Mock\n'
-            '  Statistics of the fit processed data:\n'
-            '    Total number of tables: 2\n'
-            '    Total number of rows: 6\n'
-            '    Total number of columns: 4\n'
-            '  Synthesizer id: BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        )
+        assert caplog.messages[0] == str({
+            'EVENT': 'Fit processed data',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 2,
+            'TOTAL NUMBER OF ROWS': 6,
+            'TOTAL NUMBER OF COLUMNS': 4
+        })
 
     def test_fit_processed_data_empty_table(self):
         """Test attributes are properly set when data is empty and that _fit is not called."""
@@ -1012,16 +1012,15 @@ class TestBaseMultiTableSynthesizer:
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()
-        assert caplog.messages[0] == (
-            '\nFit:\n'
-            '  Timestamp: 2024-04-19 16:20:10.037183\n'
-            '  Synthesizer class name: Mock\n'
-            '  Statistics of the fit data:\n'
-            '    Total number of tables: 2\n'
-            '    Total number of rows: 6\n'
-            '    Total number of columns: 4\n'
-            '  Synthesizer id: BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        )
+        assert caplog.messages[0] == str({
+            'EVENT': 'Fit',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 2,
+            'TOTAL NUMBER OF ROWS': 6,
+            'TOTAL NUMBER OF COLUMNS': 4
+        })
 
     def test_fit_raises_version_error(self):
         """Test that fit will raise a ``VersionError`` if the current version is bigger."""
@@ -1148,16 +1147,15 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         instance._sample.assert_called_once_with(scale=1.5)
-        assert caplog.messages[0] == (
-            '\nSample:\n'
-            '  Timestamp: 2024-04-19 16:20:10.037183\n'
-            '  Synthesizer class name: BaseMultiTableSynthesizer\n'
-            '  Statistics of the sample size:\n'
-            '    Total number of tables: 2\n'
-            '    Total number of rows: 6\n'
-            '    Total number of columns: 4\n'
-            '  Synthesizer id: BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        )
+        assert caplog.messages[0] == str({
+            'EVENT': 'Sample',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'BaseMultiTableSynthesizer',
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 2,
+            'TOTAL NUMBER OF ROWS': 6,
+            'TOTAL NUMBER OF COLUMNS': 4
+        })
 
     def test_get_learned_distributions_raises_an_unfitted_error(self):
         """Test that ``get_learned_distributions`` raises an error when model is not fitted."""
@@ -1563,12 +1561,12 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
-        assert caplog.messages[0] == (
-            '\nSave:\n'
-            '  Timestamp: 2024-04-19 16:20:10.037183\n'
-            '  Synthesizer class name: Mock\n'
-            '  Synthesizer id: BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        )
+        assert caplog.messages[0] == str({
+            'EVENT': 'Save',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        })
 
     @patch('sdv.multi_table.base.datetime')
     @patch('sdv.multi_table.base.generate_synthesizer_id')
@@ -1599,9 +1597,9 @@ class TestBaseMultiTableSynthesizer:
         mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
         assert loaded_instance._synthesizer_id == synthesizer_id
         mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
-        assert caplog.messages[0] == (
-            '\nLoad:\n'
-            '  Timestamp: 2024-04-19 16:20:10.037183\n'
-            '  Synthesizer class name: Mock\n'
-            '  Synthesizer id: BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        )
+        assert caplog.messages[0] == str({
+            'EVENT': 'Load',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        })

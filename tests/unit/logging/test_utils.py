@@ -1,7 +1,12 @@
 """Test ``SDV`` logging utilities."""
+from io import StringIO
 from unittest.mock import Mock, mock_open, patch
 
-from sdv.logging.utils import disable_single_table_logger, get_sdv_logger_config
+import numpy as np
+import pandas as pd
+
+from sdv.logging.utils import (
+    disable_single_table_logger, get_sdv_logger_config, load_logfile_dataframe)
 
 
 def test_get_sdv_logger_config():
@@ -54,3 +59,32 @@ def test_disable_single_table_logger(mock_getlogger):
 
     # Assert
     assert len(mock_logger.handlers) == 1
+
+
+def test_load_logfile_dataframe():
+    """Test loading the CSV logfile into a DataFrame"""
+    # Setup
+    logfile = StringIO(
+        'INFO,Instance,2024-05-14 11:29:00.649735,GaussianCopulaSynthesizer,'
+        'GaussianCopulaSynthesizer_1.12.1_5387a6e9f4d,,,\n'
+        'INFO,Fit,2024-05-14 11:29:00.649735,GaussianCopulaSynthesizer,'
+        'GaussianCopulaSynthesizer_1.12.1_5387a6e9f4d,1,500,9\n'
+        'INFO,Sample,2024-05-14 11:29:00.649735,GaussianCopulaSynthesizer,'
+        'GaussianCopulaSynthesizer_1.12.1_5387a6e9f4d,1,500,6\n'
+    )
+
+    # Run
+    log_dataframe = load_logfile_dataframe(logfile)
+
+    # Assert
+    expected_log = pd.DataFrame({
+        'LEVEL': ['INFO'] * 3,
+        'EVENT': ['Instance', 'Fit', 'Sample'],
+        'TIMESTAMP': ['2024-05-14 11:29:00.649735'] * 3,
+        'SYNTHESIZER CLASS NAME': ['GaussianCopulaSynthesizer'] * 3,
+        'SYNTHESIZER ID': ['GaussianCopulaSynthesizer_1.12.1_5387a6e9f4d'] * 3,
+        'TOTAL NUMBER OF TABLES': [np.nan, 1, 1],
+        'TOTAL NUMBER OF ROWS': [np.nan, 500, 500],
+        'TOTAL NUMBER OF COLUMNS': [np.nan, 9, 6]
+    })
+    pd.testing.assert_frame_equal(log_dataframe, expected_log)
