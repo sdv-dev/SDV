@@ -96,7 +96,7 @@ def _get_data(modality, output_folder_name, in_memory_directory):
         for filename, file_ in in_memory_directory.items():
             if filename.endswith('.csv'):
                 table_name = Path(filename).stem
-                data[table_name] = pd.read_csv(io.StringIO(file_.decode()))
+                data[table_name] = pd.read_csv(io.StringIO(file_.decode()), low_memory=False)
 
     if modality != 'multi_table':
         data = data.popitem()[1]
