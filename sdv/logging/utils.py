@@ -26,7 +26,7 @@ def get_sdv_logger_config():
 
     for logger in logger_conf.get('loggers', {}).values():
         handler = logger.get('handlers', {})
-        if handler.get('filename') == 'sdv_logs.log':
+        if handler.get('filename') == 'sdv_logs.csv':
             handler['filename'] = store_path / handler['filename']
 
     return logger_conf
