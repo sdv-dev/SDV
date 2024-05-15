@@ -119,15 +119,12 @@ class BaseMultiTableSynthesizer:
         self._fitted_sdv_version = None
         self._fitted_sdv_enterprise_version = None
         self._synthesizer_id = generate_synthesizer_id(self)
-        SYNTHESIZER_LOGGER.info(
-            '\nInstance:\n'
-            '  Timestamp: %s\n'
-            '  Synthesizer class name: %s\n'
-            '  Synthesizer id: %s',
-            datetime.datetime.now(),
-            self.__class__.__name__,
-            self._synthesizer_id
-        )
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Instance',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id
+        })
 
     def set_address_columns(self, table_name, column_names, anonymization_level='full'):
         """Set the address multi-column transformer.
@@ -403,22 +400,16 @@ class BaseMultiTableSynthesizer:
             total_rows += len(table)
             total_columns += len(table.columns)
 
-        SYNTHESIZER_LOGGER.info(
-            '\nFit processed data:\n'
-            '  Timestamp: %s\n'
-            '  Synthesizer class name: %s\n'
-            '  Statistics of the fit processed data:\n'
-            '    Total number of tables: %s\n'
-            '    Total number of rows: %s\n'
-            '    Total number of columns: %s\n'
-            '  Synthesizer id: %s',
-            datetime.datetime.now(),
-            self.__class__.__name__,
-            len(processed_data),
-            total_rows,
-            total_columns,
-            self._synthesizer_id,
-        )
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Fit processed data',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': len(processed_data),
+            'TOTAL NUMBER OF ROWS': total_rows,
+            'TOTAL NUMBER OF COLUMNS': total_columns
+        })
+
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         with disable_single_table_logger():
             augmented_data = self._augment_tables(processed_data)
@@ -443,22 +434,16 @@ class BaseMultiTableSynthesizer:
             total_rows += len(table)
             total_columns += len(table.columns)
 
-        SYNTHESIZER_LOGGER.info(
-            '\nFit:\n'
-            '  Timestamp: %s\n'
-            '  Synthesizer class name: %s\n'
-            '  Statistics of the fit data:\n'
-            '    Total number of tables: %s\n'
-            '    Total number of rows: %s\n'
-            '    Total number of columns: %s\n'
-            '  Synthesizer id: %s',
-            datetime.datetime.now(),
-            self.__class__.__name__,
-            len(data),
-            total_rows,
-            total_columns,
-            self._synthesizer_id,
-        )
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Fit',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': len(data),
+            'TOTAL NUMBER OF ROWS': total_rows,
+            'TOTAL NUMBER OF COLUMNS': total_columns
+        })
+
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         _validate_foreign_keys_not_null(self.metadata, data)
         self._check_metadata_updated()
@@ -511,22 +496,16 @@ class BaseMultiTableSynthesizer:
             if table in table_columns:
                 sampled_data[table].columns = table_columns[table]
 
-        SYNTHESIZER_LOGGER.info(
-            '\nSample:\n'
-            '  Timestamp: %s\n'
-            '  Synthesizer class name: %s\n'
-            '  Statistics of the sample size:\n'
-            '    Total number of tables: %s\n'
-            '    Total number of rows: %s\n'
-            '    Total number of columns: %s\n'
-            '  Synthesizer id: %s',
-            datetime.datetime.now(),
-            self.__class__.__name__,
-            len(sampled_data),
-            total_rows,
-            total_columns,
-            self._synthesizer_id,
-        )
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Sample',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': len(sampled_data),
+            'TOTAL NUMBER OF ROWS': total_rows,
+            'TOTAL NUMBER OF COLUMNS': total_columns
+        })
+
         return sampled_data
 
     def get_learned_distributions(self, table_name):
@@ -692,15 +671,13 @@ class BaseMultiTableSynthesizer:
                 Path where the instance will be serialized.
         """
         synthesizer_id = getattr(self, '_synthesizer_id', None)
-        SYNTHESIZER_LOGGER.info(
-            '\nSave:\n'
-            '  Timestamp: %s\n'
-            '  Synthesizer class name: %s\n'
-            '  Synthesizer id: %s',
-            datetime.datetime.now(),
-            self.__class__.__name__,
-            synthesizer_id
-        )
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Save',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': synthesizer_id,
+        })
+
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
 
@@ -724,13 +701,11 @@ class BaseMultiTableSynthesizer:
         if getattr(synthesizer, '_synthesizer_id', None) is None:
             synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
 
-        SYNTHESIZER_LOGGER.info(
-            '\nLoad:\n'
-            '  Timestamp: %s\n'
-            '  Synthesizer class name: %s\n'
-            '  Synthesizer id: %s',
-            datetime.datetime.now(),
-            synthesizer.__class__.__name__,
-            synthesizer._synthesizer_id,
-        )
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Load',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': synthesizer.__class__.__name__,
+            'SYNTHESIZER ID': synthesizer._synthesizer_id,
+        })
+
         return synthesizer

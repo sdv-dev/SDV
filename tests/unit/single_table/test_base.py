@@ -94,11 +94,12 @@ class TestBaseSingleTableSynthesizer:
         metadata.validate.assert_called_once_with()
         mock_check_metadata_updated.assert_called_once()
         mock_generate_synthesizer_id.assert_called_once_with(instance)
-        assert caplog.messages[0] == (
-            '\nInstance:\n  Timestamp: 2024-04-19 16:20:10.037183\n  Synthesizer class name: '
-            'BaseSingleTableSynthesizer\n  Synthesizer id: '
-            'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        )
+        assert caplog.messages[0] == str({
+            'EVENT': 'Instance',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'BaseSingleTableSynthesizer',
+            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        })
 
     @patch('sdv.single_table.base.DataProcessor')
     def test___init__custom(self, mock_data_processor):
@@ -398,16 +399,15 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         instance._fit.assert_called_once_with(processed_data)
-        assert caplog.messages[0] == (
-            '\nFit processed data:\n'
-            '  Timestamp: 2024-04-19 16:20:10.037183\n'
-            '  Synthesizer class name: Mock\n'
-            '  Statistics of the fit processed data:\n'
-            '    Total number of tables: 1\n'
-            '    Total number of rows: 3\n'
-            '    Total number of columns: 1\n'
-            '  Synthesizer id: BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        )
+        assert caplog.messages[0] == str({
+            'EVENT': 'Fit processed data',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': 3,
+            'TOTAL NUMBER OF COLUMNS': 1
+        })
 
     def test_fit_processed_data_raises_version_error(self):
         """Test that ``fit`` raises ``VersionError``
@@ -461,16 +461,15 @@ class TestBaseSingleTableSynthesizer:
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()
-        assert caplog.messages[0] == (
-            '\nFit:\n'
-            '  Timestamp: 2024-04-19 16:20:10.037183\n'
-            '  Synthesizer class name: Mock\n'
-            '  Statistics of the fit data:\n'
-            '    Total number of tables: 1\n'
-            '    Total number of rows: 3\n'
-            '    Total number of columns: 2\n'
-            '  Synthesizer id: BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        )
+        assert caplog.messages[0] == str({
+            'EVENT': 'Fit',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': 3,
+            'TOTAL NUMBER OF COLUMNS': 2
+        })
 
     def test_fit_raises_version_error(self):
         """Test that ``fit`` raises ``VersionError``
@@ -1476,16 +1475,15 @@ class TestBaseSingleTableSynthesizer:
             show_progress_bar=True
         )
         pd.testing.assert_frame_equal(result, pd.DataFrame({'col': [1, 2, 3]}))
-        assert caplog.messages[0] == (
-            '\nSample:\n'
-            '  Timestamp: 2024-04-19 16:20:10.037183\n'
-            '  Synthesizer class name: Mock\n'
-            '  Statistics of the sample size:\n'
-            '    Total number of tables: 1\n'
-            '    Total number of rows: 3\n'
-            '    Total number of columns: 1\n'
-            '  Synthesizer id: BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        )
+        assert caplog.messages[0] == str({
+            'EVENT': 'Sample',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': 3,
+            'TOTAL NUMBER OF COLUMNS': 1
+        })
 
     def test__validate_conditions_unseen_columns(self):
         """Test that conditions are within the ``data_processor`` fields."""
@@ -1855,12 +1853,12 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
-        assert caplog.messages[0] == (
-            '\nSave:\n'
-            '  Timestamp: 2024-04-19 16:20:10.037183\n'
-            '  Synthesizer class name: Mock\n'
-            '  Synthesizer id: BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        )
+        assert caplog.messages[0] == str({
+            'EVENT': 'Save',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        })
 
     @patch('sdv.single_table.base.datetime')
     @patch('sdv.single_table.base.generate_synthesizer_id')
@@ -1891,12 +1889,12 @@ class TestBaseSingleTableSynthesizer:
         assert loaded_instance._synthesizer_id == synthesizer_id
         mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
         mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
-        assert caplog.messages[0] == (
-            '\nLoad:\n'
-            '  Timestamp: 2024-04-19 16:20:10.037183\n'
-            '  Synthesizer class name: Mock\n'
-            '  Synthesizer id: BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
-        )
+        assert caplog.messages[0] == str({
+            'EVENT': 'Load',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        })
 
     def test_load_custom_constraint_classes(self):
         """Test that ``load_custom_constraint_classes`` calls the ``DataProcessor``'s method."""
