@@ -38,6 +38,7 @@ dependencies = [
     'rdt>=1.12.0',
     'sdmetrics>=0.14.0',
     'platformdirs>=4.0',
+    'pyyaml>=6.0.1',
 ]
 
 [project.urls]
