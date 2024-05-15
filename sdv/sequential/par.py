@@ -178,7 +178,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             fill_value = min(sequence_index_sequence[self._sequence_index].dropna())
         sequence_index_sequence = sequence_index_sequence.fillna(fill_value)
 
-        data[self._sequence_index] = sequence_index_sequence[self._sequence_index]
+        data[self._sequence_index] = sequence_index_sequence[self._sequence_index].to_numpy()
         data = data.merge(
             sequence_index_context,
             left_on=self._sequence_key,
