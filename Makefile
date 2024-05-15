@@ -267,3 +267,22 @@ release-major: check-release bumpversion-major release
 check-deps:
 	$(eval allow_list='cloudpickle=|graphviz=|numpy=|pandas=|tqdm=|copulas=|ctgan=|deepecho=|rdt=|sdmetrics=|platformdirs=')
 	pip freeze | grep -v "SDV.git" | grep -E $(allow_list) | sort > $(OUTPUT_FILEPATH)
+
+.PHONY: upgradepip
+upgradepip:
+	python -m pip install --upgrade pip
+
+.PHONY: upgradebuild
+upgradebuild:
+	python -m pip install --upgrade build
+
+.PHONY: upgradesetuptools
+upgradesetuptools:
+	python -m pip install --upgrade setuptools
+
+.PHONY: package
+package: upgradepip upgradebuild upgradesetuptools
+	python -m build ; \
+	$(eval VERSION=$(shell python -c 'import setuptools; setuptools.setup()' --version))
+	tar -zxvf "dist/sdv-${VERSION}.tar.gz"
+	mv "sdv-${VERSION}" unpacked_sdist
