@@ -7,7 +7,7 @@ from io import StringIO
 from sdv.logging.utils import get_sdv_logger_config
 
 
-class CSVHandler(logging.Formatter):
+class CSVFormatter(logging.Formatter):
     """Logging formatter to convert to CSV."""
 
     def __init__(self):
@@ -59,11 +59,14 @@ def get_sdv_logger(logger_name):
             logger.removeHandler(handler)
 
         if logger_name in logger_conf.get('loggers'):
-            formatter = CSVHandler()
+            formatter = None
             config = logger_conf.get('loggers').get(logger_name)
             log_level = getattr(logging, config.get('level', 'INFO'))
             if config.get('format'):
-                formatter = logging.Formatter(config.get('format'))
+                if config.get('format') == 'CSV':
+                    formatter = CSVFormatter()
+                else:
+                    formatter = logging.Formatter(config.get('format'))
 
             logger.setLevel(log_level)
             logger.propagate = config.get('propagate', False)

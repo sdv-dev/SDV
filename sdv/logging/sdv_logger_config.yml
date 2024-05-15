@@ -4,24 +4,28 @@ loggers:
   SingleTableSynthesizer:
     level: INFO
     propagate: false
+    format: CSV
     handlers:
       class: logging.FileHandler
       filename: sdv_logs.csv
   MultiTableSynthesizer:
     level: INFO
     propagate: false
+    format: CSV
     handlers:
       class: logging.FileHandler
       filename: sdv_logs.csv
     MultiTableMetadata:
       level: INFO
       propagate: false
+      format: CSV
       handlers:
         class: logging.FileHandler
         filename: sdv_logs.csv
     SingleTableMetadata:
       level: INFO
       propagate: false
+      format: CSV
       handlers:
         class: logging.FileHandler
         filename: sdv_logs.csv
