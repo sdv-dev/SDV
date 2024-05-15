@@ -68,7 +68,7 @@ def test_get_sdv_logger_csv(mock_get_sdv_logger_config, mock_getlogger,
     mock_logger_conf = {
         'log_registry': 'local',
         'loggers': {
-            'test_logger': {
+            'test_logger_csv': {
                 'level': 'DEBUG',
                 'format': 'CSV',
                 'handlers': {
@@ -86,7 +86,7 @@ def test_get_sdv_logger_csv(mock_get_sdv_logger_config, mock_getlogger,
     mock_filehandler.return_value = mock_filehandler_instance
 
     # Run
-    get_sdv_logger('test_logger')
+    get_sdv_logger('test_logger_csv')
 
     # Assert
     mock_logger_instance.setLevel.assert_called_once_with(logging.DEBUG)
