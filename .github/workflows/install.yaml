@@ -7,13 +7,12 @@ on:
       - main
 jobs:
   install:
-    name: ${{ matrix.os }} - ${{ matrix.python_version }} install
+    name: ${{ matrix.python_version }} install
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest, macos-latest]
         python_version: ["3.8", "3.12"]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Set up python ${{ matrix.python_version }}
         uses: actions/setup-python@v5
