@@ -59,7 +59,7 @@ def get_sdv_logger(logger_name):
             logger.removeHandler(handler)
 
         if logger_name in logger_conf.get('loggers'):
-            formatter = None            
+            formatter = None
             config = logger_conf.get('loggers').get(logger_name)
             log_level = getattr(logging, config.get('level', 'INFO'))
             if config.get('formatter'):
