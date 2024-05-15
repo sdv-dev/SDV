@@ -70,7 +70,7 @@ def test_get_sdv_logger_csv(mock_get_sdv_logger_config, mock_getlogger,
         'loggers': {
             'test_logger_csv': {
                 'level': 'DEBUG',
-                'format': 'CSV',
+                'formatter': 'sdv.logging.logger.CSVFormatter',
                 'handlers': {
                     'filename': 'logfile.csv',
                     'class': 'logging.FileHandler'

@@ -59,14 +59,14 @@ def get_sdv_logger(logger_name):
             logger.removeHandler(handler)
 
         if logger_name in logger_conf.get('loggers'):
-            formatter = None
+            formatter = None            
             config = logger_conf.get('loggers').get(logger_name)
             log_level = getattr(logging, config.get('level', 'INFO'))
-            if config.get('format'):
-                if config.get('format') == 'CSV':
+            if config.get('formatter'):
+                if config.get('formatter') == 'sdv.logging.logger.CSVFormatter':
                     formatter = CSVFormatter()
-                else:
-                    formatter = logging.Formatter(config.get('format'))
+            elif config.get('format'):
+                formatter = logging.Formatter(config.get('format'))
 
             logger.setLevel(log_level)
             logger.propagate = config.get('propagate', False)
