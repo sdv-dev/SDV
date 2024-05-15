@@ -16,6 +16,7 @@ from sdv._utils import (
     _cast_to_iterable, _format_invalid_values_string, _get_datetime_format, _is_boolean_type,
     _is_datetime_type, _is_numerical_type, _load_data_from_csv, _validate_datetime_format)
 from sdv.errors import InvalidDataError
+from sdv.logging import get_sdv_logger
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
@@ -23,6 +24,7 @@ from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 
 LOGGER = logging.getLogger(__name__)
+SINGLETABLEMETADATA_LOGGER = get_sdv_logger('SingleTableMetadata')
 
 
 class SingleTableMetadata:
@@ -522,6 +524,8 @@ class SingleTableMetadata:
             data (pandas.DataFrame):
                 The data to be analyzed.
         """
+        old_columns = data.columns
+        data.columns = data.columns.astype(str)
         first_pii_field = None
         for field in data:
             column_data = data[field]
@@ -571,11 +575,13 @@ class SingleTableMetadata:
             self.primary_key = first_pii_field
 
         self._updated = True
+        data.columns = old_columns
 
     def detect_from_dataframe(self, data):
         """Detect the metadata from a ``pd.DataFrame`` object.
 
         This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
+        All data column names are converted to strings.
 
         Args:
             data (pandas.DataFrame):
@@ -1206,6 +1212,16 @@ class SingleTableMetadata:
         validate_file_does_not_exist(filepath)
         metadata = self.to_dict()
         metadata['METADATA_SPEC_VERSION'] = self.METADATA_SPEC_VERSION
+        SINGLETABLEMETADATA_LOGGER.info(
+            '\nMetadata Save:\n'
+            '  Timestamp: %s\n'
+            '  Statistics about the metadata:\n'
+            '    Total number of tables: 1'
+            '    Total number of columns: %s'
+            '    Total number of relationships: 0',
+            datetime.now(),
+            len(self.columns)
+        )
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)
 
@@ -1220,12 +1236,19 @@ class SingleTableMetadata:
                 Python dictionary representing a ``SingleTableMetadata`` object.
 
         Returns:
-            Instance of ``SingleTableMetadata``.
+            Instance of ``SingleTableMetadata``. Column names are converted to
+            string type.
         """
         instance = cls()
         for key in instance._KEYS:
             value = deepcopy(metadata_dict.get(key))
             if value:
+                if key == 'columns':
+                    value = {
+                        str(key)
+                        if not isinstance(key, str)
+                        else key: col for key, col in value.items()
+                    }
                 setattr(instance, f'{key}', value)
 
         return instance

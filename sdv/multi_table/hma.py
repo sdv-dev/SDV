@@ -114,7 +114,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             columns_per_table[table_name] += \
                 cls._get_num_extended_columns(
                     metadata, child_name, table_name, columns_per_table, distributions
-                )
+            )
 
         visited.add(table_name)
 
@@ -205,7 +205,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 Dictionary containing the distributions used or detected for each column and the
                 learned parameters for those.
         """
-        if table_name not in self._get_root_parents():
+        if table_name not in _get_root_tables(self.metadata.relationships):
             raise SynthesizerInputError(
                 f"Learned distributions are not available for the '{table_name}' table. "
                 'Please choose a table that does not have any parents.'
@@ -521,7 +521,10 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         default_parameters = getattr(self, '_default_parameters', {}).get(child_name, {})
 
         table_meta = self.metadata.tables[child_name]
-        synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
+        synthesizer = self._synthesizer(
+            table_meta,
+            **self._table_parameters[child_name]
+        )
         synthesizer._set_parameters(parameters, default_parameters)
         synthesizer._data_processor = self._table_synthesizers[child_name]._data_processor
 
@@ -615,7 +618,10 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         for parent_id, row in parent_rows.iterrows():
             parameters = self._extract_parameters(row, table_name, foreign_key)
             table_meta = self._table_synthesizers[table_name].get_metadata()
-            synthesizer = self._synthesizer(table_meta, **self._table_parameters[table_name])
+            synthesizer = self._synthesizer(
+                table_meta,
+                **self._table_parameters[table_name]
+            )
             synthesizer._set_parameters(parameters)
             try:
                 likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)

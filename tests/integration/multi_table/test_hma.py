@@ -13,7 +13,7 @@ from sdmetrics.reports.multi_table import DiagnosticReport
 from sdv import version
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
-from sdv.errors import SynthesizerInputError, VersionError
+from sdv.errors import SamplingError, SynthesizerInputError, VersionError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
@@ -551,7 +551,7 @@ class TestHMASynthesizer:
         custom_synthesizer.set_table_parameters(
             table_name='hotels',
             table_parameters={
-                'default_distribution': 'truncnorm'
+                'default_distribution': 'truncnorm',
             }
         )
 
@@ -1664,3 +1664,127 @@ def test_hma_relationship_validity():
 
     # Assert
     assert report.get_details('Relationship Validity')['Score'].mean() == 1.0
+
+
+def test_hma_not_fit_raises_sampling_error():
+    """Test that ``HMA`` will raise a ``SamplingError`` if it wasn't fit."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'Dunur_v1')
+    synthesizer = HMASynthesizer(metadata)
+
+    # Run and Assert
+    error_msg = (
+        'This synthesizer has not been fitted. Please fit your synthesizer first before '
+        'sampling synthetic data.'
+    )
+    with pytest.raises(SamplingError, match=error_msg):
+        synthesizer.sample(1)
+
+
+def test_fit_and_sample_numerical_col_names():
+    """Test fitting/sampling when column names are integers"""
+    # Setup
+    num_rows = 50
+    num_cols = 10
+    num_tables = 2
+    data = {}
+    for i in range(num_tables):
+        values = {j: np.random.randint(0, 100, size=num_rows) for j in range(num_cols)}
+        data[str(i)] = pd.DataFrame(values)
+
+    primary_key = pd.DataFrame({1: range(num_rows)})
+    primary_key_2 = pd.DataFrame({2: range(num_rows)})
+    data['0'][1] = primary_key
+    data['1'][1] = primary_key
+    data['1'][2] = primary_key_2
+    metadata = MultiTableMetadata()
+    metadata_dict = {'tables': {}}
+    for table_idx in range(num_tables):
+        metadata_dict['tables'][str(table_idx)] = {'columns': {}}
+        for i in range(num_cols):
+            metadata_dict['tables'][str(table_idx)]['columns'][i] = {'sdtype': 'numerical'}
+    metadata_dict['tables']['0']['columns'][1] = {'sdtype': 'id'}
+    metadata_dict['tables']['1']['columns'][2] = {'sdtype': 'id'}
+    metadata_dict['relationships'] = [
+        {
+            'parent_table_name': '0',
+            'parent_primary_key': 1,
+            'child_table_name': '1',
+            'child_foreign_key': 2
+        }
+    ]
+    metadata = MultiTableMetadata.load_from_dict(metadata_dict)
+    metadata.set_primary_key('0', '1')
+
+    # Run
+    synth = HMASynthesizer(metadata)
+    synth.fit(data)
+    first_sample = synth.sample()
+    second_sample = synth.sample()
+    assert first_sample['0'].columns.tolist() == data['0'].columns.tolist()
+    assert first_sample['1'].columns.tolist() == data['1'].columns.tolist()
+    assert second_sample['0'].columns.tolist() == data['0'].columns.tolist()
+    assert second_sample['1'].columns.tolist() == data['1'].columns.tolist()
+
+    # Assert
+    with pytest.raises(AssertionError):
+        pd.testing.assert_frame_equal(first_sample['0'], second_sample['0'])
+
+
+def test_detect_from_dataframe_numerical_col():
+    """Test that metadata detection of integer columns work."""
+    # Setup
+    parent_data = pd.DataFrame({
+        1: [1000, 1001, 1002],
+        2: [2, 3, 4],
+        'categorical_col': ['a', 'b', 'a'],
+    })
+    child_data = pd.DataFrame({
+        3: [1000, 1001, 1000],
+        4: [1, 2, 3]
+    })
+    data = {
+        'parent_data': parent_data,
+        'child_data': child_data,
+    }
+    metadata = MultiTableMetadata()
+    metadata.detect_table_from_dataframe('parent_data', parent_data)
+    metadata.detect_table_from_dataframe('child_data', child_data)
+    metadata.update_column('parent_data', '1', sdtype='id')
+    metadata.update_column('child_data', '3', sdtype='id')
+    metadata.update_column('child_data', '4', sdtype='id')
+    metadata.set_primary_key('parent_data', '1')
+    metadata.set_primary_key('child_data', '4')
+    metadata.add_relationship(
+        parent_primary_key='1',
+        parent_table_name='parent_data',
+        child_foreign_key='3',
+        child_table_name='child_data'
+    )
+
+    test_metadata = MultiTableMetadata()
+    test_metadata.detect_from_dataframes(data)
+    test_metadata.update_column('parent_data', '1', sdtype='id')
+    test_metadata.update_column('child_data', '3', sdtype='id')
+    test_metadata.update_column('child_data', '4', sdtype='id')
+    test_metadata.set_primary_key('parent_data', '1')
+    test_metadata.set_primary_key('child_data', '4')
+    test_metadata.add_relationship(
+        parent_primary_key='1',
+        parent_table_name='parent_data',
+        child_foreign_key='3',
+        child_table_name='child_data'
+    )
+
+    # Run
+    instance = HMASynthesizer(metadata)
+    instance.fit(data)
+    sample = instance.sample(5)
+
+    # Assert
+    assert test_metadata.to_dict() == metadata.to_dict()
+    assert sample['parent_data'].columns.tolist() == data['parent_data'].columns.tolist()
+    assert sample['child_data'].columns.tolist() == data['child_data'].columns.tolist()
+
+    test_metadata = MultiTableMetadata()
+    test_metadata.detect_from_dataframes(data)

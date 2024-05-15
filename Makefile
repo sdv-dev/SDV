@@ -123,12 +123,8 @@ test-integration: ## run tests quickly with the default Python
 test-readme: ## run the readme snippets
 	invoke readme
 
-.PHONY: test-tutorials
-test-tutorials: ## run the tutorial notebooks
-	invoke tutorials
-
 .PHONY: test
-test: test-unit test-integration test-readme test-tutorials ## test everything that needs test dependencies
+test: test-unit test-integration test-readme ## test everything that needs test dependencies
 
 .PHONY: test-all
 test-all: ## run tests on every Python version with tox
@@ -239,6 +235,10 @@ ifeq ($(CHANGELOG_LINES),0)
 	$(error Please insert the release notes in HISTORY.md before releasing)
 endif
 
+.PHONY: git-push
+git-push: ## Simply push the repository to github
+	git push
+
 .PHONY: check-release
 check-release: check-clean check-main check-history ## Check if the release can be made
 	@echo "A new release can be made"
@@ -265,5 +265,5 @@ release-major: check-release bumpversion-major release
 
 .PHONY: check-deps
 check-deps:
-	$(eval allow_list='cloudpickle=|graphviz=|numpy=|pandas=|tqdm=|copulas=|ctgan=|deepecho=|rdt=|sdmetrics=')
+	$(eval allow_list='cloudpickle=|graphviz=|numpy=|pandas=|tqdm=|copulas=|ctgan=|deepecho=|rdt=|sdmetrics=|platformdirs=')
 	pip freeze | grep -v "SDV.git" | grep -E $(allow_list) | sort > $(OUTPUT_FILEPATH)

@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import date, datetime
 from unittest.mock import ANY, MagicMock, Mock, call, mock_open, patch
@@ -11,12 +12,13 @@ from rdt.transformers import (
 
 from sdv import version
 from sdv.constraints.errors import AggregateConstraintsError
-from sdv.errors import ConstraintsNotMetError, SynthesizerInputError, VersionError
+from sdv.errors import ConstraintsNotMetError, SamplingError, SynthesizerInputError, VersionError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
 from sdv.single_table import (
     CopulaGANSynthesizer, CTGANSynthesizer, GaussianCopulaSynthesizer, TVAESynthesizer)
 from sdv.single_table.base import COND_IDX, BaseSingleTableSynthesizer
+from tests.utils import catch_sdv_logs
 
 
 class TestBaseSingleTableSynthesizer:
@@ -59,19 +61,22 @@ class TestBaseSingleTableSynthesizer:
         # Assert
         instance.metadata._updated = False
 
+    @patch('sdv.single_table.base.datetime')
     @patch('sdv.single_table.base.generate_synthesizer_id')
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.BaseSingleTableSynthesizer._check_metadata_updated')
     def test___init__(self, mock_check_metadata_updated, mock_data_processor,
-                      mock_generate_synthesizer_id):
+                      mock_generate_synthesizer_id, mock_datetime, caplog):
         """Test instantiating with default values."""
         # Setup
         metadata = Mock()
         synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         mock_generate_synthesizer_id.return_value = synthesizer_id
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
 
         # Run
-        instance = BaseSingleTableSynthesizer(metadata)
+        with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableSynthesizer'):
+            instance = BaseSingleTableSynthesizer(metadata)
 
         # Assert
         assert instance.enforce_min_max_values is True
@@ -89,6 +94,12 @@ class TestBaseSingleTableSynthesizer:
         metadata.validate.assert_called_once_with()
         mock_check_metadata_updated.assert_called_once()
         mock_generate_synthesizer_id.assert_called_once_with(instance)
+        assert caplog.messages[0] == str({
+            'EVENT': 'Instance',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'BaseSingleTableSynthesizer',
+            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        })
 
     @patch('sdv.single_table.base.DataProcessor')
     def test___init__custom(self, mock_data_processor):
@@ -314,6 +325,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         instance = Mock()
         instance._fitted = True
+        instance._store_and_convert_original_cols.return_value = False
         data = pd.DataFrame({
             'name': ['John', 'Doe', 'John Doe']
         })
@@ -329,6 +341,34 @@ class TestBaseSingleTableSynthesizer:
         mock_warnings.warn.assert_called_once_with(expected_warning)
         instance._preprocess.assert_called_once_with(data)
 
+    def test_preprocess_int_columns(self):
+        """Test the preprocess method.
+
+        Ensure that data with column names as integers are not changed by
+        preprocess.
+        """
+        # Setup
+        instance = Mock()
+        instance._fitted = False
+        instance._original_columns = pd.Index([1, 2, 'str'])
+        data = pd.DataFrame({
+            1: ['John', 'Doe', 'John Doe'],
+            2: ['John', 'Doe', 'John Doe'],
+            'str': ['John', 'Doe', 'John Doe'],
+        })
+
+        # Run
+        BaseSingleTableSynthesizer.preprocess(instance, data)
+
+        # Assert
+        corrected_frame = pd.DataFrame({
+            1: ['John', 'Doe', 'John Doe'],
+            2: ['John', 'Doe', 'John Doe'],
+            'str': ['John', 'Doe', 'John Doe'],
+        })
+
+        pd.testing.assert_frame_equal(data, corrected_frame)
+
     @patch('sdv.single_table.base.DataProcessor')
     def test__fit(self, mock_data_processor):
         """Test that ``NotImplementedError`` is being raised."""
@@ -341,21 +381,33 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(NotImplementedError, match=''):
             instance._fit(data)
 
-    def test_fit_processed_data(self):
+    @patch('sdv.single_table.base.datetime')
+    def test_fit_processed_data(self, mock_datetime, caplog):
         """Test that ``fit_processed_data`` calls the ``_fit``."""
         # Setup
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         instance = Mock(
             _fitted_sdv_version=None,
             _fitted_sdv_enterprise_version=None,
+            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         )
-        processed_data = Mock()
-        processed_data.empty = False
+        processed_data = pd.DataFrame({'column_a': [1, 2, 3]})
 
         # Run
-        BaseSingleTableSynthesizer.fit_processed_data(instance, processed_data)
+        with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
+            BaseSingleTableSynthesizer.fit_processed_data(instance, processed_data)
 
         # Assert
         instance._fit.assert_called_once_with(processed_data)
+        assert caplog.messages[0] == str({
+            'EVENT': 'Fit processed data',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': 3,
+            'TOTAL NUMBER OF COLUMNS': 1
+        })
 
     def test_fit_processed_data_raises_version_error(self):
         """Test that ``fit`` raises ``VersionError``
@@ -368,7 +420,7 @@ class TestBaseSingleTableSynthesizer:
             _fitted_sdv_version='1.0.0',
             _fitted_sdv_enterprise_version=None,
         )
-        processed_data = Mock()
+        processed_data = pd.DataFrame({'column_a': [1, 2, 3]})
         instance._random_state_set = True
         instance._fitted = True
 
@@ -381,30 +433,43 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(VersionError, match=error_msg):
             BaseSingleTableSynthesizer.fit_processed_data(instance, processed_data)
 
-    def test_fit(self):
+    @patch('sdv.single_table.base.datetime')
+    def test_fit(self, mock_datetime, caplog):
         """Test that ``fit`` calls ``preprocess`` and the ``fit_processed_data``.
 
         When fitting, the synthsizer has to ``preprocess`` the data and with the output
         of this method, call the ``fit_processed_data``
         """
         # Setup
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         instance = Mock(
             _fitted_sdv_version=None,
             _fitted_sdv_enterprise_version=None,
+            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         )
-        processed_data = Mock()
+        data = pd.DataFrame({'column_a': [1, 2, 3], 'name': ['John', 'Doe', 'Johanna']})
         instance._random_state_set = True
         instance._fitted = True
 
         # Run
-        BaseSingleTableSynthesizer.fit(instance, processed_data)
+        with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
+            BaseSingleTableSynthesizer.fit(instance, data)
 
         # Assert
         assert instance._random_state_set is False
         instance._data_processor.reset_sampling.assert_called_once_with()
-        instance._preprocess.assert_called_once_with(processed_data)
-        instance.fit_processed_data.assert_called_once_with(instance._preprocess.return_value)
+        instance.preprocess.assert_called_once_with(data)
+        instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()
+        assert caplog.messages[0] == str({
+            'EVENT': 'Fit',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': 3,
+            'TOTAL NUMBER OF COLUMNS': 2
+        })
 
     def test_fit_raises_version_error(self):
         """Test that ``fit`` raises ``VersionError``
@@ -417,7 +482,7 @@ class TestBaseSingleTableSynthesizer:
             _fitted_sdv_version='1.0.0',
             _fitted_sdv_enterprise_version=None,
         )
-        processed_data = Mock()
+        data = pd.DataFrame({'column_a': [1, 2, 3]})
         instance._random_state_set = True
         instance._fitted = True
 
@@ -428,7 +493,7 @@ class TestBaseSingleTableSynthesizer:
             'create a new synthesizer.'
         )
         with pytest.raises(VersionError, match=error_msg):
-            BaseSingleTableSynthesizer.fit(instance, processed_data)
+            BaseSingleTableSynthesizer.fit(instance, data)
 
     def test__validate_constraints(self):
         """Test that ``_validate_constraints`` calls ``fit`` and returns any errors."""
@@ -1362,24 +1427,44 @@ class TestBaseSingleTableSynthesizer:
         mock_os.remove.assert_called_once_with('.sample.csv.temp')
         mock_os.path.exists.assert_called_once_with('.sample.csv.temp')
 
-    def test_sample(self):
+    def test_sample_not_fitted(self):
+        """Test that ``sample`` raises an error when the synthesizer is not fitted."""
+        # Setup
+        instance = Mock()
+        instance._fitted = False
+        expected_message = re.escape(
+            'This synthesizer has not been fitted. Please fit your synthesizer first before'
+            ' sampling synthetic data.'
+        )
+
+        # Run and Assert
+        with pytest.raises(SamplingError, match=expected_message):
+            BaseSingleTableSynthesizer.sample(instance, 10)
+
+    @patch('sdv.single_table.base.datetime')
+    def test_sample(self, mock_datetime, caplog):
         """Test that we use ``_sample_with_progress_bar`` in this method."""
         # Setup
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         num_rows = 10
         max_tries_per_batch = 50
         batch_size = 5
         output_file_path = 'temp.csv'
-        instance = Mock()
+        instance = Mock(
+            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        )
         instance.get_metadata.return_value._constraints = False
+        instance._sample_with_progress_bar.return_value = pd.DataFrame({'col': [1, 2, 3]})
 
         # Run
-        result = BaseSingleTableSynthesizer.sample(
-            instance,
-            num_rows,
-            max_tries_per_batch,
-            batch_size,
-            output_file_path,
-        )
+        with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableSynthesizer'):
+            result = BaseSingleTableSynthesizer.sample(
+                instance,
+                num_rows,
+                max_tries_per_batch,
+                batch_size,
+                output_file_path,
+            )
 
         # Assert
         instance._sample_with_progress_bar.assert_called_once_with(
@@ -1389,7 +1474,16 @@ class TestBaseSingleTableSynthesizer:
             'temp.csv',
             show_progress_bar=True
         )
-        assert result == instance._sample_with_progress_bar.return_value
+        pd.testing.assert_frame_equal(result, pd.DataFrame({'col': [1, 2, 3]}))
+        assert caplog.messages[0] == str({
+            'EVENT': 'Sample',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': 3,
+            'TOTAL NUMBER OF COLUMNS': 1
+        })
 
     def test__validate_conditions_unseen_columns(self):
         """Test that conditions are within the ``data_processor`` fields."""
@@ -1742,35 +1836,50 @@ class TestBaseSingleTableSynthesizer:
         with pytest.warns(UserWarning, match=warn_msg):
             synthesizer._validate_known_columns(conditions)
 
+    @patch('sdv.single_table.base.datetime')
     @patch('sdv.single_table.base.cloudpickle')
-    def test_save(self, cloudpickle_mock, tmp_path):
+    def test_save(self, cloudpickle_mock, mock_datetime, tmp_path, caplog):
         """Test that the synthesizer is saved correctly."""
         # Setup
-        synthesizer = Mock()
+        synthesizer = Mock(
+            _synthesizer_id='BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        )
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
 
         # Run
         filepath = tmp_path / 'output.pkl'
-        BaseSingleTableSynthesizer.save(synthesizer, filepath)
+        with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
+            BaseSingleTableSynthesizer.save(synthesizer, filepath)
 
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
+        assert caplog.messages[0] == str({
+            'EVENT': 'Save',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        })
 
+    @patch('sdv.single_table.base.datetime')
     @patch('sdv.single_table.base.generate_synthesizer_id')
     @patch('sdv.single_table.base.check_synthesizer_version')
     @patch('sdv.single_table.base.check_sdv_versions_and_warn')
     @patch('sdv.single_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
     def test_load(self, mock_file, cloudpickle_mock, mock_check_sdv_versions_and_warn,
-                  mock_check_synthesizer_version, mock_generate_synthesizer_id):
+                  mock_check_synthesizer_version, mock_generate_synthesizer_id,
+                  mock_datetime, caplog):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
         synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         mock_generate_synthesizer_id.return_value = synthesizer_id
         cloudpickle_mock.load.return_value = synthesizer_mock
 
         # Run
-        loaded_instance = BaseSingleTableSynthesizer.load('synth.pkl')
+        with catch_sdv_logs(caplog, logging.INFO, 'SingleTableSynthesizer'):
+            loaded_instance = BaseSingleTableSynthesizer.load('synth.pkl')
 
         # Assert
         mock_file.assert_called_once_with('synth.pkl', 'rb')
@@ -1780,6 +1889,12 @@ class TestBaseSingleTableSynthesizer:
         assert loaded_instance._synthesizer_id == synthesizer_id
         mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
         mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
+        assert caplog.messages[0] == str({
+            'EVENT': 'Load',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        })
 
     def test_load_custom_constraint_classes(self):
         """Test that ``load_custom_constraint_classes`` calls the ``DataProcessor``'s method."""

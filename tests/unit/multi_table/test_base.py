@@ -1,3 +1,4 @@
+import logging
 import re
 import warnings
 from collections import defaultdict
@@ -10,14 +11,15 @@ import pytest
 
 from sdv import version
 from sdv.errors import (
-    ConstraintsNotMetError, InvalidDataError, NotFittedError, SynthesizerInputError, VersionError)
+    ConstraintsNotMetError, InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError,
+    VersionError)
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
-from tests.utils import get_multi_table_data, get_multi_table_metadata
+from tests.utils import catch_sdv_logs, get_multi_table_data, get_multi_table_metadata
 
 
 class TestBaseMultiTableSynthesizer:
@@ -100,22 +102,26 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         mock_print.assert_called_once_with('Fitting', end='')
 
+    @patch('sdv.multi_table.base.datetime')
     @patch('sdv.multi_table.base.generate_synthesizer_id')
     @patch('sdv.multi_table.base.BaseMultiTableSynthesizer._check_metadata_updated')
-    def test___init__(self, mock_check_metadata_updated, mock_generate_synthesizer_id):
+    def test___init__(self, mock_check_metadata_updated, mock_generate_synthesizer_id,
+                      mock_datetime, caplog):
         """Test that when creating a new instance this sets the defaults.
 
         Test that the metadata object is being stored and also being validated. Afterwards, this
         calls the ``self._initialize_models`` which creates the initial instances of those.
         """
         # Setup
-        synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        synthesizer_id = 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         mock_generate_synthesizer_id.return_value = synthesizer_id
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         metadata = get_multi_table_metadata()
         metadata.validate = Mock()
 
         # Run
-        instance = BaseMultiTableSynthesizer(metadata)
+        with catch_sdv_logs(caplog, logging.INFO, 'MultiTableSynthesizer'):
+            instance = BaseMultiTableSynthesizer(metadata)
 
         # Assert
         assert instance.metadata == metadata
@@ -127,6 +133,12 @@ class TestBaseMultiTableSynthesizer:
         mock_check_metadata_updated.assert_called_once()
         mock_generate_synthesizer_id.assert_called_once_with(instance)
         assert instance._synthesizer_id == synthesizer_id
+        assert caplog.messages[0] == str({
+            'EVENT': 'Instance',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'BaseMultiTableSynthesizer',
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        })
 
     def test__init__column_relationship_warning(self):
         """Test that a warning is raised only once when the metadata has column relationships."""
@@ -488,7 +500,7 @@ class TestBaseMultiTableSynthesizer:
             'The provided data does not match the metadata:\n'
             'Relationships:\n'
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
-            "Please use the utility method 'drop_unknown_references' to clean the data."
+            "Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)
@@ -769,6 +781,77 @@ class TestBaseMultiTableSynthesizer:
         synth_upravna_enota._preprocess.assert_called_once_with(data['upravna_enota'])
         synth_upravna_enota.update_transformers.assert_called_once_with({'a': None, 'b': None})
 
+    def test_preprocess_int_columns(self):
+        """Test the preprocess method.
+
+        Ensure that data with column names as integers are not changed by
+        preprocess.
+        """
+        # Setup
+        metadata_dict = {
+            'tables': {
+                'first_table': {
+                    'primary_key': '1',
+                    'columns': {
+                        '1': {'sdtype': 'id'},
+                        '2': {'sdtype': 'categorical'},
+                        'str': {'sdtype': 'categorical'}
+                    }
+                },
+                'second_table': {
+                    'columns': {
+                        '3': {'sdtype': 'id'},
+                        'str': {'sdtype': 'categorical'}
+                    }
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'first_table',
+                    'parent_primary_key': '1',
+                    'child_table_name': 'second_table',
+                    'child_foreign_key': '3'
+                }
+            ]
+        }
+        metadata = MultiTableMetadata.load_from_dict(metadata_dict)
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance.validate = Mock()
+        instance._table_synthesizers = {
+            'first_table': Mock(),
+            'second_table': Mock()
+        }
+        multi_data = {
+            'first_table': pd.DataFrame({
+                1: ['abc', 'def', 'ghi'],
+                2: ['x', 'a', 'b'],
+                'str': ['John', 'Doe', 'John Doe'],
+            }),
+            'second_table': pd.DataFrame({
+                3: ['abc', 'def', 'ghi'],
+                'another': ['John', 'Doe', 'John Doe'],
+            }),
+        }
+
+        # Run
+        instance.preprocess(multi_data)
+
+        # Assert
+        corrected_frame = {
+            'first_table': pd.DataFrame({
+                1: ['abc', 'def', 'ghi'],
+                2: ['x', 'a', 'b'],
+                'str': ['John', 'Doe', 'John Doe'],
+            }),
+            'second_table': pd.DataFrame({
+                3: ['abc', 'def', 'ghi'],
+                'another': ['John', 'Doe', 'John Doe'],
+            }),
+        }
+
+        pd.testing.assert_frame_equal(multi_data['first_table'], corrected_frame['first_table'])
+        pd.testing.assert_frame_equal(multi_data['second_table'], corrected_frame['second_table'])
+
     @patch('sdv.multi_table.base.warnings')
     def test_preprocess_warning(self, mock_warnings):
         """Test that ``preprocess`` warns the user if the model has already been fitted."""
@@ -818,27 +901,42 @@ class TestBaseMultiTableSynthesizer:
             "please refit the model using 'fit' or 'fit_processed_data'."
         )
 
-    def test_fit_processed_data(self):
+    @patch('sdv.multi_table.base.datetime')
+    def test_fit_processed_data(self, mock_datetime, caplog):
         """Test that fit processed data calls ``_augment_tables`` and ``_model_tables``.
 
         Ensure that the ``fit_processed_data`` augments the tables and then models those using
         the ``_model_tables`` method. Then sets the state to fitted.
         """
         # Setup
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         instance = Mock(
             _fitted_sdv_version=None,
-            _fitted_sdv_enterprise_version=None
+            _fitted_sdv_enterprise_version=None,
+            _synthesizer_id='BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         )
-        data = Mock()
-        data.copy.return_value = data
+        processed_data = {
+            'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
+            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})
+        }
 
         # Run
-        BaseMultiTableSynthesizer.fit_processed_data(instance, data)
+        with catch_sdv_logs(caplog, logging.INFO, 'MultiTableSynthesizer'):
+            BaseMultiTableSynthesizer.fit_processed_data(instance, processed_data)
 
         # Assert
-        instance._augment_tables.assert_called_once_with(data)
+        instance._augment_tables.assert_called_once_with(processed_data)
         instance._model_tables.assert_called_once_with(instance._augment_tables.return_value)
         assert instance._fitted
+        assert caplog.messages[0] == str({
+            'EVENT': 'Fit processed data',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 2,
+            'TOTAL NUMBER OF ROWS': 6,
+            'TOTAL NUMBER OF COLUMNS': 4
+        })
 
     def test_fit_processed_data_empty_table(self):
         """Test attributes are properly set when data is empty and that _fit is not called."""
@@ -847,10 +945,13 @@ class TestBaseMultiTableSynthesizer:
             _fitted_sdv_version=None,
             _fitted_sdv_enterprise_version=None
         )
-        data = pd.DataFrame()
+        processed_data = {
+            'table1': pd.DataFrame(),
+            'table2': pd.DataFrame()
+        }
 
         # Run
-        BaseMultiTableSynthesizer.fit_processed_data(instance, data)
+        BaseMultiTableSynthesizer.fit_processed_data(instance, processed_data)
 
         # Assert
         instance._fit.assert_not_called()
@@ -866,7 +967,10 @@ class TestBaseMultiTableSynthesizer:
             _fitted_sdv_enterprise_version=None
         )
         instance.metadata = Mock()
-        data = Mock()
+        processed_data = {
+            'table1': pd.DataFrame(),
+            'table2': pd.DataFrame()
+        }
 
         # Run and Assert
         error_msg = (
@@ -875,32 +979,48 @@ class TestBaseMultiTableSynthesizer:
             'Please create a new synthesizer.'
         )
         with pytest.raises(VersionError, match=error_msg):
-            BaseMultiTableSynthesizer.fit_processed_data(instance, data)
+            BaseMultiTableSynthesizer.fit_processed_data(instance, processed_data)
 
         # Assert
         instance.preprocess.assert_not_called()
         instance.fit_processed_data.assert_not_called()
         instance._check_metadata_updated.assert_not_called()
 
+    @patch('sdv.multi_table.base.datetime')
     @patch('sdv.multi_table.base._validate_foreign_keys_not_null')
-    def test_fit(self, mock_validate_foreign_keys_not_null):
+    def test_fit(self, mock_validate_foreign_keys_not_null, mock_datetime, caplog):
         """Test that it calls the appropriate methods."""
         # Setup
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         instance = Mock(
             _fitted_sdv_version=None,
-            _fitted_sdv_enterprise_version=None
+            _fitted_sdv_enterprise_version=None,
+            _synthesizer_id='BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         )
         instance.metadata = Mock()
-        data = Mock()
+        data = {
+            'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
+            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})
+        }
 
         # Run
-        BaseMultiTableSynthesizer.fit(instance, data)
+        with catch_sdv_logs(caplog, logging.INFO, 'MultiTableSynthesizer'):
+            BaseMultiTableSynthesizer.fit(instance, data)
 
         # Assert
         mock_validate_foreign_keys_not_null.assert_called_once_with(instance.metadata, data)
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()
+        assert caplog.messages[0] == str({
+            'EVENT': 'Fit',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 2,
+            'TOTAL NUMBER OF ROWS': 6,
+            'TOTAL NUMBER OF COLUMNS': 4
+        })
 
     def test_fit_raises_version_error(self):
         """Test that fit will raise a ``VersionError`` if the current version is bigger."""
@@ -910,7 +1030,10 @@ class TestBaseMultiTableSynthesizer:
             _fitted_sdv_enterprise_version=None
         )
         instance.metadata = Mock()
-        data = Mock()
+        data = {
+            'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
+            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})
+        }
 
         # Run and Assert
         error_msg = (
@@ -964,6 +1087,7 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
+        instance._fitted = True
         instance._sample = Mock()
         scales = ['Test', True, -1.2, np.nan]
 
@@ -986,18 +1110,52 @@ class TestBaseMultiTableSynthesizer:
             with pytest.raises(SynthesizerInputError, match=msg):
                 instance.sample(scale=scale)
 
-    def test_sample(self):
-        """Test that ``sample`` calls the ``_sample`` with the given arguments."""
+    def test_sample_raises_sampling_error(self):
+        """Test that ``sample`` will raise ``SamplingError`` when not fitted."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        instance._sample = Mock()
+
+        # Run and Assert
+        error_msg = (
+            'This synthesizer has not been fitted. Please fit your synthesizer first before '
+            'sampling synthetic data.'
+        )
+        with pytest.raises(SamplingError, match=error_msg):
+            instance.sample(1)
+
+    @patch('sdv.multi_table.base.datetime')
+    def test_sample(self, mock_datetime, caplog):
+        """Test that ``sample`` calls the ``_sample`` with the given arguments."""
+        # Setup
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance._fitted = True
+        data = {
+            'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
+            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})
+        }
+        instance._sample = Mock(return_value=data)
+
+        synth_id = 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        instance._synthesizer_id = synth_id
 
         # Run
-        instance.sample(scale=1.5)
+        with catch_sdv_logs(caplog, logging.INFO, logger='MultiTableSynthesizer'):
+            instance.sample(scale=1.5)
 
         # Assert
         instance._sample.assert_called_once_with(scale=1.5)
+        assert caplog.messages[0] == str({
+            'EVENT': 'Sample',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'BaseMultiTableSynthesizer',
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+            'TOTAL NUMBER OF TABLES': 2,
+            'TOTAL NUMBER OF ROWS': 6,
+            'TOTAL NUMBER OF COLUMNS': 4
+        })
 
     def test_get_learned_distributions_raises_an_unfitted_error(self):
         """Test that ``get_learned_distributions`` raises an error when model is not fitted."""
@@ -1386,19 +1544,31 @@ class TestBaseMultiTableSynthesizer:
                 'fitted_sdv_enterprise_version': '1.1.0'
             }
 
+    @patch('sdv.multi_table.base.datetime')
     @patch('sdv.multi_table.base.cloudpickle')
-    def test_save(self, cloudpickle_mock, tmp_path):
+    def test_save(self, cloudpickle_mock, mock_datetime, tmp_path, caplog):
         """Test that the synthesizer is saved correctly."""
         # Setup
-        synthesizer = Mock()
+        synthesizer = Mock(
+            _synthesizer_id='BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        )
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
 
         # Run
         filepath = tmp_path / 'output.pkl'
-        BaseMultiTableSynthesizer.save(synthesizer, filepath)
+        with catch_sdv_logs(caplog, logging.INFO, 'MultiTableSynthesizer'):
+            BaseMultiTableSynthesizer.save(synthesizer, filepath)
 
         # Assert
         cloudpickle_mock.dump.assert_called_once_with(synthesizer, ANY)
+        assert caplog.messages[0] == str({
+            'EVENT': 'Save',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        })
 
+    @patch('sdv.multi_table.base.datetime')
     @patch('sdv.multi_table.base.generate_synthesizer_id')
     @patch('sdv.multi_table.base.check_synthesizer_version')
     @patch('sdv.multi_table.base.check_sdv_versions_and_warn')
@@ -1406,16 +1576,18 @@ class TestBaseMultiTableSynthesizer:
     @patch('builtins.open', new_callable=mock_open)
     def test_load(self, mock_file, cloudpickle_mock,
                   mock_check_sdv_versions_and_warn, mock_check_synthesizer_version,
-                  mock_generate_synthesizer_id):
+                  mock_generate_synthesizer_id, mock_datetime, caplog):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
-        synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        synthesizer_id = 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         mock_generate_synthesizer_id.return_value = synthesizer_id
         synthesizer_mock = Mock(_fitted=False, _synthesizer_id=None)
         cloudpickle_mock.load.return_value = synthesizer_mock
 
         # Run
-        loaded_instance = BaseMultiTableSynthesizer.load('synth.pkl')
+        with catch_sdv_logs(caplog, logging.INFO, 'MultiTableSynthesizer'):
+            loaded_instance = BaseMultiTableSynthesizer.load('synth.pkl')
 
         # Assert
         mock_file.assert_called_once_with('synth.pkl', 'rb')
@@ -1425,3 +1597,9 @@ class TestBaseMultiTableSynthesizer:
         mock_check_synthesizer_version.assert_called_once_with(synthesizer_mock)
         assert loaded_instance._synthesizer_id == synthesizer_id
         mock_generate_synthesizer_id.assert_called_once_with(synthesizer_mock)
+        assert caplog.messages[0] == str({
+            'EVENT': 'Load',
+            'TIMESTAMP': '2024-04-19 16:20:10.037183',
+            'SYNTHESIZER CLASS NAME': 'Mock',
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
+        })

@@ -6,7 +6,7 @@
 
 __author__ = 'DataCebo, Inc.'
 __email__ = 'info@sdv.dev'
-__version__ = '1.12.1'
+__version__ = '1.13.0.dev1'
 
 
 import sys
@@ -16,8 +16,8 @@ from operator import attrgetter
 from types import ModuleType
 
 from sdv import (
-    constraints, data_processing, datasets, evaluation, io, lite, metadata, metrics, multi_table,
-    sampling, sequential, single_table, version)
+    constraints, data_processing, datasets, evaluation, io, lite, logging, metadata, metrics,
+    multi_table, sampling, sequential, single_table, version)
 
 __all__ = [
     'constraints',
@@ -26,6 +26,7 @@ __all__ = [
     'evaluation',
     'io',
     'lite',
+    'logging',
     'metadata',
     'metrics',
     'multi_table',
@@ -94,7 +95,7 @@ def _find_addons():
             addon = entry_point.load()
         except Exception as e:  # pylint: disable=broad-exception-caught
             msg = (
-                f'Failed to load "{entry_point.name}" from "{entry_point.version}" '
+                f'Failed to load "{entry_point.name}" from "{entry_point.value}" '
                 f'with error:\n{e}'
             )
             warnings.warn(msg)

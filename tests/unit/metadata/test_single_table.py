@@ -1,6 +1,7 @@
 """Test Single Table Metadata."""
 
 import json
+import logging
 import re
 import warnings
 from datetime import datetime
@@ -13,6 +14,7 @@ import pytest
 from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
+from tests.utils import catch_sdv_logs
 
 
 class TestSingleTableMetadata:
@@ -1293,6 +1295,87 @@ class TestSingleTableMetadata:
             call(json.dumps(instance.to_dict(), indent=4))
         ]
         mock_log.info.assert_has_calls(expected_log_calls)
+
+    @patch('sdv.metadata.single_table.LOGGER')
+    def test_detect_from_dataframe_numerical_columns(self, mock_log):
+        """Test the detect from dataframe with columns that are integers"""
+        # Setup
+        num_rows = 100
+        num_cols = 20
+        values = {i + 1: np.random.randint(0, 100, size=num_rows) for i in range(num_cols)}
+        data = pd.DataFrame(values)
+        correct_metadata = {
+            'columns': {
+                '1': {
+                    'sdtype': 'numerical'
+                },
+                '2': {
+                    'sdtype': 'numerical'
+                },
+                '3': {
+                    'sdtype': 'numerical'
+                },
+                '4': {
+                    'sdtype': 'numerical'
+                },
+                '5': {
+                    'sdtype': 'numerical'
+                },
+                '6': {
+                    'sdtype': 'numerical'
+                },
+                '7': {
+                    'sdtype': 'numerical'
+                },
+                '8': {
+                    'sdtype': 'numerical'
+                },
+                '9': {
+                    'sdtype': 'numerical'
+                },
+                '10': {
+                    'sdtype': 'numerical'
+                },
+                '11': {
+                    'sdtype': 'numerical'
+                },
+                '12': {
+                    'sdtype': 'numerical'
+                },
+                '13': {
+                    'sdtype': 'numerical'
+                },
+                '14': {
+                    'sdtype': 'numerical'
+                },
+                '15': {
+                    'sdtype': 'numerical'
+                },
+                '16': {
+                    'sdtype': 'numerical'
+                },
+                '17': {
+                    'sdtype': 'numerical'
+                },
+                '18': {
+                    'sdtype': 'numerical'
+                },
+                '19': {
+                    'sdtype': 'numerical'
+                },
+                '20': {
+                    'sdtype': 'numerical'
+                }
+            },
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+        }
+
+        # Run
+        metadata = SingleTableMetadata()
+        metadata.detect_from_dataframe(data)
+
+        # Assert
+        assert correct_metadata == metadata.to_dict()
 
     def test_detect_from_csv_raises_error(self):
         """Test the ``detect_from_csv`` method.
@@ -2693,6 +2776,34 @@ class TestSingleTableMetadata:
         assert instance.sequence_index is None
         assert instance._version == 'SINGLE_TABLE_V1'
 
+    def test_load_from_dict_integer(self):
+        """Test that ``load_from_dict`` returns a instance with the ``dict`` updated objects.
+
+        If the metadata dict contains columns with integers for certain reasons
+        (e.g. due to missing column names from CSV) make sure they are correctly typed
+        to strings to ensure metadata is parsed properly.
+        """
+        # Setup
+        my_metadata = {
+            'columns': {1: 'value'},
+            'primary_key': 'pk',
+            'alternate_keys': [],
+            'sequence_key': None,
+            'sequence_index': None,
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+        }
+
+        # Run
+        instance = SingleTableMetadata.load_from_dict(my_metadata)
+
+        # Assert
+        assert instance.columns == {'1': 'value'}
+        assert instance.primary_key == 'pk'
+        assert instance.sequence_key is None
+        assert instance.alternate_keys == []
+        assert instance.sequence_index is None
+        assert instance._version == 'SINGLE_TABLE_V1'
+
     @patch('sdv.metadata.utils.Path')
     def test_load_from_json_path_does_not_exist(self, mock_path):
         """Test the ``load_from_json`` method.
@@ -2835,7 +2946,8 @@ class TestSingleTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             instance.save_to_json('filepath.json')
 
-    def test_save_to_json(self, tmp_path):
+    @patch('sdv.metadata.single_table.datetime')
+    def test_save_to_json(self, mock_datetime, tmp_path, caplog):
         """Test the ``save_to_json`` method.
 
         Test that ``save_to_json`` stores a ``json`` file and dumps the instance dict into
@@ -2850,12 +2962,23 @@ class TestSingleTableMetadata:
             - Creates a json representation of the instance.
         """
         # Setup
+        mock_datetime.now.return_value = '2024-04-19 16:20:10.037183'
         instance = SingleTableMetadata()
 
-        # Run / Assert
+        # Run
         file_name = tmp_path / 'singletable.json'
-        instance.save_to_json(file_name)
+        with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableMetadata'):
+            instance.save_to_json(file_name)
 
+        # Assert
+        assert caplog.messages[0] == (
+            '\nMetadata Save:\n'
+            '  Timestamp: 2024-04-19 16:20:10.037183\n'
+            '  Statistics about the metadata:\n'
+            '    Total number of tables: 1'
+            '    Total number of columns: 0'
+            '    Total number of relationships: 0'
+        )
         with open(file_name, 'rb') as single_table_file:
             saved_metadata = json.load(single_table_file)
             assert saved_metadata == instance.to_dict()

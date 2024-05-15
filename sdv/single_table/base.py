@@ -23,10 +23,14 @@ from sdv._utils import (
     _groupby_list, check_sdv_versions_and_warn, check_synthesizer_version, generate_synthesizer_id)
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
-from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
+from sdv.errors import (
+    ConstraintsNotMetError, InvalidDataError, SamplingError, SynthesizerInputError)
+from sdv.logging import get_sdv_logger
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
 LOGGER = logging.getLogger(__name__)
+SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
+
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
 TMP_FILE_NAME = '.sample.csv.temp'
@@ -97,8 +101,9 @@ class BaseSynthesizer:
             metadata=self.metadata,
             enforce_rounding=self.enforce_rounding,
             enforce_min_max_values=self.enforce_min_max_values,
-            locales=self.locales
+            locales=self.locales,
         )
+        self._original_columns = pd.Index([])
         self._fitted = False
         self._random_state_set = False
         self._update_default_transformers()
@@ -107,6 +112,12 @@ class BaseSynthesizer:
         self._fitted_sdv_version = None
         self._fitted_sdv_enterprise_version = None
         self._synthesizer_id = generate_synthesizer_id(self)
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Instance',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+        })
 
     def set_address_columns(self, column_names, anonymization_level='full'):
         """Set the address multi-column transformer."""
@@ -354,6 +365,16 @@ class BaseSynthesizer:
         self._data_processor.fit(data)
         return self._data_processor.transform(data)
 
+    def _store_and_convert_original_cols(self, data):
+        # Transform in place to avoid possible large copy of data
+        for column in data.columns:
+            if isinstance(column, int):
+                self._original_columns = data.columns
+                data.columns = data.columns.astype(str)
+                return True
+
+        return False
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -371,7 +392,14 @@ class BaseSynthesizer:
                 "please refit the model using 'fit' or 'fit_processed_data'."
             )
 
-        return self._preprocess(data)
+        is_converted = self._store_and_convert_original_cols(data)
+
+        preprocess_data = self._preprocess(data)
+
+        if is_converted:
+            data.columns = self._original_columns
+
+        return preprocess_data
 
     def _fit(self, processed_data):
         """Fit the model to the table.
@@ -389,6 +417,16 @@ class BaseSynthesizer:
             processed_data (pandas.DataFrame):
                 The transformed data used to fit the model to.
         """
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Fit processed data',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': len(processed_data),
+            'TOTAL NUMBER OF COLUMNS': len(processed_data.columns)
+        })
+
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         if not processed_data.empty:
             self._fit(processed_data)
@@ -405,12 +443,22 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) to fit the model to.
         """
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Fit',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': len(data),
+            'TOTAL NUMBER OF COLUMNS': len(data.columns)
+        })
+
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         self._check_metadata_updated()
         self._fitted = False
         self._data_processor.reset_sampling()
         self._random_state_set = False
-        processed_data = self._preprocess(data)
+        processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
 
     def save(self, filepath):
@@ -420,6 +468,14 @@ class BaseSynthesizer:
             filepath (str):
                 Path where the synthesizer instance will be serialized.
         """
+        synthesizer_id = getattr(self, '_synthesizer_id', None)
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Save',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': synthesizer_id,
+        })
+
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
 
@@ -442,6 +498,13 @@ class BaseSynthesizer:
         check_sdv_versions_and_warn(synthesizer)
         if getattr(synthesizer, '_synthesizer_id', None) is None:
             synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
+
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Load',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': synthesizer.__class__.__name__,
+            'SYNTHESIZER ID': synthesizer._synthesizer_id,
+        })
 
         return synthesizer
 
@@ -806,17 +869,41 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             pandas.DataFrame:
                 Sampled data.
         """
+        if not self._fitted:
+            raise SamplingError(
+                'This synthesizer has not been fitted. Please fit your synthesizer first before'
+                ' sampling synthetic data.'
+            )
+
+        sample_timestamp = datetime.datetime.now()
         has_constraints = bool(self._data_processor._constraints)
         has_batches = batch_size is not None and batch_size != num_rows
         show_progress_bar = has_constraints or has_batches
 
-        return self._sample_with_progress_bar(
+        sampled_data = self._sample_with_progress_bar(
             num_rows,
             max_tries_per_batch,
             batch_size,
             output_file_path,
             show_progress_bar=show_progress_bar
         )
+
+        original_columns = getattr(self, '_original_columns', pd.Index([]))
+        if not original_columns.empty:
+            sampled_data.columns = self._original_columns
+
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Sample',
+            'TIMESTAMP': sample_timestamp,
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': len(sampled_data),
+            'TOTAL NUMBER OF COLUMNS': len(sampled_data.columns)
+
+        })
+
+        return sampled_data
 
     def _sample_with_conditions(self, conditions, max_tries_per_batch, batch_size,
                                 progress_bar=None, output_file_path=None):

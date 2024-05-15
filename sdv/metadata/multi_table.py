@@ -1,5 +1,6 @@
 """Multi Table Metadata."""
 
+import datetime
 import json
 import logging
 import warnings
@@ -11,6 +12,7 @@ import pandas as pd
 
 from sdv._utils import _cast_to_iterable, _load_data_from_csv
 from sdv.errors import InvalidDataError
+from sdv.logging import get_sdv_logger
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -19,6 +21,7 @@ from sdv.metadata.visualization import (
     create_columns_node, create_summarized_columns_node, visualize_graph)
 
 LOGGER = logging.getLogger(__name__)
+MULTITABLEMETADATA_LOGGER = get_sdv_logger('MultiTableMetadata')
 WARNINGS_COLUMN_ORDER = ['Table Name', 'Column Name', 'sdtype', 'datetime_format']
 
 
@@ -521,6 +524,9 @@ class MultiTableMetadata:
     def detect_table_from_dataframe(self, table_name, data):
         """Detect the metadata for a table from a dataframe.
 
+        This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``,
+        for a specified table. All data column names are converted to strings.
+
         Args:
             table_name (str):
                 Name of the table to detect.
@@ -535,6 +541,9 @@ class MultiTableMetadata:
 
     def detect_from_dataframes(self, data):
         """Detect the metadata for all tables in a dictionary of dataframes.
+
+        This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
+        All data column names are converted to strings.
 
         Args:
             data (dict):
@@ -818,8 +827,8 @@ class MultiTableMetadata:
 
                     errors.append(
                         f"Error: foreign key column '{relation['child_foreign_key']}' contains "
-                        f'unknown references: {message}. Please use the utility method'
-                        " 'drop_unknown_references' to clean the data."
+                        f'unknown references: {message}. Please use the method'
+                        " 'drop_unknown_references' from sdv.utils to clean the data."
                     )
 
             if errors:
@@ -895,6 +904,20 @@ class MultiTableMetadata:
         """
         self._validate_table_exists(table_name)
         return self.tables[table_name].get_column_names(**kwargs)
+
+    def get_table_metadata(self, table_name):
+        """Return the metadata for a table.
+
+        Args:
+            table_name (str):
+                The name of the table to get the metadata for.
+
+        Returns:
+            SingleTableMetadata:
+                The metadata for the given table.
+        """
+        self._validate_table_exists(table_name)
+        return deepcopy(self.tables[table_name])
 
     def visualize(self, show_table_details='full', show_relationship_labels=True,
                   output_filepath=None):
@@ -1011,7 +1034,12 @@ class MultiTableMetadata:
             self.tables[table_name] = SingleTableMetadata.load_from_dict(table_dict)
 
         for relationship in metadata.get('relationships', []):
-            self.relationships.append(relationship)
+            type_safe_relationships = {
+                key: str(value)
+                if not isinstance(value, str)
+                else value for key, value in relationship.items()
+            }
+            self.relationships.append(type_safe_relationships)
 
     @classmethod
     def load_from_dict(cls, metadata_dict):
@@ -1040,6 +1068,22 @@ class MultiTableMetadata:
         """
         validate_file_does_not_exist(filepath)
         metadata = self.to_dict()
+        total_columns = 0
+        for table in self.tables.values():
+            total_columns += len(table.columns)
+
+        MULTITABLEMETADATA_LOGGER.info(
+            '\nMetadata Save:\n'
+            '  Timestamp: %s\n'
+            '  Statistics about the metadata:\n'
+            '    Total number of tables: %s\n'
+            '    Total number of columns: %s\n'
+            '    Total number of relationships: %s',
+            datetime.datetime.now(),
+            len(self.tables),
+            total_columns,
+            len(self.relationships)
+        )
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)
 

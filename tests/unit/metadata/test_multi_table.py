@@ -1,6 +1,7 @@
 """Test Multi Table Metadata."""
 
 import json
+import logging
 import re
 from collections import defaultdict
 from unittest.mock import Mock, call, patch
@@ -12,7 +13,7 @@ import pytest
 from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata, SingleTableMetadata
-from tests.utils import get_multi_table_data, get_multi_table_metadata
+from tests.utils import catch_sdv_logs, get_multi_table_data, get_multi_table_metadata
 
 
 class TestMultiTableMetadata:
@@ -1288,9 +1289,9 @@ class TestMultiTableMetadata:
             'Relationships:\n'
             "Error: foreign key column 'upravna_enota' contains unknown references: "
             '(10, 11, 12, 13, 14, + more). '
-            "Please use the utility method 'drop_unknown_references' to clean the data.\n"
+            "Please use the method 'drop_unknown_references' from sdv.utils to clean the data.\n"
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9)."
-            " Please use the utility method 'drop_unknown_references' to clean the data."
+            " Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
         ]
         assert result == missing_upravna_enota
 
@@ -1403,7 +1404,7 @@ class TestMultiTableMetadata:
             'The provided data does not match the metadata:\n'
             'Relationships:\n'
             "Error: foreign key column 'id_nesreca' contains unknown references: (1, 3, 5, 7, 9). "
-            "Please use the utility method 'drop_unknown_references' to clean the data."
+            "Please use the method 'drop_unknown_references' from sdv.utils to clean the data."
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             metadata.validate_data(data)
@@ -1716,6 +1717,85 @@ class TestMultiTableMetadata:
                 'parent_primary_key': 'id',
                 'child_table_name': 'branches',
                 'child_foreign_key': 'branch_id',
+            }
+        ]
+
+    @patch('sdv.metadata.multi_table.SingleTableMetadata')
+    def test_load_from_dict_integer(self, mock_singletablemetadata):
+        """Test that ``load_from_dict`` returns a instance of ``MultiTableMetadata``.
+
+        Test that when calling the ``load_from_dict`` method a new instance with the passed
+        python ``dict`` details should be created. Make sure that integers passed in are
+        turned into strings to ensure metadata is properly typed.
+
+        Setup:
+            - A dict representing a ``MultiTableMetadata``.
+
+        Mock:
+            - Mock ``SingleTableMetadata`` from ``sdv.metadata.multi_table``
+
+        Output:
+            - ``instance`` that contains ``instance.tables`` and ``instance.relationships``.
+
+        Side Effects:
+            - ``SingleTableMetadata.load_from_dict`` has been called.
+        """
+        # Setup
+        multitable_metadata = {
+            'tables': {
+                'accounts': {
+                    1: {'sdtype': 'numerical'},
+                    2: {'sdtype': 'numerical'},
+                    'amount': {'sdtype': 'numerical'},
+                    'start_date': {'sdtype': 'datetime'},
+                    'owner': {'sdtype': 'id'},
+                },
+                'branches': {
+                    1: {'sdtype': 'numerical'},
+                    'name': {'sdtype': 'id'},
+                }
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'accounts',
+                    'parent_primary_key': 1,
+                    'child_table_name': 'branches',
+                    'child_foreign_key': 1,
+                }
+            ]
+        }
+
+        single_table_accounts = {
+            '1': {'sdtype': 'numerical'},
+            '2': {'sdtype': 'numerical'},
+            'amount': {'sdtype': 'numerical'},
+            'start_date': {'sdtype': 'datetime'},
+            'owner': {'sdtype': 'id'},
+        }
+        single_table_branches = {
+            '1': {'sdtype': 'numerical'},
+            'name': {'sdtype': 'id'},
+        }
+        mock_singletablemetadata.load_from_dict.side_effect = [
+            single_table_accounts,
+            single_table_branches
+        ]
+
+        # Run
+        instance = MultiTableMetadata.load_from_dict(multitable_metadata)
+
+        # Assert
+        assert instance.tables == {
+            'accounts': single_table_accounts,
+            'branches': single_table_branches
+        }
+
+        assert instance.relationships == [
+            {
+                'parent_table_name': 'accounts',
+                'parent_primary_key': '1',
+                'child_table_name': 'branches',
+                'child_foreign_key': '1',
             }
         ]
 
@@ -2187,6 +2267,22 @@ class TestMultiTableMetadata:
 
         # Assert
         table1.get_column_names.assert_called_once_with(sdtype='email', pii=True)
+
+    @patch('sdv.metadata.multi_table.deepcopy')
+    def test_get_table_metadata(self, deepcopy_mock):
+        """Test the ``get_table_metadata`` method."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._validate_table_exists = Mock()
+        table1 = Mock()
+        metadata.tables = {'table1': table1}
+
+        # Run
+        metadata.get_table_metadata('table1')
+
+        # Assert
+        metadata._validate_table_exists.assert_called_once_with('table1')
+        deepcopy_mock.assert_called_once_with(table1)
 
     def test__detect_relationships(self):
         """Test relationships are automatically detected and the foreign key sdtype is updated."""
@@ -2827,7 +2923,8 @@ class TestMultiTableMetadata:
         with pytest.raises(ValueError, match=error_msg):
             instance.save_to_json('filepath.json')
 
-    def test_save_to_json(self, tmp_path):
+    @patch('sdv.metadata.multi_table.datetime')
+    def test_save_to_json(self, mock_datetime, tmp_path, caplog):
         """Test the ``save_to_json`` method.
 
         Test that ``save_to_json`` stores a ``json`` file and dumps the instance dict into
@@ -2844,16 +2941,26 @@ class TestMultiTableMetadata:
         # Setup
         instance = MultiTableMetadata()
         instance._reset_updated_flag = Mock()
+        mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
 
         # Run / Assert
         file_name = tmp_path / 'multitable.json'
-        instance.save_to_json(file_name)
+        with catch_sdv_logs(caplog, logging.INFO, logger='MultiTableMetadata'):
+            instance.save_to_json(file_name)
 
         with open(file_name, 'rb') as multi_table_file:
             saved_metadata = json.load(multi_table_file)
             assert saved_metadata == instance.to_dict()
 
         instance._reset_updated_flag.assert_called_once()
+        assert caplog.messages[0] == (
+            '\nMetadata Save:\n'
+            '  Timestamp: 2024-04-19 16:20:10.037183\n'
+            '  Statistics about the metadata:\n'
+            '    Total number of tables: 0\n'
+            '    Total number of columns: 0\n'
+            '    Total number of relationships: 0'
+        )
 
     def test__convert_relationships(self):
         """Test the ``_convert_relationships`` method.

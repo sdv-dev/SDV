@@ -15,8 +15,12 @@ from sdv import version
 from sdv._utils import (
     _validate_foreign_keys_not_null, check_sdv_versions_and_warn, check_synthesizer_version,
     generate_synthesizer_id)
-from sdv.errors import ConstraintsNotMetError, InvalidDataError, SynthesizerInputError
+from sdv.errors import (
+    ConstraintsNotMetError, InvalidDataError, SamplingError, SynthesizerInputError)
+from sdv.logging import disable_single_table_logger, get_sdv_logger
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
+
+SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
 
 
 class BaseMultiTableSynthesizer:
@@ -56,13 +60,14 @@ class BaseMultiTableSynthesizer:
             np.random.set_state(initial_state)
 
     def _initialize_models(self):
-        for table_name, table_metadata in self.metadata.tables.items():
-            synthesizer_parameters = self._table_parameters.get(table_name, {})
-            self._table_synthesizers[table_name] = self._synthesizer(
-                metadata=table_metadata,
-                locales=self.locales,
-                **synthesizer_parameters
-            )
+        with disable_single_table_logger():
+            for table_name, table_metadata in self.metadata.tables.items():
+                synthesizer_parameters = self._table_parameters.get(table_name, {})
+                self._table_synthesizers[table_name] = self._synthesizer(
+                    metadata=table_metadata,
+                    locales=self.locales,
+                    **synthesizer_parameters
+                )
 
     def _get_pbar_args(self, **kwargs):
         """Return a dictionary with the updated keyword args for a progress bar."""
@@ -95,6 +100,7 @@ class BaseMultiTableSynthesizer:
         self.extended_columns = defaultdict(dict)
         self._table_synthesizers = {}
         self._table_parameters = defaultdict(dict)
+        self._original_table_columns = {}
         if synthesizer_kwargs is not None:
             warn_message = (
                 'The `synthesizer_kwargs` parameter is deprecated as of SDV 1.2.0 and does not '
@@ -113,13 +119,12 @@ class BaseMultiTableSynthesizer:
         self._fitted_sdv_version = None
         self._fitted_sdv_enterprise_version = None
         self._synthesizer_id = generate_synthesizer_id(self)
-
-    def _get_root_parents(self):
-        """Get the set of root parents in the graph."""
-        non_root_tables = set(self.metadata._get_parent_map().keys())
-        root_parents = set(self.metadata.tables.keys()) - non_root_tables
-
-        return root_parents
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Instance',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id
+        })
 
     def set_address_columns(self, table_name, column_names, anonymization_level='full'):
         """Set the address multi-column transformer.
@@ -319,6 +324,19 @@ class BaseMultiTableSynthesizer:
         self._validate_table_name(table_name)
         self._table_synthesizers[table_name].update_transformers(column_name_to_transformer)
 
+    def _store_and_convert_original_cols(self, data):
+        list_of_changed_tables = []
+        for table, dataframe in data.items():
+            self._original_table_columns[table] = dataframe.columns
+            for column in dataframe.columns:
+                if isinstance(column, int):
+                    dataframe.columns = dataframe.columns.astype(str)
+                    list_of_changed_tables.append(table)
+                    break
+
+            data[table] = dataframe
+        return list_of_changed_tables
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -330,6 +348,8 @@ class BaseMultiTableSynthesizer:
             dict:
                 A dictionary with the preprocessed data.
         """
+        list_of_changed_tables = self._store_and_convert_original_cols(data)
+
         self.validate(data)
         if self._fitted:
             warnings.warn(
@@ -343,6 +363,9 @@ class BaseMultiTableSynthesizer:
             synthesizer = self._table_synthesizers[table_name]
             self._assign_table_transformers(synthesizer, table_name, table_data)
             processed_data[table_name] = synthesizer._preprocess(table_data)
+
+        for table in list_of_changed_tables:
+            data[table].columns = self._original_table_columns[table]
 
         return processed_data
 
@@ -371,9 +394,27 @@ class BaseMultiTableSynthesizer:
             processed_data (dict):
                 Dictionary mapping each table name to a preprocessed ``pandas.DataFrame``.
         """
+        total_rows = 0
+        total_columns = 0
+        for table in processed_data.values():
+            total_rows += len(table)
+            total_columns += len(table.columns)
+
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Fit processed data',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': len(processed_data),
+            'TOTAL NUMBER OF ROWS': total_rows,
+            'TOTAL NUMBER OF COLUMNS': total_columns
+        })
+
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
-        augmented_data = self._augment_tables(processed_data)
-        self._model_tables(augmented_data)
+        with disable_single_table_logger():
+            augmented_data = self._augment_tables(processed_data)
+            self._model_tables(augmented_data)
+
         self._fitted = True
         self._fitted_date = datetime.datetime.today().strftime('%Y-%m-%d')
         self._fitted_sdv_version = getattr(version, 'public', None)
@@ -387,6 +428,22 @@ class BaseMultiTableSynthesizer:
                 Dictionary mapping each table name to a ``pandas.DataFrame`` in the raw format
                 (before any transformations).
         """
+        total_rows = 0
+        total_columns = 0
+        for table in data.values():
+            total_rows += len(table)
+            total_columns += len(table.columns)
+
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Fit',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': len(data),
+            'TOTAL NUMBER OF ROWS': total_rows,
+            'TOTAL NUMBER OF COLUMNS': total_columns
+        })
+
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         _validate_foreign_keys_not_null(self.metadata, data)
         self._check_metadata_updated()
@@ -415,12 +472,39 @@ class BaseMultiTableSynthesizer:
                 If ``scale`` is lower than ``1.0`` create fewer rows by the factor of ``scale``
                 than the original tables. Defaults to ``1.0``.
         """
+        if not self._fitted:
+            raise SamplingError(
+                'This synthesizer has not been fitted. Please fit your synthesizer first before '
+                'sampling synthetic data.'
+            )
+
         if not type(scale) in (float, int) or not scale > 0:
             raise SynthesizerInputError(
                 f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0.")
 
-        with self._set_temp_numpy_seed():
+        with self._set_temp_numpy_seed(), disable_single_table_logger():
             sampled_data = self._sample(scale=scale)
+
+        total_rows = 0
+        total_columns = 0
+        for table in sampled_data.values():
+            total_rows += len(table)
+            total_columns += len(table.columns)
+
+        table_columns = getattr(self, '_original_table_columns', {})
+        for table in sampled_data:
+            if table in table_columns:
+                sampled_data[table].columns = table_columns[table]
+
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Sample',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': len(sampled_data),
+            'TOTAL NUMBER OF ROWS': total_rows,
+            'TOTAL NUMBER OF COLUMNS': total_columns
+        })
 
         return sampled_data
 
@@ -586,6 +670,14 @@ class BaseMultiTableSynthesizer:
             filepath (str):
                 Path where the instance will be serialized.
         """
+        synthesizer_id = getattr(self, '_synthesizer_id', None)
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Save',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': synthesizer_id,
+        })
+
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
 
@@ -608,5 +700,12 @@ class BaseMultiTableSynthesizer:
         check_sdv_versions_and_warn(synthesizer)
         if getattr(synthesizer, '_synthesizer_id', None) is None:
             synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
+
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Load',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': synthesizer.__class__.__name__,
+            'SYNTHESIZER ID': synthesizer._synthesizer_id,
+        })
 
         return synthesizer

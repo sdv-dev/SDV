@@ -4,7 +4,7 @@ import json
 from unittest.mock import patch
 
 from sdv.datasets.demo import download_demo
-from sdv.metadata import MultiTableMetadata
+from sdv.metadata import MultiTableMetadata, SingleTableMetadata
 from tests.utils import get_multi_table_metadata
 
 
@@ -377,3 +377,33 @@ def test_get_column_names():
 
     # Assert
     assert set(matches) == {'upravna_enota', 'id_nesreca'}
+
+
+def test_get_table_metadata():
+    """Test the ``get_table_metadata`` method."""
+    # Setup
+    metadata = get_multi_table_metadata()
+    metadata.add_column('nesreca', 'latitude', sdtype='latitude')
+    metadata.add_column('nesreca', 'longitude', sdtype='longitude')
+    metadata.add_column_relationship('nesreca', 'gps', ['latitude', 'longitude'])
+
+    # Run
+    table_metadata = metadata.get_table_metadata('nesreca')
+
+    # Assert
+    assert isinstance(table_metadata, SingleTableMetadata)
+    expected_metadata = {
+        'primary_key': 'id_nesreca',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'columns': {
+            'upravna_enota': {'sdtype': 'id'},
+            'id_nesreca': {'sdtype': 'id'},
+            'nesreca_val': {'sdtype': 'numerical'},
+            'latitude': {'sdtype': 'latitude', 'pii': True},
+            'longitude': {'sdtype': 'longitude', 'pii': True}
+        },
+        'column_relationships': [
+            {'type': 'gps', 'column_names': ['latitude', 'longitude']}
+        ]
+    }
+    assert table_metadata.to_dict() == expected_metadata

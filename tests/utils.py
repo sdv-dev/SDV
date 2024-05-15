@@ -1,6 +1,9 @@
 """Utils for testing."""
+import contextlib
+
 import pandas as pd
 
+from sdv.logging import get_sdv_logger
 from sdv.metadata.multi_table import MultiTableMetadata
 
 
@@ -99,3 +102,17 @@ def get_multi_table_data():
     }
 
     return data
+
+
+@contextlib.contextmanager
+def catch_sdv_logs(caplog, level, logger):
+    """Context manager to capture logs from an SDV logger."""
+    logger = get_sdv_logger(logger)
+    orig_level = logger.level
+    logger.setLevel(level)
+    logger.addHandler(caplog.handler)
+    try:
+        yield
+    finally:
+        logger.setLevel(orig_level)
+        logger.removeHandler(caplog.handler)

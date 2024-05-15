@@ -161,7 +161,7 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,
             enforce_rounding=enforce_rounding,
-            locales=locales
+            locales=locales,
         )
 
         self.embedding_dim = embedding_dim
