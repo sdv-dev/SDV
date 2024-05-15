@@ -25,6 +25,7 @@ Finally, this release fixes some bugs that prevented synthesizers from working w
 * Metadata detection crashes when the column names are integers (`AttributeError: 'int' object has no attribute 'lower'`) - Issue [#1933](https://github.com/sdv-dev/SDV/issues/1933) by @lajohn4747
 * Synthesizers crash when column names are integers (`TypeError: unsupported operand`) - Issue [#1935](https://github.com/sdv-dev/SDV/issues/1935) by @lajohn4747
 * Switch parameter order in drop_unknown_references - Issue [#1944](https://github.com/sdv-dev/SDV/issues/1944) by @R-Palazzo
+* Unexpected NaN values in sequence_index when dataframe isn't reset - Issue [#1973](https://github.com/sdv-dev/SDV/issues/1973) by @fealho
 * Fix pandas DtypeWarning in download_demo - Issue [#1980](https://github.com/sdv-dev/SDV/issues/1980) by @fealho
 
 ### Maintenance
