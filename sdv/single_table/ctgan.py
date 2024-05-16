@@ -322,6 +322,8 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             Regularization term. Defaults to 1e-5.
         batch_size (int):
             Number of data samples to process in each step.
+        verbose (boolean):
+            Whether to have print statements for progress results. Defaults to ``False``.
         epochs (int):
             Number of training epochs. Defaults to 300.
         loss_factor (int):
@@ -338,7 +340,8 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
 
     def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
                  embedding_dim=128, compress_dims=(128, 128), decompress_dims=(128, 128),
-                 l2scale=1e-5, batch_size=500, epochs=300, loss_factor=2, cuda=True):
+                 l2scale=1e-5, batch_size=500, verbose=False, epochs=300, loss_factor=2,
+                 cuda=True):
 
         super().__init__(
             metadata=metadata,
@@ -350,6 +353,7 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
         self.decompress_dims = decompress_dims
         self.l2scale = l2scale
         self.batch_size = batch_size
+        self.verbose = verbose
         self.epochs = epochs
         self.loss_factor = loss_factor
         self.cuda = cuda
@@ -360,6 +364,7 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             'decompress_dims': decompress_dims,
             'l2scale': l2scale,
             'batch_size': batch_size,
+            'verbose': verbose,
             'epochs': epochs,
             'loss_factor': loss_factor,
             'cuda': cuda
