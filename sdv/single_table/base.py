@@ -492,7 +492,14 @@ class BaseSynthesizer:
                 The loaded synthesizer.
         """
         with open(filepath, 'rb') as f:
-            synthesizer = cloudpickle.load(f)
+            try:
+                synthesizer = cloudpickle.load(f)
+            except RuntimeError:
+                raise SamplingError(
+                    'This synthesizer was created on a machine with GPU but the current machine is'
+                    ' CPU-only. This feature is currently unsupported. We recommend sampling on '
+                    'the same GPU-enabled machine.'
+                )
 
         check_synthesizer_version(synthesizer)
         check_sdv_versions_and_warn(synthesizer)
