@@ -1,5 +1,9 @@
 # Release Notes
 
+## 1.13.1 - 2024-05-16
+
+This release fixes the `ModuleNotFoundError` error that was causing the 1.13.0 release to fail.
+
 ## 1.13.0 - 2024-05-15
 
 This release adds a utility function called `get_random_subset` that helps users get a subset of their multi-table data so that modeling can be done quicker. Given a dictionary of table names mapped to DataFrames, metadata, a main table and a desired number of rows to use for the main table, it will subsample the data in a way that maintains referential integrity.
