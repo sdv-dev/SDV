@@ -359,6 +359,7 @@ class TestTVAESynthesizer:
         assert instance.decompress_dims == (128, 128)
         assert instance.l2scale == 1e-5
         assert instance.batch_size == 500
+        assert instance.verbose is False
         assert instance.epochs == 300
         assert instance.loss_factor == 2
         assert instance.cuda is True
@@ -374,6 +375,7 @@ class TestTVAESynthesizer:
         decompress_dims = (64, 64)
         l2scale = 2e-5
         batch_size = 250
+        verbose = True
         epochs = 150
         loss_factor = 4
         cuda = False
@@ -388,6 +390,7 @@ class TestTVAESynthesizer:
             decompress_dims=decompress_dims,
             l2scale=l2scale,
             batch_size=batch_size,
+            verbose=verbose,
             epochs=epochs,
             loss_factor=loss_factor,
             cuda=cuda,
@@ -401,6 +404,7 @@ class TestTVAESynthesizer:
         assert instance.decompress_dims == (64, 64)
         assert instance.l2scale == 2e-5
         assert instance.batch_size == 250
+        assert instance.verbose is True
         assert instance.epochs == 150
         assert instance.loss_factor == 4
         assert instance.cuda is False
@@ -423,6 +427,7 @@ class TestTVAESynthesizer:
             'decompress_dims': (128, 128),
             'l2scale': 1e-5,
             'batch_size': 500,
+            'verbose': False,
             'epochs': 300,
             'loss_factor': 2,
             'cuda': True
@@ -459,6 +464,7 @@ class TestTVAESynthesizer:
             cuda=True,
             decompress_dims=(128, 128),
             embedding_dim=128,
+            verbose=False,
             epochs=300,
             l2scale=1e-5,
             loss_factor=2,
