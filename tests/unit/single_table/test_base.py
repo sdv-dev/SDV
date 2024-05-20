@@ -1935,6 +1935,17 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(SamplingError, match=err_msg):
             BaseSingleTableSynthesizer.load('synth.pkl')
 
+    @patch('builtins.open')
+    @patch('sdv.single_table.base.cloudpickle')
+    def test_load_runtime_error_no_change(self, cloudpickle_mock, mock_open):
+        """Test that the synthesizer's load method errors with the correct message."""
+        # Setup
+        cloudpickle_mock.load.side_effect = RuntimeError('Error')
+
+        # Run and Assert
+        with pytest.raises(RuntimeError, match='Error'):
+            BaseSingleTableSynthesizer.load('synth.pkl')
+
     def test_add_custom_constraint_class(self):
         """Test that this method calls the ``DataProcessor``'s method."""
         # Setup

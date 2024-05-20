@@ -1624,3 +1624,14 @@ class TestBaseMultiTableSynthesizer:
         )
         with pytest.raises(SamplingError, match=err_msg):
             BaseMultiTableSynthesizer.load('synth.pkl')
+
+    @patch('builtins.open')
+    @patch('sdv.multi_table.base.cloudpickle')
+    def test_load_runtime_error_no_change(self, cloudpickle_mock, mock_open):
+        """Test that the synthesizer's load method errors with the correct message."""
+        # Setup
+        cloudpickle_mock.load.side_effect = RuntimeError('Error')
+
+        # Run and Assert
+        with pytest.raises(RuntimeError, match='Error'):
+            BaseMultiTableSynthesizer.load('synth.pkl')

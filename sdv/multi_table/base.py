@@ -709,6 +709,7 @@ class BaseMultiTableSynthesizer:
                         'machine is CPU-only. This feature is currently unsupported. We recommend'
                         ' sampling on the same GPU-enabled machine.'
                     )
+                raise e
 
         check_synthesizer_version(synthesizer)
         check_sdv_versions_and_warn(synthesizer)
