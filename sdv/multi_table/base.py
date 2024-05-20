@@ -705,9 +705,9 @@ class BaseMultiTableSynthesizer:
                 )
                 if str(e) == err_msg:
                     raise SamplingError(
-                        'This synthesizer was created on a machine with GPU but the current machine is'
-                        ' CPU-only. This feature is currently unsupported. We recommend sampling on '
-                        'the same GPU-enabled machine.'
+                        'This synthesizer was created on a machine with GPU but the current '
+                        'machine is CPU-only. This feature is currently unsupported. We recommend'
+                        ' sampling on the same GPU-enabled machine.'
                     )
 
         check_synthesizer_version(synthesizer)
