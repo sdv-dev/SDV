@@ -249,3 +249,36 @@ def test_par_subset_of_data_simplified():
 
     # Assert
     assert not pd.isna(synthetic_data['date']).any()
+
+
+def test_par_missing_sequence_index():
+    """Test if PAR Synthesizer can run without a sequence key"""
+    # Setup
+    metadata_dict = {
+        'columns': {
+            'value': {
+                'sdtype': 'numerical'
+            },
+            'e_id': {
+                'sdtype': 'id'
+            }
+        },
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'sequence_key': 'e_id'
+    }
+
+    metadata = SingleTableMetadata().load_from_dict(metadata_dict)
+
+    data = pd.DataFrame({
+        'value': [10, 20, 30],
+        'e_id': [1, 2, 3]
+    })
+
+    # Run
+    synthesizer = PARSynthesizer(metadata)
+    synthesizer.fit(data)
+    sampled = synthesizer.sample(num_sequences=3)
+
+    # Assert
+    assert sampled.shape == data.shape
+    assert (sampled.dtypes == data.dtypes).all()
