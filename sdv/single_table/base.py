@@ -305,6 +305,7 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) that will be used to fit the model.
         """
+        self.metadata._validate_metadata_matches_data(data)
         self._data_processor.prepare_for_fitting(data)
 
     def get_transformers(self):
