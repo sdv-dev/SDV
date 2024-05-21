@@ -1914,6 +1914,38 @@ class TestBaseSingleTableSynthesizer:
             ['Custom', 'Constr', 'UpperPlus']
         )
 
+    @patch('builtins.open')
+    @patch('sdv.single_table.base.cloudpickle')
+    def test_load_runtime_error(self, cloudpickle_mock, mock_open):
+        """Test that the synthesizer's load method errors with the correct message."""
+        # Setup
+        cloudpickle_mock.load.side_effect = RuntimeError((
+            'Attempting to deserialize object on a CUDA device but '
+            'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
+            " please use torch.load with map_location=torch.device('cpu') "
+            'to map your storages to the CPU.'
+        ))
+
+        # Run and Assert
+        err_msg = re.escape(
+            'This synthesizer was created on a machine with GPU but the current machine is'
+            ' CPU-only. This feature is currently unsupported. We recommend sampling on '
+            'the same GPU-enabled machine.'
+        )
+        with pytest.raises(SamplingError, match=err_msg):
+            BaseSingleTableSynthesizer.load('synth.pkl')
+
+    @patch('builtins.open')
+    @patch('sdv.single_table.base.cloudpickle')
+    def test_load_runtime_error_no_change(self, cloudpickle_mock, mock_open):
+        """Test that the synthesizer's load method errors with the correct message."""
+        # Setup
+        cloudpickle_mock.load.side_effect = RuntimeError('Error')
+
+        # Run and Assert
+        with pytest.raises(RuntimeError, match='Error'):
+            BaseSingleTableSynthesizer.load('synth.pkl')
+
     def test_add_custom_constraint_class(self):
         """Test that this method calls the ``DataProcessor``'s method."""
         # Setup
