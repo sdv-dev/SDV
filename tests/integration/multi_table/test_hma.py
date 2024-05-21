@@ -1,5 +1,6 @@
 import datetime
 import importlib.metadata
+import logging
 import re
 import warnings
 
@@ -18,6 +19,7 @@ from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, g
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
+from tests.utils import catch_sdv_logs
 
 
 class TestHMASynthesizer:
@@ -1788,3 +1790,62 @@ def test_detect_from_dataframe_numerical_col():
 
     test_metadata = MultiTableMetadata()
     test_metadata.detect_from_dataframes(data)
+
+
+def test_table_name_logging(caplog):
+    """Test the table name is correctly logged GH#1964."""
+    # Setup
+    parent_data = pd.DataFrame({
+        'parent_id': [1, 2, 3, 4, 5, 6],
+        'col': ['a', 'b', 'a', 'b', 'a', 'b'],
+    })
+    child_data = pd.DataFrame({
+        'id': [1, 2, 3, 4, 5, 6],
+        'parent_id': [1, 2, 3, 4, 5, 6]
+    })
+    data = {
+        'parent_data': parent_data,
+        'child_data': child_data,
+    }
+    metadata = MultiTableMetadata()
+    metadata.detect_from_dataframes(data)
+    instance = HMASynthesizer(metadata)
+
+    # Run
+    with catch_sdv_logs(caplog, logging.INFO, 'sdv.data_processing.data_processor'):
+        instance.fit(data)
+
+    # Assert
+    assert caplog.messages == [
+        'Fitting table parent_data metadata',
+        'Fitting table parent_data metadata',
+        'Fitting formatters for table parent_data',
+        'Fitting formatters for table parent_data',
+        'Fitting constraints for table parent_data',
+        'Fitting constraints for table parent_data',
+        'Setting the configuration for the ``HyperTransformer`` for table parent_data',
+        'Setting the configuration for the ``HyperTransformer`` for table parent_data',
+        'Fitting table parent_data metadata', 'Fitting table parent_data metadata',
+        'Fitting formatters for table parent_data',
+        'Fitting formatters for table parent_data',
+        'Fitting constraints for table parent_data',
+        'Fitting constraints for table parent_data',
+        'Fitting HyperTransformer for table parent_data',
+        'Fitting HyperTransformer for table parent_data',
+        'Fitting table child_data metadata',
+        'Fitting table child_data metadata',
+        'Fitting formatters for table child_data',
+        'Fitting formatters for table child_data',
+        'Fitting constraints for table child_data',
+        'Fitting constraints for table child_data',
+        'Setting the configuration for the ``HyperTransformer`` for table child_data',
+        'Setting the configuration for the ``HyperTransformer`` for table child_data',
+        'Fitting table child_data metadata',
+        'Fitting table child_data metadata',
+        'Fitting formatters for table child_data',
+        'Fitting formatters for table child_data',
+        'Fitting constraints for table child_data',
+        'Fitting constraints for table child_data',
+        'Fitting HyperTransformer for table child_data',
+        'Fitting HyperTransformer for table child_data'
+    ]
