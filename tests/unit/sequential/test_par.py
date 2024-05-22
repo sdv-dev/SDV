@@ -32,7 +32,7 @@ class TestPARSynthesizer:
 
     def get_data(self):
         data = pd.DataFrame({
-            'time': [1, 2, 3],
+            'time': ['2020-01-01', '2020-01-02', '2020-01-03'],
             'gender': ['F', 'M', 'M'],
             'name': ['Jane', 'John', 'Doe'],
             'measurement': [55, 60, 65]
@@ -269,7 +269,7 @@ class TestPARSynthesizer:
             'gender': ['F', 'M', 'M'],
             'name': ['Jane', 'John', 'Doe'],
             'measurement': [55, 60, 65],
-            'time.context': [1, 2, 3]
+            'time.context': ['2020-01-01', '2020-01-02', '2020-01-03']
         })
         pd.testing.assert_frame_equal(transformed_data, expected)
         assert par._extra_context_columns == {'time.context': {'sdtype': 'numerical'}}
@@ -294,7 +294,7 @@ class TestPARSynthesizer:
             'gender': ['M'],
             'name': ['John'],
             'measurement': [60],
-            'time.context': [2]
+            'time.context': ['2020-01-02']
         })
         pd.testing.assert_frame_equal(transformed_data, expected)
         assert par._extra_context_columns == {'time.context': {'sdtype': 'numerical'}}
@@ -468,9 +468,9 @@ class TestPARSynthesizer:
             context_columns=['gender']
         )
         sequences = [
-            {'context': np.array(['M'], dtype=object), 'data': [[3], [65]]},
-            {'context': np.array(['F'], dtype=object), 'data': [[1], [55]]},
-            {'context': np.array(['M'], dtype=object), 'data': [[2], [60]]}
+            {'context': np.array(['M'], dtype=object), 'data': [['2020-01-03'], [65]]},
+            {'context': np.array(['F'], dtype=object), 'data': [['2020-01-01'], [55]]},
+            {'context': np.array(['M'], dtype=object), 'data': [['2020-01-02'], [60]]}
         ]
         assemble_sequences_mock.return_value = sequences
 
@@ -490,7 +490,7 @@ class TestPARSynthesizer:
         model_mock.return_value.fit_sequences.assert_called_once_with(
             sequences,
             ['categorical'],
-            ['continuous', 'continuous']
+            ['categorical', 'continuous']
         )
 
     @patch('sdv.sequential.par.PARModel')
