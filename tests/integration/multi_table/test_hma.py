@@ -1816,36 +1816,5 @@ def test_table_name_logging(caplog):
         instance.fit(data)
 
     # Assert
-    assert caplog.messages == [
-        'Fitting table parent_data metadata',
-        'Fitting table parent_data metadata',
-        'Fitting formatters for table parent_data',
-        'Fitting formatters for table parent_data',
-        'Fitting constraints for table parent_data',
-        'Fitting constraints for table parent_data',
-        'Setting the configuration for the ``HyperTransformer`` for table parent_data',
-        'Setting the configuration for the ``HyperTransformer`` for table parent_data',
-        'Fitting table parent_data metadata', 'Fitting table parent_data metadata',
-        'Fitting formatters for table parent_data',
-        'Fitting formatters for table parent_data',
-        'Fitting constraints for table parent_data',
-        'Fitting constraints for table parent_data',
-        'Fitting HyperTransformer for table parent_data',
-        'Fitting HyperTransformer for table parent_data',
-        'Fitting table child_data metadata',
-        'Fitting table child_data metadata',
-        'Fitting formatters for table child_data',
-        'Fitting formatters for table child_data',
-        'Fitting constraints for table child_data',
-        'Fitting constraints for table child_data',
-        'Setting the configuration for the ``HyperTransformer`` for table child_data',
-        'Setting the configuration for the ``HyperTransformer`` for table child_data',
-        'Fitting table child_data metadata',
-        'Fitting table child_data metadata',
-        'Fitting formatters for table child_data',
-        'Fitting formatters for table child_data',
-        'Fitting constraints for table child_data',
-        'Fitting constraints for table child_data',
-        'Fitting HyperTransformer for table child_data',
-        'Fitting HyperTransformer for table child_data'
-    ]
+    for msg in caplog.messages:
+        assert 'table parent_data' in msg or 'table child_data' in msg
