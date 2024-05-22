@@ -220,16 +220,14 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.prepare_for_fitting.assert_called_once_with(data)
 
     def test_auto_assign_transformers_with_invalid_data(self):
-        """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""
+        """Test that auto_assign_transformer throws useful error about invalid data"""
         # Setup
         metadata = SingleTableMetadata.load_from_dict({
             'columns': {
                 'a': {'sdtype': 'categorical'},
             }
         })
-
         synthesizer = GaussianCopulaSynthesizer(metadata)
-
         # input data that does not match the metadata
         data = pd.DataFrame({'b': list(np.random.choice(['M', 'F'], size=10))})
         error_msg = re.escape(
@@ -237,6 +235,8 @@ class TestBaseSingleTableSynthesizer:
             "The columns ['b'] are not present in the metadata.\n\n"
             "The metadata columns ['a'] are not present in the data."
         )
+
+        # Run and Assert
         with pytest.raises(InvalidDataError, match=error_msg):
             synthesizer.auto_assign_transformers(data)
 

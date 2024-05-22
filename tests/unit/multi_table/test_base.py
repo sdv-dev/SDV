@@ -616,7 +616,7 @@ class TestBaseMultiTableSynthesizer:
             instance.auto_assign_transformers(data)
 
     def test_auto_assign_transformers_missing_column(self):
-        """Test that each table of the data calls its single table auto assign method."""
+        """Test errors when there is a missing column within a table"""
         # Setup
         metadata = get_multi_table_metadata()
         synthesizer = HMASynthesizer(metadata)
@@ -634,6 +634,8 @@ class TestBaseMultiTableSynthesizer:
             "The metadata columns ['id_nesreca', 'nesreca_val', 'upravna_enota'] "
             'are not present in the data.'
         )
+
+        # Assert
         with pytest.raises(InvalidDataError, match=error_msg):
             synthesizer.auto_assign_transformers(data)
 
