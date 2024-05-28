@@ -68,6 +68,7 @@ class BaseMultiTableSynthesizer:
                     locales=self.locales,
                     **synthesizer_parameters
                 )
+                self._table_synthesizers[table_name]._data_processor.table_name = table_name
 
     def _get_pbar_args(self, **kwargs):
         """Return a dictionary with the updated keyword args for a progress bar."""
