@@ -282,3 +282,47 @@ def test_par_missing_sequence_index():
     # Assert
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
+
+
+def test_par_unique_sequence_index_with_enforce_min_max():
+    """Test to see if there are duplicate sequence index values
+    when sequence_length is higher than real data
+    """
+    # Setup
+    test_id = list(range(10))
+    s_key = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
+    visits = [
+        '2021-01-01', '2021-01-03', '2021-01-05', '2021-01-07', '2021-01-09',
+        '2021-09-11', '2021-09-17', '2021-10-01', '2021-10-08', '2021-11-01'
+    ]
+    pre_date = [
+        '2020-01-01', '2020-01-02', '2020-01-03', '2020-01-04', '2020-01-05',
+        '2021-04-01', '2021-04-02', '2021-04-03', '2021-04-04', '2021-04-05'
+    ]
+    test_df = pd.DataFrame({
+        'id': test_id,
+        's_key': s_key,
+        'visits': visits,
+        'pre_date': pre_date
+    })
+    test_df[['visits', 'pre_date']] = test_df[['visits', 'pre_date']].apply(
+        pd.to_datetime, format='%Y-%m-%d', errors='coerce')
+    test_df['pre_date'] = pd.to_datetime(test_df['pre_date'], unit='ns').astype(int)
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(test_df)
+    metadata.update_column(column_name='pre_date', sdtype='numerical')
+    metadata.update_column(column_name='s_key', sdtype='id')
+    metadata.set_sequence_key('s_key')
+    metadata.set_sequence_index('visits')
+    synthesizer = PARSynthesizer(metadata, enforce_min_max_values=True,
+                                 enforce_rounding=False, epochs=100, verbose=True)
+
+    # Run
+    synthesizer.fit(test_df)
+    synth_df = synthesizer.sample(num_sequences=50, sequence_length=50)
+
+    # Assert
+    for i in synth_df['s_key'].unique():
+        seq_df = synth_df[synth_df['s_key'] == i]
+        has_duplicates = seq_df['visits'].duplicated().any()
+        assert not has_duplicates
