@@ -108,24 +108,82 @@ class TestPARSynthesizer:
                 verbose=False
             )
 
-    @patch('sdv.sequential.par.warnings')
-    def test_add_constraints(self, warnings_mock):
-        """Test that if constraints are being added, a warning is raised."""
+    def test_add_constraints(self):
+        """Test that that only simple constraints can be added to PARSynthesizer."""
+        # Setup
+        metadata = self.get_metadata()
+        synthesizer = PARSynthesizer(metadata=metadata,
+                                     context_columns=['name', 'measurement'])
+        name_constraint = {
+            'constraint_class': 'Mock',
+            'constraint_parameters': {
+                'column_name': 'name'
+            }
+        }
+        measurement_constraint = {
+            'constraint_class': 'Mock',
+            'constraint_parameters': {
+                'column_name': 'measurement'
+            }
+        }
+        gender_constraint = {
+            'constraint_class': 'Mock',
+            'constraint_parameters': {
+                'column_name': 'gender'
+            }
+        }
+        time_constraint = {
+            'constraint_class': 'Mock',
+            'constraint_parameters': {
+                'column_name': 'time'
+            }
+        }
+        multi_constraint = {
+            'constraint_class': 'Mock',
+            'constraint_parameters': {
+                'column_names': ['name', 'time']
+            }
+        }
+        overlapping_error_msg = re.escape(
+            'The PARSynthesizer cannot accommodate multiple constraints '
+            'that overlap on the same columns.'
+        )
+        mixed_constraint_error_msg = re.escape(
+            'The PARSynthesizer cannot accommodate constraints '
+            'with a mix of context and non-context columns.'
+        )
+
+        # Run and Assert
+        with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
+            synthesizer.add_constraints([name_constraint, gender_constraint])
+
+        with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
+            synthesizer.add_constraints([time_constraint, measurement_constraint])
+
+        with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
+            synthesizer.add_constraints([multi_constraint])
+
+        with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
+            synthesizer.add_constraints([multi_constraint, name_constraint])
+
+        with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
+            synthesizer.add_constraints([name_constraint, name_constraint])
+
+        with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
+            synthesizer.add_constraints([gender_constraint, gender_constraint])
+
+    def test_load_custom_constraint_classes(self):
+        """Test that if custom constraint is being added, an error is raised."""
         # Setup
         metadata = self.get_metadata()
         synthesizer = PARSynthesizer(metadata=metadata)
 
-        # Run
-        synthesizer.add_constraints([object()])
-
-        # Assert
-        warning_message = (
-            'The PARSynthesizer does not yet support constraints. This model will ignore any '
-            'constraints in the metadata.'
+        # Run and Assert
+        error_message = re.escape(
+            'The PARSynthesizer cannot accommodate custom constraints.'
         )
-        warnings_mock.warn.assert_called_once_with(warning_message)
-        assert synthesizer._data_processor._constraints == []
-        assert synthesizer._data_processor._constraints_list == []
+        with pytest.raises(SynthesizerInputError, match=error_message):
+            synthesizer.load_custom_constraint_classes(filepath='test', class_names=[])
 
     def test_get_parameters(self):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
