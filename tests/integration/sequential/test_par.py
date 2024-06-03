@@ -310,7 +310,6 @@ def test_par_unique_sequence_index_with_enforce_min_max():
     test_df['pre_date'] = pd.to_datetime(test_df['pre_date'], unit='ns').astype(int)
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(test_df)
-    metadata.update_column(column_name='pre_date', sdtype='numerical')
     metadata.update_column(column_name='s_key', sdtype='id')
     metadata.set_sequence_key('s_key')
     metadata.set_sequence_index('visits')
