@@ -307,7 +307,6 @@ def test_par_unique_sequence_index_with_enforce_min_max():
     })
     test_df[['visits', 'pre_date']] = test_df[['visits', 'pre_date']].apply(
         pd.to_datetime, format='%Y-%m-%d', errors='coerce')
-    test_df['pre_date'] = pd.to_datetime(test_df['pre_date'], unit='ns').astype(int)
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(test_df)
     metadata.update_column(column_name='s_key', sdtype='id')
