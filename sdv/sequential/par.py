@@ -154,10 +154,13 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         for constraint in constraints:
             constraint_parameters = constraint['constraint_parameters']
             columns = []
-            if 'column_name' in constraint_parameters:
-                columns.append(constraint_parameters['column_name'])
-            else:
-                columns.extend(constraint_parameters['column_names'])
+            for param in constraint_parameters:
+                if 'column_name' in param:
+                    col_names = constraint_parameters[param]
+                    if isinstance(col_names, list):
+                        columns.extend(col_names)
+                    else:
+                        columns.append(col_names)
             for col in columns:
                 if col in constraint_cols:
                     raise SynthesizerInputError(
