@@ -114,7 +114,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             columns_per_table[table_name] += \
                 cls._get_num_extended_columns(
                     metadata, child_name, table_name, columns_per_table, distributions
-                )
+            )
 
         visited.add(table_name)
 

@@ -5,6 +5,7 @@ import logging
 import shutil
 from pathlib import Path
 
+import pandas as pd
 import platformdirs
 import yaml
 
@@ -25,7 +26,7 @@ def get_sdv_logger_config():
 
     for logger in logger_conf.get('loggers', {}).values():
         handler = logger.get('handlers', {})
-        if handler.get('filename') == 'sdv_logs.log':
+        if handler.get('filename') == 'sdv_logs.csv':
             handler['filename'] = store_path / handler['filename']
 
     return logger_conf
@@ -49,3 +50,17 @@ def disable_single_table_logger():
     finally:
         for handler in handlers:
             single_table_logger.addHandler(handler)
+
+
+def load_logfile_dataframe(logfile):
+    """Load the SDV logfile as a pandas DataFrame with correct column headers.
+
+    Args:
+        logfile (str):
+            Path to the SDV log CSV file.
+    """
+    column_names = [
+        'LEVEL', 'EVENT', 'TIMESTAMP', 'SYNTHESIZER CLASS NAME', 'SYNTHESIZER ID',
+        'TOTAL NUMBER OF TABLES', 'TOTAL NUMBER OF ROWS', 'TOTAL NUMBER OF COLUMNS'
+    ]
+    return pd.read_csv(logfile, names=column_names)

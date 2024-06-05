@@ -1,9 +1,33 @@
 """SDV Logger."""
-
+import csv
 import logging
 from functools import lru_cache
+from io import StringIO
 
 from sdv.logging.utils import get_sdv_logger_config
+
+
+class CSVFormatter(logging.Formatter):
+    """Logging formatter to convert to CSV."""
+
+    def __init__(self):
+        super().__init__()
+        self.output = StringIO()
+        headers = [
+            'LEVEL', 'EVENT', 'TIMESTAMP', 'SYNTHESIZER CLASS NAME', 'SYNTHESIZER ID',
+            'TOTAL NUMBER OF TABLES', 'TOTAL NUMBER OF ROWS', 'TOTAL NUMBER OF COLUMNS'
+        ]
+        self.writer = csv.DictWriter(self.output, headers)
+
+    def format(self, record):  # noqa: A003
+        """Format the record and write to CSV."""
+        row = record.msg
+        row['LEVEL'] = record.levelname
+        self.writer.writerow(row)
+        data = self.output.getvalue()
+        self.output.truncate(0)
+        self.output.seek(0)
+        return data.strip()
 
 
 @lru_cache()
@@ -38,7 +62,10 @@ def get_sdv_logger(logger_name):
             formatter = None
             config = logger_conf.get('loggers').get(logger_name)
             log_level = getattr(logging, config.get('level', 'INFO'))
-            if config.get('format'):
+            if config.get('formatter'):
+                if config.get('formatter') == 'sdv.logging.logger.CSVFormatter':
+                    formatter = CSVFormatter()
+            elif config.get('format'):
                 formatter = logging.Formatter(config.get('format'))
 
             logger.setLevel(log_level)

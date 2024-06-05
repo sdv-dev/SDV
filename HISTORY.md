@@ -1,5 +1,45 @@
 # Release Notes
 
+## 1.13.1 - 2024-05-16
+
+This release fixes the `ModuleNotFoundError` error that was causing the 1.13.0 release to fail.
+
+## 1.13.0 - 2024-05-15
+
+This release adds a utility function called `get_random_subset` that helps users get a subset of their multi-table data so that modeling can be done quicker. Given a dictionary of table names mapped to DataFrames, metadata, a main table and a desired number of rows to use for the main table, it will subsample the data in a way that maintains referential integrity.
+
+This release also adds two new local file handlers: the `CSVHandler` and the `ExcelHandler`. This enables users to easily load from and save synthetic data to these files types. These handlers return data and metadata in the multi-table format, so we also added the function `get_table_metadata` to get a `SingleTableMetadata` object from a `MultiTableMetadata` object.
+
+Finally, this release fixes some bugs that prevented synthesizers from working with data that had numerical column names.
+
+### New Features
+
+* Add `get_random_subset` poc utility function - Issue [#1877](https://github.com/sdv-dev/SDV/issues/1877) by @R-Palazzo
+* Add usage logging - Issue [#1903](https://github.com/sdv-dev/SDV/issues/1903) by @pvk-developer
+* Move function `drop_unknown_references` from `poc` to be directly under `utils` - Issue [#1947](https://github.com/sdv-dev/SDV/issues/1947) by @R-Palazzo
+* Add CSVHandler - Issue [#1949](https://github.com/sdv-dev/SDV/issues/1949) by @pvk-developer
+* Add ExcelHandler - Issue [#1950](https://github.com/sdv-dev/SDV/issues/1950) by @pvk-developer
+* Add get_table_metadata function - Issue [#1951](https://github.com/sdv-dev/SDV/issues/1951) by @R-Palazzo
+* Save usage log file as a csv - Issue [#1974](https://github.com/sdv-dev/SDV/issues/1974) by @frances-h
+* Split out metadata creation from data import in the local files handlers - Issue [#1975](https://github.com/sdv-dev/SDV/issues/1975) by @pvk-developer
+* Improve error message when trying to sample before fitting (single table) - Issue [#1978](https://github.com/sdv-dev/SDV/issues/1978) by @R-Palazzo
+
+### Bugs Fixed
+
+* Metadata detection crashes when the column names are integers (`AttributeError: 'int' object has no attribute 'lower'`) - Issue [#1933](https://github.com/sdv-dev/SDV/issues/1933) by @lajohn4747
+* Synthesizers crash when column names are integers (`TypeError: unsupported operand`) - Issue [#1935](https://github.com/sdv-dev/SDV/issues/1935) by @lajohn4747
+* Switch parameter order in drop_unknown_references - Issue [#1944](https://github.com/sdv-dev/SDV/issues/1944) by @R-Palazzo
+* Unexpected NaN values in sequence_index when dataframe isn't reset - Issue [#1973](https://github.com/sdv-dev/SDV/issues/1973) by @fealho
+* Fix pandas DtypeWarning in download_demo - Issue [#1980](https://github.com/sdv-dev/SDV/issues/1980) by @fealho
+
+### Maintenance
+
+* Only run unit and integration tests on oldest and latest python versions for macos - Issue [#1948](https://github.com/sdv-dev/SDV/issues/1948) by @frances-h
+
+### Internal
+
+* Update code to remove `FutureWarning` related to 'enforce_uniqueness' parameter - Issue [#1995](https://github.com/sdv-dev/SDV/issues/1995) by @pvk-developer
+
 ## 1.12.1 - 2024-04-19
 
 This release makes a number of changes to how id columns are generated. By default, id columns with a regex will now have their values scrambled in the output. Id columns without a regex that are numeric will be created randomly. If they're not numeric, they will have a random suffix.

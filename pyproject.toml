@@ -38,6 +38,7 @@ dependencies = [
     'rdt>=1.12.0',
     'sdmetrics>=0.14.0',
     'platformdirs>=4.0',
+    'pyyaml>=6.0.1',
 ]
 
 [project.urls]
@@ -157,7 +158,7 @@ namespaces = false
 version = {attr = 'sdv.__version__'}
 
 [tool.bumpversion]
-current_version = "1.12.2.dev0"
+current_version = "1.13.2.dev0"
 parse = '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(\.(?P<release>[a-z]+)(?P<candidate>\d+))?'
 serialize = [
     '{major}.{minor}.{patch}.{release}{candidate}',

@@ -235,6 +235,10 @@ ifeq ($(CHANGELOG_LINES),0)
 	$(error Please insert the release notes in HISTORY.md before releasing)
 endif
 
+.PHONY: git-push
+git-push: ## Simply push the repository to github
+	git push
+
 .PHONY: check-release
 check-release: check-clean check-main check-history ## Check if the release can be made
 	@echo "A new release can be made"
@@ -261,5 +265,24 @@ release-major: check-release bumpversion-major release
 
 .PHONY: check-deps
 check-deps:
-	$(eval allow_list='cloudpickle=|graphviz=|numpy=|pandas=|tqdm=|copulas=|ctgan=|deepecho=|rdt=|sdmetrics=|platformdirs=')
+	$(eval allow_list='cloudpickle=|graphviz=|numpy=|pandas=|tqdm=|copulas=|ctgan=|deepecho=|rdt=|sdmetrics=|platformdirs=|pyyaml=')
 	pip freeze | grep -v "SDV.git" | grep -E $(allow_list) | sort > $(OUTPUT_FILEPATH)
+
+.PHONY: upgradepip
+upgradepip:
+	python -m pip install --upgrade pip
+
+.PHONY: upgradebuild
+upgradebuild:
+	python -m pip install --upgrade build
+
+.PHONY: upgradesetuptools
+upgradesetuptools:
+	python -m pip install --upgrade setuptools
+
+.PHONY: package
+package: upgradepip upgradebuild upgradesetuptools
+	python -m build ; \
+	$(eval VERSION=$(shell python -c 'import setuptools; setuptools.setup()' --version))
+	tar -zxvf "dist/sdv-${VERSION}.tar.gz"
+	mv "sdv-${VERSION}" unpacked_sdist

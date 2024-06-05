@@ -112,15 +112,12 @@ class BaseSynthesizer:
         self._fitted_sdv_version = None
         self._fitted_sdv_enterprise_version = None
         self._synthesizer_id = generate_synthesizer_id(self)
-        SYNTHESIZER_LOGGER.info(
-            '\nInstance:\n'
-            '  Timestamp: %s\n'
-            '  Synthesizer class name: %s\n'
-            '  Synthesizer id: %s',
-            datetime.datetime.now(),
-            self.__class__.__name__,
-            self._synthesizer_id
-        )
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Instance',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+        })
 
     def set_address_columns(self, column_names, anonymization_level='full'):
         """Set the address multi-column transformer."""
@@ -308,6 +305,7 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) that will be used to fit the model.
         """
+        self.validate(data)
         self._data_processor.prepare_for_fitting(data)
 
     def get_transformers(self):
@@ -420,21 +418,15 @@ class BaseSynthesizer:
             processed_data (pandas.DataFrame):
                 The transformed data used to fit the model to.
         """
-        SYNTHESIZER_LOGGER.info(
-            '\nFit processed data:\n'
-            '  Timestamp: %s\n'
-            '  Synthesizer class name: %s\n'
-            '  Statistics of the fit processed data:\n'
-            '    Total number of tables: 1\n'
-            '    Total number of rows: %s\n'
-            '    Total number of columns: %s\n'
-            '  Synthesizer id: %s',
-            datetime.datetime.now(),
-            self.__class__.__name__,
-            len(processed_data),
-            len(processed_data.columns),
-            self._synthesizer_id,
-        )
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Fit processed data',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': len(processed_data),
+            'TOTAL NUMBER OF COLUMNS': len(processed_data.columns)
+        })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         if not processed_data.empty:
@@ -452,21 +444,15 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) to fit the model to.
         """
-        SYNTHESIZER_LOGGER.info(
-            '\nFit:\n'
-            '  Timestamp: %s\n'
-            '  Synthesizer class name: %s\n'
-            '  Statistics of the fit data:\n'
-            '    Total number of tables: 1\n'
-            '    Total number of rows: %s\n'
-            '    Total number of columns: %s\n'
-            '  Synthesizer id: %s',
-            datetime.datetime.now(),
-            self.__class__.__name__,
-            len(data),
-            len(data.columns),
-            self._synthesizer_id,
-        )
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Fit',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': len(data),
+            'TOTAL NUMBER OF COLUMNS': len(data.columns)
+        })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
         self._check_metadata_updated()
@@ -484,15 +470,12 @@ class BaseSynthesizer:
                 Path where the synthesizer instance will be serialized.
         """
         synthesizer_id = getattr(self, '_synthesizer_id', None)
-        SYNTHESIZER_LOGGER.info(
-            '\nSave:\n'
-            '  Timestamp: %s\n'
-            '  Synthesizer class name: %s\n'
-            '  Synthesizer id: %s',
-            datetime.datetime.now(),
-            self.__class__.__name__,
-            synthesizer_id
-        )
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Save',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': synthesizer_id,
+        })
 
         with open(filepath, 'wb') as output:
             cloudpickle.dump(self, output)
@@ -510,22 +493,34 @@ class BaseSynthesizer:
                 The loaded synthesizer.
         """
         with open(filepath, 'rb') as f:
-            synthesizer = cloudpickle.load(f)
+            try:
+                synthesizer = cloudpickle.load(f)
+            except RuntimeError as e:
+                err_msg = (
+                    'Attempting to deserialize object on a CUDA device but '
+                    'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
+                    " please use torch.load with map_location=torch.device('cpu') "
+                    'to map your storages to the CPU.'
+                )
+                if str(e) == err_msg:
+                    raise SamplingError(
+                        'This synthesizer was created on a machine with GPU but the current '
+                        'machine is CPU-only. This feature is currently unsupported. We recommend'
+                        ' sampling on the same GPU-enabled machine.'
+                    )
+                raise e
 
         check_synthesizer_version(synthesizer)
         check_sdv_versions_and_warn(synthesizer)
         if getattr(synthesizer, '_synthesizer_id', None) is None:
             synthesizer._synthesizer_id = generate_synthesizer_id(synthesizer)
 
-        SYNTHESIZER_LOGGER.info(
-            '\nLoad:\n'
-            '  Timestamp: %s\n'
-            '  Synthesizer class name: %s\n'
-            '  Synthesizer id: %s',
-            datetime.datetime.now(),
-            synthesizer.__class__.__name__,
-            synthesizer._synthesizer_id,
-        )
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Load',
+            'TIMESTAMP': datetime.datetime.now(),
+            'SYNTHESIZER CLASS NAME': synthesizer.__class__.__name__,
+            'SYNTHESIZER ID': synthesizer._synthesizer_id,
+        })
 
         return synthesizer
 
@@ -913,21 +908,16 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         if not original_columns.empty:
             sampled_data.columns = self._original_columns
 
-        SYNTHESIZER_LOGGER.info(
-            '\nSample:\n'
-            '  Timestamp: %s\n'
-            '  Synthesizer class name: %s\n'
-            '  Statistics of the sample size:\n'
-            '    Total number of tables: 1\n'
-            '    Total number of rows: %s\n'
-            '    Total number of columns: %s\n'
-            '  Synthesizer id: %s',
-            sample_timestamp,
-            self.__class__.__name__,
-            len(sampled_data),
-            len(sampled_data.columns),
-            self._synthesizer_id,
-        )
+        SYNTHESIZER_LOGGER.info({
+            'EVENT': 'Sample',
+            'TIMESTAMP': sample_timestamp,
+            'SYNTHESIZER CLASS NAME': self.__class__.__name__,
+            'SYNTHESIZER ID': self._synthesizer_id,
+            'TOTAL NUMBER OF TABLES': 1,
+            'TOTAL NUMBER OF ROWS': len(sampled_data),
+            'TOTAL NUMBER OF COLUMNS': len(sampled_data.columns)
+
+        })
 
         return sampled_data
 

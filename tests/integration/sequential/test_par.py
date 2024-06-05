@@ -1,5 +1,6 @@
 import datetime
 
+import numpy as np
 import pandas as pd
 from deepecho import load_demo
 
@@ -192,3 +193,92 @@ def test_sythesize_sequences(tmp_path):
     synthesizer.validate(loaded_sample)
     loaded_synthesizer.validate(synthetic_data)
     loaded_synthesizer.validate(loaded_sample)
+
+
+def test_par_subset_of_data():
+    """Test it when the data index is not continuous GH#1973."""
+    # download data
+    data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019',)
+
+    # modify the data by choosing a subset of it
+    data_subset = data.copy()
+    np.random.seed(1234)
+    symbols = data['Symbol'].unique()
+
+    # only select a subset of data in each sequence
+    for i, symbol in enumerate(symbols):
+        symbol_mask = data_subset['Symbol'] == symbol
+        data_subset = data_subset.drop(
+            data_subset[symbol_mask].sample(frac=i / (2 * len(symbols))).index)
+
+    # now run PAR
+    synthesizer = PARSynthesizer(metadata, epochs=5, verbose=True)
+    synthesizer.fit(data_subset)
+    synthetic_data = synthesizer.sample(num_sequences=5)
+
+    # assert that the synthetic data doesn't contain NaN values in sequence index column
+    assert not pd.isna(synthetic_data['Date']).any()
+
+
+def test_par_subset_of_data_simplified():
+    """Test it when the data index is not continuous for a simple dataset GH#1973."""
+    # Setup
+    data = pd.DataFrame({
+        'id': [1, 2, 3],
+        'date': ['2020-01-01', '2020-01-02', '2020-01-03'],
+    })
+    data.index = [0, 1, 5]
+    metadata = SingleTableMetadata.load_from_dict({
+        'sequence_index': 'date',
+        'sequence_key': 'id',
+        'columns': {
+            'id': {
+                'sdtype': 'id',
+            },
+            'date': {
+                'sdtype': 'datetime',
+            },
+        },
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+    })
+    synthesizer = PARSynthesizer(metadata, epochs=0)
+
+    # Run
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(num_sequences=50)
+
+    # Assert
+    assert not pd.isna(synthetic_data['date']).any()
+
+
+def test_par_missing_sequence_index():
+    """Test if PAR Synthesizer can run without a sequence key"""
+    # Setup
+    metadata_dict = {
+        'columns': {
+            'value': {
+                'sdtype': 'numerical'
+            },
+            'e_id': {
+                'sdtype': 'id'
+            }
+        },
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'sequence_key': 'e_id'
+    }
+
+    metadata = SingleTableMetadata().load_from_dict(metadata_dict)
+
+    data = pd.DataFrame({
+        'value': [10, 20, 30],
+        'e_id': [1, 2, 3]
+    })
+
+    # Run
+    synthesizer = PARSynthesizer(metadata)
+    synthesizer.fit(data)
+    sampled = synthesizer.sample(num_sequences=3)
+
+    # Assert
+    assert sampled.shape == data.shape
+    assert (sampled.dtypes == data.dtypes).all()

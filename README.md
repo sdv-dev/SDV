@@ -94,12 +94,12 @@ column and the primary key (`guest_email`).
 ## Synthesizing Data
 Next, we can create an **SDV synthesizer**,  an object that you can use to create synthetic data.
 It learns patterns from the real data and replicates them to generate synthetic data. Let's use
-the `FAST_ML` preset synthesizer, which is optimized for performance.
+the [GaussianCopulaSynthesizer](https://docs.sdv.dev/sdv/single-table-data/modeling/synthesizers/gaussiancopulasynthesizer).
 
 ```python
-from sdv.lite import SingleTablePreset
+from sdv.single_table import GaussianCopulaSynthesizer
 
-synthesizer = SingleTablePreset(metadata, name='FAST_ML')
+synthesizer = GaussianCopulaSynthesizer(metadata)
 synthesizer.fit(data=real_data)
 ```
 
@@ -131,11 +131,15 @@ quality_report = evaluate_quality(
 ```
 
 ```
-Creating report: 100%|██████████| 4/4 [00:00<00:00, 19.30it/s]
-Overall Quality Score: 89.12%
-Properties:
-Column Shapes: 90.27%
-Column Pair Trends: 87.97%
+Generating report ...
+
+(1/2) Evaluating Column Shapes: |████████████████| 9/9 [00:00<00:00, 1133.09it/s]|
+Column Shapes Score: 89.11%
+
+(2/2) Evaluating Column Pair Trends: |██████████████████████████████████████████| 36/36 [00:00<00:00, 502.88it/s]|
+Column Pair Trends Score: 88.3%
+
+Overall Score (Average): 88.7%
 ```
 
 This object computes an overall quality score on a scale of 0 to 100% (100 being the best) as well

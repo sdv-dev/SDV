@@ -831,3 +831,24 @@ def test_sample_not_fitted(synthesizer):
     # Run and Assert
     with pytest.raises(SamplingError, match=expected_message):
         synthesizer.sample(10)
+
+
+@pytest.mark.parametrize('synthesizer_class', SYNTHESIZERS_CLASSES)
+def test_detect_from_dataframe_numerical_col(synthesizer_class):
+    """Test that metadata detection of integer columns work."""
+    # Setup
+    data = pd.DataFrame({
+        1: [1, 2, 3],
+        2: [4, 5, 6],
+        3: ['a', 'b', 'c'],
+    })
+    metadata = SingleTableMetadata()
+
+    # Run
+    metadata.detect_from_dataframe(data)
+    instance = synthesizer_class(metadata)
+    instance.fit(data)
+    sample = instance.sample(5)
+
+    # Assert
+    assert sample.columns.tolist() == data.columns.tolist()

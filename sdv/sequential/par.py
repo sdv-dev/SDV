@@ -178,7 +178,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             fill_value = min(sequence_index_sequence[self._sequence_index].dropna())
         sequence_index_sequence = sequence_index_sequence.fillna(fill_value)
 
-        data[self._sequence_index] = sequence_index_sequence[self._sequence_index]
+        data[self._sequence_index] = sequence_index_sequence[self._sequence_index].to_numpy()
         data = data.merge(
             sequence_index_context,
             left_on=self._sequence_key,
@@ -239,6 +239,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
     def _fit_context_model(self, transformed):
         LOGGER.debug(f'Fitting context synthesizer {self._context_synthesizer.__class__.__name__}')
+        context_metadata: SingleTableMetadata = self._get_context_metadata()
         if self.context_columns or self._extra_context_columns:
             context_cols = (
                 self._sequence_key + self.context_columns +
@@ -250,9 +251,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             # Add constant column to allow modeling
             constant_column = str(uuid.uuid4())
             context[constant_column] = 0
-            self._extra_context_columns[constant_column] = {'sdtype': 'numerical'}
+            context_metadata.add_column(constant_column, sdtype='numerical')
 
-        context_metadata = self._get_context_metadata()
         self._context_synthesizer = GaussianCopulaSynthesizer(
             context_metadata,
             enforce_min_max_values=self._context_synthesizer.enforce_min_max_values,
