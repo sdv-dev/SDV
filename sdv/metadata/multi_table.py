@@ -512,13 +512,6 @@ class MultiTableMetadata:
                                            primary_key,
                                            sdtype=original_foreign_key_sdtype)
                         continue
-        try:
-            self._validate_all_tables_connected(self._get_parent_map(), self._get_child_map())
-        except InvalidMetadataError as invalid_error:
-            warning_msg = (
-                f'Could not automatically add relationships for all tables. {str(invalid_error)}'
-            )
-            warnings.warn(warning_msg)
 
     def detect_table_from_dataframe(self, table_name, data):
         """Detect the metadata for a table from a dataframe.

@@ -2319,44 +2319,6 @@ class TestMultiTableMetadata:
         assert instance.relationships == expected_relationships
         assert instance.tables['sessions'].columns['user_id']['sdtype'] == 'id'
 
-    @patch('sdv.metadata.multi_table.warnings')
-    def test__detect_relationships_disconnected_warning(self, warnings_mock):
-        """Test that ``_detect_relationships`` warns about tables it could not connect."""
-        # Setup
-        parent_table = Mock()
-        parent_table.primary_key = 'id'
-        parent_table.columns = {
-            'id': {'sdtype': 'id'},
-            'user_name': {'sdtype': 'categorical'},
-            'transactions': {'sdtype': 'numerical'},
-        }
-
-        child_table = SingleTableMetadata()
-        child_table.primary_key = 'session_id'
-        child_table.columns = {
-            'user_id': {'sdtype': 'categorical'},
-            'session_id': {'sdtype': 'numerical'},
-            'timestamp': {'sdtype': 'datetime'},
-        }
-
-        instance = MultiTableMetadata()
-        instance.tables = {
-            'users': parent_table,
-            'sessions': child_table,
-        }
-
-        # Run
-        instance._detect_relationships()
-
-        # Assert
-        expected_warning = (
-            'Could not automatically add relationships for all tables. The relationships in '
-            "the dataset are disjointed. Tables ['users', 'sessions'] are not connected to "
-            'any of the other tables.'
-        )
-        warnings_mock.warn.assert_called_once_with(expected_warning)
-        assert instance.relationships == []
-
     def test__detect_relationships_circular(self):
         """Test that relationships that invalidate the metadata are not added."""
         # Setup
