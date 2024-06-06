@@ -233,6 +233,28 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
         return data
 
+    def auto_assign_transformers(self, data):
+        """Automatically assign the required transformers for the given data and constraints.
+
+        This method will automatically set a configuration to the ``rdt.HyperTransformer``
+        with the required transformers for the current data.
+
+        Args:
+            data (dict):
+                Mapping of table name to pandas.DataFrame.
+
+        Raises:
+            InvalidDataError:
+                If a table of the data is not present in the metadata.
+        """
+        super().auto_assign_transformers(data)
+
+        # Ensure that sequence index does not get auto assigned with enforce_min_max_values
+        if self._sequence_index:
+            sequence_index_transformer = self.get_transformers()[self._sequence_index]
+            if sequence_index_transformer.enforce_min_max_values:
+                sequence_index_transformer.enforce_min_max_values = False
+
     def _preprocess(self, data):
         """Transform the raw data to numerical space.
 

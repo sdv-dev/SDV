@@ -398,6 +398,9 @@ class TestPARSynthesizer:
         par._transform_sequence_index = Mock()
         par.auto_assign_transformers = Mock()
         par.update_transformers = Mock()
+        get_transform_mock = Mock()
+        get_transform_mock.return_value = {'time': Mock()}
+        par.get_transformers = get_transform_mock
         par._data_processor._prepared_for_fitting = True
         data = self.get_data()
 
