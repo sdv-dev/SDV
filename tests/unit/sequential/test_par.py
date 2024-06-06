@@ -7,6 +7,7 @@ import pytest
 from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 
 from sdv.data_processing.data_processor import DataProcessor
+from sdv.data_processing.errors import InvalidConstraintsError
 from sdv.errors import InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition
@@ -171,6 +172,10 @@ class TestPARSynthesizer:
 
         with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
             synthesizer.add_constraints([gender_constraint, gender_constraint])
+
+        # Custom constraint will not be found
+        with pytest.raises(InvalidConstraintsError):
+            synthesizer.add_constraints([gender_constraint])
 
     def test_load_custom_constraint_classes(self):
         """Test that if custom constraint is being added, an error is raised."""
