@@ -182,6 +182,10 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         """Error that tells the user custom constraints can't be used in the ``PARSynthesizer``."""
         raise SynthesizerInputError('The PARSynthesizer cannot accommodate custom constraints.')
 
+    def add_custom_constraint_class(self, class_object, class_name):
+        """Error that tells the user custom constraints can't be used in the ``PARSynthesizer``."""
+        raise SynthesizerInputError('The PARSynthesizer cannot accommodate custom constraints.')
+
     def _validate_context_columns(self, data):
         errors = []
         if self.context_columns:
