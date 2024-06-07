@@ -1178,8 +1178,10 @@ class TestMultiTableMetadata:
 
     def test_validate_raises_errors(self):
         """Test the method ``validate``.
+
         Test that when an invalid ``MultiTableMetadata`` has been provided, all different errors
         are being raised.
+
         Setup:
             - Instance of ``MultiTableMetadata`` with all valid tables and relationships.
         """
@@ -1208,13 +1210,13 @@ class TestMultiTableMetadata:
             instance.validate()
 
     def test__validate_all_tables_connected_raises_errors(self):
-        """Test the method ``validate``.
+        """Test the method ``_validate_all_tables_connected``.
 
-        Test that when an invalid ``MultiTableMetadata`` has been provided, all different errors
-        are being raised.
+        Test that when a disjointed table is validated with `_validate_all_tables_connected`
 
         Setup:
-            - Instance of ``MultiTableMetadata`` with all valid tables and relationships.
+            - Instance of ``MultiTableMetadata`` with all valid tables and
+            missing relationships.
         """
         # Setup
         instance = self.get_metadata()
