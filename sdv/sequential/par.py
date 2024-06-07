@@ -3,7 +3,6 @@
 import inspect
 import logging
 import uuid
-import warnings
 
 import numpy as np
 import pandas as pd
@@ -135,13 +134,57 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         return instantiated_parameters
 
     def add_constraints(self, constraints):
-        """Warn the user that constraints can't be added to the ``PARSynthesizer``."""
-        warnings.warn(
-            'The PARSynthesizer does not yet support constraints. This model will ignore any '
-            'constraints in the metadata.'
-        )
-        self._data_processor._constraints = []
-        self._data_processor._constraints_list = []
+        """Add constraints to the synthesizer.
+
+        For PARSynthesizers only allow a list of constraints that follow these rules:
+
+        1) All constraints must be either for all contextual columns or non-contextual column.
+           No mixing constraints that cover both contextual and non-contextual columns
+        2) No overlapping constraints (there are no constraints that act on the same column)
+        3) No custom constraints
+
+        Args:
+            constraints (list):
+                List of constraints described as dictionaries in the following format:
+                    * ``constraint_class``: Name of the constraint to apply.
+                    * ``constraint_parameters``: A dictionary with the constraint parameters.
+        """
+        context_set = set(self.context_columns)
+        constraint_cols = []
+        for constraint in constraints:
+            constraint_parameters = constraint['constraint_parameters']
+            columns = []
+            for param in constraint_parameters:
+                if 'column_name' in param:
+                    col_names = constraint_parameters[param]
+                    if isinstance(col_names, list):
+                        columns.extend(col_names)
+                    else:
+                        columns.append(col_names)
+            for col in columns:
+                if col in constraint_cols:
+                    raise SynthesizerInputError(
+                        'The PARSynthesizer cannot accommodate multiple constraints '
+                        'that overlap on the same columns.')
+                constraint_cols.append(col)
+
+        all_context = all(col in context_set for col in constraint_cols)
+        no_context = all(col not in context_set for col in constraint_cols)
+
+        if all_context or no_context:
+            super().add_constraints(constraints)
+        else:
+            raise SynthesizerInputError(
+                'The PARSynthesizer cannot accommodate constraints '
+                'with a mix of context and non-context columns.')
+
+    def load_custom_constraint_classes(self, filepath, class_names):
+        """Error that tells the user custom constraints can't be used in the ``PARSynthesizer``."""
+        raise SynthesizerInputError('The PARSynthesizer cannot accommodate custom constraints.')
+
+    def add_custom_constraint_class(self, class_object, class_name):
+        """Error that tells the user custom constraints can't be used in the ``PARSynthesizer``."""
+        raise SynthesizerInputError('The PARSynthesizer cannot accommodate custom constraints.')
 
     def _validate_context_columns(self, data):
         errors = []

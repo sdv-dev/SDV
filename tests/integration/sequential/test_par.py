@@ -1,10 +1,13 @@
 import datetime
+import re
 
 import numpy as np
 import pandas as pd
+import pytest
 from deepecho import load_demo
 
 from sdv.datasets.demo import download_demo
+from sdv.errors import SynthesizerInputError
 from sdv.metadata import SingleTableMetadata
 from sdv.sequential import PARSynthesizer
 
@@ -282,6 +285,60 @@ def test_par_missing_sequence_index():
     # Assert
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
+
+
+def test_constraints_on_par():
+    """Test if only simple constraints work on PARSynthesizer."""
+    # Setup
+    real_data, metadata = download_demo(
+        modality='sequential',
+        dataset_name='nasdaq100_2019'
+    )
+
+    synthesizer = PARSynthesizer(
+        metadata,
+        epochs=5,
+        context_columns=['Sector', 'Industry']
+    )
+
+    market_constraint = {
+        'constraint_class': 'Positive',
+        'constraint_parameters': {
+            'column_name': 'MarketCap',
+            'strict_boundaries': True
+        }
+    }
+    volume_constraint = {
+        'constraint_class': 'Positive',
+        'constraint_parameters': {
+            'column_name': 'Volume',
+            'strict_boundaries': True
+        }
+    }
+
+    context_constraint = {
+        'constraint_class': 'Mock',
+        'constraint_parameters': {
+            'column_name': 'Sector',
+            'strict_boundaries': True
+        }
+    }
+
+    # Run
+    synthesizer.add_constraints([volume_constraint, market_constraint])
+    synthesizer.fit(real_data)
+    samples = synthesizer.sample(50, 10)
+
+    # Assert
+    assert not (samples['MarketCap'] < 0).any().any()
+    assert not (samples['Volume'] < 0).any().any()
+    mixed_constraint_error_msg = re.escape(
+        'The PARSynthesizer cannot accommodate constraints '
+        'with a mix of context and non-context columns.'
+    )
+
+    with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
+        synthesizer.add_constraints([volume_constraint, context_constraint])
 
 
 def test_par_unique_sequence_index_with_enforce_min_max():
