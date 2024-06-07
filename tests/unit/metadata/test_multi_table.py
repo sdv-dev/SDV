@@ -1178,6 +1178,37 @@ class TestMultiTableMetadata:
 
     def test_validate_raises_errors(self):
         """Test the method ``validate``.
+        Test that when an invalid ``MultiTableMetadata`` has been provided, all different errors
+        are being raised.
+        Setup:
+            - Instance of ``MultiTableMetadata`` with all valid tables and relationships.
+        """
+        # Setup
+        instance = self.get_metadata()
+        instance.tables['users'].primary_key = None
+        instance.tables['transactions'].columns['session_id']['sdtype'] = 'datetime'
+        instance.tables['payments'].columns['date']['sdtype'] = 'id'
+        instance.tables['payments'].columns['date']['regex_format'] = '[A-z{'
+        instance.relationships.pop(-1)
+
+        # Run
+        error_msg = re.escape(
+            'The metadata is not valid\n'
+            '\nTable: payments'
+            "\nInvalid regex format string '[A-z{' for id column 'date'."
+            '\n\nRelationships:'
+            "\nThe parent table 'users' does not have a primary key set. "
+            "Please use 'set_primary_key' in order to set one."
+            "\nRelationship between tables ('sessions', 'transactions') is invalid. "
+            'The primary and foreign key columns are not the same type.'
+        )
+
+        # Run and Assert
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            instance.validate()
+
+    def test__validate_all_tables_connected_raises_errors(self):
+        """Test the method ``validate``.
 
         Test that when an invalid ``MultiTableMetadata`` has been provided, all different errors
         are being raised.
