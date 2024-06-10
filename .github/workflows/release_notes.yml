@@ -3,12 +3,16 @@ name: Release Notes Generator
 on:
   workflow_dispatch:
     inputs:
+      branch:
+        description: 'Branch to merge release notes into.'
+        required: true
+        default: 'main'
       version:
         description:
           'Version to use for the release. Must be in format: X.Y.Z.'
       date:
         description:
-          'Date of the release. Must be in format YYYY_MM_DD.'
+          'Date of the release. Must be in format YYYY-MM-DD.'
 
 jobs:
   releasenotesgeneration:
@@ -45,4 +49,4 @@ jobs:
           body: "This is an auto-generated PR to update the release notes."
           branch: release-notes
           branch-suffix: short-commit-hash
-          base: main
+          base: ${{ inputs.branch }}
