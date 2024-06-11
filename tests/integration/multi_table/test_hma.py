@@ -1818,3 +1818,24 @@ def test_table_name_logging(caplog):
     # Assert
     for msg in caplog.messages:
         assert 'table parent_data' in msg or 'table child_data' in msg
+
+
+def test_disjointed_tables():
+    """Test to see if synthesizer works with disjointed tables."""
+    # Setup
+    real_data, metadata = download_demo('multi_table', 'Bupa_v1')
+
+    # Delete Some Relationships to make it disjointed
+    remove_some_dict = metadata.to_dict()
+    half_list = remove_some_dict['relationships'][1::2]
+    remove_some_dict['relationships'] = half_list
+    disjoined_metadata = MultiTableMetadata.load_from_dict(remove_some_dict)
+
+    # Run
+    disjoin_synthesizer = HMASynthesizer(disjoined_metadata)
+    disjoin_synthesizer.fit(real_data)
+    disjoin_synthetic_data = disjoin_synthesizer.sample(1.0)
+
+    # Assert
+    for table in real_data:
+        assert list(real_data[table].columns) == list(disjoin_synthetic_data[table].columns)
