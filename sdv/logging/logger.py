@@ -1,6 +1,7 @@
 """SDV Logger."""
 import csv
 import logging
+import os
 from functools import lru_cache
 from io import StringIO
 
@@ -10,14 +11,18 @@ from sdv.logging.utils import get_sdv_logger_config
 class CSVFormatter(logging.Formatter):
     """Logging formatter to convert to CSV."""
 
-    def __init__(self):
+    def __init__(self, filename=None):
         super().__init__()
         self.output = StringIO()
         headers = [
             'LEVEL', 'EVENT', 'TIMESTAMP', 'SYNTHESIZER CLASS NAME', 'SYNTHESIZER ID',
             'TOTAL NUMBER OF TABLES', 'TOTAL NUMBER OF ROWS', 'TOTAL NUMBER OF COLUMNS'
         ]
-        self.writer = csv.DictWriter(self.output, headers)
+        self.writer = csv.DictWriter(self.output, fieldnames=headers)
+        if filename:
+            file_exists = os.path.exists(filename)
+            if not file_exists:
+                self.writer.writeheader()
 
     def format(self, record):  # noqa: A003
         """Format the record and write to CSV."""
@@ -64,7 +69,8 @@ def get_sdv_logger(logger_name):
             log_level = getattr(logging, config.get('level', 'INFO'))
             if config.get('formatter'):
                 if config.get('formatter') == 'sdv.logging.logger.CSVFormatter':
-                    formatter = CSVFormatter()
+                    filename = config.get('handlers').get('filename')
+                    formatter = CSVFormatter(filename=filename)
             elif config.get('format'):
                 formatter = logging.Formatter(config.get('format'))
 
