@@ -8,7 +8,7 @@ import pytest
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.utils import (
     _key_order, check_num_rows, detect_discrete_columns, flatten_array, flatten_dict,
-    handle_sampling_error, unflatten_dict)
+    handle_sampling_error, unflatten_dict, validate_file_path)
 
 
 def test_detect_discrete_columns():
@@ -223,21 +223,7 @@ def test_unflatten_dict():
     assert result == expected
 
 
-def test_handle_sampling_error():
-    """Test when an error is raised at the end of the function when temp dir is ``True``."""
-    # Run and Assert
-    error_msg = (
-        'Error: Sampling terminated. Partial results are stored in a temporary file: test.csv. '
-        'This file will be overridden the next time you sample. Please rename the file if you '
-        'wish to save these results.'
-        '\n'
-        'Test error'
-    )
-    with pytest.raises(ValueError, match=error_msg):
-        handle_sampling_error(True, 'test.csv', ValueError('Test error'))
-
-
-def test_handle_sampling_error_false_temp_file():
+def test_handle_sampling_error_temp_file():
     """Test that an error is raised when temp dir is ``False``."""
     # Run and Assert
     error_msg = (
@@ -246,7 +232,7 @@ def test_handle_sampling_error_false_temp_file():
         'Test error'
     )
     with pytest.raises(ValueError, match=error_msg):
-        handle_sampling_error(False, 'test.csv', ValueError('Test error'))
+        handle_sampling_error('test.csv', ValueError('Test error'))
 
 
 def test_handle_sampling_error_false_temp_file_none_output_file():
@@ -258,7 +244,7 @@ def test_handle_sampling_error_false_temp_file_none_output_file():
     # Run and Assert
     error_msg = 'Test error'
     with pytest.raises(ValueError, match=error_msg):
-        handle_sampling_error(False, 'test.csv', ValueError('Test error'))
+        handle_sampling_error('test.csv', ValueError('Test error'))
 
 
 def test_handle_sampling_error_ignore():
@@ -266,7 +252,7 @@ def test_handle_sampling_error_ignore():
     # Run and assert
     error_msg = 'Unable to sample any rows for the given conditions.'
     with pytest.raises(ValueError, match=error_msg):
-        handle_sampling_error(True, 'test.csv', ValueError(error_msg))
+        handle_sampling_error('test.csv', ValueError(error_msg))
 
 
 def test_check_num_rows_reject_sampling_error():
@@ -342,3 +328,19 @@ def test_check_num_rows_valid(warning_mock):
 
     # Assert
     assert warning_mock.warn.call_count == 0
+
+
+@patch('builtins.open')
+def test_validate_file_path(mock_open):
+    """Test the validate_file_path function."""
+    # Setup
+    output_path = '.sample.csv.temp'
+
+    # Run
+    result = validate_file_path(output_path)
+    none_result = validate_file_path(None)
+
+    # Assert
+    assert output_path in result
+    assert none_result is None
+    mock_open.assert_called_once_with(result, 'w+')

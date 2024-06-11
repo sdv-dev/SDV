@@ -33,8 +33,6 @@ SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
-TMP_FILE_NAME = '.sample.csv.temp'
-DISABLE_TMP_FILE = 'disable'
 
 
 class BaseSynthesizer:
@@ -859,11 +857,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 )
 
         except (Exception, KeyboardInterrupt) as error:
-            handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
-
-        else:
-            if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
-                os.remove(output_file_path)
+            handle_sampling_error(output_file_path, error)
 
         return sampled
 
@@ -935,8 +929,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             progress_bar (tqdm.tqdm or None):
                 The progress bar to update.
             output_file_path (str or None):
-                The file to periodically write sampled rows to. Defaults to
-                a temporary file, if None.
+                The file to periodically write sampled rows to.
 
         Returns:
             pandas.DataFrame:
@@ -1059,8 +1052,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             batch_size (int):
                 The batch size to use per sampling call.
             output_file_path (str or None):
-                The file to periodically write sampled rows to. Defaults to
-                a temporary file, if None.
+                The file to periodically write sampled rows to.
 
         Returns:
             pandas.DataFrame:
@@ -1106,11 +1098,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             )
 
         except (Exception, KeyboardInterrupt) as error:
-            handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
-
-        else:
-            if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
-                os.remove(output_file_path)
+            handle_sampling_error(output_file_path, error)
 
         return sampled
 
@@ -1139,8 +1127,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             batch_size (int):
                 The batch size to use per sampling call.
             output_file_path (str or None):
-                The file to periodically write sampled rows to. Defaults to
-                a temporary file, if None.
+                The file to periodically write sampled rows to.
 
         Returns:
             pandas.DataFrame:
@@ -1176,10 +1163,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             )
 
         except (Exception, KeyboardInterrupt) as error:
-            handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
-
-        else:
-            if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
-                os.remove(output_file_path)
+            handle_sampling_error(output_file_path, error)
 
         return sampled
