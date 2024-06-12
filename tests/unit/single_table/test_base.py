@@ -1413,7 +1413,7 @@ class TestBaseSingleTableSynthesizer:
             progress_bar=progress_bar.__enter__.return_value,
             output_file_path=mock_validate_file_path.return_value,
         )
-        mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
+        mock_handle_sampling_error.assert_called_once_with('temp_file', keyboard_error)
 
     @patch('sdv.single_table.base.os')
     @patch('sdv.single_table.base.tqdm')
@@ -1446,8 +1446,6 @@ class TestBaseSingleTableSynthesizer:
             progress_bar=progress_bar.__enter__.return_value,
             output_file_path=mock_validate_file_path.return_value,
         )
-        mock_os.remove.assert_called_once_with('.sample.csv.temp')
-        mock_os.path.exists.assert_called_once_with('.sample.csv.temp')
 
     def test_sample_not_fitted(self):
         """Test that ``sample`` raises an error when the synthesizer is not fitted."""
@@ -1462,6 +1460,24 @@ class TestBaseSingleTableSynthesizer:
         # Run and Assert
         with pytest.raises(SamplingError, match=expected_message):
             BaseSingleTableSynthesizer.sample(instance, 10)
+
+    def test__sample_with_progress_bar_without_output_filepath(self):
+        """Test that ``_sample_with_progress_bar`` raises an error
+        when the synthesizer is not fitted.
+        """
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        expected_message = re.escape(
+            'Error: Sampling terminated. No results were saved due to unspecified '
+            '"output_file_path".\nMocked Error'
+        )
+        instance._sample_in_batches.side_effect = RuntimeError('Mocked Error')
+
+        # Run and Assert
+        with pytest.raises(RuntimeError, match=expected_message):
+            BaseSingleTableSynthesizer._sample_with_progress_bar(
+                instance, output_file_path=None, num_rows=10)
 
     @patch('sdv.single_table.base.datetime')
     def test_sample(self, mock_datetime, caplog):
@@ -1715,8 +1731,6 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
-        mock_os.remove.assert_called_once_with('.sample.csv.temp')
-        mock_os.path.exists.assert_called_once_with('.sample.csv.temp')
 
     @patch('sdv.single_table.base.handle_sampling_error')
     @patch('sdv.single_table.base.tqdm')
@@ -1751,7 +1765,7 @@ class TestBaseSingleTableSynthesizer:
         progress_bar.__enter__.return_value.set_description.assert_called_once_with(
             'Sampling conditions'
         )
-        mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
+        mock_handle_sampling_error.assert_called_once_with('temp_file', keyboard_error)
 
     @patch('sdv.single_table.base.os')
     @patch('sdv.single_table.base.check_num_rows')
@@ -1785,8 +1799,6 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
-        mock_os.remove.assert_called_once_with('.sample.csv.temp')
-        mock_os.path.exists.assert_called_once_with('.sample.csv.temp')
 
     @patch('sdv.single_table.base.handle_sampling_error')
     @patch('sdv.single_table.base.check_num_rows')
@@ -1826,7 +1838,7 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame())
-        mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
+        mock_handle_sampling_error.assert_called_once_with('temp_file', keyboard_error)
 
     def test__validate_known_columns_nans(self):
         """Test that it crashes when condition has nans."""
