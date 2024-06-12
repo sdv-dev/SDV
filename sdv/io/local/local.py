@@ -192,16 +192,16 @@ class CSVHandler(BaseLocalHandler):
 class ExcelHandler(BaseLocalHandler):
     """A class for handling Excel files."""
 
-    def _read_excel(self, file_path, sheet_names=None):
+    def _read_excel(self, filepath, sheet_names=None):
         """Read data from Excel File and return just the data as a dictionary."""
         data = {}
         if sheet_names is None:
-            xl_file = pd.ExcelFile(file_path)
+            xl_file = pd.ExcelFile(filepath)
             sheet_names = xl_file.sheet_names
 
         for sheet_name in sheet_names:
             data[sheet_name] = pd.read_excel(
-                file_path,
+                filepath,
                 sheet_name=sheet_name,
                 parse_dates=False,
                 decimal=self.decimal,
@@ -210,11 +210,11 @@ class ExcelHandler(BaseLocalHandler):
 
         return data
 
-    def read(self, file_path, sheet_names=None):
+    def read(self, filepath, sheet_names=None):
         """Read data from Excel files and return it along with metadata.
 
         Args:
-            file_path (str):
+            filepath (str):
                 The path to the Excel file to read.
             sheet_names (list of str, optional):
                 The names of sheets to read. If None, all sheets are read.
@@ -226,7 +226,7 @@ class ExcelHandler(BaseLocalHandler):
         if sheet_names is not None and not isinstance(sheet_names, list):
             raise ValueError("'sheet_names' must be None or a list of strings.")
 
-        return self._read_excel(file_path, sheet_names)
+        return self._read_excel(filepath, sheet_names)
 
     def write(self, synthetic_data, file_name, sheet_name_suffix=None, mode='w'):
         """Write synthetic data to an Excel File.
