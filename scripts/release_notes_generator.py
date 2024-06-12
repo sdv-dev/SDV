@@ -132,7 +132,7 @@ def update_release_notes(release_notes):
     with open(file_path, 'r') as history_file:
         history = history_file.read()
 
-    token = '# HISTORY\n\n'
+    token = '# Release Notes\n\n'
     split_index = history.find(token) + len(token) + 1
     header = history[:split_index]
     new_notes = f'{header}{release_notes}{history[split_index:]}'
