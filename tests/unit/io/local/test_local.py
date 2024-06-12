@@ -327,7 +327,7 @@ class TestExcelHandler:
     def test_read_sheet_names(self, mock_pd):
         """Test the read method when provided sheet names."""
         # Setup
-        file_path = 'test_file.xlsx'
+        filepath = 'test_file.xlsx'
         sheet_names = ['Sheet1']
         mock_pd.ExcelFile.return_value = Mock(sheet_names=['Sheet1', 'Sheet2'])
         mock_pd.read_excel.side_effect = [
@@ -338,7 +338,7 @@ class TestExcelHandler:
         instance = ExcelHandler()
 
         # Run
-        data = instance.read(file_path, sheet_names)
+        data = instance.read(filepath, sheet_names)
 
         # Assert
         sheet_1_call = call(
@@ -358,14 +358,14 @@ class TestExcelHandler:
     def test_read_sheet_names_string(self):
         """Test the read method when provided sheet names but they are string."""
         # Setup
-        file_path = 'test_file.xlsx'
+        filepath = 'test_file.xlsx'
         sheet_names = 'Sheet1'
         instance = ExcelHandler()
 
         # Run and Assert
         error_msg = "'sheet_names' must be None or a list of strings."
         with pytest.raises(ValueError, match=error_msg):
-            instance.read(file_path, sheet_names)
+            instance.read(filepath, sheet_names)
 
     @patch('sdv.io.local.local.pd')
     def test_write(self, mock_pd):
