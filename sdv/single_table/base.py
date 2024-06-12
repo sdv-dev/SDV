@@ -929,7 +929,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             progress_bar (tqdm.tqdm or None):
                 The progress bar to update.
             output_file_path (str or None):
-                The file to periodically write sampled rows to.
+                The file to periodically write sampled rows to. Defaults to None.
 
         Returns:
             pandas.DataFrame:
@@ -1052,7 +1052,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             batch_size (int):
                 The batch size to use per sampling call.
             output_file_path (str or None):
-                The file to periodically write sampled rows to.
+                The file to periodically write sampled rows to. Defaults to None.
 
         Returns:
             pandas.DataFrame:
@@ -1127,7 +1127,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             batch_size (int):
                 The batch size to use per sampling call.
             output_file_path (str or None):
-                The file to periodically write sampled rows to.
+                The file to periodically write sampled rows to. Defaults to None.
 
         Returns:
             pandas.DataFrame:
