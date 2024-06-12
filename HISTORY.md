@@ -1,6 +1,34 @@
 # Release Notes
 
-## 1.13.1 - 2024-05-16
+### v0.14.0 - 2024-06-13
+
+### Documentation
+
+* Typo in the document - Issue [#680](https://github.com/sdv-dev/SDV/issues/680) by @katxiao
+
+### Bugs Fixed
+
+* Conditional sampling doesn't work if the model has a `CustomConstraint` - Issue [#696](https://github.com/sdv-dev/SDV/issues/696) by @katxiao
+
+### New Features
+
+* Updates to `GaussianCopula` conditional sampling methods - Issue [#729](https://github.com/sdv-dev/SDV/issues/729) by @katxiao
+* Enable Batch Sampling + Progress Bar - Issue [#693](https://github.com/sdv-dev/SDV/issues/693) by @katxiao
+* Create `sample_remaining_columns()` method - Issue [#692](https://github.com/sdv-dev/SDV/issues/692) by @katxiao
+* Create `sample_conditions()` method - Issue [#691](https://github.com/sdv-dev/SDV/issues/691) by @katxiao
+* Improve `sample()` method - Issue [#690](https://github.com/sdv-dev/SDV/issues/690) by @katxiao
+* Create `Condition` object - Issue [#689](https://github.com/sdv-dev/SDV/issues/689) by @katxiao
+* No way to fix the random seed? - Issue [#157](https://github.com/sdv-dev/SDV/issues/157)
+
+### Miscellaneous
+
+* Fix write to file in sampling - Issue [#732](https://github.com/sdv-dev/SDV/pull/732)
+* Update conditional sampling errors - Issue [#730](https://github.com/sdv-dev/SDV/pull/730)
+* Is it possible to generate data with new set of primary keys?  - Issue [#686](https://github.com/sdv-dev/SDV/issues/686)
+* Can you set a random state for the sdv.tabular.ctgan.CTGAN.sample method? - Issue [#515](https://github.com/sdv-dev/SDV/issues/515)
+* generating different synthetic data while training the model multiple times. - Issue [#299](https://github.com/sdv-dev/SDV/issues/299)
+
+# 1.13.1 - 2024-05-16
 
 This release fixes the `ModuleNotFoundError` error that was causing the 1.13.0 release to fail.
 
