@@ -136,7 +136,7 @@ class SingleTablePreset:
                 The batch size to use per attempt at sampling. Defaults to 10 times
                 the number of rows.
             output_file_path (str or None):
-                The file to periodically write sampled rows to.
+                The file to periodically write sampled rows to. Defaults to None.
 
         Returns:
             pandas.DataFrame:
@@ -167,7 +167,7 @@ class SingleTablePreset:
                 The batch size to use per attempt at sampling. Defaults to 10 times
                 the number of rows.
             output_file_path (str or None):
-                The file to periodically write sampled rows to.
+                The file to periodically write sampled rows to. Defaults to None.
 
         Returns:
             pandas.DataFrame:
