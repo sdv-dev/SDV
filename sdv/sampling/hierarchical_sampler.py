@@ -139,7 +139,7 @@ class BaseHierarchicalSampler():
             sampled_data (dict):
                 A dictionary mapping table names to sampled data (pd.DataFrame).
         """
-        total_num_rows = max(round(self._table_sizes[child_name] * scale), 1)
+        total_num_rows = round(self._table_sizes[child_name] * scale)
         for foreign_key in self.metadata._get_foreign_keys(table_name, child_name):
             num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
             min_rows = getattr(self, '_min_child_rows', {num_rows_key: 0})[num_rows_key]
