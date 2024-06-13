@@ -1,5 +1,6 @@
 """Hierarchical Samplers."""
 import logging
+import warnings
 
 import pandas as pd
 
@@ -138,7 +139,7 @@ class BaseHierarchicalSampler():
             sampled_data (dict):
                 A dictionary mapping table names to sampled data (pd.DataFrame).
         """
-        total_num_rows = round(self._table_sizes[child_name] * scale)
+        total_num_rows = max(round(self._table_sizes[child_name] * scale), 1)
         for foreign_key in self.metadata._get_foreign_keys(table_name, child_name):
             num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
             min_rows = getattr(self, '_min_child_rows', {num_rows_key: 0})[num_rows_key]
@@ -273,12 +274,23 @@ class BaseHierarchicalSampler():
         # DFS to sample roots and then their children
         non_root_parents = set(self.metadata._get_parent_map().keys())
         root_parents = set(self.metadata.tables.keys()) - non_root_parents
+        send_min_sample_warning = False
         for table in root_parents:
             num_rows = round(self._table_sizes[table] * scale)
+            if num_rows <= 0:
+                send_min_sample_warning = True
+                num_rows = 1
             synthesizer = self._table_synthesizers[table]
             LOGGER.info(f'Sampling {num_rows} rows from table {table}')
             sampled_data[table] = self._sample_rows(synthesizer, num_rows)
             self._sample_children(table_name=table, sampled_data=sampled_data, scale=scale)
+
+        if send_min_sample_warning:
+            warn_msg = (
+                "The 'scale' parameter it too small. Some tables may have 1 row."
+                ' For better quality data, please choose a larger scale.'
+            )
+            warnings.warn(warn_msg)
 
         added_relationships = set()
         for relationship in self.metadata.relationships:
