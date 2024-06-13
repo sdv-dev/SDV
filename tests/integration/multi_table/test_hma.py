@@ -1,5 +1,6 @@
 import datetime
 import importlib.metadata
+import logging
 import re
 import warnings
 
@@ -18,6 +19,7 @@ from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, g
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
+from tests.utils import catch_sdv_logs
 
 
 class TestHMASynthesizer:
@@ -1788,3 +1790,52 @@ def test_detect_from_dataframe_numerical_col():
 
     test_metadata = MultiTableMetadata()
     test_metadata.detect_from_dataframes(data)
+
+
+def test_table_name_logging(caplog):
+    """Test the table name is correctly logged GH#1964."""
+    # Setup
+    parent_data = pd.DataFrame({
+        'parent_id': [1, 2, 3, 4, 5, 6],
+        'col': ['a', 'b', 'a', 'b', 'a', 'b'],
+    })
+    child_data = pd.DataFrame({
+        'id': [1, 2, 3, 4, 5, 6],
+        'parent_id': [1, 2, 3, 4, 5, 6]
+    })
+    data = {
+        'parent_data': parent_data,
+        'child_data': child_data,
+    }
+    metadata = MultiTableMetadata()
+    metadata.detect_from_dataframes(data)
+    instance = HMASynthesizer(metadata)
+
+    # Run
+    with catch_sdv_logs(caplog, logging.INFO, 'sdv.data_processing.data_processor'):
+        instance.fit(data)
+
+    # Assert
+    for msg in caplog.messages:
+        assert 'table parent_data' in msg or 'table child_data' in msg
+
+
+def test_disjointed_tables():
+    """Test to see if synthesizer works with disjointed tables."""
+    # Setup
+    real_data, metadata = download_demo('multi_table', 'Bupa_v1')
+
+    # Delete Some Relationships to make it disjointed
+    remove_some_dict = metadata.to_dict()
+    half_list = remove_some_dict['relationships'][1::2]
+    remove_some_dict['relationships'] = half_list
+    disjoined_metadata = MultiTableMetadata.load_from_dict(remove_some_dict)
+
+    # Run
+    disjoin_synthesizer = HMASynthesizer(disjoined_metadata)
+    disjoin_synthesizer.fit(real_data)
+    disjoin_synthetic_data = disjoin_synthesizer.sample(1.0)
+
+    # Assert
+    for table in real_data:
+        assert list(real_data[table].columns) == list(disjoin_synthetic_data[table].columns)

@@ -1203,13 +1203,41 @@ class TestMultiTableMetadata:
             "Please use 'set_primary_key' in order to set one."
             "\nRelationship between tables ('sessions', 'transactions') is invalid. "
             'The primary and foreign key columns are not the same type.'
-            "\nThe relationships in the dataset are disjointed. Table ['payments'] "
-            'is not connected to any of the other tables.'
         )
 
         # Run and Assert
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.validate()
+
+    def test__validate_all_tables_connected_raises_errors(self):
+        """Test the method ``_validate_all_tables_connected``.
+
+        Test that when a disjointed table is validated with `_validate_all_tables_connected`
+
+        Setup:
+            - Instance of ``MultiTableMetadata`` with all valid tables and
+            missing relationships.
+        """
+        # Setup
+        instance = self.get_metadata()
+        instance.tables['users'].primary_key = None
+        instance.tables['transactions'].columns['session_id']['sdtype'] = 'datetime'
+        instance.tables['payments'].columns['date']['sdtype'] = 'id'
+        instance.tables['payments'].columns['date']['regex_format'] = '[A-z{'
+        instance.relationships.pop(-1)
+
+        # Run
+        error_msg = re.escape(
+            'The relationships in the dataset are disjointed. '
+            "Table ['payments'] is not connected to any of the other tables."
+        )
+
+        # Run and Assert
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            instance._validate_all_tables_connected(
+                instance._get_parent_map(),
+                instance._get_child_map()
+            )
 
     def test_validate_child_key_is_primary_key(self):
         """Test it crashes if the child key is a primary key."""
@@ -2323,44 +2351,6 @@ class TestMultiTableMetadata:
         ]
         assert instance.relationships == expected_relationships
         assert instance.tables['sessions'].columns['user_id']['sdtype'] == 'id'
-
-    @patch('sdv.metadata.multi_table.warnings')
-    def test__detect_relationships_disconnected_warning(self, warnings_mock):
-        """Test that ``_detect_relationships`` warns about tables it could not connect."""
-        # Setup
-        parent_table = Mock()
-        parent_table.primary_key = 'id'
-        parent_table.columns = {
-            'id': {'sdtype': 'id'},
-            'user_name': {'sdtype': 'categorical'},
-            'transactions': {'sdtype': 'numerical'},
-        }
-
-        child_table = SingleTableMetadata()
-        child_table.primary_key = 'session_id'
-        child_table.columns = {
-            'user_id': {'sdtype': 'categorical'},
-            'session_id': {'sdtype': 'numerical'},
-            'timestamp': {'sdtype': 'datetime'},
-        }
-
-        instance = MultiTableMetadata()
-        instance.tables = {
-            'users': parent_table,
-            'sessions': child_table,
-        }
-
-        # Run
-        instance._detect_relationships()
-
-        # Assert
-        expected_warning = (
-            'Could not automatically add relationships for all tables. The relationships in '
-            "the dataset are disjointed. Tables ['users', 'sessions'] are not connected to "
-            'any of the other tables.'
-        )
-        warnings_mock.warn.assert_called_once_with(expected_warning)
-        assert instance.relationships == []
 
     def test__detect_relationships_circular(self):
         """Test that relationships that invalidate the metadata are not added."""

@@ -33,8 +33,6 @@ SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
-TMP_FILE_NAME = '.sample.csv.temp'
-DISABLE_TMP_FILE = 'disable'
 
 
 class BaseSynthesizer:
@@ -305,6 +303,7 @@ class BaseSynthesizer:
             data (pandas.DataFrame):
                 The raw data (before any transformations) that will be used to fit the model.
         """
+        self.validate(data)
         self._data_processor.prepare_for_fitting(data)
 
     def get_transformers(self):
@@ -492,7 +491,22 @@ class BaseSynthesizer:
                 The loaded synthesizer.
         """
         with open(filepath, 'rb') as f:
-            synthesizer = cloudpickle.load(f)
+            try:
+                synthesizer = cloudpickle.load(f)
+            except RuntimeError as e:
+                err_msg = (
+                    'Attempting to deserialize object on a CUDA device but '
+                    'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
+                    " please use torch.load with map_location=torch.device('cpu') "
+                    'to map your storages to the CPU.'
+                )
+                if str(e) == err_msg:
+                    raise SamplingError(
+                        'This synthesizer was created on a machine with GPU but the current '
+                        'machine is CPU-only. This feature is currently unsupported. We recommend'
+                        ' sampling on the same GPU-enabled machine.'
+                    )
+                raise e
 
         check_synthesizer_version(synthesizer)
         check_sdv_versions_and_warn(synthesizer)
@@ -843,11 +857,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 )
 
         except (Exception, KeyboardInterrupt) as error:
-            handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
-
-        else:
-            if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
-                os.remove(output_file_path)
+            handle_sampling_error(output_file_path, error)
 
         return sampled
 
@@ -919,8 +929,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             progress_bar (tqdm.tqdm or None):
                 The progress bar to update.
             output_file_path (str or None):
-                The file to periodically write sampled rows to. Defaults to
-                a temporary file, if None.
+                The file to periodically write sampled rows to. Defaults to None.
 
         Returns:
             pandas.DataFrame:
@@ -1043,8 +1052,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             batch_size (int):
                 The batch size to use per sampling call.
             output_file_path (str or None):
-                The file to periodically write sampled rows to. Defaults to
-                a temporary file, if None.
+                The file to periodically write sampled rows to. Defaults to None.
 
         Returns:
             pandas.DataFrame:
@@ -1090,11 +1098,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             )
 
         except (Exception, KeyboardInterrupt) as error:
-            handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
-
-        else:
-            if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
-                os.remove(output_file_path)
+            handle_sampling_error(output_file_path, error)
 
         return sampled
 
@@ -1123,8 +1127,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             batch_size (int):
                 The batch size to use per sampling call.
             output_file_path (str or None):
-                The file to periodically write sampled rows to. Defaults to
-                a temporary file, if None.
+                The file to periodically write sampled rows to. Defaults to None.
 
         Returns:
             pandas.DataFrame:
@@ -1160,10 +1163,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             )
 
         except (Exception, KeyboardInterrupt) as error:
-            handle_sampling_error(output_file_path == TMP_FILE_NAME, output_file_path, error)
-
-        else:
-            if output_file_path == TMP_FILE_NAME and os.path.exists(output_file_path):
-                os.remove(output_file_path)
+            handle_sampling_error(output_file_path, error)
 
         return sampled

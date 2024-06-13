@@ -7,7 +7,6 @@ import numpy as np
 
 from sdv.errors import SynthesizerInputError
 
-TMP_FILE_NAME = '.sample.csv.temp'
 DISABLE_TMP_FILE = 'disable'
 IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
 
@@ -79,12 +78,10 @@ def detect_discrete_columns(metadata, data, transformers):
     return discrete_columns
 
 
-def handle_sampling_error(is_tmp_file, output_file_path, sampling_error):
+def handle_sampling_error(output_file_path, sampling_error):
     """Handle sampling errors by printing a user-legible error and then raising.
 
     Args:
-        is_tmp_file (bool):
-            Whether or not the output file is a temp file.
         output_file_path (str):
             The output file path.
         sampling_error:
@@ -97,15 +94,14 @@ def handle_sampling_error(is_tmp_file, output_file_path, sampling_error):
         raise sampling_error
 
     error_msg = None
-    if is_tmp_file:
-        error_msg = (
-            'Error: Sampling terminated. Partial results are stored in a temporary file: '
-            f'{output_file_path}. This file will be overridden the next time you sample. '
-            'Please rename the file if you wish to save these results.'
-        )
-    elif output_file_path is not None:
+    if output_file_path is not None:
         error_msg = (
             f'Error: Sampling terminated. Partial results are stored in {output_file_path}.'
+        )
+    else:
+        error_msg = (
+            'Error: Sampling terminated. No results were saved due to unspecified '
+            '"output_file_path".'
         )
 
     if error_msg:
@@ -166,17 +162,13 @@ def validate_file_path(output_file_path):
     if output_file_path == DISABLE_TMP_FILE:
         # Temporary way of disabling the output file feature, used by HMA1.
         return output_path
-
     elif output_file_path:
         output_path = os.path.abspath(output_file_path)
         if os.path.exists(output_path):
             raise AssertionError(f'{output_path} already exists.')
-
     else:
-        if os.path.exists(TMP_FILE_NAME):
-            os.remove(TMP_FILE_NAME)
-
-        output_path = TMP_FILE_NAME
+        # Do not save a file if the user specified not to save a file.
+        return None
 
     # Create the file.
     with open(output_path, 'w+'):

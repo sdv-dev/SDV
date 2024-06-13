@@ -68,6 +68,7 @@ class BaseMultiTableSynthesizer:
                     locales=self.locales,
                     **synthesizer_parameters
                 )
+                self._table_synthesizers[table_name]._data_processor.table_name = table_name
 
     def _get_pbar_args(self, **kwargs):
         """Return a dictionary with the updated keyword args for a progress bar."""
@@ -694,7 +695,22 @@ class BaseMultiTableSynthesizer:
                 The loaded synthesizer.
         """
         with open(filepath, 'rb') as f:
-            synthesizer = cloudpickle.load(f)
+            try:
+                synthesizer = cloudpickle.load(f)
+            except RuntimeError as e:
+                err_msg = (
+                    'Attempting to deserialize object on a CUDA device but '
+                    'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
+                    " please use torch.load with map_location=torch.device('cpu') "
+                    'to map your storages to the CPU.'
+                )
+                if str(e) == err_msg:
+                    raise SamplingError(
+                        'This synthesizer was created on a machine with GPU but the current '
+                        'machine is CPU-only. This feature is currently unsupported. We recommend'
+                        ' sampling on the same GPU-enabled machine.'
+                    )
+                raise e
 
         check_synthesizer_version(synthesizer)
         check_sdv_versions_and_warn(synthesizer)

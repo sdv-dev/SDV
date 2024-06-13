@@ -12,7 +12,8 @@ from rdt.transformers import (
 
 from sdv import version
 from sdv.constraints.errors import AggregateConstraintsError
-from sdv.errors import ConstraintsNotMetError, SamplingError, SynthesizerInputError, VersionError
+from sdv.errors import (
+    ConstraintsNotMetError, InvalidDataError, SamplingError, SynthesizerInputError, VersionError)
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
 from sdv.single_table import (
@@ -217,6 +218,27 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         instance._data_processor.prepare_for_fitting.assert_called_once_with(data)
+
+    def test_auto_assign_transformers_with_invalid_data(self):
+        """Test that auto_assign_transformer throws useful error about invalid data"""
+        # Setup
+        metadata = SingleTableMetadata.load_from_dict({
+            'columns': {
+                'a': {'sdtype': 'categorical'},
+            }
+        })
+        synthesizer = GaussianCopulaSynthesizer(metadata)
+        # input data that does not match the metadata
+        data = pd.DataFrame({'b': list(np.random.choice(['M', 'F'], size=10))})
+        error_msg = re.escape(
+            'The provided data does not match the metadata:\n'
+            "The columns ['b'] are not present in the metadata.\n\n"
+            "The metadata columns ['a'] are not present in the data."
+        )
+
+        # Run and Assert
+        with pytest.raises(InvalidDataError, match=error_msg):
+            synthesizer.auto_assign_transformers(data)
 
     def test_get_transformers(self):
         """Test that this returns the field transformers from the ``HyperTransformer``."""
@@ -1391,7 +1413,7 @@ class TestBaseSingleTableSynthesizer:
             progress_bar=progress_bar.__enter__.return_value,
             output_file_path=mock_validate_file_path.return_value,
         )
-        mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
+        mock_handle_sampling_error.assert_called_once_with('temp_file', keyboard_error)
 
     @patch('sdv.single_table.base.os')
     @patch('sdv.single_table.base.tqdm')
@@ -1424,8 +1446,6 @@ class TestBaseSingleTableSynthesizer:
             progress_bar=progress_bar.__enter__.return_value,
             output_file_path=mock_validate_file_path.return_value,
         )
-        mock_os.remove.assert_called_once_with('.sample.csv.temp')
-        mock_os.path.exists.assert_called_once_with('.sample.csv.temp')
 
     def test_sample_not_fitted(self):
         """Test that ``sample`` raises an error when the synthesizer is not fitted."""
@@ -1440,6 +1460,24 @@ class TestBaseSingleTableSynthesizer:
         # Run and Assert
         with pytest.raises(SamplingError, match=expected_message):
             BaseSingleTableSynthesizer.sample(instance, 10)
+
+    def test__sample_with_progress_bar_without_output_filepath(self):
+        """Test that ``_sample_with_progress_bar`` raises an error
+        when the synthesizer is not fitted.
+        """
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        expected_message = re.escape(
+            'Error: Sampling terminated. No results were saved due to unspecified '
+            '"output_file_path".\nMocked Error'
+        )
+        instance._sample_in_batches.side_effect = RuntimeError('Mocked Error')
+
+        # Run and Assert
+        with pytest.raises(RuntimeError, match=expected_message):
+            BaseSingleTableSynthesizer._sample_with_progress_bar(
+                instance, output_file_path=None, num_rows=10)
 
     @patch('sdv.single_table.base.datetime')
     def test_sample(self, mock_datetime, caplog):
@@ -1693,8 +1731,6 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
-        mock_os.remove.assert_called_once_with('.sample.csv.temp')
-        mock_os.path.exists.assert_called_once_with('.sample.csv.temp')
 
     @patch('sdv.single_table.base.handle_sampling_error')
     @patch('sdv.single_table.base.tqdm')
@@ -1729,7 +1765,7 @@ class TestBaseSingleTableSynthesizer:
         progress_bar.__enter__.return_value.set_description.assert_called_once_with(
             'Sampling conditions'
         )
-        mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
+        mock_handle_sampling_error.assert_called_once_with('temp_file', keyboard_error)
 
     @patch('sdv.single_table.base.os')
     @patch('sdv.single_table.base.check_num_rows')
@@ -1763,8 +1799,6 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame({'name': ['John Doe']}))
-        mock_os.remove.assert_called_once_with('.sample.csv.temp')
-        mock_os.path.exists.assert_called_once_with('.sample.csv.temp')
 
     @patch('sdv.single_table.base.handle_sampling_error')
     @patch('sdv.single_table.base.check_num_rows')
@@ -1804,7 +1838,7 @@ class TestBaseSingleTableSynthesizer:
 
         # Assert
         pd.testing.assert_frame_equal(result, pd.DataFrame())
-        mock_handle_sampling_error.assert_called_once_with(False, 'temp_file', keyboard_error)
+        mock_handle_sampling_error.assert_called_once_with('temp_file', keyboard_error)
 
     def test__validate_known_columns_nans(self):
         """Test that it crashes when condition has nans."""
@@ -1913,6 +1947,38 @@ class TestBaseSingleTableSynthesizer:
             'path/to/file.py',
             ['Custom', 'Constr', 'UpperPlus']
         )
+
+    @patch('builtins.open')
+    @patch('sdv.single_table.base.cloudpickle')
+    def test_load_runtime_error(self, cloudpickle_mock, mock_open):
+        """Test that the synthesizer's load method errors with the correct message."""
+        # Setup
+        cloudpickle_mock.load.side_effect = RuntimeError((
+            'Attempting to deserialize object on a CUDA device but '
+            'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
+            " please use torch.load with map_location=torch.device('cpu') "
+            'to map your storages to the CPU.'
+        ))
+
+        # Run and Assert
+        err_msg = re.escape(
+            'This synthesizer was created on a machine with GPU but the current machine is'
+            ' CPU-only. This feature is currently unsupported. We recommend sampling on '
+            'the same GPU-enabled machine.'
+        )
+        with pytest.raises(SamplingError, match=err_msg):
+            BaseSingleTableSynthesizer.load('synth.pkl')
+
+    @patch('builtins.open')
+    @patch('sdv.single_table.base.cloudpickle')
+    def test_load_runtime_error_no_change(self, cloudpickle_mock, mock_open):
+        """Test that the synthesizer's load method errors with the correct message."""
+        # Setup
+        cloudpickle_mock.load.side_effect = RuntimeError('Error')
+
+        # Run and Assert
+        with pytest.raises(RuntimeError, match='Error'):
+            BaseSingleTableSynthesizer.load('synth.pkl')
 
     def test_add_custom_constraint_class(self):
         """Test that this method calls the ``DataProcessor``'s method."""

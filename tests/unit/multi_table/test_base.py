@@ -615,6 +615,30 @@ class TestBaseMultiTableSynthesizer:
         with pytest.raises(ValueError, match=err_msg):
             instance.auto_assign_transformers(data)
 
+    def test_auto_assign_transformers_missing_column(self):
+        """Test errors when there is a missing column within a table"""
+        # Setup
+        metadata = get_multi_table_metadata()
+        synthesizer = HMASynthesizer(metadata)
+        table1 = pd.DataFrame({'col1': [1, 2]})
+        table2 = pd.DataFrame({'col2': [1, 2]})
+        data = {
+            'nesreca': table1,
+            'oseba': table2
+        }
+
+        # Run
+        error_msg = re.escape(
+            'The provided data does not match the metadata:\n'
+            "The columns ['col1'] are not present in the metadata.\n\n"
+            "The metadata columns ['id_nesreca', 'nesreca_val', 'upravna_enota'] "
+            'are not present in the data.'
+        )
+
+        # Assert
+        with pytest.raises(InvalidDataError, match=error_msg):
+            synthesizer.auto_assign_transformers(data)
+
     def test_get_transformers(self):
         """Test that each table of the data calls its single table get_transformers method."""
         # Setup
@@ -1603,3 +1627,35 @@ class TestBaseMultiTableSynthesizer:
             'SYNTHESIZER CLASS NAME': 'Mock',
             'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
+
+    @patch('builtins.open')
+    @patch('sdv.multi_table.base.cloudpickle')
+    def test_load_runtime_error(self, cloudpickle_mock, mock_open):
+        """Test that the synthesizer's load method errors with the correct message."""
+        # Setup
+        cloudpickle_mock.load.side_effect = RuntimeError((
+            'Attempting to deserialize object on a CUDA device but '
+            'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
+            " please use torch.load with map_location=torch.device('cpu') "
+            'to map your storages to the CPU.'
+        ))
+
+        # Run and Assert
+        err_msg = re.escape(
+            'This synthesizer was created on a machine with GPU but the current machine is'
+            ' CPU-only. This feature is currently unsupported. We recommend sampling on '
+            'the same GPU-enabled machine.'
+        )
+        with pytest.raises(SamplingError, match=err_msg):
+            BaseMultiTableSynthesizer.load('synth.pkl')
+
+    @patch('builtins.open')
+    @patch('sdv.multi_table.base.cloudpickle')
+    def test_load_runtime_error_no_change(self, cloudpickle_mock, mock_open):
+        """Test that the synthesizer's load method errors with the correct message."""
+        # Setup
+        cloudpickle_mock.load.side_effect = RuntimeError('Error')
+
+        # Run and Assert
+        with pytest.raises(RuntimeError, match='Error'):
+            BaseMultiTableSynthesizer.load('synth.pkl')

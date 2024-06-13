@@ -7,6 +7,22 @@ from sdv.logging.logger import CSVFormatter, get_sdv_logger
 
 class TestCSVFormatter:
 
+    @patch('os.path.exists')
+    @patch('csv.DictWriter')
+    def test___init__(self, mock_dict_writer, mock_path_exists):
+        """Test CSV formatter is initialized correctly."""
+        # Setup
+        mock_path_exists.return_value = False
+        mock_writer = Mock()
+        mock_dict_writer.return_value = mock_writer
+
+        # Run
+        instance = CSVFormatter(filename='test.csv')
+
+        # Assert
+        mock_path_exists.assert_called_once()
+        instance.writer.writeheader.assert_called_once()
+
     def test_format(self):
         """Test CSV formatter correctly formats the log entry."""
         # Setup

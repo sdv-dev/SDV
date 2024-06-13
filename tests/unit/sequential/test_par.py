@@ -7,6 +7,7 @@ import pytest
 from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 
 from sdv.data_processing.data_processor import DataProcessor
+from sdv.data_processing.errors import InvalidConstraintsError
 from sdv.errors import InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition
@@ -32,7 +33,7 @@ class TestPARSynthesizer:
 
     def get_data(self):
         data = pd.DataFrame({
-            'time': [1, 2, 3],
+            'time': ['2020-01-01', '2020-01-02', '2020-01-03'],
             'gender': ['F', 'M', 'M'],
             'name': ['Jane', 'John', 'Doe'],
             'measurement': [55, 60, 65]
@@ -108,24 +109,99 @@ class TestPARSynthesizer:
                 verbose=False
             )
 
-    @patch('sdv.sequential.par.warnings')
-    def test_add_constraints(self, warnings_mock):
-        """Test that if constraints are being added, a warning is raised."""
+    def test_add_constraints(self):
+        """Test that that only simple constraints can be added to PARSynthesizer."""
+        # Setup
+        metadata = self.get_metadata()
+        synthesizer = PARSynthesizer(metadata=metadata,
+                                     context_columns=['name', 'measurement'])
+        name_constraint = {
+            'constraint_class': 'Mock',
+            'constraint_parameters': {
+                'column_name': 'name'
+            }
+        }
+        measurement_constraint = {
+            'constraint_class': 'Mock',
+            'constraint_parameters': {
+                'column_name': 'measurement'
+            }
+        }
+        gender_constraint = {
+            'constraint_class': 'Mock',
+            'constraint_parameters': {
+                'column_name': 'gender'
+            }
+        }
+        time_constraint = {
+            'constraint_class': 'Mock',
+            'constraint_parameters': {
+                'column_name': 'time'
+            }
+        }
+        multi_constraint = {
+            'constraint_class': 'Mock',
+            'constraint_parameters': {
+                'column_names': ['name', 'time']
+            }
+        }
+        overlapping_error_msg = re.escape(
+            'The PARSynthesizer cannot accommodate multiple constraints '
+            'that overlap on the same columns.'
+        )
+        mixed_constraint_error_msg = re.escape(
+            'The PARSynthesizer cannot accommodate constraints '
+            'with a mix of context and non-context columns.'
+        )
+
+        # Run and Assert
+        with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
+            synthesizer.add_constraints([name_constraint, gender_constraint])
+
+        with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
+            synthesizer.add_constraints([time_constraint, measurement_constraint])
+
+        with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
+            synthesizer.add_constraints([multi_constraint])
+
+        with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
+            synthesizer.add_constraints([multi_constraint, name_constraint])
+
+        with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
+            synthesizer.add_constraints([name_constraint, name_constraint])
+
+        with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
+            synthesizer.add_constraints([gender_constraint, gender_constraint])
+
+        # Custom constraint will not be found
+        with pytest.raises(InvalidConstraintsError):
+            synthesizer.add_constraints([gender_constraint])
+
+    def test_load_custom_constraint_classes(self):
+        """Test that if custom constraint is being added, an error is raised."""
         # Setup
         metadata = self.get_metadata()
         synthesizer = PARSynthesizer(metadata=metadata)
 
-        # Run
-        synthesizer.add_constraints([object()])
-
-        # Assert
-        warning_message = (
-            'The PARSynthesizer does not yet support constraints. This model will ignore any '
-            'constraints in the metadata.'
+        # Run and Assert
+        error_message = re.escape(
+            'The PARSynthesizer cannot accommodate custom constraints.'
         )
-        warnings_mock.warn.assert_called_once_with(warning_message)
-        assert synthesizer._data_processor._constraints == []
-        assert synthesizer._data_processor._constraints_list == []
+        with pytest.raises(SynthesizerInputError, match=error_message):
+            synthesizer.load_custom_constraint_classes(filepath='test', class_names=[])
+
+    def test_add_custom_constraint_class(self):
+        """Test that if custom constraint is being added, an error is raised."""
+        # Setup
+        metadata = self.get_metadata()
+        synthesizer = PARSynthesizer(metadata=metadata)
+
+        # Run and Assert
+        error_message = re.escape(
+            'The PARSynthesizer cannot accommodate custom constraints.'
+        )
+        with pytest.raises(SynthesizerInputError, match=error_message):
+            synthesizer.add_custom_constraint_class(Mock(), class_name='Mock')
 
     def test_get_parameters(self):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
@@ -269,7 +345,7 @@ class TestPARSynthesizer:
             'gender': ['F', 'M', 'M'],
             'name': ['Jane', 'John', 'Doe'],
             'measurement': [55, 60, 65],
-            'time.context': [1, 2, 3]
+            'time.context': ['2020-01-01', '2020-01-02', '2020-01-03']
         })
         pd.testing.assert_frame_equal(transformed_data, expected)
         assert par._extra_context_columns == {'time.context': {'sdtype': 'numerical'}}
@@ -294,7 +370,7 @@ class TestPARSynthesizer:
             'gender': ['M'],
             'name': ['John'],
             'measurement': [60],
-            'time.context': [2]
+            'time.context': ['2020-01-02']
         })
         pd.testing.assert_frame_equal(transformed_data, expected)
         assert par._extra_context_columns == {'time.context': {'sdtype': 'numerical'}}
@@ -340,6 +416,9 @@ class TestPARSynthesizer:
         par._transform_sequence_index = Mock()
         par.auto_assign_transformers = Mock()
         par.update_transformers = Mock()
+        get_transform_mock = Mock()
+        get_transform_mock.return_value = {'time': Mock()}
+        par.get_transformers = get_transform_mock
         par._data_processor._prepared_for_fitting = True
         data = self.get_data()
 
@@ -468,9 +547,9 @@ class TestPARSynthesizer:
             context_columns=['gender']
         )
         sequences = [
-            {'context': np.array(['M'], dtype=object), 'data': [[3], [65]]},
-            {'context': np.array(['F'], dtype=object), 'data': [[1], [55]]},
-            {'context': np.array(['M'], dtype=object), 'data': [[2], [60]]}
+            {'context': np.array(['M'], dtype=object), 'data': [['2020-01-03'], [65]]},
+            {'context': np.array(['F'], dtype=object), 'data': [['2020-01-01'], [55]]},
+            {'context': np.array(['M'], dtype=object), 'data': [['2020-01-02'], [60]]}
         ]
         assemble_sequences_mock.return_value = sequences
 
@@ -490,7 +569,7 @@ class TestPARSynthesizer:
         model_mock.return_value.fit_sequences.assert_called_once_with(
             sequences,
             ['categorical'],
-            ['continuous', 'continuous']
+            ['categorical', 'continuous']
         )
 
     @patch('sdv.sequential.par.PARModel')
