@@ -634,7 +634,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         """
         if self._model and not self._random_state_set:
             self._set_random_state(FIXED_RNG_SEED)
-
         need_sample = self._data_processor.get_sdtypes(primary_keys=False) or keep_extra_columns
         if self._model and need_sample:
             if conditions is None:
@@ -644,7 +643,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     raw_sampled = self._sample(num_rows, transformed_conditions)
                 except NotImplementedError:
                     raw_sampled = self._sample(num_rows)
-
             sampled = self._data_processor.reverse_transform(raw_sampled)
             if keep_extra_columns:
                 input_columns = self._data_processor._hyper_transformer._input_columns
@@ -655,7 +653,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
-
             sampled = self._data_processor.filter_valid(sampled)
 
             if conditions is not None:

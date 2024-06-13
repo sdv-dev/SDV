@@ -1381,6 +1381,45 @@ class TestHMASynthesizer:
         with pytest.raises(SynthesizerInputError, match=err_msg):
             synthesizer.fit(data)
 
+def test_hma_0_1_child():
+    parent = pd.DataFrame({'parent_id': [0, 1, 2]})
+    child = pd.DataFrame({'child_id': [10, 11], 'parent_id': [0, 1], 'data': [1.8, .7]})
+    data = {'parent': parent, 'child': child}
+    metadata_dict = {
+        'tables': {
+            'parent': {
+                'primary_key': 'parent_id',
+                'columns': {
+                    'parent_id': {'sdtype': 'id'},
+                }
+            },
+            'child': {
+                'primary_key': 'child_id',
+                'columns': {
+                    'child_id': {'sdtype': 'id'},
+                    'parent_id': {'sdtype': 'id'},
+                    'data': {'sdtype': 'numerical'}
+                }
+            }
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'parent',
+                'parent_primary_key': 'parent_id',
+                'child_table_name': 'child',
+                'child_foreign_key': 'parent_id'
+            }
+        ]
+    }
+    metadata = MultiTableMetadata().load_from_dict(metadata_dict)
+    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(scale=1)
+    data_col = synthetic_data['child']['data']
+    assert data_col.shape[0] == 2
+    assert data_col.max() <= child['data'].max()
+    assert data_col.min() >= child['data'].min()
+
 
 parametrization = [
     ('update_column', {'table_name': 'departure', 'column_name': 'city', 'sdtype': 'categorical'}),

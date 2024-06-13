@@ -110,15 +110,19 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             locales=locales,
         )
         validate_numerical_distributions(numerical_distributions, self.metadata.columns)
-        self.numerical_distributions = numerical_distributions or {}
-        self.default_distribution = default_distribution or 'beta'
 
+        self.default_distribution = default_distribution or 'beta'
         self._default_distribution = self.get_distribution_class(self.default_distribution)
+
+        self._set_numerical_distributions(numerical_distributions)
+        self._num_rows = None
+
+    def _set_numerical_distributions(self, numerical_distributions):
+        self.numerical_distributions = numerical_distributions or {}
         self._numerical_distributions = {
             field: self.get_distribution_class(distribution)
             for field, distribution in self.numerical_distributions.items()
         }
-        self._num_rows = None
 
     def _fit(self, processed_data):
         """Fit the model to the table.

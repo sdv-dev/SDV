@@ -191,7 +191,7 @@ class BaseHierarchicalSampler:
 
         Args:
             table_name (string):
-                Name of the table to sample children for.
+                Name of the table (parent) to sample children for.
             sampled_data (dict):
                 A dictionary mapping table names to sampled tables (pd.DataFrame).
         """
@@ -254,7 +254,7 @@ class BaseHierarchicalSampler:
         """Sample the entire dataset.
 
         Returns a dictionary with all the tables of the dataset. The amount of rows sampled will
-        depend from table to table. This is because the children tables are created modelling the
+        depend from table to table. This is because the children tables are created modeling the
         relation that they have with their parent tables, so its behavior may change from one
         table to another.
 
@@ -305,5 +305,4 @@ class BaseHierarchicalSampler:
                     sampled_data[child_name], sampled_data[parent_name], child_name, parent_name
                 )
                 added_relationships.add((parent_name, child_name))
-
         return self._finalize(sampled_data)
