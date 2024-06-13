@@ -1381,6 +1381,7 @@ class TestHMASynthesizer:
         with pytest.raises(SynthesizerInputError, match=err_msg):
             synthesizer.fit(data)
 
+
 def test_hma_0_1_child():
     parent = pd.DataFrame({'parent_id': [0, 1, 2]})
     child = pd.DataFrame({'child_id': [10, 11], 'parent_id': [0, 1], 'data': [1.8, .7]})

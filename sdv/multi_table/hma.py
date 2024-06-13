@@ -466,11 +466,13 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             )
 
             if not table.empty:
-                if table_name in self.parent_extended_columns and len(self.parent_extended_columns[table_name]) > 0:
+                if table_name in self.parent_extended_columns and len(
+                        self.parent_extended_columns[table_name]) > 0:
                     numerical_distributions = {}
                     for extended_column in self.parent_extended_columns[table_name]:
                         numerical_distributions[extended_column] = 'truncnorm'
-                    self._table_synthesizers[table_name]._set_numerical_distributions(numerical_distributions)
+                    self._table_synthesizers[table_name]._set_numerical_distributions(
+                        numerical_distributions)
                 self._table_synthesizers[table_name].fit_processed_data(table)
 
                 table_parameters = self._table_synthesizers[table_name]._get_parameters()
