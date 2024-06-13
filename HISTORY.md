@@ -2,6 +2,10 @@
 
 ### v1.14.0 - 2024-06-13
 
+This release provides a number of new features. A big one is that it adds the ability to fit the `HMASynthesizer` on disconnected schemas! It also enables the `PARSynthesizer` to work with constraints in certain conditions. More specifically, the `PARSynthesizer` can now handle constraints as long as the columns involved in the constraints are either exclusively all context columns or exclusively all non-context columns.
+
+Additionally, a `verbose` parameter was added to the `TVAESynthesizer` to get a more detailed progress bar. Also, a bug was corrected that renamed the `file_path` parameter in the `ExcelHandler.read()` method to `filepath` as specified in the official [SDV docs](https://docs.sdv.dev/sdv/multi-table-data/data-preparation/loading-data/excel#read).
+
 ### Internal
 
 * Add workflow to generate release notes - Issue [#2050](https://github.com/sdv-dev/SDV/issues/2050) by @amontanez24
