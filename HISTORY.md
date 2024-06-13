@@ -1,6 +1,39 @@
 # Release Notes
 
-## 1.13.1 - 2024-05-16
+### v1.14.0 - 2024-06-13
+
+This release provides a number of new features. A big one is that it adds the ability to fit the `HMASynthesizer` on disconnected schemas! It also enables the `PARSynthesizer` to work with constraints in certain conditions. More specifically, the `PARSynthesizer` can now handle constraints as long as the columns involved in the constraints are either exclusively all context columns or exclusively all non-context columns.
+
+Additionally, a `verbose` parameter was added to the `TVAESynthesizer` to get a more detailed progress bar. Also, a bug was corrected that renamed the `file_path` parameter in the `ExcelHandler.read()` method to `filepath` as specified in the official [SDV docs](https://docs.sdv.dev/sdv/multi-table-data/data-preparation/loading-data/excel#read).
+
+### Internal
+
+* Add workflow to generate release notes - Issue [#2050](https://github.com/sdv-dev/SDV/issues/2050) by @amontanez24
+
+### Bugs Fixed
+
+* PARSynthesizer: Duplicate sequence index values when `sequence_length` is higher than real data - Issue [#2031](https://github.com/sdv-dev/SDV/issues/2031) by @lajohn4747
+* PARSynthesizer model won't fit if sequence_index is missing - Issue [#1972](https://github.com/sdv-dev/SDV/issues/1972) by @lajohn4747
+* `DataProcessor` never gets assigned a `table_name`. - Issue [#1964](https://github.com/sdv-dev/SDV/issues/1964) by @fealho
+
+### New Features
+
+* Rename `file_path` to `filepath` parameter in ExcelHandler - Issue [#2055](https://github.com/sdv-dev/SDV/issues/2055) by @amontanez24
+* Enable the ability to run multi table synthesizers on disjointed table schemas - Issue [#2047](https://github.com/sdv-dev/SDV/issues/2047) by @lajohn4747
+* Add header to log.csv file - Issue [#2046](https://github.com/sdv-dev/SDV/issues/2046) by @lajohn4747
+* If no filepath is provided, do not create a file during `sample` - Issue [#2042](https://github.com/sdv-dev/SDV/issues/2042) by @lajohn4747
+* Add verbosity to `TVAESynthesizer` - Issue [#1990](https://github.com/sdv-dev/SDV/issues/1990) by @fealho
+* Allow constraints in PARSynthesizer (for all context cols, or all non-context columns) - Issue [#1936](https://github.com/sdv-dev/SDV/issues/1936) by @lajohn4747
+* Improve error message when sampling on a non-CPU device - Issue [#1819](https://github.com/sdv-dev/SDV/issues/1819) by @fealho
+* Better data validation message for `auto_assign_transformers` - Issue [#1509](https://github.com/sdv-dev/SDV/issues/1509) by @lajohn4747
+
+### Miscellaneous
+
+* Do not enforce min/max on sequence index column - Issue [#2043](https://github.com/sdv-dev/SDV/pull/2043)
+* Include validation check for single table auto_assign_transformers - Issue [#2021](https://github.com/sdv-dev/SDV/pull/2021)
+* Add the dummy context column to metadata and not to extra_context_column - Issue [#2019](https://github.com/sdv-dev/SDV/pull/2019)
+
+# 1.13.1 - 2024-05-16
 
 This release fixes the `ModuleNotFoundError` error that was causing the 1.13.0 release to fail.
 
