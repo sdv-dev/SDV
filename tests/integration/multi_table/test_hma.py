@@ -15,11 +15,7 @@ from sdv import version
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import SamplingError, SynthesizerInputError, VersionError
-from sdv.evaluation.multi_table import (
-    evaluate_quality,
-    get_column_pair_plot,
-    get_column_plot,
-)
+from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
@@ -1497,7 +1493,7 @@ def test_hma_0_1_grandparent():
 def test_hma_0_1_child_larger():
     num_rows = 1000
     parent_table = pd.DataFrame(data={
-        'id': [i for i in range(num_rows)],
+        'id': list(range(num_rows)),
         'col_A': list(np.random.choice(['A', 'B', 'C', 'D', 'E'], size=num_rows))
     })
     child_table_data = {
@@ -1535,14 +1531,17 @@ def test_hma_0_1_child_larger():
                     'col_B': {'sdtype': 'numerical'},
                     'col_C': {'sdtype': 'categorical'}
                 }
-            }
+            },
         },
-        'relationships': [{
-            'parent_table_name': 'parent',
-            'child_table_name': 'child',
-            'parent_primary_key': 'id',
-            'child_foreign_key': 'parent_id'
-        }]
+        'relationships':
+        [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'parent_id'
+            }
+        ],
     })
     metadata.validate()
     metadata.validate_data(data)
