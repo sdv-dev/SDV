@@ -77,7 +77,8 @@ def install_minimum(c):
     minimum_versions = _get_minimum_versions(dependencies, python_version)
 
     if minimum_versions:
-        c.run(f'python -m pip install {" ".join(minimum_versions)}')
+        install_deps = ' '.join(minimum_versions)
+        c.run(f'python -m pip install {install_deps}')
 
 
 @task
@@ -116,10 +117,8 @@ def tutorials(c):
 @task
 def lint(c):
     check_dependencies(c)
-    c.run('flake8 sdv')
-    c.run('flake8 tests --ignore=D,SFS2')
-    c.run('isort -c sdv tests')
-    c.run('pydocstyle sdv')
+    c.run('ruff check .')
+    c.run('ruff format .  --check')
 
 
 def remove_readonly(func, path, _):

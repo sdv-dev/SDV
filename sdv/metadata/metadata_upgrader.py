@@ -3,8 +3,16 @@
 import warnings
 
 from sdv.constraints import (
-    FixedCombinations, Inequality, Negative, OneHotEncoding, Positive, Range, ScalarInequality,
-    ScalarRange, Unique)
+    FixedCombinations,
+    Inequality,
+    Negative,
+    OneHotEncoding,
+    Positive,
+    Range,
+    ScalarInequality,
+    ScalarRange,
+    Unique,
+)
 
 
 def _upgrade_columns_and_keys(old_metadata):

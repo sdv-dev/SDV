@@ -18,7 +18,10 @@ from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import (
-    create_columns_node, create_summarized_columns_node, visualize_graph)
+    create_columns_node,
+    create_summarized_columns_node,
+    visualize_graph,
+)
 
 LOGGER = logging.getLogger(__name__)
 MULTITABLEMETADATA_LOGGER = get_sdv_logger('MultiTableMetadata')

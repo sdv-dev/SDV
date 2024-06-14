@@ -20,11 +20,19 @@ from copulas.multivariate import GaussianMultivariate
 
 from sdv import version
 from sdv._utils import (
-    _groupby_list, check_sdv_versions_and_warn, check_synthesizer_version, generate_synthesizer_id)
+    _groupby_list,
+    check_sdv_versions_and_warn,
+    check_synthesizer_version,
+    generate_synthesizer_id,
+)
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import (
-    ConstraintsNotMetError, InvalidDataError, SamplingError, SynthesizerInputError)
+    ConstraintsNotMetError,
+    InvalidDataError,
+    SamplingError,
+    SynthesizerInputError,
+)
 from sdv.logging import get_sdv_logger
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 

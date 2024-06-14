@@ -7,7 +7,9 @@ import rdt
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
 from sdv.single_table.utils import (
-    log_numerical_distributions_error, validate_numerical_distributions)
+    log_numerical_distributions_error,
+    validate_numerical_distributions,
+)
 
 LOGGER = logging.getLogger(__name__)
 

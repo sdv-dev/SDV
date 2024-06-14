@@ -10,12 +10,27 @@ import pandas as pd
 import pytest
 
 from sdv.constraints.errors import (
-    AggregateConstraintsError, ConstraintMetadataError, FunctionError, InvalidFunctionError,
-    MissingConstraintColumnError)
+    AggregateConstraintsError,
+    ConstraintMetadataError,
+    FunctionError,
+    InvalidFunctionError,
+    MissingConstraintColumnError,
+)
 from sdv.constraints.tabular import (
-    FixedCombinations, FixedIncrements, Inequality, Negative, OneHotEncoding, Positive, Range,
-    ScalarInequality, ScalarRange, Unique, _RecreateCustomConstraint,
-    _validate_inputs_custom_constraint, create_custom_constraint_class)
+    FixedCombinations,
+    FixedIncrements,
+    Inequality,
+    Negative,
+    OneHotEncoding,
+    Positive,
+    Range,
+    ScalarInequality,
+    ScalarRange,
+    Unique,
+    _RecreateCustomConstraint,
+    _validate_inputs_custom_constraint,
+    create_custom_constraint_class,
+)
 
 
 def dummy_transform_table(table_data):

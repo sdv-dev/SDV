@@ -10,10 +10,18 @@ import pytest
 from rdt.errors import ConfigNotSetError
 from rdt.errors import NotFittedError as RDTNotFittedError
 from rdt.transformers import (
-    AnonymizedFaker, FloatFormatter, GaussianNormalizer, UniformEncoder, UnixTimestampEncoder)
+    AnonymizedFaker,
+    FloatFormatter,
+    GaussianNormalizer,
+    UniformEncoder,
+    UnixTimestampEncoder,
+)
 
 from sdv.constraints.errors import (
-    AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
+    AggregateConstraintsError,
+    FunctionError,
+    MissingConstraintColumnError,
+)
 from sdv.constraints.tabular import Positive, ScalarRange
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.datetime_formatter import DatetimeFormatter

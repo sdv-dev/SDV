@@ -8,16 +8,30 @@ import pandas as pd
 import pytest
 from copulas.multivariate import GaussianMultivariate
 from rdt.transformers import (
-    BinaryEncoder, FloatFormatter, GaussianNormalizer, OneHotEncoder, RegexGenerator)
+    BinaryEncoder,
+    FloatFormatter,
+    GaussianNormalizer,
+    OneHotEncoder,
+    RegexGenerator,
+)
 
 from sdv import version
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.errors import (
-    ConstraintsNotMetError, InvalidDataError, SamplingError, SynthesizerInputError, VersionError)
+    ConstraintsNotMetError,
+    InvalidDataError,
+    SamplingError,
+    SynthesizerInputError,
+    VersionError,
+)
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
 from sdv.single_table import (
-    CopulaGANSynthesizer, CTGANSynthesizer, GaussianCopulaSynthesizer, TVAESynthesizer)
+    CopulaGANSynthesizer,
+    CTGANSynthesizer,
+    GaussianCopulaSynthesizer,
+    TVAESynthesizer,
+)
 from sdv.single_table.base import COND_IDX, BaseSingleTableSynthesizer
 from tests.utils import catch_sdv_logs
 

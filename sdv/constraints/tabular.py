@@ -39,10 +39,20 @@ import pandas as pd
 from sdv._utils import _convert_to_timedelta, _create_unique_name, _is_datetime_type
 from sdv.constraints.base import Constraint
 from sdv.constraints.errors import (
-    AggregateConstraintsError, ConstraintMetadataError, FunctionError, InvalidFunctionError)
+    AggregateConstraintsError,
+    ConstraintMetadataError,
+    FunctionError,
+    InvalidFunctionError,
+)
 from sdv.constraints.utils import (
-    cast_to_datetime64, compute_nans_column, get_datetime_diff, logit, matches_datetime_format,
-    revert_nans_columns, sigmoid)
+    cast_to_datetime64,
+    compute_nans_column,
+    get_datetime_diff,
+    logit,
+    matches_datetime_format,
+    revert_nans_columns,
+    sigmoid,
+)
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,

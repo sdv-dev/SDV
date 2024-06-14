@@ -4,8 +4,14 @@ from unittest.mock import Mock, patch
 import pandas as pd
 
 from sdv.evaluation.multi_table import (
-    DiagnosticReport, QualityReport, evaluate_quality, get_cardinality_plot, get_column_pair_plot,
-    get_column_plot, run_diagnostic)
+    DiagnosticReport,
+    QualityReport,
+    evaluate_quality,
+    get_cardinality_plot,
+    get_column_pair_plot,
+    get_column_plot,
+    run_diagnostic,
+)
 from sdv.metadata.multi_table import MultiTableMetadata
 
 

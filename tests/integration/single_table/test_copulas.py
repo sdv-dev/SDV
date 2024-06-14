@@ -4,8 +4,13 @@ import numpy as np
 import pandas as pd
 import pytest
 from rdt.transformers import (
-    AnonymizedFaker, CustomLabelEncoder, FloatFormatter, IDGenerator, LabelEncoder,
-    PseudoAnonymizedFaker)
+    AnonymizedFaker,
+    CustomLabelEncoder,
+    FloatFormatter,
+    IDGenerator,
+    LabelEncoder,
+    PseudoAnonymizedFaker,
+)
 
 from sdv.datasets.demo import download_demo
 from sdv.errors import ConstraintsNotMetError

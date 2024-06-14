@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import scipy
-from copulas.univariate import (
-    BetaUnivariate, GammaUnivariate, TruncatedGaussian, UniformUnivariate)
+from copulas.univariate import BetaUnivariate, GammaUnivariate, TruncatedGaussian, UniformUnivariate
 
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata

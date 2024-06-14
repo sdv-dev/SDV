@@ -6,8 +6,13 @@ import pytest
 
 from sdv.errors import VisualizationUnavailableError
 from sdv.evaluation.single_table import (
-    DiagnosticReport, QualityReport, evaluate_quality, get_column_pair_plot, get_column_plot,
-    run_diagnostic)
+    DiagnosticReport,
+    QualityReport,
+    evaluate_quality,
+    get_column_pair_plot,
+    get_column_plot,
+    run_diagnostic,
+)
 from sdv.metadata.single_table import SingleTableMetadata
 
 

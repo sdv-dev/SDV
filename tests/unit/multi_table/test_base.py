@@ -11,8 +11,13 @@ import pytest
 
 from sdv import version
 from sdv.errors import (
-    ConstraintsNotMetError, InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError,
-    VersionError)
+    ConstraintsNotMetError,
+    InvalidDataError,
+    NotFittedError,
+    SamplingError,
+    SynthesizerInputError,
+    VersionError,
+)
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer

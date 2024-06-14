@@ -9,9 +9,17 @@ import pytest
 
 from sdv import version
 from sdv._utils import (
-    _compare_versions, _convert_to_timedelta, _create_unique_name, _get_datetime_format,
-    _get_root_tables, _is_datetime_type, _validate_foreign_keys_not_null,
-    check_sdv_versions_and_warn, check_synthesizer_version, generate_synthesizer_id)
+    _compare_versions,
+    _convert_to_timedelta,
+    _create_unique_name,
+    _get_datetime_format,
+    _get_root_tables,
+    _is_datetime_type,
+    _validate_foreign_keys_not_null,
+    check_sdv_versions_and_warn,
+    check_synthesizer_version,
+    generate_synthesizer_id,
+)
 from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.base import BaseSingleTableSynthesizer

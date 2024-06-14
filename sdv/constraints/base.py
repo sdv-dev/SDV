@@ -13,7 +13,10 @@ from rdt.transformers import BinaryEncoder, FloatFormatter, OneHotEncoder, UnixT
 
 from sdv._utils import _format_invalid_values_string, _groupby_list
 from sdv.constraints.errors import (
-    AggregateConstraintsError, ConstraintMetadataError, MissingConstraintColumnError)
+    AggregateConstraintsError,
+    ConstraintMetadataError,
+    MissingConstraintColumnError,
+)
 from sdv.errors import ConstraintsNotMetError
 
 LOGGER = logging.getLogger(__name__)

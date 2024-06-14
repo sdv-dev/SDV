@@ -5,8 +5,13 @@ from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 from sdv.multi_table.utils import (
-    _get_total_estimated_columns, _print_simplified_schema_summary, _print_subsample_summary,
-    _simplify_data, _simplify_metadata, _subsample_data)
+    _get_total_estimated_columns,
+    _print_simplified_schema_summary,
+    _print_subsample_summary,
+    _simplify_data,
+    _simplify_metadata,
+    _subsample_data,
+)
 from sdv.utils.utils import drop_unknown_references as utils_drop_unknown_references
 
 

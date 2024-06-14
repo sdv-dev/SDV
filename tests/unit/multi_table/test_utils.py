@@ -10,14 +10,33 @@ import pytest
 from sdv.errors import InvalidDataError, SamplingError
 from sdv.metadata import MultiTableMetadata
 from sdv.multi_table.utils import (
-    _drop_rows, _get_all_descendant_per_root_at_order_n, _get_ancestors,
-    _get_columns_to_drop_child, _get_disconnected_roots_from_table, _get_n_order_descendants,
-    _get_nan_fk_indices_table, _get_num_column_to_drop, _get_primary_keys_referenced,
-    _get_relationships_for_child, _get_relationships_for_parent, _get_rows_to_drop,
-    _get_total_estimated_columns, _print_simplified_schema_summary, _print_subsample_summary,
-    _simplify_child, _simplify_children, _simplify_data, _simplify_grandchildren,
-    _simplify_metadata, _simplify_relationships_and_tables, _subsample_ancestors, _subsample_data,
-    _subsample_disconnected_roots, _subsample_parent, _subsample_table_and_descendants)
+    _drop_rows,
+    _get_all_descendant_per_root_at_order_n,
+    _get_ancestors,
+    _get_columns_to_drop_child,
+    _get_disconnected_roots_from_table,
+    _get_n_order_descendants,
+    _get_nan_fk_indices_table,
+    _get_num_column_to_drop,
+    _get_primary_keys_referenced,
+    _get_relationships_for_child,
+    _get_relationships_for_parent,
+    _get_rows_to_drop,
+    _get_total_estimated_columns,
+    _print_simplified_schema_summary,
+    _print_subsample_summary,
+    _simplify_child,
+    _simplify_children,
+    _simplify_data,
+    _simplify_grandchildren,
+    _simplify_metadata,
+    _simplify_relationships_and_tables,
+    _subsample_ancestors,
+    _subsample_data,
+    _subsample_disconnected_roots,
+    _subsample_parent,
+    _subsample_table_and_descendants,
+)
 
 
 def test__get_relationships_for_child():

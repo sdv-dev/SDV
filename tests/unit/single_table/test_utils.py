@@ -7,8 +7,15 @@ import pytest
 
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.utils import (
-    _key_order, check_num_rows, detect_discrete_columns, flatten_array, flatten_dict,
-    handle_sampling_error, unflatten_dict, validate_file_path)
+    _key_order,
+    check_num_rows,
+    detect_discrete_columns,
+    flatten_array,
+    flatten_dict,
+    handle_sampling_error,
+    unflatten_dict,
+    validate_file_path,
+)
 
 
 def test_detect_discrete_columns():

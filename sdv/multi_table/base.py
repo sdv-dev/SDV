@@ -13,10 +13,17 @@ from tqdm import tqdm
 
 from sdv import version
 from sdv._utils import (
-    _validate_foreign_keys_not_null, check_sdv_versions_and_warn, check_synthesizer_version,
-    generate_synthesizer_id)
+    _validate_foreign_keys_not_null,
+    check_sdv_versions_and_warn,
+    check_synthesizer_version,
+    generate_synthesizer_id,
+)
 from sdv.errors import (
-    ConstraintsNotMetError, InvalidDataError, SamplingError, SynthesizerInputError)
+    ConstraintsNotMetError,
+    InvalidDataError,
+    SamplingError,
+    SynthesizerInputError,
+)
 from sdv.logging import disable_single_table_logger, get_sdv_logger
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
@@ -479,7 +486,7 @@ class BaseMultiTableSynthesizer:
                 'sampling synthetic data.'
             )
 
-        if not type(scale) in (float, int) or not scale > 0:
+        if type(scale) not in (float, int) or not scale > 0:
             raise SynthesizerInputError(
                 f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0.")
 

@@ -15,8 +15,11 @@ from rdt.transformers import OneHotEncoder
 from sdv.errors import NonParametricError
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.single_table.utils import (
-    flatten_dict, log_numerical_distributions_error, unflatten_dict,
-    validate_numerical_distributions)
+    flatten_dict,
+    log_numerical_distributions_error,
+    unflatten_dict,
+    validate_numerical_distributions,
+)
 
 LOGGER = logging.getLogger(__name__)
 

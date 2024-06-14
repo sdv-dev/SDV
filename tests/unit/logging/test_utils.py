@@ -6,7 +6,10 @@ import numpy as np
 import pandas as pd
 
 from sdv.logging.utils import (
-    disable_single_table_logger, get_sdv_logger_config, load_logfile_dataframe)
+    disable_single_table_logger,
+    get_sdv_logger_config,
+    load_logfile_dataframe,
+)
 
 
 def test_get_sdv_logger_config():

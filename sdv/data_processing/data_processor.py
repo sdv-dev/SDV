@@ -15,7 +15,10 @@ from rdt.transformers.pii.anonymization import get_anonymized_transformer
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
 from sdv.constraints.errors import (
-    AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
+    AggregateConstraintsError,
+    FunctionError,
+    MissingConstraintColumnError,
+)
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter

@@ -15,7 +15,11 @@ from sdv.errors import SamplingError, SynthesizerInputError, VersionError
 from sdv.metadata import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.single_table import (
-    CopulaGANSynthesizer, CTGANSynthesizer, GaussianCopulaSynthesizer, TVAESynthesizer)
+    CopulaGANSynthesizer,
+    CTGANSynthesizer,
+    GaussianCopulaSynthesizer,
+    TVAESynthesizer,
+)
 from sdv.single_table.base import BaseSingleTableSynthesizer
 
 METADATA = SingleTableMetadata.load_from_dict({
