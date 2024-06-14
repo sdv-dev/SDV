@@ -1853,7 +1853,7 @@ def test_small_sample():
 
     # Run and Assert
     warn_msg = re.escape(
-        "The 'scale' parameter it too small. Some tables may have 1 row."
+        "The 'scale' parameter is too small. Some tables may have 1 row."
         ' For better quality data, please choose a larger scale.'
     )
     with pytest.warns(Warning, match=warn_msg):

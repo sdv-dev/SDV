@@ -287,7 +287,7 @@ class BaseHierarchicalSampler():
 
         if send_min_sample_warning:
             warn_msg = (
-                "The 'scale' parameter it too small. Some tables may have 1 row."
+                "The 'scale' parameter is too small. Some tables may have 1 row."
                 ' For better quality data, please choose a larger scale.'
             )
             warnings.warn(warn_msg)
