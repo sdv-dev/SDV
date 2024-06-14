@@ -1,5 +1,6 @@
 """Hierarchical Samplers."""
 import logging
+import warnings
 
 import pandas as pd
 
@@ -273,12 +274,23 @@ class BaseHierarchicalSampler():
         # DFS to sample roots and then their children
         non_root_parents = set(self.metadata._get_parent_map().keys())
         root_parents = set(self.metadata.tables.keys()) - non_root_parents
+        send_min_sample_warning = False
         for table in root_parents:
             num_rows = round(self._table_sizes[table] * scale)
+            if num_rows <= 0:
+                send_min_sample_warning = True
+                num_rows = 1
             synthesizer = self._table_synthesizers[table]
             LOGGER.info(f'Sampling {num_rows} rows from table {table}')
             sampled_data[table] = self._sample_rows(synthesizer, num_rows)
             self._sample_children(table_name=table, sampled_data=sampled_data, scale=scale)
+
+        if send_min_sample_warning:
+            warn_msg = (
+                "The 'scale' parameter is too small. Some tables may have 1 row."
+                ' For better quality data, please choose a larger scale.'
+            )
+            warnings.warn(warn_msg)
 
         added_relationships = set()
         for relationship in self.metadata.relationships:

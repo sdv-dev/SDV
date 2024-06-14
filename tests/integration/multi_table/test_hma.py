@@ -1839,3 +1839,27 @@ def test_disjointed_tables():
     # Assert
     for table in real_data:
         assert list(real_data[table].columns) == list(disjoin_synthetic_data[table].columns)
+
+
+def test_small_sample():
+    """Test that the sample function still works with a small scale"""
+    # Setup
+    data, metadata = download_demo(
+        modality='multi_table',
+        dataset_name='fake_hotels'
+    )
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.fit(data)
+
+    # Run and Assert
+    warn_msg = re.escape(
+        "The 'scale' parameter is too small. Some tables may have 1 row."
+        ' For better quality data, please choose a larger scale.'
+    )
+    with pytest.warns(Warning, match=warn_msg):
+        synthetic_data = synthesizer.sample(scale=0.01)
+
+    assert (len(synthetic_data['hotels']) == 1)
+    assert (len(synthetic_data['guests']) >= len(data['guests']) * .01)
+    assert synthetic_data['hotels'].columns.tolist() == data['hotels'].columns.tolist()
+    assert synthetic_data['guests'].columns.tolist() == data['guests'].columns.tolist()

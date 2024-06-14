@@ -667,3 +667,33 @@ class TestBaseHierarchicalSampler():
 
         # Assert
         assert data['parent']['__child__fk__num_rows'].to_list() == [2, 2, 4]
+
+    def test___enforce_table_size_too_small_sample(self):
+        """Test it enforces the sampled data to have the same size as the real data.
+
+        If the sample scale is too small ensure that the function doesn't error out.
+        """
+        # Setup
+        instance = MagicMock()
+        data = {
+            'parent': pd.DataFrame({
+                'fk': ['a', 'b', 'c'],
+                '__child__fk__num_rows': [1, 2, 3]
+            })
+        }
+        instance.metadata._get_foreign_keys.return_value = ['fk']
+        instance._min_child_rows = {'__child__fk__num_rows': 1}
+        instance._max_child_rows = {'__child__fk__num_rows': 3}
+        instance._table_sizes = {'child': 4}
+
+        # Run
+        BaseHierarchicalSampler._enforce_table_size(
+            instance,
+            'child',
+            'parent',
+            .001,
+            data
+        )
+
+        # Assert
+        assert data['parent']['__child__fk__num_rows'].to_list() == [0, 0, 0]
