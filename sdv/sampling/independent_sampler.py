@@ -1,10 +1,11 @@
 """Independent Samplers."""
+
 import logging
 
 LOGGER = logging.getLogger(__name__)
 
 
-class BaseIndependentSampler():
+class BaseIndependentSampler:
     """Independent sampler mixin.
 
     Args:
@@ -67,17 +68,17 @@ class BaseIndependentSampler():
                 A dictionary mapping table names to the sampled tables (pd.DataFrame).
         """
         queue = [
-            table
-            for table in self.metadata.tables
-            if not self.metadata._get_parent_map()[table]
+            table for table in self.metadata.tables if not self.metadata._get_parent_map()[table]
         ]
         while queue:
             parent = queue.pop(0)
             for child in self.metadata._get_child_map()[parent]:
                 self._add_foreign_key_columns(
-                    sampled_data[child], sampled_data[parent], child, parent)
+                    sampled_data[child], sampled_data[parent], child, parent
+                )
                 if set(self.metadata._get_all_foreign_keys(child)).issubset(
-                        set(sampled_data[child].columns)):
+                    set(sampled_data[child].columns)
+                ):
                     queue.append(child)
 
     def _finalize(self, sampled_data):
@@ -95,7 +96,6 @@ class BaseIndependentSampler():
         """
         final_data = {}
         for table_name, table_rows in sampled_data.items():
-
             synthesizer = self._table_synthesizers.get(table_name)
             metadata = synthesizer.get_metadata()
             dtypes = synthesizer._data_processor._dtypes
@@ -147,8 +147,12 @@ class BaseIndependentSampler():
         for table in self.metadata.tables:
             num_rows = int(self._table_sizes[table] * scale)
             synthesizer = self._table_synthesizers[table]
-            self._sample_table(synthesizer=synthesizer, table_name=table, num_rows=num_rows,
-                               sampled_data=sampled_data)
+            self._sample_table(
+                synthesizer=synthesizer,
+                table_name=table,
+                num_rows=num_rows,
+                sampled_data=sampled_data,
+            )
 
         self._connect_tables(sampled_data)
         return self._finalize(sampled_data)

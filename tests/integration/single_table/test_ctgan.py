@@ -23,7 +23,7 @@ def test__estimate_num_columns():
     metadata.add_column('datetime', sdtype='datetime')
     metadata.add_column('boolean', sdtype='boolean')
     data = pd.DataFrame({
-        'numerical': [.1, .2, .3],
+        'numerical': [0.1, 0.2, 0.3],
         'datetime': ['2020-01-01', '2020-01-02', '2020-01-03'],
         'categorical': ['a', 'b', 'b'],
         'categorical2': ['a', 'b', 'b'],
@@ -54,15 +54,9 @@ def test_synthesize_table_ctgan(tmp_path):
     Tests quality reports, anonymization, and customizing the synthesizer.
     """
     # Setup
-    real_data, metadata = download_demo(
-        modality='single_table',
-        dataset_name='fake_hotel_guests'
-    )
+    real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
     synthesizer = CTGANSynthesizer(metadata)
-    custom_synthesizer = CTGANSynthesizer(
-        metadata,
-        epochs=100
-    )
+    custom_synthesizer = CTGANSynthesizer(metadata, epochs=100)
     sensitive_columns = ['guest_email', 'billing_address', 'credit_card_number']
     model_path = tmp_path / 'synthesizer.pkl'
 
@@ -71,24 +65,20 @@ def test_synthesize_table_ctgan(tmp_path):
     synthetic_data = synthesizer.sample(num_rows=500)
 
     # Run - evaluate
-    quality_report = evaluate_quality(
-        real_data,
-        synthetic_data,
-        metadata
-    )
+    quality_report = evaluate_quality(real_data, synthetic_data, metadata)
 
     column_plot = get_column_plot(
         real_data=real_data,
         synthetic_data=synthetic_data,
         column_name='room_type',
-        metadata=metadata
+        metadata=metadata,
     )
 
     pair_plot = get_column_pair_plot(
         real_data=real_data,
         synthetic_data=synthetic_data,
         column_names=['room_rate', 'room_type'],
-        metadata=metadata
+        metadata=metadata,
     )
 
     # Run - save model
@@ -97,11 +87,7 @@ def test_synthesize_table_ctgan(tmp_path):
     # Run - custom synthesizer
     custom_synthesizer.fit(real_data)
     synthetic_data_customized = custom_synthesizer.sample(num_rows=500)
-    custom_quality_report = evaluate_quality(
-        real_data,
-        synthetic_data_customized,
-        metadata
-    )
+    custom_quality_report = evaluate_quality(real_data, synthetic_data_customized, metadata)
 
     # Assert - fit
     assert set(real_data.columns) == set(synthetic_data.columns)
@@ -141,16 +127,18 @@ def test_categoricals_are_not_preprocessed():
     for different data types.
     """
     # Setup
-    data = pd.DataFrame(data={
-        'age': [56, 61, 36, 52, 42],
-        'therapy': [True, False, True, False, True],
-        'alcohol': ['medium', 'medium', 'low', 'high', 'low'],
-    })
+    data = pd.DataFrame(
+        data={
+            'age': [56, 61, 36, 52, 42],
+            'therapy': [True, False, True, False, True],
+            'alcohol': ['medium', 'medium', 'low', 'high', 'low'],
+        }
+    )
     metadata = SingleTableMetadata.load_from_dict({
         'columns': {
             'age': {'sdtype': 'numerical'},
             'therapy': {'sdtype': 'boolean'},
-            'alcohol': {'sdtype': 'categorical'}
+            'alcohol': {'sdtype': 'categorical'},
         }
     })
 
@@ -188,8 +176,8 @@ def test_categorical_metadata_with_int_data():
         'columns': {
             'A': {'sdtype': 'categorical'},
             'B': {'sdtype': 'numerical'},
-            'C': {'sdtype': 'categorical'}
-        }
+            'C': {'sdtype': 'categorical'},
+        },
     }
 
     metadata = SingleTableMetadata.load_from_dict(metadata_dict)
@@ -255,13 +243,9 @@ def test_ctgansynthesizer_with_constraints_generating_categorical_values():
     my_synthesizer = CTGANSynthesizer(metadata)
     my_constraint = {
         'constraint_class': 'FixedCombinations',
-        'constraint_parameters': {
-            'column_names': ['high_spec', 'degree_type']
-        }
+        'constraint_parameters': {'column_names': ['high_spec', 'degree_type']},
     }
-    my_synthesizer.add_constraints(constraints=[
-        my_constraint
-    ])
+    my_synthesizer.add_constraints(constraints=[my_constraint])
 
     # Run
     my_synthesizer.fit(data)
@@ -274,17 +258,16 @@ def test_ctgansynthesizer_with_constraints_generating_categorical_values():
 def test_ctgan_with_dropped_columns():
     """Test CTGANSynthesizer doesn't crash when applied to columns that will be dropped. GH#1741"""
     # Setup
-    data = pd.DataFrame(data={
-        'user_id': ['100', '101', '102', '103', '104'],
-        'user_ssn': ['111-11-1111', '222-22-2222', '333-33-3333', '444-44-4444', '555-55-5555']
-    })
+    data = pd.DataFrame(
+        data={
+            'user_id': ['100', '101', '102', '103', '104'],
+            'user_ssn': ['111-11-1111', '222-22-2222', '333-33-3333', '444-44-4444', '555-55-5555'],
+        }
+    )
 
     metadata_dict = {
         'primary_key': 'user_id',
-        'columns': {
-            'user_id': {'sdtype': 'id'},
-            'user_ssn': {'sdtype': 'ssn'}
-        }
+        'columns': {'user_id': {'sdtype': 'id'}, 'user_ssn': {'sdtype': 'ssn'}},
     }
 
     metadata = SingleTableMetadata.load_from_dict(metadata_dict)
@@ -300,16 +283,19 @@ def test_ctgan_with_dropped_columns():
     assert all(id_val.startswith('sdv-id-') for id_val in samples['user_id'])
     pd.testing.assert_series_equal(
         samples['user_id'],
-        pd.Series([
-            'sdv-id-IOsBJZ',
-            'sdv-id-CFcIuA',
-            'sdv-id-prYgtc',
-            'sdv-id-yrTTYM',
-            'sdv-id-kLtfIW',
-            'sdv-id-nCFkOi',
-            'sdv-id-kKQXYV',
-            'sdv-id-aPRybP',
-            'sdv-id-RHPiGX',
-            'sdv-id-SJNtGY'
-        ], name='user_id')
+        pd.Series(
+            [
+                'sdv-id-IOsBJZ',
+                'sdv-id-CFcIuA',
+                'sdv-id-prYgtc',
+                'sdv-id-yrTTYM',
+                'sdv-id-kLtfIW',
+                'sdv-id-nCFkOi',
+                'sdv-id-kKQXYV',
+                'sdv-id-aPRybP',
+                'sdv-id-RHPiGX',
+                'sdv-id-SJNtGY',
+            ],
+            name='user_id',
+        ),
     )

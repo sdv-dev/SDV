@@ -24,10 +24,7 @@ def _isinstance_side_effect(*args, **kwargs):
         return isinstance(args[0], args[1])
 
 
-DEMO_DATA, DEMO_METADATA = download_demo(
-    modality='single_table',
-    dataset_name='fake_hotel_guests'
-)
+DEMO_DATA, DEMO_METADATA = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
 
 
 @pytest.fixture
@@ -72,7 +69,7 @@ def test_fit_with_unique_constraint_on_data_with_only_index_column():
             'C',
             'D',
             'E',
-        ]
+        ],
     })
 
     metadata = SingleTableMetadata()
@@ -83,9 +80,7 @@ def test_fit_with_unique_constraint_on_data_with_only_index_column():
     model = GaussianCopulaSynthesizer(metadata)
     constraint = {
         'constraint_class': 'Unique',
-        'constraint_parameters': {
-            'column_names': ['index']
-        }
+        'constraint_parameters': {'column_names': ['index']},
     }
     model.add_constraints([constraint])
 
@@ -138,7 +133,7 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
             'C3',
             'D4',
             'E5',
-        ]
+        ],
     })
 
     metadata = SingleTableMetadata()
@@ -150,9 +145,7 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
     model = GaussianCopulaSynthesizer(metadata)
     constraint = {
         'constraint_class': 'Unique',
-        'constraint_parameters': {
-            'column_names': ['test_column']
-        }
+        'constraint_parameters': {'column_names': ['test_column']},
     }
     model.add_constraints([constraint])
 
@@ -198,7 +191,7 @@ def test_fit_with_unique_constraint_on_data_subset():
             'C',
             'D',
             'E',
-        ]
+        ],
     })
 
     metadata = SingleTableMetadata()
@@ -209,9 +202,7 @@ def test_fit_with_unique_constraint_on_data_subset():
     test_df = test_df.iloc[[1, 3, 4]]
     constraint = {
         'constraint_class': 'Unique',
-        'constraint_parameters': {
-            'column_names': ['test_column']
-        }
+        'constraint_parameters': {'column_names': ['test_column']},
     }
     model = GaussianCopulaSynthesizer(metadata)
     model.add_constraints([constraint])
@@ -228,17 +219,19 @@ def test_fit_with_unique_constraint_on_data_subset():
 def test_conditional_sampling_with_constraints():
     """Test constraints with conditional sampling. GH#1737"""
     # Setup
-    data = pd.DataFrame(data={
-        'A': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
-        'B': [round(i) for i in np.random.uniform(low=0, high=10, size=100)],
-        'C': np.random.choice(['Yes', 'No', 'Maybe'], size=100)
-    })
+    data = pd.DataFrame(
+        data={
+            'A': [round(i, 2) for i in np.random.uniform(low=0, high=10, size=100)],
+            'B': [round(i) for i in np.random.uniform(low=0, high=10, size=100)],
+            'C': np.random.choice(['Yes', 'No', 'Maybe'], size=100),
+        }
+    )
 
     metadata = SingleTableMetadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'numerical'},
             'B': {'sdtype': 'numerical'},
-            'C': {'sdtype': 'categorical'}
+            'C': {'sdtype': 'categorical'},
         }
     })
 
@@ -250,8 +243,8 @@ def test_conditional_sampling_with_constraints():
             'column_name': 'B',
             'low_value': 0,
             'high_value': 10,
-            'strict_boundaries': False
-        }
+            'strict_boundaries': False,
+        },
     }
 
     my_condition = Condition(num_rows=250, column_values={'B': 1})
@@ -269,8 +262,7 @@ def test_conditional_sampling_with_constraints():
 
 
 @patch('sdv.single_table.base.isinstance')
-@patch('sdv.single_table.copulas.multivariate.GaussianMultivariate',
-       spec_set=GaussianMultivariate)
+@patch('sdv.single_table.copulas.multivariate.GaussianMultivariate', spec_set=GaussianMultivariate)
 def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstance_mock):
     """Test that the ``sample`` method handles constraints with conditions.
 
@@ -295,7 +287,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     data = pd.DataFrame({
         'city': ['LA', 'SF', 'CHI', 'LA', 'LA'],
         'state': ['CA', 'CA', 'IL', 'CA', 'CA'],
-        'age': [27, 28, 26, 21, 30]
+        'age': [27, 28, 26, 21, 30],
     })
 
     metadata = SingleTableMetadata()
@@ -307,20 +299,12 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
 
     constraint = {
         'constraint_class': 'FixedCombinations',
-        'constraint_parameters': {
-            'column_names': ['city', 'state']
-        }
+        'constraint_parameters': {'column_names': ['city', 'state']},
     }
     model.add_constraints([constraint])
     sampled_numeric_data = [
-        pd.DataFrame({
-            'city#state': [0.1, 1, 0.75, 0.25, 0.25],
-            'age': [30, 30, 30, 30, 30]
-        }),
-        pd.DataFrame({
-            'city#state': [0.75],
-            'age': [30]
-        }),
+        pd.DataFrame({'city#state': [0.1, 1, 0.75, 0.25, 0.25], 'age': [30, 30, 30, 30, 30]}),
+        pd.DataFrame({'city#state': [0.75], 'age': [30]}),
     ]
     gm_mock.return_value.sample.side_effect = sampled_numeric_data
     model.fit(data)
@@ -334,7 +318,7 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
     expected_data = pd.DataFrame({
         'city': ['LA', 'SF', 'LA', 'LA', 'SF'],
         'state': ['CA', 'CA', 'CA', 'CA', 'CA'],
-        'age': [30, 30, 30, 30, 30]
+        'age': [30, 30, 30, 30, 30],
     })
     sample_calls = model._model.sample.mock_calls
     assert len(sample_calls) == 2
@@ -355,19 +339,14 @@ def test_custom_constraints_from_file(tmpdir):
     metadata.detect_from_dataframe(data)
     metadata.update_column(column_name='pii_col', sdtype='address', pii=True)
     synthesizer = GaussianCopulaSynthesizer(
-        metadata,
-        enforce_min_max_values=False,
-        enforce_rounding=False
+        metadata, enforce_min_max_values=False, enforce_rounding=False
     )
     synthesizer.load_custom_constraint_classes(
-        'tests/integration/single_table/custom_constraints.py',
-        ['MyConstraint']
+        'tests/integration/single_table/custom_constraints.py', ['MyConstraint']
     )
     constraint = {
         'constraint_class': 'MyConstraint',
-        'constraint_parameters': {
-            'column_names': ['numerical_col']
-        }
+        'constraint_parameters': {'column_names': ['numerical_col']},
     }
 
     # Run
@@ -404,16 +383,12 @@ def test_custom_constraints_from_object(tmpdir):
     metadata.detect_from_dataframe(data)
     metadata.update_column(column_name='pii_col', sdtype='address', pii=True)
     synthesizer = GaussianCopulaSynthesizer(
-        metadata,
-        enforce_min_max_values=False,
-        enforce_rounding=False
+        metadata, enforce_min_max_values=False, enforce_rounding=False
     )
     synthesizer.add_custom_constraint_class(MyConstraint, 'MyConstraint')
     constraint = {
         'constraint_class': 'MyConstraint',
-        'constraint_parameters': {
-            'column_names': ['numerical_col']
-        }
+        'constraint_parameters': {'column_names': ['numerical_col']},
     }
 
     # Run
@@ -445,8 +420,8 @@ def test_synthesizer_with_inequality_constraint(demo_data, demo_metadata):
         'constraint_class': 'Inequality',
         'constraint_parameters': {
             'low_column_name': 'checkin_date',
-            'high_column_name': 'checkout_date'
-        }
+            'high_column_name': 'checkout_date',
+        },
     }
 
     synthesizer.add_constraints([checkin_lessthan_checkout])
@@ -456,23 +431,23 @@ def test_synthesizer_with_inequality_constraint(demo_data, demo_metadata):
     sampled = synthesizer.sample(num_rows=500)
     synthesizer.validate(sampled)
     _sampled = sampled[~sampled['checkout_date'].isna()]
-    assert all(
-        pd.to_datetime(_sampled['checkin_date']) < pd.to_datetime(_sampled['checkout_date'])
-    )
+    assert all(pd.to_datetime(_sampled['checkin_date']) < pd.to_datetime(_sampled['checkout_date']))
 
 
 def test_inequality_constraint_with_datetimes_and_nones():
     """Test that the ``Inequality`` constraint works with ``None`` and ``datetime``."""
     # Setup
-    data = pd.DataFrame(data={
-        'A': [None, None, '2020-01-02', '2020-03-04'] * 2,
-        'B': [None, '2021-03-04', '2021-12-31', None] * 2
-    })
+    data = pd.DataFrame(
+        data={
+            'A': [None, None, '2020-01-02', '2020-03-04'] * 2,
+            'B': [None, '2021-03-04', '2021-12-31', None] * 2,
+        }
+    )
 
     metadata = SingleTableMetadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'}
+            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
         }
     })
 
@@ -481,10 +456,7 @@ def test_inequality_constraint_with_datetimes_and_nones():
     synth.add_constraints([
         {
             'constraint_class': 'Inequality',
-            'constraint_parameters': {
-                'low_column_name': 'A',
-                'high_column_name': 'B'
-            }
+            'constraint_parameters': {'low_column_name': 'A', 'high_column_name': 'B'},
         }
     ])
     synth.validate(data)
@@ -496,13 +468,29 @@ def test_inequality_constraint_with_datetimes_and_nones():
     # Assert
     expected_sampled = pd.DataFrame({
         'A': [
-            '2020-01-02', '2020-01-02', '2020-01-02', '2020-01-02', '2020-01-02', '2020-01-02',
-            '2020-01-02', '2020-01-02', '2020-01-02', np.nan
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            np.nan,
         ],
         'B': [
-            np.nan, '2021-12-30', '2021-12-30', '2021-12-30', np.nan,
-            '2021-12-30', np.nan, '2021-12-30', np.nan, '2021-12-30'
-        ]
+            np.nan,
+            '2021-12-30',
+            '2021-12-30',
+            '2021-12-30',
+            np.nan,
+            '2021-12-30',
+            np.nan,
+            '2021-12-30',
+            np.nan,
+            '2021-12-30',
+        ],
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
 
@@ -510,15 +498,17 @@ def test_inequality_constraint_with_datetimes_and_nones():
 def test_scalar_inequality_constraint_with_datetimes_and_nones():
     """Test that the ``ScalarInequality`` constraint works with ``None`` and ``datetime``."""
     # Setup
-    data = pd.DataFrame(data={
-        'A': [None, None, '2020-01-02', '2020-03-04'],
-        'B': [None, '2021-03-04', '2021-12-31', None]
-    })
+    data = pd.DataFrame(
+        data={
+            'A': [None, None, '2020-01-02', '2020-03-04'],
+            'B': [None, '2021-03-04', '2021-12-31', None],
+        }
+    )
 
     metadata = SingleTableMetadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'}
+            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
         }
     })
 
@@ -527,11 +517,7 @@ def test_scalar_inequality_constraint_with_datetimes_and_nones():
     synth.add_constraints([
         {
             'constraint_class': 'ScalarInequality',
-            'constraint_parameters': {
-                'column_name': 'A',
-                'relation': '>=',
-                'value': '2019-01-01'
-            }
+            'constraint_parameters': {'column_name': 'A', 'relation': '>=', 'value': '2019-01-01'},
         }
     ])
     synth.validate(data)
@@ -555,7 +541,7 @@ def test_scalar_inequality_constraint_with_datetimes_and_nones():
             2: '2021-07-26',
             3: '2021-07-02',
             4: '2021-06-06',
-        }
+        },
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
 
@@ -563,15 +549,17 @@ def test_scalar_inequality_constraint_with_datetimes_and_nones():
 def test_scalar_range_constraint_with_datetimes_and_nones():
     """Test that the ``ScalarRange`` constraint works with ``None`` and ``datetime``."""
     # Setup
-    data = pd.DataFrame(data={
-        'A': [None, None, '2020-01-02', '2020-03-04'],
-        'B': [None, '2021-03-04', '2021-12-31', None]
-    })
+    data = pd.DataFrame(
+        data={
+            'A': [None, None, '2020-01-02', '2020-03-04'],
+            'B': [None, '2021-03-04', '2021-12-31', None],
+        }
+    )
 
     metadata = SingleTableMetadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'}
+            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
         }
     })
 
@@ -584,8 +572,8 @@ def test_scalar_range_constraint_with_datetimes_and_nones():
                 'column_name': 'A',
                 'low_value': '2019-10-30',
                 'high_value': '2020-03-04',
-                'strict_boundaries': False
-            }
+                'strict_boundaries': False,
+            },
         }
     ])
     synth.validate(data)
@@ -619,7 +607,7 @@ def test_scalar_range_constraint_with_datetimes_and_nones():
             7: '2021-06-19',
             8: np.nan,
             9: np.nan,
-        }
+        },
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
 
@@ -627,17 +615,19 @@ def test_scalar_range_constraint_with_datetimes_and_nones():
 def test_range_constraint_with_datetimes_and_nones():
     """Test that the ``Range`` constraint works with ``None`` and ``datetime``."""
     # Setup
-    data = pd.DataFrame(data={
-        'A': [None, None, '2020-01-02', '2020-03-04'],
-        'B': [None, '2021-03-04', '2021-12-31', None],
-        'C': [None, '2022-03-04', '2022-12-31', None],
-    })
+    data = pd.DataFrame(
+        data={
+            'A': [None, None, '2020-01-02', '2020-03-04'],
+            'B': [None, '2021-03-04', '2021-12-31', None],
+            'C': [None, '2022-03-04', '2022-12-31', None],
+        }
+    )
 
     metadata = SingleTableMetadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'C': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'}
+            'C': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
         }
     })
 
@@ -650,8 +640,8 @@ def test_range_constraint_with_datetimes_and_nones():
                 'low_column_name': 'A',
                 'middle_column_name': 'B',
                 'high_column_name': 'C',
-                'strict_boundaries': False
-            }
+                'strict_boundaries': False,
+            },
         }
     ])
     synth.validate(data)
@@ -663,17 +653,41 @@ def test_range_constraint_with_datetimes_and_nones():
     # Assert
     expected_sampled = pd.DataFrame({
         'A': [
-            '2020-01-02', '2020-01-02', '2020-01-02', '2020-01-02', '2020-01-02',
-            '2020-01-02', '2020-01-02', '2020-01-02', '2020-01-02', '2020-01-02'
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
+            '2020-01-02',
         ],
         'B': [
-            np.nan, np.nan, '2021-12-30', np.nan, np.nan, '2021-12-30', np.nan,
-            np.nan, np.nan, '2021-12-30'
+            np.nan,
+            np.nan,
+            '2021-12-30',
+            np.nan,
+            np.nan,
+            '2021-12-30',
+            np.nan,
+            np.nan,
+            np.nan,
+            '2021-12-30',
         ],
         'C': [
-            np.nan, np.nan, '2022-12-30', np.nan, np.nan, '2022-12-30', np.nan,
-            np.nan, np.nan, '2022-12-30'
-        ]
+            np.nan,
+            np.nan,
+            '2022-12-30',
+            np.nan,
+            np.nan,
+            '2022-12-30',
+            np.nan,
+            np.nan,
+            np.nan,
+            '2022-12-30',
+        ],
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
 
@@ -681,10 +695,7 @@ def test_range_constraint_with_datetimes_and_nones():
 def test_inequality_constraint_all_possible_nans_configurations():
     """Test that the inequality constraint works with all possible NaN configurations."""
     # Setup
-    data = pd.DataFrame(data={
-        'A': [0, 1, np.nan, np.nan, 2],
-        'B': [2, np.nan, 3, np.nan, 3]
-    })
+    data = pd.DataFrame(data={'A': [0, 1, np.nan, np.nan, 2], 'B': [2, np.nan, 3, np.nan, 3]})
 
     metadata = SingleTableMetadata.load_from_dict({
         'columns': {
@@ -694,17 +705,12 @@ def test_inequality_constraint_all_possible_nans_configurations():
     })
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    synthesizer.add_constraints(
-        [
-            {
-                'constraint_class': 'Inequality',
-                'constraint_parameters': {
-                    'low_column_name': 'A',
-                    'high_column_name': 'B'
-                }
-            }
-        ]
-    )
+    synthesizer.add_constraints([
+        {
+            'constraint_class': 'Inequality',
+            'constraint_parameters': {'low_column_name': 'A', 'high_column_name': 'B'},
+        }
+    ])
 
     # Run
     synthesizer.fit(data)
@@ -720,17 +726,19 @@ def test_inequality_constraint_all_possible_nans_configurations():
 def test_range_constraint_all_possible_nans_configurations():
     """Test that the range constraint works with all possible NaN configurations."""
     # Setup
-    data = pd.DataFrame(data={
-        'low': [1, 4, np.nan, 0, 4, np.nan, np.nan, 5, np.nan],
-        'middle': [2, 5, 3, np.nan, 5, np.nan, 5, np.nan, np.nan],
-        'high': [3, 7, 8, 4, np.nan, 9, np.nan, np.nan, np.nan]
-    })
+    data = pd.DataFrame(
+        data={
+            'low': [1, 4, np.nan, 0, 4, np.nan, np.nan, 5, np.nan],
+            'middle': [2, 5, 3, np.nan, 5, np.nan, 5, np.nan, np.nan],
+            'high': [3, 7, 8, 4, np.nan, 9, np.nan, np.nan, np.nan],
+        }
+    )
 
     metadata_dict = {
         'columns': {
             'low': {'sdtype': 'numerical'},
             'middle': {'sdtype': 'numerical'},
-            'high': {'sdtype': 'numerical'}
+            'high': {'sdtype': 'numerical'},
         }
     }
 
@@ -742,8 +750,8 @@ def test_range_constraint_all_possible_nans_configurations():
         'constraint_parameters': {
             'low_column_name': 'low',
             'middle_column_name': 'middle',
-            'high_column_name': 'high'
-        }
+            'high_column_name': 'high',
+        },
     }
 
     # Run
@@ -779,6 +787,7 @@ def test_range_constraint_all_possible_nans_configurations():
 
 def test_custom_constraint_with_key():
     """Test that a custom constraint can work with a primary key."""
+
     # Setup
     def is_valid(column_names, data):
         return data['key'] == data['letter'] + '_' + data['number']
@@ -794,16 +803,14 @@ def test_custom_constraint_with_key():
         return data
 
     custom_constraint = create_custom_constraint_class(
-        is_valid_fn=is_valid,
-        transform_fn=transform,
-        reverse_transform_fn=reverse_transform
+        is_valid_fn=is_valid, transform_fn=transform, reverse_transform_fn=reverse_transform
     )
 
     data = pd.DataFrame({
         'key': ['a_1', 'b_2', 'c_3'],
         'letter': ['a', 'b', 'c'],
         'number': ['1', '2', '3'],
-        'other': [7, 8, 9]
+        'other': [7, 8, 9],
     })
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
@@ -816,7 +823,7 @@ def test_custom_constraint_with_key():
         'constraint_class': 'custom',
         'constraint_parameters': {
             'column_names': ['letter', 'number'],
-        }
+        },
     }
     synth.add_constraints([id_must_match])
 
@@ -844,8 +851,8 @@ def test_timezone_aware_constraints():
         'constraint_parameters': {
             'low_column_name': 'col1',
             'high_column_name': 'col2',
-            'strict_boundaries': True
-        }
+            'strict_boundaries': True,
+        },
     }
 
     # Run
@@ -878,31 +885,29 @@ def test_custom_and_overlapping_constraint_errors(caplog, demo_data, demo_metada
         return data
 
     custom_constraint = create_custom_constraint_class(
-        is_valid_fn=is_valid,
-        transform_fn=transform,
-        reverse_transform_fn=reverse_transform
+        is_valid_fn=is_valid, transform_fn=transform, reverse_transform_fn=reverse_transform
     )
     synth.add_custom_constraint_class(custom_constraint, 'custom')
     checkin_checkout_constraint = {
         'constraint_class': 'Inequality',
         'constraint_parameters': {
             'low_column_name': 'checkin_date',
-            'high_column_name': 'checkout_date'
-        }
+            'high_column_name': 'checkout_date',
+        },
     }
     error_constraint = {
         'constraint_class': 'custom',
         'constraint_parameters': {
             'column_names': ['room_rate'],
-        }
+        },
     }
     overlapped_constraint = {
         'constraint_class': 'ScalarInequality',
         'constraint_parameters': {
             'column_name': 'checkout_date',
             'relation': '>',
-            'value': '01 Jan 1990'
-        }
+            'value': '01 Jan 1990',
+        },
     }
     synth.add_constraints(
         constraints=[checkin_checkout_constraint, error_constraint, overlapped_constraint]
@@ -917,7 +922,7 @@ def test_custom_and_overlapping_constraint_errors(caplog, demo_data, demo_metada
         "Unable to transform ScalarInequality with columns ['checkout_date'] because they are not "
         'all available in the data. This happens due to multiple, overlapping constraints.',
         "Unable to transform CustomConstraint with columns ['room_rate'] due to an error in "
-        'transform: \nTransform error\nUsing the reject sampling approach instead.'
+        'transform: \nTransform error\nUsing the reject sampling approach instead.',
     ]
     log_messages = [record[2] for record in caplog.record_tuples]
     for log in expected_logs:
@@ -926,6 +931,7 @@ def test_custom_and_overlapping_constraint_errors(caplog, demo_data, demo_metada
 
 def test_aggregate_constraint_errors(demo_data, demo_metadata):
     """Test that if there are multiple constraint errors, they are raised together."""
+
     # Setup
     class BadConstraint(Constraint):
         def __init__(self, column_name):
@@ -937,11 +943,11 @@ def test_aggregate_constraint_errors(demo_data, demo_metadata):
     synth = GaussianCopulaSynthesizer(demo_metadata)
     bad_constraint1 = {
         'constraint_class': 'BadConstraint',
-        'constraint_parameters': {'column_name': 'room_rate'}
+        'constraint_parameters': {'column_name': 'room_rate'},
     }
     bad_constraint2 = {
         'constraint_class': 'BadConstraint',
-        'constraint_parameters': {'column_name': 'checkin_date'}
+        'constraint_parameters': {'column_name': 'checkin_date'},
     }
     synth.add_constraints(constraints=[bad_constraint1, bad_constraint2])
 
@@ -954,14 +960,16 @@ def test_aggregate_constraint_errors(demo_data, demo_metadata):
 def test_constraint_datetime_check():
     """Test datetime columns are correctly identified in constraints. GH#1692"""
     # Setup
-    data = pd.DataFrame(data={
-        'low_col': ['21 Sep, 15', '23 Aug, 14', '29 May, 12'],
-        'high_col': ['02 Nov, 15', '12 Oct, 14', '08 Jul, 12']
-    })
+    data = pd.DataFrame(
+        data={
+            'low_col': ['21 Sep, 15', '23 Aug, 14', '29 May, 12'],
+            'high_col': ['02 Nov, 15', '12 Oct, 14', '08 Jul, 12'],
+        }
+    )
     metadata = SingleTableMetadata.load_from_dict({
         'columns': {
             'low_col': {'sdtype': 'datetime', 'datetime_format': '%d %b, %y'},
-            'high_col': {'sdtype': 'datetime', 'datetime_format': '%d %b, %y'}
+            'high_col': {'sdtype': 'datetime', 'datetime_format': '%d %b, %y'},
         }
     })
     my_constraint = {
@@ -969,8 +977,8 @@ def test_constraint_datetime_check():
         'constraint_parameters': {
             'low_column_name': 'low_col',
             'high_column_name': 'high_col',
-            'strict_boundaries': False
-        }
+            'strict_boundaries': False,
+        },
     }
 
     # Run
@@ -985,6 +993,6 @@ def test_constraint_datetime_check():
     # Assert
     expected_dataframe = pd.DataFrame({
         'low_col': ['18 Jul, 15', '09 Aug, 15', '24 Jun, 15'],
-        'high_col': ['05 Sep, 15', '26 Sep, 15', '12 Aug, 15']
+        'high_col': ['05 Sep, 15', '26 Sep, 15', '12 Aug, 15'],
     })
     pd.testing.assert_frame_equal(samples, expected_dataframe)

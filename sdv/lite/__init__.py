@@ -2,6 +2,4 @@
 
 from sdv.lite.single_table import SingleTablePreset
 
-__all__ = (
-    'SingleTablePreset',
-)
+__all__ = ('SingleTablePreset',)

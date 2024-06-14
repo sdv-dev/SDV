@@ -72,7 +72,7 @@ def _extract_data(bytes_io, output_folder_name):
                 os.remove(metadata_v0_filepath)
             os.rename(
                 os.path.join(output_folder_name, 'metadata_v1.json'),
-                os.path.join(output_folder_name, METADATA_FILENAME)
+                os.path.join(output_folder_name, METADATA_FILENAME),
             )
 
         else:

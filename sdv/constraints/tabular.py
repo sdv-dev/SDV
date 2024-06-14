@@ -58,7 +58,7 @@ INEQUALITY_TO_OPERATION = {
     '>': np.greater,
     '>=': np.greater_equal,
     '<': np.less,
-    '<=': np.less_equal
+    '<=': np.less_equal,
 }
 
 
@@ -78,13 +78,13 @@ def _validate_inputs_custom_constraint(is_valid_fn, transform_fn=None, reverse_t
         raise ValueError('`reverse_transform_fn` must be a function.')
 
 
-class _RecreateCustomConstraint():
+class _RecreateCustomConstraint:
     def __call__(self, is_valid_fn, transform_fn, reverse_transform_fn):
         constraint_class = _RecreateCustomConstraint()
         constraint_class.__class__ = create_custom_constraint_class(
             is_valid_fn=is_valid_fn,
             transform_fn=transform_fn,
-            reverse_transform_fn=reverse_transform_fn
+            reverse_transform_fn=reverse_transform_fn,
         )
 
         return constraint_class
@@ -135,7 +135,7 @@ def create_custom_constraint_class(is_valid_fn, transform_fn=None, reverse_trans
             return (
                 _RecreateCustomConstraint(),
                 (is_valid_fn, transform_fn, reverse_transform_fn),
-                self.__dict__
+                self.__dict__,
             )
 
         def __init__(self, column_names, **kwargs):
@@ -157,7 +157,8 @@ def create_custom_constraint_class(is_valid_fn, transform_fn=None, reverse_trans
             valid = is_valid_fn(self.column_names, data, **self.kwargs)
             if len(valid) != data.shape[0]:
                 raise InvalidFunctionError(
-                    '`is_valid_fn` did not produce exactly 1 True/False value for each row.')
+                    '`is_valid_fn` did not produce exactly 1 True/False value for each row.'
+                )
 
             if not isinstance(valid, pd.Series):
                 raise ValueError(
@@ -186,7 +187,8 @@ def create_custom_constraint_class(is_valid_fn, transform_fn=None, reverse_trans
                 transformed_data = transform_fn(self.column_names, data, **self.kwargs)
                 if data.shape[0] != transformed_data.shape[0]:
                     raise InvalidFunctionError(
-                        'Transformation did not produce the same number of rows as the original')
+                        'Transformation did not produce the same number of rows as the original'
+                    )
 
                 self.reverse_transform(transformed_data.copy())
                 return transformed_data
@@ -257,9 +259,11 @@ class FixedCombinations(Constraint):
 
         if invalid_columns:
             columns = '", "'.join(invalid_columns)
-            raise ConstraintMetadataError(f'Invalid columns ("{columns}") supplied to a '
-                                          'FixedCombinations constraint. This constraint only '
-                                          'supports boolean and categorical columns.')
+            raise ConstraintMetadataError(
+                f'Invalid columns ("{columns}") supplied to a '
+                'FixedCombinations constraint. This constraint only '
+                'supports boolean and categorical columns.'
+            )
 
     def __init__(self, column_names):
         if len(column_names) < 2:
@@ -309,10 +313,7 @@ class FixedCombinations(Constraint):
                 Whether each row is valid.
         """
         merged = table_data.merge(
-            self._combinations,
-            how='left',
-            on=self._columns,
-            indicator=self._joint_column
+            self._combinations, how='left', on=self._columns, indicator=self._joint_column
         )
         return merged[self._joint_column] == 'both'
 
@@ -451,9 +452,11 @@ class Inequality(Constraint):
         self._is_datetime = self._get_is_datetime()
         if self._is_datetime:
             self._low_datetime_format = self.metadata.columns[self._low_column_name].get(
-                'datetime_format')
+                'datetime_format'
+            )
             self._high_datetime_format = self.metadata.columns[self._high_column_name].get(
-                'datetime_format')
+                'datetime_format'
+            )
 
     def is_valid(self, table_data):
         """Check whether ``high`` is greater than ``low`` in each row.
@@ -497,7 +500,7 @@ class Inequality(Constraint):
                 high=high,
                 low=low,
                 high_datetime_format=self._high_datetime_format,
-                low_datetime_format=self._low_datetime_format
+                low_datetime_format=self._low_datetime_format,
             )
         else:
             diff_column = high - low
@@ -515,7 +518,7 @@ class Inequality(Constraint):
                 mean_value_low = table_data[self._low_column_name].mean()
             table_data = table_data.fillna({
                 self._low_column_name: mean_value_low,
-                self._diff_column_name: table_data[self._diff_column_name].mean()
+                self._diff_column_name: table_data[self._diff_column_name].mean(),
             })
 
         return table_data.drop(self._high_column_name, axis=1)
@@ -582,10 +585,12 @@ class ScalarInequality(Constraint):
 
         if 'relation' in kwargs and kwargs['relation'] not in {'>', '>=', '<', '<='}:
             wrong_relation = {kwargs['relation']}
-            errors.append(ConstraintMetadataError(
-                f'Invalid relation value {wrong_relation} in a ScalarInequality constraint.'
-                " The relation must be one of: '>', '>=', '<' or '<='."
-            ))
+            errors.append(
+                ConstraintMetadataError(
+                    f'Invalid relation value {wrong_relation} in a ScalarInequality constraint.'
+                    " The relation must be one of: '>', '>=', '<' or '<='."
+                )
+            )
 
         if errors:
             raise AggregateConstraintsError(errors)
@@ -846,16 +851,17 @@ class Range(Constraint):
         middle_sdtype = metadata.columns.get(middle, {}).get('sdtype')
         all_datetime = high_sdtype == low_sdtype == middle_sdtype == 'datetime'
         all_numerical = high_sdtype == low_sdtype == middle_sdtype == 'numerical'
-        if not (all_datetime or all_numerical) and \
-           not (high is None or low is None or middle is None):
+        if not (all_datetime or all_numerical) and not (
+            high is None or low is None or middle is None
+        ):
             raise ConstraintMetadataError(
                 'A Range constraint is being applied to columns with mismatched sdtypes '
                 f'{[high, middle, low]}. All columns must be either numerical or datetime.'
             )
 
-    def __init__(self, low_column_name, middle_column_name, high_column_name,
-                 strict_boundaries=True):
-
+    def __init__(
+        self, low_column_name, middle_column_name, high_column_name, strict_boundaries=True
+    ):
         self.constraint_columns = (low_column_name, middle_column_name, high_column_name)
         self.low_column_name = low_column_name
         self.middle_column_name = middle_column_name
@@ -891,11 +897,14 @@ class Range(Constraint):
         self._is_datetime = self._get_is_datetime()
         if self._is_datetime:
             self._low_datetime_format = self.metadata.columns[self.low_column_name].get(
-                'datetime_format')
+                'datetime_format'
+            )
             self._middle_datetime_format = self.metadata.columns[self.middle_column_name].get(
-                'datetime_format')
+                'datetime_format'
+            )
             self._high_datetime_format = self.metadata.columns[self.high_column_name].get(
-                'datetime_format')
+                'datetime_format'
+            )
 
         self.low_diff_column_name = f'{self.low_column_name}#{self.middle_column_name}'
         self.high_diff_column_name = f'{self.middle_column_name}#{self.high_column_name}'
@@ -987,7 +996,7 @@ class Range(Constraint):
             table_data = table_data.fillna({
                 self.low_column_name: mean_value_low,
                 self.low_diff_column_name: table_data[self.low_diff_column_name].mean(),
-                self.high_diff_column_name: table_data[self.high_diff_column_name].mean()
+                self.high_diff_column_name: table_data[self.high_diff_column_name].mean(),
             })
 
         return table_data.drop([self.middle_column_name, self.high_column_name], axis=1)
@@ -1023,9 +1032,9 @@ class Range(Constraint):
 
         middle = pd.Series(low_diff_column + low).astype(self._dtype)
         table_data[self.middle_column_name] = middle
-        table_data[self.high_column_name] = pd.Series(
-            high_diff_column + middle.to_numpy()
-        ).astype(self._dtype)
+        table_data[self.high_column_name] = pd.Series(high_diff_column + middle.to_numpy()).astype(
+            self._dtype
+        )
 
         if self.nan_column_name in table_data.columns:
             table_data = revert_nans_columns(table_data, self.nan_column_name)
@@ -1143,12 +1152,13 @@ class ScalarRange(Constraint):
         self._is_datetime = self._get_is_datetime()
         self._transformed_column = self._get_diff_column_name(table_data)
         if self._is_datetime:
-            self._datetime_format = self.metadata.columns[self._column_name].get(
-                'datetime_format')
+            self._datetime_format = self.metadata.columns[self._column_name].get('datetime_format')
             self._low_value = cast_to_datetime64(
-                self._low_value, datetime_format=self._datetime_format)
+                self._low_value, datetime_format=self._datetime_format
+            )
             self._high_value = cast_to_datetime64(
-                self._high_value, datetime_format=self._datetime_format)
+                self._high_value, datetime_format=self._datetime_format
+            )
 
     def is_valid(self, table_data):
         """Say whether the ``column_name`` is between the ``low`` and ``high`` values.
@@ -1198,7 +1208,8 @@ class ScalarRange(Constraint):
         data = table_data[self._column_name]
         if self._is_datetime:
             data = cast_to_datetime64(
-                table_data[self._column_name], datetime_format=self._datetime_format)
+                table_data[self._column_name], datetime_format=self._datetime_format
+            )
 
         data = logit(data, self._low_value, self._high_value)
         table_data[self._transformed_column] = data
@@ -1267,10 +1278,12 @@ class FixedIncrements(Constraint):
 
         if 'increment_value' in kwargs and kwargs['increment_value'] <= 0:
             wrong_increment = {kwargs['increment_value']}
-            errors.append(ConstraintMetadataError(
-                f'Invalid increment value {wrong_increment} in a FixedIncrements constraint.'
-                ' Increments must be positive integers.'
-            ))
+            errors.append(
+                ConstraintMetadataError(
+                    f'Invalid increment value {wrong_increment} in a FixedIncrements constraint.'
+                    ' Increments must be positive integers.'
+                )
+            )
 
         if errors:
             raise AggregateConstraintsError(errors)

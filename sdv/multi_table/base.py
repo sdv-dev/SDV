@@ -1,4 +1,5 @@
 """Base Multi Table Synthesizer class."""
+
 import contextlib
 import datetime
 import inspect
@@ -71,9 +72,7 @@ class BaseMultiTableSynthesizer:
             for table_name, table_metadata in self.metadata.tables.items():
                 synthesizer_parameters = self._table_parameters.get(table_name, {})
                 self._table_synthesizers[table_name] = self._synthesizer(
-                    metadata=table_metadata,
-                    locales=self.locales,
-                    **synthesizer_parameters
+                    metadata=table_metadata, locales=self.locales, **synthesizer_parameters
                 )
                 self._table_synthesizers[table_name]._data_processor.table_name = table_name
 
@@ -131,7 +130,7 @@ class BaseMultiTableSynthesizer:
             'EVENT': 'Instance',
             'TIMESTAMP': datetime.datetime.now(),
             'SYNTHESIZER CLASS NAME': self.__class__.__name__,
-            'SYNTHESIZER ID': self._synthesizer_id
+            'SYNTHESIZER ID': self._synthesizer_id,
         })
 
     def set_address_columns(self, table_name, column_names, anonymization_level='full'):
@@ -169,7 +168,7 @@ class BaseMultiTableSynthesizer:
         else:
             table_params = {
                 'synthesizer_name': type(table_synthesizer).__name__,
-                'synthesizer_parameters': table_synthesizer.get_parameters()
+                'synthesizer_parameters': table_synthesizer.get_parameters(),
             }
 
         return table_params
@@ -200,8 +199,7 @@ class BaseMultiTableSynthesizer:
                 the table's synthesizer.
         """
         self._table_synthesizers[table_name] = self._synthesizer(
-            metadata=self.metadata.tables[table_name],
-            **table_parameters
+            metadata=self.metadata.tables[table_name], **table_parameters
         )
         self._table_parameters[table_name].update(deepcopy(table_parameters))
 
@@ -270,10 +268,7 @@ class BaseMultiTableSynthesizer:
         """Update the ``synthesizer`` to ignore the foreign keys while preprocessing the data."""
         synthesizer.auto_assign_transformers(table_data)
         foreign_key_columns = self.metadata._get_all_foreign_keys(table_name)
-        column_name_to_transformers = {
-            column_name: None
-            for column_name in foreign_key_columns
-        }
+        column_name_to_transformers = {column_name: None for column_name in foreign_key_columns}
         synthesizer.update_transformers(column_name_to_transformers)
 
     def auto_assign_transformers(self, data):
@@ -415,7 +410,7 @@ class BaseMultiTableSynthesizer:
             'SYNTHESIZER ID': self._synthesizer_id,
             'TOTAL NUMBER OF TABLES': len(processed_data),
             'TOTAL NUMBER OF ROWS': total_rows,
-            'TOTAL NUMBER OF COLUMNS': total_columns
+            'TOTAL NUMBER OF COLUMNS': total_columns,
         })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
@@ -449,7 +444,7 @@ class BaseMultiTableSynthesizer:
             'SYNTHESIZER ID': self._synthesizer_id,
             'TOTAL NUMBER OF TABLES': len(data),
             'TOTAL NUMBER OF ROWS': total_rows,
-            'TOTAL NUMBER OF COLUMNS': total_columns
+            'TOTAL NUMBER OF COLUMNS': total_columns,
         })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
@@ -488,7 +483,8 @@ class BaseMultiTableSynthesizer:
 
         if type(scale) not in (float, int) or not scale > 0:
             raise SynthesizerInputError(
-                f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0.")
+                f"Invalid parameter for 'scale' ({scale}). Please provide a number that is >0.0."
+            )
 
         with self._set_temp_numpy_seed(), disable_single_table_logger():
             sampled_data = self._sample(scale=scale)
@@ -511,7 +507,7 @@ class BaseMultiTableSynthesizer:
             'SYNTHESIZER ID': self._synthesizer_id,
             'TOTAL NUMBER OF TABLES': len(sampled_data),
             'TOTAL NUMBER OF ROWS': total_rows,
-            'TOTAL NUMBER OF COLUMNS': total_columns
+            'TOTAL NUMBER OF COLUMNS': total_columns,
         })
 
         return sampled_data
@@ -555,9 +551,7 @@ class BaseMultiTableSynthesizer:
                 Dataframe of loss values per epoch
         """
         if table_name not in self._table_synthesizers:
-            raise ValueError(
-                f"Table '{table_name}' is not present in the metadata."
-            )
+            raise ValueError(f"Table '{table_name}' is not present in the metadata.")
 
         synthesizer = self._table_synthesizers[table_name]
         if hasattr(synthesizer, 'get_loss_values'):
@@ -664,7 +658,7 @@ class BaseMultiTableSynthesizer:
             'creation_date': self._creation_date,
             'is_fit': self._fitted,
             'last_fit_date': self._fitted_date,
-            'fitted_sdv_version': self._fitted_sdv_version
+            'fitted_sdv_version': self._fitted_sdv_version,
         }
         if self._fitted_sdv_enterprise_version:
             info['fitted_sdv_enterprise_version'] = self._fitted_sdv_enterprise_version

@@ -13,7 +13,6 @@ from tests.utils import get_multi_table_data, get_multi_table_metadata
 
 
 class TestHMASynthesizer:
-
     def test___init__(self):
         """Test the default initialization of the ``HMASynthesizer``."""
         # Run
@@ -38,9 +37,7 @@ class TestHMASynthesizer:
         # Setup
         default_table_parameters = {'default_distribution': 'gaussian_kde'}
         numerical_distribution_parameters = {
-            'numerical_distributions': {
-                'id_nesreca': 'gaussian_kde'
-            }
+            'numerical_distributions': {'id_nesreca': 'gaussian_kde'}
         }
         metadata = get_multi_table_metadata()
         instance = HMASynthesizer(metadata)
@@ -65,10 +62,7 @@ class TestHMASynthesizer:
         """
         # Setup
         metadata = get_multi_table_metadata()
-        child_table = pd.DataFrame({
-            'id_nesreca': [0, 1, 2, 3],
-            'upravna_enota': [0, 1, 2, 3]
-        })
+        child_table = pd.DataFrame({'id_nesreca': [0, 1, 2, 3], 'upravna_enota': [0, 1, 2, 3]})
         instance = HMASynthesizer(metadata)
 
         # Run
@@ -76,11 +70,11 @@ class TestHMASynthesizer:
 
         # Assert
         expected = pd.DataFrame({
-            '__nesreca__upravna_enota__univariates__id_nesreca__a': [1., 1., 1., 1.],
-            '__nesreca__upravna_enota__univariates__id_nesreca__b': [1., 1., 1., 1.],
-            '__nesreca__upravna_enota__univariates__id_nesreca__loc': [0., 1., 2., 3.],
+            '__nesreca__upravna_enota__univariates__id_nesreca__a': [1.0, 1.0, 1.0, 1.0],
+            '__nesreca__upravna_enota__univariates__id_nesreca__b': [1.0, 1.0, 1.0, 1.0],
+            '__nesreca__upravna_enota__univariates__id_nesreca__loc': [0.0, 1.0, 2.0, 3.0],
             '__nesreca__upravna_enota__univariates__id_nesreca__scale': [np.nan] * 4,
-            '__nesreca__upravna_enota__num_rows': [1., 1., 1., 1.]
+            '__nesreca__upravna_enota__num_rows': [1.0, 1.0, 1.0, 1.0],
         })
 
         pd.testing.assert_frame_equal(result, expected)
@@ -94,18 +88,14 @@ class TestHMASynthesizer:
         instance.get_table_parameters.side_effect = [
             {'synthesizer_parameters': {'default_distribution': 'gamma'}},
             {'wrong_key': {'default_distribution': 'gamma'}},
-            {'synthesizer_parameters': {'not_default_distribution': 'wrong'}}
+            {'synthesizer_parameters': {'not_default_distribution': 'wrong'}},
         ]
 
         # Run
         result = instance._get_distributions()
 
         # Assert
-        expected = {
-            'nesreca': 'gamma',
-            'oseba': None,
-            'upravna_enota': None
-        }
+        expected = {'nesreca': 'gamma', 'oseba': None, 'upravna_enota': None}
         assert result == expected
 
     @patch('sdv.multi_table.hma.HMASynthesizer._estimate_num_columns')
@@ -119,7 +109,7 @@ class TestHMASynthesizer:
         key_phrases = [
             r'PerformanceAlert:',
             r'large number of columns.',
-            r'contact us at info@sdv.dev for enterprise solutions.'
+            r'contact us at info@sdv.dev for enterprise solutions.',
         ]
 
         # Run
@@ -151,9 +141,7 @@ class TestHMASynthesizer:
         instance._get_pbar_args.return_value = {'desc': "(1/2) Tables 'A' and 'B' ('user_id')"}
         instance.metadata._get_all_foreign_keys.return_value = ['id_upravna_enota']
         instance._table_synthesizers = {'nesreca': Mock()}
-        child_table = pd.DataFrame({
-            'id_upravna_enota': [0, 1, 2, 3]
-        })
+        child_table = pd.DataFrame({'id_upravna_enota': [0, 1, 2, 3]})
 
         # Run
         result = HMASynthesizer._get_extension(
@@ -161,15 +149,12 @@ class TestHMASynthesizer:
             'nesreca',
             child_table,
             'id_upravna_enota',
-            "(1/2) Tables 'A' and 'B' ('user_id')"
+            "(1/2) Tables 'A' and 'B' ('user_id')",
         )
 
         # Assert
-        expected = pd.DataFrame({
-            '__nesreca__id_upravna_enota__num_rows': [1, 1, 1, 1]
-        })
-        instance._get_pbar_args.assert_called_once_with(
-            desc="(1/2) Tables 'A' and 'B' ('user_id')")
+        expected = pd.DataFrame({'__nesreca__id_upravna_enota__num_rows': [1, 1, 1, 1]})
+        instance._get_pbar_args.assert_called_once_with(desc="(1/2) Tables 'A' and 'B' ('user_id')")
 
         pd.testing.assert_frame_equal(result, expected)
 
@@ -201,16 +186,16 @@ class TestHMASynthesizer:
             'upravna_enota': [0, 1, 2, 3],
             'nesreca_val': [0, 1, 2, 3],
             'value': [0, 1, 2, 3],
-            '__oseba__id_nesreca__correlation__0__0': [0.] * 4,
-            '__oseba__id_nesreca__univariates__oseba_val__a': [1.] * 4,
-            '__oseba__id_nesreca__univariates__oseba_val__b': [1.] * 4,
-            '__oseba__id_nesreca__univariates__oseba_val__loc': [0., 1., 2., 3.],
+            '__oseba__id_nesreca__correlation__0__0': [0.0] * 4,
+            '__oseba__id_nesreca__univariates__oseba_val__a': [1.0] * 4,
+            '__oseba__id_nesreca__univariates__oseba_val__b': [1.0] * 4,
+            '__oseba__id_nesreca__univariates__oseba_val__loc': [0.0, 1.0, 2.0, 3.0],
             '__oseba__id_nesreca__univariates__oseba_val__scale': [1e-6] * 4,
-            '__oseba__id_nesreca__univariates__oseba_value__a': [1.] * 4,
-            '__oseba__id_nesreca__univariates__oseba_value__b': [1.] * 4,
-            '__oseba__id_nesreca__univariates__oseba_value__loc': [0., 1., 2., 3.],
+            '__oseba__id_nesreca__univariates__oseba_value__a': [1.0] * 4,
+            '__oseba__id_nesreca__univariates__oseba_value__b': [1.0] * 4,
+            '__oseba__id_nesreca__univariates__oseba_value__loc': [0.0, 1.0, 2.0, 3.0],
             '__oseba__id_nesreca__univariates__oseba_value__scale': [1e-6] * 4,
-            '__oseba__id_nesreca__num_rows': [1.] * 4,
+            '__oseba__id_nesreca__num_rows': [1.0] * 4,
         })
 
         pd.testing.assert_frame_equal(expected_result, result)
@@ -225,11 +210,7 @@ class TestHMASynthesizer:
         # Setup
         instance = Mock()
         instance.metadata._get_all_foreign_keys.return_value = ['a', 'b']
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [2, 3, 4],
-            'c': ['John', 'Doe', 'Johanna']
-        })
+        table_data = pd.DataFrame({'a': [1, 2, 3], 'b': [2, 3, 4], 'c': ['John', 'Doe', 'Johanna']})
 
         # Run
         result = HMASynthesizer._pop_foreign_keys(instance, table_data, 'table_name')
@@ -253,7 +234,7 @@ class TestHMASynthesizer:
         # Assert
         expected_data = pd.DataFrame({
             'numerical': [0, 1, 2, 3, 1.5, 1.5],
-            'categorical': ['John', 'John', 'Johanna', 'John', 'John', 'Doe']
+            'categorical': ['John', 'John', 'Johanna', 'John', 'John', 'Doe'],
         })
         pd.testing.assert_frame_equal(expected_data, data)
 
@@ -272,7 +253,7 @@ class TestHMASynthesizer:
         upravna_enota_model = Mock()
         upravna_enota_model._get_parameters.return_value = {
             'col__univariates': 'univariate_param',
-            'corr': 'correlation_param'
+            'corr': 'correlation_param',
         }
         instance = Mock()
         instance._synthesizer = GaussianCopulaSynthesizer
@@ -290,7 +271,7 @@ class TestHMASynthesizer:
             'upravna_enota': pd.DataFrame({
                 'id_nesreca': [0, 1, 2],
                 'upravna_enota': [0, 1, 2],
-                'extended': ['a', 'b', 'c']
+                'extended': ['a', 'b', 'c'],
             })
         }
         augmented_data = input_data.copy()
@@ -303,13 +284,12 @@ class TestHMASynthesizer:
             'id_nesreca': [0, 1, 2],
             'upravna_enota': [0, 1, 2],
             'extended': ['a', 'b', 'c'],
-            'fk': [1, 2, 3]
+            'fk': [1, 2, 3],
         })
         pd.testing.assert_frame_equal(expected_result, augmented_data['upravna_enota'])
 
         instance._pop_foreign_keys.assert_called_once_with(
-            input_data['upravna_enota'],
-            'upravna_enota'
+            input_data['upravna_enota'], 'upravna_enota'
         )
         instance._clear_nans.assert_called_once_with(input_data['upravna_enota'])
         upravna_enota_model.fit_processed_data.assert_called_once_with(
@@ -357,7 +337,7 @@ class TestHMASynthesizer:
         metadata = Mock()
         metadata._get_parent_map.return_value = {
             'sessions': ['users'],
-            'transactions': ['sessions']
+            'transactions': ['sessions'],
         }
         instance.metadata = metadata
 
@@ -387,18 +367,15 @@ class TestHMASynthesizer:
             'user_id': np.int64,
             'session_id': str,
             'os': str,
-            'country': str
+            'country': str,
         }
         transactions_synth = Mock()
-        transactions_synth._data_processor._dtypes = {
-            'transaction_id': np.int64,
-            'session_id': str
-        }
+        transactions_synth._data_processor._dtypes = {'transaction_id': np.int64, 'session_id': str}
 
         instance._table_synthesizers = {
             'users': users_synth,
             'sessions': sessions_synth,
-            'transactions': transactions_synth
+            'transactions': transactions_synth,
         }
 
         # Run
@@ -437,7 +414,7 @@ class TestHMASynthesizer:
         instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
 
         float_formatter1 = MagicMock()
-        float_formatter1._min_value = 0.
+        float_formatter1._min_value = 0.0
         float_formatter1._max_value = 5
 
         float_formatter2 = MagicMock()
@@ -466,7 +443,7 @@ class TestHMASynthesizer:
 
         # Assert
         expected_result = {
-            'a': .1,
+            'a': 0.1,
             'b': 0.2,
             'loc': 0.3,
             'num_rows': 5,
@@ -487,9 +464,7 @@ class TestHMASynthesizer:
         instance.metadata._get_foreign_keys.return_value = ['session_id']
         instance._table_parameters = {'users': {'a': 1}}
         instance._table_synthesizers = {'users': table_synthesizer}
-        instance._default_parameters = {
-            'users': {'colA': 'default_param', 'colB': 'default_param'}
-        }
+        instance._default_parameters = {'users': {'colA': 'default_param', 'colB': 'default_param'}}
 
         # Run
         synthesizer = HMASynthesizer._recreate_child_synthesizer(
@@ -505,7 +480,7 @@ class TestHMASynthesizer:
         instance._synthesizer.assert_called_once_with(table_meta, a=1)
         synthesizer._set_parameters.assert_called_once_with(
             instance._extract_parameters.return_value,
-            {'colA': 'default_param', 'colB': 'default_param'}
+            {'colA': 'default_param', 'colB': 'default_param'},
         )
         instance._extract_parameters.assert_called_once_with(parent_row, table_name, 'session_id')
 
@@ -544,12 +519,7 @@ class TestHMASynthesizer:
         assert list(result) == ['upravna_val']
         assert result['upravna_val'] == {
             'distribution': 'beta',
-            'learned_parameters': {
-                'a': 1.0,
-                'b': 1.0,
-                'loc': 10.0,
-                'scale': 0.0
-            }
+            'learned_parameters': {'a': 1.0, 'b': 1.0, 'loc': 10.0, 'scale': 0.0},
         }
 
     def test_get_learned_distributions_raises_an_error(self):
@@ -596,21 +566,15 @@ class TestHMASynthesizer:
         })
         child_table = pd.DataFrame({
             'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
-            'primary_user_id': pd.Series([0, 0, 1], dtype=np.int64)
+            'primary_user_id': pd.Series([0, 0, 1], dtype=np.int64),
         })
 
-        instance._table_synthesizers = {
-            'users': Mock(),
-            'transactions': Mock()
-        }
+        instance._table_synthesizers = {'users': Mock(), 'transactions': Mock()}
 
         # Run
         HMASynthesizer._add_foreign_key_columns(
-            instance,
-            child_table,
-            parent_table,
-            'transactions',
-            'users')
+            instance, child_table, parent_table, 'transactions', 'users'
+        )
 
         # Assert
         expected_parent_table = pd.DataFrame({
@@ -620,7 +584,7 @@ class TestHMASynthesizer:
         expected_child_table = pd.DataFrame({
             'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
             'primary_user_id': pd.Series([0, 0, 1], dtype=np.int64),
-            'secondary_user_id': pd.Series([2, 1, 2], dtype=np.int64)
+            'secondary_user_id': pd.Series([2, 1, 2], dtype=np.int64),
         })
         pd.testing.assert_frame_equal(expected_parent_table, parent_table)
         pd.testing.assert_frame_equal(expected_child_table, child_table)
@@ -637,7 +601,7 @@ class TestHMASynthesizer:
             'id': [0, 1, 2],
             'id1': [0, 1, 2],
             'id2': [0, 1, 2],
-            'col1': [0, 1, 2]
+            'col1': [0, 1, 2],
         })
         data = {'parent': parent, 'child': child}
         metadata = MultiTableMetadata.load_from_dict({
@@ -646,7 +610,7 @@ class TestHMASynthesizer:
                     'primary_key': 'id',
                     'columns': {
                         'id': {'sdtype': 'id'},
-                    }
+                    },
                 },
                 'child': {
                     'primary_key': 'id',
@@ -655,7 +619,7 @@ class TestHMASynthesizer:
                         'id1': {'sdtype': 'id'},
                         'id2': {'sdtype': 'id'},
                         'col1': {'sdtype': 'numerical'},
-                    }
+                    },
                 },
             },
             'relationships': [
@@ -663,15 +627,15 @@ class TestHMASynthesizer:
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child',
-                    'child_foreign_key': 'id1'
+                    'child_foreign_key': 'id1',
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child',
-                    'child_foreign_key': 'id2'
+                    'child_foreign_key': 'id2',
                 },
-            ]
+            ],
         })
         synthesizer = HMASynthesizer(metadata)
         synthesizer._finalize = Mock(return_value=data)
@@ -710,7 +674,7 @@ class TestHMASynthesizer:
             'id': [0, 1, 2],
             'id1': [0, 1, 2],
             'id2': [0, 1, 2],
-            'col': [.2, .3, .2]
+            'col': [0.2, 0.3, 0.2],
         })
         data = {
             'parent': parent,
@@ -718,7 +682,7 @@ class TestHMASynthesizer:
             'child_beta': child,
             'child_gamma': child,
             'child_truncnorm': child,
-            'child_uniform': child
+            'child_uniform': child,
         }
         child_dict = {
             'primary_key': 'id',
@@ -727,7 +691,7 @@ class TestHMASynthesizer:
                 'id1': {'sdtype': 'id'},
                 'id2': {'sdtype': 'id'},
                 'col': {'sdtype': 'numerical'},
-            }
+            },
         }
         metadata = MultiTableMetadata.load_from_dict({
             'tables': {
@@ -735,7 +699,7 @@ class TestHMASynthesizer:
                     'primary_key': 'id',
                     'columns': {
                         'id': {'sdtype': 'id'},
-                    }
+                    },
                 },
                 'child_norm': child_dict,
                 'child_beta': child_dict,
@@ -748,80 +712,76 @@ class TestHMASynthesizer:
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child_norm',
-                    'child_foreign_key': 'id1'
+                    'child_foreign_key': 'id1',
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child_norm',
-                    'child_foreign_key': 'id2'
+                    'child_foreign_key': 'id2',
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child_beta',
-                    'child_foreign_key': 'id1'
+                    'child_foreign_key': 'id1',
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child_beta',
-                    'child_foreign_key': 'id2'
+                    'child_foreign_key': 'id2',
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child_truncnorm',
-                    'child_foreign_key': 'id1'
+                    'child_foreign_key': 'id1',
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child_truncnorm',
-                    'child_foreign_key': 'id2'
+                    'child_foreign_key': 'id2',
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child_uniform',
-                    'child_foreign_key': 'id1'
+                    'child_foreign_key': 'id1',
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child_uniform',
-                    'child_foreign_key': 'id2'
+                    'child_foreign_key': 'id2',
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child_gamma',
-                    'child_foreign_key': 'id1'
+                    'child_foreign_key': 'id1',
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child_gamma',
-                    'child_foreign_key': 'id2'
+                    'child_foreign_key': 'id2',
                 },
-            ]
+            ],
         })
         synthesizer = HMASynthesizer(metadata)
         synthesizer.set_table_parameters(
-            table_name='child_norm',
-            table_parameters={'default_distribution': 'norm'}
+            table_name='child_norm', table_parameters={'default_distribution': 'norm'}
         )
         synthesizer.set_table_parameters(
-            table_name='child_gamma',
-            table_parameters={'default_distribution': 'gamma'}
+            table_name='child_gamma', table_parameters={'default_distribution': 'gamma'}
         )
         synthesizer.set_table_parameters(
-            table_name='child_truncnorm',
-            table_parameters={'default_distribution': 'truncnorm'}
+            table_name='child_truncnorm', table_parameters={'default_distribution': 'truncnorm'}
         )
         synthesizer.set_table_parameters(
-            table_name='child_uniform',
-            table_parameters={'default_distribution': 'uniform'}
+            table_name='child_uniform', table_parameters={'default_distribution': 'uniform'}
         )
         synthesizer._finalize = Mock(return_value=data)
         distributions = synthesizer._get_distributions()
@@ -862,7 +822,10 @@ class TestHMASynthesizer:
         root1 = pd.DataFrame({'R1': [0, 1, 2]})
         root2 = pd.DataFrame({'R2': [0, 1, 2], 'data': [0, 1, 2]})
         grandparent = pd.DataFrame({
-            'GP': [0, 1, 2], 'R1_1': [0, 1, 2], 'R1_2': [0, 1, 2], 'R2': [0, 1, 2]
+            'GP': [0, 1, 2],
+            'R1_1': [0, 1, 2],
+            'R1_2': [0, 1, 2],
+            'R2': [0, 1, 2],
         })
         parent = pd.DataFrame({'P': [0, 1, 2], 'GP': [0, 1, 2]})
         child = pd.DataFrame({'C': [0, 1, 2], 'P': [0, 1, 2], 'GP': [0, 1, 2]})
@@ -871,7 +834,7 @@ class TestHMASynthesizer:
             'root2': root2,
             'grandparent': grandparent,
             'parent': parent,
-            'child': child
+            'child': child,
         }
         metadata = MultiTableMetadata.load_from_dict({
             'tables': {
@@ -879,14 +842,11 @@ class TestHMASynthesizer:
                     'primary_key': 'R1',
                     'columns': {
                         'R1': {'sdtype': 'id'},
-                    }
+                    },
                 },
                 'root2': {
                     'primary_key': 'R2',
-                    'columns': {
-                        'R2': {'sdtype': 'id'},
-                        'data': {'sdtype': 'numerical'}
-                    }
+                    'columns': {'R2': {'sdtype': 'id'}, 'data': {'sdtype': 'numerical'}},
                 },
                 'grandparent': {
                     'primary_key': 'GP',
@@ -895,14 +855,14 @@ class TestHMASynthesizer:
                         'R1_1': {'sdtype': 'id'},
                         'R1_2': {'sdtype': 'id'},
                         'R2': {'sdtype': 'id'},
-                    }
+                    },
                 },
                 'parent': {
                     'primary_key': 'P',
                     'columns': {
                         'P': {'sdtype': 'id'},
                         'GP': {'sdtype': 'id'},
-                    }
+                    },
                 },
                 'child': {
                     'primary_key': 'C',
@@ -910,47 +870,47 @@ class TestHMASynthesizer:
                         'C': {'sdtype': 'id'},
                         'P': {'sdtype': 'id'},
                         'GP': {'sdtype': 'id'},
-                    }
-                }
+                    },
+                },
             },
             'relationships': [
                 {
                     'parent_table_name': 'root1',
                     'parent_primary_key': 'R1',
                     'child_table_name': 'grandparent',
-                    'child_foreign_key': 'R1_1'
+                    'child_foreign_key': 'R1_1',
                 },
                 {
                     'parent_table_name': 'root1',
                     'parent_primary_key': 'R1',
                     'child_table_name': 'grandparent',
-                    'child_foreign_key': 'R1_2'
+                    'child_foreign_key': 'R1_2',
                 },
                 {
                     'parent_table_name': 'root2',
                     'parent_primary_key': 'R2',
                     'child_table_name': 'grandparent',
-                    'child_foreign_key': 'R2'
+                    'child_foreign_key': 'R2',
                 },
                 {
                     'parent_table_name': 'grandparent',
                     'parent_primary_key': 'GP',
                     'child_table_name': 'parent',
-                    'child_foreign_key': 'GP'
+                    'child_foreign_key': 'GP',
                 },
                 {
                     'parent_table_name': 'grandparent',
                     'parent_primary_key': 'GP',
                     'child_table_name': 'child',
-                    'child_foreign_key': 'GP'
+                    'child_foreign_key': 'GP',
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'P',
                     'child_table_name': 'child',
-                    'child_foreign_key': 'P'
+                    'child_foreign_key': 'P',
                 },
-            ]
+            ],
         })
         synthesizer = HMASynthesizer(metadata)
         synthesizer._finalize = Mock(return_value=data)
@@ -998,7 +958,7 @@ class TestHMASynthesizer:
         parent = pd.DataFrame({
             'P': [0, 1, 2],
             'GP': [0, 1, 2],
-            'numerical': [.1, .5, np.nan],
+            'numerical': [0.1, 0.5, np.nan],
             'categorical': ['a', np.nan, 'c'],
             'datetime': [None, '2019-01-02', '2019-01-03'],
             'boolean': [float('nan'), False, True],
@@ -1016,14 +976,11 @@ class TestHMASynthesizer:
                     'primary_key': 'R1',
                     'columns': {
                         'R1': {'sdtype': 'id'},
-                    }
+                    },
                 },
                 'root2': {
                     'primary_key': 'R2',
-                    'columns': {
-                        'R2': {'sdtype': 'id'},
-                        'data': {'sdtype': 'numerical'}
-                    }
+                    'columns': {'R2': {'sdtype': 'id'}, 'data': {'sdtype': 'numerical'}},
                 },
                 'grandparent': {
                     'primary_key': 'GP',
@@ -1031,7 +988,7 @@ class TestHMASynthesizer:
                         'GP': {'sdtype': 'id'},
                         'R1': {'sdtype': 'id'},
                         'R2': {'sdtype': 'id'},
-                    }
+                    },
                 },
                 'parent': {
                     'primary_key': 'P',
@@ -1043,29 +1000,29 @@ class TestHMASynthesizer:
                         'datetime': {'sdtype': 'datetime'},
                         'boolean': {'sdtype': 'boolean'},
                         'id': {'sdtype': 'id'},
-                    }
-                }
+                    },
+                },
             },
             'relationships': [
                 {
                     'parent_table_name': 'root1',
                     'parent_primary_key': 'R1',
                     'child_table_name': 'grandparent',
-                    'child_foreign_key': 'R1'
+                    'child_foreign_key': 'R1',
                 },
                 {
                     'parent_table_name': 'root2',
                     'parent_primary_key': 'R2',
                     'child_table_name': 'grandparent',
-                    'child_foreign_key': 'R2'
+                    'child_foreign_key': 'R2',
                 },
                 {
                     'parent_table_name': 'grandparent',
                     'parent_primary_key': 'GP',
                     'child_table_name': 'parent',
-                    'child_foreign_key': 'GP'
+                    'child_foreign_key': 'GP',
                 },
-            ]
+            ],
         })
         synthesizer = HMASynthesizer(metadata)
         synthesizer._finalize = Mock(return_value=data)

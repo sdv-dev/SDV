@@ -18,14 +18,8 @@ def test_load_csvs(load_mock, warnings_mock, tmp_path):
     If the folder contains files that aren't csvs, they should be ignored.
     """
     # Setup
-    users_table = pd.DataFrame({
-        'user_id': [1, 2, 3],
-        'name': ['a', 'b', 'c']
-    })
-    orders_table = pd.DataFrame({
-        'order_id': [1, 2, 3],
-        'user_id': [1, 2, 2]
-    })
+    users_table = pd.DataFrame({'user_id': [1, 2, 3], 'name': ['a', 'b', 'c']})
+    orders_table = pd.DataFrame({'order_id': [1, 2, 3], 'user_id': [1, 2, 2]})
     fake_json = {'tables': ['orders', 'users']}
     users_mock = Mock()
     orders_mock = Mock()
@@ -44,14 +38,12 @@ def test_load_csvs(load_mock, warnings_mock, tmp_path):
     csvs = load_csvs(tmp_path)
 
     # Assert
-    assert csvs == {
-        'orders': orders_mock,
-        'users': users_mock
-    }
+    assert csvs == {'orders': orders_mock, 'users': users_mock}
     assert call(op.join(tmp_path, 'orders.csv'), None) in load_mock.mock_calls
     assert call(op.join(tmp_path, 'users.csv'), None) in load_mock.mock_calls
     warnings_mock.warn.assert_called_once_with(
-        f"Ignoring incompatible files ['fake.json'] in folder '{tmp_path}'.")
+        f"Ignoring incompatible files ['fake.json'] in folder '{tmp_path}'."
+    )
 
 
 def test_load_csvs_no_csvs(tmp_path):
@@ -92,10 +84,7 @@ def test_save_csvs_data_not_dict():
 def test_save_csvs_data_not_dict_of_dataframes():
     """Test that ``save_csvs`` raises an error if the data is not a dictionary of dataframes."""
     # Setup
-    data = {
-        'parent': 'dataframe',
-        'child': 'dataframe'
-    }
+    data = {'parent': 'dataframe', 'child': 'dataframe'}
 
     # Run and Assert
     expected_message = re.escape(
@@ -115,10 +104,7 @@ def test_save_csvs_folder_does_not_exist(mock_makedirs, mock_exists, tmp_path):
 
     parent_mock = Mock(spec=pd.DataFrame)
     child_mock = Mock(spec=pd.DataFrame)
-    data = {
-        'parent': parent_mock,
-        'child': child_mock
-    }
+    data = {'parent': parent_mock, 'child': child_mock}
 
     # Run
     save_csvs(data, folder)
@@ -128,11 +114,9 @@ def test_save_csvs_folder_does_not_exist(mock_makedirs, mock_exists, tmp_path):
     mock_exists.assert_has_calls([
         call(folder),
         call(op.join(folder, 'parent.csv')),
-        call(op.join(folder, 'child.csv'))
+        call(op.join(folder, 'child.csv')),
     ])
-    parent_mock.to_csv.assert_called_once_with(
-        op.join(folder, 'parent.csv')
-    )
+    parent_mock.to_csv.assert_called_once_with(op.join(folder, 'parent.csv'))
     child_mock.to_csv.assert_called_once_with(op.join(folder, 'child.csv'))
 
 
@@ -146,10 +130,7 @@ def test_save_csvs(mock_exists, tmp_path):
 
     parent_mock = Mock(spec=pd.DataFrame)
     child_mock = Mock(spec=pd.DataFrame)
-    data = {
-        'parent': parent_mock,
-        'child': child_mock
-    }
+    data = {'parent': parent_mock, 'child': child_mock}
 
     # Run
     save_csvs(data, folder, suffix='-synthetic', to_csv_parameters={'index': False})
@@ -158,11 +139,9 @@ def test_save_csvs(mock_exists, tmp_path):
     mock_exists.assert_has_calls([
         call(folder),
         call(op.join(folder, 'parent-synthetic.csv')),
-        call(op.join(folder, 'child-synthetic.csv'))
+        call(op.join(folder, 'child-synthetic.csv')),
     ])
-    parent_mock.to_csv.assert_called_once_with(
-        op.join(folder, 'parent-synthetic.csv'), index=False
-    )
+    parent_mock.to_csv.assert_called_once_with(op.join(folder, 'parent-synthetic.csv'), index=False)
     child_mock.to_csv.assert_called_once_with(op.join(folder, 'child-synthetic.csv'), index=False)
 
 
@@ -173,15 +152,15 @@ def test_save_csvs_existing_files(tmp_path):
     folder.mkdir()
     (folder / 'parent-synthetic.csv').touch()
 
-    parent = pd.DataFrame(data={
-        'id': [0, 1, 2, 3, 4],
-        'A': [True, True, False, True, False],
-        'B': [0.434, 0.312, 0.212, 0.339, 0.491]
-    })
+    parent = pd.DataFrame(
+        data={
+            'id': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+            'B': [0.434, 0.312, 0.212, 0.339, 0.491],
+        }
+    )
 
-    data = {
-        'parent': parent
-    }
+    data = {'parent': parent}
 
     # Run and Assert
     error_message = re.escape(
@@ -207,7 +186,7 @@ def test_save_csvs_existing_files_more_files(tmp_path):
         'parent': Mock(spec=pd.DataFrame),
         'child': Mock(spec=pd.DataFrame),
         'grandchild': Mock(spec=pd.DataFrame),
-        'grandchild2': Mock(spec=pd.DataFrame)
+        'grandchild2': Mock(spec=pd.DataFrame),
     }
 
     # Run and Assert

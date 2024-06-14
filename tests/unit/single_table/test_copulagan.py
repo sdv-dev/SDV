@@ -13,7 +13,6 @@ from sdv.single_table.copulagan import CopulaGANSynthesizer
 
 
 class TestCopulaGANSynthesizer:
-
     def test___init__(self):
         """Test creating an instance of ``CopulaGANSynthesizer``."""
         # Setup
@@ -94,7 +93,7 @@ class TestCopulaGANSynthesizer:
             pac=pac,
             cuda=cuda,
             numerical_distributions=numerical_distributions,
-            default_distribution=default_distribution
+            default_distribution=default_distribution,
         )
 
         # Assert
@@ -174,7 +173,7 @@ class TestCopulaGANSynthesizer:
             'pac': 10,
             'cuda': True,
             'numerical_distributions': {},
-            'default_distribution': 'beta'
+            'default_distribution': 'beta',
         }
 
     @patch('sdv.single_table.copulagan.rdt')
@@ -199,7 +198,6 @@ class TestCopulaGANSynthesizer:
             'account': {
                 'sdtype': 'numerical',
             },
-
         }
 
         instance = CopulaGANSynthesizer(metadata, numerical_distributions=numerical_distributions)
@@ -223,15 +221,14 @@ class TestCopulaGANSynthesizer:
                 'name': None,
                 'age': mock_rdt.transformers.GaussianNormalizer.return_value,
                 'account': mock_rdt.transformers.GaussianNormalizer.return_value,
-                'name#age': None
+                'name#age': None,
             },
             'sdtypes': {
                 'name': 'categorical',
                 'age': 'numerical',
                 'account': 'numerical',
-                'name#age': 'categorical'
-            }
-
+                'name#age': 'categorical',
+            },
         }
         assert config == expected_config
         assert mock_rdt.transformers.GaussianNormalizer.call_args_list == expected_calls
@@ -283,11 +280,13 @@ class TestCopulaGANSynthesizer:
         hypertransformer = instance._gaussian_normalizer_hyper_transformer
         assert hypertransformer == mock_rdt.HyperTransformer.return_value
         hypertransformer.set_config.assert_called_once_with(
-            instance._create_gaussian_normalizer_config.return_value)
+            instance._create_gaussian_normalizer_config.return_value
+        )
 
         hypertransformer.fit_transform.assert_called_once_with(processed_data)
         mock_ctgansynthesizer__fit.assert_called_once_with(
-            hypertransformer.fit_transform.return_value)
+            hypertransformer.fit_transform.return_value
+        )
 
     def test_get_learned_distributions(self):
         """Test that ``get_learned_distributions`` returns a dict.
@@ -296,10 +295,7 @@ class TestCopulaGANSynthesizer:
         distribution and it's parameters.
         """
         # Setup
-        data = pd.DataFrame({
-            'zero': [0, 0, 0],
-            'one': [1, 1, 1]
-        })
+        data = pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})
         stm = SingleTableMetadata()
         stm.detect_from_dataframe(data)
         cgs = CopulaGANSynthesizer(stm)
@@ -309,7 +305,7 @@ class TestCopulaGANSynthesizer:
             'b': 1.0,
             'loc': 0.0,
             'scale': 0.0,
-            'type': None
+            'type': None,
         }
         one_transformer_mock = Mock(spec_set=GaussianNormalizer)
         one_transformer_mock._univariate.to_dict.return_value = {
@@ -317,12 +313,12 @@ class TestCopulaGANSynthesizer:
             'b': 1.0,
             'loc': 1.0,
             'scale': 0.0,
-            'type': None
+            'type': None,
         }
         cgs._gaussian_normalizer_hyper_transformer = Mock()
         cgs._gaussian_normalizer_hyper_transformer.field_transformers = {
             'zero': zero_transformer_mock,
-            'one': one_transformer_mock
+            'one': one_transformer_mock,
         }
         cgs._fitted = True
 
@@ -333,31 +329,18 @@ class TestCopulaGANSynthesizer:
         assert result == {
             'zero': {
                 'distribution': 'beta',
-                'learned_parameters': {
-                    'a': 1.0,
-                    'b': 1.0,
-                    'loc': 0.0,
-                    'scale': 0.0
-                }
+                'learned_parameters': {'a': 1.0, 'b': 1.0, 'loc': 0.0, 'scale': 0.0},
             },
             'one': {
                 'distribution': 'beta',
-                'learned_parameters': {
-                    'a': 1.0,
-                    'b': 1.0,
-                    'loc': 1.0,
-                    'scale': 0.0
-                }
-            }
+                'learned_parameters': {'a': 1.0, 'b': 1.0, 'loc': 1.0, 'scale': 0.0},
+            },
         }
 
     def test_get_learned_distributions_raises_an_error(self):
         """Test that ``get_learned_distributions`` raises an error."""
         # Setup
-        data = pd.DataFrame({
-            'zero': [0, 0, 0],
-            'one': [1, 1, 1]
-        })
+        data = pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})
         stm = SingleTableMetadata()
         stm.detect_from_dataframe(data)
         cgs = CopulaGANSynthesizer(stm)

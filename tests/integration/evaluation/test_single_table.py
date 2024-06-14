@@ -1,4 +1,3 @@
-
 import pandas as pd
 
 from sdv.datasets.demo import download_demo
@@ -27,18 +26,15 @@ def test_evaluation():
         report.get_properties(),
         pd.DataFrame({
             'Property': ['Data Validity', 'Data Structure'],
-            'Score': [1., 1.],
-        })
+            'Score': [1.0, 1.0],
+        }),
     )
 
 
 def test_column_pair_plot_sample_size_parameter():
     """Test the sample_size parameter for the column pair plot."""
     # Setup
-    real_data, metadata = download_demo(
-        modality='single_table',
-        dataset_name='fake_hotel_guests'
-    )
+    real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.fit(real_data)
     synthetic_data = synthesizer.sample(len(real_data))
@@ -49,7 +45,7 @@ def test_column_pair_plot_sample_size_parameter():
         synthetic_data=synthetic_data,
         column_names=['room_rate', 'amenities_fee'],
         metadata=metadata,
-        sample_size=40
+        sample_size=40,
     )
 
     # Assert

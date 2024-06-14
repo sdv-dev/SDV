@@ -9,8 +9,7 @@ from sdv.sampling.hierarchical_sampler import BaseHierarchicalSampler
 from tests.utils import DataFrameMatcher, SeriesMatcher, get_multi_table_metadata
 
 
-class TestBaseHierarchicalSampler():
-
+class TestBaseHierarchicalSampler:
     def test___init__(self):
         """Test the default initialization of the ``BaseHierarchicalSampler``."""
         # Run
@@ -44,11 +43,11 @@ class TestBaseHierarchicalSampler():
                 child_table=pd.DataFrame(),
                 parent_table=pd.DataFrame(),
                 child_name='oseba',
-                parent_name='nescra'
+                parent_name='nescra',
             )
 
     def test__sample_rows(self):
-        """Test that ``_sample_rows`` samples ``num_rows`` from the synthesizer. """
+        """Test that ``_sample_rows`` samples ``num_rows`` from the synthesizer."""
         synthesizer = Mock()
         instance = Mock()
 
@@ -57,13 +56,10 @@ class TestBaseHierarchicalSampler():
 
         # Assert
         assert result == synthesizer._sample_batch.return_value
-        synthesizer._sample_batch.assert_called_once_with(
-            10,
-            keep_extra_columns=True
-        )
+        synthesizer._sample_batch.assert_called_once_with(10, keep_extra_columns=True)
 
     def test__sample_rows_missing_num_rows(self):
-        """Test that ``_sample_rows`` falls back to ``synthesizer._num_rows``. """
+        """Test that ``_sample_rows`` falls back to ``synthesizer._num_rows``."""
         synthesizer = Mock()
         synthesizer._num_rows = 10
         instance = Mock()
@@ -73,10 +69,7 @@ class TestBaseHierarchicalSampler():
 
         # Assert
         assert result == synthesizer._sample_batch.return_value
-        synthesizer._sample_batch.assert_called_once_with(
-            10,
-            keep_extra_columns=True
-        )
+        synthesizer._sample_batch.assert_called_once_with(10, keep_extra_columns=True)
 
     def test__add_child_rows(self):
         """Test adding child rows when sampled data is empty."""
@@ -89,10 +82,7 @@ class TestBaseHierarchicalSampler():
         sessions_meta = Mock()
         users_meta = Mock()
         users_meta.primary_key = 'user_id'
-        metadata.tables = {
-            'users': users_meta,
-            'sessions': sessions_meta
-        }
+        metadata.tables = {'users': users_meta, 'sessions': sessions_meta}
         metadata._get_foreign_keys.return_value = ['user_id']
         instance.metadata = metadata
 
@@ -104,7 +94,7 @@ class TestBaseHierarchicalSampler():
         parent_row = pd.DataFrame({
             'user_id': [1, 2, 3],
             'name': ['John', 'Doe', 'Johanna'],
-            '__sessions__user_id__num_rows': [10, 10, 10]
+            '__sessions__user_id__num_rows': [10, 10, 10],
         })
         sampled_data = {}
 
@@ -118,7 +108,7 @@ class TestBaseHierarchicalSampler():
             'session_id': ['a', 'b', 'c'],
             'os': ['linux', 'mac', 'win'],
             'country': ['us', 'us', 'es'],
-            'user_id': [1, 2, 3]
+            'user_id': [1, 2, 3],
         })
         pd.testing.assert_frame_equal(sampled_data['sessions'], expected_result)
 
@@ -136,10 +126,7 @@ class TestBaseHierarchicalSampler():
         sessions_meta = Mock()
         users_meta = Mock()
         users_meta.primary_key.return_value = 'user_id'
-        metadata.tables = {
-            'users': users_meta,
-            'sessions': sessions_meta
-        }
+        metadata.tables = {'users': users_meta, 'sessions': sessions_meta}
         metadata._get_foreign_keys.return_value = ['user_id']
         instance.metadata = metadata
         instance._synthesizer_kwargs = {'a': 0.1, 'b': 0.5, 'loc': 0.25}
@@ -152,7 +139,7 @@ class TestBaseHierarchicalSampler():
         parent_row = pd.DataFrame({
             'user_id': [1, 2, 3],
             'name': ['John', 'Doe', 'Johanna'],
-            '__sessions__user_id__num_rows': [10, 10, 10]
+            '__sessions__user_id__num_rows': [10, 10, 10],
         })
         sampled_data = {
             'sessions': pd.DataFrame({
@@ -165,7 +152,8 @@ class TestBaseHierarchicalSampler():
 
         # Run
         BaseHierarchicalSampler._add_child_rows(
-            instance, 'sessions', 'users', parent_row, sampled_data)
+            instance, 'sessions', 'users', parent_row, sampled_data
+        )
 
         # Assert
         expected_result = pd.DataFrame({
@@ -181,11 +169,12 @@ class TestBaseHierarchicalSampler():
 
         ``_sample_table`` does not sample the root parents of a graph, only the children.
         """
+
         # Setup
         def sample_children(table_name, sampled_data, scale):
             sampled_data['transactions'] = pd.DataFrame({
                 'transaction_id': [1, 2, 3],
-                'session_id': ['a', 'a', 'b']
+                'session_id': ['a', 'a', 'b'],
             })
 
         def _add_child_rows(child_name, parent_name, parent_row, sampled_data):
@@ -195,7 +184,7 @@ class TestBaseHierarchicalSampler():
                         'user_id': [1, 1],
                         'session_id': ['a', 'b'],
                         'os': ['windows', 'linux'],
-                        'country': ['us', 'us']
+                        'country': ['us', 'us'],
                     })
 
                 if parent_row['user_id'] == 3:
@@ -203,11 +192,12 @@ class TestBaseHierarchicalSampler():
                         'user_id': [3],
                         'session_id': ['c'],
                         'os': ['mac'],
-                        'country': ['es']
+                        'country': ['es'],
                     })
-                    sampled_data[child_name] = pd.concat(
-                        [sampled_data[child_name], row]
-                    ).reset_index(drop=True)
+                    sampled_data[child_name] = pd.concat([
+                        sampled_data[child_name],
+                        row,
+                    ]).reset_index(drop=True)
 
         instance = Mock()
         instance.metadata._get_child_map.return_value = {'users': ['sessions', 'transactions']}
@@ -218,30 +208,28 @@ class TestBaseHierarchicalSampler():
         instance._add_child_rows.side_effect = _add_child_rows
 
         # Run
-        result = {
-            'users': pd.DataFrame({
-                'user_id': [1, 3]
-            })
-        }
+        result = {'users': pd.DataFrame({'user_id': [1, 3]})}
         BaseHierarchicalSampler._sample_children(
-            self=instance,
-            table_name='users',
-            sampled_data=result
+            self=instance, table_name='users', sampled_data=result
         )
 
         # Assert
         expected_calls = [
-            call(child_name='sessions', parent_name='users',
-                 parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0)),
-                 sampled_data=result),
-            call(child_name='sessions', parent_name='users',
-                 parent_row=SeriesMatcher(pd.Series({'user_id': 3}, name=1)),
-                 sampled_data=result)
+            call(
+                child_name='sessions',
+                parent_name='users',
+                parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0)),
+                sampled_data=result,
+            ),
+            call(
+                child_name='sessions',
+                parent_name='users',
+                parent_row=SeriesMatcher(pd.Series({'user_id': 3}, name=1)),
+                sampled_data=result,
+            ),
         ]
         expected_result = {
-            'users': pd.DataFrame({
-                'user_id': [1, 3]
-            }),
+            'users': pd.DataFrame({'user_id': [1, 3]}),
             'sessions': pd.DataFrame({
                 'user_id': [1, 1, 3],
                 'session_id': ['a', 'b', 'c'],
@@ -250,8 +238,8 @@ class TestBaseHierarchicalSampler():
             }),
             'transactions': pd.DataFrame({
                 'transaction_id': [1, 2, 3],
-                'session_id': ['a', 'a', 'b']
-            })
+                'session_id': ['a', 'a', 'b'],
+            }),
         }
         instance._add_child_rows.assert_has_calls(expected_calls)
         for result_frame, expected_frame in zip(result.values(), expected_result.values()):
@@ -263,19 +251,17 @@ class TestBaseHierarchicalSampler():
         ``_sample_table`` should select the parent row with the highest ``num_rows``
         value and force a child to be created from that row.
         """
+
         # Setup
         def sample_children(table_name, sampled_data, scale):
             sampled_data['transactions'] = pd.DataFrame({
                 'transaction_id': [1, 2],
-                'session_id': ['a', 'a']
+                'session_id': ['a', 'a'],
             })
 
         def _add_child_rows(child_name, parent_name, parent_row, sampled_data, num_rows=None):
             if num_rows is not None:
-                sampled_data['sessions'] = pd.DataFrame({
-                    'user_id': [1],
-                    'session_id': ['a']
-                })
+                sampled_data['sessions'] = pd.DataFrame({'user_id': [1], 'session_id': ['a']})
 
         instance = Mock()
         instance.metadata._get_child_map.return_value = {'users': ['sessions', 'transactions']}
@@ -287,44 +273,35 @@ class TestBaseHierarchicalSampler():
         instance._add_child_rows.side_effect = _add_child_rows
 
         # Run
-        result = {
-            'users': pd.DataFrame({
-                'user_id': [1],
-                '__sessions__user_id__num_rows': [1]
-            })
-        }
+        result = {'users': pd.DataFrame({'user_id': [1], '__sessions__user_id__num_rows': [1]})}
         BaseHierarchicalSampler._sample_children(
-            self=instance,
-            table_name='users',
-            sampled_data=result
+            self=instance, table_name='users', sampled_data=result
         )
 
         # Assert
-        expected_parent_row = pd.Series({
-            'user_id': 1,
-            '__sessions__user_id__num_rows': 1
-        }, name=0)
+        expected_parent_row = pd.Series({'user_id': 1, '__sessions__user_id__num_rows': 1}, name=0)
         expected_calls = [
-            call(child_name='sessions', parent_name='users',
-                 parent_row=SeriesMatcher(expected_parent_row),
-                 sampled_data=result),
-            call(child_name='sessions', parent_name='users',
-                 parent_row=SeriesMatcher(expected_parent_row),
-                 sampled_data=result, num_rows=1)
+            call(
+                child_name='sessions',
+                parent_name='users',
+                parent_row=SeriesMatcher(expected_parent_row),
+                sampled_data=result,
+            ),
+            call(
+                child_name='sessions',
+                parent_name='users',
+                parent_row=SeriesMatcher(expected_parent_row),
+                sampled_data=result,
+                num_rows=1,
+            ),
         ]
         expected_result = {
-            'users': pd.DataFrame({
-                'user_id': [1],
-                '__sessions__user_id__num_rows': [1]
-            }),
+            'users': pd.DataFrame({'user_id': [1], '__sessions__user_id__num_rows': [1]}),
             'sessions': pd.DataFrame({
                 'user_id': [1],
                 'session_id': ['a'],
             }),
-            'transactions': pd.DataFrame({
-                'transaction_id': [1, 2],
-                'session_id': ['a', 'a']
-            })
+            'transactions': pd.DataFrame({'transaction_id': [1, 2], 'session_id': ['a', 'a']}),
         }
         instance._add_child_rows.assert_has_calls(expected_calls)
         for result_frame, expected_frame in zip(result.values(), expected_result.values()):
@@ -336,19 +313,17 @@ class TestBaseHierarchicalSampler():
         ``_sample_table`` should select randomly select a parent row and force
         a child to be created from that row.
         """
+
         # Setup
         def sample_children(table_name, sampled_data, scale):
             sampled_data['transactions'] = pd.DataFrame({
                 'transaction_id': [1, 2],
-                'session_id': ['a', 'a']
+                'session_id': ['a', 'a'],
             })
 
         def _add_child_rows(child_name, parent_name, parent_row, sampled_data, num_rows=None):
             if num_rows is not None:
-                sampled_data['sessions'] = pd.DataFrame({
-                    'user_id': [1],
-                    'session_id': ['a']
-                })
+                sampled_data['sessions'] = pd.DataFrame({'user_id': [1], 'session_id': ['a']})
 
         instance = Mock()
         instance.metadata._get_child_map.return_value = {'users': ['sessions', 'transactions']}
@@ -360,38 +335,34 @@ class TestBaseHierarchicalSampler():
         instance._add_child_rows.side_effect = _add_child_rows
 
         # Run
-        result = {
-            'users': pd.DataFrame({
-                'user_id': [1]
-            })
-        }
+        result = {'users': pd.DataFrame({'user_id': [1]})}
         BaseHierarchicalSampler._sample_children(
-            self=instance,
-            table_name='users',
-            sampled_data=result
+            self=instance, table_name='users', sampled_data=result
         )
 
         # Assert
         expected_calls = [
-            call(child_name='sessions', parent_name='users',
-                 parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0)),
-                 sampled_data=result),
-            call(child_name='sessions', parent_name='users',
-                 parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0)),
-                 sampled_data=result, num_rows=1)
+            call(
+                child_name='sessions',
+                parent_name='users',
+                parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0)),
+                sampled_data=result,
+            ),
+            call(
+                child_name='sessions',
+                parent_name='users',
+                parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0)),
+                sampled_data=result,
+                num_rows=1,
+            ),
         ]
         expected_result = {
-            'users': pd.DataFrame({
-                'user_id': [1]
-            }),
+            'users': pd.DataFrame({'user_id': [1]}),
             'sessions': pd.DataFrame({
                 'user_id': [1],
                 'session_id': ['a'],
             }),
-            'transactions': pd.DataFrame({
-                'transaction_id': [1, 2],
-                'session_id': ['a', 'a']
-            })
+            'transactions': pd.DataFrame({'transaction_id': [1, 2], 'session_id': ['a', 'a']}),
         }
         instance._add_child_rows.assert_has_calls(expected_calls)
         for result_frame, expected_frame in zip(result.values(), expected_result.values()):
@@ -404,7 +375,7 @@ class TestBaseHierarchicalSampler():
         metadata = Mock()
         metadata._get_parent_map.return_value = {
             'sessions': ['users'],
-            'transactions': ['sessions']
+            'transactions': ['sessions'],
         }
         instance.metadata = metadata
 
@@ -434,18 +405,15 @@ class TestBaseHierarchicalSampler():
             'user_id': np.int64,
             'session_id': str,
             'os': str,
-            'country': str
+            'country': str,
         }
         transactions_synth = Mock()
-        transactions_synth._data_processor._dtypes = {
-            'transaction_id': np.int64,
-            'session_id': str
-        }
+        transactions_synth._data_processor._dtypes = {'transaction_id': np.int64, 'session_id': str}
 
         instance._table_synthesizers = {
             'users': users_synth,
             'sessions': sessions_synth,
-            'transactions': transactions_synth
+            'transactions': transactions_synth,
         }
 
         # Run
@@ -481,20 +449,17 @@ class TestBaseHierarchicalSampler():
         4. All extra columns are dropped by calling ``_finalize``.
         """
         # Setup
-        users = pd.DataFrame({
-            'id': [1, 2, 3],
-            'name': ['John', 'Doe', 'Johanna']
-        })
+        users = pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Doe', 'Johanna']})
         sessions = pd.DataFrame({
             'user_id': [1, 1, 3],
             'session_id': ['a', 'b', 'c'],
             'os': ['windows', 'linux', 'mac'],
-            'country': ['us', 'us', 'es']
+            'country': ['us', 'us', 'es'],
         })
         transactions = pd.DataFrame({
             'user_id': [1, 2, 3],
             'transaction_id': [1, 2, 3],
-            'transaction_amount': [100, 1000, 200]
+            'transaction_amount': [100, 1000, 200],
         })
 
         def _sample_children_dummy(table_name, sampled_data, scale):
@@ -502,30 +467,26 @@ class TestBaseHierarchicalSampler():
             sampled_data['transactions'] = transactions
 
         instance = Mock()
-        instance._table_sizes = {
-            'users': 3,
-            'transactions': 9,
-            'sessions': 5
-        }
+        instance._table_sizes = {'users': 3, 'transactions': 9, 'sessions': 5}
         instance.metadata.relationships = [
             {
                 'parent_table_name': 'users',
                 'parent_primary_key': 'id',
                 'child_table_name': 'sessions',
-                'child_foreign_key': 'user_id'
+                'child_foreign_key': 'user_id',
             },
             {
                 'parent_table_name': 'users',
                 'parent_primary_key': 'id',
                 'child_table_name': 'transactions',
-                'child_foreign_key': 'user_id'
-            }
+                'child_foreign_key': 'user_id',
+            },
         ]
         users_synthesizer = Mock()
         instance._table_synthesizers = defaultdict(Mock, {'users': users_synthesizer})
         instance.metadata._get_parent_map.return_value = {
             'sessions': ['users'],
-            'transactions': ['users']
+            'transactions': ['users'],
         }
         instance.metadata.tables = {
             'users': Mock(),
@@ -540,41 +501,34 @@ class TestBaseHierarchicalSampler():
 
         # Assert
         expected_sample = {
-            'users': DataFrameMatcher(pd.DataFrame({
-                'id': [1, 2, 3],
-                'name': ['John', 'Doe', 'Johanna']
-            })),
-            'sessions': DataFrameMatcher(pd.DataFrame({
-                'user_id': [1, 1, 3],
-                'session_id': ['a', 'b', 'c'],
-                'os': ['windows', 'linux', 'mac'],
-                'country': ['us', 'us', 'es']
-            })),
-            'transactions': DataFrameMatcher(pd.DataFrame({
-                'user_id': [1, 2, 3],
-                'transaction_id': [1, 2, 3],
-                'transaction_amount': [100, 1000, 200]
-            }))
+            'users': DataFrameMatcher(
+                pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Doe', 'Johanna']})
+            ),
+            'sessions': DataFrameMatcher(
+                pd.DataFrame({
+                    'user_id': [1, 1, 3],
+                    'session_id': ['a', 'b', 'c'],
+                    'os': ['windows', 'linux', 'mac'],
+                    'country': ['us', 'us', 'es'],
+                })
+            ),
+            'transactions': DataFrameMatcher(
+                pd.DataFrame({
+                    'user_id': [1, 2, 3],
+                    'transaction_id': [1, 2, 3],
+                    'transaction_amount': [100, 1000, 200],
+                })
+            ),
         }
         assert result == instance._finalize.return_value
         instance._sample_children.assert_called_once_with(
-            table_name='users',
-            sampled_data=expected_sample,
-            scale=1.0
+            table_name='users', sampled_data=expected_sample, scale=1.0
         )
         instance._add_foreign_key_columns.assert_has_calls([
+            call(expected_sample['sessions'], expected_sample['users'], 'sessions', 'users'),
             call(
-                expected_sample['sessions'],
-                expected_sample['users'],
-                'sessions',
-                'users'
+                expected_sample['transactions'], expected_sample['users'], 'transactions', 'users'
             ),
-            call(
-                expected_sample['transactions'],
-                expected_sample['users'],
-                'transactions',
-                'users'
-            )
         ])
         instance._finalize.assert_called_once_with(expected_sample)
 
@@ -585,25 +539,14 @@ class TestBaseHierarchicalSampler():
         """
         # Setup
         instance = MagicMock()
-        data = {
-            'parent': pd.DataFrame({
-                'fk': ['a', 'b', 'c'],
-                '__child__fk__num_rows': [1, 2, 3]
-            })
-        }
+        data = {'parent': pd.DataFrame({'fk': ['a', 'b', 'c'], '__child__fk__num_rows': [1, 2, 3]})}
         instance.metadata._get_foreign_keys.return_value = ['fk']
         instance._min_child_rows = {'__child__fk__num_rows': 1}
         instance._max_child_rows = {'__child__fk__num_rows': 3}
         instance._table_sizes = {'child': 4}
 
         # Run
-        BaseHierarchicalSampler._enforce_table_size(
-            instance,
-            'child',
-            'parent',
-            1.0,
-            data
-        )
+        BaseHierarchicalSampler._enforce_table_size(instance, 'child', 'parent', 1.0, data)
 
         # Assert
         assert data['parent']['__child__fk__num_rows'].to_list() == [1, 1, 2]
@@ -615,25 +558,14 @@ class TestBaseHierarchicalSampler():
         """
         # Setup
         instance = MagicMock()
-        data = {
-            'parent': pd.DataFrame({
-                'fk': ['a', 'b', 'c'],
-                '__child__fk__num_rows': [1, 1, 1]
-            })
-        }
+        data = {'parent': pd.DataFrame({'fk': ['a', 'b', 'c'], '__child__fk__num_rows': [1, 1, 1]})}
         instance.metadata._get_foreign_keys.return_value = ['fk']
         instance._min_child_rows = {'__child__fk__num_rows': 1}
         instance._max_child_rows = {'__child__fk__num_rows': 3}
         instance._table_sizes = {'child': 4}
 
         # Run
-        BaseHierarchicalSampler._enforce_table_size(
-            instance,
-            'child',
-            'parent',
-            1.0,
-            data
-        )
+        BaseHierarchicalSampler._enforce_table_size(instance, 'child', 'parent', 1.0, data)
 
         # Assert
         assert data['parent']['__child__fk__num_rows'].to_list() == [2, 1, 1]
@@ -645,25 +577,14 @@ class TestBaseHierarchicalSampler():
         """
         # Setup
         instance = MagicMock()
-        data = {
-            'parent': pd.DataFrame({
-                'fk': ['a', 'b', 'c'],
-                '__child__fk__num_rows': [1, 2, 5]
-            })
-        }
+        data = {'parent': pd.DataFrame({'fk': ['a', 'b', 'c'], '__child__fk__num_rows': [1, 2, 5]})}
         instance.metadata._get_foreign_keys.return_value = ['fk']
         instance._min_child_rows = {'__child__fk__num_rows': 2}
         instance._max_child_rows = {'__child__fk__num_rows': 4}
         instance._table_sizes = {'child': 8}
 
         # Run
-        BaseHierarchicalSampler._enforce_table_size(
-            instance,
-            'child',
-            'parent',
-            1.0,
-            data
-        )
+        BaseHierarchicalSampler._enforce_table_size(instance, 'child', 'parent', 1.0, data)
 
         # Assert
         assert data['parent']['__child__fk__num_rows'].to_list() == [2, 2, 4]
@@ -675,25 +596,14 @@ class TestBaseHierarchicalSampler():
         """
         # Setup
         instance = MagicMock()
-        data = {
-            'parent': pd.DataFrame({
-                'fk': ['a', 'b', 'c'],
-                '__child__fk__num_rows': [1, 2, 3]
-            })
-        }
+        data = {'parent': pd.DataFrame({'fk': ['a', 'b', 'c'], '__child__fk__num_rows': [1, 2, 3]})}
         instance.metadata._get_foreign_keys.return_value = ['fk']
         instance._min_child_rows = {'__child__fk__num_rows': 1}
         instance._max_child_rows = {'__child__fk__num_rows': 3}
         instance._table_sizes = {'child': 4}
 
         # Run
-        BaseHierarchicalSampler._enforce_table_size(
-            instance,
-            'child',
-            'parent',
-            .001,
-            data
-        )
+        BaseHierarchicalSampler._enforce_table_size(instance, 'child', 'parent', 0.001, data)
 
         # Assert
         assert data['parent']['__child__fk__num_rows'].to_list() == [0, 0, 0]

@@ -64,7 +64,7 @@ def detect_discrete_columns(metadata, data, transformers):
             is_float = not is_int
             num_values = len(column_data)
             num_categories = column_data.nunique()
-            threshold = max(10, num_values * .1)
+            threshold = max(10, num_values * 0.1)
             has_many_categories = num_categories > threshold
             if is_float or (is_int and has_many_categories):
                 continue
@@ -95,9 +95,7 @@ def handle_sampling_error(output_file_path, sampling_error):
 
     error_msg = None
     if output_file_path is not None:
-        error_msg = (
-            f'Error: Sampling terminated. Partial results are stored in {output_file_path}.'
-        )
+        error_msg = f'Error: Sampling terminated. Partial results are stored in {output_file_path}.'
     else:
         error_msg = (
             'Error: Sampling terminated. No results were saved due to unspecified '
@@ -132,7 +130,7 @@ def check_num_rows(num_rows, expected_num_rows, is_reject_sampling, max_tries_pe
     """
     if num_rows < expected_num_rows:
         if num_rows == 0:
-            user_msg = ('Unable to sample any rows for the given conditions. ')
+            user_msg = 'Unable to sample any rows for the given conditions. '
             if is_reject_sampling:
                 user_msg = user_msg + (
                     f'Try increasing `max_tries_per_batch` (currently: {max_tries_per_batch}). '

@@ -15,53 +15,44 @@ from sdv.utils.poc import get_random_subset, simplify_schema
 
 @pytest.fixture
 def metadata():
-    return MultiTableMetadata.load_from_dict(
-        {
-            'tables': {
-                'parent': {
-                    'columns': {
-                        'id': {'sdtype': 'id'},
-                        'A': {'sdtype': 'categorical'},
-                        'B': {'sdtype': 'numerical'}
-                    },
-                    'primary_key': 'id'
+    return MultiTableMetadata.load_from_dict({
+        'tables': {
+            'parent': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'A': {'sdtype': 'categorical'},
+                    'B': {'sdtype': 'numerical'},
                 },
-                'child': {
-                    'columns': {
-                        'parent_id': {'sdtype': 'id'},
-                        'C': {'sdtype': 'categorical'}
-                    }
-                }
+                'primary_key': 'id',
             },
-            'relationships': [
-                {
-                    'parent_table_name': 'parent',
-                    'child_table_name': 'child',
-                    'parent_primary_key': 'id',
-                    'child_foreign_key': 'parent_id'
-                }
-            ]
-        }
-    )
+            'child': {'columns': {'parent_id': {'sdtype': 'id'}, 'C': {'sdtype': 'categorical'}}},
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'parent_id',
+            }
+        ],
+    })
 
 
 @pytest.fixture
 def data():
-    parent = pd.DataFrame(data={
-        'id': [0, 1, 2, 3, 4],
-        'A': [True, True, False, True, False],
-        'B': [0.434, 0.312, 0.212, 0.339, 0.491]
-    })
+    parent = pd.DataFrame(
+        data={
+            'id': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+            'B': [0.434, 0.312, 0.212, 0.339, 0.491],
+        }
+    )
 
-    child = pd.DataFrame(data={
-        'parent_id': [0, 1, 2, 2, 5],
-        'C': ['Yes', 'No', 'Maye', 'No', 'No']
-    })
+    child = pd.DataFrame(
+        data={'parent_id': [0, 1, 2, 2, 5], 'C': ['Yes', 'No', 'Maye', 'No', 'No']}
+    )
 
-    return {
-        'parent': parent,
-        'child': child
-    }
+    return {'parent': parent, 'child': child}
 
 
 def test_simplify_schema(capsys):
@@ -152,13 +143,13 @@ def test_simplify_schema_big_demo_datasets():
         'NBA_v1',
         'NCAA_v1',
         'PremierLeague_v1',
-        'financial_v1'
+        'financial_v1',
     ]
     for dataset in list_datasets:
         real_data, metadata = download_demo('multi_table', dataset)
 
         # Run
-        data_simplify, metadata_simplify = simplify_schema(real_data, metadata)
+        _data_simplify, metadata_simplify = simplify_schema(real_data, metadata)
 
         # Assert
         estimate_column_before = _get_total_estimated_columns(metadata)
@@ -174,7 +165,7 @@ def test_simplify_schema_big_demo_datasets():
         ('MuskSmall_v1', 'molecule', 'conformation', 50, 150),
         ('NBA_v1', 'Team', 'Actions', 10, 200),
         ('NCAA_v1', 'tourney_slots', 'tourney_compact_results', 1000, 1000),
-    ]
+    ],
 )
 def test_get_random_subset(dataset_name, main_table_1, main_table_2, num_rows_1, num_rows_2):
     """Test ``get_random_subset`` end to end.

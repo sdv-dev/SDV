@@ -27,10 +27,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     synthesizer customization.
     """
     # Setup
-    real_data, metadata = download_demo(
-        modality='single_table',
-        dataset_name='fake_hotel_guests'
-    )
+    real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
     synthesizer = GaussianCopulaSynthesizer(metadata)
     custom_synthesizer = GaussianCopulaSynthesizer(
         metadata,
@@ -38,20 +35,18 @@ def test_synthesize_table_gaussian_copula(tmp_path):
         numerical_distributions={
             'checkin_date': 'uniform',
             'checkout_date': 'uniform',
-            'room_rate': 'gaussian_kde'
-        }
+            'room_rate': 'gaussian_kde',
+        },
     )
     sensitive_columns = ['guest_email', 'billing_address', 'credit_card_number']
     model_path = tmp_path / 'synthesizer.pkl'
 
     suite_guests_with_rewards = Condition(
-        num_rows=250,
-        column_values={'room_type': 'SUITE', 'has_rewards': True}
+        num_rows=250, column_values={'room_type': 'SUITE', 'has_rewards': True}
     )
 
     suite_guests_without_rewards = Condition(
-        num_rows=250,
-        column_values={'room_type': 'SUITE', 'has_rewards': False}
+        num_rows=250, column_values={'room_type': 'SUITE', 'has_rewards': False}
     )
 
     # Run - fit
@@ -59,24 +54,20 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     synthetic_data = synthesizer.sample(num_rows=500)
 
     # Run - evaluate
-    quality_report = evaluate_quality(
-        real_data,
-        synthetic_data,
-        metadata
-    )
+    quality_report = evaluate_quality(real_data, synthetic_data, metadata)
 
     column_plot = get_column_plot(
         real_data=real_data,
         synthetic_data=synthetic_data,
         column_name='room_rate',
-        metadata=metadata
+        metadata=metadata,
     )
 
     pair_plot = get_column_pair_plot(
         real_data=real_data,
         synthetic_data=synthetic_data,
         column_names=['room_rate', 'room_type'],
-        metadata=metadata
+        metadata=metadata,
     )
 
     # Run - save model
@@ -86,21 +77,16 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     custom_synthesizer.fit(real_data)
     synthetic_data_customized = custom_synthesizer.sample(num_rows=500)
     learned_distributions = custom_synthesizer.get_learned_distributions()
-    custom_quality_report = evaluate_quality(
-        real_data,
-        synthetic_data_customized,
-        metadata
-    )
+    custom_quality_report = evaluate_quality(real_data, synthetic_data_customized, metadata)
     custom_column_plot = get_column_plot(
         real_data=real_data,
         synthetic_data=synthetic_data_customized,
         column_name='room_rate',
-        metadata=metadata
+        metadata=metadata,
     )
-    simulated_synthetic_data = custom_synthesizer.sample_from_conditions(conditions=[
-        suite_guests_with_rewards,
-        suite_guests_without_rewards
-    ])
+    simulated_synthetic_data = custom_synthesizer.sample_from_conditions(
+        conditions=[suite_guests_with_rewards, suite_guests_without_rewards]
+    )
 
     # Assert - fit
     assert set(real_data.columns) == set(synthetic_data.columns)
@@ -130,7 +116,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
         'a',
         'b',
         'loc',
-        'scale'
+        'scale',
     ]
     assert learned_distributions['has_rewards']['distribution'] == 'truncnorm'
     assert set(real_data.columns) == set(simulated_synthetic_data.columns)
@@ -149,17 +135,14 @@ def test_adding_constraints(tmp_path):
         * Save, load and sample from the model storing both custom and pre-defined constraints.
     """
     # Setup
-    real_data, metadata = download_demo(
-        modality='single_table',
-        dataset_name='fake_hotel_guests'
-    )
+    real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
 
     checkin_lessthan_checkout = {
         'constraint_class': 'Inequality',
         'constraint_parameters': {
             'low_column_name': 'checkin_date',
-            'high_column_name': 'checkout_date'
-        }
+            'high_column_name': 'checkout_date',
+        },
     }
     synthesizer = GaussianCopulaSynthesizer(metadata)
 
@@ -177,30 +160,26 @@ def test_adding_constraints(tmp_path):
 
     # Load custom constraint class
     synthesizer.load_custom_constraint_classes(
-        'tests/integration/single_table/custom_constraints.py',
-        ['IfTrueThenZero']
+        'tests/integration/single_table/custom_constraints.py', ['IfTrueThenZero']
     )
     rewards_member_no_fee = {
         'constraint_class': 'IfTrueThenZero',
-        'constraint_parameters': {
-            'column_names': ['has_rewards', 'amenities_fee']
-        }
+        'constraint_parameters': {'column_names': ['has_rewards', 'amenities_fee']},
     }
     synthesizer.add_constraints([rewards_member_no_fee])
 
     # Re-Fit the model
     synthesizer.preprocess(real_data)
-    synthesizer.update_transformers({
-        'checkin_date#checkout_date.nan_component': LabelEncoder()
-    })
+    synthesizer.update_transformers({'checkin_date#checkout_date.nan_component': LabelEncoder()})
     synthesizer.fit(real_data)
     synthetic_data_custom_constraint = synthesizer.sample(500)
 
     # Assert
     validation = synthetic_data_custom_constraint[synthetic_data_custom_constraint['has_rewards']]
     assert validation['amenities_fee'].sum() == 0.0
-    assert isinstance(synthesizer.get_transformers()['checkin_date#checkout_date.nan_component'],
-                      LabelEncoder)
+    assert isinstance(
+        synthesizer.get_transformers()['checkin_date#checkout_date.nan_component'], LabelEncoder
+    )
 
     # Save and Load
     model_path = tmp_path / 'synthesizer.pkl'
@@ -231,33 +210,22 @@ def test_custom_processing_anonymization():
         * Anonymization and pseudo-anonymization
     """
     # Setup
-    real_data, metadata = download_demo(
-        modality='single_table',
-        dataset_name='fake_hotel_guests'
-    )
+    real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
     synthesizer = GaussianCopulaSynthesizer(metadata)
     transformers_synthesizer = GaussianCopulaSynthesizer(metadata)
     anonymization_synthesizer = GaussianCopulaSynthesizer(metadata)
 
-    room_type_transformer = CustomLabelEncoder(
-        order=['BASIC', 'DELUXE', 'SUITE'],
-        add_noise=True
-    )
+    room_type_transformer = CustomLabelEncoder(order=['BASIC', 'DELUXE', 'SUITE'], add_noise=True)
     amenities_fee_transformer = FloatFormatter(
-        learn_rounding_scheme=True,
-        enforce_min_max_values=True,
-        missing_value_replacement=0.00
+        learn_rounding_scheme=True, enforce_min_max_values=True, missing_value_replacement=0.00
     )
 
     sensitive_columns = ['guest_email', 'billing_address', 'credit_card_number']
     guest_email_transformer = AnonymizedFaker(
-        provider_name='misc',
-        function_name='uuid4',
-        enforce_uniqueness=True
+        provider_name='misc', function_name='uuid4', enforce_uniqueness=True
     )
     billing_address_transformer = PseudoAnonymizedFaker(
-        provider_name='address',
-        function_name='address'
+        provider_name='address', function_name='address'
     )
 
     # Run - Pre-process data
@@ -269,7 +237,7 @@ def test_custom_processing_anonymization():
     transformers_synthesizer.preprocess(real_data)
     transformers_synthesizer.update_transformers({
         'room_type': room_type_transformer,
-        'amenities_fee': amenities_fee_transformer
+        'amenities_fee': amenities_fee_transformer,
     })
     transformers_synthesizer.fit(real_data)
 
@@ -277,7 +245,7 @@ def test_custom_processing_anonymization():
     anonymization_synthesizer.preprocess(real_data)
     anonymization_synthesizer.update_transformers({
         'guest_email': guest_email_transformer,
-        'billing_address': billing_address_transformer
+        'billing_address': billing_address_transformer,
     })
     anonymization_synthesizer.fit(real_data)
     anonymized_sample = anonymization_synthesizer.sample(num_rows=100)
@@ -307,10 +275,7 @@ def test_update_transformers_with_id_generator():
     # Setup
     min_value_id = 5
     sample_num = 20
-    data = pd.DataFrame({
-        'user_id': list(range(4)),
-        'user_cat': ['a', 'b', 'c', 'd']
-    })
+    data = pd.DataFrame({'user_id': list(range(4)), 'user_cat': ['a', 'b', 'c', 'd']})
 
     stm = SingleTableMetadata()
     stm.detect_from_dataframe(data)
@@ -337,10 +302,7 @@ def test_update_transformers_with_id_generator():
 def test_validate_with_failing_constraint():
     """Validate that the ``constraint`` are raising errors if there is an error during validate."""
     # Setup
-    real_data, metadata = download_demo(
-        modality='single_table',
-        dataset_name='fake_hotel_guests'
-    )
+    real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
     real_data['checkin_date'][0] = real_data['checkout_date'][1]
     gc = GaussianCopulaSynthesizer(metadata)
 
@@ -348,12 +310,10 @@ def test_validate_with_failing_constraint():
         'constraint_class': 'Inequality',
         'constraint_parameters': {
             'low_column_name': 'checkin_date',
-            'high_column_name': 'checkout_date'
-        }
+            'high_column_name': 'checkout_date',
+        },
     }
-    gc.add_constraints([
-        checkin_lessthan_checkout
-    ])
+    gc.add_constraints([checkin_lessthan_checkout])
 
     error_msg = (
         "Data is not valid for the 'Inequality' constraint:"
@@ -369,18 +329,16 @@ def test_validate_with_failing_constraint():
 def test_numerical_columns_gets_pii():
     """Test that the synthesizer works when a ``numerical`` column gets converted to ``PII``."""
     # Setup
-    data = pd.DataFrame(data={
-        'id': [0, 1, 2, 3, 4],
-        'city': [0, 0, 0, 0, 0],
-        'numerical': [21, 22, 23, 24, 25]
-    })
+    data = pd.DataFrame(
+        data={'id': [0, 1, 2, 3, 4], 'city': [0, 0, 0, 0, 0], 'numerical': [21, 22, 23, 24, 25]}
+    )
     metadata = SingleTableMetadata.load_from_dict({
         'primary_key': 'id',
         'columns': {
             'id': {'sdtype': 'id'},
             'city': {'sdtype': 'city'},
-            'numerical': {'sdtype': 'numerical'}
-        }
+            'numerical': {'sdtype': 'numerical'},
+        },
     })
     synth = GaussianCopulaSynthesizer(metadata, default_distribution='truncnorm')
     synth.fit(data)
@@ -400,7 +358,7 @@ def test_numerical_columns_gets_pii():
             6: 795819284,
             7: 607278621,
             8: 783746695,
-            9: 162118876
+            9: 162118876,
         },
         'city': {
             0: 'Danielfort',
@@ -412,9 +370,9 @@ def test_numerical_columns_gets_pii():
             6: 'Ryanfort',
             7: 'West Stephenland',
             8: 'Davidland',
-            9: 'Port Christopher'
+            9: 'Port Christopher',
         },
-        'numerical': {0: 22, 1: 24, 2: 22, 3: 23, 4: 22, 5: 24, 6: 23, 7: 24, 8: 24, 9: 24}
+        'numerical': {0: 22, 1: 24, 2: 22, 3: 23, 4: 22, 5: 24, 6: 23, 7: 24, 8: 24, 9: 24},
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
 
@@ -424,8 +382,26 @@ def test_categorical_column_with_numbers():
     # Setup
     data = pd.DataFrame({
         'category_col': [
-            1, 2, 1, 2, 1, 2, np.nan, 1, 1, np.nan, 2, 2, np.nan, 2,
-            1, 1, np.nan, 1, 2, 2
+            1,
+            2,
+            1,
+            2,
+            1,
+            2,
+            np.nan,
+            1,
+            1,
+            np.nan,
+            2,
+            2,
+            np.nan,
+            2,
+            1,
+            1,
+            np.nan,
+            1,
+            2,
+            2,
         ],
         'numerical_col': np.random.rand(20),
     })

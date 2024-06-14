@@ -25,16 +25,10 @@ from sdv.single_table.base import BaseSingleTableSynthesizer
 METADATA = SingleTableMetadata.load_from_dict({
     'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
     'columns': {
-        'column1': {
-            'sdtype': 'numerical'
-        },
-        'column2': {
-            'sdtype': 'numerical'
-        },
-        'column3': {
-            'sdtype': 'numerical'
-        }
-    }
+        'column1': {'sdtype': 'numerical'},
+        'column2': {'sdtype': 'numerical'},
+        'column3': {'sdtype': 'numerical'},
+    },
 })
 
 SYNTHESIZERS = [
@@ -50,17 +44,11 @@ def test_conditional_sampling_graceful_reject_sampling_true_dict(synthesizer):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
-        'column3': list(range(100))
+        'column3': list(range(100)),
     })
 
     synthesizer.fit(data)
-    conditions = [
-        Condition({
-            'column1': 28,
-            'column2': 37,
-            'column3': 93
-        })
-    ]
+    conditions = [Condition({'column1': 28, 'column2': 37, 'column3': 93})]
 
     with pytest.raises(ValueError):  # noqa: PT011
         synthesizer.sample_from_conditions(conditions=conditions)
@@ -71,15 +59,11 @@ def test_conditional_sampling_graceful_reject_sampling_true_dataframe(synthesize
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
-        'column3': list(range(100))
+        'column3': list(range(100)),
     })
 
     synthesizer.fit(data)
-    conditions = pd.DataFrame({
-        'column1': [28],
-        'column2': [37],
-        'column3': [93]
-    })
+    conditions = pd.DataFrame({'column1': [28], 'column2': [37], 'column3': [93]})
 
     with pytest.raises(ValueError, match='a'):
         synthesizer.sample_remaining_columns(conditions)
@@ -103,7 +87,7 @@ def test_sample_from_conditions_with_batch_size():
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
-        'column3': list(range(100))
+        'column3': list(range(100)),
     })
 
     metadata = SingleTableMetadata()
@@ -113,10 +97,7 @@ def test_sample_from_conditions_with_batch_size():
 
     model = GaussianCopulaSynthesizer(metadata)
     model.fit(data)
-    conditions = [
-        Condition({'column1': 10}, num_rows=100),
-        Condition({'column1': 50}, num_rows=10)
-    ]
+    conditions = [Condition({'column1': 10}, num_rows=100), Condition({'column1': 50}, num_rows=10)]
 
     # Run
     sampled_data = model.sample_from_conditions(conditions, batch_size=50)
@@ -132,7 +113,7 @@ def test_sample_from_conditions_negative_float():
     data = pd.DataFrame({
         'column1': [-float(i) for i in range(100)],
         'column2': list(range(100)),
-        'column3': list(range(100))
+        'column3': list(range(100)),
     })
 
     metadata = SingleTableMetadata()
@@ -143,30 +124,24 @@ def test_sample_from_conditions_negative_float():
     model = GaussianCopulaSynthesizer(metadata)
     model.fit(data)
     conditions = [
-        Condition({'column1': -10.}, num_rows=100),
-        Condition({'column1': -50}, num_rows=10)
+        Condition({'column1': -10.0}, num_rows=100),
+        Condition({'column1': -50}, num_rows=10),
     ]
 
     # Run
     sampled_data = model.sample_from_conditions(conditions)
 
     # Assert
-    expected = pd.Series([-10.] * 100 + [-50.] * 10, name='column1')
+    expected = pd.Series([-10.0] * 100 + [-50.0] * 10, name='column1')
     pd.testing.assert_series_equal(sampled_data['column1'], expected)
 
 
 def test_sample_from_conditions_with_nans():
     """Test it crashes when condition has nans (GH#1758)."""
     # Setup
-    data, metadata = download_demo(
-        modality='single_table',
-        dataset_name='fake_hotel_guests'
-    )
+    data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    my_condition = Condition(
-        num_rows=250,
-        column_values={'room_type': None, 'has_rewards': False}
-    )
+    my_condition = Condition(num_rows=250, column_values={'room_type': None, 'has_rewards': False})
 
     # Run
     synthesizer.fit(data)
@@ -183,15 +158,11 @@ def test_sample_from_conditions_with_nans():
 def test_sample_remaining_columns_with_all_nans():
     """Test it crashes when every condition row has a nan (GH#1758)."""
     # Setup
-    data, metadata = download_demo(
-        modality='single_table',
-        dataset_name='fake_hotel_guests'
-    )
+    data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    known_columns = pd.DataFrame(data={
-        'has_rewards': [np.nan, False, True],
-        'amenities_fee': [5.00, np.nan, None]
-    })
+    known_columns = pd.DataFrame(
+        data={'has_rewards': [np.nan, False, True], 'amenities_fee': [5.00, np.nan, None]}
+    )
 
     # Run
     synthesizer.fit(data)
@@ -208,23 +179,18 @@ def test_sample_remaining_columns_with_all_nans():
 def test_sample_remaining_columns_with_some_nans():
     """Test it warns when some of the condition rows contain nans (GH#1758)."""
     # Setup
-    data, metadata = download_demo(
-        modality='single_table',
-        dataset_name='fake_hotel_guests'
-    )
+    data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    known_columns = pd.DataFrame(data={
-        'has_rewards': [True, False, np.nan],
-        'amenities_fee': [5.00, np.nan, None]
-    })
+    known_columns = pd.DataFrame(
+        data={'has_rewards': [True, False, np.nan], 'amenities_fee': [5.00, np.nan, None]}
+    )
 
     # Run
     synthesizer.fit(data)
 
     # Assert
     warn_msg = (
-        'Missing values are not yet supported. '
-        'Rows with any missing values will not be created.'
+        'Missing values are not yet supported. ' 'Rows with any missing values will not be created.'
     )
     with pytest.warns(UserWarning, match=warn_msg):
         synthesizer.sample_remaining_columns(known_columns=known_columns)
@@ -233,10 +199,7 @@ def test_sample_remaining_columns_with_some_nans():
 def test_sample_keys_are_scrambled():
     """Test that the keys are scrambled in the sampled data."""
     # Setup
-    data, metadata = download_demo(
-        modality='single_table',
-        dataset_name='fake_hotel_guests'
-    )
+    data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
     metadata.update_column('guest_email', sdtype='id', regex_format='[A-Z]{3}')
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.fit(data)
@@ -259,12 +222,12 @@ def test_multiple_fits():
     data_1 = pd.DataFrame({
         'city': ['LA', 'SF', 'CHI', 'LA', 'LA'],
         'state': ['CA', 'CA', 'IL', 'CA', 'CA'],
-        'measurement': [27.123, 28.756, 26.908, 21.002, 30.987]
+        'measurement': [27.123, 28.756, 26.908, 21.002, 30.987],
     })
     data_2 = pd.DataFrame({
         'city': ['LA', 'LA', 'CHI', 'LA', 'LA'],
         'state': ['CA', 'CA', 'IL', 'CA', 'CA'],
-        'measurement': [27.1, 28.7, 26.9, 21.2, 30.9]
+        'measurement': [27.1, 28.7, 26.9, 21.2, 30.9],
     })
     metadata = SingleTableMetadata()
     metadata.add_column('city', sdtype='categorical')
@@ -272,9 +235,7 @@ def test_multiple_fits():
     metadata.add_column('measurement', sdtype='numerical')
     constraint = {
         'constraint_class': 'FixedCombinations',
-        'constraint_parameters': {
-            'column_names': ['city', 'state']
-        }
+        'constraint_parameters': {'column_names': ['city', 'state']},
     }
     model = GaussianCopulaSynthesizer(metadata)
     model.add_constraints([constraint])
@@ -295,7 +256,7 @@ def test_sampling(synthesizer):
     data = pd.DataFrame({
         'column1': list(range(100)),
         'column2': list(range(100)),
-        'column3': list(range(100))
+        'column3': list(range(100)),
     })
     synthesizer.fit(data)
 
@@ -314,20 +275,11 @@ def test_sampling_reset_sampling(synthesizer):
     metadata = SingleTableMetadata.load_from_dict({
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         'columns': {
-            'column1': {
-                'sdtype': 'numerical'
-            },
-            'column2': {
-                'sdtype': 'address'
-            },
-            'column3': {
-                'sdtype': 'email'
-            },
-            'column4': {
-                'sdtype': 'ssn',
-                'pii': True
-            }
-        }
+            'column1': {'sdtype': 'numerical'},
+            'column2': {'sdtype': 'address'},
+            'column3': {'sdtype': 'email'},
+            'column4': {'sdtype': 'ssn', 'pii': True},
+        },
     })
     data = pd.DataFrame({
         'column1': list(range(100)),
@@ -361,11 +313,7 @@ def test_config_creation_doesnt_raise_error():
 
     # Run
     test_metadata.detect_from_dataframe(test_data)
-    test_metadata.update_column(
-        column_name='address_col',
-        sdtype='address',
-        pii=False
-    )
+    test_metadata.update_column(column_name='address_col', sdtype='address', pii=False)
 
     synthesizer = GaussianCopulaSynthesizer(test_metadata)
     synthesizer.fit(test_data)
@@ -387,7 +335,8 @@ def test_transformers_correctly_auto_assigned():
     metadata.set_primary_key('primary_key')
     metadata.update_column(column_name='pii_col', sdtype='address', pii=True)
     synthesizer = GaussianCopulaSynthesizer(
-        metadata, enforce_min_max_values=False, enforce_rounding=False)
+        metadata, enforce_min_max_values=False, enforce_rounding=False
+    )
 
     # Run
     synthesizer.auto_assign_transformers(data)
@@ -414,33 +363,29 @@ def test_transformers_correctly_auto_assigned():
 def test_modeling_with_complex_datetimes():
     """Test that models work with datetimes passed as strings or ints with complex format."""
     # Setup
-    data = pd.DataFrame(data={
-        'string_column': [
-            '20220902110443000000',
-            '20220916230356000000',
-            '20220826173917000000',
-            '20220826212135000000',
-            '20220929111311000000'
-        ],
-        'int_column': [
-            20220902110443000000,
-            20220916230356000000,
-            20220826173917000000,
-            20220826212135000000,
-            20220929111311000000
-        ]
-    })
+    data = pd.DataFrame(
+        data={
+            'string_column': [
+                '20220902110443000000',
+                '20220916230356000000',
+                '20220826173917000000',
+                '20220826212135000000',
+                '20220929111311000000',
+            ],
+            'int_column': [
+                20220902110443000000,
+                20220916230356000000,
+                20220826173917000000,
+                20220826212135000000,
+                20220929111311000000,
+            ],
+        }
+    )
 
     test_metadata = {
         'columns': {
-            'string_column': {
-                'sdtype': 'datetime',
-                'datetime_format': '%Y%m%d%H%M%S%f'
-            },
-            'int_column': {
-                'sdtype': 'datetime',
-                'datetime_format': '%Y%m%d%H%M%S%f'
-            }
+            'string_column': {'sdtype': 'datetime', 'datetime_format': '%Y%m%d%H%M%S%f'},
+            'int_column': {'sdtype': 'datetime', 'datetime_format': '%Y%m%d%H%M%S%f'},
         }
     }
 
@@ -464,11 +409,13 @@ def test_auto_assign_transformers_and_update_with_pii():
     still assign the expected transformer to it.
     """
     # Setup
-    data = pd.DataFrame(data={
-        'id': ['N', 'A', 'K', 'F', 'P'],
-        'numerical': [1, 2, 3, 2, 1],
-        'name': ['A', 'A', 'B', 'B', 'B']
-    })
+    data = pd.DataFrame(
+        data={
+            'id': ['N', 'A', 'K', 'F', 'P'],
+            'numerical': [1, 2, 3, 2, 1],
+            'name': ['A', 'A', 'B', 'B', 'B'],
+        }
+    )
 
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
@@ -495,11 +442,13 @@ def test_auto_assign_transformers_and_update_with_pii():
 def test_refitting_a_model():
     """Test that refitting a model resets the sampling state of the generators."""
     # Setup
-    data = pd.DataFrame(data={
-        'id': [0, 1, 2, 3, 4],
-        'numerical': [1, 2, 3, 2, 1],
-        'name': ['A', 'A', 'B', 'B', 'B']
-    })
+    data = pd.DataFrame(
+        data={
+            'id': [0, 1, 2, 3, 4],
+            'numerical': [1, 2, 3, 2, 1],
+            'name': ['A', 'A', 'B', 'B', 'B'],
+        }
+    )
 
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
@@ -541,7 +490,7 @@ def test_get_info():
         'creation_date': today,
         'is_fit': False,
         'last_fit_date': None,
-        'fitted_sdv_version': None
+        'fitted_sdv_version': None,
     }
 
     # Run
@@ -555,7 +504,7 @@ def test_get_info():
         'creation_date': today,
         'is_fit': True,
         'last_fit_date': today,
-        'fitted_sdv_version': version
+        'fitted_sdv_version': version,
     }
 
 
@@ -719,10 +668,8 @@ parametrization = [
     ('update_column', {'column_name': 'col 1', 'sdtype': 'categorical'}),
     ('set_primary_key', {'column_name': 'col 1'}),
     (
-        'add_column_relationship', {
-            'relationship_type': 'address',
-            'column_names': ['city', 'country']
-        }
+        'add_column_relationship',
+        {'relationship_type': 'address', 'column_names': ['city', 'country']},
     ),
     ('add_alternate_keys', {'column_names': ['col 1', 'col 2']}),
     ('set_sequence_key', {'column_name': 'col 1'}),
@@ -797,9 +744,7 @@ def test_fit_and_sample_numerical_col_names(synthesizer_class):
     # Setup
     num_rows = 50
     num_cols = 10
-    values = {
-        i: np.random.randint(0, 100, size=num_rows) for i in range(num_cols)
-    }
+    values = {i: np.random.randint(0, 100, size=num_rows) for i in range(num_cols)}
     data = pd.DataFrame(values)
     metadata = SingleTableMetadata()
     metadata_dict = {'columns': {}}

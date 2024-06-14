@@ -1,4 +1,5 @@
 """Test ``SDV`` logger."""
+
 import logging
 from unittest.mock import Mock, patch
 
@@ -6,7 +7,6 @@ from sdv.logging.logger import CSVFormatter, get_sdv_logger
 
 
 class TestCSVFormatter:
-
     @patch('os.path.exists')
     @patch('csv.DictWriter')
     def test___init__(self, mock_dict_writer, mock_path_exists):
@@ -53,13 +53,8 @@ def test_get_sdv_logger(mock_get_sdv_logger_config, mock_getlogger, mock_streamh
     mock_logger_conf = {
         'log_registry': 'local',
         'loggers': {
-            'test_logger': {
-                'level': 'DEBUG',
-                'handlers': {
-                    'class': 'logging.StreamHandler'
-                }
-            }
-        }
+            'test_logger': {'level': 'DEBUG', 'handlers': {'class': 'logging.StreamHandler'}}
+        },
     }
     mock_get_sdv_logger_config.return_value = mock_logger_conf
     mock_logger_instance = Mock()
@@ -78,8 +73,9 @@ def test_get_sdv_logger(mock_get_sdv_logger_config, mock_getlogger, mock_streamh
 @patch('sdv.logging.logger.logging.FileHandler')
 @patch('sdv.logging.logger.logging.getLogger')
 @patch('sdv.logging.logger.get_sdv_logger_config')
-def test_get_sdv_logger_csv(mock_get_sdv_logger_config, mock_getlogger,
-                            mock_filehandler, mock_csvformatter):
+def test_get_sdv_logger_csv(
+    mock_get_sdv_logger_config, mock_getlogger, mock_filehandler, mock_csvformatter
+):
     # Setup
     mock_logger_conf = {
         'log_registry': 'local',
@@ -87,12 +83,9 @@ def test_get_sdv_logger_csv(mock_get_sdv_logger_config, mock_getlogger,
             'test_logger_csv': {
                 'level': 'DEBUG',
                 'formatter': 'sdv.logging.logger.CSVFormatter',
-                'handlers': {
-                    'filename': 'logfile.csv',
-                    'class': 'logging.FileHandler'
-                }
+                'handlers': {'filename': 'logfile.csv', 'class': 'logging.FileHandler'},
             }
-        }
+        },
     }
     mock_get_sdv_logger_config.return_value = mock_logger_conf
     mock_logger_instance = Mock()

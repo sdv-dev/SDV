@@ -2,19 +2,17 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_float_dtype
 
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 
 
 class TestNumericalFormatter:
-
     def test___init__(self):
         """Test ``__init__`` attributes properly set."""
         # Run
         formatter = NumericalFormatter(
-            enforce_rounding=True,
-            enforce_min_max_values=True,
-            computer_representation='Int8'
+            enforce_rounding=True, enforce_min_max_values=True, computer_representation='Int8'
         )
 
         # Assert
@@ -53,7 +51,7 @@ class TestNumericalFormatter:
             - 3
         """
         # Setup
-        data = pd.Series(np.array([10, 0., 0.1, 0.12, 0.123, np.nan]))
+        data = pd.Series(np.array([10, 0.0, 0.1, 0.12, 0.123, np.nan]))
 
         # Run
         output = NumericalFormatter._learn_rounding_digits(data)
@@ -70,7 +68,7 @@ class TestNumericalFormatter:
             - an array that contains floats that are multiples of 10, 100 and 1000 and a NaN.
         """
         # Setup
-        data = pd.Series(np.array([1230., 12300., 123000., np.nan]))
+        data = pd.Series(np.array([1230.0, 12300.0, 123000.0, np.nan]))
 
         # Run
         output = NumericalFormatter._learn_rounding_digits(data)
@@ -136,7 +134,8 @@ class TestNumericalFormatter:
         formatter.learn_format(data)
 
         # Asserts
-        assert formatter._dtype == float
+
+        assert is_float_dtype(formatter._dtype)
         assert formatter._min_value is None
         assert formatter._max_value is None
         assert formatter._rounding_digits is None
@@ -290,7 +289,7 @@ class TestNumericalFormatter:
             - input array rounded an converted to integers
         """
         # Setup
-        data = pd.Series([0., 1.2, 3.45, 6.789])
+        data = pd.Series([0.0, 1.2, 3.45, 6.789])
         formatter = NumericalFormatter()
         formatter._rounding_digits = None
         formatter._dtype = np.int64

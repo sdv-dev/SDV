@@ -20,10 +20,7 @@ def create_columns_node(columns):
         str:
             String representing the node that will be printed for the given columns.
     """
-    columns = [
-        fr"{name} : {meta.get('sdtype')}"
-        for name, meta in columns.items()
-    ]
+    columns = [rf"{name} : {meta.get('sdtype')}" for name, meta in columns.items()]
     return r'\l'.join(columns)
 
 
@@ -46,10 +43,7 @@ def create_summarized_columns_node(columns):
 
     count_dict = dict(sorted(count_dict.items()))
     columns = ['Columns']
-    columns.extend([
-        fr'&nbsp; &nbsp; • {sdtype} : {count}'
-        for sdtype, count in count_dict.items()
-    ])
+    columns.extend([rf'&nbsp; &nbsp; • {sdtype} : {count}' for sdtype, count in count_dict.items()])
 
     return r'\l'.join(columns)
 
@@ -101,11 +95,7 @@ def visualize_graph(nodes, edges, filepath=None):
     digraph = graphviz.Digraph(
         'Metadata',
         format=graphviz_extension,
-        node_attr={
-            'shape': 'Mrecord',
-            'fillcolor': 'lightgoldenrod1',
-            'style': 'filled'
-        },
+        node_attr={'shape': 'Mrecord', 'fillcolor': 'lightgoldenrod1', 'style': 'filled'},
     )
 
     for name, label in nodes.items():

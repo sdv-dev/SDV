@@ -53,8 +53,9 @@ def test_simplify_schema_nothing_to_simplify(mock_print_summary, mock_get_total_
 @patch('sdv.utils.poc._simplify_data')
 @patch('sdv.utils.poc._get_total_estimated_columns')
 @patch('sdv.utils.poc._print_simplified_schema_summary')
-def test_simplify_schema(mock_print_summary, mock_get_total_estimated_columns,
-                         mock_simplify_data, mock_simplify_metadata):
+def test_simplify_schema(
+    mock_print_summary, mock_get_total_estimated_columns, mock_simplify_data, mock_simplify_metadata
+):
     """Test ``simplify_schema``."""
     # Setup
     data = Mock()
@@ -83,21 +84,15 @@ def test_simplify_schema_invalid_metadata():
     """Test ``simplify_schema`` when the metadata is not invalid."""
     # Setup
     metadata = MultiTableMetadata().load_from_dict({
-        'tables': {
-            'table1': {
-                'columns': {
-                    'column1': {'sdtype': 'categorical'}
-                }
-            }
-        },
+        'tables': {'table1': {'columns': {'column1': {'sdtype': 'categorical'}}}},
         'relationships': [
             {
                 'parent_table_name': 'table1',
                 'child_table_name': 'table2',
                 'parent_primary_key': 'column1',
-                'child_foreign_key': 'column2'
+                'child_foreign_key': 'column2',
             }
-        ]
+        ],
     })
     real_data = {
         'table1': pd.DataFrame({'column1': [1, 2, 3]}),
@@ -118,26 +113,19 @@ def test_simplify_schema_invalid_data():
     # Setup
     metadata = MultiTableMetadata().load_from_dict({
         'tables': {
-            'table1': {
-                'columns': {
-                    'column1': {'sdtype': 'id'}
-                },
-                'primary_key': 'column1'
-            },
+            'table1': {'columns': {'column1': {'sdtype': 'id'}}, 'primary_key': 'column1'},
             'table2': {
-                'columns': {
-                    'column2': {'sdtype': 'id'}
-                },
-            }
+                'columns': {'column2': {'sdtype': 'id'}},
+            },
         },
         'relationships': [
             {
                 'parent_table_name': 'table1',
                 'child_table_name': 'table2',
                 'parent_primary_key': 'column1',
-                'child_foreign_key': 'column2'
+                'child_foreign_key': 'column2',
             }
-        ]
+        ],
     })
     real_data = {
         'table1': pd.DataFrame({'column1': [np.nan, 1, 2]}),
@@ -157,21 +145,15 @@ def test_get_random_subset_invalid_metadata():
     """Test ``get_random_subset`` when the metadata is invalid."""
     # Setup
     metadata = MultiTableMetadata().load_from_dict({
-        'tables': {
-            'table1': {
-                'columns': {
-                    'column1': {'sdtype': 'categorical'}
-                }
-            }
-        },
+        'tables': {'table1': {'columns': {'column1': {'sdtype': 'categorical'}}}},
         'relationships': [
             {
                 'parent_table_name': 'table1',
                 'child_table_name': 'table2',
                 'parent_primary_key': 'column1',
-                'child_foreign_key': 'column2'
+                'child_foreign_key': 'column2',
             }
-        ]
+        ],
     })
     real_data = {
         'table1': pd.DataFrame({'column1': [1, 2, 3]}),
@@ -192,26 +174,19 @@ def test_get_random_subset_invalid_data():
     # Setup
     metadata = MultiTableMetadata().load_from_dict({
         'tables': {
-            'table1': {
-                'columns': {
-                    'column1': {'sdtype': 'id'}
-                },
-                'primary_key': 'column1'
-            },
+            'table1': {'columns': {'column1': {'sdtype': 'id'}}, 'primary_key': 'column1'},
             'table2': {
-                'columns': {
-                    'column2': {'sdtype': 'id'}
-                },
-            }
+                'columns': {'column2': {'sdtype': 'id'}},
+            },
         },
         'relationships': [
             {
                 'parent_table_name': 'table1',
                 'child_table_name': 'table2',
                 'parent_primary_key': 'column1',
-                'child_foreign_key': 'column2'
+                'child_foreign_key': 'column2',
             }
-        ]
+        ],
     })
     real_data = {
         'table1': pd.DataFrame({'column1': [np.nan, 1, 2]}),

@@ -1,4 +1,5 @@
 """Miscellaneous utility functions."""
+
 import operator
 import uuid
 import warnings
@@ -122,11 +123,7 @@ def _validate_datetime_format(column, datetime_format):
             Series of booleans, with True if the value matches the format, False if not.
     """
     pandas_datetime_format = datetime_format.replace('%-', '%')
-    datetime_column = pd.to_datetime(
-        column,
-        errors='coerce',
-        format=pandas_datetime_format
-    )
+    datetime_column = pd.to_datetime(column, errors='coerce', format=pandas_datetime_format)
     valid = pd.isna(column) | ~pd.isna(datetime_column)
 
     return set(column[~valid])
@@ -253,7 +250,7 @@ def check_sdv_versions_and_warn(synthesizer):
         public_missmatch = current_public_version != fitted_public_version
         enterprise_missmatch = current_enterprise_version != fitted_enterprise_version
 
-        if (public_missmatch or enterprise_missmatch):
+        if public_missmatch or enterprise_missmatch:
             static_message = (
                 'The latest bug fixes and features may not be available for this synthesizer. '
                 'To see these enhancements, create and train a new synthesizer on this version.'
@@ -346,23 +343,18 @@ def check_synthesizer_version(synthesizer, is_fit_method=False, compare_operator
     static_message = 'Downgrading your SDV version is not supported.'
     if is_fit_method:
         static_message = (
-            'Fitting this synthesizer again is not supported. '
-            'Please create a new synthesizer.'
+            'Fitting this synthesizer again is not supported. ' 'Please create a new synthesizer.'
         )
 
     fit_public_version = getattr(synthesizer, '_fitted_sdv_version', None)
     fit_enterprise_version = getattr(synthesizer, '_fitted_sdv_enterprise_version', None)
 
     is_public_lower = _compare_versions(
-        current_public_version,
-        fit_public_version,
-        compare_operator
+        current_public_version, fit_public_version, compare_operator
     )
 
     is_enterprise_lower = _compare_versions(
-        current_enterprise_version,
-        fit_enterprise_version,
-        compare_operator
+        current_enterprise_version, fit_enterprise_version, compare_operator
     )
 
     if is_public_lower and is_enterprise_lower:

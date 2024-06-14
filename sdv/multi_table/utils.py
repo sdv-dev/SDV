@@ -1,4 +1,5 @@
 """Utility functions for the MultiTable models."""
+
 import math
 import warnings
 from collections import defaultdict
@@ -197,9 +198,9 @@ def _get_num_column_to_drop(metadata, child_table, max_col_per_relationships):
 
     num_modelable_column = sum([len(value) for value in modelable_columns.values()])
     num_cols_to_drop = math.ceil(
-        num_modelable_column + num_column_parameter - np.sqrt(
-            num_column_parameter ** 2 + 1 + 2 * max_col_per_relationships
-        )
+        num_modelable_column
+        + num_column_parameter
+        - np.sqrt(num_column_parameter**2 + 1 + 2 * max_col_per_relationships)
     )
 
     return num_cols_to_drop, modelable_columns
@@ -221,11 +222,7 @@ def _get_columns_to_drop_child(metadata, child_table, max_col_per_relationships)
     for sdtype, frequency in sdtypes_frequency.items():
         num_col_to_drop_per_sdtype = round(num_col_to_drop * frequency)
         columns_to_drop.extend(
-            np.random.choice(
-                modelable_columns[sdtype],
-                num_col_to_drop_per_sdtype,
-                replace=False
-            )
+            np.random.choice(modelable_columns[sdtype], num_col_to_drop_per_sdtype, replace=False)
         )
 
     return columns_to_drop
@@ -242,9 +239,7 @@ def _simplify_child(metadata, child_table, max_col_per_relationships):
         max_col_per_relationships (int):
             Maximum number of columns to model per relationship.
     """
-    columns_to_drop = _get_columns_to_drop_child(
-        metadata, child_table, max_col_per_relationships
-    )
+    columns_to_drop = _get_columns_to_drop_child(metadata, child_table, max_col_per_relationships)
     columns = metadata.tables[child_table].columns
     for column in columns_to_drop:
         del columns[column]
@@ -312,9 +307,7 @@ def _simplify_metadata(metadata):
     tables_to_keep = set(children) | set(grandchildren) | {root_to_keep}
     table_to_drop = set(simplified_metadata.tables.keys()) - tables_to_keep
 
-    _simplify_relationships_and_tables(
-        simplified_metadata, table_to_drop
-    )
+    _simplify_relationships_and_tables(simplified_metadata, table_to_drop)
     if grandchildren:
         _simplify_grandchildren(simplified_metadata, grandchildren)
 
@@ -324,9 +317,7 @@ def _simplify_metadata(metadata):
         return simplified_metadata
 
     num_data_column = HMASynthesizer._get_num_data_columns(simplified_metadata)
-    _simplify_children(
-        simplified_metadata, children, root_to_keep, num_data_column
-    )
+    _simplify_children(simplified_metadata, children, root_to_keep, num_data_column)
     simplified_metadata.validate()
 
     return simplified_metadata
@@ -369,7 +360,7 @@ def _print_simplified_schema_summary(data_before, data_after):
         '# Columns (Before)': [len(data_before[table].columns) for table in tables],
         '# Columns (After)': [
             len(data_after[table].columns) if table in data_after else 0 for table in tables
-        ]
+        ],
     })
     message.append(summary.to_string(index=False))
     print('\n'.join(message))  # noqa: T001
@@ -403,7 +394,8 @@ def _get_rows_to_drop(data, metadata):
             relationships_parent = _get_relationships_for_parent(relationships, parent_table)
             parent_column = metadata.tables[parent_table].primary_key
             valid_parent_idx = [
-                idx for idx in data[parent_table].index
+                idx
+                for idx in data[parent_table].index
                 if idx not in table_to_idx_to_drop[parent_table]
             ]
             valid_parent_values = set(data[parent_table].loc[valid_parent_idx, parent_column])
@@ -412,18 +404,18 @@ def _get_rows_to_drop(data, metadata):
                 child_column = relationship['child_foreign_key']
 
                 is_nan = data[child_table][child_column].isna()
-                invalid_values = set(
-                    data[child_table].loc[~is_nan, child_column]
-                ) - valid_parent_values
+                invalid_values = (
+                    set(data[child_table].loc[~is_nan, child_column]) - valid_parent_values
+                )
                 invalid_rows = data[child_table][
                     data[child_table][child_column].isin(invalid_values)
                 ]
                 idx_to_drop = set(invalid_rows.index)
 
                 if idx_to_drop:
-                    table_to_idx_to_drop[child_table] = table_to_idx_to_drop[
-                        child_table
-                    ].union(idx_to_drop)
+                    table_to_idx_to_drop[child_table] = table_to_idx_to_drop[child_table].union(
+                        idx_to_drop
+                    )
 
             relationships = [rel for rel in relationships if rel not in relationships_parent]
 
@@ -436,9 +428,7 @@ def _get_nan_fk_indices_table(data, relationships, table):
     relationships_for_table = _get_relationships_for_child(relationships, table)
     for relationship in relationships_for_table:
         child_column = relationship['child_foreign_key']
-        idx_with_nan_foreign_key.update(
-            data[table][data[table][child_column].isna()].index
-        )
+        idx_with_nan_foreign_key.update(data[table][data[table][child_column].isna()].index)
 
     return idx_with_nan_foreign_key
 
@@ -449,9 +439,7 @@ def _drop_rows(data, metadata, drop_missing_values):
         idx_to_drop = table_to_idx_to_drop[table]
         data[table] = data[table].drop(idx_to_drop)
         if drop_missing_values:
-            idx_with_nan_fk = _get_nan_fk_indices_table(
-                data, metadata.relationships, table
-            )
+            idx_with_nan_fk = _get_nan_fk_indices_table(data, metadata.relationships, table)
             data[table] = data[table].drop(idx_with_nan_fk)
 
         if data[table].empty:
@@ -526,8 +514,9 @@ def _get_primary_keys_referenced(data, metadata):
     return primary_keys_referenced
 
 
-def _subsample_parent(parent_table, parent_primary_key, parent_pk_referenced_before,
-                      dereferenced_pk_parent):
+def _subsample_parent(
+    parent_table, parent_primary_key, parent_pk_referenced_before, dereferenced_pk_parent
+):
     """Subsample the parent table.
 
     The strategy here is to:
@@ -596,8 +585,7 @@ def _subsample_ancestors(data, metadata, table, primary_keys_referenced):
         pk_referenced_before = primary_keys_referenced[parent]
         dereferenced_primary_keys = pk_referenced_before - pk_referenced[parent]
         data[parent] = _subsample_parent(
-            data[parent], parent_primary_key, pk_referenced_before,
-            dereferenced_primary_keys
+            data[parent], parent_primary_key, pk_referenced_before, dereferenced_primary_keys
         )
         if dereferenced_primary_keys:
             primary_keys_referenced[parent] = pk_referenced[parent]
@@ -667,7 +655,7 @@ def _print_subsample_summary(data_before, data_after):
         '# Rows (Before)': [len(data_before[table]) for table in tables],
         '# Rows (After)': [
             len(data_after[table]) if table in data_after else 0 for table in tables
-        ]
+        ],
     })
     subsample_rows = 100 * (1 - summary['# Rows (After)'].sum() / summary['# Rows (Before)'].sum())
     message = [f'Success! Your subset has {round(subsample_rows)}% less rows than the original.\n']

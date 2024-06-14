@@ -19,20 +19,20 @@ def test_drop_unknown_references(mock_drop_rows):
             'parent_table_name': 'parent',
             'child_table_name': 'child',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
+            'child_foreign_key': 'parent_foreign_key',
         },
         {
             'parent_table_name': 'child',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_child',
-            'child_foreign_key': 'child_foreign_key'
+            'child_foreign_key': 'child_foreign_key',
         },
         {
             'parent_table_name': 'parent',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
-        }
+            'child_foreign_key': 'parent_foreign_key',
+        },
     ]
 
     metadata = Mock()
@@ -48,13 +48,13 @@ def test_drop_unknown_references(mock_drop_rows):
         'child': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 5],
             'id_child': [5, 6, 7, 8, 9],
-            'B': ['Yes', 'No', 'No', 'No', 'No']
+            'B': ['Yes', 'No', 'No', 'No', 'No'],
         }),
         'grandchild': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 6],
             'child_foreign_key': [9, 5, 11, 6, 4],
-            'C': ['Yes', 'No', 'No', 'No', 'No']
-        })
+            'C': ['Yes', 'No', 'No', 'No', 'No'],
+        }),
     }
 
     def _drop_rows(data, metadata, drop_missing_values):
@@ -72,16 +72,18 @@ def test_drop_unknown_references(mock_drop_rows):
             'id_parent': [0, 1, 2, 3, 4],
             'A': [True, True, False, True, False],
         }),
-        'child': pd.DataFrame({
-            'parent_foreign_key': [0, 1, 2, 2],
-            'id_child': [5, 6, 7, 8],
-            'B': ['Yes', 'No', 'No', 'No']
-        }, index=[0, 1, 2, 3]),
-        'grandchild': pd.DataFrame({
-            'parent_foreign_key': [1, 2],
-            'child_foreign_key': [5, 6],
-            'C': ['No', 'No']
-        }, index=[1, 3])
+        'child': pd.DataFrame(
+            {
+                'parent_foreign_key': [0, 1, 2, 2],
+                'id_child': [5, 6, 7, 8],
+                'B': ['Yes', 'No', 'No', 'No'],
+            },
+            index=[0, 1, 2, 3],
+        ),
+        'grandchild': pd.DataFrame(
+            {'parent_foreign_key': [1, 2], 'child_foreign_key': [5, 6], 'C': ['No', 'No']},
+            index=[1, 3],
+        ),
     }
     metadata.validate.assert_called_once()
     metadata.validate_data.assert_called_once_with(data)
@@ -96,7 +98,9 @@ def test_drop_unknown_references_valid_data_mock(mock_stdout_write):
     # Setup
     metadata = Mock()
     metadata._get_all_foreign_keys.side_effect = [
-        [], ['parent_foreign_key'], ['child_foreign_key', 'parent_foreign_key']
+        [],
+        ['parent_foreign_key'],
+        ['child_foreign_key', 'parent_foreign_key'],
     ]
     metadata.tables = {'parent', 'child', 'grandchild'}
     data = {
@@ -107,13 +111,13 @@ def test_drop_unknown_references_valid_data_mock(mock_stdout_write):
         'child': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 3],
             'id_child': [5, 6, 7, 8, 9],
-            'B': ['Yes', 'No', 'No', 'No', 'No']
+            'B': ['Yes', 'No', 'No', 'No', 'No'],
         }),
         'grandchild': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 3],
             'child_foreign_key': [6, 5, 7, 6, 9],
-            'C': ['Yes', 'No', 'No', 'No', 'No']
-        })
+            'C': ['Yes', 'No', 'No', 'No', 'No'],
+        }),
     }
 
     # Run
@@ -145,20 +149,20 @@ def test_drop_unknown_references_with_nan(mock_validate_foreign_keys, mock_get_r
             'parent_table_name': 'parent',
             'child_table_name': 'child',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
+            'child_foreign_key': 'parent_foreign_key',
         },
         {
             'parent_table_name': 'child',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_child',
-            'child_foreign_key': 'child_foreign_key'
+            'child_foreign_key': 'child_foreign_key',
         },
         {
             'parent_table_name': 'parent',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
-        }
+            'child_foreign_key': 'parent_foreign_key',
+        },
     ]
 
     metadata = Mock()
@@ -174,18 +178,15 @@ def test_drop_unknown_references_with_nan(mock_validate_foreign_keys, mock_get_r
         'child': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 5, None],
             'id_child': [5, 6, 7, 8, 9, 10],
-            'B': ['Yes', 'No', 'No', 'No', 'No', 'No']
+            'B': ['Yes', 'No', 'No', 'No', 'No', 'No'],
         }),
         'grandchild': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 6, 4],
             'child_foreign_key': [9, np.nan, 5, 11, 6, 4],
-            'C': ['Yes', 'No', 'No', 'No', 'No', 'No']
-        })
+            'C': ['Yes', 'No', 'No', 'No', 'No', 'No'],
+        }),
     }
-    mock_get_rows_to_drop.return_value = defaultdict(set, {
-        'child': {4},
-        'grandchild': {0, 3, 4}
-    })
+    mock_get_rows_to_drop.return_value = defaultdict(set, {'child': {4}, 'grandchild': {0, 3, 4}})
 
     # Run
     result = drop_unknown_references(data, metadata, verbose=False)
@@ -201,16 +202,18 @@ def test_drop_unknown_references_with_nan(mock_validate_foreign_keys, mock_get_r
             'id_parent': [0, 1, 2, 3, 4],
             'A': [True, True, False, True, False],
         }),
-        'child': pd.DataFrame({
-            'parent_foreign_key': [0., 1., 2., 2.],
-            'id_child': [5, 6, 7, 8],
-            'B': ['Yes', 'No', 'No', 'No']
-        }, index=[0, 1, 2, 3]),
-        'grandchild': pd.DataFrame({
-            'parent_foreign_key': [2, 4],
-            'child_foreign_key': [5., 4.],
-            'C': ['No', 'No']
-        }, index=[2, 5])
+        'child': pd.DataFrame(
+            {
+                'parent_foreign_key': [0.0, 1.0, 2.0, 2.0],
+                'id_child': [5, 6, 7, 8],
+                'B': ['Yes', 'No', 'No', 'No'],
+            },
+            index=[0, 1, 2, 3],
+        ),
+        'grandchild': pd.DataFrame(
+            {'parent_foreign_key': [2, 4], 'child_foreign_key': [5.0, 4.0], 'C': ['No', 'No']},
+            index=[2, 5],
+        ),
     }
     for table_name, table in result.items():
         pd.testing.assert_frame_equal(table, expected_result[table_name])
@@ -225,20 +228,20 @@ def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop
             'parent_table_name': 'parent',
             'child_table_name': 'child',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
+            'child_foreign_key': 'parent_foreign_key',
         },
         {
             'parent_table_name': 'child',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_child',
-            'child_foreign_key': 'child_foreign_key'
+            'child_foreign_key': 'child_foreign_key',
         },
         {
             'parent_table_name': 'parent',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
-        }
+            'child_foreign_key': 'parent_foreign_key',
+        },
     ]
 
     metadata = Mock()
@@ -254,18 +257,15 @@ def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop
         'child': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 5, None],
             'id_child': [5, 6, 7, 8, 9, 10],
-            'B': ['Yes', 'No', 'No', 'No', 'No', 'No']
+            'B': ['Yes', 'No', 'No', 'No', 'No', 'No'],
         }),
         'grandchild': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 6, 4],
             'child_foreign_key': [9, np.nan, 5, 11, 6, 4],
-            'C': ['Yes', 'No', 'No', 'No', 'No', 'No']
-        })
+            'C': ['Yes', 'No', 'No', 'No', 'No', 'No'],
+        }),
     }
-    mock_get_rows_to_drop.return_value = defaultdict(set, {
-        'child': {4},
-        'grandchild': {0, 3, 4}
-    })
+    mock_get_rows_to_drop.return_value = defaultdict(set, {'child': {4}, 'grandchild': {0, 3, 4}})
 
     # Run
     result = drop_unknown_references(data, metadata, drop_missing_values=False, verbose=False)
@@ -277,16 +277,22 @@ def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop
             'id_parent': [0, 1, 2, 3, 4],
             'A': [True, True, False, True, False],
         }),
-        'child': pd.DataFrame({
-            'parent_foreign_key': [0., 1., 2., 2., None],
-            'id_child': [5, 6, 7, 8, 10],
-            'B': ['Yes', 'No', 'No', 'No', 'No']
-        }, index=[0, 1, 2, 3, 5]),
-        'grandchild': pd.DataFrame({
-            'parent_foreign_key': [1, 2, 4],
-            'child_foreign_key': [np.nan, 5, 4.],
-            'C': ['No', 'No', 'No']
-        }, index=[1, 2, 5])
+        'child': pd.DataFrame(
+            {
+                'parent_foreign_key': [0.0, 1.0, 2.0, 2.0, None],
+                'id_child': [5, 6, 7, 8, 10],
+                'B': ['Yes', 'No', 'No', 'No', 'No'],
+            },
+            index=[0, 1, 2, 3, 5],
+        ),
+        'grandchild': pd.DataFrame(
+            {
+                'parent_foreign_key': [1, 2, 4],
+                'child_foreign_key': [np.nan, 5, 4.0],
+                'C': ['No', 'No', 'No'],
+            },
+            index=[1, 2, 5],
+        ),
     }
     for table_name, table in result.items():
         pd.testing.assert_frame_equal(table, expected_result[table_name])
@@ -301,20 +307,20 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
             'parent_table_name': 'parent',
             'child_table_name': 'child',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
+            'child_foreign_key': 'parent_foreign_key',
         },
         {
             'parent_table_name': 'child',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_child',
-            'child_foreign_key': 'child_foreign_key'
+            'child_foreign_key': 'child_foreign_key',
         },
         {
             'parent_table_name': 'parent',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
-        }
+            'child_foreign_key': 'parent_foreign_key',
+        },
     ]
 
     metadata = Mock()
@@ -330,18 +336,16 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
         'child': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 5],
             'id_child': [5, 6, 7, 8, 9],
-            'B': ['Yes', 'No', 'No', 'No', 'No']
+            'B': ['Yes', 'No', 'No', 'No', 'No'],
         }),
         'grandchild': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 6],
             'child_foreign_key': [9, 5, 11, 6, 4],
-            'C': ['Yes', 'No', 'No', 'No', 'No']
-        })
+            'C': ['Yes', 'No', 'No', 'No', 'No'],
+        }),
     }
 
-    mock_get_rows_to_drop.return_value = defaultdict(set, {
-        'child': {0, 1, 2, 3, 4}
-    })
+    mock_get_rows_to_drop.return_value = defaultdict(set, {'child': {0, 1, 2, 3, 4}})
 
     # Run and Assert
     expected_message = re.escape(

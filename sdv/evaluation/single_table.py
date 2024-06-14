@@ -100,15 +100,13 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=
         })
 
     return visualization.get_column_plot(
-        real_data,
-        synthetic_data,
-        column_name,
-        plot_type=plot_type
+        real_data, synthetic_data, column_name, plot_type=plot_type
     )
 
 
 def get_column_pair_plot(
-        real_data, synthetic_data, metadata, column_names, plot_type=None, sample_size=None):
+    real_data, synthetic_data, metadata, column_names, plot_type=None, sample_size=None
+):
     """Get a plot of the real and synthetic data for a given column pair.
 
     Args:
@@ -159,13 +157,9 @@ def get_column_pair_plot(
         sdtype = metadata.columns.get(column_name)['sdtype']
         if sdtype == 'datetime':
             datetime_format = metadata.columns.get(column_name).get('datetime_format')
-            real_data[column_name] = pd.to_datetime(
-                real_data[column_name],
-                format=datetime_format
-            )
+            real_data[column_name] = pd.to_datetime(real_data[column_name], format=datetime_format)
             synthetic_data[column_name] = pd.to_datetime(
-                synthetic_data[column_name],
-                format=datetime_format
+                synthetic_data[column_name], format=datetime_format
             )
 
     require_subsample = sample_size and sample_size < min(len(real_data), len(synthetic_data))
@@ -173,9 +167,4 @@ def get_column_pair_plot(
         real_data = real_data.sample(n=sample_size)
         synthetic_data = synthetic_data.sample(n=sample_size)
 
-    return visualization.get_column_pair_plot(
-        real_data,
-        synthetic_data,
-        column_names,
-        plot_type
-    )
+    return visualization.get_column_pair_plot(real_data, synthetic_data, column_names, plot_type)

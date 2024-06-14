@@ -19,7 +19,7 @@ def _get_par_data_and_metadata():
         'date': [date, date, date, date],
         'column2': ['b', 'a', 'a', 'c'],
         'entity': [1, 1, 2, 2],
-        'context': ['a', 'a', 'b', 'b']
+        'context': ['a', 'a', 'b', 'b'],
     })
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
@@ -128,30 +128,25 @@ def test_sythesize_sequences(tmp_path):
         * Save and Load.
     """
     # Setup
-    real_data, metadata = download_demo(
-        modality='sequential',
-        dataset_name='nasdaq100_2019'
-    )
+    real_data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
     assert real_data[real_data['Symbol'] == 'AMZN']['Sector'].unique()
-    synthesizer = PARSynthesizer(
-        metadata,
-        epochs=5,
-        context_columns=['Sector', 'Industry']
-    )
+    synthesizer = PARSynthesizer(metadata, epochs=5, context_columns=['Sector', 'Industry'])
     custom_synthesizer = PARSynthesizer(
-        metadata,
-        epochs=5,
-        context_columns=['Sector', 'Industry'],
-        verbose=True
+        metadata, epochs=5, context_columns=['Sector', 'Industry'], verbose=True
     )
-    scenario_context = pd.DataFrame(data={
-        'Symbol': ['COMPANY-A', 'COMPANY-B', 'COMPANY-C', 'COMPANY-D', 'COMPANY-E'],
-        'Sector': ['Technology'] * 2 + ['Consumer Services'] * 3,
-        'Industry': [
-            'Computer Manufacturing', 'Computer Software: Prepackaged Software',
-            'Hotels/Resorts', 'Restaurants', 'Clothing/Shoe/Accessory Stores'
-        ]
-    })
+    scenario_context = pd.DataFrame(
+        data={
+            'Symbol': ['COMPANY-A', 'COMPANY-B', 'COMPANY-C', 'COMPANY-D', 'COMPANY-E'],
+            'Sector': ['Technology'] * 2 + ['Consumer Services'] * 3,
+            'Industry': [
+                'Computer Manufacturing',
+                'Computer Software: Prepackaged Software',
+                'Hotels/Resorts',
+                'Restaurants',
+                'Clothing/Shoe/Accessory Stores',
+            ],
+        }
+    )
 
     # Run - Fit
     synthesizer.fit(real_data)
@@ -161,8 +156,7 @@ def test_sythesize_sequences(tmp_path):
     synthetic_data = synthesizer.sample(num_sequences=10)
     custom_synthetic_data = custom_synthesizer.sample(num_sequences=3, sequence_length=2)
     custom_synthetic_data_conditional = custom_synthesizer.sample_sequential_columns(
-        context_columns=scenario_context,
-        sequence_length=2
+        context_columns=scenario_context, sequence_length=2
     )
 
     # Save and Load
@@ -182,7 +176,7 @@ def test_sythesize_sequences(tmp_path):
         'Computer Software: Prepackaged Software',
         'Hotels/Resorts',
         'Restaurants',
-        'Clothing/Shoe/Accessory Stores'
+        'Clothing/Shoe/Accessory Stores',
     ]
     assert industries in custom_synthetic_data_conditional['Industry'].unique()
 
@@ -201,7 +195,10 @@ def test_sythesize_sequences(tmp_path):
 def test_par_subset_of_data():
     """Test it when the data index is not continuous GH#1973."""
     # download data
-    data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019',)
+    data, metadata = download_demo(
+        modality='sequential',
+        dataset_name='nasdaq100_2019',
+    )
 
     # modify the data by choosing a subset of it
     data_subset = data.copy()
@@ -212,7 +209,8 @@ def test_par_subset_of_data():
     for i, symbol in enumerate(symbols):
         symbol_mask = data_subset['Symbol'] == symbol
         data_subset = data_subset.drop(
-            data_subset[symbol_mask].sample(frac=i / (2 * len(symbols))).index)
+            data_subset[symbol_mask].sample(frac=i / (2 * len(symbols))).index
+        )
 
     # now run PAR
     synthesizer = PARSynthesizer(metadata, epochs=5, verbose=True)
@@ -242,7 +240,7 @@ def test_par_subset_of_data_simplified():
                 'sdtype': 'datetime',
             },
         },
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
     })
     synthesizer = PARSynthesizer(metadata, epochs=0)
 
@@ -258,24 +256,14 @@ def test_par_missing_sequence_index():
     """Test if PAR Synthesizer can run without a sequence key"""
     # Setup
     metadata_dict = {
-        'columns': {
-            'value': {
-                'sdtype': 'numerical'
-            },
-            'e_id': {
-                'sdtype': 'id'
-            }
-        },
+        'columns': {'value': {'sdtype': 'numerical'}, 'e_id': {'sdtype': 'id'}},
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
-        'sequence_key': 'e_id'
+        'sequence_key': 'e_id',
     }
 
     metadata = SingleTableMetadata().load_from_dict(metadata_dict)
 
-    data = pd.DataFrame({
-        'value': [10, 20, 30],
-        'e_id': [1, 2, 3]
-    })
+    data = pd.DataFrame({'value': [10, 20, 30], 'e_id': [1, 2, 3]})
 
     # Run
     synthesizer = PARSynthesizer(metadata)
@@ -290,38 +278,22 @@ def test_par_missing_sequence_index():
 def test_constraints_on_par():
     """Test if only simple constraints work on PARSynthesizer."""
     # Setup
-    real_data, metadata = download_demo(
-        modality='sequential',
-        dataset_name='nasdaq100_2019'
-    )
+    real_data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
 
-    synthesizer = PARSynthesizer(
-        metadata,
-        epochs=5,
-        context_columns=['Sector', 'Industry']
-    )
+    synthesizer = PARSynthesizer(metadata, epochs=5, context_columns=['Sector', 'Industry'])
 
     market_constraint = {
         'constraint_class': 'Positive',
-        'constraint_parameters': {
-            'column_name': 'MarketCap',
-            'strict_boundaries': True
-        }
+        'constraint_parameters': {'column_name': 'MarketCap', 'strict_boundaries': True},
     }
     volume_constraint = {
         'constraint_class': 'Positive',
-        'constraint_parameters': {
-            'column_name': 'Volume',
-            'strict_boundaries': True
-        }
+        'constraint_parameters': {'column_name': 'Volume', 'strict_boundaries': True},
     }
 
     context_constraint = {
         'constraint_class': 'Mock',
-        'constraint_parameters': {
-            'column_name': 'Sector',
-            'strict_boundaries': True
-        }
+        'constraint_parameters': {'column_name': 'Sector', 'strict_boundaries': True},
     }
 
     # Run
@@ -349,28 +321,41 @@ def test_par_unique_sequence_index_with_enforce_min_max():
     test_id = list(range(10))
     s_key = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
     visits = [
-        '2021-01-01', '2021-01-03', '2021-01-05', '2021-01-07', '2021-01-09',
-        '2021-09-11', '2021-09-17', '2021-10-01', '2021-10-08', '2021-11-01'
+        '2021-01-01',
+        '2021-01-03',
+        '2021-01-05',
+        '2021-01-07',
+        '2021-01-09',
+        '2021-09-11',
+        '2021-09-17',
+        '2021-10-01',
+        '2021-10-08',
+        '2021-11-01',
     ]
     pre_date = [
-        '2020-01-01', '2020-01-02', '2020-01-03', '2020-01-04', '2020-01-05',
-        '2021-04-01', '2021-04-02', '2021-04-03', '2021-04-04', '2021-04-05'
+        '2020-01-01',
+        '2020-01-02',
+        '2020-01-03',
+        '2020-01-04',
+        '2020-01-05',
+        '2021-04-01',
+        '2021-04-02',
+        '2021-04-03',
+        '2021-04-04',
+        '2021-04-05',
     ]
-    test_df = pd.DataFrame({
-        'id': test_id,
-        's_key': s_key,
-        'visits': visits,
-        'pre_date': pre_date
-    })
+    test_df = pd.DataFrame({'id': test_id, 's_key': s_key, 'visits': visits, 'pre_date': pre_date})
     test_df[['visits', 'pre_date']] = test_df[['visits', 'pre_date']].apply(
-        pd.to_datetime, format='%Y-%m-%d', errors='coerce')
+        pd.to_datetime, format='%Y-%m-%d', errors='coerce'
+    )
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(test_df)
     metadata.update_column(column_name='s_key', sdtype='id')
     metadata.set_sequence_key('s_key')
     metadata.set_sequence_index('visits')
-    synthesizer = PARSynthesizer(metadata, enforce_min_max_values=True,
-                                 enforce_rounding=False, epochs=100, verbose=True)
+    synthesizer = PARSynthesizer(
+        metadata, enforce_min_max_values=True, enforce_rounding=False, epochs=100, verbose=True
+    )
 
     # Run
     synthesizer.fit(test_df)

@@ -1,4 +1,5 @@
 """Local file handlers."""
+
 import codecs
 import inspect
 import os
@@ -74,8 +75,9 @@ class CSVHandler(BaseLocalHandler):
             If the provided encoding is not available in the system.
     """
 
-    def __init__(self, sep=',', encoding='UTF', decimal='.', float_format=None,
-                 quotechar='"', quoting=0):
+    def __init__(
+        self, sep=',', encoding='UTF', decimal='.', float_format=None, quotechar='"', quoting=0
+    ):
         super().__init__(decimal, float_format)
         try:
             codecs.lookup(encoding)
@@ -116,11 +118,7 @@ class CSVHandler(BaseLocalHandler):
         else:
             # Validate if the given files exist in the folder
             file_names = file_names
-            missing_files = [
-                file
-                for file in file_names
-                if not (folder_path / file).exists()
-            ]
+            missing_files = [file for file in file_names if not (folder_path / file).exists()]
             if missing_files:
                 raise FileNotFoundError(
                     f"The following files do not exist in the folder: {', '.join(missing_files)}."
@@ -137,7 +135,7 @@ class CSVHandler(BaseLocalHandler):
             'decimal': self.decimal,
             'on_bad_lines': 'warn',
             'quotechar': self.quotechar,
-            'quoting': self.quoting
+            'quoting': self.quoting,
         }
 
         args = inspect.getfullargspec(pd.read_csv)
@@ -147,10 +145,7 @@ class CSVHandler(BaseLocalHandler):
 
         for file_path in file_paths:
             table_name = file_path.stem  # Remove file extension to get table name
-            data[table_name] = pd.read_csv(
-                file_path,
-                **kwargs
-            )
+            data[table_name] = pd.read_csv(file_path, **kwargs)
 
         return data
 
@@ -205,7 +200,7 @@ class ExcelHandler(BaseLocalHandler):
                 sheet_name=sheet_name,
                 parse_dates=False,
                 decimal=self.decimal,
-                index_col=None
+                index_col=None,
             )
 
         return data
@@ -257,8 +252,7 @@ class ExcelHandler(BaseLocalHandler):
 
                 if temp_data.get(sheet_name) is not None:
                     temp_data[sheet_name] = pd.concat(
-                        [temp_data[sheet_name], synthetic_data[sheet_name]],
-                        ignore_index=True
+                        [temp_data[sheet_name], synthetic_data[sheet_name]], ignore_index=True
                     )
 
                 else:
@@ -270,10 +264,7 @@ class ExcelHandler(BaseLocalHandler):
                 table_name += sheet_name_suffix
 
             table_data.to_excel(
-                writer,
-                sheet_name=table_name,
-                float_format=self.float_format,
-                index=False
+                writer, sheet_name=table_name, float_format=self.float_format, index=False
             )
 
         writer.close()

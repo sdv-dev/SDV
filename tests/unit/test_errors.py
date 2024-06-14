@@ -12,7 +12,7 @@ def test_log_exception(traceback_mock):
     traceback_mock.format_exception.return_value = [
         'error line 1\n',
         'error line 2\n',
-        'error line 3\n'
+        'error line 3\n',
     ]
 
     # Run

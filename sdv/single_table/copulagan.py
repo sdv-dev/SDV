@@ -1,4 +1,5 @@
 """Combination of GaussianCopula transformation and GANs."""
+
 import logging
 from copy import deepcopy
 
@@ -118,13 +119,29 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
 
     _gaussian_normalizer_hyper_transformer = None
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
-                 locales=['en_US'], embedding_dim=128, generator_dim=(256, 256),
-                 discriminator_dim=(256, 256), generator_lr=2e-4, generator_decay=1e-6,
-                 discriminator_lr=2e-4, discriminator_decay=1e-6, batch_size=500,
-                 discriminator_steps=1, log_frequency=True, verbose=False, epochs=300,
-                 pac=10, cuda=True, numerical_distributions=None, default_distribution=None):
-
+    def __init__(
+        self,
+        metadata,
+        enforce_min_max_values=True,
+        enforce_rounding=True,
+        locales=['en_US'],
+        embedding_dim=128,
+        generator_dim=(256, 256),
+        discriminator_dim=(256, 256),
+        generator_lr=2e-4,
+        generator_decay=1e-6,
+        discriminator_lr=2e-4,
+        discriminator_decay=1e-6,
+        batch_size=500,
+        discriminator_steps=1,
+        log_frequency=True,
+        verbose=False,
+        epochs=300,
+        pac=10,
+        cuda=True,
+        numerical_distributions=None,
+        default_distribution=None,
+    ):
         super().__init__(
             metadata,
             enforce_min_max_values=enforce_min_max_values,
@@ -166,10 +183,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             sdtype = columns.get(column, {}).get('sdtype')
             if column in columns and sdtype not in ['categorical', 'boolean']:
                 sdtypes[column] = 'numerical'
-                distribution = self._numerical_distributions.get(
-                    column,
-                    self._default_distribution
-                )
+                distribution = self._numerical_distributions.get(column, self._default_distribution)
 
                 transformers[column] = rdt.transformers.GaussianNormalizer(
                     missing_value_generation='from_column',
@@ -190,7 +204,8 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
                 Data to be learned.
         """
         log_numerical_distributions_error(
-            self.numerical_distributions, processed_data.columns, LOGGER)
+            self.numerical_distributions, processed_data.columns, LOGGER
+        )
 
         gaussian_normalizer_config = self._create_gaussian_normalizer_config(processed_data)
         self._gaussian_normalizer_hyper_transformer = rdt.HyperTransformer()
@@ -241,12 +256,11 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
                 learned_params = deepcopy(transformer._univariate.to_dict())
                 learned_params.pop('type')
                 distribution = self.numerical_distributions.get(
-                    column_name,
-                    self.default_distribution
+                    column_name, self.default_distribution
                 )
                 learned_distributions[column_name] = {
                     'distribution': distribution,
-                    'learned_parameters': learned_params
+                    'learned_parameters': learned_params,
                 }
 
         return learned_distributions

@@ -1,4 +1,5 @@
 """Integration tests for Single Table Metadata."""
+
 import json
 import re
 from unittest.mock import patch
@@ -22,9 +23,7 @@ def test_single_table_metadata():
     result = instance.to_dict()
 
     # Assert
-    assert result == {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
-    }
+    assert result == {'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'}
     assert instance.columns == {}
     assert instance._version == 'SINGLE_TABLE_V1'
     assert instance.primary_key is None
@@ -36,6 +35,7 @@ def test_single_table_metadata():
 @patch('rdt.transformers')
 def test_add_column_relationship(mock_rdt_transformers):
     """Test ``add_column_relationship`` method."""
+
     # Setup
     class RandomLocationGeneratorMock:
         @classmethod
@@ -54,9 +54,7 @@ def test_add_column_relationship(mock_rdt_transformers):
 
     # Assert
     instance.validate()
-    assert instance.column_relationships == [
-        {'type': 'address', 'column_names': ['col2', 'col3']}
-    ]
+    assert instance.column_relationships == [{'type': 'address', 'column_names': ['col2', 'col3']}]
 
 
 def test_add_column_relationship_existing_column_in_relationship():
@@ -79,9 +77,7 @@ def test_add_column_relationship_existing_column_in_relationship():
         ' Columns cannot be part of multiple relationships.'
     )
     with pytest.raises(InvalidMetadataError, match=expected_message):
-        instance.add_column_relationship(
-            relationship_type='address', column_names=['col2', 'col4']
-        )
+        instance.add_column_relationship(relationship_type='address', column_names=['col2', 'col4'])
 
 
 @patch('rdt.transformers')
@@ -90,6 +86,7 @@ def test_validate(mock_rdt_transformers):
 
     Ensure the method doesn't crash for a valid metadata.
     """
+
     # Setup
     class RandomLocationGeneratorMock:
         @classmethod
@@ -116,13 +113,20 @@ def test_validate(mock_rdt_transformers):
 @patch('rdt.transformers')
 def test_validate_errors(mock_rdt_transformers):
     """Test ``SingleTableMetadata.validate`` raises the correct errors."""
+
     # Setup
     class RandomLocationGeneratorMock:
         @classmethod
         def _validate_sdtypes(cls, columns_to_sdtypes):
             valid_sdtypes = (
-                'country_code', 'administrative_unit', 'city', 'postcode', 'street_address',
-                'secondary_address', 'state', 'state_abbr'
+                'country_code',
+                'administrative_unit',
+                'city',
+                'postcode',
+                'street_address',
+                'secondary_address',
+                'state',
+                'state_abbr',
             )
             bad_columns = []
             for column_name, sdtypes in columns_to_sdtypes.items():
@@ -156,7 +160,7 @@ def test_validate_errors(mock_rdt_transformers):
     instance.column_relationships = [
         {'type': 'address', 'column_names': ['col11']},
         {'type': 'address', 'column_names': ['col1', 'col2']},
-        {'type': 'fake_relationship', 'column_names': ['col3', 'col4']}
+        {'type': 'fake_relationship', 'column_names': ['col3', 'col4']},
     ]
 
     err_msg = re.escape(
@@ -193,43 +197,17 @@ def test_upgrade_metadata(tmp_path):
     # Setup
     old_metadata = {
         'fields': {
-            'start_date': {
-                'type': 'datetime',
-                'format': '%Y-%m-%d'
-            },
-            'end_date': {
-                'type': 'datetime',
-                'format': '%Y-%m-%d'
-            },
-            'salary': {
-                'type': 'numerical',
-                'subtype': 'integer'
-            },
-            'duration': {
-                'type': 'categorical'
-            },
-            'student_id': {
-                'type': 'id',
-                'subtype': 'integer'
-            },
-            'high_perc': {
-                'type': 'numerical',
-                'subtype': 'float'
-            },
-            'placed': {
-                'type': 'boolean'
-            },
-            'ssn': {
-                'type': 'id',
-                'subtype': 'integer'
-            },
-            'drivers_license': {
-                'type': 'id',
-                'subtype': 'string',
-                'regex': 'regex'
-            }
+            'start_date': {'type': 'datetime', 'format': '%Y-%m-%d'},
+            'end_date': {'type': 'datetime', 'format': '%Y-%m-%d'},
+            'salary': {'type': 'numerical', 'subtype': 'integer'},
+            'duration': {'type': 'categorical'},
+            'student_id': {'type': 'id', 'subtype': 'integer'},
+            'high_perc': {'type': 'numerical', 'subtype': 'float'},
+            'placed': {'type': 'boolean'},
+            'ssn': {'type': 'id', 'subtype': 'integer'},
+            'drivers_license': {'type': 'id', 'subtype': 'string', 'regex': 'regex'},
         },
-        'primary_key': 'student_id'
+        'primary_key': 'student_id',
     }
     filepath = tmp_path / 'old.json'
     old_metadata_file = open(filepath, 'w')
@@ -242,44 +220,19 @@ def test_upgrade_metadata(tmp_path):
     # Assert
     expected_metadata = {
         'columns': {
-            'start_date': {
-                'sdtype': 'datetime',
-                'datetime_format': '%Y-%m-%d'
-            },
-            'end_date': {
-                'sdtype': 'datetime',
-                'datetime_format': '%Y-%m-%d'
-            },
-            'salary': {
-                'sdtype': 'numerical',
-                'computer_representation': 'Int64'
-            },
-            'duration': {
-                'sdtype': 'categorical'
-            },
-            'student_id': {
-                'sdtype': 'id',
-                'regex_format': r'\d{30}'
-            },
-            'high_perc': {
-                'sdtype': 'numerical',
-                'computer_representation': 'Float'
-            },
-            'placed': {
-                'sdtype': 'boolean'
-            },
-            'ssn': {
-                'sdtype': 'id',
-                'regex_format': r'\d{30}'
-            },
-            'drivers_license': {
-                'sdtype': 'id',
-                'regex_format': 'regex'
-            }
+            'start_date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'end_date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'salary': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'duration': {'sdtype': 'categorical'},
+            'student_id': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+            'high_perc': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+            'placed': {'sdtype': 'boolean'},
+            'ssn': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+            'drivers_license': {'sdtype': 'id', 'regex_format': 'regex'},
         },
         'primary_key': 'student_id',
         'alternate_keys': ['ssn', 'drivers_license'],
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
     }
     assert new_metadata == expected_metadata
 
@@ -287,10 +240,7 @@ def test_upgrade_metadata(tmp_path):
 def test_validate_unknown_sdtype():
     """Test ``validate`` method works with ``unknown`` sdtype."""
     # Setup
-    data, _ = download_demo(
-        modality='multi_table',
-        dataset_name='fake_hotels'
-    )
+    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
 
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data['hotels'])
@@ -306,9 +256,9 @@ def test_validate_unknown_sdtype():
             'city': {'sdtype': 'city', 'pii': True},
             'state': {'sdtype': 'administrative_unit', 'pii': True},
             'rating': {'sdtype': 'numerical'},
-            'classification': {'sdtype': 'unknown', 'pii': True}
+            'classification': {'sdtype': 'unknown', 'pii': True},
         },
-        'primary_key': 'hotel_id'
+        'primary_key': 'hotel_id',
     }
     assert metadata.to_dict() == expected_metadata
 
@@ -322,7 +272,7 @@ def test_detect_from_dataframe_with_none_nan_and_nat():
         'f_nan_data': [float('nan')] * 100,
         'none_data': [None] * 100,
         'np_nan_data': [np.nan] * 100,
-        'pd_nat_data': [pd.NaT] * 100
+        'pd_nat_data': [pd.NaT] * 100,
     })
     stm = SingleTableMetadata()
 
@@ -344,7 +294,6 @@ def test_detect_from_dataframe_with_pii_names():
         'addr_line_1': [1, 2, 3],
         'First Name': [1, 2, 3],
         'guest_email': [1, 2, 3],
-
     })
     metadata = SingleTableMetadata()
 
@@ -359,8 +308,8 @@ def test_detect_from_dataframe_with_pii_names():
             'USER PHONE NUMBER': {'sdtype': 'phone_number', 'pii': True},
             'addr_line_1': {'sdtype': 'street_address', 'pii': True},
             'First Name': {'sdtype': 'first_name', 'pii': True},
-            'guest_email': {'sdtype': 'email', 'pii': True}
-        }
+            'guest_email': {'sdtype': 'email', 'pii': True},
+        },
     }
 
     assert metadata.to_dict() == expected_metadata
@@ -372,11 +321,13 @@ def test_detect_from_dataframe_with_pii_non_unique():
     The metadata should not detect any primray key.
     """
     # Setup
-    data = pd.DataFrame(data={
-        'Age': [int(i) for i in np.random.uniform(low=0, high=100, size=100)],
-        'Sex': np.random.choice(['Male', 'Female'], size=100),
-        'latitude': [round(i, 2) for i in np.random.uniform(low=-90, high=+90, size=50)] * 2
-    })
+    data = pd.DataFrame(
+        data={
+            'Age': [int(i) for i in np.random.uniform(low=0, high=100, size=100)],
+            'Sex': np.random.choice(['Male', 'Female'], size=100),
+            'latitude': [round(i, 2) for i in np.random.uniform(low=-90, high=+90, size=50)] * 2,
+        }
+    )
     metadata = SingleTableMetadata()
 
     # Run
@@ -397,7 +348,7 @@ def test_update_columns():
             'col3': {'sdtype': 'categorical'},
             'col4': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'col5': {'sdtype': 'unknown'},
-            'col6': {'sdtype': 'email', 'pii': True}
+            'col6': {'sdtype': 'email', 'pii': True},
         }
     })
 
@@ -405,7 +356,7 @@ def test_update_columns():
     metadata.update_columns(
         ['col1', 'col3', 'col4', 'col5', 'col6'],
         sdtype='numerical',
-        computer_representation='Int64'
+        computer_representation='Int64',
     )
 
     # Assert
@@ -417,8 +368,8 @@ def test_update_columns():
             'col3': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
             'col4': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
             'col5': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-            'col6': {'sdtype': 'numerical', 'computer_representation': 'Int64'}
-        }
+            'col6': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+        },
     }
     assert metadata.to_dict() == expected_metadata
 
@@ -433,20 +384,18 @@ def test_update_columns_invalid_kwargs_combination():
             'col3': {'sdtype': 'categorical'},
             'col4': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'col5': {'sdtype': 'unknown'},
-            'col6': {'sdtype': 'email', 'pii': True}
+            'col6': {'sdtype': 'email', 'pii': True},
         }
     })
 
     # Run / Assert
-    expected_message = re.escape(
-        "Invalid values '(pii)' for 'numerical' sdtype."
-    )
+    expected_message = re.escape("Invalid values '(pii)' for 'numerical' sdtype.")
     with pytest.raises(InvalidMetadataError, match=expected_message):
         metadata.update_columns(
             ['col1', 'col3', 'col4', 'col5', 'col6'],
             sdtype='numerical',
             computer_representation='Int64',
-            pii=True
+            pii=True,
         )
 
 
@@ -460,20 +409,18 @@ def test_update_columns_metadata():
             'col3': {'sdtype': 'categorical'},
             'col4': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'col5': {'sdtype': 'unknown'},
-            'col6': {'sdtype': 'email', 'pii': True}
+            'col6': {'sdtype': 'email', 'pii': True},
         }
     })
 
     # Run
-    metadata.update_columns_metadata(
-        {
-            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-            'col3': {'sdtype': 'email', 'pii': True},
-            'col4': {'sdtype': 'phone_number', 'pii': False},
-            'col5': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'col6': {'sdtype': 'unknown'}
-        }
-    )
+    metadata.update_columns_metadata({
+        'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+        'col3': {'sdtype': 'email', 'pii': True},
+        'col4': {'sdtype': 'phone_number', 'pii': False},
+        'col5': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+        'col6': {'sdtype': 'unknown'},
+    })
 
     # Assert
     expected_metadata = {
@@ -484,8 +431,8 @@ def test_update_columns_metadata():
             'col3': {'sdtype': 'email', 'pii': True},
             'col4': {'sdtype': 'phone_number', 'pii': False},
             'col5': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'col6': {'sdtype': 'unknown'}
-        }
+            'col6': {'sdtype': 'unknown'},
+        },
     }
     assert metadata.to_dict() == expected_metadata
 
@@ -500,7 +447,7 @@ def test_update_columns_metadata_invalid_kwargs_combination():
             'col3': {'sdtype': 'categorical'},
             'col4': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'col5': {'sdtype': 'unknown'},
-            'col6': {'sdtype': 'email', 'pii': True}
+            'col6': {'sdtype': 'email', 'pii': True},
         }
     })
 
@@ -509,15 +456,12 @@ def test_update_columns_metadata_invalid_kwargs_combination():
         'The following errors were found when updating columns:\n\n'
         "Invalid values '(pii)' for numerical column 'col1'.\n"
         "Invalid values '(pii)' for numerical column 'col2'."
-
     )
     with pytest.raises(InvalidMetadataError, match=expected_message):
-        metadata.update_columns_metadata(
-            {
-                'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64', 'pii': True},
-                'col2': {'pii': True}
-            }
-        )
+        metadata.update_columns_metadata({
+            'col1': {'sdtype': 'numerical', 'computer_representation': 'Int64', 'pii': True},
+            'col2': {'pii': True},
+        })
 
 
 def test_column_relationship_validation():
@@ -527,14 +471,11 @@ def test_column_relationship_validation():
         'columns': {
             'user_city': {'sdtype': 'city'},
             'user_zip': {'sdtype': 'postcode'},
-            'user_value': {'sdtype': 'unknown'}
+            'user_value': {'sdtype': 'unknown'},
         },
         'column_relationships': [
-            {
-                'type': 'address',
-                'column_names': ['user_city', 'user_zip', 'user_value']
-            }
-        ]
+            {'type': 'address', 'column_names': ['user_city', 'user_zip', 'user_value']}
+        ],
     })
 
     expected_message = re.escape(

@@ -16,11 +16,7 @@ def test_sample():
     metadata.detect_from_dataframe(data)
     preset = SingleTablePreset(metadata, name='FAST_ML')
     preset.fit(data)
-    samples = preset.sample(
-        num_rows=10,
-        max_tries_per_batch=20,
-        batch_size=5
-    )
+    samples = preset.sample(num_rows=10, max_tries_per_batch=20, batch_size=5)
 
     # Assert
     assert samples['a'].all() in [1, 2, 3, np.nan]
@@ -30,10 +26,7 @@ def test_sample():
 def test_sample_with_constraints():
     """Test sampling for the ``SingleTablePreset``."""
     # Setup
-    data = pd.DataFrame({
-        'a': [1, 2, 3],
-        'b': [4, 5, 6]
-    })
+    data = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
 
     # Run
     metadata = SingleTableMetadata()
@@ -42,19 +35,12 @@ def test_sample_with_constraints():
     constraints = [
         {
             'constraint_class': 'Inequality',
-            'constraint_parameters': {
-                'low_column_name': 'a',
-                'high_column_name': 'b'
-            }
+            'constraint_parameters': {'low_column_name': 'a', 'high_column_name': 'b'},
         }
     ]
     preset.add_constraints(constraints)
     preset.fit(data)
-    samples = preset.sample(
-        num_rows=10,
-        max_tries_per_batch=20,
-        batch_size=5
-    )
+    samples = preset.sample(num_rows=10, max_tries_per_batch=20, batch_size=5)
 
     # Assert
     assert len(samples) == 10
@@ -68,10 +54,7 @@ def test_warnings_are_shown():
         "functionality, please use the 'GaussianCopulaSynthesizer'."
     )
     # Setup
-    data = pd.DataFrame({
-        'a': [1, 2, 3],
-        'b': [4, 5, 6]
-    })
+    data = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
 
     # Run
     metadata = SingleTableMetadata()
@@ -83,10 +66,7 @@ def test_warnings_are_shown():
     constraints = [
         {
             'constraint_class': 'Inequality',
-            'constraint_parameters': {
-                'low_column_name': 'a',
-                'high_column_name': 'b'
-            }
+            'constraint_parameters': {'low_column_name': 'a', 'high_column_name': 'b'},
         }
     ]
     with pytest.warns(FutureWarning, match=warn_message):
@@ -96,11 +76,7 @@ def test_warnings_are_shown():
         preset.fit(data)
 
     with pytest.warns(FutureWarning, match=warn_message):
-        samples = preset.sample(
-            num_rows=10,
-            max_tries_per_batch=20,
-            batch_size=5
-        )
+        samples = preset.sample(num_rows=10, max_tries_per_batch=20, batch_size=5)
 
     # Assert
     assert len(samples) == 10

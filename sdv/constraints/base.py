@@ -126,15 +126,19 @@ class Constraint(metaclass=ConstraintMeta):
         constraint = cls.__name__
         article = 'an' if constraint == 'Inequality' else 'a'
         if missing_values:
-            errors.append(ValueError(
-                f'Missing required values {missing_values} in {article} {constraint} constraint.'
-            ))
+            errors.append(
+                ValueError(
+                    f'Missing required values {missing_values} in {article} {constraint} constraint.'
+                )
+            )
 
         invalid_vals = set(kwargs) - set(args)
         if invalid_vals:
-            errors.append(ValueError(
-                f'Invalid values {invalid_vals} are present in {article} {constraint} constraint.'
-            ))
+            errors.append(
+                ValueError(
+                    f'Invalid values {invalid_vals} are present in {article} {constraint} constraint.'
+                )
+            )
 
         if errors:
             raise AggregateConstraintsError(errors)
@@ -327,8 +331,9 @@ class Constraint(metaclass=ConstraintMeta):
         valid = self.is_valid(table_data)
         invalid = sum(~valid)
         if invalid:
-            LOGGER.debug('%s: %s invalid rows out of %s.',
-                         self.__class__.__name__, sum(~valid), len(valid))
+            LOGGER.debug(
+                '%s: %s invalid rows out of %s.', self.__class__.__name__, sum(~valid), len(valid)
+            )
 
         if isinstance(valid, pd.Series):
             return table_data[valid.to_numpy()]
@@ -414,8 +419,7 @@ class ColumnsModel:
             if dtype in ('i', 'f'):
                 sdtypes[column_name] = 'numerical'
                 transformers = FloatFormatter(
-                    missing_value_replacement='mean',
-                    missing_value_generation='from_column'
+                    missing_value_replacement='mean', missing_value_generation='from_column'
                 )
             elif dtype == 'O':
                 sdtypes[column_name] = 'categorical'
@@ -423,14 +427,12 @@ class ColumnsModel:
             elif dtype == 'M':
                 sdtypes[column_name] = 'datetime'
                 transformers[column_name] = UnixTimestampEncoder(
-                    missing_value_replacement='mean',
-                    missing_value_generation='from_column'
+                    missing_value_replacement='mean', missing_value_generation='from_column'
                 )
             elif dtype == 'b':
                 sdtypes[column_name] = 'boolean'
                 transformers[column_name] = BinaryEncoder(
-                    missing_value_replacement=-1,
-                    missing_value_generation='from_column'
+                    missing_value_replacement=-1, missing_value_generation='from_column'
                 )
 
         return {'sdtypes': sdtypes, 'transformers': transformers}
@@ -471,8 +473,9 @@ class ColumnsModel:
                     multiplier = num_rows // num_valid
                     num_rows_missing = num_rows % num_valid
                     remainder_rows = valid_rows.iloc[0:num_rows_missing, :]
-                    valid_rows = pd.concat([valid_rows] * multiplier + [remainder_rows],
-                                           ignore_index=True)
+                    valid_rows = pd.concat(
+                        [valid_rows] * multiplier + [remainder_rows], ignore_index=True
+                    )
                     break
 
             remaining = num_rows - num_valid
@@ -503,9 +506,7 @@ class ColumnsModel:
                 Table data with additional ``constraint_columns``.
         """
         condition_columns = [c for c in self.constraint_columns if c in table_data.columns]
-        grouped_conditions = table_data[condition_columns].groupby(
-            _groupby_list(condition_columns)
-        )
+        grouped_conditions = table_data[condition_columns].groupby(_groupby_list(condition_columns))
         all_sampled_rows = []
         for group, dataframe in grouped_conditions:
             if not isinstance(group, tuple):
@@ -513,8 +514,7 @@ class ColumnsModel:
 
             transformed_condition = self._hyper_transformer.transform(dataframe).iloc[0].to_dict()
             sampled_rows = self._reject_sample(
-                num_rows=dataframe.shape[0],
-                conditions=transformed_condition
+                num_rows=dataframe.shape[0], conditions=transformed_condition
             )
             all_sampled_rows.append(sampled_rows)
 

@@ -1,4 +1,5 @@
 """Wrappers around copulas models."""
+
 import inspect
 import logging
 import warnings
@@ -93,8 +94,15 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         return cls._DISTRIBUTIONS[distribution]
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
-                 locales=['en_US'], numerical_distributions=None, default_distribution=None):
+    def __init__(
+        self,
+        metadata,
+        enforce_min_max_values=True,
+        enforce_rounding=True,
+        locales=['en_US'],
+        numerical_distributions=None,
+        default_distribution=None,
+    ):
         super().__init__(
             metadata,
             enforce_min_max_values=enforce_min_max_values,
@@ -120,18 +128,18 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
                 Data to be learned.
         """
         log_numerical_distributions_error(
-            self.numerical_distributions, processed_data.columns, LOGGER)
+            self.numerical_distributions, processed_data.columns, LOGGER
+        )
         self._num_rows = len(processed_data)
 
         numerical_distributions = deepcopy(self._numerical_distributions)
         for column in processed_data.columns:
             if column not in numerical_distributions:
                 numerical_distributions[column] = self._numerical_distributions.get(
-                    column, self._default_distribution)
+                    column, self._default_distribution
+                )
 
-        self._model = multivariate.GaussianMultivariate(
-            distribution=numerical_distributions
-        )
+        self._model = multivariate.GaussianMultivariate(distribution=numerical_distributions)
 
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', module='scipy')
@@ -205,7 +213,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
                 learned_params.pop('type')
                 learned_distributions[column] = {
                     'distribution': distribution,
-                    'learned_parameters': learned_params
+                    'learned_parameters': learned_params,
                 }
 
         return learned_distributions
@@ -236,7 +244,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
         correlation = []
         for index, row in enumerate(params['correlation'][1:]):
-            correlation.append(row[:index + 1])
+            correlation.append(row[: index + 1])
 
         params['correlation'] = correlation
         params['univariates'] = dict(zip(params.pop('columns'), params['univariates']))
@@ -369,9 +377,7 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
                         univariate = default_params['univariates'][column]
                         univariate['type'] = univariate_type
                     else:
-                        LOGGER.debug(
-                            f"Column '{column}' has invalid parameters."
-                        )
+                        LOGGER.debug(f"Column '{column}' has invalid parameters.")
             else:
                 LOGGER.debug(f"Univariate for col '{column}' does not have _argcheck method.")
 

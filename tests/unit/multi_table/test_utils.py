@@ -45,7 +45,7 @@ def test__get_relationships_for_child():
     relationships = [
         {'parent_table_name': 'parent', 'child_table_name': 'child'},
         {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
-        {'parent_table_name': 'parent', 'child_table_name': 'grandchild'}
+        {'parent_table_name': 'parent', 'child_table_name': 'grandchild'},
     ]
 
     # Run
@@ -54,7 +54,7 @@ def test__get_relationships_for_child():
     # Assert
     expected_result = [
         {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
-        {'parent_table_name': 'parent', 'child_table_name': 'grandchild'}
+        {'parent_table_name': 'parent', 'child_table_name': 'grandchild'},
     ]
     assert result == expected_result
 
@@ -65,7 +65,7 @@ def test__get_relationships_for_parent():
     relationships = [
         {'parent_table_name': 'parent', 'child_table_name': 'child'},
         {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
-        {'parent_table_name': 'parent', 'child_table_name': 'grandchild'}
+        {'parent_table_name': 'parent', 'child_table_name': 'grandchild'},
     ]
 
     # Run
@@ -74,7 +74,7 @@ def test__get_relationships_for_parent():
     # Assert
     expected_result = [
         {'parent_table_name': 'parent', 'child_table_name': 'child'},
-        {'parent_table_name': 'parent', 'child_table_name': 'grandchild'}
+        {'parent_table_name': 'parent', 'child_table_name': 'grandchild'},
     ]
     assert result == expected_result
 
@@ -99,20 +99,20 @@ def test__get_rows_to_drop():
             'parent_table_name': 'parent',
             'child_table_name': 'child',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
+            'child_foreign_key': 'parent_foreign_key',
         },
         {
             'parent_table_name': 'child',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_child',
-            'child_foreign_key': 'child_foreign_key'
+            'child_foreign_key': 'child_foreign_key',
         },
         {
             'parent_table_name': 'parent',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
-        }
+            'child_foreign_key': 'parent_foreign_key',
+        },
     ]
 
     metadata = Mock()
@@ -120,7 +120,7 @@ def test__get_rows_to_drop():
     metadata.tables = {
         'parent': Mock(primary_key='id_parent'),
         'child': Mock(primary_key='id_child'),
-        'grandchild': Mock(primary_key='id_grandchild')
+        'grandchild': Mock(primary_key='id_grandchild'),
     }
 
     data = {
@@ -131,24 +131,20 @@ def test__get_rows_to_drop():
         'child': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 5],
             'id_child': [5, 6, 7, 8, 9],
-            'B': ['Yes', 'No', 'No', 'No', 'No']
+            'B': ['Yes', 'No', 'No', 'No', 'No'],
         }),
         'grandchild': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 6],
             'child_foreign_key': [9, 5, 11, 6, 4],
-            'C': ['Yes', 'No', 'No', 'No', 'No']
-        })
+            'C': ['Yes', 'No', 'No', 'No', 'No'],
+        }),
     }
 
     # Run
     result = _get_rows_to_drop(data, metadata)
 
     # Assert
-    expected_result = defaultdict(set, {
-        'child': {4},
-        'grandchild': {0, 2, 4},
-        'parent': set()
-    })
+    expected_result = defaultdict(set, {'child': {4}, 'grandchild': {0, 2, 4}, 'parent': set()})
     assert result == expected_result
 
 
@@ -160,26 +156,26 @@ def test__get_nan_fk_indices_table():
             'parent_table_name': 'parent',
             'child_table_name': 'child',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
+            'child_foreign_key': 'parent_foreign_key',
         },
         {
             'parent_table_name': 'child',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_child',
-            'child_foreign_key': 'child_foreign_key'
+            'child_foreign_key': 'child_foreign_key',
         },
         {
             'parent_table_name': 'parent',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
-        }
+            'child_foreign_key': 'parent_foreign_key',
+        },
     ]
     data = {
         'grandchild': pd.DataFrame({
             'parent_foreign_key': [np.nan, 1, 2, 2, np.nan],
             'child_foreign_key': [9, np.nan, 11, 6, 4],
-            'C': ['Yes', 'No', 'No', 'No', 'No']
+            'C': ['Yes', 'No', 'No', 'No', 'No'],
         })
     }
 
@@ -199,20 +195,20 @@ def test__drop_rows(mock_get_rows_to_drop):
             'parent_table_name': 'parent',
             'child_table_name': 'child',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
+            'child_foreign_key': 'parent_foreign_key',
         },
         {
             'parent_table_name': 'child',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_child',
-            'child_foreign_key': 'child_foreign_key'
+            'child_foreign_key': 'child_foreign_key',
         },
         {
             'parent_table_name': 'parent',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
-        }
+            'child_foreign_key': 'parent_foreign_key',
+        },
     ]
 
     metadata = Mock()
@@ -220,7 +216,7 @@ def test__drop_rows(mock_get_rows_to_drop):
     metadata.tables = {
         'parent': Mock(primary_key='id_parent'),
         'child': Mock(primary_key='id_child'),
-        'grandchild': Mock(primary_key='id_grandchild')
+        'grandchild': Mock(primary_key='id_grandchild'),
     }
     data = {
         'parent': pd.DataFrame({
@@ -230,19 +226,16 @@ def test__drop_rows(mock_get_rows_to_drop):
         'child': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 5],
             'id_child': [5, 6, 7, 8, 9],
-            'B': ['Yes', 'No', 'No', 'No', 'No']
+            'B': ['Yes', 'No', 'No', 'No', 'No'],
         }),
         'grandchild': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 6],
             'child_foreign_key': [9, 5, 11, 6, 4],
-            'C': ['Yes', 'No', 'No', 'No', 'No']
-        })
+            'C': ['Yes', 'No', 'No', 'No', 'No'],
+        }),
     }
 
-    mock_get_rows_to_drop.return_value = defaultdict(set, {
-        'child': {4},
-        'grandchild': {0, 2, 4}
-    })
+    mock_get_rows_to_drop.return_value = defaultdict(set, {'child': {4}, 'grandchild': {0, 2, 4}})
 
     # Run
     _drop_rows(data, metadata, False)
@@ -254,16 +247,18 @@ def test__drop_rows(mock_get_rows_to_drop):
             'id_parent': [0, 1, 2, 3, 4],
             'A': [True, True, False, True, False],
         }),
-        'child': pd.DataFrame({
-            'parent_foreign_key': [0, 1, 2, 2],
-            'id_child': [5, 6, 7, 8],
-            'B': ['Yes', 'No', 'No', 'No']
-        }, index=[0, 1, 2, 3]),
-        'grandchild': pd.DataFrame({
-            'parent_foreign_key': [1, 2],
-            'child_foreign_key': [5, 6],
-            'C': ['No', 'No']
-        }, index=[1, 3])
+        'child': pd.DataFrame(
+            {
+                'parent_foreign_key': [0, 1, 2, 2],
+                'id_child': [5, 6, 7, 8],
+                'B': ['Yes', 'No', 'No', 'No'],
+            },
+            index=[0, 1, 2, 3],
+        ),
+        'grandchild': pd.DataFrame(
+            {'parent_foreign_key': [1, 2], 'child_foreign_key': [5, 6], 'C': ['No', 'No']},
+            index=[1, 3],
+        ),
     }
     for table_name, table in data.items():
         pd.testing.assert_frame_equal(table, expected_result[table_name])
@@ -278,20 +273,20 @@ def test_drop_unknown_references_with_nan(mock_get_rows_to_drop):
             'parent_table_name': 'parent',
             'child_table_name': 'child',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
+            'child_foreign_key': 'parent_foreign_key',
         },
         {
             'parent_table_name': 'child',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_child',
-            'child_foreign_key': 'child_foreign_key'
+            'child_foreign_key': 'child_foreign_key',
         },
         {
             'parent_table_name': 'parent',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
-        }
+            'child_foreign_key': 'parent_foreign_key',
+        },
     ]
 
     metadata = Mock()
@@ -306,18 +301,15 @@ def test_drop_unknown_references_with_nan(mock_get_rows_to_drop):
         'child': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 5, None],
             'id_child': [5, 6, 7, 8, 9, 10],
-            'B': ['Yes', 'No', 'No', 'No', 'No', 'No']
+            'B': ['Yes', 'No', 'No', 'No', 'No', 'No'],
         }),
         'grandchild': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 6, 4],
             'child_foreign_key': [9, np.nan, 5, 11, 6, 4],
-            'C': ['Yes', 'No', 'No', 'No', 'No', 'No']
-        })
+            'C': ['Yes', 'No', 'No', 'No', 'No', 'No'],
+        }),
     }
-    mock_get_rows_to_drop.return_value = defaultdict(set, {
-        'child': {4},
-        'grandchild': {0, 3, 4}
-    })
+    mock_get_rows_to_drop.return_value = defaultdict(set, {'child': {4}, 'grandchild': {0, 3, 4}})
 
     # Run
     _drop_rows(data, metadata, True)
@@ -329,16 +321,18 @@ def test_drop_unknown_references_with_nan(mock_get_rows_to_drop):
             'id_parent': [0, 1, 2, 3, 4],
             'A': [True, True, False, True, False],
         }),
-        'child': pd.DataFrame({
-            'parent_foreign_key': [0., 1., 2., 2.],
-            'id_child': [5, 6, 7, 8],
-            'B': ['Yes', 'No', 'No', 'No']
-        }, index=[0, 1, 2, 3]),
-        'grandchild': pd.DataFrame({
-            'parent_foreign_key': [2, 4],
-            'child_foreign_key': [5., 4.],
-            'C': ['No', 'No']
-        }, index=[2, 5])
+        'child': pd.DataFrame(
+            {
+                'parent_foreign_key': [0.0, 1.0, 2.0, 2.0],
+                'id_child': [5, 6, 7, 8],
+                'B': ['Yes', 'No', 'No', 'No'],
+            },
+            index=[0, 1, 2, 3],
+        ),
+        'grandchild': pd.DataFrame(
+            {'parent_foreign_key': [2, 4], 'child_foreign_key': [5.0, 4.0], 'C': ['No', 'No']},
+            index=[2, 5],
+        ),
     }
     for table_name, table in data.items():
         pd.testing.assert_frame_equal(table, expected_result[table_name])
@@ -353,20 +347,20 @@ def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop
             'parent_table_name': 'parent',
             'child_table_name': 'child',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
+            'child_foreign_key': 'parent_foreign_key',
         },
         {
             'parent_table_name': 'child',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_child',
-            'child_foreign_key': 'child_foreign_key'
+            'child_foreign_key': 'child_foreign_key',
         },
         {
             'parent_table_name': 'parent',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
-        }
+            'child_foreign_key': 'parent_foreign_key',
+        },
     ]
 
     metadata = Mock()
@@ -382,18 +376,15 @@ def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop
         'child': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 5, None],
             'id_child': [5, 6, 7, 8, 9, 10],
-            'B': ['Yes', 'No', 'No', 'No', 'No', 'No']
+            'B': ['Yes', 'No', 'No', 'No', 'No', 'No'],
         }),
         'grandchild': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 6, 4],
             'child_foreign_key': [9, np.nan, 5, 11, 6, 4],
-            'C': ['Yes', 'No', 'No', 'No', 'No', 'No']
-        })
+            'C': ['Yes', 'No', 'No', 'No', 'No', 'No'],
+        }),
     }
-    mock_get_rows_to_drop.return_value = defaultdict(set, {
-        'child': {4},
-        'grandchild': {0, 3, 4}
-    })
+    mock_get_rows_to_drop.return_value = defaultdict(set, {'child': {4}, 'grandchild': {0, 3, 4}})
 
     # Run
     _drop_rows(data, metadata, drop_missing_values=False)
@@ -405,16 +396,22 @@ def test_drop_unknown_references_drop_missing_values_false(mock_get_rows_to_drop
             'id_parent': [0, 1, 2, 3, 4],
             'A': [True, True, False, True, False],
         }),
-        'child': pd.DataFrame({
-            'parent_foreign_key': [0., 1., 2., 2., None],
-            'id_child': [5, 6, 7, 8, 10],
-            'B': ['Yes', 'No', 'No', 'No', 'No']
-        }, index=[0, 1, 2, 3, 5]),
-        'grandchild': pd.DataFrame({
-            'parent_foreign_key': [1, 2, 4],
-            'child_foreign_key': [np.nan, 5, 4.],
-            'C': ['No', 'No', 'No']
-        }, index=[1, 2, 5])
+        'child': pd.DataFrame(
+            {
+                'parent_foreign_key': [0.0, 1.0, 2.0, 2.0, None],
+                'id_child': [5, 6, 7, 8, 10],
+                'B': ['Yes', 'No', 'No', 'No', 'No'],
+            },
+            index=[0, 1, 2, 3, 5],
+        ),
+        'grandchild': pd.DataFrame(
+            {
+                'parent_foreign_key': [1, 2, 4],
+                'child_foreign_key': [np.nan, 5, 4.0],
+                'C': ['No', 'No', 'No'],
+            },
+            index=[1, 2, 5],
+        ),
     }
     for table_name, table in data.items():
         pd.testing.assert_frame_equal(table, expected_result[table_name])
@@ -429,20 +426,20 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
             'parent_table_name': 'parent',
             'child_table_name': 'child',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
+            'child_foreign_key': 'parent_foreign_key',
         },
         {
             'parent_table_name': 'child',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_child',
-            'child_foreign_key': 'child_foreign_key'
+            'child_foreign_key': 'child_foreign_key',
         },
         {
             'parent_table_name': 'parent',
             'child_table_name': 'grandchild',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
-        }
+            'child_foreign_key': 'parent_foreign_key',
+        },
     ]
 
     metadata = Mock()
@@ -458,18 +455,16 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
         'child': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 5],
             'id_child': [5, 6, 7, 8, 9],
-            'B': ['Yes', 'No', 'No', 'No', 'No']
+            'B': ['Yes', 'No', 'No', 'No', 'No'],
         }),
         'grandchild': pd.DataFrame({
             'parent_foreign_key': [0, 1, 2, 2, 6],
             'child_foreign_key': [9, 5, 11, 6, 4],
-            'C': ['Yes', 'No', 'No', 'No', 'No']
-        })
+            'C': ['Yes', 'No', 'No', 'No', 'No'],
+        }),
     }
 
-    mock_get_rows_to_drop.return_value = defaultdict(set, {
-        'child': {0, 1, 2, 3, 4}
-    })
+    mock_get_rows_to_drop.return_value = defaultdict(set, {'child': {0, 1, 2, 3, 4}})
 
     # Run and Assert
     expected_message = re.escape(
@@ -501,19 +496,13 @@ def test__get_n_order_descendants():
     expected_gp_order_1 = {
         'order_1': ['parent', 'other_table'],
     }
-    expected_gp_order_2 = {
-        'order_1': ['parent', 'other_table'],
-        'order_2': ['child']
-    }
+    expected_gp_order_2 = {'order_1': ['parent', 'other_table'], 'order_2': ['child']}
     expected_gp_order_3 = {
         'order_1': ['parent', 'other_table'],
         'order_2': ['child'],
-        'order_3': ['grandchild']
+        'order_3': ['grandchild'],
     }
-    expected_other_order_2 = {
-        'order_1': [],
-        'order_2': []
-    }
+    expected_other_order_2 = {'order_1': [], 'order_2': []}
     assert grandparent_order_1 == expected_gp_order_1
     assert grandparent_order_2 == expected_gp_order_2
     assert grandparent_order_3 == expected_gp_order_3
@@ -537,25 +526,32 @@ def test__get_all_descendant_per_root_at_order_n():
     # Assert
     expected_result = {
         'other_root': {
-            'order_1': ['child'], 'order_2': ['grandchild'], 'order_3': [],
-            'num_descendants': 2
+            'order_1': ['child'],
+            'order_2': ['grandchild'],
+            'order_3': [],
+            'num_descendants': 2,
         },
         'grandparent': {
-            'order_1': ['parent', 'other_table'], 'order_2': ['child'], 'order_3': ['grandchild'],
-            'num_descendants': 4
-        }
+            'order_1': ['parent', 'other_table'],
+            'order_2': ['child'],
+            'order_3': ['grandchild'],
+            'num_descendants': 4,
+        },
     }
     assert result == expected_result
 
 
-@pytest.mark.parametrize(('table_name', 'expected_result'), [
-    ('grandchild', {'child', 'parent', 'grandparent', 'other_root'}),
-    ('child', {'parent', 'grandparent', 'other_root'}),
-    ('parent', {'grandparent'}),
-    ('other_table', {'grandparent'}),
-    ('grandparent', set()),
-    ('other_root', set()),
-])
+@pytest.mark.parametrize(
+    ('table_name', 'expected_result'),
+    [
+        ('grandchild', {'child', 'parent', 'grandparent', 'other_root'}),
+        ('child', {'parent', 'grandparent', 'other_root'}),
+        ('parent', {'grandparent'}),
+        ('other_table', {'grandparent'}),
+        ('grandparent', set()),
+        ('other_root', set()),
+    ],
+)
 def test__get_ancestors(table_name, expected_result):
     """Test the ``_get_ancestors`` method."""
     # Setup
@@ -574,16 +570,19 @@ def test__get_ancestors(table_name, expected_result):
     assert result == expected_result
 
 
-@pytest.mark.parametrize(('table_name', 'expected_result'), [
-    ('grandchild', {'disconnected_root'}),
-    ('child', {'disconnected_root'}),
-    ('parent', {'disconnected_root'}),
-    ('other_table', {'disconnected_root', 'other_root'}),
-    ('grandparent', {'disconnected_root'}),
-    ('other_root', {'disconnected_root'}),
-    ('disconnected_root', {'grandparent', 'other_root'}),
-    ('disconnect_child', {'grandparent', 'other_root'}),
-])
+@pytest.mark.parametrize(
+    ('table_name', 'expected_result'),
+    [
+        ('grandchild', {'disconnected_root'}),
+        ('child', {'disconnected_root'}),
+        ('parent', {'disconnected_root'}),
+        ('other_table', {'disconnected_root', 'other_root'}),
+        ('grandparent', {'disconnected_root'}),
+        ('other_root', {'disconnected_root'}),
+        ('disconnected_root', {'grandparent', 'other_root'}),
+        ('disconnect_child', {'grandparent', 'other_root'}),
+    ],
+)
 def test__get_disconnected_roots_from_table(table_name, expected_result):
     """Test the ``_get_disconnected_roots_from_table`` method."""
     # Setup
@@ -621,7 +620,7 @@ def test__simplify_relationships_and_tables():
             {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
             {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
             {'parent_table_name': 'other_root', 'child_table_name': 'child'},
-        ]
+        ],
     })
     tables_to_drop = {'grandchild', 'other_root'}
 
@@ -665,7 +664,7 @@ def test__simplify_grandchildren():
                 'columns': {
                     'col_10': {'sdtype': 'id'},
                     'col_11': {'sdtype': 'phone_number'},
-                    'col_12': {'sdtype': 'categorical'}
+                    'col_12': {'sdtype': 'categorical'},
                 }
             },
         }
@@ -693,27 +692,20 @@ def test__get_num_column_to_drop():
     """Test the ``_get_num_column_to_drop`` method."""
     # Setup
     metadata = Mock()
-    categorical_columns = {
-        f'col_{i}': {'sdtype': 'categorical'} for i in range(300)
-    }
-    numerical_columns = {
-        f'col_{i}': {'sdtype': 'numerical'} for i in range(300, 600)
-    }
-    datetime_columns = {
-        f'col_{i}': {'sdtype': 'datetime'} for i in range(600, 900)
-    }
-    id_columns = {
-        f'col_{i}': {'sdtype': 'id'} for i in range(900, 910)
-    }
-    email_columns = {
-        f'col_{i}': {'sdtype': 'email'} for i in range(910, 920)
-    }
+    categorical_columns = {f'col_{i}': {'sdtype': 'categorical'} for i in range(300)}
+    numerical_columns = {f'col_{i}': {'sdtype': 'numerical'} for i in range(300, 600)}
+    datetime_columns = {f'col_{i}': {'sdtype': 'datetime'} for i in range(600, 900)}
+    id_columns = {f'col_{i}': {'sdtype': 'id'} for i in range(900, 910)}
+    email_columns = {f'col_{i}': {'sdtype': 'email'} for i in range(910, 920)}
     metadata = MultiTableMetadata().load_from_dict({
         'tables': {
             'child': {
                 'columns': {
-                    **categorical_columns, **numerical_columns,
-                    **datetime_columns, **id_columns, **email_columns
+                    **categorical_columns,
+                    **numerical_columns,
+                    **datetime_columns,
+                    **id_columns,
+                    **email_columns,
                 }
             }
         }
@@ -721,7 +713,7 @@ def test__get_num_column_to_drop():
 
     child_table = 'child'
     max_col_per_relationship = 500
-    num_modelable_columnn = (len(metadata.tables[child_table].columns) - 20)
+    num_modelable_columnn = len(metadata.tables[child_table].columns) - 20
 
     # Run
     num_col_to_drop, modelable_columns = _get_num_column_to_drop(
@@ -747,14 +739,10 @@ def test__get_columns_to_drop_child_drop_all_modelable_columns(mock_get_num_colu
     mock_get_num_column_to_drop.return_value = (10, modelable_column)
 
     # Run
-    columns_to_drop = _get_columns_to_drop_child(
-        metadata, 'child', max_col_per_relationship
-    )
+    columns_to_drop = _get_columns_to_drop_child(metadata, 'child', max_col_per_relationship)
 
     # Assert
-    mock_get_num_column_to_drop.assert_called_once_with(
-        metadata, 'child', max_col_per_relationship
-    )
+    mock_get_num_column_to_drop.assert_called_once_with(metadata, 'child', max_col_per_relationship)
     assert columns_to_drop == ['col_1', 'col_3', 'col_3', 'col_4', 'col_5']
 
 
@@ -764,21 +752,14 @@ def test__get_columns_to_drop_child_only_one_sdtyoe(mock_get_num_column_to_drop)
     # Setup
     metadata = Mock()
     max_col_per_relationship = 10
-    modelable_column = {
-        'numerical': ['col_1', 'col_2', 'col_3'],
-        'categorical': []
-    }
+    modelable_column = {'numerical': ['col_1', 'col_2', 'col_3'], 'categorical': []}
     mock_get_num_column_to_drop.return_value = (2, modelable_column)
 
     # Run
-    columns_to_drop = _get_columns_to_drop_child(
-        metadata, 'child', max_col_per_relationship
-    )
+    columns_to_drop = _get_columns_to_drop_child(metadata, 'child', max_col_per_relationship)
 
     # Assert
-    mock_get_num_column_to_drop.assert_called_once_with(
-        metadata, 'child', max_col_per_relationship
-    )
+    mock_get_num_column_to_drop.assert_called_once_with(metadata, 'child', max_col_per_relationship)
     assert set(columns_to_drop).issubset({'col_1', 'col_2', 'col_3'})
     assert len(set(columns_to_drop)) == len(columns_to_drop) == 2
 
@@ -796,19 +777,15 @@ def test__get_column_to_drop_child(mock_get_num_column_to_drop):
     max_col_per_relationship = 10
     modelable_column = {
         'numerical': ['col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6'],
-        'categorical': ['col_7', 'col_8', 'col_9', 'col_10']
+        'categorical': ['col_7', 'col_8', 'col_9', 'col_10'],
     }
     mock_get_num_column_to_drop.return_value = (5, modelable_column)
 
     # Run
-    columns_to_drop = _get_columns_to_drop_child(
-        metadata, 'child', max_col_per_relationship
-    )
+    columns_to_drop = _get_columns_to_drop_child(metadata, 'child', max_col_per_relationship)
 
     # Assert
-    mock_get_num_column_to_drop.assert_called_once_with(
-        metadata, 'child', max_col_per_relationship
-    )
+    mock_get_num_column_to_drop.assert_called_once_with(metadata, 'child', max_col_per_relationship)
     numerical_set = {'col_1', 'col_2', 'col_3', 'col_4', 'col_5', 'col_6'}
     categorical_set = {'col_7', 'col_8', 'col_9', 'col_10'}
     output_set = set(columns_to_drop)
@@ -871,7 +848,7 @@ def test__simplify_children_valid_children(mock_hma):
     # Assert
     mock_hma._get_num_extended_columns.assert_has_calls([
         call(metadata, 'child_1', 'parent', 3),
-        call(metadata, 'child_2', 'parent', 3)
+        call(metadata, 'child_2', 'parent', 3),
     ])
 
 
@@ -906,17 +883,11 @@ def test__simplify_children(mock_get_columns_to_drop_child, mock_hma):
     child_2_before_simplify['columns']['col_8'] = {'sdtype': 'categorical'}
     metadata = MultiTableMetadata().load_from_dict({
         'relationships': relatioships,
-        'tables': {
-            'child_1': child_1_before_simplify,
-            'child_2': child_2_before_simplify
-        }
+        'tables': {'child_1': child_1_before_simplify, 'child_2': child_2_before_simplify},
     })
     metadata_after_simplify_2 = MultiTableMetadata().load_from_dict({
         'relationships': relatioships,
-        'tables': {
-            'child_1': child_1,
-            'child_2': child_2
-        }
+        'tables': {'child_1': child_1, 'child_2': child_2},
     })
     mock_hma._get_num_extended_columns.side_effect = [800, 700]
     mock_get_columns_to_drop_child.side_effect = [['col_4'], ['col_8']]
@@ -928,11 +899,11 @@ def test__simplify_children(mock_get_columns_to_drop_child, mock_hma):
     assert metadata.to_dict()['tables'] == metadata_after_simplify_2.to_dict()['tables']
     mock_hma._get_num_extended_columns.assert_has_calls([
         call(metadata, 'child_1', 'parent', 3),
-        call(metadata, 'child_2', 'parent', 3)
+        call(metadata, 'child_2', 'parent', 3),
     ])
     mock_get_columns_to_drop_child.assert_has_calls([
         call(metadata, 'child_1', 500),
-        call(metadata, 'child_2', 500)
+        call(metadata, 'child_2', 500),
     ])
 
 
@@ -940,10 +911,7 @@ def test__simplify_children(mock_get_columns_to_drop_child, mock_hma):
 def test__get_total_estimated_columns(mock_hma):
     """Test the ``_get_total_estimated_columns`` method."""
     # Setup
-    mock_hma._estimate_num_columns.return_value = {
-        'child_1': 500,
-        'child_2': 700
-    }
+    mock_hma._estimate_num_columns.return_value = {'child_1': 500, 'child_2': 700}
     metadata = Mock()
 
     # Run
@@ -981,17 +949,13 @@ def test__simplify_metadata_no_child_simplification(mock_hma):
         },
         'grandchild': {'columns': {'col_7': {'sdtype': 'numerical'}}},
         'other_table': {'columns': {'col_8': {'sdtype': 'numerical'}}},
-        'other_root': {'columns': {'col_9': {'sdtype': 'numerical'}}}
+        'other_root': {'columns': {'col_9': {'sdtype': 'numerical'}}},
     }
     metadata = MultiTableMetadata().load_from_dict({
         'relationships': relationships,
-        'tables': tables
+        'tables': tables,
     })
-    mock_hma._estimate_num_columns.return_value = {
-        'child': 10,
-        'parent': 20,
-        'other_table': 30
-    }
+    mock_hma._estimate_num_columns.return_value = {'child': 10, 'parent': 20, 'other_table': 30}
 
     # Run
     metadata_result = _simplify_metadata(metadata)
@@ -1028,20 +992,20 @@ def test__simplify_metadata(mock_get_columns_to_drop_child, mock_hma):
             'parent_table_name': 'grandparent',
             'child_table_name': 'parent',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
+            'child_foreign_key': 'parent_foreign_key',
         },
         {
             'parent_table_name': 'parent',
             'child_table_name': 'child',
             'parent_primary_key': 'id_child',
-            'child_foreign_key': 'child_foreign_key'
+            'child_foreign_key': 'child_foreign_key',
         },
         {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
         {
             'parent_table_name': 'grandparent',
             'child_table_name': 'other_table',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'col_9'
+            'child_foreign_key': 'col_9',
         },
         {'parent_table_name': 'other_root', 'child_table_name': 'child'},
     ]
@@ -1051,7 +1015,7 @@ def test__simplify_metadata(mock_get_columns_to_drop_child, mock_hma):
                 'col_1': {'sdtype': 'numerical'},
                 'id_parent': {'sdtype': 'id'},
             },
-            'primary_key': 'id_parent'
+            'primary_key': 'id_parent',
         },
         'parent': {
             'columns': {
@@ -1062,7 +1026,7 @@ def test__simplify_metadata(mock_get_columns_to_drop_child, mock_hma):
                 'parent_foreign_key': {'sdtype': 'id'},
                 'id_child': {'sdtype': 'id'},
             },
-            'primary_key': 'id_child'
+            'primary_key': 'id_child',
         },
         'child': {
             'columns': {
@@ -1081,15 +1045,13 @@ def test__simplify_metadata(mock_get_columns_to_drop_child, mock_hma):
                 'col_10': {'sdtype': 'categorical'},
             }
         },
-        'other_root': {'columns': {'col_9': {'sdtype': 'numerical'}}}
+        'other_root': {'columns': {'col_9': {'sdtype': 'numerical'}}},
     }
     metadata = MultiTableMetadata().load_from_dict({
         'relationships': relationships,
-        'tables': tables
+        'tables': tables,
     })
-    mock_hma._estimate_num_columns.return_value = {
-        'child': 800, 'parent': 900, 'other_table': 10
-    }
+    mock_hma._estimate_num_columns.return_value = {'child': 800, 'parent': 900, 'other_table': 10}
     mock_hma._get_num_extended_columns.side_effect = [500, 700, 10]
     mock_get_columns_to_drop_child.side_effect = [
         ['col_2', 'col_3'],
@@ -1106,7 +1068,7 @@ def test__simplify_metadata(mock_get_columns_to_drop_child, mock_hma):
                 'col_1': {'sdtype': 'numerical'},
                 'id_parent': {'sdtype': 'id'},
             },
-            'primary_key': 'id_parent'
+            'primary_key': 'id_parent',
         },
         'parent': {
             'columns': {
@@ -1115,7 +1077,7 @@ def test__simplify_metadata(mock_get_columns_to_drop_child, mock_hma):
                 'parent_foreign_key': {'sdtype': 'id'},
                 'id_child': {'sdtype': 'id'},
             },
-            'primary_key': 'id_child'
+            'primary_key': 'id_child',
         },
         'child': {
             'columns': {
@@ -1136,19 +1098,19 @@ def test__simplify_metadata(mock_get_columns_to_drop_child, mock_hma):
             'parent_table_name': 'grandparent',
             'child_table_name': 'parent',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'parent_foreign_key'
+            'child_foreign_key': 'parent_foreign_key',
         },
         {
             'parent_table_name': 'parent',
             'child_table_name': 'child',
             'parent_primary_key': 'id_child',
-            'child_foreign_key': 'child_foreign_key'
+            'child_foreign_key': 'child_foreign_key',
         },
         {
             'parent_table_name': 'grandparent',
             'child_table_name': 'other_table',
             'parent_primary_key': 'id_parent',
-            'child_foreign_key': 'col_9'
+            'child_foreign_key': 'col_9',
         },
     ]
     metadata_dict = metadata_result.to_dict()
@@ -1171,32 +1133,25 @@ def test__simplify_data():
                 'parent_table_name': 'parent',
                 'child_table_name': 'child',
                 'parent_primary_key': 'col_1',
-                'child_foreign_key': 'col_2'
+                'child_foreign_key': 'col_2',
             },
             {
                 'parent_table_name': 'parent',
                 'child_table_name': 'grandchild',
                 'parent_primary_key': 'col_1',
-                'child_foreign_key': 'col_4'
+                'child_foreign_key': 'col_4',
             },
-        ]
+        ],
     })
     data = {
-        'parent': pd.DataFrame({
-            'col_1': [1, 2, 3]
-        }),
-        'child': pd.DataFrame({
-            'col_2': [2, 2, 3],
-            'col_3': [7, 8, 9]
-        }),
+        'parent': pd.DataFrame({'col_1': [1, 2, 3]}),
+        'child': pd.DataFrame({'col_2': [2, 2, 3], 'col_3': [7, 8, 9]}),
         'grandchild': pd.DataFrame({
             'col_4': [3, 2, 1],
             'col_5': [10, 11, 12],
-            'col_7': [13, 14, 15]
+            'col_7': [13, 14, 15],
         }),
-        'grandchild_2': pd.DataFrame({
-            'col_5': [10, 11, 12]
-        })
+        'grandchild_2': pd.DataFrame({'col_5': [10, 11, 12]}),
     }
 
     # Run
@@ -1204,9 +1159,7 @@ def test__simplify_data():
 
     # Assert
     expected_results = {
-        'parent': pd.DataFrame({
-            'col_1': [1, 2, 3]
-        }),
+        'parent': pd.DataFrame({'col_1': [1, 2, 3]}),
         'child': pd.DataFrame({
             'col_2': [2, 2, 3],
         }),
@@ -1231,9 +1184,7 @@ def test__print_simplified_schema_summary(capsys):
         'col_5': [10, 11, 12],
         'col_6': [13, 14, 15],
     })
-    data_before_3 = pd.DataFrame({
-        'col_7': [10, 11, 12]
-    })
+    data_before_3 = pd.DataFrame({'col_7': [10, 11, 12]})
     data_before = {
         'Table 1': data_before_1,
         'Table 2': data_before_2,
@@ -1246,7 +1197,6 @@ def test__print_simplified_schema_summary(capsys):
     })
     data_after_2 = pd.DataFrame({
         'col_5': [2, 2, 3],
-
     })
     data_after = {
         'Table 1': data_after_1,
@@ -1345,7 +1295,7 @@ def test__subsample_disconnected_roots(mock_drop_rows, mock_get_disconnected_roo
             {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
             {'parent_table_name': 'other_root', 'child_table_name': 'child'},
             {'parent_table_name': 'disconnected_root', 'child_table_name': 'disconnect_child'},
-        ]
+        ],
     })
     mock_get_disconnected_roots_from_table.return_value = {'grandparent', 'other_root'}
     ratio_to_keep = 0.6
@@ -1368,8 +1318,7 @@ def test__subsample_disconnected_roots(mock_drop_rows, mock_get_disconnected_roo
 
 @patch('sdv.multi_table.utils._drop_rows')
 @patch('sdv.multi_table.utils._get_nan_fk_indices_table')
-def test__subsample_table_and_descendants(mock_get_nan_fk_indices_table,
-                                          mock_drop_rows):
+def test__subsample_table_and_descendants(mock_get_nan_fk_indices_table, mock_drop_rows):
     """Test the ``_subsample_table_and_descendants`` method."""
     # Setup
     data = {
@@ -1398,9 +1347,7 @@ def test__subsample_table_and_descendants(mock_get_nan_fk_indices_table,
     _subsample_table_and_descendants(data, metadata, 'parent', 3)
 
     # Assert
-    mock_get_nan_fk_indices_table.assert_called_once_with(
-        data, metadata.relationships, 'parent'
-    )
+    mock_get_nan_fk_indices_table.assert_called_once_with(data, metadata.relationships, 'parent')
     mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=True)
     assert len(data['parent']) == 3
 
@@ -1423,9 +1370,7 @@ def test__subsample_table_and_descendants_nan_fk(mock_get_nan_fk_indices_table):
         _subsample_table_and_descendants(data, metadata, 'parent', 3)
 
     # Assert
-    mock_get_nan_fk_indices_table.assert_called_once_with(
-        data, metadata.relationships, 'parent'
-    )
+    mock_get_nan_fk_indices_table.assert_called_once_with(data, metadata.relationships, 'parent')
 
 
 def test__get_primary_keys_referenced():
@@ -1462,7 +1407,7 @@ def test__get_primary_keys_referenced():
                     'pk_gp': {'type': 'id'},
                     'col_1': {'type': 'numerical'},
                 },
-                'primary_key': 'pk_gp'
+                'primary_key': 'pk_gp',
             },
             'parent': {
                 'columns': {
@@ -1470,7 +1415,7 @@ def test__get_primary_keys_referenced():
                     'pk_p': {'type': 'id'},
                     'col_2': {'type': 'numerical'},
                 },
-                'primary_key': 'pk_p'
+                'primary_key': 'pk_p',
             },
             'child': {
                 'columns': {
@@ -1480,7 +1425,7 @@ def test__get_primary_keys_referenced():
                     'pk_c': {'type': 'id'},
                     'col_3': {'type': 'numerical'},
                 },
-                'primary_key': 'pk_c'
+                'primary_key': 'pk_c',
             },
             'grandchild': {
                 'columns': {
@@ -1509,7 +1454,6 @@ def test__get_primary_keys_referenced():
                 'child_table_name': 'child',
                 'parent_primary_key': 'pk_p',
                 'child_foreign_key': 'fk_gp',
-
             },
             {
                 'parent_table_name': 'parent',
@@ -1534,8 +1478,8 @@ def test__get_primary_keys_referenced():
                 'child_table_name': 'grandchild',
                 'parent_primary_key': 'pk_p',
                 'child_foreign_key': 'fk_p_4',
-            }
-        ]
+            },
+        ],
     })
 
     # Run
@@ -1619,9 +1563,7 @@ def test__subsample_parent_not_all_referenced_before():
 
     # Assert
     assert len(data['parent']) == 6
-    assert set(data['parent']['pk_p']).issubset({
-        1, 2, 3, 4, 6, 7, 8
-    })
+    assert set(data['parent']['pk_p']).issubset({1, 2, 3, 4, 6, 7, 8})
 
 
 def test__subsample_ancestors():
@@ -1629,13 +1571,28 @@ def test__subsample_ancestors():
     # Setup
     data = {
         'grandparent': pd.DataFrame({
-            'pk_gp': [
-                1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-                11, 12, 13, 14, 15, 16, 17, 18, 19, 20
-            ],
+            'pk_gp': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
             'col_1': [
-                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-                'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'
+                'a',
+                'b',
+                'c',
+                'd',
+                'e',
+                'f',
+                'g',
+                'h',
+                'i',
+                'j',
+                'k',
+                'l',
+                'm',
+                'n',
+                'o',
+                'p',
+                'q',
+                'r',
+                's',
+                't',
             ],
         }),
         'parent': pd.DataFrame({
@@ -1670,7 +1627,7 @@ def test__subsample_ancestors():
                     'pk_gp': {'type': 'id'},
                     'col_1': {'type': 'numerical'},
                 },
-                'primary_key': 'pk_gp'
+                'primary_key': 'pk_gp',
             },
             'parent': {
                 'columns': {
@@ -1678,7 +1635,7 @@ def test__subsample_ancestors():
                     'pk_p': {'type': 'id'},
                     'col_2': {'type': 'numerical'},
                 },
-                'primary_key': 'pk_p'
+                'primary_key': 'pk_p',
             },
             'child': {
                 'columns': {
@@ -1688,7 +1645,7 @@ def test__subsample_ancestors():
                     'pk_c': {'type': 'id'},
                     'col_3': {'type': 'numerical'},
                 },
-                'primary_key': 'pk_c'
+                'primary_key': 'pk_c',
             },
             'grandchild': {
                 'columns': {
@@ -1717,7 +1674,6 @@ def test__subsample_ancestors():
                 'child_table_name': 'child',
                 'parent_primary_key': 'pk_p',
                 'child_foreign_key': 'fk_gp',
-
             },
             {
                 'parent_table_name': 'parent',
@@ -1736,8 +1692,8 @@ def test__subsample_ancestors():
                 'child_table_name': 'grandchild',
                 'parent_primary_key': 'pk_p',
                 'child_foreign_key': 'fk_p_3',
-            }
-        ]
+            },
+        ],
     })
 
     # Run
@@ -1745,31 +1701,56 @@ def test__subsample_ancestors():
 
     # Assert
     expected_result = {
-        'parent': pd.DataFrame({
-            'fk_gp': [1, 2, 3, 6],
-            'pk_p': [11, 12, 13, 16],
-            'col_2': ['k', 'l', 'm', 'p'],
-        }, index=[0, 1, 2, 5]),
-        'child': pd.DataFrame({
-            'fk_gp': [4, 5, 6],
-            'fk_p_1': [11, 11, 11],
-            'fk_p_2': [12, 12, 12],
-            'pk_c': [21, 22, 23],
-            'col_3': ['q', 'r', 's'],
-        }, index=[0, 1, 2]),
-        'grandchild': pd.DataFrame({
-            'fk_p_3': [11, 12, 13, 11, 13],
-            'fk_c': [21, 22, 23, 21, 22],
-            'col_4': [36, 37, 38, 39, 40],
-        }, index=[0, 1, 2, 3, 4]),
+        'parent': pd.DataFrame(
+            {
+                'fk_gp': [1, 2, 3, 6],
+                'pk_p': [11, 12, 13, 16],
+                'col_2': ['k', 'l', 'm', 'p'],
+            },
+            index=[0, 1, 2, 5],
+        ),
+        'child': pd.DataFrame(
+            {
+                'fk_gp': [4, 5, 6],
+                'fk_p_1': [11, 11, 11],
+                'fk_p_2': [12, 12, 12],
+                'pk_c': [21, 22, 23],
+                'col_3': ['q', 'r', 's'],
+            },
+            index=[0, 1, 2],
+        ),
+        'grandchild': pd.DataFrame(
+            {
+                'fk_p_3': [11, 12, 13, 11, 13],
+                'fk_c': [21, 22, 23, 21, 22],
+                'col_4': [36, 37, 38, 39, 40],
+            },
+            index=[0, 1, 2, 3, 4],
+        ),
     }
     assert len(data['grandparent']) == 14
-    assert set(data['grandparent']['pk_gp']).issubset(
-        {
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-            12, 13, 14, 15, 16, 17, 18, 19, 20
-        }
-    )
+    assert set(data['grandparent']['pk_gp']).issubset({
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+    })
     for table_name in ['parent', 'child', 'grandchild']:
         pd.testing.assert_frame_equal(data[table_name], expected_result[table_name])
 
@@ -1779,13 +1760,28 @@ def test__subsample_ancestors_schema_diamond_shape():
     # Setup
     data = {
         'grandparent': pd.DataFrame({
-            'pk_gp': [
-                1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-                11, 12, 13, 14, 15, 16, 17, 18, 19, 20
-            ],
+            'pk_gp': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
             'col_1': [
-                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-                'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'
+                'a',
+                'b',
+                'c',
+                'd',
+                'e',
+                'f',
+                'g',
+                'h',
+                'i',
+                'j',
+                'k',
+                'l',
+                'm',
+                'n',
+                'o',
+                'p',
+                'q',
+                'r',
+                's',
+                't',
             ],
         }),
         'parent_1': pd.DataFrame({
@@ -1802,7 +1798,7 @@ def test__subsample_ancestors_schema_diamond_shape():
             'fk_p_1': [21, 22, 23, 23, 23],
             'fk_p_2': [31, 32, 33, 34, 34],
             'col_4': ['q', 'r', 's', 't', 'u'],
-        })
+        }),
     }
 
     primary_key_referenced = {
@@ -1818,7 +1814,7 @@ def test__subsample_ancestors_schema_diamond_shape():
                     'pk_gp': {'type': 'id'},
                     'col_1': {'type': 'numerical'},
                 },
-                'primary_key': 'pk_gp'
+                'primary_key': 'pk_gp',
             },
             'parent_1': {
                 'columns': {
@@ -1826,7 +1822,7 @@ def test__subsample_ancestors_schema_diamond_shape():
                     'pk_p': {'type': 'id'},
                     'col_2': {'type': 'numerical'},
                 },
-                'primary_key': 'pk_p'
+                'primary_key': 'pk_p',
             },
             'parent_2': {
                 'columns': {
@@ -1834,7 +1830,7 @@ def test__subsample_ancestors_schema_diamond_shape():
                     'pk_p': {'type': 'id'},
                     'col_3': {'type': 'numerical'},
                 },
-                'primary_key': 'pk_p'
+                'primary_key': 'pk_p',
             },
             'child': {
                 'columns': {
@@ -1869,7 +1865,7 @@ def test__subsample_ancestors_schema_diamond_shape():
                 'parent_primary_key': 'pk_p',
                 'child_foreign_key': 'fk_p_2',
             },
-        ]
+        ],
     })
 
     # Run
@@ -1877,29 +1873,54 @@ def test__subsample_ancestors_schema_diamond_shape():
 
     # Assert
     expected_result = {
-        'parent_1': pd.DataFrame({
-            'fk_gp': [1, 2, 3, 6],
-            'pk_p': [21, 22, 23, 26],
-            'col_2': ['k', 'l', 'm', 'p'],
-        }, index=[0, 1, 2, 5]),
-        'parent_2': pd.DataFrame({
-            'fk_gp': [7, 8, 9, 10],
-            'pk_p': [31, 32, 33, 34],
-            'col_3': ['k', 'l', 'm', 'n'],
-        }, index=[0, 1, 2, 3]),
-        'child': pd.DataFrame({
-            'fk_p_1': [21, 22, 23, 23, 23],
-            'fk_p_2': [31, 32, 33, 34, 34],
-            'col_4': ['q', 'r', 's', 't', 'u'],
-        }, index=[0, 1, 2, 3, 4]),
+        'parent_1': pd.DataFrame(
+            {
+                'fk_gp': [1, 2, 3, 6],
+                'pk_p': [21, 22, 23, 26],
+                'col_2': ['k', 'l', 'm', 'p'],
+            },
+            index=[0, 1, 2, 5],
+        ),
+        'parent_2': pd.DataFrame(
+            {
+                'fk_gp': [7, 8, 9, 10],
+                'pk_p': [31, 32, 33, 34],
+                'col_3': ['k', 'l', 'm', 'n'],
+            },
+            index=[0, 1, 2, 3],
+        ),
+        'child': pd.DataFrame(
+            {
+                'fk_p_1': [21, 22, 23, 23, 23],
+                'fk_p_2': [31, 32, 33, 34, 34],
+                'col_4': ['q', 'r', 's', 't', 'u'],
+            },
+            index=[0, 1, 2, 3, 4],
+        ),
     }
     assert len(data['grandparent']) == 14
-    assert set(data['grandparent']['pk_gp']).issubset(
-        {
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-            12, 13, 14, 15, 16, 17, 18, 19, 20
-        }
-    )
+    assert set(data['grandparent']['pk_gp']).issubset({
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+    })
     for table_name in ['parent_1', 'parent_2', 'child']:
         pd.testing.assert_frame_equal(data[table_name], expected_result[table_name])
 
@@ -1916,7 +1937,7 @@ def test__subsample_data(
     mock_get_primary_keys_referenced,
     mock_subsample_ancestors,
     mock_subsample_table_and_descendants,
-    mock_subsample_disconnected_roots
+    mock_subsample_disconnected_roots,
 ):
     """Test the ``_subsample_data`` method."""
     # Setup
@@ -1926,9 +1947,7 @@ def test__subsample_data(
     metadata = Mock()
     num_rows = 5
     main_table = 'main_table'
-    primary_key_reference = {
-        'main_table': {1, 2, 4}
-    }
+    primary_key_reference = {'main_table': {1, 2, 4}}
     mock_get_primary_keys_referenced.return_value = primary_key_reference
 
     # Run
@@ -1954,7 +1973,7 @@ def test__subsample_data(
 def test__subsample_data_empty_dataset(
     mock_validate_foreign_keys_not_null,
     mock_get_primary_keys_referenced,
-    mock_subsample_disconnected_roots
+    mock_subsample_disconnected_roots,
 ):
     """Test the ``subsample_data`` method when a dataset is empty."""
     # Setup
@@ -1980,13 +1999,28 @@ def test__print_subsample_summary(capsys):
     # Setup
     data_before = {
         'grandparent': pd.DataFrame({
-            'pk_gp': [
-                1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-                11, 12, 13, 14, 15, 16, 17, 18, 19, 20
-            ],
+            'pk_gp': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
             'col_1': [
-                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-                'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'
+                'a',
+                'b',
+                'c',
+                'd',
+                'e',
+                'f',
+                'g',
+                'h',
+                'i',
+                'j',
+                'k',
+                'l',
+                'm',
+                'n',
+                'o',
+                'p',
+                'q',
+                'r',
+                's',
+                't',
             ],
         }),
         'parent_1': pd.DataFrame({
@@ -2003,35 +2037,41 @@ def test__print_subsample_summary(capsys):
             'fk_p_1': [21, 22, 23, 23, 23],
             'fk_p_2': [31, 32, 33, 34, 34],
             'col_4': ['q', 'r', 's', 't', 'u'],
-        })
+        }),
     }
 
     data_after = {
-        'grandparent': pd.DataFrame({
-            'pk_gp': [
-                1, 2, 3, 6, 7, 8, 9, 10, 14, 15,
-                16, 17, 18, 20
-            ],
-            'col_1': [
-                'a', 'b', 'c', 'f', 'g', 'h', 'i', 'j', 'n', 'o',
-                'p', 'q', 'r', 't'
-            ],
-        }, index=[0, 1, 2, 5, 6, 7, 8, 9, 13, 14, 15, 16, 17, 19]),
-        'parent_1': pd.DataFrame({
-            'fk_gp': [1, 2, 3, 6],
-            'pk_p': [21, 22, 23, 26],
-            'col_2': ['k', 'l', 'm', 'p'],
-        }, index=[0, 1, 2, 5]),
-        'parent_2': pd.DataFrame({
-            'fk_gp': [7, 8, 9, 10],
-            'pk_p': [31, 32, 33, 34],
-            'col_3': ['k', 'l', 'm', 'n'],
-        }, index=[0, 1, 2, 3]),
-        'child': pd.DataFrame({
-            'fk_p_1': [21, 22, 23, 23, 23],
-            'fk_p_2': [31, 32, 33, 34, 34],
-            'col_4': ['q', 'r', 's', 't', 'u'],
-        }, index=[0, 1, 2, 3, 4]),
+        'grandparent': pd.DataFrame(
+            {
+                'pk_gp': [1, 2, 3, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 20],
+                'col_1': ['a', 'b', 'c', 'f', 'g', 'h', 'i', 'j', 'n', 'o', 'p', 'q', 'r', 't'],
+            },
+            index=[0, 1, 2, 5, 6, 7, 8, 9, 13, 14, 15, 16, 17, 19],
+        ),
+        'parent_1': pd.DataFrame(
+            {
+                'fk_gp': [1, 2, 3, 6],
+                'pk_p': [21, 22, 23, 26],
+                'col_2': ['k', 'l', 'm', 'p'],
+            },
+            index=[0, 1, 2, 5],
+        ),
+        'parent_2': pd.DataFrame(
+            {
+                'fk_gp': [7, 8, 9, 10],
+                'pk_p': [31, 32, 33, 34],
+                'col_3': ['k', 'l', 'm', 'n'],
+            },
+            index=[0, 1, 2, 3],
+        ),
+        'child': pd.DataFrame(
+            {
+                'fk_p_1': [21, 22, 23, 23, 23],
+                'fk_p_2': [31, 32, 33, 34, 34],
+                'col_4': ['q', 'r', 's', 't', 'u'],
+            },
+            index=[0, 1, 2, 3, 4],
+        ),
     }
 
     # Run

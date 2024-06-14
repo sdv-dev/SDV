@@ -1,4 +1,5 @@
 """Methods to compare the real and synthetic data for multi-table."""
+
 from sdmetrics import visualization
 from sdmetrics.reports.multi_table.diagnostic_report import DiagnosticReport
 from sdmetrics.reports.multi_table.quality_report import QualityReport
@@ -87,8 +88,9 @@ def get_column_plot(real_data, synthetic_data, metadata, table_name, column_name
     )
 
 
-def get_column_pair_plot(real_data, synthetic_data, metadata,
-                         table_name, column_names, plot_type=None, sample_size=None):
+def get_column_pair_plot(
+    real_data, synthetic_data, metadata, table_name, column_names, plot_type=None, sample_size=None
+):
     """Get a plot of the real and synthetic data for a given column pair.
 
     Args:
@@ -119,17 +121,19 @@ def get_column_pair_plot(real_data, synthetic_data, metadata,
     real_data = real_data[table_name]
     synthetic_data = synthetic_data[table_name]
     return single_table_visualization.get_column_pair_plot(
-        real_data,
-        synthetic_data,
-        metadata,
-        column_names,
-        sample_size,
-        plot_type
+        real_data, synthetic_data, metadata, column_names, sample_size, plot_type
     )
 
 
-def get_cardinality_plot(real_data, synthetic_data, child_table_name, parent_table_name,
-                         child_foreign_key, metadata, plot_type='bar'):
+def get_cardinality_plot(
+    real_data,
+    synthetic_data,
+    child_table_name,
+    parent_table_name,
+    child_foreign_key,
+    metadata,
+    plot_type='bar',
+):
     """Get a plot of the cardinality of the parent-child relationship.
 
     Args:
@@ -160,5 +164,5 @@ def get_cardinality_plot(real_data, synthetic_data, child_table_name, parent_tab
         parent_table_name,
         child_foreign_key,
         parent_primary_key,
-        plot_type
+        plot_type,
     )

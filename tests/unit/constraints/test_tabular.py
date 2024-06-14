@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.api.types import is_float_dtype
 
 from sdv.constraints.errors import (
     AggregateConstraintsError,
@@ -69,8 +70,7 @@ def dummy_is_valid_column(column_data):
     return [True] * len(column_data)
 
 
-class TestCreateCustomConstraint():
-
+class TestCreateCustomConstraint:
     @patch('sdv.constraints.tabular.create_custom_constraint_class')
     def test___recreatecustomconstraint___call__(self, create_custom_constraint_mock):
         """Test that custom constraints are recreated properly."""
@@ -86,17 +86,13 @@ class TestCreateCustomConstraint():
         create_custom_constraint_mock.return_value = MockClass
 
         # Run
-        recreated_class = class_recreator(
-            dummy_is_valid,
-            dummy_transform,
-            dummy_reverse_transform
-        )
+        recreated_class = class_recreator(dummy_is_valid, dummy_transform, dummy_reverse_transform)
 
         # Assert
         create_custom_constraint_mock.assert_called_once_with(
             is_valid_fn=dummy_is_valid,
             transform_fn=dummy_transform,
-            reverse_transform_fn=dummy_reverse_transform
+            reverse_transform_fn=dummy_reverse_transform,
         )
         assert isinstance(recreated_class, MockClass)
 
@@ -108,9 +104,7 @@ class TestCreateCustomConstraint():
         Raises:
         - List of ValueErrors
         """
-        err_msg = (
-            "Missing required values {'column_names'} in a CustomConstraint constraint."
-        )
+        err_msg = "Missing required values {'column_names'} in a CustomConstraint constraint."
         # Run / Assert
         constraint = create_custom_constraint_class(sorted, sorted, sorted)
         with pytest.raises(AggregateConstraintsError, match=err_msg):
@@ -171,7 +165,8 @@ class TestCreateCustomConstraint():
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
             _validate_inputs_custom_constraint(
-                is_valid_fn=sorted, transform_fn='a', reverse_transform_fn=sorted)
+                is_valid_fn=sorted, transform_fn='a', reverse_transform_fn=sorted
+            )
 
     def test__validate_inputs_custom_constraint_reverse_transform_not_callable(self):
         """Test validation when ``reverse_transform_fn`` is not callable.
@@ -187,7 +182,8 @@ class TestCreateCustomConstraint():
         # Run / Assert
         with pytest.raises(ValueError, match=err_msg):
             _validate_inputs_custom_constraint(
-                is_valid_fn=sorted, transform_fn=sorted, reverse_transform_fn=10)
+                is_valid_fn=sorted, transform_fn=sorted, reverse_transform_fn=10
+            )
 
     def test__validate_metadata_columns(self):
         """Test the ``_validate_metadata_columns`` method.
@@ -277,7 +273,7 @@ class TestCreateCustomConstraint():
             lambda _, x: pd.Series([True if x_i >= 0 else False for x_i in x['col']])
         )
         custom_constraint = custom_constraint('col')
-        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -0.5]})
 
         # Run
         valid_out = custom_constraint.is_valid(data)
@@ -301,7 +297,7 @@ class TestCreateCustomConstraint():
             lambda _, x: pd.Series([True, True, True])
         )
         custom_constraint = custom_constraint('col')
-        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -0.5]})
 
         # Run
         err_msg = '`is_valid_fn` did not produce exactly 1 True/False value for each row.'
@@ -324,7 +320,7 @@ class TestCreateCustomConstraint():
             lambda _, x: [True if x_i >= 0 else False for x_i in x['col']]
         )
         custom_constraint = custom_constraint('col')
-        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -0.5]})
 
         # Run
         err_msg = (
@@ -345,6 +341,7 @@ class TestCreateCustomConstraint():
         Output:
         - pd.DataFrame of transformed values
         """
+
         # Setup
         def test_is_valid(*_):
             return pd.Series([True] * 5)
@@ -358,13 +355,13 @@ class TestCreateCustomConstraint():
         custom_constraint = create_custom_constraint_class(
             test_is_valid, test_transform, test_reverse_transform
         )('col')
-        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -0.5]})
 
         # Run
         transform_out = custom_constraint.transform(data)
 
         # Assert
-        expected_out = pd.DataFrame({'col': [100, 1, 0, 9, .25]})
+        expected_out = pd.DataFrame({'col': [100, 1, 0, 9, 0.25]})
         pd.testing.assert_frame_equal(transform_out, expected_out)
 
     def test_create_custom_constraint_class_transform_not_defined(self):
@@ -378,11 +375,9 @@ class TestCreateCustomConstraint():
         - Original data
         """
         # Setup
-        custom_constraint = create_custom_constraint_class(
-            lambda _, x: pd.Series([True] * 5)
-        )
+        custom_constraint = create_custom_constraint_class(lambda _, x: pd.Series([True] * 5))
         custom_constraint = custom_constraint('col')
-        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -0.5]})
 
         # Run
         out = custom_constraint.transform(data)
@@ -404,10 +399,10 @@ class TestCreateCustomConstraint():
         custom_constraint = create_custom_constraint_class(
             lambda _, x: pd.Series([True] * 5),
             lambda _, x: pd.DataFrame({'col': [1, 2, 3]}),
-            sorted
+            sorted,
         )
         custom_constraint = custom_constraint('col')
-        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -0.5]})
 
         # Run
         err_msg = 'Transformation did not produce the same number of rows as the original'
@@ -427,12 +422,10 @@ class TestCreateCustomConstraint():
         """
         # Setup
         custom_constraint = create_custom_constraint_class(
-            lambda _, x: pd.Series([True] * 5),
-            lambda _: pd.DataFrame({'col': [1, 2, 3]}),
-            sorted
+            lambda _, x: pd.Series([True] * 5), lambda _: pd.DataFrame({'col': [1, 2, 3]}), sorted
         )
         custom_constraint = custom_constraint('col')
-        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -0.5]})
 
         # Run
         with pytest.raises(FunctionError):
@@ -451,18 +444,16 @@ class TestCreateCustomConstraint():
         """
         # Setup
         custom_constraint = create_custom_constraint_class(
-            sorted,
-            sorted,
-            lambda _, x: pd.DataFrame({'col': x['col'] ** 2})
+            sorted, sorted, lambda _, x: pd.DataFrame({'col': x['col'] ** 2})
         )
         custom_constraint = custom_constraint('col')
-        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -0.5]})
 
         # Run
         transformed_out = custom_constraint.reverse_transform(data)
 
         # Assert
-        expected_out = pd.DataFrame({'col': [100, 1, 0, 9, .25]})
+        expected_out = pd.DataFrame({'col': [100, 1, 0, 9, 0.25]})
         pd.testing.assert_frame_equal(transformed_out, expected_out)
 
     def test_create_custom_constraint_class_reverse_transform_not_defined(self):
@@ -477,7 +468,7 @@ class TestCreateCustomConstraint():
         """
         # Setup
         custom_constraint = create_custom_constraint_class(sorted)('col')
-        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -0.5]})
 
         # Run
         out = custom_constraint.reverse_transform(data)
@@ -498,12 +489,10 @@ class TestCreateCustomConstraint():
         """
         # Setup
         custom_constraint = create_custom_constraint_class(
-            sorted,
-            sorted,
-            lambda _, x: pd.DataFrame({'col': [1, 2, 3]})
+            sorted, sorted, lambda _, x: pd.DataFrame({'col': [1, 2, 3]})
         )
         custom_constraint = custom_constraint('col')
-        data = pd.DataFrame({'col': [-10, 1, 0, 3, -.5]})
+        data = pd.DataFrame({'col': [-10, 1, 0, 3, -0.5]})
 
         # Run
         err_msg = 'Reverse transform did not produce the same number of rows as the original.'
@@ -523,9 +512,7 @@ class TestCreateCustomConstraint():
         reverse_transfom_fn = Mock()
 
         custom_constraint = create_custom_constraint_class(
-            is_valid_fn,
-            transform_fn,
-            reverse_transfom_fn
+            is_valid_fn, transform_fn, reverse_transfom_fn
         )
         custom_constraint = custom_constraint(['col'])
 
@@ -540,12 +527,11 @@ class TestCreateCustomConstraint():
             'metadata': None,
             'column_names': ['col'],
             'constraint_columns': ('col',),
-            'kwargs': {}
+            'kwargs': {},
         }
 
 
-class TestFixedCombinations():
-
+class TestFixedCombinations:
     def test__validate_inputs(self):
         """Test the ``FixedCombinations._validate_inputs`` method.
 
@@ -616,8 +602,7 @@ class TestFixedCombinations():
 
         # Run
         FixedCombinations._validate_metadata_specific_to_constraint(
-            metadata,
-            column_names=['a', 'b']
+            metadata, column_names=['a', 'b']
         )
 
     def test__validate_metadata_specific_to_constraint_incorrect_types(self):
@@ -633,8 +618,7 @@ class TestFixedCombinations():
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             FixedCombinations._validate_metadata_specific_to_constraint(
-                metadata,
-                column_names=['a', 'b']
+                metadata, column_names=['a', 'b']
             )
 
     def test___init__(self):
@@ -697,10 +681,7 @@ class TestFixedCombinations():
         instance._fit(table_data)
 
         # Asserts
-        expected_combinations = pd.DataFrame({
-            'b': ['d', 'e', 'f'],
-            'c': ['g', 'h', 'i']
-        })
+        expected_combinations = pd.DataFrame({'b': ['d', 'e', 'f'], 'c': ['g', 'h', 'i']})
         assert instance._separator == '##'
         assert instance._joint_column == 'b##c'
         pd.testing.assert_frame_equal(instance._combinations, expected_combinations)
@@ -722,7 +703,7 @@ class TestFixedCombinations():
         table_data = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['d', 'e', 'f'],
-            'c': ['g', 'h', 'i']
+            'c': ['g', 'h', 'i'],
         })
         columns = ['b', 'c']
         instance = FixedCombinations(column_names=columns)
@@ -751,7 +732,7 @@ class TestFixedCombinations():
         table_data = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['d', 'e', 'f'],
-            'c': ['g', 'h', 'i']
+            'c': ['g', 'h', 'i'],
         })
         columns = ['b', 'c']
         instance = FixedCombinations(column_names=columns)
@@ -761,7 +742,7 @@ class TestFixedCombinations():
         incorrect_table = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['D', 'E', 'F'],
-            'c': ['g', 'h', 'i']
+            'c': ['g', 'h', 'i'],
         })
         out = instance.is_valid(incorrect_table)
 
@@ -787,7 +768,7 @@ class TestFixedCombinations():
             'a': ['a', 'b', 'c'],
             'b': [1, 2, 3],
             'c': ['g', 'h', 'i'],
-            'd': [2.4, 1.23, 5.6]
+            'd': [2.4, 1.23, 5.6],
         })
         columns = ['b', 'c', 'd']
         instance = FixedCombinations(column_names=columns)
@@ -817,7 +798,7 @@ class TestFixedCombinations():
             'a': ['a', 'b', 'c'],
             'b': [1, 2, 3],
             'c': ['g', 'h', 'i'],
-            'd': [2.4, 1.23, 5.6]
+            'd': [2.4, 1.23, 5.6],
         })
         columns = ['b', 'c', 'd']
         instance = FixedCombinations(column_names=columns)
@@ -828,7 +809,7 @@ class TestFixedCombinations():
             'a': ['a', 'b', 'c'],
             'b': [6, 7, 8],
             'c': ['g', 'h', 'i'],
-            'd': [2.4, 1.23, 5.6]
+            'd': [2.4, 1.23, 5.6],
         })
         out = instance.is_valid(incorrect_table)
 
@@ -853,7 +834,7 @@ class TestFixedCombinations():
         table_data = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['d', 'e', 'f'],
-            'c': ['g', 'h', 'i']
+            'c': ['g', 'h', 'i'],
         })
         columns = ['b', 'c']
         instance = FixedCombinations(column_names=columns)
@@ -886,7 +867,7 @@ class TestFixedCombinations():
             'a': ['a', 'b', 'c'],
             'b': [1, 2, 3],
             'c': ['g', 'h', 'i'],
-            'd': [2.4, 1.23, 5.6]
+            'd': [2.4, 1.23, 5.6],
         })
         columns = ['b', 'c', 'd']
         instance = FixedCombinations(column_names=columns)
@@ -916,7 +897,7 @@ class TestFixedCombinations():
         table_data = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['d', 'e', 'f'],
-            'c': ['g', 'h', 'i']
+            'c': ['g', 'h', 'i'],
         })
         columns = ['b', 'c']
         instance = FixedCombinations(column_names=columns)
@@ -943,7 +924,7 @@ class TestFixedCombinations():
         table_data = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['d', 'e', 'f'],
-            'c': ['g', 'h', 'i']
+            'c': ['g', 'h', 'i'],
         })
         columns = ['b', 'c']
         instance = FixedCombinations(column_names=columns)
@@ -959,7 +940,7 @@ class TestFixedCombinations():
         expected_out = pd.DataFrame({
             'a': ['a', 'b', 'c'],
             'b': ['d', 'e', 'f'],
-            'c': ['g', 'h', 'i']
+            'c': ['g', 'h', 'i'],
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
@@ -981,7 +962,7 @@ class TestFixedCombinations():
             'a': ['a', 'b', 'c'],
             'b': [1, 2, 3],
             'c': ['g', 'h', 'i'],
-            'd': [2.4, 1.23, 5.6]
+            'd': [2.4, 1.23, 5.6],
         })
         columns = ['b', 'c', 'd']
         instance = FixedCombinations(column_names=columns)
@@ -998,13 +979,12 @@ class TestFixedCombinations():
             'a': ['a', 'b', 'c'],
             'b': [1, 2, 3],
             'c': ['g', 'h', 'i'],
-            'd': [2.4, 1.23, 5.6]
+            'd': [2.4, 1.23, 5.6],
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
 
-class TestInequality():
-
+class TestInequality:
     def test__validate_inputs(self):
         """Test the ``Inequality._validate_inputs`` method.
 
@@ -1066,7 +1046,8 @@ class TestInequality():
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             Inequality._validate_metadata_columns(
-                metadata, low_column_name='a', high_column_name='c')
+                metadata, low_column_name='a', high_column_name='c'
+            )
 
     def test__validate_metadata_specific_to_constraint_datetime(self):
         """Test the ``_validate_metadata_specific_to_constraint`` with datetimes.
@@ -1083,9 +1064,7 @@ class TestInequality():
 
         # Run
         Inequality._validate_metadata_specific_to_constraint(
-            metadata,
-            high_column_name='a',
-            low_column_name='b'
+            metadata, high_column_name='a', low_column_name='b'
         )
 
     def test__validate_metadata_specific_to_constraint_datetime_error(self):
@@ -1108,9 +1087,7 @@ class TestInequality():
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             Inequality._validate_metadata_specific_to_constraint(
-                metadata,
-                high_column_name='a',
-                low_column_name='b'
+                metadata, high_column_name='a', low_column_name='b'
             )
 
     def test__validate_metadata_specific_to_constraint_numerical(self):
@@ -1128,9 +1105,7 @@ class TestInequality():
 
         # Run
         Inequality._validate_metadata_specific_to_constraint(
-            metadata,
-            high_column_name='a',
-            low_column_name='b'
+            metadata, high_column_name='a', low_column_name='b'
         )
 
     def test__validate_metadata_specific_to_constraint_numerical_error(self):
@@ -1153,9 +1128,7 @@ class TestInequality():
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             Inequality._validate_metadata_specific_to_constraint(
-                metadata,
-                high_column_name='a',
-                low_column_name='b'
+                metadata, high_column_name='a', low_column_name='b'
             )
 
     def test__validate_init_inputs_incorrect_column(self):
@@ -1253,10 +1226,7 @@ class TestInequality():
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
         instance.metadata = Mock()
-        instance.metadata.columns = {
-            'a': {'sdtype': 'datetime'},
-            'b': {'sdtype': 'categorical'}
-        }
+        instance.metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'categorical'}}
 
         # Run / Assert
         err_msg = 'Both high and low must be datetime.'
@@ -1272,10 +1242,7 @@ class TestInequality():
         - Table with given data.
         """
         # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6]
-        })
+        table_data = pd.DataFrame({'a': [1, 2, 4], 'b': [4, 5, 6]})
         instance = Inequality(low_column_name='a', high_column_name='c')
 
         # Run / Assert
@@ -1296,10 +1263,7 @@ class TestInequality():
         - _dtype should be a list of integer dtypes.
         """
         # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6]
-        })
+        table_data = pd.DataFrame({'a': [1, 2, 4], 'b': [4, 5, 6]})
         instance = Inequality(low_column_name='a', high_column_name='b')
         instance._validate_columns_exist = Mock()
         instance._get_is_datetime = Mock(return_value='abc')
@@ -1329,16 +1293,10 @@ class TestInequality():
         - _dtype should be a float dtype.
         """
         # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4., 5., 6.]
-        })
+        table_data = pd.DataFrame({'a': [1, 2, 4], 'b': [4.0, 5.0, 6.0]})
         instance = Inequality(low_column_name='a', high_column_name='b')
         instance.metadata = Mock()
-        instance.metadata.columns = {
-            'a': {'sdtype': 'datetime'},
-            'b': {'sdtype': 'datetime'}
-        }
+        instance.metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'datetime'}}
 
         # Run
         instance._fit(table_data)
@@ -1359,14 +1317,11 @@ class TestInequality():
         # Setup
         table_data = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01']),
-            'b': pd.to_datetime(['2020-01-02'])
+            'b': pd.to_datetime(['2020-01-02']),
         })
         instance = Inequality(low_column_name='a', high_column_name='b')
         instance.metadata = Mock()
-        instance.metadata.columns = {
-            'a': {'sdtype': 'datetime'},
-            'b': {'sdtype': 'datetime'}
-        }
+        instance.metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'datetime'}}
 
         # Run
         instance._fit(table_data)
@@ -1392,7 +1347,7 @@ class TestInequality():
         table_data = pd.DataFrame({
             'a': [1, np.nan, 3, 4, None, 6, 8, 0],
             'b': [4, 2, 2, 4, np.nan, -6, 10, float('nan')],
-            'c': [7, 8, 9, 10, 11, 12, 13, 14]
+            'c': [7, 8, 9, 10, 11, 12, 13, 14],
         })
         out = instance.is_valid(table_data)
 
@@ -1418,7 +1373,7 @@ class TestInequality():
         table_data = pd.DataFrame({
             'a': [1, np.nan, 3, 4, None, 6, 8, 0],
             'b': [4, 2, 2, 4, np.nan, -6, 10, float('nan')],
-            'c': [7, 8, 9, 10, 11, 12, 13, 14]
+            'c': [7, 8, 9, 10, 11, 12, 13, 14],
         })
         out = instance.is_valid(table_data)
 
@@ -1444,7 +1399,7 @@ class TestInequality():
         table_data = pd.DataFrame({
             'a': [datetime(2020, 5, 17), datetime(2021, 9, 1), np.nan],
             'b': [datetime(2020, 5, 18), datetime(2020, 9, 2), datetime(2020, 9, 2)],
-            'c': [7, 8, 9]
+            'c': [7, 8, 9],
         })
         out = instance.is_valid(table_data)
 
@@ -1463,7 +1418,7 @@ class TestInequality():
         table_data = pd.DataFrame({
             'a': ['2020-5-17', '2021-9-1', np.nan],
             'b': ['2020-5-18', '2020-9-2', '2020-9-2'],
-            'c': [7, 8, 9]
+            'c': [7, 8, 9],
         })
         out = instance.is_valid(table_data)
 
@@ -1505,18 +1460,16 @@ class TestInequality():
         pd.testing.assert_frame_equal(out, expected_out)
 
     def test__transform_with_nans(self):
-
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
         instance._diff_column_name = 'a#b'
 
         table_data_with_nans = pd.DataFrame({
-            'a': [1, np.nan, 3, np.nan], 'b': [np.nan, 2, 4, np.nan]
+            'a': [1, np.nan, 3, np.nan],
+            'b': [np.nan, 2, 4, np.nan],
         })
 
-        table_data_without_nans = pd.DataFrame({
-            'a': [1, 2, 3], 'b': [2, 3, 4]
-        })
+        table_data_without_nans = pd.DataFrame({'a': [1, 2, 3], 'b': [2, 3, 4]})
 
         # Run
         output_with_nans = instance._transform(table_data_with_nans)
@@ -1524,9 +1477,9 @@ class TestInequality():
 
         # Assert
         expected_output_with_nans = pd.DataFrame({
-            'a': [1., 2., 3., 2.],
+            'a': [1.0, 2.0, 3.0, 2.0],
             'a#b': [np.log(2)] * 4,
-            'a#b.nan_component': ['b', 'a', 'None', 'a, b']
+            'a#b.nan_component': ['b', 'a', 'None', 'a, b'],
         })
 
         expected_output_without_nans = pd.DataFrame({
@@ -1731,7 +1684,7 @@ class TestInequality():
         expected_out = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01T00:00:00', '2020-01-02T00:00:00']),
             'c': [1, 2],
-            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01'])
+            'b': pd.to_datetime(['2020-01-01T00:00:01', '2020-01-02T00:00:01']),
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -1759,14 +1712,13 @@ class TestInequality():
         expected_out = pd.DataFrame({
             'a': ['2020-01-01T00:00:00', '2020-01-02T00:00:00'],
             'c': [1, 2],
-            'b': [pd.Timestamp('2020-01-01 00:00:01'), pd.Timestamp('2020-01-02 00:00:01')]
+            'b': [pd.Timestamp('2020-01-01 00:00:01'), pd.Timestamp('2020-01-02 00:00:01')],
         })
         expected_out['b'] = expected_out['b'].astype(np.dtype('O'))
         pd.testing.assert_frame_equal(out, expected_out)
 
 
-class TestScalarInequality():
-
+class TestScalarInequality:
     def test__validate_inputs(self):
         """Test the ``ScalarInequality._validate_inputs`` method.
 
@@ -1778,7 +1730,8 @@ class TestScalarInequality():
         # Run / Assert
         with pytest.raises(AggregateConstraintsError) as error:
             ScalarInequality._validate_inputs(
-                not_high_column=None, not_low_column=None, relation='+')
+                not_high_column=None, not_low_column=None, relation='+'
+            )
 
         err_msg = (
             r'Missing required values {(.*)} in a ScalarInequality constraint.'
@@ -1851,10 +1804,7 @@ class TestScalarInequality():
 
         # Run
         ScalarInequality._validate_metadata_specific_to_constraint(
-            metadata,
-            column_name='a',
-            relation='>',
-            value=7
+            metadata, column_name='a', relation='>', value=7
         )
 
     def test__validate_metadata_specific_to_constraint_numerical_error(self):
@@ -1877,10 +1827,7 @@ class TestScalarInequality():
         error_message = "'value' must be an int or float."
         with pytest.raises(ConstraintMetadataError, match=error_message):
             ScalarInequality._validate_metadata_specific_to_constraint(
-                metadata,
-                column_name='a',
-                relation='>',
-                value='7'
+                metadata, column_name='a', relation='>', value='7'
             )
 
     @patch('sdv.constraints.tabular.matches_datetime_format')
@@ -1904,10 +1851,7 @@ class TestScalarInequality():
 
         # Run
         ScalarInequality._validate_metadata_specific_to_constraint(
-            metadata,
-            column_name='a',
-            relation='>',
-            value='1/1/2020'
+            metadata, column_name='a', relation='>', value='1/1/2020'
         )
 
     @patch('sdv.constraints.tabular.matches_datetime_format')
@@ -1936,10 +1880,7 @@ class TestScalarInequality():
         error_message = "'value' must be a datetime string of the right format"
         with pytest.raises(ConstraintMetadataError, match=error_message):
             ScalarInequality._validate_metadata_specific_to_constraint(
-                metadata,
-                column_name='a',
-                relation='>',
-                value='1-1-2020'
+                metadata, column_name='a', relation='>', value='1-1-2020'
             )
 
     def test__validate_metadata_specific_to_constraint_bad_type(self):
@@ -1969,10 +1910,7 @@ class TestScalarInequality():
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             ScalarInequality._validate_metadata_specific_to_constraint(
-                metadata,
-                column_name='a',
-                relation='>',
-                value=7
+                metadata, column_name='a', relation='>', value=7
             )
 
     def test__validate_init_inputs_incorrect_column(self):
@@ -2103,10 +2041,7 @@ class TestScalarInequality():
         - Table with given data.
         """
         # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6]
-        })
+        table_data = pd.DataFrame({'a': [1, 2, 4], 'b': [4, 5, 6]})
         instance = ScalarInequality(column_name='c', value=5, relation='>')
 
         # Run / Assert
@@ -2127,10 +2062,7 @@ class TestScalarInequality():
         - _dtype should be a list of integer dtypes.
         """
         # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4, 5, 6]
-        })
+        table_data = pd.DataFrame({'a': [1, 2, 4], 'b': [4, 5, 6]})
         instance = ScalarInequality(column_name='b', value=3, relation='>')
         instance._validate_columns_exist = Mock()
         instance._get_is_datetime = Mock(return_value=False)
@@ -2155,10 +2087,7 @@ class TestScalarInequality():
         - _dtype should be a float dtype.
         """
         # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 4],
-            'b': [4., 5., 6.]
-        })
+        table_data = pd.DataFrame({'a': [1, 2, 4], 'b': [4.0, 5.0, 6.0]})
         instance = ScalarInequality(column_name='b', value=10, relation='>')
         instance.metadata = MagicMock()
 
@@ -2181,13 +2110,15 @@ class TestScalarInequality():
         # Setup
         table_data = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01']),
-            'b': pd.to_datetime(['2020-01-02'])
+            'b': pd.to_datetime(['2020-01-02']),
         })
         instance = ScalarInequality(column_name='b', value='2020-01-01', relation='>')
-        instance.metadata = Mock(columns={
-            'a': {'sdtype': 'datetime'},
-            'b': {'sdtype': 'datetime'},
-        })
+        instance.metadata = Mock(
+            columns={
+                'a': {'sdtype': 'datetime'},
+                'b': {'sdtype': 'datetime'},
+            }
+        )
 
         # Run
         instance._fit(table_data)
@@ -2232,15 +2163,12 @@ class TestScalarInequality():
         - False should be returned for the strictly invalid rows and True for the rest.
         """
         # Setup
-        instance = ScalarInequality(
-            column_name='b',
-            value='8/31/2021',
-            relation='>=')
+        instance = ScalarInequality(column_name='b', value='8/31/2021', relation='>=')
 
         # Run
         table_data = pd.DataFrame({
             'b': [datetime(2021, 8, 30), datetime(2021, 8, 31), datetime(2021, 9, 2), np.nan],
-            'c': [7, 8, 9, 10]
+            'c': [7, 8, 9, 10],
         })
         out = instance.is_valid(table_data)
 
@@ -2255,18 +2183,14 @@ class TestScalarInequality():
         ``value`` or the row contains nan, even when the ``datetime`` is passed as an object.
         """
         # Setup
-        instance = ScalarInequality(
-            column_name='b',
-            value='8/31/2021',
-            relation='>='
-        )
+        instance = ScalarInequality(column_name='b', value='8/31/2021', relation='>=')
         instance._dtype = np.dtype('O')
         instance._is_datetime = True
 
         # Run
         table_data = pd.DataFrame({
             'b': ['2021, 8, 30', '2021, 8, 31', '2021, 9, 2', np.nan],
-            'c': [7, 8, 9, 10]
+            'c': [7, 8, 9, 10],
         })
         out = instance.is_valid(table_data)
 
@@ -2321,10 +2245,7 @@ class TestScalarInequality():
           in the ``column_name``'s place.
         """
         # Setup
-        instance = ScalarInequality(
-            column_name='a',
-            value='2020-01-01T00:00:00',
-            relation='>')
+        instance = ScalarInequality(column_name='a', value='2020-01-01T00:00:00', relation='>')
         instance._diff_column_name = 'a#'
         instance._is_datetime = True
 
@@ -2438,10 +2359,7 @@ class TestScalarInequality():
         and the diff column dropped.
         """
         # Setup
-        instance = ScalarInequality(
-            column_name='a',
-            value='2020-01-01T00:00:00',
-            relation='>=')
+        instance = ScalarInequality(column_name='a', value='2020-01-01T00:00:00', relation='>=')
         instance._dtype = np.dtype('<M8[ns]')
         instance._diff_column_name = 'a#'
         instance._is_datetime = True
@@ -2482,8 +2400,7 @@ class TestScalarInequality():
         pd.testing.assert_frame_equal(out, expected_out)
 
 
-class TestPositive():
-
+class TestPositive:
     def test__validate_inputs(self):
         """Test the ``Positive._validate_inputs`` method.
 
@@ -2547,7 +2464,7 @@ class TestPositive():
             Positive._validate_metadata_columns(metadata, column_name='c')
 
     def test__validate_metadata_specific_to_constraint(self):
-        """ Test the ``_validate_metadata_specific_to_constraint`` method.
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
 
         If the column name provided has an sdtype of numerical, then no error should
         be raised.
@@ -2557,18 +2474,13 @@ class TestPositive():
         """
         # Setup
         metadata = Mock()
-        metadata.columns = {
-            'a': {'sdtype': 'numerical'}
-        }
+        metadata.columns = {'a': {'sdtype': 'numerical'}}
 
         # Run
-        Positive._validate_metadata_specific_to_constraint(
-            metadata,
-            column_name='a'
-        )
+        Positive._validate_metadata_specific_to_constraint(metadata, column_name='a')
 
     def test__validate_metadata_specific_to_constraint_error(self):
-        """ Test the ``_validate_metadata_specific_to_constraint`` method.
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
 
         If the column name provided does not have an sdtype of numerical, then an error should
         be raised.
@@ -2581,9 +2493,7 @@ class TestPositive():
         """
         # Setup
         metadata = Mock()
-        metadata.columns = {
-            'a': {'sdtype': 'datetime'}
-        }
+        metadata.columns = {'a': {'sdtype': 'datetime'}}
 
         # Run
         error_message = (
@@ -2591,10 +2501,7 @@ class TestPositive():
             "'a'. This constraint is only defined for numerical columns."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
-            Positive._validate_metadata_specific_to_constraint(
-                metadata,
-                column_name='a'
-            )
+            Positive._validate_metadata_specific_to_constraint(metadata, column_name='a')
 
     def test__init__(self):
         """Test the ``Positive.__init__`` method.
@@ -2623,8 +2530,7 @@ class TestPositive():
         assert instance._operator == np.greater
 
 
-class TestNegative():
-
+class TestNegative:
     def test__validate_inputs(self):
         """Test the ``Negative._validate_inputs`` method.
 
@@ -2688,7 +2594,7 @@ class TestNegative():
             Negative._validate_metadata_columns(metadata, column_name='c')
 
     def test__validate_metadata_specific_to_constraint(self):
-        """ Test the ``_validate_metadata_specific_to_constraint`` method.
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
 
         If the column name provided has an sdtype of numerical, then no error should
         be raised.
@@ -2698,18 +2604,13 @@ class TestNegative():
         """
         # Setup
         metadata = Mock()
-        metadata.columns = {
-            'a': {'sdtype': 'numerical'}
-        }
+        metadata.columns = {'a': {'sdtype': 'numerical'}}
 
         # Run
-        Positive._validate_metadata_specific_to_constraint(
-            metadata,
-            column_name='a'
-        )
+        Positive._validate_metadata_specific_to_constraint(metadata, column_name='a')
 
     def test__validate_metadata_specific_to_constraint_error(self):
-        """ Test the ``_validate_metadata_specific_to_constraint`` method.
+        """Test the ``_validate_metadata_specific_to_constraint`` method.
 
         If the column name provided does not have an sdtype of numerical, then an error should
         be raised.
@@ -2722,9 +2623,7 @@ class TestNegative():
         """
         # Setup
         metadata = Mock()
-        metadata.columns = {
-            'a': {'sdtype': 'datetime'}
-        }
+        metadata.columns = {'a': {'sdtype': 'datetime'}}
 
         # Run
         error_message = (
@@ -2732,10 +2631,7 @@ class TestNegative():
             "'a'. This constraint is only defined for numerical columns."
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
-            Negative._validate_metadata_specific_to_constraint(
-                metadata,
-                column_name='a'
-            )
+            Negative._validate_metadata_specific_to_constraint(metadata, column_name='a')
 
     def test__init__(self):
         """Test the ``Negative.__init__`` method.
@@ -2764,8 +2660,7 @@ class TestNegative():
         assert instance._operator == np.less
 
 
-class TestRange():
-
+class TestRange:
     def test__validate_inputs(self):
         """Test the ``Range._validate_inputs`` method.
 
@@ -2785,7 +2680,9 @@ class TestRange():
         groups = re.search(err_msg, str(error.value))
         assert groups is not None
         assert set(eval(groups.group(1))) == {
-            'middle_column_name', 'high_column_name', 'low_column_name'
+            'middle_column_name',
+            'high_column_name',
+            'low_column_name',
         }
         assert set(eval(groups.group(2))) == {'not_high_column', 'not_low_column'}
 
@@ -2807,10 +2704,7 @@ class TestRange():
 
         # Run
         Range._validate_metadata_columns(
-            metadata,
-            high_column_name='a',
-            low_column_name='b',
-            middle_column_name='c'
+            metadata, high_column_name='a', low_column_name='b', middle_column_name='c'
         )
 
     def test__validate_metadata_columns_raises_error(self):
@@ -2835,10 +2729,7 @@ class TestRange():
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             Range._validate_metadata_columns(
-                metadata,
-                high_column_name='a',
-                low_column_name='b',
-                middle_column_name='c'
+                metadata, high_column_name='a', low_column_name='b', middle_column_name='c'
             )
 
     def test__validate_metadata_specific_to_constraint_datetime(self):
@@ -2855,15 +2746,12 @@ class TestRange():
         metadata.columns = {
             'a': {'sdtype': 'datetime'},
             'b': {'sdtype': 'datetime'},
-            'c': {'sdtype': 'datetime'}
+            'c': {'sdtype': 'datetime'},
         }
 
         # Run
         Range._validate_metadata_specific_to_constraint(
-            metadata,
-            high_column_name='a',
-            low_column_name='b',
-            middle_column_name='c'
+            metadata, high_column_name='a', low_column_name='b', middle_column_name='c'
         )
 
     def test__validate_metadata_specific_to_constraint_datetime_error(self):
@@ -2881,7 +2769,7 @@ class TestRange():
         metadata.columns = {
             'a': {'sdtype': 'datetime'},
             'b': {'sdtype': 'datetime'},
-            'c': {'sdtype': 'numerical'}
+            'c': {'sdtype': 'numerical'},
         }
 
         # Run
@@ -2891,10 +2779,7 @@ class TestRange():
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             Range._validate_metadata_specific_to_constraint(
-                metadata,
-                high_column_name='a',
-                low_column_name='b',
-                middle_column_name='c'
+                metadata, high_column_name='a', low_column_name='b', middle_column_name='c'
             )
 
     def test__validate_metadata_specific_to_constraint_numerical(self):
@@ -2911,15 +2796,12 @@ class TestRange():
         metadata.columns = {
             'a': {'sdtype': 'numerical'},
             'b': {'sdtype': 'numerical'},
-            'c': {'sdtype': 'numerical'}
+            'c': {'sdtype': 'numerical'},
         }
 
         # Run
         Range._validate_metadata_specific_to_constraint(
-            metadata,
-            high_column_name='a',
-            low_column_name='b',
-            middle_column_name='c'
+            metadata, high_column_name='a', low_column_name='b', middle_column_name='c'
         )
 
     def test__validate_metadata_specific_to_constraint_numerical_error(self):
@@ -2937,7 +2819,7 @@ class TestRange():
         metadata.columns = {
             'a': {'sdtype': 'numerical'},
             'b': {'sdtype': 'numerical'},
-            'c': {'sdtype': 'datetime'}
+            'c': {'sdtype': 'datetime'},
         }
 
         # Run
@@ -2947,10 +2829,7 @@ class TestRange():
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             Range._validate_metadata_specific_to_constraint(
-                metadata,
-                high_column_name='a',
-                low_column_name='b',
-                middle_column_name='c'
+                metadata, high_column_name='a', low_column_name='b', middle_column_name='c'
             )
 
     def test___init__(self):
@@ -2984,10 +2863,7 @@ class TestRange():
         """
         # Run
         instance = Range(
-            'age_when_joined',
-            'current_age',
-            'retirement_age',
-            strict_boundaries=False
+            'age_when_joined', 'current_age', 'retirement_age', strict_boundaries=False
         )
 
         # Assert
@@ -3014,11 +2890,13 @@ class TestRange():
         """
         # Setup
         instance = Range('join_date', 'promotion_date', 'retirement_date')
-        instance.metadata = Mock(columns={
-            'join_date': {'sdtype': 'datetime'},
-            'promotion_date': {'sdtype': 'datetime'},
-            'retirement_date': {'sdtype': 'datetime'},
-        })
+        instance.metadata = Mock(
+            columns={
+                'join_date': {'sdtype': 'datetime'},
+                'promotion_date': {'sdtype': 'datetime'},
+                'retirement_date': {'sdtype': 'datetime'},
+            }
+        )
 
         # Run
         is_datetime = instance._get_is_datetime()
@@ -3071,11 +2949,13 @@ class TestRange():
         """
         # Setup
         instance = Range('join_date', 'promotion_date', 'current_age')
-        instance.metadata = Mock(columns={
-            'join_date': {'sdtype': 'datetime'},
-            'promotion_date': {'sdtype': 'datetime'},
-            'current_age': {'sdtype': 'numerical'},
-        })
+        instance.metadata = Mock(
+            columns={
+                'join_date': {'sdtype': 'datetime'},
+                'promotion_date': {'sdtype': 'datetime'},
+                'current_age': {'sdtype': 'numerical'},
+            }
+        )
         expected_text = 'The constraint column and bounds must all be datetime.'
 
         # Run
@@ -3099,12 +2979,15 @@ class TestRange():
             - instance has ``_transformed_column`` and ``_is_datetime`` and ``_dtype``.
         """
         # Setup
-        table_data = pd.DataFrame({
-            'age_when_joined': [18, 19, 20],
-            'current_age': [21, 22, 25],
-            'retirement_age': [65, 68, 75],
-            'current_age#age_when_joined#retirement_age': [1, 2, 3]
-        }, dtype=np.int64)
+        table_data = pd.DataFrame(
+            {
+                'age_when_joined': [18, 19, 20],
+                'current_age': [21, 22, 25],
+                'retirement_age': [65, 68, 75],
+                'current_age#age_when_joined#retirement_age': [1, 2, 3],
+            },
+            dtype=np.int64,
+        )
         instance = Range('age_when_joined', 'current_age', 'retirement_age')
         instance.metadata = MagicMock()
 
@@ -3133,7 +3016,7 @@ class TestRange():
         table_data = pd.DataFrame({
             'age_when_joined': [18, 19, 20],
             'current_age': [21, 22, 25],
-            'retirement_age': [65, 68, 75]
+            'retirement_age': [65, 68, 75],
         })
         instance = Range('age_when_joined', 'current_age', 'retirement_age')
 
@@ -3161,13 +3044,10 @@ class TestRange():
         table_data = pd.DataFrame({
             'age_when_joined': [21, 19, 20],
             'current_age': [21, 22, 25],
-            'retirement_age': [65, 68, 75]
+            'retirement_age': [65, 68, 75],
         })
         instance = Range(
-            'age_when_joined',
-            'current_age',
-            'retirement_age',
-            strict_boundaries=False
+            'age_when_joined', 'current_age', 'retirement_age', strict_boundaries=False
         )
 
         # Run
@@ -3192,13 +3072,10 @@ class TestRange():
         table_data = pd.DataFrame({
             'age_when_joined': [70, 19, 20],
             'current_age': [21, 22, 25],
-            'retirement_age': [65, 68, 75]
+            'retirement_age': [65, 68, 75],
         })
         instance = Range(
-            'age_when_joined',
-            'current_age',
-            'retirement_age',
-            strict_boundaries=False
+            'age_when_joined', 'current_age', 'retirement_age', strict_boundaries=False
         )
 
         # Run
@@ -3280,8 +3157,8 @@ class TestRange():
         # Assert
         expected_out = pd.DataFrame({
             'a': pd.to_datetime(['2020-01-01', '2020-01-02']),
-            'a#b': [0., 0.],
-            'b#c': [0., 0.],
+            'a#b': [0.0, 0.0],
+            'b#c': [0.0, 0.0],
         })
         pd.testing.assert_frame_equal(out, expected_out)
 
@@ -3325,11 +3202,13 @@ class TestRange():
         })
 
         instance = Range('a', 'b', 'c')
-        instance.metadata = Mock(columns={
-            'a': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
-            'b': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
-            'c': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
-        })
+        instance.metadata = Mock(
+            columns={
+                'a': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
+                'b': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
+                'c': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
+            }
+        )
 
         # Run
         instance.fit(table_data)
@@ -3339,8 +3218,7 @@ class TestRange():
         pd.testing.assert_frame_equal(table_data, out)
 
 
-class TestScalarRange():
-
+class TestScalarRange:
     def test__validate_inputs(self):
         """Test the ``ScalarRange._validate_inputs`` method.
 
@@ -3421,10 +3299,7 @@ class TestScalarRange():
 
         # Run
         ScalarRange._validate_metadata_specific_to_constraint(
-            metadata,
-            column_name='a',
-            high_value=10,
-            low_value=5
+            metadata, column_name='a', high_value=10, low_value=5
         )
 
     def test__validate_metadata_specific_to_constraint_numerical_high_not_numerical_error(self):
@@ -3447,10 +3322,7 @@ class TestScalarRange():
         error_message = "Both 'high_value' and 'low_value' must be ints or floats"
         with pytest.raises(ConstraintMetadataError, match=error_message):
             ScalarRange._validate_metadata_specific_to_constraint(
-                metadata,
-                column_name='a',
-                low_value=5,
-                high_value='10'
+                metadata, column_name='a', low_value=5, high_value='10'
             )
 
     def test__validate_metadata_specific_to_constraint_numerical_low_not_numerical_error(self):
@@ -3473,10 +3345,7 @@ class TestScalarRange():
         error_message = "Both 'high_value' and 'low_value' must be ints or floats"
         with pytest.raises(ConstraintMetadataError, match=error_message):
             ScalarRange._validate_metadata_specific_to_constraint(
-                metadata,
-                column_name='a',
-                low_value='5',
-                high_value=10
+                metadata, column_name='a', low_value='5', high_value=10
             )
 
     @patch('sdv.constraints.tabular.matches_datetime_format')
@@ -3501,15 +3370,13 @@ class TestScalarRange():
 
         # Run
         ScalarRange._validate_metadata_specific_to_constraint(
-            metadata,
-            column_name='a',
-            low_value='1/1/2020',
-            high_value='1/30/2020'
+            metadata, column_name='a', low_value='1/1/2020', high_value='1/30/2020'
         )
 
     @patch('sdv.constraints.tabular.matches_datetime_format')
     def test__validate_metadata_specific_to_constraint_high_datetime_error(
-            self, datetime_format_mock):
+        self, datetime_format_mock
+    ):
         """Test the ``_validate_metadata_specific_to_constraint`` method.
 
         If the column_name has an sdtype of datetime, and the high_value
@@ -3537,15 +3404,13 @@ class TestScalarRange():
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             ScalarRange._validate_metadata_specific_to_constraint(
-                metadata,
-                column_name='a',
-                high_value='1/1/2019',
-                low_value='1-1-2020'
+                metadata, column_name='a', high_value='1/1/2019', low_value='1-1-2020'
             )
 
     @patch('sdv.constraints.tabular.matches_datetime_format')
     def test__validate_metadata_specific_to_constraint_low_datetime_error(
-            self, datetime_format_mock):
+        self, datetime_format_mock
+    ):
         """Test the ``_validate_metadata_specific_to_constraint`` method.
 
         If the column_name has an sdtype of datetime, and the low_value
@@ -3573,10 +3438,7 @@ class TestScalarRange():
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             ScalarRange._validate_metadata_specific_to_constraint(
-                metadata,
-                column_name='a',
-                high_value='1-1-2019',
-                low_value='1/1/2020'
+                metadata, column_name='a', high_value='1-1-2019', low_value='1/1/2020'
             )
 
     def test__validate_metadata_specific_to_constraint_bad_type(self):
@@ -3606,10 +3468,7 @@ class TestScalarRange():
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
             ScalarRange._validate_metadata_specific_to_constraint(
-                metadata,
-                column_name='a',
-                high_value='10',
-                low_value='7'
+                metadata, column_name='a', high_value='10', low_value='7'
             )
 
     def test__validate_init_inputs(self):
@@ -3789,10 +3648,7 @@ class TestScalarRange():
             - The column name concatenated with ``#`` followed by the ``low`` and ``high`` values.
         """
         # Setup
-        table_data = pd.DataFrame({
-            'current_age': [21, 22, 25],
-            'current_age#18#35': [1, 2, 3]
-        })
+        table_data = pd.DataFrame({'current_age': [21, 22, 25], 'current_age#18#35': [1, 2, 3]})
         instance = ScalarRange('current_age', 18, 35)
 
         # Run
@@ -4041,8 +3897,7 @@ class TestScalarRange():
         instance = ScalarRange('current_age', 20, 28)
         instance._transformed_column = 'current_age#20#28'
         instance._is_datetime = True
-        mock_pd.to_datetime.side_effect = \
-            lambda x, format: pd.to_datetime('2021-02-02 10:10:59')  # noqa: A006
+        mock_pd.to_datetime.side_effect = lambda x, format: pd.to_datetime('2021-02-02 10:10:59')  # noqa: A006
 
         # Run
         output = instance.reverse_transform(transformed_data)
@@ -4060,8 +3915,7 @@ class TestScalarRange():
         assert mock_pd.to_datetime.call_count == 1
 
 
-class TestOneHotEncoding():
-
+class TestOneHotEncoding:
     def test__validate_inputs(self):
         """Test the ``OneHotEncoding._validate_inputs`` method.
 
@@ -4139,19 +3993,11 @@ class TestOneHotEncoding():
         instance = OneHotEncoding(column_names=['a', 'b'])
 
         # Run
-        table_data = pd.DataFrame({
-            'a': [0.1, 0.5, 0.8],
-            'b': [0.8, 0.1, 0.9],
-            'c': [1, 2, 3]
-        })
+        table_data = pd.DataFrame({'a': [0.1, 0.5, 0.8], 'b': [0.8, 0.1, 0.9], 'c': [1, 2, 3]})
         out = instance.reverse_transform(table_data)
 
         # Assert
-        expected_out = pd.DataFrame({
-            'a': [0.0, 1.0, 0.0],
-            'b': [1.0, 0.0, 1.0],
-            'c': [1, 2, 3]
-        })
+        expected_out = pd.DataFrame({'a': [0.0, 1.0, 0.0], 'b': [1.0, 0.0, 1.0], 'c': [1, 2, 3]})
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_is_valid(self):
@@ -4174,7 +4020,7 @@ class TestOneHotEncoding():
             'a': [1.0, 1.0, 0.0, 0.5, 1.0],
             'b': [0.0, 1.0, 0.0, 0.5, 0.0],
             'c': [0.0, 2.0, 0.0, 0.0, np.nan],
-            'd': [1, 2, 3, 4, 5]
+            'd': [1, 2, 3, 4, 5],
         })
         out = instance.is_valid(table_data)
 
@@ -4183,8 +4029,7 @@ class TestOneHotEncoding():
         pd.testing.assert_series_equal(expected_out, out)
 
 
-class TestUnique():
-
+class TestUnique:
     def test__validate_inputs(self):
         """Test the ``Unique._validate_inputs`` method.
 
@@ -4263,10 +4108,7 @@ class TestUnique():
         metadata.alternate_keys = ['b', 'c']
 
         # Run
-        Unique._validate_metadata_specific_to_constraint(
-            metadata,
-            column_names=['a', 'b', 'd']
-        )
+        Unique._validate_metadata_specific_to_constraint(metadata, column_names=['a', 'b', 'd'])
 
     def test__validate_metadata_specific_to_constraint_error(self):
         """Test the ``_validate_metadata_specific_to_constraint``.
@@ -4289,10 +4131,7 @@ class TestUnique():
             'These columns are already a key for that table.'
         )
         with pytest.raises(ConstraintMetadataError, match=error_message):
-            Unique._validate_metadata_specific_to_constraint(
-                metadata,
-                column_names=['a', 'b', 'c']
-            )
+            Unique._validate_metadata_specific_to_constraint(metadata, column_names=['a', 'b', 'c'])
 
     def test___init__(self):
         """Test the ``Unique.__init__`` method.
@@ -4329,7 +4168,7 @@ class TestUnique():
         data = pd.DataFrame({
             'a': [1, 1, 2, 2, 3, 4],
             'b': [5, 5, 6, 6, 7, 8],
-            'c': [9, 9, 10, 10, 12, 13]
+            'c': [9, 9, 10, 10, 12, 13],
         })
         valid = instance.is_valid(data)
 
@@ -4356,11 +4195,10 @@ class TestUnique():
         instance = Unique(column_names=['a', 'b', 'c'])
 
         # Run
-        data = pd.DataFrame({
-            'a': [1, 1, 2, 2, 3],
-            'b': [5, 5, 6, 6, 7],
-            'c': [8, 8, 9, 9, 10]
-        }, index=[0, 0, 0, 0, 0])
+        data = pd.DataFrame(
+            {'a': [1, 1, 2, 2, 3], 'b': [5, 5, 6, 6, 7], 'c': [8, 8, 9, 9, 10]},
+            index=[0, 0, 0, 0, 0],
+        )
         valid = instance.is_valid(data)
 
         # Assert
@@ -4386,11 +4224,10 @@ class TestUnique():
         instance = Unique(column_names=['a', 'b', 'c'])
 
         # Run
-        data = pd.DataFrame({
-            'a': [1, 1, 2, 2, 3],
-            'b': [5, 5, 6, 6, 7],
-            'c': [8, 8, 9, 9, 10]
-        }, index=[2, 1, 3, 5, 4])
+        data = pd.DataFrame(
+            {'a': [1, 1, 2, 2, 3], 'b': [5, 5, 6, 6, 7], 'c': [8, 8, 9, 9, 10]},
+            index=[2, 1, 3, 5, 4],
+        )
         valid = instance.is_valid(data)
 
         # Assert
@@ -4417,11 +4254,14 @@ class TestUnique():
         instance = Unique(column_names='a')
 
         # Run
-        data = pd.DataFrame({
-            'a': [1, 1, 1, 2, 3, 2],
-            'b': [1, 2, 3, 4, 5, 6],
-            'c': [False, False, True, False, False, True]
-        }, index=[2, 1, 3, 5, 4, 6])
+        data = pd.DataFrame(
+            {
+                'a': [1, 1, 1, 2, 3, 2],
+                'b': [1, 2, 3, 4, 5, 6],
+                'c': [False, False, True, False, False, True],
+            },
+            index=[2, 1, 3, 5, 4, 6],
+        )
         valid = instance.is_valid(data)
 
         # Assert
@@ -4448,11 +4288,14 @@ class TestUnique():
         instance = Unique(column_names='a')
 
         # Run
-        data = pd.DataFrame({
-            'a': [1, 1, 1, 2, 3, 2],
-            'b': [1, 2, 3, 4, 5, 6],
-            'c': [False, False, True, False, False, True]
-        }, index=[0, 0, 0, 0, 0, 0])
+        data = pd.DataFrame(
+            {
+                'a': [1, 1, 1, 2, 3, 2],
+                'b': [1, 2, 3, 4, 5, 6],
+                'c': [False, False, True, False, False, True],
+            },
+            index=[0, 0, 0, 0, 0, 0],
+        )
         valid = instance.is_valid(data)
 
         # Assert
@@ -4479,7 +4322,7 @@ class TestUnique():
         data = pd.DataFrame({
             'a': [1, 1, 1, 2, 3, 2],
             'b': [1, 2, 3, 4, 5, 6],
-            'c': [False, False, True, False, False, True]
+            'c': [False, False, True, False, False, True],
         })
         valid = instance.is_valid(data)
 
@@ -4542,8 +4385,7 @@ class TestUnique():
         pd.testing.assert_series_equal(valid, expected)
 
 
-class TestFixedIncrements():
-
+class TestFixedIncrements:
     def test__validate_inputs(self):
         """Test the ``FixedIncrements._validate_inputs`` method.
 
@@ -4561,7 +4403,8 @@ class TestFixedIncrements():
         # Run / Assert
         with pytest.raises(AggregateConstraintsError) as error:
             FixedIncrements._validate_inputs(
-                not_column_name=None, increment_value=-1, something_else=None)
+                not_column_name=None, increment_value=-1, something_else=None
+            )
 
         groups = re.search(err_msg, str(error.value))
         assert groups is not None
@@ -4628,7 +4471,7 @@ class TestFixedIncrements():
         # Assert
         assert instance.column_name == 'column'
         assert instance.increment_value == 5
-        assert instance.constraint_columns == ('column', )
+        assert instance.constraint_columns == ('column',)
 
     def test___init___increment_value_is_negative_number(self):
         """Test the ``FixedIncrements.__init__ method with a negative increment.
@@ -4683,7 +4526,7 @@ class TestFixedIncrements():
         instance._fit(data)
 
         # Assert
-        assert instance._dtype == float
+        assert is_float_dtype(instance._dtype)
 
     def test_is_valid(self):
         """Test the ``FixedIncrements.is_valid`` method.

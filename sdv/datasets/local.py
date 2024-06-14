@@ -33,9 +33,7 @@ def load_csvs(folder_name, read_csv_parameters=None):
             other_files.append(filename)
 
     if other_files:
-        warnings.warn(
-            f"Ignoring incompatible files {other_files} in folder '{folder_name}'."
-        )
+        warnings.warn(f"Ignoring incompatible files {other_files} in folder '{folder_name}'.")
 
     if not csvs:
         raise ValueError(

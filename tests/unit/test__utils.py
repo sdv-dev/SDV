@@ -31,22 +31,19 @@ def test__convert_to_timedelta(to_timedelta_mock):
     """Test that nans and values are properly converted to timedeltas."""
     # Setup
     column = pd.Series([7200, 3600, np.nan])
-    to_timedelta_mock.return_value = pd.Series([
-        pd.Timedelta(hours=1),
-        pd.Timedelta(hours=2),
-        pd.Timedelta(hours=0)
-    ], dtype='timedelta64[ns]')
+    to_timedelta_mock.return_value = pd.Series(
+        [pd.Timedelta(hours=1), pd.Timedelta(hours=2), pd.Timedelta(hours=0)],
+        dtype='timedelta64[ns]',
+    )
 
     # Run
     converted_column = _convert_to_timedelta(column)
 
     # Assert
     to_timedelta_mock.assert_called_with(SeriesMatcher(pd.Series([7200, 3600, 0.0])))
-    expected_column = pd.Series([
-        pd.Timedelta(hours=1),
-        pd.Timedelta(hours=2),
-        pd.NaT
-    ], dtype='timedelta64[ns]')
+    expected_column = pd.Series(
+        [pd.Timedelta(hours=1), pd.Timedelta(hours=2), pd.NaT], dtype='timedelta64[ns]'
+    )
     pd.testing.assert_series_equal(converted_column, expected_column)
 
 
@@ -89,11 +86,8 @@ def test__is_datetime_type_with_datetime_series():
     - True
     """
     # Setup
-    data = pd.Series([
-        pd.to_datetime('2020-01-01'),
-        pd.to_datetime('2020-01-02'),
-        pd.to_datetime('2020-01-03')
-    ],
+    data = pd.Series(
+        [pd.to_datetime('2020-01-01'), pd.to_datetime('2020-01-02'), pd.to_datetime('2020-01-03')],
     )
 
     # Run
@@ -111,7 +105,7 @@ def test__is_datetime_type_with_mixed_array():
         '1890-03-05',
         pd.Timestamp('01-01-01'),
         datetime(2020, 1, 1),
-        np.nan
+        np.nan,
     ]
 
     # Run
@@ -130,7 +124,7 @@ def test__is_datetime_type_with_invalid_strings_in_list():
         pd.Timestamp('01-01-01'),
         datetime(2020, 1, 1),
         'invalid',
-        np.nan
+        np.nan,
     ]
 
     # Run
@@ -293,6 +287,7 @@ def test__create_unique_name():
 
 def test__validate_foreign_keys_not_null():
     """Test that it crashes when foreign keys contain null data."""
+
     # Setup
     def side_effect_func(value):
         return ['fk'] if value == 'child_table' else []
@@ -300,13 +295,8 @@ def test__validate_foreign_keys_not_null():
     metadata = Mock()
     metadata._get_all_foreign_keys.side_effect = side_effect_func
     data = {
-        'parent_table': pd.DataFrame({
-            'id': [1, 2, 3]
-        }),
-        'child_table': pd.DataFrame({
-            'id': [1, 2, 3],
-            'fk': [None, 2, np.nan]
-        })
+        'parent_table': pd.DataFrame({'id': [1, 2, 3]}),
+        'child_table': pd.DataFrame({'id': [1, 2, 3], 'fk': [None, 2, np.nan]}),
     }
 
     # Run and Assert
@@ -323,6 +313,7 @@ def test__validate_foreign_keys_not_null():
 
 def test__validate_foreign_keys_not_null_no_nulls():
     """Test that it doesn't crash when foreign keys contain no null data."""
+
     # Setup
     def side_effect_func(value):
         return ['fk'] if value == 'child_table' else []
@@ -330,13 +321,8 @@ def test__validate_foreign_keys_not_null_no_nulls():
     metadata = Mock()
     metadata._get_all_foreign_keys.side_effect = side_effect_func
     data = {
-        'parent_table': pd.DataFrame({
-            'id': [1, 2, 3]
-        }),
-        'child_table': pd.DataFrame({
-            'id': [1, 2, 3],
-            'fk': [1, 2, 3]
-        })
+        'parent_table': pd.DataFrame({'id': [1, 2, 3]}),
+        'child_table': pd.DataFrame({'id': [1, 2, 3], 'fk': [1, 2, 3]}),
     }
 
     # Run
@@ -463,10 +449,7 @@ def test__compare_versions_lower():
 def test_check_synthesizer_version_public_and_enterprise_are_lower(mock_version):
     """Test that VersionError is raised when both public and enterprise version are higher."""
     # Setup
-    synthesizer = Mock(
-        _fitted_sdv_version='2.0.0',
-        _fitted_sdv_enterprise_version='2.1.0'
-    )
+    synthesizer = Mock(_fitted_sdv_version='2.0.0', _fitted_sdv_enterprise_version='2.1.0')
 
     mock_version.public = '1.3.0'
     mock_version.enterprise = '1.3.3'
@@ -485,10 +468,7 @@ def test_check_synthesizer_version_public_and_enterprise_are_lower(mock_version)
 def test_check_synthesizer_version_public_is_lower(mock_version):
     """Test that VersionError is raised when only public version is lower."""
     # Setup
-    synthesizer = Mock(
-        _fitted_sdv_version='1.4.0',
-        _fitted_sdv_enterprise_version='1.2.0'
-    )
+    synthesizer = Mock(_fitted_sdv_version='1.4.0', _fitted_sdv_enterprise_version='1.2.0')
 
     mock_version.public = '1.3.0'
     mock_version.enterprise = '1.2.0'
@@ -506,10 +486,7 @@ def test_check_synthesizer_version_public_is_lower(mock_version):
 def test_check_synthesizer_version_enterprise_is_lower(mock_version):
     """Test that VersionError is raised when only enterprise version is lower."""
     # Setup
-    synthesizer = Mock(
-        _fitted_sdv_version='1.3.0',
-        _fitted_sdv_enterprise_version='1.3.0'
-    )
+    synthesizer = Mock(_fitted_sdv_version='1.3.0', _fitted_sdv_enterprise_version='1.3.0')
 
     mock_version.public = '1.3.0'
     mock_version.enterprise = '1.2.0'
@@ -527,10 +504,7 @@ def test_check_synthesizer_version_enterprise_is_lower(mock_version):
 def test_check_synthesizer_version_enterprise_is_none(mock_version):
     """Test that no VersionError is raised enterprise is None on the synthesizer."""
     # Setup
-    synthesizer = Mock(
-        _fitted_sdv_version='1.3.0',
-        _fitted_sdv_enterprise_version=None
-    )
+    synthesizer = Mock(_fitted_sdv_version='1.3.0', _fitted_sdv_enterprise_version=None)
 
     mock_version.public = '1.3.0'
     mock_version.enterprise = '1.2.0'
@@ -545,7 +519,7 @@ def test__get_root_tables():
     relationships = [
         {'parent_table_name': 'parent', 'child_table_name': 'child'},
         {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
-        {'parent_table_name': 'parent', 'child_table_name': 'grandchild'}
+        {'parent_table_name': 'parent', 'child_table_name': 'grandchild'},
     ]
 
     # Run
@@ -563,10 +537,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater(mock_version):
     than the current package version.
     """
     # Setup
-    synthesizer = Mock(
-        _fitted_sdv_version='1.3.0',
-        _fitted_sdv_enterprise_version='1.3.0'
-    )
+    synthesizer = Mock(_fitted_sdv_version='1.3.0', _fitted_sdv_enterprise_version='1.3.0')
 
     mock_version.public = '1.3.0'
     mock_version.enterprise = '1.4.0'
@@ -578,21 +549,14 @@ def test_check_synthesizer_version_check_synthesizer_is_greater(mock_version):
         'Please create a new synthesizer.'
     )
     with pytest.raises(VersionError, match=message):
-        check_synthesizer_version(
-            synthesizer,
-            is_fit_method=True,
-            compare_operator=operator.lt
-        )
+        check_synthesizer_version(synthesizer, is_fit_method=True, compare_operator=operator.lt)
 
 
 @patch('sdv._utils.version')
 def test_check_synthesizer_version_check_synthesizer_is_greater_equal(mock_version):
     """Test that no ``VersionError`` is raised when versions match."""
     # Setup
-    synthesizer = Mock(
-        _fitted_sdv_version='1.3.0',
-        _fitted_sdv_enterprise_version='1.3.0'
-    )
+    synthesizer = Mock(_fitted_sdv_version='1.3.0', _fitted_sdv_enterprise_version='1.3.0')
 
     mock_version.public = '1.3.0'
     mock_version.enterprise = '1.3.0'
@@ -609,10 +573,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_public_missmatch
     than the current package version.
     """
     # Setup
-    synthesizer = Mock(
-        _fitted_sdv_version='1.3.0',
-        _fitted_sdv_enterprise_version='1.4.0'
-    )
+    synthesizer = Mock(_fitted_sdv_version='1.3.0', _fitted_sdv_enterprise_version='1.4.0')
 
     mock_version.public = '1.5.0'
     mock_version.enterprise = '1.4.0'
@@ -635,10 +596,7 @@ def test_check_synthesizer_version_check_synthesizer_is_greater_both_missmatch(m
     than the current package version.
     """
     # Setup
-    synthesizer = Mock(
-        _fitted_sdv_version='1.3.0',
-        _fitted_sdv_enterprise_version='1.3.2'
-    )
+    synthesizer = Mock(_fitted_sdv_version='1.3.0', _fitted_sdv_enterprise_version='1.3.2')
 
     mock_version.public = '1.5.0'
     mock_version.enterprise = '1.4.0'

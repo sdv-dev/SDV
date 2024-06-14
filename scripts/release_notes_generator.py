@@ -13,7 +13,7 @@ LABEL_TO_HEADER = {
     'maintenance': 'Maintenance',
     'customer success': 'Customer Success',
     'documentation': 'Documentation',
-    'misc': 'Miscellaneous'
+    'misc': 'Miscellaneous',
 }
 ISSUE_LABELS = [
     'documentation',
@@ -21,7 +21,7 @@ ISSUE_LABELS = [
     'internal',
     'bug',
     'feature request',
-    'customer success'
+    'customer success',
 ]
 NEW_LINE = '\n'
 GITHUB_URL = 'https://api.github.com/repos/sdv-dev/sdv'
@@ -30,14 +30,8 @@ GITHUB_TOKEN = os.getenv('GH_ACCESS_TOKEN')
 
 def _get_milestone_number(milestone_title):
     url = f'{GITHUB_URL}/milestones'
-    headers = {
-        'Authorization': f'Bearer {GITHUB_TOKEN}'
-    }
-    query_params = {
-        'milestone': milestone_title,
-        'state': 'all',
-        'per_page': 100
-    }
+    headers = {'Authorization': f'Bearer {GITHUB_TOKEN}'}
+    query_params = {'milestone': milestone_title, 'state': 'all', 'per_page': 100}
     response = requests.get(url, headers=headers, params=query_params)
     body = response.json()
     if response.status_code != 200:
@@ -52,17 +46,12 @@ def _get_milestone_number(milestone_title):
 
 
 def _get_issues_by_milestone(milestone):
-    headers = {
-        'Authorization': f'Bearer {GITHUB_TOKEN}'
-    }
+    headers = {'Authorization': f'Bearer {GITHUB_TOKEN}'}
     # get milestone number
     milestone_number = _get_milestone_number(milestone)
     url = f'{GITHUB_URL}/issues'
     page = 1
-    query_params = {
-        'milestone': milestone_number,
-        'state': 'all'
-    }
+    query_params = {'milestone': milestone_number, 'state': 'all'}
     issues = []
     while True:
         query_params['page'] = page
