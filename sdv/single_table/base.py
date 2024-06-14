@@ -33,6 +33,7 @@ SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
+FLOAT_RTOL = 0.01
 
 
 class BaseSynthesizer:
@@ -576,7 +577,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         return sampled
 
     def _sample_rows(self, num_rows, conditions=None, transformed_conditions=None,
-                     float_rtol=0.1, previous_rows=None, keep_extra_columns=False):
+                     float_rtol=FLOAT_RTOL, previous_rows=None, keep_extra_columns=False):
         """Sample rows with the given conditions.
 
         Input conditions is taken both in the raw input format, which will be used
@@ -654,7 +655,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             return sampled, num_rows
 
     def _sample_batch(self, batch_size, max_tries=100,
-                      conditions=None, transformed_conditions=None, float_rtol=0.01,
+                      conditions=None, transformed_conditions=None, float_rtol=FLOAT_RTOL,
                       progress_bar=None, output_file_path=None, keep_extra_columns=False):
         """Sample a batch of rows with the given conditions.
 
@@ -774,7 +775,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         ]
 
     def _sample_in_batches(self, num_rows, batch_size, max_tries_per_batch, conditions=None,
-                           transformed_conditions=None, float_rtol=0.01, progress_bar=None,
+                           transformed_conditions=None, float_rtol=FLOAT_RTOL, progress_bar=None,
                            output_file_path=None):
         sampled = []
         batch_size = batch_size if num_rows > batch_size else num_rows
@@ -794,7 +795,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         return sampled.head(num_rows)
 
     def _conditionally_sample_rows(self, dataframe, condition, transformed_condition,
-                                   max_tries_per_batch=None, batch_size=None, float_rtol=0.01,
+                                   max_tries_per_batch=None, batch_size=None, float_rtol=FLOAT_RTOL,
                                    graceful_reject_sampling=True, progress_bar=None,
                                    output_file_path=None):
         batch_size = batch_size or len(dataframe)
