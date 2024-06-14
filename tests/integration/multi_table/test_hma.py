@@ -1383,7 +1383,7 @@ class TestHMASynthesizer:
             synthesizer.fit(data)
 
 
-@pytest.mark.parametrize("num_rows,", [(10), (1000)])
+@pytest.mark.parametrize('num_rows', [(10), (1000)])
 def test_hma_0_1_child(num_rows):
     parent_table = pd.DataFrame(data={
         'id': list(range(num_rows)),
@@ -1442,8 +1442,8 @@ def test_hma_0_1_child(num_rows):
     synthetic_child_df = synthetic_data['child']
     data_col_max = synthetic_child_df['col_B'].max()
     expected_constant_length = math.floor(len(synthetic_child_df) * 0.70)
-    assert len(synthetic_child_df[synthetic_child_df['col_B']
-               == data_col_max]) <= expected_constant_length
+    actual_constants = synthetic_child_df[synthetic_child_df['col_B'] == data_col_max]
+    assert len(actual_constants) <= expected_constant_length
     assert synthetic_child_df['col_B'].max() <= synthetic_child_df['col_B'].max()
     assert synthetic_child_df['col_B'].min() >= synthetic_child_df['col_B'].min()
 
