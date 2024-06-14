@@ -15,7 +15,11 @@ from sdv import version
 from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import SamplingError, SynthesizerInputError, VersionError
-from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
+from sdv.evaluation.multi_table import (
+    evaluate_quality,
+    get_column_pair_plot,
+    get_column_plot,
+)
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
@@ -1417,9 +1421,137 @@ def test_hma_0_1_child():
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(scale=1)
     data_col = synthetic_data['child']['data']
-    assert data_col.shape[0] == 2
+    assert data_col.nunique() == 2
     assert data_col.max() <= child['data'].max()
     assert data_col.min() >= child['data'].min()
+
+
+def test_hma_0_1_grandparent():
+    grandparent = pd.DataFrame({
+        'grandparent_id': [50, 51, 52]
+    })
+    parent = pd.DataFrame({
+        'parent_id': [0, 1, 2, 3],
+        'data': [1.5, 2.5, 5.9, 10.6],
+        'grandparent_id': [50, 50, 50, 52]
+    })
+    child = pd.DataFrame({
+        'child_id': [10, 11, 12],
+        'parent_id': [0, 1, 2],
+        'data': [1.8, 0.7, 2.5]
+    })
+    data = {'parent': parent, 'child': child, 'grandparent': grandparent}
+    metadata_dict = {
+        'tables': {
+            'grandparent': {
+                'primary_key': 'grandparent_id',
+                'columns': {
+                    'grandparent_id': {'sdtype': 'id'},
+                }
+            },
+            'parent': {
+                'primary_key': 'parent_id',
+                'columns': {
+                    'parent_id': {'sdtype': 'id'},
+                    'data': {'sdtype': 'numerical'},
+                    'grandparent_id': {'sdtype': 'id'},
+                }
+            },
+            'child': {
+                'primary_key': 'child_id',
+                'columns': {
+                    'child_id': {'sdtype': 'id'},
+                    'parent_id': {'sdtype': 'id'},
+                    'data': {'sdtype': 'numerical'},
+                }
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'grandparent',
+                'parent_primary_key': 'grandparent_id',
+                'child_table_name': 'parent',
+                'child_foreign_key': 'grandparent_id'
+            },
+            {
+                'parent_table_name': 'parent',
+                'parent_primary_key': 'parent_id',
+                'child_table_name': 'child',
+                'child_foreign_key': 'parent_id'
+            }
+        ]
+    }
+    metadata = MultiTableMetadata().load_from_dict(metadata_dict)
+    metadata.validate()
+    metadata.validate_data(data)
+    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample()
+    child_df = synthetic_data['child']
+    data_col_max = child_df['data'].max()
+    data_col_min = child_df['data'].min()
+    assert child_df[child_df['data'] == data_col_max].shape[0] == 2
+    assert child_df[child_df['data'] == data_col_min].shape[0] == 1
+
+
+def test_hma_0_1_child_larger():
+    num_rows = 1000
+    parent_table = pd.DataFrame(data={
+        'id': [i for i in range(num_rows)],
+        'col_A': list(np.random.choice(['A', 'B', 'C', 'D', 'E'], size=num_rows))
+    })
+    child_table_data = {
+        'parent_id': [],
+        'col_B': [],
+        'col_C': []
+    }
+
+    for i in range(num_rows):
+        num_children = np.random.choice([0, 1, 10, 15], p=[0.4, 0.5, 0.05, 0.05])
+        if num_children == 0:
+            continue
+        child_table_data['parent_id'].extend([i] * num_children)
+        child_table_data['col_B'].extend(
+            [round(i, 2) for i in np.random.uniform(low=0, high=10, size=num_children)])
+        child_table_data['col_C'].extend(
+            list(np.random.choice(['A', 'B', 'C', 'D', 'E'], size=num_children)))
+
+    data = {
+        'parent': parent_table,
+        'child': pd.DataFrame(data=child_table_data)
+    }
+    metadata = MultiTableMetadata.load_from_dict({
+        'tables': {
+            'parent': {
+                'primary_key': 'id',
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'col_A': {'sdtype': 'categorical'}
+                }
+            },
+            'child': {
+                'columns': {
+                    'parent_id': {'sdtype': 'id'},
+                    'col_B': {'sdtype': 'numerical'},
+                    'col_C': {'sdtype': 'categorical'}
+                }
+            }
+        },
+        'relationships': [{
+            'parent_table_name': 'parent',
+            'child_table_name': 'child',
+            'parent_primary_key': 'id',
+            'child_foreign_key': 'parent_id'
+        }]
+    })
+    metadata.validate()
+    metadata.validate_data(data)
+    synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(scale=1)
+    synthetic_child_df = synthetic_data['child']
+    data_col_max = synthetic_child_df['col_B'].max()
+    assert len(synthetic_child_df[synthetic_child_df['col_B'] == data_col_max]) <= 700
 
 
 parametrization = [

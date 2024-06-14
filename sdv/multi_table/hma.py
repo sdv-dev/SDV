@@ -308,10 +308,18 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     row = pd.Series({'num_rows': len(child_rows)})
                     row.index = f'__{child_name}__{foreign_key}__' + row.index
                 else:
+                    numerical_distributions = {}
+                    if child_name in self.parent_extended_columns and \
+                            len(self.parent_extended_columns[child_name]) > 0:
+                        numerical_distributions = {}
+                        for extended_column in self.parent_extended_columns[child_name]:
+                            if extended_column in child_rows.columns:
+                                numerical_distributions[extended_column] = 'truncnorm'
                     synthesizer = self._synthesizer(
-                        table_meta,
-                        **self._table_parameters[child_name],
+                        table_meta, **self._table_parameters[child_name],
                     )
+                    if len(numerical_distributions) > 0:
+                        synthesizer._set_numerical_distributions(numerical_distributions)
                     synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
                     row = synthesizer._get_parameters()
                     row = pd.Series(row)
@@ -388,16 +396,17 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                         enforce_min_max_values=True
                     )
                     self.extended_columns[child_name][column].fit(extension, column)
-                if len(extension.columns) > 0:
-                    if table_name not in self.parent_extended_columns:
-                        self.parent_extended_columns[table_name] = []
-                    self.parent_extended_columns[table_name] = list(extension.columns)
-
                 table = table.merge(extension, how='left', right_index=True, left_index=True)
                 num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
                 table[num_rows_key] = table[num_rows_key].fillna(0)
                 self._max_child_rows[num_rows_key] = table[num_rows_key].max()
                 self._min_child_rows[num_rows_key] = table[num_rows_key].min()
+
+                if len(extension.columns) > 0:
+                    if table_name not in self.parent_extended_columns:
+                        self.parent_extended_columns[table_name] = []
+                    self.parent_extended_columns[table_name].extend(list(extension.columns))
+
                 tables[table_name] = table
                 self._learned_relationships += 1
         self._augmented_tables.append(table_name)
