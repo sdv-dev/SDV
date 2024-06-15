@@ -269,6 +269,18 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         return processed_data
 
+    def _set_extended_columns_distributions(self, synthesizer,
+                                            table_name,
+                                            valid_columns):
+        numerical_distributions = {}
+        if table_name in self.parent_extended_columns and \
+                len(self.parent_extended_columns[table_name]) > 0:
+            for extended_column in self.parent_extended_columns[table_name]:
+                if extended_column in valid_columns:
+                    numerical_distributions[extended_column] = 'truncnorm'
+
+            synthesizer._set_numerical_distributions(numerical_distributions)
+
     def _get_extension(self, child_name, child_table, foreign_key, progress_bar_desc):
         """Generate the extension columns for this child table.
 
@@ -308,18 +320,12 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     row = pd.Series({'num_rows': len(child_rows)})
                     row.index = f'__{child_name}__{foreign_key}__' + row.index
                 else:
-                    numerical_distributions = {}
-                    if child_name in self.parent_extended_columns and \
-                            len(self.parent_extended_columns[child_name]) > 0:
-                        numerical_distributions = {}
-                        for extended_column in self.parent_extended_columns[child_name]:
-                            if extended_column in child_rows.columns:
-                                numerical_distributions[extended_column] = 'truncnorm'
                     synthesizer = self._synthesizer(
                         table_meta, **self._table_parameters[child_name],
                     )
-                    if len(numerical_distributions) > 0:
-                        synthesizer._set_numerical_distributions(numerical_distributions)
+                    self._set_extended_columns_distributions(synthesizer,
+                                                             child_name,
+                                                             child_rows.columns)
                     synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
                     row = synthesizer._get_parameters()
                     row = pd.Series(row)
@@ -475,15 +481,10 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             )
 
             if not table.empty:
-                if table_name in self.parent_extended_columns and len(
-                        self.parent_extended_columns[table_name]) > 0:
-                    numerical_distributions = {}
-                    for extended_column in self.parent_extended_columns[table_name]:
-                        numerical_distributions[extended_column] = 'truncnorm'
-                    self._table_synthesizers[table_name]._set_numerical_distributions(
-                        numerical_distributions)
+                self._set_extended_columns_distributions(self._table_synthesizers[table_name],
+                                                         table_name,
+                                                         table.columns)
                 self._table_synthesizers[table_name].fit_processed_data(table)
-
                 table_parameters = self._table_synthesizers[table_name]._get_parameters()
                 self._default_parameters[table_name] = {
                     parameter: value
