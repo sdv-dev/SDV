@@ -1,6 +1,7 @@
 """Hierarchical Modeling Algorithms."""
 
 import logging
+from collections import defaultdict
 from copy import deepcopy
 
 import numpy as np
@@ -159,7 +160,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         self._augmented_tables = []
         self._learned_relationships = 0
         self._default_parameters = {}
-        self.parent_extended_columns = {}
+        self.parent_extended_columns = defaultdict(list)
         self.verbose = verbose
         BaseHierarchicalSampler.__init__(
             self, self.metadata, self._table_synthesizers, self._table_sizes
@@ -409,8 +410,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 self._min_child_rows[num_rows_key] = table[num_rows_key].min()
 
                 if len(extension.columns) > 0:
-                    if table_name not in self.parent_extended_columns:
-                        self.parent_extended_columns[table_name] = []
                     self.parent_extended_columns[table_name].extend(list(extension.columns))
 
                 tables[table_name] = table
