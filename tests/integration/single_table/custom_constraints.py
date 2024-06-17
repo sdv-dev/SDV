@@ -20,11 +20,7 @@ def reverse_transform(column_names, data):
     return data
 
 
-MyConstraint = create_custom_constraint_class(
-    is_valid,
-    transform,
-    reverse_transform
-)
+MyConstraint = create_custom_constraint_class(is_valid, transform, reverse_transform)
 
 
 def amenities_is_valid(column_names, data):
@@ -42,10 +38,7 @@ def amenities_transform(column_names, data):
     boolean_column = column_names[0]
     numerical_column = column_names[1]
     typical_value = data[numerical_column].median()
-    data[numerical_column] = data[numerical_column].mask(
-        data[boolean_column],
-        typical_value
-    )
+    data[numerical_column] = data[numerical_column].mask(data[boolean_column], typical_value)
 
     return data
 
@@ -60,7 +53,5 @@ def amenities_reverse_transform(column_names, data):
 
 
 IfTrueThenZero = create_custom_constraint_class(
-    amenities_is_valid,
-    amenities_transform,
-    amenities_reverse_transform
+    amenities_is_valid, amenities_transform, amenities_reverse_transform
 )

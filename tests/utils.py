@@ -1,4 +1,5 @@
 """Utils for testing."""
+
 import contextlib
 
 import pandas as pd
@@ -38,45 +39,45 @@ def get_multi_table_metadata():
                 'columns': {
                     'upravna_enota': {'sdtype': 'id'},
                     'id_nesreca': {'sdtype': 'id'},
-                    'nesreca_val': {'sdtype': 'numerical'}
-                }
+                    'nesreca_val': {'sdtype': 'numerical'},
+                },
             },
             'oseba': {
                 'columns': {
                     'upravna_enota': {'sdtype': 'id'},
                     'id_nesreca': {'sdtype': 'id'},
-                    'oseba_val': {'sdtype': 'numerical'}
+                    'oseba_val': {'sdtype': 'numerical'},
                 }
             },
             'upravna_enota': {
                 'primary_key': 'id_upravna_enota',
                 'columns': {
                     'id_upravna_enota': {'sdtype': 'id'},
-                    'upravna_val': {'sdtype': 'numerical'}
-                }
-            }
+                    'upravna_val': {'sdtype': 'numerical'},
+                },
+            },
         },
         'relationships': [
             {
                 'parent_table_name': 'upravna_enota',
                 'parent_primary_key': 'id_upravna_enota',
                 'child_table_name': 'nesreca',
-                'child_foreign_key': 'upravna_enota'
+                'child_foreign_key': 'upravna_enota',
             },
             {
                 'parent_table_name': 'upravna_enota',
                 'parent_primary_key': 'id_upravna_enota',
                 'child_table_name': 'oseba',
-                'child_foreign_key': 'upravna_enota'
+                'child_foreign_key': 'upravna_enota',
             },
             {
                 'parent_table_name': 'nesreca',
                 'parent_primary_key': 'id_nesreca',
                 'child_table_name': 'oseba',
-                'child_foreign_key': 'id_nesreca'
-            }
+                'child_foreign_key': 'id_nesreca',
+            },
         ],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
     }
 
     return MultiTableMetadata.load_from_dict(dict_metadata)
@@ -88,16 +89,16 @@ def get_multi_table_data():
         'nesreca': pd.DataFrame({
             'id_nesreca': list(range(4)),
             'upravna_enota': list(range(4)),
-            'nesreca_val': list(range(4))
+            'nesreca_val': list(range(4)),
         }),
         'oseba': pd.DataFrame({
             'upravna_enota': list(range(4)),
             'id_nesreca': list(range(4)),
-            'oseba_val': list(range(4))
+            'oseba_val': list(range(4)),
         }),
         'upravna_enota': pd.DataFrame({
             'id_upravna_enota': list(range(4)),
-            'upravna_val': list(range(4))
+            'upravna_val': list(range(4)),
         }),
     }
 

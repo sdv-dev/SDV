@@ -3,8 +3,16 @@
 import warnings
 
 from sdv.constraints import (
-    FixedCombinations, Inequality, Negative, OneHotEncoding, Positive, Range, ScalarInequality,
-    ScalarRange, Unique)
+    FixedCombinations,
+    Inequality,
+    Negative,
+    OneHotEncoding,
+    Positive,
+    Range,
+    ScalarInequality,
+    ScalarRange,
+    Unique,
+)
 
 
 def _upgrade_columns_and_keys(old_metadata):
@@ -75,7 +83,7 @@ def _upgrade_positive_negative(old_constraint):
         new_constraint = {
             'constraint_name': constraint_name,
             'column_name': column,
-            'strict_boundaries': strict
+            'strict_boundaries': strict,
         }
         new_constraints.append(new_constraint)
 
@@ -85,7 +93,7 @@ def _upgrade_positive_negative(old_constraint):
 def _upgrade_unique_combinations(old_constraint):
     new_constraint = {
         'constraint_name': FixedCombinations.__name__,
-        'column_names': old_constraint.get('columns')
+        'column_names': old_constraint.get('columns'),
     }
 
     return [new_constraint]
@@ -117,7 +125,7 @@ def _upgrade_greater_than(old_constraint):
             'constraint_name': Inequality.__name__,
             'high_column_name': high if high_is_string else high[0],
             'low_column_name': low if low_is_string else low[0],
-            'strict_boundaries': strict
+            'strict_boundaries': strict,
         }
         new_constraints.append(new_constraint)
 
@@ -128,7 +136,7 @@ def _upgrade_greater_than(old_constraint):
                 'constraint_name': ScalarInequality.__name__,
                 'column_name': column,
                 'relation': '>' if strict else '>=',
-                'value': low
+                'value': low,
             }
             new_constraints.append(new_constraint)
 
@@ -139,7 +147,7 @@ def _upgrade_greater_than(old_constraint):
                 'constraint_name': ScalarInequality.__name__,
                 'column_name': column,
                 'relation': '<' if strict else '<=',
-                'value': high
+                'value': high,
             }
             new_constraints.append(new_constraint)
 
@@ -160,7 +168,7 @@ def _upgrade_between(old_constraint):
             'column_name': constraint_column,
             'low_value': low,
             'high_value': high,
-            'strict_boundaries': strict
+            'strict_boundaries': strict,
         }
         new_constraints.append(new_constraint)
 
@@ -169,13 +177,13 @@ def _upgrade_between(old_constraint):
             'constraint_name': Inequality.__name__,
             'low_column_name': low,
             'high_column_name': constraint_column,
-            'strict_boundaries': strict
+            'strict_boundaries': strict,
         }
         scalar_constraint = {
             'constraint_name': ScalarInequality.__name__,
             'column_name': constraint_column,
             'relation': '<' if strict else '<=',
-            'value': high
+            'value': high,
         }
         new_constraints.append(inequality_constraint)
         new_constraints.append(scalar_constraint)
@@ -185,13 +193,13 @@ def _upgrade_between(old_constraint):
             'constraint_name': Inequality.__name__,
             'low_column_name': constraint_column,
             'high_column_name': high,
-            'strict_boundaries': strict
+            'strict_boundaries': strict,
         }
         scalar_constraint = {
             'constraint_name': ScalarInequality.__name__,
             'column_name': constraint_column,
             'relation': '>' if strict else '>=',
-            'value': low
+            'value': low,
         }
         new_constraints.append(inequality_constraint)
         new_constraints.append(scalar_constraint)
@@ -202,7 +210,7 @@ def _upgrade_between(old_constraint):
             'low_column_name': low,
             'middle_column_name': constraint_column,
             'high_column_name': high,
-            'strict_boundaries': strict
+            'strict_boundaries': strict,
         }
         new_constraints.append(new_constraint)
 
@@ -212,7 +220,7 @@ def _upgrade_between(old_constraint):
 def _upgrade_one_hot_encoding(old_constraint):
     new_constraint = {
         'constraint_name': OneHotEncoding.__name__,
-        'column_names': old_constraint.get('columns')
+        'column_names': old_constraint.get('columns'),
     }
     return [new_constraint]
 
@@ -220,7 +228,7 @@ def _upgrade_one_hot_encoding(old_constraint):
 def _upgrade_unique(old_constraint):
     new_constraint = {
         'constraint_name': Unique.__name__,
-        'column_names': old_constraint.get('columns')
+        'column_names': old_constraint.get('columns'),
     }
     return [new_constraint]
 

@@ -1,4 +1,3 @@
-
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -7,8 +6,15 @@ import pytest
 
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.utils import (
-    _key_order, check_num_rows, detect_discrete_columns, flatten_array, flatten_dict,
-    handle_sampling_error, unflatten_dict, validate_file_path)
+    _key_order,
+    check_num_rows,
+    detect_discrete_columns,
+    flatten_array,
+    flatten_dict,
+    handle_sampling_error,
+    unflatten_dict,
+    validate_file_path,
+)
 
 
 def test_detect_discrete_columns():
@@ -25,9 +31,7 @@ def test_detect_discrete_columns():
         'subscribed': {
             'sdtype': 'boolean',
         },
-        'join_date': {
-            'sdtype': 'datetime'
-        }
+        'join_date': {'sdtype': 'datetime'},
     }
     data = pd.DataFrame({
         'name': ['John', 'Doe', 'John Doe', 'John Doe Doe'],
@@ -36,7 +40,7 @@ def test_detect_discrete_columns():
         'join_date': ['2021-02-02', '2022-03-04', '2015-05-06', '2018-09-30'],
         'uses_synthetic': [np.nan, True, False, False],
         'surname': [object(), object(), object(), object()],
-        'bool': [0., 0., 1., np.nan],
+        'bool': [0.0, 0.0, 1.0, np.nan],
     })
 
     # Run
@@ -51,7 +55,7 @@ def test_detect_discrete_columns_numerical():
     # Setup
     metadata = SingleTableMetadata()
     data = pd.DataFrame({
-        'float': [.1] * 1000,
+        'float': [0.1] * 1000,
         'nan': [np.nan] * 1000,
         'cat_int': list(range(100)) * 10,
         'num_int': list(range(125)) * 8,
@@ -77,13 +81,13 @@ def test_detect_discrete_columns_with_categorical_transformer():
         'columns': {
             'name': {'sdtype': 'categorical'},
             'age': {'sdtype': 'numerical'},
-            'position': {'sdtype': 'categorical'}
-        }
+            'position': {'sdtype': 'categorical'},
+        },
     })
     data = pd.DataFrame({
         'name': ['John', 'Doe', 'John Doe', 'John Doe Doe'],
         'age': [1, 2, 3, 4],
-        'position': ['Software', 'Design', 'Marketing', 'Product']
+        'position': ['Software', 'Design', 'Marketing', 'Product'],
     })
     cat_transformer = Mock()
     cat_transformer.get_output_sdtypes.return_value = {'name': 'float'}
@@ -102,11 +106,7 @@ def test_flatten_array_default():
     result = flatten_array([['foo', 'bar'], 'tar'])
 
     # Asserts
-    expected = {
-        '0__0': 'foo',
-        '0__1': 'bar',
-        '1': 'tar'
-    }
+    expected = {'0__0': 'foo', '0__1': 'bar', '1': 'tar'}
     assert result == expected
 
 
@@ -116,11 +116,7 @@ def test_flatten_array_with_prefix():
     result = flatten_array([['foo', 'bar'], 'tar'], prefix='test')
 
     # Asserts
-    expected = {
-        'test__0__0': 'foo',
-        'test__0__1': 'bar',
-        'test__1': 'tar'
-    }
+    expected = {'test__0__0': 'foo', 'test__0__1': 'bar', 'test__1': 'tar'}
     assert result == expected
 
 
@@ -133,7 +129,7 @@ def test_flatten_dict_default():
         'tar': ['value_tar_list_0', 'value_tar_list_1'],
         'fitted': 'value_1',
         'distribution': 'value_2',
-        'type': 'value_3'
+        'type': 'value_3',
     }
     result = flatten_dict(nested)
 
@@ -142,7 +138,7 @@ def test_flatten_dict_default():
         'foo': 'value',
         'bar__bar_dict': 'value_bar_dict',
         'tar__0': 'value_tar_list_0',
-        'tar__1': 'value_tar_list_1'
+        'tar__1': 'value_tar_list_1',
     }
     assert result == expected
 
@@ -156,7 +152,7 @@ def test_flatten_dict_with_prefix():
         'tar': ['value_tar_list_0', 'value_tar_list_1'],
         'fitted': 'value_1',
         'distribution': 'value_2',
-        'type': 'value_3'
+        'type': 'value_3',
     }
     result = flatten_dict(nested, prefix='test')
 
@@ -165,7 +161,7 @@ def test_flatten_dict_with_prefix():
         'test__foo': 'value',
         'test__bar__bar_dict': 'value_bar_dict',
         'test__tar__0': 'value_tar_list_0',
-        'test__tar__1': 'value_tar_list_1'
+        'test__tar__1': 'value_tar_list_1',
     }
     assert result == expected
 
@@ -183,9 +179,7 @@ def test__key_order():
 def test_unflatten_dict_raises_error_row_index():
     """Test unflatten dict raises error row_index."""
     # Run
-    flat = {
-        'foo__0__1': 'some value'
-    }
+    flat = {'foo__0__1': 'some value'}
 
     err_msg = 'There was an error unflattening the extension.'
     with pytest.raises(ValueError, match=err_msg):
@@ -195,9 +189,7 @@ def test_unflatten_dict_raises_error_row_index():
 def test_unflatten_dict_raises_error_column_index():
     """Test unflatten dict raises error column_index."""
     # Run
-    flat = {
-        'foo__1__0': 'some value'
-    }
+    flat = {'foo__1__0': 'some value'}
 
     err_msg = 'There was an error unflattening the extension.'
     with pytest.raises(ValueError, match=err_msg):
@@ -207,11 +199,7 @@ def test_unflatten_dict_raises_error_column_index():
 def test_unflatten_dict():
     """Test unflatten_dict."""
     # Run
-    flat = {
-        'foo__0__foo': 'foo value',
-        'bar__0__0': 'bar value',
-        'tar': 'tar value'
-    }
+    flat = {'foo__0__foo': 'foo value', 'bar__0__0': 'bar value', 'tar': 'tar value'}
     result = unflatten_dict(flat)
 
     # Asserts
@@ -227,9 +215,7 @@ def test_handle_sampling_error_temp_file():
     """Test that an error is raised when temp dir is ``False``."""
     # Run and Assert
     error_msg = (
-        'Error: Sampling terminated. Partial results are stored in test.csv.'
-        '\n'
-        'Test error'
+        'Error: Sampling terminated. Partial results are stored in test.csv.' '\n' 'Test error'
     )
     with pytest.raises(ValueError, match=error_msg):
         handle_sampling_error('test.csv', ValueError('Test error'))

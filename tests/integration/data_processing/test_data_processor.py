@@ -1,13 +1,20 @@
 """Integration tests for the ``DataProcessor``."""
+
 import itertools
 import re
 
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.api.types import is_float_dtype
 from rdt.transformers import (
-    AnonymizedFaker, BinaryEncoder, FloatFormatter, IDGenerator, UniformEncoder,
-    UnixTimestampEncoder)
+    AnonymizedFaker,
+    BinaryEncoder,
+    FloatFormatter,
+    IDGenerator,
+    UniformEncoder,
+    UnixTimestampEncoder,
+)
 
 from sdv._utils import _get_datetime_format
 from sdv.data_processing import DataProcessor
@@ -238,8 +245,7 @@ class TestDataProcessor:
         """
         # Setup
         data, metadata = download_demo(
-            modality='single_table',
-            dataset_name='student_placements_pii'
+            modality='single_table', dataset_name='student_placements_pii'
         )
         dp = DataProcessor(metadata)
 
@@ -266,7 +272,7 @@ class TestDataProcessor:
             'high_spec': UniformEncoder,
             'high_perc': FloatFormatter,
             'work_experience': UniformEncoder,
-            'degree_perc': FloatFormatter
+            'degree_perc': FloatFormatter,
         }
         for column_name, transformer_class in expected_transformers.items():
             if transformer_class is not None:
@@ -281,10 +287,7 @@ class TestDataProcessor:
     def test_reverse_transform_with_formatters(self):
         """End to end test using formatters."""
         # Setup
-        data, metadata = download_demo(
-            modality='single_table',
-            dataset_name='student_placements'
-        )
+        data, metadata = download_demo(modality='single_table', dataset_name='student_placements')
         dp = DataProcessor(metadata)
 
         # Run
@@ -316,19 +319,14 @@ class TestDataProcessor:
         assert start_date_data_format == reversed_start_date_format
 
         end_date_data_format = _get_datetime_format(data['end_date'][~data['end_date'].isna()][0])
-        reversed_end_date = reverse_transformed['end_date'][
-            ~reverse_transformed['end_date'].isna()
-        ]
+        reversed_end_date = reverse_transformed['end_date'][~reverse_transformed['end_date'].isna()]
         reversed_end_date_format = _get_datetime_format(reversed_end_date.iloc[0])
         assert end_date_data_format == reversed_end_date_format
 
     def test_refit_hypertransformer(self):
         """Test data processor re-fits _hyper_transformer."""
         # Setup
-        data, metadata = download_demo(
-            modality='single_table',
-            dataset_name='student_placements'
-        )
+        data, metadata = download_demo(modality='single_table', dataset_name='student_placements')
         dp = DataProcessor(metadata)
 
         # Run
@@ -342,7 +340,7 @@ class TestDataProcessor:
         dp.fit(data)
 
         transformed = dp.transform(data)
-        assert all(transformed.dtypes == float)
+        assert all([is_float_dtype(dtype) for dtype in transformed.dtypes])
 
     def test_localized_anonymized_columns(self):
         """Test data processor uses the default locale for anonymized columns."""
@@ -362,10 +360,7 @@ class TestDataProcessor:
         """Test that UniformEncoder is assigned for categorical columns defined with numbers."""
         # Setup
         data = pd.DataFrame({
-            'category_col': [
-                1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 2, 2, 1, 2,
-                1, 1, 2, 1, 2, 2
-            ],
+            'category_col': [1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 2, 2, 1, 2, 1, 1, 2, 1, 2, 2],
             'numerical_col': np.random.rand(20),
         })
 
@@ -381,12 +376,9 @@ class TestDataProcessor:
         assert isinstance(dp._hyper_transformer.field_transformers['category_col'], UniformEncoder)
 
     def test_update_transformers_id_generator(self):
-        """ Test that updating to transformer to id generator is valid"""
+        """Test that updating to transformer to id generator is valid"""
         # Setup
-        data = pd.DataFrame({
-            'user_id': list(range(4)),
-            'user_cat': ['a', 'b', 'c', 'd']
-        })
+        data = pd.DataFrame({'user_id': list(range(4)), 'user_cat': ['a', 'b', 'c', 'd']})
         metadata = SingleTableMetadata()
         metadata.detect_from_dataframe(data)
         metadata.update_column('user_id', sdtype='id')

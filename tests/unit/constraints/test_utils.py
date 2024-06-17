@@ -1,12 +1,21 @@
 """Tests for the sdv.constraints.utils module."""
+
 from decimal import Decimal
 
 import numpy as np
 import pandas as pd
 
 from sdv.constraints.utils import (
-    _cast_to_type, cast_to_datetime64, compute_nans_column, get_datetime_diff,
-    get_nan_component_value, logit, matches_datetime_format, revert_nans_columns, sigmoid)
+    _cast_to_type,
+    cast_to_datetime64,
+    compute_nans_column,
+    get_datetime_diff,
+    get_nan_component_value,
+    logit,
+    matches_datetime_format,
+    revert_nans_columns,
+    sigmoid,
+)
 
 
 def test__cast_to_type():
@@ -121,13 +130,11 @@ def test_cast_to_datetime64():
     expected_series_output = pd.Series([
         np.datetime64('2021-02-02'),
         np.datetime64('NaT'),
-        np.datetime64('NaT')
+        np.datetime64('NaT'),
     ])
-    expected_list_output = np.array([
-        np.datetime64('NaT'),
-        np.datetime64('NaT'),
-        '2021-02-02'
-    ], dtype='datetime64[ns]')
+    expected_list_output = np.array(
+        [np.datetime64('NaT'), np.datetime64('NaT'), '2021-02-02'], dtype='datetime64[ns]'
+    )
     np.testing.assert_array_equal(expected_list_output, list_out)
     pd.testing.assert_series_equal(expected_series_output, series_out)
     assert expected_string_output == string_out
@@ -150,13 +157,11 @@ def test_cast_to_datetime64_datetime_format():
     expected_series_output = pd.Series([
         np.datetime64('2021-02-02'),
         np.datetime64('NaT'),
-        np.datetime64('NaT')
+        np.datetime64('NaT'),
     ])
-    expected_list_output = np.array([
-        np.datetime64('NaT'),
-        np.datetime64('NaT'),
-        '2021-02-02'
-    ], dtype='datetime64[ns]')
+    expected_list_output = np.array(
+        [np.datetime64('NaT'), np.datetime64('NaT'), '2021-02-02'], dtype='datetime64[ns]'
+    )
     np.testing.assert_array_equal(expected_list_output, list_out)
     pd.testing.assert_series_equal(expected_series_output, series_out)
     assert expected_string_output == string_out
@@ -232,7 +237,9 @@ def test_compute_nans_columns():
     """Test the ``compute_nans_columns`` method."""
     # Setup
     data = pd.DataFrame({
-        'a': [1, np.nan, 3, np.nan], 'b': [np.nan, 2, 3, np.nan], 'c': [1, np.nan, 3, np.nan]
+        'a': [1, np.nan, 3, np.nan],
+        'b': [np.nan, 2, 3, np.nan],
+        'c': [1, np.nan, 3, np.nan],
     })
 
     # Run
@@ -246,9 +253,7 @@ def test_compute_nans_columns():
 def test_compute_nans_columns_without_nan():
     """Test the ``compute_nans_columns`` method when there are no nans."""
     # Setup
-    data = pd.DataFrame({
-        'a': [1, 2, 3, 2], 'b': [2.5, 2, 3, 2.5], 'c': [1, 2, 3, 2]
-    })
+    data = pd.DataFrame({'a': [1, 2, 3, 2], 'b': [2.5, 2, 3, 2.5], 'c': [1, 2, 3, 2]})
 
     # Run
     output = compute_nans_column(data, ['a', 'b', 'c'])
@@ -261,8 +266,10 @@ def test_revert_nans_columns():
     """Test the ``revert_nans_columns`` method."""
     # Setup
     data = pd.DataFrame({
-        'a': [1, 2, 3, 2], 'b': [2.5, 2, 3, 2.5], 'c': [1, 2, 3, 2],
-        'a#b#c.nan_component': ['b', 'a, c', 'None', 'a, b, c']
+        'a': [1, 2, 3, 2],
+        'b': [2.5, 2, 3, 2.5],
+        'c': [1, 2, 3, 2],
+        'a#b#c.nan_component': ['b', 'a, c', 'None', 'a, b, c'],
     })
     nan_column_name = 'a#b#c.nan_component'
 
@@ -270,8 +277,9 @@ def test_revert_nans_columns():
     result = revert_nans_columns(data, nan_column_name)
 
     expected_data = pd.DataFrame({
-        'a': [1, np.nan, 3, np.nan], 'b': [np.nan, 2, 3, np.nan],
-        'c': [1, np.nan, 3, np.nan]
+        'a': [1, np.nan, 3, np.nan],
+        'b': [np.nan, 2, 3, np.nan],
+        'c': [1, np.nan, 3, np.nan],
     })
 
     # Assert

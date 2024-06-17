@@ -31,15 +31,13 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             Whether to print progress for fitting or not.
     """
 
-    DEFAULT_SYNTHESIZER_KWARGS = {
-        'default_distribution': 'beta'
-    }
+    DEFAULT_SYNTHESIZER_KWARGS = {'default_distribution': 'beta'}
     DISTRIBUTIONS_TO_NUM_PARAMETER_COLUMNS = {
         'beta': 4,
         'truncnorm': 4,
         'gamma': 3,
         'norm': 2,
-        'uniform': 2
+        'uniform': 2,
     }
 
     @staticmethod
@@ -52,14 +50,16 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         """
         columns_per_table = {}
         for table_name, table in metadata.tables.items():
-            columns_per_table[table_name] = \
-                sum([1 for col in table.columns.values() if col['sdtype'] != 'id'])
+            columns_per_table[table_name] = sum([
+                1 for col in table.columns.values() if col['sdtype'] != 'id'
+            ])
 
         return columns_per_table
 
     @classmethod
-    def _get_num_extended_columns(cls, metadata, table_name,
-                                  parent_table, columns_per_table, distributions=None):
+    def _get_num_extended_columns(
+        cls, metadata, table_name, parent_table, columns_per_table, distributions=None
+    ):
         """Get the number of columns that will be generated for table_name.
 
         A table generates, for each foreign key:
@@ -93,8 +93,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         return num_correlation_columns + num_rows_columns + num_parameters_columns
 
     @classmethod
-    def _estimate_columns_traversal(cls, metadata, table_name,
-                                    columns_per_table, visited, distributions=None):
+    def _estimate_columns_traversal(
+        cls, metadata, table_name, columns_per_table, visited, distributions=None
+    ):
         """Given a table, estimate how many columns each parent will model.
 
         This method recursively models the children of a table all the way to the leaf nodes.
@@ -111,9 +112,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             if child_name not in visited:
                 cls._estimate_columns_traversal(metadata, child_name, columns_per_table, visited)
 
-            columns_per_table[table_name] += \
-                cls._get_num_extended_columns(
-                    metadata, child_name, table_name, columns_per_table, distributions
+            columns_per_table[table_name] += cls._get_num_extended_columns(
+                metadata, child_name, table_name, columns_per_table, distributions
             )
 
         visited.add(table_name)
@@ -161,10 +161,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         self._default_parameters = {}
         self.verbose = verbose
         BaseHierarchicalSampler.__init__(
-            self,
-            self.metadata,
-            self._table_synthesizers,
-            self._table_sizes)
+            self, self.metadata, self._table_synthesizers, self._table_sizes
+        )
         self._print_estimate_warning()
 
     def set_table_parameters(self, table_name, table_parameters):
@@ -239,16 +237,13 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             self._print(
                 'PerformanceAlert: Using the HMASynthesizer on this metadata '
                 'schema is not recommended. To model this data, HMA will '
-                f'generate a large number of columns. ({total_est_cols} columns)\n\n')
+                f'generate a large number of columns. ({total_est_cols} columns)\n\n'
+            )
             self._print(
                 pd.DataFrame(
-                    print_table,
-                    columns=[
-                        'Table Name',
-                        '# Columns in Metadata',
-                        'Est # Columns'
-                    ]
-                ).to_string(index=False) + '\n'
+                    print_table, columns=['Table Name', '# Columns in Metadata', 'Est # Columns']
+                ).to_string(index=False)
+                + '\n'
             )
             self._print(
                 "We recommend simplifying your metadata schema using 'sdv.utils.poc.simplify_sch"
@@ -313,8 +308,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     row.index = f'__{child_name}__{foreign_key}__' + row.index
                 else:
                     synthesizer = self._synthesizer(
-                        table_meta,
-                        **self._table_parameters[child_name]
+                        table_meta, **self._table_parameters[child_name]
                     )
                     synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
                     row = synthesizer._get_parameters()
@@ -322,11 +316,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     row.index = f'__{child_name}__{foreign_key}__' + row.index
 
                     if scale_columns is None:
-                        scale_columns = [
-                            column
-                            for column in row.index
-                            if column.endswith('scale')
-                        ]
+                        scale_columns = [column for column in row.index if column.endswith('scale')]
 
                     if len(child_rows) == 1:
                         row.loc[scale_columns] = None
@@ -385,10 +375,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     f"Tables '{table_name}' and '{child_name}' ('{foreign_key}')"
                 )
                 extension = self._get_extension(
-                    child_name,
-                    child_table.copy(),
-                    foreign_key,
-                    progress_bar_desc
+                    child_name, child_table.copy(), foreign_key, progress_bar_desc
                 )
                 for column in extension.columns:
                     extension[column] = extension[column].astype(float)
@@ -396,7 +383,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                         extension[column] = extension[column].fillna(1e-6)
 
                     self.extended_columns[child_name][column] = FloatFormatter(
-                        enforce_min_max_values=True)
+                        enforce_min_max_values=True
+                    )
                     self.extended_columns[child_name][column].fit(extension, column)
 
                 table = table.merge(extension, how='left', right_index=True, left_index=True)
@@ -459,22 +447,26 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 Dictionary mapping each table name to an augmented ``pandas.DataFrame``.
         """
         augmented_data_to_model = [
-            (table_name, table)
-            for table_name, table in augmented_data.items()
+            (table_name, table) for table_name, table in augmented_data.items()
         ]
         self._print(text='\n', end='')
         pbar_args = self._get_pbar_args(desc='Modeling Tables')
         for table_name, table in tqdm(augmented_data_to_model, **pbar_args):
             keys = self._pop_foreign_keys(table, table_name)
             self._clear_nans(table)
-            LOGGER.info('Fitting %s for table %s; shape: %s', self._synthesizer.__name__,
-                        table_name, table.shape)
+            LOGGER.info(
+                'Fitting %s for table %s; shape: %s',
+                self._synthesizer.__name__,
+                table_name,
+                table.shape,
+            )
 
             if not table.empty:
                 self._table_synthesizers[table_name].fit_processed_data(table)
                 table_parameters = self._table_synthesizers[table_name]._get_parameters()
                 self._default_parameters[table_name] = {
-                    parameter: value for parameter, value in table_parameters.items()
+                    parameter: value
+                    for parameter, value in table_parameters.items()
                     if 'univariates' in parameter
                 }
 
@@ -495,22 +487,20 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         """
         prefix = f'__{table_name}__{foreign_key}__'
         keys = [key for key in parent_row.keys() if key.startswith(prefix)]
-        new_keys = {key: key[len(prefix):] for key in keys}
+        new_keys = {key: key[len(prefix) :] for key in keys}
         flat_parameters = parent_row[keys].astype(float).fillna(1e-6)
 
         num_rows_key = f'{prefix}num_rows'
         if num_rows_key in flat_parameters:
             num_rows = flat_parameters[num_rows_key]
-            flat_parameters[num_rows_key] = min(
-                self._max_child_rows[num_rows_key],
-                round(num_rows)
-            )
+            flat_parameters[num_rows_key] = min(self._max_child_rows[num_rows_key], round(num_rows))
 
         flat_parameters = flat_parameters.to_dict()
         for parameter_name, parameter in flat_parameters.items():
             float_formatter = self.extended_columns[table_name][parameter_name]
             flat_parameters[parameter_name] = np.clip(  # this should be revisited in GH#1769
-                parameter, float_formatter._min_value, float_formatter._max_value)
+                parameter, float_formatter._min_value, float_formatter._max_value
+            )
 
         return {new_keys[key]: value for key, value in flat_parameters.items()}
 
@@ -521,10 +511,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         default_parameters = getattr(self, '_default_parameters', {}).get(child_name, {})
 
         table_meta = self.metadata.tables[child_name]
-        synthesizer = self._synthesizer(
-            table_meta,
-            **self._table_parameters[child_name]
-        )
+        synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
         synthesizer._set_parameters(parameters, default_parameters)
         synthesizer._data_processor = self._table_synthesizers[child_name]._data_processor
 
@@ -611,17 +598,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         if transformed.index.name:
             table_rows = table_rows.set_index(transformed.index.name)
 
-        table_rows = pd.concat(
-            [transformed, table_rows.drop(columns=transformed.columns)],
-            axis=1
-        )
+        table_rows = pd.concat([transformed, table_rows.drop(columns=transformed.columns)], axis=1)
         for parent_id, row in parent_rows.iterrows():
             parameters = self._extract_parameters(row, table_name, foreign_key)
             table_meta = self._table_synthesizers[table_name].get_metadata()
-            synthesizer = self._synthesizer(
-                table_meta,
-                **self._table_parameters[table_name]
-            )
+            synthesizer = self._synthesizer(table_meta, **self._table_parameters[table_name])
             synthesizer._set_parameters(parameters)
             try:
                 likelihoods[parent_id] = synthesizer._get_likelihood(table_rows)
@@ -669,6 +650,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     parent_table=parent_table,
                     child_name=child_name,
                     parent_name=parent_name,
-                    foreign_key=foreign_key
+                    foreign_key=foreign_key,
                 )
                 child_table[foreign_key] = parent_ids.to_numpy()

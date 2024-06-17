@@ -24,36 +24,33 @@ class TestMultiTableMetadata:
         metadata = {}
         metadata['tables'] = {
             'users': {
-                'columns': {
-                    'id': {'sdtype': 'id'},
-                    'country': {'sdtype': 'categorical'}
-                },
-                'primary_key': 'id'
+                'columns': {'id': {'sdtype': 'id'}, 'country': {'sdtype': 'categorical'}},
+                'primary_key': 'id',
             },
             'payments': {
                 'columns': {
                     'payment_id': {'sdtype': 'id'},
                     'user_id': {'sdtype': 'id'},
-                    'date': {'sdtype': 'datetime'}
+                    'date': {'sdtype': 'datetime'},
                 },
-                'primary_key': 'payment_id'
+                'primary_key': 'payment_id',
             },
             'sessions': {
                 'columns': {
                     'session_id': {'sdtype': 'id'},
                     'user_id': {'sdtype': 'id'},
-                    'device': {'sdtype': 'categorical'}
+                    'device': {'sdtype': 'categorical'},
                 },
-                'primary_key': 'session_id'
+                'primary_key': 'session_id',
             },
             'transactions': {
                 'columns': {
                     'transaction_id': {'sdtype': 'id'},
                     'session_id': {'sdtype': 'id'},
-                    'timestamp': {'sdtype': 'datetime'}
+                    'timestamp': {'sdtype': 'datetime'},
                 },
-                'primary_key': 'transaction_id'
-            }
+                'primary_key': 'transaction_id',
+            },
         }
 
         metadata['relationships'] = [
@@ -74,7 +71,7 @@ class TestMultiTableMetadata:
                 'parent_primary_key': 'id',
                 'child_table_name': 'payments',
                 'child_foreign_key': 'user_id',
-            }
+            },
         ]
 
         return MultiTableMetadata.load_from_dict(metadata)
@@ -198,11 +195,7 @@ class TestMultiTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             MultiTableMetadata._validate_missing_relationship_keys(
-                instance,
-                parent_table_name,
-                parent_primary_key,
-                child_table_name,
-                child_foreign_key
+                instance, parent_table_name, parent_primary_key, child_table_name, child_foreign_key
             )
 
     def test__validate_missing_relationship_keys_primary_key(self):
@@ -247,7 +240,7 @@ class TestMultiTableMetadata:
                 parent_table_name,
                 parent_primary_key,
                 child_table_name,
-                child_foreign_key
+                child_foreign_key,
             )
 
     def test__validate_no_missing_tables_in_relationship(self):
@@ -268,9 +261,7 @@ class TestMultiTableMetadata:
         error_msg = re.escape("Relationship contains an unknown table {'session'}.")
         with pytest.raises(InvalidMetadataError, match=error_msg):
             MultiTableMetadata._validate_no_missing_tables_in_relationship(
-                'users',
-                'session',
-                tables
+                'users', 'session', tables
             )
 
     def test__validate_missing_relationship_key_length(self):
@@ -298,10 +289,7 @@ class TestMultiTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             MultiTableMetadata._validate_relationship_key_length(
-                parent_table_name,
-                parent_primary_key,
-                child_table_name,
-                child_foreign_key
+                parent_table_name, parent_primary_key, child_table_name, child_foreign_key
             )
 
     def test__validate_relationship_sdtype(self):
@@ -366,11 +354,7 @@ class TestMultiTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             MultiTableMetadata._validate_relationship_sdtypes(
-                instance,
-                parent_table_name,
-                parent_primary_key,
-                child_table_name,
-                child_foreign_key
+                instance, parent_table_name, parent_primary_key, child_table_name, child_foreign_key
             )
 
     def test__validate_relationship_does_not_exist(self):
@@ -389,7 +373,7 @@ class TestMultiTableMetadata:
                 'child_table_name': 'transactions',
                 'parent_primary_key': 'id',
                 'child_foreign_key': 'session_id',
-            }
+            },
         ]
 
         # Run and Assert
@@ -399,7 +383,7 @@ class TestMultiTableMetadata:
                 parent_table_name='sessions',
                 parent_primary_key='id',
                 child_table_name='transactions',
-                child_foreign_key='session_id'
+                child_foreign_key='session_id',
             )
 
     def test__validate_circular_relationships(self):
@@ -421,16 +405,14 @@ class TestMultiTableMetadata:
               relationship.
         """
         # Setup
-        child_map = {
-            'users': {'sessions', 'transactions'},
-            'sessions': {'users', 'transactions'}
-        }
+        child_map = {'users': {'sessions', 'transactions'}, 'sessions': {'users', 'transactions'}}
         parent = 'users'
         errors = []
 
         # Run
         MultiTableMetadata()._validate_circular_relationships(
-            parent, child_map=child_map, errors=errors)
+            parent, child_map=child_map, errors=errors
+        )
 
         # Assert
         assert errors == ['users']
@@ -457,15 +439,11 @@ class TestMultiTableMetadata:
         # Setup
         instance = MultiTableMetadata()
         parent_table = Mock()
-        instance.tables = {
-            'users': parent_table,
-            'sessions': Mock(),
-            'transactions': Mock()
-        }
+        instance.tables = {'users': parent_table, 'sessions': Mock(), 'transactions': Mock()}
         child_map = {
             'users': {'sessions', 'transactions'},
             'sessions': {'users'},
-            'transactions': set()
+            'transactions': set(),
         }
 
         # Run / Assert
@@ -480,9 +458,9 @@ class TestMultiTableMetadata:
         'sdv.metadata.multi_table.MultiTableMetadata._validate_no_missing_tables_in_relationship'
     )
     @patch('sdv.metadata.multi_table.MultiTableMetadata._validate_relationship_key_length')
-    def test__validate_relationship(self,
-                                    mock_validate_relationship_key_length,
-                                    mock_validate_no_missing_tables_in_relationship):
+    def test__validate_relationship(
+        self, mock_validate_relationship_key_length, mock_validate_no_missing_tables_in_relationship
+    ):
         """Test thath the ``_validate_relationship`` method.
 
         Test that when calling the ``_validate_relationship`` method, the other validation methods
@@ -538,13 +516,17 @@ class TestMultiTableMetadata:
 
         # Assert
         mock_validate_no_missing_tables_in_relationship.assert_called_once_with(
-            'users', 'sessions', instance.tables.keys())
+            'users', 'sessions', instance.tables.keys()
+        )
         instance._validate_missing_relationship_keys.assert_called_once_with(
-            'users', 'id', 'sessions', 'user_id')
+            'users', 'id', 'sessions', 'user_id'
+        )
         mock_validate_relationship_key_length.assert_called_once_with(
-            'users', 'id', 'sessions', 'user_id')
+            'users', 'id', 'sessions', 'user_id'
+        )
         instance._validate_relationship_sdtypes.assert_called_once_with(
-            'users', 'id', 'sessions', 'user_id')
+            'users', 'id', 'sessions', 'user_id'
+        )
 
     def test__get_foreign_keys(self):
         """Test that this method returns the foreign keys for a given table name and child name."""
@@ -566,7 +548,7 @@ class TestMultiTableMetadata:
             parent_table_name='users',
             parent_primary_key='id',
             child_table_name='transactions',
-            child_foreign_key='user_id'
+            child_foreign_key='user_id',
         )
 
         # Run
@@ -636,8 +618,9 @@ class TestMultiTableMetadata:
                 'child_foreign_key': 'user_id',
             }
         ]
-        instance._validate_child_map_circular_relationship.assert_called_once_with(
-            {'users': {'sessions'}})
+        instance._validate_child_map_circular_relationship.assert_called_once_with({
+            'users': {'sessions'}
+        })
         instance._validate_relationship_does_not_exist.assert_called_once_with(
             'users', 'id', 'sessions', 'user_id'
         )
@@ -646,11 +629,7 @@ class TestMultiTableMetadata:
     def test_add_relationship_child_key_is_primary_key(self):
         """Test that passing a primary key as ``child_foreign_key`` crashes."""
         # Setup
-        table = pd.DataFrame({
-            'pk': [1, 2, 3],
-            'col1': [.1, .1, .2],
-            'col2': ['a', 'b', 'c']
-        })
+        table = pd.DataFrame({'pk': [1, 2, 3], 'col1': [0.1, 0.1, 0.2], 'col2': ['a', 'b', 'c']})
         metadata = MultiTableMetadata()
         metadata.detect_table_from_dataframe('table', table)
         metadata.update_column('table', 'pk', sdtype='id')
@@ -700,7 +679,7 @@ class TestMultiTableMetadata:
         instance.tables = {
             'users': parent_table,
             'sessions': child_table,
-            'transactions': alternate_child_table
+            'transactions': alternate_child_table,
         }
         instance.relationships = [
             {
@@ -726,7 +705,7 @@ class TestMultiTableMetadata:
                 'child_table_name': 'transactions',
                 'parent_primary_key': 'session_id',
                 'child_foreign_key': 'session_id',
-            }
+            },
         ]
 
         # Run
@@ -745,7 +724,7 @@ class TestMultiTableMetadata:
                 'child_table_name': 'transactions',
                 'parent_primary_key': 'session_id',
                 'child_foreign_key': 'session_id',
-            }
+            },
         ]
         assert instance._multi_table_updated is True
 
@@ -794,30 +773,26 @@ class TestMultiTableMetadata:
         instance = MultiTableMetadata()
         table = Mock()
         table.primary_key = 'primary_key'
-        instance.tables = {
-            'table': table,
-            'parent': Mock(),
-            'child': Mock()
-        }
+        instance.tables = {'table': table, 'parent': Mock(), 'child': Mock()}
         instance.relationships = [
             {
                 'parent_table_name': 'parent',
                 'child_table_name': 'table',
                 'parent_primary_key': 'pk',
-                'child_foreign_key': 'primary_key'
+                'child_foreign_key': 'primary_key',
             },
             {
                 'parent_table_name': 'table',
                 'child_table_name': 'child',
                 'parent_primary_key': 'primary_key',
-                'child_foreign_key': 'fk'
+                'child_foreign_key': 'fk',
             },
             {
                 'parent_table_name': 'parent',
                 'child_table_name': 'child',
                 'parent_primary_key': 'pk',
-                'child_foreign_key': 'fk'
-            }
+                'child_foreign_key': 'fk',
+            },
         ]
 
         # Run
@@ -829,7 +804,7 @@ class TestMultiTableMetadata:
                 'parent_table_name': 'parent',
                 'child_table_name': 'child',
                 'parent_primary_key': 'pk',
-                'child_foreign_key': 'fk'
+                'child_foreign_key': 'fk',
             }
         ]
         table.remove_primary_key.assert_called_once()
@@ -847,15 +822,11 @@ class TestMultiTableMetadata:
     def test__validate_column_relationships_foreign_keys(self):
         """Test ``_validate_column_relationships_foriegn_keys."""
         # Setup
-        column_relationships = [
-            {'type': 'bad_relationship', 'column_names': ['amount', 'owner']}
-        ]
+        column_relationships = [{'type': 'bad_relationship', 'column_names': ['amount', 'owner']}]
         instance = MultiTableMetadata()
 
         # Run and Assert
-        err_msg = (
-            "Cannot use foreign keys {'owner'} in column relationship."
-        )
+        err_msg = "Cannot use foreign keys {'owner'} in column relationship."
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance._validate_column_relationships_foreign_keys(column_relationships, ['owner'])
 
@@ -878,7 +849,7 @@ class TestMultiTableMetadata:
                 'parent_table_name': 'parent',
                 'child_table_name': 'child',
                 'parent_primary_key': 'parent_id',
-                'child_foreign_key': 'foreign_key'
+                'child_foreign_key': 'foreign_key',
             }
         ]
 
@@ -892,13 +863,12 @@ class TestMultiTableMetadata:
         mock_validate_column_relationships.assert_called_with(
             [
                 {'type': 'relationship_B', 'column_names': ['col1', 'col2', 'col3']},
-                {'type': 'relationship_A', 'column_names': ['colA', 'colB']}
+                {'type': 'relationship_A', 'column_names': ['colA', 'colB']},
             ],
-            ['foreign_key']
+            ['foreign_key'],
         )
         instance.tables['child'].add_column_relationship.assert_called_with(
-            'relationship_B',
-            ['col1', 'col2', 'col3']
+            'relationship_B', ['col1', 'col2', 'col3']
         )
 
     def test__validate_single_table(self):
@@ -915,11 +885,10 @@ class TestMultiTableMetadata:
         Side Effects:
             - Errors has been updated with the error message for that column.
         """
+
         # Setup
         def validate_relationship_side_effect(*args, **kwargs):
-            raise InvalidMetadataError(
-                'Cannot use foreign keys in column relationship.'
-            )
+            raise InvalidMetadataError('Cannot use foreign keys in column relationship.')
 
         table_accounts = SingleTableMetadata.load_from_dict({
             'columns': {
@@ -929,10 +898,8 @@ class TestMultiTableMetadata:
                 'start_date': {'sdtype': 'datetime'},
                 'owner': {'sdtype': 'id'},
             },
-            'column_relationships': [
-                {'type': 'bad_relationship', 'columns': ['amount', 'owner']}
-            ],
-            'primary_key': 'branches'
+            'column_relationships': [{'type': 'bad_relationship', 'columns': ['amount', 'owner']}],
+            'primary_key': 'branches',
         })
 
         instance = Mock()
@@ -941,16 +908,13 @@ class TestMultiTableMetadata:
         instance._validate_column_relationships_foreign_keys = validate_column_relationship_mock
         users_mock = Mock()
         users_mock.columns = {}
-        instance.tables = {
-            'accounts': table_accounts,
-            'users': users_mock
-        }
+        instance.tables = {'accounts': table_accounts, 'users': users_mock}
         instance.relationships = [
             {
                 'parent_table_name': 'users',
                 'child_table_name': 'accounts',
                 'child_foreign_key': 'owner',
-                'parent_primary_key': 'id'
+                'parent_primary_key': 'id',
             }
         ]
         errors = []
@@ -964,16 +928,17 @@ class TestMultiTableMetadata:
             'Keys should be columns that exist in the table.\n'
             "Relationship has invalid keys {'columns'}."
         )
-        foreign_key_col_relationship_message = (
-            'Cannot use foreign keys in column relationship.'
-        )
+        foreign_key_col_relationship_message = 'Cannot use foreign keys in column relationship.'
         empty_table_error_message = (
             "Table 'users' has 0 columns. Use 'add_column' to specify its columns."
         )
 
         assert errors == [
-            '\n', expected_error_msg, foreign_key_col_relationship_message,
-            empty_table_error_message, foreign_key_col_relationship_message
+            '\n',
+            expected_error_msg,
+            foreign_key_col_relationship_message,
+            empty_table_error_message,
+            foreign_key_col_relationship_message,
         ]
         instance.tables['users'].validate.assert_called_once()
 
@@ -1001,22 +966,12 @@ class TestMultiTableMetadata:
             'users': Mock(),
             'sessions': Mock(),
             'transactions': Mock(),
-            'accounts': Mock()
+            'accounts': Mock(),
         }
         relationships = [
-            {
-                'parent_table_name': 'users',
-                'child_table_name': 'sessions'
-            },
-            {
-                'parent_table_name': 'users',
-                'child_table_name': 'transactions'
-            },
-            {
-                'parent_table_name': 'users',
-                'child_table_name': 'accounts'
-            },
-
+            {'parent_table_name': 'users', 'child_table_name': 'sessions'},
+            {'parent_table_name': 'users', 'child_table_name': 'transactions'},
+            {'parent_table_name': 'users', 'child_table_name': 'accounts'},
         ]
 
         parent_map = defaultdict(set)
@@ -1058,15 +1013,8 @@ class TestMultiTableMetadata:
             'accounts': Mock(),
         }
         relationships = [
-            {
-                'parent_table_name': 'users',
-                'child_table_name': 'sessions'
-            },
-            {
-                'parent_table_name': 'users',
-                'child_table_name': 'transactions'
-            },
-
+            {'parent_table_name': 'users', 'child_table_name': 'sessions'},
+            {'parent_table_name': 'users', 'child_table_name': 'transactions'},
         ]
 
         parent_map = defaultdict(set)
@@ -1111,18 +1059,11 @@ class TestMultiTableMetadata:
             'sessions': Mock(),
             'transactions': Mock(),
             'accounts': Mock(),
-            'branches': Mock()
+            'branches': Mock(),
         }
         relationships = [
-            {
-                'parent_table_name': 'users',
-                'child_table_name': 'sessions'
-            },
-            {
-                'parent_table_name': 'users',
-                'child_table_name': 'transactions'
-            },
-
+            {'parent_table_name': 'users', 'child_table_name': 'sessions'},
+            {'parent_table_name': 'users', 'child_table_name': 'transactions'},
         ]
 
         parent_map = defaultdict(set)
@@ -1145,11 +1086,7 @@ class TestMultiTableMetadata:
         """Test ``_validate_all_tables_connected`` when no tables are connected."""
         # Setup
         instance = Mock()
-        instance.tables = {
-            'users': Mock(),
-            'sessions': Mock(),
-            'transactions': Mock()
-        }
+        instance.tables = {'users': Mock(), 'sessions': Mock(), 'transactions': Mock()}
 
         parent_map = defaultdict(set)
         child_map = defaultdict(set)
@@ -1235,18 +1172,13 @@ class TestMultiTableMetadata:
         # Run and Assert
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_all_tables_connected(
-                instance._get_parent_map(),
-                instance._get_child_map()
+                instance._get_parent_map(), instance._get_child_map()
             )
 
     def test_validate_child_key_is_primary_key(self):
         """Test it crashes if the child key is a primary key."""
         # Setup
-        table = pd.DataFrame({
-            'pk': [1, 2, 3],
-            'col1': [.1, .1, .2],
-            'col2': ['a', 'b', 'c']
-        })
+        table = pd.DataFrame({'pk': [1, 2, 3], 'col1': [0.1, 0.1, 0.2], 'col2': ['a', 'b', 'c']})
         metadata = MultiTableMetadata()
         metadata.detect_table_from_dataframe('table', table)
         metadata.update_column('table', 'pk', sdtype='id')
@@ -1377,16 +1309,16 @@ class TestMultiTableMetadata:
             'nesreca': pd.DataFrame({
                 'id_nesreca': np.arange(10),
                 'upravna_enota': np.arange(10),
-                'nesreca_val': np.arange(10).astype(str)
+                'nesreca_val': np.arange(10).astype(str),
             }),
             'oseba': pd.DataFrame({
                 'upravna_enota': np.arange(10),
                 'id_nesreca': np.arange(10),
-                'oseba_val': np.arange(10).astype(str)
+                'oseba_val': np.arange(10).astype(str),
             }),
             'upravna_enota': pd.DataFrame({
                 'id_upravna_enota': np.arange(10),
-                'upravna_val': np.arange(10).astype(str)
+                'upravna_val': np.arange(10).astype(str),
             }),
         }
 
@@ -1414,16 +1346,16 @@ class TestMultiTableMetadata:
             'nesreca': pd.DataFrame({
                 'id_nesreca': np.arange(0, 20, 2),
                 'upravna_enota': np.arange(10),
-                'nesreca_val': np.arange(10)
+                'nesreca_val': np.arange(10),
             }),
             'oseba': pd.DataFrame({
                 'upravna_enota': np.arange(10),
                 'id_nesreca': np.arange(10),
-                'oseba_val': np.arange(10)
+                'oseba_val': np.arange(10),
             }),
             'upravna_enota': pd.DataFrame({
                 'id_upravna_enota': np.arange(10),
-                'upravna_val': np.arange(10)
+                'upravna_val': np.arange(10),
             }),
         }
 
@@ -1451,26 +1383,23 @@ class TestMultiTableMetadata:
             '2022-09-02',
             '2022-09-16',
             '2022-08-26',
-            '2022-08-26'
+            '2022-08-26',
         ]
         data['upravna_enota']['valid_date'] = [
             '20220902110443000000',
             '20220916230356000000',
             '20220826173917000000',
-            '20220929111311000000'
+            '20220929111311000000',
         ]
         data['upravna_enota']['datetime'] = pd.to_datetime([
             '20220902',
             '20220916',
             '20220826',
-            '20220826'
+            '20220826',
         ])
         metadata.add_column('upravna_enota', 'warning_date_str', sdtype='datetime')
         metadata.add_column(
-            'upravna_enota',
-            'valid_date',
-            sdtype='datetime',
-            datetime_format='%Y%m%d%H%M%S%f'
+            'upravna_enota', 'valid_date', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f'
         )
         metadata.add_column('upravna_enota', 'datetime', sdtype='datetime')
 
@@ -1479,7 +1408,7 @@ class TestMultiTableMetadata:
             'Table Name': ['upravna_enota'],
             'Column Name': ['warning_date_str'],
             'sdtype': ['datetime'],
-            'datetime_format': [None]
+            'datetime_format': [None],
         })
         warning_msg = (
             "No 'datetime_format' is present in the metadata for the following columns:\n "
@@ -1569,10 +1498,7 @@ class TestMultiTableMetadata:
             'name': {'sdtype': 'id'},
         }
         instance = MultiTableMetadata()
-        instance.tables = {
-            'accounts': table_accounts,
-            'branches': table_branches
-        }
+        instance.tables = {'accounts': table_accounts, 'branches': table_branches}
         instance.relationships = [
             {
                 'parent_table_name': 'accounts',
@@ -1598,7 +1524,7 @@ class TestMultiTableMetadata:
                 'branches': {
                     'id': {'sdtype': 'numerical'},
                     'name': {'sdtype': 'id'},
-                }
+                },
             },
             'relationships': [
                 {
@@ -1608,7 +1534,7 @@ class TestMultiTableMetadata:
                     'chil_foreign_key': 'branch_id',
                 }
             ],
-            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
         }
         assert result == expected_result
 
@@ -1640,7 +1566,7 @@ class TestMultiTableMetadata:
                 'branches': {
                     'id': {'sdtype': 'numerical'},
                     'name': {'sdtype': 'id'},
-                }
+                },
             },
             'relationships': [
                 {
@@ -1649,14 +1575,14 @@ class TestMultiTableMetadata:
                     'child_table_name': 'branches',
                     'chil_foreign_key': 'branch_id',
                 }
-            ]
+            ],
         }
 
         single_table_accounts = object()
         single_table_branches = object()
         mock_singletablemetadata.load_from_dict.side_effect = [
             single_table_accounts,
-            single_table_branches
+            single_table_branches,
         ]
 
         instance = MultiTableMetadata()
@@ -1667,7 +1593,7 @@ class TestMultiTableMetadata:
         # Assert
         assert instance.tables == {
             'accounts': single_table_accounts,
-            'branches': single_table_branches
+            'branches': single_table_branches,
         }
 
         assert instance.relationships == [
@@ -1711,7 +1637,7 @@ class TestMultiTableMetadata:
                 'branches': {
                     'id': {'sdtype': 'numerical'},
                     'name': {'sdtype': 'id'},
-                }
+                },
             },
             'relationships': [
                 {
@@ -1720,14 +1646,14 @@ class TestMultiTableMetadata:
                     'child_table_name': 'branches',
                     'child_foreign_key': 'branch_id',
                 }
-            ]
+            ],
         }
 
         single_table_accounts = object()
         single_table_branches = object()
         mock_singletablemetadata.load_from_dict.side_effect = [
             single_table_accounts,
-            single_table_branches
+            single_table_branches,
         ]
 
         # Run
@@ -1736,7 +1662,7 @@ class TestMultiTableMetadata:
         # Assert
         assert instance.tables == {
             'accounts': single_table_accounts,
-            'branches': single_table_branches
+            'branches': single_table_branches,
         }
 
         assert instance.relationships == [
@@ -1781,7 +1707,7 @@ class TestMultiTableMetadata:
                 'branches': {
                     1: {'sdtype': 'numerical'},
                     'name': {'sdtype': 'id'},
-                }
+                },
             },
             'relationships': [
                 {
@@ -1790,7 +1716,7 @@ class TestMultiTableMetadata:
                     'child_table_name': 'branches',
                     'child_foreign_key': 1,
                 }
-            ]
+            ],
         }
 
         single_table_accounts = {
@@ -1806,7 +1732,7 @@ class TestMultiTableMetadata:
         }
         mock_singletablemetadata.load_from_dict.side_effect = [
             single_table_accounts,
-            single_table_branches
+            single_table_branches,
         ]
 
         # Run
@@ -1815,7 +1741,7 @@ class TestMultiTableMetadata:
         # Assert
         assert instance.tables == {
             'accounts': single_table_accounts,
-            'branches': single_table_branches
+            'branches': single_table_branches,
         }
 
         assert instance.relationships == [
@@ -1900,12 +1826,12 @@ class TestMultiTableMetadata:
             'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l}',
             'payments': expected_payments_label,
             'sessions': expected_sessions_label,
-            'transactions': expected_transactions_label
+            'transactions': expected_transactions_label,
         }
         expected_edges = [
             ('users', 'sessions', '  user_id → id'),
             ('sessions', 'transactions', '  session_id → session_id'),
-            ('users', 'payments', '  user_id → id')
+            ('users', 'payments', '  user_id → id'),
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
 
@@ -1951,19 +1877,20 @@ class TestMultiTableMetadata:
             'users': expected_user_label,
             'payments': expected_payments_label,
             'sessions': expected_sessions_label,
-            'transactions': expected_transactions_label
+            'transactions': expected_transactions_label,
         }
         expected_edges = [
             ('users', 'sessions', '  user_id → id'),
             ('sessions', 'transactions', '  session_id → session_id'),
-            ('users', 'payments', '  user_id → id')
+            ('users', 'payments', '  user_id → id'),
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
 
     @patch('sdv.metadata.multi_table.warnings')
     @patch('sdv.metadata.multi_table.visualize_graph')
-    def test_visualize_show_relationship_and_details_warning(self, visualize_graph_mock,
-                                                             warnings_mock):
+    def test_visualize_show_relationship_and_details_warning(
+        self, visualize_graph_mock, warnings_mock
+    ):
         """Test the ``visualize`` method.
 
         If both the ``show_relationship_labels`` and ``show_table_details`` parameters are
@@ -2004,17 +1931,18 @@ class TestMultiTableMetadata:
             'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l}',
             'payments': expected_payments_label,
             'sessions': expected_sessions_label,
-            'transactions': expected_transactions_label
+            'transactions': expected_transactions_label,
         }
         expected_edges = [
             ('users', 'sessions', '  user_id → id'),
             ('sessions', 'transactions', '  session_id → session_id'),
-            ('users', 'payments', '  user_id → id')
+            ('users', 'payments', '  user_id → id'),
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, None)
         warnings_mock.warn.assert_called_once_with(
             'Using True or False for show_table_details is deprecated. Use '
-            "show_table_details='full' to show all table details.", FutureWarning
+            "show_table_details='full' to show all table details.",
+            FutureWarning,
         )
 
     @patch('sdv.metadata.multi_table.visualize_graph')
@@ -2048,19 +1976,18 @@ class TestMultiTableMetadata:
             'users': 'users',
             'payments': 'payments',
             'sessions': 'sessions',
-            'transactions': 'transactions'
+            'transactions': 'transactions',
         }
         expected_edges = [
             ('users', 'sessions', '  user_id → id'),
             ('sessions', 'transactions', '  session_id → session_id'),
-            ('users', 'payments', '  user_id → id')
+            ('users', 'payments', '  user_id → id'),
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
 
     @patch('sdv.metadata.multi_table.warnings')
     @patch('sdv.metadata.multi_table.visualize_graph')
-    def test_visualize_show_relationship_only_warning(self, visualize_graph_mock,
-                                                      warnings_mock):
+    def test_visualize_show_relationship_only_warning(self, visualize_graph_mock, warnings_mock):
         """Test the ``visualize`` method.
 
         If ``show_relationship_labels`` is True but ``show_table_details``is False,
@@ -2089,17 +2016,18 @@ class TestMultiTableMetadata:
             'users': 'users',
             'payments': 'payments',
             'sessions': 'sessions',
-            'transactions': 'transactions'
+            'transactions': 'transactions',
         }
         expected_edges = [
             ('users', 'sessions', '  user_id → id'),
             ('sessions', 'transactions', '  session_id → session_id'),
-            ('users', 'payments', '  user_id → id')
+            ('users', 'payments', '  user_id → id'),
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
         warnings_mock.warn.assert_called_once_with(
             "Using True or False for 'show_table_details' is deprecated. "
-            'Use show_table_details=None to hide table details.', FutureWarning
+            'Use show_table_details=None to hide table details.',
+            FutureWarning,
         )
 
     @patch('sdv.metadata.multi_table.visualize_graph')
@@ -2144,12 +2072,12 @@ class TestMultiTableMetadata:
             'users': '{users|id : id\\lcountry : categorical\\l|Primary key: id\\l}',
             'payments': expected_payments_label,
             'sessions': expected_sessions_label,
-            'transactions': expected_transactions_label
+            'transactions': expected_transactions_label,
         }
         expected_edges = [
             ('users', 'sessions', ''),
             ('sessions', 'transactions', ''),
-            ('users', 'payments', '')
+            ('users', 'payments', ''),
         ]
         visualize_graph_mock.assert_called_once_with(expected_nodes, expected_edges, 'output.jpg')
 
@@ -2271,10 +2199,7 @@ class TestMultiTableMetadata:
         metadata._validate_table_exists = Mock()
         table = Mock()
         metadata.tables = {'table': table}
-        metadata_updates = {
-            'col_1': {'sdtype': 'numerical'},
-            'col_2': {'sdtype': 'categorical'}
-        }
+        metadata_updates = {'col_1': {'sdtype': 'numerical'}, 'col_2': {'sdtype': 'categorical'}}
 
         # Run
         metadata.update_columns_metadata('table', metadata_updates)
@@ -2346,7 +2271,7 @@ class TestMultiTableMetadata:
                 'parent_table_name': 'users',
                 'child_table_name': 'sessions',
                 'parent_primary_key': 'user_id',
-                'child_foreign_key': 'user_id'
+                'child_foreign_key': 'user_id',
             }
         ]
         assert instance.relationships == expected_relationships
@@ -2383,8 +2308,7 @@ class TestMultiTableMetadata:
         instance._detect_relationships()
 
         # Assert
-        instance.add_relationship.assert_called_once_with(
-            'users', 'sessions', 'user_id', 'user_id')
+        instance.add_relationship.assert_called_once_with('users', 'sessions', 'user_id', 'user_id')
         assert instance.tables['sessions'].columns['user_id']['sdtype'] == 'categorical'
 
     @patch('sdv.metadata.multi_table.LOGGER')
@@ -2485,7 +2409,7 @@ class TestMultiTableMetadata:
         # Assert
         expected_calls = [
             call('table1', str(filepath1), None),
-            call('table2', str(filepath2), None)
+            call('table2', str(filepath2), None),
         ]
 
         instance.detect_table_from_csv.assert_has_calls(expected_calls, any_order=True)
@@ -2595,12 +2519,7 @@ class TestMultiTableMetadata:
         hotels_table = pd.DataFrame()
 
         # Run
-        metadata.detect_from_dataframes(
-            data={
-                'guests': guests_table,
-                'hotels': hotels_table
-            }
-        )
+        metadata.detect_from_dataframes(data={'guests': guests_table, 'hotels': hotels_table})
 
         # Assert
         metadata.detect_table_from_dataframe.assert_any_call('guests', guests_table)
@@ -2782,7 +2701,8 @@ class TestMultiTableMetadata:
 
         # Assert
         table.add_constraint.assert_called_once_with(
-            'Inequality', low_column_name='a', high_column_name='b')
+            'Inequality', low_column_name='a', high_column_name='b'
+        )
 
     def test_add_constraint_table_does_not_exist(self):
         """Test the ``add_constraint`` method.
@@ -2804,7 +2724,8 @@ class TestMultiTableMetadata:
         error_message = re.escape("Unknown table name ('table')")
         with pytest.raises(InvalidMetadataError, match=error_message):
             metadata.add_constraint(
-                'table', 'Inequality', low_column_name='a', high_column_name='b')
+                'table', 'Inequality', low_column_name='a', high_column_name='b'
+            )
 
     @patch('sdv.metadata.utils.Path')
     def test_load_from_json_path_does_not_exist(self, mock_path):
@@ -2861,16 +2782,12 @@ class TestMultiTableMetadata:
         mock_json.load.return_value = {
             'tables': {
                 'table1': {
-                    'columns': {
-                        'animals': {
-                            'type': 'categorical'
-                        }
-                    },
+                    'columns': {'animals': {'type': 'categorical'}},
                     'primary_key': 'animals',
-                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
                 }
             },
-            'relationships': {}
+            'relationships': {},
         }
 
         # Run
@@ -2972,47 +2889,30 @@ class TestMultiTableMetadata:
                         'upravna_enota': {
                             'type': 'id',
                             'subtype': 'integer',
-                            'ref': {
-                                'table': 'upravna_enota',
-                                'field': 'id_upravna_enota'
-                            }
+                            'ref': {'table': 'upravna_enota', 'field': 'id_upravna_enota'},
                         },
-                        'id_nesreca': {
-                            'type': 'id',
-                            'subtype': 'integer'
-                        },
+                        'id_nesreca': {'type': 'id', 'subtype': 'integer'},
                     },
-                    'primary_key': 'id_nesreca'
+                    'primary_key': 'id_nesreca',
                 },
                 'oseba': {
                     'fields': {
                         'upravna_enota': {
                             'type': 'id',
                             'subtype': 'integer',
-                            'ref': {
-                                'table': 'upravna_enota',
-                                'field': 'id_upravna_enota'
-                            }
+                            'ref': {'table': 'upravna_enota', 'field': 'id_upravna_enota'},
                         },
                         'id_nesreca': {
                             'type': 'id',
                             'subtype': 'integer',
-                            'ref': {
-                                'table': 'nesreca',
-                                'field': 'id_nesreca'
-                            }
+                            'ref': {'table': 'nesreca', 'field': 'id_nesreca'},
                         },
                     },
                 },
                 'upravna_enota': {
-                    'fields': {
-                        'id_upravna_enota': {
-                            'type': 'id',
-                            'subtype': 'integer'
-                        }
-                    },
-                    'primary_key': 'id_upravna_enota'
-                }
+                    'fields': {'id_upravna_enota': {'type': 'id', 'subtype': 'integer'}},
+                    'primary_key': 'id_upravna_enota',
+                },
             }
         }
 
@@ -3025,20 +2925,20 @@ class TestMultiTableMetadata:
                 'parent_table_name': 'upravna_enota',
                 'parent_primary_key': 'id_upravna_enota',
                 'child_table_name': 'nesreca',
-                'child_foreign_key': 'upravna_enota'
+                'child_foreign_key': 'upravna_enota',
             },
             {
                 'parent_table_name': 'nesreca',
                 'parent_primary_key': 'id_nesreca',
                 'child_table_name': 'oseba',
-                'child_foreign_key': 'id_nesreca'
+                'child_foreign_key': 'id_nesreca',
             },
             {
                 'parent_table_name': 'upravna_enota',
                 'parent_primary_key': 'id_upravna_enota',
                 'child_table_name': 'oseba',
-                'child_foreign_key': 'upravna_enota'
-            }
+                'child_foreign_key': 'upravna_enota',
+            },
         ]
         for relationship in expected:
             assert relationship in relationships
@@ -3048,7 +2948,8 @@ class TestMultiTableMetadata:
     @patch('sdv.metadata.multi_table.convert_metadata')
     @patch('sdv.metadata.multi_table.MultiTableMetadata.load_from_dict')
     def test_upgrade_metadata(
-            self, from_dict_mock, convert_mock, relationships_mock, read_json_mock):
+        self, from_dict_mock, convert_mock, relationships_mock, read_json_mock
+    ):
         """Test the ``upgrade_metadata`` method.
 
         The method should validate that the ``new_filepath`` does not exist, read the old metadata
@@ -3079,7 +2980,7 @@ class TestMultiTableMetadata:
         read_json_mock.return_value = {
             'tables': {
                 'table1': {'columns': {'column1': {'type': 'numerical'}}},
-                'table2': {'columns': {'column2': {'type': 'categorical'}}}
+                'table2': {'columns': {'column2': {'type': 'categorical'}}},
             }
         }
         relationships_mock.return_value = [
@@ -3087,7 +2988,7 @@ class TestMultiTableMetadata:
                 'parent_table_name': 'table1',
                 'parent_primary_key': 'id',
                 'child_table_name': 'table2',
-                'child_foreign_key': 'id'
+                'child_foreign_key': 'id',
             }
         ]
 
@@ -3099,27 +3000,27 @@ class TestMultiTableMetadata:
         relationships_mock.assert_called_once_with({
             'tables': {
                 'table1': {'columns': {'column1': {'type': 'numerical'}}},
-                'table2': {'columns': {'column2': {'type': 'categorical'}}}
+                'table2': {'columns': {'column2': {'type': 'categorical'}}},
             }
         })
         convert_mock.assert_has_calls([
             call({'columns': {'column1': {'type': 'numerical'}}}),
-            call({'columns': {'column2': {'type': 'categorical'}}})
+            call({'columns': {'column2': {'type': 'categorical'}}}),
         ])
         expected_new_metadata = {
             'tables': {
                 'table1': {'columns': {'column1': {'sdtype': 'numerical'}}},
-                'table2': {'columns': {'column2': {'sdtype': 'categorical'}}}
+                'table2': {'columns': {'column2': {'sdtype': 'categorical'}}},
             },
             'relationships': [
                 {
                     'parent_table_name': 'table1',
                     'parent_primary_key': 'id',
                     'child_table_name': 'table2',
-                    'child_foreign_key': 'id'
+                    'child_foreign_key': 'id',
                 }
             ],
-            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
         }
         from_dict_mock.assert_called_once_with(expected_new_metadata)
         new_metadata.validate.assert_called_once()
@@ -3130,7 +3031,8 @@ class TestMultiTableMetadata:
     @patch('sdv.metadata.multi_table.convert_metadata')
     @patch('sdv.metadata.multi_table.MultiTableMetadata.load_from_dict')
     def test_upgrade_metadata_validate_error(
-            self, from_dict_mock, convert_mock, relationships_mock, read_json_mock, warnings_mock):
+        self, from_dict_mock, convert_mock, relationships_mock, read_json_mock, warnings_mock
+    ):
         """Test the ``upgrade_metadata`` method.
 
         The method should validate that the ``new_filepath`` does not exist, read the old metadata
@@ -3170,7 +3072,7 @@ class TestMultiTableMetadata:
         expected_new_metadata = {
             'tables': {},
             'relationships': [],
-            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
         }
         from_dict_mock.assert_called_once_with(expected_new_metadata)
         new_metadata.validate.assert_called_once()

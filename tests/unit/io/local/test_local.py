@@ -1,4 +1,5 @@
 """Unit tests for local file handlers."""
+
 import os
 from pathlib import Path
 from unittest.mock import Mock, call, patch
@@ -11,7 +12,6 @@ from sdv.metadata.multi_table import MultiTableMetadata
 
 
 class TestBaseLocalHandler:
-
     def test___init__(self):
         """Test the default initialization of the class."""
         # Run
@@ -25,14 +25,8 @@ class TestBaseLocalHandler:
         """Test that ``create_metadata`` will infer the metadata."""
         # Setup
         data = {
-            'hotel': pd.DataFrame({
-                'hotel_id': [1, 2, 3, 4, 5],
-                'stars': [3, 4, 5, 3, 4]
-            }),
-            'guests': pd.DataFrame({
-                'guest_id': [1, 2, 3, 4, 5],
-                'hotel_id': [1, 1, 3, 2, 3]
-            })
+            'hotel': pd.DataFrame({'hotel_id': [1, 2, 3, 4, 5], 'stars': [3, 4, 5, 3, 4]}),
+            'guests': pd.DataFrame({'guest_id': [1, 2, 3, 4, 5], 'hotel_id': [1, 1, 3, 2, 3]}),
         }
         instance = BaseLocalHandler()
 
@@ -48,21 +42,20 @@ class TestBaseLocalHandler:
                 'guests': {
                     'columns': {
                         'guest_id': {'sdtype': 'numerical'},
-                        'hotel_id': {'sdtype': 'numerical'}
+                        'hotel_id': {'sdtype': 'numerical'},
                     }
                 },
                 'hotel': {
                     'columns': {
                         'hotel_id': {'sdtype': 'numerical'},
-                        'stars': {'sdtype': 'numerical'}
+                        'stars': {'sdtype': 'numerical'},
                     }
-                }
-            }
+                },
+            },
         }
 
 
 class TestCSVHandler:
-
     def test___init__(self):
         """Test the dafault initialization of the class."""
         # Run
@@ -80,12 +73,7 @@ class TestCSVHandler:
         """Test custom initialization of the class."""
         # Run
         instance = CSVHandler(
-            sep=';',
-            encoding='utf-8',
-            decimal=',',
-            float_format='%.2f',
-            quotechar="'",
-            quoting=2
+            sep=';', encoding='utf-8', decimal=',', float_format='%.2f', quotechar="'", quoting=2
         )
 
         # Assert
@@ -108,13 +96,10 @@ class TestCSVHandler:
     def test_read(self, mock_read_csv, mock_glob):
         """Test the read method of CSVHandler class with a folder."""
         # Setup
-        mock_glob.return_value = [
-            Path('/path/to/data/parent.csv'),
-            Path('/path/to/data/child.csv')
-        ]
+        mock_glob.return_value = [Path('/path/to/data/parent.csv'), Path('/path/to/data/child.csv')]
         mock_read_csv.side_effect = [
             pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}),
-            pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']})
+            pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']}),
         ]
 
         handler = CSVHandler()
@@ -128,12 +113,10 @@ class TestCSVHandler:
         assert 'child' in data
         assert mock_read_csv.call_count == 2
         pd.testing.assert_frame_equal(
-            data['parent'],
-            pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']})
+            data['parent'], pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']})
         )
         pd.testing.assert_frame_equal(
-            data['child'],
-            pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']})
+            data['child'], pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']})
         )
 
     def test_read_files(self, tmpdir):
@@ -141,12 +124,10 @@ class TestCSVHandler:
         # Setup
         file_path = Path(tmpdir)
         pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}).to_csv(
-            file_path / 'parent.csv',
-            index=False
+            file_path / 'parent.csv', index=False
         )
         pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']}).to_csv(
-            file_path / 'child.csv',
-            index=False
+            file_path / 'child.csv', index=False
         )
 
         handler = CSVHandler()
@@ -157,8 +138,7 @@ class TestCSVHandler:
         # Assert
         assert 'parent' in data
         pd.testing.assert_frame_equal(
-            data['parent'],
-            pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']})
+            data['parent'], pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']})
         )
 
     def test_read_files_missing(self, tmpdir):
@@ -166,12 +146,10 @@ class TestCSVHandler:
         # Setup
         file_path = Path(tmpdir)
         pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}).to_csv(
-            file_path / 'parent.csv',
-            index=False
+            file_path / 'parent.csv', index=False
         )
         pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']}).to_csv(
-            file_path / 'child.csv',
-            index=False
+            file_path / 'child.csv', index=False
         )
 
         handler = CSVHandler()
@@ -186,7 +164,7 @@ class TestCSVHandler:
         # Setup
         synthetic_data = {
             'table1': pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}),
-            'table2': pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']})
+            'table2': pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']}),
         }
         handler = CSVHandler()
 
@@ -204,7 +182,7 @@ class TestCSVHandler:
         # Setup
         synthetic_data = {
             'table1': pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}),
-            'table2': pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']})
+            'table2': pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']}),
         }
 
         os.makedirs(tmpdir / 'synthetic_data')
@@ -220,7 +198,7 @@ class TestCSVHandler:
         # Setup
         synthetic_data = {
             'table1': pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}),
-            'table2': pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']})
+            'table2': pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']}),
         }
 
         os.makedirs(tmpdir / 'synthetic_data')
@@ -234,7 +212,7 @@ class TestCSVHandler:
         dataframe = pd.read_csv(tmpdir / 'synthetic_data' / 'table1.csv')
         expected_dataframe = pd.DataFrame({
             'col1': ['1', '2', '3', 'col1', '1', '2', '3'],
-            'col2': ['a', 'b', 'c', 'col2', 'a', 'b', 'c']
+            'col2': ['a', 'b', 'c', 'col2', 'a', 'b', 'c'],
         })
         pd.testing.assert_frame_equal(dataframe, expected_dataframe)
 
@@ -243,7 +221,7 @@ class TestCSVHandler:
         # Setup
         synthetic_data = {
             'table1': pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}),
-            'table2': pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']})
+            'table2': pd.DataFrame({'col3': [4, 5, 6], 'col4': ['d', 'e', 'f']}),
         }
 
         os.makedirs(tmpdir / 'synthetic_data')
@@ -255,15 +233,11 @@ class TestCSVHandler:
 
         # Assert
         dataframe = pd.read_csv(tmpdir / 'synthetic_data' / 'table1.csv')
-        expected_dataframe = pd.DataFrame({
-            'col1': [1, 2, 3],
-            'col2': ['a', 'b', 'c']
-        })
+        expected_dataframe = pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']})
         pd.testing.assert_frame_equal(dataframe, expected_dataframe)
 
 
 class TestExcelHandler:
-
     def test___init__(self):
         """Test the init parameters with default values."""
         # Run
@@ -290,7 +264,7 @@ class TestExcelHandler:
         mock_pd.ExcelFile.return_value = Mock(sheet_names=['Sheet1', 'Sheet2'])
         mock_pd.read_excel.side_effect = [
             pd.DataFrame({'A': [1, 2], 'B': [3, 4]}),
-            pd.DataFrame({'C': [5, 6], 'D': [7, 8]})
+            pd.DataFrame({'C': [5, 6], 'D': [7, 8]}),
         ]
 
         instance = ExcelHandler()
@@ -300,27 +274,13 @@ class TestExcelHandler:
 
         # Assert
         sheet_1_call = call(
-            'test_file.xlsx',
-            sheet_name='Sheet1',
-            parse_dates=False,
-            decimal='.',
-            index_col=None
+            'test_file.xlsx', sheet_name='Sheet1', parse_dates=False, decimal='.', index_col=None
         )
         sheet_2_call = call(
-            'test_file.xlsx',
-            sheet_name='Sheet2',
-            parse_dates=False,
-            decimal='.',
-            index_col=None
+            'test_file.xlsx', sheet_name='Sheet2', parse_dates=False, decimal='.', index_col=None
         )
-        pd.testing.assert_frame_equal(
-            data['Sheet1'],
-            pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
-        )
-        pd.testing.assert_frame_equal(
-            data['Sheet2'],
-            pd.DataFrame({'C': [5, 6], 'D': [7, 8]})
-        )
+        pd.testing.assert_frame_equal(data['Sheet1'], pd.DataFrame({'A': [1, 2], 'B': [3, 4]}))
+        pd.testing.assert_frame_equal(data['Sheet2'], pd.DataFrame({'C': [5, 6], 'D': [7, 8]}))
         assert mock_pd.read_excel.call_args_list == [sheet_1_call, sheet_2_call]
 
     @patch('sdv.io.local.local.pd')
@@ -332,7 +292,7 @@ class TestExcelHandler:
         mock_pd.ExcelFile.return_value = Mock(sheet_names=['Sheet1', 'Sheet2'])
         mock_pd.read_excel.side_effect = [
             pd.DataFrame({'A': [1, 2], 'B': [3, 4]}),
-            pd.DataFrame({'C': [5, 6], 'D': [7, 8]})
+            pd.DataFrame({'C': [5, 6], 'D': [7, 8]}),
         ]
 
         instance = ExcelHandler()
@@ -342,16 +302,9 @@ class TestExcelHandler:
 
         # Assert
         sheet_1_call = call(
-            'test_file.xlsx',
-            sheet_name='Sheet1',
-            parse_dates=False,
-            decimal='.',
-            index_col=None
+            'test_file.xlsx', sheet_name='Sheet1', parse_dates=False, decimal='.', index_col=None
         )
-        pd.testing.assert_frame_equal(
-            data['Sheet1'],
-            pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
-        )
+        pd.testing.assert_frame_equal(data['Sheet1'], pd.DataFrame({'A': [1, 2], 'B': [3, 4]}))
         assert mock_pd.read_excel.call_args_list == [sheet_1_call]
         assert list(data) == ['Sheet1']
 
@@ -387,13 +340,13 @@ class TestExcelHandler:
             mock_pd.ExcelWriter.return_value,
             sheet_name='Sheet1_synthetic',
             float_format=None,
-            index=False
+            index=False,
         )
         sheet_two.to_excel.assert_called_once_with(
             mock_pd.ExcelWriter.return_value,
             sheet_name='Sheet2_synthetic',
             float_format=None,
-            index=False
+            index=False,
         )
         mock_pd.ExcelWriter.return_value.close.assert_called_once_with()
 
@@ -417,28 +370,22 @@ class TestExcelHandler:
 
         # Assert
         sheet_one.to_excel.assert_called_once_with(
-            mock_pd.ExcelWriter.return_value,
-            sheet_name='Sheet1',
-            float_format=None,
-            index=False
+            mock_pd.ExcelWriter.return_value, sheet_name='Sheet1', float_format=None, index=False
         )
         sheet_two.to_excel.assert_called_once_with(
-            mock_pd.ExcelWriter.return_value,
-            sheet_name='Sheet2',
-            float_format=None,
-            index=False
+            mock_pd.ExcelWriter.return_value, sheet_name='Sheet2', float_format=None, index=False
         )
         synth_sheet_one.to_excel.assert_called_once_with(
             mock_pd.ExcelWriter.return_value,
             sheet_name='Sheet1_synthetic',
             float_format=None,
-            index=False
+            index=False,
         )
         synth_sheet_two.to_excel.assert_called_once_with(
             mock_pd.ExcelWriter.return_value,
             sheet_name='Sheet2_synthetic',
             float_format=None,
-            index=False
+            index=False,
         )
         mock_pd.ExcelWriter.return_value.close.assert_called_once_with()
 
@@ -460,16 +407,10 @@ class TestExcelHandler:
         # Assert
         mock_pd.concat.assert_called_once_with([sheet_one, synth_sheet_one], ignore_index=True)
         mock_pd.concat.return_value.to_excel.assert_called_once_with(
-            mock_pd.ExcelWriter.return_value,
-            sheet_name='Sheet1',
-            float_format=None,
-            index=False
+            mock_pd.ExcelWriter.return_value, sheet_name='Sheet1', float_format=None, index=False
         )
 
         sheet_two.to_excel.assert_called_once_with(
-            mock_pd.ExcelWriter.return_value,
-            sheet_name='Sheet2',
-            float_format=None,
-            index=False
+            mock_pd.ExcelWriter.return_value, sheet_name='Sheet2', float_format=None, index=False
         )
         mock_pd.ExcelWriter.return_value.close.assert_called_once_with()

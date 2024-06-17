@@ -39,36 +39,41 @@ class TestSingleTableMetadata:
         (
             'age',
             'numerical',
-            {
-                'computer_representation': 'Int8',
-                'datetime_format': None,
-                'pii': True
-            },
+            {'computer_representation': 'Int8', 'datetime_format': None, 'pii': True},
             re.escape("Invalid values '(datetime_format, pii)' for numerical column 'age'."),
         ),
         (
-            'start_date', 'datetime', {'datetime_format': '%Y-%d', 'pii': True},
-            re.escape("Invalid values '(pii)' for datetime column 'start_date'.")
+            'start_date',
+            'datetime',
+            {'datetime_format': '%Y-%d', 'pii': True},
+            re.escape("Invalid values '(pii)' for datetime column 'start_date'."),
         ),
         (
-            'name', 'categorical',
+            'name',
+            'categorical',
             {'pii': True, 'ordering': ['a', 'b'], 'ordered': 'numerical_values'},
-            re.escape("Invalid values '(ordered, ordering, pii)' for categorical column 'name'.")
+            re.escape("Invalid values '(ordered, ordering, pii)' for categorical column 'name'."),
         ),
         (
-            'synthetic', 'boolean', {'pii': True},
-            re.escape("Invalid values '(pii)' for boolean column 'synthetic'.")
+            'synthetic',
+            'boolean',
+            {'pii': True},
+            re.escape("Invalid values '(pii)' for boolean column 'synthetic'."),
         ),
         (
-            'phrase', 'id', {'regex_format': '[A-z]', 'pii': True, 'anonymization': True},
-            re.escape("Invalid values '(anonymization, pii)' for id column 'phrase'.")
+            'phrase',
+            'id',
+            {'regex_format': '[A-z]', 'pii': True, 'anonymization': True},
+            re.escape("Invalid values '(anonymization, pii)' for id column 'phrase'."),
         ),
         (
-            'phone', 'phone_number', {'anonymization': True, 'order_by': 'phone_number'},
+            'phone',
+            'phone_number',
+            {'anonymization': True, 'order_by': 'phone_number'},
             re.escape(
                 "Invalid values '(anonymization, order_by)' for phone_number column 'phone'."
-            )
-        )
+            ),
+        ),
     ]  # noqa: JS102
 
     def test___init__(self):
@@ -113,7 +118,8 @@ class TestSingleTableMetadata:
             instance._validate_numerical('age', computer_representation=36)
 
     @pytest.mark.parametrize(
-        'computer_representation', SingleTableMetadata._NUMERICAL_REPRESENTATIONS)
+        'computer_representation', SingleTableMetadata._NUMERICAL_REPRESENTATIONS
+    )
     def test__validate_numerical_computer_representations(self, computer_representation):
         """Test the ``_validate_numerical`` method.
 
@@ -160,7 +166,8 @@ class TestSingleTableMetadata:
         instance._validate_datetime('start_date', datetime_format='%Y-%m-%d - Synthetic')
 
         error_msg = re.escape(
-            "Invalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'start_date'.")
+            "Invalid datetime format string '%1-%Y-%m-%d-%' for datetime column 'start_date'."
+        )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_datetime('start_date', datetime_format='%1-%Y-%m-%d-%')
 
@@ -333,8 +340,7 @@ class TestSingleTableMetadata:
             instance._validate_column_args('column', 'fake_type')
 
         error_msg = re.escape(
-            'Invalid sdtype: None is not a string. Please use one of the '
-            'supported SDV sdtypes.'
+            'Invalid sdtype: None is not a string. Please use one of the ' 'supported SDV sdtypes.'
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_column_args('column', None)
@@ -369,7 +375,8 @@ class TestSingleTableMetadata:
 
         # Assert
         mock__validate_kwargs.assert_called_once_with(
-            'age', 'numerical', computer_representation='Int8')
+            'age', 'numerical', computer_representation='Int8'
+        )
         mock__validate_numerical.assert_called_once_with('age', computer_representation='Int8')
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
@@ -401,8 +408,7 @@ class TestSingleTableMetadata:
         instance._validate_column_args('name', 'categorical', order=['a', 'b', 'c'])
 
         # Assert
-        mock__validate_kwargs.assert_called_once_with(
-            'name', 'categorical', order=['a', 'b', 'c'])
+        mock__validate_kwargs.assert_called_once_with('name', 'categorical', order=['a', 'b', 'c'])
         mock__validate_categorical.assert_called_once_with('name', order=['a', 'b', 'c'])
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
@@ -495,7 +501,8 @@ class TestSingleTableMetadata:
 
         # Assert
         mock__validate_kwargs.assert_called_once_with(
-            'phrase', 'id', regex_format='[A-z0-9]', pii=True)
+            'phrase', 'id', regex_format='[A-z0-9]', pii=True
+        )
         mock__validate_id.assert_called_once_with('phrase', regex_format='[A-z0-9]', pii=True)
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
@@ -538,10 +545,7 @@ class TestSingleTableMetadata:
 
         # Assert
         assert instance.columns == {
-            'a': {
-                'sdtype': 'numerical',
-                'computer_representation': 'Int64'
-            }
+            'a': {'sdtype': 'numerical', 'computer_representation': 'Int64'}
         }
 
     def test_add_column_column_name_in_columns(self):
@@ -567,7 +571,8 @@ class TestSingleTableMetadata:
 
         # Run / Assert
         error_msg = re.escape(
-            "Column name 'age' already exists. Use 'update_column' to update an existing column.")
+            "Column name 'age' already exists. Use 'update_column' to update an existing column."
+        )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.add_column('age')
 
@@ -634,10 +639,7 @@ class TestSingleTableMetadata:
         instance.add_column('age', sdtype='numerical', computer_representation='Int8')
 
         # Assert
-        assert instance.columns['age'] == {
-            'sdtype': 'numerical',
-            'computer_representation': 'Int8'
-        }
+        assert instance.columns['age'] == {'sdtype': 'numerical', 'computer_representation': 'Int8'}
 
     def test_add_column_other_sdtype(self):
         """Test ``add_column`` with an ``sdtype`` that isn't in our base ``sdtypes``..
@@ -687,7 +689,8 @@ class TestSingleTableMetadata:
         instance._validate_column_exists.assert_called_once_with('age')
         expected_kwargs = {'computer_representation': 'Int8'}
         instance._validate_column_args.assert_called_once_with(
-            'age', 'numerical', **expected_kwargs)
+            'age', 'numerical', **expected_kwargs
+        )
 
     def test_update_column(self):
         """Test the ``update_column`` method."""
@@ -703,15 +706,13 @@ class TestSingleTableMetadata:
         instance._validate_update_column.assert_called_once_with(
             'age', sdtype='categorical', order_by='numerical_value'
         )
-        assert instance.columns['age'] == {
-            'sdtype': 'categorical',
-            'order_by': 'numerical_value'
-        }
+        assert instance.columns['age'] == {'sdtype': 'categorical', 'order_by': 'numerical_value'}
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_args')
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_exists')
-    def test_update_column_sdtype_in_kwargs(self,
-                                            mock__validate_column_exists, mock__validate_column):
+    def test_update_column_sdtype_in_kwargs(
+        self, mock__validate_column_exists, mock__validate_column
+    ):
         """Test the ``update_column`` method.
 
         Test that when calling ``update_column`` with an ``sdtype`` this is being updated as well
@@ -736,13 +737,11 @@ class TestSingleTableMetadata:
         instance.update_column('age', sdtype='categorical', order_by='numerical_value')
 
         # Assert
-        assert instance.columns['age'] == {
-            'sdtype': 'categorical',
-            'order_by': 'numerical_value'
-        }
+        assert instance.columns['age'] == {'sdtype': 'categorical', 'order_by': 'numerical_value'}
         mock__validate_column_exists.assert_called_once_with('age')
         mock__validate_column.assert_called_once_with(
-            'age', 'categorical', order_by='numerical_value')
+            'age', 'categorical', order_by='numerical_value'
+        )
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_args')
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_column_exists')
@@ -773,11 +772,12 @@ class TestSingleTableMetadata:
         # Assert
         assert instance.columns['age'] == {
             'sdtype': 'numerical',
-            'computer_representation': 'Float'
+            'computer_representation': 'Float',
         }
         mock__validate_column_exists.assert_called_once_with('age')
         mock__validate_column.assert_called_once_with(
-            'age', 'numerical', computer_representation='Float')
+            'age', 'numerical', computer_representation='Float'
+        )
 
     def test_update_columns_sdtype_in_kwargs_error(self):
         """Test the ``update_columns`` method.
@@ -789,8 +789,7 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         # Run / Assert
-        error_msg = re.escape(
-            "Invalid values '(pii)' for 'numerical' sdtype.")
+        error_msg = re.escape("Invalid values '(pii)' for 'numerical' sdtype.")
 
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.update_columns(['col_1', 'col_2'], sdtype='numerical', pii=True)
@@ -806,7 +805,7 @@ class TestSingleTableMetadata:
         instance.columns = {
             'col_1': {'sdtype': 'country_code'},
             'col_2': {'sdtype': 'numerical'},
-            'col_3': {'sdtype': 'categorical'}
+            'col_3': {'sdtype': 'categorical'},
         }
 
         # Run / Assert
@@ -824,10 +823,7 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         instance._validate_update_column = Mock()
         instance._get_unexpected_kwargs = Mock(return_value=None)
-        instance.columns = {
-            'age': {'sdtype': 'numerical'},
-            'salary': {'sdtype': 'numerical'}
-        }
+        instance.columns = {'age': {'sdtype': 'numerical'}, 'salary': {'sdtype': 'numerical'}}
 
         # Run
         instance.update_columns(['age', 'salary'], sdtype='categorical')
@@ -836,11 +832,11 @@ class TestSingleTableMetadata:
         instance._get_unexpected_kwargs.assert_called_once_with('categorical')
         instance._validate_update_column.assert_has_calls([
             call('age', sdtype='categorical'),
-            call('salary', sdtype='categorical')
+            call('salary', sdtype='categorical'),
         ])
         assert instance.columns == {
             'age': {'sdtype': 'categorical'},
-            'salary': {'sdtype': 'categorical'}
+            'salary': {'sdtype': 'categorical'},
         }
 
     def test_update_columns_kwargs_without_sdtype(self):
@@ -850,7 +846,7 @@ class TestSingleTableMetadata:
         instance.columns = {
             'col_1': {'sdtype': 'country_code'},
             'col_2': {'sdtype': 'latitude'},
-            'col_3': {'sdtype': 'longitude'}
+            'col_3': {'sdtype': 'longitude'},
         }
 
         # Run
@@ -860,7 +856,7 @@ class TestSingleTableMetadata:
         assert instance.columns == {
             'col_1': {'sdtype': 'country_code', 'pii': True},
             'col_2': {'sdtype': 'latitude', 'pii': True},
-            'col_3': {'sdtype': 'longitude', 'pii': True}
+            'col_3': {'sdtype': 'longitude', 'pii': True},
         }
         assert instance._updated is True
 
@@ -869,35 +865,29 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         instance._validate_update_column = Mock()
-        instance.columns = {
-            'age': {'sdtype': 'numerical'},
-            'salary': {'sdtype': 'numerical'}
-        }
+        instance.columns = {'age': {'sdtype': 'numerical'}, 'salary': {'sdtype': 'numerical'}}
 
         # Run
         instance.update_columns_metadata({
             'age': {'sdtype': 'categorical'},
-            'salary': {'computer_representation': 'Int64'}
+            'salary': {'computer_representation': 'Int64'},
         })
 
         # Assert
         instance._validate_update_column.assert_has_calls([
             call('age', sdtype='categorical'),
-            call('salary', computer_representation='Int64')
+            call('salary', computer_representation='Int64'),
         ])
         assert instance.columns == {
             'age': {'sdtype': 'categorical'},
-            'salary': {'sdtype': 'numerical', 'computer_representation': 'Int64'}
+            'salary': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
         }
 
     def test_update_columns_metadata_multiple_error(self):
         """Test the ``update_columns_metadata`` method with multiple error."""
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {
-            'age': {'sdtype': 'numerical'},
-            'hours': {'sdtype': 'numerical'}
-        }
+        instance.columns = {'age': {'sdtype': 'numerical'}, 'hours': {'sdtype': 'numerical'}}
 
         # Run / Assert
         error_msg = re.escape(
@@ -911,7 +901,7 @@ class TestSingleTableMetadata:
             instance.update_columns_metadata({
                 'age': {'pii': True},
                 'hours': {'sdtype': 'categorical', 'datetime_format': '%Y-%m-%d'},
-                'salary': {'sdtype': 'numerical'}
+                'salary': {'sdtype': 'numerical'},
             })
 
     def test_get_column_names(self):
@@ -921,15 +911,14 @@ class TestSingleTableMetadata:
         metadata.columns = {
             'id': {'sdtype': 'id'},
             'value1': {'sdtype': 'numerical'},
-            'value2': {'sdtype': 'numerical', 'computer_representation': 'Float'}
+            'value2': {'sdtype': 'numerical', 'computer_representation': 'Float'},
         }
 
         # Run
         matches_no_filter = metadata.get_column_names()
         matches_numerical = metadata.get_column_names(sdtype='numerical')
         matches_extra = metadata.get_column_names(
-            sdtype='numerical',
-            computer_representation='Float'
+            sdtype='numerical', computer_representation='Float'
         )
 
         # Assert
@@ -977,18 +966,35 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
 
         data_less_than_5_rows = pd.Series([1, np.nan, 3, 4, 5])
-        data_less_than_10_percent_unique_values = pd.Series(
-            [1, 2, 2, None, 2, 1, 1, 1, 1, 1, 2, 2, np.nan, 2, 1, 1, 2, 1, 2, 2]
+        data_less_than_10_percent_unique_values = pd.Series([
+            1,
+            2,
+            2,
+            None,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1,
+            2,
+            2,
+            np.nan,
+            2,
+            1,
+            1,
+            2,
+            1,
+            2,
+            2,
+        ])
+        large_numerical_series = pd.Series(
+            [400, 401, 402, 403, 404, 405, 406, 500, 501, 502, 503, 504, 505, 506] * 1000
         )
-        large_numerical_series = pd.Series([
-            400, 401, 402, 403, 404, 405, 406,
-            500, 501, 502, 503, 504, 505, 506
-        ] * 1000)
 
-        large_categorical_series = pd.Series([
-            400, 401, 402, 403, 404,
-            500, 501, 502, 503, 504
-        ] * 1000)
+        large_categorical_series = pd.Series(
+            [400, 401, 402, 403, 404, 500, 501, 502, 503, 504] * 1000
+        )
         data_all_unique = pd.Series([1, 2, 3, 4, 5, 6])
         data_numerical_int = pd.Series([1, np.nan, 3, 4, 5, 6, 7, 8, 9, 10])
         data_numerical_float = pd.Series([1.1, 2.2, 3.3, 4.4, 5.5, 6.6])
@@ -1093,8 +1099,17 @@ class TestSingleTableMetadata:
             'id': ['id1', 'id2', 'id3', 'id4', 'id5', 'id6', 'id7', 'id8', 'id9', 'id10', 'id11'],
             'numerical': [1, 2, 3, 2, 5, 6, 7, 8, 9, 10, 11],
             'datetime': [
-                '2022-01-01', '2022-02-01', '2022-03-01', '2022-04-01', '2022-05-01', '2022-06-01',
-                '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01', '2022-11-01'
+                '2022-01-01',
+                '2022-02-01',
+                '2022-03-01',
+                '2022-04-01',
+                '2022-05-01',
+                '2022-06-01',
+                '2022-07-01',
+                '2022-08-01',
+                '2022-09-01',
+                '2022-10-01',
+                '2022-11-01',
             ],
             'alternate_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             'alternate_id_string': ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
@@ -1102,8 +1117,17 @@ class TestSingleTableMetadata:
             'bool': [True, False, True, False, True, False, True, False, True, False, True],
             'unknown': ['a', 'b', 'c', 'c', 1, 2.2, np.nan, None, 'd', 'e', 'f'],
             'first_name': [
-                'John', 'Jane', 'John', 'Jane', 'John', 'Jane', 'John', 'Jane', 'John',
-                'Jane', 'John'
+                'John',
+                'Jane',
+                'John',
+                'Jane',
+                'John',
+                'Jane',
+                'John',
+                'Jane',
+                'John',
+                'Jane',
+                'John',
             ],
         })
 
@@ -1169,7 +1193,7 @@ class TestSingleTableMetadata:
             'cat': [None] * 100,
             'num': [np.nan] * 100,
             'num2': [float('nan')] * 100,
-            'date': [pd.NaT] * 100
+            'date': [pd.NaT] * 100,
         })
         stm = SingleTableMetadata()
 
@@ -1274,8 +1298,8 @@ class TestSingleTableMetadata:
             'categorical': ['cat', 'dog', 'cat', np.nan],
             'date': pd.to_datetime(['2021-02-02', np.nan, '2021-03-05', '2022-12-09']),
             'int': [1, 2, 3, 4],
-            'float': [1., 2., 3., 4],
-            'bool': [np.nan, True, False, True]
+            'float': [1.0, 2.0, 3.0, 4],
+            'bool': [np.nan, True, False, True],
         })
 
         # Run
@@ -1287,12 +1311,12 @@ class TestSingleTableMetadata:
             'date': {'sdtype': 'datetime'},
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
-            'bool': {'sdtype': 'categorical'}
+            'bool': {'sdtype': 'categorical'},
         }
 
         expected_log_calls = [
             call('Detected metadata:'),
-            call(json.dumps(instance.to_dict(), indent=4))
+            call(json.dumps(instance.to_dict(), indent=4)),
         ]
         mock_log.info.assert_has_calls(expected_log_calls)
 
@@ -1306,68 +1330,28 @@ class TestSingleTableMetadata:
         data = pd.DataFrame(values)
         correct_metadata = {
             'columns': {
-                '1': {
-                    'sdtype': 'numerical'
-                },
-                '2': {
-                    'sdtype': 'numerical'
-                },
-                '3': {
-                    'sdtype': 'numerical'
-                },
-                '4': {
-                    'sdtype': 'numerical'
-                },
-                '5': {
-                    'sdtype': 'numerical'
-                },
-                '6': {
-                    'sdtype': 'numerical'
-                },
-                '7': {
-                    'sdtype': 'numerical'
-                },
-                '8': {
-                    'sdtype': 'numerical'
-                },
-                '9': {
-                    'sdtype': 'numerical'
-                },
-                '10': {
-                    'sdtype': 'numerical'
-                },
-                '11': {
-                    'sdtype': 'numerical'
-                },
-                '12': {
-                    'sdtype': 'numerical'
-                },
-                '13': {
-                    'sdtype': 'numerical'
-                },
-                '14': {
-                    'sdtype': 'numerical'
-                },
-                '15': {
-                    'sdtype': 'numerical'
-                },
-                '16': {
-                    'sdtype': 'numerical'
-                },
-                '17': {
-                    'sdtype': 'numerical'
-                },
-                '18': {
-                    'sdtype': 'numerical'
-                },
-                '19': {
-                    'sdtype': 'numerical'
-                },
-                '20': {
-                    'sdtype': 'numerical'
-                }
+                '1': {'sdtype': 'numerical'},
+                '2': {'sdtype': 'numerical'},
+                '3': {'sdtype': 'numerical'},
+                '4': {'sdtype': 'numerical'},
+                '5': {'sdtype': 'numerical'},
+                '6': {'sdtype': 'numerical'},
+                '7': {'sdtype': 'numerical'},
+                '8': {'sdtype': 'numerical'},
+                '9': {'sdtype': 'numerical'},
+                '10': {'sdtype': 'numerical'},
+                '11': {'sdtype': 'numerical'},
+                '12': {'sdtype': 'numerical'},
+                '13': {'sdtype': 'numerical'},
+                '14': {'sdtype': 'numerical'},
+                '15': {'sdtype': 'numerical'},
+                '16': {'sdtype': 'numerical'},
+                '17': {'sdtype': 'numerical'},
+                '18': {'sdtype': 'numerical'},
+                '19': {'sdtype': 'numerical'},
+                '20': {'sdtype': 'numerical'},
             },
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         }
 
         # Run
@@ -1428,8 +1412,8 @@ class TestSingleTableMetadata:
             'categorical': ['cat', 'dog', 'tiger', np.nan],
             'date': pd.to_datetime(['2021-02-02', np.nan, '2021-03-05', '2022-12-09']),
             'int': [1, 2, 3, 4],
-            'float': [1., 2., 3., 4],
-            'bool': [np.nan, True, False, True]
+            'float': [1.0, 2.0, 3.0, 4],
+            'bool': [np.nan, True, False, True],
         })
 
         # Run
@@ -1443,12 +1427,12 @@ class TestSingleTableMetadata:
             'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
-            'bool': {'sdtype': 'categorical'}
+            'bool': {'sdtype': 'categorical'},
         }
 
         expected_log_calls = [
             call('Detected metadata:'),
-            call(json.dumps(instance.to_dict(), indent=4))
+            call(json.dumps(instance.to_dict(), indent=4)),
         ]
         mock_log.info.assert_has_calls(expected_log_calls)
 
@@ -1478,8 +1462,8 @@ class TestSingleTableMetadata:
             'categorical': ['cat', 'dog', 'tiger', np.nan],
             'date': pd.to_datetime(['2021-02-02', np.nan, '2021-03-05', '2022-12-09']),
             'int': [1, 2, 3, 4],
-            'float': [1., 2., 3., 4],
-            'bool': [np.nan, True, False, True]
+            'float': [1.0, 2.0, 3.0, 4],
+            'bool': [np.nan, True, False, True],
         })
 
         # Run
@@ -1493,12 +1477,12 @@ class TestSingleTableMetadata:
             'date': {'sdtype': 'datetime'},
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
-            'bool': {'sdtype': 'categorical'}
+            'bool': {'sdtype': 'categorical'},
         }
 
         expected_log_calls = [
             call('Detected metadata:'),
-            call(json.dumps(instance.to_dict(), indent=4))
+            call(json.dumps(instance.to_dict(), indent=4)),
         ]
         mock_log.info.assert_has_calls(expected_log_calls)
 
@@ -1568,9 +1552,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
 
-        err_msg = (
-            "'primary_key' must be a string."
-        )
+        err_msg = "'primary_key' must be a string."
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_primary_key(1)
@@ -1592,8 +1574,7 @@ class TestSingleTableMetadata:
         instance.columns = {'a', 'd'}
 
         err_msg = (
-            "Unknown primary key values {'b'}."
-            ' Keys should be columns that exist in the table.'
+            "Unknown primary key values {'b'}." ' Keys should be columns that exist in the table.'
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -1615,9 +1596,7 @@ class TestSingleTableMetadata:
         instance.add_column('column2', sdtype='categorical')
         instance.add_column('column3', sdtype='id')
 
-        err_msg = re.escape(
-            "The primary_keys ['column1'] must be type 'id' or another PII type."
-        )
+        err_msg = re.escape("The primary_keys ['column1'] must be type 'id' or another PII type.")
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_primary_key('column1')
@@ -1712,7 +1691,7 @@ class TestSingleTableMetadata:
         )
         warning_mock.warn.assert_has_calls([
             call(alternate_key_warning_msg),
-            call(primary_key_warning_msg)
+            call(primary_key_warning_msg),
         ])
         assert instance.primary_key == 'column1'
         assert instance.alternate_keys == ['column2']
@@ -1751,8 +1730,7 @@ class TestSingleTableMetadata:
         instance.columns = {'a', 'd'}
 
         err_msg = (
-            "Unknown sequence key values {'b'}."
-            ' Keys should be columns that exist in the table.'
+            "Unknown sequence key values {'b'}." ' Keys should be columns that exist in the table.'
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -1774,9 +1752,7 @@ class TestSingleTableMetadata:
         instance.add_column('column2', sdtype='categorical')
         instance.add_column('column3', sdtype='id')
 
-        err_msg = re.escape(
-            "The sequence_keys ['column1'] must be type 'id' or another PII type."
-        )
+        err_msg = re.escape("The sequence_keys ['column1'] must be type 'id' or another PII type.")
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_sequence_key('column1')
@@ -1920,7 +1896,7 @@ class TestSingleTableMetadata:
         instance.columns = {
             'column1': {'sdtype': 'id'},
             'column2': {'sdtype': 'id'},
-            'column3': {'sdtype': 'id'}
+            'column3': {'sdtype': 'id'},
         }
 
         # Run
@@ -1937,7 +1913,7 @@ class TestSingleTableMetadata:
         instance.columns = {
             'column1': {'sdtype': 'id'},
             'column2': {'sdtype': 'id'},
-            'column3': {'sdtype': 'id'}
+            'column3': {'sdtype': 'id'},
         }
         instance.alternate_keys = ['column3']
 
@@ -1994,10 +1970,7 @@ class TestSingleTableMetadata:
         """Test that the method errors if the column is not numerical or datetime."""
         # Setup
         instance = SingleTableMetadata()
-        instance.columns = {
-            'a': {'sdtype': 'numerical'},
-            'd': {'sdtype': 'categorical'}
-        }
+        instance.columns = {'a': {'sdtype': 'numerical'}, 'd': {'sdtype': 'categorical'}}
 
         # Run / Assert
         error_message = "The sequence_index must be of type 'datetime' or 'numerical'."
@@ -2036,17 +2009,12 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         mock_relationship_validation = Mock()
-        instance._COLUMN_RELATIONSHIP_TYPES = {
-            'mock_relationship': mock_relationship_validation
-        }
-        relationship = {
-            'type': 'mock_relationship',
-            'column_names': ['a', 'b']
-        }
+        instance._COLUMN_RELATIONSHIP_TYPES = {'mock_relationship': mock_relationship_validation}
+        relationship = {'type': 'mock_relationship', 'column_names': ['a', 'b']}
         instance.columns = {
             'a': {'sdtype': 'categorical'},
             'b': {'sdtype': 'numerical'},
-            'c': {'sdtype': 'datetime'}
+            'c': {'sdtype': 'datetime'},
         }
 
         # Run
@@ -2057,21 +2025,14 @@ class TestSingleTableMetadata:
             'a': 'categorical',
             'b': 'numerical',
         }
-        mock_relationship_validation.assert_called_once_with(
-            expected_columns_to_sdtypes
-        )
+        mock_relationship_validation.assert_called_once_with(expected_columns_to_sdtypes)
 
     def test__validate_column_relationship_bad_relationship_type(self):
         """Test validation fails for an unknown relationship type."""
         # Setup
         instance = SingleTableMetadata()
-        instance._COLUMN_RELATIONSHIP_TYPES = {
-            'mock_relationship': Mock()
-        }
-        relationship = {
-            'type': 'bad_relationship_type',
-            'column_names': ['a', 'b']
-        }
+        instance._COLUMN_RELATIONSHIP_TYPES = {'mock_relationship': Mock()}
+        relationship = {'type': 'bad_relationship_type', 'column_names': ['a', 'b']}
 
         # Run and Assert
         msg = re.escape(
@@ -2083,6 +2044,7 @@ class TestSingleTableMetadata:
 
     def test__validate_column_relationship_bad_columns(self):
         """Test validation fails for invalid columns."""
+
         # Setup
         def validation_side_effect(*args, **kwargs):
             raise InvalidMetadataError("Columns ['a', 'b'] have unsupported sdtype.")
@@ -2090,13 +2052,8 @@ class TestSingleTableMetadata:
         instance = SingleTableMetadata()
         mock_relationship_validation = Mock()
         mock_relationship_validation.side_effect = validation_side_effect
-        instance._COLUMN_RELATIONSHIP_TYPES = {
-            'mock_relationship': mock_relationship_validation
-        }
-        relationship = {
-            'type': 'mock_relationship',
-            'column_names': ['a', 'b', 'c', 'x']
-        }
+        instance._COLUMN_RELATIONSHIP_TYPES = {'mock_relationship': mock_relationship_validation}
+        relationship = {'type': 'mock_relationship', 'column_names': ['a', 'b', 'c', 'x']}
         instance.columns = {
             'a': {'sdtype': 'id'},
             'b': {'sdtype': 'categorical'},
@@ -2114,15 +2071,8 @@ class TestSingleTableMetadata:
             instance._validate_column_relationship(relationship)
 
         # Assert
-        expected_columns_to_sdtypes = {
-            'a': 'id',
-            'b': 'categorical',
-            'c': 'numerical',
-            'x': None
-        }
-        mock_relationship_validation.assert_called_once_with(
-            expected_columns_to_sdtypes
-        )
+        expected_columns_to_sdtypes = {'a': 'id', 'b': 'categorical', 'c': 'numerical', 'x': None}
+        mock_relationship_validation.assert_called_once_with(expected_columns_to_sdtypes)
 
     def test__validate_column_relationship_with_other_relationships(self):
         """Test ``_validate_column_relationship_with_others``."""
@@ -2131,26 +2081,19 @@ class TestSingleTableMetadata:
         column_relationships = [
             {'type': 'relationship_one', 'column_names': ['a', 'b']},
         ]
-        relationship_valid = {
-            'type': 'relationship_two',
-            'column_names': ['c', 'd']
-        }
-        relationship_invalid = {
-            'type': 'relationship_two',
-            'column_names': ['b', 'e']
-        }
+        relationship_valid = {'type': 'relationship_two', 'column_names': ['c', 'd']}
+        relationship_invalid = {'type': 'relationship_two', 'column_names': ['b', 'e']}
 
         # Run and Assert
-        instance._validate_column_relationship_with_others(
-            relationship_valid, column_relationships
-        )
+        instance._validate_column_relationship_with_others(relationship_valid, column_relationships)
         expected_message = re.escape(
             "Columns 'b' is already part of a relationship of type"
             " 'relationship_one'. Columns cannot be part of multiple relationships."
         )
         with pytest.raises(InvalidMetadataError, match=expected_message):
             instance._validate_column_relationship_with_others(
-                relationship_invalid, column_relationships)
+                relationship_invalid, column_relationships
+            )
 
     def test__validate_all_column_relationships(self):
         """Test ``_validate_all_column_relationships`` method."""
@@ -2160,9 +2103,7 @@ class TestSingleTableMetadata:
         instance._validate_column_relationship = mock_validate_relationship
         relationship_one = {'type': 'relationship_one', 'column_names': ['a', 'b']}
         relationship_two = {'type': 'relationship_two', 'column_names': ['c', 'd']}
-        column_relationships = [
-            relationship_one, relationship_two
-        ]
+        column_relationships = [relationship_one, relationship_two]
 
         # Run
         instance._validate_all_column_relationships(column_relationships)
@@ -2170,7 +2111,7 @@ class TestSingleTableMetadata:
         # Assert
         mock_validate_relationship.assert_has_calls([
             call(relationship_one),
-            call(relationship_two)
+            call(relationship_two),
         ])
 
     def test__validate_all_column_relationships_invalid_relationship_structure(self):
@@ -2181,13 +2122,11 @@ class TestSingleTableMetadata:
         instance._validate_column_relationship = mock_validate_relationship
         column_relationships = [
             {'type': 'relationship_one', 'column_names': ['a', 'b']},
-            {'type': 'relationship_two', 'bad_key': ['c', 'd']}
+            {'type': 'relationship_two', 'bad_key': ['c', 'd']},
         ]
 
         # Run and Assert
-        err_msg = re.escape(
-            "Relationship has invalid keys {'bad_key'}."
-        )
+        err_msg = re.escape("Relationship has invalid keys {'bad_key'}.")
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance._validate_all_column_relationships(column_relationships)
 
@@ -2199,7 +2138,7 @@ class TestSingleTableMetadata:
         instance._validate_column_relationship = mock_validate_relationship
         column_relationships = [
             {'type': 'relationship_one', 'column_names': ['a', 'b']},
-            {'type': 'relationship_two', 'column_names': ['b', 'c']}
+            {'type': 'relationship_two', 'column_names': ['b', 'c']},
         ]
         instance.column_relationships = column_relationships
         # Run and Assert
@@ -2212,18 +2151,18 @@ class TestSingleTableMetadata:
 
     def test__validate_all_column_relationships_bad_relationship(self):
         """Test validation fails if individual relationship validation fails."""
+
         # Setup
         def mock_relationship_validate(relationship):
-            raise InvalidMetadataError(
-                f"Error in '{relationship['type']}' relationship."
-            )
+            raise InvalidMetadataError(f"Error in '{relationship['type']}' relationship.")
+
         instance = SingleTableMetadata()
         mock_validate_relationship = Mock()
         mock_validate_relationship.side_effect = mock_relationship_validate
         instance._validate_column_relationship = mock_validate_relationship
         column_relationships = [
             {'type': 'relationship_one', 'column_names': ['a', 'b']},
-            {'type': 'relationship_two', 'column_names': ['c', 'd']}
+            {'type': 'relationship_two', 'column_names': ['c', 'd']},
         ]
 
         # Run and Assert
@@ -2243,30 +2182,27 @@ class TestSingleTableMetadata:
 
         # Run
         instance.add_column_relationship(
-            relationship_type='relationship_A',
-            column_names=['colA', 'colB']
+            relationship_type='relationship_A', column_names=['colA', 'colB']
         )
         instance.add_column_relationship(
-            relationship_type='relationship_B',
-            column_names=['col1', 'col2', 'col3']
+            relationship_type='relationship_B', column_names=['col1', 'col2', 'col3']
         )
         # Assert
         mock_validate_column_relationships.assert_has_calls([
-            call([
-                {'type': 'relationship_A', 'column_names': ['colA', 'colB']}
-            ]),
+            call([{'type': 'relationship_A', 'column_names': ['colA', 'colB']}]),
             call([
                 {'type': 'relationship_B', 'column_names': ['col1', 'col2', 'col3']},
-                {'type': 'relationship_A', 'column_names': ['colA', 'colB']}
-            ])
+                {'type': 'relationship_A', 'column_names': ['colA', 'colB']},
+            ]),
         ])
         assert instance.column_relationships == [
             {'type': 'relationship_A', 'column_names': ['colA', 'colB']},
-            {'type': 'relationship_B', 'column_names': ['col1', 'col2', 'col3']}
+            {'type': 'relationship_B', 'column_names': ['col1', 'col2', 'col3']},
         ]
 
     def test_add_column_relationships_silence_warnings(self):
         """Test ``add_column_relationship`` silences UserWarnings."""
+
         # Setup
         def raise_user_warning(*args, **kwargs):
             warnings.warn('This is a warning', UserWarning)
@@ -2279,8 +2215,7 @@ class TestSingleTableMetadata:
         with warnings.catch_warnings(record=True) as captured_warnings:
             warnings.simplefilter('always')
             instance.add_column_relationship(
-                relationship_type='relationship_A',
-                column_names=['colA', 'colB']
+                relationship_type='relationship_A', column_names=['colA', 'colB']
             )
 
         # Assert
@@ -2316,27 +2251,27 @@ class TestSingleTableMetadata:
         instance._validate_column_args = Mock(side_effect=InvalidMetadataError('column_error'))
 
         err_msg = re.escape(
-            'The following errors were found in the metadata:'
-            '\n\ncolumn_error'
-            '\ncolumn_error'
+            'The following errors were found in the metadata:' '\n\ncolumn_error' '\ncolumn_error'
         )
         # Run
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.validate()
 
         # Assert
-        instance._validate_key.assert_has_calls(
-            [call(instance.primary_key, 'primary'), call(instance.sequence_key, 'sequence')]
-        )
-        instance._validate_column_args.assert_has_calls(
-            [call('col1', sdtype='numerical'), call('col2', sdtype='numerical')]
-        )
+        instance._validate_key.assert_has_calls([
+            call(instance.primary_key, 'primary'),
+            call(instance.sequence_key, 'sequence'),
+        ])
+        instance._validate_column_args.assert_has_calls([
+            call('col1', sdtype='numerical'),
+            call('col2', sdtype='numerical'),
+        ])
         instance._validate_alternate_keys.assert_called_once_with(instance.alternate_keys)
         instance._validate_sequence_index.assert_called_once_with(instance.sequence_index)
         instance._validate_sequence_index_not_in_sequence_key.assert_called_once()
-        instance._validate_all_column_relationships.assert_called_once_with(
-            [{'type': 'relationship_one', 'column_names': ['col1', 'col2']}]
-        )
+        instance._validate_all_column_relationships.assert_called_once_with([
+            {'type': 'relationship_one', 'column_names': ['col1', 'col2']}
+        ])
 
     def test_validate_data_wrong_type(self):
         """Test error is raised if data is not ``pd.DataFrame``."""
@@ -2405,7 +2340,7 @@ class TestSingleTableMetadata:
             'sk_col3': [0, 1, 2],
             'ak_col1': [0, 1, None],
             'ak_col2': [0, 1, np.nan],
-            'ak_col3': [0, 1, 2]
+            'ak_col3': [0, 1, 2],
         })
         metadata = SingleTableMetadata()
         metadata.add_column('pk_col', sdtype='id')
@@ -2437,10 +2372,7 @@ class TestSingleTableMetadata:
 
         Test the case with a single sequence key.
         """
-        data = pd.DataFrame({
-            'pk_col': [1],
-            'sk_col': [None]
-        })
+        data = pd.DataFrame({'pk_col': [1], 'sk_col': [None]})
         metadata = SingleTableMetadata()
         metadata.add_column('pk_col', sdtype='id')
         metadata.add_column('sk_col', sdtype='id')
@@ -2461,7 +2393,7 @@ class TestSingleTableMetadata:
             'pk_col': [0, 1, 1, 0, 2],
             'ak_col1': [0, 1, 0, 3, 3],
             'ak_col2': [2, 2, 2, 2, 2],
-            'ak_col3': [0, 1, 2, 3, 4]
+            'ak_col3': [0, 1, 2, 3, 4],
         })
         metadata = SingleTableMetadata()
         metadata.add_column('pk_col', sdtype='id')
@@ -2591,22 +2523,22 @@ class TestSingleTableMetadata:
                 '20220916230356000000',
                 '20220826173917000000',
                 '20220826212135000000',
-                '20220929111311000000'
+                '20220929111311000000',
             ],
             'date_int': [
                 20220902110443000000,
                 20220916230356000000,
                 20220826173917000000,
                 20220826212135000000,
-                20220929111311000000
+                20220929111311000000,
             ],
             'bad_date': [
                 2022090,
                 20220916230356000000,
                 2022,
                 20220826212135000000,
-                20220929111311000000
-            ]
+                20220929111311000000,
+            ],
         })
         metadata = SingleTableMetadata()
         metadata.add_column('date_str', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f')
@@ -2634,22 +2566,22 @@ class TestSingleTableMetadata:
                 '2022-09-16',
                 '2022-08-26',
                 '2022-08-26',
-                '2022-09-29'
+                '2022-09-29',
             ],
             'valid_date': [
                 '20220902110443000000',
                 '20220916230356000000',
                 '20220826173917000000',
                 '20220826212135000000',
-                '20220929111311000000'
+                '20220929111311000000',
             ],
             'datetime': pd.to_datetime([
                 '20220902',
                 '20220916',
                 '20220826',
                 '20220826',
-                '20220929'
-            ])
+                '20220929',
+            ]),
         })
         metadata = SingleTableMetadata()
         metadata.add_column('warning_date_str', sdtype='datetime')
@@ -2660,7 +2592,7 @@ class TestSingleTableMetadata:
         warning_frame = pd.DataFrame({
             'Column Name': ['warning_date_str'],
             'sdtype': ['datetime'],
-            'datetime_format': [None]
+            'datetime_format': [None],
         })
         warning_msg = (
             "No 'datetime_format' is present in the metadata for the following columns:\n"
@@ -2687,7 +2619,6 @@ class TestSingleTableMetadata:
             'numerical_col': [np.nan, -1, 1.54],
             'date_col': [np.nan, '2021-02-10', '2021-05-10'],
             'bool_col': [np.nan, True, False],
-
         })
         metadata = SingleTableMetadata()
         metadata.add_column('pk_col', sdtype='id')
@@ -2725,7 +2656,7 @@ class TestSingleTableMetadata:
         # Assert
         assert result == {
             'columns': {'my_column': 'value'},
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         }
 
         # Ensure that the output object does not alterate the inside object
@@ -2750,7 +2681,7 @@ class TestSingleTableMetadata:
         # Assert
         assert result == {
             'columns': {'my_column': 'value'},
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         }
 
     def test_load_from_dict(self):
@@ -2762,7 +2693,7 @@ class TestSingleTableMetadata:
             'alternate_keys': [],
             'sequence_key': None,
             'sequence_index': None,
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         }
 
         # Run
@@ -2790,7 +2721,7 @@ class TestSingleTableMetadata:
             'alternate_keys': [],
             'sequence_key': None,
             'sequence_index': None,
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         }
 
         # Run
@@ -2856,11 +2787,7 @@ class TestSingleTableMetadata:
         mock_path.return_value.exists.return_value = True
         mock_path.return_value.name = 'filepath.json'
         mock_json.load.return_value = {
-            'columns': {
-                'animals': {
-                    'type': 'categorical'
-                }
-            },
+            'columns': {'animals': {'type': 'categorical'}},
             'primary_key': 'animals',
         }
 
@@ -2898,13 +2825,9 @@ class TestSingleTableMetadata:
         mock_path.return_value.exists.return_value = True
         mock_path.return_value.name = 'filepath.json'
         mock_json.load.return_value = {
-            'columns': {
-                'animals': {
-                    'type': 'categorical'
-                }
-            },
+            'columns': {'animals': {'type': 'categorical'}},
             'primary_key': 'animals',
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         }
 
         # Run
@@ -3065,8 +2988,9 @@ class TestSingleTableMetadata:
         mock_visualize_graph.assert_called_once_with(expected_node, [], None)
 
     @patch('sdv.metadata.single_table.visualize_graph')
-    def test_visualize_metadata_with_primary_alternate_and_sequence_keys(self,
-                                                                         mock_visualize_graph):
+    def test_visualize_metadata_with_primary_alternate_and_sequence_keys(
+        self, mock_visualize_graph
+    ):
         """Test the ``visualize`` method when there are primary, alternate and sequence keys."""
         # Setup
         instance = SingleTableMetadata()
@@ -3076,7 +3000,7 @@ class TestSingleTableMetadata:
             'age': {'sdtype': 'numerical'},
             'start_date': {'sdtype': 'datetime'},
             'phrase': {'sdtype': 'id'},
-            'passport': {'sdtype': 'id'}
+            'passport': {'sdtype': 'id'},
         }
         instance.primary_key = 'passport'
         instance.alternate_keys = ['phrase', 'name']
@@ -3135,8 +3059,7 @@ class TestSingleTableMetadata:
     @patch('sdv.metadata.single_table.read_json')
     @patch('sdv.metadata.single_table.convert_metadata')
     @patch('sdv.metadata.single_table.SingleTableMetadata.load_from_dict')
-    def test_upgrade_metadata_multiple_tables(
-            self, from_dict_mock, convert_mock, read_json_mock):
+    def test_upgrade_metadata_multiple_tables(self, from_dict_mock, convert_mock, read_json_mock):
         """Test the ``upgrade_metadata`` method.
 
         If the old metadata is in the multi-table format (has 'tables'), but it only contains one
@@ -3159,9 +3082,7 @@ class TestSingleTableMetadata:
         convert_mock.return_value = {}
         new_metadata = Mock()
         from_dict_mock.return_value = new_metadata
-        read_json_mock.return_value = {
-            'tables': {'table': {'columns': {}}}
-        }
+        read_json_mock.return_value = {'tables': {'table': {'columns': {}}}}
 
         # Run
         SingleTableMetadata.upgrade_metadata('old')
@@ -3174,7 +3095,8 @@ class TestSingleTableMetadata:
     @patch('sdv.metadata.single_table.convert_metadata')
     @patch('sdv.metadata.single_table.SingleTableMetadata.load_from_dict')
     def test_upgrade_metadata_multiple_tables_fails(
-            self, from_dict_mock, convert_mock, read_json_mock):
+        self, from_dict_mock, convert_mock, read_json_mock
+    ):
         """Test the ``upgrade_metadata`` method.
 
         If the old metadata is in the multi-table format (has 'tables'), but contains multiple
@@ -3197,9 +3119,7 @@ class TestSingleTableMetadata:
         convert_mock.return_value = {}
         new_metadata = Mock()
         from_dict_mock.return_value = new_metadata
-        read_json_mock.return_value = {
-            'tables': {'table1': {'columns': {}}, 'table2': {}}
-        }
+        read_json_mock.return_value = {'tables': {'table1': {'columns': {}}, 'table2': {}}}
 
         # Run
         message = (
@@ -3214,7 +3134,8 @@ class TestSingleTableMetadata:
     @patch('sdv.metadata.single_table.convert_metadata')
     @patch('sdv.metadata.single_table.SingleTableMetadata.load_from_dict')
     def test_upgrade_metadata_validate_error(
-            self, from_dict_mock, convert_mock, read_json_mock, warnings_mock):
+        self, from_dict_mock, convert_mock, read_json_mock, warnings_mock
+    ):
         """Test the ``upgrade_metadata`` method.
 
         The method should raise a warning with any validation errors after the metadata is

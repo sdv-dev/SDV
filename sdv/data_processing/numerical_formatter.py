@@ -1,4 +1,5 @@
 """Formatter for numerical data."""
+
 import logging
 import sys
 
@@ -9,10 +10,10 @@ LOGGER = logging.getLogger(__name__)
 
 MAX_DECIMALS = sys.float_info.dig - 1
 INTEGER_BOUNDS = {
-    'Int8': (-2**7, 2**7 - 1),
-    'Int16': (-2**15, 2**15 - 1),
-    'Int32': (-2**31, 2**31 - 1),
-    'Int64': (-2**63, 2**63 - 1),
+    'Int8': (-(2**7), 2**7 - 1),
+    'Int16': (-(2**15), 2**15 - 1),
+    'Int32': (-(2**31), 2**31 - 1),
+    'Int64': (-(2**63), 2**63 - 1),
     'UInt8': (0, 2**8 - 1),
     'UInt16': (0, 2**16 - 1),
     'UInt32': (0, 2**32 - 1),
@@ -43,8 +44,9 @@ class NumericalFormatter:
     _max_value = None
     _rounding_digits = None
 
-    def __init__(self, enforce_rounding=False, enforce_min_max_values=False,
-                 computer_representation='Float'):
+    def __init__(
+        self, enforce_rounding=False, enforce_min_max_values=False, computer_representation='Float'
+    ):
         self.enforce_rounding = enforce_rounding
         self.enforce_min_max_values = enforce_min_max_values
         self.computer_representation = computer_representation

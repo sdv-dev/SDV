@@ -13,7 +13,6 @@ from tests.utils import DataFrameMatcher
 
 
 class TestSingleTablePreset:
-
     def test___init__invalid_name(self):
         """Test the method with an invalid name.
 
@@ -40,7 +39,7 @@ class TestSingleTablePreset:
             metadata=metadata_mock,
             default_distribution='norm',
             enforce_rounding=False,
-            locales=['en_US']
+            locales=['en_US'],
         )
 
     @patch('sdv.lite.single_table.GaussianCopulaSynthesizer')
@@ -60,7 +59,7 @@ class TestSingleTablePreset:
             metadata=metadata_mock,
             default_distribution='norm',
             enforce_rounding=False,
-            locales=['en_US', 'fr_CA']
+            locales=['en_US', 'fr_CA'],
         )
 
     @patch('sdv.single_table.base.DataProcessor')
@@ -187,10 +186,7 @@ class TestSingleTablePreset:
 
         # Run
         SingleTablePreset.sample_from_conditions(
-            preset,
-            conditions,
-            max_tries_per_batch=2,
-            batch_size=5
+            preset, conditions, max_tries_per_batch=2, batch_size=5
         )
 
         # Assert
@@ -224,7 +220,8 @@ class TestSingleTablePreset:
 
         # Run
         SingleTablePreset.sample_remaining_columns(
-            preset, conditions, max_tries_per_batch=2, batch_size=5)
+            preset, conditions, max_tries_per_batch=2, batch_size=5
+        )
 
         # Assert
         synthesizer.sample_remaining_columns.assert_called_once_with(conditions, 2, 5, None)

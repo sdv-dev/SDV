@@ -20,11 +20,19 @@ from copulas.multivariate import GaussianMultivariate
 
 from sdv import version
 from sdv._utils import (
-    _groupby_list, check_sdv_versions_and_warn, check_synthesizer_version, generate_synthesizer_id)
+    _groupby_list,
+    check_sdv_versions_and_warn,
+    check_synthesizer_version,
+    generate_synthesizer_id,
+)
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import (
-    ConstraintsNotMetError, InvalidDataError, SamplingError, SynthesizerInputError)
+    ConstraintsNotMetError,
+    InvalidDataError,
+    SamplingError,
+    SynthesizerInputError,
+)
 from sdv.logging import get_sdv_logger
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
@@ -86,8 +94,9 @@ class BaseSynthesizer:
                 ' in future SDV versions.'
             )
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
-                 locales=['en_US']):
+    def __init__(
+        self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
+    ):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata = metadata
         self.metadata.validate()
@@ -121,7 +130,8 @@ class BaseSynthesizer:
         """Set the address multi-column transformer."""
         warnings.warn(
             '`set_address_columns` is deprecated. Please add these columns directly to your'
-            ' metadata using `add_column_relationship`.', DeprecationWarning
+            ' metadata using `add_column_relationship`.',
+            DeprecationWarning,
         )
 
     def _validate_metadata(self, data):
@@ -199,7 +209,8 @@ class BaseSynthesizer:
             # If columns were set, the transformer was fitted
             if transformer.columns:
                 raise SynthesizerInputError(
-                    f"Transformer for column '{column}' has already been fit on data.")
+                    f"Transformer for column '{column}' has already been fit on data."
+                )
 
     def _warn_for_update_transformers(self, column_name_to_transformer):
         """Raise warnings for update_transformers.
@@ -352,7 +363,7 @@ class BaseSynthesizer:
             'creation_date': self._creation_date,
             'is_fit': self._fitted,
             'last_fit_date': self._fitted_date,
-            'fitted_sdv_version': self._fitted_sdv_version
+            'fitted_sdv_version': self._fitted_sdv_version,
         }
         if self._fitted_sdv_enterprise_version is not None:
             info['fitted_sdv_enterprise_version'] = self._fitted_sdv_enterprise_version
@@ -423,7 +434,7 @@ class BaseSynthesizer:
             'SYNTHESIZER ID': self._synthesizer_id,
             'TOTAL NUMBER OF TABLES': 1,
             'TOTAL NUMBER OF ROWS': len(processed_data),
-            'TOTAL NUMBER OF COLUMNS': len(processed_data.columns)
+            'TOTAL NUMBER OF COLUMNS': len(processed_data.columns),
         })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
@@ -449,7 +460,7 @@ class BaseSynthesizer:
             'SYNTHESIZER ID': self._synthesizer_id,
             'TOTAL NUMBER OF TABLES': 1,
             'TOTAL NUMBER OF ROWS': len(data),
-            'TOTAL NUMBER OF COLUMNS': len(data.columns)
+            'TOTAL NUMBER OF COLUMNS': len(data.columns),
         })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
@@ -575,8 +586,15 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return sampled
 
-    def _sample_rows(self, num_rows, conditions=None, transformed_conditions=None,
-                     float_rtol=0.1, previous_rows=None, keep_extra_columns=False):
+    def _sample_rows(
+        self,
+        num_rows,
+        conditions=None,
+        transformed_conditions=None,
+        float_rtol=0.1,
+        previous_rows=None,
+        keep_extra_columns=False,
+    ):
         """Sample rows with the given conditions.
 
         Input conditions is taken both in the raw input format, which will be used
@@ -619,7 +637,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         need_sample = self._data_processor.get_sdtypes(primary_keys=False) or keep_extra_columns
         if self._model and need_sample:
-
             if conditions is None:
                 raw_sampled = self._sample(num_rows)
             else:
@@ -653,9 +670,17 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             sampled = self._data_processor.reverse_transform(sampled)
             return sampled, num_rows
 
-    def _sample_batch(self, batch_size, max_tries=100,
-                      conditions=None, transformed_conditions=None, float_rtol=0.01,
-                      progress_bar=None, output_file_path=None, keep_extra_columns=False):
+    def _sample_batch(
+        self,
+        batch_size,
+        max_tries=100,
+        conditions=None,
+        transformed_conditions=None,
+        float_rtol=0.01,
+        progress_bar=None,
+        output_file_path=None,
+        keep_extra_columns=False,
+    ):
         """Sample a batch of rows with the given conditions.
 
         This will enter a reject-sampling loop in which rows will be sampled until
@@ -717,7 +742,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 transformed_conditions,
                 float_rtol,
                 sampled,
-                keep_extra_columns
+                keep_extra_columns,
             )
 
             num_new_valid_rows = num_valid - prev_num_valid
@@ -742,7 +767,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
             if remaining > 0:
                 LOGGER.info(
-                    f'{remaining} valid rows remaining. Resampling {num_rows_to_sample} rows')
+                    f'{remaining} valid rows remaining. Resampling {num_rows_to_sample} rows'
+                )
 
             counter += 1
 
@@ -766,16 +792,25 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         for condition in conditions:
             column_values = condition.get_column_values()
             condition_dataframes[tuple(column_values.keys())].append(
-                pd.DataFrame(column_values, index=range(condition.get_num_rows())))
+                pd.DataFrame(column_values, index=range(condition.get_num_rows()))
+            )
 
         return [
             pd.concat(condition_list, ignore_index=True)
             for condition_list in condition_dataframes.values()
         ]
 
-    def _sample_in_batches(self, num_rows, batch_size, max_tries_per_batch, conditions=None,
-                           transformed_conditions=None, float_rtol=0.01, progress_bar=None,
-                           output_file_path=None):
+    def _sample_in_batches(
+        self,
+        num_rows,
+        batch_size,
+        max_tries_per_batch,
+        conditions=None,
+        transformed_conditions=None,
+        float_rtol=0.01,
+        progress_bar=None,
+        output_file_path=None,
+    ):
         sampled = []
         batch_size = batch_size if num_rows > batch_size else num_rows
         for step in range(math.ceil(num_rows / batch_size)):
@@ -793,10 +828,18 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         sampled = pd.concat(sampled, ignore_index=True) if len(sampled) > 0 else pd.DataFrame()
         return sampled.head(num_rows)
 
-    def _conditionally_sample_rows(self, dataframe, condition, transformed_condition,
-                                   max_tries_per_batch=None, batch_size=None, float_rtol=0.01,
-                                   graceful_reject_sampling=True, progress_bar=None,
-                                   output_file_path=None):
+    def _conditionally_sample_rows(
+        self,
+        dataframe,
+        condition,
+        transformed_condition,
+        max_tries_per_batch=None,
+        batch_size=None,
+        float_rtol=0.01,
+        graceful_reject_sampling=True,
+        progress_bar=None,
+        output_file_path=None,
+    ):
         batch_size = batch_size or len(dataframe)
         sampled_rows = self._sample_in_batches(
             num_rows=len(dataframe),
@@ -806,16 +849,15 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             transformed_conditions=transformed_condition,
             float_rtol=float_rtol,
             progress_bar=progress_bar,
-            output_file_path=output_file_path
+            output_file_path=output_file_path,
         )
 
         if len(sampled_rows) > 0:
-            sampled_rows[COND_IDX] = dataframe[COND_IDX].to_numpy()[:len(sampled_rows)]
+            sampled_rows[COND_IDX] = dataframe[COND_IDX].to_numpy()[: len(sampled_rows)]
 
         elif not graceful_reject_sampling:
             user_msg = (
-                'Unable to sample any rows for the given conditions '
-                f"'{transformed_condition}'. "
+                'Unable to sample any rows for the given conditions ' f"'{transformed_condition}'. "
             )
             if hasattr(self, '_model') and isinstance(self._model, GaussianMultivariate):
                 user_msg = user_msg + (
@@ -833,8 +875,14 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         return sampled_rows
 
-    def _sample_with_progress_bar(self, num_rows, max_tries_per_batch=100, batch_size=None,
-                                  output_file_path=None, show_progress_bar=True):
+    def _sample_with_progress_bar(
+        self,
+        num_rows,
+        max_tries_per_batch=100,
+        batch_size=None,
+        output_file_path=None,
+        show_progress_bar=True,
+    ):
         if num_rows is None:
             raise ValueError('You must specify the number of rows to sample (e.g. num_rows=100).')
 
@@ -853,7 +901,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     batch_size=batch_size,
                     max_tries_per_batch=max_tries_per_batch,
                     progress_bar=progress_bar,
-                    output_file_path=output_file_path
+                    output_file_path=output_file_path,
                 )
 
         except (Exception, KeyboardInterrupt) as error:
@@ -895,7 +943,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             max_tries_per_batch,
             batch_size,
             output_file_path,
-            show_progress_bar=show_progress_bar
+            show_progress_bar=show_progress_bar,
         )
 
         original_columns = getattr(self, '_original_columns', pd.Index([]))
@@ -909,14 +957,14 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             'SYNTHESIZER ID': self._synthesizer_id,
             'TOTAL NUMBER OF TABLES': 1,
             'TOTAL NUMBER OF ROWS': len(sampled_data),
-            'TOTAL NUMBER OF COLUMNS': len(sampled_data.columns)
-
+            'TOTAL NUMBER OF COLUMNS': len(sampled_data.columns),
         })
 
         return sampled_data
 
-    def _sample_with_conditions(self, conditions, max_tries_per_batch, batch_size,
-                                progress_bar=None, output_file_path=None):
+    def _sample_with_conditions(
+        self, conditions, max_tries_per_batch, batch_size, progress_bar=None, output_file_path=None
+    ):
         """Sample rows with conditions.
 
         Args:
@@ -959,8 +1007,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             condition_df = dataframe.iloc[0].to_frame().T
             try:
                 transformed_condition = self._data_processor.transform(
-                    condition_df,
-                    is_condition=True
+                    condition_df, is_condition=True
                 )
             except ConstraintsNotMetError as error:
                 raise ConstraintsNotMetError(
@@ -968,8 +1015,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 ) from error
 
             transformed_conditions = pd.concat(
-                [transformed_condition] * len(dataframe),
-                ignore_index=True
+                [transformed_condition] * len(dataframe), ignore_index=True
             )
             transformed_columns = list(transformed_conditions.columns)
             if not transformed_conditions.empty:
@@ -1021,8 +1067,10 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         """Validate the user-passed conditions."""
         for column in conditions.columns:
             if column not in self._data_processor.get_sdtypes():
-                raise ValueError(f"Unexpected column name '{column}'. "
-                                 f'Use a column name that was present in the original data.')
+                raise ValueError(
+                    f"Unexpected column name '{column}'. "
+                    f'Use a column name that was present in the original data.'
+                )
 
     @staticmethod
     def _raise_condition_with_nans():
@@ -1038,8 +1086,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             if condition_dataframe.isna().any().any():
                 self._raise_condition_with_nans()
 
-    def sample_from_conditions(self, conditions, max_tries_per_batch=100,
-                               batch_size=None, output_file_path=None):
+    def sample_from_conditions(
+        self, conditions, max_tries_per_batch=100, batch_size=None, output_file_path=None
+    ):
         """Sample rows from this table with the given conditions.
 
         Args:
@@ -1069,7 +1118,8 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         output_file_path = validate_file_path(output_file_path)
 
         num_rows = functools.reduce(
-            lambda num_rows, condition: condition.get_num_rows() + num_rows, conditions, 0)
+            lambda num_rows, condition: condition.get_num_rows() + num_rows, conditions, 0
+        )
 
         conditions = self._make_condition_dfs(conditions)
         self._validate_conditions(conditions)
@@ -1089,12 +1139,13 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     sampled = pd.concat([sampled, sampled_for_condition], ignore_index=True)
 
             is_reject_sampling = bool(
-                hasattr(self, '_model') and not isinstance(self._model, GaussianMultivariate))
+                hasattr(self, '_model') and not isinstance(self._model, GaussianMultivariate)
+            )
             check_num_rows(
                 num_rows=len(sampled),
                 expected_num_rows=num_rows,
                 is_reject_sampling=is_reject_sampling,
-                max_tries_per_batch=max_tries_per_batch
+                max_tries_per_batch=max_tries_per_batch,
             )
 
         except (Exception, KeyboardInterrupt) as error:
@@ -1113,8 +1164,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 'Rows with any missing values will not be created.'
             )
 
-    def sample_remaining_columns(self, known_columns, max_tries_per_batch=100,
-                                 batch_size=None, output_file_path=None):
+    def sample_remaining_columns(
+        self, known_columns, max_tries_per_batch=100, batch_size=None, output_file_path=None
+    ):
         """Sample remaining rows from already known columns.
 
         Args:
@@ -1150,16 +1202,18 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             with tqdm.tqdm(total=len(known_columns)) as progress_bar:
                 progress_bar.set_description('Sampling remaining columns')
                 sampled = self._sample_with_conditions(
-                    known_columns, max_tries_per_batch, batch_size, progress_bar, output_file_path)
+                    known_columns, max_tries_per_batch, batch_size, progress_bar, output_file_path
+                )
 
-            is_reject_sampling = (hasattr(self, '_model') and not isinstance(
-                self._model, copulas.multivariate.GaussianMultivariate))
+            is_reject_sampling = hasattr(self, '_model') and not isinstance(
+                self._model, copulas.multivariate.GaussianMultivariate
+            )
 
             check_num_rows(
                 num_rows=len(sampled),
                 expected_num_rows=len(known_columns),
                 is_reject_sampling=is_reject_sampling,
-                max_tries_per_batch=max_tries_per_batch
+                max_tries_per_batch=max_tries_per_batch,
             )
 
         except (Exception, KeyboardInterrupt) as error:

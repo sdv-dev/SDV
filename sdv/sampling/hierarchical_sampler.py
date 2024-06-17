@@ -1,4 +1,5 @@
 """Hierarchical Samplers."""
+
 import logging
 import warnings
 
@@ -7,7 +8,7 @@ import pandas as pd
 LOGGER = logging.getLogger(__name__)
 
 
-class BaseHierarchicalSampler():
+class BaseHierarchicalSampler:
     """Hierarchical sampler mixin.
 
     Args:
@@ -108,8 +109,9 @@ class BaseHierarchicalSampler():
             if previous is None:
                 sampled_data[child_name] = sampled_rows
             else:
-                sampled_data[child_name] = pd.concat(
-                    [previous, sampled_rows]).reset_index(drop=True)
+                sampled_data[child_name] = pd.concat([previous, sampled_rows]).reset_index(
+                    drop=True
+                )
 
     def _enforce_table_size(self, child_name, table_name, scale, sampled_data):
         """Ensure the child table has the same size as in the real data times the scale factor.
@@ -155,8 +157,10 @@ class BaseHierarchicalSampler():
                         # If the number of rows is already at the maximum, skip
                         # The exception is when the smallest value is already at the maximum,
                         # in which case we ignore the boundary
-                        if sampled_data[table_name].loc[i, num_rows_key] >= max_rows and \
-                           sampled_data[table_name][num_rows_key].min() < max_rows:
+                        if (
+                            sampled_data[table_name].loc[i, num_rows_key] >= max_rows
+                            and sampled_data[table_name][num_rows_key].min() < max_rows
+                        ):
                             break
 
                         sampled_data[table_name].loc[i, num_rows_key] += 1
@@ -168,8 +172,10 @@ class BaseHierarchicalSampler():
                         # If the number of rows is already at the minimum, skip
                         # The exception is when the highest value is already at the minimum,
                         # in which case we ignore the boundary
-                        if sampled_data[table_name].loc[i, num_rows_key] <= min_rows and \
-                           sampled_data[table_name][num_rows_key].max() > min_rows:
+                        if (
+                            sampled_data[table_name].loc[i, num_rows_key] <= min_rows
+                            and sampled_data[table_name][num_rows_key].max() > min_rows
+                        ):
                             break
 
                         sampled_data[table_name].loc[i, num_rows_key] -= 1
@@ -198,7 +204,7 @@ class BaseHierarchicalSampler():
                         child_name=child_name,
                         parent_name=table_name,
                         parent_row=row,
-                        sampled_data=sampled_data
+                        sampled_data=sampled_data,
                     )
 
                 if child_name not in sampled_data:  # No child rows sampled, force row creation
@@ -215,14 +221,10 @@ class BaseHierarchicalSampler():
                         parent_name=table_name,
                         parent_row=parent_row,
                         sampled_data=sampled_data,
-                        num_rows=1
+                        num_rows=1,
                     )
 
-                self._sample_children(
-                    table_name=child_name,
-                    sampled_data=sampled_data,
-                    scale=scale
-                )
+                self._sample_children(table_name=child_name, sampled_data=sampled_data, scale=scale)
 
     def _finalize(self, sampled_data):
         """Remove extra columns from sampled tables and apply finishing touches.
@@ -300,10 +302,7 @@ class BaseHierarchicalSampler():
             # is used to recreate the child tables, so the rest can be skipped.
             if (parent_name, child_name) not in added_relationships:
                 self._add_foreign_key_columns(
-                    sampled_data[child_name],
-                    sampled_data[parent_name],
-                    child_name,
-                    parent_name
+                    sampled_data[child_name], sampled_data[parent_name], child_name, parent_name
                 )
                 added_relationships.add((parent_name, child_name))
 

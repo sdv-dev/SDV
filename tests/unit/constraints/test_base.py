@@ -1,4 +1,5 @@
 """Tests for the sdv.constraints.base module."""
+
 import re
 from unittest.mock import Mock, patch
 
@@ -7,10 +8,18 @@ import pytest
 from copulas.univariate import GaussianUnivariate
 
 from sdv.constraints.base import (
-    ColumnsModel, Constraint, _get_qualified_name, _module_contains_callable_name, get_subclasses,
-    import_object)
+    ColumnsModel,
+    Constraint,
+    _get_qualified_name,
+    _module_contains_callable_name,
+    get_subclasses,
+    import_object,
+)
 from sdv.constraints.errors import (
-    AggregateConstraintsError, ConstraintMetadataError, MissingConstraintColumnError)
+    AggregateConstraintsError,
+    ConstraintMetadataError,
+    MissingConstraintColumnError,
+)
 from sdv.constraints.tabular import FixedCombinations
 from sdv.errors import ConstraintsNotMetError
 
@@ -99,6 +108,7 @@ def test_get_subclasses():
     Output:
     - Dict of the subclasses of the class: ``Child`` and ``GrandChild`` classes.
     """
+
     # Setup
     class Parent:
         pass
@@ -113,10 +123,7 @@ def test_get_subclasses():
     subclasses = get_subclasses(Parent)
 
     # Assert
-    expected_subclasses = {
-        'Child': Child,
-        'GrandChild': GrandChild
-    }
+    expected_subclasses = {'Child': Child, 'GrandChild': GrandChild}
 
     assert subclasses == expected_subclasses
 
@@ -157,8 +164,7 @@ def test_import_object_function():
     assert imported is import_object
 
 
-class TestConstraint():
-
+class TestConstraint:
     def test__validate_inputs(self):
         """Test the ``_validate_inputs`` method.
 
@@ -179,8 +185,11 @@ class TestConstraint():
     @patch('sdv.constraints.base.Constraint._validate_metadata_columns')
     @patch('sdv.constraints.base.Constraint._validate_metadata_specific_to_constraint')
     def test__validate_metadata(
-            self, validate_metadata_columns_mock, validate_metadata_specific_to_constraint_mock,
-            validate_inputs_mock):
+        self,
+        validate_metadata_columns_mock,
+        validate_metadata_specific_to_constraint_mock,
+        validate_inputs_mock,
+    ):
         """Test the ``_validate_metadata`` method.
 
         The method should compile the error messages returned from ``_validate_inputs``,
@@ -221,9 +230,7 @@ class TestConstraint():
         - Table data (pandas.DataFrame)
         """
         # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3]
-        })
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
         instance = Constraint()
         instance._fit = Mock()
         instance._validate_data_meets_constraint = Mock()
@@ -249,10 +256,7 @@ class TestConstraint():
         - No error
         """
         # Setup
-        data = pd.DataFrame({
-            'a': [0, 1, 2],
-            'b': [3, 4, 5]
-        }, index=[0, 1, 2])
+        data = pd.DataFrame({'a': [0, 1, 2], 'b': [3, 4, 5]}, index=[0, 1, 2])
         constraint = Constraint()
         constraint.constraint_columns = ['a', 'b']
         constraint.is_valid = Mock()
@@ -277,10 +281,10 @@ class TestConstraint():
         - A ``ConstraintsNotMetError`` is thrown
         """
         # Setup
-        data = pd.DataFrame({
-            'a': [0, 1, 2, 3, 4, 5, 6, 7],
-            'b': [3, 4, 5, 6, 7, 8, 9, 10]
-        }, index=[0, 1, 2, 3, 4, 5, 6, 7])
+        data = pd.DataFrame(
+            {'a': [0, 1, 2, 3, 4, 5, 6, 7], 'b': [3, 4, 5, 6, 7, 8, 9, 10]},
+            index=[0, 1, 2, 3, 4, 5, 6, 7],
+        )
         constraint = Constraint()
         constraint.constraint_columns = ['a', 'b']
         is_valid_result = pd.Series([True, False, True, False, False, False, False, False])
@@ -308,10 +312,7 @@ class TestConstraint():
         - No error
         """
         # Setup
-        data = pd.DataFrame({
-            'a': [0, 1, 2],
-            'b': [3, 4, 5]
-        }, index=[0, 1, 2])
+        data = pd.DataFrame({'a': [0, 1, 2], 'b': [3, 4, 5]}, index=[0, 1, 2])
         constraint = Constraint()
         constraint.constraint_columns = ['a', 'b', 'c']
         constraint.is_valid = Mock()
@@ -500,9 +501,7 @@ class TestConstraint():
         - Series of ``True`` values (pandas.Series)
         """
         # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3]
-        })
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
 
         # Run
         instance = Constraint()
@@ -524,9 +523,7 @@ class TestConstraint():
         - Table data, with only the valid rows (pandas.DataFrame)
         """
         # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3]
-        })
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
 
         constraint_mock = Mock()
         constraint_mock.is_valid.return_value = pd.Series([True, True, False])
@@ -535,9 +532,7 @@ class TestConstraint():
         out = Constraint.filter_valid(constraint_mock, table_data)
 
         # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2]
-        })
+        expected_out = pd.DataFrame({'a': [1, 2]})
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_filter_valid_with_invalid_index(self):
@@ -554,9 +549,7 @@ class TestConstraint():
         - Table data, with only the valid rows (pandas.DataFrame)
         """
         # Setup
-        table_data = pd.DataFrame({
-            'a': [1, 2, 3]
-        })
+        table_data = pd.DataFrame({'a': [1, 2, 3]})
 
         constraint_mock = Mock()
         is_valid = pd.Series([True, True, False])
@@ -567,9 +560,7 @@ class TestConstraint():
         out = Constraint.filter_valid(constraint_mock, table_data)
 
         # Assert
-        expected_out = pd.DataFrame({
-            'a': [1, 2]
-        })
+        expected_out = pd.DataFrame({'a': [1, 2]})
         pd.testing.assert_frame_equal(expected_out, out)
 
     def test_from_dict_fqn(self):
@@ -588,7 +579,7 @@ class TestConstraint():
             'constraint_class': 'sdv.constraints.tabular.FixedCombinations',
             'constraint_parameters': {
                 'column_names': ['a', 'b'],
-            }
+            },
         }
 
         # Run
@@ -614,7 +605,7 @@ class TestConstraint():
             'constraint_class': 'FixedCombinations',
             'constraint_parameters': {
                 'column_names': ['a', 'b'],
-            }
+            },
         }
 
         # Run
@@ -643,13 +634,12 @@ class TestConstraint():
             'constraint_class': 'sdv.constraints.tabular.FixedCombinations',
             'constraint_parameters': {
                 'column_names': ['a', 'b'],
-            }
+            },
         }
         assert constraint_dict == expected_dict
 
 
 class TestColumnsModel:
-
     def test___init__(self):
         """Test the ``__init__`` method of ``ColumnsModel``.
 
@@ -701,8 +691,9 @@ class TestColumnsModel:
     @patch('sdv.constraints.base.OneHotEncoder')
     @patch('sdv.constraints.base.UnixTimestampEncoder')
     @patch('sdv.constraints.base.BinaryEncoder')
-    def test__get_hyper_transformer_config(self, mock_binaryencoder, mock_unixtimestampencoder,
-                                           mock_onehotencoder, mock_floatformatter):
+    def test__get_hyper_transformer_config(
+        self, mock_binaryencoder, mock_unixtimestampencoder, mock_onehotencoder, mock_floatformatter
+    ):
         """Test the ``_get_hyper_transformer_config``.
 
         Test that the method ``_get_hyper_transformer_config`` returns the expected
@@ -743,16 +734,15 @@ class TestColumnsModel:
                 'amount': 'numerical',
                 'name': 'categorical',
                 'joindate': 'datetime',
-                'is_valid': 'boolean'
+                'is_valid': 'boolean',
             },
             'transformers': {
                 'age': age_float_formatter,
                 'amount': amount_float_formatter,
                 'name': mock_onehotencoder,
                 'joindate': mock_unixtimestampencoder.return_value,
-                'is_valid': mock_binaryencoder.return_value
-            }
-
+                'is_valid': mock_binaryencoder.return_value,
+            },
         }
 
     @patch('sdv.constraints.base.GaussianMultivariate')
@@ -783,7 +773,7 @@ class TestColumnsModel:
         table_data = pd.DataFrame({
             'age': [1, 2, 3, 4],
             'age_when_joined': [5, 6, 7, 8],
-            'retirement': ['a', 'b', 'c', 'd']
+            'retirement': ['a', 'b', 'c', 'd'],
         })
 
         mock_hyper_transformer.return_value.fit_transform.return_value = 'transformed_data'
@@ -825,22 +815,15 @@ class TestColumnsModel:
         # Setup
         constraint = Mock()
         constraint.is_valid.side_effect = lambda x: pd.Series(
-            [True for _ in range(len(x))],
-            index=x.index
+            [True for _ in range(len(x))], index=x.index
         )
         instance = ColumnsModel(constraint, ['a', 'b'])
         instance._hyper_transformer = Mock()
         instance._model = Mock()
         transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
         instance._model.sample.side_effect = [
-            pd.DataFrame({
-                'a': [1, 1],
-                'b': [2, 3]
-            }),
-            pd.DataFrame({
-                'a': [1, 1, 1, 1],
-                'b': [4, 5, 6, 7]
-            })
+            pd.DataFrame({'a': [1, 1], 'b': [2, 3]}),
+            pd.DataFrame({'a': [1, 1, 1, 1], 'b': [4, 5, 6, 7]}),
         ]
         instance._hyper_transformer.transform.side_effect = transformed_conditions
         instance._hyper_transformer.reverse_transform = lambda x: x
@@ -849,10 +832,7 @@ class TestColumnsModel:
         transformed_data = instance._reject_sample(num_rows=5, conditions={'b': 1})
 
         # Assert
-        expected_result = pd.DataFrame({
-            'a': [1, 1, 1, 1, 1],
-            'b': [2, 3, 4, 5, 6]
-        })
+        expected_result = pd.DataFrame({'a': [1, 1, 1, 1, 1], 'b': [2, 3, 4, 5, 6]})
         model_calls = instance._model.sample.mock_calls
         assert len(model_calls) == 2
         instance._model.sample.assert_any_call(num_rows=5, conditions={'b': 1})
@@ -860,10 +840,7 @@ class TestColumnsModel:
         pd.testing.assert_frame_equal(transformed_data, expected_result)
 
         expected_call_1 = pd.DataFrame({'a': [1, 1], 'b': [2, 3]})
-        expected_call_2 = pd.DataFrame({
-            'a': [1, 1, 1, 1],
-            'b': [4, 5, 6, 7]
-        })
+        expected_call_2 = pd.DataFrame({'a': [1, 1, 1, 1], 'b': [4, 5, 6, 7]})
         pd.testing.assert_frame_equal(expected_call_1, constraint.is_valid.call_args_list[0][0][0])
         pd.testing.assert_frame_equal(expected_call_2, constraint.is_valid.call_args_list[1][0][0])
 
@@ -889,18 +866,14 @@ class TestColumnsModel:
         # Setup
         constraint = Mock()
         constraint.is_valid.side_effect = lambda x: pd.Series(
-            [True for _ in range(len(x))],
-            index=x.index, dtype=bool
+            [True for _ in range(len(x))], index=x.index, dtype=bool
         )
         instance = ColumnsModel(constraint, ['a', 'b'])
         instance._hyper_transformer = Mock()
         instance._model = Mock()
         transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
         instance._model.sample.side_effect = [pd.DataFrame()] * 100 + [
-            pd.DataFrame({
-                'a': [1, 1],
-                'b': [2, 3]
-            })
+            pd.DataFrame({'a': [1, 1], 'b': [2, 3]})
         ]
         instance._hyper_transformer.transform.side_effect = transformed_conditions
         instance._hyper_transformer.reverse_transform = lambda x: x
@@ -909,10 +882,7 @@ class TestColumnsModel:
         transformed_data = instance._reject_sample(num_rows=5, conditions={'b': 1})
 
         # Assert
-        expected_result = pd.DataFrame({
-            'a': [1, 1, 1, 1, 1],
-            'b': [2, 3, 2, 3, 2]
-        })
+        expected_result = pd.DataFrame({'a': [1, 1, 1, 1, 1], 'b': [2, 3, 2, 3, 2]})
         model_calls = instance._model.sample.mock_calls
         assert len(model_calls) == 101
         instance._model.sample.assert_any_call(num_rows=5, conditions={'b': 1})
@@ -940,18 +910,14 @@ class TestColumnsModel:
         # Setup
         constraint = Mock()
         constraint.is_valid.side_effect = lambda x: pd.Series(
-            [False for _ in range(len(x))],
-            index=x.index, dtype=bool
+            [False for _ in range(len(x))], index=x.index, dtype=bool
         )
         instance = ColumnsModel(constraint, ['a', 'b'])
         instance._hyper_transformer = Mock()
         instance._model = Mock()
         transformed_conditions = [pd.DataFrame([[1], [1], [1], [1], [1]], columns=['b'])]
         instance._model.sample.side_effect = [pd.DataFrame()] * 100 + [
-            pd.DataFrame({
-                'a': [1, 1],
-                'b': [2, 3]
-            })
+            pd.DataFrame({'a': [1, 1], 'b': [2, 3]})
         ]
         instance._hyper_transformer.transform.side_effect = transformed_conditions
         instance._hyper_transformer.reverse_transform = lambda x: x
@@ -989,10 +955,7 @@ class TestColumnsModel:
         instance._hyper_transformer.reverse_transform = lambda x: x
         instance._reject_sample = Mock()
         instance._reject_sample.side_effect = [
-            pd.DataFrame({
-                'a': [1, 1, 1, 1, 1],
-                'b': [2, 3, 4, 5, 6]
-            })
+            pd.DataFrame({'a': [1, 1, 1, 1, 1], 'b': [2, 3, 4, 5, 6]})
         ]
 
         # Run
@@ -1000,10 +963,7 @@ class TestColumnsModel:
         transformed_data = instance.sample(data)
 
         # Assert
-        expected_result = pd.DataFrame({
-            'a': [1, 1, 1, 1, 1],
-            'b': [2, 3, 4, 5, 6]
-        })
+        expected_result = pd.DataFrame({'a': [1, 1, 1, 1, 1], 'b': [2, 3, 4, 5, 6]})
         instance._reject_sample.assert_any_call(num_rows=5, conditions={'b': 1})
         pd.testing.assert_frame_equal(transformed_data, expected_result)
 

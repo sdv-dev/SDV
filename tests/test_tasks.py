@@ -1,4 +1,5 @@
 """Tests for the ``tasks.py`` file."""
+
 from tasks import _get_minimum_versions
 
 
@@ -15,7 +16,7 @@ def test_get_minimum_versions():
         "pandas>=1.2.0,<2;python_version<'3.10'",
         "pandas>=1.3.0,<2;python_version>='3.10'",
         'humanfriendly>=8.2,<11',
-        'pandas @ git+https://github.com/pandas-dev/pandas.git@master'
+        'pandas @ git+https://github.com/pandas-dev/pandas.git@master',
     ]
 
     # Run

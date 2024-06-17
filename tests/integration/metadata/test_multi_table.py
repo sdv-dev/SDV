@@ -18,11 +18,7 @@ def test_multi_table_metadata():
     result = instance.to_dict()
 
     # Assert
-    assert result == {
-        'tables': {},
-        'relationships': [],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
-    }
+    assert result == {'tables': {}, 'relationships': [], 'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'}
     assert instance.tables == {}
     assert instance.relationships == []
 
@@ -30,6 +26,7 @@ def test_multi_table_metadata():
 @patch('rdt.transformers')
 def test_add_column_relationship(mock_rdt_transformers):
     """Test ``add_column_relationship`` method."""
+
     # Setup
     class RandomLocationGeneratorMock:
         @classmethod
@@ -64,14 +61,14 @@ def test_remove_primary_key():
             'parent_table_name': 'upravna_enota',
             'parent_primary_key': 'id_upravna_enota',
             'child_table_name': 'nesreca',
-            'child_foreign_key': 'upravna_enota'
+            'child_foreign_key': 'upravna_enota',
         },
         {
             'parent_table_name': 'upravna_enota',
             'parent_primary_key': 'id_upravna_enota',
             'child_table_name': 'oseba',
-            'child_foreign_key': 'upravna_enota'
-        }
+            'child_foreign_key': 'upravna_enota',
+        },
     ]
     assert metadata.tables['nesreca'].primary_key is None
     assert metadata.relationships == expected_relationships
@@ -87,47 +84,30 @@ def test_upgrade_metadata(tmp_path):
                     'upravna_enota': {
                         'type': 'id',
                         'subtype': 'integer',
-                        'ref': {
-                            'table': 'upravna_enota',
-                            'field': 'id_upravna_enota'
-                        }
+                        'ref': {'table': 'upravna_enota', 'field': 'id_upravna_enota'},
                     },
-                    'id_nesreca': {
-                        'type': 'id',
-                        'subtype': 'integer'
-                    },
+                    'id_nesreca': {'type': 'id', 'subtype': 'integer'},
                 },
-                'primary_key': 'id_nesreca'
+                'primary_key': 'id_nesreca',
             },
             'oseba': {
                 'fields': {
                     'upravna_enota': {
                         'type': 'id',
                         'subtype': 'integer',
-                        'ref': {
-                            'table': 'upravna_enota',
-                            'field': 'id_upravna_enota'
-                        }
+                        'ref': {'table': 'upravna_enota', 'field': 'id_upravna_enota'},
                     },
                     'id_nesreca': {
                         'type': 'id',
                         'subtype': 'integer',
-                        'ref': {
-                            'table': 'nesreca',
-                            'field': 'id_nesreca'
-                        }
+                        'ref': {'table': 'nesreca', 'field': 'id_nesreca'},
                     },
                 },
             },
             'upravna_enota': {
-                'fields': {
-                    'id_upravna_enota': {
-                        'type': 'id',
-                        'subtype': 'integer'
-                    }
-                },
-                'primary_key': 'id_upravna_enota'
-            }
+                'fields': {'id_upravna_enota': {'type': 'id', 'subtype': 'integer'}},
+                'primary_key': 'id_upravna_enota',
+            },
         }
     }
     filepath = tmp_path / 'old.json'
@@ -145,41 +125,41 @@ def test_upgrade_metadata(tmp_path):
                 'primary_key': 'id_nesreca',
                 'columns': {
                     'upravna_enota': {'sdtype': 'id', 'regex_format': r'\d{30}'},
-                    'id_nesreca': {'sdtype': 'id', 'regex_format': r'\d{30}'}
-                }
+                    'id_nesreca': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+                },
             },
             'oseba': {
                 'columns': {
                     'upravna_enota': {'sdtype': 'id', 'regex_format': r'\d{30}'},
-                    'id_nesreca': {'sdtype': 'id', 'regex_format': r'\d{30}'}
+                    'id_nesreca': {'sdtype': 'id', 'regex_format': r'\d{30}'},
                 }
             },
             'upravna_enota': {
                 'primary_key': 'id_upravna_enota',
-                'columns': {'id_upravna_enota': {'sdtype': 'id', 'regex_format': r'\d{30}'}}
-            }
+                'columns': {'id_upravna_enota': {'sdtype': 'id', 'regex_format': r'\d{30}'}},
+            },
         },
         'relationships': [
             {
                 'parent_table_name': 'upravna_enota',
                 'parent_primary_key': 'id_upravna_enota',
                 'child_table_name': 'nesreca',
-                'child_foreign_key': 'upravna_enota'
+                'child_foreign_key': 'upravna_enota',
             },
             {
                 'parent_table_name': 'upravna_enota',
                 'parent_primary_key': 'id_upravna_enota',
                 'child_table_name': 'oseba',
-                'child_foreign_key': 'upravna_enota'
+                'child_foreign_key': 'upravna_enota',
             },
             {
                 'parent_table_name': 'nesreca',
                 'parent_primary_key': 'id_nesreca',
                 'child_table_name': 'oseba',
-                'child_foreign_key': 'id_nesreca'
-            }
+                'child_foreign_key': 'id_nesreca',
+            },
         ],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
     }
     assert new_metadata['METADATA_SPEC_VERSION'] == expected_metadata['METADATA_SPEC_VERSION']
     assert new_metadata['tables'] == expected_metadata['tables']
@@ -190,10 +170,7 @@ def test_upgrade_metadata(tmp_path):
 def test_detect_from_dataframes():
     """Test the ``detect_from_dataframes`` method."""
     # Setup
-    real_data, _ = download_demo(
-        modality='multi_table',
-        dataset_name='fake_hotels'
-    )
+    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
 
     metadata = MultiTableMetadata()
 
@@ -215,9 +192,9 @@ def test_detect_from_dataframes():
                     'city': {'sdtype': 'city', 'pii': True},
                     'state': {'sdtype': 'administrative_unit', 'pii': True},
                     'rating': {'sdtype': 'numerical'},
-                    'classification': {'sdtype': 'categorical'}
+                    'classification': {'sdtype': 'categorical'},
                 },
-                'primary_key': 'hotel_id'
+                'primary_key': 'hotel_id',
             },
             'guests': {
                 'columns': {
@@ -230,20 +207,20 @@ def test_detect_from_dataframes():
                     'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
                     'room_rate': {'sdtype': 'numerical'},
                     'billing_address': {'sdtype': 'unknown', 'pii': True},
-                    'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True}
+                    'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True},
                 },
-                'primary_key': 'guest_email'
-            }
+                'primary_key': 'guest_email',
+            },
         },
         'relationships': [
             {
                 'parent_table_name': 'hotels',
                 'child_table_name': 'guests',
                 'parent_primary_key': 'hotel_id',
-                'child_foreign_key': 'hotel_id'
+                'child_foreign_key': 'hotel_id',
             }
         ],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
     }
     assert metadata.to_dict() == expected_metadata
 
@@ -251,10 +228,7 @@ def test_detect_from_dataframes():
 def test_detect_from_csvs(tmp_path):
     """Test the ``detect_from_csvs`` method."""
     # Setup
-    real_data, _ = download_demo(
-        modality='multi_table',
-        dataset_name='fake_hotels'
-    )
+    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
 
     metadata = MultiTableMetadata()
 
@@ -280,9 +254,9 @@ def test_detect_from_csvs(tmp_path):
                     'city': {'sdtype': 'city', 'pii': True},
                     'state': {'sdtype': 'administrative_unit', 'pii': True},
                     'rating': {'sdtype': 'numerical'},
-                    'classification': {'sdtype': 'categorical'}
+                    'classification': {'sdtype': 'categorical'},
                 },
-                'primary_key': 'hotel_id'
+                'primary_key': 'hotel_id',
             },
             'guests': {
                 'columns': {
@@ -295,20 +269,20 @@ def test_detect_from_csvs(tmp_path):
                     'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
                     'room_rate': {'sdtype': 'numerical'},
                     'billing_address': {'sdtype': 'unknown', 'pii': True},
-                    'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True}
+                    'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True},
                 },
-                'primary_key': 'guest_email'
-            }
+                'primary_key': 'guest_email',
+            },
         },
         'relationships': [
             {
                 'parent_table_name': 'hotels',
                 'child_table_name': 'guests',
                 'parent_primary_key': 'hotel_id',
-                'child_foreign_key': 'hotel_id'
+                'child_foreign_key': 'hotel_id',
             }
         ],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
     }
 
     assert metadata.to_dict() == expected_metadata
@@ -317,10 +291,7 @@ def test_detect_from_csvs(tmp_path):
 def test_detect_table_from_csv(tmp_path):
     """Test the ``detect_table_from_csv`` method."""
     # Setup
-    real_data, _ = download_demo(
-        modality='multi_table',
-        dataset_name='fake_hotels'
-    )
+    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
 
     metadata = MultiTableMetadata()
 
@@ -355,13 +326,13 @@ def test_detect_table_from_csv(tmp_path):
                     'city': {'sdtype': 'categorical'},
                     'state': {'sdtype': 'categorical'},
                     'rating': {'sdtype': 'numerical'},
-                    'classification': {'sdtype': 'categorical'}
+                    'classification': {'sdtype': 'categorical'},
                 },
-                'primary_key': 'hotel_id'
+                'primary_key': 'hotel_id',
             }
         },
         'relationships': [],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
     }
 
     assert metadata.to_dict() == expected_metadata
@@ -400,10 +371,8 @@ def test_get_table_metadata():
             'id_nesreca': {'sdtype': 'id'},
             'nesreca_val': {'sdtype': 'numerical'},
             'latitude': {'sdtype': 'latitude', 'pii': True},
-            'longitude': {'sdtype': 'longitude', 'pii': True}
+            'longitude': {'sdtype': 'longitude', 'pii': True},
         },
-        'column_relationships': [
-            {'type': 'gps', 'column_names': ['latitude', 'longitude']}
-        ]
+        'column_relationships': [{'type': 'gps', 'column_names': ['latitude', 'longitude']}],
     }
     assert table_metadata.to_dict() == expected_metadata

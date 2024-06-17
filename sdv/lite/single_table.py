@@ -39,10 +39,7 @@ class SingleTablePreset:
 
     def _setup_fast_preset(self, metadata, locales):
         self._synthesizer = GaussianCopulaSynthesizer(
-            metadata=metadata,
-            default_distribution='norm',
-            enforce_rounding=False,
-            locales=locales
+            metadata=metadata, default_distribution='norm', enforce_rounding=False, locales=locales
         )
 
     def __init__(self, metadata, name, locales=['en_US']):
@@ -121,8 +118,9 @@ class SingleTablePreset:
 
         return sampled
 
-    def sample_from_conditions(self, conditions, max_tries_per_batch=100,
-                               batch_size=None, output_file_path=None):
+    def sample_from_conditions(
+        self, conditions, max_tries_per_batch=100, batch_size=None, output_file_path=None
+    ):
         """Sample rows from this table with the given conditions.
 
         Args:
@@ -144,16 +142,14 @@ class SingleTablePreset:
         """
         warnings.warn(DEPRECATION_MSG, FutureWarning)
         sampled = self._synthesizer.sample_from_conditions(
-            conditions,
-            max_tries_per_batch,
-            batch_size,
-            output_file_path
+            conditions, max_tries_per_batch, batch_size, output_file_path
         )
 
         return sampled
 
-    def sample_remaining_columns(self, known_columns, max_tries_per_batch=100,
-                                 batch_size=None, output_file_path=None):
+    def sample_remaining_columns(
+        self, known_columns, max_tries_per_batch=100, batch_size=None, output_file_path=None
+    ):
         """Sample rows from this table.
 
         Args:
@@ -175,10 +171,7 @@ class SingleTablePreset:
         """
         warnings.warn(DEPRECATION_MSG, FutureWarning)
         sampled = self._synthesizer.sample_remaining_columns(
-            known_columns,
-            max_tries_per_batch,
-            batch_size,
-            output_file_path
+            known_columns, max_tries_per_batch, batch_size, output_file_path
         )
 
         return sampled
@@ -215,10 +208,12 @@ class SingleTablePreset:
     def list_available_presets(cls, out=sys.stdout):
         """List the available presets and their descriptions."""
         warnings.warn(DEPRECATION_MSG, FutureWarning)
-        out.write(f'Available presets:\n{PRESETS}\n\n'
-                  'Supply the desired preset using the `name` parameter.\n\n'
-                  'Have any requests for custom presets? Contact the SDV team to learn '
-                  'more an SDV Premium license.\n')
+        out.write(
+            f'Available presets:\n{PRESETS}\n\n'
+            'Supply the desired preset using the `name` parameter.\n\n'
+            'Have any requests for custom presets? Contact the SDV team to learn '
+            'more an SDV Premium license.\n'
+        )
 
     def __repr__(self):
         """Represent single table preset instance as text.

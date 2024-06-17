@@ -1,7 +1,7 @@
 """SDV Condition class for sampling."""
 
 
-class Condition():
+class Condition:
     """Condition class.
 
     This class represents a condition that is used for sampling.

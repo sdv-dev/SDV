@@ -1,12 +1,18 @@
 """POC functions to use HMASynthesizer succesfully."""
+
 import warnings
 
 from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS
 from sdv.multi_table.utils import (
-    _get_total_estimated_columns, _print_simplified_schema_summary, _print_subsample_summary,
-    _simplify_data, _simplify_metadata, _subsample_data)
+    _get_total_estimated_columns,
+    _print_simplified_schema_summary,
+    _print_subsample_summary,
+    _simplify_data,
+    _simplify_metadata,
+    _subsample_data,
+)
 from sdv.utils.utils import drop_unknown_references as utils_drop_unknown_references
 
 
@@ -14,7 +20,8 @@ def drop_unknown_references(data, metadata):
     """Wrap the drop_unknown_references function from the utils module."""
     warnings.warn(
         "Please access the 'drop_unknown_references' function directly from the sdv.utils module"
-        'instead of sdv.utils.poc.', FutureWarning
+        'instead of sdv.utils.poc.',
+        FutureWarning,
     )
     return utils_drop_unknown_references(data, metadata)
 
@@ -113,9 +120,7 @@ def get_random_subset(data, metadata, main_table_name, num_rows, verbose=True):
     except InvalidDataError as error:
         raise InvalidDataError([error_message]) from error
 
-    error_message_num_rows = (
-        '``num_rows`` must be a positive integer.'
-    )
+    error_message_num_rows = '``num_rows`` must be a positive integer.'
     if not isinstance(num_rows, (int, float)) or num_rows != int(num_rows):
         raise ValueError(error_message_num_rows)
 

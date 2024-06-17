@@ -13,7 +13,4 @@ class InvalidConstraintsError(Exception):
         self.errors = errors
 
     def __str__(self):
-        return (
-            'The provided constraint is invalid:\n' +
-            '\n\n'.join(map(str, self.errors))
-        )
+        return 'The provided constraint is invalid:\n' + '\n\n'.join(map(str, self.errors))

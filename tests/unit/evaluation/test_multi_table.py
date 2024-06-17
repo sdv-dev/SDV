@@ -1,11 +1,16 @@
-
 from unittest.mock import Mock, patch
 
 import pandas as pd
 
 from sdv.evaluation.multi_table import (
-    DiagnosticReport, QualityReport, evaluate_quality, get_cardinality_plot, get_column_pair_plot,
-    get_column_plot, run_diagnostic)
+    DiagnosticReport,
+    QualityReport,
+    evaluate_quality,
+    get_cardinality_plot,
+    get_column_pair_plot,
+    get_column_plot,
+    run_diagnostic,
+)
 from sdv.metadata.multi_table import MultiTableMetadata
 
 
@@ -95,37 +100,31 @@ def test_get_cardinality_plot(mock_plot):
     # Setup
     data1 = {
         'table1': pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]}),
-        'table2': pd.DataFrame({'col1': [2, 2, 3], 'col2': [6, 7, 8]})
+        'table2': pd.DataFrame({'col1': [2, 2, 3], 'col2': [6, 7, 8]}),
     }
     data2 = {
         'table1': pd.DataFrame({'col1': [2, 1, 3], 'col2': [1, 2, 3]}),
-        'table2': pd.DataFrame({'col1': [2, 2, 3], 'col2': [6, 7, 8]})
+        'table2': pd.DataFrame({'col1': [2, 2, 3], 'col2': [6, 7, 8]}),
     }
     metadata_dict = {
         'tables': {
             'table1': {
-                'columns': {
-                    'col1': {'sdtype': 'numerical'},
-                    'col2': {'sdtype': 'numerical'}
-                },
-                'primary_key': 'col1'
+                'columns': {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}},
+                'primary_key': 'col1',
             },
             'table2': {
-                'columns': {
-                    'col1': {'sdtype': 'numerical'},
-                    'col2': {'sdtype': 'numerical'}
-                }
-            }
+                'columns': {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
+            },
         },
         'relationships': [
             {
                 'parent_table_name': 'table1',
                 'child_table_name': 'table2',
                 'parent_primary_key': 'col1',
-                'child_foreign_key': 'col1'
+                'child_foreign_key': 'col1',
             }
         ],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
     }
     metadata = MultiTableMetadata.load_from_dict(metadata_dict)
     mock_plot.return_value = 'plot'
@@ -134,15 +133,7 @@ def test_get_cardinality_plot(mock_plot):
     plot = get_cardinality_plot(data1, data2, 'table2', 'table1', 'col1', metadata)
 
     # Assert
-    mock_plot.assert_called_once_with(
-        data1,
-        data2,
-        'table2',
-        'table1',
-        'col1',
-        'col1',
-        'bar'
-    )
+    mock_plot.assert_called_once_with(data1, data2, 'table2', 'table1', 'col1', 'col1', 'bar')
     assert plot == 'plot'
 
 
@@ -152,60 +143,40 @@ def test_get_cardinality_plot_plot_type(mock_plot):
     # Setup
     data1 = {
         'table1': pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]}),
-        'table2': pd.DataFrame({'col1': [2, 2, 3], 'col2': [6, 7, 8]})
+        'table2': pd.DataFrame({'col1': [2, 2, 3], 'col2': [6, 7, 8]}),
     }
     data2 = {
         'table1': pd.DataFrame({'col1': [2, 1, 3], 'col2': [1, 2, 3]}),
-        'table2': pd.DataFrame({'col1': [2, 2, 3], 'col2': [6, 7, 8]})
+        'table2': pd.DataFrame({'col1': [2, 2, 3], 'col2': [6, 7, 8]}),
     }
     metadata_dict = {
         'tables': {
             'table1': {
-                'columns': {
-                    'col1': {'sdtype': 'numerical'},
-                    'col2': {'sdtype': 'numerical'}
-                },
-                'primary_key': 'col1'
+                'columns': {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}},
+                'primary_key': 'col1',
             },
             'table2': {
-                'columns': {
-                    'col1': {'sdtype': 'numerical'},
-                    'col2': {'sdtype': 'numerical'}
-                }
-            }
+                'columns': {'col1': {'sdtype': 'numerical'}, 'col2': {'sdtype': 'numerical'}}
+            },
         },
         'relationships': [
             {
                 'parent_table_name': 'table1',
                 'child_table_name': 'table2',
                 'parent_primary_key': 'col1',
-                'child_foreign_key': 'col1'
+                'child_foreign_key': 'col1',
             }
         ],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
     }
     metadata = MultiTableMetadata.load_from_dict(metadata_dict)
     mock_plot.return_value = 'plot'
 
     # Run
     plot = get_cardinality_plot(
-        data1,
-        data2,
-        'table2',
-        'table1',
-        'col1',
-        metadata,
-        plot_type='distplot'
+        data1, data2, 'table2', 'table1', 'col1', metadata, plot_type='distplot'
     )
 
     # Assert
-    mock_plot.assert_called_once_with(
-        data1,
-        data2,
-        'table2',
-        'table1',
-        'col1',
-        'col1',
-        'distplot'
-    )
+    mock_plot.assert_called_once_with(data1, data2, 'table2', 'table1', 'col1', 'col1', 'distplot')
     assert plot == 'plot'

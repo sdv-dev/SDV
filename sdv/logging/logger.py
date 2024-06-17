@@ -1,4 +1,5 @@
 """SDV Logger."""
+
 import csv
 import logging
 import os
@@ -15,8 +16,14 @@ class CSVFormatter(logging.Formatter):
         super().__init__()
         self.output = StringIO()
         headers = [
-            'LEVEL', 'EVENT', 'TIMESTAMP', 'SYNTHESIZER CLASS NAME', 'SYNTHESIZER ID',
-            'TOTAL NUMBER OF TABLES', 'TOTAL NUMBER OF ROWS', 'TOTAL NUMBER OF COLUMNS'
+            'LEVEL',
+            'EVENT',
+            'TIMESTAMP',
+            'SYNTHESIZER CLASS NAME',
+            'SYNTHESIZER ID',
+            'TOTAL NUMBER OF TABLES',
+            'TOTAL NUMBER OF ROWS',
+            'TOTAL NUMBER OF COLUMNS',
         ]
         self.writer = csv.DictWriter(self.output, fieldnames=headers)
         if filename:

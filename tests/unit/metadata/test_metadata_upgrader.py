@@ -33,14 +33,8 @@ def test__upgrade_constraints_no_upgrade_needed():
     """
     # Setup
     old_constraints = [
-        {
-            'constraint_name': 'OneHotEncoding',
-            'column_names': ['a', 'b']
-        },
-        {
-            'constraint_name': 'Unique',
-            'column_names': ['c', 'd']
-        },
+        {'constraint_name': 'OneHotEncoding', 'column_names': ['a', 'b']},
+        {'constraint_name': 'Unique', 'column_names': ['c', 'd']},
     ]
     old_metadata = {'constraints': old_constraints}
 
@@ -75,46 +69,46 @@ def test__upgrade_constraints_greater_than():
             'scalar': None,
             'high': 'a',
             'low': 'b',
-            'strict': True
+            'strict': True,
         },
         {
             'constraint': 'sdv.constraints.tabular.GreaterThan',
             'scalar': None,
             'high': ['c'],
             'low': 'd',
-            'strict': True
+            'strict': True,
         },
         {
             'constraint': 'sdv.constraints.tabular.GreaterThan',
             'scalar': None,
             'high': 'e',
             'low': ['f'],
-            'strict': True
+            'strict': True,
         },
         {
             'constraint': 'sdv.constraints.tabular.GreaterThan',
             'scalar': 'low',
             'high': 'a',
-            'low': 10
+            'low': 10,
         },
         {
             'constraint': 'sdv.constraints.tabular.GreaterThan',
             'scalar': 'low',
             'high': ['b', 'c'],
-            'low': 5
+            'low': 5,
         },
         {
             'constraint': 'sdv.constraints.tabular.GreaterThan',
             'scalar': 'high',
             'high': 10,
-            'low': 'f'
+            'low': 'f',
         },
         {
             'constraint': 'sdv.constraints.tabular.GreaterThan',
             'scalar': 'high',
             'high': 5,
-            'low': ['c', 'd']
-        }
+            'low': ['c', 'd'],
+        },
     ]
     old_metadata = {'constraints': old_constraints}
 
@@ -127,56 +121,26 @@ def test__upgrade_constraints_greater_than():
             'constraint_name': 'Inequality',
             'high_column_name': 'a',
             'low_column_name': 'b',
-            'strict_boundaries': True
+            'strict_boundaries': True,
         },
         {
             'constraint_name': 'Inequality',
             'high_column_name': 'c',
             'low_column_name': 'd',
-            'strict_boundaries': True
+            'strict_boundaries': True,
         },
         {
             'constraint_name': 'Inequality',
             'high_column_name': 'e',
             'low_column_name': 'f',
-            'strict_boundaries': True
+            'strict_boundaries': True,
         },
-        {
-            'constraint_name': 'ScalarInequality',
-            'column_name': 'a',
-            'relation': '>=',
-            'value': 10
-        },
-        {
-            'constraint_name': 'ScalarInequality',
-            'column_name': 'b',
-            'relation': '>=',
-            'value': 5
-        },
-        {
-            'constraint_name': 'ScalarInequality',
-            'column_name': 'c',
-            'relation': '>=',
-            'value': 5
-        },
-        {
-            'constraint_name': 'ScalarInequality',
-            'column_name': 'f',
-            'relation': '<=',
-            'value': 10
-        },
-        {
-            'constraint_name': 'ScalarInequality',
-            'column_name': 'c',
-            'relation': '<=',
-            'value': 5
-        },
-        {
-            'constraint_name': 'ScalarInequality',
-            'column_name': 'd',
-            'relation': '<=',
-            'value': 5
-        }
+        {'constraint_name': 'ScalarInequality', 'column_name': 'a', 'relation': '>=', 'value': 10},
+        {'constraint_name': 'ScalarInequality', 'column_name': 'b', 'relation': '>=', 'value': 5},
+        {'constraint_name': 'ScalarInequality', 'column_name': 'c', 'relation': '>=', 'value': 5},
+        {'constraint_name': 'ScalarInequality', 'column_name': 'f', 'relation': '<=', 'value': 10},
+        {'constraint_name': 'ScalarInequality', 'column_name': 'c', 'relation': '<=', 'value': 5},
+        {'constraint_name': 'ScalarInequality', 'column_name': 'd', 'relation': '<=', 'value': 5},
     ]
 
     assert len(expected_constraints) == len(new_constraints)
@@ -205,15 +169,15 @@ def test__upgrade_constraints_greater_than_error(warnings_mock):
             'scalar': None,
             'high': ['a', 'b'],
             'low': 'c',
-            'strict': True
+            'strict': True,
         },
         {
             'constraint': 'sdv.constraints.tabular.GreaterThan',
             'scalar': None,
             'high': 'a',
             'low': ['b', 'c'],
-            'strict': True
-        }
+            'strict': True,
+        },
     ]
     old_metadata = {'constraints': old_constraints}
 
@@ -230,7 +194,7 @@ def test__upgrade_constraints_greater_than_error(warnings_mock):
         call(
             "Unable to upgrade the GreaterThan constraint specified for 'high' 'a' "
             "and 'low' ['b', 'c']. Manually add Inequality constraints to capture this logic."
-        )
+        ),
     ])
 
 
@@ -260,7 +224,7 @@ def test__upgrade_constraints_between():
             'low_is_scalar': True,
             'low': 5,
             'high': 10,
-            'strict': True
+            'strict': True,
         },
         {
             'constraint': 'sdv.constraints.tabular.Between',
@@ -269,7 +233,7 @@ def test__upgrade_constraints_between():
             'low_is_scalar': False,
             'low': 'a',
             'high': 'b',
-            'strict': True
+            'strict': True,
         },
         {
             'constraint': 'sdv.constraints.tabular.Between',
@@ -277,7 +241,7 @@ def test__upgrade_constraints_between():
             'high_is_scalar': True,
             'low_is_scalar': False,
             'low': 'a',
-            'high': 10
+            'high': 10,
         },
         {
             'constraint': 'sdv.constraints.tabular.Between',
@@ -285,8 +249,8 @@ def test__upgrade_constraints_between():
             'high_is_scalar': False,
             'low_is_scalar': True,
             'low': 5,
-            'high': 'b'
-        }
+            'high': 'b',
+        },
     ]
     old_metadata = {'constraints': old_constraints}
 
@@ -300,20 +264,20 @@ def test__upgrade_constraints_between():
             'column_name': 'z',
             'low_value': 5,
             'high_value': 10,
-            'strict_boundaries': True
+            'strict_boundaries': True,
         },
         {
             'constraint_name': 'Range',
             'middle_column_name': 'z',
             'low_column_name': 'a',
             'high_column_name': 'b',
-            'strict_boundaries': True
+            'strict_boundaries': True,
         },
         {
             'constraint_name': 'Inequality',
             'low_column_name': 'a',
             'high_column_name': 'z',
-            'strict_boundaries': False
+            'strict_boundaries': False,
         },
         {
             'constraint_name': 'ScalarInequality',
@@ -325,14 +289,14 @@ def test__upgrade_constraints_between():
             'constraint_name': 'Inequality',
             'low_column_name': 'z',
             'high_column_name': 'b',
-            'strict_boundaries': False
+            'strict_boundaries': False,
         },
         {
             'constraint_name': 'ScalarInequality',
             'column_name': 'z',
             'relation': '>=',
             'value': 5,
-        }
+        },
     ]
     assert len(expected_constraints) == len(new_constraints)
     for constraint in expected_constraints:
@@ -362,46 +326,14 @@ def test__upgrade_constraints_positive_and_negative():
     """
     # Setup
     old_constraints = [
-        {
-            'constraint': 'sdv.constraints.tabular.Positive',
-            'columns': 'a',
-            'strict': True
-        },
-        {
-            'constraint': 'sdv.constraints.tabular.Positive',
-            'columns': ['b', 'c'],
-            'strict': True
-        },
-        {
-            'constraint': 'sdv.constraints.tabular.Positive',
-            'columns': 'd',
-            'strict': False
-        },
-        {
-            'constraint': 'sdv.constraints.tabular.Positive',
-            'columns': ['e', 'f'],
-            'strict': False
-        },
-        {
-            'constraint': 'sdv.constraints.tabular.Negative',
-            'columns': 'a',
-            'strict': True
-        },
-        {
-            'constraint': 'sdv.constraints.tabular.Negative',
-            'columns': ['b', 'c'],
-            'strict': True
-        },
-        {
-            'constraint': 'sdv.constraints.tabular.Negative',
-            'columns': 'd',
-            'strict': False
-        },
-        {
-            'constraint': 'sdv.constraints.tabular.Negative',
-            'columns': ['e', 'f'],
-            'strict': False
-        },
+        {'constraint': 'sdv.constraints.tabular.Positive', 'columns': 'a', 'strict': True},
+        {'constraint': 'sdv.constraints.tabular.Positive', 'columns': ['b', 'c'], 'strict': True},
+        {'constraint': 'sdv.constraints.tabular.Positive', 'columns': 'd', 'strict': False},
+        {'constraint': 'sdv.constraints.tabular.Positive', 'columns': ['e', 'f'], 'strict': False},
+        {'constraint': 'sdv.constraints.tabular.Negative', 'columns': 'a', 'strict': True},
+        {'constraint': 'sdv.constraints.tabular.Negative', 'columns': ['b', 'c'], 'strict': True},
+        {'constraint': 'sdv.constraints.tabular.Negative', 'columns': 'd', 'strict': False},
+        {'constraint': 'sdv.constraints.tabular.Negative', 'columns': ['e', 'f'], 'strict': False},
     ]
     old_metadata = {'constraints': old_constraints}
 
@@ -410,66 +342,18 @@ def test__upgrade_constraints_positive_and_negative():
 
     # Assert
     expected_constraints = [
-        {
-            'constraint_name': 'Positive',
-            'column_name': 'a',
-            'strict_boundaries': True
-        },
-        {
-            'constraint_name': 'Positive',
-            'column_name': 'b',
-            'strict_boundaries': True
-        },
-        {
-            'constraint_name': 'Positive',
-            'column_name': 'c',
-            'strict_boundaries': True
-        },
-        {
-            'constraint_name': 'Positive',
-            'column_name': 'd',
-            'strict_boundaries': False
-        },
-        {
-            'constraint_name': 'Positive',
-            'column_name': 'e',
-            'strict_boundaries': False
-        },
-        {
-            'constraint_name': 'Positive',
-            'column_name': 'f',
-            'strict_boundaries': False
-        },
-        {
-            'constraint_name': 'Negative',
-            'column_name': 'a',
-            'strict_boundaries': True
-        },
-        {
-            'constraint_name': 'Negative',
-            'column_name': 'b',
-            'strict_boundaries': True
-        },
-        {
-            'constraint_name': 'Negative',
-            'column_name': 'c',
-            'strict_boundaries': True
-        },
-        {
-            'constraint_name': 'Negative',
-            'column_name': 'd',
-            'strict_boundaries': False
-        },
-        {
-            'constraint_name': 'Negative',
-            'column_name': 'e',
-            'strict_boundaries': False
-        },
-        {
-            'constraint_name': 'Negative',
-            'column_name': 'f',
-            'strict_boundaries': False
-        }
+        {'constraint_name': 'Positive', 'column_name': 'a', 'strict_boundaries': True},
+        {'constraint_name': 'Positive', 'column_name': 'b', 'strict_boundaries': True},
+        {'constraint_name': 'Positive', 'column_name': 'c', 'strict_boundaries': True},
+        {'constraint_name': 'Positive', 'column_name': 'd', 'strict_boundaries': False},
+        {'constraint_name': 'Positive', 'column_name': 'e', 'strict_boundaries': False},
+        {'constraint_name': 'Positive', 'column_name': 'f', 'strict_boundaries': False},
+        {'constraint_name': 'Negative', 'column_name': 'a', 'strict_boundaries': True},
+        {'constraint_name': 'Negative', 'column_name': 'b', 'strict_boundaries': True},
+        {'constraint_name': 'Negative', 'column_name': 'c', 'strict_boundaries': True},
+        {'constraint_name': 'Negative', 'column_name': 'd', 'strict_boundaries': False},
+        {'constraint_name': 'Negative', 'column_name': 'e', 'strict_boundaries': False},
+        {'constraint_name': 'Negative', 'column_name': 'f', 'strict_boundaries': False},
     ]
     assert len(expected_constraints) == len(new_constraints)
     for constraint in expected_constraints:
@@ -492,18 +376,9 @@ def test__upgrade_constraints_simple_constraints():
     """
     # Setup
     old_constraints = [
-        {
-            'constraint': 'sdv.constraints.tabular.UniqueCombinations',
-            'columns': ['a', 'b']
-        },
-        {
-            'constraint': 'sdv.constraints.tabular.OneHotEncoding',
-            'columns': ['c', 'd']
-        },
-        {
-            'constraint': 'sdv.constraints.tabular.Unique',
-            'columns': ['e', 'f']
-        },
+        {'constraint': 'sdv.constraints.tabular.UniqueCombinations', 'columns': ['a', 'b']},
+        {'constraint': 'sdv.constraints.tabular.OneHotEncoding', 'columns': ['c', 'd']},
+        {'constraint': 'sdv.constraints.tabular.Unique', 'columns': ['e', 'f']},
     ]
     old_metadata = {'constraints': old_constraints}
 
@@ -512,18 +387,9 @@ def test__upgrade_constraints_simple_constraints():
 
     # Assert
     expected_constraints = [
-        {
-            'constraint_name': 'FixedCombinations',
-            'column_names': ['a', 'b']
-        },
-        {
-            'constraint_name': 'OneHotEncoding',
-            'column_names': ['c', 'd']
-        },
-        {
-            'constraint_name': 'Unique',
-            'column_names': ['e', 'f']
-        },
+        {'constraint_name': 'FixedCombinations', 'column_names': ['a', 'b']},
+        {'constraint_name': 'OneHotEncoding', 'column_names': ['c', 'd']},
+        {'constraint_name': 'Unique', 'column_names': ['e', 'f']},
     ]
     assert len(expected_constraints) == len(new_constraints)
     for constraint in expected_constraints:
@@ -552,18 +418,10 @@ def test__upgrade_constraints_constraint_has_no_upgrade(warnings_mock):
     """
     # Setup
     old_constraints = [
-        {
-            'constraint': 'sdv.constraints.tabular.Rounding'
-        },
-        {
-            'constraint': 'sdv.constraints.tabular.ColumnFormula'
-        },
-        {
-            'constraint': 'sdv.constraints.tabular.CustomConstraint'
-        },
-        {
-            'constraint': 'Fake'
-        }
+        {'constraint': 'sdv.constraints.tabular.Rounding'},
+        {'constraint': 'sdv.constraints.tabular.ColumnFormula'},
+        {'constraint': 'sdv.constraints.tabular.CustomConstraint'},
+        {'constraint': 'Fake'},
     ]
     old_metadata = {'constraints': old_constraints}
 
@@ -589,7 +447,7 @@ def test__upgrade_constraints_constraint_has_no_upgrade(warnings_mock):
         call(
             'Unable to upgrade the Fake constraint. Please add in the constraint '
             'using the new Constraints API.'
-        )
+        ),
     ])
 
 
@@ -608,49 +466,22 @@ def test_convert_metadata():
     # Setup
     old_metadata = {
         'fields': {
-            'start_date': {
-                'type': 'datetime',
-                'format': '%Y-%m-%d'
-            },
-            'end_date': {
-                'type': 'datetime',
-                'format': '%Y-%m-%d'
-            },
-            'salary': {
-                'type': 'numerical',
-                'subtype': 'integer'
-            },
-            'duration': {
-                'type': 'categorical'
-            },
-            'student_id': {
-                'type': 'id',
-                'subtype': 'integer'
-            },
-            'high_perc': {
-                'type': 'numerical',
-                'subtype': 'float'
-            },
-            'placed': {
-                'type': 'boolean'
-            },
-            'ssn': {
-                'type': 'categorical',
-                'pii': True,
-                'pii_category': 'ssn'
-            },
+            'start_date': {'type': 'datetime', 'format': '%Y-%m-%d'},
+            'end_date': {'type': 'datetime', 'format': '%Y-%m-%d'},
+            'salary': {'type': 'numerical', 'subtype': 'integer'},
+            'duration': {'type': 'categorical'},
+            'student_id': {'type': 'id', 'subtype': 'integer'},
+            'high_perc': {'type': 'numerical', 'subtype': 'float'},
+            'placed': {'type': 'boolean'},
+            'ssn': {'type': 'categorical', 'pii': True, 'pii_category': 'ssn'},
             'credit_card': {
                 'type': 'categorical',
                 'pii': True,
-                'pii_category': ['credit_card_number', 'visa']
+                'pii_category': ['credit_card_number', 'visa'],
             },
-            'drivers_license': {
-                'type': 'id',
-                'subtype': 'string',
-                'regex': 'regex'
-            }
+            'drivers_license': {'type': 'id', 'subtype': 'string', 'regex': 'regex'},
         },
-        'primary_key': 'student_id'
+        'primary_key': 'student_id',
     }
 
     # Run
@@ -659,47 +490,19 @@ def test_convert_metadata():
     # Assert
     expected_metadata = {
         'columns': {
-            'start_date': {
-                'sdtype': 'datetime',
-                'datetime_format': '%Y-%m-%d'
-            },
-            'end_date': {
-                'sdtype': 'datetime',
-                'datetime_format': '%Y-%m-%d'
-            },
-            'salary': {
-                'sdtype': 'numerical',
-                'computer_representation': 'Int64'
-            },
-            'duration': {
-                'sdtype': 'categorical'
-            },
-            'student_id': {
-                'sdtype': 'id',
-                'regex_format': r'\d{30}'
-            },
-            'high_perc': {
-                'sdtype': 'numerical',
-                'computer_representation': 'Float'
-            },
-            'placed': {
-                'sdtype': 'boolean'
-            },
-            'ssn': {
-                'sdtype': 'ssn',
-                'pii': True
-            },
-            'credit_card': {
-                'sdtype': 'credit_card_number',
-                'pii': True
-            },
-            'drivers_license': {
-                'sdtype': 'id',
-                'regex_format': 'regex'
-            }
+            'start_date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'end_date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'salary': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'duration': {'sdtype': 'categorical'},
+            'student_id': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+            'high_perc': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+            'placed': {'sdtype': 'boolean'},
+            'ssn': {'sdtype': 'ssn', 'pii': True},
+            'credit_card': {'sdtype': 'credit_card_number', 'pii': True},
+            'drivers_license': {'sdtype': 'id', 'regex_format': 'regex'},
         },
         'primary_key': 'student_id',
-        'alternate_keys': ['drivers_license']
+        'alternate_keys': ['drivers_license'],
     }
     assert new_metadata == expected_metadata
 
@@ -723,36 +526,18 @@ def test_convert_metadata_with_constraints(upgrade_constraints_mock):
     # Setup
     old_metadata = {
         'fields': {
-            'salary': {
-                'type': 'numerical',
-                'subtype': 'integer'
-            },
-            'student_id': {
-                'type': 'id',
-                'subtype': 'integer'
-            },
+            'salary': {'type': 'numerical', 'subtype': 'integer'},
+            'student_id': {'type': 'id', 'subtype': 'integer'},
         },
         'primary_key': 'student_id',
         'constraints': [
-            {
-                'constraint': 'sdv.constraints.tabular.UniqueCombinations',
-                'columns': ['a', 'b']
-            },
-            {
-                'constraint': 'sdv.constraints.tabular.OneHotEncoding',
-                'columns': ['c', 'd']
-            }
-        ]
+            {'constraint': 'sdv.constraints.tabular.UniqueCombinations', 'columns': ['a', 'b']},
+            {'constraint': 'sdv.constraints.tabular.OneHotEncoding', 'columns': ['c', 'd']},
+        ],
     }
     new_constraints = [
-        {
-            'constraint_name': 'FixedCombinations',
-            'column_names': ['a', 'b']
-        },
-        {
-            'constraint_name': 'OneHotEncoding',
-            'column_names': ['c', 'd']
-        }
+        {'constraint_name': 'FixedCombinations', 'column_names': ['a', 'b']},
+        {'constraint_name': 'OneHotEncoding', 'column_names': ['c', 'd']},
     ]
     upgrade_constraints_mock.return_value = new_constraints
 
@@ -762,15 +547,9 @@ def test_convert_metadata_with_constraints(upgrade_constraints_mock):
     # Assert
     expected_metadata = {
         'columns': {
-            'salary': {
-                'sdtype': 'numerical',
-                'computer_representation': 'Int64'
-            },
-            'student_id': {
-                'sdtype': 'id',
-                'regex_format': r'\d{30}'
-            }
+            'salary': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'student_id': {'sdtype': 'id', 'regex_format': r'\d{30}'},
         },
-        'primary_key': 'student_id'
+        'primary_key': 'student_id',
     }
     assert new_metadata == expected_metadata

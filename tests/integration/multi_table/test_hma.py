@@ -23,7 +23,6 @@ from tests.utils import catch_sdv_logs
 
 
 class TestHMASynthesizer:
-
     def test_hma(self):
         """End to end integration tests with ``HMASynthesizer``.
 
@@ -46,8 +45,7 @@ class TestHMASynthesizer:
         for table_name, table in normal_sample.items():
             assert all(table.columns == data[table_name].columns)
 
-        for normal_table, increased_table in zip(
-                normal_sample.values(), increased_sample.values()):
+        for normal_table, increased_table in zip(normal_sample.values(), increased_sample.values()):
             assert increased_table.size > normal_table.size
 
     def test_hma_reset_sampling(self):
@@ -111,7 +109,7 @@ class TestHMASynthesizer:
             'creation_date': today,
             'is_fit': False,
             'last_fit_date': None,
-            'fitted_sdv_version': None
+            'fitted_sdv_version': None,
         }
 
         # Run
@@ -125,7 +123,7 @@ class TestHMASynthesizer:
             'creation_date': today,
             'is_fit': True,
             'last_fit_date': today,
-            'fitted_sdv_version': version
+            'fitted_sdv_version': version,
         }
 
     def test_hma_set_table_parameters(self):
@@ -134,7 +132,7 @@ class TestHMASynthesizer:
         Validate that the ``set_table_parameters`` sets new parameters to the synthesizers.
         """
         # Setup
-        data, metadata = download_demo('multi_table', 'got_families')
+        _data, metadata = download_demo('multi_table', 'got_families')
         hmasynthesizer = HMASynthesizer(metadata)
 
         # Run
@@ -150,7 +148,7 @@ class TestHMASynthesizer:
             'enforce_min_max_values': True,
             'enforce_rounding': True,
             'locales': ['en_US'],
-            'numerical_distributions': {}
+            'numerical_distributions': {},
         }
         families_params = hmasynthesizer.get_table_parameters('families')
         assert families_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
@@ -159,7 +157,7 @@ class TestHMASynthesizer:
             'enforce_min_max_values': True,
             'enforce_rounding': True,
             'locales': ['en_US'],
-            'numerical_distributions': {}
+            'numerical_distributions': {},
         }
         char_families_params = hmasynthesizer.get_table_parameters('character_families')
         assert char_families_params['synthesizer_name'] == 'GaussianCopulaSynthesizer'
@@ -168,13 +166,14 @@ class TestHMASynthesizer:
             'enforce_min_max_values': True,
             'enforce_rounding': True,
             'locales': ['en_US'],
-            'numerical_distributions': {}
+            'numerical_distributions': {},
         }
 
         assert hmasynthesizer._table_synthesizers['characters'].default_distribution == 'gamma'
         assert hmasynthesizer._table_synthesizers['families'].default_distribution == 'uniform'
-        assert hmasynthesizer._table_synthesizers['character_families'].default_distribution == \
-            'norm'
+        assert (
+            hmasynthesizer._table_synthesizers['character_families'].default_distribution == 'norm'
+        )
 
     def get_custom_constraint_data_and_metadata(self):
         """Return data and metadata for the custom constraint tests."""
@@ -203,7 +202,7 @@ class TestHMASynthesizer:
             parent_primary_key='primary_key',
             parent_table_name='parent',
             child_foreign_key='user_id',
-            child_table_name='child'
+            child_table_name='child',
         )
 
         return parent_data, child_data, metadata
@@ -216,9 +215,7 @@ class TestHMASynthesizer:
         constraint = {
             'table_name': 'parent',
             'constraint_class': 'MyConstraint',
-            'constraint_parameters': {
-                'column_names': ['numerical_col']
-            }
+            'constraint_parameters': {'column_names': ['numerical_col']},
         }
         synthesizer.add_custom_constraint_class(MyConstraint, 'MyConstraint')
 
@@ -229,7 +226,7 @@ class TestHMASynthesizer:
         # Assert Processed Data
         np.testing.assert_equal(
             processed_data['parent']['numerical_col'].array,
-            (parent_data['numerical_col'] ** 2.0).array
+            (parent_data['numerical_col'] ** 2.0).array,
         )
 
         # Run - Fit the model
@@ -251,17 +248,13 @@ class TestHMASynthesizer:
         constraint_parent = {
             'table_name': 'parent',
             'constraint_class': 'MyConstraint',
-            'constraint_parameters': {
-                'column_names': ['numerical_col']
-            }
+            'constraint_parameters': {'column_names': ['numerical_col']},
         }
 
         constraint_child = {
             'table_name': 'child',
             'constraint_class': 'MyConstraint',
-            'constraint_parameters': {
-                'column_names': ['numerical_col_2']
-            }
+            'constraint_parameters': {'column_names': ['numerical_col_2']},
         }
         synthesizer.add_custom_constraint_class(MyConstraint, 'MyConstraint')
 
@@ -272,11 +265,11 @@ class TestHMASynthesizer:
         # Assert Processed Data
         np.testing.assert_equal(
             processed_data['parent']['numerical_col'].array,
-            (parent_data['numerical_col'] ** 2.0).array
+            (parent_data['numerical_col'] ** 2.0).array,
         )
         np.testing.assert_equal(
             processed_data['child']['numerical_col_2'].array,
-            (child_data['numerical_col_2'] ** 2.0).array
+            (child_data['numerical_col_2'] ** 2.0).array,
         )
 
         # Run - Fit the model
@@ -296,13 +289,10 @@ class TestHMASynthesizer:
         constraint = {
             'table_name': 'parent',
             'constraint_class': 'MyConstraint',
-            'constraint_parameters': {
-                'column_names': ['numerical_col']
-            }
+            'constraint_parameters': {'column_names': ['numerical_col']},
         }
         synthesizer.load_custom_constraint_classes(
-            'tests/integration/single_table/custom_constraints.py',
-            ['MyConstraint']
+            'tests/integration/single_table/custom_constraints.py', ['MyConstraint']
         )
 
         # Run
@@ -312,7 +302,7 @@ class TestHMASynthesizer:
         # Assert Processed Data
         np.testing.assert_equal(
             processed_data['parent']['numerical_col'].array,
-            (parent_data['numerical_col'] ** 2.0).array
+            (parent_data['numerical_col'] ** 2.0).array,
         )
 
         # Run - Fit the model
@@ -325,22 +315,20 @@ class TestHMASynthesizer:
     def test_hma_with_inequality_constraint(self):
         """Test that when new columns are created by the constraint this still works."""
         # Setup
-        parent_table = pd.DataFrame(data={
-            'id': [1, 2, 3, 4, 5],
-            'column': [1.2, 2.1, 2.2, 2.1, 1.4]
-        })
+        parent_table = pd.DataFrame(
+            data={'id': [1, 2, 3, 4, 5], 'column': [1.2, 2.1, 2.2, 2.1, 1.4]}
+        )
 
-        child_table = pd.DataFrame(data={
-            'id': [1, 2, 3, 4, 5],
-            'parent_id': [1, 1, 3, 2, 1],
-            'low_column': [1, 3, 3, 1, 2],
-            'high_column': [2, 4, 5, 2, 4]
-        })
+        child_table = pd.DataFrame(
+            data={
+                'id': [1, 2, 3, 4, 5],
+                'parent_id': [1, 1, 3, 2, 1],
+                'low_column': [1, 3, 3, 1, 2],
+                'high_column': [2, 4, 5, 2, 4],
+            }
+        )
 
-        data = {
-            'parent_table': parent_table,
-            'child_table': child_table
-        }
+        data = {'parent_table': parent_table, 'child_table': child_table}
 
         metadata = MultiTableMetadata()
         metadata.detect_table_from_dataframe(table_name='parent_table', data=parent_table)
@@ -356,7 +344,7 @@ class TestHMASynthesizer:
             parent_table_name='parent_table',
             child_table_name='child_table',
             parent_primary_key='id',
-            child_foreign_key='parent_id'
+            child_foreign_key='parent_id',
         )
 
         constraint = {
@@ -364,8 +352,8 @@ class TestHMASynthesizer:
             'table_name': 'child_table',
             'constraint_parameters': {
                 'low_column_name': 'low_column',
-                'high_column_name': 'high_column'
-            }
+                'high_column_name': 'high_column',
+            },
         }
 
         synthesizer = HMASynthesizer(metadata)
@@ -421,25 +409,15 @@ class TestHMASynthesizer:
     def test_hma_primary_key_and_foreign_key_only(self):
         """Test that ``HMASynthesizer`` can handle tables with primary and foreign keys only."""
         # Setup
-        users = pd.DataFrame({
-            'user_id': [1, 2, 3],
-            'user_name': ['John', 'Doe', 'Johanna']
-        })
-        sessions = pd.DataFrame({
-            'session_id': ['a', 'b', 'c'],
-            'clicks': [10, 20, 30]
-        })
+        users = pd.DataFrame({'user_id': [1, 2, 3], 'user_name': ['John', 'Doe', 'Johanna']})
+        sessions = pd.DataFrame({'session_id': ['a', 'b', 'c'], 'clicks': [10, 20, 30]})
         games = pd.DataFrame({
             'game_id': ['a1', 'b2', 'c3'],
             'session_id': ['a', 'b', 'c'],
-            'user_id': [1, 2, 3]
+            'user_id': [1, 2, 3],
         })
 
-        data = {
-            'users': users,
-            'sessions': sessions,
-            'games': games
-        }
+        data = {'users': users, 'sessions': sessions, 'games': games}
 
         metadata = MultiTableMetadata()
         for table_name, table in data.items():
@@ -480,10 +458,7 @@ class TestHMASynthesizer:
         """
 
         # Loading the demo data
-        real_data, metadata = download_demo(
-            modality='multi_table',
-            dataset_name='fake_hotels'
-        )
+        real_data, metadata = download_demo(modality='multi_table', dataset_name='fake_hotels')
 
         # Creating a Synthesizer
         synthesizer = HMASynthesizer(metadata)
@@ -502,19 +477,14 @@ class TestHMASynthesizer:
             assert synthetic_data['guests'][column].isin(real_data['guests'][column]).sum() == 0
 
         # Evaluate Real vs Synthetic Data
-        quality_report = evaluate_quality(
-            real_data,
-            synthetic_data,
-            metadata,
-            verbose=False
-        )
+        quality_report = evaluate_quality(real_data, synthetic_data, metadata, verbose=False)
 
         column_plot = get_column_plot(
             real_data=real_data,
             synthetic_data=synthetic_data,
             column_name='has_rewards',
             table_name='guests',
-            metadata=metadata
+            metadata=metadata,
         )
 
         column_pair_plot = get_column_pair_plot(
@@ -522,7 +492,7 @@ class TestHMASynthesizer:
             synthetic_data=synthetic_data,
             column_names=['room_rate', 'room_type'],
             table_name='guests',
-            metadata=metadata
+            metadata=metadata,
         )
 
         # Assert
@@ -546,15 +516,13 @@ class TestHMASynthesizer:
         loaded_synthesizer.sample()
 
         # HMA Customization
-        custom_synthesizer = HMASynthesizer(
-            metadata
-        )
+        custom_synthesizer = HMASynthesizer(metadata)
 
         custom_synthesizer.set_table_parameters(
             table_name='hotels',
             table_parameters={
                 'default_distribution': 'truncnorm',
-            }
+            },
         )
 
         custom_synthesizer.fit(real_data)
@@ -565,7 +533,7 @@ class TestHMASynthesizer:
             'a',
             'b',
             'loc',
-            'scale'
+            'scale',
         ]
         assert learned_distributions['rating']['distribution'] == 'truncnorm'
 
@@ -578,9 +546,7 @@ class TestHMASynthesizer:
         # Setup
         data_folder = tmp_path / 'datasets'
         download_demo(
-            modality='multi_table',
-            dataset_name='fake_hotels',
-            output_folder_name=data_folder
+            modality='multi_table', dataset_name='fake_hotels', output_folder_name=data_folder
         )
 
         # Run - load CSVs
@@ -592,14 +558,8 @@ class TestHMASynthesizer:
         # Metadata
         metadata = MultiTableMetadata()
 
-        metadata.detect_table_from_dataframe(
-            table_name='guests',
-            data=datasets['guests']
-        )
-        metadata.detect_table_from_dataframe(
-            table_name='hotels',
-            data=datasets['hotels']
-        )
+        metadata.detect_table_from_dataframe(table_name='guests', data=datasets['guests'])
+        metadata.detect_table_from_dataframe(table_name='hotels', data=datasets['hotels'])
 
         # Assert - detected metadata correctly
         for table in metadata.tables:
@@ -610,25 +570,19 @@ class TestHMASynthesizer:
             table_name='guests',
             column_name='checkin_date',
             sdtype='datetime',
-            datetime_format='%d %b %Y'
+            datetime_format='%d %b %Y',
         )
         metadata.update_column(
             table_name='guests',
             column_name='checkout_date',
             sdtype='datetime',
-            datetime_format='%d %b %Y'
+            datetime_format='%d %b %Y',
         )
         metadata.update_column(
-            table_name='hotels',
-            column_name='hotel_id',
-            sdtype='id',
-            regex_format='HID_[0-9]{3,4}'
+            table_name='hotels', column_name='hotel_id', sdtype='id', regex_format='HID_[0-9]{3,4}'
         )
         metadata.update_column(
-            table_name='guests',
-            column_name='hotel_id',
-            sdtype='id',
-            regex_format='HID_[0-9]{3,4}'
+            table_name='guests', column_name='hotel_id', sdtype='id', regex_format='HID_[0-9]{3,4}'
         )
         metadata.update_column(
             table_name='hotels',
@@ -646,40 +600,25 @@ class TestHMASynthesizer:
             sdtype='categorical',
         )
         metadata.update_column(
-            table_name='guests',
-            column_name='guest_email',
-            sdtype='email',
-            pii=True
+            table_name='guests', column_name='guest_email', sdtype='email', pii=True
         )
         metadata.update_column(
-            table_name='guests',
-            column_name='billing_address',
-            sdtype='address',
-            pii=True
+            table_name='guests', column_name='billing_address', sdtype='address', pii=True
         )
         metadata.update_column(
             table_name='guests',
             column_name='credit_card_number',
             sdtype='credit_card_number',
-            pii=True
+            pii=True,
         )
-        metadata.set_primary_key(
-            table_name='hotels',
-            column_name='hotel_id'
-        )
-        metadata.set_primary_key(
-            table_name='guests',
-            column_name='guest_email'
-        )
-        metadata.add_alternate_keys(
-            table_name='guests',
-            column_names=['credit_card_number']
-        )
+        metadata.set_primary_key(table_name='hotels', column_name='hotel_id')
+        metadata.set_primary_key(table_name='guests', column_name='guest_email')
+        metadata.add_alternate_keys(table_name='guests', column_names=['credit_card_number'])
         metadata.add_relationship(
             parent_table_name='hotels',
             child_table_name='guests',
             parent_primary_key='hotel_id',
-            child_foreign_key='hotel_id'
+            child_foreign_key='hotel_id',
         )
 
         # Assert - check updated metadata
@@ -733,7 +672,7 @@ class TestHMASynthesizer:
             r'Preprocess Tables:',
             r'Learning relationships:',
             r"\(1/2\) Tables 'characters' and 'character_families' \('character_id'\):",
-            r"\(2/2\) Tables 'families' and 'character_families' \('family_id'\):"
+            r"\(2/2\) Tables 'families' and 'character_families' \('family_id'\):",
         ]
 
         # Run
@@ -750,15 +689,12 @@ class TestHMASynthesizer:
     def test_warning_message_too_many_cols(self, capsys):
         """Test that a warning appears if there are more than 1000 expected columns"""
         # Setup
-        (_, metadata) = download_demo(
-            modality='multi_table',
-            dataset_name='NBA_v1'
-        )
+        (_, metadata) = download_demo(modality='multi_table', dataset_name='NBA_v1')
 
         key_phrases = [
             r'PerformanceAlert:',
             r'large number of columns.',
-            r'contact us at info@sdv.dev for enterprise solutions.'
+            r'contact us at info@sdv.dev for enterprise solutions.',
         ]
 
         # Run
@@ -770,10 +706,7 @@ class TestHMASynthesizer:
         for pattern in key_phrases:
             match = re.search(pattern, captured.out + captured.err)
             assert match is not None
-        (_, small_metadata) = download_demo(
-            modality='multi_table',
-            dataset_name='trains_v1'
-        )
+        (_, small_metadata) = download_demo(modality='multi_table', dataset_name='trains_v1')
 
         # Run
         HMASynthesizer(small_metadata)
@@ -788,20 +721,23 @@ class TestHMASynthesizer:
     def test_hma_three_linear_nodes(self):
         """Test it works on a simple 'grandparent-parent-child' dataset."""
         # Setup
-        grandparent = pd.DataFrame(data={
-            'grandparent_ID': [0, 1, 2, 3, 4],
-            'data': ['0', '1', '2', '3', '4']
-        })
-        parent = pd.DataFrame(data={
-            'parent_ID': ['a', 'b', 'c', 'd', 'e'],
-            'grandparent_ID': [0, 0, 1, 1, 3],
-            'data': [True, False, False, False, True]
-        })
-        child = pd.DataFrame(data={
-            'child_ID': ['00', '01', '02', '03', '04'],
-            'parent_ID': ['b', 'b', 'a', 'e', 'e'],
-            'data': ['Yes', 'Yes', 'Maybe', 'No', 'No']
-        })
+        grandparent = pd.DataFrame(
+            data={'grandparent_ID': [0, 1, 2, 3, 4], 'data': ['0', '1', '2', '3', '4']}
+        )
+        parent = pd.DataFrame(
+            data={
+                'parent_ID': ['a', 'b', 'c', 'd', 'e'],
+                'grandparent_ID': [0, 0, 1, 1, 3],
+                'data': [True, False, False, False, True],
+            }
+        )
+        child = pd.DataFrame(
+            data={
+                'child_ID': ['00', '01', '02', '03', '04'],
+                'parent_ID': ['b', 'b', 'a', 'e', 'e'],
+                'data': ['Yes', 'Yes', 'Maybe', 'No', 'No'],
+            }
+        )
         data = {'grandparent': grandparent, 'parent': parent, 'child': child}
         metadata = MultiTableMetadata.load_from_dict({
             'tables': {
@@ -809,40 +745,40 @@ class TestHMASynthesizer:
                     'primary_key': 'grandparent_ID',
                     'columns': {
                         'grandparent_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
+                        'data': {'sdtype': 'categorical'},
+                    },
                 },
                 'parent': {
                     'primary_key': 'parent_ID',
                     'columns': {
                         'parent_ID': {'sdtype': 'id'},
                         'grandparent_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
+                        'data': {'sdtype': 'categorical'},
+                    },
                 },
                 'child': {
                     'primary_key': 'child_ID',
                     'columns': {
                         'child_ID': {'sdtype': 'id'},
                         'parent_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
-                }
+                        'data': {'sdtype': 'categorical'},
+                    },
+                },
             },
             'relationships': [
                 {
                     'parent_table_name': 'grandparent',
                     'parent_primary_key': 'grandparent_ID',
                     'child_table_name': 'parent',
-                    'child_foreign_key': 'grandparent_ID'
+                    'child_foreign_key': 'grandparent_ID',
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'parent_ID',
                     'child_table_name': 'child',
-                    'child_foreign_key': 'parent_ID'
-                }
-            ]
+                    'child_foreign_key': 'parent_ID',
+                },
+            ],
         })
         synthesizer = HMASynthesizer(metadata)
 
@@ -864,61 +800,61 @@ class TestHMASynthesizer:
     def test_hma_one_parent_two_children(self):
         """Test it works on a simple 'child-parent-child' dataset."""
         # Setup
-        parent = pd.DataFrame(data={
-            'parent_ID': [0, 1, 2, 3, 4],
-            'data': ['0', '1', '2', '3', '4']
-        })
-        child1 = pd.DataFrame(data={
-            'child_ID': ['a', 'b', 'c', 'd', 'e'],
-            'parent_ID': [0, 0, 1, 1, 3],
-            'data': [True, False, False, False, True]
-        })
-        child2 = pd.DataFrame(data={
-            'child_ID': ['00', '01', '02', '03', '04'],
-            'parent_ID': [0, 1, 2, 3, 4],
-            'data': ['Yes', 'Yes', 'Maybe', 'No', 'No']
-        })
+        parent = pd.DataFrame(
+            data={'parent_ID': [0, 1, 2, 3, 4], 'data': ['0', '1', '2', '3', '4']}
+        )
+        child1 = pd.DataFrame(
+            data={
+                'child_ID': ['a', 'b', 'c', 'd', 'e'],
+                'parent_ID': [0, 0, 1, 1, 3],
+                'data': [True, False, False, False, True],
+            }
+        )
+        child2 = pd.DataFrame(
+            data={
+                'child_ID': ['00', '01', '02', '03', '04'],
+                'parent_ID': [0, 1, 2, 3, 4],
+                'data': ['Yes', 'Yes', 'Maybe', 'No', 'No'],
+            }
+        )
         data = {'parent': parent, 'child1': child1, 'child2': child2}
         metadata = MultiTableMetadata.load_from_dict({
             'tables': {
                 'parent': {
                     'primary_key': 'parent_ID',
-                    'columns': {
-                        'parent_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
+                    'columns': {'parent_ID': {'sdtype': 'id'}, 'data': {'sdtype': 'categorical'}},
                 },
                 'child1': {
                     'primary_key': 'child_ID',
                     'columns': {
                         'child_ID': {'sdtype': 'id'},
                         'parent_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
+                        'data': {'sdtype': 'categorical'},
+                    },
                 },
                 'child2': {
                     'primary_key': 'child_ID',
                     'columns': {
                         'child_ID': {'sdtype': 'id'},
                         'parent_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
-                }
+                        'data': {'sdtype': 'categorical'},
+                    },
+                },
             },
             'relationships': [
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'parent_ID',
                     'child_table_name': 'child1',
-                    'child_foreign_key': 'parent_ID'
+                    'child_foreign_key': 'parent_ID',
                 },
                 {
                     'parent_table_name': 'parent',
                     'parent_primary_key': 'parent_ID',
                     'child_table_name': 'child2',
-                    'child_foreign_key': 'parent_ID'
+                    'child_foreign_key': 'parent_ID',
                 },
-            ]
+            ],
         })
         synthesizer = HMASynthesizer(metadata)
 
@@ -940,36 +876,30 @@ class TestHMASynthesizer:
     def test_hma_two_parents_one_child(self):
         """Test it works on a simple 'parent-child-parent' dataset."""
         # Setup
-        child = pd.DataFrame(data={
-            'child_ID': ['a', 'b', 'c', 'd', 'e'],
-            'parent_ID1': [0, 1, 2, 3, 3],
-            'parent_ID2': [0, 1, 2, 3, 4],
-            'data': ['0', '1', '2', '3', '4']
-        })
-        parent1 = pd.DataFrame(data={
-            'parent_ID1': [0, 1, 2, 3, 4],
-            'data': [True, False, False, False, True]
-        })
-        parent2 = pd.DataFrame(data={
-            'parent_ID2': [0, 1, 2, 3, 4],
-            'data': ['Yes', 'Yes', 'Maybe', 'No', 'No']
-        })
+        child = pd.DataFrame(
+            data={
+                'child_ID': ['a', 'b', 'c', 'd', 'e'],
+                'parent_ID1': [0, 1, 2, 3, 3],
+                'parent_ID2': [0, 1, 2, 3, 4],
+                'data': ['0', '1', '2', '3', '4'],
+            }
+        )
+        parent1 = pd.DataFrame(
+            data={'parent_ID1': [0, 1, 2, 3, 4], 'data': [True, False, False, False, True]}
+        )
+        parent2 = pd.DataFrame(
+            data={'parent_ID2': [0, 1, 2, 3, 4], 'data': ['Yes', 'Yes', 'Maybe', 'No', 'No']}
+        )
         data = {'parent1': parent1, 'child': child, 'parent2': parent2}
         metadata = MultiTableMetadata.load_from_dict({
             'tables': {
                 'parent1': {
                     'primary_key': 'parent_ID1',
-                    'columns': {
-                        'parent_ID1': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
+                    'columns': {'parent_ID1': {'sdtype': 'id'}, 'data': {'sdtype': 'categorical'}},
                 },
                 'parent2': {
                     'primary_key': 'parent_ID2',
-                    'columns': {
-                        'parent_ID2': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
+                    'columns': {'parent_ID2': {'sdtype': 'id'}, 'data': {'sdtype': 'categorical'}},
                 },
                 'child': {
                     'primary_key': 'child_ID',
@@ -977,8 +907,8 @@ class TestHMASynthesizer:
                         'child_ID': {'sdtype': 'id'},
                         'parent_ID1': {'sdtype': 'id'},
                         'parent_ID2': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
+                        'data': {'sdtype': 'categorical'},
+                    },
                 },
             },
             'relationships': [
@@ -986,15 +916,15 @@ class TestHMASynthesizer:
                     'parent_table_name': 'parent1',
                     'parent_primary_key': 'parent_ID1',
                     'child_table_name': 'child',
-                    'child_foreign_key': 'parent_ID1'
+                    'child_foreign_key': 'parent_ID1',
                 },
                 {
                     'parent_table_name': 'parent2',
                     'parent_primary_key': 'parent_ID2',
                     'child_table_name': 'child',
-                    'child_foreign_key': 'parent_ID2'
+                    'child_foreign_key': 'parent_ID2',
                 },
-            ]
+            ],
         })
         synthesizer = HMASynthesizer(metadata)
 
@@ -1024,68 +954,66 @@ class TestHMASynthesizer:
            gc
         """
         # Setup
-        root1 = pd.DataFrame(data={
-            'id': [0, 1, 2, 3, 4],
-            'data': [True, False, False, False, True]
-        })
-        root2 = pd.DataFrame(data={
-            'id': [0, 1, 2, 3, 4],
-            'data': [True, False, False, False, True]
-        })
-        child1 = pd.DataFrame(data={
-            'child_ID': ['a', 'b', 'c', 'd', 'e'],
-            'root1_ID': [0, 1, 2, 3, 3],
-            'data': [True, False, False, False, True]
-        })
-        child2 = pd.DataFrame(data={
-            'child_ID': ['a', 'b', 'c', 'd', 'e'],
-            'root2_ID': [0, 1, 2, 3, 4],
-            'data': [True, False, False, False, True]
-        })
-        grandchild = pd.DataFrame(data={
-            'grandchild_ID': ['a', 'b', 'c', 'd', 'e'],
-            'child1_ID': ['a', 'b', 'c', 'd', 'e'],
-            'child2_ID': ['a', 'b', 'c', 'd', 'e'],
-            'data': [True, False, False, False, True]
-        })
+        root1 = pd.DataFrame(
+            data={'id': [0, 1, 2, 3, 4], 'data': [True, False, False, False, True]}
+        )
+        root2 = pd.DataFrame(
+            data={'id': [0, 1, 2, 3, 4], 'data': [True, False, False, False, True]}
+        )
+        child1 = pd.DataFrame(
+            data={
+                'child_ID': ['a', 'b', 'c', 'd', 'e'],
+                'root1_ID': [0, 1, 2, 3, 3],
+                'data': [True, False, False, False, True],
+            }
+        )
+        child2 = pd.DataFrame(
+            data={
+                'child_ID': ['a', 'b', 'c', 'd', 'e'],
+                'root2_ID': [0, 1, 2, 3, 4],
+                'data': [True, False, False, False, True],
+            }
+        )
+        grandchild = pd.DataFrame(
+            data={
+                'grandchild_ID': ['a', 'b', 'c', 'd', 'e'],
+                'child1_ID': ['a', 'b', 'c', 'd', 'e'],
+                'child2_ID': ['a', 'b', 'c', 'd', 'e'],
+                'data': [True, False, False, False, True],
+            }
+        )
         data = {
             'root1': root1,
             'root2': root2,
             'child1': child1,
             'child2': child2,
-            'grandchild': grandchild
+            'grandchild': grandchild,
         }
         metadata = MultiTableMetadata.load_from_dict({
             'tables': {
                 'root1': {
                     'primary_key': 'id',
-                    'columns': {
-                        'id': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
+                    'columns': {'id': {'sdtype': 'id'}, 'data': {'sdtype': 'categorical'}},
                 },
                 'root2': {
                     'primary_key': 'id',
-                    'columns': {
-                        'id': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
+                    'columns': {'id': {'sdtype': 'id'}, 'data': {'sdtype': 'categorical'}},
                 },
                 'child1': {
                     'primary_key': 'child_ID',
                     'columns': {
                         'child_ID': {'sdtype': 'id'},
                         'root1_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
+                        'data': {'sdtype': 'categorical'},
+                    },
                 },
                 'child2': {
                     'primary_key': 'child_ID',
                     'columns': {
                         'child_ID': {'sdtype': 'id'},
                         'root2_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
+                        'data': {'sdtype': 'categorical'},
+                    },
                 },
                 'grandchild': {
                     'primary_key': 'grandchild_ID',
@@ -1093,8 +1021,8 @@ class TestHMASynthesizer:
                         'grandchild_ID': {'sdtype': 'id'},
                         'child1_ID': {'sdtype': 'id'},
                         'child2_ID': {'sdtype': 'id'},
-                        'data': {'sdtype': 'categorical'}
-                    }
+                        'data': {'sdtype': 'categorical'},
+                    },
                 },
             },
             'relationships': [
@@ -1102,27 +1030,27 @@ class TestHMASynthesizer:
                     'parent_table_name': 'root1',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child1',
-                    'child_foreign_key': 'root1_ID'
+                    'child_foreign_key': 'root1_ID',
                 },
                 {
                     'parent_table_name': 'root2',
                     'parent_primary_key': 'id',
                     'child_table_name': 'child2',
-                    'child_foreign_key': 'root2_ID'
+                    'child_foreign_key': 'root2_ID',
                 },
                 {
                     'parent_table_name': 'child1',
                     'parent_primary_key': 'child_ID',
                     'child_table_name': 'grandchild',
-                    'child_foreign_key': 'child1_ID'
+                    'child_foreign_key': 'child1_ID',
                 },
                 {
                     'parent_table_name': 'child2',
                     'parent_primary_key': 'child_ID',
                     'child_table_name': 'grandchild',
-                    'child_foreign_key': 'child2_ID'
+                    'child_foreign_key': 'child2_ID',
                 },
-            ]
+            ],
         })
         synthesizer = HMASynthesizer(metadata)
 
@@ -1150,11 +1078,7 @@ class TestHMASynthesizer:
         # Run
         synthesizer.set_table_parameters(
             table_name='guests',
-            table_parameters={
-                'numerical_distributions': {
-                    'amenities_fee': 'beta'
-                }
-            }
+            table_parameters={'numerical_distributions': {'amenities_fee': 'beta'}},
         )
         synthesizer.fit(data)
         samples = synthesizer.sample(scale=1)
@@ -1167,10 +1091,7 @@ class TestHMASynthesizer:
     def test_get_learned_distributions_error_msg(self):
         """Ensure the error message is correct when calling ``get_learned_distributions``."""
         # Setup
-        data, metadata = download_demo(
-            modality='multi_table',
-            dataset_name='fake_hotels'
-        )
+        data, metadata = download_demo(modality='multi_table', dataset_name='fake_hotels')
         synth = HMASynthesizer(metadata)
 
         # Run
@@ -1193,8 +1114,7 @@ class TestHMASynthesizer:
 
         sampled_data = {}
         sampled_data['characters'] = hmasynthesizer._sample_rows(
-            hmasynthesizer._table_synthesizers['characters'],
-            len(data['characters'])
+            hmasynthesizer._table_synthesizers['characters'], len(data['characters'])
         )
         hmasynthesizer._sample_children('characters', sampled_data)
 
@@ -1203,7 +1123,7 @@ class TestHMASynthesizer:
             sampled_data['character_families'],
             sampled_data['characters'].set_index('character_id'),
             'character_families',
-            'character_id'
+            'character_id',
         )
 
         # Assert
@@ -1222,7 +1142,7 @@ class TestHMASynthesizer:
             '__sessions__user_id__a': -1,
             '__sessions__user_id__b': 1000,
             '__sessions__user_id__loc': 0.5,
-            '__sessions__user_id__scale': -0.25
+            '__sessions__user_id__scale': -0.25,
         })
         instance = HMASynthesizer(MultiTableMetadata())
         instance.extended_columns = {
@@ -1231,11 +1151,11 @@ class TestHMASynthesizer:
                 '__sessions__user_id__a': FloatFormatter(enforce_min_max_values=True),
                 '__sessions__user_id__b': FloatFormatter(enforce_min_max_values=True),
                 '__sessions__user_id__loc': FloatFormatter(enforce_min_max_values=True),
-                '__sessions__user_id__scale': FloatFormatter(enforce_min_max_values=True)
+                '__sessions__user_id__scale': FloatFormatter(enforce_min_max_values=True),
             }
         }
         for col, float_formatter in instance.extended_columns['sessions'].items():
-            float_formatter.fit(pd.DataFrame({col: [0., 100.]}), col)
+            float_formatter.fit(pd.DataFrame({col: [0.0, 100.0]}), col)
 
         instance._max_child_rows = {'__sessions__user_id__num_rows': 10}
 
@@ -1243,13 +1163,7 @@ class TestHMASynthesizer:
         result = instance._extract_parameters(parent_row, 'sessions', 'user_id')
 
         # Assert
-        expected_result = {
-            'a': 0.,
-            'b': 100.,
-            'loc': 0.5,
-            'num_rows': 10.,
-            'scale': 0.
-        }
+        expected_result = {'a': 0.0, 'b': 100.0, 'loc': 0.5, 'num_rows': 10.0, 'scale': 0.0}
         assert result == expected_result
 
     def test__recreate_child_synthesizer_with_default_parameters(self):
@@ -1261,31 +1175,23 @@ class TestHMASynthesizer:
             f'{prefix}univariates__brand__a': 100,
             f'{prefix}univariates__brand__b': 10,
             f'{prefix}univariates__brand__loc': 0.5,
-            f'{prefix}univariates__brand__scale': -0.25
+            f'{prefix}univariates__brand__scale': -0.25,
         })
         metadata = MultiTableMetadata.load_from_dict({
             'tables': {
-                'users': {
-                    'columns': {
-                        'user_id': {'sdtype': 'id'}
-                    },
-                    'primary_key': 'user_id'
-                },
+                'users': {'columns': {'user_id': {'sdtype': 'id'}}, 'primary_key': 'user_id'},
                 'sessions': {
-                    'columns': {
-                        'user_id': {'sdtype': 'id'},
-                        'brand': {'sdtype': 'categorical'}
-                    }
-                }
+                    'columns': {'user_id': {'sdtype': 'id'}, 'brand': {'sdtype': 'categorical'}}
+                },
             },
             'relationships': [
                 {
                     'parent_table_name': 'users',
                     'child_table_name': 'sessions',
                     'parent_primary_key': 'user_id',
-                    'child_foreign_key': 'user_id'
+                    'child_foreign_key': 'user_id',
                 }
-            ]
+            ],
         })
         instance = HMASynthesizer(metadata)
         instance.set_table_parameters('sessions', {'default_distribution': 'truncnorm'})
@@ -1296,18 +1202,18 @@ class TestHMASynthesizer:
                 f'{prefix}univariates__brand__a': FloatFormatter(enforce_min_max_values=True),
                 f'{prefix}univariates__brand__b': FloatFormatter(enforce_min_max_values=True),
                 f'{prefix}univariates__brand__loc': FloatFormatter(enforce_min_max_values=True),
-                f'{prefix}univariates__brand__scale': FloatFormatter(enforce_min_max_values=True)
+                f'{prefix}univariates__brand__scale': FloatFormatter(enforce_min_max_values=True),
             }
         }
         for col, float_formatter in instance.extended_columns['sessions'].items():
-            float_formatter.fit(pd.DataFrame({col: [0., 100.]}), col)
+            float_formatter.fit(pd.DataFrame({col: [0.0, 100.0]}), col)
 
         instance._default_parameters = {
             'sessions': {
                 'univariates__brand__a': 5,
                 'univariates__brand__b': 84,
                 'univariates__brand__loc': 1,
-                'univariates__brand__scale': 1
+                'univariates__brand__scale': 1,
             }
         }
 
@@ -1320,7 +1226,7 @@ class TestHMASynthesizer:
             'univariates__brand__b': 84,
             'univariates__brand__loc': 1,
             'univariates__brand__scale': 1,
-            'num_rows': 10
+            'num_rows': 10,
         }
         assert child_synthesizer._get_parameters() == expected_result
 
@@ -1367,7 +1273,8 @@ class TestHMASynthesizer:
         # Run 3
         instance = HMASynthesizer(metadata_detect)
         metadata_detect.update_column(
-            table_name='characters', column_name='age', sdtype='categorical')
+            table_name='characters', column_name='age', sdtype='categorical'
+        )
         file_name = tmp_path / 'multitable_2.json'
         metadata_detect.save_to_json(file_name)
         with warnings.catch_warnings(record=True) as captured_warnings:
@@ -1429,36 +1336,31 @@ class TestHMASynthesizer:
             parent_table_name='parent_table',
             child_table_name='child_table1',
             parent_primary_key='id',
-            child_foreign_key='fk'
+            child_foreign_key='fk',
         )
 
         metadata.add_relationship(
             parent_table_name='parent_table',
             child_table_name='child_table2',
             parent_primary_key='id',
-            child_foreign_key='fk1'
+            child_foreign_key='fk1',
         )
 
         metadata.add_relationship(
             parent_table_name='parent_table',
             child_table_name='child_table2',
             parent_primary_key='id',
-            child_foreign_key='fk2'
+            child_foreign_key='fk2',
         )
 
         data = {
-            'parent_table': pd.DataFrame({
-                'id': [1, 2, 3]
-            }),
-            'child_table1': pd.DataFrame({
-                'id': [1, 2, 3],
-                'fk': [1, 2, np.nan]
-            }),
+            'parent_table': pd.DataFrame({'id': [1, 2, 3]}),
+            'child_table1': pd.DataFrame({'id': [1, 2, 3], 'fk': [1, 2, np.nan]}),
             'child_table2': pd.DataFrame({
                 'id': [1, 2, 3],
                 'fk1': [1, 2, np.nan],
-                'fk2': [1, 2, np.nan]
-            })
+                'fk2': [1, 2, np.nan],
+            }),
         }
 
         synthesizer = HMASynthesizer(metadata)
@@ -1481,22 +1383,22 @@ class TestHMASynthesizer:
 
 
 parametrization = [
-    ('update_column', {
-        'table_name': 'departure', 'column_name': 'city', 'sdtype': 'categorical'
-    }),
+    ('update_column', {'table_name': 'departure', 'column_name': 'city', 'sdtype': 'categorical'}),
     ('set_primary_key', {'table_name': 'arrival', 'column_name': 'id_flight'}),
     (
-        'add_column_relationship', {
+        'add_column_relationship',
+        {
             'table_name': 'departure',
             'relationship_type': 'address',
-            'column_names': ['city', 'country']
-        }
+            'column_names': ['city', 'country'],
+        },
     ),
     ('add_alternate_keys', {'table_name': 'departure', 'column_names': ['city', 'country']}),
     ('set_sequence_key', {'table_name': 'departure', 'column_name': 'city'}),
-    ('add_column', {
-        'table_name': 'departure', 'column_name': 'postal_code', 'sdtype': 'postal_code'
-    }),
+    (
+        'add_column',
+        {'table_name': 'departure', 'column_name': 'postal_code', 'sdtype': 'postal_code'},
+    ),
 ]
 
 
@@ -1514,7 +1416,7 @@ def test_metadata_updated_warning(method, kwargs):
                     'id': {'sdtype': 'id'},
                     'date': {'sdtype': 'datetime'},
                     'city': {'sdtype': 'city'},
-                    'country': {'sdtype': 'country_code'}
+                    'country': {'sdtype': 'country_code'},
                 },
             },
             'arrival': {
@@ -1524,7 +1426,7 @@ def test_metadata_updated_warning(method, kwargs):
                     'date': {'sdtype': 'datetime'},
                     'city': {'sdtype': 'city'},
                     'country': {'sdtype': 'country'},
-                    'id_flight': {'sdtype': 'id'}
+                    'id_flight': {'sdtype': 'id'},
                 },
             },
         },
@@ -1533,9 +1435,9 @@ def test_metadata_updated_warning(method, kwargs):
                 'parent_table_name': 'departure',
                 'parent_primary_key': 'id',
                 'child_table_name': 'arrival',
-                'child_foreign_key': 'id'
+                'child_foreign_key': 'id',
             }
-        ]
+        ],
     })
     expected_message = re.escape(
         "We strongly recommend saving the metadata using 'save_to_json' for replicability"
@@ -1564,7 +1466,7 @@ def test_save_and_load_with_downgraded_version(tmp_path):
                     'id': {'sdtype': 'id'},
                     'date': {'sdtype': 'datetime'},
                     'city': {'sdtype': 'city'},
-                    'country': {'sdtype': 'country'}
+                    'country': {'sdtype': 'country'},
                 },
             },
             'arrival': {
@@ -1574,7 +1476,7 @@ def test_save_and_load_with_downgraded_version(tmp_path):
                     'date': {'sdtype': 'datetime'},
                     'city': {'sdtype': 'city'},
                     'country': {'sdtype': 'country'},
-                    'id_flight': {'sdtype': 'id'}
+                    'id_flight': {'sdtype': 'id'},
                 },
             },
         },
@@ -1583,9 +1485,9 @@ def test_save_and_load_with_downgraded_version(tmp_path):
                 'parent_table_name': 'departure',
                 'parent_primary_key': 'id',
                 'child_table_name': 'arrival',
-                'child_foreign_key': 'id'
+                'child_foreign_key': 'id',
             }
-        ]
+        ],
     })
 
     instance = HMASynthesizer(metadata)
@@ -1615,7 +1517,7 @@ def test_fit_raises_version_error():
                     'id': {'sdtype': 'id'},
                     'date': {'sdtype': 'datetime'},
                     'city': {'sdtype': 'city'},
-                    'country': {'sdtype': 'country'}
+                    'country': {'sdtype': 'country'},
                 },
             },
             'arrival': {
@@ -1625,7 +1527,7 @@ def test_fit_raises_version_error():
                     'date': {'sdtype': 'datetime'},
                     'city': {'sdtype': 'city'},
                     'country': {'sdtype': 'country'},
-                    'id_flight': {'sdtype': 'id'}
+                    'id_flight': {'sdtype': 'id'},
                 },
             },
         },
@@ -1634,9 +1536,9 @@ def test_fit_raises_version_error():
                 'parent_table_name': 'departure',
                 'parent_primary_key': 'id',
                 'child_table_name': 'arrival',
-                'child_foreign_key': 'id'
+                'child_foreign_key': 'id',
             }
-        ]
+        ],
     })
 
     instance = HMASynthesizer(metadata)
@@ -1671,7 +1573,7 @@ def test_hma_relationship_validity():
 def test_hma_not_fit_raises_sampling_error():
     """Test that ``HMA`` will raise a ``SamplingError`` if it wasn't fit."""
     # Setup
-    data, metadata = download_demo('multi_table', 'Dunur_v1')
+    _data, metadata = download_demo('multi_table', 'Dunur_v1')
     synthesizer = HMASynthesizer(metadata)
 
     # Run and Assert
@@ -1712,7 +1614,7 @@ def test_fit_and_sample_numerical_col_names():
             'parent_table_name': '0',
             'parent_primary_key': 1,
             'child_table_name': '1',
-            'child_foreign_key': 2
+            'child_foreign_key': 2,
         }
     ]
     metadata = MultiTableMetadata.load_from_dict(metadata_dict)
@@ -1741,10 +1643,7 @@ def test_detect_from_dataframe_numerical_col():
         2: [2, 3, 4],
         'categorical_col': ['a', 'b', 'a'],
     })
-    child_data = pd.DataFrame({
-        3: [1000, 1001, 1000],
-        4: [1, 2, 3]
-    })
+    child_data = pd.DataFrame({3: [1000, 1001, 1000], 4: [1, 2, 3]})
     data = {
         'parent_data': parent_data,
         'child_data': child_data,
@@ -1761,7 +1660,7 @@ def test_detect_from_dataframe_numerical_col():
         parent_primary_key='1',
         parent_table_name='parent_data',
         child_foreign_key='3',
-        child_table_name='child_data'
+        child_table_name='child_data',
     )
 
     test_metadata = MultiTableMetadata()
@@ -1775,7 +1674,7 @@ def test_detect_from_dataframe_numerical_col():
         parent_primary_key='1',
         parent_table_name='parent_data',
         child_foreign_key='3',
-        child_table_name='child_data'
+        child_table_name='child_data',
     )
 
     # Run
@@ -1799,10 +1698,7 @@ def test_table_name_logging(caplog):
         'parent_id': [1, 2, 3, 4, 5, 6],
         'col': ['a', 'b', 'a', 'b', 'a', 'b'],
     })
-    child_data = pd.DataFrame({
-        'id': [1, 2, 3, 4, 5, 6],
-        'parent_id': [1, 2, 3, 4, 5, 6]
-    })
+    child_data = pd.DataFrame({'id': [1, 2, 3, 4, 5, 6], 'parent_id': [1, 2, 3, 4, 5, 6]})
     data = {
         'parent_data': parent_data,
         'child_data': child_data,
@@ -1844,10 +1740,7 @@ def test_disjointed_tables():
 def test_small_sample():
     """Test that the sample function still works with a small scale"""
     # Setup
-    data, metadata = download_demo(
-        modality='multi_table',
-        dataset_name='fake_hotels'
-    )
+    data, metadata = download_demo(modality='multi_table', dataset_name='fake_hotels')
     synthesizer = HMASynthesizer(metadata)
     synthesizer.fit(data)
 
@@ -1859,7 +1752,7 @@ def test_small_sample():
     with pytest.warns(Warning, match=warn_msg):
         synthetic_data = synthesizer.sample(scale=0.01)
 
-    assert (len(synthetic_data['hotels']) == 1)
-    assert (len(synthetic_data['guests']) >= len(data['guests']) * .01)
+    assert len(synthetic_data['hotels']) == 1
+    assert len(synthetic_data['guests']) >= len(data['guests']) * 0.01
     assert synthetic_data['hotels'].columns.tolist() == data['hotels'].columns.tolist()
     assert synthetic_data['guests'].columns.tolist() == data['guests'].columns.tolist()

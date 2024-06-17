@@ -60,7 +60,13 @@ def load_logfile_dataframe(logfile):
             Path to the SDV log CSV file.
     """
     column_names = [
-        'LEVEL', 'EVENT', 'TIMESTAMP', 'SYNTHESIZER CLASS NAME', 'SYNTHESIZER ID',
-        'TOTAL NUMBER OF TABLES', 'TOTAL NUMBER OF ROWS', 'TOTAL NUMBER OF COLUMNS'
+        'LEVEL',
+        'EVENT',
+        'TIMESTAMP',
+        'SYNTHESIZER CLASS NAME',
+        'SYNTHESIZER ID',
+        'TOTAL NUMBER OF TABLES',
+        'TOTAL NUMBER OF ROWS',
+        'TOTAL NUMBER OF COLUMNS',
     ]
     return pd.read_csv(logfile, names=column_names)

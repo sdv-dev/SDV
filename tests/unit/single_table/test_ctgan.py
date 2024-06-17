@@ -17,7 +17,7 @@ def test__validate_no_category_dtype():
     data = pd.DataFrame({
         'category1': pd.Categorical(['a', 'a', 'b']),
         'value': [0, 1, 2],
-        'category2': pd.Categorical([0, 1, 2])
+        'category2': pd.Categorical([0, 1, 2]),
     })
 
     # Run and Assert
@@ -30,7 +30,6 @@ def test__validate_no_category_dtype():
 
 
 class TestCTGANSynthesizer:
-
     def test___init__(self):
         """Test creating an instance of ``CTGANSynthesizer``."""
         # Setup
@@ -150,7 +149,7 @@ class TestCTGANSynthesizer:
             'verbose': False,
             'epochs': 300,
             'pac': 10,
-            'cuda': True
+            'cuda': True,
         }
 
     def test__estimate_num_columns(self):
@@ -194,7 +193,7 @@ class TestCTGANSynthesizer:
         instance.preprocess(data)
 
         # Assert
-        out, err = capfd.readouterr()
+        out, _err = capfd.readouterr()
         assert out == (
             'PerformanceAlert: Using the CTGANSynthesizer on this data is not recommended. '
             'To model this data, CTGAN will generate a large number of columns.'
@@ -224,7 +223,7 @@ class TestCTGANSynthesizer:
         instance.preprocess(data)
 
         # Assert
-        out, err = capfd.readouterr()
+        out, _err = capfd.readouterr()
         assert out == ''
 
     @patch('sdv.single_table.ctgan.CTGAN')
@@ -248,9 +247,7 @@ class TestCTGANSynthesizer:
         # Assert
         mock_category_validate.assert_called_once_with(processed_data)
         mock_detect_discrete_columns.assert_called_once_with(
-            metadata,
-            processed_data,
-            instance._data_processor._hyper_transformer.field_transformers
+            metadata, processed_data, instance._data_processor._hyper_transformer.field_transformers
         )
         mock_ctgan.assert_called_once_with(
             batch_size=500,
@@ -271,18 +268,14 @@ class TestCTGANSynthesizer:
 
         assert instance._model == mock_ctgan.return_value
         instance._model.fit.assert_called_once_with(
-            processed_data,
-            discrete_columns=mock_detect_discrete_columns.return_value
+            processed_data, discrete_columns=mock_detect_discrete_columns.return_value
         )
 
     def test_get_loss_values(self):
         """Test the ``get_loss_values`` method from ``CTGANSynthesizer."""
         # Setup
         mock_model = Mock()
-        loss_values = pd.DataFrame({
-            'Epoch': [0, 1, 2],
-            'Loss': [0.8, 0.6, 0.5]
-        })
+        loss_values = pd.DataFrame({'Epoch': [0, 1, 2], 'Loss': [0.8, 0.6, 0.5]})
         mock_model.loss_values = loss_values
         metadata = SingleTableMetadata()
         instance = CTGANSynthesizer(metadata)
@@ -318,7 +311,7 @@ class TestCTGANSynthesizer:
         loss_values = pd.DataFrame({
             'Epoch': [0, 1, 2],
             'Generator Loss': [mock_loss_value, mock_loss_value, mock_loss_value],
-            'Discriminator Loss': [mock_loss_value, mock_loss_value, mock_loss_value]
+            'Discriminator Loss': [mock_loss_value, mock_loss_value, mock_loss_value],
         })
         mock_model.loss_values = loss_values
         instance._model = mock_model
@@ -327,16 +320,15 @@ class TestCTGANSynthesizer:
         # Run
         instance.get_loss_values_plot()
         fig = mock_line_plot.call_args[1]
-        assert (fig['x'] == 'Epoch')
-        assert (fig['y'] == ['Generator Loss', 'Discriminator Loss'])
-        assert (fig['color_discrete_map'] == {
+        assert fig['x'] == 'Epoch'
+        assert fig['y'] == ['Generator Loss', 'Discriminator Loss']
+        assert fig['color_discrete_map'] == {
             'Generator Loss': visualization.PlotConfig.DATACEBO_DARK,
-            'Discriminator Loss': visualization.PlotConfig.DATACEBO_GREEN
-        })
+            'Discriminator Loss': visualization.PlotConfig.DATACEBO_GREEN,
+        }
 
 
 class TestTVAESynthesizer:
-
     def test___init__(self):
         """Test creating an instance of ``TVAESynthesizer``."""
         # Setup
@@ -430,7 +422,7 @@ class TestTVAESynthesizer:
             'verbose': False,
             'epochs': 300,
             'loss_factor': 2,
-            'cuda': True
+            'cuda': True,
         }
 
     @patch('sdv.single_table.ctgan.TVAE')
@@ -454,9 +446,7 @@ class TestTVAESynthesizer:
         # Assert
         mock_category_validate.assert_called_once_with(processed_data)
         mock_detect_discrete_columns.assert_called_once_with(
-            metadata,
-            processed_data,
-            instance._data_processor._hyper_transformer.field_transformers
+            metadata, processed_data, instance._data_processor._hyper_transformer.field_transformers
         )
         mock_tvae.assert_called_once_with(
             batch_size=500,
@@ -472,18 +462,14 @@ class TestTVAESynthesizer:
 
         assert instance._model == mock_tvae.return_value
         instance._model.fit.assert_called_once_with(
-            processed_data,
-            discrete_columns=mock_detect_discrete_columns.return_value
+            processed_data, discrete_columns=mock_detect_discrete_columns.return_value
         )
 
     def test_get_loss_values(self):
         """Test the ``get_loss_values`` method from ``TVAESynthesizer."""
         # Setup
         mock_model = Mock()
-        loss_values = pd.DataFrame({
-            'Epoch': [0, 1, 2],
-            'Loss': [0.8, 0.6, 0.5]
-        })
+        loss_values = pd.DataFrame({'Epoch': [0, 1, 2], 'Loss': [0.8, 0.6, 0.5]})
         mock_model.loss_values = loss_values
         metadata = SingleTableMetadata()
         instance = TVAESynthesizer(metadata)

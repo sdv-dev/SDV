@@ -1,4 +1,5 @@
 """Wrapper around CTGAN model."""
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -74,11 +75,12 @@ class LossValuesMixin:
 
         # Create a pretty chart using Plotly Express
         fig = px.line(
-            loss_df, x='Epoch',
+            loss_df,
+            x='Epoch',
             y=['Generator Loss', 'Discriminator Loss'],
             color_discrete_map={
                 'Generator Loss': visualization.PlotConfig.DATACEBO_DARK,
-                'Discriminator Loss': visualization.PlotConfig.DATACEBO_GREEN
+                'Discriminator Loss': visualization.PlotConfig.DATACEBO_GREEN,
             },
         )
         fig.update_layout(
@@ -86,7 +88,7 @@ class LossValuesMixin:
             legend_title_text='',
             legend_orientation='v',
             plot_bgcolor=visualization.PlotConfig.BACKGROUND_COLOR,
-            font={'size': visualization.PlotConfig.FONT_SIZE}
+            font={'size': visualization.PlotConfig.FONT_SIZE},
         )
         fig.update_layout(title=title, xaxis_title='Epoch', yaxis_title='Loss')
         return fig
@@ -145,18 +147,29 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             If ``False``, do not use cuda at all.
     """
 
-    _model_sdtype_transformers = {
-        'categorical': None,
-        'boolean': None
-    }
+    _model_sdtype_transformers = {'categorical': None, 'boolean': None}
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
-                 locales=['en_US'], embedding_dim=128, generator_dim=(256, 256),
-                 discriminator_dim=(256, 256), generator_lr=2e-4, generator_decay=1e-6,
-                 discriminator_lr=2e-4, discriminator_decay=1e-6, batch_size=500,
-                 discriminator_steps=1, log_frequency=True, verbose=False, epochs=300,
-                 pac=10, cuda=True):
-
+    def __init__(
+        self,
+        metadata,
+        enforce_min_max_values=True,
+        enforce_rounding=True,
+        locales=['en_US'],
+        embedding_dim=128,
+        generator_dim=(256, 256),
+        discriminator_dim=(256, 256),
+        generator_lr=2e-4,
+        generator_decay=1e-6,
+        discriminator_lr=2e-4,
+        discriminator_decay=1e-6,
+        batch_size=500,
+        discriminator_steps=1,
+        log_frequency=True,
+        verbose=False,
+        epochs=300,
+        pac=10,
+        cuda=True,
+    ):
         super().__init__(
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,
@@ -193,7 +206,7 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             'verbose': verbose,
             'epochs': epochs,
             'pac': pac,
-            'cuda': cuda
+            'cuda': cuda,
         }
 
     def _estimate_num_columns(self, data):
@@ -271,9 +284,7 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
 
         transformers = self._data_processor._hyper_transformer.field_transformers
         discrete_columns = detect_discrete_columns(
-            self.get_metadata(),
-            processed_data,
-            transformers
+            self.get_metadata(), processed_data, transformers
         )
         self._model = CTGAN(**self._model_kwargs)
         self._model.fit(processed_data, discrete_columns=discrete_columns)
@@ -333,16 +344,23 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             If ``False``, do not use cuda at all.
     """
 
-    _model_sdtype_transformers = {
-        'categorical': None,
-        'boolean': None
-    }
+    _model_sdtype_transformers = {'categorical': None, 'boolean': None}
 
-    def __init__(self, metadata, enforce_min_max_values=True, enforce_rounding=True,
-                 embedding_dim=128, compress_dims=(128, 128), decompress_dims=(128, 128),
-                 l2scale=1e-5, batch_size=500, verbose=False, epochs=300, loss_factor=2,
-                 cuda=True):
-
+    def __init__(
+        self,
+        metadata,
+        enforce_min_max_values=True,
+        enforce_rounding=True,
+        embedding_dim=128,
+        compress_dims=(128, 128),
+        decompress_dims=(128, 128),
+        l2scale=1e-5,
+        batch_size=500,
+        verbose=False,
+        epochs=300,
+        loss_factor=2,
+        cuda=True,
+    ):
         super().__init__(
             metadata=metadata,
             enforce_min_max_values=enforce_min_max_values,
@@ -367,7 +385,7 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             'verbose': verbose,
             'epochs': epochs,
             'loss_factor': loss_factor,
-            'cuda': cuda
+            'cuda': cuda,
         }
 
     def _fit(self, processed_data):
@@ -381,9 +399,7 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
 
         transformers = self._data_processor._hyper_transformer.field_transformers
         discrete_columns = detect_discrete_columns(
-            self.get_metadata(),
-            processed_data,
-            transformers
+            self.get_metadata(), processed_data, transformers
         )
         self._model = TVAE(**self._model_kwargs)
         self._model.fit(processed_data, discrete_columns=discrete_columns)

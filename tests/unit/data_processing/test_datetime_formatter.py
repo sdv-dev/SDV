@@ -4,7 +4,6 @@ from sdv.data_processing.datetime_formatter import DatetimeFormatter
 
 
 class TestDatetimeFormatter:
-
     def test___init__(self):
         """Test ``__init__`` attributes by default."""
         # Run
@@ -59,8 +58,7 @@ class TestDatetimeFormatter:
 
         # Assert
         pd.testing.assert_series_equal(
-            result,
-            pd.Series(['15-02-2021', '16-05-2022', '11-04-2023'])
+            result, pd.Series(['15-02-2021', '16-05-2022', '11-04-2023'])
         )
 
     def test_format_datetime_does_not_match_format(self):
@@ -73,7 +71,7 @@ class TestDatetimeFormatter:
             '16 Sep 2022 23:03:56',
             '26 Aug 2022 17:39:17',
             '26 Aug 2022 21:21:35',
-            '29 Sep 2022 11:13:11'
+            '29 Sep 2022 11:13:11',
         ])
 
         # Run
@@ -85,6 +83,6 @@ class TestDatetimeFormatter:
             '20220916230356000000',
             '20220826173917000000',
             '20220826212135000000',
-            '20220929111311000000'
+            '20220929111311000000',
         ])
         pd.testing.assert_series_equal(result, expected)

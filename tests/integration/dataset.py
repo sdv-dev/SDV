@@ -4,15 +4,8 @@ from sdv import Metadata
 
 
 def load_multi_foreign_key():
-    parent = pd.DataFrame({
-        'parent_id': range(10),
-        'value': range(10)
-    })
-    child = pd.DataFrame({
-        'parent_1_id': range(10),
-        'parent_2_id': range(10),
-        'value': range(10)
-    })
+    parent = pd.DataFrame({'parent_id': range(10), 'value': range(10)})
+    child = pd.DataFrame({'parent_1_id': range(10), 'parent_2_id': range(10), 'value': range(10)})
 
     metadata = Metadata()
     metadata.add_table('parent', parent, primary_key='parent_id')

@@ -99,14 +99,13 @@ check-dependencies: ## test if there are any broken dependencies
 	pip check
 
 .PHONY: lint
-lint: ## check style with flake8 and isort
+lint:
 	invoke lint
 
 .PHONY: fix-lint
-fix-lint: ## fix lint issues using autoflake, autopep8, and isort
-	find sdv tests -name '*.py' | xargs autoflake --in-place --remove-all-unused-imports --remove-unused-variables
-	autopep8 --in-place --recursive --aggressive sdv tests
-	isort --apply --atomic sdv tests
+fix-lint:
+	ruff check --fix .
+	ruff format
 
 
 # TEST TARGETS

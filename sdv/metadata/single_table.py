@@ -13,15 +13,25 @@ from rdt.transformers._validators import AddressValidator, GPSValidator
 from rdt.transformers.pii.anonymization import SDTYPE_ANONYMIZERS, is_faker_function
 
 from sdv._utils import (
-    _cast_to_iterable, _format_invalid_values_string, _get_datetime_format, _is_boolean_type,
-    _is_datetime_type, _is_numerical_type, _load_data_from_csv, _validate_datetime_format)
+    _cast_to_iterable,
+    _format_invalid_values_string,
+    _get_datetime_format,
+    _is_boolean_type,
+    _is_datetime_type,
+    _is_numerical_type,
+    _load_data_from_csv,
+    _validate_datetime_format,
+)
 from sdv.errors import InvalidDataError
 from sdv.logging import get_sdv_logger
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
 from sdv.metadata.utils import read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import (
-    create_columns_node, create_summarized_columns_node, visualize_graph)
+    create_columns_node,
+    create_summarized_columns_node,
+    visualize_graph,
+)
 
 LOGGER = logging.getLogger(__name__)
 SINGLETABLEMETADATA_LOGGER = get_sdv_logger('SingleTableMetadata')
@@ -45,8 +55,15 @@ class SingleTableMetadata:
     }
 
     _NUMERICAL_REPRESENTATIONS = frozenset([
-        'Float', 'Int64', 'Int32', 'Int16', 'Int8',
-        'UInt64', 'UInt32', 'UInt16', 'UInt8',
+        'Float',
+        'Int64',
+        'Int32',
+        'Int16',
+        'Int8',
+        'UInt64',
+        'UInt32',
+        'UInt16',
+        'UInt8',
     ])
     _KEYS = frozenset([
         'columns',
@@ -55,7 +72,7 @@ class SingleTableMetadata:
         'sequence_key',
         'sequence_index',
         'column_relationships',
-        'METADATA_SPEC_VERSION'
+        'METADATA_SPEC_VERSION',
     ])
 
     _REFERENCE_TO_SDTYPE = {
@@ -104,7 +121,8 @@ class SingleTableMetadata:
     }
 
     _SDTYPES_WITH_SUBSTRINGS = dict(
-        set(_REFERENCE_TO_SDTYPE.items()) - set(_SDTYPES_WITHOUT_SUBSTRINGS.items()))
+        set(_REFERENCE_TO_SDTYPE.items()) - set(_SDTYPES_WITHOUT_SUBSTRINGS.items())
+    )
 
     _COLUMN_RELATIONSHIP_TYPES = {
         'address': AddressValidator.validate,
@@ -155,8 +173,9 @@ class SingleTableMetadata:
                 f"Unknown ordering method '{order_by}' provided for categorical column "
                 f"'{column_name}'. Ordering method must be 'numerical_value' or 'alphabetical'."
             )
-        if (isinstance(order, list) and not len(order)) or\
-           (not isinstance(order, list) and order is not None):
+        if (isinstance(order, list) and not len(order)) or (
+            not isinstance(order, list) and order is not None
+        ):
             raise InvalidMetadataError(
                 f"Invalid order value provided for categorical column '{column_name}'. "
                 "The 'order' must be a list with 1 or more elements."
@@ -323,9 +342,7 @@ class SingleTableMetadata:
         errors = []
         has_sdtype_key = 'sdtype' in kwargs
         if has_sdtype_key:
-            kwargs_without_sdtype = {
-                key: value for key, value in kwargs.items() if key != 'sdtype'
-            }
+            kwargs_without_sdtype = {key: value for key, value in kwargs.items() if key != 'sdtype'}
             unexpected_kwargs = self._get_unexpected_kwargs(
                 kwargs['sdtype'], **kwargs_without_sdtype
             )
@@ -452,10 +469,14 @@ class SingleTableMetadata:
         # tokenize the column name based on (1) symbols and (2) camelCase
         tokens = self._tokenize_column_name(column_name)
 
-        return next((
-            sdtype for reference, sdtype in self._SDTYPES_WITH_SUBSTRINGS.items()
-            if reference in tokens
-        ), None)
+        return next(
+            (
+                sdtype
+                for reference, sdtype in self._SDTYPES_WITH_SUBSTRINGS.items()
+                if reference in tokens
+            ),
+            None,
+        )
 
     def _determine_sdtype_for_numbers(self, data):
         """Determine the sdtype for a numerical column.
@@ -628,21 +649,21 @@ class SingleTableMetadata:
         """Validate that each key is of type 'id' or a valid Faker function."""
         bad_keys = set()
         for key in keys:
-            if not (self.columns[key]['sdtype'] == 'id' or
-                    is_faker_function(self.columns[key]['sdtype'])):
+            if not (
+                self.columns[key]['sdtype'] == 'id'
+                or is_faker_function(self.columns[key]['sdtype'])
+            ):
                 bad_keys.add(key)
         if bad_keys:
             raise InvalidMetadataError(
-                f"The {key_type}_keys {sorted(bad_keys)} must be type 'id' or "
-                'another PII type.'
+                f"The {key_type}_keys {sorted(bad_keys)} must be type 'id' or " 'another PII type.'
             )
 
     def _validate_key(self, column_name, key_type):
         """Validate the primary and sequence keys."""
         if column_name is not None:
             if not self._validate_key_datatype(column_name):
-                raise InvalidMetadataError(
-                    f"'{key_type}_key' must be a string.")
+                raise InvalidMetadataError(f"'{key_type}_key' must be a string.")
 
             keys = {column_name} if isinstance(column_name, str) else set(column_name)
             invalid_ids = keys - set(self.columns)
@@ -704,11 +725,10 @@ class SingleTableMetadata:
         self.sequence_key = column_name
 
     def _validate_alternate_keys(self, column_names):
-        if not isinstance(column_names, list) or \
-           not all(self._validate_key_datatype(column_name) for column_name in column_names):
-            raise InvalidMetadataError(
-                "'alternate_keys' must be a list of strings."
-            )
+        if not isinstance(column_names, list) or not all(
+            self._validate_key_datatype(column_name) for column_name in column_names
+        ):
+            raise InvalidMetadataError("'alternate_keys' must be a list of strings.")
 
         keys = set()
         for column_name in column_names:
@@ -759,7 +779,8 @@ class SingleTableMetadata:
         sdtype = self.columns[column_name].get('sdtype')
         if sdtype not in ['datetime', 'numerical']:
             raise InvalidMetadataError(
-                "The sequence_index must be of type 'datetime' or 'numerical'.")
+                "The sequence_index must be of type 'datetime' or 'numerical'."
+            )
 
     def set_sequence_index(self, column_name):
         """Set the metadata sequence index.
@@ -817,9 +838,7 @@ class SingleTableMetadata:
             if column not in self.columns:
                 errors.append(f"Column '{column}' not in metadata.")
             elif self.primary_key == column:
-                errors.append(
-                    f"Cannot use primary key '{column}' in column relationship."
-                )
+                errors.append(f"Cannot use primary key '{column}' in column relationship.")
 
         columns_to_sdtypes = {
             column: self.columns.get(column, {}).get('sdtype') for column in column_names
@@ -855,8 +874,7 @@ class SingleTableMetadata:
                 List of other column relationships to compare against.
         """
         for other_relationship in other_relationships:
-            repeated_columns = set(
-                other_relationship.get('column_names', [])) & set(
+            repeated_columns = set(other_relationship.get('column_names', [])) & set(
                 column_relationship['column_names']
             )
             if repeated_columns:
@@ -885,12 +903,10 @@ class SingleTableMetadata:
         for idx, relationship in enumerate(column_relationships):
             if set(relationship.keys()) != valid_relationship_keys:
                 unknown_keys = set(relationship.keys()).difference(valid_relationship_keys)
-                raise InvalidMetadataError(
-                    f'Relationship has invalid keys {unknown_keys}.'
-                )
+                raise InvalidMetadataError(f'Relationship has invalid keys {unknown_keys}.')
 
             self._validate_column_relationship_with_others(
-                relationship, column_relationships[idx + 1:]
+                relationship, column_relationships[idx + 1 :]
             )
 
         # Validate each individual relationship
@@ -912,8 +928,8 @@ class SingleTableMetadata:
 
         if errors:
             raise InvalidMetadataError(
-                'Column relationships have following errors:\n' +
-                '\n'.join([str(e) for e in errors])
+                'Column relationships have following errors:\n'
+                + '\n'.join([str(e) for e in errors])
             )
 
     def add_column_relationship(self, relationship_type, column_names):
@@ -957,9 +973,7 @@ class SingleTableMetadata:
 
         # Validate column relationships
         self._append_error(
-            errors,
-            self._validate_all_column_relationships,
-            self.column_relationships
+            errors, self._validate_all_column_relationships, self.column_relationships
         )
 
         if errors:
@@ -974,7 +988,8 @@ class SingleTableMetadata:
         missing_data_columns = set(columns).difference(metadata_columns)
         if missing_data_columns:
             errors.append(
-                f'The columns {sorted(missing_data_columns)} are not present in the metadata.')
+                f'The columns {sorted(missing_data_columns)} are not present in the metadata.'
+            )
 
         missing_metadata_columns = set(metadata_columns).difference(columns)
         if missing_metadata_columns:
@@ -1084,7 +1099,7 @@ class SingleTableMetadata:
 
                 invalid_values = self._get_invalid_column_values(
                     column.sample(num_samples_to_validate),
-                    lambda x: pd.isna(x) | _is_datetime_type(x)
+                    lambda x: pd.isna(x) | _is_datetime_type(x),
                 )
 
             if datetime_format is None and column.dtype == 'O':
@@ -1173,28 +1188,28 @@ class SingleTableMetadata:
             raise ValueError("'show_table_details' should be 'full' or 'summarized'.")
 
         if show_table_details == 'full':
-            node = fr'{create_columns_node(self.columns)}\l'
+            node = rf'{create_columns_node(self.columns)}\l'
 
         elif show_table_details == 'summarized':
-            node = fr'{create_summarized_columns_node(self.columns)}\l'
+            node = rf'{create_summarized_columns_node(self.columns)}\l'
 
         keys_node = ''
         if self.primary_key:
-            keys_node = fr'{keys_node}Primary key: {self.primary_key}\l'
+            keys_node = rf'{keys_node}Primary key: {self.primary_key}\l'
 
         if self.sequence_key:
-            keys_node = fr'{keys_node}Sequence key: {self.sequence_key}\l'
+            keys_node = rf'{keys_node}Sequence key: {self.sequence_key}\l'
 
         if self.sequence_index:
-            keys_node = fr'{keys_node}Sequence index: {self.sequence_index}\l'
+            keys_node = rf'{keys_node}Sequence index: {self.sequence_index}\l'
 
         if self.alternate_keys:
-            alternate_keys = [fr'&nbsp; &nbsp; • {key}\l' for key in self.alternate_keys]
+            alternate_keys = [rf'&nbsp; &nbsp; • {key}\l' for key in self.alternate_keys]
             alternate_keys = ''.join(alternate_keys)
-            keys_node = fr'{keys_node}Alternate keys:\l {alternate_keys}'
+            keys_node = rf'{keys_node}Alternate keys:\l {alternate_keys}'
 
         if keys_node != '':
-            node = fr'{node}|{keys_node}'
+            node = rf'{node}|{keys_node}'
 
         node = {'': f'{{{node}}}'}
         return visualize_graph(node, [], output_filepath)
@@ -1220,7 +1235,7 @@ class SingleTableMetadata:
             '    Total number of columns: %s'
             '    Total number of relationships: 0',
             datetime.now(),
-            len(self.columns)
+            len(self.columns),
         )
         with open(filepath, 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4)
@@ -1245,9 +1260,8 @@ class SingleTableMetadata:
             if value:
                 if key == 'columns':
                     value = {
-                        str(key)
-                        if not isinstance(key, str)
-                        else key: col for key, col in value.items()
+                        str(key) if not isinstance(key, str) else key: col
+                        for key, col in value.items()
                     }
                 setattr(instance, f'{key}', value)
 

@@ -32,7 +32,8 @@ def test_visualize_graph_for_multi_table():
     metadata.update_column('2', '\\|=/bla@#$324%^,"&*()><...', sdtype='id')
     metadata.set_primary_key('1', '\\|=/bla@#$324%^,"&*()><...')
     metadata.add_relationship(
-        '1', '2', '\\|=/bla@#$324%^,"&*()><...', '\\|=/bla@#$324%^,"&*()><...')
+        '1', '2', '\\|=/bla@#$324%^,"&*()><...', '\\|=/bla@#$324%^,"&*()><...'
+    )
     model = HMASynthesizer(metadata)
 
     # Run

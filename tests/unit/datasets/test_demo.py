@@ -50,16 +50,10 @@ def test_download_demo_single_table(tmpdir):
 
     expected_metadata_dict = {
         'columns': {
-            '0': {
-                'sdtype': 'numerical',
-                'computer_representation': 'Int64'
-            },
-            '1': {
-                'sdtype': 'numerical',
-                'computer_representation': 'Int64'
-            }
+            '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
         },
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
     }
     assert metadata.to_dict() == expected_metadata_dict
 
@@ -79,9 +73,7 @@ def test__get_data_from_bucket(session_mock):
     # Assert
     assert result == b'data'
     session_mock.assert_called_once()
-    mock_s3_client.get_object.assert_called_once_with(
-        Bucket='bucket', Key='object_key'
-    )
+    mock_s3_client.get_object.assert_called_once_with(Bucket='bucket', Key='object_key')
 
 
 @patch('sdv.datasets.demo._get_data_from_bucket')
@@ -108,16 +100,10 @@ def test_download_demo_single_table_no_output_folder():
 
     expected_metadata_dict = {
         'columns': {
-            '0': {
-                'sdtype': 'numerical',
-                'computer_representation': 'Int64'
-            },
-            '1': {
-                'sdtype': 'numerical',
-                'computer_representation': 'Int64'
-            }
+            '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
         },
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
     }
     assert metadata.to_dict() == expected_metadata_dict
 
@@ -134,29 +120,18 @@ def test_download_demo_timeseries(tmpdir):
         's_index': [0, 1],
         'tt_split': [1, 1],
         'dim_0': [0.67892, 0.68085],
-        'dim_1': [0.27315, 0.27315]
+        'dim_1': [0.27315, 0.27315],
     })
     pd.testing.assert_frame_equal(table.head(2), expected_table)
 
     expected_metadata_dict = {
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         'columns': {
-            'e_id': {
-                'sdtype': 'numerical',
-                'computer_representation': 'Int64'
-            },
-            'dim_0': {
-                'sdtype': 'numerical',
-                'computer_representation': 'Float'
-            },
-            'dim_1': {
-                'sdtype': 'numerical',
-                'computer_representation': 'Float'
-            },
-            'ml_class': {
-                'sdtype': 'categorical'
-            }
-        }
+            'e_id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+            'dim_0': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+            'dim_1': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+            'ml_class': {'sdtype': 'categorical'},
+        },
     }
     assert metadata.to_dict() == expected_metadata_dict
 
@@ -177,15 +152,14 @@ def test_download_demo_multi_table(tmpdir):
         'character_id': [1, 1],
         'family_id': [1, 4],
         'generation': [8, 5],
-        'type': ['father', 'mother']
+        'type': ['father', 'mother'],
     })
-    pd.testing.assert_frame_equal(
-        tables['character_families'].head(2), expected_character_families)
+    pd.testing.assert_frame_equal(tables['character_families'].head(2), expected_character_families)
 
     expected_characters = pd.DataFrame({
         'age': [20, 16],
         'character_id': [1, 2],
-        'name': ['Jon', 'Arya']
+        'name': ['Jon', 'Arya'],
     })
     pd.testing.assert_frame_equal(tables['characters'].head(2), expected_characters)
 
@@ -193,49 +167,25 @@ def test_download_demo_multi_table(tmpdir):
         'tables': {
             'characters': {
                 'columns': {
-                    'character_id': {
-                        'sdtype': 'id',
-                        'regex_format': '^[1-9]{1,2}$'
-                    },
-                    'name': {
-                        'sdtype': 'categorical'
-                    },
-                    'age': {
-                        'sdtype': 'numerical',
-                        'computer_representation': 'Int64'
-                    }
+                    'character_id': {'sdtype': 'id', 'regex_format': '^[1-9]{1,2}$'},
+                    'name': {'sdtype': 'categorical'},
+                    'age': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
                 },
-                'primary_key': 'character_id'
+                'primary_key': 'character_id',
             },
             'families': {
                 'columns': {
-                    'family_id': {
-                        'sdtype': 'id',
-                        'regex_format': '^[1-9]$'
-                    },
-                    'name': {
-                        'sdtype': 'categorical'
-                    }
+                    'family_id': {'sdtype': 'id', 'regex_format': '^[1-9]$'},
+                    'name': {'sdtype': 'categorical'},
                 },
-                'primary_key': 'family_id'
+                'primary_key': 'family_id',
             },
             'character_families': {
                 'columns': {
-                    'character_id': {
-                        'sdtype': 'id',
-                        'regex_format': '[A-Za-z]{5}'
-                    },
-                    'family_id': {
-                        'sdtype': 'id',
-                        'regex_format': '[A-Za-z]{5}'
-                    },
-                    'type': {
-                        'sdtype': 'categorical'
-                    },
-                    'generation': {
-                        'sdtype': 'numerical',
-                        'computer_representation': 'Int64'
-                    },
+                    'character_id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
+                    'family_id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
+                    'type': {'sdtype': 'categorical'},
+                    'generation': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
                 },
             },
         },
@@ -244,16 +194,16 @@ def test_download_demo_multi_table(tmpdir):
                 'parent_table_name': 'families',
                 'parent_primary_key': 'family_id',
                 'child_table_name': 'character_families',
-                'child_foreign_key': 'family_id'
+                'child_foreign_key': 'family_id',
             },
             {
                 'parent_table_name': 'characters',
                 'parent_primary_key': 'character_id',
                 'child_table_name': 'character_families',
-                'child_foreign_key': 'character_id'
+                'child_foreign_key': 'character_id',
             },
         ],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
     }
     assert metadata.to_dict() == expected_metadata_dict
 
@@ -271,28 +221,15 @@ def test_get_available_demos(client_mock):
     """Test it gets the correct output."""
     # Setup
     contents_objects = {
-        'Contents': [
-            {'Key': 'SINGLE_TABLE/dataset1.zip'},
-            {'Key': 'SINGLE_TABLE/dataset2.zip'}
-        ]
+        'Contents': [{'Key': 'SINGLE_TABLE/dataset1.zip'}, {'Key': 'SINGLE_TABLE/dataset2.zip'}]
     }
     client_mock.return_value.list_objects = Mock(return_value=contents_objects)
 
     def metadata_func(Bucket, Key):  # noqa: N803
         if Key == 'SINGLE_TABLE/dataset1.zip':
-            return {
-                'Metadata': {
-                    'size-mb': 123,
-                    'num-tables': 321
-                }
-            }
+            return {'Metadata': {'size-mb': 123, 'num-tables': 321}}
 
-        return {
-            'Metadata': {
-                'size-mb': 456,
-                'num-tables': 654
-            }
-        }
+        return {'Metadata': {'size-mb': 456, 'num-tables': 654}}
 
     client_mock.return_value.head_object = MagicMock(side_effect=metadata_func)
 
@@ -303,7 +240,7 @@ def test_get_available_demos(client_mock):
     expected_table = pd.DataFrame({
         'dataset_name': ['dataset1', 'dataset2'],
         'size_MB': [123.00, 456.00],
-        'num_tables': [321, 654]
+        'num_tables': [321, 654],
     })
     pd.testing.assert_frame_equal(tables_info, expected_table)
 
@@ -313,25 +250,15 @@ def test_get_available_demos_missing_metadata(client_mock):
     """Test it can handle data with missing metadata information."""
     # Setup
     contents_objects = {
-        'Contents': [
-            {'Key': 'SINGLE_TABLE/dataset1.zip'},
-            {'Key': 'SINGLE_TABLE/dataset2.zip'}
-        ]
+        'Contents': [{'Key': 'SINGLE_TABLE/dataset1.zip'}, {'Key': 'SINGLE_TABLE/dataset2.zip'}]
     }
     client_mock.return_value.list_objects = Mock(return_value=contents_objects)
 
     def metadata_func(Bucket, Key):  # noqa: N803
         if Key == 'SINGLE_TABLE/dataset1.zip':
-            return {
-                'Metadata': {}
-            }
+            return {'Metadata': {}}
 
-        return {
-            'Metadata': {
-                'size-mb': 456,
-                'num-tables': 654
-            }
-        }
+        return {'Metadata': {'size-mb': 456, 'num-tables': 654}}
 
     client_mock.return_value.head_object = MagicMock(side_effect=metadata_func)
 
@@ -342,6 +269,6 @@ def test_get_available_demos_missing_metadata(client_mock):
     expected_table = pd.DataFrame({
         'dataset_name': ['dataset1', 'dataset2'],
         'size_MB': [np.nan, 456.00],
-        'num_tables': [np.nan, 654]
+        'num_tables': [np.nan, 654],
     })
     pd.testing.assert_frame_equal(tables_info, expected_table)

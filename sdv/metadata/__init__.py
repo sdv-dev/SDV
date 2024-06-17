@@ -10,5 +10,5 @@ __all__ = (
     'MetadataNotFittedError',
     'MultiTableMetadata',
     'SingleTableMetadata',
-    'visualization'
+    'visualization',
 )

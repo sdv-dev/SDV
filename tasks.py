@@ -12,12 +12,7 @@ from invoke import task
 from packaging.requirements import Requirement
 from packaging.version import Version
 
-COMPARISONS = {
-    '>=': operator.ge,
-    '>': operator.gt,
-    '<': operator.lt,
-    '<=': operator.le
-}
+COMPARISONS = {'>=': operator.ge, '>': operator.gt, '<': operator.lt, '<=': operator.le}
 
 
 if not hasattr(inspect, 'getargspec'):
@@ -54,15 +49,22 @@ def _get_minimum_versions(dependencies, python_version):
                 continue  # Skip this dependency if the marker does not apply to the current Python version
 
         if req.name not in min_versions:
-            min_version = next((spec.version for spec in req.specifier if spec.operator in ('>=', '==')), None)
+            min_version = next(
+                (spec.version for spec in req.specifier if spec.operator in ('>=', '==')), None
+            )
             if min_version:
                 min_versions[req.name] = f'{req.name}=={min_version}'
 
         elif '@' not in min_versions[req.name]:
             existing_version = Version(min_versions[req.name].split('==')[1])
-            new_version = next((spec.version for spec in req.specifier if spec.operator in ('>=', '==')), existing_version)
+            new_version = next(
+                (spec.version for spec in req.specifier if spec.operator in ('>=', '==')),
+                existing_version,
+            )
             if new_version > existing_version:
-                min_versions[req.name] = f'{req.name}=={new_version}'  # Change when a valid newer version is found
+                min_versions[req.name] = (
+                    f'{req.name}=={new_version}'  # Change when a valid newer version is found
+                )
 
     return list(min_versions.values())
 
@@ -77,7 +79,8 @@ def install_minimum(c):
     minimum_versions = _get_minimum_versions(dependencies, python_version)
 
     if minimum_versions:
-        c.run(f'python -m pip install {" ".join(minimum_versions)}')
+        install_deps = ' '.join(minimum_versions)
+        c.run(f'python -m pip install {install_deps}')
 
 
 @task
@@ -107,19 +110,20 @@ def readme(c):
 def tutorials(c):
     for ipynb_file in glob.glob('tutorials/*.ipynb') + glob.glob('tutorials/**/*.ipynb'):
         if '.ipynb_checkpoints' not in ipynb_file:
-            c.run((
-                'jupyter nbconvert --execute --ExecutePreprocessor.timeout=3600 '
-                f'--to=html --stdout {ipynb_file}'
-            ), hide='out')
+            c.run(
+                (
+                    'jupyter nbconvert --execute --ExecutePreprocessor.timeout=3600 '
+                    f'--to=html --stdout {ipynb_file}'
+                ),
+                hide='out',
+            )
 
 
 @task
 def lint(c):
     check_dependencies(c)
-    c.run('flake8 sdv')
-    c.run('flake8 tests --ignore=D,SFS2')
-    c.run('isort -c sdv tests')
-    c.run('pydocstyle sdv')
+    c.run('ruff check .')
+    c.run('ruff format . --check')
 
 
 def remove_readonly(func, path, _):

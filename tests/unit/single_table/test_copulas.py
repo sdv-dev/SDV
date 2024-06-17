@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import scipy
-from copulas.univariate import (
-    BetaUnivariate, GammaUnivariate, TruncatedGaussian, UniformUnivariate)
+from copulas.univariate import BetaUnivariate, GammaUnivariate, TruncatedGaussian, UniformUnivariate
 
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.single_table import SingleTableMetadata
@@ -14,7 +13,6 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 
 class TestGaussianCopulaSynthesizer:
-
     def test_get_distribution_class_str(self):
         """Test that when a ``str`` is passed, the class from the ``DISTRIBUTIONS`` is returned."""
         # Setup
@@ -130,7 +128,7 @@ class TestGaussianCopulaSynthesizer:
             'enforce_rounding': True,
             'locales': ['en_US'],
             'numerical_distributions': {},
-            'default_distribution': 'beta'
+            'default_distribution': 'beta',
         }
 
     @patch('sdv.single_table.copulas.LOGGER')
@@ -145,7 +143,8 @@ class TestGaussianCopulaSynthesizer:
         metadata.add_column('col', sdtype='numerical')
         numerical_distributions = {'col': 'gamma'}
         instance = GaussianCopulaSynthesizer(
-            metadata, numerical_distributions=numerical_distributions)
+            metadata, numerical_distributions=numerical_distributions
+        )
         processed_data = pd.DataFrame({'updated_col': [1, 2, 3]})
 
         # Run
@@ -175,11 +174,10 @@ class TestGaussianCopulaSynthesizer:
         processed_data = pd.DataFrame({
             'name': np.arange(10),
             'user.id': np.arange(10),
-            'account_balance': np.arange(10)
+            'account_balance': np.arange(10),
         })
         instance = GaussianCopulaSynthesizer(
-            metadata,
-            numerical_distributions=numerical_distributions
+            metadata, numerical_distributions=numerical_distributions
         )
 
         # Run
@@ -187,7 +185,6 @@ class TestGaussianCopulaSynthesizer:
 
         # Assert
         expected_numerical_distributions = {
-            'name': UniformUnivariate,
             'name': UniformUnivariate,
             'user.id': GammaUnivariate,
             'account_balance': BetaUnivariate,
@@ -274,18 +271,11 @@ class TestGaussianCopulaSynthesizer:
         - numpy array with the square correlation matrix
         """
         # Run
-        triangular_correlation = [
-            [0.1],
-            [0.2, 0.3]
-        ]
+        triangular_correlation = [[0.1], [0.2, 0.3]]
         correlation = GaussianCopulaSynthesizer._rebuild_correlation_matrix(triangular_correlation)
 
         # Assert
-        expected = [
-            [1.0, 0.1, 0.2],
-            [0.1, 1.0, 0.3],
-            [0.2, 0.3, 1.0]
-        ]
+        expected = [[1.0, 0.1, 0.2], [0.1, 1.0, 0.3], [0.2, 0.3, 1.0]]
         assert expected == correlation
 
     def test__rebuild_correlation_matrix_outside(self):
@@ -301,18 +291,11 @@ class TestGaussianCopulaSynthesizer:
         - numpy array with the square correlation matrix
         """
         # Run
-        triangular_correlation = [
-            [1.0],
-            [2.0, 1.0]
-        ]
+        triangular_correlation = [[1.0], [2.0, 1.0]]
         correlation = GaussianCopulaSynthesizer._rebuild_correlation_matrix(triangular_correlation)
 
         # Assert
-        expected = [
-            [1.0, 0.5, 1.0],
-            [0.5, 1.0, 0.5],
-            [1.0, 0.5, 1.0]
-        ]
+        expected = [[1.0, 0.5, 1.0], [0.5, 1.0, 0.5], [1.0, 0.5, 1.0]]
         assert expected == correlation
 
     def test__rebuild_gaussian_copula(self):
@@ -332,18 +315,9 @@ class TestGaussianCopulaSynthesizer:
         gaussian_copula = GaussianCopulaSynthesizer(metadata)
         model_parameters = {
             'univariates': {
-                'foo': {
-                    'scale': 0.0,
-                    'loc': 0.0
-                },
-                'bar': {
-                    'scale': 1.0,
-                    'loc': 1.0
-                },
-                'baz': {
-                    'scale': 2.0,
-                    'loc': 2.0
-                },
+                'foo': {'scale': 0.0, 'loc': 0.0},
+                'bar': {'scale': 1.0, 'loc': 1.0},
+                'baz': {'scale': 2.0, 'loc': 2.0},
             },
             'correlation': [[0.1], [0.2, 0.3]],
             'distribution': 'beta',
@@ -351,34 +325,17 @@ class TestGaussianCopulaSynthesizer:
 
         # Run
         result = GaussianCopulaSynthesizer._rebuild_gaussian_copula(
-            gaussian_copula,
-            model_parameters
+            gaussian_copula, model_parameters
         )
 
         # Asserts
         expected = {
             'univariates': [
-                {
-                    'scale': 0.0,
-                    'loc': 0.0,
-                    'type': BetaUnivariate
-                },
-                {
-                    'scale': 1.0,
-                    'loc': 1.0,
-                    'type': BetaUnivariate
-                },
-                {
-                    'scale': 2.0,
-                    'loc': 2.0,
-                    'type': BetaUnivariate
-                },
+                {'scale': 0.0, 'loc': 0.0, 'type': BetaUnivariate},
+                {'scale': 1.0, 'loc': 1.0, 'type': BetaUnivariate},
+                {'scale': 2.0, 'loc': 2.0, 'type': BetaUnivariate},
             ],
-            'correlation': [
-                [1.0, 0.1, 0.2],
-                [0.1, 1.0, 0.3],
-                [0.2, 0.3, 1.0]
-            ],
+            'correlation': [[1.0, 0.1, 0.2], [0.1, 1.0, 0.3], [0.2, 0.3, 1.0]],
             'distribution': 'beta',
             'columns': ['foo', 'bar', 'baz'],
         }
@@ -395,75 +352,27 @@ class TestGaussianCopulaSynthesizer:
         gaussian_copula._numerical_distributions = {'baz': distribution_mock}
         model_parameters = {
             'univariates': {
-                'foo': {
-                    'a': 10,
-                    'b': 1,
-                    'scale': 0.0,
-                    'loc': 0.0
-                },
-                'bar': {
-                    'a': 10,
-                    'b': 1,
-                    'scale': 1.0,
-                    'loc': 1.0
-                },
-                'baz': {
-                    'a': 1,
-                    'b': 10,
-                    'scale': 2.0,
-                    'loc': 2.0
-                },
+                'foo': {'a': 10, 'b': 1, 'scale': 0.0, 'loc': 0.0},
+                'bar': {'a': 10, 'b': 1, 'scale': 1.0, 'loc': 1.0},
+                'baz': {'a': 1, 'b': 10, 'scale': 2.0, 'loc': 2.0},
             },
             'correlation': [[0.1], [0.2, 0.3]],
         }
-        default_parameters = {
-            'univariates': {
-                'foo': {
-                    'a': 2,
-                    'b': 8,
-                    'scale': 0.0,
-                    'loc': 0.0
-                }
-            }
-        }
+        default_parameters = {'univariates': {'foo': {'a': 2, 'b': 8, 'scale': 0.0, 'loc': 0.0}}}
 
         # Run
         result = GaussianCopulaSynthesizer._rebuild_gaussian_copula(
-            gaussian_copula,
-            model_parameters,
-            default_parameters
+            gaussian_copula, model_parameters, default_parameters
         )
 
         # Asserts
         expected = {
             'univariates': [
-                {
-                    'a': 2,
-                    'b': 8,
-                    'scale': 0.0,
-                    'loc': 0.0,
-                    'type': TruncatedGaussian
-                },
-                {
-                    'a': 10,
-                    'b': 1,
-                    'scale': 1.0,
-                    'loc': 1.0,
-                    'type': TruncatedGaussian
-                },
-                {
-                    'a': 1,
-                    'b': 10,
-                    'scale': 2.0,
-                    'loc': 2.0,
-                    'type': distribution_mock
-                },
+                {'a': 2, 'b': 8, 'scale': 0.0, 'loc': 0.0, 'type': TruncatedGaussian},
+                {'a': 10, 'b': 1, 'scale': 1.0, 'loc': 1.0, 'type': TruncatedGaussian},
+                {'a': 1, 'b': 10, 'scale': 2.0, 'loc': 2.0, 'type': distribution_mock},
             ],
-            'correlation': [
-                [1.0, 0.1, 0.2],
-                [0.1, 1.0, 0.3],
-                [0.2, 0.3, 1.0]
-            ],
+            'correlation': [[1.0, 0.1, 0.2], [0.1, 1.0, 0.3], [0.2, 0.3, 1.0]],
             'columns': ['foo', 'bar', 'baz'],
         }
         assert result == expected
@@ -472,7 +381,7 @@ class TestGaussianCopulaSynthesizer:
         )
         logger_mock.debug.assert_has_calls([
             call("Column 'bar' has invalid parameters."),
-            call("Univariate for col 'baz' does not have _argcheck method.")
+            call("Univariate for col 'baz' does not have _argcheck method."),
         ])
 
     @patch('sdv.single_table.copulas.multivariate')
@@ -481,25 +390,13 @@ class TestGaussianCopulaSynthesizer:
         """Test that parameters are properly set and that number of rows is set properly."""
         # Setup
         parameters = {
-            'correlation': [
-                [0.0],
-                [0.0, 0.0]
-            ],
+            'correlation': [[0.0], [0.0, 0.0]],
             'num_rows': 4.59,
             'univariates': {
-                'amount': {
-                    'loc': 85.62233142690933,
-                    'scale': 0.0
-                },
-                'cancelled': {
-                    'loc': 0.48772424778255064,
-                    'scale': 0.0
-                },
-                'timestamp': {
-                    'loc': 1.5475359249730097e+18,
-                    'scale': 0.0
-                }
-            }
+                'amount': {'loc': 85.62233142690933, 'scale': 0.0},
+                'cancelled': {'loc': 0.48772424778255064, 'scale': 0.0},
+                'timestamp': {'loc': 1.5475359249730097e18, 'scale': 0.0},
+            },
         }
         instance = Mock()
         mock_unflatten_dict.return_value = parameters
@@ -510,24 +407,12 @@ class TestGaussianCopulaSynthesizer:
         # Assert
         mock_unflatten_dict.assert_called_once_with(parameters)
         expected_parameters = {
-            'correlation': [
-                [0.0],
-                [0.0, 0.0]
-            ],
+            'correlation': [[0.0], [0.0, 0.0]],
             'univariates': {
-                'amount': {
-                    'loc': 85.62233142690933,
-                    'scale': 0.0
-                },
-                'cancelled': {
-                    'loc': 0.48772424778255064,
-                    'scale': 0.0
-                },
-                'timestamp': {
-                    'loc': 1.5475359249730097e+18,
-                    'scale': 0.0
-                }
-            }
+                'amount': {'loc': 85.62233142690933, 'scale': 0.0},
+                'cancelled': {'loc': 0.48772424778255064, 'scale': 0.0},
+                'timestamp': {'loc': 1.5475359249730097e18, 'scale': 0.0},
+            },
         }
 
         instance._rebuild_gaussian_copula.assert_called_once_with(expected_parameters, {})
@@ -542,11 +427,7 @@ class TestGaussianCopulaSynthesizer:
         """Test that it returns a list with columns that are from the metadata."""
         # Seutp
         instance = Mock()
-        instance.metadata.columns = {
-            'a_value': object(),
-            'n_value': object(),
-            'b_value': object()
-        }
+        instance.metadata.columns = {'a_value': object(), 'n_value': object(), 'b_value': object()}
         columns = ['a', 'a_value.is_null', '__b_value', '__a_value__b_value', 'n_value']
 
         # Run
@@ -562,10 +443,7 @@ class TestGaussianCopulaSynthesizer:
         distribution and it's parameters.
         """
         # Setup
-        data = pd.DataFrame({
-            'zero': [0, 0, 0],
-            'one': [1, 1, 1]
-        })
+        data = pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})
         stm = SingleTableMetadata()
         stm.detect_from_dataframe(data)
         gcs = GaussianCopulaSynthesizer(stm, numerical_distributions={'one': 'uniform'})
@@ -578,20 +456,9 @@ class TestGaussianCopulaSynthesizer:
         assert result == {
             'zero': {
                 'distribution': 'beta',
-                'learned_parameters': {
-                    'a': 1.0,
-                    'b': 1.0,
-                    'loc': 0.0,
-                    'scale': 0.0
-                }
+                'learned_parameters': {'a': 1.0, 'b': 1.0, 'loc': 0.0, 'scale': 0.0},
             },
-            'one': {
-                'distribution': 'uniform',
-                'learned_parameters': {
-                    'loc': 1.0,
-                    'scale': 0.0
-                }
-            }
+            'one': {'distribution': 'uniform', 'learned_parameters': {'loc': 1.0, 'scale': 0.0}},
         }
 
     def test_get_learned_distributions_raises_an_error(self):
@@ -601,10 +468,7 @@ class TestGaussianCopulaSynthesizer:
         distribution and it's parameters.
         """
         # Setup
-        data = pd.DataFrame({
-            'zero': [0, 0, 0],
-            'one': [1, 1, 1]
-        })
+        data = pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})
         stm = SingleTableMetadata()
         stm.detect_from_dataframe(data)
         gcs = GaussianCopulaSynthesizer(stm)

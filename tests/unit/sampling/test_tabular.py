@@ -1,9 +1,9 @@
 """Tests for the sdv.sampling.tabular module."""
+
 from sdv.sampling.tabular import Condition
 
 
-class TestCondition():
-
+class TestCondition:
     def test___init__(self):
         """Test ```Condition.__init__`` method.
 

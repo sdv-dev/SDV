@@ -15,7 +15,10 @@ from rdt.transformers.pii.anonymization import get_anonymized_transformer
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
 from sdv.constraints.errors import (
-    AggregateConstraintsError, FunctionError, MissingConstraintColumnError)
+    AggregateConstraintsError,
+    FunctionError,
+    MissingConstraintColumnError,
+)
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
@@ -65,17 +68,14 @@ class DataProcessor:
         'M': 'datetime',
     }
 
-    _COLUMN_RELATIONSHIP_TO_TRANSFORMER = {
-        'address': 'RandomLocationGenerator',
-        'gps': 'GPSNoiser'
-    }
+    _COLUMN_RELATIONSHIP_TO_TRANSFORMER = {'address': 'RandomLocationGenerator', 'gps': 'GPSNoiser'}
 
     def _update_numerical_transformer(self, enforce_rounding, enforce_min_max_values):
         custom_float_formatter = rdt.transformers.FloatFormatter(
             missing_value_replacement='mean',
             missing_value_generation='random',
             learn_rounding_scheme=enforce_rounding,
-            enforce_min_max_values=enforce_min_max_values
+            enforce_min_max_values=enforce_min_max_values,
         )
         self._transformers_by_sdtype.update({'numerical': custom_float_formatter})
 
@@ -104,8 +104,15 @@ class DataProcessor:
 
         return result
 
-    def __init__(self, metadata, enforce_rounding=True, enforce_min_max_values=True,
-                 model_kwargs=None, table_name=None, locales=['en_US']):
+    def __init__(
+        self,
+        metadata,
+        enforce_rounding=True,
+        enforce_min_max_values=True,
+        model_kwargs=None,
+        table_name=None,
+        locales=['en_US'],
+    ):
         self.metadata = metadata
         self._enforce_rounding = enforce_rounding
         self._enforce_min_max_values = enforce_min_max_values
@@ -140,9 +147,7 @@ class DataProcessor:
             list:
                 A list of columns that are part of a multi column transformer.
         """
-        return [
-            col for col_tuple in self.grouped_columns_to_transformers for col in col_tuple
-        ]
+        return [col for col_tuple in self.grouped_columns_to_transformers for col in col_tuple]
 
     def get_model_kwargs(self, model_name):
         """Return the required model kwargs for the indicated model.
@@ -381,7 +386,7 @@ class DataProcessor:
                         'Unable to transform %s with columns %s because they are not all available'
                         ' in the data. This happens due to multiple, overlapping constraints.',
                         constraint.__class__.__name__,
-                        error.missing_columns
+                        error.missing_columns,
                     )
                     log_exc_stacktrace(LOGGER, error)
                 else:
@@ -392,7 +397,7 @@ class DataProcessor:
                         '%s\nUsing the reject sampling approach instead.',
                         constraint.__class__.__name__,
                         constraint.column_names,
-                        str(error)
+                        str(error),
                     )
                     log_exc_stacktrace(LOGGER, error)
                 if is_condition:
@@ -412,8 +417,7 @@ class DataProcessor:
         self._transformers_by_sdtype[sdtype] = transformer
 
     @staticmethod
-    def create_anonymized_transformer(sdtype, column_metadata, cardinality_rule,
-                                      locales=['en_US']):
+    def create_anonymized_transformer(sdtype, column_metadata, cardinality_rule, locales=['en_US']):
         """Create an instance of an ``AnonymizedFaker``.
 
         Read the extra keyword arguments from the ``column_metadata`` and use them to create
@@ -436,10 +440,7 @@ class DataProcessor:
         Returns:
             Instance of ``rdt.transformers.pii.AnonymizedFaker``.
         """
-        kwargs = {
-            'locales': locales,
-            'cardinality_rule': cardinality_rule
-        }
+        kwargs = {'locales': locales, 'cardinality_rule': cardinality_rule}
         for key, value in column_metadata.items():
             if key not in ['pii', 'sdtype']:
                 kwargs[key] = value
@@ -484,7 +485,7 @@ class DataProcessor:
         transformer = rdt.transformers.RegexGenerator(
             regex_format=regex_format,
             enforce_uniqueness=(column_name in self._keys),
-            generation_order='scrambled'
+            generation_order='scrambled',
         )
 
         return transformer
@@ -500,8 +501,7 @@ class DataProcessor:
                 )
 
         kwargs = {
-            key: value for key, value in column_metadata.items()
-            if key not in ['pii', 'sdtype']
+            key: value for key, value in column_metadata.items() if key not in ['pii', 'sdtype']
         }
         if sdtype == 'datetime':
             kwargs['enforce_min_max_values'] = self._enforce_min_max_values
@@ -521,7 +521,7 @@ class DataProcessor:
                 config['transformers'][column] = rdt.transformers.FloatFormatter(
                     missing_value_replacement='mean',
                     missing_value_generation='random',
-                    enforce_min_max_values=self._enforce_min_max_values
+                    enforce_min_max_values=self._enforce_min_max_values,
                 )
             else:
                 sdtype = self._DTYPE_TO_SDTYPE.get(dtype_kind, 'categorical')
@@ -563,10 +563,7 @@ class DataProcessor:
                 is_numeric = pd.api.types.is_numeric_dtype(data[column].dtype)
                 if column_metadata.get('regex_format', False):
                     transformers[column] = self.create_regex_generator(
-                        column,
-                        sdtype,
-                        column_metadata,
-                        is_numeric
+                        column, sdtype, column_metadata, is_numeric
                     )
                     sdtypes[column] = 'text'
 
@@ -583,7 +580,7 @@ class DataProcessor:
                         provider_name=None,
                         function_name='bothify',
                         function_kwargs={'text': bothify_format},
-                        cardinality_rule=cardinality_rule
+                        cardinality_rule=cardinality_rule,
                     )
 
                     sdtypes[column] = 'pii' if column_metadata.get('pii') else 'text'
@@ -595,17 +592,14 @@ class DataProcessor:
                 )
                 transformers[column].function_kwargs = {
                     'text': 'sdv-pii-?????',
-                    'letters': '0123456789abcdefghijklmnopqrstuvwxyz'
+                    'letters': '0123456789abcdefghijklmnopqrstuvwxyz',
                 }
 
             elif pii:
                 sdtypes[column] = 'pii'
                 cardinality_rule = 'unique' if bool(column in self._keys) else None
                 transformers[column] = self.create_anonymized_transformer(
-                    sdtype,
-                    column_metadata,
-                    cardinality_rule,
-                    self._locales
+                    sdtype, column_metadata, cardinality_rule, self._locales
                 )
 
             elif sdtype in self._transformers_by_sdtype:
@@ -617,14 +611,13 @@ class DataProcessor:
                         sdtype=sdtype,
                         column_metadata=column_metadata,
                         cardinality_rule='unique',
-                        locales=self._locales
+                        locales=self._locales,
                     )
 
             else:
                 sdtypes[column] = 'categorical'
                 transformers[column] = self._get_transformer_instance(
-                    'categorical',
-                    column_metadata
+                    'categorical', column_metadata
                 )
 
         for columns, transformer in self.grouped_columns_to_transformers.items():
@@ -690,7 +683,7 @@ class DataProcessor:
                 self.formatters[column_name] = NumericalFormatter(
                     enforce_rounding=self._enforce_rounding,
                     enforce_min_max_values=self._enforce_min_max_values,
-                    computer_representation=representation
+                    computer_representation=representation,
                 )
                 self.formatters[column_name].learn_format(data[column_name])
 
@@ -729,19 +722,17 @@ class DataProcessor:
             config = self._hyper_transformer.get_config()
             missing_columns = columns_created_by_constraints - config.get('sdtypes').keys()
             if not config.get('sdtypes'):
-                LOGGER.info((
-                    'Setting the configuration for the ``HyperTransformer`` '
-                    f'for table {self.table_name}'
-                ))
+                LOGGER.info(
+                    (
+                        'Setting the configuration for the ``HyperTransformer`` '
+                        f'for table {self.table_name}'
+                    )
+                )
                 config = self._create_config(constrained, columns_created_by_constraints)
                 self._hyper_transformer.set_config(config)
 
             elif missing_columns:
-                config = self._update_constraint_transformers(
-                    constrained,
-                    missing_columns,
-                    config
-                )
+                config = self._update_constraint_transformers(constrained, missing_columns, config)
                 self._hyper_transformer = rdt.HyperTransformer()
                 self._hyper_transformer.set_config(config)
 
@@ -761,7 +752,8 @@ class DataProcessor:
         constrained = self._transform_constraints(data)
         if constrained.empty:
             raise ValueError(
-                'The constrained fit dataframe is empty, synthesizer will not be fitted.')
+                'The constrained fit dataframe is empty, synthesizer will not be fitted.'
+            )
         LOGGER.info(f'Fitting HyperTransformer for table {self.table_name}')
         self._fit_hyper_transformer(constrained)
         self.fitted = True
@@ -806,7 +798,8 @@ class DataProcessor:
 
         # Filter columns that can be transformed
         columns = [
-            column for column in self.get_sdtypes(primary_keys=not is_condition)
+            column
+            for column in self.get_sdtypes(primary_keys=not is_condition)
             if column in data.columns
         ]
         LOGGER.debug(f'Transforming constraints for table {self.table_name}')
@@ -839,9 +832,7 @@ class DataProcessor:
             raise NotFittedError()
 
         reversible_columns = [
-            column
-            for column in self._hyper_transformer._output_columns
-            if column in data.columns
+            column for column in self._hyper_transformer._output_columns if column in data.columns
         ]
 
         reversed_data = data
@@ -866,8 +857,7 @@ class DataProcessor:
         ]
         if missing_columns and num_rows:
             anonymized_data = self._hyper_transformer.create_anonymized_columns(
-                num_rows=num_rows,
-                column_names=missing_columns
+                num_rows=num_rows, column_names=missing_columns
             )
             sampled_columns.extend(missing_columns)
             reversed_data[anonymized_data.columns] = anonymized_data[anonymized_data.notna()]
@@ -890,8 +880,7 @@ class DataProcessor:
         # And alternate keys. Thats the reason of ensuring that the metadata column is within
         # The sampled columns.
         sampled_columns = [
-            column for column in self.metadata.columns.keys()
-            if column in sampled_columns
+            column for column in self.metadata.columns.keys() if column in sampled_columns
         ]
         for column_name in sampled_columns:
             column_data = reversed_data[column_name]
@@ -954,7 +943,7 @@ class DataProcessor:
             'metadata': deepcopy(self.metadata.to_dict()),
             'constraints_list': self.get_constraints(),
             'constraints_to_reverse': constraints_to_reverse,
-            'model_kwargs': deepcopy(self._model_kwargs)
+            'model_kwargs': deepcopy(self._model_kwargs),
         }
 
     @classmethod
@@ -973,7 +962,7 @@ class DataProcessor:
             metadata=SingleTableMetadata.load_from_dict(metadata_dict['metadata']),
             enforce_rounding=enforce_rounding,
             enforce_min_max_values=enforce_min_max_values,
-            model_kwargs=metadata_dict.get('model_kwargs')
+            model_kwargs=metadata_dict.get('model_kwargs'),
         )
 
         instance._constraints_to_reverse = [

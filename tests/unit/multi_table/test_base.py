@@ -11,8 +11,13 @@ import pytest
 
 from sdv import version
 from sdv.errors import (
-    ConstraintsNotMetError, InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError,
-    VersionError)
+    ConstraintsNotMetError,
+    InvalidDataError,
+    NotFittedError,
+    SamplingError,
+    SynthesizerInputError,
+    VersionError,
+)
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -23,7 +28,6 @@ from tests.utils import catch_sdv_logs, get_multi_table_data, get_multi_table_me
 
 
 class TestBaseMultiTableSynthesizer:
-
     def test__initialize_models(self):
         """Test that this method initializes the ``self._synthezier`` for each table.
 
@@ -34,11 +38,7 @@ class TestBaseMultiTableSynthesizer:
         locales = ['en_CA', 'fr_CA']
         instance = Mock()
         instance._table_synthesizers = {}
-        instance._table_parameters = {
-            'nesreca': {
-                'default_distribution': 'gamma'
-            }
-        }
+        instance._table_parameters = {'nesreca': {'default_distribution': 'gamma'}}
         instance.locales = locales
         instance.metadata = get_multi_table_metadata()
 
@@ -49,13 +49,16 @@ class TestBaseMultiTableSynthesizer:
         assert instance._table_synthesizers == {
             'nesreca': instance._synthesizer.return_value,
             'oseba': instance._synthesizer.return_value,
-            'upravna_enota': instance._synthesizer.return_value
+            'upravna_enota': instance._synthesizer.return_value,
         }
         instance._synthesizer.assert_has_calls([
-            call(metadata=instance.metadata.tables['nesreca'], default_distribution='gamma',
-                 locales=locales),
+            call(
+                metadata=instance.metadata.tables['nesreca'],
+                default_distribution='gamma',
+                locales=locales,
+            ),
             call(metadata=instance.metadata.tables['oseba'], locales=locales),
-            call(metadata=instance.metadata.tables['upravna_enota'], locales=locales)
+            call(metadata=instance.metadata.tables['upravna_enota'], locales=locales),
         ])
 
     def test__get_pbar_args(self):
@@ -78,17 +81,11 @@ class TestBaseMultiTableSynthesizer:
 
         # Run
         result = BaseMultiTableSynthesizer._get_pbar_args(
-            instance,
-            desc='Process Table',
-            position=0
+            instance, desc='Process Table', position=0
         )
 
         # Assert
-        assert result == {
-            'disable': False,
-            'desc': 'Process Table',
-            'position': 0
-        }
+        assert result == {'disable': False, 'desc': 'Process Table', 'position': 0}
 
     @patch('sdv.multi_table.base.print')
     def test__print(self, mock_print):
@@ -105,8 +102,9 @@ class TestBaseMultiTableSynthesizer:
     @patch('sdv.multi_table.base.datetime')
     @patch('sdv.multi_table.base.generate_synthesizer_id')
     @patch('sdv.multi_table.base.BaseMultiTableSynthesizer._check_metadata_updated')
-    def test___init__(self, mock_check_metadata_updated, mock_generate_synthesizer_id,
-                      mock_datetime, caplog):
+    def test___init__(
+        self, mock_check_metadata_updated, mock_generate_synthesizer_id, mock_datetime, caplog
+    ):
         """Test that when creating a new instance this sets the defaults.
 
         Test that the metadata object is being stored and also being validated. Afterwards, this
@@ -137,7 +135,7 @@ class TestBaseMultiTableSynthesizer:
             'EVENT': 'Instance',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
             'SYNTHESIZER CLASS NAME': 'BaseMultiTableSynthesizer',
-            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+            'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
 
     def test__init__column_relationship_warning(self):
@@ -211,23 +209,23 @@ class TestBaseMultiTableSynthesizer:
                         'city_column': {'sdtype': 'city'},
                         'parent_key': {'sdtype': 'id'},
                     },
-                    'primary_key': 'parent_key'
+                    'primary_key': 'parent_key',
                 },
                 'other_table': {
                     'columns': {
                         'numerical_column': {'sdtype': 'numerical'},
                         'child_foreign_key': {'sdtype': 'id'},
                     }
-                }
+                },
             },
             'relationships': [
                 {
                     'parent_table_name': 'address_table',
                     'parent_primary_key': 'parent_key',
                     'child_table_name': 'other_table',
-                    'child_foreign_key': 'child_foreign_key'
+                    'child_foreign_key': 'child_foreign_key',
                 }
-            ]
+            ],
         })
         columns = ('country_column', 'city_column')
         metadata.validate = Mock()
@@ -236,9 +234,7 @@ class TestBaseMultiTableSynthesizer:
         instance._table_synthesizers['address_table'].set_address_columns = Mock()
 
         # Run
-        instance.set_address_columns(
-            'address_table', columns, anonymization_level='street_address'
-        )
+        instance.set_address_columns('address_table', columns, anonymization_level='street_address')
 
         # Assert
         instance._table_synthesizers['address_table'].set_address_columns.assert_called_once_with(
@@ -281,8 +277,8 @@ class TestBaseMultiTableSynthesizer:
                 'enforce_min_max_values': True,
                 'enforce_rounding': True,
                 'locales': ['en_US'],
-                'numerical_distributions': {}
-            }
+                'numerical_distributions': {},
+            },
         }
 
     def test_get_table_parameters_has_parameters(self):
@@ -301,7 +297,7 @@ class TestBaseMultiTableSynthesizer:
             'enforce_min_max_values': True,
             'enforce_rounding': True,
             'locales': ['en_US'],
-            'numerical_distributions': {}
+            'numerical_distributions': {},
         }
 
     def test_get_parameters(self):
@@ -339,7 +335,7 @@ class TestBaseMultiTableSynthesizer:
             'enforce_min_max_values': True,
             'locales': ['en_US'],
             'enforce_rounding': True,
-            'numerical_distributions': {}
+            'numerical_distributions': {},
         }
 
     def test_set_table_parameters_invalid_enforce_min_max_values(self):
@@ -442,16 +438,16 @@ class TestBaseMultiTableSynthesizer:
             'nesreca': pd.DataFrame({
                 'id_nesreca': np.arange(10),
                 'upravna_enota': np.arange(10),
-                'nesreca_val': np.arange(10).astype(str)
+                'nesreca_val': np.arange(10).astype(str),
             }),
             'oseba': pd.DataFrame({
                 'upravna_enota': np.arange(10),
                 'id_nesreca': np.arange(10),
-                'oseba_val': np.arange(10).astype(str)
+                'oseba_val': np.arange(10).astype(str),
             }),
             'upravna_enota': pd.DataFrame({
                 'id_upravna_enota': np.arange(10),
-                'upravna_val': np.arange(10).astype(str)
+                'upravna_val': np.arange(10).astype(str),
             }),
         }
 
@@ -481,16 +477,16 @@ class TestBaseMultiTableSynthesizer:
             'nesreca': pd.DataFrame({
                 'id_nesreca': np.arange(0, 20, 2),
                 'upravna_enota': np.arange(10),
-                'nesreca_val': np.arange(10)
+                'nesreca_val': np.arange(10),
             }),
             'oseba': pd.DataFrame({
                 'upravna_enota': np.arange(10),
                 'id_nesreca': np.arange(10),
-                'oseba_val': np.arange(10)
+                'oseba_val': np.arange(10),
             }),
             'upravna_enota': pd.DataFrame({
                 'id_upravna_enota': np.arange(10),
-                'upravna_val': np.arange(10)
+                'upravna_val': np.arange(10),
             }),
         }
         instance = BaseMultiTableSynthesizer(metadata)
@@ -519,8 +515,8 @@ class TestBaseMultiTableSynthesizer:
             'constraint_parameters': {
                 'low_column_name': 'nesreca_val',
                 'high_column_name': 'val',
-                'strict_boundaries': True
-            }
+                'strict_boundaries': True,
+            },
         }
         instance.add_constraints([inequality_constraint])
 
@@ -548,8 +544,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Run and Assert
         error_msg = (
-            'The provided data does not match the metadata:\n'
-            'Invalid data for PAR synthesizer.'
+            'The provided data does not match the metadata:\n' 'Invalid data for PAR synthesizer.'
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)
@@ -561,10 +556,7 @@ class TestBaseMultiTableSynthesizer:
         instance = BaseMultiTableSynthesizer(metadata)
         table1 = pd.DataFrame({'col1': [1, 2]})
         table2 = pd.DataFrame({'col2': [1, 2]})
-        data = {
-            'nesreca': table1,
-            'oseba': table2
-        }
+        data = {'nesreca': table1, 'oseba': table2}
         instance._table_synthesizers['nesreca'] = Mock()
         instance._table_synthesizers['oseba'] = Mock()
 
@@ -573,19 +565,18 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         instance._table_synthesizers['nesreca'].auto_assign_transformers.assert_called_once_with(
-            table1)
+            table1
+        )
         instance._table_synthesizers['oseba'].auto_assign_transformers.assert_called_once_with(
-            table2)
+            table2
+        )
 
     def test_auto_assign_transformers_foreign_key_none(self):
         """Test that each table's foreign key transformers are set to None."""
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        data = {
-            'nesreca': Mock(),
-            'oseba': Mock()
-        }
+        data = {'nesreca': Mock(), 'oseba': Mock()}
         instance.validate = Mock()
         instance.metadata._get_all_foreign_keys = Mock(return_value=['a', 'b'])
         nesreca_synthesizer = Mock()
@@ -622,10 +613,7 @@ class TestBaseMultiTableSynthesizer:
         synthesizer = HMASynthesizer(metadata)
         table1 = pd.DataFrame({'col1': [1, 2]})
         table2 = pd.DataFrame({'col2': [1, 2]})
-        data = {
-            'nesreca': table1,
-            'oseba': table2
-        }
+        data = {'nesreca': table1, 'oseba': table2}
 
         # Run
         error_msg = re.escape(
@@ -774,7 +762,7 @@ class TestBaseMultiTableSynthesizer:
         instance._table_synthesizers = {
             'nesreca': synth_nesreca,
             'oseba': synth_oseba,
-            'upravna_enota': synth_upravna_enota
+            'upravna_enota': synth_upravna_enota,
         }
 
         # Run
@@ -784,13 +772,13 @@ class TestBaseMultiTableSynthesizer:
         assert result == {
             'nesreca': synth_nesreca._preprocess.return_value,
             'oseba': synth_oseba._preprocess.return_value,
-            'upravna_enota': synth_upravna_enota._preprocess.return_value
+            'upravna_enota': synth_upravna_enota._preprocess.return_value,
         }
         instance.validate.assert_called_once_with(data)
         assert instance.metadata._get_all_foreign_keys.call_args_list == [
             call('nesreca'),
             call('oseba'),
-            call('upravna_enota')
+            call('upravna_enota'),
         ]
 
         synth_nesreca.auto_assign_transformers.assert_called_once_with(data['nesreca'])
@@ -819,32 +807,26 @@ class TestBaseMultiTableSynthesizer:
                     'columns': {
                         '1': {'sdtype': 'id'},
                         '2': {'sdtype': 'categorical'},
-                        'str': {'sdtype': 'categorical'}
-                    }
+                        'str': {'sdtype': 'categorical'},
+                    },
                 },
                 'second_table': {
-                    'columns': {
-                        '3': {'sdtype': 'id'},
-                        'str': {'sdtype': 'categorical'}
-                    }
-                }
+                    'columns': {'3': {'sdtype': 'id'}, 'str': {'sdtype': 'categorical'}}
+                },
             },
             'relationships': [
                 {
                     'parent_table_name': 'first_table',
                     'parent_primary_key': '1',
                     'child_table_name': 'second_table',
-                    'child_foreign_key': '3'
+                    'child_foreign_key': '3',
                 }
-            ]
+            ],
         }
         metadata = MultiTableMetadata.load_from_dict(metadata_dict)
         instance = BaseMultiTableSynthesizer(metadata)
         instance.validate = Mock()
-        instance._table_synthesizers = {
-            'first_table': Mock(),
-            'second_table': Mock()
-        }
+        instance._table_synthesizers = {'first_table': Mock(), 'second_table': Mock()}
         multi_data = {
             'first_table': pd.DataFrame({
                 1: ['abc', 'def', 'ghi'],
@@ -903,7 +885,7 @@ class TestBaseMultiTableSynthesizer:
         instance._table_synthesizers = {
             'nesreca': synth_nesreca,
             'oseba': synth_oseba,
-            'upravna_enota': synth_upravna_enota
+            'upravna_enota': synth_upravna_enota,
         }
         instance._fitted = True
 
@@ -914,7 +896,7 @@ class TestBaseMultiTableSynthesizer:
         assert result == {
             'nesreca': synth_nesreca._preprocess.return_value,
             'oseba': synth_oseba._preprocess.return_value,
-            'upravna_enota': synth_upravna_enota._preprocess.return_value
+            'upravna_enota': synth_upravna_enota._preprocess.return_value,
         }
         instance.validate.assert_called_once_with(data)
         synth_nesreca._preprocess.assert_called_once_with(data['nesreca'])
@@ -937,11 +919,11 @@ class TestBaseMultiTableSynthesizer:
         instance = Mock(
             _fitted_sdv_version=None,
             _fitted_sdv_enterprise_version=None,
-            _synthesizer_id='BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+            _synthesizer_id='BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         )
         processed_data = {
             'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
-            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})
+            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
         }
 
         # Run
@@ -959,20 +941,14 @@ class TestBaseMultiTableSynthesizer:
             'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
             'TOTAL NUMBER OF TABLES': 2,
             'TOTAL NUMBER OF ROWS': 6,
-            'TOTAL NUMBER OF COLUMNS': 4
+            'TOTAL NUMBER OF COLUMNS': 4,
         })
 
     def test_fit_processed_data_empty_table(self):
         """Test attributes are properly set when data is empty and that _fit is not called."""
         # Setup
-        instance = Mock(
-            _fitted_sdv_version=None,
-            _fitted_sdv_enterprise_version=None
-        )
-        processed_data = {
-            'table1': pd.DataFrame(),
-            'table2': pd.DataFrame()
-        }
+        instance = Mock(_fitted_sdv_version=None, _fitted_sdv_enterprise_version=None)
+        processed_data = {'table1': pd.DataFrame(), 'table2': pd.DataFrame()}
 
         # Run
         BaseMultiTableSynthesizer.fit_processed_data(instance, processed_data)
@@ -986,15 +962,9 @@ class TestBaseMultiTableSynthesizer:
     def test_fit_processed_data_raises_version_error(self):
         """Test that fit_processed data  will raise a ``VersionError``."""
         # Setup
-        instance = Mock(
-            _fitted_sdv_version='1.0.0',
-            _fitted_sdv_enterprise_version=None
-        )
+        instance = Mock(_fitted_sdv_version='1.0.0', _fitted_sdv_enterprise_version=None)
         instance.metadata = Mock()
-        processed_data = {
-            'table1': pd.DataFrame(),
-            'table2': pd.DataFrame()
-        }
+        processed_data = {'table1': pd.DataFrame(), 'table2': pd.DataFrame()}
 
         # Run and Assert
         error_msg = (
@@ -1019,12 +989,12 @@ class TestBaseMultiTableSynthesizer:
         instance = Mock(
             _fitted_sdv_version=None,
             _fitted_sdv_enterprise_version=None,
-            _synthesizer_id='BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+            _synthesizer_id='BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         )
         instance.metadata = Mock()
         data = {
             'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
-            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})
+            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
         }
 
         # Run
@@ -1043,20 +1013,17 @@ class TestBaseMultiTableSynthesizer:
             'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
             'TOTAL NUMBER OF TABLES': 2,
             'TOTAL NUMBER OF ROWS': 6,
-            'TOTAL NUMBER OF COLUMNS': 4
+            'TOTAL NUMBER OF COLUMNS': 4,
         })
 
     def test_fit_raises_version_error(self):
         """Test that fit will raise a ``VersionError`` if the current version is bigger."""
         # Setup
-        instance = Mock(
-            _fitted_sdv_version='1.0.0',
-            _fitted_sdv_enterprise_version=None
-        )
+        instance = Mock(_fitted_sdv_version='1.0.0', _fitted_sdv_enterprise_version=None)
         instance.metadata = Mock()
         data = {
             'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
-            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})
+            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
         }
 
         # Run and Assert
@@ -1158,7 +1125,7 @@ class TestBaseMultiTableSynthesizer:
         instance._fitted = True
         data = {
             'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
-            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']})
+            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
         }
         instance._sample = Mock(return_value=data)
 
@@ -1178,7 +1145,7 @@ class TestBaseMultiTableSynthesizer:
             'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
             'TOTAL NUMBER OF TABLES': 2,
             'TOTAL NUMBER OF ROWS': 6,
-            'TOTAL NUMBER OF COLUMNS': 4
+            'TOTAL NUMBER OF COLUMNS': 4,
         })
 
     def test_get_learned_distributions_raises_an_unfitted_error(self):
@@ -1255,9 +1222,7 @@ class TestBaseMultiTableSynthesizer:
         instance._fitted = True
 
         # Run and Assert
-        warn_msg = (
-            "For these constraints to take effect, please refit the synthesizer using 'fit'."
-        )
+        warn_msg = "For these constraints to take effect, please refit the synthesizer using 'fit'."
         with pytest.warns(UserWarning, match=warn_msg):
             instance.add_constraints([])
 
@@ -1271,18 +1236,12 @@ class TestBaseMultiTableSynthesizer:
         positive_constraint = {
             'constraint_class': 'Positive',
             'table_name': 'nesreca',
-            'constraint_parameters': {
-                'column_name': 'nesreca_val',
-                'strict_boundaries': True
-            }
+            'constraint_parameters': {'column_name': 'nesreca_val', 'strict_boundaries': True},
         }
         negative_constraint = {
             'constraint_class': 'Negative',
             'table_name': 'oseba',
-            'constraint_parameters': {
-                'column_name': 'oseba_val',
-                'strict_boundaries': False
-            }
+            'constraint_parameters': {'column_name': 'oseba_val', 'strict_boundaries': False},
         }
 
         # Run
@@ -1291,17 +1250,11 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         positive_constraint = {
             'constraint_class': 'Positive',
-            'constraint_parameters': {
-                'column_name': 'nesreca_val',
-                'strict_boundaries': True
-            }
+            'constraint_parameters': {'column_name': 'nesreca_val', 'strict_boundaries': True},
         }
         negative_constraint = {
             'constraint_class': 'Negative',
-            'constraint_parameters': {
-                'column_name': 'oseba_val',
-                'strict_boundaries': False
-            }
+            'constraint_parameters': {'column_name': 'oseba_val', 'strict_boundaries': False},
         }
         output_nesreca = instance._table_synthesizers['nesreca'].get_constraints()
         assert output_nesreca == [positive_constraint]
@@ -1319,7 +1272,7 @@ class TestBaseMultiTableSynthesizer:
             'table_name': 'oseba',
             'constraint_parameters': {
                 'column_name': 'id_nesreca',
-            }
+            },
         }
 
         # Run and Assert
@@ -1340,18 +1293,12 @@ class TestBaseMultiTableSynthesizer:
         positive_constraint = {
             'constraint_class': 'Positive',
             'table_name': 'nesreca',
-            'constraint_parameters': {
-                'column_name': 'nesreca_val',
-                'strict_boundaries': True
-            }
+            'constraint_parameters': {'column_name': 'nesreca_val', 'strict_boundaries': True},
         }
         negative_constraint = {
             'constraint_class': 'Negative',
             'table_name': 'oseba',
-            'constraint_parameters': {
-                'column_name': 'oseba_val',
-                'strict_boundaries': False
-            }
+            'constraint_parameters': {'column_name': 'oseba_val', 'strict_boundaries': False},
         }
         constraints = [positive_constraint, negative_constraint]
         instance.add_constraints(constraints)
@@ -1388,15 +1335,12 @@ class TestBaseMultiTableSynthesizer:
 
         # Run
         BaseMultiTableSynthesizer.load_custom_constraint_classes(
-            instance,
-            'path/to/file.py',
-            ['Custom', 'Constr', 'UpperPlus']
+            instance, 'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
         )
 
         # Assert
         table_synth_mock.load_custom_constraint_classes.assert_called_once_with(
-            'path/to/file.py',
-            ['Custom', 'Constr', 'UpperPlus']
+            'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
         )
 
     def test_load_custom_constraint_classes_multi_tables(self):
@@ -1409,19 +1353,15 @@ class TestBaseMultiTableSynthesizer:
 
         # Run
         BaseMultiTableSynthesizer.load_custom_constraint_classes(
-            instance,
-            'path/to/file.py',
-            ['Custom', 'Constr', 'UpperPlus']
+            instance, 'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
         )
 
         # Assert
         table_synth_mock.load_custom_constraint_classes.assert_called_once_with(
-            'path/to/file.py',
-            ['Custom', 'Constr', 'UpperPlus']
+            'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
         )
         table_synth_mock_2.load_custom_constraint_classes.assert_called_once_with(
-            'path/to/file.py',
-            ['Custom', 'Constr', 'UpperPlus']
+            'path/to/file.py', ['Custom', 'Constr', 'UpperPlus']
         )
 
     def test_add_custom_constraint_class(self):
@@ -1433,16 +1373,11 @@ class TestBaseMultiTableSynthesizer:
         instance._table_synthesizers = {'table': table_synth_mock}
 
         # Run
-        BaseMultiTableSynthesizer.add_custom_constraint_class(
-            instance,
-            constraint_mock,
-            'custom'
-        )
+        BaseMultiTableSynthesizer.add_custom_constraint_class(instance, constraint_mock, 'custom')
 
         # Assert
         table_synth_mock.add_custom_constraint_class.assert_called_once_with(
-            constraint_mock,
-            'custom'
+            constraint_mock, 'custom'
         )
 
     def test_add_custom_constraint_class_multi_tables(self):
@@ -1455,20 +1390,14 @@ class TestBaseMultiTableSynthesizer:
         instance._table_synthesizers = {'table': table_synth_mock, 'table_2': table_synth_mock_2}
 
         # Run
-        BaseMultiTableSynthesizer.add_custom_constraint_class(
-            instance,
-            constraint_mock,
-            'custom'
-        )
+        BaseMultiTableSynthesizer.add_custom_constraint_class(instance, constraint_mock, 'custom')
 
         # Assert
         table_synth_mock.add_custom_constraint_class.assert_called_once_with(
-            constraint_mock,
-            'custom'
+            constraint_mock, 'custom'
         )
         table_synth_mock_2.add_custom_constraint_class.assert_called_once_with(
-            constraint_mock,
-            'custom'
+            constraint_mock, 'custom'
         )
 
     @patch('sdv.multi_table.base.version')
@@ -1503,7 +1432,7 @@ class TestBaseMultiTableSynthesizer:
                 'creation_date': '2023-01-23',
                 'is_fit': False,
                 'last_fit_date': None,
-                'fitted_sdv_version': None
+                'fitted_sdv_version': None,
             }
 
             # Run
@@ -1516,7 +1445,7 @@ class TestBaseMultiTableSynthesizer:
                 'creation_date': '2023-01-23',
                 'is_fit': True,
                 'last_fit_date': '2023-01-23',
-                'fitted_sdv_version': '1.0.0'
+                'fitted_sdv_version': '1.0.0',
             }
 
     @patch('sdv.multi_table.base.version')
@@ -1551,7 +1480,7 @@ class TestBaseMultiTableSynthesizer:
                 'creation_date': '2023-01-23',
                 'is_fit': False,
                 'last_fit_date': None,
-                'fitted_sdv_version': None
+                'fitted_sdv_version': None,
             }
 
             # Run
@@ -1565,7 +1494,7 @@ class TestBaseMultiTableSynthesizer:
                 'is_fit': True,
                 'last_fit_date': '2023-01-23',
                 'fitted_sdv_version': '1.0.0',
-                'fitted_sdv_enterprise_version': '1.1.0'
+                'fitted_sdv_enterprise_version': '1.1.0',
             }
 
     @patch('sdv.multi_table.base.datetime')
@@ -1598,9 +1527,16 @@ class TestBaseMultiTableSynthesizer:
     @patch('sdv.multi_table.base.check_sdv_versions_and_warn')
     @patch('sdv.multi_table.base.cloudpickle')
     @patch('builtins.open', new_callable=mock_open)
-    def test_load(self, mock_file, cloudpickle_mock,
-                  mock_check_sdv_versions_and_warn, mock_check_synthesizer_version,
-                  mock_generate_synthesizer_id, mock_datetime, caplog):
+    def test_load(
+        self,
+        mock_file,
+        cloudpickle_mock,
+        mock_check_sdv_versions_and_warn,
+        mock_check_synthesizer_version,
+        mock_generate_synthesizer_id,
+        mock_datetime,
+        caplog,
+    ):
         """Test that the ``load`` method loads a stored synthesizer."""
         # Setup
         synthesizer_id = 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
@@ -1633,12 +1569,14 @@ class TestBaseMultiTableSynthesizer:
     def test_load_runtime_error(self, cloudpickle_mock, mock_open):
         """Test that the synthesizer's load method errors with the correct message."""
         # Setup
-        cloudpickle_mock.load.side_effect = RuntimeError((
-            'Attempting to deserialize object on a CUDA device but '
-            'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
-            " please use torch.load with map_location=torch.device('cpu') "
-            'to map your storages to the CPU.'
-        ))
+        cloudpickle_mock.load.side_effect = RuntimeError(
+            (
+                'Attempting to deserialize object on a CUDA device but '
+                'torch.cuda.is_available() is False. If you are running on a CPU-only machine,'
+                " please use torch.load with map_location=torch.device('cpu') "
+                'to map your storages to the CPU.'
+            )
+        )
 
         # Run and Assert
         err_msg = re.escape(

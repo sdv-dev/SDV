@@ -1,4 +1,5 @@
 """Test ``SDV`` logging utilities."""
+
 from io import StringIO
 from unittest.mock import Mock, mock_open, patch
 
@@ -6,7 +7,10 @@ import numpy as np
 import pandas as pd
 
 from sdv.logging.utils import (
-    disable_single_table_logger, get_sdv_logger_config, load_logfile_dataframe)
+    disable_single_table_logger,
+    get_sdv_logger_config,
+    load_logfile_dataframe,
+)
 
 
 def test_get_sdv_logger_config():
@@ -33,13 +37,8 @@ def test_get_sdv_logger_config():
     assert logger_conf == {
         'log_registry': 'local',
         'loggers': {
-            'test_logger': {
-                'level': 'DEBUG',
-                'handlers': {
-                    'class': 'logging.StreamHandler'
-                }
-            }
-        }
+            'test_logger': {'level': 'DEBUG', 'handlers': {'class': 'logging.StreamHandler'}}
+        },
     }
 
 
@@ -85,6 +84,6 @@ def test_load_logfile_dataframe():
         'SYNTHESIZER ID': ['GaussianCopulaSynthesizer_1.12.1_5387a6e9f4d'] * 3,
         'TOTAL NUMBER OF TABLES': [np.nan, 1, 1],
         'TOTAL NUMBER OF ROWS': [np.nan, 500, 500],
-        'TOTAL NUMBER OF COLUMNS': [np.nan, 9, 6]
+        'TOTAL NUMBER OF COLUMNS': [np.nan, 9, 6],
     })
     pd.testing.assert_frame_equal(log_dataframe, expected_log)
