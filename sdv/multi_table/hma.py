@@ -270,12 +270,12 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         return processed_data
 
-    def _set_extended_columns_distributions(self, synthesizer,
-                                            table_name,
-                                            valid_columns):
+    def _set_extended_columns_distributions(self, synthesizer, table_name, valid_columns):
         numerical_distributions = {}
-        if table_name in self.parent_extended_columns and \
-                len(self.parent_extended_columns[table_name]) > 0:
+        if (
+            table_name in self.parent_extended_columns
+            and len(self.parent_extended_columns[table_name]) > 0
+        ):
             for extended_column in self.parent_extended_columns[table_name]:
                 if extended_column in valid_columns:
                     numerical_distributions[extended_column] = 'truncnorm'
@@ -322,11 +322,12 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     row.index = f'__{child_name}__{foreign_key}__' + row.index
                 else:
                     synthesizer = self._synthesizer(
-                        table_meta, **self._table_parameters[child_name],
+                        table_meta,
+                        **self._table_parameters[child_name],
                     )
-                    self._set_extended_columns_distributions(synthesizer,
-                                                             child_name,
-                                                             child_rows.columns)
+                    self._set_extended_columns_distributions(
+                        synthesizer, child_name, child_rows.columns
+                    )
                     synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
                     row = synthesizer._get_parameters()
                     row = pd.Series(row)
@@ -480,9 +481,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             )
 
             if not table.empty:
-                self._set_extended_columns_distributions(self._table_synthesizers[table_name],
-                                                         table_name,
-                                                         table.columns)
+                self._set_extended_columns_distributions(
+                    self._table_synthesizers[table_name], table_name, table.columns
+                )
                 self._table_synthesizers[table_name].fit_processed_data(table)
                 table_parameters = self._table_synthesizers[table_name]._get_parameters()
                 self._default_parameters[table_name] = {

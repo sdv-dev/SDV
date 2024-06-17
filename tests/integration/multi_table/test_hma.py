@@ -1385,54 +1385,47 @@ class TestHMASynthesizer:
 
 @pytest.mark.parametrize('num_rows', [(10), (1000)])
 def test_hma_0_1_child(num_rows):
-    parent_table = pd.DataFrame(data={
-        'id': list(range(num_rows)),
-        'col_A': list(np.random.choice(['A', 'B', 'C', 'D', 'E'], size=num_rows))
-    })
-    child_table_data = {
-        'parent_id': [],
-        'col_B': [],
-        'col_C': []
-    }
+    parent_table = pd.DataFrame(
+        data={
+            'id': list(range(num_rows)),
+            'col_A': list(np.random.choice(['A', 'B', 'C', 'D', 'E'], size=num_rows)),
+        }
+    )
+    child_table_data = {'parent_id': [], 'col_B': [], 'col_C': []}
 
     for i in range(num_rows):
         num_children = np.random.choice([0, 1, 10, 15], p=[0.4, 0.5, 0.05, 0.05])
         if num_children == 0:
             continue
         child_table_data['parent_id'].extend([i] * num_children)
-        child_table_data['col_B'].extend(
-            [round(i, 2) for i in np.random.uniform(low=0, high=10, size=num_children)])
+        child_table_data['col_B'].extend([
+            round(i, 2) for i in np.random.uniform(low=0, high=10, size=num_children)
+        ])
         child_table_data['col_C'].extend(
-            list(np.random.choice(['A', 'B', 'C', 'D', 'E'], size=num_children)))
+            list(np.random.choice(['A', 'B', 'C', 'D', 'E'], size=num_children))
+        )
 
-    data = {
-        'parent': parent_table,
-        'child': pd.DataFrame(data=child_table_data)
-    }
+    data = {'parent': parent_table, 'child': pd.DataFrame(data=child_table_data)}
     metadata = MultiTableMetadata.load_from_dict({
         'tables': {
             'parent': {
                 'primary_key': 'id',
-                'columns': {
-                    'id': {'sdtype': 'id'},
-                    'col_A': {'sdtype': 'categorical'}
-                }
+                'columns': {'id': {'sdtype': 'id'}, 'col_A': {'sdtype': 'categorical'}},
             },
             'child': {
                 'columns': {
                     'parent_id': {'sdtype': 'id'},
                     'col_B': {'sdtype': 'numerical'},
-                    'col_C': {'sdtype': 'categorical'}
+                    'col_C': {'sdtype': 'categorical'},
                 }
             },
         },
-        'relationships':
-        [
+        'relationships': [
             {
                 'parent_table_name': 'parent',
                 'child_table_name': 'child',
                 'parent_primary_key': 'id',
-                'child_foreign_key': 'parent_id'
+                'child_foreign_key': 'parent_id',
             }
         ],
     })
@@ -1449,18 +1442,16 @@ def test_hma_0_1_child(num_rows):
 
 
 def test_hma_0_1_grandparent():
-    grandparent = pd.DataFrame({
-        'grandparent_id': [50, 51, 52]
-    })
+    grandparent = pd.DataFrame({'grandparent_id': [50, 51, 52]})
     parent = pd.DataFrame({
         'parent_id': [0, 1, 2, 3],
         'data': [1.5, 2.5, 5.9, 10.6],
-        'grandparent_id': [50, 50, 50, 52]
+        'grandparent_id': [50, 50, 50, 52],
     })
     child = pd.DataFrame({
         'child_id': [10, 11, 12],
         'parent_id': [0, 1, 2],
-        'data': [1.8, 0.7, 2.5]
+        'data': [1.8, 0.7, 2.5],
     })
     data = {'parent': parent, 'child': child, 'grandparent': grandparent}
     metadata_dict = {
@@ -1469,7 +1460,7 @@ def test_hma_0_1_grandparent():
                 'primary_key': 'grandparent_id',
                 'columns': {
                     'grandparent_id': {'sdtype': 'id'},
-                }
+                },
             },
             'parent': {
                 'primary_key': 'parent_id',
@@ -1477,7 +1468,7 @@ def test_hma_0_1_grandparent():
                     'parent_id': {'sdtype': 'id'},
                     'data': {'sdtype': 'numerical'},
                     'grandparent_id': {'sdtype': 'id'},
-                }
+                },
             },
             'child': {
                 'primary_key': 'child_id',
@@ -1485,7 +1476,7 @@ def test_hma_0_1_grandparent():
                     'child_id': {'sdtype': 'id'},
                     'parent_id': {'sdtype': 'id'},
                     'data': {'sdtype': 'numerical'},
-                }
+                },
             },
         },
         'relationships': [
@@ -1493,15 +1484,15 @@ def test_hma_0_1_grandparent():
                 'parent_table_name': 'grandparent',
                 'parent_primary_key': 'grandparent_id',
                 'child_table_name': 'parent',
-                'child_foreign_key': 'grandparent_id'
+                'child_foreign_key': 'grandparent_id',
             },
             {
                 'parent_table_name': 'parent',
                 'parent_primary_key': 'parent_id',
                 'child_table_name': 'child',
-                'child_foreign_key': 'parent_id'
-            }
-        ]
+                'child_foreign_key': 'parent_id',
+            },
+        ],
     }
     metadata = MultiTableMetadata().load_from_dict(metadata_dict)
     metadata.validate()

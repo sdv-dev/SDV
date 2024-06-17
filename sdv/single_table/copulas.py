@@ -140,10 +140,9 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         for column in processed_data.columns:
             if column not in numerical_distributions:
                 numerical_distributions[column] = self._numerical_distributions.get(
-                    column, self._default_distribution)
-        self._model = multivariate.GaussianMultivariate(
-            distribution=numerical_distributions
-        )
+                    column, self._default_distribution
+                )
+        self._model = multivariate.GaussianMultivariate(distribution=numerical_distributions)
 
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', module='scipy')
