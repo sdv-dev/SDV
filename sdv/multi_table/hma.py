@@ -16,6 +16,7 @@ from sdv.sampling import BaseHierarchicalSampler
 
 LOGGER = logging.getLogger(__name__)
 MAX_NUMBER_OF_COLUMNS = 1000
+DEFAULT_EXTENDED_COLUMNS_DISTRIBUTION = 'truncnorm'
 
 
 class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
@@ -272,14 +273,10 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
     def _set_extended_columns_distributions(self, synthesizer, table_name, valid_columns):
         numerical_distributions = {}
-        if (
-            table_name in self._parent_extended_columns
-            and len(self._parent_extended_columns[table_name]) > 0
-        ):
+        if table_name in self._parent_extended_columns:
             for extended_column in self._parent_extended_columns[table_name]:
                 if extended_column in valid_columns:
-                    numerical_distributions[extended_column] = 'truncnorm'
-
+                    numerical_distributions[extended_column] = DEFAULT_EXTENDED_COLUMNS_DISTRIBUTION
             synthesizer._set_numerical_distributions(numerical_distributions)
 
     def _get_extension(self, child_name, child_table, foreign_key, progress_bar_desc):
