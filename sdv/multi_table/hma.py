@@ -273,7 +273,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
     def _set_extended_columns_distributions(self, synthesizer, table_name, valid_columns):
         numerical_distributions = {}
-        for extended_column in self._parent_extended_columns.get(table_name, []):
+        for extended_column in self._parent_extended_columns[table_name]:
             if extended_column in valid_columns:
                 numerical_distributions[extended_column] = DEFAULT_EXTENDED_COLUMNS_DISTRIBUTION
         synthesizer._set_numerical_distributions(numerical_distributions)
