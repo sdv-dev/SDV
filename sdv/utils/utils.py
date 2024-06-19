@@ -10,7 +10,7 @@ from sdv.errors import InvalidDataError, SynthesizerInputError
 from sdv.multi_table.utils import _drop_rows
 
 
-def drop_unknown_references(data, metadata, drop_missing_values=True, verbose=True):
+def drop_unknown_references(data, metadata, drop_missing_values=False, verbose=True):
     """Drop rows with unknown foreign keys.
 
     Args:
@@ -22,7 +22,7 @@ def drop_unknown_references(data, metadata, drop_missing_values=True, verbose=Tr
         drop_missing_values (bool):
             Boolean describing whether or not to also drop foreign keys with missing values
             If True, drop rows with missing values in the foreign keys.
-            Defaults to True.
+            Defaults to False.
         verbose (bool):
             If True, print information about the rows that are dropped.
             Defaults to True.
