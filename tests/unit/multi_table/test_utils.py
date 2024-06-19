@@ -1308,7 +1308,7 @@ def test__subsample_disconnected_roots(mock_drop_rows, mock_get_disconnected_roo
     mock_get_disconnected_roots_from_table.assert_called_once_with(
         metadata.relationships, 'disconnected_root'
     )
-    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=True)
+    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=False)
     for table_name in metadata.tables:
         if table_name not in {'grandparent', 'other_root'}:
             pd.testing.assert_frame_equal(data[table_name], expected_result[table_name])
@@ -1317,8 +1317,7 @@ def test__subsample_disconnected_roots(mock_drop_rows, mock_get_disconnected_roo
 
 
 @patch('sdv.multi_table.utils._drop_rows')
-@patch('sdv.multi_table.utils._get_nan_fk_indices_table')
-def test__subsample_table_and_descendants(mock_get_nan_fk_indices_table, mock_drop_rows):
+def test__subsample_table_and_descendants(mock_drop_rows):
     """Test the ``_subsample_table_and_descendants`` method."""
     # Setup
     data = {
@@ -1339,7 +1338,6 @@ def test__subsample_table_and_descendants(mock_get_nan_fk_indices_table, mock_dr
             'col_8': [6, 7, 8, 9, 10],
         }),
     }
-    mock_get_nan_fk_indices_table.return_value = {0}
     metadata = Mock()
     metadata.relationships = Mock()
 
@@ -1347,30 +1345,8 @@ def test__subsample_table_and_descendants(mock_get_nan_fk_indices_table, mock_dr
     _subsample_table_and_descendants(data, metadata, 'parent', 3)
 
     # Assert
-    mock_get_nan_fk_indices_table.assert_called_once_with(data, metadata.relationships, 'parent')
-    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=True)
+    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=False)
     assert len(data['parent']) == 3
-
-
-@patch('sdv.multi_table.utils._get_nan_fk_indices_table')
-def test__subsample_table_and_descendants_nan_fk(mock_get_nan_fk_indices_table):
-    """Test the ``_subsample_table_and_descendants`` when there are too many NaN foreign keys."""
-    # Setup
-    data = {'parent': [1, 2, 3, 4, 5, 6]}
-    mock_get_nan_fk_indices_table.return_value = {0, 1, 2, 3, 4}
-    metadata = Mock()
-    metadata.relationships = Mock()
-    expected_message = re.escape(
-        "Referential integrity cannot be reached for table 'parent' while keeping "
-        '3 rows. Please try again with a bigger number of rows.'
-    )
-
-    # Run
-    with pytest.raises(SamplingError, match=expected_message):
-        _subsample_table_and_descendants(data, metadata, 'parent', 3)
-
-    # Assert
-    mock_get_nan_fk_indices_table.assert_called_once_with(data, metadata.relationships, 'parent')
 
 
 def test__get_primary_keys_referenced():
@@ -1929,11 +1905,7 @@ def test__subsample_ancestors_schema_diamond_shape():
 @patch('sdv.multi_table.utils._subsample_table_and_descendants')
 @patch('sdv.multi_table.utils._subsample_ancestors')
 @patch('sdv.multi_table.utils._get_primary_keys_referenced')
-@patch('sdv.multi_table.utils._drop_rows')
-@patch('sdv.multi_table.utils._validate_foreign_keys_not_null')
 def test__subsample_data(
-    mock_validate_foreign_keys_not_null,
-    mock_drop_rows,
     mock_get_primary_keys_referenced,
     mock_subsample_ancestors,
     mock_subsample_table_and_descendants,
@@ -1954,7 +1926,6 @@ def test__subsample_data(
     result = _subsample_data(data, metadata, main_table, num_rows)
 
     # Assert
-    mock_validate_foreign_keys_not_null.assert_called_once_with(metadata, data)
     mock_get_primary_keys_referenced.assert_called_once_with(data, metadata)
     mock_subsample_disconnected_roots.assert_called_once_with(data, metadata, main_table, 0.5)
     mock_subsample_table_and_descendants.assert_called_once_with(
@@ -1963,15 +1934,12 @@ def test__subsample_data(
     mock_subsample_ancestors.assert_called_once_with(
         data, metadata, main_table, primary_key_reference
     )
-    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=True)
     assert result == data
 
 
 @patch('sdv.multi_table.utils._subsample_disconnected_roots')
 @patch('sdv.multi_table.utils._get_primary_keys_referenced')
-@patch('sdv.multi_table.utils._validate_foreign_keys_not_null')
 def test__subsample_data_empty_dataset(
-    mock_validate_foreign_keys_not_null,
     mock_get_primary_keys_referenced,
     mock_subsample_disconnected_roots,
 ):
