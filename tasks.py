@@ -123,7 +123,7 @@ def tutorials(c):
 def lint(c):
     check_dependencies(c)
     c.run('ruff check .')
-    c.run('ruff format . --check')
+    c.run('ruff format --check --diff .')
 
 
 def remove_readonly(func, path, _):
