@@ -85,14 +85,13 @@ install-develop: clean-build clean-pyc ## install the package in editable mode a
 
 .PHONY: lint-sdv
 lint-sdv: ## check style with flake8 and isort
-	flake8 sdv
-	isort -c sdv
-	pydocstyle sdv
+	ruff check sdv/
+	ruff format --check --diff sdv/
 
 .PHONY: lint-tests
 lint-tests: ## check style with flake8 and isort
-	flake8 --ignore=D,SFS2 tests
-	isort -c tests
+	ruff check tests/
+	ruff format --check --diff tests/ 
 
 .PHONY: check-dependencies
 check-dependencies: ## test if there are any broken dependencies
@@ -105,7 +104,7 @@ lint:
 .PHONY: fix-lint
 fix-lint:
 	ruff check --fix .
-	ruff format
+	ruff format .
 
 
 # TEST TARGETS
