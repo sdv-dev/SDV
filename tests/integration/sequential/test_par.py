@@ -366,3 +366,22 @@ def test_par_unique_sequence_index_with_enforce_min_max():
         seq_df = synth_df[synth_df['s_key'] == i]
         has_duplicates = seq_df['visits'].duplicated().any()
         assert not has_duplicates
+
+
+def test_par_sequence_index_is_numerical():
+    metadata_dict = {
+        'sequence_index': 'time_in_cycles',
+        'columns': {
+            'engine_no': {'sdtype': 'id'},
+            'time_in_cycles': {'sdtype': 'numerical'},
+        },
+        'sequence_key': 'engine_no',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+    }
+    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+    data = pd.DataFrame({'engine_no': [0, 0, 1, 1], 'time_in_cycles': [1, 2, 3, 4]})
+
+    s1 = PARSynthesizer(metadata)
+    s1.fit(data)
+    sample = s1.sample(2, 5)
+    assert sample.columns.to_list() == data.columns.to_list()

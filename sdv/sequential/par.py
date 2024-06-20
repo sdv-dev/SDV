@@ -264,7 +264,9 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         # Ensure that sequence index does not get auto assigned with enforce_min_max_values
         if self._sequence_index:
             sequence_index_transformer = self.get_transformers()[self._sequence_index]
-            if sequence_index_transformer.enforce_min_max_values:
+            if sequence_index_transformer and getattr(
+                sequence_index_transformer, 'enforce_min_max_values', False
+            ):
                 sequence_index_transformer.enforce_min_max_values = False
 
     def _preprocess(self, data):
