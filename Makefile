@@ -91,7 +91,7 @@ lint-sdv: ## check style with flake8 and isort
 .PHONY: lint-tests
 lint-tests: ## check style with flake8 and isort
 	ruff check tests/
-	ruff format --check --diff tests/ 
+	ruff format --check --diff tests/
 
 .PHONY: check-dependencies
 check-dependencies: ## test if there are any broken dependencies
@@ -103,7 +103,7 @@ lint:
 
 .PHONY: fix-lint
 fix-lint:
-	invoke fix_lint
+	invoke fix-lint
 
 
 # TEST TARGETS
