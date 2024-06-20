@@ -981,8 +981,7 @@ class TestBaseMultiTableSynthesizer:
         instance._check_metadata_updated.assert_not_called()
 
     @patch('sdv.multi_table.base.datetime')
-    @patch('sdv.multi_table.base._validate_foreign_keys_not_null')
-    def test_fit(self, mock_validate_foreign_keys_not_null, mock_datetime, caplog):
+    def test_fit(self, mock_datetime, caplog):
         """Test that it calls the appropriate methods."""
         # Setup
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
@@ -1002,7 +1001,6 @@ class TestBaseMultiTableSynthesizer:
             BaseMultiTableSynthesizer.fit(instance, data)
 
         # Assert
-        mock_validate_foreign_keys_not_null.assert_called_once_with(instance.metadata, data)
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()
