@@ -103,8 +103,7 @@ lint:
 
 .PHONY: fix-lint
 fix-lint:
-	ruff check --fix .
-	ruff format .
+	invoke fix_lint
 
 
 # TEST TARGETS
