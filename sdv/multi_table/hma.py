@@ -1,6 +1,7 @@
 """Hierarchical Modeling Algorithms."""
 
 import logging
+from collections import defaultdict
 from copy import deepcopy
 
 import numpy as np
@@ -15,6 +16,7 @@ from sdv.sampling import BaseHierarchicalSampler
 
 LOGGER = logging.getLogger(__name__)
 MAX_NUMBER_OF_COLUMNS = 1000
+DEFAULT_EXTENDED_COLUMNS_DISTRIBUTION = 'truncnorm'
 
 
 class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
@@ -159,6 +161,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         self._augmented_tables = []
         self._learned_relationships = 0
         self._default_parameters = {}
+        self._parent_extended_columns = defaultdict(list)
         self.verbose = verbose
         BaseHierarchicalSampler.__init__(
             self, self.metadata, self._table_synthesizers, self._table_sizes
@@ -215,8 +218,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         distributions = {}
         for table in self.metadata.tables:
             parameters = self.get_table_parameters(table)
-            sythesizer_parameter = parameters.get('synthesizer_parameters', {})
-            distributions[table] = sythesizer_parameter.get('default_distribution', None)
+            synthesizer_parameters = parameters.get('synthesizer_parameters', {})
+            distributions[table] = synthesizer_parameters.get('default_distribution', None)
 
         return distributions
 
@@ -268,6 +271,13 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
         return processed_data
 
+    def _set_extended_columns_distributions(self, synthesizer, table_name, valid_columns):
+        numerical_distributions = {}
+        for extended_column in self._parent_extended_columns[table_name]:
+            if extended_column in valid_columns:
+                numerical_distributions[extended_column] = DEFAULT_EXTENDED_COLUMNS_DISTRIBUTION
+        synthesizer._set_numerical_distributions(numerical_distributions)
+
     def _get_extension(self, child_name, child_table, foreign_key, progress_bar_desc):
         """Generate the extension columns for this child table.
 
@@ -298,17 +308,21 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         index = []
         scale_columns = None
         pbar_args = self._get_pbar_args(desc=progress_bar_desc)
+
         for foreign_key_value in tqdm(foreign_key_values, **pbar_args):
             child_rows = child_table.loc[[foreign_key_value]]
             child_rows = child_rows[child_rows.columns.difference(foreign_key_columns)]
-
             try:
                 if child_rows.empty:
                     row = pd.Series({'num_rows': len(child_rows)})
                     row.index = f'__{child_name}__{foreign_key}__' + row.index
                 else:
                     synthesizer = self._synthesizer(
-                        table_meta, **self._table_parameters[child_name]
+                        table_meta,
+                        **self._table_parameters[child_name],
+                    )
+                    self._set_extended_columns_distributions(
+                        synthesizer, child_name, child_rows.columns
                     )
                     synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
                     row = synthesizer._get_parameters()
@@ -361,8 +375,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         """
         self._table_sizes[table_name] = len(table)
         LOGGER.info('Computing extensions for table %s', table_name)
-        child_map = self.metadata._get_child_map()[table_name]
-        for child_name in child_map:
+        children = self.metadata._get_child_map()[table_name]
+        for child_name in children:
             if child_name not in self._augmented_tables:
                 child_table = self._augment_table(tables[child_name], tables, child_name)
             else:
@@ -386,15 +400,17 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                         enforce_min_max_values=True
                     )
                     self.extended_columns[child_name][column].fit(extension, column)
-
                 table = table.merge(extension, how='left', right_index=True, left_index=True)
                 num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
                 table[num_rows_key] = table[num_rows_key].fillna(0)
                 self._max_child_rows[num_rows_key] = table[num_rows_key].max()
                 self._min_child_rows[num_rows_key] = table[num_rows_key].min()
+
+                if len(extension.columns) > 0:
+                    self._parent_extended_columns[table_name].extend(list(extension.columns))
+
                 tables[table_name] = table
                 self._learned_relationships += 1
-
         self._augmented_tables.append(table_name)
         self._clear_nans(table)
 
@@ -436,7 +452,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         keys = {}
         for fk in foreign_keys:
             keys[fk] = table_data.pop(fk).to_numpy()
-
         return keys
 
     def _model_tables(self, augmented_data):
@@ -462,6 +477,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             )
 
             if not table.empty:
+                self._set_extended_columns_distributions(
+                    self._table_synthesizers[table_name], table_name, table.columns
+                )
                 self._table_synthesizers[table_name].fit_processed_data(table)
                 table_parameters = self._table_synthesizers[table_name]._get_parameters()
                 self._default_parameters[table_name] = {
@@ -470,8 +488,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     if 'univariates' in parameter
                 }
 
-            for name, values in keys.items():
-                table[name] = values
+            for fk_column_name, fk_values in keys.items():
+                table[fk_column_name] = fk_values
 
     def _extract_parameters(self, parent_row, table_name, foreign_key):
         """Get the params from a generated parent row.

@@ -126,7 +126,7 @@ class BaseIndependentSampler:
         """Sample the entire dataset.
 
         Returns a dictionary with all the tables of the dataset. The amount of rows sampled will
-        depend from table to table. This is because the children tables are created modelling the
+        depend from table to table. This is because the children tables are created modeling the
         relation that they have with their parent tables, so its behavior may change from one
         table to another.
 
