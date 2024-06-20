@@ -110,7 +110,7 @@ def test_drop_unknown_references_drop_missing_values(metadata, data, capsys):
     data['child'].loc[4, 'parent_id'] = np.nan
 
     # Run
-    cleaned_data = drop_unknown_references(data, metadata)
+    cleaned_data = drop_unknown_references(data, metadata, drop_missing_values=True)
     metadata.validate_data(cleaned_data)
     captured = capsys.readouterr()
 

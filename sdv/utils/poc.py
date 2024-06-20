@@ -16,14 +16,14 @@ from sdv.multi_table.utils import (
 from sdv.utils.utils import drop_unknown_references as utils_drop_unknown_references
 
 
-def drop_unknown_references(data, metadata):
+def drop_unknown_references(data, metadata, drop_missing_values=False, verbose=True):
     """Wrap the drop_unknown_references function from the utils module."""
     warnings.warn(
         "Please access the 'drop_unknown_references' function directly from the sdv.utils module"
         'instead of sdv.utils.poc.',
         FutureWarning,
     )
-    return utils_drop_unknown_references(data, metadata)
+    return utils_drop_unknown_references(data, metadata, drop_missing_values, verbose)
 
 
 def simplify_schema(data, metadata, verbose=True):

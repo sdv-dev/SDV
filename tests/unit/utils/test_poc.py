@@ -17,6 +17,8 @@ def test_drop_unknown_references(mock_drop_unknown_references):
     # Setup
     data = Mock()
     metadata = Mock()
+    drop_missing_values = Mock()
+    verbose = Mock()
     expected_message = re.escape(
         "Please access the 'drop_unknown_references' function directly from the sdv.utils module"
         'instead of sdv.utils.poc.'
@@ -24,10 +26,12 @@ def test_drop_unknown_references(mock_drop_unknown_references):
 
     # Run
     with pytest.warns(FutureWarning, match=expected_message):
-        drop_unknown_references(data, metadata)
+        drop_unknown_references(data, metadata, drop_missing_values, verbose)
 
     # Assert
-    mock_drop_unknown_references.assert_called_once_with(data, metadata)
+    mock_drop_unknown_references.assert_called_once_with(
+        data, metadata, drop_missing_values, verbose
+    )
 
 
 @patch('sdv.utils.poc._get_total_estimated_columns')

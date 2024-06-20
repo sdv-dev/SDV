@@ -87,7 +87,7 @@ def test_drop_unknown_references(mock_drop_rows):
     }
     metadata.validate.assert_called_once()
     metadata.validate_data.assert_called_once_with(data)
-    mock_drop_rows.assert_called_once_with(result, metadata, True)
+    mock_drop_rows.assert_called_once_with(result, metadata, False)
     for table_name, table in result.items():
         pd.testing.assert_frame_equal(table, expected_result[table_name])
 
@@ -189,7 +189,7 @@ def test_drop_unknown_references_with_nan(mock_validate_foreign_keys, mock_get_r
     mock_get_rows_to_drop.return_value = defaultdict(set, {'child': {4}, 'grandchild': {0, 3, 4}})
 
     # Run
-    result = drop_unknown_references(data, metadata, verbose=False)
+    result = drop_unknown_references(data, metadata, drop_missing_values=True, verbose=False)
 
     # Assert
     metadata.validate.assert_called_once()
