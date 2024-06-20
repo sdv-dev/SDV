@@ -13,7 +13,7 @@ LABEL_TO_HEADER = {
     'maintenance': 'Maintenance',
     'customer success': 'Customer Success',
     'documentation': 'Documentation',
-    'misc': 'Miscellaneous',
+    'misc': 'Miscellaneous'
 }
 ISSUE_LABELS = [
     'documentation',
@@ -21,7 +21,15 @@ ISSUE_LABELS = [
     'internal',
     'bug',
     'feature request',
-    'customer success',
+    'customer success'
+]
+ISSUE_LABELS_ORDERED_BY_IMPORTANCE = [
+    'feature request',
+    'customer success'
+    'bug',
+    'documentation',
+    'internal',
+    'maintenance'
 ]
 NEW_LINE = '\n'
 GITHUB_URL = 'https://api.github.com/repos/sdv-dev/sdv'
@@ -64,6 +72,8 @@ def _get_issues_by_milestone(milestone):
         if not issues_on_page:
             break
 
+        # Filter our PRs
+        issues_on_page = [issue for issue in issues_on_page if issue.get('pull_request') is None]
         issues.extend(issues_on_page)
         page += 1
 
@@ -102,7 +112,7 @@ def _create_release_notes(issues_by_category, version, date):
     title = f'## v{version} - {date}'
     release_notes = f'{title}{NEW_LINE}{NEW_LINE}'
 
-    for category in ISSUE_LABELS + ['misc']:
+    for category in ISSUE_LABELS_ORDERED_BY_IMPORTANCE + ['misc']:
         issues = issues_by_category.get(category)
         if issues:
             section_text = (
