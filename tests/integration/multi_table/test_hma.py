@@ -1314,7 +1314,7 @@ class TestHMASynthesizer:
         assert len(record) == 1
 
     def test_null_foreign_keys(self):
-        """Test that the synthesizer crashes when there are null foreign keys."""
+        """Test that the synthesizer does not crash when there are null foreign keys."""
         # Setup
         metadata = MultiTableMetadata()
         metadata.add_table('parent_table')
@@ -1370,16 +1370,7 @@ class TestHMASynthesizer:
         metadata.validate_data(data)
 
         # Run and Assert
-        err_msg = re.escape(
-            'The data contains null values in foreign key columns. This feature is currently '
-            'unsupported. Please remove null values to fit the synthesizer.\n'
-            '\n'
-            'Affected columns:\n'
-            "Table 'child_table1', column(s) ['fk']\n"
-            "Table 'child_table2', column(s) ['fk1', 'fk2']\n"
-        )
-        with pytest.raises(SynthesizerInputError, match=err_msg):
-            synthesizer.fit(data)
+        synthesizer.fit(data)
 
 
 parametrization = [
