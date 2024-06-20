@@ -469,6 +469,9 @@ class TestPARSynthesizer:
 
     @patch('sdv.sequential.par.PARSynthesizer.get_transformers')
     def test_auto_assign_transformers_without_enforce_min_max(self, mock_get_transfomers):
+        """Test to see if auto_assign_transformers does not add enforce_min_max_values if the transformer
+        does not contain it already
+        """
         # Setup
         datetime = pd.Series(
             [pd.to_datetime('1/1/1999'), pd.to_datetime('1/2/1999'), '1/3/1999'], dtype='<M8[ns]'
@@ -482,8 +485,12 @@ class TestPARSynthesizer:
         metadata = self.get_metadata()
         metadata.set_sequence_index('time')
         mock_get_transfomers.return_value = {'time': FloatFormatter}
+
+        # Run
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
         par.auto_assign_transformers(data)
+
+        # Assert
         assert (
             hasattr(par.get_transformers()[par._sequence_index], 'enforce_min_max_values') is False
         )
