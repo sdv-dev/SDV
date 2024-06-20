@@ -25,7 +25,8 @@ ISSUE_LABELS = [
 ]
 ISSUE_LABELS_ORDERED_BY_IMPORTANCE = [
     'feature request',
-    'customer success' 'bug',
+    'customer success',
+    'bug',
     'documentation',
     'internal',
     'maintenance',
