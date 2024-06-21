@@ -448,18 +448,22 @@ def _drop_rows(data, metadata, drop_missing_values):
             ])
 
 
-def _subsample_disconnected_roots(data, metadata, table, ratio_to_keep):
+def _subsample_disconnected_roots(data, metadata, table, ratio_to_keep, drop_missing_values):
     """Subsample the disconnected roots tables and their descendants."""
     relationships = metadata.relationships
     roots = _get_disconnected_roots_from_table(relationships, table)
     for root in roots:
         data[root] = data[root].sample(frac=ratio_to_keep)
 
-    _drop_rows(data, metadata, drop_missing_values=False)
+    _drop_rows(data, metadata, drop_missing_values)
 
 
-def _subsample_table_and_descendants(data, metadata, table, num_rows):
+def _subsample_table_and_descendants(data, metadata, table, num_rows, drop_missing_values):
     """Subsample the table and its descendants.
+
+    The logic is to first subsample all the NaN foreign keys of the table when ``drop_missing_values``
+    is True. We raise an error if we cannot reach referential integrity while keeping
+    the number of rows. Then, we drop rows of the descendants to ensure referential integrity.
 
     Args:
         data (dict):
@@ -471,9 +475,24 @@ def _subsample_table_and_descendants(data, metadata, table, num_rows):
             Name of the table.
         num_rows (int):
             Number of rows to keep in the table.
+        drop_missing_values (bool):
+            Boolean describing whether or not to also drop foreign keys with missing values
+            If True, drop rows with missing values in the foreign keys.
+            Defaults to False.
     """
+    if drop_missing_values:
+        idx_nan_fk = _get_nan_fk_indices_table(data, metadata.relationships, table)
+        num_rows_to_drop = len(data[table]) - num_rows
+        if len(idx_nan_fk) > num_rows_to_drop:
+            raise SamplingError(
+                f"Referential integrity cannot be reached for table '{table}' while keeping "
+                f'{num_rows} rows. Please try again with a bigger number of rows.'
+            )
+        else:
+            data[table] = data[table].drop(idx_nan_fk)
+
     data[table] = data[table].sample(num_rows)
-    _drop_rows(data, metadata, drop_missing_values=False)
+    _drop_rows(data, metadata, drop_missing_values)
 
 
 def _get_primary_keys_referenced(data, metadata):
@@ -580,7 +599,7 @@ def _subsample_ancestors(data, metadata, table, primary_keys_referenced):
         _subsample_ancestors(data, metadata, parent, primary_keys_referenced)
 
 
-def _subsample_data(data, metadata, main_table_name, num_rows):
+def _subsample_data(data, metadata, main_table_name, num_rows, drop_missing_values=False):
     """Subsample multi-table table based on a table and a number of rows.
 
     The strategy is to:
@@ -600,6 +619,10 @@ def _subsample_data(data, metadata, main_table_name, num_rows):
             Name of the main table.
         num_rows (int):
             Number of rows to keep in the main table.
+        drop_missing_values (bool):
+            Boolean describing whether or not to also drop foreign keys with missing values
+            If True, drop rows with missing values in the foreign keys.
+            Defaults to False.
 
     Returns:
         dict:
@@ -610,9 +633,15 @@ def _subsample_data(data, metadata, main_table_name, num_rows):
     ratio_to_keep = num_rows / len(result[main_table_name])
 
     try:
-        _subsample_disconnected_roots(result, metadata, main_table_name, ratio_to_keep)
-        _subsample_table_and_descendants(result, metadata, main_table_name, num_rows)
+        _subsample_disconnected_roots(
+            result, metadata, main_table_name, ratio_to_keep, drop_missing_values
+        )
+        _subsample_table_and_descendants(
+            result, metadata, main_table_name, num_rows, drop_missing_values
+        )
         _subsample_ancestors(result, metadata, main_table_name, primary_keys_referenced)
+        _drop_rows(result, metadata, drop_missing_values)
+
     except InvalidDataError as error:
         if 'All references in table' not in str(error.args[0]):
             raise error

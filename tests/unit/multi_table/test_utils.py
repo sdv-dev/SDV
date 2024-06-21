@@ -1302,13 +1302,15 @@ def test__subsample_disconnected_roots(mock_drop_rows, mock_get_disconnected_roo
     expected_result = deepcopy(data)
 
     # Run
-    _subsample_disconnected_roots(data, metadata, 'disconnected_root', ratio_to_keep)
+    _subsample_disconnected_roots(
+        data, metadata, 'disconnected_root', ratio_to_keep, drop_missing_values=False
+    )
 
     # Assert
     mock_get_disconnected_roots_from_table.assert_called_once_with(
         metadata.relationships, 'disconnected_root'
     )
-    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=False)
+    mock_drop_rows.assert_called_once_with(data, metadata, False)
     for table_name in metadata.tables:
         if table_name not in {'grandparent', 'other_root'}:
             pd.testing.assert_frame_equal(data[table_name], expected_result[table_name])
@@ -1342,10 +1344,10 @@ def test__subsample_table_and_descendants(mock_drop_rows):
     metadata.relationships = Mock()
 
     # Run
-    _subsample_table_and_descendants(data, metadata, 'parent', 3)
+    _subsample_table_and_descendants(data, metadata, 'parent', 3, drop_missing_values=False)
 
     # Assert
-    mock_drop_rows.assert_called_once_with(data, metadata, drop_missing_values=False)
+    mock_drop_rows.assert_called_once_with(data, metadata, False)
     assert len(data['parent']) == 3
 
 
@@ -1905,7 +1907,9 @@ def test__subsample_ancestors_schema_diamond_shape():
 @patch('sdv.multi_table.utils._subsample_table_and_descendants')
 @patch('sdv.multi_table.utils._subsample_ancestors')
 @patch('sdv.multi_table.utils._get_primary_keys_referenced')
+@patch('sdv.multi_table.utils._drop_rows')
 def test__subsample_data(
+    mock_drop_rows,
     mock_get_primary_keys_referenced,
     mock_subsample_ancestors,
     mock_subsample_table_and_descendants,
@@ -1926,15 +1930,69 @@ def test__subsample_data(
     result = _subsample_data(data, metadata, main_table, num_rows)
 
     # Assert
+    mock_drop_rows.assert_called_once_with(data, metadata, False)
     mock_get_primary_keys_referenced.assert_called_once_with(data, metadata)
-    mock_subsample_disconnected_roots.assert_called_once_with(data, metadata, main_table, 0.5)
+    mock_subsample_disconnected_roots.assert_called_once_with(
+        data, metadata, main_table, 0.5, False
+    )
     mock_subsample_table_and_descendants.assert_called_once_with(
-        data, metadata, main_table, num_rows
+        data, metadata, main_table, num_rows, False
     )
     mock_subsample_ancestors.assert_called_once_with(
         data, metadata, main_table, primary_key_reference
     )
     assert result == data
+
+
+def test__subsample_data_with_null_foreing_keys():
+    """Test the ``_subsample_data`` method when there are null foreign keys."""
+    # Setup
+    metadata = MultiTableMetadata.load_from_dict({
+        'tables': {
+            'parent': {
+                'columns': {
+                    'id': {'sdtype': 'id'},
+                    'A': {'sdtype': 'categorical'},
+                    'B': {'sdtype': 'numerical'},
+                },
+                'primary_key': 'id',
+            },
+            'child': {'columns': {'parent_id': {'sdtype': 'id'}, 'C': {'sdtype': 'categorical'}}},
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'parent',
+                'child_table_name': 'child',
+                'parent_primary_key': 'id',
+                'child_foreign_key': 'parent_id',
+            }
+        ],
+    })
+
+    parent = pd.DataFrame(
+        data={
+            'id': [0, 1, 2, 3, 4],
+            'A': [True, True, False, True, False],
+            'B': [0.434, 0.312, 0.212, 0.339, 0.491],
+        }
+    )
+
+    child = pd.DataFrame(
+        data={'parent_id': [0, 1, 2, 2, 5], 'C': ['Yes', 'No', 'Maybe', 'No', 'No']}
+    )
+
+    data = {'parent': parent, 'child': child}
+    data['child'].loc[[2, 3, 4], 'parent_id'] = np.nan
+
+    # Run
+    result_with_nan = _subsample_data(data, metadata, 'child', 4, drop_missing_values=False)
+    result_without_nan = _subsample_data(data, metadata, 'child', 2, drop_missing_values=True)
+
+    # Assert
+    assert len(result_with_nan['child']) == 4
+    assert result_with_nan['child']['parent_id'].isnull().sum() > 0
+    assert len(result_without_nan['child']) == 2
+    assert set(result_without_nan['child'].index) == {0, 1}
 
 
 @patch('sdv.multi_table.utils._subsample_disconnected_roots')
