@@ -192,16 +192,32 @@ select = [
     # Pycodestyle
     "E",
     "W",
-    "D200",
+    # pydocstyle
+    "D",
     # isort
     "I001",
     # print statements
     "T201",
+    # pandas-vet
+    "PD"
 ]
 ignore = [
     "E501",
+    # pydocstyle
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105", # Missing docstring in magic method
     "D107",  # Missing docstring in __init__
+    "D205",
+    "D301",
+    "D415",
     "D417",   # Missing argument descriptions in the docstring, this is a bug from pydocstyle: https://github.com/PyCQA/pydocstyle/issues/449
+    # pandas-vet
+    "PD901",
+    "PD101",
 ]
 
 [tool.ruff.format]
@@ -213,6 +229,7 @@ docstring-code-line-length = "dynamic"
 
 [tool.ruff.lint.isort]
 known-first-party = ["sdv"]
+lines-between-types = 0
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "E402", "F403", "F405", "E501", "I001"]

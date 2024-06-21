@@ -10,7 +10,6 @@ from tests.utils import get_multi_table_metadata
 
 def test_multi_table_metadata():
     """Test ``MultiTableMetadata``."""
-
     # Create an instance
     instance = MultiTableMetadata()
 

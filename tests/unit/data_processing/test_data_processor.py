@@ -1477,8 +1477,7 @@ class TestDataProcessor:
             dp.update_transformers({'col1': GaussianNormalizer()})
 
     def test_update_transformers_for_key(self):
-        """
-        Test when ``transformer`` is not ``AnonymizedFaker``, ``IDGenerator,
+        """Test when ``transformer`` is not ``AnonymizedFaker``, ``IDGenerator,
         or ``RegexGenerator`` for keys.
         """
         # Setup

@@ -15,7 +15,6 @@ from sdv.metadata.errors import InvalidMetadataError
 
 def test_single_table_metadata():
     """Test ``SingleTableMetadata``."""
-
     # Create an instance
     instance = SingleTableMetadata()
 

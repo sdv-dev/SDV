@@ -961,7 +961,8 @@ class TestSingleTableMetadata:
               categorical sdtype
             - A series of numbers with all unique values. Should be detected as id sdtype
             - A series of integers. Should be detected as numerical sdtype
-            - A series of floats. Should be detected as numerical sdtype"""
+        - A series of floats. Should be detected as numerical sdtype
+        """
         # Setup
         instance = SingleTableMetadata()
 
