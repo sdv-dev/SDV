@@ -655,7 +655,6 @@ class TestColumnsModel:
         Side Effects:
             - ``instance.constraint_columns`` is a list from the string given before.
         """
-
         # Run
         constraint = Mock()
         instance = ColumnsModel(constraint, 'age')
@@ -678,7 +677,6 @@ class TestColumnsModel:
         Side Effects:
             - ``instance.constraint_columns`` is the input list.
         """
-
         # Run
         constraint = Mock()
         instance = ColumnsModel(constraint, ['age', 'age_when_joined'])

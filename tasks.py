@@ -123,11 +123,18 @@ def tutorials(c):
 def lint(c):
     check_dependencies(c)
     c.run('ruff check .')
-    c.run('ruff format . --check')
+    c.run('ruff format --check --diff .')
+
+
+@task
+def fix_lint(c):
+    check_dependencies(c)
+    c.run('ruff check --fix .')
+    c.run('ruff format .')
 
 
 def remove_readonly(func, path, _):
-    "Clear the readonly bit and reattempt the removal"
+    """Clear the readonly bit and reattempt the removal"""
     os.chmod(path, stat.S_IWRITE)
     func(path)
 

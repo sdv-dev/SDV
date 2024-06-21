@@ -101,6 +101,7 @@ class TestCreateCustomConstraint:
 
         Input:
         -  Incorrect parameters for the method.
+
         Raises:
         - List of ValueErrors
         """
@@ -3086,7 +3087,6 @@ class TestRange:
 
     def test_is_valid_with_nans(self):
         """Test the ``Range.is_valid`` when there are NaNs in the columns."""
-
         # Setup
         table_data_valid = pd.DataFrame({
             'low': [1, np.nan, 3, 4, np.nan, 1],

@@ -141,7 +141,6 @@ class TestMultiTableMetadata:
     def test__validate_missing_relationship_keys_foreign_key(self):
         """Test the ``_validate_missing_relationship_keys`` method of ``MultiTableMetadata``.
 
-
         Setup:
             - Mock ``parent_table`` and ``child_table``.
             - Instance of ``MultiTableMetadata``.
