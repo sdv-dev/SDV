@@ -85,7 +85,7 @@ class BaseMultiTableSynthesizer:
 
     def _print(self, text='', **kwargs):
         if self.verbose:
-            print(text, **kwargs)  # noqa: T001
+            print(text, **kwargs)  # noqa: T201
 
     def _check_metadata_updated(self):
         if self.metadata._check_updated_flag():

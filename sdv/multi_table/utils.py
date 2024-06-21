@@ -363,7 +363,7 @@ def _print_simplified_schema_summary(data_before, data_after):
         ],
     })
     message.append(summary.to_string(index=False))
-    print('\n'.join(message))  # noqa: T001
+    print('\n'.join(message))  # noqa: T201
 
 
 def _get_rows_to_drop(data, metadata):
@@ -660,4 +660,4 @@ def _print_subsample_summary(data_before, data_after):
     subsample_rows = 100 * (1 - summary['# Rows (After)'].sum() / summary['# Rows (Before)'].sum())
     message = [f'Success! Your subset has {round(subsample_rows)}% less rows than the original.\n']
     message.append(summary.to_string(index=False))
-    print('\n'.join(message))  # noqa: T001
+    print('\n'.join(message))  # noqa: T201

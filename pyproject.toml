@@ -195,6 +195,8 @@ select = [
     "D200",
     # isort
     "I001",
+    # print statements
+    "T201",
 ]
 ignore = [
     "E501",

@@ -255,7 +255,7 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
                 lines_to_print.append(f'{column:{cap}} {num_generated_columns}')
 
             generated_columns_str = '\n'.join(lines_to_print)
-            print(  # noqa: T001
+            print(  # noqa: T201
                 'PerformanceAlert: Using the CTGANSynthesizer on this data is not recommended. '
                 'To model this data, CTGAN will generate a large number of columns.'
                 '\n\n'
