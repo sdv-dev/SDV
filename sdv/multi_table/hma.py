@@ -616,7 +616,12 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         if transformed.index.name:
             table_rows = table_rows.set_index(transformed.index.name)
 
-        table_rows = pd.concat([transformed, table_rows.drop(columns=transformed.columns)], axis=1)
+        columns_to_drop = [
+            column
+            for column in transformed.columns
+            if column in table_rows.columns
+        ]
+        table_rows = pd.concat([transformed, table_rows.drop(columns=columns_to_drop)], axis=1)
         for parent_id, row in parent_rows.iterrows():
             parameters = self._extract_parameters(row, table_name, foreign_key)
             table_meta = self._table_synthesizers[table_name].get_metadata()
