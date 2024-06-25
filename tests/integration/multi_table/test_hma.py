@@ -1935,6 +1935,30 @@ def test_hma_synthesizer_with_fixed_combinations():
     sampled = synthesizer.sample(1)
 
     # Assert
+    expected_users = pd.DataFrame({
+        'user_id': {0: 450136792, 1: 558009640, 2: 539105334},
+        'name': {0: 'Bob', 1: 'Bob', 2: 'Alice'},
+    })
+
+    expected_records = pd.DataFrame({
+        'record_id': {
+            0: 'sdv-id-YgcjPo',
+            1: 'sdv-id-KdNkPe',
+            2: 'sdv-id-RaVuGw',
+            3: 'sdv-id-vlMQGO',
+        },
+        'user_id': {0: 450136792, 1: 450136792, 2: 558009640, 3: 539105334},
+        'score': {0: 82, 1: 82, 2: 88, 3: 88},
+        'location_id': {
+            0: 'sdv-id-wEiTzy',
+            1: 'sdv-id-EOvRzQ',
+            2: 'sdv-id-wvpusz',
+            3: 'sdv-id-LemVFy',
+        },
+        'department': {0: 'HR', 1: 'HR', 2: 'IT', 3: 'IT'},
+        'office': {0: 'LA Office', 1: 'LA Office', 2: 'NYC Office', 3: 'NYC Office'},
+    })
+
     expected_locations = pd.DataFrame({
         'location_id': {
             0: 'sdv-id-EOvRzQ',
@@ -1944,28 +1968,6 @@ def test_hma_synthesizer_with_fixed_combinations():
         },
         'city': {0: 'East Christopherville', 1: 'Port Jamesview', 2: 'Melaniebury', 3: 'Lopeztown'},
         'country': {0: 'USA', 1: 'USA', 2: 'USA', 3: 'USA'},
-    })
-    expected_users = pd.DataFrame({
-        'user_id': {0: 450136792, 1: 558009640, 2: 539105334},
-        'name': {0: 'Bob', 1: 'Bob', 2: 'Alice'},
-    })
-    expected_records = pd.DataFrame({
-        'record_id': {
-            0: 'sdv-id-YgcjPo',
-            1: 'sdv-id-KdNkPe',
-            2: 'sdv-id-RaVuGw',
-            3: 'sdv-id-vlMQGO',
-        },
-        'user_id': {0: 539105334, 1: 450136792, 2: 450136792, 3: 558009640},
-        'score': {0: 85, 1: 83, 2: 81, 3: 91},
-        'location_id': {
-            0: 'sdv-id-EOvRzQ',
-            1: 'sdv-id-LemVFy',
-            2: 'sdv-id-wEiTzy',
-            3: 'sdv-id-wvpusz',
-        },
-        'department': {0: 'Finance', 1: 'HR', 2: 'IT', 3: 'IT'},
-        'office': {0: 'Chicago HQ', 1: 'Boston HQ', 2: 'NYC Office', 3: 'NYC Office'},
     })
 
     pd.testing.assert_frame_equal(expected_users, sampled['users'])
