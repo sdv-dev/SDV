@@ -335,6 +335,15 @@ class TestHMASynthesizer:
         # Setup
         instance = Mock()
         metadata = Mock()
+        # Mock metadata
+        metadata.tables = MagicMock()
+        mock_table = MagicMock()
+        metadata.tables.get.side_effect = lambda table_name, default: mock_table
+        mock_table.columns = MagicMock()
+        mock_column = MagicMock()
+        mock_table.columns.get.side_effect = lambda column_name, default: mock_column
+        mock_column.get.side_effect = lambda key, default: {'pii': False}.get(key, default)
+
         metadata._get_parent_map.return_value = {
             'sessions': ['users'],
             'transactions': ['sessions'],
