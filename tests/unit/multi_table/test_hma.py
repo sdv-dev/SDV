@@ -659,12 +659,12 @@ class TestHMASynthesizer:
             103: [0.1, 0.2, 0.3, 0.4],
         })
         pd.testing.assert_frame_equal(result, expected_result)
-        mock_concat.call_args_list == [
-            pd.DataFrame({'value#date': ['a', 'b', 'c', 'd'], 'value': [10, 20, 30, 40]}),
-            pd.DataFrame({
-                'child_id': [1, 2, 3, 4],
-            }),
-        ]
+        df_one, df_two = mock_concat.call_args_list[0][0][0]
+
+        pd.testing.assert_frame_equal(
+            df_one, pd.DataFrame({'value#date': ['a', 'b', 'c', 'd'], 'value': [10, 20, 30, 40]})
+        )
+        pd.testing.assert_frame_equal(df_two, pd.DataFrame({'child_id': [1, 2, 3, 4]}))
 
     def test_get_learned_distributions(self):
         """Test that ``get_learned_distributions`` returns a dict.
