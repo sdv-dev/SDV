@@ -484,6 +484,188 @@ class TestHMASynthesizer:
         )
         instance._extract_parameters.assert_called_once_with(parent_row, table_name, 'session_id')
 
+    def test__get_likelihoods(self):
+        """Test that ``_get_likelihoods`` computes the likelihoods.
+
+        The ``table_rows`` represents the child rows without the foreign key. The ``parent_rows``
+        represent the parent table rows that contains all the parameters and the primary key
+        as index.
+        """
+        # Setup
+        instance = Mock(spec=HMASynthesizer)
+        table_rows = pd.DataFrame({'child_id': [1, 2, 3, 4], 'value': [10, 20, 30, 40]})
+
+        parent_rows = pd.DataFrame({
+            'parent_id': [101, 102, 103],
+            'param1': [0.1, 0.2, 0.3],
+            'param2': [5, 10, 15],
+        })
+        parent_rows = parent_rows.set_index('parent_id')
+        table_name = 'child_table'
+        foreign_key = 'parent_id'
+
+        likelihoods = np.array([0.1, 0.2, 0.3, 0.4])
+        child_synthesizer = Mock()
+        child_synthesizer._data_processor.transform.return_value = table_rows
+        instance._table_synthesizers = {'child_table': child_synthesizer}
+        instance._table_parameters = {'child_table': {}}
+        instance._extract_parameters = Mock()
+        instance._synthesizer.return_value._get_likelihood.return_value = likelihoods
+
+        # Run
+        result = HMASynthesizer._get_likelihoods(
+            instance, table_rows, parent_rows, table_name, foreign_key
+        )
+
+        # Assert
+        expected_result = pd.DataFrame({
+            101: [0.1, 0.2, 0.3, 0.4],
+            102: [0.1, 0.2, 0.3, 0.4],
+            103: [0.1, 0.2, 0.3, 0.4],
+        })
+        pd.testing.assert_frame_equal(result, expected_result)
+
+    def test__get_likelihoods_attribute_error(self):
+        """Test when ``_get_likelihoods`` raises an ``AttributeError``.
+
+        When an ``AttributeError`` is being raised, the likelihood for the given parent key should
+        be ``None``.
+        """
+        # Setup
+        instance = Mock(spec=HMASynthesizer)
+        table_rows = pd.DataFrame({'child_id': [1, 2, 3, 4], 'value': [10, 20, 30, 40]})
+
+        parent_rows = pd.DataFrame({
+            'parent_id': [101, 102, 103],
+            'param1': [0.1, 0.2, 0.3],
+            'param2': [5, 10, 15],
+        })
+        parent_rows = parent_rows.set_index('parent_id')
+        table_name = 'child_table'
+        foreign_key = 'parent_id'
+
+        likelihoods = np.array([0.1, 0.2, 0.3, 0.4])
+        child_synthesizer = Mock()
+        child_synthesizer._data_processor.transform.return_value = table_rows
+        instance._table_synthesizers = {'child_table': child_synthesizer}
+        instance._table_parameters = {'child_table': {}}
+        instance._extract_parameters = Mock()
+        instance._synthesizer.return_value._get_likelihood.side_effect = [
+            likelihoods,
+            AttributeError(),
+            likelihoods,
+        ]
+
+        # Run
+        result = HMASynthesizer._get_likelihoods(
+            instance, table_rows, parent_rows, table_name, foreign_key
+        )
+
+        # Assert
+        expected_result = pd.DataFrame({
+            101: [0.1, 0.2, 0.3, 0.4],
+            102: [None, None, None, None],
+            103: [0.1, 0.2, 0.3, 0.4],
+        })
+        pd.testing.assert_frame_equal(result, expected_result)
+
+    def test__get_likelihoods_linalg_error(self):
+        """Test when ``_get_likelihoods`` raises a ``np.linalg.LinAlgError``.
+
+        When an ``np.linalg.LinAlgError``` is being raised, the likelihood for the given parent
+        key should be ``None``.
+        """
+        # Setup
+        instance = Mock(spec=HMASynthesizer)
+        table_rows = pd.DataFrame({'child_id': [1, 2, 3, 4], 'value': [10, 20, 30, 40]})
+
+        parent_rows = pd.DataFrame({
+            'parent_id': [101, 102, 103],
+            'param1': [0.1, 0.2, 0.3],
+            'param2': [5, 10, 15],
+        })
+        parent_rows = parent_rows.set_index('parent_id')
+        table_name = 'child_table'
+        foreign_key = 'parent_id'
+
+        likelihoods = np.array([0.1, 0.2, 0.3, 0.4])
+        child_synthesizer = Mock()
+        child_synthesizer._data_processor.transform.return_value = table_rows
+        instance._table_synthesizers = {'child_table': child_synthesizer}
+        instance._table_parameters = {'child_table': {}}
+        instance._extract_parameters = Mock()
+        instance._synthesizer.return_value._get_likelihood.side_effect = [
+            likelihoods,
+            np.linalg.LinAlgError(),
+            likelihoods,
+        ]
+
+        # Run
+        result = HMASynthesizer._get_likelihoods(
+            instance, table_rows, parent_rows, table_name, foreign_key
+        )
+
+        # Assert
+        expected_result = pd.DataFrame({
+            101: [0.1, 0.2, 0.3, 0.4],
+            102: [None, None, None, None],
+            103: [0.1, 0.2, 0.3, 0.4],
+        })
+        pd.testing.assert_frame_equal(result, expected_result)
+
+    @patch('sdv.multi_table.hma.pd.concat')
+    def test_get_likelihoods_filters_over_existing_columns(self, mock_concat):
+        """Test that ``_get_likelihoods`` filters over existing columns in ``table_rows``."""
+        # Setup
+        instance = Mock(spec=HMASynthesizer)
+        table_rows = pd.DataFrame({'child_id': [1, 2, 3, 4], 'value': [10, 20, 30, 40]})
+        transformed_table_rows = pd.DataFrame({
+            'value#date': ['a', 'b', 'c', 'd'],
+            'value': [10, 20, 30, 40],
+        })
+
+        parent_rows = pd.DataFrame({
+            'parent_id': [101, 102, 103],
+            'param1': [0.1, 0.2, 0.3],
+            'param2': [5, 10, 15],
+        })
+
+        parent_rows = parent_rows.set_index('parent_id')
+        table_name = 'child_table'
+        foreign_key = 'parent_id'
+
+        child_synthesizer = Mock()
+        child_synthesizer._data_processor.transform.return_value = transformed_table_rows
+        instance._table_synthesizers = {'child_table': child_synthesizer}
+        instance._table_parameters = {'child_table': {}}
+        instance._extract_parameters = Mock()
+
+        likelihoods = np.array([0.1, 0.2, 0.3, 0.4])
+        instance._synthesizer.return_value._get_likelihood.return_value = likelihoods
+        mock_concat.return_value = pd.DataFrame({
+            'child_id': [1, 2, 3, 4],
+            'value': [10, 20, 30, 40],
+        })
+
+        # Run
+        result = HMASynthesizer._get_likelihoods(
+            instance, table_rows, parent_rows, table_name, foreign_key
+        )
+
+        # Assert
+        expected_result = pd.DataFrame({
+            101: [0.1, 0.2, 0.3, 0.4],
+            102: [0.1, 0.2, 0.3, 0.4],
+            103: [0.1, 0.2, 0.3, 0.4],
+        })
+        pd.testing.assert_frame_equal(result, expected_result)
+        mock_concat.call_args_list == [
+            pd.DataFrame({'value#date': ['a', 'b', 'c', 'd'], 'value': [10, 20, 30, 40]}),
+            pd.DataFrame({
+                'child_id': [1, 2, 3, 4],
+            }),
+        ]
+
     def test_get_learned_distributions(self):
         """Test that ``get_learned_distributions`` returns a dict.
 
