@@ -210,11 +210,8 @@ class BaseHierarchicalSampler:
                 if child_name not in sampled_data:  # No child rows sampled, force row creation
                     foreign_key = self.metadata._get_foreign_keys(table_name, child_name)[0]
                     num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
-                    if num_rows_key in sampled_data[table_name].columns:
-                        max_num_child_index = sampled_data[table_name][num_rows_key].idxmax()
-                        parent_row = sampled_data[table_name].iloc[max_num_child_index]
-                    else:
-                        parent_row = sampled_data[table_name].sample().iloc[0]
+                    max_num_child_index = sampled_data[table_name][num_rows_key].idxmax()
+                    parent_row = sampled_data[table_name].iloc[max_num_child_index]
 
                     self._add_child_rows(
                         child_name=child_name,
