@@ -1880,3 +1880,61 @@ def test_small_sample():
     assert len(synthetic_data['guests']) >= len(data['guests']) * 0.01
     assert synthetic_data['hotels'].columns.tolist() == data['hotels'].columns.tolist()
     assert synthetic_data['guests'].columns.tolist() == data['guests'].columns.tolist()
+
+
+def test_hma_synthesizer_with_fixed_combinations():
+    """Tests that https://github.com/sdv-dev/SDV/issues/2087 does not occur."""
+    # Creating the dataset
+    data = {
+        'users': pd.DataFrame({
+            'user_id': [1, 2, 3],
+            'name': ['Alice', 'Bob', 'John'],
+        }),
+        'records': pd.DataFrame({
+            'record_id': ['record_a', 'record_b', 'record_c', 'record_d'],
+            'user_id': [1, 2, 2, 1],
+            'score': [85, 92, 78, 88],
+            'location_id': ['A', 'B', 'C', 'D'],
+            'department': ['HR', 'IT', 'HR', 'Finance'],
+            'office': ['Boston HQ', 'NYC Office', 'LA Office', 'Chicago HQ'],
+        }),
+        'locations': pd.DataFrame({
+            'location_id': ['A', 'B', 'C', 'D'],
+            'city': ['Boston', 'New York', 'Los Angeles', 'Chicago'],
+            'country': ['USA', 'USA', 'USA', 'USA'],
+        }),
+    }
+
+    # Creating metadata for the dataset
+    metadata = MultiTableMetadata()
+    metadata.detect_from_dataframes(data)
+
+    metadata.update_column('users', 'user_id', sdtype='id')
+    metadata.update_column('records', 'record_id', sdtype='id')
+    metadata.update_column('records', 'user_id', sdtype='id')
+    metadata.update_column('records', 'location_id', sdtype='id')
+    metadata.update_column('locations', 'location_id', sdtype='id')
+    metadata.set_primary_key('users', 'user_id')
+    metadata.set_primary_key('locations', 'location_id')
+    metadata.add_relationship('users', 'records', 'user_id', 'user_id')
+    metadata.add_relationship('locations', 'records', 'location_id', 'location_id')
+
+    # Adding FixedCombinations to HMASynthesizer
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.add_constraints(
+        constraints=[
+            {
+                'constraint_class': 'FixedCombinations',
+                'table_name': 'records',
+                'constraint_parameters': {'column_names': ['department', 'office']},
+            }
+        ]
+    )
+
+    synthesizer.fit(data)
+    sampled = synthesizer.sample(1)
+
+    # Assert
+    assert len(sampled['users']) > 1
+    assert len(sampled['records']) > 1
+    assert len(sampled['locations']) > 1
