@@ -247,7 +247,7 @@ class BaseHierarchicalSampler:
                 is_pii = (
                     self.metadata.tables.get(table_name, {}).columns.get(name, {}).get('pii', False)
                 )
-                # If pii column, the original dtype should be converted to object and not the original type
+                # If pii column, the original dtype should be converted to object and not the transformer dtype
                 # as the reverse transform will remain in a pii format
                 if is_pii:
                     dtype = 'object'
