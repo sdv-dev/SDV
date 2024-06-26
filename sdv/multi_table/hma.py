@@ -158,6 +158,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         self._table_sizes = {}
         self._max_child_rows = {}
         self._min_child_rows = {}
+        self._null_child_synthesizers = {}
+        self._null_foreign_key_percentages = {}
         self._augmented_tables = []
         self._learned_relationships = 0
         self._default_parameters = {}
@@ -335,8 +337,11 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     if len(child_rows) == 1:
                         row.loc[scale_columns] = None
 
-                extension_rows.append(row)
-                index.append(foreign_key_value)
+                if pd.isna(foreign_key_value):
+                    self._null_child_synthesizers[f'__{child_name}__{foreign_key}'] = synthesizer
+                else:
+                    extension_rows.append(row)
+                    index.append(foreign_key_value)
             except Exception:
                 # Skip children rows subsets that fail
                 pass
@@ -405,6 +410,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 table[num_rows_key] = table[num_rows_key].fillna(0)
                 self._max_child_rows[num_rows_key] = table[num_rows_key].max()
                 self._min_child_rows[num_rows_key] = table[num_rows_key].min()
+                self._null_foreign_key_percentages[f'__{child_name}__{foreign_key}'] = 1 - (table[num_rows_key].sum() / child_table.shape[0])
 
                 if len(extension.columns) > 0:
                     self._parent_extended_columns[table_name].extend(list(extension.columns))
@@ -412,7 +418,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 tables[table_name] = table
                 self._learned_relationships += 1
         self._augmented_tables.append(table_name)
-        self._clear_nans(table)
+        # self._clear_nans(table)  TODO: replace with standardizing nans?
 
         return table
 
