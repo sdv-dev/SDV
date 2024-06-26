@@ -1331,6 +1331,7 @@ class TestHMASynthesizer:
         metadata.set_primary_key('child_table2', 'id')
         metadata.add_column('child_table2', 'fk1', sdtype='id')
         metadata.add_column('child_table2', 'fk2', sdtype='id')
+        metadata.add_column('child_table2', 'cat_type', sdtype='categorical')
 
         metadata.add_relationship(
             parent_table_name='parent_table',
@@ -1360,6 +1361,7 @@ class TestHMASynthesizer:
                 'id': [1, 2, 3],
                 'fk1': [1, 2, np.nan],
                 'fk2': [1, 2, np.nan],
+                'cat_type': ['siamese','persian', 'american shorthair'],
             }),
         }
 
@@ -1371,6 +1373,8 @@ class TestHMASynthesizer:
 
         # Run and Assert
         synthesizer.fit(data)
+        breakpoint()
+
 
 
 parametrization = [
