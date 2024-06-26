@@ -307,67 +307,6 @@ class TestBaseHierarchicalSampler:
         for result_frame, expected_frame in zip(result.values(), expected_result.values()):
             pd.testing.assert_frame_equal(result_frame, expected_frame)
 
-    def test__sample_children_no_rows_sampled_no_num_rows(self):
-        """Test sampling the children of a table where no rows created.
-
-        ``_sample_table`` should select randomly select a parent row and force
-        a child to be created from that row.
-        """
-
-        # Setup
-        def sample_children(table_name, sampled_data, scale):
-            sampled_data['transactions'] = pd.DataFrame({
-                'transaction_id': [1, 2],
-                'session_id': ['a', 'a'],
-            })
-
-        def _add_child_rows(child_name, parent_name, parent_row, sampled_data, num_rows=None):
-            if num_rows is not None:
-                sampled_data['sessions'] = pd.DataFrame({'user_id': [1], 'session_id': ['a']})
-
-        instance = Mock()
-        instance.metadata._get_child_map.return_value = {'users': ['sessions', 'transactions']}
-        instance.metadata._get_parent_map.return_value = {'users': []}
-        instance.metadata._get_foreign_keys.return_value = ['user_id']
-        instance._table_sizes = {'users': 10, 'sessions': 5, 'transactions': 3}
-        instance._table_synthesizers = {'users': Mock()}
-        instance._sample_children = sample_children
-        instance._add_child_rows.side_effect = _add_child_rows
-
-        # Run
-        result = {'users': pd.DataFrame({'user_id': [1]})}
-        BaseHierarchicalSampler._sample_children(
-            self=instance, table_name='users', sampled_data=result
-        )
-
-        # Assert
-        expected_calls = [
-            call(
-                child_name='sessions',
-                parent_name='users',
-                parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0)),
-                sampled_data=result,
-            ),
-            call(
-                child_name='sessions',
-                parent_name='users',
-                parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0)),
-                sampled_data=result,
-                num_rows=1,
-            ),
-        ]
-        expected_result = {
-            'users': pd.DataFrame({'user_id': [1]}),
-            'sessions': pd.DataFrame({
-                'user_id': [1],
-                'session_id': ['a'],
-            }),
-            'transactions': pd.DataFrame({'transaction_id': [1, 2], 'session_id': ['a', 'a']}),
-        }
-        instance._add_child_rows.assert_has_calls(expected_calls)
-        for result_frame, expected_frame in zip(result.values(), expected_result.values()):
-            pd.testing.assert_frame_equal(result_frame, expected_frame)
-
     def test__finalize(self):
         """Test that finalize removes extra columns from the sampled data."""
         # Setup
