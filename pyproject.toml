@@ -225,7 +225,7 @@ lines-between-types = 0
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "E402", "F403", "F405", "E501", "I001"]
 "errors.py" = ["D105"]
-"tests/**.py" = ["D", "W505"]
+"tests/**.py" = ["D"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
