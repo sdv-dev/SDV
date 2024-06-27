@@ -6,9 +6,14 @@ import pandas as pd
 import pytest
 
 from sdv.errors import InvalidDataError
-from sdv.metadata import MultiTableMetadata
+from sdv.metadata import MultiTableMetadata, SingleTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
-from sdv.utils.poc import drop_unknown_references, get_random_subset, simplify_schema
+from sdv.utils.poc import (
+    drop_unknown_references,
+    get_random_sequence_subset,
+    get_random_subset,
+    simplify_schema,
+)
 
 
 @patch('sdv.utils.poc.utils_drop_unknown_references')
@@ -262,3 +267,127 @@ def test_get_random_subset(mock_print_summary, mock_subsample_data):
         ((data, metadata, 'table2', 3),),
     ])
     mock_print_summary.call_count == 1
+
+
+def test_get_random_sequence_subset_no_sequence_key():
+    """Test that an error is raised if no sequence_key is provided in the metadata."""
+    # Setup
+    metadata = Mock(spec=SingleTableMetadata)
+    metadata.sequence_key = None
+
+    # Run and Assert
+    error_message = (
+        'Your metadata does not include a sequence key. A sequence key must be provided to subset'
+        ' the sequential data.'
+    )
+    with pytest.raises(ValueError, match=error_message):
+        get_random_sequence_subset(pd.DataFrame(), metadata, 3)
+
+
+def test_get_random_sequence_bad_long_sequence_subsampling_method():
+    """Test that an error is raised if the long_sequence_subsampling_method is invalid."""
+    # Setup
+    metadata = Mock(spec=SingleTableMetadata)
+    metadata.sequence_key = 'key'
+
+    # Run and Assert
+    error_message = (
+        'long_sequence_subsampling_method must be one of "first_rows", "last_rows" or "random"'
+    )
+    with pytest.raises(ValueError, match=error_message):
+        get_random_sequence_subset(pd.DataFrame(), metadata, 3, 10, 'blah')
+
+
+@patch('sdv.utils.poc.np')
+def test_get_random_sequence_subset_no_max_sequence_length(mock_np):
+    """Test that the sequences are subsetted but each sequence is full."""
+    # Setup
+    data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
+    metadata = Mock(spec=SingleTableMetadata)
+    metadata.sequence_key = 'key'
+    mock_np.random.permutation.return_value = np.array(['a', 'd'])
+
+    # Run
+    subset = get_random_sequence_subset(data, metadata, num_sequences=2)
+
+    # Assert
+    expected = pd.DataFrame({
+        'key': ['a'] * 10 + ['d'] * 4,
+        'value': list(range(10)) + [26, 27, 28, 29],
+    })
+    pd.testing.assert_frame_equal(expected, subset)
+
+
+@patch('sdv.utils.poc.np')
+def test_get_random_sequence_subset_use_first_rows(mock_np):
+    """Test that the sequences are subsetted but each sequence is full."""
+    # Setup
+    data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
+    metadata = Mock(spec=SingleTableMetadata)
+    metadata.sequence_key = 'key'
+    mock_np.random.permutation.return_value = np.array(['a', 'b', 'd'])
+
+    # Run
+    subset = get_random_sequence_subset(data, metadata, num_sequences=3, max_sequence_length=6)
+
+    # Assert
+    expected = pd.DataFrame({
+        'key': ['a'] * 6 + ['b'] * 6 + ['d'] * 4,
+        'value': [0, 1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 26, 27, 28, 29],
+    })
+    pd.testing.assert_frame_equal(expected, subset)
+
+
+@patch('sdv.utils.poc.np')
+def test_get_random_sequence_subset_use_last_rows(mock_np):
+    """Test that the sequences are subsetted but each sequence is full."""
+    # Setup
+    data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
+    metadata = Mock(spec=SingleTableMetadata)
+    metadata.sequence_key = 'key'
+    mock_np.random.permutation.return_value = np.array(['a', 'b', 'd'])
+
+    # Run
+    subset = get_random_sequence_subset(
+        data,
+        metadata,
+        num_sequences=3,
+        max_sequence_length=6,
+        long_sequence_subsampling_method='last_rows',
+    )
+
+    # Assert
+    expected = pd.DataFrame({
+        'key': ['a'] * 6 + ['b'] * 6 + ['d'] * 4,
+        'value': [4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 26, 27, 28, 29],
+    })
+    pd.testing.assert_frame_equal(expected, subset)
+
+
+@patch('sdv.utils.poc.np')
+def test_get_random_sequence_subset_use_random_rows(mock_np):
+    """Test that the sequences are subsetted but each sequence is full."""
+    # Setup
+    data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
+    metadata = Mock(spec=SingleTableMetadata)
+    metadata.sequence_key = 'key'
+    mock_np.random.permutation.side_effect = [
+        np.array(['a', 'b', 'd']),
+        np.array([0, 2, 4, 5, 7, 9]),
+        np.array([6, 5, 1, 2, 4, 0]),
+    ]
+    # Run
+    subset = get_random_sequence_subset(
+        data,
+        metadata,
+        num_sequences=3,
+        max_sequence_length=6,
+        long_sequence_subsampling_method='random',
+    )
+
+    # Assert
+    expected = pd.DataFrame({
+        'key': ['a'] * 6 + ['b'] * 6 + ['d'] * 4,
+        'value': [0, 2, 4, 5, 7, 9, 10, 11, 12, 14, 15, 16, 26, 27, 28, 29],
+    })
+    pd.testing.assert_frame_equal(expected, subset)
