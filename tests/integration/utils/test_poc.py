@@ -300,6 +300,7 @@ def test_get_random_sequence_subset_random_clipping():
     assert len(selected_sequences) == 3
     for sequence_key in selected_sequences:
         selected_sequence = subset[subset[metadata.sequence_key] == sequence_key]
+        assert len(selected_sequence) <= 5
         subset_data = data[
             data['Date'].isin(selected_sequence['Date']) &
             data['Symbol'].isin(selected_sequence['Symbol'])
