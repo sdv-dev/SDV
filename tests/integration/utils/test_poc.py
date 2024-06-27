@@ -251,18 +251,10 @@ def test_get_random_subset_with_missing_values(metadata, data):
 def test_get_random_sequence_subset():
     """Test that the sequences are subsetted and properly clipped."""
     # Setup
-    data, metadata = download_demo(
-        modality='sequential',
-        dataset_name='nasdaq100_2019'
-    )
+    data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
 
     # Run
-    subset = get_random_sequence_subset(
-        data,
-        metadata,
-        num_sequences=3,
-        max_sequence_length=5
-    )
+    subset = get_random_sequence_subset(data, metadata, num_sequences=3, max_sequence_length=5)
 
     # Assert
     selected_sequences = subset[metadata.sequence_key].unique()
@@ -270,7 +262,7 @@ def test_get_random_sequence_subset():
     for sequence_key in selected_sequences:
         pd.testing.assert_frame_equal(
             subset[subset[metadata.sequence_key] == sequence_key].reset_index(drop=True),
-            data[data[metadata.sequence_key] == sequence_key].head(5).reset_index(drop=True)
+            data[data[metadata.sequence_key] == sequence_key].head(5).reset_index(drop=True),
         )
 
 
@@ -281,10 +273,7 @@ def test_get_random_sequence_subset_random_clipping():
     subsampled randomly, but maintain the same order.
     """
     # Setup
-    data, metadata = download_demo(
-        modality='sequential',
-        dataset_name='nasdaq100_2019'
-    )
+    data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
 
     # Run
     subset = get_random_sequence_subset(
@@ -292,7 +281,7 @@ def test_get_random_sequence_subset_random_clipping():
         metadata,
         num_sequences=3,
         max_sequence_length=5,
-        long_sequence_subsampling_method='random'
+        long_sequence_subsampling_method='random',
     )
 
     # Assert
@@ -302,10 +291,9 @@ def test_get_random_sequence_subset_random_clipping():
         selected_sequence = subset[subset[metadata.sequence_key] == sequence_key]
         assert len(selected_sequence) <= 5
         subset_data = data[
-            data['Date'].isin(selected_sequence['Date']) &
-            data['Symbol'].isin(selected_sequence['Symbol'])
+            data['Date'].isin(selected_sequence['Date'])
+            & data['Symbol'].isin(selected_sequence['Symbol'])
         ]
         pd.testing.assert_frame_equal(
-            subset_data.reset_index(drop=True),
-            selected_sequence.reset_index(drop=True)
+            subset_data.reset_index(drop=True), selected_sequence.reset_index(drop=True)
         )
