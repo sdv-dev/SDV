@@ -251,6 +251,7 @@ class BaseHierarchicalSampler:
                 # as the reverse transform will remain in a pii format
                 if is_pii:
                     dtype = 'object'
+
                 table_rows[name] = table_rows[name].dropna().astype(dtype)
 
             final_data[table_name] = table_rows[list(dtypes.keys())]
