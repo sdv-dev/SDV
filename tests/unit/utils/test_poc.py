@@ -320,7 +320,11 @@ def test_get_random_sequence_subset_no_max_sequence_length(mock_np):
 
 @patch('sdv.utils.poc.np')
 def test_get_random_sequence_subset_use_first_rows(mock_np):
-    """Test that the sequences are subsetted but each sequence is full."""
+    """Test that the sequences are subsetted and subsampled properly.
+
+    If 'long_sequence_subsampling_method' isn't set, the sequences should be clipped using the
+    first 'max_sequence_length' rows.
+    """
     # Setup
     data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
     metadata = Mock(spec=SingleTableMetadata)
@@ -340,7 +344,11 @@ def test_get_random_sequence_subset_use_first_rows(mock_np):
 
 @patch('sdv.utils.poc.np')
 def test_get_random_sequence_subset_use_last_rows(mock_np):
-    """Test that the sequences are subsetted but each sequence is full."""
+    """Test that the sequences are subsetted and subsampled properly.
+
+    If 'long_sequence_subsampling_method' isn't set, the sequences should be clipped using the
+    last 'max_sequence_length' rows.
+    """
     # Setup
     data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
     metadata = Mock(spec=SingleTableMetadata)
@@ -366,7 +374,11 @@ def test_get_random_sequence_subset_use_last_rows(mock_np):
 
 @patch('sdv.utils.poc.np')
 def test_get_random_sequence_subset_use_random_rows(mock_np):
-    """Test that the sequences are subsetted but each sequence is full."""
+    """Test that the sequences are subsetted and subsampled properly.
+
+    If 'long_sequence_subsampling_method' isn't set, the sequences should be clipped using random
+    'max_sequence_length' rows.
+    """
     # Setup
     data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
     metadata = Mock(spec=SingleTableMetadata)
@@ -376,6 +388,7 @@ def test_get_random_sequence_subset_use_random_rows(mock_np):
         np.array([0, 2, 4, 5, 7, 9]),
         np.array([6, 5, 1, 2, 4, 0]),
     ]
+
     # Run
     subset = get_random_sequence_subset(
         data,
