@@ -8,7 +8,11 @@ import pytest
 from sdv.errors import InvalidDataError
 from sdv.metadata import MultiTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
-from sdv.utils.poc import drop_unknown_references, get_random_subset, simplify_schema
+from sdv.utils.poc import (
+    drop_unknown_references,
+    get_random_subset,
+    simplify_schema,
+)
 
 
 @patch('sdv.utils.poc.utils_drop_unknown_references')
