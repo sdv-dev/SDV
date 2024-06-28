@@ -157,7 +157,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         self._max_child_rows = {}
         self._min_child_rows = {}
         self._null_child_synthesizers = {}
-        self._null_foreign_key_percentages = {}
         self._augmented_tables = []
         self._learned_relationships = 0
         self._default_parameters = {}
@@ -323,6 +322,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     if len(child_rows) == 1:
                         row.loc[scale_columns] = None
 
+                # TODO: handle null synthesizer when child_rows is empty
                 if pd.isna(foreign_key_value):
                     self._null_child_synthesizers[f'__{child_name}__{foreign_key}'] = synthesizer
                 else:
@@ -513,12 +513,17 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
     def _recreate_child_synthesizer(self, child_name, parent_name, parent_row):
         # A child table is created based on only one foreign key.
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
-        parameters = self._extract_parameters(parent_row, child_name, foreign_key)
-        default_parameters = getattr(self, '_default_parameters', {}).get(child_name, {})
 
-        table_meta = self.metadata.tables[child_name]
-        synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
-        synthesizer._set_parameters(parameters, default_parameters)
+        if parent_row is not None:
+            parameters = self._extract_parameters(parent_row, child_name, foreign_key)
+            default_parameters = getattr(self, '_default_parameters', {}).get(child_name, {})
+
+            table_meta = self.metadata.tables[child_name]
+            synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
+            synthesizer._set_parameters(parameters, default_parameters)
+        else:
+            synthesizer = self._null_child_synthesizers[f'__{child_name}__{foreign_key}']
+
         synthesizer._data_processor = self._table_synthesizers[child_name]._data_processor
 
         return synthesizer
@@ -616,6 +621,13 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             except (AttributeError, np.linalg.LinAlgError):
                 likelihoods[parent_id] = None
 
+        if f'__{table_name}__{foreign_key}' in self._null_child_synthesizers:
+            try:
+                likelihoods[np.nan] = synthesizer._get_likelihood(table_rows)
+
+            except (AttributeError, np.linalg.LinAlgError):
+                likelihoods[np.nan] = None
+
         return pd.DataFrame(likelihoods, index=table_rows.index)
 
     def _find_parent_ids(self, child_table, parent_table, child_name, parent_name, foreign_key):
@@ -644,6 +656,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         primary_key = self.metadata.tables[parent_name].primary_key
         parent_table = parent_table.set_index(primary_key)
         num_rows = parent_table[f'__{child_name}__{foreign_key}__num_rows'].copy()
+        num_rows.loc[np.nan] = child_table.shape[0] - num_rows.sum()
 
         likelihoods = self._get_likelihoods(child_table, parent_table, child_name, foreign_key)
         return likelihoods.apply(self._find_parent_id, axis=1, num_rows=num_rows)
