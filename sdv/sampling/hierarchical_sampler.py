@@ -245,7 +245,7 @@ class BaseHierarchicalSampler:
                     table_rows[name] = table_rows[name].dropna().astype(dtype)
                 except Exception:
                     LOGGER.info(
-                        'Could not cast back to transformer dtype, keeping original typing.'
+                        "Could not cast back to column's original dtype, keeping original typing."
                     )
                     table_rows[name] = table_rows[name].dropna()
 

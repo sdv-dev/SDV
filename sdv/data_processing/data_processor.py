@@ -593,9 +593,8 @@ class DataProcessor:
                     'letters': '0123456789abcdefghijklmnopqrstuvwxyz',
                 }
                 if pd.api.types.is_numeric_dtype(data[column]):
-                    digits = data[column].apply(lambda x: len(str(abs(x))))
-                    max_digits = max(digits)
-                    min_digits = min(digits)
+                    max_digits = len(str(abs(max(data[column]))))
+                    min_digits = len(str(abs(min(data[column]))))
                     text = ('!' * (max_digits - min_digits)) + '%' + ('#' * (min_digits - 1))
                     function_name = 'numerify'
                     function_kwargs = {
