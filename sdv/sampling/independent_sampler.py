@@ -1,6 +1,7 @@
 """Independent Samplers."""
 
 import logging
+import warnings
 
 LOGGER = logging.getLogger(__name__)
 
@@ -144,8 +145,12 @@ class BaseIndependentSampler:
                 sampled data tables as ``pandas.DataFrame``.
         """
         sampled_data = {}
+        send_min_sample_warning = False
         for table in self.metadata.tables:
             num_rows = int(self._table_sizes[table] * scale)
+            if num_rows <= 0:
+                send_min_sample_warning = True
+                num_rows = 1
             synthesizer = self._table_synthesizers[table]
             self._sample_table(
                 synthesizer=synthesizer,
@@ -153,6 +158,13 @@ class BaseIndependentSampler:
                 num_rows=num_rows,
                 sampled_data=sampled_data,
             )
+
+        if send_min_sample_warning:
+            warn_msg = (
+                "The 'scale' parameter is too small. Some tables may have 1 row."
+                ' For better quality data, please choose a larger scale.'
+            )
+            warnings.warn(warn_msg)
 
         self._connect_tables(sampled_data)
         return self._finalize(sampled_data)
