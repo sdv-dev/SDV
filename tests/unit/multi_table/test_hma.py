@@ -154,8 +154,7 @@ class TestHMASynthesizer:
 
         # Assert
         expected = pd.DataFrame({'__nesreca__id_upravna_enota__num_rows': [1, 1, 1, 1]})
-        instance._get_pbar_args.assert_called_once_with(
-            desc="(1/2) Tables 'A' and 'B' ('user_id')")
+        instance._get_pbar_args.assert_called_once_with(desc="(1/2) Tables 'A' and 'B' ('user_id')")
 
         pd.testing.assert_frame_equal(result, expected)
 
@@ -211,8 +210,7 @@ class TestHMASynthesizer:
         # Setup
         instance = Mock()
         instance.metadata._get_all_foreign_keys.return_value = ['a', 'b']
-        table_data = pd.DataFrame({'a': [1, 2, 3], 'b': [2, 3, 4],
-                                  'c': ['John', 'Doe', 'Johanna']})
+        table_data = pd.DataFrame({'a': [1, 2, 3], 'b': [2, 3, 4], 'c': ['John', 'Doe', 'Johanna']})
 
         # Run
         result = HMASynthesizer._pop_foreign_keys(instance, table_data, 'table_name')
@@ -372,8 +370,7 @@ class TestHMASynthesizer:
             'country': str,
         }
         transactions_synth = Mock()
-        transactions_synth._data_processor._dtypes = {
-            'transaction_id': np.int64, 'session_id': str}
+        transactions_synth._data_processor._dtypes = {'transaction_id': np.int64, 'session_id': str}
 
         instance._table_synthesizers = {
             'users': users_synth,
@@ -467,8 +464,7 @@ class TestHMASynthesizer:
         instance.metadata._get_foreign_keys.return_value = ['session_id']
         instance._table_parameters = {'users': {'a': 1}}
         instance._table_synthesizers = {'users': table_synthesizer}
-        instance._default_parameters = {
-            'users': {'colA': 'default_param', 'colB': 'default_param'}}
+        instance._default_parameters = {'users': {'colA': 'default_param', 'colB': 'default_param'}}
 
         # Run
         synthesizer = HMASynthesizer._recreate_child_synthesizer(
