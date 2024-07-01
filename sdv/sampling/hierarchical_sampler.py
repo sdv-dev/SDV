@@ -244,15 +244,13 @@ class BaseHierarchicalSampler:
             synthesizer = self._table_synthesizers.get(table_name)
             dtypes = synthesizer._data_processor._dtypes
             for name, dtype in dtypes.items():
-                is_pii = (
-                    self.metadata.tables.get(table_name, {}).columns.get(name, {}).get('pii', False)
-                )
-                # If pii column, the original dtype should be converted to object and not the transformer dtype
-                # as the reverse transform will remain in a pii format
-                if is_pii:
-                    dtype = 'object'
-
-                table_rows[name] = table_rows[name].dropna().astype(dtype)
+                try:
+                    table_rows[name] = table_rows[name].dropna().astype(dtype)
+                except:
+                    LOGGER.info(
+                        f'Could not cast back to transformer dtype, keeping original typing.'
+                    )
+                    table_rows[name] = table_rows[name].dropna()
 
             final_data[table_name] = table_rows[list(dtypes.keys())]
 
