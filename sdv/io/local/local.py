@@ -223,14 +223,14 @@ class ExcelHandler(BaseLocalHandler):
 
         return self._read_excel(filepath, sheet_names)
 
-    def write(self, synthetic_data, file_name, sheet_name_suffix=None, mode='w'):
+    def write(self, synthetic_data, filepath, sheet_name_suffix=None, mode='w'):
         """Write synthetic data to an Excel File.
 
         Args:
             synthetic_data (dict):
                 A dictionary mapping table names to pandas DataFrames containing synthetic data.
-            file_name (str):
-                The name of the Excel file to write.
+            filepath (str):
+                The path to the Excel file to write.
             sheet_name_suffix (str, optional):
                 A suffix to add to each sheet name.
             mode (str, optional):
@@ -243,7 +243,7 @@ class ExcelHandler(BaseLocalHandler):
         suffix_added = False
 
         if mode == 'a':
-            temp_data = self._read_excel(file_name)
+            temp_data = self._read_excel(filepath)
             for table_name, table in synthetic_data.items():
                 sheet_name = table_name
                 if sheet_name_suffix:
@@ -258,7 +258,7 @@ class ExcelHandler(BaseLocalHandler):
                 else:
                     temp_data[sheet_name] = table
 
-        writer = pd.ExcelWriter(file_name)
+        writer = pd.ExcelWriter(filepath)
         for table_name, table_data in temp_data.items():
             if sheet_name_suffix and not suffix_added:
                 table_name += sheet_name_suffix
