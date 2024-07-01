@@ -595,7 +595,8 @@ class DataProcessor:
                 if pd.api.types.is_numeric_dtype(data[column]):
                     digits = data[column].apply(lambda x: len(str(abs(x))))
                     max_digits = max(digits)
-                    text = '!' * max_digits
+                    min_digits = min(digits)
+                    text = ('!' * (max_digits - min_digits)) + '%' + ('#' * (min_digits - 1))
                     function_name = 'numerify'
                     function_kwargs = {
                         'text': text,
