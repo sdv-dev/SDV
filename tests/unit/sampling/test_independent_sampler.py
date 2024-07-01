@@ -1,3 +1,4 @@
+import re
 from unittest.mock import Mock, call, patch
 
 import numpy as np
@@ -404,3 +405,36 @@ class TestBaseIndependentSampler:
             'transactions': DataFrameMatcher(connected_transactions),
         })
         assert result == instance._finalize.return_value
+
+    def test__sample_too_small(self):
+        instance = Mock()
+        metadata = Mock()
+        metadata.tables = {
+            'guests': {
+                'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+                'primary_key': 'key_1',
+                'columns': {
+                    'key_1': {
+                        'sdtype': 'numerical',
+                    }
+                },
+            },
+            'hotels': {
+                'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+                'primary_key': 'key_2',
+                'columns': {
+                    'key_2': {
+                        'sdtype': 'numerical',
+                    }
+                },
+            },
+        }
+        instance._table_sizes = {'hotels': 10, 'guests': 658}
+        instance._table_synthesizers = {'hotels': Mock(), 'guests': Mock()}
+        instance.metadata = metadata
+        warning_msg = re.escape(
+            "The 'scale' parameter is too small. Some tables may have 1 row."
+            ' For better quality data, please choose a larger scale.'
+        )
+        with pytest.warns(Warning, match=warning_msg):
+            BaseIndependentSampler._sample(instance, 0.01)
