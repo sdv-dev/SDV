@@ -894,8 +894,6 @@ class TestDataProcessor:
         )
 
         # Assert
-        print(output)
-        print(mock_rdt.transformers.RegexGenerator.return_value)
         assert output == mock_rdt.transformers.RegexGenerator.return_value
         mock_rdt.transformers.RegexGenerator.assert_called_once_with(
             regex_format='ID_00', enforce_uniqueness=True, generation_order='scrambled'
