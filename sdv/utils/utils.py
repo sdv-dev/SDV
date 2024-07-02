@@ -85,7 +85,7 @@ def get_random_sequence_subset(
             If provided all subsampled sequences must be <= the provided length.
         long_sequence_subsampling_method (str):
             The method to use when a selected sequence is too long. Options are:
-            - (default) first_rows: Keep the first n rows of the sequence, where n is the max
+            - first_rows (default): Keep the first n rows of the sequence, where n is the max
             sequence length.
             - last_rows: Keep the last n rows of the sequence, where n is the max sequence length.
             - random: Randomly choose n rows to keep within the sequence. It is important to keep
@@ -103,7 +103,7 @@ def get_random_sequence_subset(
             'subset the sequential data.'
         )
 
-    if sequence_key not in data:
+    if sequence_key not in data.columns:
         raise ValueError(
             'Your provided sequence key is not in the data. This is required to get a subset.'
         )
