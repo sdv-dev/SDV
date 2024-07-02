@@ -1398,7 +1398,7 @@ class TestHMASynthesizer:
         table2 = pd.DataFrame({
             'company': [fake.company() for i in range(20)],
             'employee_count': np.random.randint(15, 4000, 20),
-            'revenue': np.random.randint(100_000, 4_000_000_000),
+            'revenue': np.random.randint(100_000, 1_000_000_000),
         })
 
         tables_dict = {'people': table1, 'company': table2}
