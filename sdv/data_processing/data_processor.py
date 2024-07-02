@@ -587,13 +587,23 @@ class DataProcessor:
 
             elif sdtype == 'unknown':
                 sdtypes[column] = 'pii'
-                transformers[column] = AnonymizedFaker(
-                    function_name='bothify',
-                )
-                transformers[column].function_kwargs = {
+                function_name = 'bothify'
+                function_kwargs = {
                     'text': 'sdv-pii-?????',
                     'letters': '0123456789abcdefghijklmnopqrstuvwxyz',
                 }
+                if pd.api.types.is_numeric_dtype(data[column]):
+                    max_digits = len(str(abs(max(data[column]))))
+                    min_digits = len(str(abs(min(data[column]))))
+                    text = ('!' * (max_digits - min_digits)) + '%' + ('#' * (min_digits - 1))
+                    function_name = 'numerify'
+                    function_kwargs = {
+                        'text': text,
+                    }
+                transformers[column] = AnonymizedFaker(
+                    function_name=function_name,
+                )
+                transformers[column].function_kwargs = function_kwargs
 
             elif pii:
                 sdtypes[column] = 'pii'
