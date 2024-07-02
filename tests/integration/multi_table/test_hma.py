@@ -1412,19 +1412,24 @@ class TestHMASynthesizer:
         sample_data = synth.sample(1)
 
         # Assert
-        expected_people_dtypes = pd.Series({
-            'name': 'object',
-            'salary': 'int64',
-            'age': 'int64',
-            'address': 'object',
-        })
-        expected_company_dtypes = pd.Series({
-            'company': 'object',
-            'employee_count': 'int64',
-            'revenue': 'int64',
-        })
-        pd.testing.assert_series_equal(sample_data['people'].dtypes, expected_people_dtypes)
-        pd.testing.assert_series_equal(sample_data['company'].dtypes, expected_company_dtypes)
+        people_sample = sample_data['people']
+        company_sample = sample_data['company']
+
+        # Since these values are inferred, windows and mac may have different int types
+        # so check if it is numeric
+        numeric_data = [
+            people_sample['salary'],
+            people_sample['age'],
+            company_sample['employee_count'],
+            company_sample['revenue'],
+        ]
+        object_data = [
+            people_sample['name'].dtype,
+            people_sample['address'].dtype,
+            company_sample['company'].dtype,
+        ]
+        assert all(pd.api.types.is_numeric_dtype(dtype) for dtype in numeric_data)
+        assert all(dtype == 'object' for dtype in object_data)
 
 
 @pytest.mark.parametrize('num_rows', [(10), (1000)])
