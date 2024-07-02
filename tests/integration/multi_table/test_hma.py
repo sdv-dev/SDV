@@ -5,6 +5,7 @@ import math
 import re
 import warnings
 
+import faker
 import numpy as np
 import pandas as pd
 import pytest
@@ -1380,6 +1381,50 @@ class TestHMASynthesizer:
         )
         with pytest.raises(SynthesizerInputError, match=err_msg):
             synthesizer.fit(data)
+
+    def test_sampling_with_unknown_sdtype_numerical_column(self):
+        """Test that if a numerical column is detected as unknown in the metadata,
+        it does not fail and is handled as original detected value
+        """
+        # Setup
+        fake = faker.Faker()
+
+        table1 = pd.DataFrame({
+            'name': [fake.name() for i in range(20)],
+            'salary': np.random.randint(20_000, 250_000, 20),
+            'age': np.random.randint(18, 70, 20),
+            'address': [fake.address() for i in range(20)],
+        })
+        table2 = pd.DataFrame({
+            'company': [fake.company() for i in range(20)],
+            'employee_count': np.random.randint(15, 4000, 20),
+            'revenue': np.random.randint(100_000, 4_000_000_000),
+        })
+
+        tables_dict = {'people': table1, 'company': table2}
+
+        metadata = MultiTableMetadata()
+        metadata.detect_from_dataframes(tables_dict)
+
+        # Run
+        synth = HMASynthesizer(metadata)
+        synth.fit(tables_dict)
+        sample_data = synth.sample(1)
+
+        # Assert
+        expected_people_dtypes = pd.Series({
+            'name': 'object',
+            'salary': 'int64',
+            'age': 'int64',
+            'address': 'object',
+        })
+        expected_company_dtypes = pd.Series({
+            'company': 'object',
+            'employee_count': 'int64',
+            'revenue': 'int64',
+        })
+        pd.testing.assert_series_equal(sample_data['people'].dtypes, expected_people_dtypes)
+        pd.testing.assert_series_equal(sample_data['company'].dtypes, expected_company_dtypes)
 
 
 @pytest.mark.parametrize('num_rows', [(10), (1000)])

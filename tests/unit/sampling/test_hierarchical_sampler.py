@@ -1,5 +1,5 @@
 from collections import defaultdict
-from unittest.mock import MagicMock, Mock, call
+from unittest.mock import MagicMock, Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -377,6 +377,84 @@ class TestBaseHierarchicalSampler:
         }
         for result_frame, expected_frame in zip(result.values(), expected_result.values()):
             pd.testing.assert_frame_equal(result_frame, expected_frame)
+
+    @patch('sdv.sampling.hierarchical_sampler.LOGGER')
+    def test__finalize_no_matching_dtype(self, mock_logging):
+        """Test that finalize removes extra columns from the sampled data."""
+        # Setup
+        instance = Mock()
+        metadata = Mock()
+        metadata._get_parent_map.return_value = {
+            'sessions': ['users'],
+            'transactions': ['sessions'],
+        }
+        instance.metadata = metadata
+
+        sampled_data = {
+            'users': pd.DataFrame({
+                'user_id': pd.Series([0, 1, 2], dtype=np.int64),
+                'name': pd.Series(['John', 'Doe', 'Johanna'], dtype=object),
+                'additional_column': pd.Series([0.1, 0.2, 0.3], dtype=float),
+                'another_additional_column': pd.Series([0.1, 0.2, 0.5], dtype=float),
+            }),
+            'sessions': pd.DataFrame({
+                'user_id': pd.Series([1, 2, 1], dtype=np.int64),
+                'session_id': pd.Series(['a', 'b', 'c'], dtype=object),
+                'os': pd.Series(['linux', 'mac', 'win'], dtype=object),
+                'country': pd.Series(['us', 'us', 'es'], dtype=object),
+            }),
+            'transactions': pd.DataFrame({
+                'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
+                'session_id': pd.Series(['a', 'a', 'b'], dtype=object),
+            }),
+        }
+
+        users_synth = Mock()
+        users_synth._data_processor._dtypes = {'user_id': np.int64, 'name': str}
+        sessions_synth = Mock()
+        # Incorrectly label data_processor type
+        sessions_synth._data_processor._dtypes = {
+            'user_id': np.int64,
+            'session_id': np.int64,  # Should be str
+            'os': str,
+            'country': str,
+        }
+        transactions_synth = Mock()
+        transactions_synth._data_processor._dtypes = {'transaction_id': np.int64, 'session_id': str}
+
+        instance._table_synthesizers = {
+            'users': users_synth,
+            'sessions': sessions_synth,
+            'transactions': transactions_synth,
+        }
+
+        # Run
+        result = BaseHierarchicalSampler._finalize(instance, sampled_data)
+
+        # Assert
+        expected_result = {
+            'users': pd.DataFrame({
+                'user_id': pd.Series([0, 1, 2], dtype=np.int64),
+                'name': pd.Series(['John', 'Doe', 'Johanna'], dtype=object),
+            }),
+            'sessions': pd.DataFrame({
+                'user_id': pd.Series([1, 2, 1], dtype=np.int64),
+                'session_id': pd.Series(['a', 'b', 'c'], dtype=object),
+                'os': pd.Series(['linux', 'mac', 'win'], dtype=object),
+                'country': pd.Series(['us', 'us', 'es'], dtype=object),
+            }),
+            'transactions': pd.DataFrame({
+                'transaction_id': pd.Series([1, 2, 3], dtype=np.int64),
+                'session_id': pd.Series(['a', 'a', 'b'], dtype=object),
+            }),
+        }
+        for result_frame, expected_frame in zip(result.values(), expected_result.values()):
+            pd.testing.assert_frame_equal(result_frame, expected_frame)
+
+        # Confirm log was called
+        mock_logging.info.assert_called_once_with(
+            "Could not cast back to column's original dtype, keeping original typing."
+        )
 
     def test__sample(self):
         """Test that the whole dataset is sampled.
