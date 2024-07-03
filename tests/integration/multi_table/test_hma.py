@@ -5,6 +5,7 @@ import math
 import re
 import warnings
 
+import faker
 import numpy as np
 import pandas as pd
 import pytest
@@ -1380,6 +1381,55 @@ class TestHMASynthesizer:
         )
         with pytest.raises(SynthesizerInputError, match=err_msg):
             synthesizer.fit(data)
+
+    def test_sampling_with_unknown_sdtype_numerical_column(self):
+        """Test that if a numerical column is detected as unknown in the metadata,
+        it does not fail and is handled as original detected value
+        """
+        # Setup
+        fake = faker.Faker()
+
+        table1 = pd.DataFrame({
+            'name': [fake.name() for i in range(20)],
+            'salary': np.random.randint(20_000, 250_000, 20),
+            'age': np.random.randint(18, 70, 20),
+            'address': [fake.address() for i in range(20)],
+        })
+        table2 = pd.DataFrame({
+            'company': [fake.company() for i in range(20)],
+            'employee_count': np.random.randint(15, 4000, 20),
+            'revenue': np.random.randint(100_000, 1_000_000_000),
+        })
+
+        tables_dict = {'people': table1, 'company': table2}
+
+        metadata = MultiTableMetadata()
+        metadata.detect_from_dataframes(tables_dict)
+
+        # Run
+        synth = HMASynthesizer(metadata)
+        synth.fit(tables_dict)
+        sample_data = synth.sample(1)
+
+        # Assert
+        people_sample = sample_data['people']
+        company_sample = sample_data['company']
+
+        # Since these values are inferred, windows and mac may have different int types
+        # so check if it is numeric
+        numeric_data = [
+            people_sample['salary'],
+            people_sample['age'],
+            company_sample['employee_count'],
+            company_sample['revenue'],
+        ]
+        object_data = [
+            people_sample['name'].dtype,
+            people_sample['address'].dtype,
+            company_sample['company'].dtype,
+        ]
+        assert all(pd.api.types.is_numeric_dtype(dtype) for dtype in numeric_data)
+        assert all(dtype == 'object' for dtype in object_data)
 
 
 @pytest.mark.parametrize('num_rows', [(10), (1000)])

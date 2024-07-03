@@ -241,7 +241,13 @@ class BaseHierarchicalSampler:
             synthesizer = self._table_synthesizers.get(table_name)
             dtypes = synthesizer._data_processor._dtypes
             for name, dtype in dtypes.items():
-                table_rows[name] = table_rows[name].dropna().astype(dtype)
+                try:
+                    table_rows[name] = table_rows[name].dropna().astype(dtype)
+                except Exception:
+                    LOGGER.info(
+                        "Could not cast back to column's original dtype, keeping original typing."
+                    )
+                    table_rows[name] = table_rows[name].dropna()
 
             final_data[table_name] = table_rows[list(dtypes.keys())]
 

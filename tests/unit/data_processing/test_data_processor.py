@@ -1419,6 +1419,24 @@ class TestDataProcessor:
         assert isinstance(config['transformers']['phone_number'], AnonymizedFaker)
         assert isinstance(config['transformers']['email'], CustomTransformer)
 
+    def test__create_config_with_unknown_numerical_data(self):
+        """Test the ``_create_config`` method with unknown numerical columns."""
+        # Setup
+        data = pd.DataFrame({
+            'numerical_column': [12321, 198, 1958],
+        })
+        metadata = SingleTableMetadata().load_from_dict({
+            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+            'columns': {'numerical_column': {'sdtype': 'unknown', 'pii': True}},
+        })
+        dp = DataProcessor(metadata)
+
+        # Run
+        config = dp._create_config(data, set())
+
+        # Assert
+        assert config['transformers']['numerical_column'].function_kwargs['text'] == '!!%##'
+
     def test_update_transformers_not_fitted(self):
         """Test when ``self._hyper_transformer`` is ``None`` raises a ``NotFittedError``."""
         # Setup
