@@ -666,6 +666,14 @@ class SingleTableMetadata:
                 raise InvalidMetadataError(f"'{key_type}_key' must be a string.")
 
             keys = {column_name} if isinstance(column_name, str) else set(column_name)
+            if (key_type == 'primary' and column_name == self.sequence_key) or (
+                key_type == 'sequence' and column_name == self.primary_key
+            ):
+                raise InvalidMetadataError(
+                    f'The column ({column_name}) cannot be set as {key_type}_key as it is already set as the '
+                    f"{'sequence' if key_type == 'primary' else 'primary'}_key."
+                )
+
             invalid_ids = keys - set(self.columns)
             if invalid_ids:
                 raise InvalidMetadataError(
