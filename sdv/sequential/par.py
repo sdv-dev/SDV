@@ -198,7 +198,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
     def _validate_sequence_key_and_context_columns(self, sequence_key, context_columns):
         if set(sequence_key).intersection(set(context_columns)):
             raise SynthesizerInputError(
-                f'The sequence key {self._sequence_key} cannot be a context column. '
+                f'The sequence key {sequence_key} cannot be a context column. '
                 'To proceed, please remove the sequence key from the context_columns parameter.'
             )
 
