@@ -40,7 +40,7 @@ def _get_milestone_number(milestone_title):
     url = f'{GITHUB_URL}/milestones'
     headers = {'Authorization': f'Bearer {GITHUB_TOKEN}'}
     query_params = {'milestone': milestone_title, 'state': 'all', 'per_page': 100}
-    response = requests.get(url, headers=headers, params=query_params)
+    response = requests.get(url, headers=headers, params=query_params, timeout=30)
     body = response.json()
     if response.status_code != 200:
         raise Exception(str(body))
@@ -63,7 +63,7 @@ def _get_issues_by_milestone(milestone):
     issues = []
     while True:
         query_params['page'] = page
-        response = requests.get(url, headers=headers, params=query_params)
+        response = requests.get(url, headers=headers, params=query_params, timeout=30)
         body = response.json()
         if response.status_code != 200:
             raise Exception(str(body))
