@@ -128,10 +128,6 @@ class TestPARSynthesizer:
             'constraint_class': 'Mock',
             'constraint_parameters': {'column_names': ['time', 'gender']},
         }
-        # 'time': ['2020-01-01', '2020-01-02', '2020-01-03'],
-        # 'gender': ['F', 'M', 'M'],
-        # 'name': ['Jane', 'John', 'Doe'],
-        # 'measurement': [55, 60, 65],
         overlapping_error_msg = re.escape(
             'The PARSynthesizer cannot accommodate multiple constraints '
             'that overlap on the same columns.'
