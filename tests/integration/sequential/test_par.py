@@ -392,8 +392,6 @@ def test_par_error_on_context_columns():
         'columns': {
             'A': {'sdtype': 'id'},
             'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
-            'C': {'sdtype': 'numerical'},
-            'D': {'sdtype': 'categorical'},
         },
         'sequence_key': 'A',
     }
