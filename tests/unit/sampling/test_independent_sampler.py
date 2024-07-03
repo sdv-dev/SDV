@@ -169,7 +169,8 @@ class TestBaseIndependentSampler:
             'country': str,
         }
         transactions_synth = Mock()
-        transactions_synth._data_processor._dtypes = {'transaction_id': np.int64, 'session_id': str}
+        transactions_synth._data_processor._dtypes = {
+            'transaction_id': np.int64, 'session_id': str}
 
         instance._table_synthesizers = {
             'users': users_synth,
@@ -258,7 +259,8 @@ class TestBaseIndependentSampler:
             'M': 'datetime',
         }
         transactions_synth = Mock()
-        transactions_synth._data_processor._dtypes = {'transaction_id': np.int64, 'session_id': str}
+        transactions_synth._data_processor._dtypes = {
+            'transaction_id': np.int64, 'session_id': str}
         transactions_synth._data_processor._DTYPE_TO_SDTYPE = {
             'i': 'numerical',
             'f': 'numerical',
@@ -407,6 +409,7 @@ class TestBaseIndependentSampler:
         assert result == instance._finalize.return_value
 
     def test__sample_too_small(self):
+        """Test that the ``_sample`` method works even when it's too small."""
         instance = Mock()
         metadata = Mock()
         metadata.tables = {
