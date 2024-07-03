@@ -407,6 +407,7 @@ class TestBaseIndependentSampler:
         assert result == instance._finalize.return_value
 
     def test__sample_too_small(self):
+        """Test that the ``_sample`` method works even when sample size is very small."""
         instance = Mock()
         metadata = Mock()
         metadata.tables = {
