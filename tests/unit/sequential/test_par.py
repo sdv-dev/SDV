@@ -110,12 +110,8 @@ class TestPARSynthesizer:
     def test_add_constraints(self):
         """Test that that only simple constraints can be added to PARSynthesizer."""
         # Setup
-        metadata = self.get_metadata()
-        synthesizer = PARSynthesizer(metadata=metadata, context_columns=['name', 'measurement'])
-        name_constraint = {
-            'constraint_class': 'Mock',
-            'constraint_parameters': {'column_name': 'name'},
-        }
+        metadata = self.get_metadata(add_sequence_key=True)
+        synthesizer = PARSynthesizer(metadata=metadata, context_columns=['gender', 'measurement'])
         measurement_constraint = {
             'constraint_class': 'Mock',
             'constraint_parameters': {'column_name': 'measurement'},
@@ -130,8 +126,12 @@ class TestPARSynthesizer:
         }
         multi_constraint = {
             'constraint_class': 'Mock',
-            'constraint_parameters': {'column_names': ['name', 'time']},
+            'constraint_parameters': {'column_names': ['time', 'gender']},
         }
+        # 'time': ['2020-01-01', '2020-01-02', '2020-01-03'],
+        # 'gender': ['F', 'M', 'M'],
+        # 'name': ['Jane', 'John', 'Doe'],
+        # 'measurement': [55, 60, 65],
         overlapping_error_msg = re.escape(
             'The PARSynthesizer cannot accommodate multiple constraints '
             'that overlap on the same columns.'
@@ -143,7 +143,7 @@ class TestPARSynthesizer:
 
         # Run and Assert
         with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
-            synthesizer.add_constraints([name_constraint, gender_constraint])
+            synthesizer.add_constraints([time_constraint, gender_constraint])
 
         with pytest.raises(SynthesizerInputError, match=mixed_constraint_error_msg):
             synthesizer.add_constraints([time_constraint, measurement_constraint])
@@ -152,10 +152,7 @@ class TestPARSynthesizer:
             synthesizer.add_constraints([multi_constraint])
 
         with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
-            synthesizer.add_constraints([multi_constraint, name_constraint])
-
-        with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
-            synthesizer.add_constraints([name_constraint, name_constraint])
+            synthesizer.add_constraints([multi_constraint, gender_constraint])
 
         with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
             synthesizer.add_constraints([gender_constraint, gender_constraint])
@@ -935,3 +932,15 @@ class TestPARSynthesizer:
         mock_file.assert_called_once_with('synth.pkl', 'rb')
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         assert loaded_instance == synthesizer_mock
+
+    def test__par_error_on_context_columns(self):
+        metadata = self.get_metadata(add_sequence_key=True)
+        sequence_key_context_column_error_msg = re.escape(
+            "The sequence key ['name'] cannot be a context column. "
+            'To proceed, please remove the sequence key from the context_columns parameter.'
+        )
+        with pytest.raises(SynthesizerInputError, match=sequence_key_context_column_error_msg):
+            PARSynthesizer(
+                metadata=metadata,
+                context_columns=['name'],
+            )
