@@ -148,10 +148,10 @@ class TestPARSynthesizer:
             synthesizer.add_constraints([multi_constraint])
 
         with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
-            synthesizer.add_constraints([multi_constraint, time_constraint])
+            synthesizer.add_constraints([multi_constraint, gender_constraint])
 
         with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
-            synthesizer.add_constraints([multi_constraint, multi_constraint])
+            synthesizer.add_constraints([gender_constraint, gender_constraint])
 
         with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
             synthesizer.add_constraints([gender_constraint, gender_constraint])
