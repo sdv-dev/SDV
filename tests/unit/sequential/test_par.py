@@ -126,7 +126,7 @@ class TestPARSynthesizer:
         }
         multi_constraint = {
             'constraint_class': 'Mock',
-            'constraint_parameters': {'column_names': ['time', 'gender']},
+            'constraint_parameters': {'column_names': ['gender', 'time']},
         }
         overlapping_error_msg = re.escape(
             'The PARSynthesizer cannot accommodate multiple constraints '
@@ -148,7 +148,10 @@ class TestPARSynthesizer:
             synthesizer.add_constraints([multi_constraint])
 
         with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
-            synthesizer.add_constraints([multi_constraint, gender_constraint])
+            synthesizer.add_constraints([multi_constraint, time_constraint])
+
+        with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
+            synthesizer.add_constraints([multi_constraint, multi_constraint])
 
         with pytest.raises(SynthesizerInputError, match=overlapping_error_msg):
             synthesizer.add_constraints([gender_constraint, gender_constraint])
