@@ -169,8 +169,7 @@ class TestBaseIndependentSampler:
             'country': str,
         }
         transactions_synth = Mock()
-        transactions_synth._data_processor._dtypes = {
-            'transaction_id': np.int64, 'session_id': str}
+        transactions_synth._data_processor._dtypes = {'transaction_id': np.int64, 'session_id': str}
 
         instance._table_synthesizers = {
             'users': users_synth,
@@ -259,8 +258,7 @@ class TestBaseIndependentSampler:
             'M': 'datetime',
         }
         transactions_synth = Mock()
-        transactions_synth._data_processor._dtypes = {
-            'transaction_id': np.int64, 'session_id': str}
+        transactions_synth._data_processor._dtypes = {'transaction_id': np.int64, 'session_id': str}
         transactions_synth._data_processor._DTYPE_TO_SDTYPE = {
             'i': 'numerical',
             'f': 'numerical',
