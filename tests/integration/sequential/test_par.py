@@ -388,6 +388,7 @@ def test_par_sequence_index_is_numerical():
 
 
 def test_par_error_on_context_columns():
+    # Setup
     metadata_dict = {
         'columns': {
             'A': {'sdtype': 'id'},
@@ -400,5 +401,6 @@ def test_par_error_on_context_columns():
         "The sequence key ['A'] cannot be a context column. "
         'To proceed, please remove the sequence key from the context_columns parameter.'
     )
+    # Run and Assert
     with pytest.raises(SynthesizerInputError, match=sequence_key_context_column_error_msg):
         PARSynthesizer(metadata, context_columns=['A'])

@@ -933,11 +933,14 @@ class TestPARSynthesizer:
         assert loaded_instance == synthesizer_mock
 
     def test__par_error_on_context_columns(self):
+        """Test that the sequence_key is not a context column"""
+        # Setup
         metadata = self.get_metadata(add_sequence_key=True)
         sequence_key_context_column_error_msg = re.escape(
             "The sequence key ['name'] cannot be a context column. "
             'To proceed, please remove the sequence key from the context_columns parameter.'
         )
+        # Run and Assert
         with pytest.raises(SynthesizerInputError, match=sequence_key_context_column_error_msg):
             PARSynthesizer(
                 metadata=metadata,
