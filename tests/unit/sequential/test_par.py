@@ -932,7 +932,7 @@ class TestPARSynthesizer:
         cloudpickle_mock.load.assert_called_once_with(mock_file.return_value)
         assert loaded_instance == synthesizer_mock
 
-    def test__par_error_on_context_columns(self):
+    def test___init___error_sequence_key_in_context(self):
         """Test that the sequence_key is not a context column"""
         # Setup
         metadata = self.get_metadata(add_sequence_key=True)

@@ -387,7 +387,7 @@ def test_par_sequence_index_is_numerical():
     assert sample.columns.to_list() == data.columns.to_list()
 
 
-def test_par_error_on_context_columns():
+def test_init_error_sequence_key_in_context():
     # Setup
     metadata_dict = {
         'columns': {
