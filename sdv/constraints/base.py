@@ -128,7 +128,8 @@ class Constraint(metaclass=ConstraintMeta):
         if missing_values:
             errors.append(
                 ValueError(
-                    f'Missing required values {missing_values} in {article} {constraint} constraint.'
+                    f'Missing required values {missing_values} '
+                    f'in {article} {constraint} constraint.'
                 )
             )
 
@@ -136,7 +137,8 @@ class Constraint(metaclass=ConstraintMeta):
         if invalid_vals:
             errors.append(
                 ValueError(
-                    f'Invalid values {invalid_vals} are present in {article} {constraint} constraint.'
+                    f'Invalid values {invalid_vals} are present '
+                    f'in {article} {constraint} constraint.'
                 )
             )
 

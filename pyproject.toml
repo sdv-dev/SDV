@@ -203,7 +203,6 @@ select = [
     "PD"
 ]
 ignore = [
-    "E501",
     # pydocstyle
     "D107",  # Missing docstring in __init__
     "D417",   # Missing argument descriptions in the docstring, this is a bug from pydocstyle: https://github.com/PyCQA/pydocstyle/issues/449
