@@ -304,17 +304,18 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             child_rows = child_rows[child_rows.columns.difference(foreign_key_columns)]
 
             try:
-                if child_rows.empty:
+                if child_rows.empty and not pd.isna(foreign_key_value):
                     row = pd.Series({'num_rows': len(child_rows)})
                     row.index = f'__{child_name}__{foreign_key}__' + row.index
                 else:
                     synthesizer = self._synthesizer(
                         table_meta, **self._table_parameters[child_name]
                     )
-                    synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
-                    row = synthesizer._get_parameters()
-                    row = pd.Series(row)
-                    row.index = f'__{child_name}__{foreign_key}__' + row.index
+                    if not child_rows.empty:
+                        synthesizer.fit_processed_data(child_rows.reset_index(drop=True))
+                        row = synthesizer._get_parameters()
+                        row = pd.Series(row)
+                        row.index = f'__{child_name}__{foreign_key}__' + row.index
 
                     if scale_columns is None:
                         scale_columns = [column for column in row.index if column.endswith('scale')]
@@ -322,7 +323,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                     if len(child_rows) == 1:
                         row.loc[scale_columns] = None
 
-                # TODO: handle null synthesizer when child_rows is empty
                 if pd.isna(foreign_key_value):
                     self._null_child_synthesizers[f'__{child_name}__{foreign_key}'] = synthesizer
                 else:
