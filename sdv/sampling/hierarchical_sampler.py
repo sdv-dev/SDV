@@ -211,8 +211,9 @@ class BaseHierarchicalSampler:
                         sampled_data=sampled_data,
                     )
 
+                foreign_key = self.metadata._get_foreign_keys(table_name, child_name)[0]
+
                 if child_name not in sampled_data:  # No child rows sampled, force row creation
-                    foreign_key = self.metadata._get_foreign_keys(table_name, child_name)[0]
                     num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
                     max_num_child_index = sampled_data[table_name][num_rows_key].idxmax()
                     parent_row = sampled_data[table_name].iloc[max_num_child_index]
@@ -226,7 +227,8 @@ class BaseHierarchicalSampler:
                     )
 
                 total_num_rows = round(self._table_sizes[child_name] * scale)
-                num_null_rows = total_num_rows - sampled_data[child_name].shape[0]
+                null_fk_pctg = self._null_foreign_key_percentages[f'__{child_name}__{foreign_key}']
+                num_null_rows = round(total_num_rows * null_fk_pctg)
                 if num_null_rows > 0:
                     self._add_child_rows(
                         child_name=child_name,

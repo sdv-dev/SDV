@@ -177,7 +177,7 @@ class TestBaseHierarchicalSampler:
                 'session_id': ['a', 'a', 'b'],
             })
 
-        def _add_child_rows(child_name, parent_name, parent_row, sampled_data):
+        def _add_child_rows(child_name, parent_name, parent_row, sampled_data, num_rows=None):
             if parent_name == 'users':
                 if parent_row['user_id'] == 1:
                     sampled_data[child_name] = pd.DataFrame({
