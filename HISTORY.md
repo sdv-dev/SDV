@@ -1,6 +1,35 @@
 # Release Notes
 
-### v1.14.0 - 2024-06-13
+### v1.15.0 - 2024-07-11
+
+### New Features
+
+* Add a utility function `get_random_sequence_subset` - Issue [#2085](https://github.com/sdv-dev/SDV/issues/2085) by @amontanez24
+* Rename the `file_name` parameter to `filepath` parameter in ExcelHandler - Issue [#2065](https://github.com/sdv-dev/SDV/issues/2065) by @lajohn4747
+
+### Bugs Fixed
+
+* Context column cannot be a sequence key: Need better error message for this case - Issue [#2097](https://github.com/sdv-dev/SDV/issues/2097) by @gsheni
+* Primary key and sequential key cannot be the same - Issue [#2096](https://github.com/sdv-dev/SDV/issues/2096) by @lajohn4747
+* Error when applying `FixedCombinations` constraint on a child table with multiple parents in `HMASynthesizer` - Issue [#2087](https://github.com/sdv-dev/SDV/issues/2087) by @pvk-developer
+* PARSynthesizer errors during `fit` if sequence_index is numerical sdtype - Issue [#2079](https://github.com/sdv-dev/SDV/issues/2079) by @lajohn4747
+* Cap numpy to less than 2.0.0 until SDV supports - Issue [#2075](https://github.com/sdv-dev/SDV/issues/2075) by @gsheni
+* HMA sampling crashes when unknown sdtype detected for numerical column - Issue [#2064](https://github.com/sdv-dev/SDV/issues/2064) by @lajohn4747
+* HMA Synthesizer's `scale` parameter doesn't work for small values - Issue [#2045](https://github.com/sdv-dev/SDV/issues/2045) by @lajohn4747
+* PAR DiagnosticReport not 1.0 with float categorical columns - Issue [#1910](https://github.com/sdv-dev/SDV/issues/1910) by @lajohn4747
+* If a parent has 0/1 children, HMASynthesizer may create constant data - Issue [#1895](https://github.com/sdv-dev/SDV/issues/1895) by @gsheni
+
+### Internal
+
+* Add timeouts to requests in release notes script - Issue [#2067](https://github.com/sdv-dev/SDV/issues/2067) by @gsheni
+* Investigate HMA case where parent is missing num_rows column - Issue [#1703](https://github.com/sdv-dev/SDV/issues/1703) by @gsheni
+
+### Maintenance
+
+* Release notes should not include PRs - Issue [#2074](https://github.com/sdv-dev/SDV/issues/2074) by @amontanez24
+* Switch to using ruff for Python linting and code formatting - Issue [#1803](https://github.com/sdv-dev/SDV/issues/1803) by @gsheni
+
+## v1.14.0 - 2024-06-13
 
 This release provides a number of new features. A big one is that it adds the ability to fit the `HMASynthesizer` on disconnected schemas! It also enables the `PARSynthesizer` to work with constraints in certain conditions. More specifically, the `PARSynthesizer` can now handle constraints as long as the columns involved in the constraints are either exclusively all context columns or exclusively all non-context columns.
 
