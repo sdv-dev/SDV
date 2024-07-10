@@ -2,10 +2,11 @@
 
 ### v1.15.0 - 2024-07-11
 
+This release adds a new utils function called `get_random_sequence_subset`, that allows users to get a subset of sequential data.
+
 ### New Features
 
 * Add a utility function `get_random_sequence_subset` - Issue [#2085](https://github.com/sdv-dev/SDV/issues/2085) by @amontanez24
-* Rename the `file_name` parameter to `filepath` parameter in ExcelHandler - Issue [#2065](https://github.com/sdv-dev/SDV/issues/2065) by @lajohn4747
 
 ### Bugs Fixed
 
@@ -14,6 +15,7 @@
 * Error when applying `FixedCombinations` constraint on a child table with multiple parents in `HMASynthesizer` - Issue [#2087](https://github.com/sdv-dev/SDV/issues/2087) by @pvk-developer
 * PARSynthesizer errors during `fit` if sequence_index is numerical sdtype - Issue [#2079](https://github.com/sdv-dev/SDV/issues/2079) by @lajohn4747
 * Cap numpy to less than 2.0.0 until SDV supports - Issue [#2075](https://github.com/sdv-dev/SDV/issues/2075) by @gsheni
+* Rename the `file_name` parameter to `filepath` parameter in ExcelHandler - Issue [#2065](https://github.com/sdv-dev/SDV/issues/2065) by @lajohn4747
 * HMA sampling crashes when unknown sdtype detected for numerical column - Issue [#2064](https://github.com/sdv-dev/SDV/issues/2064) by @lajohn4747
 * HMA Synthesizer's `scale` parameter doesn't work for small values - Issue [#2045](https://github.com/sdv-dev/SDV/issues/2045) by @lajohn4747
 * PAR DiagnosticReport not 1.0 with float categorical columns - Issue [#1910](https://github.com/sdv-dev/SDV/issues/1910) by @lajohn4747
