@@ -34,6 +34,7 @@ jobs:
         restore-keys: |
             ${{ runner.os }}-pip-${{ matrix.python-version }}-
     - name: Check cache hit
+      if: runner.os == 'Windows'
       run: |
         echo "Cache hit status: ${{ steps.cache-pip.outputs.cache-hit }}"
     - name: Install dependencies
