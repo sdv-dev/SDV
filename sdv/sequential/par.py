@@ -334,8 +334,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         context_metadata: SingleTableMetadata = self._get_context_metadata()
         if self.context_columns or self._extra_context_columns:
             context_cols = (
-                self._sequence_key + self.context_columns +
-                list(self._extra_context_columns.keys())
+                self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
             )
             context = transformed[context_cols]
         else:
@@ -362,8 +361,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             for column in timeseries_data.columns
             if column
             not in (
-                self._sequence_key + self.context_columns +
-                list(self._extra_context_columns.keys())
+                self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
             )
         ]
 
