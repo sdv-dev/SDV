@@ -38,7 +38,7 @@ jobs:
       run: |
         echo "Cache hit status: ${{ steps.cache-pip.outputs.cache-hit }}"
         python -m pip install --upgrade pip
-        python -m pip install --no-dependencies .
+        python -m pip install --no-dependencies invoke .[test]
     - name: Install dependencies
       if: runner.os != 'Windows' || !steps.cache-pip.outputs.cache-hit
       run: |
