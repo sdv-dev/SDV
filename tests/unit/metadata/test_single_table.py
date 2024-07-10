@@ -1541,6 +1541,27 @@ class TestSingleTableMetadata:
         # Assert
         assert out is False
 
+    def test__validate_key_sequence_and_primary_key_same(self):
+        """Test ``_validate_key`` for a column used as both sequence and primary keys."""
+        # Setup
+        instance_primary = SingleTableMetadata()
+        instance_primary.primary_key = 'A'
+        error_msg_primary = re.escape(
+            'The column (A) cannot be set as sequence_key as it is already set as the primary_key.'
+        )
+
+        instance_sequence = SingleTableMetadata()
+        instance_sequence.sequence_key = 'A'
+        error_msg_sequence = re.escape(
+            'The column (A) cannot be set as primary_key as it is already set as the sequence_key.'
+        )
+
+        # Run and Assert
+        with pytest.raises(InvalidMetadataError, match=error_msg_primary):
+            instance_primary._validate_key('A', 'sequence')
+        with pytest.raises(InvalidMetadataError, match=error_msg_sequence):
+            instance_sequence._validate_key('A', 'primary')
+
     def test_set_primary_key_validation_dtype(self):
         """Test that ``set_primary_key`` crashes for invalid arguments.
 

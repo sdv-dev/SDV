@@ -487,3 +487,67 @@ def test_column_relationship_validation():
     # Run and Assert
     with pytest.raises(InvalidMetadataError, match=expected_message):
         metadata.validate()
+
+
+def test_metadata_validate_same_sequence_primary():
+    """Test metadata validation when both primary and sequence keys are the same."""
+    # Setup
+    metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'id'},
+            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'C': {'sdtype': 'numerical'},
+            'D': {'sdtype': 'categorical'},
+        },
+        'primary_key': 'A',
+        'sequence_key': 'A',
+    })
+
+    expected_message = re.escape(
+        'The following errors were found in the metadata:\n\n'
+        'The column (A) cannot be set as primary_key as it is already set as the sequence_key.\n'
+        'The column (A) cannot be set as sequence_key as it is already set as the primary_key.'
+    )
+
+    # Run and Assert
+    with pytest.raises(InvalidMetadataError, match=expected_message):
+        metadata.validate()
+
+
+def test_metadata_set_same_sequence_primary():
+    """Test metadata throws error when setting the sequence and primary keys to be the same."""
+    # Setup
+    metadata_sequence = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'id'},
+            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'C': {'sdtype': 'numerical'},
+            'D': {'sdtype': 'categorical'},
+        },
+    })
+
+    # Run and Assert
+    metadata_sequence.set_sequence_key('A')
+    error_msg_sequence = re.escape(
+        'The column (A) cannot be set as primary_key as it is already set as the sequence_key.'
+    )
+    with pytest.raises(InvalidMetadataError, match=error_msg_sequence):
+        metadata_sequence.set_primary_key('A')
+
+    # Setup primary first
+    metadata_primary = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'id'},
+            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'C': {'sdtype': 'numerical'},
+            'D': {'sdtype': 'categorical'},
+        },
+    })
+
+    # Run and Assert
+    metadata_primary.set_primary_key('A')
+    error_msg_sequence = re.escape(
+        'The column (A) cannot be set as sequence_key as it is already set as the primary_key.'
+    )
+    with pytest.raises(InvalidMetadataError, match=error_msg_sequence):
+        metadata_primary.set_sequence_key('A')

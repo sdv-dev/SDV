@@ -110,6 +110,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
         self._sequence_index = self.metadata.sequence_index
         self.context_columns = context_columns or []
+        self._validate_sequence_key_and_context_columns()
         self._extra_context_columns = {}
         self.extended_columns = {}
         self.segment_size = segment_size
@@ -193,6 +194,21 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
     def add_custom_constraint_class(self, class_object, class_name):
         """Error that tells the user custom constraints can't be used in the ``PARSynthesizer``."""
         raise SynthesizerInputError('The PARSynthesizer cannot accommodate custom constraints.')
+
+    def _validate_sequence_key_and_context_columns(self):
+        """Check that the sequence key is not present in the context colums.
+
+        Args:
+            sequence_key (list[str]):
+                A list of column that identify which row(s) belong to which sequences.
+            context_columns (list[str]):
+                A list of strings, representing the columns that do not vary in a sequence.
+        """
+        if set(self._sequence_key).intersection(set(self.context_columns)):
+            raise SynthesizerInputError(
+                f'The sequence key {self._sequence_key} cannot be a context column. '
+                'To proceed, please remove the sequence key from the context_columns parameter.'
+            )
 
     def _validate_context_columns(self, data):
         errors = []

@@ -385,3 +385,22 @@ def test_par_sequence_index_is_numerical():
     s1.fit(data)
     sample = s1.sample(2, 5)
     assert sample.columns.to_list() == data.columns.to_list()
+
+
+def test_init_error_sequence_key_in_context():
+    # Setup
+    metadata_dict = {
+        'columns': {
+            'A': {'sdtype': 'id'},
+            'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+        },
+        'sequence_key': 'A',
+    }
+    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+    sequence_key_context_column_error_msg = re.escape(
+        "The sequence key ['A'] cannot be a context column. "
+        'To proceed, please remove the sequence key from the context_columns parameter.'
+    )
+    # Run and Assert
+    with pytest.raises(SynthesizerInputError, match=sequence_key_context_column_error_msg):
+        PARSynthesizer(metadata, context_columns=['A'])
