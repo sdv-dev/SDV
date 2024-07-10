@@ -29,13 +29,14 @@ jobs:
       if: runner.os == 'Windows'
       uses: actions/cache@v3
       with:
-        path: ~/.cache/pip
+        path: C:\Users\runneradmin\AppData\Local\pip\Cache
         key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
         restore-keys: |
             ${{ runner.os }}-pip-${{ matrix.python-version }}-
     - name: Check cache hit
       run: |
         echo "Cache hit status: ${{ steps.cache-pip.outputs.cache-hit }}"
+        python -m pip cache dir
     - name: Install dependencies
       run: |
           python -m pip install --upgrade pip
