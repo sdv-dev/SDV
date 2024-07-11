@@ -6,6 +6,7 @@ This release adds a new utils function called `get_random_sequence_subset`, that
 
 ### New Features
 
+* Add utils to the Top Level Package. - Issue [#2119](https://github.com/sdv-dev/SDV/issues/2119) by @pvk-developer
 * Add a utility function `get_random_sequence_subset` - Issue [#2085](https://github.com/sdv-dev/SDV/issues/2085) by @amontanez24
 
 ### Bugs Fixed
