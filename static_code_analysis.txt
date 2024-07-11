@@ -1,57 +1,37 @@
-Run started:2024-06-13 19:03:37.953463
+Run started:2024-07-11 19:44:16.993309
 
 Test results:
->> Issue: [B113:request_without_timeout] Requests call without timeout
-   Severity: Medium   Confidence: Low
-   CWE: CWE-400 (https://cwe.mitre.org/data/definitions/400.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b113_request_without_timeout.html
-   Location: ./scripts/release_notes_generator.py:41:15
-40	    }
-41	    response = requests.get(url, headers=headers, params=query_params)
-42	    body = response.json()
-
---------------------------------------------------
->> Issue: [B113:request_without_timeout] Requests call without timeout
-   Severity: Medium   Confidence: Low
-   CWE: CWE-400 (https://cwe.mitre.org/data/definitions/400.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b113_request_without_timeout.html
-   Location: ./scripts/release_notes_generator.py:69:19
-68	        query_params['page'] = page
-69	        response = requests.get(url, headers=headers, params=query_params)
-70	        body = response.json()
-
---------------------------------------------------
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '# Release Notes
 
 '
    Severity: Low   Confidence: Medium
    CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b105_hardcoded_password_string.html
-   Location: ./scripts/release_notes_generator.py:135:12
-134	
-135	    token = '# Release Notes\n\n'
-136	    split_index = history.find(token) + len(token) + 1
+   Location: ./scripts/release_notes_generator.py:134:12
+133	
+134	    token = '# Release Notes\n\n'
+135	    split_index = history.find(token) + len(token) + 1
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/_utils.py:323:8
+   Location: ./sdv/_utils.py:320:8
+319	
+320	        except Exception:
+321	            pass
 322	
-323	        except Exception:
-324	            pass
-325	
 
 --------------------------------------------------
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '#'
    Severity: Low   Confidence: Medium
    CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b105_hardcoded_password_string.html
-   Location: ./sdv/constraints/tabular.py:1106:16
-1105	    def _get_diff_column_name(self, table_data):
-1106	        token = '#'
-1107	        columns = [self._column_name, self._low_value, self._high_value]
+   Location: ./sdv/constraints/tabular.py:1125:16
+1124	    def _get_diff_column_name(self, table_data):
+1125	        token = '#'
+1126	        columns = [self._column_name, self._low_value, self._high_value]
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -68,28 +48,28 @@ Test results:
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/metadata/single_table.py:515:12
-514	
-515	            except Exception:
-516	                pass
-517	
+   Location: ./sdv/metadata/single_table.py:536:12
+535	
+536	            except Exception:
+537	                pass
+538	
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/multi_table/hma.py:336:12
-335	                index.append(foreign_key_value)
-336	            except Exception:
-337	                # Skip children rows subsets that fail
-338	                pass
-339	
+   Location: ./sdv/multi_table/hma.py:340:12
+339	                index.append(foreign_key_value)
+340	            except Exception:
+341	                # Skip children rows subsets that fail
+342	                pass
+343	
 
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 11978
+	Total lines of code: 12224
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
@@ -97,11 +77,11 @@ Run metrics:
 	Total issues (by severity):
 		Undefined: 0
 		Low: 6
-		Medium: 2
+		Medium: 0
 		High: 0
 	Total issues (by confidence):
 		Undefined: 0
-		Low: 2
+		Low: 0
 		Medium: 2
 		High: 4
 Files skipped (0):
