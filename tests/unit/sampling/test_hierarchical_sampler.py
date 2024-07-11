@@ -202,10 +202,13 @@ class TestBaseHierarchicalSampler:
         instance = Mock()
         instance.metadata._get_child_map.return_value = {'users': ['sessions', 'transactions']}
         instance.metadata._get_parent_map.return_value = {'users': []}
+        instance.metadata._get_foreign_keys.return_value = ['user_id']
         instance._table_sizes = {'users': 10, 'sessions': 5, 'transactions': 3}
         instance._table_synthesizers = {'users': Mock()}
         instance._sample_children = sample_children
         instance._add_child_rows.side_effect = _add_child_rows
+        instance._null_child_synthesizers = {}
+        instance._null_foreign_key_percentages = {'__sessions__user_id': 0}
 
         # Run
         result = {'users': pd.DataFrame({'user_id': [1, 3]})}
@@ -271,6 +274,7 @@ class TestBaseHierarchicalSampler:
         instance._table_synthesizers = {'users': Mock()}
         instance._sample_children = sample_children
         instance._add_child_rows.side_effect = _add_child_rows
+        instance._null_foreign_key_percentages = {'__sessions__user_id': 0}
 
         # Run
         result = {'users': pd.DataFrame({'user_id': [1], '__sessions__user_id__num_rows': [1]})}
@@ -561,6 +565,7 @@ class TestBaseHierarchicalSampler:
         instance._min_child_rows = {'__child__fk__num_rows': 1}
         instance._max_child_rows = {'__child__fk__num_rows': 3}
         instance._table_sizes = {'child': 4}
+        instance._null_foreign_key_percentages = {'__child__fk': 0}
 
         # Run
         BaseHierarchicalSampler._enforce_table_size(instance, 'child', 'parent', 1.0, data)
@@ -580,6 +585,7 @@ class TestBaseHierarchicalSampler:
         instance._min_child_rows = {'__child__fk__num_rows': 1}
         instance._max_child_rows = {'__child__fk__num_rows': 3}
         instance._table_sizes = {'child': 4}
+        instance._null_foreign_key_percentages = {'__child__fk': 0}
 
         # Run
         BaseHierarchicalSampler._enforce_table_size(instance, 'child', 'parent', 1.0, data)
@@ -599,6 +605,7 @@ class TestBaseHierarchicalSampler:
         instance._min_child_rows = {'__child__fk__num_rows': 2}
         instance._max_child_rows = {'__child__fk__num_rows': 4}
         instance._table_sizes = {'child': 8}
+        instance._null_foreign_key_percentages = {'__child__fk': 0}
 
         # Run
         BaseHierarchicalSampler._enforce_table_size(instance, 'child', 'parent', 1.0, data)
@@ -618,6 +625,7 @@ class TestBaseHierarchicalSampler:
         instance._min_child_rows = {'__child__fk__num_rows': 1}
         instance._max_child_rows = {'__child__fk__num_rows': 3}
         instance._table_sizes = {'child': 4}
+        instance._null_foreign_key_percentages = {'__child__fk': 0}
 
         # Run
         BaseHierarchicalSampler._enforce_table_size(instance, 'child', 'parent', 0.001, data)

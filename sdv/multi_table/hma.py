@@ -349,8 +349,12 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         return pd.DataFrame(extension_rows, index=index)
 
     @staticmethod
-    def _clear_nans(table_data):
-        for column in table_data.columns:
+    def _clear_nans(table_data, ignore_cols=None):
+        # TODO: test child with foreign key that points to multiple parents
+        columns = set(table_data.columns)
+        if ignore_cols is not None:
+            columns = columns - set(ignore_cols)
+        for column in columns:
             column_data = table_data[column]
             if column_data.dtype in (int, float):
                 fill_value = 0 if column_data.isna().all() else column_data.mean()
@@ -418,7 +422,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 tables[table_name] = table
                 self._learned_relationships += 1
         self._augmented_tables.append(table_name)
-        # self._clear_nans(table)  TODO: replace with standardizing nans?
+
+        foreign_keys = self.metadata._get_all_foreign_keys(table_name)
+        self._clear_nans(table, ignore_cols=foreign_keys)
 
         return table
 
