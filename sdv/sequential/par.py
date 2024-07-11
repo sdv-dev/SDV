@@ -381,9 +381,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             if kind in ('i', 'f'):
                 data_type = 'continuous'
                 # Check if metadata overrides this data type
-                if field in self.metadata.columns:
-                    if self.metadata.columns[field].get('sdtype', None) == 'categorical':
-                        data_type = 'categorical'
+                if self.metadata.columns.get(field, {}).get('sdtype', None) == 'categorical':
+                    data_type = 'categorical'
             elif kind in ('O', 'b'):
                 data_type = 'categorical'
             else:
