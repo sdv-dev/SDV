@@ -30,6 +30,7 @@ from sdv import (
     sequential,
     single_table,
     version,
+    utils,
 )
 
 __all__ = [
@@ -47,6 +48,7 @@ __all__ = [
     'sequential',
     'single_table',
     'version',
+    'utils',
 ]
 
 
