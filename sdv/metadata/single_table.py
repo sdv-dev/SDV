@@ -209,6 +209,7 @@ class SingleTableMetadata:
         self.column_relationships = []
         self._version = self.METADATA_SPEC_VERSION
         self._updated = False
+        self._primary_key_candidates = None
 
     def _get_unexpected_kwargs(self, sdtype, **kwargs):
         expected_kwargs = self._SDTYPE_KWARGS.get(sdtype, ['pii'])
@@ -538,13 +539,62 @@ class SingleTableMetadata:
 
         return sdtype
 
+    def _detect_primary_key(self, data):
+        """Detect the table's primary key.
+
+        If the sdtypes have already been detected, this method will just return the first primary
+        key candidate. Otherwise it will loop through the columns and select the first column that
+        would be an id. If there are none of those, it will pick the first unique pii column. If
+        there is still no primary key, it will return None.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to be analyzed.
+
+        Returns:
+            str:
+                The column name of the selected primary key.
+        """
+        if self._primary_key_candidates is None:
+            data.columns = data.columns.astype(str)
+            pii_keys = []
+            for column in data:
+                column_data = data[column]
+                clean_data = column_data.dropna()
+                dtype = clean_data.infer_objects().dtype.kind
+                sdtype = self._detect_pii_column(column)
+                no_nans = len(clean_data) == len(column_data)
+                if sdtype is None:
+                    if dtype in ['i', 'f']:
+                        sdtype = self._determine_sdtype_for_numbers(column_data)
+                    elif dtype == 'O':
+                        sdtype = self._determine_sdtype_for_objects(column_data)
+                    if sdtype == 'id':
+                        return column
+
+                elif column_data.is_unique and no_nans:
+                    pii_keys.append(column)
+
+            if pii_keys:
+                return pii_keys[0]
+
+        elif self._primary_key_candidates:
+            for column in self._primary_key_candidates[1:]:
+                self.columns[column]['sdtype'] = 'unknown'
+                self.columns[column]['pii'] = True
+
+            return self._primary_key_candidates[0]
+
+        return None
+
     def _detect_columns(self, data):
-        """Detect the columns' sdtype and the primary key from the data.
+        """Detect the columns' sdtypes from the data.
 
         Args:
             data (pandas.DataFrame):
                 The data to be analyzed.
         """
+        self._primary_key_candidates = []
         old_columns = data.columns
         data.columns = data.columns.astype(str)
         first_pii_field = None
@@ -571,19 +621,16 @@ class SingleTableMetadata:
                         "The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
                     )
 
-                # Set the first ID column we detect to be the primary key
+                # Add id columns to list of potential primary keys and reassign extras to unknown
                 if sdtype == 'id':
-                    if self.primary_key is None and valid_potential_primary_key:
-                        self.primary_key = field
-                    else:
-                        sdtype = 'unknown'
+                    self._primary_key_candidates.append(field)
 
             column_dict = {'sdtype': sdtype}
             sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
 
             if sdtype_in_reference or sdtype == 'unknown':
                 column_dict['pii'] = True
-            if sdtype_in_reference and first_pii_field is None and not has_nan:
+            if sdtype_in_reference and first_pii_field is None and valid_potential_primary_key:
                 first_pii_field = field
             if sdtype == 'datetime' and dtype == 'O':
                 datetime_format = _get_datetime_format(column_data.iloc[:100])
@@ -593,8 +640,9 @@ class SingleTableMetadata:
 
         # When no primary key column was set, choose the first pii field
         if self.primary_key is None and first_pii_field and valid_potential_primary_key:
-            self.primary_key = first_pii_field
+            self._primary_key_candidates.append(first_pii_field)
 
+        self.primary_key = self._detect_primary_key(data)
         self._updated = True
         data.columns = old_columns
 
@@ -1265,6 +1313,7 @@ class SingleTableMetadata:
                     }
                 setattr(instance, f'{key}', value)
 
+        instance._primary_key_candidates = None
         return instance
 
     @classmethod

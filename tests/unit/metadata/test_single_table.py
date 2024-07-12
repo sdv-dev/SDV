@@ -14,7 +14,7 @@ import pytest
 from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.single_table import SingleTableMetadata
-from tests.utils import catch_sdv_logs
+from tests.utils import SeriesMatcher, catch_sdv_logs
 
 
 class TestSingleTableMetadata:
@@ -794,7 +794,7 @@ class TestSingleTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.update_columns(['col_1', 'col_2'], sdtype='numerical', pii=True)
 
-    def test_update_columns_multiple_erros(self):
+    def test_update_columns_multiple_errors(self):
         """Test the ``update_columns`` method.
 
         Test that ``update_columns`` with multiple errors.
@@ -1248,6 +1248,79 @@ class TestSingleTableMetadata:
         instance._determine_sdtype_for_numbers.assert_called_once()
         instance._determine_sdtype_for_objects.assert_called_once()
         mock__get_datetime_format.assert_called_once()
+
+    def test__detect_primary_key_multiple_candidates(self):
+        """The first column that is a viable primary key should be returned unless it's pii."""
+        # Setup
+        data = pd.DataFrame({
+            'email': [
+                'sdv@sdv.dev',
+                'info@datacebo.com',
+                'info@gmail.co.uk',
+                'sdv@gmail.com',
+                'test@gmail.com',
+                'dev@gmail.com',
+            ],
+            'num_id': [1, 2, 3, 4, 5, 6],
+            'string_id': ['1', '2', '3', '4', '5', '6'],
+        })
+        metadata = SingleTableMetadata()
+        metadata._determine_sdtype_for_numbers = Mock(return_value='id')
+        metadata._determine_sdtype_for_objects = Mock(return_value='id')
+        metadata._detect_pii_column = Mock(side_effect=['email', None])
+
+        # Run
+        pk = metadata._detect_primary_key(data)
+
+        # Assert
+        assert pk == 'num_id'
+        metadata._determine_sdtype_for_numbers.assert_called_once_with(
+            SeriesMatcher(data['num_id'])
+        )
+        metadata._determine_sdtype_for_objects.assert_not_called()
+        metadata._detect_pii_column.assert_has_calls([call('email'), call('num_id')])
+
+    def test__detect_primary_key_object(self):
+        """A unique object column with more than 5 values should be marked as the primary key.
+
+        This is only in the case that it is the first column that is a valid primary key.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'string_id': ['1', '2', '3', '4', '5', '6'],
+            'num_id': [1, 2, 3, 4, 5, 6],
+        })
+        metadata = SingleTableMetadata()
+
+        # Run
+        pk = metadata._detect_primary_key(data)
+
+        # Assert
+        assert pk == 'string_id'
+
+    def test__detect_primary_key_multiple_pii(self):
+        """The first pii column that is a viable primary key should be returned."""
+        # Setup
+        data = pd.DataFrame({
+            'email': [
+                'sdv@sdv.dev',
+                'info@datacebo.com',
+                'info@gmail.co.uk',
+                'sdv@gmail.com',
+                'test@gmail.com',
+                'dev@gmail.com',
+            ],
+            'credit_card': [1, 2, 3, 4, 5, 6],
+        })
+        metadata = SingleTableMetadata()
+        metadata._detect_pii_column = Mock(side_effect=['email', 'credit_card'])
+
+        # Run
+        pk = metadata._detect_primary_key(data)
+
+        # Assert
+        metadata._detect_pii_column.assert_has_calls([call('email'), call('credit_card')])
+        assert pk == 'email'
 
     def test_detect_from_dataframe_raises_error(self):
         """Test the ``detect_from_dataframe`` method.
