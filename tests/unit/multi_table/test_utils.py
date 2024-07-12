@@ -1990,7 +1990,7 @@ def test__subsample_data_with_null_foreing_keys():
 
     # Assert
     assert len(result_with_nan['child']) == 4
-    assert result_with_nan['child']['parent_id'].isnull().sum() > 0
+    assert result_with_nan['child']['parent_id'].isna().sum() > 0
     assert len(result_without_nan['child']) == 2
     assert set(result_without_nan['child'].index) == {0, 1}
 

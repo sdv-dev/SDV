@@ -414,7 +414,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 table[num_rows_key] = table[num_rows_key].fillna(0)
                 self._max_child_rows[num_rows_key] = table[num_rows_key].max()
                 self._min_child_rows[num_rows_key] = table[num_rows_key].min()
-                self._null_foreign_key_percentages[f'__{child_name}__{foreign_key}'] = 1 - (table[num_rows_key].sum() / child_table.shape[0])
+                self._null_foreign_key_percentages[f'__{child_name}__{foreign_key}'] = 1 - (
+                    table[num_rows_key].sum() / child_table.shape[0]
+                )
 
                 if len(extension.columns) > 0:
                     self._parent_extended_columns[table_name].extend(list(extension.columns))

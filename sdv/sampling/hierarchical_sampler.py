@@ -105,7 +105,9 @@ class BaseHierarchicalSampler:
                 row_indices = sampled_rows.index
                 sampled_rows[foreign_key].iloc[row_indices] = parent_row[parent_key]
             else:
-                sampled_rows[foreign_key] = parent_row[parent_key] if parent_row is not None else np.nan
+                sampled_rows[foreign_key] = (
+                    parent_row[parent_key] if parent_row is not None else np.nan
+                )
 
             previous = sampled_data.get(child_name)
             if previous is None:
@@ -235,7 +237,7 @@ class BaseHierarchicalSampler:
                         parent_name=table_name,
                         parent_row=None,
                         sampled_data=sampled_data,
-                        num_rows=num_null_rows
+                        num_rows=num_null_rows,
                     )
 
                 self._sample_children(table_name=child_name, sampled_data=sampled_data, scale=scale)

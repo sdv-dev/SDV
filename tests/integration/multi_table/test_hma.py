@@ -1362,7 +1362,7 @@ class TestHMASynthesizer:
                 'id': [1, 2, 3],
                 'fk1': [1, 2, np.nan],
                 'fk2': [1, 2, np.nan],
-                'cat_type': pd.Series(['siamese','persian', 'american shorthair'], dtype='object'),
+                'cat_type': pd.Series(['siamese', 'persian', 'american shorthair'], dtype='object'),
             }),
         }
 
@@ -1372,10 +1372,11 @@ class TestHMASynthesizer:
         metadata.validate()
         metadata.validate_data(data)
 
-        # Run and Assert
+        # Run
         synthesizer.fit(data)
-        sampled_data = synthesizer.sample()
+        synthesizer.sample()
 
+        # TODO: check results match expected
 
     def test_sampling_with_unknown_sdtype_numerical_column(self):
         """Test that if a numerical column is detected as unknown in the metadata,
