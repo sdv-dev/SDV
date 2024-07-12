@@ -1362,7 +1362,7 @@ class TestHMASynthesizer:
                 'id': [1, 2, 3],
                 'fk1': [1, 2, np.nan],
                 'fk2': [1, 2, np.nan],
-                'cat_type': ['siamese','persian', 'american shorthair'],
+                'cat_type': pd.Series(['siamese','persian', 'american shorthair'], dtype='object'),
             }),
         }
 
