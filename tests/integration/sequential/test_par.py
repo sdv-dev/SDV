@@ -117,7 +117,7 @@ def test_save_and_load(tmp_path):
     assert metadata == instance.metadata
 
 
-def test_sythesize_sequences(tmp_path):
+def test_synthesize_sequences(tmp_path):
     """End to end test for synthesizing sequences.
 
     The following functionalities are being tested:
@@ -404,3 +404,20 @@ def test_init_error_sequence_key_in_context():
     # Run and Assert
     with pytest.raises(SynthesizerInputError, match=sequence_key_context_column_error_msg):
         PARSynthesizer(metadata, context_columns=['A'])
+
+
+def test_par_categorical_column_represented_by_floats():
+    """Test to see if categorical columns work fine  with float representation."""
+    # Setup
+    data, metadata = download_demo('sequential', 'nasdaq100_2019')
+    data['category'] = [100.0 if i % 2 == 0 else 50.0 for i in data.index]
+    metadata.add_column('category', sdtype='categorical')
+
+    # Run
+    synth = PARSynthesizer(metadata)
+    synth.fit(data)
+    sampled = synth.sample(num_sequences=10)
+
+    # Assert
+    synth.validate(sampled)
+    assert sampled['category'].isin(data['category']).all()
