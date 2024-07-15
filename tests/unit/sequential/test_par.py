@@ -548,6 +548,42 @@ class TestPARSynthesizer:
 
     @patch('sdv.sequential.par.PARModel')
     @patch('sdv.sequential.par.assemble_sequences')
+    def test__fit_sequence_columns_with_categorical_float(
+        self, assemble_sequences_mock, model_mock
+    ):
+        """Test that the method ``_fit_sequence_columns`` is called with the right data types.
+
+        The method should use the ``assemble_sequences`` method to create a list of sequences
+        that the model can fit to. This tests to make sure that labeled categorical data is called
+        as categorical even if it's represented by floats.
+        """
+        # Setup
+        data = self.get_data()
+        data['measurement'] = data['measurement'].astype(float)
+        metadata = self.get_metadata()
+        metadata.update_column('measurement', sdtype='categorical')
+        par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
+        sequences = [
+            {'context': np.array(['M'], dtype=object), 'data': [['2020-01-03'], [65.0]]},
+            {'context': np.array(['F'], dtype=object), 'data': [['2020-01-01'], [55.0]]},
+            {'context': np.array(['M'], dtype=object), 'data': [['2020-01-02'], [60.0]]},
+        ]
+        assemble_sequences_mock.return_value = sequences
+
+        # Run
+        par._fit_sequence_columns(data)
+
+        # Assert
+        assemble_sequences_mock.assert_called_once_with(
+            data, ['name'], ['gender'], None, None, drop_sequence_index=False
+        )
+        model_mock.assert_called_once_with(epochs=128, sample_size=1, cuda=True, verbose=False)
+        model_mock.return_value.fit_sequences.assert_called_once_with(
+            sequences, ['categorical'], ['categorical', 'categorical']
+        )
+
+    @patch('sdv.sequential.par.PARModel')
+    @patch('sdv.sequential.par.assemble_sequences')
     def test__fit_sequence_columns_with_sequence_index(self, assemble_sequences_mock, model_mock):
         """Test the method when a sequence_index is present.
 

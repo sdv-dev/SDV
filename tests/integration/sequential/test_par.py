@@ -117,7 +117,7 @@ def test_save_and_load(tmp_path):
     assert metadata == instance.metadata
 
 
-def test_sythesize_sequences(tmp_path):
+def test_synthesize_sequences(tmp_path):
     """End to end test for synthesizing sequences.
 
     The following functionalities are being tested:
@@ -435,4 +435,22 @@ def test_par_with_datetime_context():
     synth.fit(data)
     sample = synth.sample(num_sequences=1)
     expected_birthdate = pd.Series(['1984-02-23'] * 5, name='birthdate')
+
+    # Assert
     pd.testing.assert_series_equal(sample['birthdate'], expected_birthdate)
+
+def test_par_categorical_column_represented_by_floats():
+    """Test to see if categorical columns work fine  with float representation."""
+    # Setup
+    data, metadata = download_demo('sequential', 'nasdaq100_2019')
+    data['category'] = [100.0 if i % 2 == 0 else 50.0 for i in data.index]
+    metadata.add_column('category', sdtype='categorical')
+
+    # Run
+    synth = PARSynthesizer(metadata)
+    synth.fit(data)
+    sampled = synth.sample(num_sequences=10)
+
+    # Assert
+    synth.validate(sampled)
+    assert sampled['category'].isin(data['category']).all()
