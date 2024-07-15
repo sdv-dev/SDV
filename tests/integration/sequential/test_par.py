@@ -439,6 +439,7 @@ def test_par_with_datetime_context():
     # Assert
     pd.testing.assert_series_equal(sample['birthdate'], expected_birthdate)
 
+
 def test_par_categorical_column_represented_by_floats():
     """Test to see if categorical columns work fine  with float representation."""
     # Setup
