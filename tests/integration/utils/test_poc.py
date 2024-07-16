@@ -242,4 +242,4 @@ def test_get_random_subset_with_missing_values(metadata, data):
 
     # Assert
     assert len(result['child']) == 3
-    assert result['child']['parent_id'].ina().sum() > 0
+    assert result['child']['parent_id'].isna().sum() > 0
