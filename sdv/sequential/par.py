@@ -73,9 +73,6 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
         for column in context_columns:
             context_columns_dict[column] = self.metadata.columns[column]
-            # Context datetime SDTypes for PAR have already been converted to float timestamp
-            if context_columns_dict[column]['sdtype'] == 'datetime':
-                context_columns_dict[column] = {'sdtype': 'numerical'}
 
         for column, column_metadata in self._extra_context_columns.items():
             context_columns_dict[column] = column_metadata
@@ -346,6 +343,12 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             constant_column = str(uuid.uuid4())
             context[constant_column] = 0
             context_metadata.add_column(constant_column, sdtype='numerical')
+
+        for column in self.context_columns:
+            # Context datetime SDTypes for PAR have already been converted to float timestamp
+            if context_metadata.columns[column]['sdtype'] == 'datetime':
+                if pd.api.types.is_numeric_dtype(context[column]):
+                    context_metadata.update_column(column, sdtype='numerical')
 
         self._context_synthesizer = GaussianCopulaSynthesizer(
             context_metadata,
