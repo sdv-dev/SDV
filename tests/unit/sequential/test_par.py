@@ -444,8 +444,7 @@ class TestPARSynthesizer:
             'columns': {'gender': {'sdtype': 'categorical'}, 'name': {'sdtype': 'id'}}
         })
         par._context_synthesizer = initial_synthesizer
-        par._get_context_metadata = Mock()
-        par._get_context_metadata.return_value = context_metadata
+        par._get_context_metadata = Mock(return_value=context_metadata)
 
         # Run
         par._fit_context_model(data)
