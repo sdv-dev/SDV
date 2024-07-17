@@ -794,7 +794,7 @@ class TestSingleTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.update_columns(['col_1', 'col_2'], sdtype='numerical', pii=True)
 
-    def test_update_columns_multiple_erros(self):
+    def test_update_columns_multiple_errors(self):
         """Test the ``update_columns`` method.
 
         Test that ``update_columns`` with multiple errors.
@@ -1248,6 +1248,23 @@ class TestSingleTableMetadata:
         instance._determine_sdtype_for_numbers.assert_called_once()
         instance._determine_sdtype_for_objects.assert_called_once()
         mock__get_datetime_format.assert_called_once()
+
+    def test__detect_primary_key_missing_sdtypes(self):
+        """The method should raise an error if not all sdtypes were detected."""
+        # Setup
+        data = pd.DataFrame({
+            'string_id': ['1', '2', '3', '4', '5', '6'],
+            'num_id': [1, 2, 3, 4, 5, 6],
+        })
+        metadata = SingleTableMetadata()
+        metadata.columns = {'string_id': {'sdtype': 'id'}}
+
+        # Run and Assert
+        message = (
+            'All columns must have sdtypes detected or set manually to detect the primary key.'
+        )
+        with pytest.raises(RuntimeError, match=message):
+            metadata._detect_primary_key(data)
 
     def test_detect_from_dataframe_raises_error(self):
         """Test the ``detect_from_dataframe`` method.
