@@ -344,6 +344,12 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             context[constant_column] = 0
             context_metadata.add_column(constant_column, sdtype='numerical')
 
+        for column in self.context_columns:
+            # Context datetime SDTypes for PAR have already been converted to float timestamp
+            if context_metadata.columns[column]['sdtype'] == 'datetime':
+                if pd.api.types.is_numeric_dtype(context[column]):
+                    context_metadata.update_column(column, sdtype='numerical')
+
         self._context_synthesizer = GaussianCopulaSynthesizer(
             context_metadata,
             enforce_min_max_values=self._context_synthesizer.enforce_min_max_values,
