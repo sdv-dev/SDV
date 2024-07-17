@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import read_json
@@ -12,10 +11,6 @@ class Metadata(MultiTableMetadata):
     """Metadata class that handles all metadata."""
 
     METADATA_SPEC_VERSION = 'V1'
-
-    def __init__(self):
-        super().__init__()
-        self._is_multi_table = None
 
     @classmethod
     def load_from_json(cls, filepath):
@@ -30,7 +25,7 @@ class Metadata(MultiTableMetadata):
             - An ``Error`` if the ``json`` file does not contain the ``METADATA_SPEC_VERSION``.
 
         Returns:
-            A ``MultiTableMetadata`` instance.
+            A ``Metadata`` instance.
         """
         filename = Path(filepath).stem
         metadata = read_json(filepath)
@@ -67,23 +62,12 @@ class Metadata(MultiTableMetadata):
                 Python dictionary representing a ``MultiTableMetadata`` or
                 ``SingleTableMetadata`` object.
         """
-        self._is_multi_table = 'tables' in metadata
+        is_multi_table = 'tables' in metadata
 
-        if self._is_multi_table:
+        if is_multi_table:
             super()._set_metadata_dict(metadata)
         else:
             if single_table_name is None:
                 single_table_name = 'default_table_name'
 
             self.tables[single_table_name] = SingleTableMetadata.load_from_dict(metadata)
-
-    def is_multi_table(self):
-        """Return of this is metadata represents multi-table.
-
-        Returns:
-            Boolean stating if it represents multi-table data or not.
-        """
-        if self._is_multi_table is None:
-            raise InvalidMetadataError('Metadata has not been set yet.')
-
-        return self._is_multi_table

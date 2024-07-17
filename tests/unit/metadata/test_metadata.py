@@ -1,9 +1,7 @@
-import re
 from unittest.mock import patch
 
 import pytest
 
-from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from tests.utils import get_multi_table_data, get_multi_table_metadata
 
@@ -489,66 +487,6 @@ class TestMetadataClass:
         assert instance.tables['default_table_name'].sequence_key is None
         assert instance.tables['default_table_name'].sequence_index is None
         assert instance.tables['default_table_name'].METADATA_SPEC_VERSION == 'SINGLE_TABLE_V1'
-
-    def test_is_multi_table_error(self):
-        """Test that ``is_multi_table`` errors if metadata is not set."""
-        # Setup
-        instance = Metadata()
-        error_msg = re.escape('Metadata has not been set yet.')
-
-        # Run and Assert
-        with pytest.raises(InvalidMetadataError, match=error_msg):
-            instance.is_multi_table()
-
-    def test_is_multi_table(self):
-        """Test if ``is_multi_table`` correctly identifies metadata passed in."""
-        # Setup
-        multitable_metadata = {
-            'tables': {
-                'accounts': {
-                    'id': {'sdtype': 'numerical'},
-                    'branch_id': {'sdtype': 'numerical'},
-                    'amount': {'sdtype': 'numerical'},
-                    'start_date': {'sdtype': 'datetime'},
-                    'owner': {'sdtype': 'id'},
-                },
-                'branches': {
-                    'id': {'sdtype': 'numerical'},
-                    'name': {'sdtype': 'id'},
-                },
-            },
-            'relationships': [
-                {
-                    'parent_table_name': 'accounts',
-                    'parent_primary_key': 'id',
-                    'child_table_name': 'branches',
-                    'child_foreign_key': 'branch_id',
-                }
-            ],
-        }
-
-        # Run
-        multi_metadata_instance = Metadata.load_from_dict(multitable_metadata)
-
-        # Assert
-        assert multi_metadata_instance.is_multi_table()
-
-        # Setup Single Table
-        # Setup
-        single_metadata = {
-            'columns': {'my_column': 'value'},
-            'primary_key': 'pk',
-            'alternate_keys': [],
-            'sequence_key': None,
-            'sequence_index': None,
-            'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
-        }
-
-        # Run
-        instance = Metadata.load_from_dict(single_metadata)
-
-        # Assert
-        assert not instance.is_multi_table()
 
     def test_validate(self):
         """Test the method ``validate``.
