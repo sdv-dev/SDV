@@ -34,6 +34,7 @@ from sdv.errors import (
     SynthesizerInputError,
 )
 from sdv.logging import get_sdv_logger
+from sdv.metadata.metadata import Metadata
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
 LOGGER = logging.getLogger(__name__)
@@ -97,8 +98,12 @@ class BaseSynthesizer:
     def __init__(
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
     ):
+        single_metadata = metadata
+        if isinstance(single_metadata, Metadata):
+            single_metadata = single_metadata._convert_to_single_table()
+
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
-        self.metadata = metadata
+        self.metadata = single_metadata
         self.metadata.validate()
         self._check_metadata_updated()
         self.enforce_min_max_values = enforce_min_max_values

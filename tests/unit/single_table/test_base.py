@@ -24,6 +24,8 @@ from sdv.errors import (
     SynthesizerInputError,
     VersionError,
 )
+from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
 from sdv.single_table import (
@@ -117,6 +119,43 @@ class TestBaseSingleTableSynthesizer:
             'SYNTHESIZER CLASS NAME': 'BaseSingleTableSynthesizer',
             'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
+
+    def test___init__with_unified_metadata(self):
+        """Test initialization with unified metadata."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table_1': {
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    },
+                }
+            }
+        })
+
+        multi_metadata = Metadata.load_from_dict({
+            'tables': {
+                'table_1': {
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    },
+                },
+                'table_2': {
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    },
+                },
+            }
+        })
+
+        # Run and Assert
+        BaseSingleTableSynthesizer(metadata)
+        error_msg = re.escape(
+            'Metadata contains more than one table, use a MultiTableSynthesizer instead.'
+        )
+
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            BaseSingleTableSynthesizer(multi_metadata)
 
     @patch('sdv.single_table.base.DataProcessor')
     def test___init__custom(self, mock_data_processor):
