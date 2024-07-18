@@ -62,7 +62,8 @@ class Metadata(MultiTableMetadata):
                 The name of the table that will be stored in the ``Metadata object.
 
         Returns:
-            Instance of ``Metadata``."""
+            Instance of ``Metadata``.
+        """
         if not isinstance(single_metadata_table, SingleTableMetadata):
             raise InvalidMetadataError('Cannot convert given legacy metadata')
         instance = cls()
@@ -81,7 +82,6 @@ class Metadata(MultiTableMetadata):
                 Python dictionary representing a ``MultiTableMetadata`` or
                 ``SingleTableMetadata`` object.
         """
-
         is_multi_table = 'tables' in metadata
 
         if is_multi_table:

@@ -65,7 +65,7 @@ class SingleTablePreset:
         self._synthesizer.add_constraints(constraints)
 
     def get_metadata(self):
-        """Return the ``SingleTableMetadata`` for this synthesizer."""
+        """Return the ``Metadata`` for this synthesizer."""
         warnings.warn(DEPRECATION_MSG, FutureWarning)
         return self._synthesizer.get_metadata()
 
