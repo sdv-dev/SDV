@@ -8,6 +8,7 @@ from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariat
 from rdt.transformers import GaussianNormalizer
 
 from sdv.errors import SynthesizerInputError
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.copulagan import CopulaGANSynthesizer
 
@@ -17,6 +18,42 @@ class TestCopulaGANSynthesizer:
         """Test creating an instance of ``CopulaGANSynthesizer``."""
         # Setup
         metadata = SingleTableMetadata()
+        enforce_min_max_values = True
+        enforce_rounding = True
+
+        # Run
+        instance = CopulaGANSynthesizer(
+            metadata,
+            enforce_min_max_values=enforce_min_max_values,
+            enforce_rounding=enforce_rounding,
+        )
+
+        # Assert
+        assert instance.enforce_min_max_values is True
+        assert instance.enforce_rounding is True
+        assert instance.embedding_dim == 128
+        assert instance.generator_dim == (256, 256)
+        assert instance.discriminator_dim == (256, 256)
+        assert instance.generator_lr == 2e-4
+        assert instance.generator_decay == 1e-6
+        assert instance.discriminator_lr == 2e-4
+        assert instance.discriminator_decay == 1e-6
+        assert instance.batch_size == 500
+        assert instance.discriminator_steps == 1
+        assert instance.log_frequency is True
+        assert instance.verbose is False
+        assert instance.epochs == 300
+        assert instance.pac == 10
+        assert instance.cuda is True
+        assert instance.numerical_distributions == {}
+        assert instance.default_distribution == 'beta'
+        assert instance._numerical_distributions == {}
+        assert instance._default_distribution == BetaUnivariate
+
+    def test___init__with_unified_metadata(self):
+        """Test creating an instance of ``CopulaGANSynthesizer`` with Metadata."""
+        # Setup
+        metadata = Metadata()
         enforce_min_max_values = True
         enforce_rounding = True
 

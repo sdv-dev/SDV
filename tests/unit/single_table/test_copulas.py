@@ -8,6 +8,7 @@ import scipy
 from copulas.univariate import BetaUnivariate, GammaUnivariate, TruncatedGaussian, UniformUnivariate
 
 from sdv.errors import SynthesizerInputError
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
@@ -37,6 +38,33 @@ class TestGaussianCopulaSynthesizer:
         """Test creating an instance of ``GaussianCopulaSynthesizer``."""
         # Setup
         metadata = SingleTableMetadata()
+        enforce_min_max_values = True
+        enforce_rounding = True
+        numerical_distributions = None
+        default_distribution = None
+
+        # Run
+        instance = GaussianCopulaSynthesizer(
+            metadata,
+            enforce_min_max_values=enforce_min_max_values,
+            enforce_rounding=enforce_rounding,
+            numerical_distributions=numerical_distributions,
+            default_distribution=default_distribution,
+        )
+
+        # Assert
+        assert instance.enforce_min_max_values is True
+        assert instance.enforce_rounding is True
+        assert instance.numerical_distributions == {}
+        assert instance.default_distribution == 'beta'
+        assert instance._default_distribution == BetaUnivariate
+        assert instance._numerical_distributions == {}
+        assert instance._num_rows is None
+
+    def test___init__with_unified_metadata(self):
+        """Test creating an instance of ``GaussianCopulaSynthesizer`` with Metadata."""
+        # Setup
+        metadata = Metadata()
         enforce_min_max_values = True
         enforce_rounding = True
         numerical_distributions = None

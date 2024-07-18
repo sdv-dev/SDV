@@ -240,7 +240,7 @@ class TestBaseSingleTableSynthesizer:
     def test_get_metadata(self, mock_data_processor):
         """Test that it returns the ``metadata`` object."""
         # Setup
-        metadata = Mock()
+        metadata = Mock(spec=Metadata)
         instance = BaseSingleTableSynthesizer(
             metadata, enforce_min_max_values=False, enforce_rounding=False
         )

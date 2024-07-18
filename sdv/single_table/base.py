@@ -35,6 +35,7 @@ from sdv.errors import (
 )
 from sdv.logging import get_sdv_logger
 from sdv.metadata.metadata import Metadata
+from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
 LOGGER = logging.getLogger(__name__)
@@ -101,6 +102,9 @@ class BaseSynthesizer:
         single_metadata = metadata
         if isinstance(single_metadata, Metadata):
             single_metadata = single_metadata._convert_to_single_table()
+            self.real_metadata = metadata
+        elif isinstance(single_metadata, SingleTableMetadata):
+            self.real_metadata = Metadata.load_from_single_table_metadata(metadata)
 
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata = single_metadata
@@ -257,8 +261,8 @@ class BaseSynthesizer:
         return instantiated_parameters
 
     def get_metadata(self):
-        """Return the ``SingleTableMetadata`` for this synthesizer."""
-        return self.metadata
+        """Return the ``Metadata`` for this synthesizer."""
+        return self.real_metadata
 
     def load_custom_constraint_classes(self, filepath, class_names):
         """Load a custom constraint class for the current synthesizer.
