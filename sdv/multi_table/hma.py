@@ -350,7 +350,6 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
     @staticmethod
     def _clear_nans(table_data, ignore_cols=None):
-        # TODO: test child with foreign key that points to multiple parents
         columns = set(table_data.columns)
         if ignore_cols is not None:
             columns = columns - set(ignore_cols)
