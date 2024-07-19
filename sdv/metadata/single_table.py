@@ -1218,6 +1218,43 @@ class SingleTableMetadata:
         if errors:
             raise InvalidDataError(errors)
 
+    def anonymize(self):
+        """Anonymize metadata by obfuscating column names.
+
+        Returns:
+            SingleTableMetadata:
+                An anonymized SingleTableMetadata instance.
+        """
+        anonymized_metadata = {'columns': {}}
+
+        self._anonymized_column_map = {}
+        counter = 1
+        for column, column_metadata in self.columns.items():
+            anonymized_column = f'col{counter}'
+            self._anonymized_column_map[column] = anonymized_column
+            anonymized_metadata['columns'][anonymized_column] = column_metadata
+            counter += 1
+
+        if self.primary_key:
+            anonymized_metadata['primary_key'] = self._anonymized_column_map[self.primary_key]
+
+        if self.alternate_keys:
+            anonymized_alternate_keys = []
+            for alternate_key in self.alternate_keys:
+                anonymized_alternate_keys.append(self._anonymized_column_map[alternate_key])
+
+            anonymized_metadata['alternate_keys'] = anonymized_alternate_keys
+
+        if self.sequence_key:
+            anonymized_metadata['sequence_key'] = self._anonymized_column_map[self.sequence_key]
+
+        if self.sequence_index:
+            anonymized_metadata['sequence_index'] = self._anonymized_column_map[
+                self.sequence_index
+            ]
+
+        return SingleTableMetadata.load_from_dict(anonymized_metadata)
+
     def visualize(self, show_table_details='full', output_filepath=None):
         """Create a visualization of the single-table dataset.
 
