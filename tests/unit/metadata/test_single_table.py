@@ -3219,7 +3219,7 @@ class TestSingleTableMetadata:
             'real_column1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
             'real_column2': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'real_column3': {'sdtype': 'numerical'},
-            'real_column4': {'sdtype': 'id'}
+            'real_column4': {'sdtype': 'id'},
         }
         instance.primary_key = 'real_column1'
         instance.alternate_keys = ['real_column4']

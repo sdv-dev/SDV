@@ -928,8 +928,9 @@ class MultiTableMetadata:
             anonymized_table_name = f'table{counter}'
             anonymized_table_map[table] = anonymized_table_name
 
-            anonymized_metadata['tables'][anonymized_table_name] = table_metadata.anonymize(
-            ).to_dict()
+            anonymized_metadata['tables'][anonymized_table_name] = (
+                table_metadata.anonymize().to_dict()
+            )
             counter += 1
 
         for relationship in self.relationships:
@@ -949,7 +950,7 @@ class MultiTableMetadata:
                 'parent_table_name': anonymized_parent_table,
                 'child_table_name': anonymized_child_table,
                 'child_foreign_key': anonymized_foreign_key,
-                'parent_primary_key': anonymized_primary_key
+                'parent_primary_key': anonymized_primary_key,
             })
 
         return MultiTableMetadata.load_from_dict(anonymized_metadata)

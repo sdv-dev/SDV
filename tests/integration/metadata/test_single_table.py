@@ -564,12 +564,12 @@ def test_anonymize():
             'alternate_id1': {'sdtype': 'email', 'pii': True},
             'alternate_id2': {'sdtype': 'name', 'pii': True},
             'numerical': {'sdtype': 'numerical', 'computer_representation': 'Float'},
-            'categorical': {'sdtype': 'categorical'}
+            'categorical': {'sdtype': 'categorical'},
         },
         'primary_key': 'primary_key',
         'sequence_index': 'sequence_index',
         'sequence_key': 'sequence_key',
-        'alternate_keys': ['alternate_id1', 'alternate_id2']
+        'alternate_keys': ['alternate_id1', 'alternate_id2'],
     }
     metadata = SingleTableMetadata.load_from_dict(metadata_dict)
     metadata.validate()

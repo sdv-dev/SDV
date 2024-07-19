@@ -1249,9 +1249,7 @@ class SingleTableMetadata:
             anonymized_metadata['sequence_key'] = self._anonymized_column_map[self.sequence_key]
 
         if self.sequence_index:
-            anonymized_metadata['sequence_index'] = self._anonymized_column_map[
-                self.sequence_index
-            ]
+            anonymized_metadata['sequence_index'] = self._anonymized_column_map[self.sequence_index]
 
         return SingleTableMetadata.load_from_dict(anonymized_metadata)
 
