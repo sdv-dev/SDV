@@ -3210,3 +3210,42 @@ class TestSingleTableMetadata:
             'Successfully converted the old metadata, but the metadata was not valid. '
             'To use this with the SDV, please fix the following errors.\n blah'
         )
+
+    def test_anonymize(self):
+        """Test the ``anonymize`` method."""
+        # Setup
+        instance = SingleTableMetadata()
+        instance.columns = {
+            'real_column1': {'sdtype': 'id', 'regex_format': r'\d{30}'},
+            'real_column2': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'real_column3': {'sdtype': 'numerical'},
+            'real_column4': {'sdtype': 'id'}
+        }
+        instance.primary_key = 'real_column1'
+        instance.alternate_keys = ['real_column4']
+        instance.sequence_index = 'real_column2'
+        instance.sequence_key = 'real_column4'
+
+        # Run
+        anonymized = instance.anonymize()
+
+        # Assert
+        anonymized.validate()
+
+        assert all(original_col not in anonymized.columns for original_col in instance.columns)
+        for original_col, anonymized_col in instance._anonymized_column_map.items():
+            assert instance.columns[original_col] == anonymized.columns[anonymized_col]
+
+        anon_primary_key = anonymized.primary_key
+        assert anonymized.columns[anon_primary_key] == instance.columns['real_column1']
+
+        anon_alternate_keys = anonymized.alternate_keys
+        assert anonymized.columns[anon_alternate_keys[0]] == instance.columns['real_column4']
+
+        anon_sequence_index = anonymized.sequence_index
+        assert anonymized.columns[anon_sequence_index] == instance.columns['real_column2']
+
+        anon_sequence_key = anonymized.sequence_key
+        assert anonymized.columns[anon_sequence_key] == instance.columns['real_column4']
+
+        assert anon_alternate_keys[0] == anon_sequence_key
