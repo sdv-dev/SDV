@@ -551,3 +551,49 @@ def test_metadata_set_same_sequence_primary():
     )
     with pytest.raises(InvalidMetadataError, match=error_msg_sequence):
         metadata_primary.set_sequence_key('A')
+
+
+def test_anonymize():
+    """Test the ``anonymize`` method."""
+    # Setup
+    metadata_dict = {
+        'columns': {
+            'primary_key': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{3}'},
+            'sequence_index': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'sequence_key': {'sdtype': 'id'},
+            'alternate_id1': {'sdtype': 'email', 'pii': True},
+            'alternate_id2': {'sdtype': 'name', 'pii': True},
+            'numerical': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+            'categorical': {'sdtype': 'categorical'}
+        },
+        'primary_key': 'primary_key',
+        'sequence_index': 'sequence_index',
+        'sequence_key': 'sequence_key',
+        'alternate_keys': ['alternate_id1', 'alternate_id2']
+    }
+    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+    metadata.validate()
+
+    # Run
+    anonymized = metadata.anonymize()
+
+    # Assert
+    anonymized.validate()
+
+    assert all(original_col not in anonymized.columns for original_col in metadata.columns)
+    for original_col, anonymized_col in metadata._anonymized_column_map.items():
+        assert metadata.columns[original_col] == anonymized.columns[anonymized_col]
+
+    anon_primary_key = anonymized.primary_key
+    assert anonymized.columns[anon_primary_key] == metadata.columns['primary_key']
+
+    anon_alternate_keys = anonymized.alternate_keys
+    assert len(anon_alternate_keys) == len(metadata.alternate_keys)
+    assert anonymized.columns[anon_alternate_keys[0]] == metadata.columns['alternate_id1']
+    assert anonymized.columns[anon_alternate_keys[1]] == metadata.columns['alternate_id2']
+
+    anon_sequence_index = anonymized.sequence_index
+    assert anonymized.columns[anon_sequence_index] == metadata.columns['sequence_index']
+
+    anon_sequence_key = anonymized.sequence_key
+    assert anonymized.columns[anon_sequence_key] == metadata.columns['sequence_key']
