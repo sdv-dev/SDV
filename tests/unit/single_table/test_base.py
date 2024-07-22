@@ -120,6 +120,22 @@ class TestBaseSingleTableSynthesizer:
             'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
 
+    def test__init__with_old_metadata_future_warning(self):
+        """Test that future warning is thrown when using `SingleTableMetadata`"""
+        # Setup
+        metadata = SingleTableMetadata.load_from_dict({
+            'columns': {
+                'a': {'sdtype': 'categorical'},
+            }
+        })
+        warn_msg = re.escape(
+            "The 'SingleTableMetadata' is deprecated. Please use the new "
+            "'Metadata' class for synthesizers."
+        )
+        # Run and Assert
+        with pytest.warns(FutureWarning, match=warn_msg):
+            BaseSingleTableSynthesizer(metadata)
+
     def test___init__with_unified_metadata(self):
         """Test initialization with unified metadata."""
         # Setup

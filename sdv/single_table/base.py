@@ -44,6 +44,11 @@ SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
 
+DEPRECATION_MSG = (
+    "The 'SingleTableMetadata' is deprecated. Please use the new "
+    "'Metadata' class for synthesizers."
+)
+
 
 class BaseSynthesizer:
     """Base class for all ``Synthesizers``.
@@ -100,15 +105,15 @@ class BaseSynthesizer:
     def __init__(
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
     ):
-        single_metadata = metadata
-        if isinstance(single_metadata, Metadata):
-            single_metadata = single_metadata._convert_to_single_table()
+        self.metadata = metadata
+        if isinstance(metadata, Metadata):
+            self.metadata = metadata._convert_to_single_table()
             self.real_metadata = metadata
-        elif isinstance(single_metadata, SingleTableMetadata):
-            self.real_metadata = Metadata.load_from_single_table_metadata(metadata)
+        elif isinstance(metadata, SingleTableMetadata):
+            self.real_metadata = Metadata.load_from_dict(metadata.to_dict())
+            warnings.warn(DEPRECATION_MSG, FutureWarning)
 
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
-        self.metadata = single_metadata
         self.metadata.validate()
         self._check_metadata_updated()
         self.enforce_min_max_values = enforce_min_max_values

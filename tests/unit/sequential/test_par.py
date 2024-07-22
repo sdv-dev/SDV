@@ -238,7 +238,7 @@ class TestPARSynthesizer:
         result = instance.get_metadata()
 
         # Assert
-        assert result.to_dict() == Metadata.load_from_single_table_metadata(metadata).to_dict()
+        assert result._convert_to_single_table().to_dict() == metadata.to_dict()
         assert isinstance(result, Metadata)
 
     def test_validate_context_columns_unique_per_sequence_key(self):
