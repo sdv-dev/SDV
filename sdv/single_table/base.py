@@ -105,6 +105,7 @@ class BaseSynthesizer:
     def __init__(
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
     ):
+        self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata = metadata
         if isinstance(metadata, Metadata):
             self.metadata = metadata._convert_to_single_table()
