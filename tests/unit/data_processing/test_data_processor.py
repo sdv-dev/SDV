@@ -620,8 +620,8 @@ class TestDataProcessor:
         }
 
         metadata = SingleTableMetadata()
-        metadata.add_column('country_column', sdtype='country_code')
-        metadata.add_column('city_column', sdtype='city')
+        metadata.columns['country_column'] = {'sdtype': 'country_code', 'pii': True}
+        metadata.columns['city_column'] = {'sdtype': 'city', 'pii': True}
         custom_constraint = Mock()
 
         dp = DataProcessor(metadata)
