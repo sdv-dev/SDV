@@ -98,7 +98,7 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
     """Model wrapping ``CTGAN`` model.
 
     Args:
-        metadata (sdv.metadata.SingleTableMetadata):
+        metadata (sdv.metadata.Metadata):
             Single table metadata representing the data that this synthesizer will be used for.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
@@ -314,7 +314,7 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
     """Model wrapping ``TVAE`` model.
 
     Args:
-        metadata (sdv.metadata.SingleTableMetadata):
+        metadata (sdv.metadata.Metadata):
             Single table metadata representing the data that this synthesizer will be used for.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of

@@ -28,8 +28,8 @@ class SingleTablePreset:
     """Class for all single table synthesizer presets.
 
     Args:
-        metadata (sdv.metadata.SingleTableMetadata):
-            ``SingleTableMetadata`` instance.
+        metadata (sdv.metadata.Metadata):
+            ``Metadata`` instance with a single table.
         name (str):
             The preset to use.
         locales (list or str):
@@ -71,7 +71,7 @@ class SingleTablePreset:
         self._synthesizer.add_constraints(constraints)
 
     def get_metadata(self):
-        """Return the ``SingleTableMetadata`` for this synthesizer."""
+        """Return the ``Metadata`` for this synthesizer."""
         warnings.warn(DEPRECATION_MSG, FutureWarning)
         return self._synthesizer.get_metadata()
 

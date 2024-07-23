@@ -21,7 +21,7 @@ def detect_discrete_columns(metadata, data, transformers):
     discrete.
 
     Args:
-        metadata (sdv.metadata.SingleTableMetadata):
+        metadata (sdv.metadata.Metadata):
             Metadata that belongs to the given ``data``.
 
         data (pandas.DataFrame):

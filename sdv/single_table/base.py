@@ -52,7 +52,7 @@ class BaseSynthesizer:
     ``Synthesizers`` need to implement, as well as common functionality.
 
     Args:
-        metadata (sdv.metadata.SingleTableMetadata):
+        metadata (sdv.metadata.Metadata):
             Single table metadata representing the data that this synthesizer will be used for.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
@@ -258,7 +258,7 @@ class BaseSynthesizer:
         return instantiated_parameters
 
     def get_metadata(self):
-        """Return the ``SingleTableMetadata`` for this synthesizer."""
+        """Return the ``Metadata`` for this synthesizer."""
         return self.metadata
 
     def load_custom_constraint_classes(self, filepath, class_names):

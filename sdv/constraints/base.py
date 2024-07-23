@@ -169,8 +169,8 @@ class Constraint(metaclass=ConstraintMeta):
         """Validate the metadata against the constraint.
 
         Args:
-            metadata (sdv.metadata.SingleTableMetadata):
-                Single table metadata instance.
+            metadata (sdv.metadata.Metadata):
+                Metadata instance with a single table.
             **kwargs (dict):
                 Any required kwargs for the constraint.
 
