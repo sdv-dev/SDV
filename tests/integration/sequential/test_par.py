@@ -9,6 +9,7 @@ from deepecho import load_demo
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
 from sdv.metadata import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.sequential import PARSynthesizer
 
 
@@ -89,6 +90,7 @@ def test_column_after_date_complex():
     """Test that adding multiple columns after the ``sequence_index`` column works."""
     # Setup
     data, metadata = _get_par_data_and_metadata()
+    metadata = Metadata.load_from_dict(metadata.to_dict())
 
     # Run
     model = PARSynthesizer(metadata=metadata, context_columns=['context'], epochs=1)
@@ -105,6 +107,7 @@ def test_save_and_load(tmp_path):
     """Test that synthesizers can be saved and loaded properly."""
     # Setup
     _, metadata = _get_par_data_and_metadata()
+    metadata = Metadata.load_from_dict(metadata.to_dict())
     instance = PARSynthesizer(metadata)
     synthesizer_path = tmp_path / 'synthesizer.pkl'
     instance.save(synthesizer_path)
@@ -183,7 +186,8 @@ def test_synthesize_sequences(tmp_path):
     assert model_path.exists()
     assert model_path.is_file()
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+    single_table_metadata = loaded_synthesizer.metadata.get_table_metadata('default_table_name')
+    assert single_table_metadata.to_dict() == metadata.to_dict()
     synthesizer.validate(synthetic_data)
     synthesizer.validate(custom_synthetic_data)
     synthesizer.validate(custom_synthetic_data_conditional)

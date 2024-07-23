@@ -507,14 +507,18 @@ class MultiTableMetadata:
                     try:
                         original_foreign_key_sdtype = child_meta.columns[primary_key]['sdtype']
                         if original_foreign_key_sdtype != 'id':
-                            self.update_column(child_candidate, primary_key, sdtype='id')
+                            self.update_column(
+                                table_name=child_candidate, column_name=primary_key, sdtype='id'
+                            )
 
                         self.add_relationship(
                             parent_candidate, child_candidate, primary_key, primary_key
                         )
                     except InvalidMetadataError:
                         self.update_column(
-                            child_candidate, primary_key, sdtype=original_foreign_key_sdtype
+                            table_name=child_candidate,
+                            column_name=primary_key,
+                            sdtype=original_foreign_key_sdtype,
                         )
                         continue
 

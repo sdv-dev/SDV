@@ -24,7 +24,8 @@ from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
 from sdv.errors import SynthesizerInputError, log_exc_stacktrace
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
+from sdv.metadata.single_table import DEPRECATION_MSG, SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,8 +38,8 @@ class DataProcessor:
     anonymization and constraint handling.
 
     Args:
-        metadata (metadata.SingleTableMetadata):
-            The single table metadata instance that will be used to apply constraints and
+        metadata (metadata.Metadata):
+            The metadata instance that will be used to apply constraints and
             transformations to the data.
         enforce_rounding (bool):
             Define rounding scheme for FloatFormatter. If True, the data returned by
@@ -87,8 +88,8 @@ class DataProcessor:
                 A dictionary mapping column names to the multi column transformer.
         """
         result = {}
-        if self.metadata.column_relationships:
-            for relationship in self.metadata._valid_column_relationships:
+        if self.metadata.get_column_relationships():
+            for relationship in self.metadata.get_valid_column_relationships():
                 column_names = tuple(relationship['column_names'])
                 relationship_type = relationship['type']
                 if relationship_type in self._COLUMN_RELATIONSHIP_TO_TRANSFORMER:
@@ -114,6 +115,9 @@ class DataProcessor:
         locales=['en_US'],
     ):
         self.metadata = metadata
+        if isinstance(metadata, SingleTableMetadata):
+            self.metadata = Metadata().load_from_dict(metadata.to_dict())
+            warnings.warn(DEPRECATION_MSG, FutureWarning)
         self._enforce_rounding = enforce_rounding
         self._enforce_min_max_values = enforce_min_max_values
         self._model_kwargs = model_kwargs or {}
@@ -134,9 +138,9 @@ class DataProcessor:
         self._dtypes = None
         self.fitted = False
         self.formatters = {}
-        self._primary_key = self.metadata.primary_key
+        self._primary_key = self.metadata.get_primary_key()
         self._prepared_for_fitting = False
-        self._keys = deepcopy(self.metadata.alternate_keys)
+        self._keys = deepcopy(self.metadata.get_alternate_keys())
         if self._primary_key:
             self._keys.append(self._primary_key)
 
@@ -186,7 +190,7 @@ class DataProcessor:
                 Dictionary that contains the column names and ``sdtypes``.
         """
         sdtypes = {}
-        for name, column_metadata in self.metadata.columns.items():
+        for name, column_metadata in self.metadata.get_columns().items():
             sdtype = column_metadata['sdtype']
 
             if primary_keys or (name not in self._keys):
@@ -546,7 +550,7 @@ class DataProcessor:
 
         columns_in_multi_col_transformer = self._get_grouped_columns()
         for column in set(data.columns) - columns_created_by_constraints:
-            column_metadata = self.metadata.columns.get(column)
+            column_metadata = self.metadata.get_columns().get(column)
             sdtype = column_metadata.get('sdtype')
 
             if column in columns_in_multi_col_transformer:
@@ -686,7 +690,7 @@ class DataProcessor:
     def _fit_formatters(self, data):
         """Fit ``NumericalFormatter`` and ``DatetimeFormatter`` for each column in the data."""
         for column_name in data:
-            column_metadata = self.metadata.columns.get(column_name)
+            column_metadata = self.metadata.get_columns().get(column_name)
             sdtype = column_metadata.get('sdtype')
             if sdtype == 'numerical' and column_name != self._primary_key:
                 representation = column_metadata.get('computer_representation', 'Float')
@@ -862,7 +866,7 @@ class DataProcessor:
         sampled_columns = list(reversed_data.columns)
         missing_columns = [
             column
-            for column in self.metadata.columns.keys() - set(sampled_columns + self._keys)
+            for column in self.metadata.get_columns().keys() - set(sampled_columns + self._keys)
             if self._hyper_transformer.field_transformers.get(column)
         ]
         if missing_columns and num_rows:
@@ -890,7 +894,7 @@ class DataProcessor:
         # And alternate keys. Thats the reason of ensuring that the metadata column is within
         # The sampled columns.
         sampled_columns = [
-            column for column in self.metadata.columns.keys() if column in sampled_columns
+            column for column in self.metadata.get_columns().keys() if column in sampled_columns
         ]
         for column_name in sampled_columns:
             column_data = reversed_data[column_name]
@@ -903,7 +907,7 @@ class DataProcessor:
             try:
                 reversed_data[column_name] = reversed_data[column_name].astype(dtype)
             except ValueError as e:
-                column_metadata = self.metadata.columns.get(column_name)
+                column_metadata = self.metadata.get_columns().get(column_name)
                 sdtype = column_metadata.get('sdtype')
                 if sdtype not in self._DTYPE_TO_SDTYPE.values():
                     LOGGER.info(
@@ -969,7 +973,7 @@ class DataProcessor:
                 If passed, set the ``enforce_min_max_values`` on the new instance.
         """
         instance = cls(
-            metadata=SingleTableMetadata.load_from_dict(metadata_dict['metadata']),
+            metadata=Metadata.load_from_dict(metadata_dict['metadata']),
             enforce_rounding=enforce_rounding,
             enforce_min_max_values=enforce_min_max_values,
             model_kwargs=metadata_dict.get('model_kwargs'),

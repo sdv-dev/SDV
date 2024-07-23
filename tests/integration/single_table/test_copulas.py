@@ -16,6 +16,7 @@ from sdv.datasets.demo import download_demo
 from sdv.errors import ConstraintsNotMetError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 
@@ -28,6 +29,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     """
     # Setup
     real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
+    metadata = SingleTableMetadata.load_from_dict(metadata.to_dict())
     synthesizer = GaussianCopulaSynthesizer(metadata)
     custom_synthesizer = GaussianCopulaSynthesizer(
         metadata,
@@ -106,7 +108,8 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     loaded_synthesizer = GaussianCopulaSynthesizer.load(model_path)
     assert isinstance(synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+    single_table_metadata = loaded_synthesizer.metadata.get_table_metadata('default_table_name')
+    assert single_table_metadata.to_dict() == metadata.to_dict()
     loaded_synthesizer.sample(20)
 
     # Assert - custom synthesizer
@@ -137,6 +140,7 @@ def test_adding_constraints(tmp_path):
     # Setup
     real_data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
 
+    metadata = Metadata.load_from_dict(metadata.to_dict())
     checkin_lessthan_checkout = {
         'constraint_class': 'Inequality',
         'constraint_parameters': {

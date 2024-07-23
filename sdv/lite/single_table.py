@@ -7,6 +7,9 @@ import warnings
 
 import cloudpickle
 
+from sdv.metadata.metadata import Metadata
+from sdv.metadata.single_table import DEPRECATION_MSG as sdv_DEPRECATION_MSG
+from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
 
 LOGGER = logging.getLogger(__name__)
@@ -50,6 +53,9 @@ class SingleTablePreset:
 
         self.name = name
         if name == FAST_ML_PRESET:
+            if isinstance(metadata, SingleTableMetadata):
+                metadata = Metadata().load_from_dict(metadata.to_dict())
+                warnings.warn(sdv_DEPRECATION_MSG, FutureWarning)
             self._setup_fast_preset(metadata, self.locales)
 
     def add_constraints(self, constraints):

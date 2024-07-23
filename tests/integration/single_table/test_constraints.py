@@ -12,6 +12,7 @@ from sdv.constraints import Constraint, create_custom_constraint_class
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.datasets.demo import download_demo
 from sdv.metadata import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
@@ -136,7 +137,7 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
         ],
     })
 
-    metadata = SingleTableMetadata()
+    metadata = Metadata()
     metadata.add_column('key', sdtype='id')
     metadata.add_column('index', sdtype='categorical')
     metadata.add_column('test_column', sdtype='categorical')

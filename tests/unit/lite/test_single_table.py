@@ -8,6 +8,7 @@ import pytest
 
 from sdv.lite import SingleTablePreset
 from sdv.metadata import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from tests.utils import DataFrameMatcher
 
@@ -29,7 +30,7 @@ class TestSingleTablePreset:
         The method should pass the parameters to the ``GaussianCopulaSynthesizer`` class.
         """
         # Setup
-        metadata_mock = MagicMock(spec_set=SingleTableMetadata)
+        metadata_mock = MagicMock(spec_set=Metadata)
 
         # Run
         SingleTablePreset(metadata=metadata_mock, name='FAST_ML')
@@ -49,7 +50,7 @@ class TestSingleTablePreset:
         The method should pass the locales parameter to the ``GaussianCopulaSynthesizer`` class.
         """
         # Setup
-        metadata_mock = MagicMock(spec_set=SingleTableMetadata)
+        metadata_mock = MagicMock(spec_set=Metadata)
 
         # Run
         SingleTablePreset(metadata=metadata_mock, name='FAST_ML', locales=['en_US', 'fr_CA'])
@@ -79,7 +80,7 @@ class TestSingleTablePreset:
     def test_get_metadata(self, mock_data_processor):
         """Test that it returns the ``metadata`` object."""
         # Setup
-        metadata = Mock()
+        metadata = Mock(spec=Metadata)
         instance = SingleTablePreset(metadata, 'FAST_ML')
 
         # Run
@@ -279,7 +280,7 @@ class TestSingleTablePreset:
     def test___repr__(self):
         """Test that a string of format 'SingleTablePreset(name=<name>)' is returned"""
         # Setup
-        instance = SingleTablePreset(metadata=SingleTableMetadata(), name='FAST_ML')
+        instance = SingleTablePreset(metadata=Metadata(), name='FAST_ML')
 
         # Run
         res = repr(instance)

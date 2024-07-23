@@ -152,7 +152,7 @@ class Constraint(metaclass=ConstraintMeta):
         else:
             column_names = kwargs.get('column_names')
 
-        missing_columns = set(column_names) - set(metadata.columns) - {None}
+        missing_columns = set(column_names) - set(metadata.get_columns()) - {None}
         if missing_columns:
             article = 'An' if cls.__name__ == 'Inequality' else 'A'
             raise ConstraintMetadataError(

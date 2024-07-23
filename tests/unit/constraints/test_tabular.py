@@ -32,6 +32,7 @@ from sdv.constraints.tabular import (
     _validate_inputs_custom_constraint,
     create_custom_constraint_class,
 )
+from sdv.metadata.metadata import Metadata
 
 
 def dummy_transform_table(table_data):
@@ -202,8 +203,8 @@ class TestCreateCustomConstraint:
         """
         # Setup
         constraint_class = create_custom_constraint_class(sorted, sorted, sorted)
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         constraint_class._validate_metadata_columns(metadata, column_names=['a', 'b'])
@@ -224,8 +225,8 @@ class TestCreateCustomConstraint:
         """
         # Setup
         constraint_class = create_custom_constraint_class(sorted, sorted, sorted)
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -566,8 +567,8 @@ class TestFixedCombinations:
             - No error should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         FixedCombinations._validate_metadata_columns(metadata, column_names=['a', 'b'])
@@ -584,8 +585,8 @@ class TestFixedCombinations:
             - ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -598,8 +599,11 @@ class TestFixedCombinations:
     def test__validate_metadata_specific_to_constraint(self):
         """Test validating sdtypes with valid sdtypes."""
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'boolean'}, 'b': {'sdtype': 'categorical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
+            'a': {'sdtype': 'boolean'},
+            'b': {'sdtype': 'categorical'},
+        }
 
         # Run
         FixedCombinations._validate_metadata_specific_to_constraint(
@@ -609,8 +613,11 @@ class TestFixedCombinations:
     def test__validate_metadata_specific_to_constraint_incorrect_types(self):
         """Test validating sdtypes with invalid sdtypes"""
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'numerical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'numerical'},
+        }
 
         # Run
         error_message = re.escape(
@@ -1019,8 +1026,8 @@ class TestInequality:
             - No error should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         Inequality._validate_metadata_columns(metadata, low_column_name='a', high_column_name='b')
@@ -1037,8 +1044,8 @@ class TestInequality:
             - ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -1060,8 +1067,11 @@ class TestInequality:
             - Metadata with sdtypes set to datetime for both the high and low column.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'datetime'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'datetime'},
+        }
 
         # Run
         Inequality._validate_metadata_specific_to_constraint(
@@ -1078,8 +1088,11 @@ class TestInequality:
             - Metadata with sdtypes set to datetime for the high but not low column.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'categorical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'categorical'},
+        }
 
         # Run
         error_message = re.escape(
@@ -1101,8 +1114,11 @@ class TestInequality:
             - Metadata with sdtypes set to numerical for both the high and low column.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'numerical'}, 'b': {'sdtype': 'numerical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
+            'a': {'sdtype': 'numerical'},
+            'b': {'sdtype': 'numerical'},
+        }
 
         # Run
         Inequality._validate_metadata_specific_to_constraint(
@@ -1119,8 +1135,11 @@ class TestInequality:
             - Metadata with sdtypes set to numerical for the high but not low column.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'numerical'}, 'b': {'sdtype': 'categorical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
+            'a': {'sdtype': 'numerical'},
+            'b': {'sdtype': 'categorical'},
+        }
 
         # Run
         error_message = re.escape(
@@ -1226,8 +1245,11 @@ class TestInequality:
         """
         # Setup
         instance = Inequality(low_column_name='a', high_column_name='b')
-        instance.metadata = Mock()
-        instance.metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'categorical'}}
+        instance.metadata = Mock(spec=Metadata)
+        instance.metadata.get_columns.return_value = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'categorical'},
+        }
 
         # Run / Assert
         err_msg = 'Both high and low must be datetime.'
@@ -1268,8 +1290,8 @@ class TestInequality:
         instance = Inequality(low_column_name='a', high_column_name='b')
         instance._validate_columns_exist = Mock()
         instance._get_is_datetime = Mock(return_value='abc')
-        instance.metadata = Mock()
-        instance.metadata.columns = {
+        instance.metadata = Mock(spec=Metadata)
+        instance.metadata.get_columns.return_value = {
             'a': {'sdtype': 'datetime', 'datetime_format': '%y %m, %d'},
             'b': {'sdtype': 'datetime', 'datetime_format': '%y %m, %d'},
         }
@@ -1296,8 +1318,11 @@ class TestInequality:
         # Setup
         table_data = pd.DataFrame({'a': [1, 2, 4], 'b': [4.0, 5.0, 6.0]})
         instance = Inequality(low_column_name='a', high_column_name='b')
-        instance.metadata = Mock()
-        instance.metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'datetime'}}
+        instance.metadata = Mock(spec=Metadata)
+        instance.metadata.get_columns.return_value = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'datetime'},
+        }
 
         # Run
         instance._fit(table_data)
@@ -1321,8 +1346,11 @@ class TestInequality:
             'b': pd.to_datetime(['2020-01-02']),
         })
         instance = Inequality(low_column_name='a', high_column_name='b')
-        instance.metadata = Mock()
-        instance.metadata.columns = {'a': {'sdtype': 'datetime'}, 'b': {'sdtype': 'datetime'}}
+        instance.metadata = Mock(spec=Metadata)
+        instance.metadata.get_columns.return_value = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'datetime'},
+        }
 
         # Run
         instance._fit(table_data)
@@ -1758,8 +1786,8 @@ class TestScalarInequality:
             - No error should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         ScalarInequality._validate_metadata_columns(metadata, column_name='a')
@@ -1776,8 +1804,8 @@ class TestScalarInequality:
             - ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -1800,8 +1828,8 @@ class TestScalarInequality:
             - The column name and a value set to a number.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'numerical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': {'sdtype': 'numerical'}}
 
         # Run
         ScalarInequality._validate_metadata_specific_to_constraint(
@@ -1821,8 +1849,8 @@ class TestScalarInequality:
             - The column name and a value set to a string.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'numerical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': {'sdtype': 'numerical'}}
 
         # Run
         error_message = "'value' must be an int or float."
@@ -1846,8 +1874,10 @@ class TestScalarInequality:
             - The column name and a value set to a datetime of the right format.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
+            'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}
+        }
         datetime_format_mock.return_value = True
 
         # Run
@@ -1873,8 +1903,10 @@ class TestScalarInequality:
             - A ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
+            'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}
+        }
         datetime_format_mock.return_value = False
 
         # Run
@@ -1900,8 +1932,8 @@ class TestScalarInequality:
             - A ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'categorical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': {'sdtype': 'categorical'}}
 
         # Run
         error_message = (
@@ -2026,7 +2058,8 @@ class TestScalarInequality:
         """
         # Setupy
         instance = ScalarInequality(column_name='a', value=1, relation='<')
-        instance.metadata = Mock(columns={'a': {'sdtype': 'datetime'}})
+        instance.metadata = Mock(spec=Metadata())
+        instance.metadata.get_columns.return_value = {'a': {'sdtype': 'datetime'}}
 
         # Run / Assert
         err_msg = 'Both column and value must be datetime.'
@@ -2090,7 +2123,7 @@ class TestScalarInequality:
         # Setup
         table_data = pd.DataFrame({'a': [1, 2, 4], 'b': [4.0, 5.0, 6.0]})
         instance = ScalarInequality(column_name='b', value=10, relation='>')
-        instance.metadata = MagicMock()
+        instance.metadata = MagicMock(spec=Metadata)
 
         # Run
         instance._fit(table_data)
@@ -2114,12 +2147,11 @@ class TestScalarInequality:
             'b': pd.to_datetime(['2020-01-02']),
         })
         instance = ScalarInequality(column_name='b', value='2020-01-01', relation='>')
-        instance.metadata = Mock(
-            columns={
-                'a': {'sdtype': 'datetime'},
-                'b': {'sdtype': 'datetime'},
-            }
-        )
+        instance.metadata = Mock(spec=Metadata())
+        instance.metadata.get_columns.return_value = {
+            'a': {'sdtype': 'datetime'},
+            'b': {'sdtype': 'datetime'},
+        }
 
         # Run
         instance._fit(table_data)
@@ -2435,8 +2467,8 @@ class TestPositive:
             - No error should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         Positive._validate_metadata_columns(metadata, column_name='a')
@@ -2453,8 +2485,8 @@ class TestPositive:
             - ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -2474,8 +2506,8 @@ class TestPositive:
             - Metadata with the column's sdtype set to numerical.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'numerical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': {'sdtype': 'numerical'}}
 
         # Run
         Positive._validate_metadata_specific_to_constraint(metadata, column_name='a')
@@ -2493,8 +2525,8 @@ class TestPositive:
             - Raises ConstraintMetadataError
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'datetime'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': {'sdtype': 'datetime'}}
 
         # Run
         error_message = (
@@ -2565,8 +2597,8 @@ class TestNegative:
             - No error should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         Negative._validate_metadata_columns(metadata, column_name='a')
@@ -2583,8 +2615,8 @@ class TestNegative:
             - ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -2604,8 +2636,8 @@ class TestNegative:
             - Metadata with the column's sdtype set to numerical.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'numerical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': {'sdtype': 'numerical'}}
 
         # Run
         Positive._validate_metadata_specific_to_constraint(metadata, column_name='a')
@@ -2623,8 +2655,8 @@ class TestNegative:
             - Raises ConstraintMetadataError
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'datetime'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': {'sdtype': 'datetime'}}
 
         # Run
         error_message = (
@@ -2700,8 +2732,8 @@ class TestRange:
             - No error should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2, 'c': 3}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2, 'c': 3}
 
         # Run
         Range._validate_metadata_columns(
@@ -2720,8 +2752,8 @@ class TestRange:
             - ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -2743,8 +2775,8 @@ class TestRange:
             - Metadata with sdtypes set to datetime for the high, middle and low column.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
             'a': {'sdtype': 'datetime'},
             'b': {'sdtype': 'datetime'},
             'c': {'sdtype': 'datetime'},
@@ -2766,8 +2798,8 @@ class TestRange:
             but not the middle.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
             'a': {'sdtype': 'datetime'},
             'b': {'sdtype': 'datetime'},
             'c': {'sdtype': 'numerical'},
@@ -2793,8 +2825,8 @@ class TestRange:
             - Metadata with sdtypes set to numerical for the high, middle and low column.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
             'a': {'sdtype': 'numerical'},
             'b': {'sdtype': 'numerical'},
             'c': {'sdtype': 'numerical'},
@@ -2816,8 +2848,8 @@ class TestRange:
             but not the middle.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
             'a': {'sdtype': 'numerical'},
             'b': {'sdtype': 'numerical'},
             'c': {'sdtype': 'datetime'},
@@ -2891,13 +2923,12 @@ class TestRange:
         """
         # Setup
         instance = Range('join_date', 'promotion_date', 'retirement_date')
-        instance.metadata = Mock(
-            columns={
-                'join_date': {'sdtype': 'datetime'},
-                'promotion_date': {'sdtype': 'datetime'},
-                'retirement_date': {'sdtype': 'datetime'},
-            }
-        )
+        instance.metadata = Mock(spec=Metadata)
+        instance.metadata.get_columns.return_value = {
+            'join_date': {'sdtype': 'datetime'},
+            'promotion_date': {'sdtype': 'datetime'},
+            'retirement_date': {'sdtype': 'datetime'},
+        }
 
         # Run
         is_datetime = instance._get_is_datetime()
@@ -2923,7 +2954,7 @@ class TestRange:
         """
         # Setup
         instance = Range('age_when_joined', 'current_age', 'retirement_age')
-        instance.metadata = MagicMock()
+        instance.metadata = MagicMock(spec=Metadata)
 
         # Run
         is_datetime = instance._get_is_datetime()
@@ -2950,13 +2981,12 @@ class TestRange:
         """
         # Setup
         instance = Range('join_date', 'promotion_date', 'current_age')
-        instance.metadata = Mock(
-            columns={
-                'join_date': {'sdtype': 'datetime'},
-                'promotion_date': {'sdtype': 'datetime'},
-                'current_age': {'sdtype': 'numerical'},
-            }
-        )
+        instance.metadata = Mock(spec=Metadata)
+        instance.metadata.get_columns.return_value = {
+            'join_date': {'sdtype': 'datetime'},
+            'promotion_date': {'sdtype': 'datetime'},
+            'current_age': {'sdtype': 'numerical'},
+        }
         expected_text = 'The constraint column and bounds must all be datetime.'
 
         # Run
@@ -2990,7 +3020,7 @@ class TestRange:
             dtype=np.int64,
         )
         instance = Range('age_when_joined', 'current_age', 'retirement_age')
-        instance.metadata = MagicMock()
+        instance.metadata = MagicMock(spec=Metadata)
 
         # Run
         instance._fit(table_data)
@@ -3177,7 +3207,7 @@ class TestRange:
             'b#c': [np.log(5), np.log(4), np.log(6)],
         })
         instance = Range('a', 'b', 'c')
-        instance.metadata = MagicMock()
+        instance.metadata = MagicMock(spec=Metadata)
 
         # Run
         instance.fit(table_data)
@@ -3202,13 +3232,12 @@ class TestRange:
         })
 
         instance = Range('a', 'b', 'c')
-        instance.metadata = Mock(
-            columns={
-                'a': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
-                'b': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
-                'c': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
-            }
-        )
+        instance.metadata = Mock(spec=Metadata)
+        instance.metadata.get_columns.return_value = {
+            'a': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
+            'b': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
+            'c': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d %H:%M:%S'},
+        }
 
         # Run
         instance.fit(table_data)
@@ -3252,8 +3281,8 @@ class TestScalarRange:
             - No error should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         ScalarRange._validate_metadata_columns(metadata, column_name='a')
@@ -3270,8 +3299,8 @@ class TestScalarRange:
             - ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -3294,8 +3323,8 @@ class TestScalarRange:
             - The column name and both high_value and low_value set to a number.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'numerical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': {'sdtype': 'numerical'}}
 
         # Run
         ScalarRange._validate_metadata_specific_to_constraint(
@@ -3315,8 +3344,8 @@ class TestScalarRange:
             - The column name, low_value set to a number and high_value set to a string.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'numerical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': {'sdtype': 'numerical'}}
 
         # Run
         error_message = "Both 'high_value' and 'low_value' must be ints or floats"
@@ -3338,8 +3367,8 @@ class TestScalarRange:
             - The column name, high_value set to a number and low_value set to a string.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'numerical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': {'sdtype': 'numerical'}}
 
         # Run
         error_message = "Both 'high_value' and 'low_value' must be ints or floats"
@@ -3364,8 +3393,10 @@ class TestScalarRange:
             right format.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
+            'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}
+        }
         datetime_format_mock.return_value = True
 
         # Run
@@ -3394,8 +3425,10 @@ class TestScalarRange:
             - A ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
+            'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}
+        }
         datetime_format_mock.side_effect = [False, True]
 
         # Run
@@ -3428,8 +3461,10 @@ class TestScalarRange:
             - A ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {
+            'a': {'sdtype': 'datetime', 'datetime_format': 'm/d/y'}
+        }
         datetime_format_mock.side_effect = [True, False]
 
         # Run
@@ -3457,8 +3492,8 @@ class TestScalarRange:
             - A ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': {'sdtype': 'categorical'}}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': {'sdtype': 'categorical'}}
 
         # Run
         error_message = (
@@ -3573,7 +3608,8 @@ class TestScalarRange:
         """
         # Setup
         instance = ScalarRange('promotion_date', '2021-02-10', '2050-10-11')
-        instance.metadata = Mock(columns={'promotion_date': {'sdtype': 'datetime'}})
+        instance.metadata = Mock(spec=Metadata)
+        instance.metadata.get_columns.return_value = {'promotion_date': {'sdtype': 'datetime'}}
 
         # Run
         is_datetime = instance._get_is_datetime()
@@ -3599,7 +3635,7 @@ class TestScalarRange:
         """
         # Setup
         instance = ScalarRange('current_age', 21, 30)
-        instance.metadata = MagicMock()
+        instance.metadata = MagicMock(spec=Metadata)
 
         # Run
         is_datetime = instance._get_is_datetime()
@@ -3625,7 +3661,8 @@ class TestScalarRange:
         """
         # Setup
         instance = ScalarRange('promotion_date', 18, 25)
-        instance.metadata = Mock(columns={'promotion_date': {'sdtype': 'datetime'}})
+        instance.metadata = Mock(spec=Metadata)
+        instance.metadata.get_columns.return_value = {'promotion_date': {'sdtype': 'datetime'}}
         expected_text = 'The constraint column and bounds must all be datetime.'
 
         # Run
@@ -3676,7 +3713,7 @@ class TestScalarRange:
         # Setup
         table_data = pd.DataFrame({'current_age': [21, 22, 25]})
         instance = ScalarRange('current_age', 18, 20)
-        instance.metadata = MagicMock()
+        instance.metadata = MagicMock(spec=Metadata)
 
         # Run
         instance._fit(table_data)
@@ -3705,7 +3742,8 @@ class TestScalarRange:
             ]
         })
         instance = ScalarRange('checkin', '2022-05-05', '2022-06-01')
-        instance.metadata = Mock(columns={'checkin': {'sdtype': 'datetime'}})
+        instance.metadata = Mock(spec=Metadata)
+        instance.metadata.get_columns.return_value = {'checkin': {'sdtype': 'datetime'}}
 
         # Run
         instance._fit(table_data)
@@ -3823,7 +3861,7 @@ class TestScalarRange:
         table_data = pd.DataFrame({'current_age': [21, 22, 25]})
         instance = ScalarRange('current_age', 20, 28)
         mock_logit.return_value = [1, 2, 3]
-        instance.metadata = MagicMock()
+        instance.metadata = MagicMock(spec=Metadata)
 
         # Run
         instance.fit(table_data)
@@ -3858,7 +3896,7 @@ class TestScalarRange:
         transformed_data = pd.DataFrame({'current_age#20#28': [1, 2, 3]})
         mock_sigmoid.return_value = pd.Series([21, 22, 25])
         instance = ScalarRange('current_age', 20, 28)
-        instance.metadata = MagicMock()
+        instance.metadata = MagicMock(spec=Metadata)
 
         # Run
         instance.fit(table_data)
@@ -3949,8 +3987,8 @@ class TestOneHotEncoding:
             - No error should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         OneHotEncoding._validate_metadata_columns(metadata, column_names=['a', 'b'])
@@ -3967,8 +4005,8 @@ class TestOneHotEncoding:
             - ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -4063,8 +4101,8 @@ class TestUnique:
             - No error should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         Unique._validate_metadata_columns(metadata, column_names=['a', 'b'])
@@ -4081,8 +4119,8 @@ class TestUnique:
             - ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(
@@ -4103,9 +4141,9 @@ class TestUnique:
             - Column names with list of columns different htan the primary key and alternate keys.
         """
         # Setup
-        metadata = Mock()
-        metadata.primary_key = 'a'
-        metadata.alternate_keys = ['b', 'c']
+        metadata = Mock(spec=Metadata)
+        metadata.get_primary_key.return_value = 'a'
+        metadata.get_alternate_keys.return_value = ['b', 'c']
 
         # Run
         Unique._validate_metadata_specific_to_constraint(metadata, column_names=['a', 'b', 'd'])
@@ -4121,9 +4159,9 @@ class TestUnique:
             - Column names with list of columns different htan the primary key and alternate keys.
         """
         # Setup
-        metadata = Mock()
-        metadata.primary_key = 'a'
-        metadata.alternate_keys = [('b', 'c'), 'd']
+        metadata = Mock(spec=Metadata)
+        metadata.get_primary_key.return_value = 'a'
+        metadata.get_alternate_keys.return_value = [('b', 'c'), 'd']
 
         # Run
         error_message = re.escape(
@@ -4424,8 +4462,8 @@ class TestFixedIncrements:
             - No error should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         FixedIncrements._validate_metadata_columns(metadata, column_name='a')
@@ -4442,8 +4480,8 @@ class TestFixedIncrements:
             - ConstraintMetadataError should be raised.
         """
         # Setup
-        metadata = Mock()
-        metadata.columns = {'a': 1, 'b': 2}
+        metadata = Mock(spec=Metadata)
+        metadata.get_columns.return_value = {'a': 1, 'b': 2}
 
         # Run
         error_message = re.escape(

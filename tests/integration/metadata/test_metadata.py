@@ -1,17 +1,18 @@
 from sdv.datasets.demo import download_demo
 from sdv.metadata.metadata import Metadata
+from sdv.metadata.multi_table import MultiTableMetadata
 
 
 def test_metadata():
     """Test ``MultiTableMetadata``."""
     # Create an instance
-    instance = Metadata()
+    instance = MultiTableMetadata()
 
     # To dict
     result = instance.to_dict()
 
     # Assert
-    assert result == {'tables': {}, 'relationships': [], 'METADATA_SPEC_VERSION': 'V1'}
+    assert result == {'tables': {}, 'relationships': [], 'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1'}
     assert instance.tables == {}
     assert instance.relationships == []
 
@@ -21,7 +22,7 @@ def test_detect_from_dataframes_multi_table():
     # Setup
     real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
 
-    metadata = Metadata()
+    metadata = MultiTableMetadata()
 
     # Run
     metadata.detect_from_dataframes(real_data)
@@ -69,7 +70,7 @@ def test_detect_from_dataframes_multi_table():
                 'child_foreign_key': 'hotel_id',
             }
         ],
-        'METADATA_SPEC_VERSION': 'V1',
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
     }
     assert metadata.to_dict() == expected_metadata
 

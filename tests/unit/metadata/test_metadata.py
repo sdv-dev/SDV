@@ -1,8 +1,12 @@
-from unittest.mock import patch
+import re
+from unittest.mock import MagicMock, patch
 
+import pandas as pd
 import pytest
 
 from sdv.metadata.metadata import Metadata
+from sdv.metadata.multi_table import MultiTableMetadata
+from sdv.metadata.single_table import SingleTableMetadata
 from tests.utils import get_multi_table_data, get_multi_table_metadata
 
 
@@ -520,17 +524,6 @@ class TestMetadataClass:
         test_metadata.validate()
         assert test_metadata.METADATA_SPEC_VERSION == 'V1'
 
-    def test_validate_data(self):
-        """Test that no error is being raised when the data is valid."""
-        # Setup
-        metadata_dict = get_multi_table_metadata().to_dict()
-        metadata = Metadata.load_from_dict(metadata_dict)
-        data = get_multi_table_data()
-
-        # Run and Assert
-        metadata.validate_data(data)
-        assert metadata.METADATA_SPEC_VERSION == 'V1'
-
     def test_validate_data_no_relationships(self):
         """Test that no error is being raised when the data is valid but has no relationships."""
         # Setup
@@ -543,3 +536,413 @@ class TestMetadataClass:
         # Run and Assert
         metadata.validate_data(data)
         assert metadata.METADATA_SPEC_VERSION == 'V1'
+
+    @patch('sdv.metadata.metadata.read_json')
+    @patch('sdv.metadata.metadata.Path')
+    def test_load_from_json(self, mock_path, mock_read_json):
+        """Test ``load_from_json`` on Metadata."""
+        # Setup
+        mock_read_json.return_value = {'tables': {}}
+        filepath = 'test_path.json'
+        mock_path.stem.return_value = 'test_path'
+
+        # Run
+        metadata = Metadata.load_from_json(filepath)
+
+        # Assert
+        mock_path.assert_called_once_with(filepath)
+        assert isinstance(metadata, Metadata)
+        mock_read_json.assert_called_once_with(filepath)
+
+    def test_set_metadata_dict_single_table(self):
+        """Test ``set_metadata_dict`` works for single tables."""
+        # Setup
+        metadata_dict = {'columns': {}}
+        metadata = Metadata()
+
+        # Run
+        metadata._set_metadata_dict(metadata_dict, 'test_table')
+
+        # Assert
+        assert 'test_table' in metadata.tables
+        assert isinstance(metadata.tables['test_table'], SingleTableMetadata)
+
+    def test_set_metadata_dict_multi_table(self):
+        """Test ``set_metadata_dict`` works for multiple tables."""
+        # Setup
+        metadata_dict = {'tables': {'table1': {'columns': {}}, 'table2': {'columns': {}}}}
+        metadata = Metadata()
+
+        # Run
+        metadata._set_metadata_dict(metadata_dict)
+
+        # Assert
+        assert 'table1' in metadata.tables
+        assert 'table2' in metadata.tables
+
+    def test__get_table_or_default(self):
+        """Test ``_get_table_or_default`` method."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+
+        # Run and Assert
+        assert metadata._get_table_or_default('table1') == metadata.tables['table1']
+
+    def test__get_table_or_default_no_table_name(self):
+        """Test ``_get_table_or_default`` method falls back to a single table."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+
+        # Run and Assert
+        assert metadata._get_table_or_default() == metadata.tables['table1']
+
+    def test__get_table_or_default_multiple_tables(self):
+        """Confirm that ``_get_table_or_default_multiple_tables`` raises an error."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+        metadata.tables['table2'] = SingleTableMetadata()
+        error_msg = re.escape(
+            'This metadata contains more than one table. Please provide a table name in the method.'
+        )
+
+        # Run and Assert
+        with pytest.raises(ValueError, match=error_msg):
+            metadata._get_table_or_default()
+
+    def test__get_table_name_error_too_many_tables_no_arg(self):
+        """Test ``_get_table_name`` with more than one table but table argument."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+        metadata.tables['table2'] = SingleTableMetadata()
+        error_msg = re.escape(
+            'This metadata contains more than one table. Please provide a table name in the method.'
+        )
+
+        # Run and Assert
+        with pytest.raises(ValueError, match=error_msg):
+            metadata._get_table_name()
+
+    def test_get_column_relationships(self):
+        """Test ``get_column_relationships`` works with a table and default table."""
+        # Setup
+        table_mock = MagicMock()
+        table_mock.column_relationships = ['relationship1']
+        metadata = Metadata()
+        metadata.tables['table1'] = table_mock
+
+        # Run and Assert
+        assert metadata.get_column_relationships('table1') == ['relationship1']
+        assert metadata.get_column_relationships() == ['relationship1']
+
+    def test_get_primary_key(self):
+        """Test ``get_primary_key`` works with a table and default table."""
+        # Setup
+        table_mock = MagicMock()
+        table_mock.primary_key = 'id'
+        metadata = Metadata()
+        metadata.tables['table1'] = table_mock
+
+        # Run and Assert
+        assert metadata.get_primary_key('table1') == 'id'
+        assert metadata.get_primary_key() == 'id'
+
+    def test_get_alternate_keys(self):
+        """Test ``get_alternate_keys`` works with a table and default table."""
+        # Setup
+        table_mock = MagicMock()
+        table_mock.alternate_keys = ['alt_key']
+        metadata = Metadata()
+        metadata.tables['table1'] = table_mock
+
+        # Run and Assert
+        assert metadata.get_alternate_keys('table1') == ['alt_key']
+        assert metadata.get_alternate_keys() == ['alt_key']
+
+    def test_get_columns(self):
+        """Test ``get_columns`` works with a table and default table."""
+        # Setup
+        table_mock = MagicMock()
+        table_mock.columns = {'col1': 'type1'}
+        metadata = Metadata()
+        metadata.tables['table1'] = table_mock
+
+        # Run and Assert
+        assert metadata.get_columns('table1') == {'col1': 'type1'}
+        assert metadata.get_columns() == {'col1': 'type1'}
+
+    def test_validate_data(self):
+        """Test ``validate_data`` works with a dataframe."""
+        # Setup
+        data = pd.DataFrame({'col1': [1, 2, 3]})
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'validate_data') as mock_validate:
+            metadata.validate_data(data)
+            mock_validate.assert_called_once()
+
+        assert metadata.METADATA_SPEC_VERSION == 'V1'
+
+    def test_validate_data_dict(self):
+        """Test ``validate_data`` works with a dict of dataframes."""
+        # Setup
+        data = {
+            'table1': pd.DataFrame({'col1': [1, 2, 3]}),
+            'table2': pd.DataFrame({'col1': [4, 5, 6]}),
+        }
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+        metadata.tables['table2'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'validate_data') as mock_validate:
+            metadata.validate_data(data)
+            mock_validate.assert_called_once()
+
+    def test_add_column_default(self):
+        """Test ``add_column`` works with a single table."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'add_column') as mock_add_column:
+            metadata.add_column('col1', sdtype='integer')
+            mock_add_column.assert_called_once_with('table1', 'col1', sdtype='integer')
+
+    def test_add_column(self):
+        """Test ``add_column`` method."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+        metadata.tables['table2'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'add_column') as mock_add_column:
+            metadata.add_column('col1', 'table2', sdtype='integer')
+            mock_add_column.assert_called_once_with('table2', 'col1', sdtype='integer')
+
+    def test_set_sequence_key(self):
+        """Test ``set_sequence_key`` method."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+        metadata.tables['table2'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'set_sequence_key') as mock_set_sequence_key:
+            metadata.set_sequence_key('seq_col', 'table2')
+            mock_set_sequence_key.assert_called_once_with('table2', 'seq_col')
+
+    def test_set_sequence_key_default(self):
+        """Test ``set_sequence_key`` method with a single table."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'set_sequence_key') as mock_set_sequence_key:
+            metadata.set_sequence_key('seq_col')
+            mock_set_sequence_key.assert_called_once_with('table1', 'seq_col')
+
+    def test_add_alternate_keys(self):
+        """Test ``set_sequence_key`` method."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+        metadata.tables['table2'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'add_alternate_keys') as mock_add_alternate_keys:
+            metadata.add_alternate_keys(['alt_key'], 'table2')
+            mock_add_alternate_keys.assert_called_once_with('table2', ['alt_key'])
+
+    def test_add_alternate_keys_default(self):
+        """Test ``set_sequence_key`` method with a single table."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'add_alternate_keys') as mock_add_alternate_keys:
+            metadata.add_alternate_keys(['alt_key'])
+            mock_add_alternate_keys.assert_called_once_with('table1', ['alt_key'])
+
+    def test_get_primary_and_alternate_keys(self):
+        """Test ``get_primary_and_alternate_keys`` works with a table and default table."""
+        # Setup
+        table_mock = MagicMock()
+        table_mock._get_primary_and_alternate_keys.return_value = {'id', 'alt_key'}
+        metadata = Metadata()
+        metadata.tables['table1'] = table_mock
+
+        # Run and Assert
+        assert metadata.get_primary_and_alternate_keys('table1') == {'id', 'alt_key'}
+        assert metadata.get_primary_and_alternate_keys() == {'id', 'alt_key'}
+
+    def test_get_set_of_sequence_keys(self):
+        """Test ``get_set_of_sequence_keys`` works with a table and default table."""
+        # Setup
+        table_mock = MagicMock()
+        table_mock._get_set_of_sequence_keys.return_value = {'seq_key'}
+        metadata = Metadata()
+        metadata.tables['table1'] = table_mock
+
+        # Run and Assert
+        assert metadata.get_set_of_sequence_keys('table1') == {'seq_key'}
+        assert metadata.get_set_of_sequence_keys() == {'seq_key'}
+
+    def test_set_primary_key_default(self):
+        """Test ``set_primary_key`` method with a single table."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'set_primary_key') as mock_set_primary_key:
+            metadata.set_primary_key('id')
+            mock_set_primary_key.assert_called_once_with('table1', 'id')
+
+    def test_set_primary_key(self):
+        """Test ``set_primary_key`` method."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+        metadata.tables['table2'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'set_primary_key') as mock_set_primary_key:
+            metadata.set_primary_key('id', 'table2')
+            mock_set_primary_key.assert_called_once_with('table2', 'id')
+
+    def test_detect_from_dataframes(self):
+        """Test ``detect_from_dataframes`` method with a Dataframe."""
+        # Setup
+        data = {'table1': pd.DataFrame({'col1': [1, 2, 3]})}
+        metadata = Metadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'detect_from_dataframes') as mock_detect:
+            metadata.detect_from_dataframes(data)
+            mock_detect.assert_called_once_with(data)
+
+    def test_detect_from_dataframes_dict(self):
+        """Test ``detect_from_dataframes`` method with a dict of Dataframes."""
+        # Setup
+        data = {
+            'table1': pd.DataFrame({'col1': [1, 2, 3]}),
+            'table2': pd.DataFrame({'col1': [4, 5, 6]}),
+        }
+        metadata = Metadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'detect_from_dataframes') as mock_detect:
+            metadata.detect_from_dataframes(data)
+            mock_detect.assert_called_once_with(data)
+
+    def test_get_sequence_key(self):
+        """Test ``get_sequence_key`` works with a table and default table."""
+        # Setup
+        table_mock = MagicMock()
+        table_mock.sequence_key = 'seq_key'
+        metadata = Metadata()
+        metadata.tables['table1'] = table_mock
+
+        # Run and Assert
+        assert metadata.get_sequence_key('table1') == 'seq_key'
+        assert metadata.get_sequence_key() == 'seq_key'
+
+    def test_get_sequence_key_none(self):
+        """Test ``get_sequence_key`` called with None."""
+        # Setup
+        metadata = Metadata()
+
+        # Run and Assert
+        assert metadata.get_sequence_key() is None
+
+    def test_get_sequence_index(self):
+        """Test ``get_sequence_index`` works with a table and default table."""
+        # Setup
+        table_mock = MagicMock()
+        table_mock.sequence_index = 'seq_index'
+        metadata = Metadata()
+        metadata.tables['table1'] = table_mock
+
+        # Run and Assert
+        assert metadata.get_sequence_index('table1') == 'seq_index'
+        assert metadata.get_sequence_index() == 'seq_index'
+
+    def test_get_sequence_index_none(self):
+        """Test ``get_sequence_index`` works with None."""
+        # Setup
+        metadata = Metadata()
+
+        # Run and Assert
+        assert metadata.get_sequence_index() is None
+
+    def test_get_valid_column_relationships(self):
+        """Test ``get_valid_column_relationships`` works with a table and default table."""
+        # Setup
+        table_mock = MagicMock()
+        table_mock._valid_column_relationships = ['relationship1']
+        metadata = Metadata()
+        metadata.tables['table1'] = table_mock
+
+        # Run and Assert
+        assert metadata.get_valid_column_relationships('table1') == ['relationship1']
+        assert metadata.get_valid_column_relationships() == ['relationship1']
+
+    def test_add_column_relationship(self):
+        """Test ``add_column_relationship`` method."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+        metadata.tables['table2'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(
+            MultiTableMetadata, 'add_column_relationship'
+        ) as mock_add_column_relationship:
+            metadata.add_column_relationship('type', ['col1', 'col2'], 'table1')
+            mock_add_column_relationship.assert_called_once_with('table1', 'type', ['col1', 'col2'])
+
+    def test_add_column_relationship_default(self):
+        """Test ``add_column_relationship`` method with a single table."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(
+            MultiTableMetadata, 'add_column_relationship'
+        ) as mock_add_column_relationship:
+            metadata.add_column_relationship('type', ['col1', 'col2'])
+            mock_add_column_relationship.assert_called_once_with('table1', 'type', ['col1', 'col2'])
+
+    def test_update_column(self):
+        """Test ``update_column`` method."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+        metadata.tables['table2'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'update_column') as mock_update_column:
+            metadata.update_column('col1', 'table2', sdtype='integer')
+            mock_update_column.assert_called_once_with('table2', 'col1', sdtype='integer')
+
+    def test_update_column_default(self):
+        """Test ``update_column`` method."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables['table1'] = SingleTableMetadata()
+
+        # Run and Assert
+        with patch.object(MultiTableMetadata, 'update_column') as mock_update_column:
+            metadata.update_column('col1', sdtype='integer')
+            mock_update_column.assert_called_once_with('table1', 'col1', sdtype='integer')

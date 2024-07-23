@@ -13,7 +13,7 @@ from rdt.transformers import FloatFormatter
 
 from sdv._utils import _cast_to_iterable, _groupby_list
 from sdv.errors import SamplingError, SynthesizerInputError
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from sdv.single_table.base import BaseSynthesizer
@@ -72,13 +72,13 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             context_columns += self._sequence_key
 
         for column in context_columns:
-            context_columns_dict[column] = self.metadata.columns[column]
+            context_columns_dict[column] = self.metadata.get_columns()[column]
 
         for column, column_metadata in self._extra_context_columns.items():
             context_columns_dict[column] = column_metadata
 
         context_metadata_dict = {'columns': context_columns_dict}
-        return SingleTableMetadata.load_from_dict(context_metadata_dict)
+        return Metadata.load_from_dict(context_metadata_dict)
 
     def __init__(
         self,
@@ -100,7 +100,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             locales=locales,
         )
 
-        sequence_key = self.metadata.sequence_key
+        sequence_key = self.metadata.get_sequence_key()
         self._sequence_key = list(_cast_to_iterable(sequence_key)) if sequence_key else None
         if not self._sequence_key:
             raise SynthesizerInputError(
@@ -108,7 +108,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 'sequence key. Your metadata does not include a sequence key.'
             )
 
-        self._sequence_index = self.metadata.sequence_index
+        self._sequence_index = self.metadata.get_sequence_index()
         self.context_columns = context_columns or []
         self._validate_sequence_key_and_context_columns()
         self._extra_context_columns = {}
@@ -331,7 +331,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
     def _fit_context_model(self, transformed):
         LOGGER.debug(f'Fitting context synthesizer {self._context_synthesizer.__class__.__name__}')
-        context_metadata: SingleTableMetadata = self._get_context_metadata()
+        context_metadata: Metadata = self._get_context_metadata()
         if self.context_columns or self._extra_context_columns:
             context_cols = (
                 self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
@@ -346,7 +346,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
         for column in self.context_columns:
             # Context datetime SDTypes for PAR have already been converted to float timestamp
-            if context_metadata.columns[column]['sdtype'] == 'datetime':
+            if context_metadata.get_columns()[column]['sdtype'] == 'datetime':
                 if pd.api.types.is_numeric_dtype(context[column]):
                     context_metadata.update_column(column, sdtype='numerical')
 
@@ -387,7 +387,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             if kind in ('i', 'f'):
                 data_type = 'continuous'
                 # Check if metadata overrides this data type
-                if self.metadata.columns.get(field, {}).get('sdtype', None) == 'categorical':
+                if self.metadata.get_columns().get(field, {}).get('sdtype', None) == 'categorical':
                     data_type = 'categorical'
             elif kind in ('O', 'b'):
                 data_type = 'categorical'

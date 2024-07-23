@@ -6,6 +6,8 @@ import warnings
 import numpy as np
 
 from sdv.errors import SynthesizerInputError
+from sdv.metadata.metadata import Metadata
+from sdv.metadata.single_table import DEPRECATION_MSG, SingleTableMetadata
 
 DISABLE_TMP_FILE = 'disable'
 IGNORED_DICT_KEYS = ['fitted', 'distribution', 'type']
@@ -33,10 +35,13 @@ def detect_discrete_columns(metadata, data, transformers):
         discrete_columns (list):
             A list of discrete columns to be used with some of ``sdv`` synthesizers.
     """
+    if isinstance(metadata, SingleTableMetadata):
+        metadata = Metadata().load_from_dict(metadata.to_dict())
+        warnings.warn(DEPRECATION_MSG, FutureWarning)
     discrete_columns = []
     for column in data.columns:
-        if column in metadata.columns:
-            sdtype = metadata.columns[column]['sdtype']
+        if column in metadata.get_columns():
+            sdtype = metadata.get_columns()[column]['sdtype']
             # Numerical and datetime columns never get preprocessed into categorical ones
             if sdtype in ['numerical', 'datetime']:
                 continue

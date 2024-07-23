@@ -1250,7 +1250,9 @@ class TestHMASynthesizer:
             instance.fit(data)
 
         # Assert
-        assert len(captured_warnings) == 0
+        for warning in captured_warnings:
+            assert warning.category is FutureWarning
+        assert len(captured_warnings) == 3
 
         # Run 2
         metadata_detect = MultiTableMetadata()
@@ -1269,7 +1271,9 @@ class TestHMASynthesizer:
             instance.fit(data)
 
         # Assert
-        assert len(captured_warnings) == 0
+        for warning in captured_warnings:
+            assert warning.category is FutureWarning
+        assert len(captured_warnings) == 3
 
         # Run 3
         instance = HMASynthesizer(metadata_detect)
@@ -1312,7 +1316,16 @@ class TestHMASynthesizer:
             instance.fit(data)
 
         # Assert
-        assert len(record) == 1
+        future_warnings = 0
+        user_warnings = 0
+        for warning in record:
+            if warning.category is FutureWarning:
+                future_warnings += 1
+            if warning.category is UserWarning:
+                user_warnings += 1
+        assert future_warnings == 3
+        assert user_warnings == 1
+        assert len(record) == 4
 
     def test_null_foreign_keys(self):
         """Test that the synthesizer crashes when there are null foreign keys."""

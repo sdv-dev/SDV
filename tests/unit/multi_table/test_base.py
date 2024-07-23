@@ -618,8 +618,9 @@ class TestBaseMultiTableSynthesizer:
         # Run
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
-            "The columns ['col1'] are not present in the metadata.\n\n"
-            "The metadata columns ['id_nesreca', 'nesreca_val', 'upravna_enota'] "
+            "Table: 'default_table_name'\n"
+            "Error: The columns ['col1'] are not present in the metadata.\n"
+            "Error: The metadata columns ['id_nesreca', 'nesreca_val', 'upravna_enota'] "
             'are not present in the data.'
         )
 

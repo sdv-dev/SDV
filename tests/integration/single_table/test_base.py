@@ -13,6 +13,7 @@ from sdv import version
 from sdv.datasets.demo import download_demo
 from sdv.errors import SamplingError, SynthesizerInputError, VersionError
 from sdv.metadata import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import (
     CopulaGANSynthesizer,
@@ -521,12 +522,12 @@ def test_save_and_load(tmp_path):
 
     # Assert
     assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
-    assert loaded_instance.metadata.columns == {}
-    assert loaded_instance.metadata.primary_key is None
-    assert loaded_instance.metadata.alternate_keys == []
-    assert loaded_instance.metadata.sequence_key is None
-    assert loaded_instance.metadata.sequence_index is None
-    assert loaded_instance.metadata._version == 'SINGLE_TABLE_V1'
+    assert loaded_instance.metadata.get_columns() == {}
+    assert loaded_instance.metadata.get_primary_key() is None
+    assert loaded_instance.metadata.get_alternate_keys() == []
+    assert loaded_instance.metadata.get_sequence_key() is None
+    assert loaded_instance.metadata.get_sequence_index() is None
+    assert loaded_instance.metadata.METADATA_SPEC_VERSION == 'V1'
     assert instance._synthesizer_id == loaded_instance._synthesizer_id
 
 
@@ -545,12 +546,12 @@ def test_save_and_load_no_id(tmp_path):
 
     # Assert
     assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
-    assert loaded_instance.metadata.columns == {}
-    assert loaded_instance.metadata.primary_key is None
-    assert loaded_instance.metadata.alternate_keys == []
-    assert loaded_instance.metadata.sequence_key is None
-    assert loaded_instance.metadata.sequence_index is None
-    assert loaded_instance.metadata._version == 'SINGLE_TABLE_V1'
+    assert loaded_instance.metadata.get_columns() == {}
+    assert loaded_instance.metadata.get_primary_key() is None
+    assert loaded_instance.metadata.get_alternate_keys() == []
+    assert loaded_instance.metadata.get_sequence_key() is None
+    assert loaded_instance.metadata.get_sequence_index() is None
+    assert loaded_instance.metadata.METADATA_SPEC_VERSION == 'V1'
     assert hasattr(instance, '_synthesizer_id') is False
     assert hasattr(loaded_instance, '_synthesizer_id') is True
     assert isinstance(loaded_instance._synthesizer_id, str) is True
@@ -587,7 +588,7 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
             initialization, but is saved to a file before fitting.
     """
     # Setup
-    metadata_from_dict = SingleTableMetadata().load_from_dict({
+    metadata_from_dict = Metadata().load_from_dict({
         'columns': {
             'col 1': {'sdtype': 'numerical'},
             'col 2': {'sdtype': 'numerical'},
@@ -610,8 +611,8 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
     assert len(captured_warnings) == 0
 
     # Run 2
-    metadata_detect = SingleTableMetadata()
-    metadata_detect.detect_from_dataframe(data)
+    metadata_detect = Metadata()
+    metadata_detect.detect_from_dataframes(data)
     file_name = tmp_path / 'singletable.json'
     metadata_detect.save_to_json(file_name)
     with warnings.catch_warnings(record=True) as captured_warnings:
@@ -648,8 +649,8 @@ def test_metadata_updated_warning_detect(mock__fit):
         'col 2': [4, 5, 6],
         'col 3': ['a', 'b', 'c'],
     })
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
+    metadata = Metadata()
+    metadata.detect_from_dataframes(data)
     expected_message = re.escape(
         "We strongly recommend saving the metadata using 'save_to_json' for replicability"
         ' in future SDV versions.'
@@ -684,7 +685,7 @@ def test_metadata_updated_warning(method, kwargs):
     The warning should be raised during synthesizer initialization.
     """
     # Setup
-    metadata = SingleTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'columns': {
             'col 1': {'sdtype': 'id'},
             'col 2': {'sdtype': 'id'},
@@ -704,7 +705,7 @@ def test_metadata_updated_warning(method, kwargs):
         BaseSingleTableSynthesizer(metadata)
 
     # Assert
-    assert metadata._updated is False
+    assert metadata._check_updated_flag() is False
 
 
 def test_fit_raises_version_error():

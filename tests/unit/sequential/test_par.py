@@ -9,6 +9,7 @@ from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.errors import InvalidConstraintsError
 from sdv.errors import InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.sequential.par import PARSynthesizer
@@ -74,9 +75,13 @@ class TestPARSynthesizer:
             'verbose': False,
         }
         assert isinstance(synthesizer._data_processor, DataProcessor)
-        assert synthesizer._data_processor.metadata == metadata
+        assert isinstance(synthesizer._data_processor.metadata, Metadata)
+        assert (
+            synthesizer._data_processor.metadata.to_dict()
+            == Metadata.load_from_dict(metadata.to_dict()).to_dict()
+        )
         assert isinstance(synthesizer._context_synthesizer, GaussianCopulaSynthesizer)
-        assert synthesizer._context_synthesizer.metadata.columns == {
+        assert synthesizer._context_synthesizer.metadata.get_columns() == {
             'gender': {'sdtype': 'categorical'},
             'name': {'sdtype': 'id'},
         }
@@ -236,7 +241,7 @@ class TestPARSynthesizer:
         result = instance.get_metadata()
 
         # Assert
-        assert result == metadata
+        assert result.tables['default_table_name'].to_dict() == metadata.to_dict()
 
     def test_validate_context_columns_unique_per_sequence_key(self):
         """Test error is raised if context column values vary for each tuple of sequence keys.
@@ -440,7 +445,7 @@ class TestPARSynthesizer:
         data = self.get_data()
         par = PARSynthesizer(metadata, context_columns=['gender'])
         initial_synthesizer = Mock()
-        context_metadata = SingleTableMetadata.load_from_dict({
+        context_metadata = Metadata.load_from_dict({
             'columns': {'gender': {'sdtype': 'categorical'}, 'name': {'sdtype': 'id'}}
         })
         par._context_synthesizer = initial_synthesizer
@@ -477,7 +482,7 @@ class TestPARSynthesizer:
         data['time'] = data['time'].apply(lambda x: x.timestamp())
         par = PARSynthesizer(metadata, context_columns=['time'])
         initial_synthesizer = Mock()
-        context_metadata = SingleTableMetadata.load_from_dict({
+        context_metadata = Metadata.load_from_dict({
             'columns': {'time': {'sdtype': 'datetime'}, 'name': {'sdtype': 'id'}}
         })
         par._context_synthesizer = initial_synthesizer
@@ -487,7 +492,7 @@ class TestPARSynthesizer:
         # Run
         par._fit_context_model(data)
 
-        converted_context_metadata = SingleTableMetadata.load_from_dict({
+        converted_context_metadata = Metadata.load_from_dict({
             'columns': {'time': {'sdtype': 'numerical'}, 'name': {'sdtype': 'id'}}
         })
 
@@ -497,7 +502,7 @@ class TestPARSynthesizer:
             enforce_min_max_values=initial_synthesizer.enforce_min_max_values,
             enforce_rounding=initial_synthesizer.enforce_rounding,
         )
-        assert converted_context_metadata.columns == context_metadata.columns
+        assert converted_context_metadata.get_columns() == context_metadata.get_columns()
         fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0]
         expected_fitted_data = pd.DataFrame({
             'name': ['Doe', 'Jane', 'John'],

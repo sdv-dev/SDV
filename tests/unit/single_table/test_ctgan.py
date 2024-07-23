@@ -7,6 +7,7 @@ import pytest
 from sdmetrics import visualization
 
 from sdv.errors import InvalidDataTypeError, NotFittedError
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer, _validate_no_category_dtype
 
@@ -237,7 +238,7 @@ class TestCTGANSynthesizer:
         that have been detected by the utility function.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = CTGANSynthesizer(metadata)
         processed_data = Mock()
 
@@ -436,7 +437,7 @@ class TestTVAESynthesizer:
         that have been detected by the utility function.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = TVAESynthesizer(metadata)
         processed_data = Mock()
 
