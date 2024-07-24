@@ -84,10 +84,11 @@ class Metadata(MultiTableMetadata):
                     'This metadata contains more than one table. '
                     'Please provide a table name in the method.'
                 )
+
             single_table = next(iter(self.tables.values()), None)
             return single_table
-        else:
-            return self.tables[table_name]
+
+        return self.tables[table_name]
 
     def _get_table_name(self, table_name=None):
         if table_name is None:
@@ -96,7 +97,9 @@ class Metadata(MultiTableMetadata):
                     'This metadata contains more than one table. '
                     'Please provide a table name in the method.'
                 )
+
             table_name = next(iter(self.tables), None)
+
         return table_name
 
     def get_column_relationships(self, table_name=None):
@@ -115,9 +118,7 @@ class Metadata(MultiTableMetadata):
                 Returns a list of column relationships dicts
         """
         table = self._get_table_or_default(table_name)
-        if table is None:
-            return []
-        return table.column_relationships
+        return getattr(table, 'column_relationships', [])
 
     def get_primary_key(self, table_name=None):
         """Get the primary key for a table.
@@ -135,9 +136,7 @@ class Metadata(MultiTableMetadata):
                 Returns the name of the primary key for the table.
         """
         table = self._get_table_or_default(table_name)
-        if table is None:
-            return None
-        return table.primary_key
+        return getattr(table, 'primary_key', None)
 
     def get_alternate_keys(self, table_name=None):
         """Get the alternate keys for a table.
@@ -155,9 +154,7 @@ class Metadata(MultiTableMetadata):
                 List of alternate keys found in the table.
         """
         table = self._get_table_or_default(table_name)
-        if table is None:
-            return []
-        return table.alternate_keys
+        return getattr(table, 'alternate_keys', [])
 
     def get_columns(self, table_name=None):
         """Get the columns for a table.
@@ -175,9 +172,7 @@ class Metadata(MultiTableMetadata):
                 Returns dict describing columns of the given table.
         """
         table = self._get_table_or_default(table_name)
-        if table is None:
-            return {}
-        return table.columns
+        return getattr(table, 'columns', {})
 
     def validate_data(self, data):
         """Validate the data matches the metadata.
@@ -232,6 +227,7 @@ class Metadata(MultiTableMetadata):
         if table_name is None:
             self.tables[DEFAULT_TABLE_NAME] = SingleTableMetadata()
             table_name = DEFAULT_TABLE_NAME
+
         super().add_column(table_name, column_name, **kwargs)
 
     def set_sequence_key(self, column_name, table_name=None):
@@ -345,9 +341,7 @@ class Metadata(MultiTableMetadata):
                 Sequence key name
         """
         table = self._get_table_or_default(table_name)
-        if table is None:
-            return None
-        return table.sequence_key
+        return getattr(table, 'sequence_key', None)
 
     def get_sequence_index(self, table_name=None):
         """Get sequence index for a table.
@@ -365,9 +359,7 @@ class Metadata(MultiTableMetadata):
                 Sequence Index name for the given table.
         """
         table = self._get_table_or_default(table_name)
-        if table is None:
-            return None
-        return table.sequence_index
+        return getattr(table, 'sequence_key', None)
 
     def get_valid_column_relationships(self, table_name=None):
         """Get valid columns relationships for a table.
