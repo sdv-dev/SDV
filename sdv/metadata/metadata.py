@@ -359,7 +359,7 @@ class Metadata(MultiTableMetadata):
                 Sequence Index name for the given table.
         """
         table = self._get_table_or_default(table_name)
-        return getattr(table, 'sequence_key', None)
+        return getattr(table, 'sequence_index', None)
 
     def get_valid_column_relationships(self, table_name=None):
         """Get valid columns relationships for a table.
