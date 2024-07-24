@@ -1,5 +1,6 @@
 """Metadata."""
 
+import warnings
 from pathlib import Path
 
 import pandas as pd
@@ -9,6 +10,10 @@ from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import read_json
 
 DEFAULT_TABLE_NAME = 'default_table_name'
+DEPRECATION_MSG = (
+    "'SingleTableMetadata'/'MultiTableMetadata' is deprecated. Please "
+    "use the new 'Metadata' class for synthesizers."
+)
 
 
 class Metadata(MultiTableMetadata):
@@ -34,6 +39,14 @@ class Metadata(MultiTableMetadata):
         filename = Path(filepath).stem
         metadata = read_json(filepath)
         return cls.load_from_dict(metadata, filename)
+
+    @classmethod
+    def _convert_to_unified_metadata(cls, metadata):
+        """Convert the metadata to Metadata."""
+        if type(metadata) == SingleTableMetadata or type(metadata) == MultiTableMetadata:
+            metadata = Metadata().load_from_dict(metadata.to_dict())
+            warnings.warn(DEPRECATION_MSG, FutureWarning)
+        return metadata
 
     @classmethod
     def load_from_dict(cls, metadata_dict, single_table_name=None):

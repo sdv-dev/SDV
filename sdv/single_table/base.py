@@ -510,6 +510,7 @@ class BaseSynthesizer:
         with open(filepath, 'rb') as f:
             try:
                 synthesizer = cloudpickle.load(f)
+                synthesizer.metadata = Metadata._convert_to_unified_metadata(synthesizer.metadata)
             except RuntimeError as e:
                 err_msg = (
                     'Attempting to deserialize object on a CUDA device but '

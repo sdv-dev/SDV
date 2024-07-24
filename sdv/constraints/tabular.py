@@ -53,6 +53,7 @@ from sdv.constraints.utils import (
     revert_nans_columns,
     sigmoid,
 )
+from sdv.metadata.metadata import Metadata
 
 INEQUALITY_TO_OPERATION = {
     '>': np.greater,
@@ -251,6 +252,7 @@ class FixedCombinations(Constraint):
 
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
+        metadata = Metadata._convert_to_unified_metadata(metadata)
         invalid_columns = []
         column_names = kwargs.get('column_names')
         for column in column_names:
@@ -390,11 +392,13 @@ class Inequality(Constraint):
 
     @classmethod
     def _validate_metadata_columns(cls, metadata, **kwargs):
+        metadata = Metadata._convert_to_unified_metadata(metadata)
         kwargs['column_names'] = [kwargs.get('high_column_name'), kwargs.get('low_column_name')]
         super()._validate_metadata_columns(metadata, **kwargs)
 
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
+        metadata = Metadata._convert_to_unified_metadata(metadata)
         high = kwargs.get('high_column_name')
         low = kwargs.get('low_column_name')
         high_sdtype = metadata.get_columns().get(high, {}).get('sdtype')
@@ -599,6 +603,7 @@ class ScalarInequality(Constraint):
 
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
+        metadata = Metadata._convert_to_unified_metadata(metadata)
         column_name = kwargs.get('column_name')
         sdtype = metadata.get_columns().get(column_name, {}).get('sdtype')
         value = kwargs.get('value')
@@ -772,6 +777,7 @@ class Positive(ScalarInequality):
 
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
+        metadata = Metadata._convert_to_unified_metadata(metadata)
         column_name = kwargs.get('column_name')
         sdtype = metadata.get_columns().get(column_name, {}).get('sdtype')
         if sdtype != 'numerical':
@@ -801,6 +807,7 @@ class Negative(ScalarInequality):
 
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
+        metadata = Metadata._convert_to_unified_metadata(metadata)
         column_name = kwargs.get('column_name')
         sdtype = metadata.get_columns().get(column_name, {}).get('sdtype')
         if sdtype != 'numerical':
@@ -839,6 +846,7 @@ class Range(Constraint):
 
     @classmethod
     def _validate_metadata_columns(cls, metadata, **kwargs):
+        metadata = Metadata._convert_to_unified_metadata(metadata)
         high = kwargs.get('high_column_name')
         low = kwargs.get('low_column_name')
         middle = kwargs.get('middle_column_name')
@@ -847,6 +855,7 @@ class Range(Constraint):
 
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
+        metadata = Metadata._convert_to_unified_metadata(metadata)
         high = kwargs.get('high_column_name')
         low = kwargs.get('low_column_name')
         middle = kwargs.get('middle_column_name')
@@ -1087,6 +1096,7 @@ class ScalarRange(Constraint):
 
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
+        metadata = Metadata._convert_to_unified_metadata(metadata)
         column_name = kwargs.get('column_name')
         if column_name not in metadata.get_columns():
             raise ConstraintMetadataError(
@@ -1442,6 +1452,7 @@ class Unique(Constraint):
 
     @staticmethod
     def _validate_metadata_specific_to_constraint(metadata, **kwargs):
+        metadata = Metadata._convert_to_unified_metadata(metadata)
         column_names = kwargs.get('column_names')
         keys = set()
         if isinstance(metadata.get_primary_key(), tuple):

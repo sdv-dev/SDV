@@ -18,6 +18,7 @@ from sdv.constraints.errors import (
     MissingConstraintColumnError,
 )
 from sdv.errors import ConstraintsNotMetError
+from sdv.metadata.metadata import Metadata
 
 LOGGER = logging.getLogger(__name__)
 
@@ -147,6 +148,7 @@ class Constraint(metaclass=ConstraintMeta):
 
     @classmethod
     def _validate_metadata_columns(cls, metadata, **kwargs):
+        Metadata._convert_to_unified_metadata(metadata)
         if 'column_name' in kwargs:
             column_names = [kwargs.get('column_name')]
         else:
@@ -179,6 +181,7 @@ class Constraint(metaclass=ConstraintMeta):
                 All the errors from validating the metadata.
         """
         errors = []
+        metadata = Metadata._convert_to_unified_metadata(metadata)
         try:
             cls._validate_inputs(**kwargs)
         except AggregateConstraintsError as agg_error:
