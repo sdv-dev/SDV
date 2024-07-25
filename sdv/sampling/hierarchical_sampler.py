@@ -147,7 +147,8 @@ class BaseHierarchicalSampler:
         """
         total_num_rows = round(self._table_sizes[child_name] * scale)
         for foreign_key in self.metadata._get_foreign_keys(table_name, child_name):
-            null_fk_pctg = self._null_foreign_key_percentages[f'__{child_name}__{foreign_key}']
+            null_fk_pctgs = getattr(self, '_null_foreign_key_percentages', {})
+            null_fk_pctg = null_fk_pctgs.get(f'__{child_name}__{foreign_key}', 0)
             total_parent_rows = round(total_num_rows * (1 - null_fk_pctg))
             num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
             min_rows = getattr(self, '_min_child_rows', {num_rows_key: 0})[num_rows_key]
@@ -229,7 +230,8 @@ class BaseHierarchicalSampler:
                     )
 
                 total_num_rows = round(self._table_sizes[child_name] * scale)
-                null_fk_pctg = self._null_foreign_key_percentages[f'__{child_name}__{foreign_key}']
+                null_fk_pctgs = getattr(self, '_null_foreign_key_percentages', {})
+                null_fk_pctg = null_fk_pctgs.get(f'__{child_name}__{foreign_key}', 0)
                 num_null_rows = round(total_num_rows * null_fk_pctg)
                 if num_null_rows > 0:
                     self._add_child_rows(
