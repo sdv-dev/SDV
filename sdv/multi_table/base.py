@@ -665,6 +665,15 @@ class BaseMultiTableSynthesizer:
 
         return info
 
+    def _validate_fit_before_save(self):
+        """Validate that the synthesizer has been fitted before saving."""
+        if not self._fitted:
+            warnings.warn(
+                'You are saving a synthesizer that has not yet been fitted. You will not be able '
+                'to sample synthetic data without fitting. We recommend fitting the synthesizer '
+                'first and then saving.'
+            )
+
     def save(self, filepath):
         """Save this instance to the given path using cloudpickle.
 
@@ -672,6 +681,7 @@ class BaseMultiTableSynthesizer:
             filepath (str):
                 Path where the instance will be serialized.
         """
+        self._validate_fit_before_save()
         synthesizer_id = getattr(self, '_synthesizer_id', None)
         SYNTHESIZER_LOGGER.info({
             'EVENT': 'Save',
