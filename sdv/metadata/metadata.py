@@ -43,7 +43,7 @@ class Metadata(MultiTableMetadata):
     @classmethod
     def _convert_to_unified_metadata(cls, metadata):
         """Convert the metadata to Metadata."""
-        if type(metadata) == SingleTableMetadata or type(metadata) == MultiTableMetadata:
+        if type(metadata) is SingleTableMetadata or type(metadata) is MultiTableMetadata:
             metadata = Metadata().load_from_dict(metadata.to_dict())
             warnings.warn(DEPRECATION_MSG, FutureWarning)
         return metadata
