@@ -18,6 +18,7 @@ from sdv.errors import (
     SynthesizerInputError,
     VersionError,
 )
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -53,13 +54,21 @@ class TestBaseMultiTableSynthesizer:
         }
         instance._synthesizer.assert_has_calls([
             call(
-                metadata=instance.metadata.tables['nesreca'],
+                metadata=ANY,
                 default_distribution='gamma',
                 locales=locales,
             ),
-            call(metadata=instance.metadata.tables['oseba'], locales=locales),
-            call(metadata=instance.metadata.tables['upravna_enota'], locales=locales),
+            call(metadata=ANY, locales=locales),
+            call(metadata=ANY, locales=locales),
         ])
+
+        expected_call_0 = instance.metadata.tables['nesreca'].to_dict()
+        expected_call_1 = instance.metadata.tables['oseba'].to_dict()
+        expected_call_2 = instance.metadata.tables['upravna_enota'].to_dict()
+        call_list = instance._synthesizer.call_args_list
+        assert call_list[0][1]['metadata'].tables['default_table_name'].to_dict() == expected_call_0
+        assert call_list[1][1]['metadata'].tables['default_table_name'].to_dict() == expected_call_1
+        assert call_list[2][1]['metadata'].tables['default_table_name'].to_dict() == expected_call_2
 
     def test__get_pbar_args(self):
         """Test that ``_get_pbar_args`` returns a dictionary with disable opposite to verbose."""
@@ -115,6 +124,7 @@ class TestBaseMultiTableSynthesizer:
         mock_generate_synthesizer_id.return_value = synthesizer_id
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         metadata = get_multi_table_metadata()
+        metadata = Metadata.load_from_dict(metadata.to_dict())
         metadata.validate = Mock()
 
         # Run
@@ -122,6 +132,7 @@ class TestBaseMultiTableSynthesizer:
             instance = BaseMultiTableSynthesizer(metadata)
 
         # Assert
+        assert type(instance.metadata) is Metadata
         assert instance.metadata == metadata
         assert isinstance(instance._table_synthesizers['nesreca'], GaussianCopulaSynthesizer)
         assert isinstance(instance._table_synthesizers['oseba'], GaussianCopulaSynthesizer)
@@ -370,12 +381,14 @@ class TestBaseMultiTableSynthesizer:
         """Test that the metadata object is returned."""
         # Setup
         metadata = get_multi_table_metadata()
+        metadata = Metadata.load_from_dict(metadata.to_dict())
         instance = BaseMultiTableSynthesizer(metadata)
 
         # Run
         result = instance.get_metadata()
 
         # Assert
+        assert type(metadata) is Metadata
         assert metadata == result
 
     def test_validate(self):
@@ -903,9 +916,16 @@ class TestBaseMultiTableSynthesizer:
         synth_nesreca._preprocess.assert_called_once_with(data['nesreca'])
         synth_oseba._preprocess.assert_called_once_with(data['oseba'])
         synth_upravna_enota._preprocess.assert_called_once_with(data['upravna_enota'])
-        mock_warnings.warn.assert_called_once_with(
-            'This model has already been fitted. To use the new preprocessed data, '
-            "please refit the model using 'fit' or 'fit_processed_data'."
+
+        arg_list = mock_warnings.warn.call_args_list
+        assert arg_list[0][0][0] == (
+            "The 'MultiTableMetadata' is deprecated. "
+            "Please use the new 'Metadata' class for synthesizers."
+        )
+        assert arg_list[1][0][0] == (
+            'This model has already been fitted. '
+            'To use the new preprocessed data, please '
+            "refit the model using 'fit' or 'fit_processed_data'."
         )
 
     @patch('sdv.multi_table.base.datetime')

@@ -123,7 +123,7 @@ def _simplify_relationships_and_tables(metadata, tables_to_drop):
     Removes the tables that are not direct child or grandchild of the root table.
 
     Args:
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
         tables_to_drop (set):
             Set of the tables that relationships will be removed.
@@ -149,7 +149,7 @@ def _simplify_grandchildren(metadata, grandchildren):
      - Drop all modelables columns.
 
     Args:
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
         grandchildren (set):
             Set of the grandchildren of the root table.
@@ -174,7 +174,7 @@ def _get_num_column_to_drop(metadata, child_table, max_col_per_relationships):
         - minimum number of column to drop = n + k - sqrt(k^2 + 1 + 2m)
 
     Args:
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
         child_table (str):
             Name of the child table.
@@ -232,7 +232,7 @@ def _simplify_child(metadata, child_table, max_col_per_relationships):
     """Simplify the child table.
 
     Args:
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
         child_table (str):
             Name of the child table.
@@ -252,7 +252,7 @@ def _simplify_children(metadata, children, root_table, num_data_column):
      - Drop some modelable columns to have at most MAX_NUMBER_OF_COLUMNS columns to model.
 
     Args:
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
         children (set):
             Set of the children of the root table.
@@ -288,11 +288,11 @@ def _simplify_metadata(metadata):
      - Drop some modelable columns in the children to have at most 1000 columns to model.
 
     Args:
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
 
     Returns:
-        MultiTableMetadata:
+        Metadata:
             Simplified metadata.
     """
     simplified_metadata = deepcopy(metadata)
@@ -330,7 +330,7 @@ def _simplify_data(data, metadata):
         data (dict):
             Dictionary that maps each table name (string) to the data for that
             table (pandas.DataFrame).
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
 
     Returns:
@@ -375,7 +375,7 @@ def _get_rows_to_drop(data, metadata):
     This ensures that we preserve the referential integrity between all the relationships.
 
     Args:
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
         data (dict):
             Dictionary that maps each table name (string) to the data for that
@@ -470,7 +470,7 @@ def _subsample_table_and_descendants(data, metadata, table, num_rows):
         data (dict):
             Dictionary that maps each table name (string) to the data for that
             table (pandas.DataFrame).
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
         table (str):
             Name of the table.
@@ -496,7 +496,7 @@ def _get_primary_keys_referenced(data, metadata):
         data (dict):
             Dictionary that maps each table name (string) to the data for that
             table (pandas.DataFrame).
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
 
     Returns:
@@ -568,7 +568,7 @@ def _subsample_ancestors(data, metadata, table, primary_keys_referenced):
         data (dict):
             Dictionary that maps each table name (string) to the data for that
             table (pandas.DataFrame).
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
         table (str):
             Name of the table.
@@ -604,7 +604,7 @@ def _subsample_data(data, metadata, main_table_name, num_rows):
       referenced by the descendants and some unreferenced rows.
 
     Args:
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
         data (dict):
             Dictionary that maps each table name (string) to the data for that

@@ -23,7 +23,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
     """Hierarchical Modeling Algorithm One.
 
     Args:
-        metadata (sdv.metadata.multi_table.MultiTableMetadata):
+        metadata (sdv.metadata.Metadata):
             Multi table metadata representing the data tables that this synthesizer will be used
             for.
         locales (list or str):
@@ -47,7 +47,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         """Get the number of data columns, ie colums that are not id, for each table.
 
         Args:
-            metadata (MultiTableMetadata):
+            metadata (Metadata):
                 Metadata of the datasets.
         """
         columns_per_table = {}

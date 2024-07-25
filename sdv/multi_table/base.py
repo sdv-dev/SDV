@@ -26,6 +26,8 @@ from sdv.errors import (
     SynthesizerInputError,
 )
 from sdv.logging import disable_single_table_logger, get_sdv_logger
+from sdv.metadata.metadata import Metadata
+from sdv.metadata.multi_table import DEPRECATION_MSG, MultiTableMetadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
@@ -38,8 +40,8 @@ class BaseMultiTableSynthesizer:
     multi table synthesizers need to implement, as well as common functionality.
 
     Args:
-        metadata (sdv.metadata.multi_table.MultiTableMetadata):
-            Multi table metadata representing the data tables that this synthesizer will be used
+        metadata (sdv.metadata.Metadata):
+            Table metadata representing the data tables that this synthesizer will be used
             for.
         locales (list or str):
             The default locale(s) to use for AnonymizedFaker transformers.
@@ -71,8 +73,9 @@ class BaseMultiTableSynthesizer:
         with disable_single_table_logger():
             for table_name, table_metadata in self.metadata.tables.items():
                 synthesizer_parameters = self._table_parameters.get(table_name, {})
+                metadata = Metadata.load_from_dict(table_metadata.to_dict())
                 self._table_synthesizers[table_name] = self._synthesizer(
-                    metadata=table_metadata, locales=self.locales, **synthesizer_parameters
+                    metadata=metadata, locales=self.locales, **synthesizer_parameters
                 )
                 self._table_synthesizers[table_name]._data_processor.table_name = table_name
 
@@ -97,6 +100,9 @@ class BaseMultiTableSynthesizer:
 
     def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
         self.metadata = metadata
+        if type(metadata) is MultiTableMetadata:
+            self.metadata = Metadata().load_from_dict(metadata.to_dict())
+            warnings.warn(DEPRECATION_MSG, FutureWarning)
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', message=r'.*column relationship.*')
             self.metadata.validate()

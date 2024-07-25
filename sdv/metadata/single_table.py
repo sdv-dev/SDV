@@ -1371,7 +1371,7 @@ class SingleTableMetadata:
             if len(tables) > 1:
                 raise InvalidMetadataError(
                     'There are multiple tables specified in the JSON. '
-                    'Try using the MultiTableMetadata class to upgrade this file.'
+                    'Try using the Metadata class to upgrade this file.'
                 )
 
             else:

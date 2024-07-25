@@ -1,8 +1,11 @@
+import re
+
 import pytest
 
 from sdv.datasets.demo import download_demo
 from sdv.metadata.metadata import DEFAULT_TABLE_NAME, Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
+from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 
@@ -255,3 +258,41 @@ def test_single_table_compatibility(tmp_path):
     metadata_sample = synthesizer.sample(10)
     assert loaded_synthesizer.metadata.to_dict() == synthesizer_2.metadata.to_dict()
     assert metadata_sample.columns.to_list() == loaded_sample.columns.to_list()
+
+
+def test_multi_table_compatibility(tmp_path):
+    """Test if SingleMetadataTable still has compatibility with single table synthesizers."""
+    # Setup
+    data, metadata = download_demo('multi_table', 'fake_hotels')
+    warn_msg = re.escape(
+        "The 'MultiTableMetadata' is deprecated. Please use the new "
+        "'Metadata' class for synthesizers."
+    )
+
+    # Run
+    with pytest.warns(FutureWarning, match=warn_msg):
+        synthesizer = HMASynthesizer(metadata)
+    synthesizer.fit(data)
+    model_path = tmp_path / 'synthesizer.pkl'
+    synthesizer.save(model_path)
+
+    # Assert
+    assert model_path.exists()
+    assert model_path.is_file()
+    loaded_synthesizer = HMASynthesizer.load(model_path)
+    assert isinstance(synthesizer, HMASynthesizer)
+    assert loaded_synthesizer.get_info() == synthesizer.get_info()
+    assert isinstance(loaded_synthesizer.metadata, Metadata)
+    expected_metadata = metadata.to_dict()
+    expected_metadata['METADATA_SPEC_VERSION'] = 'V1'
+    assert loaded_synthesizer.metadata.to_dict() == expected_metadata
+    loaded_sample = loaded_synthesizer.sample(10)
+    synthesizer.validate(loaded_sample)
+
+    # Run against Metadata
+    synthesizer_2 = HMASynthesizer(Metadata._convert_to_unified_metadata(metadata))
+    synthesizer_2.fit(data)
+    metadata_sample = synthesizer.sample(10)
+    assert loaded_synthesizer.metadata.to_dict() == synthesizer_2.metadata.to_dict()
+    for table in metadata_sample:
+        assert metadata_sample[table].columns.to_list() == loaded_sample[table].columns.to_list()

@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from sdv.errors import SynthesizerInputError
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
@@ -17,6 +18,7 @@ class TestHMASynthesizer:
         """Test the default initialization of the ``HMASynthesizer``."""
         # Run
         metadata = get_multi_table_metadata()
+        metadata = Metadata.load_from_dict(metadata.to_dict())
         metadata.validate = Mock()
         instance = HMASynthesizer(metadata)
 
