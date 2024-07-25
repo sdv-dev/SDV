@@ -10,9 +10,11 @@ from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import read_json
 
 DEFAULT_TABLE_NAME = 'default_table_name'
-DEPRECATION_MSG = (
-    "'SingleTableMetadata'/'MultiTableMetadata' is deprecated. Please "
-    "use the new 'Metadata' class for synthesizers."
+SINGLE_DEPRECATION_MSG = (
+    "'SingleTableMetadata' is deprecated. Please " "use the new 'Metadata' class for synthesizers."
+)
+MULTI_DEPRECATION_MSG = (
+    "'MultiTableMetadata' is deprecated. Please " "use the new 'Metadata' class for synthesizers."
 )
 
 
@@ -43,9 +45,15 @@ class Metadata(MultiTableMetadata):
     @classmethod
     def _convert_to_unified_metadata(cls, metadata):
         """Convert the metadata to Metadata."""
-        if type(metadata) is SingleTableMetadata or type(metadata) is MultiTableMetadata:
+        metadata_type = type(metadata)
+        if metadata_type is SingleTableMetadata or metadata_type is MultiTableMetadata:
             metadata = Metadata().load_from_dict(metadata.to_dict())
-            warnings.warn(DEPRECATION_MSG, FutureWarning)
+            warnings.warn(
+                SINGLE_DEPRECATION_MSG
+                if metadata_type is SingleTableMetadata
+                else MULTI_DEPRECATION_MSG,
+                FutureWarning,
+            )
         return metadata
 
     @classmethod

@@ -11,6 +11,7 @@ from sdv.evaluation.multi_table import (
     get_column_plot,
     run_diagnostic,
 )
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
 
 
@@ -31,6 +32,23 @@ def test_evaluate_quality():
     QualityReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
 
 
+def test_evaluate_quality_metadata():
+    """Test ``generate`` is called for the ``QualityReport`` object with Metadata."""
+    # Setup
+    table = pd.DataFrame({'col': [1, 2, 3]})
+    data1 = {'table': table}
+    data2 = {'table': pd.DataFrame({'col': [2, 1, 3]})}
+    metadata = Metadata()
+    metadata.detect_table_from_dataframe('table', table)
+    QualityReport.generate = Mock()
+
+    # Run
+    evaluate_quality(data1, data2, metadata)
+
+    # Assert
+    QualityReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
+
+
 def test_run_diagnostic():
     """Test ``generate`` is called for the ``DiagnosticReport`` object."""
     # Setup
@@ -38,6 +56,23 @@ def test_run_diagnostic():
     data1 = {'table': table}
     data2 = {'table': pd.DataFrame({'col': [2, 1, 3]})}
     metadata = MultiTableMetadata()
+    metadata.detect_table_from_dataframe('table', table)
+    DiagnosticReport.generate = Mock()
+
+    # Run
+    run_diagnostic(data1, data2, metadata)
+
+    # Assert
+    DiagnosticReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
+
+
+def test_run_diagnostic_metadata():
+    """Test ``generate`` is called for the ``DiagnosticReport`` object with Metadata."""
+    # Setup
+    table = pd.DataFrame({'col': [1, 2, 3]})
+    data1 = {'table': table}
+    data2 = {'table': pd.DataFrame({'col': [2, 1, 3]})}
+    metadata = Metadata()
     metadata.detect_table_from_dataframe('table', table)
     DiagnosticReport.generate = Mock()
 

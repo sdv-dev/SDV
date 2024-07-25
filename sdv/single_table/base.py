@@ -35,7 +35,6 @@ from sdv.errors import (
 )
 from sdv.logging import get_sdv_logger
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.single_table import DEPRECATION_MSG, SingleTableMetadata
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
 LOGGER = logging.getLogger(__name__)
@@ -100,10 +99,7 @@ class BaseSynthesizer:
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
     ):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
-        self.metadata = metadata
-        if isinstance(metadata, SingleTableMetadata):
-            self.metadata = Metadata().load_from_dict(metadata.to_dict())
-            warnings.warn(DEPRECATION_MSG, FutureWarning)
+        self.metadata = Metadata()._convert_to_unified_metadata(metadata)
 
         self.metadata.validate()
         self._check_metadata_updated()

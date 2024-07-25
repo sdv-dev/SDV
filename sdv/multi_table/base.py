@@ -27,7 +27,6 @@ from sdv.errors import (
 )
 from sdv.logging import disable_single_table_logger, get_sdv_logger
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.multi_table import DEPRECATION_MSG, MultiTableMetadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
@@ -99,10 +98,7 @@ class BaseMultiTableSynthesizer:
             )
 
     def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
-        self.metadata = metadata
-        if type(metadata) is MultiTableMetadata:
-            self.metadata = Metadata().load_from_dict(metadata.to_dict())
-            warnings.warn(DEPRECATION_MSG, FutureWarning)
+        self.metadata = Metadata()._convert_to_unified_metadata(metadata)
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', message=r'.*column relationship.*')
             self.metadata.validate()
@@ -210,7 +206,7 @@ class BaseMultiTableSynthesizer:
         self._table_parameters[table_name].update(deepcopy(table_parameters))
 
     def get_metadata(self):
-        """Return the ``MultiTableMetadata`` for this synthesizer."""
+        """Return the ``Metadata`` for this synthesizer."""
         return self.metadata
 
     def _validate_all_tables(self, data):

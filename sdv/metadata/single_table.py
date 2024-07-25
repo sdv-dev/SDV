@@ -36,11 +36,6 @@ from sdv.metadata.visualization import (
 LOGGER = logging.getLogger(__name__)
 SINGLETABLEMETADATA_LOGGER = get_sdv_logger('SingleTableMetadata')
 
-DEPRECATION_MSG = (
-    "The 'SingleTableMetadata' is deprecated. Please use the new "
-    "'Metadata' class for synthesizers."
-)
-
 
 class SingleTableMetadata:
     """Single Table Metadata class."""

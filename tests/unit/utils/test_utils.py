@@ -8,6 +8,7 @@ import pytest
 
 from sdv.errors import InvalidDataError
 from sdv.metadata import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.utils.utils import drop_unknown_references, get_random_sequence_subset
 
 
@@ -358,11 +359,14 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
         drop_unknown_references(data, metadata)
 
 
-def test_get_random_sequence_subset_no_sequence_key():
+@patch('sdv.metadata.Metadata._convert_to_unified_metadata')
+def test_get_random_sequence_subset_no_sequence_key(mock_convert_metadata):
     """Test that an error is raised if no sequence_key is provided in the metadata."""
     # Setup
     metadata = Mock(spec=SingleTableMetadata)
-    metadata.sequence_key = None
+    unified_metadata_mock = Mock(spec=Metadata)
+    unified_metadata_mock.get_sequence_key.return_value = None
+    mock_convert_metadata.return_value = unified_metadata_mock
 
     # Run and Assert
     error_message = (
@@ -373,11 +377,14 @@ def test_get_random_sequence_subset_no_sequence_key():
         get_random_sequence_subset(pd.DataFrame(), metadata, 3)
 
 
-def test_get_random_sequence_subset_sequence_key_not_in_data():
+@patch('sdv.metadata.Metadata._convert_to_unified_metadata')
+def test_get_random_sequence_subset_sequence_key_not_in_data(mock_convert_metadata):
     """Test that an error is raised if the data doesn't contain the sequence_key."""
     # Setup
     metadata = Mock(spec=SingleTableMetadata)
-    metadata.sequence_key = 'key'
+    unified_metadata_mock = Mock(spec=Metadata)
+    unified_metadata_mock.get_sequence_key.return_value = 'key'
+    mock_convert_metadata.return_value = unified_metadata_mock
 
     # Run and Assert
     error_message = (
@@ -387,11 +394,14 @@ def test_get_random_sequence_subset_sequence_key_not_in_data():
         get_random_sequence_subset(pd.DataFrame(), metadata, 3)
 
 
-def test_get_random_sequence_subset_bad_long_sequence_subsampling_method():
+@patch('sdv.metadata.Metadata._convert_to_unified_metadata')
+def test_get_random_sequence_subset_bad_long_sequence_subsampling_method(mock_convert_metadata):
     """Test that an error is raised if the long_sequence_subsampling_method is invalid."""
     # Setup
     metadata = Mock(spec=SingleTableMetadata)
-    metadata.sequence_key = 'key'
+    unified_metadata_mock = Mock(spec=Metadata)
+    unified_metadata_mock.get_sequence_key.return_value = 'key'
+    mock_convert_metadata.return_value = unified_metadata_mock
 
     # Run and Assert
     error_message = (
@@ -401,13 +411,16 @@ def test_get_random_sequence_subset_bad_long_sequence_subsampling_method():
         get_random_sequence_subset(pd.DataFrame(), metadata, 3, 10, 'blah')
 
 
+@patch('sdv.metadata.Metadata._convert_to_unified_metadata')
 @patch('sdv.utils.utils.np')
-def test_get_random_sequence_subset_no_max_sequence_length(mock_np):
+def test_get_random_sequence_subset_no_max_sequence_length(mock_np, mock_convert_metadata):
     """Test that the sequences are subsetted but each sequence is full."""
     # Setup
     data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
     metadata = Mock(spec=SingleTableMetadata)
-    metadata.sequence_key = 'key'
+    unified_metadata_mock = Mock(spec=Metadata)
+    unified_metadata_mock.get_sequence_key.return_value = 'key'
+    mock_convert_metadata.return_value = unified_metadata_mock
     mock_np.random.permutation.return_value = np.array(['a', 'd'])
 
     # Run
@@ -421,8 +434,9 @@ def test_get_random_sequence_subset_no_max_sequence_length(mock_np):
     pd.testing.assert_frame_equal(expected, subset)
 
 
+@patch('sdv.metadata.Metadata._convert_to_unified_metadata')
 @patch('sdv.utils.utils.np')
-def test_get_random_sequence_subset_use_first_rows(mock_np):
+def test_get_random_sequence_subset_use_first_rows(mock_np, mock_convert_metadata):
     """Test that the sequences are subsetted and subsampled properly.
 
     If 'long_sequence_subsampling_method' isn't set, the sequences should be clipped using the
@@ -431,7 +445,9 @@ def test_get_random_sequence_subset_use_first_rows(mock_np):
     # Setup
     data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
     metadata = Mock(spec=SingleTableMetadata)
-    metadata.sequence_key = 'key'
+    unified_metadata_mock = Mock(spec=Metadata)
+    unified_metadata_mock.get_sequence_key.return_value = 'key'
+    mock_convert_metadata.return_value = unified_metadata_mock
     mock_np.random.permutation.return_value = np.array(['a', 'b', 'd'])
 
     # Run
@@ -445,8 +461,9 @@ def test_get_random_sequence_subset_use_first_rows(mock_np):
     pd.testing.assert_frame_equal(expected, subset)
 
 
+@patch('sdv.metadata.Metadata._convert_to_unified_metadata')
 @patch('sdv.utils.utils.np')
-def test_get_random_sequence_subset_use_last_rows(mock_np):
+def test_get_random_sequence_subset_use_last_rows(mock_np, mock_convert_metadata):
     """Test that the sequences are subsetted and subsampled properly.
 
     If 'long_sequence_subsampling_method' isn't set, the sequences should be clipped using the
@@ -455,7 +472,9 @@ def test_get_random_sequence_subset_use_last_rows(mock_np):
     # Setup
     data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
     metadata = Mock(spec=SingleTableMetadata)
-    metadata.sequence_key = 'key'
+    unified_metadata_mock = Mock(spec=Metadata)
+    unified_metadata_mock.get_sequence_key.return_value = 'key'
+    mock_convert_metadata.return_value = unified_metadata_mock
     mock_np.random.permutation.return_value = np.array(['a', 'b', 'd'])
 
     # Run
@@ -475,8 +494,9 @@ def test_get_random_sequence_subset_use_last_rows(mock_np):
     pd.testing.assert_frame_equal(expected, subset)
 
 
+@patch('sdv.metadata.Metadata._convert_to_unified_metadata')
 @patch('sdv.utils.utils.np')
-def test_get_random_sequence_subset_use_random_rows(mock_np):
+def test_get_random_sequence_subset_use_random_rows(mock_np, mock_convert_metadata):
     """Test that the sequences are subsetted and subsampled properly.
 
     If 'long_sequence_subsampling_method' isn't set, the sequences should be clipped using random
@@ -485,7 +505,9 @@ def test_get_random_sequence_subset_use_random_rows(mock_np):
     # Setup
     data = pd.DataFrame({'key': ['a'] * 10 + ['b'] * 7 + ['c'] * 9 + ['d'] * 4, 'value': range(30)})
     metadata = Mock(spec=SingleTableMetadata)
-    metadata.sequence_key = 'key'
+    unified_metadata_mock = Mock(spec=Metadata)
+    unified_metadata_mock.get_sequence_key.return_value = 'key'
+    mock_convert_metadata.return_value = unified_metadata_mock
     mock_np.random.permutation.side_effect = [
         np.array(['a', 'b', 'd']),
         np.array([0, 2, 4, 5, 7, 9]),

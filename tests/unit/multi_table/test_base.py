@@ -919,10 +919,6 @@ class TestBaseMultiTableSynthesizer:
 
         arg_list = mock_warnings.warn.call_args_list
         assert arg_list[0][0][0] == (
-            "The 'MultiTableMetadata' is deprecated. "
-            "Please use the new 'Metadata' class for synthesizers."
-        )
-        assert arg_list[1][0][0] == (
             'This model has already been fitted. '
             'To use the new preprocessed data, please '
             "refit the model using 'fit' or 'fit_processed_data'."

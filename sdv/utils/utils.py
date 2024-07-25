@@ -8,6 +8,7 @@ import pandas as pd
 
 from sdv._utils import _validate_foreign_keys_not_null
 from sdv.errors import InvalidDataError, SynthesizerInputError
+from sdv.metadata.metadata import Metadata
 from sdv.multi_table.utils import _drop_rows
 
 
@@ -75,8 +76,8 @@ def get_random_sequence_subset(
     Args:
         data (pandas.DataFrame):
             The sequential data.
-        metadata (SingleTableMetadata):
-            A SingleTableMetadata object describing the data.
+        metadata (Metadata):
+            A Metadata object describing the data.
         num_sequences (int):
             The number of sequences to subsample.
         max_sequence_length (int):
@@ -95,8 +96,8 @@ def get_random_sequence_subset(
         raise ValueError(
             'long_sequence_subsampling_method must be one of "first_rows", "last_rows" or "random"'
         )
-
-    sequence_key = metadata.sequence_key
+    metadata = Metadata()._convert_to_unified_metadata(metadata)
+    sequence_key = metadata.get_sequence_key()
     if not sequence_key:
         raise ValueError(
             'Your metadata does not include a sequence key. A sequence key must be provided to '

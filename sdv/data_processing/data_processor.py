@@ -25,7 +25,6 @@ from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
 from sdv.errors import SynthesizerInputError, log_exc_stacktrace
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.single_table import DEPRECATION_MSG, SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
 
@@ -114,10 +113,7 @@ class DataProcessor:
         table_name=None,
         locales=['en_US'],
     ):
-        self.metadata = metadata
-        if isinstance(metadata, SingleTableMetadata):
-            self.metadata = Metadata().load_from_dict(metadata.to_dict())
-            warnings.warn(DEPRECATION_MSG, FutureWarning)
+        self.metadata = Metadata()._convert_to_unified_metadata(metadata)
         self._enforce_rounding = enforce_rounding
         self._enforce_min_max_values = enforce_min_max_values
         self._model_kwargs = model_kwargs or {}

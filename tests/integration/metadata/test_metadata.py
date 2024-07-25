@@ -230,7 +230,7 @@ def test_single_table_compatibility(tmp_path):
     # Setup
     data, metadata = download_demo('single_table', 'fake_hotel_guests')
     warn_msg = (
-        "The 'SingleTableMetadata' is deprecated. Please use the new "
+        "'SingleTableMetadata' is deprecated. Please use the new "
         "'Metadata' class for synthesizers."
     )
 
@@ -265,7 +265,7 @@ def test_multi_table_compatibility(tmp_path):
     # Setup
     data, metadata = download_demo('multi_table', 'fake_hotels')
     warn_msg = re.escape(
-        "The 'MultiTableMetadata' is deprecated. Please use the new "
+        "'MultiTableMetadata' is deprecated. Please use the new "
         "'Metadata' class for synthesizers."
     )
 

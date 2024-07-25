@@ -13,6 +13,7 @@ from sdv.evaluation.single_table import (
     get_column_plot,
     run_diagnostic,
 )
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 
 
@@ -32,6 +33,23 @@ def test_evaluate_quality():
     QualityReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
 
 
+def test_evaluate_quality_metadata():
+    """Test ``generate`` is called for the ``QualityReport`` object with Metadata."""
+    # Setup
+    data1 = pd.DataFrame({'col': [1, 2, 3]})
+    data2 = pd.DataFrame({'col': [2, 1, 3]})
+    metadata = Metadata()
+    metadata.add_column('col', sdtype='numerical')
+    QualityReport.generate = Mock()
+
+    # Run
+    evaluate_quality(data1, data2, metadata)
+
+    # Assert
+    expected_metadata = metadata.tables['default_table_name'].to_dict()
+    QualityReport.generate.assert_called_once_with(data1, data2, expected_metadata, True)
+
+
 def test_run_diagnostic():
     """Test ``generate`` is called for the ``DiagnosticReport`` object."""
     # Setup
@@ -46,6 +64,23 @@ def test_run_diagnostic():
 
     # Assert
     DiagnosticReport.generate.assert_called_once_with(data1, data2, metadata.to_dict(), True)
+
+
+def test_run_diagnostic_metadata():
+    """Test ``generate`` is called for the ``DiagnosticReport`` object with Metadata."""
+    # Setup
+    data1 = pd.DataFrame({'col': [1, 2, 3]})
+    data2 = pd.DataFrame({'col': [2, 1, 3]})
+    metadata = Metadata()
+    metadata.add_column('col', sdtype='numerical')
+    DiagnosticReport.generate = Mock(return_value=123)
+
+    # Run
+    run_diagnostic(data1, data2, metadata)
+
+    # Assert
+    expected_metadata = metadata.tables['default_table_name'].to_dict()
+    DiagnosticReport.generate.assert_called_once_with(data1, data2, expected_metadata, True)
 
 
 @patch('sdmetrics.visualization.get_column_plot')
@@ -70,6 +105,27 @@ def test_get_column_plot_continuous_data(mock_get_plot):
 
 
 @patch('sdmetrics.visualization.get_column_plot')
+def test_get_column_plot_continuous_data_metadata(mock_get_plot):
+    """Test the ``get_column_plot`` with continuous data.
+
+    Test that when we call ``get_column_plot`` with continuous data (datetime or numerical)
+    this will choose to use the ``distplot`` as ``plot_type``. Uses Metadata.
+    """
+    # Setup
+    data1 = pd.DataFrame({'col': [1, 2, 3]})
+    data2 = pd.DataFrame({'col': [2, 1, 3]})
+    metadata = Metadata()
+    metadata.add_column('col', sdtype='numerical')
+
+    # Run
+    plot = get_column_plot(data1, data2, metadata, 'col')
+
+    # Assert
+    mock_get_plot.assert_called_once_with(data1, data2, 'col', plot_type='distplot')
+    assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_plot')
 def test_get_column_plot_discrete_data(mock_get_plot):
     """Test the ``get_column_plot`` with discrete data.
 
@@ -80,6 +136,27 @@ def test_get_column_plot_discrete_data(mock_get_plot):
     data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
     data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
     metadata = SingleTableMetadata()
+    metadata.add_column('col', sdtype='categorical')
+
+    # Run
+    plot = get_column_plot(data1, data2, metadata, 'col')
+
+    # Assert
+    mock_get_plot.assert_called_once_with(data1, data2, 'col', plot_type='bar')
+    assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_plot')
+def test_get_column_plot_discrete_data_metadata(mock_get_plot):
+    """Test the ``get_column_plot`` with discrete data.
+
+    Test that when we call ``get_column_plot`` with discrete data (categorical or boolean)
+    this will choose to use the ``bar`` as ``plot_type``. Uses Metadata.
+    """
+    # Setup
+    data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    metadata = Metadata()
     metadata.add_column('col', sdtype='categorical')
 
     # Run
@@ -113,6 +190,28 @@ def test_get_column_plot_discrete_data_with_distplot(mock_get_plot):
 
 
 @patch('sdmetrics.visualization.get_column_plot')
+def test_get_column_plot_discrete_data_with_distplot_metadata(mock_get_plot):
+    """Test the ``get_column_plot`` with discrete data.
+
+    Test that when we call ``get_column_plot`` with discrete data (categorical or boolean)
+    and pass in the ``distplot`` it will call the ``sdmetrics.visualization.get_column_plot``
+    with it and not switch to ``bar``. Uses Metadata.
+    """
+    # Setup
+    data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    metadata = Metadata()
+    metadata.add_column('col', sdtype='categorical')
+
+    # Run
+    plot = get_column_plot(data1, data2, metadata, 'col', plot_type='distplot')
+
+    # Assert
+    mock_get_plot.assert_called_once_with(data1, data2, 'col', plot_type='distplot')
+    assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_plot')
 def test_get_column_plot_invalid_sdtype(mock_get_plot):
     """Test the ``get_column_plot`` with sdtype that can't be plotted.
 
@@ -135,6 +234,28 @@ def test_get_column_plot_invalid_sdtype(mock_get_plot):
 
 
 @patch('sdmetrics.visualization.get_column_plot')
+def test_get_column_plot_invalid_sdtype_metadata(mock_get_plot):
+    """Test the ``get_column_plot`` with sdtype that can't be plotted.
+
+    Test that when we call ``get_column_plot`` with an sdtype that can't be plotted, this raises
+    an error. Uses Metadata.
+    """
+    # Setup
+    data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    metadata = Metadata()
+    metadata.add_column('col', sdtype='id')
+
+    # Run and Assert
+    error_msg = re.escape(
+        "The column 'col' has sdtype 'id', which does not have a "
+        "supported visualization. To visualize this data anyways, please add a 'plot_type'."
+    )
+    with pytest.raises(VisualizationUnavailableError, match=error_msg):
+        get_column_plot(data1, data2, metadata, 'col')
+
+
+@patch('sdmetrics.visualization.get_column_plot')
 def test_get_column_plot_invalid_sdtype_with_plot_type(mock_get_plot):
     """Test the ``get_column_plot`` with sdtype that can't be plotted.
 
@@ -145,6 +266,27 @@ def test_get_column_plot_invalid_sdtype_with_plot_type(mock_get_plot):
     data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
     data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
     metadata = SingleTableMetadata()
+    metadata.add_column('col', sdtype='id')
+
+    # Run
+    plot = get_column_plot(data1, data2, metadata, 'col', plot_type='bar')
+
+    # Assert
+    mock_get_plot.assert_called_once_with(data1, data2, 'col', plot_type='bar')
+    assert plot == mock_get_plot.return_value
+
+
+@patch('sdmetrics.visualization.get_column_plot')
+def test_get_column_plot_invalid_sdtype_with_plot_type_metadata(mock_get_plot):
+    """Test the ``get_column_plot`` with sdtype that can't be plotted.
+
+    Test that when we call ``get_column_plot`` with an sdtype that can't be plotted, but passing
+    ``plot_type`` it will attempt to plot it using the ``sdmetrics.visualization.get_column_plot``.
+    """
+    # Setup
+    data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
+    metadata = Metadata()
     metadata.add_column('col', sdtype='id')
 
     # Run
@@ -391,6 +533,35 @@ def test_get_column_pair_plot_with_sample_size(mock_get_plot):
         'price': [11.0, 22.0, 33.0],
     })
     metadata = SingleTableMetadata()
+    metadata.add_column('amount', sdtype='numerical')
+    metadata.add_column('price', sdtype='numerical')
+
+    # Run
+    get_column_pair_plot(real_data, synthetic_data, metadata, columns, sample_size=2)
+
+    # Assert
+    real_subsample = mock_get_plot.call_args[0][0]
+    synthetic_subsample = mock_get_plot.call_args[0][1]
+    assert len(real_subsample) == 2
+    assert len(synthetic_subsample) == 2
+    assert real_subsample.isin(real_data).all().all()
+    assert synthetic_subsample.isin(synthetic_data).all().all()
+
+
+@patch('sdmetrics.visualization.get_column_pair_plot')
+def test_get_column_pair_plot_with_sample_size_metadata(mock_get_plot):
+    """Test ``get_column_pair_plot`` with ``sample_size`` parameter with Metadata."""
+    # Setup
+    columns = ['amount', 'price']
+    real_data = pd.DataFrame({
+        'amount': [1, 2, 3],
+        'price': [10, 20, 30],
+    })
+    synthetic_data = pd.DataFrame({
+        'amount': [1.0, 2.0, 3.0],
+        'price': [11.0, 22.0, 33.0],
+    })
+    metadata = Metadata()
     metadata.add_column('amount', sdtype='numerical')
     metadata.add_column('price', sdtype='numerical')
 
