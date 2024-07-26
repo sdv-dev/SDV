@@ -229,14 +229,31 @@ def test_detect_table_from_csv(tmp_path):
 def test_single_table_compatibility(tmp_path):
     """Test if SingleMetadataTable still has compatibility with single table synthesizers."""
     # Setup
-    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    data, _ = download_demo('single_table', 'fake_hotel_guests')
     warn_msg = (
         "The 'SingleTableMetadata' is deprecated. Please use the new "
         "'Metadata' class for synthesizers."
     )
 
-    # Run
+    single_table_metadata_dict = {
+        'primary_key': 'guest_email',
+        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'columns': {
+            'guest_email': {'sdtype': 'email', 'pii': True},
+            'has_rewards': {'sdtype': 'boolean'},
+            'room_type': {'sdtype': 'categorical'},
+            'amenities_fee': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+            'checkin_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
+            'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
+            'room_rate': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+            'billing_address': {'sdtype': 'address', 'pii': True},
+            'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True},
+        },
+    }
+    metadata = SingleTableMetadata.load_from_dict(single_table_metadata_dict)
     assert isinstance(metadata, SingleTableMetadata)
+
+    # Run
     with pytest.warns(FutureWarning, match=warn_msg):
         synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.fit(data)
