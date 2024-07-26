@@ -272,6 +272,7 @@ def test_multi_table_compatibility(tmp_path):
     )
 
     # Run
+    assert type(metadata) is MultiTableMetadata
     with pytest.warns(FutureWarning, match=warn_msg):
         synthesizer = HMASynthesizer(metadata)
     synthesizer.fit(data)
