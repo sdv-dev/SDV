@@ -5,8 +5,8 @@ import pytest
 from sdv.datasets.demo import download_demo
 from sdv.metadata.metadata import DEFAULT_TABLE_NAME, Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
-from sdv.multi_table.hma import HMASynthesizer
 from sdv.metadata.single_table import SingleTableMetadata
+from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 
