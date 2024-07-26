@@ -3,6 +3,7 @@ import pytest
 from sdv.datasets.demo import download_demo
 from sdv.metadata.metadata import DEFAULT_TABLE_NAME, Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
+from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 
@@ -232,6 +233,7 @@ def test_single_table_compatibility(tmp_path):
     )
 
     # Run
+    assert isinstance(metadata, SingleTableMetadata)
     with pytest.warns(FutureWarning, match=warn_msg):
         synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.fit(data)
