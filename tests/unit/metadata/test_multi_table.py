@@ -3079,3 +3079,44 @@ class TestMultiTableMetadata:
             'Successfully converted the old metadata, but the metadata was not valid.'
             'To use this with the SDV, please fix the following errors.\n blah'
         )
+
+    @patch('sdv.metadata.multi_table.SingleTableMetadata.load_from_dict')
+    def test_anonymize(self, mock_load):
+        """Test ``anonymize`` method."""
+        # Setup
+        table1 = Mock()
+        mock_load.return_value = Mock()
+        table1._anonymized_column_map = {'table1_primary_key': 'col1'}
+        table2 = Mock()
+        table2._anonymized_column_map = {
+            'table2_primary_key': 'col1',
+            'table2_foreign_key': 'col2',
+        }
+        instance = MultiTableMetadata()
+        instance.tables = {
+            'real_table1': table1,
+            'real_table2': table2,
+        }
+
+        instance.relationships = [
+            {
+                'parent_table_name': 'real_table1',
+                'child_table_name': 'real_table2',
+                'parent_primary_key': 'table1_primary_key',
+                'child_foreign_key': 'table2_foreign_key',
+            }
+        ]
+
+        # Run
+        anonymized = instance.anonymize()
+
+        # Assert
+        table1.anonymize.assert_called_once_with()
+        table2.anonymize.assert_called_once_with()
+        assert anonymized.tables.keys() == {'table1', 'table2'}
+        assert anonymized.relationships[0] == {
+            'parent_table_name': 'table1',
+            'child_table_name': 'table2',
+            'parent_primary_key': 'col1',
+            'child_foreign_key': 'col2',
+        }
