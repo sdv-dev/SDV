@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 from datetime import date, datetime
 from unittest.mock import ANY, MagicMock, Mock, call, mock_open, patch
@@ -1821,7 +1822,7 @@ class TestBaseSingleTableSynthesizer:
             'first and then saving.'
         )
         with pytest.warns(Warning, match=warn_msg):
-            filepath = tmp_path / 'output.pkl'
+            filepath = os.path.join(tmp_path, 'output.pkl')
             synthesizer.save(filepath)
 
     @patch('sdv.single_table.base.datetime')

@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 import warnings
 from collections import defaultdict
@@ -1533,7 +1534,7 @@ class TestBaseMultiTableSynthesizer:
             'first and then saving.'
         )
         with pytest.warns(Warning, match=warn_msg):
-            filepath = tmp_path / 'output.pkl'
+            filepath = os.path.join(tmp_path, 'output.pkl')
             synthesizer.save(filepath)
 
     @patch('sdv.multi_table.base.datetime')
