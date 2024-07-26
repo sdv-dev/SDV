@@ -282,14 +282,54 @@ def test_single_table_compatibility(tmp_path):
 def test_multi_table_compatibility(tmp_path):
     """Test if SingleMetadataTable still has compatibility with single table synthesizers."""
     # Setup
-    data, metadata = download_demo('multi_table', 'fake_hotels')
+    data, _ = download_demo('multi_table', 'fake_hotels')
     warn_msg = re.escape(
         "The 'MultiTableMetadata' is deprecated. Please use the new "
         "'Metadata' class for synthesizers."
     )
 
-    # Run
+    multi_dict = {
+        'tables': {
+            'guests': {
+                'primary_key': 'guest_email',
+                'columns': {
+                    'guest_email': {'sdtype': 'email', 'pii': True},
+                    'hotel_id': {'sdtype': 'id', 'regex_format': '[A-Za-z]{5}'},
+                    'has_rewards': {'sdtype': 'boolean'},
+                    'room_type': {'sdtype': 'categorical'},
+                    'amenities_fee': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'checkin_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
+                    'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
+                    'room_rate': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'billing_address': {'sdtype': 'address', 'pii': True},
+                    'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True},
+                },
+            },
+            'hotels': {
+                'primary_key': 'hotel_id',
+                'columns': {
+                    'hotel_id': {'sdtype': 'id', 'regex_format': 'HID_[0-9]{3}'},
+                    'city': {'sdtype': 'categorical'},
+                    'state': {'sdtype': 'categorical'},
+                    'rating': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'classification': {'sdtype': 'categorical'},
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'hotels',
+                'parent_primary_key': 'hotel_id',
+                'child_table_name': 'guests',
+                'child_foreign_key': 'hotel_id',
+            }
+        ],
+        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+    }
+    metadata = MultiTableMetadata.load_from_dict(multi_dict)
     assert type(metadata) is MultiTableMetadata
+
+    # Run
     with pytest.warns(FutureWarning, match=warn_msg):
         synthesizer = HMASynthesizer(metadata)
     synthesizer.fit(data)
