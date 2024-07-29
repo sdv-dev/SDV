@@ -262,8 +262,8 @@ def test_single_table_compatibility(tmp_path):
     synthesizer.save(model_path)
 
     # Assert
-    assert model_path.exists()
-    assert model_path.is_file()
+    assert os.path.exists(model_path)
+    assert os.path.isfile(model_path)
     loaded_synthesizer = GaussianCopulaSynthesizer.load(model_path)
     assert isinstance(synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
@@ -338,8 +338,8 @@ def test_multi_table_compatibility(tmp_path):
     synthesizer.save(model_path)
 
     # Assert
-    assert model_path.exists()
-    assert model_path.is_file()
+    assert os.path.exists(model_path)
+    assert os.path.isfile(model_path)
     loaded_synthesizer = HMASynthesizer.load(model_path)
     assert isinstance(synthesizer, HMASynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
