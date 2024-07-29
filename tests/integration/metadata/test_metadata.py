@@ -121,7 +121,7 @@ def test_detect_from_csvs(tmp_path):
     metadata = Metadata()
 
     for table_name, dataframe in real_data.items():
-        csv_path = tmp_path / f'{table_name}.csv'
+        csv_path = os.path.join(tmp_path, f'{table_name}.csv')
         dataframe.to_csv(csv_path, index=False)
 
     # Run
@@ -184,11 +184,11 @@ def test_detect_table_from_csv(tmp_path):
     metadata = Metadata()
 
     for table_name, dataframe in real_data.items():
-        csv_path = tmp_path / f'{table_name}.csv'
+        csv_path = os.path.join(tmp_path, f'{table_name}.csv')
         dataframe.to_csv(csv_path, index=False)
 
     # Run
-    metadata.detect_table_from_csv('hotels', tmp_path / 'hotels.csv')
+    metadata.detect_table_from_csv('hotels', os.path.join(tmp_path, 'hotels.csv'))
 
     # Assert
     metadata.update_column(
@@ -257,7 +257,7 @@ def test_single_table_compatibility(tmp_path):
     with pytest.warns(FutureWarning, match=warn_msg):
         synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.fit(data)
-    model_path = tmp_path / 'synthesizer.pkl'
+    model_path = os.path.join(tmp_path, 'synthesizer.pkl')
     synthesizer.save(model_path)
 
     # Assert
@@ -333,7 +333,7 @@ def test_multi_table_compatibility(tmp_path):
     with pytest.warns(FutureWarning, match=warn_msg):
         synthesizer = HMASynthesizer(metadata)
     synthesizer.fit(data)
-    model_path = tmp_path / 'synthesizer.pkl'
+    model_path = os.path.join(tmp_path, 'synthesizer.pkl')
     synthesizer.save(model_path)
 
     # Assert
