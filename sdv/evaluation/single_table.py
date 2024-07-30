@@ -28,9 +28,12 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
             Single table quality report object.
     """
     quality_report = QualityReport()
-    metadata = Metadata()._convert_to_unified_metadata(metadata)
+    if not isinstance(metadata, Metadata):
+        metadata = Metadata()._convert_to_unified_metadata(metadata)
+
     if len(metadata.tables) > 1:
         raise ValueError('Only a single table is allowed in metadata.')
+
     metadata_dict = next(iter(metadata.tables.values())).to_dict()
     quality_report.generate(real_data, synthetic_data, metadata_dict, verbose)
     return quality_report
@@ -55,9 +58,12 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
             Single table diagnostic report object.
     """
     diagnostic_report = DiagnosticReport()
-    metadata = Metadata()._convert_to_unified_metadata(metadata)
+    if not isinstance(metadata, Metadata):
+        metadata = Metadata()._convert_to_unified_metadata(metadata)
+
     if len(metadata.tables) > 1:
         raise ValueError('Only a single table is allowed in metadata.')
+
     metadata_dict = next(iter(metadata.tables.values())).to_dict()
     diagnostic_report.generate(real_data, synthetic_data, metadata_dict, verbose)
     return diagnostic_report
