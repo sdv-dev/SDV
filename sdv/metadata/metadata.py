@@ -11,10 +11,10 @@ from sdv.metadata.utils import read_json
 
 DEFAULT_TABLE_NAME = 'default_table_name'
 SINGLE_DEPRECATION_MSG = (
-    "'SingleTableMetadata' is deprecated. Please " "use the new 'Metadata' class for synthesizers."
+    "'SingleTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
 )
 MULTI_DEPRECATION_MSG = (
-    "'MultiTableMetadata' is deprecated. Please " "use the new 'Metadata' class for synthesizers."
+    "'MultiTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
 )
 
 

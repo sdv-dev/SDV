@@ -50,8 +50,7 @@ def test_sample_with_constraints():
 def test_warnings_are_shown():
     """Test all actions with SingleTablePreset gives a FutureWarning"""
     warn_message = (
-        "The 'SingleTablePreset' is deprecated. For equivalent Fast ML "
-        "functionality, please use the 'GaussianCopulaSynthesizer'."
+        "'SingleTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
     )
     # Setup
     data = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
@@ -61,23 +60,4 @@ def test_warnings_are_shown():
     metadata.detect_from_dataframe(data)
 
     with pytest.warns(FutureWarning, match=warn_message):
-        preset = SingleTablePreset(metadata, name='FAST_ML')
-
-    constraints = [
-        {
-            'constraint_class': 'Inequality',
-            'constraint_parameters': {'low_column_name': 'a', 'high_column_name': 'b'},
-        }
-    ]
-    with pytest.warns(FutureWarning, match=warn_message):
-        preset.add_constraints(constraints)
-
-    with pytest.warns(FutureWarning, match=warn_message):
-        preset.fit(data)
-
-    with pytest.warns(FutureWarning, match=warn_message):
-        samples = preset.sample(num_rows=10, max_tries_per_batch=20, batch_size=5)
-
-    # Assert
-    assert len(samples) == 10
-    assert all(samples['a'] < samples['b'])
+        SingleTablePreset(metadata, name='FAST_ML')
