@@ -41,8 +41,7 @@ class BaseMultiTableSynthesizer:
 
     Args:
         metadata (sdv.metadata.Metadata):
-            Table metadata representing the data tables that this synthesizer will be used
-            for.
+            Metadata representing the data tables that this synthesizer will utilize.
         locales (list or str):
             The default locale(s) to use for AnonymizedFaker transformers.
             Defaults to ``['en_US']``.

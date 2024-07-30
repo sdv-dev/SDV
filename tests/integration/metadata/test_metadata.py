@@ -281,7 +281,7 @@ def test_single_table_compatibility(tmp_path):
 
 
 def test_multi_table_compatibility(tmp_path):
-    """Test if SingleMetadataTable still has compatibility with single table synthesizers."""
+    """Test if MultiTableMetadata still has compatibility with multi table synthesizers."""
     # Setup
     data, _ = download_demo('multi_table', 'fake_hotels')
     warn_msg = re.escape(
@@ -333,6 +333,7 @@ def test_multi_table_compatibility(tmp_path):
     # Run
     with pytest.warns(FutureWarning, match=warn_msg):
         synthesizer = HMASynthesizer(metadata)
+
     synthesizer.fit(data)
     model_path = os.path.join(tmp_path, 'synthesizer.pkl')
     synthesizer.save(model_path)
@@ -340,13 +341,23 @@ def test_multi_table_compatibility(tmp_path):
     # Assert
     assert os.path.exists(model_path)
     assert os.path.isfile(model_path)
+
+    # Load HMASynthesizer
     loaded_synthesizer = HMASynthesizer.load(model_path)
+
+    # Asserts
     assert isinstance(synthesizer, HMASynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
     assert isinstance(loaded_synthesizer.metadata, Metadata)
+
+    # Load Metadata
     expected_metadata = metadata.to_dict()
     expected_metadata['METADATA_SPEC_VERSION'] = 'V1'
+
+    # Asserts
     assert loaded_synthesizer.metadata.to_dict() == expected_metadata
+
+    # Sample from loaded synthesizer
     loaded_sample = loaded_synthesizer.sample(10)
     synthesizer.validate(loaded_sample)
 
