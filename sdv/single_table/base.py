@@ -24,6 +24,7 @@ from sdv._utils import (
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
+    get_possible_chars,
 )
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
@@ -163,6 +164,19 @@ class BaseSynthesizer:
         """
         return []
 
+    def _validate_primary_key(self, data):
+        primary_key = self.metadata.primary_key
+        is_int = pd.api.types.is_integer_dtype(data[primary_key])
+        regex = self.metadata.columns[primary_key].get('regex')
+        if is_int and regex:
+            possible_characters = get_possible_chars(regex)
+            if '0' in possible_characters:
+                raise SynthesizerInputError(
+                    f'Primary key {primary_key} is stored as an int but the Regex allows it to '
+                    "start with '0'. Please remove the Regex or update it to correspond to valid "
+                    'ints.'
+                )
+
     def validate(self, data):
         """Validate data.
 
@@ -183,6 +197,7 @@ class BaseSynthesizer:
                     * context columns vary for a sequence key
                     * values of a column don't satisfy their sdtype
         """
+        self._validate_primary_key(data)
         self._validate_metadata(data)
         self._validate_constraints(data)
 

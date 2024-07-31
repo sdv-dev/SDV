@@ -10,9 +10,15 @@ from pathlib import Path
 
 import pandas as pd
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
+from rdt.transformers.utils import _GENERATORS
 
 from sdv import version
 from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
+
+try:
+    from re import sre_parse
+except ImportError:
+    import sre_parse
 
 
 def _cast_to_iterable(value):
@@ -403,3 +409,19 @@ def generate_synthesizer_id(synthesizer):
     synth_version = version.public
     unique_id = ''.join(str(uuid.uuid4()).split('-'))
     return f'{class_name}_{synth_version}_{unique_id}'
+
+
+def _get_chars_for_option(option, args):
+    if option not in _GENERATORS:
+        raise ValueError(f'REGEX operation: {option} is not supported by SDV.')
+
+    return list(_GENERATORS[option](args))
+
+
+def get_possible_chars(regex):
+    parsed = sre_parse.parse(regex)
+    possible_chars = []
+    for option, args in parsed:
+        possible_chars += _get_chars_for_option(option, args)
+
+    return possible_chars
