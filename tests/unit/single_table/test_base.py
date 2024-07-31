@@ -78,7 +78,7 @@ class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.generate_synthesizer_id')
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.BaseSingleTableSynthesizer._check_metadata_updated')
-    def test___init__(
+    def test___init___l(
         self,
         mock_check_metadata_updated,
         mock_data_processor,
@@ -253,19 +253,22 @@ class TestBaseSingleTableSynthesizer:
         }
 
     @patch('sdv.single_table.base.DataProcessor')
-    def test_get_metadata(self, mock_data_processor):
+    @patch('sdv.single_table.base.Metadata.load_from_dict')
+    def test_get_metadata(self, mock_load_from_dict, _):
         """Test that it returns the ``metadata`` object."""
         # Setup
         metadata = Mock(spec=Metadata)
         instance = BaseSingleTableSynthesizer(
             metadata, enforce_min_max_values=False, enforce_rounding=False
         )
+        mock_converted_metadata = Mock()
+        mock_load_from_dict.return_value = mock_converted_metadata
 
         # Run
         result = instance.get_metadata()
 
         # Assert
-        assert result == metadata
+        assert result == mock_converted_metadata
 
     def test_auto_assign_transformers(self):
         """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""
