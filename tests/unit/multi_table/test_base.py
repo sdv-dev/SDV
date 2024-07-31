@@ -168,7 +168,8 @@ class TestBaseMultiTableSynthesizer:
         ]
         assert len(column_relationship_warnings) == 1
         mock_is_faker_function.assert_has_calls([
-            call('latitude'), call('longitude'),
+            call('latitude'),
+            call('longitude'),
         ])
 
     def test___init___synthesizer_kwargs_deprecated(self):
