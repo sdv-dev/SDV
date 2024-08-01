@@ -1246,6 +1246,11 @@ class TestHMASynthesizer:
 
         # Run 1
         with warnings.catch_warnings(record=True) as captured_warnings:
+            warnings.filterwarnings(
+                'ignore',
+                message=".*The 'SingleTableMetadata' is deprecated.*",
+                category=DeprecationWarning,
+            )
             warnings.simplefilter('always')
             instance = HMASynthesizer(metadata)
             instance.fit(data)

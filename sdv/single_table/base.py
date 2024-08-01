@@ -35,6 +35,8 @@ from sdv.errors import (
     SynthesizerInputError,
 )
 from sdv.logging import get_sdv_logger
+from sdv.metadata.metadata import Metadata
+from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
 
 LOGGER = logging.getLogger(__name__)
@@ -47,6 +49,11 @@ INT_REGEX_ZERO_ERROR_MESSAGE = (
     'or update it to correspond to valid ints.'
 )
 
+DEPRECATION_MSG = (
+    "The 'SingleTableMetadata' is deprecated. Please use the new "
+    "'Metadata' class for synthesizers."
+)
+
 
 class BaseSynthesizer:
     """Base class for all ``Synthesizers``.
@@ -55,8 +62,9 @@ class BaseSynthesizer:
     ``Synthesizers`` need to implement, as well as common functionality.
 
     Args:
-        metadata (sdv.metadata.SingleTableMetadata):
+        metadata (sdv.metadata.Metadata):
             Single table metadata representing the data that this synthesizer will be used for.
+            * sdv.metadata.SingleTableMetadata can be used but will be deprecated.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
@@ -104,6 +112,12 @@ class BaseSynthesizer:
     ):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata = metadata
+        if isinstance(metadata, Metadata):
+            self.metadata = metadata._convert_to_single_table()
+        elif isinstance(metadata, SingleTableMetadata):
+            warnings.warn(DEPRECATION_MSG, FutureWarning)
+
+        self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata.validate()
         self._check_metadata_updated()
         self.enforce_min_max_values = enforce_min_max_values
@@ -269,8 +283,8 @@ class BaseSynthesizer:
         return instantiated_parameters
 
     def get_metadata(self):
-        """Return the ``SingleTableMetadata`` for this synthesizer."""
-        return self.metadata
+        """Return the ``Metadata`` for this synthesizer."""
+        return Metadata.load_from_dict(self.metadata.to_dict())
 
     def load_custom_constraint_classes(self, filepath, class_names):
         """Load a custom constraint class for the current synthesizer.

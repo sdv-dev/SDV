@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.utils import read_json
@@ -69,5 +70,12 @@ class Metadata(MultiTableMetadata):
         else:
             if single_table_name is None:
                 single_table_name = 'default_table_name'
-
             self.tables[single_table_name] = SingleTableMetadata.load_from_dict(metadata)
+
+    def _convert_to_single_table(self):
+        if len(self.tables) > 1:
+            raise InvalidMetadataError(
+                'Metadata contains more than one table, use a MultiTableSynthesizer instead.'
+            )
+
+        return next(iter(self.tables.values()), SingleTableMetadata())
