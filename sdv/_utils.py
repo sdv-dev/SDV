@@ -16,7 +16,7 @@ from sdv import version
 from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
 
 try:
-    from re import sre_parse
+    from re import _parser as sre_parse
 except ImportError:
     import sre_parse
 

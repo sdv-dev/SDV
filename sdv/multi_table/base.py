@@ -374,6 +374,8 @@ class BaseMultiTableSynthesizer:
                         f'Primary key for table "{table_name}" {INT_REGEX_ZERO_ERROR_MESSAGE}'
                     )
 
+                raise e
+
         for table in list_of_changed_tables:
             data[table].columns = self._original_table_columns[table]
 
