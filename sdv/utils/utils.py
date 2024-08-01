@@ -18,7 +18,7 @@ def drop_unknown_references(data, metadata, drop_missing_values=True, verbose=Tr
         data (dict):
             Dictionary that maps each table name (string) to the data for that
             table (pandas.DataFrame).
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata of the datasets.
         drop_missing_values (bool):
             Boolean describing whether or not to also drop foreign keys with missing values

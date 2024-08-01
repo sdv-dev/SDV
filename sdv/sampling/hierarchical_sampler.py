@@ -12,7 +12,7 @@ class BaseHierarchicalSampler:
     """Hierarchical sampler mixin.
 
     Args:
-        metadata (sdv.metadata.multi_table.MultiTableMetadata):
+        metadata (sdv.metadata.Metadata):
             Multi-table metadata representing the data tables that this sampler will be used for.
         table_synthesizers (dict):
             Dictionary mapping each table to a synthesizer. Should be instantiated and passed to

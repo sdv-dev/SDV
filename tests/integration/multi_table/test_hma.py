@@ -18,6 +18,7 @@ from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import SamplingError, SynthesizerInputError, VersionError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
@@ -393,6 +394,7 @@ class TestHMASynthesizer:
         """Test saving and loading a multi-table synthesizer."""
         # Setup
         _, _, metadata = self.get_custom_constraint_data_and_metadata()
+        metadata = Metadata.load_from_dict(metadata.to_dict())
         synthesizer = HMASynthesizer(metadata)
         model_path = tmp_path / 'synthesizer.pkl'
 
@@ -460,6 +462,7 @@ class TestHMASynthesizer:
         """
         # Loading the demo data
         real_data, metadata = download_demo(modality='multi_table', dataset_name='fake_hotels')
+        metadata = Metadata.load_from_dict(metadata.to_dict())
 
         # Creating a Synthesizer
         synthesizer = HMASynthesizer(metadata)
@@ -1250,9 +1253,8 @@ class TestHMASynthesizer:
             instance.fit(data)
 
         # Assert
-        for warning in captured_warnings:
-            assert warning.category is FutureWarning
-        assert len(captured_warnings) == 3
+        assert len(captured_warnings) == 1
+        assert captured_warnings[0].category is FutureWarning
 
         # Run 2
         metadata_detect = MultiTableMetadata()
@@ -1271,9 +1273,8 @@ class TestHMASynthesizer:
             instance.fit(data)
 
         # Assert
-        for warning in captured_warnings:
-            assert warning.category is FutureWarning
-        assert len(captured_warnings) == 3
+        assert len(captured_warnings) == 1
+        assert captured_warnings[0].category is FutureWarning
 
         # Run 3
         instance = HMASynthesizer(metadata_detect)
@@ -1297,7 +1298,7 @@ class TestHMASynthesizer:
         """
         # Setup
         data, metadata = download_demo('multi_table', 'got_families')
-        metadata_detect = MultiTableMetadata()
+        metadata_detect = Metadata()
         metadata_detect.detect_from_dataframes(data)
 
         metadata_detect.relationships = metadata.relationships
@@ -1316,16 +1317,7 @@ class TestHMASynthesizer:
             instance.fit(data)
 
         # Assert
-        future_warnings = 0
-        user_warnings = 0
-        for warning in record:
-            if warning.category is FutureWarning:
-                future_warnings += 1
-            if warning.category is UserWarning:
-                user_warnings += 1
-        assert future_warnings == 3
-        assert user_warnings == 1
-        assert len(record) == 4
+        assert len(record) == 1
 
     def test_null_foreign_keys(self):
         """Test that the synthesizer crashes when there are null foreign keys."""
@@ -1595,7 +1587,7 @@ def test_metadata_updated_warning(method, kwargs):
 
     The warning should be raised during synthesizer initialization.
     """
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'departure': {
                 'primary_key': 'id',

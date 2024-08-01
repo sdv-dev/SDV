@@ -36,7 +36,7 @@ class TestBaseLocalHandler:
         # Assert
         assert isinstance(metadata, MultiTableMetadata)
         assert metadata.to_dict() == {
-            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'V1',
             'relationships': [],
             'tables': {
                 'guests': {

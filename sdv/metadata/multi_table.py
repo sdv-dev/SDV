@@ -26,6 +26,10 @@ from sdv.metadata.visualization import (
 LOGGER = logging.getLogger(__name__)
 MULTITABLEMETADATA_LOGGER = get_sdv_logger('MultiTableMetadata')
 WARNINGS_COLUMN_ORDER = ['Table Name', 'Column Name', 'sdtype', 'datetime_format']
+DEPRECATION_MSG = (
+    "The 'MultiTableMetadata' is deprecated. Please use the new "
+    "'Metadata' class for synthesizers."
+)
 
 
 class MultiTableMetadata:
