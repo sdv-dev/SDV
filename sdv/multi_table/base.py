@@ -25,6 +25,7 @@ from sdv.errors import (
     SynthesizerInputError,
 )
 from sdv.logging import disable_single_table_logger, get_sdv_logger
+from sdv.metadata.metadata import Metadata
 from sdv.single_table.base import INT_REGEX_ZERO_ERROR_MESSAGE
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 

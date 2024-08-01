@@ -13,6 +13,7 @@ from sdv import version
 from sdv.datasets.demo import download_demo
 from sdv.errors import SamplingError, SynthesizerInputError, VersionError
 from sdv.metadata import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import (
     CopulaGANSynthesizer,
@@ -587,7 +588,7 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
             initialization, but is saved to a file before fitting.
     """
     # Setup
-    metadata_from_dict = SingleTableMetadata().load_from_dict({
+    metadata_from_dict = Metadata().load_from_dict({
         'columns': {
             'col 1': {'sdtype': 'numerical'},
             'col 2': {'sdtype': 'numerical'},
@@ -610,8 +611,8 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
     assert len(captured_warnings) == 0
 
     # Run 2
-    metadata_detect = SingleTableMetadata()
-    metadata_detect.detect_from_dataframe(data)
+    metadata_detect = Metadata()
+    metadata_detect.detect_from_dataframes({'mock_table': data})
     file_name = tmp_path / 'singletable.json'
     metadata_detect.save_to_json(file_name)
     with warnings.catch_warnings(record=True) as captured_warnings:
@@ -624,7 +625,7 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
 
     # Run 3
     instance = BaseSingleTableSynthesizer(metadata_detect)
-    metadata_detect.update_column('col 1', sdtype='categorical')
+    metadata_detect.update_column('mock_table', 'col 1', sdtype='categorical')
     file_name = tmp_path / 'singletable_2.json'
     metadata_detect.save_to_json(file_name)
     with warnings.catch_warnings(record=True) as captured_warnings:
@@ -650,18 +651,26 @@ def test_metadata_updated_warning_detect(mock__fit):
     })
     metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
-    expected_message = re.escape(
+    expected_user_message = (
         "We strongly recommend saving the metadata using 'save_to_json' for replicability"
         ' in future SDV versions.'
     )
+    expected_deprecation_message = (
+        "The 'SingleTableMetadata' is deprecated. "
+        "Please use the new 'Metadata' class for synthesizers."
+    )
 
     # Run
-    with pytest.warns(UserWarning, match=expected_message) as record:
+    with warnings.catch_warnings(record=True) as record:
         instance = BaseSingleTableSynthesizer(metadata)
         instance.fit(data)
 
     # Assert
-    assert len(record) == 1
+    assert len(record) == 2
+    assert record[0].category is FutureWarning
+    assert str(record[0].message) == expected_deprecation_message
+    assert record[1].category is UserWarning
+    assert str(record[1].message) == expected_user_message
 
 
 parametrization = [
