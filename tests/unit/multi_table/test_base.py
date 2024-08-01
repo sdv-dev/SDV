@@ -18,6 +18,7 @@ from sdv.errors import (
     SynthesizerInputError,
     VersionError,
 )
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -53,13 +54,17 @@ class TestBaseMultiTableSynthesizer:
         }
         instance._synthesizer.assert_has_calls([
             call(
-                metadata=instance.metadata.tables['nesreca'],
+                metadata=ANY,
                 default_distribution='gamma',
                 locales=locales,
             ),
-            call(metadata=instance.metadata.tables['oseba'], locales=locales),
-            call(metadata=instance.metadata.tables['upravna_enota'], locales=locales),
+            call(metadata=ANY, locales=locales),
+            call(metadata=ANY, locales=locales),
         ])
+
+        for call_args in instance._synthesizer.call_args_list:
+            metadata_arg = call_args[1].get('metadata', None)
+            assert isinstance(metadata_arg, Metadata)
 
     def test__get_pbar_args(self):
         """Test that ``_get_pbar_args`` returns a dictionary with disable opposite to verbose."""

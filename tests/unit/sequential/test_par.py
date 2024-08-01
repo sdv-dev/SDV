@@ -9,6 +9,8 @@ from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.errors import InvalidConstraintsError
 from sdv.errors import InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError
+from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.sequential.par import PARSynthesizer
@@ -236,7 +238,8 @@ class TestPARSynthesizer:
         result = instance.get_metadata()
 
         # Assert
-        assert result == metadata
+        assert result._convert_to_single_table().to_dict() == metadata.to_dict()
+        assert isinstance(result, Metadata)
 
     def test_validate_context_columns_unique_per_sequence_key(self):
         """Test error is raised if context column values vary for each tuple of sequence keys.
@@ -982,3 +985,52 @@ class TestPARSynthesizer:
                 metadata=metadata,
                 context_columns=['name'],
             )
+
+    def test___init__with_unified_metadata(self):
+        """Test initialization with unified metadata."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table_1': {
+                    'columns': {
+                        'time': {'sdtype': 'datetime'},
+                        'gender': {'sdtype': 'categorical'},
+                        'name': {'sdtype': 'id'},
+                        'measurement': {'sdtype': 'numerical'},
+                    },
+                    'sequence_key': 'name',
+                }
+            }
+        })
+
+        multi_metadata = Metadata.load_from_dict({
+            'tables': {
+                'table_1': {
+                    'columns': {
+                        'time': {'sdtype': 'datetime'},
+                        'gender': {'sdtype': 'categorical'},
+                        'name': {'sdtype': 'id'},
+                        'measurement': {'sdtype': 'numerical'},
+                    },
+                    'sequence_key': 'name',
+                },
+                'table_2': {
+                    'columns': {
+                        'time': {'sdtype': 'datetime'},
+                        'gender': {'sdtype': 'categorical'},
+                        'name': {'sdtype': 'id'},
+                        'measurement': {'sdtype': 'numerical'},
+                    },
+                    'sequence_key': 'name',
+                },
+            }
+        })
+
+        # Run and Assert
+        PARSynthesizer(metadata)
+        error_msg = re.escape(
+            'Metadata contains more than one table, use a MultiTableSynthesizer instead.'
+        )
+
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            PARSynthesizer(multi_metadata)

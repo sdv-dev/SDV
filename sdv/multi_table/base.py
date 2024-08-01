@@ -26,6 +26,7 @@ from sdv.errors import (
     SynthesizerInputError,
 )
 from sdv.logging import disable_single_table_logger, get_sdv_logger
+from sdv.metadata.metadata import Metadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
@@ -71,8 +72,9 @@ class BaseMultiTableSynthesizer:
         with disable_single_table_logger():
             for table_name, table_metadata in self.metadata.tables.items():
                 synthesizer_parameters = self._table_parameters.get(table_name, {})
+                metadata = Metadata.load_from_dict(table_metadata.to_dict())
                 self._table_synthesizers[table_name] = self._synthesizer(
-                    metadata=table_metadata, locales=self.locales, **synthesizer_parameters
+                    metadata=metadata, locales=self.locales, **synthesizer_parameters
                 )
                 self._table_synthesizers[table_name]._data_processor.table_name = table_name
 

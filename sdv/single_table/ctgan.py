@@ -283,9 +283,7 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
         _validate_no_category_dtype(processed_data)
 
         transformers = self._data_processor._hyper_transformer.field_transformers
-        discrete_columns = detect_discrete_columns(
-            self.get_metadata(), processed_data, transformers
-        )
+        discrete_columns = detect_discrete_columns(self.metadata, processed_data, transformers)
         self._model = CTGAN(**self._model_kwargs)
         self._model.fit(processed_data, discrete_columns=discrete_columns)
 
@@ -398,9 +396,7 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
         _validate_no_category_dtype(processed_data)
 
         transformers = self._data_processor._hyper_transformer.field_transformers
-        discrete_columns = detect_discrete_columns(
-            self.get_metadata(), processed_data, transformers
-        )
+        discrete_columns = detect_discrete_columns(self.metadata, processed_data, transformers)
         self._model = TVAE(**self._model_kwargs)
         self._model.fit(processed_data, discrete_columns=discrete_columns)
 

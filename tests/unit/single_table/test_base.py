@@ -24,6 +24,8 @@ from sdv.errors import (
     SynthesizerInputError,
     VersionError,
 )
+from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
 from sdv.single_table import (
@@ -76,7 +78,7 @@ class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.generate_synthesizer_id')
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.BaseSingleTableSynthesizer._check_metadata_updated')
-    def test___init__(
+    def test___init___l(
         self,
         mock_check_metadata_updated,
         mock_data_processor,
@@ -117,6 +119,59 @@ class TestBaseSingleTableSynthesizer:
             'SYNTHESIZER CLASS NAME': 'BaseSingleTableSynthesizer',
             'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
+
+    def test__init__with_old_metadata_future_warning(self):
+        """Test that future warning is thrown when using `SingleTableMetadata`"""
+        # Setup
+        metadata = SingleTableMetadata.load_from_dict({
+            'columns': {
+                'a': {'sdtype': 'categorical'},
+            }
+        })
+        warn_msg = re.escape(
+            "The 'SingleTableMetadata' is deprecated. Please use the new "
+            "'Metadata' class for synthesizers."
+        )
+        # Run and Assert
+        with pytest.warns(FutureWarning, match=warn_msg):
+            BaseSingleTableSynthesizer(metadata)
+
+    def test___init__with_unified_metadata(self):
+        """Test initialization with unified metadata."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table_1': {
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    },
+                }
+            }
+        })
+
+        multi_metadata = Metadata.load_from_dict({
+            'tables': {
+                'table_1': {
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    },
+                },
+                'table_2': {
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    },
+                },
+            }
+        })
+
+        # Run and Assert
+        BaseSingleTableSynthesizer(metadata)
+        error_msg = re.escape(
+            'Metadata contains more than one table, use a MultiTableSynthesizer instead.'
+        )
+
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            BaseSingleTableSynthesizer(multi_metadata)
 
     @patch('sdv.single_table.base.DataProcessor')
     def test___init__custom(self, mock_data_processor):
@@ -198,19 +253,22 @@ class TestBaseSingleTableSynthesizer:
         }
 
     @patch('sdv.single_table.base.DataProcessor')
-    def test_get_metadata(self, mock_data_processor):
+    @patch('sdv.single_table.base.Metadata.load_from_dict')
+    def test_get_metadata(self, mock_load_from_dict, _):
         """Test that it returns the ``metadata`` object."""
         # Setup
-        metadata = Mock()
+        metadata = Mock(spec=Metadata)
         instance = BaseSingleTableSynthesizer(
             metadata, enforce_min_max_values=False, enforce_rounding=False
         )
+        mock_converted_metadata = Mock()
+        mock_load_from_dict.return_value = mock_converted_metadata
 
         # Run
         result = instance.get_metadata()
 
         # Assert
-        assert result == metadata
+        assert result == mock_converted_metadata
 
     def test_auto_assign_transformers(self):
         """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""
