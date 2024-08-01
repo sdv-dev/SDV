@@ -411,17 +411,29 @@ def generate_synthesizer_id(synthesizer):
     return f'{class_name}_{synth_version}_{unique_id}'
 
 
-def _get_chars_for_option(option, args):
+def _get_chars_for_option(option, params):
     if option not in _GENERATORS:
         raise ValueError(f'REGEX operation: {option} is not supported by SDV.')
 
-    return list(_GENERATORS[option](args))
+    if option == sre_parse.MAX_REPEAT:
+        new_option, new_params = params[2][0]  # The value at the second index is the nested option
+        return _get_chars_for_option(new_option, new_params)
+
+    return list(_GENERATORS[option](params, 1)[0])
 
 
-def get_possible_chars(regex):
+def get_possible_chars(regex, num_subpatterns):
+    """Get the list of possible characters a regex can create.
+
+    Args:
+        regex (str):
+            The regex to parse.
+        num_subpatterns (int):
+            The number of sub-patterns from the regex to find characters for.
+    """
     parsed = sre_parse.parse(regex)
     possible_chars = []
-    for option, args in parsed:
-        possible_chars += _get_chars_for_option(option, args)
+    for option, params in parsed[:num_subpatterns]:
+        possible_chars += _get_chars_for_option(option, params)
 
     return possible_chars

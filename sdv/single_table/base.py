@@ -166,10 +166,10 @@ class BaseSynthesizer:
 
     def _validate_primary_key(self, data):
         primary_key = self.metadata.primary_key
-        is_int = pd.api.types.is_integer_dtype(data[primary_key])
-        regex = self.metadata.columns[primary_key].get('regex')
+        is_int = primary_key and pd.api.types.is_integer_dtype(data[primary_key])
+        regex = self.metadata.columns.get(primary_key, {}).get('regex')
         if is_int and regex:
-            possible_characters = get_possible_chars(regex)
+            possible_characters = get_possible_chars(regex, 0)
             if '0' in possible_characters:
                 raise SynthesizerInputError(
                     f'Primary key {primary_key} is stored as an int but the Regex allows it to '
@@ -197,8 +197,8 @@ class BaseSynthesizer:
                     * context columns vary for a sequence key
                     * values of a column don't satisfy their sdtype
         """
-        self._validate_primary_key(data)
         self._validate_metadata(data)
+        self._validate_primary_key(data)
         self._validate_constraints(data)
 
         # Retaining the logic of returning errors and raising them here to maintain consistency
