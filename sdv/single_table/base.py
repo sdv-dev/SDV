@@ -42,6 +42,10 @@ SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
+INT_REGEX_ZERO_ERROR_MESSAGE = (
+    'is stored as an int but the Regex allows it to start with "0". Please remove the Regex '
+    'or update it to correspond to valid ints.'
+)
 
 
 class BaseSynthesizer:
@@ -167,14 +171,12 @@ class BaseSynthesizer:
     def _validate_primary_key(self, data):
         primary_key = self.metadata.primary_key
         is_int = primary_key and pd.api.types.is_integer_dtype(data[primary_key])
-        regex = self.metadata.columns.get(primary_key, {}).get('regex')
+        regex = self.metadata.columns.get(primary_key, {}).get('regex_format')
         if is_int and regex:
-            possible_characters = get_possible_chars(regex, 0)
+            possible_characters = get_possible_chars(regex, 1)
             if '0' in possible_characters:
                 raise SynthesizerInputError(
-                    f'Primary key {primary_key} is stored as an int but the Regex allows it to '
-                    "start with '0'. Please remove the Regex or update it to correspond to valid "
-                    'ints.'
+                    f'Primary key "{primary_key}" {INT_REGEX_ZERO_ERROR_MESSAGE} ints.'
                 )
 
     def validate(self, data):

@@ -422,7 +422,7 @@ def _get_chars_for_option(option, params):
     return list(_GENERATORS[option](params, 1)[0])
 
 
-def get_possible_chars(regex, num_subpatterns):
+def get_possible_chars(regex, num_subpatterns=None):
     """Get the list of possible characters a regex can create.
 
     Args:
@@ -432,6 +432,8 @@ def get_possible_chars(regex, num_subpatterns):
             The number of sub-patterns from the regex to find characters for.
     """
     parsed = sre_parse.parse(regex)
+    parsed = [p for p in parsed if p[0] != sre_parse.AT]
+    num_subpatterns = num_subpatterns or len(parsed)
     possible_chars = []
     for option, params in parsed[:num_subpatterns]:
         possible_chars += _get_chars_for_option(option, params)

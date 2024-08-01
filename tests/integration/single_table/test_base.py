@@ -801,3 +801,31 @@ def test_detect_from_dataframe_numerical_col(synthesizer_class):
 
     # Assert
     assert sample.columns.tolist() == data.columns.tolist()
+
+
+REGEXES = ['[0-9]{3,4}', '0HQ-[a-z]', '0+', r'\d', r'\d{1,5}', r'\w']
+
+
+@pytest.mark.parametrize('regex', REGEXES)
+@pytest.mark.parametrize('synthesizer_class', SYNTHESIZERS_CLASSES)
+def test_fit_int_primary_key_regex_includes_zero(synthesizer_class, regex):
+    """Test that sdv errors if the primary key has a regex, is an int, and can start with 0."""
+    # Setup
+    data = pd.DataFrame({
+        'a': [1, 2, 3],
+        'b': [4, 5, 6],
+        'c': ['a', 'b', 'c'],
+    })
+    metadata = SingleTableMetadata()
+    metadata.detect_from_dataframe(data)
+    metadata.update_column('a', sdtype='id', regex_format=regex)
+    metadata.set_primary_key('a')
+
+    # Run and Assert
+    instance = synthesizer_class(metadata)
+    message = (
+        'Primary key "a" is stored as an int but the Regex allows it to start with "0". Please '
+        'remove the Regex or update it to correspond to valid ints.'
+    )
+    with pytest.raises(SynthesizerInputError, match=message):
+        instance.fit(data)
