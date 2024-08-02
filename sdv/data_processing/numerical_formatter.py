@@ -3,8 +3,8 @@
 import logging
 import sys
 
-import numpy as np
 import pandas as pd
+from rdt.transformers.utils import learn_rounding_digits
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,34 +51,6 @@ class NumericalFormatter:
         self.enforce_min_max_values = enforce_min_max_values
         self.computer_representation = computer_representation
 
-    @staticmethod
-    def _learn_rounding_digits(data):
-        """Check if data has any decimals."""
-        name = data.name
-        data = np.array(data)
-        roundable_data = data[~(np.isinf(data) | pd.isna(data))]
-
-        # Doesn't contain numbers
-        if len(roundable_data) == 0:
-            return None
-
-        # Doesn't contain decimal digits
-        if ((roundable_data % 1) == 0).all():
-            return 0
-
-        # Try to round to fewer digits
-        if (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
-            for decimal in range(MAX_DECIMALS + 1):
-                if (roundable_data == roundable_data.round(decimal)).all():
-                    return decimal
-
-        # Can't round, not equal after MAX_DECIMALS digits of precision
-        LOGGER.info(
-            f"No rounding scheme detected for column '{name}'."
-            ' Synthetic data will not be rounded.'
-        )
-        return None
-
     def learn_format(self, column):
         """Learn the format of a column.
 
@@ -92,7 +64,7 @@ class NumericalFormatter:
             self._max_value = column.max()
 
         if self.enforce_rounding:
-            self._rounding_digits = self._learn_rounding_digits(column)
+            self._rounding_digits = learn_rounding_digits(column)
 
     def format_data(self, column):
         """Format a column according to the learned format.
@@ -105,20 +77,17 @@ class NumericalFormatter:
             numpy.ndarray:
                 containing the formatted data.
         """
-        column = column.copy().to_numpy()
+        column = column.copy()
         if self.enforce_min_max_values:
             column = column.clip(self._min_value, self._max_value)
-        elif self.computer_representation != 'Float':
+        elif not self.computer_representation.startswith('Float'):
             min_bound, max_bound = INTEGER_BOUNDS[self.computer_representation]
             column = column.clip(min_bound, max_bound)
 
-        is_integer = np.dtype(self._dtype).kind == 'i'
+        is_integer = pd.api.types.is_integer_dtype(self._dtype)
         if self.enforce_rounding and self._rounding_digits is not None:
             column = column.round(self._rounding_digits)
         elif is_integer:
             column = column.round(0)
-
-        if pd.isna(column).any() and is_integer:
-            return column
 
         return column.astype(self._dtype)
