@@ -600,6 +600,47 @@ class TestBaseSingleTableSynthesizer:
         instance._validate_constraints.assert_called_once_with(data)
         instance._validate.assert_not_called()
 
+    def test_validate_int_primary_key_regex_starts_with_0(self):
+        """Test that an error is raised if the primary key is an int that can start with 0.
+
+        If the the primary key is stored aas an int, but a regex is used with it, it is possible
+        that the first character can be a 0. If this happens, then we can get duplicate primary
+        key values since two different strings can be the same when converted ints
+        (eg. '00123' and '0123').
+        """
+        # Setup
+        data = pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
+        metadata = Mock()
+        metadata.primary_key = 'key'
+        metadata.column_relationships = []
+        metadata.columns = {'key': {'sdtype': 'id', 'regex_format': '[0-9]{3,4}'}}
+        instance = BaseSingleTableSynthesizer(metadata)
+
+        # Run and Assert
+        message = (
+            'Primary key "key" is stored as an int but the Regex allows it to start with '
+            '"0". Please remove the Regex or update it to correspond to valid ints.'
+        )
+        with pytest.raises(SynthesizerInputError, match=message):
+            instance.validate(data)
+
+    def test_validate_int_primary_key_regex_does_not_start_with_0(self):
+        """Test that no error is raised if the primary key is an int that can't start with 0.
+
+        If the the primary key is stored aas an int, but a regex is used with it, it is possible
+        that the first character can be a 0. If it isn't possible, then no error should be raised.
+        """
+        # Setup
+        data = pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
+        metadata = Mock()
+        metadata.primary_key = 'key'
+        metadata.column_relationships = []
+        metadata.columns = {'key': {'sdtype': 'id', 'regex_format': '[1-9]{3,4}'}}
+        instance = BaseSingleTableSynthesizer(metadata)
+
+        # Run and Assert
+        instance.validate(data)
+
     def test_update_transformers_invalid_keys(self):
         """Test error is raised if passed transformer doesn't match key column.
 
