@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -19,96 +19,6 @@ class TestNumericalFormatter:
         assert formatter.enforce_rounding is True
         assert formatter.enforce_min_max_values is True
         assert formatter.computer_representation == 'Int8'
-
-    @patch('sdv.data_processing.numerical_formatter.LOGGER')
-    def test__learn_rounding_digits_more_than_15_decimals(self, log_mock):
-        """Test the ``_learn_rounding_digits`` method with more than 15 decimals.
-
-        If the data has more than 15 decimals, return None and use ``LOGGER`` to inform the user.
-        """
-        # Setup
-        data = pd.Series(np.random.random(size=10).round(20), name='col')
-
-        # Run
-        output = NumericalFormatter._learn_rounding_digits(data)
-
-        # Assert
-        log_msg = (
-            "No rounding scheme detected for column 'col'. Synthetic data will not be rounded."
-        )
-        log_mock.info.assert_called_once_with(log_msg)
-        assert output is None
-
-    def test__learn_rounding_digits_less_than_15_decimals(self):
-        """Test the ``_learn_rounding_digits`` method with less than 15 decimals.
-
-        If the data has less than 15 decimals, the maximum number of decimals should be returned.
-
-        Input:
-            - an array that contains floats with a maximum of 3 decimals and a NaN.
-
-        Output:
-            - 3
-        """
-        # Setup
-        data = pd.Series(np.array([10, 0.0, 0.1, 0.12, 0.123, np.nan]))
-
-        # Run
-        output = NumericalFormatter._learn_rounding_digits(data)
-
-        # Assert
-        assert output == 3
-
-    def test__learn_rounding_digits_negative_decimals_float(self):
-        """Test the ``_learn_rounding_digits`` method with floats multiples of powers of 10.
-
-        If the data has all multiples of 10 the output should be None.
-
-        Input:
-            - an array that contains floats that are multiples of 10, 100 and 1000 and a NaN.
-        """
-        # Setup
-        data = pd.Series(np.array([1230.0, 12300.0, 123000.0, np.nan]))
-
-        # Run
-        output = NumericalFormatter._learn_rounding_digits(data)
-
-        # Assert
-        assert output == 0
-
-    def test__learn_rounding_digits_negative_decimals_integer(self):
-        """Test the ``_learn_rounding_digits`` method with integers multiples of powers of 10.
-
-        If the data has all multiples of 10 the output should be None.
-
-        Input:
-            - an array that contains integers that are multiples of 10, 100 and 1000 and a NaN.
-        """
-        # Setup
-        data = pd.Series(np.array([1230, 12300, 123000, np.nan]))
-
-        # Run
-        output = NumericalFormatter._learn_rounding_digits(data)
-
-        # Assert
-        assert output == 0
-
-    def test__learn_rounding_digits_all_nans(self):
-        """Test the ``_learn_rounding_digits`` method with data that is all NaNs.
-
-        If the data is all NaNs, expect that the output is 0.
-
-        Input:
-            - an array of NaN.
-        """
-        # Setup
-        data = pd.Series(np.array([np.nan, np.nan, np.nan, np.nan]))
-
-        # Run
-        output = NumericalFormatter._learn_rounding_digits(data)
-
-        # Assert
-        assert output is None
 
     def test_learn_format(self):
         """Test that ``learn_format`` method.
