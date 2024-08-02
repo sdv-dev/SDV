@@ -910,7 +910,12 @@ class TestBaseMultiTableSynthesizer:
         )
 
     def test_preprocess_single_table_preprocess_raises_error_0_int_regex(self):
-        """Test that if the single table synthesizer raises a specific error, it is reformatted."""
+        """Test that if the single table synthesizer raises a specific error, it is reformatted.
+
+        If a single table synthesizer raises an error about the primary key being an integer
+        with a regex that can start with zero, the error should be reformatted to include the
+        table name.
+        """
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
@@ -945,7 +950,11 @@ class TestBaseMultiTableSynthesizer:
             instance.preprocess(data)
 
     def test_preprocess_single_table_preprocess_raises_error(self):
-        """Test that if the single table synthesizer raises any other error, it is raised."""
+        """Test that if the single table synthesizer raises any other error, it is raised.
+
+        If a single table synthesizer raises an error besides the one concerning int primary keys
+        starting with 0 and having a regex, then the error should be raised as is.
+        """
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
