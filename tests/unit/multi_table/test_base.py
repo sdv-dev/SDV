@@ -121,7 +121,7 @@ class TestBaseMultiTableSynthesizer:
         mock_generate_synthesizer_id.return_value = synthesizer_id
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         metadata = get_multi_table_metadata()
-        metadata.validate = Mock()
+        metadata.validate = Mock(spec=Metadata)
 
         # Run
         with catch_sdv_logs(caplog, logging.INFO, 'MultiTableSynthesizer'):
@@ -143,6 +143,21 @@ class TestBaseMultiTableSynthesizer:
             'SYNTHESIZER CLASS NAME': 'BaseMultiTableSynthesizer',
             'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
+
+    def test___init___deprecated(self):
+        """Test that init with old MultiTableMetadata gives a future warnging."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        metadata.validate = Mock()
+
+        deprecation_msg = re.escape(
+            "The 'MultiTableMetadata' is deprecated. Please use the new "
+            "'Metadata' class for synthesizers."
+        )
+
+        # Run
+        with pytest.warns(FutureWarning, match=deprecation_msg):
+            BaseMultiTableSynthesizer(metadata)
 
     def test__init__column_relationship_warning(self):
         """Test that a warning is raised only once when the metadata has column relationships."""
@@ -382,7 +397,9 @@ class TestBaseMultiTableSynthesizer:
         result = instance.get_metadata()
 
         # Assert
-        assert metadata == result
+        expected_metadata = Metadata.load_from_dict(metadata.to_dict())
+        assert type(result) is Metadata
+        assert expected_metadata.to_dict() == result.to_dict()
 
     def test_validate(self):
         """Test that no error is being raised when the data is valid."""
@@ -868,7 +885,7 @@ class TestBaseMultiTableSynthesizer:
     def test_preprocess_warning(self, mock_warnings):
         """Test that ``preprocess`` warns the user if the model has already been fitted."""
         # Setup
-        metadata = get_multi_table_metadata()
+        metadata = Metadata.load_from_dict(get_multi_table_metadata().to_dict())
         instance = BaseMultiTableSynthesizer(metadata)
         instance.validate = Mock()
         data = {
