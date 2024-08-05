@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 from datetime import date, datetime
 from unittest.mock import ANY, MagicMock, Mock, call, mock_open, patch
@@ -34,7 +35,7 @@ from sdv.single_table import (
     GaussianCopulaSynthesizer,
     TVAESynthesizer,
 )
-from sdv.single_table.base import COND_IDX, BaseSingleTableSynthesizer
+from sdv.single_table.base import COND_IDX, BaseSingleTableSynthesizer, BaseSynthesizer
 from tests.utils import catch_sdv_logs
 
 
@@ -1866,6 +1867,21 @@ class TestBaseSingleTableSynthesizer:
             'SYNTHESIZER CLASS NAME': 'Mock',
             'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
+
+    def test_save_warning(self, tmp_path):
+        """Test that the synthesizer produces a warning if saved without fitting."""
+        # Setup
+        synthesizer = BaseSynthesizer(SingleTableMetadata())
+
+        # Run and Assert
+        warn_msg = re.escape(
+            'You are saving a synthesizer that has not yet been fitted. You will not be able '
+            'to sample synthetic data without fitting. We recommend fitting the synthesizer '
+            'first and then saving.'
+        )
+        with pytest.warns(Warning, match=warn_msg):
+            filepath = os.path.join(tmp_path, 'output.pkl')
+            synthesizer.save(filepath)
 
     @patch('sdv.single_table.base.datetime')
     @patch('sdv.single_table.base.generate_synthesizer_id')

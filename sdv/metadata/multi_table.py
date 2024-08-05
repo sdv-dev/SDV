@@ -914,6 +914,47 @@ class MultiTableMetadata:
         self._validate_table_exists(table_name)
         return deepcopy(self.tables[table_name])
 
+    def anonymize(self):
+        """Anonymize metadata by obfuscating column names.
+
+        Returns:
+            MultiTableMetadata:
+                An anonymized MultiTableMetadata instance.
+        """
+        anonymized_metadata = {'tables': {}, 'relationships': []}
+        anonymized_table_map = {}
+        counter = 1
+        for table, table_metadata in self.tables.items():
+            anonymized_table_name = f'table{counter}'
+            anonymized_table_map[table] = anonymized_table_name
+
+            anonymized_metadata['tables'][anonymized_table_name] = (
+                table_metadata.anonymize().to_dict()
+            )
+            counter += 1
+
+        for relationship in self.relationships:
+            parent_table = relationship['parent_table_name']
+            anonymized_parent_table = anonymized_table_map[parent_table]
+
+            child_table = relationship['child_table_name']
+            anonymized_child_table = anonymized_table_map[child_table]
+
+            foreign_key = relationship['child_foreign_key']
+            anonymized_foreign_key = self.tables[child_table]._anonymized_column_map[foreign_key]
+
+            primary_key = relationship['parent_primary_key']
+            anonymized_primary_key = self.tables[parent_table]._anonymized_column_map[primary_key]
+
+            anonymized_metadata['relationships'].append({
+                'parent_table_name': anonymized_parent_table,
+                'child_table_name': anonymized_child_table,
+                'child_foreign_key': anonymized_foreign_key,
+                'parent_primary_key': anonymized_primary_key,
+            })
+
+        return MultiTableMetadata.load_from_dict(anonymized_metadata)
+
     def visualize(
         self, show_table_details='full', show_relationship_labels=True, output_filepath=None
     ):

@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 import warnings
 from collections import defaultdict
@@ -1525,6 +1526,21 @@ class TestBaseMultiTableSynthesizer:
             'SYNTHESIZER CLASS NAME': 'Mock',
             'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
+
+    def test_save_warning(self, tmp_path):
+        """Test that the synthesizer produces a warning if saved without fitting."""
+        # Setup
+        synthesizer = BaseMultiTableSynthesizer(MultiTableMetadata())
+
+        # Run and Assert
+        warn_msg = re.escape(
+            'You are saving a synthesizer that has not yet been fitted. You will not be able '
+            'to sample synthetic data without fitting. We recommend fitting the synthesizer '
+            'first and then saving.'
+        )
+        with pytest.warns(Warning, match=warn_msg):
+            filepath = os.path.join(tmp_path, 'output.pkl')
+            synthesizer.save(filepath)
 
     @patch('sdv.multi_table.base.datetime')
     @patch('sdv.multi_table.base.generate_synthesizer_id')
