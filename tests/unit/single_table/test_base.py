@@ -600,10 +600,10 @@ class TestBaseSingleTableSynthesizer:
         instance._validate_constraints.assert_called_once_with(data)
         instance._validate.assert_not_called()
 
-    def test_validate_int_primary_key_regex_starts_with_0(self):
+    def test_validate_int_primary_key_regex_starts_with_zero(self):
         """Test that an error is raised if the primary key is an int that can start with 0.
 
-        If the the primary key is stored aas an int, but a regex is used with it, it is possible
+        If the the primary key is stored as an int, but a regex is used with it, it is possible
         that the first character can be a 0. If this happens, then we can get duplicate primary
         key values since two different strings can be the same when converted ints
         (eg. '00123' and '0123').
@@ -624,10 +624,10 @@ class TestBaseSingleTableSynthesizer:
         with pytest.raises(SynthesizerInputError, match=message):
             instance.validate(data)
 
-    def test_validate_int_primary_key_regex_does_not_start_with_0(self):
+    def test_validate_int_primary_key_regex_does_not_start_with_zero(self):
         """Test that no error is raised if the primary key is an int that can't start with 0.
 
-        If the the primary key is stored aas an int, but a regex is used with it, it is possible
+        If the the primary key is stored as an int, but a regex is used with it, it is possible
         that the first character can be a 0. If it isn't possible, then no error should be raised.
         """
         # Setup
