@@ -472,7 +472,7 @@ def test_datetime_values_inside_real_data_range():
 
 
 def test_support_new_pandas_dtypes():
-    """Test that the synthesizer supports the new pandas dtypes."""
+    """Test that the synthesizer supports the nullable numerical pandas dtypes."""
     # Setup
     data = pd.DataFrame({
         'Int8': pd.Series([1, 2, -3, pd.NA], dtype='Int8'),
