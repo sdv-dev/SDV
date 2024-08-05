@@ -75,11 +75,7 @@ def test_get_column_plot(mock_plot):
 
 @patch('sdv.evaluation.single_table.get_column_plot')
 def test_get_column_plot_only_real_or_synthetic(mock_plot):
-    """Test the ``get_column_plot``.
-
-    Ensure that the ``get_column_plot`` is being called with the ``SingleTableMetadata`` object
-    and the expected table, when only real or synthetic data is provided.
-    """
+    """Test that ``get_column_plot`` works when only real or synthetic data is provided."""
     # Setup
     table1 = pd.DataFrame({'col': [1, 2, 3]})
     data1 = {'table': table1}
@@ -101,7 +97,7 @@ def test_get_column_plot_only_real_or_synthetic(mock_plot):
 
 @patch('sdv.evaluation.single_table.get_column_pair_plot')
 def test_get_column_pair_plot(mock_plot):
-    """Test that ``get_column_pair`` plot is being called with the expected objects."""
+    """Test that ``get_column_pair_plot`` is being called with the expected objects."""
     # Setup
     table1 = pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]})
     table2 = pd.DataFrame({'col1': [2, 1, 3], 'col2': [1, 2, 3]})
@@ -122,7 +118,7 @@ def test_get_column_pair_plot(mock_plot):
 
 @patch('sdv.evaluation.single_table.get_column_pair_plot')
 def test_get_column_pair_plot_only_real_or_synthetic(mock_plot):
-    """Test that ``get_column_pair`` plot is being called with the expected objects."""
+    """Test that ``get_column_pair_plot`` works when only real or synthetic data is provided."""
     # Setup
     table1 = pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]})
     data1 = {'table': table1}
