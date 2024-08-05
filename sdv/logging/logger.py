@@ -33,7 +33,7 @@ class CSVFormatter(logging.Formatter):
 
     def format(self, record):  # noqa: A003
         """Format the record and write to CSV."""
-        row = record.msg
+        row = record.msg.copy()
         row['LEVEL'] = record.levelname
         self.writer.writerow(row)
         data = self.output.getvalue()
