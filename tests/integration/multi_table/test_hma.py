@@ -18,6 +18,7 @@ from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import SamplingError, SynthesizerInputError, VersionError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
@@ -34,6 +35,32 @@ class TestHMASynthesizer:
         """
         # Setup
         data, metadata = download_demo('multi_table', 'got_families')
+        hmasynthesizer = HMASynthesizer(metadata)
+
+        # Run
+        hmasynthesizer.fit(data)
+        normal_sample = hmasynthesizer.sample(0.5)
+        increased_sample = hmasynthesizer.sample(1.5)
+
+        # Assert
+        assert set(normal_sample) == {'characters', 'character_families', 'families'}
+        assert set(increased_sample) == {'characters', 'character_families', 'families'}
+        for table_name, table in normal_sample.items():
+            assert all(table.columns == data[table_name].columns)
+
+        for normal_table, increased_table in zip(normal_sample.values(), increased_sample.values()):
+            assert increased_table.size > normal_table.size
+
+    def test_hma_metadata(self):
+        """End to end integration tests with ``HMASynthesizer``.
+
+        The test consist on loading the demo data, convert the old metadata to the new format
+        and then fit a ``HMASynthesizer``. After fitting two samples are being generated, one with
+        a 0.5 scale and one with 1.5 scale.
+        """
+        # Setup
+        data, multi_metadata = download_demo('multi_table', 'got_families')
+        metadata = Metadata.load_from_dict(multi_metadata.to_dict())
         hmasynthesizer = HMASynthesizer(metadata)
 
         # Run
@@ -1241,7 +1268,8 @@ class TestHMASynthesizer:
                 initialization, but is saved to a file before fitting.
         """
         # Setup
-        data, metadata = download_demo('multi_table', 'got_families')
+        data, multi_metadata = download_demo('multi_table', 'got_families')
+        metadata = Metadata.load_from_dict(multi_metadata.to_dict())
 
         # Run 1
         with warnings.catch_warnings(record=True) as captured_warnings:
@@ -1258,7 +1286,7 @@ class TestHMASynthesizer:
         assert len(captured_warnings) == 0
 
         # Run 2
-        metadata_detect = MultiTableMetadata()
+        metadata_detect = Metadata()
         metadata_detect.detect_from_dataframes(data)
 
         metadata_detect.relationships = metadata.relationships
@@ -1298,7 +1326,7 @@ class TestHMASynthesizer:
         """
         # Setup
         data, metadata = download_demo('multi_table', 'got_families')
-        metadata_detect = MultiTableMetadata()
+        metadata_detect = Metadata()
         metadata_detect.detect_from_dataframes(data)
 
         metadata_detect.relationships = metadata.relationships
