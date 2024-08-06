@@ -116,10 +116,7 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=
         })
 
     return visualization.get_column_plot(
-        real_data,
-        synthetic_data,
-        column_name,
-        plot_type=plot_type
+        real_data, synthetic_data, column_name, plot_type=plot_type
     )
 
 
