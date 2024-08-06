@@ -290,7 +290,7 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
         )
         self._model = CTGAN(**self._model_kwargs)
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore', category=UserWarning)
+            warnings.filterwarnings('ignore', message='.*Attempting to run cuBLAS.*')
             self._model.fit(processed_data, discrete_columns=discrete_columns)
 
     def _sample(self, num_rows, conditions=None):
