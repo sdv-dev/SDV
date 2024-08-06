@@ -230,7 +230,7 @@ def test_detect_table_from_csv(tmp_path):
 
 
 def test_single_table_compatibility(tmp_path):
-    """Test if SingleMetadataTable still has compatibility with single table synthesizers."""
+    """Test if SingleTableMetadata still has compatibility with single table synthesizers."""
     # Setup
     data, _ = download_demo('single_table', 'fake_hotel_guests')
     warn_msg = (
