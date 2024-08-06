@@ -23,6 +23,7 @@ from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.hma import HMASynthesizer
+from sdv.single_table.base import INT_REGEX_ZERO_ERROR_MESSAGE
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
 from tests.utils import catch_sdv_logs, get_multi_table_data, get_multi_table_metadata
@@ -907,6 +908,84 @@ class TestBaseMultiTableSynthesizer:
             'This model has already been fitted. To use the new preprocessed data, '
             "please refit the model using 'fit' or 'fit_processed_data'."
         )
+
+    def test_preprocess_single_table_preprocess_raises_error_0_int_regex(self):
+        """Test that if the single table synthesizer raises a specific error, it is reformatted.
+
+        If a single table synthesizer raises an error about the primary key being an integer
+        with a regex that can start with zero, the error should be reformatted to include the
+        table name.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance.validate = Mock()
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(0, 20, 2),
+                'upravna_enota': np.arange(10),
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(10),
+                'id_nesreca': np.arange(10),
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(10),
+            }),
+        }
+
+        synth_nesreca = Mock()
+        synth_oseba = Mock()
+        synth_upravna_enota = Mock()
+        synth_nesreca._preprocess.side_effect = SynthesizerInputError(INT_REGEX_ZERO_ERROR_MESSAGE)
+        instance._table_synthesizers = {
+            'nesreca': synth_nesreca,
+            'oseba': synth_oseba,
+            'upravna_enota': synth_upravna_enota,
+        }
+
+        # Run
+        message = f'Primary key for table "nesreca" {INT_REGEX_ZERO_ERROR_MESSAGE}'
+        with pytest.raises(SynthesizerInputError, match=message):
+            instance.preprocess(data)
+
+    def test_preprocess_single_table_preprocess_raises_error(self):
+        """Test that if the single table synthesizer raises any other error, it is raised.
+
+        If a single table synthesizer raises an error besides the one concerning int primary keys
+        starting with 0 and having a regex, then the error should be raised as is.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance.validate = Mock()
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(0, 20, 2),
+                'upravna_enota': np.arange(10),
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(10),
+                'id_nesreca': np.arange(10),
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(10),
+            }),
+        }
+
+        synth_nesreca = Mock()
+        synth_oseba = Mock()
+        synth_upravna_enota = Mock()
+        synth_nesreca._preprocess.side_effect = SynthesizerInputError('blah')
+        instance._table_synthesizers = {
+            'nesreca': synth_nesreca,
+            'oseba': synth_oseba,
+            'upravna_enota': synth_upravna_enota,
+        }
+
+        # Run
+        with pytest.raises(SynthesizerInputError, match='blah'):
+            instance.preprocess(data)
 
     @patch('sdv.multi_table.base.datetime')
     def test_fit_processed_data(self, mock_datetime, caplog):

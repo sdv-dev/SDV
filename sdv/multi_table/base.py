@@ -26,6 +26,7 @@ from sdv.errors import (
     SynthesizerInputError,
 )
 from sdv.logging import disable_single_table_logger, get_sdv_logger
+from sdv.single_table.base import INT_REGEX_ZERO_ERROR_MESSAGE
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
@@ -363,9 +364,17 @@ class BaseMultiTableSynthesizer:
         processed_data = {}
         pbar_args = self._get_pbar_args(desc='Preprocess Tables')
         for table_name, table_data in tqdm(data.items(), **pbar_args):
-            synthesizer = self._table_synthesizers[table_name]
-            self._assign_table_transformers(synthesizer, table_name, table_data)
-            processed_data[table_name] = synthesizer._preprocess(table_data)
+            try:
+                synthesizer = self._table_synthesizers[table_name]
+                self._assign_table_transformers(synthesizer, table_name, table_data)
+                processed_data[table_name] = synthesizer._preprocess(table_data)
+            except SynthesizerInputError as e:
+                if INT_REGEX_ZERO_ERROR_MESSAGE in str(e):
+                    raise SynthesizerInputError(
+                        f'Primary key for table "{table_name}" {INT_REGEX_ZERO_ERROR_MESSAGE}'
+                    )
+
+                raise e
 
         for table in list_of_changed_tables:
             data[table].columns = self._original_table_columns[table]

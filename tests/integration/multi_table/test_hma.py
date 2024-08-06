@@ -1988,3 +1988,34 @@ def test_hma_synthesizer_with_fixed_combinations():
     assert len(sampled['users']) > 1
     assert len(sampled['records']) > 1
     assert len(sampled['locations']) > 1
+
+
+REGEXES = ['[0-9]{3,4}', '0HQ-[a-z]', '0+', r'\d', r'\d{1,5}', r'\w']
+
+
+@pytest.mark.parametrize('regex', REGEXES)
+def test_fit_int_primary_key_regex_includes_zero(regex):
+    """Test that sdv errors if the primary key has a regex, is an int, and can start with 0."""
+    # Setup
+    parent_data = pd.DataFrame({
+        'parent_id': [1, 2, 3, 4, 5, 6],
+        'col': ['a', 'b', 'a', 'b', 'a', 'b'],
+    })
+    child_data = pd.DataFrame({'id': [1, 2, 3, 4, 5, 6], 'parent_id': [1, 2, 3, 4, 5, 6]})
+    data = {
+        'parent_data': parent_data,
+        'child_data': child_data,
+    }
+    metadata = MultiTableMetadata()
+    metadata.detect_from_dataframes(data)
+    metadata.update_column('parent_data', 'parent_id', sdtype='id', regex_format=regex)
+    metadata.set_primary_key('parent_data', 'parent_id')
+
+    # Run and Assert
+    instance = HMASynthesizer(metadata)
+    message = (
+        'Primary key for table "parent_data" is stored as an int but the Regex allows it to start '
+        'with "0". Please remove the Regex or update it to correspond to valid ints.'
+    )
+    with pytest.raises(SynthesizerInputError, match=message):
+        instance.fit(data)
