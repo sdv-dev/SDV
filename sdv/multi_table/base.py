@@ -26,10 +26,15 @@ from sdv.errors import (
 )
 from sdv.logging import disable_single_table_logger, get_sdv_logger
 from sdv.metadata.metadata import Metadata
+from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.single_table.base import INT_REGEX_ZERO_ERROR_MESSAGE
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
+DEPRECATION_MSG = (
+    "The 'MultiTableMetadata' is deprecated. Please use the new "
+    "'Metadata' class for synthesizers."
+)
 
 
 class BaseMultiTableSynthesizer:
@@ -99,6 +104,8 @@ class BaseMultiTableSynthesizer:
 
     def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
         self.metadata = metadata
+        if type(metadata) is MultiTableMetadata:
+            warnings.warn(DEPRECATION_MSG, FutureWarning)
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', message=r'.*column relationship.*')
             self.metadata.validate()
@@ -206,8 +213,8 @@ class BaseMultiTableSynthesizer:
         self._table_parameters[table_name].update(deepcopy(table_parameters))
 
     def get_metadata(self):
-        """Return the ``MultiTableMetadata`` for this synthesizer."""
-        return self.metadata
+        """Return the ``Metadata`` for this synthesizer."""
+        return Metadata.load_from_dict(self.metadata.to_dict())
 
     def _validate_all_tables(self, data):
         """Validate every table of the data has a valid table/metadata pair."""
