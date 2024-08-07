@@ -1,5 +1,7 @@
 """Wrapper around CTGAN model."""
 
+import warnings
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -287,7 +289,9 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
             self.get_metadata(), processed_data, transformers
         )
         self._model = CTGAN(**self._model_kwargs)
-        self._model.fit(processed_data, discrete_columns=discrete_columns)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', message='.*Attempting to run cuBLAS.*')
+            self._model.fit(processed_data, discrete_columns=discrete_columns)
 
     def _sample(self, num_rows, conditions=None):
         """Sample the indicated number of rows from the model.
