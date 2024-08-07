@@ -52,7 +52,7 @@ class TestDataProcessor:
         data, metadata = download_demo('single_table', 'adult')
 
         # Add anonymized field
-        metadata.update_column('occupation', sdtype='job', pii=True)
+        metadata.update_column('adult', 'occupation', sdtype='job', pii=True)
 
         # Instance ``DataProcessor``
         dp = DataProcessor(metadata)
@@ -100,11 +100,11 @@ class TestDataProcessor:
         data, metadata = download_demo('single_table', 'adult')
 
         # Add anonymized field
-        metadata.update_column('occupation', sdtype='job', pii=True)
+        metadata.update_column('adult', 'occupation', sdtype='job', pii=True)
 
         # Add primary key field
-        metadata.add_column('id', sdtype='id', regex_format='ID_\\d{4}[0-9]')
-        metadata.set_primary_key('id')
+        metadata.add_column('adult', 'id', sdtype='id', regex_format='ID_\\d{4}[0-9]')
+        metadata.set_primary_key('adult', 'id')
 
         # Add id
         size = len(data)
@@ -346,7 +346,7 @@ class TestDataProcessor:
         """Test data processor uses the default locale for anonymized columns."""
         # Setup
         data, metadata = download_demo('single_table', 'adult')
-        metadata.update_column('occupation', sdtype='job', pii=True)
+        metadata.update_column('adult', 'occupation', sdtype='job', pii=True)
 
         dp = DataProcessor(metadata, locales=['en_CA', 'fr_CA'])
 
