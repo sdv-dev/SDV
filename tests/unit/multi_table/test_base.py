@@ -140,9 +140,11 @@ class TestBaseMultiTableSynthesizer:
             'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
 
-    def test__init__column_relationship_warning(self):
+    @patch('sdv.metadata.single_table.is_faker_function')
+    def test__init__column_relationship_warning(self, mock_is_faker_function):
         """Test that a warning is raised only once when the metadata has column relationships."""
         # Setup
+        mock_is_faker_function.return_value = True
         metadata = get_multi_table_metadata()
         metadata.add_column('nesreca', 'lat', sdtype='latitude')
         metadata.add_column('nesreca', 'lon', sdtype='longitude')
@@ -165,6 +167,10 @@ class TestBaseMultiTableSynthesizer:
             warning for warning in caught_warnings if expected_warning in str(warning.message)
         ]
         assert len(column_relationship_warnings) == 1
+        mock_is_faker_function.assert_has_calls([
+            call('latitude'),
+            call('longitude'),
+        ])
 
     def test___init___synthesizer_kwargs_deprecated(self):
         """Test that the ``synthesizer_kwargs`` method is deprecated."""
