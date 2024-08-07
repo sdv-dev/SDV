@@ -36,8 +36,8 @@ def test_evaluation_metadata():
     """Test ``evaluate_quality`` and ``run_diagnostic`` with Metadata."""
     # Setup
     data = pd.DataFrame({'col': [1, 2, 3]})
-    metadata = Metadata()
-    metadata.add_column('col', sdtype='numerical')
+    metadata_dict = {'columns': {'col': {'sdtype': 'numerical'}}}
+    metadata = Metadata.load_from_dict(metadata_dict)
     synthesizer = GaussianCopulaSynthesizer(metadata, default_distribution='truncnorm')
 
     # Run and Assert
