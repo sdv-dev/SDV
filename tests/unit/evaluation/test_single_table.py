@@ -38,8 +38,8 @@ def test_evaluate_quality_metadata():
     # Setup
     data1 = pd.DataFrame({'col': [1, 2, 3]})
     data2 = pd.DataFrame({'col': [2, 1, 3]})
-    metadata = Metadata()
-    metadata.add_column('col', sdtype='numerical')
+    metadata_dict = {'columns': {'col': {'sdtype': 'numerical'}}}
+    metadata = Metadata.load_from_dict(metadata_dict)
     QualityReport.generate = Mock()
 
     # Run
@@ -71,8 +71,8 @@ def test_run_diagnostic_metadata():
     # Setup
     data1 = pd.DataFrame({'col': [1, 2, 3]})
     data2 = pd.DataFrame({'col': [2, 1, 3]})
-    metadata = Metadata()
-    metadata.add_column('col', sdtype='numerical')
+    metadata_dict = {'columns': {'col': {'sdtype': 'numerical'}}}
+    metadata = Metadata.load_from_dict(metadata_dict)
     DiagnosticReport.generate = Mock(return_value=123)
 
     # Run
@@ -114,8 +114,8 @@ def test_get_column_plot_continuous_data_metadata(mock_get_plot):
     # Setup
     data1 = pd.DataFrame({'col': [1, 2, 3]})
     data2 = pd.DataFrame({'col': [2, 1, 3]})
-    metadata = Metadata()
-    metadata.add_column('col', sdtype='numerical')
+    metadata_dict = {'columns': {'col': {'sdtype': 'numerical'}}}
+    metadata = Metadata.load_from_dict(metadata_dict)
 
     # Run
     plot = get_column_plot(data1, data2, metadata, 'col')
@@ -156,8 +156,8 @@ def test_get_column_plot_discrete_data_metadata(mock_get_plot):
     # Setup
     data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
     data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
-    metadata = Metadata()
-    metadata.add_column('col', sdtype='categorical')
+    metadata_dict = {'columns': {'col': {'sdtype': 'categorical'}}}
+    metadata = Metadata.load_from_dict(metadata_dict)
 
     # Run
     plot = get_column_plot(data1, data2, metadata, 'col')
@@ -200,8 +200,8 @@ def test_get_column_plot_discrete_data_with_distplot_metadata(mock_get_plot):
     # Setup
     data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
     data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
-    metadata = Metadata()
-    metadata.add_column('col', sdtype='categorical')
+    metadata_dict = {'columns': {'col': {'sdtype': 'categorical'}}}
+    metadata = Metadata.load_from_dict(metadata_dict)
 
     # Run
     plot = get_column_plot(data1, data2, metadata, 'col', plot_type='distplot')
@@ -243,8 +243,8 @@ def test_get_column_plot_invalid_sdtype_metadata(mock_get_plot):
     # Setup
     data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
     data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
-    metadata = Metadata()
-    metadata.add_column('col', sdtype='id')
+    metadata_dict = {'columns': {'col': {'sdtype': 'id'}}}
+    metadata = Metadata.load_from_dict(metadata_dict)
 
     # Run and Assert
     error_msg = re.escape(
@@ -286,8 +286,8 @@ def test_get_column_plot_invalid_sdtype_with_plot_type_metadata(mock_get_plot):
     # Setup
     data1 = pd.DataFrame({'col': ['a', 'b', 'c']})
     data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
-    metadata = Metadata()
-    metadata.add_column('col', sdtype='id')
+    metadata_dict = {'columns': {'col': {'sdtype': 'id'}}}
+    metadata = Metadata.load_from_dict(metadata_dict)
 
     # Run
     plot = get_column_plot(data1, data2, metadata, 'col', plot_type='bar')
@@ -561,9 +561,13 @@ def test_get_column_pair_plot_with_sample_size_metadata(mock_get_plot):
         'amount': [1.0, 2.0, 3.0],
         'price': [11.0, 22.0, 33.0],
     })
-    metadata = Metadata()
-    metadata.add_column('amount', sdtype='numerical')
-    metadata.add_column('price', sdtype='numerical')
+    metadata_dict = {
+        'columns': {
+            'amount': {'sdtype': 'numerical'},
+            'price': {'sdtype': 'numerical'},
+        }
+    }
+    metadata = Metadata.load_from_dict(metadata_dict)
 
     # Run
     get_column_pair_plot(real_data, synthetic_data, metadata, columns, sample_size=2)
