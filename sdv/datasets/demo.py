@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import os
+import warnings
 from collections import defaultdict
 from pathlib import Path
 from zipfile import ZipFile
@@ -15,8 +16,6 @@ from botocore import UNSIGNED
 from botocore.client import Config
 from botocore.exceptions import ClientError
 
-from sdv.metadata.multi_table import MultiTableMetadata
-from sdv.metadata.single_table import SingleTableMetadata
 from sdv.metadata.metadata import Metadata
 
 LOGGER = logging.getLogger(__name__)
@@ -114,6 +113,7 @@ def _get_metadata(output_folder_name, in_memory_directory, dataset_name):
     else:
         metadata_path = 'metadata_v2.json'
         if metadata_path not in in_memory_directory:
+            warnings.warn(f'Metadata for {dataset_name} is missing updated version v2.')
             metadata_path = 'metadata_v1.json'
         metadict = json.loads(in_memory_directory[metadata_path])
         metadata = metadata.load_from_dict(metadict, dataset_name)

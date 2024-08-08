@@ -55,7 +55,7 @@ class TestDataProcessor:
         metadata.update_column('adult', 'occupation', sdtype='job', pii=True)
 
         # Instance ``DataProcessor``
-        dp = DataProcessor(metadata)
+        dp = DataProcessor(metadata._convert_to_single_table())
 
         # Fit
         dp.fit(data)
@@ -111,7 +111,7 @@ class TestDataProcessor:
         data['id'] = np.arange(0, size).astype('O')
 
         # Instance ``DataProcessor``
-        dp = DataProcessor(metadata)
+        dp = DataProcessor(metadata._convert_to_single_table())
 
         # Fit
         dp.fit(data)
@@ -247,7 +247,7 @@ class TestDataProcessor:
         data, metadata = download_demo(
             modality='single_table', dataset_name='student_placements_pii'
         )
-        dp = DataProcessor(metadata)
+        dp = DataProcessor(metadata._convert_to_single_table())
 
         # Run
         dp.prepare_for_fitting(data)
@@ -288,7 +288,7 @@ class TestDataProcessor:
         """End to end test using formatters."""
         # Setup
         data, metadata = download_demo(modality='single_table', dataset_name='student_placements')
-        dp = DataProcessor(metadata)
+        dp = DataProcessor(metadata._convert_to_single_table())
 
         # Run
         dp.fit(data)
@@ -327,7 +327,7 @@ class TestDataProcessor:
         """Test data processor re-fits _hyper_transformer."""
         # Setup
         data, metadata = download_demo(modality='single_table', dataset_name='student_placements')
-        dp = DataProcessor(metadata)
+        dp = DataProcessor(metadata._convert_to_single_table())
 
         # Run
         dp.fit(data)
@@ -348,7 +348,7 @@ class TestDataProcessor:
         data, metadata = download_demo('single_table', 'adult')
         metadata.update_column('adult', 'occupation', sdtype='job', pii=True)
 
-        dp = DataProcessor(metadata, locales=['en_CA', 'fr_CA'])
+        dp = DataProcessor(metadata._convert_to_single_table(), locales=['en_CA', 'fr_CA'])
 
         # Run
         dp.fit(data)

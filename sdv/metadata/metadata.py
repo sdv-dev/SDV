@@ -1,7 +1,5 @@
 """Metadata."""
 
-from pathlib import Path
-
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata

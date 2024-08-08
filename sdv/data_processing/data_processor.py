@@ -24,7 +24,6 @@ from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
 from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
 from sdv.errors import SynthesizerInputError, log_exc_stacktrace
-from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
@@ -115,8 +114,6 @@ class DataProcessor:
         locales=['en_US'],
     ):
         self.metadata = metadata
-        if isinstance(metadata, Metadata):
-            self.metadata = metadata._convert_to_single_table()
         self._enforce_rounding = enforce_rounding
         self._enforce_min_max_values = enforce_min_max_values
         self._model_kwargs = model_kwargs or {}
