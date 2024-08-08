@@ -15,7 +15,7 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
             Dictionary containing the real table data.
         synthetic_column (dict):
             Dictionary containing the synthetic table data.
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             The metadata object describing the real/synthetic data.
         verbose (bool):
             Whether or not to print report summary and progress.
@@ -38,7 +38,7 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
             Dictionary containing the real table data.
         synthetic_column (dict):
             Dictionary containing the synthetic table data.
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             The metadata object describing the real/synthetic data.
         verbose (bool):
             Whether or not to print report summary and progress.
@@ -61,7 +61,7 @@ def get_column_plot(real_data, synthetic_data, metadata, table_name, column_name
             Dictionary containing the real table data.
         synthetic_column (dict):
             Dictionary containing the synthetic table data.
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata describing the data.
         table_name (str):
             The name of the table.
@@ -98,7 +98,7 @@ def get_column_pair_plot(
             Dictionary containing the real table data.
         synthetic_column (dict):
             Dictionary containing the synthetic table data.
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata describing the data.
         table_name (str):
             The name of the table.
@@ -147,7 +147,7 @@ def get_cardinality_plot(
             The name of the parent table.
         child_foreign_key (string):
             The name of the foreign key column in the child table.
-        metadata (MultiTableMetadata):
+        metadata (Metadata):
             Metadata describing the data.
         plot_type (str):
             The plot type to use to plot the cardinality. Must be either 'bar' or 'distplot'.

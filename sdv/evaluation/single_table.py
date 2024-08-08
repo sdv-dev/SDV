@@ -6,6 +6,7 @@ from sdmetrics.reports.single_table.diagnostic_report import DiagnosticReport
 from sdmetrics.reports.single_table.quality_report import QualityReport
 
 from sdv.errors import VisualizationUnavailableError
+from sdv.metadata.metadata import Metadata
 
 
 def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
@@ -16,7 +17,7 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
             The table containing the real data.
         synthetic_data (pd.DataFrame):
             The table containing the synthetic data.
-        metadata (SingleTableMetadata):
+        metadata (Metadata):
             The metadata object describing the real/synthetic data.
         verbose (bool):
             Whether or not to print report summary and progress.
@@ -27,6 +28,9 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
             Single table quality report object.
     """
     quality_report = QualityReport()
+    if isinstance(metadata, Metadata):
+        metadata = metadata._convert_to_single_table()
+
     quality_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
     return quality_report
 
@@ -39,7 +43,7 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
             The table containing the real data.
         synthetic_data (pd.DataFrame):
             The table containing the synthetic data.
-        metadata (SingleTableMetadata):
+        metadata (Metadata):
             The metadata object describing the real/synthetic data.
         verbose (bool):
             Whether or not to print report summary and progress.
@@ -50,6 +54,9 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
             Single table diagnostic report object.
     """
     diagnostic_report = DiagnosticReport()
+    if isinstance(metadata, Metadata):
+        metadata = metadata._convert_to_single_table()
+
     diagnostic_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
     return diagnostic_report
 
@@ -62,7 +69,7 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=
             The real table data.
         synthetic_data (pandas.DataFrame):
             The synthetic table data.
-        metadata (SingleTableMetadata):
+        metadata (Metadata):
             The table metadata.
         column_name (str):
             The name of the column.
@@ -76,6 +83,9 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=
         plotly.graph_objects._figure.Figure:
             1D marginal distribution plot (i.e. a histogram) of the columns.
     """
+    if isinstance(metadata, Metadata):
+        metadata = metadata._convert_to_single_table()
+
     sdtype = metadata.columns.get(column_name)['sdtype']
     if plot_type is None:
         if sdtype in ['datetime', 'numerical']:
@@ -114,7 +124,7 @@ def get_column_pair_plot(
             The real table data.
         synthetic_column (pandas.Dataframe):
             The synthetic table data.
-        metadata (SingleTableMetadata):
+        metadata (Metadata):
             The table metadata.
         column_names (list[string]):
             The names of the two columns to plot.
@@ -131,6 +141,9 @@ def get_column_pair_plot(
         plotly.graph_objects._figure.Figure:
             2D bivariate distribution plot (i.e. a scatterplot) of the columns.
     """
+    if isinstance(metadata, Metadata):
+        metadata = metadata._convert_to_single_table()
+
     real_data = real_data.copy()
     synthetic_data = synthetic_data.copy()
     if plot_type is None:
