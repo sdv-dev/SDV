@@ -30,6 +30,9 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
     if isinstance(metadata, Metadata):
         metadata = metadata._convert_to_single_table()
     quality_report = QualityReport()
+    if isinstance(metadata, Metadata):
+        metadata = metadata._convert_to_single_table()
+
     quality_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
     return quality_report
 
@@ -42,7 +45,7 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
             The table containing the real data.
         synthetic_data (pd.DataFrame):
             The table containing the synthetic data.
-        metadata (SingleTableMetadata):
+        metadata (Metadata):
             The metadata object describing the real/synthetic data.
         verbose (bool):
             Whether or not to print report summary and progress.
@@ -53,6 +56,9 @@ def run_diagnostic(real_data, synthetic_data, metadata, verbose=True):
             Single table diagnostic report object.
     """
     diagnostic_report = DiagnosticReport()
+    if isinstance(metadata, Metadata):
+        metadata = metadata._convert_to_single_table()
+
     diagnostic_report.generate(real_data, synthetic_data, metadata.to_dict(), verbose)
     return diagnostic_report
 
@@ -81,6 +87,7 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=
     """
     if isinstance(metadata, Metadata):
         metadata = metadata._convert_to_single_table()
+
     sdtype = metadata.columns.get(column_name)['sdtype']
     if plot_type is None:
         if sdtype in ['datetime', 'numerical']:
@@ -119,7 +126,7 @@ def get_column_pair_plot(
             The real table data.
         synthetic_column (pandas.Dataframe):
             The synthetic table data.
-        metadata (SingleTableMetadata):
+        metadata (Metadata):
             The table metadata.
         column_names (list[string]):
             The names of the two columns to plot.
@@ -138,6 +145,7 @@ def get_column_pair_plot(
     """
     if isinstance(metadata, Metadata):
         metadata = metadata._convert_to_single_table()
+
     real_data = real_data.copy()
     synthetic_data = synthetic_data.copy()
     if plot_type is None:
