@@ -106,7 +106,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     loaded_synthesizer = GaussianCopulaSynthesizer.load(model_path)
     assert isinstance(synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+    assert loaded_synthesizer.metadata.to_dict() == metadata._convert_to_single_table().to_dict()
     loaded_synthesizer.sample(20)
 
     # Assert - custom synthesizer
@@ -192,7 +192,7 @@ def test_adding_constraints(tmp_path):
 
     assert isinstance(loaded_synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+    assert loaded_synthesizer.metadata.to_dict() == metadata._convert_to_single_table().to_dict()
     sampled_data = loaded_synthesizer.sample(100)
     validation = sampled_data[sampled_data['has_rewards']]
     assert validation['amenities_fee'].sum() == 0.0
@@ -251,7 +251,7 @@ def test_custom_processing_anonymization():
     anonymized_sample = anonymization_synthesizer.sample(num_rows=100)
 
     # Assert - Pre-process data
-    assert pre_processed_data.index.name == metadata.primary_key
+    assert pre_processed_data.index.name == metadata.tables['fake_hotel_guests'].primary_key
     assert all(pre_processed_data.dtypes == 'float64')
     for column in sensitive_columns:
         assert default_sample[column].isin(real_data[column]).sum() == 0

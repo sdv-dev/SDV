@@ -113,7 +113,7 @@ def test_synthesize_table_ctgan(tmp_path):
     loaded_synthesizer = CTGANSynthesizer.load(model_path)
     assert isinstance(synthesizer, CTGANSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+    assert loaded_synthesizer.metadata.to_dict() == metadata._convert_to_single_table().to_dict()
     loaded_synthesizer.sample(20)
 
     # Assert - custom synthesizer

@@ -183,7 +183,7 @@ def test_synthesize_sequences(tmp_path):
     assert model_path.exists()
     assert model_path.is_file()
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+    assert loaded_synthesizer.metadata.to_dict() == metadata._convert_to_single_table().to_dict()
     synthesizer.validate(synthetic_data)
     synthesizer.validate(custom_synthetic_data)
     synthesizer.validate(custom_synthetic_data_conditional)
@@ -445,7 +445,7 @@ def test_par_categorical_column_represented_by_floats():
     # Setup
     data, metadata = download_demo('sequential', 'nasdaq100_2019')
     data['category'] = [100.0 if i % 2 == 0 else 50.0 for i in data.index]
-    metadata.add_column('category', sdtype='categorical')
+    metadata.add_column('nasdaq100_2019', 'category', sdtype='categorical')
 
     # Run
     synth = PARSynthesizer(metadata)

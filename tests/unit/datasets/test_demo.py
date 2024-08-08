@@ -49,11 +49,16 @@ def test_download_demo_single_table(tmpdir):
     pd.testing.assert_frame_equal(table.head(2), expected_table)
 
     expected_metadata_dict = {
-        'columns': {
-            '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-            '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+        'tables': {
+            'ring': {
+                'columns': {
+                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                },
+            }
         },
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'V1',
+        'relationships': [],
     }
     assert metadata.to_dict() == expected_metadata_dict
 
@@ -99,12 +104,18 @@ def test_download_demo_single_table_no_output_folder():
     pd.testing.assert_frame_equal(table.head(2), expected_table)
 
     expected_metadata_dict = {
-        'columns': {
-            '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-            '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+        'tables': {
+            'ring': {
+                'columns': {
+                    '0': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    '1': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                },
+            }
         },
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'V1',
+        'relationships': [],
     }
+
     assert metadata.to_dict() == expected_metadata_dict
 
 
@@ -125,12 +136,17 @@ def test_download_demo_timeseries(tmpdir):
     pd.testing.assert_frame_equal(table.head(2), expected_table)
 
     expected_metadata_dict = {
-        'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
-        'columns': {
-            'e_id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
-            'dim_0': {'sdtype': 'numerical', 'computer_representation': 'Float'},
-            'dim_1': {'sdtype': 'numerical', 'computer_representation': 'Float'},
-            'ml_class': {'sdtype': 'categorical'},
+        'METADATA_SPEC_VERSION': 'V1',
+        'relationships': [],
+        'tables': {
+            'Libras': {
+                'columns': {
+                    'e_id': {'sdtype': 'numerical', 'computer_representation': 'Int64'},
+                    'dim_0': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'dim_1': {'sdtype': 'numerical', 'computer_representation': 'Float'},
+                    'ml_class': {'sdtype': 'categorical'},
+                }
+            }
         },
     }
     assert metadata.to_dict() == expected_metadata_dict
@@ -203,7 +219,7 @@ def test_download_demo_multi_table(tmpdir):
                 'child_foreign_key': 'character_id',
             },
         ],
-        'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+        'METADATA_SPEC_VERSION': 'V1',
     }
     assert metadata.to_dict() == expected_metadata_dict
 

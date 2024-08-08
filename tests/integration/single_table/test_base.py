@@ -201,7 +201,7 @@ def test_sample_keys_are_scrambled():
     """Test that the keys are scrambled in the sampled data."""
     # Setup
     data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
-    metadata.update_column('guest_email', sdtype='id', regex_format='[A-Z]{3}')
+    metadata.update_column('fake_hotel_guests', 'guest_email', sdtype='id', regex_format='[A-Z]{3}')
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.fit(data)
 
