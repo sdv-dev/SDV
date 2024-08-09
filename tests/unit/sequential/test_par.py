@@ -19,16 +19,17 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 class TestPARSynthesizer:
     def get_metadata(self, add_sequence_key=True, add_sequence_index=False):
-        metadata = SingleTableMetadata()
-        metadata.add_column('time', sdtype='datetime')
-        metadata.add_column('gender', sdtype='categorical')
-        metadata.add_column('name', sdtype='id')
-        metadata.add_column('measurement', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('table', 'time', sdtype='datetime')
+        metadata.add_column('table', 'gender', sdtype='categorical')
+        metadata.add_column('table', 'name', sdtype='id')
+        metadata.add_column('table', 'measurement', sdtype='numerical')
         if add_sequence_key:
-            metadata.set_sequence_key('name')
+            metadata.set_sequence_key('table', 'name')
 
         if add_sequence_index:
-            metadata.set_sequence_index('time')
+            metadata.set_sequence_index('table', 'time')
 
         return metadata
 
@@ -76,7 +77,10 @@ class TestPARSynthesizer:
             'verbose': False,
         }
         assert isinstance(synthesizer._data_processor, DataProcessor)
-        assert synthesizer._data_processor.metadata == metadata
+        assert (
+            synthesizer._data_processor.metadata.to_dict()
+            == metadata._convert_to_single_table().to_dict()
+        )
         assert isinstance(synthesizer._context_synthesizer, GaussianCopulaSynthesizer)
         assert synthesizer._context_synthesizer.metadata.columns == {
             'gender': {'sdtype': 'categorical'},
@@ -238,14 +242,14 @@ class TestPARSynthesizer:
         result = instance.get_metadata()
 
         # Assert
-        assert result._convert_to_single_table().to_dict() == metadata.to_dict()
+        assert result.to_dict() == metadata.to_dict()
         assert isinstance(result, Metadata)
 
     def test_validate_context_columns_unique_per_sequence_key(self):
         """Test error is raised if context column values vary for each tuple of sequence keys.
 
         Setup:
-            A ``SingleTableMetadata`` instance where the context columns vary for different
+            A ``Metadata`` instance where the context columns vary for different
             combinations of values of the sequence keys.
         """
         # Setup
@@ -255,12 +259,13 @@ class TestPARSynthesizer:
             'ct_col1': [1, 2, 2, 3, 2],
             'ct_col2': [3, 3, 4, 3, 2],
         })
-        metadata = SingleTableMetadata()
-        metadata.add_column('sk_col1', sdtype='id')
-        metadata.add_column('sk_col2', sdtype='id')
-        metadata.add_column('ct_col1', sdtype='numerical')
-        metadata.add_column('ct_col2', sdtype='numerical')
-        metadata.set_sequence_key('sk_col1')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('table', 'sk_col1', sdtype='id')
+        metadata.add_column('table', 'sk_col2', sdtype='id')
+        metadata.add_column('table', 'ct_col1', sdtype='numerical')
+        metadata.add_column('table', 'ct_col2', sdtype='numerical')
+        metadata.set_sequence_key('table', 'sk_col1')
         instance = PARSynthesizer(metadata=metadata, context_columns=['ct_col1', 'ct_col2'])
 
         # Run and Assert
@@ -524,7 +529,7 @@ class TestPARSynthesizer:
             'measurement': [55, 60, 65],
         })
         metadata = self.get_metadata()
-        metadata.set_sequence_index('time')
+        metadata.set_sequence_index('table', 'time')
         mock_get_transfomers.return_value = {'time': FloatFormatter}
 
         # Run
@@ -606,7 +611,7 @@ class TestPARSynthesizer:
         data = self.get_data()
         data['measurement'] = data['measurement'].astype(float)
         metadata = self.get_metadata()
-        metadata.update_column('measurement', sdtype='categorical')
+        metadata.update_column('table', 'measurement', sdtype='categorical')
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
         sequences = [
             {'context': np.array(['M'], dtype=object), 'data': [['2020-01-03'], [65.0]]},
@@ -644,7 +649,7 @@ class TestPARSynthesizer:
             'measurement': [55, 60, 65, 65, 70],
         })
         metadata = self.get_metadata()
-        metadata.set_sequence_index('time')
+        metadata.set_sequence_index('table', 'time')
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
         sequences = [
             {'context': np.array(['F'], dtype=object), 'data': [[1, 1], [55, 60], [1, 1]]},
@@ -835,7 +840,7 @@ class TestPARSynthesizer:
         """
         # Setup
         metadata = self.get_metadata()
-        metadata.set_sequence_index('time')
+        metadata.set_sequence_index('table', 'time')
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
         model_mock = Mock()
         par._model = model_mock

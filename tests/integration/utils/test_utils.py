@@ -7,13 +7,13 @@ import pytest
 
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError
-from sdv.metadata import MultiTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.utils import drop_unknown_references, get_random_sequence_subset
 
 
 @pytest.fixture
 def metadata():
-    return MultiTableMetadata.load_from_dict({
+    return Metadata.load_from_dict({
         'tables': {
             'parent': {
                 'columns': {

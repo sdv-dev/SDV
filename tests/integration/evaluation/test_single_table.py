@@ -3,7 +3,6 @@ import pandas as pd
 from sdv.datasets.demo import download_demo
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, run_diagnostic
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 
@@ -11,8 +10,9 @@ def test_evaluation():
     """Test ``evaluate_quality`` and ``run_diagnostic``."""
     # Setup
     data = pd.DataFrame({'col': [1, 2, 3]})
-    metadata = SingleTableMetadata()
-    metadata.add_column('col', sdtype='numerical')
+    metadata = Metadata()
+    metadata.add_table('table')
+    metadata.add_column('table', 'col', sdtype='numerical')
     synthesizer = GaussianCopulaSynthesizer(metadata, default_distribution='truncnorm')
 
     # Run and Assert

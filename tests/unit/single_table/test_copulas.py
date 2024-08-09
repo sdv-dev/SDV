@@ -9,7 +9,6 @@ from copulas.univariate import BetaUnivariate, GammaUnivariate, TruncatedGaussia
 
 from sdv.errors import SynthesizerInputError
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 
@@ -37,7 +36,7 @@ class TestGaussianCopulaSynthesizer:
     def test___init__(self):
         """Test creating an instance of ``GaussianCopulaSynthesizer``."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         enforce_min_max_values = True
         enforce_rounding = True
         numerical_distributions = None
@@ -91,8 +90,9 @@ class TestGaussianCopulaSynthesizer:
     def test___init__custom(self):
         """Test creating an instance of ``GaussianCopulaSynthesizer`` with custom parameters."""
         # Setup
-        metadata = SingleTableMetadata()
-        metadata.add_column('field', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('table', 'field', sdtype='numerical')
         enforce_min_max_values = False
         enforce_rounding = False
         numerical_distributions = {'field': 'gamma'}
@@ -118,7 +118,7 @@ class TestGaussianCopulaSynthesizer:
     def test___init__incorrect_numerical_distributions(self):
         """Test it crashes when ``numerical_distributions`` receives a non-dictionary."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         numerical_distributions = 'invalid'
 
         # Run
@@ -129,7 +129,7 @@ class TestGaussianCopulaSynthesizer:
     def test___init__incorrect_column_numerical_distributions(self):
         """Test it crashes when ``numerical_distributions`` includes invalid columns."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         numerical_distributions = {'totally_fake_column_name': 'beta'}
 
         # Run
@@ -144,7 +144,7 @@ class TestGaussianCopulaSynthesizer:
     def test_get_parameters(self):
         """Test that inherited method ``get_parameters`` returns the specified init parameters."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = GaussianCopulaSynthesizer(metadata)
 
         # Run
@@ -167,8 +167,9 @@ class TestGaussianCopulaSynthesizer:
         were renamed/dropped during preprocessing.
         """
         # Setup
-        metadata = SingleTableMetadata()
-        metadata.add_column('col', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('table', 'col', sdtype='numerical')
         numerical_distributions = {'col': 'gamma'}
         instance = GaussianCopulaSynthesizer(
             metadata, numerical_distributions=numerical_distributions
@@ -194,9 +195,10 @@ class TestGaussianCopulaSynthesizer:
         the ``numerical_distributions``.
         """
         # Setup
-        metadata = SingleTableMetadata()
-        metadata.add_column('name', sdtype='numerical')
-        metadata.add_column('user.id', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('table', 'name', sdtype='numerical')
+        metadata.add_column('table', 'user.id', sdtype='numerical')
         numerical_distributions = {'name': 'uniform', 'user.id': 'gamma'}
 
         processed_data = pd.DataFrame({
@@ -339,7 +341,7 @@ class TestGaussianCopulaSynthesizer:
         - numpy array, Square correlation matrix
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         gaussian_copula = GaussianCopulaSynthesizer(metadata)
         model_parameters = {
             'univariates': {
@@ -373,7 +375,7 @@ class TestGaussianCopulaSynthesizer:
     def test__rebuild_gaussian_copula_with_defaults(self, logger_mock):
         """Test the method with invalid parameters and default fallbacks."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         gaussian_copula = GaussianCopulaSynthesizer(metadata, default_distribution='truncnorm')
         distribution_mock = Mock()
         delattr(distribution_mock.MODEL_CLASS, '_argcheck')
@@ -472,8 +474,8 @@ class TestGaussianCopulaSynthesizer:
         """
         # Setup
         data = pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})
-        stm = SingleTableMetadata()
-        stm.detect_from_dataframe(data)
+        stm = Metadata()
+        stm.detect_from_dataframes({'table': data})
         gcs = GaussianCopulaSynthesizer(stm, numerical_distributions={'one': 'uniform'})
         gcs.fit(data)
 
@@ -497,8 +499,8 @@ class TestGaussianCopulaSynthesizer:
         """
         # Setup
         data = pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})
-        stm = SingleTableMetadata()
-        stm.detect_from_dataframe(data)
+        stm = Metadata()
+        stm.detect_from_dataframes({'table': data})
         gcs = GaussianCopulaSynthesizer(stm)
 
         # Run and Assert

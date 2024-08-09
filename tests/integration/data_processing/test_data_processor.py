@@ -23,6 +23,7 @@ from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
 from sdv.metadata import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 
 
 class TestDataProcessor:
@@ -155,12 +156,12 @@ class TestDataProcessor:
         """
         # Load metadata and data
         data, _ = download_demo('single_table', 'adult')
-        adult_metadata = SingleTableMetadata()
-        adult_metadata.detect_from_dataframe(data=data)
+        adult_metadata = Metadata()
+        adult_metadata.detect_from_dataframes({'adult': data})
 
         # Add primary key field
-        adult_metadata.add_column('id', sdtype='id')
-        adult_metadata.set_primary_key('id')
+        adult_metadata.add_column('adult', 'id', sdtype='id')
+        adult_metadata.set_primary_key('adult', 'id')
 
         # Add id
         size = len(data)
@@ -169,7 +170,7 @@ class TestDataProcessor:
         data['id'] = ids
 
         # Instance ``DataProcessor``
-        dp = DataProcessor(adult_metadata)
+        dp = DataProcessor(adult_metadata._convert_to_single_table())
 
         # Fit
         dp.fit(data)
@@ -195,17 +196,17 @@ class TestDataProcessor:
         # Load metadata and data
         data, _ = download_demo('single_table', 'adult')
         data['fnlwgt'] = data['fnlwgt'].astype(str)
-        adult_metadata = SingleTableMetadata()
-        adult_metadata.detect_from_dataframe(data=data)
+        adult_metadata = Metadata()
+        adult_metadata.detect_from_dataframes({'adult': data})
 
         # Add primary key field
-        adult_metadata.add_column('id', sdtype='id')
-        adult_metadata.set_primary_key('id')
+        adult_metadata.add_column('adult', 'id', sdtype='id')
+        adult_metadata.set_primary_key('adult', 'id')
 
-        adult_metadata.add_column('secondary_id', sdtype='id')
-        adult_metadata.update_column('fnlwgt', sdtype='id', regex_format='ID_\\d{4}[0-9]')
+        adult_metadata.add_column('adult', 'secondary_id', sdtype='id')
+        adult_metadata.update_column('adult', 'fnlwgt', sdtype='id', regex_format='ID_\\d{4}[0-9]')
 
-        adult_metadata.add_alternate_keys(['secondary_id', 'fnlwgt'])
+        adult_metadata.add_alternate_keys('adult', ['secondary_id', 'fnlwgt'])
 
         # Add id
         size = len(data)
@@ -215,7 +216,7 @@ class TestDataProcessor:
         data['secondary_id'] = ids
 
         # Instance ``DataProcessor``
-        dp = DataProcessor(adult_metadata)
+        dp = DataProcessor(adult_metadata._convert_to_single_table())
 
         # Fit
         dp.fit(data)

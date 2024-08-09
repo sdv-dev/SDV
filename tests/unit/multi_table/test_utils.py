@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from sdv.errors import InvalidDataError, SamplingError
-from sdv.metadata import MultiTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.multi_table.utils import (
     _drop_rows,
     _get_all_descendant_per_root_at_order_n,
@@ -605,7 +605,7 @@ def test__get_disconnected_roots_from_table(table_name, expected_result):
 def test__simplify_relationships_and_tables():
     """Test the ``_simplify_relationships`` method."""
     # Setup
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'grandparent': {'columns': {'col_1': {'sdtype': 'numerical'}}},
             'parent': {'columns': {'col_2': {'sdtype': 'numerical'}}},
@@ -646,7 +646,7 @@ def test__simplify_relationships_and_tables():
 def test__simplify_grandchildren():
     """Test the ``_simplify_grandchildren`` method."""
     # Setup
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'grandparent': {'columns': {'col_1': {'sdtype': 'numerical'}}},
             'parent': {'columns': {'col_2': {'sdtype': 'numerical'}}},
@@ -697,7 +697,7 @@ def test__get_num_column_to_drop():
     datetime_columns = {f'col_{i}': {'sdtype': 'datetime'} for i in range(600, 900)}
     id_columns = {f'col_{i}': {'sdtype': 'id'} for i in range(900, 910)}
     email_columns = {f'col_{i}': {'sdtype': 'email'} for i in range(910, 920)}
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'child': {
                 'columns': {
@@ -881,11 +881,11 @@ def test__simplify_children(mock_get_columns_to_drop_child, mock_hma):
     child_1_before_simplify['columns']['col_4'] = {'sdtype': 'categorical'}
     child_2_before_simplify = deepcopy(child_2)
     child_2_before_simplify['columns']['col_8'] = {'sdtype': 'categorical'}
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'relationships': relatioships,
         'tables': {'child_1': child_1_before_simplify, 'child_2': child_2_before_simplify},
     })
-    metadata_after_simplify_2 = MultiTableMetadata().load_from_dict({
+    metadata_after_simplify_2 = Metadata().load_from_dict({
         'relationships': relatioships,
         'tables': {'child_1': child_1, 'child_2': child_2},
     })
@@ -951,7 +951,7 @@ def test__simplify_metadata_no_child_simplification(mock_hma):
         'other_table': {'columns': {'col_8': {'sdtype': 'numerical'}}},
         'other_root': {'columns': {'col_9': {'sdtype': 'numerical'}}},
     }
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'relationships': relationships,
         'tables': tables,
     })
@@ -1047,7 +1047,7 @@ def test__simplify_metadata(mock_get_columns_to_drop_child, mock_hma):
         },
         'other_root': {'columns': {'col_9': {'sdtype': 'numerical'}}},
     }
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'relationships': relationships,
         'tables': tables,
     })
@@ -1122,7 +1122,7 @@ def test__simplify_metadata(mock_get_columns_to_drop_child, mock_hma):
 def test__simplify_data():
     """Test the ``_simplify_data`` method."""
     # Setup
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'parent': {'columns': {'col_1': {'sdtype': 'id'}}},
             'child': {'columns': {'col_2': {'sdtype': 'id'}}},
@@ -1249,7 +1249,7 @@ def test__subsample_disconnected_roots(mock_drop_rows, mock_get_disconnected_roo
             'col_12': [6, 7, 8, 9, 10],
         }),
     }
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'disconnected_root': {
                 'columns': {
@@ -1400,7 +1400,7 @@ def test__get_primary_keys_referenced():
         }),
     }
 
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'grandparent': {
                 'columns': {
@@ -1620,7 +1620,7 @@ def test__subsample_ancestors():
         'child': {21, 22, 23, 24, 25},
     }
 
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'grandparent': {
                 'columns': {
@@ -1807,7 +1807,7 @@ def test__subsample_ancestors_schema_diamond_shape():
         'parent_2': {31, 32, 33, 34, 35},
     }
 
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'grandparent': {
                 'columns': {

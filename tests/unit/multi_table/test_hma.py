@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from sdv.errors import SynthesizerInputError
-from sdv.metadata.multi_table import MultiTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import get_multi_table_data, get_multi_table_metadata
@@ -786,7 +786,7 @@ class TestHMASynthesizer:
             'col1': [0, 1, 2],
         })
         data = {'parent': parent, 'child': child}
-        metadata = MultiTableMetadata.load_from_dict({
+        metadata = Metadata.load_from_dict({
             'tables': {
                 'parent': {
                     'primary_key': 'id',
@@ -875,7 +875,7 @@ class TestHMASynthesizer:
                 'col': {'sdtype': 'numerical'},
             },
         }
-        metadata = MultiTableMetadata.load_from_dict({
+        metadata = Metadata.load_from_dict({
             'tables': {
                 'parent': {
                     'primary_key': 'id',
@@ -1018,7 +1018,7 @@ class TestHMASynthesizer:
             'parent': parent,
             'child': child,
         }
-        metadata = MultiTableMetadata.load_from_dict({
+        metadata = Metadata.load_from_dict({
             'tables': {
                 'root1': {
                     'primary_key': 'R1',
@@ -1152,7 +1152,7 @@ class TestHMASynthesizer:
             'grandparent': grandparent,
             'parent': parent,
         }
-        metadata = MultiTableMetadata.load_from_dict({
+        metadata = Metadata.load_from_dict({
             'tables': {
                 'root1': {
                     'primary_key': 'R1',

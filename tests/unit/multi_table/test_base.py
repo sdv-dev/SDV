@@ -148,7 +148,8 @@ class TestBaseMultiTableSynthesizer:
         """Test that init with old MultiTableMetadata gives a future warnging."""
         # Setup
         metadata = get_multi_table_metadata()
-        metadata.validate = Mock()
+        multi_metadata = MultiTableMetadata.load_from_dict(metadata.to_dict())
+        multi_metadata.validate = Mock()
 
         deprecation_msg = re.escape(
             "The 'MultiTableMetadata' is deprecated. Please use the new "
@@ -157,7 +158,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Run
         with pytest.warns(FutureWarning, match=deprecation_msg):
-            BaseMultiTableSynthesizer(metadata)
+            BaseMultiTableSynthesizer(multi_metadata)
 
     def test__init__column_relationship_warning(self):
         """Test that a warning is raised only once when the metadata has column relationships."""
@@ -222,7 +223,7 @@ class TestBaseMultiTableSynthesizer:
     def test_set_address_columns(self):
         """Test the ``set_address_columns`` method."""
         # Setup
-        metadata = MultiTableMetadata().load_from_dict({
+        metadata = Metadata().load_from_dict({
             'tables': {
                 'address_table': {
                     'columns': {
@@ -265,7 +266,7 @@ class TestBaseMultiTableSynthesizer:
     def test_set_address_columns_error(self):
         """Test that ``set_address_columns`` raises an error for unknown table."""
         # Setup
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         columns = ('country_column', 'city_column')
         metadata.validate = Mock()
         SingleTableMetadata.validate = Mock()
@@ -846,7 +847,7 @@ class TestBaseMultiTableSynthesizer:
                 }
             ],
         }
-        metadata = MultiTableMetadata.load_from_dict(metadata_dict)
+        metadata = Metadata.load_from_dict(metadata_dict)
         instance = BaseMultiTableSynthesizer(metadata)
         instance.validate = Mock()
         instance._table_synthesizers = {'first_table': Mock(), 'second_table': Mock()}
@@ -1336,7 +1337,7 @@ class TestBaseMultiTableSynthesizer:
         """Test error raised when ``table_name`` is missing."""
         # Setup
         data = pd.DataFrame({'col': [1, 2, 3]})
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         metadata.detect_table_from_dataframe('table', data)
         constraint = {'constraint_class': 'Inequality'}
         model = BaseMultiTableSynthesizer(metadata)
@@ -1435,7 +1436,7 @@ class TestBaseMultiTableSynthesizer:
         """
         # Setup
         data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         metadata.add_table('tab')
         metadata.add_column('tab', 'col', sdtype='numerical')
         mock_version.public = '1.0.0'
@@ -1483,7 +1484,7 @@ class TestBaseMultiTableSynthesizer:
         """
         # Setup
         data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         metadata.add_table('tab')
         metadata.add_column('tab', 'col', sdtype='numerical')
         mock_version.public = '1.0.0'
@@ -1547,7 +1548,7 @@ class TestBaseMultiTableSynthesizer:
     def test_save_warning(self, tmp_path):
         """Test that the synthesizer produces a warning if saved without fitting."""
         # Setup
-        synthesizer = BaseMultiTableSynthesizer(MultiTableMetadata())
+        synthesizer = BaseMultiTableSynthesizer(Metadata())
 
         # Run and Assert
         warn_msg = re.escape(
