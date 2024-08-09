@@ -331,11 +331,12 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                         row = pd.Series(row)
                         row.index = f'__{child_name}__{foreign_key}__' + row.index
 
-                    if scale_columns is None:
-                        scale_columns = [column for column in row.index if column.endswith('scale')]
+                    if not pd.isna(foreign_key_value):
+                        if scale_columns is None:
+                            scale_columns = [column for column in row.index if column.endswith('scale')]
 
-                    if len(child_rows) == 1:
-                        row.loc[scale_columns] = None
+                        if len(child_rows) == 1:
+                            row.loc[scale_columns] = None
 
                 if pd.isna(foreign_key_value):
                     self._null_child_synthesizers[f'__{child_name}__{foreign_key}'] = synthesizer
@@ -597,6 +598,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             if num_rows[parent] > 0:
                 candidates.append(parent)
                 candidate_weights.append(weight)
+
+        # cast candidates to series to ensure np.random.choice uses desired dtype
+        candidates = pd.Series(candidates, dtype=likelihoods.index.dtype)
 
         # All available candidates were assigned 0 likelihood of being the parent id
         if sum(candidate_weights) == 0:
