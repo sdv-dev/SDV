@@ -333,7 +333,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
                     if not pd.isna(foreign_key_value):
                         if scale_columns is None:
-                            scale_columns = [column for column in row.index if column.endswith('scale')]
+                            scale_columns = [
+                                column for column in row.index if column.endswith('scale')
+                            ]
 
                         if len(child_rows) == 1:
                             row.loc[scale_columns] = None
