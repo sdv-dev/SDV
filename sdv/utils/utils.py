@@ -48,7 +48,8 @@ def drop_unknown_references(data, metadata, drop_missing_values=True, verbose=Tr
             _validate_foreign_keys_not_null(metadata, data)
 
         if verbose:
-            sys.stdout.write('\n'.join([success_message, '', summary_table.to_string(index=False)]))
+            sys.stdout.write(
+                '\n'.join([success_message, '', summary_table.to_string(index=False)]))
 
         return data
     except (InvalidDataError, SynthesizerInputError):
@@ -59,7 +60,8 @@ def drop_unknown_references(data, metadata, drop_missing_values=True, verbose=Tr
                 len(data[table]) - len(result[table]) for table in table_names
             ]
             summary_table['# Rows (New)'] = [len(result[table]) for table in table_names]
-            sys.stdout.write('\n'.join([success_message, '', summary_table.to_string(index=False)]))
+            sys.stdout.write(
+                '\n'.join([success_message, '', summary_table.to_string(index=False)]))
 
         return result
 
@@ -94,6 +96,7 @@ def get_random_sequence_subset(
     """
     if isinstance(metadata, Metadata):
         metadata = metadata._convert_to_single_table()
+
     if long_sequence_subsampling_method not in ['first_rows', 'last_rows', 'random']:
         raise ValueError(
             'long_sequence_subsampling_method must be one of "first_rows", "last_rows" or "random"'

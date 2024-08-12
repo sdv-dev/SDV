@@ -115,6 +115,7 @@ def _get_metadata(output_folder_name, in_memory_directory, dataset_name):
         if metadata_path not in in_memory_directory:
             warnings.warn(f'Metadata for {dataset_name} is missing updated version v2.')
             metadata_path = 'metadata_v1.json'
+
         metadict = json.loads(in_memory_directory[metadata_path])
         metadata = metadata.load_from_dict(metadict, dataset_name)
 
