@@ -311,7 +311,14 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         pbar_args = self._get_pbar_args(desc=progress_bar_desc)
 
         for foreign_key_value in tqdm(foreign_key_values, **pbar_args):
-            child_rows = child_table.loc[[foreign_key_value]]
+            try:
+                child_rows = child_table.loc[[foreign_key_value]]
+            except KeyError:
+                # pre pandas 2.1 df.loc[[np.nan]] causes error
+                if pd.isna(foreign_key_value):
+                    child_rows = child_table[child_table.index.isna()]
+                else:
+                    raise
             child_rows = child_rows[child_rows.columns.difference(foreign_key_columns)]
             try:
                 if child_rows.empty and not pd.isna(foreign_key_value):
