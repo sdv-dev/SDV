@@ -48,8 +48,7 @@ def drop_unknown_references(data, metadata, drop_missing_values=True, verbose=Tr
             _validate_foreign_keys_not_null(metadata, data)
 
         if verbose:
-            sys.stdout.write(
-                '\n'.join([success_message, '', summary_table.to_string(index=False)]))
+            sys.stdout.write('\n'.join([success_message, '', summary_table.to_string(index=False)]))
 
         return data
     except (InvalidDataError, SynthesizerInputError):
@@ -60,8 +59,7 @@ def drop_unknown_references(data, metadata, drop_missing_values=True, verbose=Tr
                 len(data[table]) - len(result[table]) for table in table_names
             ]
             summary_table['# Rows (New)'] = [len(result[table]) for table in table_names]
-            sys.stdout.write(
-                '\n'.join([success_message, '', summary_table.to_string(index=False)]))
+            sys.stdout.write('\n'.join([success_message, '', summary_table.to_string(index=False)]))
 
         return result
 
