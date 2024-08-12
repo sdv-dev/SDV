@@ -1,5 +1,6 @@
 import operator
 import re
+import string
 from datetime import datetime
 from unittest.mock import Mock, patch
 
@@ -12,6 +13,7 @@ from sdv._utils import (
     _compare_versions,
     _convert_to_timedelta,
     _create_unique_name,
+    _get_chars_for_option,
     _get_datetime_format,
     _get_root_tables,
     _is_datetime_type,
@@ -19,11 +21,17 @@ from sdv._utils import (
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
+    get_possible_chars,
 )
 from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from tests.utils import SeriesMatcher
+
+try:
+    from re import _parser as sre_parse
+except ImportError:
+    import sre_parse
 
 
 @patch('sdv._utils.pd.to_timedelta')
@@ -626,3 +634,82 @@ def test_generate_synthesizer_id(mock_version, mock_uuid):
 
     # Assert
     assert result == 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
+
+
+@patch('sdv._utils._get_chars_for_option')
+def test_get_possible_chars_excludes_at(mock_get_chars):
+    """Test that 'at' regex operations aren't included when getting chars."""
+    # Setup
+    regex = '^[1-9]{1,2}$'
+    mock_get_chars.return_value = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+    # Run
+    possible_chars = get_possible_chars(regex)
+
+    # Assert
+    mock_get_chars.assert_called_once()
+    mock_call = mock_get_chars.mock_calls[0]
+    assert mock_call[1][0] == sre_parse.MAX_REPEAT
+    assert mock_call[1][1][0] == 1
+    assert mock_call[1][1][1] == 2
+    assert mock_call[1][1][2].data == [(sre_parse.IN, [(sre_parse.RANGE, (49, 57))])]
+    assert possible_chars == [str(i) for i in range(10)]
+
+
+def test_get_possible_chars_unsupported_regex():
+    """Test that an error is raised if the regex contains unsupported options."""
+    # Setup
+    regex = '(ab)*'
+
+    # Run and assert
+    message = 'REGEX operation: SUBPATTERN is not supported by SDV.'
+    with pytest.raises(ValueError, match=message):
+        get_possible_chars(regex)
+
+
+@patch('sdv._utils._get_chars_for_option')
+def test_get_possible_chars_handles_max_repeat(mock_get_chars):
+    """Test that MAX_REPEATS are handled by recursively finding the first non MAX_REPEAT.
+
+    One valid regex option is a MAX_REPEAT. Getting all possible values for this could be slow,
+    so we just look for the first nexted option that isn't a max_repeat to get the possible
+    characters instead.
+    """
+    # Setup
+    regex = '[1-9]{1,2}'
+    mock_get_chars.side_effect = lambda x, y: _get_chars_for_option(x, y)
+
+    # Run
+    possible_chars = get_possible_chars(regex)
+
+    # Assert
+    assert len(mock_get_chars.mock_calls) == 2
+    assert mock_get_chars.mock_calls[1][1] == mock_get_chars.mock_calls[0][1][1][2][0]
+    assert possible_chars == [str(i) for i in range(1, 10)]
+
+
+def test_get_possible_chars_num_subpatterns():
+    """Test that only characters for first x subpatterns are returned."""
+    # Setup
+    regex = 'HID_[0-9]{3}_[a-z]{3}'
+
+    # Run
+    possible_chars = get_possible_chars(regex, 3)
+
+    # Assert
+    assert possible_chars == ['H', 'I', 'D']
+
+
+def test_get_possible_chars():
+    """Test that all characters for regex are returned."""
+    # Setup
+    regex = 'HID_[0-9]{3}_[a-z]{3}'
+
+    # Run
+    possible_chars = get_possible_chars(regex)
+
+    # Assert
+    prefix = ['H', 'I', 'D', '_']
+    nums = [str(i) for i in range(10)]
+    lowercase_letters = list(string.ascii_lowercase)
+    assert possible_chars == prefix + nums + ['_'] + lowercase_letters
