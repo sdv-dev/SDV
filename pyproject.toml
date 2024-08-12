@@ -75,7 +75,6 @@ dev = [
 
     # docs
     'docutils>=0.12,<1',
-    'm2r2>=0.2.5,<1',
     'nbsphinx>=0.5.0,<1',
     'sphinx_toolbox>=2.5,<4',
     'Sphinx>=3,<8',
