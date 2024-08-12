@@ -73,9 +73,31 @@ def test_get_column_plot(mock_plot):
     assert plot == 'plot'
 
 
+@patch('sdv.evaluation.single_table.get_column_plot')
+def test_get_column_plot_only_real_or_synthetic(mock_plot):
+    """Test that ``get_column_plot`` works when only real or synthetic data is provided."""
+    # Setup
+    table1 = pd.DataFrame({'col': [1, 2, 3]})
+    data1 = {'table': table1}
+    metadata = MultiTableMetadata()
+    metadata.detect_table_from_dataframe('table', table1)
+    mock_plot.return_value = 'plot'
+
+    # Run
+    get_column_plot(data1, None, metadata, 'table', 'col')
+    get_column_plot(None, data1, metadata, 'table', 'col')
+
+    # Assert
+    call_metadata = metadata.tables['table']
+    mock_plot.assert_has_calls([
+        ((table1, None, call_metadata, 'col', None), {}),
+        ((None, table1, call_metadata, 'col', None), {}),
+    ])
+
+
 @patch('sdv.evaluation.single_table.get_column_pair_plot')
 def test_get_column_pair_plot(mock_plot):
-    """Test that ``get_column_pair`` plot is being called with the expected objects."""
+    """Test that ``get_column_pair_plot`` is being called with the expected objects."""
     # Setup
     table1 = pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]})
     table2 = pd.DataFrame({'col1': [2, 1, 3], 'col2': [1, 2, 3]})
@@ -92,6 +114,28 @@ def test_get_column_pair_plot(mock_plot):
     call_metadata = metadata.tables['table']
     mock_plot.assert_called_once_with(table1, table2, call_metadata, ['col1', 'col2'], None, 2)
     assert plot == 'plot'
+
+
+@patch('sdv.evaluation.single_table.get_column_pair_plot')
+def test_get_column_pair_plot_only_real_or_synthetic(mock_plot):
+    """Test that ``get_column_pair_plot`` works when only real or synthetic data is provided."""
+    # Setup
+    table1 = pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]})
+    data1 = {'table': table1}
+    metadata = MultiTableMetadata()
+    metadata.detect_table_from_dataframe('table', table1)
+    mock_plot.return_value = 'plot'
+
+    # Run
+    get_column_pair_plot(data1, None, metadata, 'table', ['col1', 'col2'], 2)
+    get_column_pair_plot(None, data1, metadata, 'table', ['col1', 'col2'], 2)
+
+    # Assert
+    call_metadata = metadata.tables['table']
+    mock_plot.assert_has_calls([
+        ((table1, None, call_metadata, ['col1', 'col2'], None, 2), {}),
+        ((None, table1, call_metadata, ['col1', 'col2'], None, 2), {}),
+    ])
 
 
 @patch('sdmetrics.visualization.get_cardinality_plot')

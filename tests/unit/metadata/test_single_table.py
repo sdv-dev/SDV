@@ -322,7 +322,8 @@ class TestSingleTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_unexpected_kwargs(column_name, sdtype, **kwargs)
 
-    def test__validate_column_invalid_sdtype(self):
+    @patch('sdv.metadata.single_table.is_faker_function')
+    def test__validate_column_invalid_sdtype(self, mock_is_faker_function):
         """Test the method with an invalid sdtype.
 
         If the sdtype isn't one of the supported types, anonymized types or Faker functions,
@@ -330,6 +331,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
+        mock_is_faker_function.return_value = False
 
         # Run and Assert
         error_msg = re.escape(
@@ -340,10 +342,12 @@ class TestSingleTableMetadata:
             instance._validate_column_args('column', 'fake_type')
 
         error_msg = re.escape(
-            'Invalid sdtype: None is not a string. Please use one of the ' 'supported SDV sdtypes.'
+            'Invalid sdtype: None is not a string. Please use one of the supported SDV sdtypes.'
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance._validate_column_args('column', None)
+
+        mock_is_faker_function.assert_called_once_with('fake_type')
 
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_unexpected_kwargs')
     @patch('sdv.metadata.single_table.SingleTableMetadata._validate_numerical')
@@ -599,7 +603,8 @@ class TestSingleTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.add_column('synthetic')
 
-    def test_add_column_invalid_sdtype(self):
+    @patch('sdv.metadata.single_table.is_faker_function')
+    def test_add_column_invalid_sdtype(self, mock_is_faker_function):
         """Test the method with an invalid sdtype.
 
         If the sdtype isn't one of the supported types, anonymized types or Faker functions,
@@ -607,6 +612,7 @@ class TestSingleTableMetadata:
         """
         # Setup
         instance = SingleTableMetadata()
+        mock_is_faker_function.return_value = False
 
         # Run and Assert
         error_msg = re.escape(
@@ -615,6 +621,8 @@ class TestSingleTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.add_column('column', sdtype='fake_type')
+
+        mock_is_faker_function.assert_called_once_with('fake_type')
 
     def test_add_column(self):
         """Test ``add_column`` method.
@@ -794,13 +802,15 @@ class TestSingleTableMetadata:
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.update_columns(['col_1', 'col_2'], sdtype='numerical', pii=True)
 
-    def test_update_columns_multiple_errors(self):
+    @patch('sdv.metadata.single_table.is_faker_function')
+    def test_update_columns_multiple_errors(self, mock_is_faker_function):
         """Test the ``update_columns`` method.
 
         Test that ``update_columns`` with multiple errors.
         Should raise an ``InvalidMetadataError`` with a summary of all the errors.
         """
         # Setup
+        mock_is_faker_function.return_value = True
         instance = SingleTableMetadata()
         instance.columns = {
             'col_1': {'sdtype': 'country_code'},
@@ -816,6 +826,8 @@ class TestSingleTableMetadata:
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             instance.update_columns(['col_1', 'col_2', 'col_3'], pii=True)
+
+        mock_is_faker_function.assert_called_once_with('country_code')
 
     def test_update_columns(self):
         """Test the ``update_columns`` method."""
@@ -839,9 +851,11 @@ class TestSingleTableMetadata:
             'salary': {'sdtype': 'categorical'},
         }
 
-    def test_update_columns_kwargs_without_sdtype(self):
+    @patch('sdv.metadata.single_table.is_faker_function')
+    def test_update_columns_kwargs_without_sdtype(self, mock_is_faker_function):
         """Test the ``update_columns`` method when there is no ``sdtype`` in the kwargs."""
         # Setup
+        mock_is_faker_function.return_value = True
         instance = SingleTableMetadata()
         instance.columns = {
             'col_1': {'sdtype': 'country_code'},
@@ -859,6 +873,11 @@ class TestSingleTableMetadata:
             'col_3': {'sdtype': 'longitude', 'pii': True},
         }
         assert instance._updated is True
+        mock_is_faker_function.assert_has_calls([
+            call('country_code'),
+            call('latitude'),
+            call('longitude'),
+        ])
 
     def test_update_columns_metadata(self):
         """Test the ``update_columns_metadata`` method."""
@@ -1620,7 +1639,8 @@ class TestSingleTableMetadata:
             instance.set_primary_key('b')
             # NOTE: used to be ('a', 'b', 'd', 'c')
 
-    def test_set_primary_key_validation_categorical(self):
+    @patch('sdv.metadata.single_table.is_faker_function')
+    def test_set_primary_key_validation_categorical(self, mock_is_faker_function):
         """Test that ``set_primary_key`` crashes when its sdtype is categorical.
 
         Input:
@@ -1630,6 +1650,7 @@ class TestSingleTableMetadata:
             - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
+        mock_is_faker_function.return_value = False
         instance = SingleTableMetadata()
         instance.add_column('column1', sdtype='categorical')
         instance.add_column('column2', sdtype='categorical')
@@ -1639,6 +1660,8 @@ class TestSingleTableMetadata:
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_primary_key('column1')
+
+        mock_is_faker_function.assert_called_once_with('categorical')
 
     def test_set_primary_key(self):
         """Test that ``set_primary_key`` sets the ``_primary_key`` value."""
@@ -1776,7 +1799,8 @@ class TestSingleTableMetadata:
             instance.set_sequence_key('b')
             # NOTE: used to be ('a', 'b', 'd', 'c')
 
-    def test_set_sequence_key_validation_categorical(self):
+    @patch('sdv.metadata.single_table.is_faker_function')
+    def test_set_sequence_key_validation_categorical(self, mock_is_faker_function):
         """Test that ``set_sequence_key`` crashes when its sdtype is categorical.
 
         Input:
@@ -1786,6 +1810,7 @@ class TestSingleTableMetadata:
             - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
+        mock_is_faker_function.return_value = False
         instance = SingleTableMetadata()
         instance.add_column('column1', sdtype='categorical')
         instance.add_column('column2', sdtype='categorical')
@@ -1795,6 +1820,8 @@ class TestSingleTableMetadata:
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.set_sequence_key('column1')
+
+        mock_is_faker_function.assert_called_once_with('categorical')
 
     def test_set_sequence_key(self):
         """Test that ``set_sequence_key`` sets the ``_sequence_key`` value."""
@@ -1887,7 +1914,8 @@ class TestSingleTableMetadata:
             instance.add_alternate_keys(['abc', '123'])
             # NOTE: used to be ['abc', ('123', '213', '312'), 'bca']
 
-    def test_add_alternate_keys_validation_categorical(self):
+    @patch('sdv.metadata.single_table.is_faker_function')
+    def test_add_alternate_keys_validation_categorical(self, mock_is_faker_function):
         """Test that ``add_alternate_keys`` crashes when its sdtype is categorical.
 
         Input:
@@ -1897,6 +1925,7 @@ class TestSingleTableMetadata:
             - An ``InvalidMetadataError`` should be raised.
         """
         # Setup
+        mock_is_faker_function.return_value = False
         instance = SingleTableMetadata()
         instance.add_column('column1', sdtype='categorical')
         instance.add_column('column2', sdtype='categorical')
@@ -1908,6 +1937,8 @@ class TestSingleTableMetadata:
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance.add_alternate_keys(['column1', 'column2', 'column3'])
+
+        mock_is_faker_function.assert_has_calls([call('categorical'), call('categorical')])
 
     def test_add_alternate_keys_validation_primary_key(self):
         """Test that ``add_alternate_keys`` crashes when the key is a primary key.

@@ -29,6 +29,7 @@ def evaluate_quality(real_data, synthetic_data, metadata, verbose=True):
     """
     if isinstance(metadata, Metadata):
         metadata = metadata._convert_to_single_table()
+
     quality_report = QualityReport()
     if isinstance(metadata, Metadata):
         metadata = metadata._convert_to_single_table()
