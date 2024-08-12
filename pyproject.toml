@@ -35,7 +35,7 @@ dependencies = [
     'copulas>=0.11.0',
     'ctgan>=0.10.0',
     'deepecho>=0.6.0',
-    'rdt>=1.12.0',
+    'rdt @ git+https://github.com/sdv-dev/RDT@main',
     'sdmetrics>=0.14.0',
     'platformdirs>=4.0',
     'pyyaml>=6.0.1',
@@ -75,7 +75,6 @@ dev = [
 
     # docs
     'docutils>=0.12,<1',
-    'm2r2>=0.2.5,<1',
     'nbsphinx>=0.5.0,<1',
     'sphinx_toolbox>=2.5,<4',
     'Sphinx>=3,<8',

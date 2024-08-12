@@ -55,6 +55,8 @@ class SingleTableMetadata:
     }
 
     _NUMERICAL_REPRESENTATIONS = frozenset([
+        'Float32',
+        'Float64',
         'Float',
         'Int64',
         'Int32',
