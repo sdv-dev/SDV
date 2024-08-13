@@ -85,9 +85,14 @@ class NumericalFormatter:
             column = column.clip(min_bound, max_bound)
 
         is_integer = pd.api.types.is_integer_dtype(self._dtype)
+        np_integer_with_nans = (
+            not pd.api.types.is_extension_array_dtype(self._dtype)
+            and is_integer
+            and pd.isna(column).any()
+        )
         if self.enforce_rounding and self._rounding_digits is not None:
             column = column.round(self._rounding_digits)
         elif is_integer:
             column = column.round(0)
 
-        return column.astype(self._dtype)
+        return column.astype(self._dtype if not np_integer_with_nans else 'float64')

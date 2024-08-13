@@ -401,3 +401,133 @@ class TestDataProcessor:
         )
         with pytest.raises(SynthesizerInputError, match=error_msg):
             dp.update_transformers({'user_id': UniformEncoder()})
+
+    def test_numerical_dtype_handling(self):
+        """Test that the DataProcessor correctly handle all numerical dtypes."""
+        # Setup
+        original_data = pd.DataFrame({
+            'Int8': pd.Series([1, 2, 3, pd.NA], dtype='Int8'),
+            'Int16': pd.Series([1, 2, 3, pd.NA], dtype='Int16'),
+            'Int32': pd.Series([1, 2, 3, pd.NA], dtype='Int32'),
+            'Int64': pd.Series([1, 2, 3, pd.NA], dtype='Int64'),
+            'UInt8': pd.Series([1, 2, 3, pd.NA], dtype='UInt8'),
+            'UInt16': pd.Series([1, 2, 3, pd.NA], dtype='UInt16'),
+            'UInt32': pd.Series([1, 2, 3, pd.NA], dtype='UInt32'),
+            'UInt64': pd.Series([1, 2, 3, pd.NA], dtype='UInt64'),
+            'Float32': pd.Series([1.1, 2.2, 3.3, pd.NA], dtype='Float32'),
+            'Float64': pd.Series([1.1, 2.2, 3.3, pd.NA], dtype='Float64'),
+            'uint8': np.array([1, 2, 3, 4], dtype='uint8'),
+            'uint16': np.array([1, 2, 3, 4], dtype='uint16'),
+            'uint32': np.array([1, 2, 3, 4], dtype='uint32'),
+            'uint64': np.array([1, 2, 3, 4], dtype='uint64'),
+            'float': np.array([1.1, 2.2, 3.3, 4.4], dtype='float'),
+            'int8': np.array([1, 2, 3, 4], dtype='int8'),
+            'int16': np.array([1, 2, 3, 4], dtype='int16'),
+            'int32': np.array([1, 2, 3, 4], dtype='int32'),
+            'int64': np.array([1, 2, 3, 4], dtype='int64'),
+        })
+
+        metadata = SingleTableMetadata.load_from_dict({
+            'columns': {
+                column_name: {'sdtype': 'numerical'} for column_name in original_data.columns
+            }
+        })
+        data_processor = DataProcessor(metadata)
+
+        # Run
+        data_processor.fit(original_data)
+        transformed_data = data_processor.transform(original_data)
+        reverse_transformed_data = data_processor.reverse_transform(transformed_data)
+
+        # Assert
+        assert transformed_data.dtypes.unique() == 'float'
+        for column in original_data.columns:
+            assert reverse_transformed_data[column].dtype == column
+
+    def test_numerical_dtype_handling_with_nans(self):
+        """Test all numerical dtypes handling when there is NaN in the transformed data.
+
+        Test that the DataProcessor correctly handle all numerical dtypes when there are NaNs in the
+        transformed data. Some dtypes don't support NaNs, so they should be converted to float.
+        """
+        # Setup
+        original_data = pd.DataFrame({
+            'Int8': pd.Series([1, 2, 3, pd.NA], dtype='Int8'),
+            'Int16': pd.Series([1, 2, 3, pd.NA], dtype='Int16'),
+            'Int32': pd.Series([1, 2, 3, pd.NA], dtype='Int32'),
+            'Int64': pd.Series([1, 2, 3, pd.NA], dtype='Int64'),
+            'UInt8': pd.Series([1, 2, 3, pd.NA], dtype='UInt8'),
+            'UInt16': pd.Series([1, 2, 3, pd.NA], dtype='UInt16'),
+            'UInt32': pd.Series([1, 2, 3, pd.NA], dtype='UInt32'),
+            'UInt64': pd.Series([1, 2, 3, pd.NA], dtype='UInt64'),
+            'Float32': pd.Series([1.1, 2.2, 3.3, pd.NA], dtype='Float32'),
+            'Float64': pd.Series([1.1, 2.2, 3.3, pd.NA], dtype='Float64'),
+            'uint8': np.array([1, 2, 3, 4], dtype='uint8'),
+            'uint16': np.array([1, 2, 3, 4], dtype='uint16'),
+            'uint32': np.array([1, 2, 3, 4], dtype='uint32'),
+            'uint64': np.array([1, 2, 3, 4], dtype='uint64'),
+            'float': np.array([1.1, 2.2, 3.3, 4.4], dtype='float'),
+            'int8': np.array([1, 2, 3, 4], dtype='int8'),
+            'int16': np.array([1, 2, 3, 4], dtype='int16'),
+            'int32': np.array([1, 2, 3, 4], dtype='int32'),
+            'int64': np.array([1, 2, 3, 4], dtype='int64'),
+        })
+
+        data_with_nans = pd.DataFrame({
+            'Int8': [1.1, 2.2, 3.3, np.nan],
+            'Int16': [1.1, 2.2, 3.3, np.nan],
+            'Int32': [1.1, 2.2, 3.3, np.nan],
+            'Int64': [1.1, 2.2, 3.3, np.nan],
+            'UInt8': [1.1, 2.2, 3.3, np.nan],
+            'UInt16': [1.1, 2.2, 3.3, np.nan],
+            'UInt32': [1.1, 2.2, 3.3, np.nan],
+            'UInt64': [1.1, 2.2, 3.3, np.nan],
+            'Float32': [1.1, 2.2, 3.3, np.nan],
+            'Float64': [1.1, 2.2, 3.3, np.nan],
+            'uint8': [1.1, 2.2, 3.3, np.nan],
+            'uint16': [1.1, 2.2, 3.3, np.nan],
+            'uint32': [1.1, 2.2, 3.3, np.nan],
+            'uint64': [1.1, 2.2, 3.3, np.nan],
+            'float': [1.1, 2.2, 3.3, np.nan],
+            'int8': [1.1, 2.2, 3.3, np.nan],
+            'int16': [1.1, 2.2, 3.3, np.nan],
+            'int32': [1.1, 2.2, 3.3, np.nan],
+            'int64': [1.1, 2.2, 3.3, np.nan],
+        })
+
+        metadata = SingleTableMetadata.load_from_dict({
+            'columns': {
+                column_name: {'sdtype': 'numerical'} for column_name in original_data.columns
+            }
+        })
+        data_processor = DataProcessor(metadata)
+        data_processor.fit(original_data)
+
+        # Run
+        reverse_transformed_data = data_processor.reverse_transform(data_with_nans)
+
+        # Assert
+        expected_output_dtypes = {
+            'Int8': 'Int8',
+            'Int16': 'Int16',
+            'Int32': 'Int32',
+            'Int64': 'Int64',
+            'UInt8': 'UInt8',
+            'UInt16': 'UInt16',
+            'UInt32': 'UInt32',
+            'UInt64': 'UInt64',
+            'Float32': 'Float32',
+            'Float64': 'Float64',
+            'uint8': 'float',
+            'uint16': 'float',
+            'uint32': 'float',
+            'uint64': 'float',
+            'float': 'float',
+            'int8': 'float',
+            'int16': 'float',
+            'int32': 'float',
+            'int64': 'float',
+        }
+        assert data_with_nans.dtypes.unique() == 'float'
+        for column_name, expected_dtype in expected_output_dtypes.items():
+            assert reverse_transformed_data[column_name].dtype == expected_dtype

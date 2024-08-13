@@ -896,12 +896,21 @@ class DataProcessor:
             column_data = reversed_data[column_name]
 
             dtype = self._dtypes[column_name]
-            if is_integer_dtype(dtype) and is_float_dtype(column_data.dtype):
+            is_integer = is_integer_dtype(dtype)
+            if is_integer and is_float_dtype(column_data.dtype):
                 column_data = column_data.round()
+
+            np_integer_with_nans = (
+                not pd.api.types.is_extension_array_dtype(dtype)
+                and is_integer
+                and pd.isna(column_data).any()
+            )
 
             reversed_data[column_name] = column_data[column_data.notna()]
             try:
-                reversed_data[column_name] = reversed_data[column_name].astype(dtype)
+                reversed_data[column_name] = reversed_data[column_name].astype(
+                    dtype if not np_integer_with_nans else 'float64'
+                )
             except ValueError as e:
                 column_metadata = self.metadata.columns.get(column_name)
                 sdtype = column_metadata.get('sdtype')
