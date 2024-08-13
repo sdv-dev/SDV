@@ -112,9 +112,9 @@ class BaseSynthesizer:
     ):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata = metadata
-        self.table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
+        self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
         if isinstance(metadata, Metadata):
-            self.table_name = metadata._get_single_table_name()
+            self._table_name = metadata._get_single_table_name()
             self.metadata = metadata._convert_to_single_table()
         elif isinstance(metadata, SingleTableMetadata):
             warnings.warn(DEPRECATION_MSG, FutureWarning)
