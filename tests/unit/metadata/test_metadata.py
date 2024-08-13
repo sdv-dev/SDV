@@ -123,7 +123,7 @@ class TestMetadataClass:
         }
 
         # Run
-        instance = Metadata.load_from_json('filepath.json')
+        instance = Metadata.load_from_json('filepath.json', 'filepath')
 
         # Assert
         assert list(instance.tables.keys()) == ['filepath']
