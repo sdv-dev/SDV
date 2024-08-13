@@ -660,7 +660,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             except (AttributeError, np.linalg.LinAlgError):
                 likelihoods[parent_id] = None
 
-        if f'__{table_name}__{foreign_key}' in self._null_child_synthesizers:
+        null_child_synths = getattr(self, '_null_child_synthesizers', {})
+        if f'__{table_name}__{foreign_key}' in null_child_synths:
             try:
                 likelihoods[np.nan] = synthesizer._get_likelihood(table_rows)
 
