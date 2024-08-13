@@ -1,7 +1,5 @@
 """Metadata."""
 
-from pathlib import Path
-
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -14,7 +12,7 @@ class Metadata(MultiTableMetadata):
     METADATA_SPEC_VERSION = 'V1'
 
     @classmethod
-    def load_from_json(cls, filepath):
+    def load_from_json(cls, filepath, single_table_name=None):
         """Create a ``Metadata`` instance from a ``json`` file.
 
         Args:
@@ -28,9 +26,8 @@ class Metadata(MultiTableMetadata):
         Returns:
             A ``Metadata`` instance.
         """
-        filename = Path(filepath).stem
         metadata = read_json(filepath)
-        return cls.load_from_dict(metadata, filename)
+        return cls.load_from_dict(metadata, single_table_name)
 
     @classmethod
     def load_from_dict(cls, metadata_dict, single_table_name=None):
