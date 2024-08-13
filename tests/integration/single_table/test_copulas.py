@@ -482,7 +482,7 @@ def test_support_new_pandas_dtypes():
         'Float32': pd.Series([1.1, 2.2, 3.3, pd.NA], dtype='Float32'),
         'Float64': pd.Series([1.113, 2.22, 3.3, pd.NA], dtype='Float64'),
     })
-    metadata = SingleTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'columns': {
             'Int8': {'sdtype': 'numerical', 'computer_representation': 'Int8'},
             'Int16': {'sdtype': 'numerical', 'computer_representation': 'Int16'},

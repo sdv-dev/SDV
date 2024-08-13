@@ -79,7 +79,7 @@ def test_get_column_plot_only_real_or_synthetic(mock_plot):
     # Setup
     table1 = pd.DataFrame({'col': [1, 2, 3]})
     data1 = {'table': table1}
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata.detect_table_from_dataframe('table', table1)
     mock_plot.return_value = 'plot'
 
@@ -122,7 +122,7 @@ def test_get_column_pair_plot_only_real_or_synthetic(mock_plot):
     # Setup
     table1 = pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]})
     data1 = {'table': table1}
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata.detect_table_from_dataframe('table', table1)
     mock_plot.return_value = 'plot'
 

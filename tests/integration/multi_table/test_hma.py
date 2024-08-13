@@ -2039,7 +2039,7 @@ def test_fit_int_primary_key_regex_includes_zero(regex):
         'parent_data': parent_data,
         'child_data': child_data,
     }
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata.detect_from_dataframes(data)
     metadata.update_column('parent_data', 'parent_id', sdtype='id', regex_format=regex)
     metadata.set_primary_key('parent_data', 'parent_id')
@@ -2086,7 +2086,7 @@ def test__estimate_num_columns_to_be_modeled_various_sdtypes():
         'grandparent': grandparent,
         'parent': parent,
     }
-    metadata = MultiTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'tables': {
             'root1': {
                 'primary_key': 'R1',

@@ -286,7 +286,7 @@ class BaseSynthesizer:
 
     def get_metadata(self):
         """Return the ``Metadata`` for this synthesizer."""
-        table_name = getattr(self, 'table_name', None)
+        table_name = getattr(self, '_table_name', None)
         return Metadata.load_from_dict(self.metadata.to_dict(), table_name)
 
     def load_custom_constraint_classes(self, filepath, class_names):

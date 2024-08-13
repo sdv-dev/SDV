@@ -85,8 +85,8 @@ class Metadata(MultiTableMetadata):
         """
         if len(self.tables) != 1:
             warnings.warn(
-                'This metadata does not contain a single table. Could not determine '
-                'single table name.'
+                'This metadata does not contain only a single table. Could not determine '
+                'single table name and will return None.'
             )
 
         return next(iter(self.tables), None)
