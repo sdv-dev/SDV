@@ -35,7 +35,7 @@ dependencies = [
     'copulas>=0.11.0',
     'ctgan>=0.10.0',
     'deepecho>=0.6.0',
-    'rdt @ git+https://github.com/sdv-dev/RDT@issue-865-uint-hypertransformer',
+    'rdt @ git+https://github.com/sdv-dev/RDT@main',
     'sdmetrics>=0.14.0',
     'platformdirs>=4.0',
     'pyyaml>=6.0.1',
