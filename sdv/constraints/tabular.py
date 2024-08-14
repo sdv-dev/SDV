@@ -48,6 +48,7 @@ from sdv.constraints.utils import (
     cast_to_datetime64,
     compute_nans_column,
     get_datetime_diff,
+    get_mappable_combination,
     logit,
     matches_datetime_format,
     revert_nans_columns,
@@ -297,9 +298,10 @@ class FixedCombinations(Constraint):
         self._combinations_to_uuids = {}
         self._uuids_to_combinations = {}
         for combination in self._combinations.itertuples(index=False, name=None):
+            mappable_combination = get_mappable_combination(combination)
             uuid_str = str(uuid.uuid4())
-            self._combinations_to_uuids[combination] = uuid_str
-            self._uuids_to_combinations[uuid_str] = combination
+            self._combinations_to_uuids[mappable_combination] = uuid_str
+            self._uuids_to_combinations[uuid_str] = mappable_combination
 
     def is_valid(self, table_data):
         """Say whether the column values are within the original combinations.
@@ -333,6 +335,7 @@ class FixedCombinations(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
+        table_data[self._columns] = table_data[self._columns].replace({np.nan: None})
         combinations = table_data[self._columns].itertuples(index=False, name=None)
         uuids = map(self._combinations_to_uuids.get, combinations)
         table_data[self._joint_column] = list(uuids)
