@@ -112,7 +112,9 @@ class BaseSynthesizer:
     ):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata = metadata
+        self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
         if isinstance(metadata, Metadata):
+            self._table_name = metadata._get_single_table_name()
             self.metadata = metadata._convert_to_single_table()
         elif isinstance(metadata, SingleTableMetadata):
             warnings.warn(DEPRECATION_MSG, FutureWarning)
@@ -284,7 +286,8 @@ class BaseSynthesizer:
 
     def get_metadata(self):
         """Return the ``Metadata`` for this synthesizer."""
-        return Metadata.load_from_dict(self.metadata.to_dict())
+        table_name = getattr(self, '_table_name', None)
+        return Metadata.load_from_dict(self.metadata.to_dict(), table_name)
 
     def load_custom_constraint_classes(self, filepath, class_names):
         """Load a custom constraint class for the current synthesizer.

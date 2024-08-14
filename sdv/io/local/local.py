@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from sdv.metadata import MultiTableMetadata
+from sdv.metadata.metadata import Metadata
 
 
 class BaseLocalHandler:
@@ -29,7 +29,7 @@ class BaseLocalHandler:
                 An ``sdv.metadata.MultiTableMetadata`` object with the detected metadata
                 properties from the data.
         """
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         metadata.detect_from_dataframes(data)
         return metadata
 

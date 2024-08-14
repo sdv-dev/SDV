@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 
 from sdv.errors import InvalidDataError
-from sdv.metadata import MultiTableMetadata
 from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.metadata import Metadata
 from sdv.utils.poc import (
     drop_unknown_references,
     get_random_subset,
@@ -64,7 +64,7 @@ def test_simplify_schema(
     # Setup
     data = Mock()
     metadata = Mock()
-    simplified_metatadata = MultiTableMetadata()
+    simplified_metatadata = Metadata()
     mock_get_total_estimated_columns.return_value = 2000
     mock_simplify_metadata.return_value = simplified_metatadata
     mock_simplify_data.return_value = {
@@ -87,7 +87,7 @@ def test_simplify_schema(
 def test_simplify_schema_invalid_metadata():
     """Test ``simplify_schema`` when the metadata is not invalid."""
     # Setup
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {'table1': {'columns': {'column1': {'sdtype': 'categorical'}}}},
         'relationships': [
             {
@@ -115,7 +115,7 @@ def test_simplify_schema_invalid_metadata():
 def test_simplify_schema_invalid_data():
     """Test ``simplify_schema`` when the data is not valid."""
     # Setup
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'table1': {'columns': {'column1': {'sdtype': 'id'}}, 'primary_key': 'column1'},
             'table2': {
@@ -148,7 +148,7 @@ def test_simplify_schema_invalid_data():
 def test_get_random_subset_invalid_metadata():
     """Test ``get_random_subset`` when the metadata is invalid."""
     # Setup
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {'table1': {'columns': {'column1': {'sdtype': 'categorical'}}}},
         'relationships': [
             {
@@ -176,7 +176,7 @@ def test_get_random_subset_invalid_metadata():
 def test_get_random_subset_invalid_data():
     """Test ``get_random_subset`` when the data is not valid."""
     # Setup
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'table1': {'columns': {'column1': {'sdtype': 'id'}}, 'primary_key': 'column1'},
             'table2': {

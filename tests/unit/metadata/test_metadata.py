@@ -391,7 +391,7 @@ class TestMetadataClass:
 
         Setup:
             - instance of ``Metadata``.
-            - A dict representing a ``MultiTableMetadata``.
+            - A dict representing a ``Metadata``.
 
         Mock:
             - Mock ``SingleTableMetadata`` from ``sdv.metadata.multi_table``
@@ -457,16 +457,10 @@ class TestMetadataClass:
 
         Setup:
             - instance of ``Metadata``.
-            - A dict representing a ``SingleTableMetadata``.
-
-        Mock:
-            - Mock ``SingleTableMetadata`` from ``sdv.metadata.multi_table``
-
-        Side Effects:
-            - ``SingleTableMetadata.load_from_dict`` has been called.
+            - A dict representing a single table``Metadata``.
         """
         # Setup
-        multitable_metadata = {
+        single_table_metadata = {
             'columns': {'my_column': 'value'},
             'primary_key': 'pk',
             'alternate_keys': [],
@@ -478,7 +472,7 @@ class TestMetadataClass:
         instance = Metadata()
 
         # Run
-        instance._set_metadata_dict(multitable_metadata)
+        instance._set_metadata_dict(single_table_metadata)
 
         # Assert
         assert instance.tables['default_table_name'].columns == {'my_column': 'value'}

@@ -20,7 +20,6 @@ from sdv.datasets.local import load_csvs
 from sdv.errors import SamplingError, SynthesizerInputError, VersionError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
 from tests.utils import catch_sdv_logs
@@ -125,7 +124,7 @@ class TestHMASynthesizer:
         # Setup
         data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
         today = datetime.datetime.today().strftime('%Y-%m-%d')
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         metadata.add_table('tab')
         metadata.add_column('tab', 'col', sdtype='numerical')
         synthesizer = HMASynthesizer(metadata)
@@ -220,7 +219,7 @@ class TestHMASynthesizer:
             'numerical_col_2': [2, 4, 6],
         })
 
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         metadata.detect_table_from_dataframe('parent', parent_data)
         metadata.update_column('parent', 'primary_key', sdtype='id')
         metadata.detect_table_from_dataframe('child', child_data)
@@ -360,7 +359,7 @@ class TestHMASynthesizer:
 
         data = {'parent_table': parent_table, 'child_table': child_table}
 
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         metadata.detect_table_from_dataframe(table_name='parent_table', data=parent_table)
         metadata.update_column('parent_table', 'id', sdtype='id')
         metadata.detect_table_from_dataframe(table_name='child_table', data=child_table)
@@ -449,7 +448,7 @@ class TestHMASynthesizer:
 
         data = {'users': users, 'sessions': sessions, 'games': games}
 
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         for table_name, table in data.items():
             metadata.detect_table_from_dataframe(table_name, table)
 
@@ -585,7 +584,7 @@ class TestHMASynthesizer:
         assert datasets.keys() == {'guests', 'hotels'}
 
         # Metadata
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
 
         metadata.detect_table_from_dataframe(table_name='guests', data=datasets['guests'])
         metadata.detect_table_from_dataframe(table_name='hotels', data=datasets['hotels'])
@@ -676,7 +675,7 @@ class TestHMASynthesizer:
         # Save and load metadata
         metadata_path = tmp_path / 'metadata.json'
         metadata.save_to_json(metadata_path)
-        loaded_metadata = MultiTableMetadata.load_from_json(metadata_path)
+        loaded_metadata = Metadata.load_from_json(metadata_path)
 
         # Assert loaded metadata matches saved
         assert metadata.to_dict() == loaded_metadata.to_dict()
@@ -768,7 +767,7 @@ class TestHMASynthesizer:
             }
         )
         data = {'grandparent': grandparent, 'parent': parent, 'child': child}
-        metadata = MultiTableMetadata.load_from_dict({
+        metadata = Metadata.load_from_dict({
             'tables': {
                 'grandparent': {
                     'primary_key': 'grandparent_ID',
@@ -847,7 +846,7 @@ class TestHMASynthesizer:
             }
         )
         data = {'parent': parent, 'child1': child1, 'child2': child2}
-        metadata = MultiTableMetadata.load_from_dict({
+        metadata = Metadata.load_from_dict({
             'tables': {
                 'parent': {
                     'primary_key': 'parent_ID',
@@ -920,7 +919,7 @@ class TestHMASynthesizer:
             data={'parent_ID2': [0, 1, 2, 3, 4], 'data': ['Yes', 'Yes', 'Maybe', 'No', 'No']}
         )
         data = {'parent1': parent1, 'child': child, 'parent2': parent2}
-        metadata = MultiTableMetadata.load_from_dict({
+        metadata = Metadata.load_from_dict({
             'tables': {
                 'parent1': {
                     'primary_key': 'parent_ID1',
@@ -1018,7 +1017,7 @@ class TestHMASynthesizer:
             'child2': child2,
             'grandchild': grandchild,
         }
-        metadata = MultiTableMetadata.load_from_dict({
+        metadata = Metadata.load_from_dict({
             'tables': {
                 'root1': {
                     'primary_key': 'id',
@@ -1173,7 +1172,7 @@ class TestHMASynthesizer:
             '__sessions__user_id__loc': 0.5,
             '__sessions__user_id__scale': -0.25,
         })
-        instance = HMASynthesizer(MultiTableMetadata())
+        instance = HMASynthesizer(Metadata())
         instance.extended_columns = {
             'sessions': {
                 '__sessions__user_id__num_rows': FloatFormatter(enforce_min_max_values=True),
@@ -1206,7 +1205,7 @@ class TestHMASynthesizer:
             f'{prefix}univariates__brand__loc': 0.5,
             f'{prefix}univariates__brand__scale': -0.25,
         })
-        metadata = MultiTableMetadata.load_from_dict({
+        metadata = Metadata.load_from_dict({
             'tables': {
                 'users': {'columns': {'user_id': {'sdtype': 'id'}}, 'primary_key': 'user_id'},
                 'sessions': {
@@ -1351,7 +1350,7 @@ class TestHMASynthesizer:
     def test_null_foreign_keys(self):
         """Test that the synthesizer crashes when there are null foreign keys."""
         # Setup
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         metadata.add_table('parent_table')
         metadata.add_column('parent_table', 'id', sdtype='id')
         metadata.set_primary_key('parent_table', 'id')
@@ -1437,7 +1436,7 @@ class TestHMASynthesizer:
 
         tables_dict = {'people': table1, 'company': table2}
 
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         metadata.detect_from_dataframes(tables_dict)
 
         # Run
@@ -1489,7 +1488,7 @@ def test_hma_0_1_child(num_rows):
         )
 
     data = {'parent': parent_table, 'child': pd.DataFrame(data=child_table_data)}
-    metadata = MultiTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'tables': {
             'parent': {
                 'primary_key': 'id',
@@ -1577,7 +1576,7 @@ def test_hma_0_1_grandparent():
             },
         ],
     }
-    metadata = MultiTableMetadata().load_from_dict(metadata_dict)
+    metadata = Metadata().load_from_dict(metadata_dict)
     metadata.validate()
     metadata.validate_data(data)
     synthesizer = HMASynthesizer(metadata=metadata, verbose=False)
@@ -1616,7 +1615,7 @@ def test_metadata_updated_warning(method, kwargs):
 
     The warning should be raised during synthesizer initialization.
     """
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'departure': {
                 'primary_key': 'id',
@@ -1666,7 +1665,7 @@ def test_metadata_updated_warning(method, kwargs):
 def test_save_and_load_with_downgraded_version(tmp_path):
     """Test that synthesizers are raising errors if loaded on a downgraded version."""
     # Setup
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'departure': {
                 'primary_key': 'id',
@@ -1717,7 +1716,7 @@ def test_save_and_load_with_downgraded_version(tmp_path):
 def test_fit_raises_version_error():
     """Test that a ``VersionError`` is being raised if the current version is newer."""
     # Setup
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'departure': {
                 'primary_key': 'id',
@@ -1809,7 +1808,7 @@ def test_fit_and_sample_numerical_col_names():
     data['0'][1] = primary_key
     data['1'][1] = primary_key
     data['1'][2] = primary_key_2
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata_dict = {'tables': {}}
     for table_idx in range(num_tables):
         metadata_dict['tables'][str(table_idx)] = {'columns': {}}
@@ -1825,7 +1824,7 @@ def test_fit_and_sample_numerical_col_names():
             'child_foreign_key': 2,
         }
     ]
-    metadata = MultiTableMetadata.load_from_dict(metadata_dict)
+    metadata = Metadata.load_from_dict(metadata_dict)
     metadata.set_primary_key('0', '1')
 
     # Run
@@ -1856,7 +1855,7 @@ def test_detect_from_dataframe_numerical_col():
         'parent_data': parent_data,
         'child_data': child_data,
     }
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata.detect_table_from_dataframe('parent_data', parent_data)
     metadata.detect_table_from_dataframe('child_data', child_data)
     metadata.update_column('parent_data', '1', sdtype='id')
@@ -1871,7 +1870,7 @@ def test_detect_from_dataframe_numerical_col():
         child_table_name='child_data',
     )
 
-    test_metadata = MultiTableMetadata()
+    test_metadata = Metadata()
     test_metadata.detect_from_dataframes(data)
     test_metadata.update_column('parent_data', '1', sdtype='id')
     test_metadata.update_column('child_data', '3', sdtype='id')
@@ -1895,7 +1894,7 @@ def test_detect_from_dataframe_numerical_col():
     assert sample['parent_data'].columns.tolist() == data['parent_data'].columns.tolist()
     assert sample['child_data'].columns.tolist() == data['child_data'].columns.tolist()
 
-    test_metadata = MultiTableMetadata()
+    test_metadata = Metadata()
     test_metadata.detect_from_dataframes(data)
 
 
@@ -1911,7 +1910,7 @@ def test_table_name_logging(caplog):
         'parent_data': parent_data,
         'child_data': child_data,
     }
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata.detect_from_dataframes(data)
     instance = HMASynthesizer(metadata)
 
@@ -1933,7 +1932,7 @@ def test_disjointed_tables():
     remove_some_dict = metadata.to_dict()
     half_list = remove_some_dict['relationships'][1::2]
     remove_some_dict['relationships'] = half_list
-    disjoined_metadata = MultiTableMetadata.load_from_dict(remove_some_dict)
+    disjoined_metadata = Metadata.load_from_dict(remove_some_dict)
 
     # Run
     disjoin_synthesizer = HMASynthesizer(disjoined_metadata)
@@ -1990,7 +1989,7 @@ def test_hma_synthesizer_with_fixed_combinations():
     }
 
     # Creating metadata for the dataset
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata.detect_from_dataframes(data)
 
     metadata.update_column('users', 'user_id', sdtype='id')
@@ -2040,7 +2039,7 @@ def test_fit_int_primary_key_regex_includes_zero(regex):
         'parent_data': parent_data,
         'child_data': child_data,
     }
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata.detect_from_dataframes(data)
     metadata.update_column('parent_data', 'parent_id', sdtype='id', regex_format=regex)
     metadata.set_primary_key('parent_data', 'parent_id')
@@ -2087,7 +2086,7 @@ def test__estimate_num_columns_to_be_modeled_various_sdtypes():
         'grandparent': grandparent,
         'parent': parent,
     }
-    metadata = MultiTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'tables': {
             'root1': {
                 'primary_key': 'R1',

@@ -21,7 +21,7 @@ class TestSingleTablePreset:
         """
         # Run and Assert
         with pytest.raises(ValueError, match=r"'name' must be one of *"):
-            SingleTablePreset(metadata=SingleTableMetadata(), name='invalid')
+            SingleTablePreset(metadata=Metadata(), name='invalid')
 
     @patch('sdv.lite.single_table.GaussianCopulaSynthesizer')
     def test__init__speed_passes_correct_parameters(self, gaussian_copula_mock):
