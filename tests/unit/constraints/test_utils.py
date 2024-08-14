@@ -10,6 +10,7 @@ from sdv.constraints.utils import (
     cast_to_datetime64,
     compute_nans_column,
     get_datetime_diff,
+    get_mappable_combination,
     get_nan_component_value,
     logit,
     matches_datetime_format,
@@ -302,3 +303,19 @@ def test_get_datetime_diff():
 
     # Assert
     assert np.array_equal(expected, diff, equal_nan=True)
+
+
+def test_get_mappable_combination():
+    """Test the ``get_mappable_combination`` method."""
+    # Setup
+    already_mappable = ('a', 1, 1.2, 'b')
+    not_mappable = ('a', 1, np.nan, 'b')
+
+    # Run
+    result_already_mappable = get_mappable_combination(already_mappable)
+    result_mappable = get_mappable_combination(not_mappable)
+
+    # Assert
+    expected_result_not_mappable = ('a', 1, None, 'b')
+    assert result_already_mappable == already_mappable
+    assert result_mappable == expected_result_not_mappable

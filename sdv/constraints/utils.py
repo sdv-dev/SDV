@@ -204,3 +204,16 @@ def get_datetime_diff(high, low, high_datetime_format=None, low_datetime_format=
     diff_column = diff_column.astype(np.float64)
     diff_column[nan_mask] = np.nan
     return diff_column
+
+
+def get_mappable_combination(combination):
+    """Get a mappable combination of values.
+
+    This function replaces NaN values with None inside the tuple
+    to ensure consistent comparisons when using mapping.
+
+    Args:
+        combination (tuple):
+            A combination of values.
+    """
+    return tuple(None if pd.isna(x) else x for x in combination)
