@@ -7,7 +7,7 @@ import pytest
 from sdmetrics import visualization
 
 from sdv.errors import InvalidDataTypeError, NotFittedError
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer, _validate_no_category_dtype
 
 
@@ -33,7 +33,7 @@ class TestCTGANSynthesizer:
     def test___init__(self):
         """Test creating an instance of ``CTGANSynthesizer``."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         enforce_min_max_values = True
         enforce_rounding = True
 
@@ -65,7 +65,7 @@ class TestCTGANSynthesizer:
     def test___init__with_unified_metadata(self):
         """Test creating an instance of ``CTGANSynthesizer`` with Metadata."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         enforce_min_max_values = True
         enforce_rounding = True
 
@@ -97,7 +97,7 @@ class TestCTGANSynthesizer:
     def test___init__custom(self):
         """Test creating an instance of ``CTGANSynthesizer`` with custom parameters."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         enforce_min_max_values = False
         enforce_rounding = False
         embedding_dim = 64
@@ -157,7 +157,7 @@ class TestCTGANSynthesizer:
     def test_get_parameters(self):
         """Test that inherited method ``get_parameters`` returns the specific init parameters."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = CTGANSynthesizer(metadata)
 
         # Run
@@ -187,10 +187,11 @@ class TestCTGANSynthesizer:
     def test__estimate_num_columns(self):
         """Test that ``_estimate_num_columns`` returns without crashing the number of columns."""
         # Setup
-        metadata = SingleTableMetadata()
-        metadata.add_column('id', sdtype='numerical')
-        metadata.add_column('name', sdtype='categorical')
-        metadata.add_column('surname', sdtype='categorical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('table', 'id', sdtype='numerical')
+        metadata.add_column('table', 'name', sdtype='categorical')
+        metadata.add_column('table', 'surname', sdtype='categorical')
         data = pd.DataFrame({
             'id': np.random.rand(1_001),
             'name': [f'cat_{i}' for i in range(1_001)],
@@ -212,9 +213,10 @@ class TestCTGANSynthesizer:
     def test_preprocessing_many_categories(self, capfd):
         """Test a message is printed during preprocess when a column has many categories."""
         # Setup
-        metadata = SingleTableMetadata()
-        metadata.add_column('name_longer_than_Original_Column_Name', sdtype='numerical')
-        metadata.add_column('categorical', sdtype='categorical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('table', 'name_longer_than_Original_Column_Name', sdtype='numerical')
+        metadata.add_column('table', 'categorical', sdtype='categorical')
         data = pd.DataFrame({
             'name_longer_than_Original_Column_Name': np.random.rand(1_001),
             'categorical': [f'cat_{i}' for i in range(1_001)],
@@ -242,9 +244,10 @@ class TestCTGANSynthesizer:
     def test_preprocessing_few_categories(self, capfd):
         """Test a message is not printed during preprocess when a column has few categories."""
         # Setup
-        metadata = SingleTableMetadata()
-        metadata.add_column('name_longer_than_Original_Column_Name', sdtype='numerical')
-        metadata.add_column('categorical', sdtype='categorical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('table', 'name_longer_than_Original_Column_Name', sdtype='numerical')
+        metadata.add_column('table', 'categorical', sdtype='categorical')
         data = pd.DataFrame({
             'name_longer_than_Original_Column_Name': np.random.rand(10),
             'categorical': [f'cat_{i}' for i in range(10)],
@@ -269,8 +272,9 @@ class TestCTGANSynthesizer:
         that have been detected by the utility function.
         """
         # Setup
-        metadata = SingleTableMetadata()
-        instance = CTGANSynthesizer(metadata)
+        metadata = Metadata()
+        single_metadata = metadata._convert_to_single_table()
+        instance = CTGANSynthesizer(single_metadata)
         processed_data = Mock()
 
         # Run
@@ -279,7 +283,9 @@ class TestCTGANSynthesizer:
         # Assert
         mock_category_validate.assert_called_once_with(processed_data)
         mock_detect_discrete_columns.assert_called_once_with(
-            metadata, processed_data, instance._data_processor._hyper_transformer.field_transformers
+            single_metadata,
+            processed_data,
+            instance._data_processor._hyper_transformer.field_transformers,
         )
         mock_ctgan.assert_called_once_with(
             batch_size=500,
@@ -309,7 +315,7 @@ class TestCTGANSynthesizer:
         mock_model = Mock()
         loss_values = pd.DataFrame({'Epoch': [0, 1, 2], 'Loss': [0.8, 0.6, 0.5]})
         mock_model.loss_values = loss_values
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = CTGANSynthesizer(metadata)
         instance._model = mock_model
         instance._fitted = True
@@ -323,7 +329,7 @@ class TestCTGANSynthesizer:
     def test_get_loss_values_error(self):
         """Test the ``get_loss_values`` errors if synthesizer has not been fitted."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = CTGANSynthesizer(metadata)
 
         # Run / Assert
@@ -335,7 +341,7 @@ class TestCTGANSynthesizer:
     def test_get_loss_values_plot(self, mock_line_plot):
         """Test the ``get_loss_values_plot`` method from ``CTGANSynthesizer."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = CTGANSynthesizer(metadata)
         mock_loss_value = Mock()
         mock_loss_value.item.return_value = 0.1
@@ -364,7 +370,7 @@ class TestTVAESynthesizer:
     def test___init__(self):
         """Test creating an instance of ``TVAESynthesizer``."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         enforce_min_max_values = True
         enforce_rounding = True
 
@@ -391,7 +397,7 @@ class TestTVAESynthesizer:
     def test___init__custom(self):
         """Test creating an instance of ``TVAESynthesizer`` with custom parameters."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         enforce_min_max_values = False
         enforce_rounding = False
         embedding_dim = 64
@@ -436,7 +442,7 @@ class TestTVAESynthesizer:
     def test_get_parameters(self):
         """Test that inherited method ``get_parameters`` returns the specific init parameters."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = TVAESynthesizer(metadata)
 
         # Run
@@ -468,8 +474,9 @@ class TestTVAESynthesizer:
         that have been detected by the utility function.
         """
         # Setup
-        metadata = SingleTableMetadata()
-        instance = TVAESynthesizer(metadata)
+        metadata = Metadata()
+        single_metadata = metadata._convert_to_single_table()
+        instance = TVAESynthesizer(single_metadata)
         processed_data = Mock()
 
         # Run
@@ -478,7 +485,9 @@ class TestTVAESynthesizer:
         # Assert
         mock_category_validate.assert_called_once_with(processed_data)
         mock_detect_discrete_columns.assert_called_once_with(
-            metadata, processed_data, instance._data_processor._hyper_transformer.field_transformers
+            single_metadata,
+            processed_data,
+            instance._data_processor._hyper_transformer.field_transformers,
         )
         mock_tvae.assert_called_once_with(
             batch_size=500,
@@ -503,7 +512,7 @@ class TestTVAESynthesizer:
         mock_model = Mock()
         loss_values = pd.DataFrame({'Epoch': [0, 1, 2], 'Loss': [0.8, 0.6, 0.5]})
         mock_model.loss_values = loss_values
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = TVAESynthesizer(metadata)
         instance._model = mock_model
         instance._fitted = True
@@ -517,7 +526,7 @@ class TestTVAESynthesizer:
     def test_get_loss_values_error(self):
         """Test the ``get_loss_values`` errors if synthesizer has not been fitted."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = TVAESynthesizer(metadata)
 
         # Run / Assert

@@ -11,7 +11,7 @@ from sdv.evaluation.multi_table import (
     get_column_plot,
     run_diagnostic,
 )
-from sdv.metadata.multi_table import MultiTableMetadata
+from sdv.metadata.metadata import Metadata
 
 
 def test_evaluate_quality():
@@ -20,7 +20,7 @@ def test_evaluate_quality():
     table = pd.DataFrame({'col': [1, 2, 3]})
     data1 = {'table': table}
     data2 = {'table': pd.DataFrame({'col': [2, 1, 3]})}
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata.detect_table_from_dataframe('table', table)
     QualityReport.generate = Mock()
 
@@ -37,7 +37,7 @@ def test_run_diagnostic():
     table = pd.DataFrame({'col': [1, 2, 3]})
     data1 = {'table': table}
     data2 = {'table': pd.DataFrame({'col': [2, 1, 3]})}
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata.detect_table_from_dataframe('table', table)
     DiagnosticReport.generate = Mock()
 
@@ -60,7 +60,7 @@ def test_get_column_plot(mock_plot):
     table2 = pd.DataFrame({'col': [2, 1, 3]})
     data1 = {'table': table1}
     data2 = {'table': table2}
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata.detect_table_from_dataframe('table', table1)
     mock_plot.return_value = 'plot'
 
@@ -79,7 +79,7 @@ def test_get_column_plot_only_real_or_synthetic(mock_plot):
     # Setup
     table1 = pd.DataFrame({'col': [1, 2, 3]})
     data1 = {'table': table1}
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata.detect_table_from_dataframe('table', table1)
     mock_plot.return_value = 'plot'
 
@@ -103,7 +103,7 @@ def test_get_column_pair_plot(mock_plot):
     table2 = pd.DataFrame({'col1': [2, 1, 3], 'col2': [1, 2, 3]})
     data1 = {'table': table1}
     data2 = {'table': table2}
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata.detect_table_from_dataframe('table', table1)
     mock_plot.return_value = 'plot'
 
@@ -122,7 +122,7 @@ def test_get_column_pair_plot_only_real_or_synthetic(mock_plot):
     # Setup
     table1 = pd.DataFrame({'col1': [1, 2, 3], 'col2': [3, 2, 1]})
     data1 = {'table': table1}
-    metadata = MultiTableMetadata()
+    metadata = Metadata()
     metadata.detect_table_from_dataframe('table', table1)
     mock_plot.return_value = 'plot'
 
@@ -170,7 +170,7 @@ def test_get_cardinality_plot(mock_plot):
         ],
         'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
     }
-    metadata = MultiTableMetadata.load_from_dict(metadata_dict)
+    metadata = Metadata.load_from_dict(metadata_dict)
     mock_plot.return_value = 'plot'
 
     # Run
@@ -213,7 +213,7 @@ def test_get_cardinality_plot_plot_type(mock_plot):
         ],
         'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
     }
-    metadata = MultiTableMetadata.load_from_dict(metadata_dict)
+    metadata = Metadata.load_from_dict(metadata_dict)
     mock_plot.return_value = 'plot'
 
     # Run

@@ -2,7 +2,6 @@ import pandas as pd
 
 from sdv.evaluation.multi_table import evaluate_quality, run_diagnostic
 from sdv.metadata.metadata import Metadata
-from sdv.metadata.multi_table import MultiTableMetadata
 
 
 def test_evaluation():
@@ -18,7 +17,7 @@ def test_evaluation():
         'table1': table,
         'table2': slightly_different_table,
     }
-    metadata = MultiTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'tables': {
             'table1': {
                 'columns': {

@@ -11,7 +11,7 @@ from copulas.multivariate.gaussian import GaussianMultivariate
 from sdv.constraints import Constraint, create_custom_constraint_class
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.datasets.demo import download_demo
-from sdv.metadata import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
@@ -72,10 +72,11 @@ def test_fit_with_unique_constraint_on_data_with_only_index_column():
         ],
     })
 
-    metadata = SingleTableMetadata()
-    metadata.add_column('key', sdtype='id')
-    metadata.add_column('index', sdtype='categorical')
-    metadata.set_primary_key('key')
+    metadata = Metadata()
+    metadata.add_table('table')
+    metadata.add_column('table', 'key', sdtype='id')
+    metadata.add_column('table', 'index', sdtype='categorical')
+    metadata.set_primary_key('table', 'key')
 
     model = GaussianCopulaSynthesizer(metadata)
     constraint = {
@@ -136,11 +137,12 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
         ],
     })
 
-    metadata = SingleTableMetadata()
-    metadata.add_column('key', sdtype='id')
-    metadata.add_column('index', sdtype='categorical')
-    metadata.add_column('test_column', sdtype='categorical')
-    metadata.set_primary_key('key')
+    metadata = Metadata()
+    metadata.add_table('table')
+    metadata.add_column('table', 'key', sdtype='id')
+    metadata.add_column('table', 'index', sdtype='categorical')
+    metadata.add_column('table', 'test_column', sdtype='categorical')
+    metadata.set_primary_key('table', 'key')
 
     model = GaussianCopulaSynthesizer(metadata)
     constraint = {
@@ -194,10 +196,11 @@ def test_fit_with_unique_constraint_on_data_subset():
         ],
     })
 
-    metadata = SingleTableMetadata()
-    metadata.add_column('key', sdtype='id')
-    metadata.add_column('test_column', sdtype='categorical')
-    metadata.set_primary_key('key')
+    metadata = Metadata()
+    metadata.add_table('table')
+    metadata.add_column('table', 'key', sdtype='id')
+    metadata.add_column('table', 'test_column', sdtype='categorical')
+    metadata.set_primary_key('table', 'key')
 
     test_df = test_df.iloc[[1, 3, 4]]
     constraint = {
@@ -227,7 +230,7 @@ def test_conditional_sampling_with_constraints():
         }
     )
 
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'numerical'},
             'B': {'sdtype': 'numerical'},
@@ -290,10 +293,11 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
         'age': [27, 28, 26, 21, 30],
     })
 
-    metadata = SingleTableMetadata()
-    metadata.add_column('city', sdtype='categorical')
-    metadata.add_column('state', sdtype='categorical')
-    metadata.add_column('age', sdtype='numerical')
+    metadata = Metadata()
+    metadata.add_table('table')
+    metadata.add_column('table', 'city', sdtype='categorical')
+    metadata.add_column('table', 'state', sdtype='categorical')
+    metadata.add_column('table', 'age', sdtype='numerical')
 
     model = GaussianCopulaSynthesizer(metadata)
 
@@ -335,9 +339,9 @@ def test_custom_constraints_from_file(tmpdir):
         'categorical_col': ['a', 'b', 'a'],
     })
 
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
-    metadata.update_column(column_name='pii_col', sdtype='address', pii=True)
+    metadata = Metadata()
+    metadata.detect_from_dataframes({'table': data})
+    metadata.update_column(table_name='table', column_name='pii_col', sdtype='address', pii=True)
     synthesizer = GaussianCopulaSynthesizer(
         metadata, enforce_min_max_values=False, enforce_rounding=False
     )
@@ -379,9 +383,9 @@ def test_custom_constraints_from_object(tmpdir):
         'categorical_col': ['a', 'b', 'a'],
     })
 
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
-    metadata.update_column(column_name='pii_col', sdtype='address', pii=True)
+    metadata = Metadata()
+    metadata.detect_from_dataframes({'table': data})
+    metadata.update_column(table_name='table', column_name='pii_col', sdtype='address', pii=True)
     synthesizer = GaussianCopulaSynthesizer(
         metadata, enforce_min_max_values=False, enforce_rounding=False
     )
@@ -444,7 +448,7 @@ def test_inequality_constraint_with_datetimes_and_nones():
         }
     )
 
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
@@ -505,7 +509,7 @@ def test_scalar_inequality_constraint_with_datetimes_and_nones():
         }
     )
 
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
@@ -556,7 +560,7 @@ def test_scalar_range_constraint_with_datetimes_and_nones():
         }
     )
 
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
@@ -623,7 +627,7 @@ def test_range_constraint_with_datetimes_and_nones():
         }
     )
 
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'B': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
@@ -697,7 +701,7 @@ def test_inequality_constraint_all_possible_nans_configurations():
     # Setup
     data = pd.DataFrame(data={'A': [0, 1, np.nan, np.nan, 2], 'B': [2, np.nan, 3, np.nan, 3]})
 
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'columns': {
             'A': {'sdtype': 'numerical'},
             'B': {'sdtype': 'numerical'},
@@ -742,7 +746,7 @@ def test_range_constraint_all_possible_nans_configurations():
         }
     }
 
-    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+    metadata = Metadata.load_from_dict(metadata_dict)
     synthesizer = GaussianCopulaSynthesizer(metadata)
 
     my_constraint = {
@@ -812,10 +816,10 @@ def test_custom_constraint_with_key():
         'number': ['1', '2', '3'],
         'other': [7, 8, 9],
     })
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
-    metadata.update_column('key', sdtype='id', regex_format=r'\w_\d')
-    metadata.set_primary_key('key')
+    metadata = Metadata()
+    metadata.detect_from_dataframes({'table': data})
+    metadata.update_column('table', 'key', sdtype='id', regex_format=r'\w_\d')
+    metadata.set_primary_key('table', 'key')
     synth = GaussianCopulaSynthesizer(metadata)
     synth.add_custom_constraint_class(custom_constraint, 'custom')
 
@@ -842,9 +846,10 @@ def test_timezone_aware_constraints():
     data['col1'] = pd.to_datetime(data['col1']).dt.tz_localize('UTC')
     data['col2'] = pd.to_datetime(data['col2']).dt.tz_localize('UTC')
 
-    metadata = SingleTableMetadata()
-    metadata.add_column('col1', sdtype='datetime')
-    metadata.add_column('col2', sdtype='datetime')
+    metadata = Metadata()
+    metadata.add_table('table')
+    metadata.add_column('table', 'col1', sdtype='datetime')
+    metadata.add_column('table', 'col2', sdtype='datetime')
 
     my_constraint = {
         'constraint_class': 'Inequality',
@@ -960,18 +965,25 @@ def test_aggregate_constraint_errors(demo_data, demo_metadata):
 def test_constraint_datetime_check():
     """Test datetime columns are correctly identified in constraints. GH#1692"""
     # Setup
-    data = pd.DataFrame(
-        data={
-            'low_col': ['21 Sep, 15', '23 Aug, 14', '29 May, 12'],
-            'high_col': ['02 Nov, 15', '12 Oct, 14', '08 Jul, 12'],
-        }
-    )
-    metadata = SingleTableMetadata.load_from_dict({
-        'columns': {
-            'low_col': {'sdtype': 'datetime', 'datetime_format': '%d %b, %y'},
-            'high_col': {'sdtype': 'datetime', 'datetime_format': '%d %b, %y'},
+    data = {
+        'table': pd.DataFrame(
+            data={
+                'low_col': ['21 Sep, 15', '23 Aug, 14', '29 May, 12'],
+                'high_col': ['02 Nov, 15', '12 Oct, 14', '08 Jul, 12'],
+            }
+        )
+    }
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'low_col': {'sdtype': 'datetime', 'datetime_format': '%d %b, %y'},
+                    'high_col': {'sdtype': 'datetime', 'datetime_format': '%d %b, %y'},
+                }
+            }
         }
     })
+
     my_constraint = {
         'constraint_class': 'Inequality',
         'constraint_parameters': {
@@ -987,7 +999,7 @@ def test_constraint_datetime_check():
 
     synth = GaussianCopulaSynthesizer(metadata)
     synth.add_constraints([my_constraint])
-    synth.fit(data)
+    synth.fit(data['table'])
     samples = synth.sample(3)
 
     # Assert

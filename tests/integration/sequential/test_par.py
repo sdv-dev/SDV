@@ -8,7 +8,7 @@ from deepecho import load_demo
 
 from sdv.datasets.demo import download_demo
 from sdv.errors import SynthesizerInputError
-from sdv.metadata import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.sequential import PARSynthesizer
 
 
@@ -21,11 +21,11 @@ def _get_par_data_and_metadata():
         'entity': [1, 1, 2, 2],
         'context': ['a', 'a', 'b', 'b'],
     })
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
-    metadata.update_column('entity', sdtype='id')
-    metadata.set_sequence_key('entity')
-    metadata.set_sequence_index('date')
+    metadata = Metadata()
+    metadata.detect_from_dataframes({'table': data})
+    metadata.update_column('table', 'entity', sdtype='id')
+    metadata.set_sequence_key('table', 'entity')
+    metadata.set_sequence_index('table', 'date')
     return data, metadata
 
 
@@ -34,11 +34,11 @@ def test_par():
     # Setup
     data = load_demo()
     data['date'] = pd.to_datetime(data['date'])
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
-    metadata.update_column('store_id', sdtype='id')
-    metadata.set_sequence_key('store_id')
-    metadata.set_sequence_index('date')
+    metadata = Metadata()
+    metadata.detect_from_dataframes({'table': data})
+    metadata.update_column('table', 'store_id', sdtype='id')
+    metadata.set_sequence_key('table', 'store_id')
+    metadata.set_sequence_index('table', 'date')
     model = PARSynthesizer(
         metadata=metadata,
         context_columns=['region'],
@@ -68,11 +68,11 @@ def test_column_after_date_simple():
         'date': [date, date],
         'col2': ['hello', 'world'],
     })
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
-    metadata.update_column('col', sdtype='id')
-    metadata.set_sequence_key('col')
-    metadata.set_sequence_index('date')
+    metadata = Metadata()
+    metadata.detect_from_dataframes({'table': data})
+    metadata.update_column('table', 'col', sdtype='id')
+    metadata.set_sequence_key('table', 'col')
+    metadata.set_sequence_index('table', 'date')
 
     # Run
     model = PARSynthesizer(metadata=metadata, epochs=1)
@@ -114,7 +114,7 @@ def test_save_and_load(tmp_path):
 
     # Assert
     assert isinstance(loaded_instance, PARSynthesizer)
-    assert metadata == instance.metadata
+    assert metadata._convert_to_single_table().to_dict() == instance.metadata.to_dict()
 
 
 def test_synthesize_sequences(tmp_path):
@@ -229,7 +229,7 @@ def test_par_subset_of_data_simplified():
         'date': ['2020-01-01', '2020-01-02', '2020-01-03'],
     })
     data.index = [0, 1, 5]
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'sequence_index': 'date',
         'sequence_key': 'id',
         'columns': {
@@ -261,7 +261,7 @@ def test_par_missing_sequence_index():
         'sequence_key': 'e_id',
     }
 
-    metadata = SingleTableMetadata().load_from_dict(metadata_dict)
+    metadata = Metadata().load_from_dict(metadata_dict)
 
     data = pd.DataFrame({'value': [10, 20, 30], 'e_id': [1, 2, 3]})
 
@@ -348,11 +348,11 @@ def test_par_unique_sequence_index_with_enforce_min_max():
     test_df[['visits', 'pre_date']] = test_df[['visits', 'pre_date']].apply(
         pd.to_datetime, format='%Y-%m-%d', errors='coerce'
     )
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(test_df)
-    metadata.update_column(column_name='s_key', sdtype='id')
-    metadata.set_sequence_key('s_key')
-    metadata.set_sequence_index('visits')
+    metadata = Metadata()
+    metadata.detect_from_dataframes({'table': test_df})
+    metadata.update_column(table_name='table', column_name='s_key', sdtype='id')
+    metadata.set_sequence_key('table', 's_key')
+    metadata.set_sequence_index('table', 'visits')
     synthesizer = PARSynthesizer(
         metadata, enforce_min_max_values=True, enforce_rounding=False, epochs=100, verbose=True
     )
@@ -378,7 +378,7 @@ def test_par_sequence_index_is_numerical():
         'sequence_key': 'engine_no',
         'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
     }
-    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+    metadata = Metadata.load_from_dict(metadata_dict)
     data = pd.DataFrame({'engine_no': [0, 0, 1, 1], 'time_in_cycles': [1, 2, 3, 4]})
 
     s1 = PARSynthesizer(metadata)
@@ -396,7 +396,7 @@ def test_init_error_sequence_key_in_context():
         },
         'sequence_key': 'A',
     }
-    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+    metadata = Metadata.load_from_dict(metadata_dict)
     sequence_key_context_column_error_msg = re.escape(
         "The sequence key ['A'] cannot be a context column. "
         'To proceed, please remove the sequence key from the context_columns parameter.'
@@ -418,7 +418,7 @@ def test_par_with_datetime_context():
         }
     )
 
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'columns': {
             'user_id': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{2}'},
             'birthdate': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},

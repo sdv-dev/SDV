@@ -1,7 +1,7 @@
 import pandas as pd
 
 from sdv.io.local import CSVHandler, ExcelHandler
-from sdv.metadata import MultiTableMetadata
+from sdv.metadata import Metadata
 
 
 class TestCSVHandler:
@@ -27,7 +27,7 @@ class TestCSVHandler:
         assert len(data) == 2
         assert 'table1' in data
         assert 'table2' in data
-        assert isinstance(metadata, MultiTableMetadata) is True
+        assert isinstance(metadata, Metadata) is True
 
         # Check if the dataframes match the original synthetic data
         pd.testing.assert_frame_equal(data['table1'], synthetic_data['table1'])
@@ -57,7 +57,7 @@ class TestExcelHandler:
         assert len(data) == 2
         assert 'table1' in data
         assert 'table2' in data
-        assert isinstance(metadata, MultiTableMetadata) is True
+        assert isinstance(metadata, Metadata) is True
 
         # Check if the dataframes match the original synthetic data
         pd.testing.assert_frame_equal(data['table1'], synthetic_data['table1'])
@@ -91,7 +91,7 @@ class TestExcelHandler:
         assert len(data) == 2
         assert 'table1' in data
         assert 'table2' in data
-        assert isinstance(metadata, MultiTableMetadata) is True
+        assert isinstance(metadata, Metadata) is True
 
         # Check if the dataframes match the original synthetic data
         expected_table_one = pd.concat(
