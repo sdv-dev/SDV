@@ -6,6 +6,7 @@ from sdv.single_table import GaussianCopulaSynthesizer
 
 
 def test_fixed_combinations_with_nans():
+    """Test that FixedCombinations constraint works with NaNs."""
     # Setup
     data = pd.DataFrame({
         'A': [1, 2, np.nan, 1, 2, 1],

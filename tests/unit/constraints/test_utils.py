@@ -313,9 +313,9 @@ def test_get_mappable_combination():
 
     # Run
     result_already_mappable = get_mappable_combination(already_mappable)
-    result_mappable = get_mappable_combination(not_mappable)
+    result_not_mappable = get_mappable_combination(not_mappable)
 
     # Assert
     expected_result_not_mappable = ('a', 1, None, 'b')
     assert result_already_mappable == already_mappable
-    assert result_mappable == expected_result_not_mappable
+    assert result_not_mappable == expected_result_not_mappable
