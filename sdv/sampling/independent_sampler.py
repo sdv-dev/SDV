@@ -98,7 +98,7 @@ class BaseIndependentSampler:
         final_data = {}
         for table_name, table_rows in sampled_data.items():
             synthesizer = self._table_synthesizers.get(table_name)
-            metadata = synthesizer.get_metadata()
+            metadata = synthesizer.get_metadata()._convert_to_single_table()
             dtypes = synthesizer._data_processor._dtypes
             dtypes_to_sdtype = synthesizer._data_processor._DTYPE_TO_SDTYPE
 

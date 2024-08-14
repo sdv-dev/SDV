@@ -1,5 +1,7 @@
 """Metadata."""
 
+import warnings
+
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -10,6 +12,7 @@ class Metadata(MultiTableMetadata):
     """Metadata class that handles all metadata."""
 
     METADATA_SPEC_VERSION = 'V1'
+    DEFAULT_SINGLE_TABLE_NAME = 'default_table_name'
 
     @classmethod
     def load_from_json(cls, filepath, single_table_name=None):
@@ -66,8 +69,28 @@ class Metadata(MultiTableMetadata):
             super()._set_metadata_dict(metadata)
         else:
             if single_table_name is None:
-                single_table_name = 'default_table_name'
+                single_table_name = self.DEFAULT_SINGLE_TABLE_NAME
             self.tables[single_table_name] = SingleTableMetadata.load_from_dict(metadata)
+
+    def _get_single_table_name(self):
+        """Get the table name if there is only one table.
+
+        Checks to see if the metadata contains only a single table, if so
+        return the name. Otherwise warn the user and return None.
+
+        Args:
+            metadata (dict):
+                Python dictionary representing a ``MultiTableMetadata`` or
+                ``SingleTableMetadata`` object.
+        """
+        if len(self.tables) != 1:
+            warnings.warn(
+                'This metadata does not contain only a single table. Could not determine '
+                'single table name and will return None.'
+            )
+            return None
+
+        return next(iter(self.tables), None)
 
     def _convert_to_single_table(self):
         if len(self.tables) > 1:

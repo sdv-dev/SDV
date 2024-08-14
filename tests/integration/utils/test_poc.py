@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from sdv.datasets.demo import download_demo
-from sdv.metadata import MultiTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.multi_table.hma import MAX_NUMBER_OF_COLUMNS, HMASynthesizer
 from sdv.multi_table.utils import _get_total_estimated_columns
 from sdv.utils.poc import get_random_subset, simplify_schema
@@ -15,7 +15,7 @@ from sdv.utils.poc import get_random_subset, simplify_schema
 
 @pytest.fixture
 def metadata():
-    return MultiTableMetadata.load_from_dict({
+    return Metadata.load_from_dict({
         'tables': {
             'parent': {
                 'columns': {

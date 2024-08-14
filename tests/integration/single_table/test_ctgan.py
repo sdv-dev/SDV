@@ -8,20 +8,21 @@ from rdt.transformers import FloatFormatter, LabelEncoder
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataTypeError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
-from sdv.metadata import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.single_table import CTGANSynthesizer, TVAESynthesizer
 
 
 def test__estimate_num_columns():
     """Test the number of columns is estimated correctly."""
     # Setup
-    metadata = SingleTableMetadata()
-    metadata.add_column('numerical', sdtype='numerical')
-    metadata.add_column('categorical', sdtype='categorical')
-    metadata.add_column('categorical2', sdtype='categorical')
-    metadata.add_column('categorical3', sdtype='categorical')
-    metadata.add_column('datetime', sdtype='datetime')
-    metadata.add_column('boolean', sdtype='boolean')
+    metadata = Metadata()
+    metadata.add_table('table')
+    metadata.add_column('table', 'numerical', sdtype='numerical')
+    metadata.add_column('table', 'categorical', sdtype='categorical')
+    metadata.add_column('table', 'categorical2', sdtype='categorical')
+    metadata.add_column('table', 'categorical3', sdtype='categorical')
+    metadata.add_column('table', 'datetime', sdtype='datetime')
+    metadata.add_column('table', 'boolean', sdtype='boolean')
     data = pd.DataFrame({
         'numerical': [0.1, 0.2, 0.3],
         'datetime': ['2020-01-01', '2020-01-02', '2020-01-03'],
@@ -134,7 +135,7 @@ def test_categoricals_are_not_preprocessed():
             'alcohol': ['medium', 'medium', 'low', 'high', 'low'],
         }
     )
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'columns': {
             'age': {'sdtype': 'numerical'},
             'therapy': {'sdtype': 'boolean'},
@@ -180,7 +181,7 @@ def test_categorical_metadata_with_int_data():
         },
     }
 
-    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+    metadata = Metadata.load_from_dict(metadata_dict)
     data = pd.DataFrame({
         'A': list(range(50)),
         'B': list(range(50)),
@@ -270,7 +271,7 @@ def test_ctgan_with_dropped_columns():
         'columns': {'user_id': {'sdtype': 'id'}, 'user_ssn': {'sdtype': 'ssn'}},
     }
 
-    metadata = SingleTableMetadata.load_from_dict(metadata_dict)
+    metadata = Metadata.load_from_dict(metadata_dict)
 
     # Run
     synth = CTGANSynthesizer(metadata)
