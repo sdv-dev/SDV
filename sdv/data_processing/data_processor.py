@@ -9,6 +9,7 @@ from pathlib import Path
 import pandas as pd
 import rdt
 from pandas.api.types import is_float_dtype, is_integer_dtype
+from pandas.errors import IntCastingNaNError
 from rdt.transformers import AnonymizedFaker, get_default_transformers
 from rdt.transformers.pii.anonymization import get_anonymized_transformer
 
@@ -900,17 +901,11 @@ class DataProcessor:
             if is_integer and is_float_dtype(column_data.dtype):
                 column_data = column_data.round()
 
-            np_integer_with_nans = (
-                not pd.api.types.is_extension_array_dtype(dtype)
-                and is_integer
-                and pd.isna(column_data).any()
-            )
-
             reversed_data[column_name] = column_data[column_data.notna()]
             try:
-                reversed_data[column_name] = reversed_data[column_name].astype(
-                    dtype if not np_integer_with_nans else 'float64'
-                )
+                reversed_data[column_name] = reversed_data[column_name].astype(dtype)
+            except IntCastingNaNError:  # Keep the column as float dtype
+                continue
             except ValueError as e:
                 column_metadata = self.metadata.columns.get(column_name)
                 sdtype = column_metadata.get('sdtype')
