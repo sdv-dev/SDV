@@ -1372,13 +1372,13 @@ class TestHMASynthesizer:
             'parent_table2': pd.DataFrame({'id': ['alpha', 'beta', 'gamma']}),
             'child_table1': pd.DataFrame({
                 'id': [1, 2, 3],
-                'fk1': [np.nan, 2, np.nan],
-                'fk2': ['alpha', 'beta', np.nan],
+                'fk1': pd.Series([np.nan, 2, np.nan], dtype="float64"),
+                'fk2': pd.Series(['alpha', 'beta', np.nan], dtype="object"),
             }),
             'child_table2': pd.DataFrame({
                 'id': [1, 2, 3],
                 'fk1': [1, 2, np.nan],
-                'fk2': [1, np.nan, np.nan],
+                'fk2': pd.Series([1, np.nan, np.nan], dtype="float64"),
                 'cat_type': pd.Series(['siamese', 'persian', 'american shorthair'], dtype='object'),
             }),
         }
