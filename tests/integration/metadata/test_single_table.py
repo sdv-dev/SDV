@@ -600,7 +600,7 @@ def test_anonymize():
 
 
 def test_metadata_detection_numerical_dtypes():
-    """Test that numerical columns are detected correctly."""
+    """Test that numerical columns are correctly detected."""
     # Setup
     data = pd.DataFrame({
         'Int8': pd.Series([1, 2, -3, pd.NA], dtype='Int8'),
@@ -618,28 +618,13 @@ def test_metadata_detection_numerical_dtypes():
         'uint32': np.array([1, 2, 3, 4], dtype='uint32'),
         'uint64': np.array([1, 2, 3, 4], dtype='uint64'),
     })
+    metadata = SingleTableMetadata()
 
     # Run
-    metadata = SingleTableMetadata()
     metadata.detect_from_dataframe(data)
 
     # Assert
     expected_metadata = {
-        'columns': {
-            'Int8': {'sdtype': 'numerical'},
-            'Int16': {'sdtype': 'numerical'},
-            'Int32': {'sdtype': 'numerical'},
-            'Int64': {'sdtype': 'numerical'},
-            'UInt8': {'sdtype': 'numerical'},
-            'UInt16': {'sdtype': 'numerical'},
-            'UInt32': {'sdtype': 'numerical'},
-            'UInt64': {'sdtype': 'numerical'},
-            'Float32': {'sdtype': 'numerical'},
-            'Float64': {'sdtype': 'numerical'},
-            'uint8': {'sdtype': 'numerical'},
-            'uint16': {'sdtype': 'numerical'},
-            'uint32': {'sdtype': 'numerical'},
-            'uint64': {'sdtype': 'numerical'},
-        },
+        'columns': {column: {'sdtype': 'numerical'} for column in data.columns},
     }
     assert metadata.to_dict()['columns'] == expected_metadata['columns']

@@ -897,8 +897,7 @@ class DataProcessor:
             column_data = reversed_data[column_name]
 
             dtype = self._dtypes[column_name]
-            is_integer = is_integer_dtype(dtype)
-            if is_integer and is_float_dtype(column_data.dtype):
+            if is_integer_dtype(dtype) and is_float_dtype(column_data.dtype):
                 column_data = column_data.round()
 
             reversed_data[column_name] = column_data[column_data.notna()]
