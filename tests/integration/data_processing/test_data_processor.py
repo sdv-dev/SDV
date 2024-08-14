@@ -429,9 +429,15 @@ class TestDataProcessor:
         parametrization,
     )
     def test_numerical_dtype_handling(self, column_name, data_series, expected_dtype_with_nans):
-        """Test that the DataProcessor correctly handle all numerical dtypes."""
+        """Test that the DataProcessor correctly handle all numerical dtypes.
+
+        Test also that the DataProcessor correctly handle all numerical dtypes when there are NaNs
+        in the transformed data. Some dtypes don't support NaNs, so they should be
+        converted to float.
+        """
         # Setup
         data = pd.DataFrame({column_name: data_series})
+        data_with_nans = pd.DataFrame({column_name: [1.1, 2.2, 3.3, np.nan]})
         metadata = SingleTableMetadata.load_from_dict({
             'columns': {column_name: {'sdtype': 'numerical'}}
         })
@@ -441,35 +447,9 @@ class TestDataProcessor:
         data_processor.fit(data)
         transformed_data = data_processor.transform(data)
         reverse_transformed_data = data_processor.reverse_transform(transformed_data)
+        reverse_transformed_with_nans = data_processor.reverse_transform(data_with_nans)
 
         # Assert
         assert transformed_data.dtypes.unique() == 'float'
         assert reverse_transformed_data[column_name].dtype == column_name
-
-    @pytest.mark.parametrize(
-        ('column_name', 'data_series', 'expected_dtype_with_nans'),
-        parametrization,
-    )
-    def test_numerical_dtype_handling_with_nans(
-        self, column_name, data_series, expected_dtype_with_nans
-    ):
-        """Test all numerical dtypes handling when there is NaN in the transformed data.
-
-        Test that the DataProcessor correctly handle all numerical dtypes when there are NaNs in the
-        transformed data. Some dtypes don't support NaNs, so they should be converted to float.
-        """
-        # Setup
-        data = pd.DataFrame({column_name: data_series})
-        data_with_nans = pd.DataFrame({column_name: [1.1, 2.2, 3.3, np.nan]})
-
-        metadata = SingleTableMetadata.load_from_dict({
-            'columns': {column_name: {'sdtype': 'numerical'}}
-        })
-        data_processor = DataProcessor(metadata)
-        data_processor.fit(data)
-
-        # Run
-        reverse_transformed_data = data_processor.reverse_transform(data_with_nans)
-
-        # Assert
-        assert reverse_transformed_data[column_name].dtype == expected_dtype_with_nans
+        assert reverse_transformed_with_nans[column_name].dtype == expected_dtype_with_nans
