@@ -76,7 +76,7 @@ class Metadata(MultiTableMetadata):
         """Get the table name if there is only one table.
 
         Checks to see if the metadata contains only a single table, if so
-        return the name. Otherwise raise an error.
+        return the name. Otherwise warn the user and return None.
 
         Args:
             metadata (dict):
@@ -88,6 +88,7 @@ class Metadata(MultiTableMetadata):
                 'This metadata does not contain only a single table. Could not determine '
                 'single table name and will return None.'
             )
+            return None
 
         return next(iter(self.tables), None)
 
