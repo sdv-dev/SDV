@@ -461,9 +461,10 @@ def _subsample_disconnected_roots(data, metadata, table, ratio_to_keep, drop_mis
 def _subsample_table_and_descendants(data, metadata, table, num_rows, drop_missing_values):
     """Subsample the table and its descendants.
 
-    The logic is to first subsample all the NaN foreign keys of the table when ``drop_missing_values``
-    is True. We raise an error if we cannot reach referential integrity while keeping
-    the number of rows. Then, we drop rows of the descendants to ensure referential integrity.
+    The logic is to first subsample all the NaN foreign keys of the table when
+    ``drop_missing_values`` is True. We raise an error if we cannot reach referential integrity
+    while keeping the number of rows. Then, we drop rows of the descendants to ensure referential
+    integrity.
 
     Args:
         data (dict):

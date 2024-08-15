@@ -3,6 +3,7 @@
 import logging
 import warnings
 
+import numpy as np
 import pandas as pd
 
 LOGGER = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ class BaseHierarchicalSampler:
 
     def __init__(self, metadata, table_synthesizers, table_sizes):
         self.metadata = metadata
+        self._null_foreign_key_percentages = {}
         self._table_synthesizers = table_synthesizers
         self._table_sizes = table_sizes
 
@@ -103,7 +105,9 @@ class BaseHierarchicalSampler:
                 row_indices = sampled_rows.index
                 sampled_rows[foreign_key].iloc[row_indices] = parent_row[parent_key]
             else:
-                sampled_rows[foreign_key] = parent_row[parent_key]
+                sampled_rows[foreign_key] = (
+                    parent_row[parent_key] if parent_row is not None else np.nan
+                )
 
             previous = sampled_data.get(child_name)
             if previous is None:
@@ -143,16 +147,19 @@ class BaseHierarchicalSampler:
         """
         total_num_rows = round(self._table_sizes[child_name] * scale)
         for foreign_key in self.metadata._get_foreign_keys(table_name, child_name):
+            null_fk_pctgs = getattr(self, '_null_foreign_key_percentages', {})
+            null_fk_pctg = null_fk_pctgs.get(f'__{child_name}__{foreign_key}', 0)
+            total_parent_rows = round(total_num_rows * (1 - null_fk_pctg))
             num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
             min_rows = getattr(self, '_min_child_rows', {num_rows_key: 0})[num_rows_key]
             max_rows = self._max_child_rows[num_rows_key]
             key_data = sampled_data[table_name][num_rows_key].fillna(0).round()
             sampled_data[table_name][num_rows_key] = key_data.clip(min_rows, max_rows).astype(int)
 
-            while sum(sampled_data[table_name][num_rows_key]) != total_num_rows:
+            while sum(sampled_data[table_name][num_rows_key]) != total_parent_rows:
                 num_rows_column = sampled_data[table_name][num_rows_key].argsort()
 
-                if sum(sampled_data[table_name][num_rows_key]) < total_num_rows:
+                if sum(sampled_data[table_name][num_rows_key]) < total_parent_rows:
                     for i in num_rows_column:
                         # If the number of rows is already at the maximum, skip
                         # The exception is when the smallest value is already at the maximum,
@@ -164,7 +171,7 @@ class BaseHierarchicalSampler:
                             break
 
                         sampled_data[table_name].loc[i, num_rows_key] += 1
-                        if sum(sampled_data[table_name][num_rows_key]) == total_num_rows:
+                        if sum(sampled_data[table_name][num_rows_key]) == total_parent_rows:
                             break
 
                 else:
@@ -179,7 +186,7 @@ class BaseHierarchicalSampler:
                             break
 
                         sampled_data[table_name].loc[i, num_rows_key] -= 1
-                        if sum(sampled_data[table_name][num_rows_key]) == total_num_rows:
+                        if sum(sampled_data[table_name][num_rows_key]) == total_parent_rows:
                             break
 
     def _sample_children(self, table_name, sampled_data, scale=1.0):
@@ -207,8 +214,9 @@ class BaseHierarchicalSampler:
                         sampled_data=sampled_data,
                     )
 
+                foreign_key = self.metadata._get_foreign_keys(table_name, child_name)[0]
+
                 if child_name not in sampled_data:  # No child rows sampled, force row creation
-                    foreign_key = self.metadata._get_foreign_keys(table_name, child_name)[0]
                     num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
                     max_num_child_index = sampled_data[table_name][num_rows_key].idxmax()
                     parent_row = sampled_data[table_name].iloc[max_num_child_index]
@@ -219,6 +227,19 @@ class BaseHierarchicalSampler:
                         parent_row=parent_row,
                         sampled_data=sampled_data,
                         num_rows=1,
+                    )
+
+                total_num_rows = round(self._table_sizes[child_name] * scale)
+                null_fk_pctgs = getattr(self, '_null_foreign_key_percentages', {})
+                null_fk_pctg = null_fk_pctgs.get(f'__{child_name}__{foreign_key}', 0)
+                num_null_rows = round(total_num_rows * null_fk_pctg)
+                if num_null_rows > 0:
+                    self._add_child_rows(
+                        child_name=child_name,
+                        parent_name=table_name,
+                        parent_row=None,
+                        sampled_data=sampled_data,
+                        num_rows=num_null_rows,
                     )
 
                 self._sample_children(table_name=child_name, sampled_data=sampled_data, scale=scale)
