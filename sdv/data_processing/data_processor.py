@@ -903,20 +903,23 @@ class DataProcessor:
             reversed_data[column_name] = column_data[column_data.notna()]
             try:
                 reversed_data[column_name] = reversed_data[column_name].astype(dtype)
-            except IntCastingNaNError:  # Keep the column as float dtype
-                continue
-            except ValueError as e:
+            except (IntCastingNaNError, ValueError) as e:
+                message = (
+                    f"The real data in '{column_name}' was stored as '{dtype}' but the "
+                    'synthetic data could not be cast back to this type. If this is a '
+                    'problem, please check your input data and metadata settings.'
+                )
+                if isinstance(e, IntCastingNaNError):
+                    LOGGER.info(message)
+                    continue
+
+                # Handle the ValueError case
                 column_metadata = self.metadata.columns.get(column_name)
                 sdtype = column_metadata.get('sdtype')
                 if sdtype not in self._DTYPE_TO_SDTYPE.values():
-                    LOGGER.info(
-                        f"The real data in '{column_name}' was stored as '{dtype}' but the "
-                        'synthetic data could not be cast back to this type. If this is a '
-                        'problem, please check your input data and metadata settings.'
-                    )
+                    LOGGER.info(message)
                     if column_name in self.formatters:
                         self.formatters.pop(column_name)
-
                 else:
                     raise ValueError(e)
 
