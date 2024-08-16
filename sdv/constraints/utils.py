@@ -215,5 +215,9 @@ def get_mappable_combination(combination):
     Args:
         combination (tuple):
             A combination of values.
+
+    Returns:
+        tuple:
+            A mappable combination of values.
     """
     return tuple(None if pd.isna(x) else x for x in combination)
