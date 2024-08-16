@@ -2506,7 +2506,7 @@ class TestDataProcessor:
             'could not be cast back to this type. If this is a problem, please check your input '
             'data and metadata settings.'
         )
-        mock_logger.info.assert_called_with(message)
+        mock_logger.debug.assert_called_with(message)
         assert isinstance(dp.formatters['bar'], NumericalFormatter)
 
     @patch('sdv.data_processing.data_processor.LOGGER')

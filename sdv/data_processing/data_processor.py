@@ -910,7 +910,7 @@ class DataProcessor:
                     'problem, please check your input data and metadata settings.'
                 )
                 if isinstance(e, IntCastingNaNError):
-                    LOGGER.info(message)
+                    LOGGER.debug(message)
                     continue
 
                 # Handle the ValueError case
