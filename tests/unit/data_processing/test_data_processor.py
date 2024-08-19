@@ -2473,8 +2473,41 @@ class TestDataProcessor:
             'could not be cast back to this type. If this is a problem, please check your input '
             'data and metadata settings.'
         )
-        mock_logger.info.assert_called_with(message)
+        mock_logger.info.assert_called_once_with(message)
         assert dp.formatters == {}
+
+    @patch('sdv.data_processing.data_processor.LOGGER')
+    def test_reverse_transform_integer_casting_error(self, mock_logger):
+        """Test the ``reverse_transform`` method doesn't break if integer column has NaNs.
+
+        If a column is a numpy integer dtype but the transformed data has NaNs, the
+        method should inform the user that the column will not be cast back to integer.
+        """
+        # Setup
+        data = pd.DataFrame({'bar': [1.0, 2.0, np.nan]})
+        dp = DataProcessor(SingleTableMetadata())
+        dp.fitted = True
+        dp._hyper_transformer = Mock()
+        dp._hyper_transformer._output_columns = []
+        dp._hyper_transformer.reverse_transform_subset.return_value = data
+        dp._constraints_to_reverse = []
+        dp._dtypes = {'bar': 'int'}
+        dp.metadata = Mock()
+        dp.metadata.columns = {'bar': {'sdtype': 'numerical'}}
+        dp.formatters = {'bar': NumericalFormatter()}
+
+        # Run
+        output = dp.reverse_transform(data)
+
+        # Assert
+        pd.testing.assert_frame_equal(output, data)
+        message = (
+            "The real data in 'bar' was stored as 'int' but the synthetic data "
+            'could not be cast back to this type. If this is a problem, please check your input '
+            'data and metadata settings.'
+        )
+        mock_logger.debug.assert_called_with(message)
+        assert isinstance(dp.formatters['bar'], NumericalFormatter)
 
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_reverse_transform_value_error_is_raised(self, mock_logger):

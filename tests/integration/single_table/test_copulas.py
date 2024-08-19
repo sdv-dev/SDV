@@ -471,7 +471,7 @@ def test_datetime_values_inside_real_data_range():
     assert check_out_synthetic.max() <= check_out_real.max()
 
 
-def test_support_new_pandas_dtypes():
+def test_support_nullable_pandas_dtypes():
     """Test that the synthesizer supports the nullable numerical pandas dtypes."""
     # Setup
     data = pd.DataFrame({
