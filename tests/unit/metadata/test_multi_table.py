@@ -2415,6 +2415,10 @@ class TestMultiTableMetadata:
         assert instance.detect_table_from_csv.call_count == 2
 
         instance._detect_relationships.assert_called_once()
+        table1 = instance._detect_relationships.call_args[0][0]['table1']
+        table2 = instance._detect_relationships.call_args[0][0]['table2']
+        pd.testing.assert_frame_equal(table1, data1)
+        pd.testing.assert_frame_equal(table2, data2)
 
     def test_detect_from_csvs_no_csv(self, tmp_path):
         """Test the ``detect_from_csvs`` method with no csv file in the folder."""
@@ -2426,13 +2430,11 @@ class TestMultiTableMetadata:
             json_file.write('{"key": "value"}')
 
         # Run and Assert
-        expected_message = re.escape("No CSV files detected in the folder '{}'.".format(tmp_path))
+        expected_message = re.escape(f"No CSV files detected in the folder '{tmp_path}'.")
         with pytest.raises(ValueError, match=expected_message):
             instance.detect_from_csvs(tmp_path)
 
-        expected_message_folder = re.escape(
-            "The folder '{}' does not exist.".format('not_a_folder')
-        )
+        expected_message_folder = re.escape(f"The folder '{'not_a_folder'}' does not exist.")
         with pytest.raises(ValueError, match=expected_message_folder):
             instance.detect_from_csvs('not_a_folder')
 
@@ -2516,14 +2518,15 @@ class TestMultiTableMetadata:
 
         guests_table = pd.DataFrame()
         hotels_table = pd.DataFrame()
+        data = {'guests': guests_table, 'hotels': hotels_table}
 
         # Run
-        metadata.detect_from_dataframes(data={'guests': guests_table, 'hotels': hotels_table})
+        metadata.detect_from_dataframes(data)
 
         # Assert
         metadata.detect_table_from_dataframe.assert_any_call('guests', guests_table)
         metadata.detect_table_from_dataframe.assert_any_call('hotels', hotels_table)
-        metadata._detect_relationships.assert_called_once()
+        metadata._detect_relationships.assert_called_once_with(data)
 
     def test_detect_from_dataframes_no_dataframes(self):
         """Test ``detect_from_dataframes`` with no dataframes in the input.
