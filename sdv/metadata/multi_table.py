@@ -560,25 +560,6 @@ class MultiTableMetadata:
 
         self._detect_relationships(data)
 
-    def detect_table_from_csv(self, table_name, filepath, read_csv_parameters=None):
-        """Detect the metadata for a table from a csv file.
-
-        Args:
-            table_name (str):
-                Name of the table to detect.
-            filepath (str):
-                String that represents the ``path`` to the ``csv`` file.
-            read_csv_parameters (dict):
-                A python dictionary of with string and value accepted by ``pandas.read_csv``
-                function. Defaults to ``None``.
-        """
-        self._validate_table_not_detected(table_name)
-        table = SingleTableMetadata()
-        data = _load_data_from_csv(filepath, read_csv_parameters)
-        table._detect_columns(data)
-        self.tables[table_name] = table
-        self._log_detected_table(table)
-
     def detect_from_csvs(self, folder_name, read_csv_parameters=None):
         """Detect the metadata for all tables in a folder of csv files.
 

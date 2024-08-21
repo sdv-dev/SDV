@@ -2310,82 +2310,9 @@ class TestMultiTableMetadata:
         instance.add_relationship.assert_called_once_with('users', 'sessions', 'user_id', 'user_id')
         assert instance.tables['sessions'].columns['user_id']['sdtype'] == 'categorical'
 
-    @patch('sdv.metadata.multi_table.LOGGER')
-    @patch('sdv.metadata.multi_table.SingleTableMetadata')
-    @patch('sdv.metadata.multi_table._load_data_from_csv')
-    def test_detect_table_from_csv(self, load_csv_mock, single_table_mock, log_mock):
-        """Test the ``detect_table_from_csv`` method.
-
-        If the table does not already exist, a ``SingleTableMetadata`` instance
-        should be created and call the ``detect_from_csv`` method.
-
-        Setup:
-            - Mock the ``SingleTableMetadata`` class and the logger.
-
-        Assert:
-            - Table should be added to ``self.tables``.
-        """
-        # Setup
-        metadata = MultiTableMetadata()
-        fake_data = Mock()
-        load_csv_mock.return_value = fake_data
-        single_table_mock.return_value.to_dict.return_value = {
-            'columns': {'a': {'sdtype': 'numerical'}}
-        }
-
-        # Run
-        metadata.detect_table_from_csv('table', 'path.csv')
-
-        # Assert
-        load_csv_mock.assert_called_once_with('path.csv', None)
-        single_table_mock.return_value._detect_columns.assert_called_once_with(fake_data)
-        assert metadata.tables == {'table': single_table_mock.return_value}
-
-        expected_log_calls = call(
-            'Detected metadata:\n'
-            '{\n'
-            '    "columns": {\n'
-            '        "a": {\n'
-            '            "sdtype": "numerical"\n'
-            '        }\n'
-            '    }'
-            '\n}'
-        )
-        log_mock.info.assert_has_calls([expected_log_calls])
-
-    def test_detect_table_from_csv_table_already_exists(self):
-        """Test the ``detect_table_from_csv`` method.
-
-        If the table already exists, an error should be raised.
-
-        Setup:
-            - Set the ``_tables`` dict to already have the table.
-
-        Input:
-            - Table name.
-            - Path.
-
-        Side effect:
-            - An error should be raised.
-        """
-        # Setup
-        metadata = MultiTableMetadata()
-        metadata.tables = {'table': Mock()}
-
-        # Run
-        error_message = (
-            "Metadata for table 'table' already exists. Specify a new table name or "
-            'create a new MultiTableMetadata object for other data sources.'
-        )
-        with pytest.raises(InvalidMetadataError, match=error_message):
-            metadata.detect_table_from_csv('table', 'path.csv')
-
     @patch('sdv.metadata.multi_table._load_data_from_csv')
     def test_detect_from_csvs(self, load_data_mock, tmp_path):
-        """Test the ``detect_from_csvs`` method.
-
-        The method should call ``detect_table_from_csv`` for each csv in the folder.
-        """
+        """Test the ``detect_from_csvs`` method."""
         # Setup
         instance = MultiTableMetadata()
         instance.detect_table_from_dataframe = Mock()
