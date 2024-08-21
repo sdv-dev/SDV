@@ -600,11 +600,10 @@ class MultiTableMetadata:
             raise ValueError(f"No CSV files detected in the folder '{folder_name}'.")
 
         data = {}
-        read_csv_parameters = read_csv_parameters or {}
         for csv_file in csv_files:
             table_name = csv_file.stem
-            self.detect_table_from_csv(table_name, str(csv_file), read_csv_parameters)
-            data[csv_file.stem] = pd.read_csv(str(csv_file), **read_csv_parameters)
+            data[table_name] = _load_data_from_csv(csv_file, read_csv_parameters)
+            self.detect_table_from_dataframe(table_name, data[table_name])
 
         self._detect_relationships(data)
 
