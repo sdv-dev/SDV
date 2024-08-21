@@ -2393,12 +2393,19 @@ class TestMultiTableMetadata:
 
         data1 = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
         data2 = pd.DataFrame({'col1': [5, 6], 'col2': [7, 8]})
-        load_data_mock.side_effect = [data2, data1]
 
         filepath1 = tmp_path / 'table1.csv'
         filepath2 = tmp_path / 'table2.csv'
         data1.to_csv(filepath1, index=False)
         data2.to_csv(filepath2, index=False)
+
+        def load_data_side_effect(filepath, _):
+            if filepath.name == 'table1.csv':
+                return data1
+            elif filepath.name == 'table2.csv':
+                return data2
+
+        load_data_mock.side_effect = load_data_side_effect
 
         json_filepath = tmp_path / 'not_csv.json'
         with open(json_filepath, 'w') as json_file:
