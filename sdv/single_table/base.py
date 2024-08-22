@@ -176,7 +176,7 @@ class BaseSynthesizer:
             possible_characters = get_possible_chars(regex, 1)
             if '0' in possible_characters:
                 raise SynthesizerInputError(
-                    f'Primary key "{primary_key}" {INT_REGEX_ZERO_ERROR_MESSAGE}.'
+                    f'Primary key "{primary_key}" {INT_REGEX_ZERO_ERROR_MESSAGE}'
                 )
 
     def validate(self, data):
