@@ -511,6 +511,7 @@ class TestHMASynthesizer:
         instance._table_parameters = {'child_table': {}}
         instance._extract_parameters = Mock()
         instance._synthesizer.return_value._get_likelihood.return_value = likelihoods
+        instance._null_child_synthesizers = {}
 
         # Run
         result = HMASynthesizer._get_likelihoods(
@@ -550,6 +551,7 @@ class TestHMASynthesizer:
         instance._table_synthesizers = {'child_table': child_synthesizer}
         instance._table_parameters = {'child_table': {}}
         instance._extract_parameters = Mock()
+        instance._null_child_synthesizers = {}
         instance._synthesizer.return_value._get_likelihood.side_effect = [
             likelihoods,
             AttributeError(),
@@ -594,6 +596,7 @@ class TestHMASynthesizer:
         instance._table_synthesizers = {'child_table': child_synthesizer}
         instance._table_parameters = {'child_table': {}}
         instance._extract_parameters = Mock()
+        instance._null_child_synthesizers = {}
         instance._synthesizer.return_value._get_likelihood.side_effect = [
             likelihoods,
             np.linalg.LinAlgError(),
@@ -639,6 +642,7 @@ class TestHMASynthesizer:
         instance._table_synthesizers = {'child_table': child_synthesizer}
         instance._table_parameters = {'child_table': {}}
         instance._extract_parameters = Mock()
+        instance._null_child_synthesizers = {}
 
         likelihoods = np.array([0.1, 0.2, 0.3, 0.4])
         instance._synthesizer.return_value._get_likelihood.return_value = likelihoods

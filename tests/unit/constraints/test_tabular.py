@@ -3,7 +3,7 @@
 import operator
 import re
 from datetime import datetime
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -658,7 +658,8 @@ class TestFixedCombinations:
         with pytest.raises(ValueError, match=err_msg):
             FixedCombinations(column_names=columns)
 
-    def test__fit(self):
+    @patch('sdv.constraints.tabular.get_mappable_combination')
+    def test__fit(self, get_mappable_combination_mock):
         """Test the ``FixedCombinations._fit`` method.
 
         The ``FixedCombinations.fit`` method is expected to:
@@ -683,9 +684,14 @@ class TestFixedCombinations:
 
         # Asserts
         expected_combinations = pd.DataFrame({'b': ['d', 'e', 'f'], 'c': ['g', 'h', 'i']})
+        expected_calls = [
+            call(combination)
+            for combination in instance._combinations.itertuples(index=False, name=None)
+        ]
         assert instance._separator == '##'
         assert instance._joint_column == 'b##c'
         pd.testing.assert_frame_equal(instance._combinations, expected_combinations)
+        assert get_mappable_combination_mock.call_args_list == expected_calls
 
     def test_is_valid_true(self):
         """Test the ``FixedCombinations.is_valid`` method.

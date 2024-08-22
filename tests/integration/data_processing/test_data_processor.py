@@ -402,3 +402,57 @@ class TestDataProcessor:
         )
         with pytest.raises(SynthesizerInputError, match=error_msg):
             dp.update_transformers({'user_id': UniformEncoder()})
+
+    parametrization = [
+        ('Int8', pd.Series([1, 2, 3, pd.NA], dtype='Int8'), 'Int8'),
+        ('Int16', pd.Series([1, 2, 3, pd.NA], dtype='Int16'), 'Int16'),
+        ('Int32', pd.Series([1, 2, 3, pd.NA], dtype='Int32'), 'Int32'),
+        ('Int64', pd.Series([1, 2, 3, pd.NA], dtype='Int64'), 'Int64'),
+        ('UInt8', pd.Series([1, 2, 3, pd.NA], dtype='UInt8'), 'UInt8'),
+        ('UInt16', pd.Series([1, 2, 3, pd.NA], dtype='UInt16'), 'UInt16'),
+        ('UInt32', pd.Series([1, 2, 3, pd.NA], dtype='UInt32'), 'UInt32'),
+        ('UInt64', pd.Series([1, 2, 3, pd.NA], dtype='UInt64'), 'UInt64'),
+        ('Float32', pd.Series([1.1, 2.2, 3.3, pd.NA], dtype='Float32'), 'Float32'),
+        ('Float64', pd.Series([1.1, 2.2, 3.3, pd.NA], dtype='Float64'), 'Float64'),
+        ('uint8', pd.Series([1, 2, 3, 4], dtype='uint8'), 'float'),
+        ('uint16', pd.Series([1, 2, 3, 4], dtype='uint16'), 'float'),
+        ('uint32', pd.Series([1, 2, 3, 4], dtype='uint32'), 'float'),
+        ('uint64', pd.Series([1, 2, 3, 4], dtype='uint64'), 'float'),
+        ('float16', pd.Series([1.1, 2.2, 3.3, 4.4], dtype='float16'), 'float16'),
+        ('float32', pd.Series([1.1, 2.2, 3.3, 4.4], dtype='float32'), 'float32'),
+        ('float64', pd.Series([1.1, 2.2, 3.3, 4.4], dtype='float64'), 'float'),
+        ('int8', pd.Series([1, 2, 3, 4], dtype='int8'), 'float'),
+        ('int16', pd.Series([1, 2, 3, 4], dtype='int16'), 'float'),
+        ('int32', pd.Series([1, 2, 3, 4], dtype='int32'), 'float'),
+        ('int64', pd.Series([1, 2, 3, 4], dtype='int64'), 'float'),
+    ]
+
+    @pytest.mark.parametrize(
+        ('column_name', 'data_series', 'expected_dtype_with_nans'),
+        parametrization,
+    )
+    def test_numerical_dtype_handling(self, column_name, data_series, expected_dtype_with_nans):
+        """Test that the DataProcessor correctly handle all numerical dtypes.
+
+        Test also that the DataProcessor correctly handle all numerical dtypes when there are NaNs
+        in the transformed data. Some dtypes don't support NaNs, so they should be
+        converted to float.
+        """
+        # Setup
+        data = pd.DataFrame({column_name: data_series})
+        data_with_nans = pd.DataFrame({column_name: [1.1, 2.2, 3.3, np.nan]})
+        metadata = SingleTableMetadata.load_from_dict({
+            'columns': {column_name: {'sdtype': 'numerical'}}
+        })
+        data_processor = DataProcessor(metadata)
+
+        # Run
+        data_processor.fit(data)
+        transformed_data = data_processor.transform(data)
+        reverse_transformed_data = data_processor.reverse_transform(transformed_data)
+        reverse_transformed_with_nans = data_processor.reverse_transform(data_with_nans)
+
+        # Assert
+        assert transformed_data.dtypes.unique() == 'float'
+        assert reverse_transformed_data[column_name].dtype == column_name
+        assert reverse_transformed_with_nans[column_name].dtype == expected_dtype_with_nans

@@ -1348,52 +1348,72 @@ class TestHMASynthesizer:
         assert len(record) == 1
 
     def test_null_foreign_keys(self):
-        """Test that the synthesizer crashes when there are null foreign keys."""
+        """Test that the synthesizer does not crash when there are null foreign keys."""
         # Setup
         metadata = Metadata()
-        metadata.add_table('parent_table')
-        metadata.add_column('parent_table', 'id', sdtype='id')
-        metadata.set_primary_key('parent_table', 'id')
+
+        metadata.add_table('parent_table1')
+        metadata.add_column('parent_table1', 'id', sdtype='id')
+        metadata.set_primary_key('parent_table1', 'id')
+
+        metadata.add_table('parent_table2')
+        metadata.add_column('parent_table2', 'id', sdtype='id')
+        metadata.set_primary_key('parent_table2', 'id')
 
         metadata.add_table('child_table1')
         metadata.add_column('child_table1', 'id', sdtype='id')
         metadata.set_primary_key('child_table1', 'id')
-        metadata.add_column('child_table1', 'fk', sdtype='id')
+        metadata.add_column('child_table1', 'fk1', sdtype='id')
+        metadata.add_column('child_table1', 'fk2', sdtype='id')
 
         metadata.add_table('child_table2')
         metadata.add_column('child_table2', 'id', sdtype='id')
         metadata.set_primary_key('child_table2', 'id')
         metadata.add_column('child_table2', 'fk1', sdtype='id')
         metadata.add_column('child_table2', 'fk2', sdtype='id')
+        metadata.add_column('child_table2', 'cat_type', sdtype='categorical')
 
         metadata.add_relationship(
-            parent_table_name='parent_table',
+            parent_table_name='parent_table1',
             child_table_name='child_table1',
             parent_primary_key='id',
-            child_foreign_key='fk',
+            child_foreign_key='fk1',
         )
 
         metadata.add_relationship(
-            parent_table_name='parent_table',
+            parent_table_name='parent_table2',
+            child_table_name='child_table1',
+            parent_primary_key='id',
+            child_foreign_key='fk2',
+        )
+
+        metadata.add_relationship(
+            parent_table_name='parent_table1',
             child_table_name='child_table2',
             parent_primary_key='id',
             child_foreign_key='fk1',
         )
 
         metadata.add_relationship(
-            parent_table_name='parent_table',
+            parent_table_name='parent_table1',
             child_table_name='child_table2',
             parent_primary_key='id',
             child_foreign_key='fk2',
         )
 
         data = {
-            'parent_table': pd.DataFrame({'id': [1, 2, 3]}),
-            'child_table1': pd.DataFrame({'id': [1, 2, 3], 'fk': [1, 2, np.nan]}),
+            'parent_table1': pd.DataFrame({'id': [1, 2, 3]}),
+            'parent_table2': pd.DataFrame({'id': ['alpha', 'beta', 'gamma']}),
+            'child_table1': pd.DataFrame({
+                'id': [1, 2, 3],
+                'fk1': pd.Series([np.nan, 2, np.nan], dtype='float64'),
+                'fk2': pd.Series(['alpha', 'beta', np.nan], dtype='object'),
+            }),
             'child_table2': pd.DataFrame({
                 'id': [1, 2, 3],
                 'fk1': [1, 2, np.nan],
-                'fk2': [1, 2, np.nan],
+                'fk2': pd.Series([1, np.nan, np.nan], dtype='float64'),
+                'cat_type': pd.Series(['siamese', 'persian', 'american shorthair'], dtype='object'),
             }),
         }
 
@@ -1403,17 +1423,17 @@ class TestHMASynthesizer:
         metadata.validate()
         metadata.validate_data(data)
 
-        # Run and Assert
-        err_msg = re.escape(
-            'The data contains null values in foreign key columns. This feature is currently '
-            'unsupported. Please remove null values to fit the synthesizer.\n'
-            '\n'
-            'Affected columns:\n'
-            "Table 'child_table1', column(s) ['fk']\n"
-            "Table 'child_table2', column(s) ['fk1', 'fk2']\n"
-        )
-        with pytest.raises(SynthesizerInputError, match=err_msg):
-            synthesizer.fit(data)
+        # Run
+        synthesizer.fit(data)
+        sampled = synthesizer.sample()
+
+        # Assert
+        assert len(sampled['parent_table1']) == 3
+        assert len(sampled['parent_table2']) == 3
+        assert sum(pd.isna(sampled['child_table1']['fk1'])) == 2
+        assert sum(pd.isna(sampled['child_table1']['fk2'])) == 1
+        assert sum(pd.isna(sampled['child_table2']['fk1'])) == 1
+        assert sum(pd.isna(sampled['child_table2']['fk2'])) == 2
 
     def test_sampling_with_unknown_sdtype_numerical_column(self):
         """Test that if a numerical column is detected as unknown in the metadata,

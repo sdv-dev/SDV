@@ -1175,6 +1175,34 @@ class TestSingleTableMetadata:
         assert instance.primary_key == 'id'
         assert instance._updated is True
 
+    def test__detect_columns_numerical_dtypes(self):
+        """Test the ``_detect_columns`` method with numerical dtypes."""
+        # Setup
+        instance = SingleTableMetadata()
+        data = pd.DataFrame({
+            'Int8': pd.Series([1, 2, -3, pd.NA], dtype='Int8'),
+            'Int16': pd.Series([1, 2, -3, pd.NA], dtype='Int16'),
+            'Int32': pd.Series([1, 2, -3, pd.NA], dtype='Int32'),
+            'Int64': pd.Series([1, 2, -3, pd.NA], dtype='Int64'),
+            'UInt8': pd.Series([1, 2, 3, pd.NA], dtype='UInt8'),
+            'UInt16': pd.Series([1, 2, 3, pd.NA], dtype='UInt16'),
+            'UInt32': pd.Series([1, 2, 3, pd.NA], dtype='UInt32'),
+            'UInt64': pd.Series([1, 2, 3, pd.NA], dtype='UInt64'),
+            'Float32': pd.Series([1.1, 2.2, 3.3, pd.NA], dtype='Float32'),
+            'Float64': pd.Series([1.1, 2.2, 3.3, pd.NA], dtype='Float64'),
+            'uint8': np.array([1, 2, 3, 4], dtype='uint8'),
+            'uint16': np.array([1, 2, 3, 4], dtype='uint16'),
+            'uint32': np.array([1, 2, 3, 4], dtype='uint32'),
+            'uint64': np.array([1, 2, 3, 4], dtype='uint64'),
+        })
+
+        # Run
+        instance._detect_columns(data)
+
+        # Assert
+        for column in data.columns:
+            assert instance.columns[column]['sdtype'] == 'numerical'
+
     def test__detect_columns_primary_key_detection(self):
         """Test the ``_detect_columns`` primary key detection."""
         # Setup

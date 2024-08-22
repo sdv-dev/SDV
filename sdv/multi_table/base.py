@@ -14,7 +14,6 @@ from tqdm import tqdm
 
 from sdv import version
 from sdv._utils import (
-    _validate_foreign_keys_not_null,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
@@ -466,7 +465,6 @@ class BaseMultiTableSynthesizer:
         })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
-        _validate_foreign_keys_not_null(self.metadata, data)
         self._check_metadata_updated()
         self._fitted = False
         processed_data = self.preprocess(data)

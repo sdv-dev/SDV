@@ -49,7 +49,7 @@ def data():
     )
 
     child = pd.DataFrame(
-        data={'parent_id': [0, 1, 2, 2, 5], 'C': ['Yes', 'No', 'Maye', 'No', 'No']}
+        data={'parent_id': [0, 1, 2, 2, 5], 'C': ['Yes', 'No', 'Maybe', 'No', 'No']}
     )
 
     return {'parent': parent, 'child': child}
@@ -229,20 +229,17 @@ def test_get_random_subset_disconnected_schema():
 
 
 def test_get_random_subset_with_missing_values(metadata, data):
-    """Test ``get_random_subset`` when there is missing values in the foreign keys."""
+    """Test ``get_random_subset`` when there is missing values in the foreign keys.
+
+    Here there should be at least one missing values in the random subset.
+    """
     # Setup
     data = deepcopy(data)
-    data['child'].loc[4, 'parent_id'] = np.nan
-    expected_warning = re.escape(
-        'The data contains null values in foreign key columns. '
-        'We recommend using ``drop_unknown_foreign_keys`` method from sdv.utils'
-        ' to drop these rows before using ``get_random_subset``.'
-    )
+    data['child'].loc[[2, 3, 4], 'parent_id'] = np.nan
 
     # Run
-    with pytest.warns(UserWarning, match=expected_warning):
-        cleaned_data = get_random_subset(data, metadata, 'child', 3)
+    result = get_random_subset(data, metadata, 'child', 3)
 
     # Assert
-    assert len(cleaned_data['child']) == 3
-    assert not pd.isna(cleaned_data['child']['parent_id']).any()
+    assert len(result['child']) == 3
+    assert result['child']['parent_id'].isna().sum() > 0

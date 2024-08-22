@@ -179,56 +179,6 @@ def test_detect_from_csvs(tmp_path):
     assert metadata.to_dict() == expected_metadata
 
 
-def test_detect_table_from_csv(tmp_path):
-    """Test the ``detect_table_from_csv`` method."""
-    # Setup
-    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
-
-    metadata = Metadata()
-
-    for table_name, dataframe in real_data.items():
-        csv_path = tmp_path / f'{table_name}.csv'
-        dataframe.to_csv(csv_path, index=False)
-
-    # Run
-    metadata.detect_table_from_csv('hotels', tmp_path / 'hotels.csv')
-
-    # Assert
-    metadata.update_column(
-        table_name='hotels',
-        column_name='city',
-        sdtype='categorical',
-    )
-    metadata.update_column(
-        table_name='hotels',
-        column_name='state',
-        sdtype='categorical',
-    )
-    metadata.update_column(
-        table_name='hotels',
-        column_name='classification',
-        sdtype='categorical',
-    )
-    expected_metadata = {
-        'tables': {
-            'hotels': {
-                'columns': {
-                    'hotel_id': {'sdtype': 'id'},
-                    'city': {'sdtype': 'categorical'},
-                    'state': {'sdtype': 'categorical'},
-                    'rating': {'sdtype': 'numerical'},
-                    'classification': {'sdtype': 'categorical'},
-                },
-                'primary_key': 'hotel_id',
-            }
-        },
-        'relationships': [],
-        'METADATA_SPEC_VERSION': 'V1',
-    }
-
-    assert metadata.to_dict() == expected_metadata
-
-
 def test_single_table_compatibility(tmp_path):
     """Test if SingleTableMetadata still has compatibility with single table synthesizers."""
     # Setup
