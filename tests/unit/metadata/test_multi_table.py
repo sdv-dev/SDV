@@ -2310,84 +2310,12 @@ class TestMultiTableMetadata:
         instance.add_relationship.assert_called_once_with('users', 'sessions', 'user_id', 'user_id')
         assert instance.tables['sessions'].columns['user_id']['sdtype'] == 'categorical'
 
-    @patch('sdv.metadata.multi_table.LOGGER')
-    @patch('sdv.metadata.multi_table.SingleTableMetadata')
     @patch('sdv.metadata.multi_table._load_data_from_csv')
-    def test_detect_table_from_csv(self, load_csv_mock, single_table_mock, log_mock):
-        """Test the ``detect_table_from_csv`` method.
-
-        If the table does not already exist, a ``SingleTableMetadata`` instance
-        should be created and call the ``detect_from_csv`` method.
-
-        Setup:
-            - Mock the ``SingleTableMetadata`` class and the logger.
-
-        Assert:
-            - Table should be added to ``self.tables``.
-        """
-        # Setup
-        metadata = MultiTableMetadata()
-        fake_data = Mock()
-        load_csv_mock.return_value = fake_data
-        single_table_mock.return_value.to_dict.return_value = {
-            'columns': {'a': {'sdtype': 'numerical'}}
-        }
-
-        # Run
-        metadata.detect_table_from_csv('table', 'path.csv')
-
-        # Assert
-        load_csv_mock.assert_called_once_with('path.csv', None)
-        single_table_mock.return_value._detect_columns.assert_called_once_with(fake_data)
-        assert metadata.tables == {'table': single_table_mock.return_value}
-
-        expected_log_calls = call(
-            'Detected metadata:\n'
-            '{\n'
-            '    "columns": {\n'
-            '        "a": {\n'
-            '            "sdtype": "numerical"\n'
-            '        }\n'
-            '    }'
-            '\n}'
-        )
-        log_mock.info.assert_has_calls([expected_log_calls])
-
-    def test_detect_table_from_csv_table_already_exists(self):
-        """Test the ``detect_table_from_csv`` method.
-
-        If the table already exists, an error should be raised.
-
-        Setup:
-            - Set the ``_tables`` dict to already have the table.
-
-        Input:
-            - Table name.
-            - Path.
-
-        Side effect:
-            - An error should be raised.
-        """
-        # Setup
-        metadata = MultiTableMetadata()
-        metadata.tables = {'table': Mock()}
-
-        # Run
-        error_message = (
-            "Metadata for table 'table' already exists. Specify a new table name or "
-            'create a new MultiTableMetadata object for other data sources.'
-        )
-        with pytest.raises(InvalidMetadataError, match=error_message):
-            metadata.detect_table_from_csv('table', 'path.csv')
-
-    def test_detect_from_csvs(self, tmp_path):
-        """Test the ``detect_from_csvs`` method.
-
-        The method should call ``detect_table_from_csv`` for each csv in the folder.
-        """
+    def test_detect_from_csvs(self, load_data_mock, tmp_path):
+        """Test the ``detect_from_csvs`` method."""
         # Setup
         instance = MultiTableMetadata()
-        instance.detect_table_from_csv = Mock()
+        instance.detect_table_from_dataframe = Mock()
         instance._detect_relationships = Mock()
 
         data1 = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
@@ -2398,6 +2326,14 @@ class TestMultiTableMetadata:
         data1.to_csv(filepath1, index=False)
         data2.to_csv(filepath2, index=False)
 
+        def load_data_side_effect(filepath, _):
+            if filepath.name == 'table1.csv':
+                return data1
+            elif filepath.name == 'table2.csv':
+                return data2
+
+        load_data_mock.side_effect = load_data_side_effect
+
         json_filepath = tmp_path / 'not_csv.json'
         with open(json_filepath, 'w') as json_file:
             json_file.write('{"key": "value"}')
@@ -2406,15 +2342,24 @@ class TestMultiTableMetadata:
         instance.detect_from_csvs(tmp_path)
 
         # Assert
-        expected_calls = [
-            call('table1', str(filepath1), None),
-            call('table2', str(filepath2), None),
+        expected_calls_load_data = [
+            call(filepath1, None),
+            call(filepath2, None),
         ]
+        load_data_mock.assert_has_calls(expected_calls_load_data, any_order=True)
 
-        instance.detect_table_from_csv.assert_has_calls(expected_calls, any_order=True)
-        assert instance.detect_table_from_csv.call_count == 2
+        expected_detect_calls = [
+            call('table1', data1),
+            call('table2', data2),
+        ]
+        instance.detect_table_from_dataframe.assert_has_calls(expected_detect_calls, any_order=True)
+        assert instance.detect_table_from_dataframe.call_count == 2
 
         instance._detect_relationships.assert_called_once()
+        table1 = instance._detect_relationships.call_args[0][0]['table1']
+        table2 = instance._detect_relationships.call_args[0][0]['table2']
+        pd.testing.assert_frame_equal(table1, data1)
+        pd.testing.assert_frame_equal(table2, data2)
 
     def test_detect_from_csvs_no_csv(self, tmp_path):
         """Test the ``detect_from_csvs`` method with no csv file in the folder."""
@@ -2426,13 +2371,11 @@ class TestMultiTableMetadata:
             json_file.write('{"key": "value"}')
 
         # Run and Assert
-        expected_message = re.escape("No CSV files detected in the folder '{}'.".format(tmp_path))
+        expected_message = re.escape(f"No CSV files detected in the folder '{tmp_path}'.")
         with pytest.raises(ValueError, match=expected_message):
             instance.detect_from_csvs(tmp_path)
 
-        expected_message_folder = re.escape(
-            "The folder '{}' does not exist.".format('not_a_folder')
-        )
+        expected_message_folder = re.escape(f"The folder '{'not_a_folder'}' does not exist.")
         with pytest.raises(ValueError, match=expected_message_folder):
             instance.detect_from_csvs('not_a_folder')
 
@@ -2516,14 +2459,15 @@ class TestMultiTableMetadata:
 
         guests_table = pd.DataFrame()
         hotels_table = pd.DataFrame()
+        data = {'guests': guests_table, 'hotels': hotels_table}
 
         # Run
-        metadata.detect_from_dataframes(data={'guests': guests_table, 'hotels': hotels_table})
+        metadata.detect_from_dataframes(data)
 
         # Assert
         metadata.detect_table_from_dataframe.assert_any_call('guests', guests_table)
         metadata.detect_table_from_dataframe.assert_any_call('hotels', hotels_table)
-        metadata._detect_relationships.assert_called_once()
+        metadata._detect_relationships.assert_called_once_with(data)
 
     def test_detect_from_dataframes_no_dataframes(self):
         """Test ``detect_from_dataframes`` with no dataframes in the input.

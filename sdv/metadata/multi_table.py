@@ -497,8 +497,14 @@ class MultiTableMetadata:
                 f'The relationships in the dataset are disjointed. {table_msg}'
             )
 
-    def _detect_relationships(self):
-        """Automatically detect relationships between tables."""
+    def _detect_relationships(self, data=None):
+        """Automatically detect relationships between tables.
+
+        Args:
+            data (dict):
+                Dictionary of table names to dataframes.
+                NOTE: this is only used in SDV-Enterprise.
+        """
         for parent_candidate in self.tables.keys():
             primary_key = self.tables[parent_candidate].primary_key
             for child_candidate in self.tables.keys() - {parent_candidate}:
@@ -552,26 +558,7 @@ class MultiTableMetadata:
         for table_name, dataframe in data.items():
             self.detect_table_from_dataframe(table_name, dataframe)
 
-        self._detect_relationships()
-
-    def detect_table_from_csv(self, table_name, filepath, read_csv_parameters=None):
-        """Detect the metadata for a table from a csv file.
-
-        Args:
-            table_name (str):
-                Name of the table to detect.
-            filepath (str):
-                String that represents the ``path`` to the ``csv`` file.
-            read_csv_parameters (dict):
-                A python dictionary of with string and value accepted by ``pandas.read_csv``
-                function. Defaults to ``None``.
-        """
-        self._validate_table_not_detected(table_name)
-        table = SingleTableMetadata()
-        data = _load_data_from_csv(filepath, read_csv_parameters)
-        table._detect_columns(data)
-        self.tables[table_name] = table
-        self._log_detected_table(table)
+        self._detect_relationships(data)
 
     def detect_from_csvs(self, folder_name, read_csv_parameters=None):
         """Detect the metadata for all tables in a folder of csv files.
@@ -579,7 +566,9 @@ class MultiTableMetadata:
         Args:
             folder_name (str):
                 Name of the folder to detect the metadata from.
-
+            read_csv_parameters (dict):
+                A python dictionary of with string and value accepted by ``pandas.read_csv``
+                function. Defaults to ``None``.
         """
         folder_path = Path(folder_name)
 
@@ -591,11 +580,13 @@ class MultiTableMetadata:
         if not csv_files:
             raise ValueError(f"No CSV files detected in the folder '{folder_name}'.")
 
+        data = {}
         for csv_file in csv_files:
             table_name = csv_file.stem
-            self.detect_table_from_csv(table_name, str(csv_file), read_csv_parameters)
+            data[table_name] = _load_data_from_csv(csv_file, read_csv_parameters)
+            self.detect_table_from_dataframe(table_name, data[table_name])
 
-        self._detect_relationships()
+        self._detect_relationships(data)
 
     def set_primary_key(self, table_name, column_name):
         """Set the primary key of a table.
