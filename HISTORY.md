@@ -1,6 +1,40 @@
 # Release Notes
 
-### v1.15.0 - 2024-07-11
+### v1.16.0 - 2024-08-22
+
+### New Features
+
+* Add metadata anonymization to public SDV - Issue [#2137](https://github.com/sdv-dev/SDV/issues/2137) by @R-Palazzo
+* Separate primary key detection functionality - Issue [#2101](https://github.com/sdv-dev/SDV/issues/2101) by @amontanez24
+* Switch drop_missing_values in in drop_unknown_references to support null foreign keys by default - Issue [#2076](https://github.com/sdv-dev/SDV/issues/2076) by @R-Palazzo
+* Support nullable foreign keys in HMA - Issue [#2063](https://github.com/sdv-dev/SDV/issues/2063) by @rwedge
+* Remove input error from base synthesizer class once nullable foreign keys are supported - Issue [#2057](https://github.com/sdv-dev/SDV/issues/2057) by @rwedge
+* Support null foreign keys in get_random_subset - Issue [#2056](https://github.com/sdv-dev/SDV/issues/2056) by @R-Palazzo
+* Warn the user if they are trying to save an unfit synthesizer - Issue [#1961](https://github.com/sdv-dev/SDV/issues/1961) by @fealho
+
+### Bugs Fixed
+
+* Using FixedCombinations constraint with an integer constraint column causes sampling to fail - Issue [#2183](https://github.com/sdv-dev/SDV/issues/2183) by @R-Palazzo
+* Metadata Detection Fails with new Data Type - Issue [#2182](https://github.com/sdv-dev/SDV/issues/2182) by @R-Palazzo
+* Unable visualize just the real data (or just the synthetic data) in a multi-table setting - Issue [#2160](https://github.com/sdv-dev/SDV/issues/2160) by @R-Palazzo
+* Primary keys may not be unique for variable length regexes - Issue [#2116](https://github.com/sdv-dev/SDV/issues/2116) by @amontanez24
+* Confusing warning when using GANs that suggests that CUDA isn't being used - Issue [#2052](https://github.com/sdv-dev/SDV/issues/2052) by @fealho
+* PAR DiagnosticReport not 1.0 with float categorical columns - Issue [#1910](https://github.com/sdv-dev/SDV/issues/1910) by @lajohn4747
+* In `PARSynthesizer` I cannot pass in datetime context (`InvalidDataError` during fitting) - Issue [#1485](https://github.com/sdv-dev/SDV/issues/1485) by @lajohn4747
+
+### Internal
+
+* Enabling sdv logging causes tests to fail locally - Issue [#2162](https://github.com/sdv-dev/SDV/issues/2162) by @amontanez24
+* [dtypes] Numerical Formatter Fails to Learn Format of New Data Types - Issue [#2156](https://github.com/sdv-dev/SDV/issues/2156) by @R-Palazzo
+
+### Maintenance
+
+* [dtypes] Update the NumericalFormatter to use the `learn_rounding_digits` from RDT - Issue [#2164](https://github.com/sdv-dev/SDV/issues/2164) by @R-Palazzo
+* Mock every usage of `is_faker_function` to speed up the unit tests - Issue [#2163](https://github.com/sdv-dev/SDV/issues/2163) by @R-Palazzo
+* Review docs-related dev dependencies - Issue [#2148](https://github.com/sdv-dev/SDV/issues/2148) by @rwedge
+* Cap boto and botocore - Issue [#2123](https://github.com/sdv-dev/SDV/issues/2123) by @lajohn4747
+
+## v1.15.0 - 2024-07-11
 
 This release adds a new utils function called `get_random_sequence_subset`, that allows users to get a subset of sequential data.
 
