@@ -10,9 +10,15 @@ from pathlib import Path
 
 import pandas as pd
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
+from rdt.transformers.utils import _GENERATORS
 
 from sdv import version
 from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
+
+try:
+    from re import _parser as sre_parse
+except ImportError:
+    import sre_parse
 
 
 def _cast_to_iterable(value):
@@ -403,3 +409,33 @@ def generate_synthesizer_id(synthesizer):
     synth_version = version.public
     unique_id = ''.join(str(uuid.uuid4()).split('-'))
     return f'{class_name}_{synth_version}_{unique_id}'
+
+
+def _get_chars_for_option(option, params):
+    if option not in _GENERATORS:
+        raise ValueError(f'REGEX operation: {option} is not supported by SDV.')
+
+    if option == sre_parse.MAX_REPEAT:
+        new_option, new_params = params[2][0]  # The value at the second index is the nested option
+        return _get_chars_for_option(new_option, new_params)
+
+    return list(_GENERATORS[option](params, 1)[0])
+
+
+def get_possible_chars(regex, num_subpatterns=None):
+    """Get the list of possible characters a regex can create.
+
+    Args:
+        regex (str):
+            The regex to parse.
+        num_subpatterns (int):
+            The number of sub-patterns from the regex to find characters for.
+    """
+    parsed = sre_parse.parse(regex)
+    parsed = [p for p in parsed if p[0] != sre_parse.AT]
+    num_subpatterns = num_subpatterns or len(parsed)
+    possible_chars = []
+    for option, params in parsed[:num_subpatterns]:
+        possible_chars += _get_chars_for_option(option, params)
+
+    return possible_chars

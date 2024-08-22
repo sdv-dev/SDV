@@ -117,7 +117,7 @@ def test_save_and_load(tmp_path):
     assert metadata == instance.metadata
 
 
-def test_sythesize_sequences(tmp_path):
+def test_synthesize_sequences(tmp_path):
     """End to end test for synthesizing sequences.
 
     The following functionalities are being tested:
@@ -404,3 +404,54 @@ def test_init_error_sequence_key_in_context():
     # Run and Assert
     with pytest.raises(SynthesizerInputError, match=sequence_key_context_column_error_msg):
         PARSynthesizer(metadata, context_columns=['A'])
+
+
+def test_par_with_datetime_context():
+    """Test PARSynthesizer with a datetime as a context column"""
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'user_id': ['ID_00'] * 5 + ['ID_01'] * 5,
+            'birthdate': ['1995-05-06'] * 5 + ['1982-01-21'] * 5,
+            'timestamp': ['2023-06-21', '2023-06-22', '2023-06-23', '2023-06-24', '2023-06-25'] * 2,
+            'heartrate': [67, 66, 68, 65, 64, 80, 82, 91, 88, 84],
+        }
+    )
+
+    metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'user_id': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{2}'},
+            'birthdate': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'timestamp': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+            'heartrate': {'sdtype': 'numerical'},
+        },
+        'sequence_key': 'user_id',
+        'sequence_index': 'timestamp',
+    })
+
+    # Run
+    synth = PARSynthesizer(metadata, epochs=50, verbose=True, context_columns=['birthdate'])
+
+    synth.fit(data)
+    sample = synth.sample(num_sequences=1)
+    expected_birthdate = pd.Series(['1984-02-23'] * 5, name='birthdate')
+
+    # Assert
+    pd.testing.assert_series_equal(sample['birthdate'], expected_birthdate)
+
+
+def test_par_categorical_column_represented_by_floats():
+    """Test to see if categorical columns work fine  with float representation."""
+    # Setup
+    data, metadata = download_demo('sequential', 'nasdaq100_2019')
+    data['category'] = [100.0 if i % 2 == 0 else 50.0 for i in data.index]
+    metadata.add_column('category', sdtype='categorical')
+
+    # Run
+    synth = PARSynthesizer(metadata)
+    synth.fit(data)
+    sampled = synth.sample(num_sequences=10)
+
+    # Assert
+    synth.validate(sampled)
+    assert sampled['category'].isin(data['category']).all()

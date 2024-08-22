@@ -4,6 +4,7 @@ import logging
 import math
 import re
 import warnings
+from unittest.mock import Mock
 
 import faker
 import numpy as np
@@ -1315,52 +1316,71 @@ class TestHMASynthesizer:
         assert len(record) == 1
 
     def test_null_foreign_keys(self):
-        """Test that the synthesizer crashes when there are null foreign keys."""
+        """Test that the synthesizer does not crash when there are null foreign keys."""
         # Setup
         metadata = MultiTableMetadata()
-        metadata.add_table('parent_table')
-        metadata.add_column('parent_table', 'id', sdtype='id')
-        metadata.set_primary_key('parent_table', 'id')
+        metadata.add_table('parent_table1')
+        metadata.add_column('parent_table1', 'id', sdtype='id')
+        metadata.set_primary_key('parent_table1', 'id')
+
+        metadata.add_table('parent_table2')
+        metadata.add_column('parent_table2', 'id', sdtype='id')
+        metadata.set_primary_key('parent_table2', 'id')
 
         metadata.add_table('child_table1')
         metadata.add_column('child_table1', 'id', sdtype='id')
         metadata.set_primary_key('child_table1', 'id')
-        metadata.add_column('child_table1', 'fk', sdtype='id')
+        metadata.add_column('child_table1', 'fk1', sdtype='id')
+        metadata.add_column('child_table1', 'fk2', sdtype='id')
 
         metadata.add_table('child_table2')
         metadata.add_column('child_table2', 'id', sdtype='id')
         metadata.set_primary_key('child_table2', 'id')
         metadata.add_column('child_table2', 'fk1', sdtype='id')
         metadata.add_column('child_table2', 'fk2', sdtype='id')
+        metadata.add_column('child_table2', 'cat_type', sdtype='categorical')
 
         metadata.add_relationship(
-            parent_table_name='parent_table',
+            parent_table_name='parent_table1',
             child_table_name='child_table1',
             parent_primary_key='id',
-            child_foreign_key='fk',
+            child_foreign_key='fk1',
         )
 
         metadata.add_relationship(
-            parent_table_name='parent_table',
+            parent_table_name='parent_table2',
+            child_table_name='child_table1',
+            parent_primary_key='id',
+            child_foreign_key='fk2',
+        )
+
+        metadata.add_relationship(
+            parent_table_name='parent_table1',
             child_table_name='child_table2',
             parent_primary_key='id',
             child_foreign_key='fk1',
         )
 
         metadata.add_relationship(
-            parent_table_name='parent_table',
+            parent_table_name='parent_table1',
             child_table_name='child_table2',
             parent_primary_key='id',
             child_foreign_key='fk2',
         )
 
         data = {
-            'parent_table': pd.DataFrame({'id': [1, 2, 3]}),
-            'child_table1': pd.DataFrame({'id': [1, 2, 3], 'fk': [1, 2, np.nan]}),
+            'parent_table1': pd.DataFrame({'id': [1, 2, 3]}),
+            'parent_table2': pd.DataFrame({'id': ['alpha', 'beta', 'gamma']}),
+            'child_table1': pd.DataFrame({
+                'id': [1, 2, 3],
+                'fk1': pd.Series([np.nan, 2, np.nan], dtype='float64'),
+                'fk2': pd.Series(['alpha', 'beta', np.nan], dtype='object'),
+            }),
             'child_table2': pd.DataFrame({
                 'id': [1, 2, 3],
                 'fk1': [1, 2, np.nan],
-                'fk2': [1, 2, np.nan],
+                'fk2': pd.Series([1, np.nan, np.nan], dtype='float64'),
+                'cat_type': pd.Series(['siamese', 'persian', 'american shorthair'], dtype='object'),
             }),
         }
 
@@ -1370,17 +1390,17 @@ class TestHMASynthesizer:
         metadata.validate()
         metadata.validate_data(data)
 
-        # Run and Assert
-        err_msg = re.escape(
-            'The data contains null values in foreign key columns. This feature is currently '
-            'unsupported. Please remove null values to fit the synthesizer.\n'
-            '\n'
-            'Affected columns:\n'
-            "Table 'child_table1', column(s) ['fk']\n"
-            "Table 'child_table2', column(s) ['fk1', 'fk2']\n"
-        )
-        with pytest.raises(SynthesizerInputError, match=err_msg):
-            synthesizer.fit(data)
+        # Run
+        synthesizer.fit(data)
+        sampled = synthesizer.sample()
+
+        # Assert
+        assert len(sampled['parent_table1']) == 3
+        assert len(sampled['parent_table2']) == 3
+        assert sum(pd.isna(sampled['child_table1']['fk1'])) == 2
+        assert sum(pd.isna(sampled['child_table1']['fk2'])) == 1
+        assert sum(pd.isna(sampled['child_table2']['fk1'])) == 1
+        assert sum(pd.isna(sampled['child_table2']['fk2'])) == 2
 
     def test_sampling_with_unknown_sdtype_numerical_column(self):
         """Test that if a numerical column is detected as unknown in the metadata,
@@ -1988,3 +2008,143 @@ def test_hma_synthesizer_with_fixed_combinations():
     assert len(sampled['users']) > 1
     assert len(sampled['records']) > 1
     assert len(sampled['locations']) > 1
+
+
+REGEXES = ['[0-9]{3,4}', '0HQ-[a-z]', '0+', r'\d', r'\d{1,5}', r'\w']
+
+
+@pytest.mark.parametrize('regex', REGEXES)
+def test_fit_int_primary_key_regex_includes_zero(regex):
+    """Test that sdv errors if the primary key has a regex, is an int, and can start with 0."""
+    # Setup
+    parent_data = pd.DataFrame({
+        'parent_id': [1, 2, 3, 4, 5, 6],
+        'col': ['a', 'b', 'a', 'b', 'a', 'b'],
+    })
+    child_data = pd.DataFrame({'id': [1, 2, 3, 4, 5, 6], 'parent_id': [1, 2, 3, 4, 5, 6]})
+    data = {
+        'parent_data': parent_data,
+        'child_data': child_data,
+    }
+    metadata = MultiTableMetadata()
+    metadata.detect_from_dataframes(data)
+    metadata.update_column('parent_data', 'parent_id', sdtype='id', regex_format=regex)
+    metadata.set_primary_key('parent_data', 'parent_id')
+
+    # Run and Assert
+    instance = HMASynthesizer(metadata)
+    message = (
+        'Primary key for table "parent_data" is stored as an int but the Regex allows it to start '
+        'with "0". Please remove the Regex or update it to correspond to valid ints.'
+    )
+    with pytest.raises(SynthesizerInputError, match=message):
+        instance.fit(data)
+
+
+def test__estimate_num_columns_to_be_modeled_various_sdtypes():
+    """Test the estimated number of columns is correct for various sdtypes.
+
+    To check that the number columns is correct we Mock the ``_finalize`` method
+    and compare its output with the estimated number of columns.
+
+    The dataset used follows the structure below:
+        R1 R2
+        | /
+        GP
+        |
+        P
+    """
+    # Setup
+    root1 = pd.DataFrame({'R1': [0, 1, 2]})
+    root2 = pd.DataFrame({'R2': [0, 1, 2], 'data': [0, 1, 2]})
+    grandparent = pd.DataFrame({'GP': [0, 1, 2], 'R1': [0, 1, 2], 'R2': [0, 1, 2]})
+    parent = pd.DataFrame({
+        'P': [0, 1, 2],
+        'GP': [0, 1, 2],
+        'numerical': [0.1, 0.5, np.nan],
+        'categorical': ['a', np.nan, 'c'],
+        'datetime': [None, '2019-01-02', '2019-01-03'],
+        'boolean': [float('nan'), False, True],
+        'id': [0, 1, 2],
+    })
+    data = {
+        'root1': root1,
+        'root2': root2,
+        'grandparent': grandparent,
+        'parent': parent,
+    }
+    metadata = MultiTableMetadata.load_from_dict({
+        'tables': {
+            'root1': {
+                'primary_key': 'R1',
+                'columns': {
+                    'R1': {'sdtype': 'id'},
+                },
+            },
+            'root2': {
+                'primary_key': 'R2',
+                'columns': {'R2': {'sdtype': 'id'}, 'data': {'sdtype': 'numerical'}},
+            },
+            'grandparent': {
+                'primary_key': 'GP',
+                'columns': {
+                    'GP': {'sdtype': 'id'},
+                    'R1': {'sdtype': 'id'},
+                    'R2': {'sdtype': 'id'},
+                },
+            },
+            'parent': {
+                'primary_key': 'P',
+                'columns': {
+                    'P': {'sdtype': 'id'},
+                    'GP': {'sdtype': 'id'},
+                    'numerical': {'sdtype': 'numerical'},
+                    'categorical': {'sdtype': 'categorical'},
+                    'datetime': {'sdtype': 'datetime'},
+                    'boolean': {'sdtype': 'boolean'},
+                    'id': {'sdtype': 'id'},
+                },
+            },
+        },
+        'relationships': [
+            {
+                'parent_table_name': 'root1',
+                'parent_primary_key': 'R1',
+                'child_table_name': 'grandparent',
+                'child_foreign_key': 'R1',
+            },
+            {
+                'parent_table_name': 'root2',
+                'parent_primary_key': 'R2',
+                'child_table_name': 'grandparent',
+                'child_foreign_key': 'R2',
+            },
+            {
+                'parent_table_name': 'grandparent',
+                'parent_primary_key': 'GP',
+                'child_table_name': 'parent',
+                'child_foreign_key': 'GP',
+            },
+        ],
+    })
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer._finalize = Mock(return_value=data)
+
+    # Run estimation
+    estimated_num_columns = synthesizer._estimate_num_columns(metadata)
+
+    # Run actual modeling
+    synthesizer.fit(data)
+    synthesizer.sample()
+
+    # Assert estimated number of columns is correct
+    tables = synthesizer._finalize.call_args[0][0]
+    for table_name, table in tables.items():
+        # Subract all the id columns present in the data, as those are not estimated
+        num_table_cols = len(table.columns)
+        if table_name in {'parent', 'grandparent'}:
+            num_table_cols -= 3
+        if table_name in {'root1', 'root2'}:
+            num_table_cols -= 1
+
+        assert num_table_cols == estimated_num_columns[table_name]

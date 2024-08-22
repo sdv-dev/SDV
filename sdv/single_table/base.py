@@ -24,6 +24,7 @@ from sdv._utils import (
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
+    get_possible_chars,
 )
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
@@ -41,6 +42,10 @@ SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
 
 COND_IDX = str(uuid.uuid4())
 FIXED_RNG_SEED = 73251
+INT_REGEX_ZERO_ERROR_MESSAGE = (
+    'is stored as an int but the Regex allows it to start with "0". Please remove the Regex '
+    'or update it to correspond to valid ints.'
+)
 
 
 class BaseSynthesizer:
@@ -163,6 +168,17 @@ class BaseSynthesizer:
         """
         return []
 
+    def _validate_primary_key(self, data):
+        primary_key = self.metadata.primary_key
+        is_int = primary_key and pd.api.types.is_integer_dtype(data[primary_key])
+        regex = self.metadata.columns.get(primary_key, {}).get('regex_format')
+        if is_int and regex:
+            possible_characters = get_possible_chars(regex, 1)
+            if '0' in possible_characters:
+                raise SynthesizerInputError(
+                    f'Primary key "{primary_key}" {INT_REGEX_ZERO_ERROR_MESSAGE}'
+                )
+
     def validate(self, data):
         """Validate data.
 
@@ -184,6 +200,7 @@ class BaseSynthesizer:
                     * values of a column don't satisfy their sdtype
         """
         self._validate_metadata(data)
+        self._validate_primary_key(data)
         self._validate_constraints(data)
 
         # Retaining the logic of returning errors and raising them here to maintain consistency
@@ -471,6 +488,15 @@ class BaseSynthesizer:
         processed_data = self.preprocess(data)
         self.fit_processed_data(processed_data)
 
+    def _validate_fit_before_save(self):
+        """Validate that the synthesizer has been fitted before saving."""
+        if not self._fitted:
+            warnings.warn(
+                'You are saving a synthesizer that has not yet been fitted. You will not be able '
+                'to sample synthetic data without fitting. We recommend fitting the synthesizer '
+                'first and then saving.'
+            )
+
     def save(self, filepath):
         """Save this model instance to the given path using cloudpickle.
 
@@ -478,6 +504,7 @@ class BaseSynthesizer:
             filepath (str):
                 Path where the synthesizer instance will be serialized.
         """
+        self._validate_fit_before_save()
         synthesizer_id = getattr(self, '_synthesizer_id', None)
         SYNTHESIZER_LOGGER.info({
             'EVENT': 'Save',

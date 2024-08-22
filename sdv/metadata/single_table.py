@@ -55,6 +55,8 @@ class SingleTableMetadata:
     }
 
     _NUMERICAL_REPRESENTATIONS = frozenset([
+        'Float32',
+        'Float64',
         'Float',
         'Int64',
         'Int32',
@@ -538,8 +540,63 @@ class SingleTableMetadata:
 
         return sdtype
 
+    def _detect_primary_key(self, data):
+        """Detect the table's primary key.
+
+        This method will loop through the columns and select the first column that was detected as
+        an id. If there are none of those, it will pick the first unique pii column. If there is
+        still no primary key, it will return None. All other id columns after the first will be
+        reassigned to the 'unknown' sdtype.
+
+        Args:
+            data (pandas.DataFrame):
+                The data to be analyzed.
+
+        Returns:
+            str:
+                The column name of the selected primary key.
+
+        Raises:
+            RuntimeError:
+                If the sdtypes for all columns haven't been detected or set yet.
+        """
+        original_columns = data.columns
+        stringified_columns = data.columns.astype(str)
+        data.columns = stringified_columns
+        for column in data.columns:
+            if not self.columns.get(column, {}).get('sdtype'):
+                raise RuntimeError(
+                    'All columns must have sdtypes detected or set manually to detect the primary '
+                    'key.'
+                )
+
+        candidates = []
+        first_pii_field = None
+        for column, column_meta in self.columns.items():
+            sdtype = column_meta['sdtype']
+            column_data = data[column]
+            has_nan = column_data.isna().any()
+            valid_potential_primary_key = column_data.is_unique and not has_nan
+            sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
+            if sdtype == 'id':
+                candidates.append(column)
+                if len(candidates) > 1:
+                    self.columns[column]['sdtype'] = 'unknown'
+                    self.columns[column]['pii'] = True
+
+            elif sdtype_in_reference and first_pii_field is None and valid_potential_primary_key:
+                first_pii_field = column
+
+        data.columns = original_columns
+        if candidates:
+            return candidates[0]
+        if first_pii_field:
+            return first_pii_field
+
+        return None
+
     def _detect_columns(self, data):
-        """Detect the columns' sdtype and the primary key from the data.
+        """Detect the columns' sdtypes from the data.
 
         Args:
             data (pandas.DataFrame):
@@ -547,11 +604,8 @@ class SingleTableMetadata:
         """
         old_columns = data.columns
         data.columns = data.columns.astype(str)
-        first_pii_field = None
         for field in data:
             column_data = data[field]
-            has_nan = column_data.isna().any()
-            valid_potential_primary_key = column_data.is_unique and not has_nan
             clean_data = column_data.dropna()
             dtype = clean_data.infer_objects().dtype.kind
 
@@ -559,7 +613,7 @@ class SingleTableMetadata:
             if sdtype is None:
                 if dtype in self._DTYPES_TO_SDTYPES:
                     sdtype = self._DTYPES_TO_SDTYPES[dtype]
-                elif dtype in ['i', 'f']:
+                elif dtype in ['i', 'f', 'u']:
                     sdtype = self._determine_sdtype_for_numbers(column_data)
 
                 elif dtype == 'O':
@@ -571,30 +625,19 @@ class SingleTableMetadata:
                         "The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
                     )
 
-                # Set the first ID column we detect to be the primary key
-                if sdtype == 'id':
-                    if self.primary_key is None and valid_potential_primary_key:
-                        self.primary_key = field
-                    else:
-                        sdtype = 'unknown'
-
             column_dict = {'sdtype': sdtype}
             sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
 
             if sdtype_in_reference or sdtype == 'unknown':
                 column_dict['pii'] = True
-            if sdtype_in_reference and first_pii_field is None and not has_nan:
-                first_pii_field = field
+
             if sdtype == 'datetime' and dtype == 'O':
                 datetime_format = _get_datetime_format(column_data.iloc[:100])
                 column_dict['datetime_format'] = datetime_format
 
             self.columns[field] = deepcopy(column_dict)
 
-        # When no primary key column was set, choose the first pii field
-        if self.primary_key is None and first_pii_field and valid_potential_primary_key:
-            self.primary_key = first_pii_field
-
+        self.primary_key = self._detect_primary_key(data)
         self._updated = True
         data.columns = old_columns
 
@@ -1177,6 +1220,41 @@ class SingleTableMetadata:
         if errors:
             raise InvalidDataError(errors)
 
+    def anonymize(self):
+        """Anonymize metadata by obfuscating column names.
+
+        Returns:
+            SingleTableMetadata:
+                An anonymized SingleTableMetadata instance.
+        """
+        anonymized_metadata = {'columns': {}}
+
+        self._anonymized_column_map = {}
+        counter = 1
+        for column, column_metadata in self.columns.items():
+            anonymized_column = f'col{counter}'
+            self._anonymized_column_map[column] = anonymized_column
+            anonymized_metadata['columns'][anonymized_column] = column_metadata
+            counter += 1
+
+        if self.primary_key:
+            anonymized_metadata['primary_key'] = self._anonymized_column_map[self.primary_key]
+
+        if self.alternate_keys:
+            anonymized_alternate_keys = []
+            for alternate_key in self.alternate_keys:
+                anonymized_alternate_keys.append(self._anonymized_column_map[alternate_key])
+
+            anonymized_metadata['alternate_keys'] = anonymized_alternate_keys
+
+        if self.sequence_key:
+            anonymized_metadata['sequence_key'] = self._anonymized_column_map[self.sequence_key]
+
+        if self.sequence_index:
+            anonymized_metadata['sequence_index'] = self._anonymized_column_map[self.sequence_index]
+
+        return SingleTableMetadata.load_from_dict(anonymized_metadata)
+
     def visualize(self, show_table_details='full', output_filepath=None):
         """Create a visualization of the single-table dataset.
 
@@ -1273,6 +1351,7 @@ class SingleTableMetadata:
                     }
                 setattr(instance, f'{key}', value)
 
+        instance._primary_key_candidates = None
         return instance
 
     @classmethod

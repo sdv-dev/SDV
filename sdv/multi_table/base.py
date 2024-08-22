@@ -14,7 +14,6 @@ from tqdm import tqdm
 
 from sdv import version
 from sdv._utils import (
-    _validate_foreign_keys_not_null,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
@@ -26,6 +25,7 @@ from sdv.errors import (
     SynthesizerInputError,
 )
 from sdv.logging import disable_single_table_logger, get_sdv_logger
+from sdv.single_table.base import INT_REGEX_ZERO_ERROR_MESSAGE
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
@@ -363,9 +363,17 @@ class BaseMultiTableSynthesizer:
         processed_data = {}
         pbar_args = self._get_pbar_args(desc='Preprocess Tables')
         for table_name, table_data in tqdm(data.items(), **pbar_args):
-            synthesizer = self._table_synthesizers[table_name]
-            self._assign_table_transformers(synthesizer, table_name, table_data)
-            processed_data[table_name] = synthesizer._preprocess(table_data)
+            try:
+                synthesizer = self._table_synthesizers[table_name]
+                self._assign_table_transformers(synthesizer, table_name, table_data)
+                processed_data[table_name] = synthesizer._preprocess(table_data)
+            except SynthesizerInputError as e:
+                if INT_REGEX_ZERO_ERROR_MESSAGE in str(e):
+                    raise SynthesizerInputError(
+                        f'Primary key for table "{table_name}" {INT_REGEX_ZERO_ERROR_MESSAGE}'
+                    )
+
+                raise e
 
         for table in list_of_changed_tables:
             data[table].columns = self._original_table_columns[table]
@@ -448,7 +456,6 @@ class BaseMultiTableSynthesizer:
         })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
-        _validate_foreign_keys_not_null(self.metadata, data)
         self._check_metadata_updated()
         self._fitted = False
         processed_data = self.preprocess(data)
@@ -665,6 +672,15 @@ class BaseMultiTableSynthesizer:
 
         return info
 
+    def _validate_fit_before_save(self):
+        """Validate that the synthesizer has been fitted before saving."""
+        if not self._fitted:
+            warnings.warn(
+                'You are saving a synthesizer that has not yet been fitted. You will not be able '
+                'to sample synthetic data without fitting. We recommend fitting the synthesizer '
+                'first and then saving.'
+            )
+
     def save(self, filepath):
         """Save this instance to the given path using cloudpickle.
 
@@ -672,6 +688,7 @@ class BaseMultiTableSynthesizer:
             filepath (str):
                 Path where the instance will be serialized.
         """
+        self._validate_fit_before_save()
         synthesizer_id = getattr(self, '_synthesizer_id', None)
         SYNTHESIZER_LOGGER.info({
             'EVENT': 'Save',

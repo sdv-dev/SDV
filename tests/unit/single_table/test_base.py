@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 from datetime import date, datetime
 from unittest.mock import ANY, MagicMock, Mock, call, mock_open, patch
@@ -32,7 +33,7 @@ from sdv.single_table import (
     GaussianCopulaSynthesizer,
     TVAESynthesizer,
 )
-from sdv.single_table.base import COND_IDX, BaseSingleTableSynthesizer
+from sdv.single_table.base import COND_IDX, BaseSingleTableSynthesizer, BaseSynthesizer
 from tests.utils import catch_sdv_logs
 
 
@@ -598,6 +599,47 @@ class TestBaseSingleTableSynthesizer:
         instance._validate_metadata.assert_called_once_with(data)
         instance._validate_constraints.assert_called_once_with(data)
         instance._validate.assert_not_called()
+
+    def test_validate_int_primary_key_regex_starts_with_zero(self):
+        """Test that an error is raised if the primary key is an int that can start with 0.
+
+        If the the primary key is stored as an int, but a regex is used with it, it is possible
+        that the first character can be a 0. If this happens, then we can get duplicate primary
+        key values since two different strings can be the same when converted ints
+        (eg. '00123' and '0123').
+        """
+        # Setup
+        data = pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
+        metadata = Mock()
+        metadata.primary_key = 'key'
+        metadata.column_relationships = []
+        metadata.columns = {'key': {'sdtype': 'id', 'regex_format': '[0-9]{3,4}'}}
+        instance = BaseSingleTableSynthesizer(metadata)
+
+        # Run and Assert
+        message = (
+            'Primary key "key" is stored as an int but the Regex allows it to start with '
+            '"0". Please remove the Regex or update it to correspond to valid ints.'
+        )
+        with pytest.raises(SynthesizerInputError, match=message):
+            instance.validate(data)
+
+    def test_validate_int_primary_key_regex_does_not_start_with_zero(self):
+        """Test that no error is raised if the primary key is an int that can't start with 0.
+
+        If the the primary key is stored as an int, but a regex is used with it, it is possible
+        that the first character can be a 0. If it isn't possible, then no error should be raised.
+        """
+        # Setup
+        data = pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
+        metadata = Mock()
+        metadata.primary_key = 'key'
+        metadata.column_relationships = []
+        metadata.columns = {'key': {'sdtype': 'id', 'regex_format': '[1-9]{3,4}'}}
+        instance = BaseSingleTableSynthesizer(metadata)
+
+        # Run and Assert
+        instance.validate(data)
 
     def test_update_transformers_invalid_keys(self):
         """Test error is raised if passed transformer doesn't match key column.
@@ -1808,6 +1850,21 @@ class TestBaseSingleTableSynthesizer:
             'SYNTHESIZER CLASS NAME': 'Mock',
             'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
+
+    def test_save_warning(self, tmp_path):
+        """Test that the synthesizer produces a warning if saved without fitting."""
+        # Setup
+        synthesizer = BaseSynthesizer(SingleTableMetadata())
+
+        # Run and Assert
+        warn_msg = re.escape(
+            'You are saving a synthesizer that has not yet been fitted. You will not be able '
+            'to sample synthetic data without fitting. We recommend fitting the synthesizer '
+            'first and then saving.'
+        )
+        with pytest.warns(Warning, match=warn_msg):
+            filepath = os.path.join(tmp_path, 'output.pkl')
+            synthesizer.save(filepath)
 
     @patch('sdv.single_table.base.datetime')
     @patch('sdv.single_table.base.generate_synthesizer_id')

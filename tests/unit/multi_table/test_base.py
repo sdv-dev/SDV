@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 import warnings
 from collections import defaultdict
@@ -22,6 +23,7 @@ from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
 from sdv.multi_table.hma import HMASynthesizer
+from sdv.single_table.base import INT_REGEX_ZERO_ERROR_MESSAGE
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
 from tests.utils import catch_sdv_logs, get_multi_table_data, get_multi_table_metadata
@@ -138,9 +140,11 @@ class TestBaseMultiTableSynthesizer:
             'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
 
-    def test__init__column_relationship_warning(self):
+    @patch('sdv.metadata.single_table.is_faker_function')
+    def test__init__column_relationship_warning(self, mock_is_faker_function):
         """Test that a warning is raised only once when the metadata has column relationships."""
         # Setup
+        mock_is_faker_function.return_value = True
         metadata = get_multi_table_metadata()
         metadata.add_column('nesreca', 'lat', sdtype='latitude')
         metadata.add_column('nesreca', 'lon', sdtype='longitude')
@@ -163,6 +167,10 @@ class TestBaseMultiTableSynthesizer:
             warning for warning in caught_warnings if expected_warning in str(warning.message)
         ]
         assert len(column_relationship_warnings) == 1
+        mock_is_faker_function.assert_has_calls([
+            call('latitude'),
+            call('longitude'),
+        ])
 
     def test___init___synthesizer_kwargs_deprecated(self):
         """Test that the ``synthesizer_kwargs`` method is deprecated."""
@@ -907,6 +915,84 @@ class TestBaseMultiTableSynthesizer:
             "please refit the model using 'fit' or 'fit_processed_data'."
         )
 
+    def test_preprocess_single_table_preprocess_raises_error_0_int_regex(self):
+        """Test that if the single table synthesizer raises a specific error, it is reformatted.
+
+        If a single table synthesizer raises an error about the primary key being an integer
+        with a regex that can start with zero, the error should be reformatted to include the
+        table name.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance.validate = Mock()
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(0, 20, 2),
+                'upravna_enota': np.arange(10),
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(10),
+                'id_nesreca': np.arange(10),
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(10),
+            }),
+        }
+
+        synth_nesreca = Mock()
+        synth_oseba = Mock()
+        synth_upravna_enota = Mock()
+        synth_nesreca._preprocess.side_effect = SynthesizerInputError(INT_REGEX_ZERO_ERROR_MESSAGE)
+        instance._table_synthesizers = {
+            'nesreca': synth_nesreca,
+            'oseba': synth_oseba,
+            'upravna_enota': synth_upravna_enota,
+        }
+
+        # Run
+        message = f'Primary key for table "nesreca" {INT_REGEX_ZERO_ERROR_MESSAGE}'
+        with pytest.raises(SynthesizerInputError, match=message):
+            instance.preprocess(data)
+
+    def test_preprocess_single_table_preprocess_raises_error(self):
+        """Test that if the single table synthesizer raises any other error, it is raised.
+
+        If a single table synthesizer raises an error besides the one concerning int primary keys
+        starting with 0 and having a regex, then the error should be raised as is.
+        """
+        # Setup
+        metadata = get_multi_table_metadata()
+        instance = BaseMultiTableSynthesizer(metadata)
+        instance.validate = Mock()
+        data = {
+            'nesreca': pd.DataFrame({
+                'id_nesreca': np.arange(0, 20, 2),
+                'upravna_enota': np.arange(10),
+            }),
+            'oseba': pd.DataFrame({
+                'upravna_enota': np.arange(10),
+                'id_nesreca': np.arange(10),
+            }),
+            'upravna_enota': pd.DataFrame({
+                'id_upravna_enota': np.arange(10),
+            }),
+        }
+
+        synth_nesreca = Mock()
+        synth_oseba = Mock()
+        synth_upravna_enota = Mock()
+        synth_nesreca._preprocess.side_effect = SynthesizerInputError('blah')
+        instance._table_synthesizers = {
+            'nesreca': synth_nesreca,
+            'oseba': synth_oseba,
+            'upravna_enota': synth_upravna_enota,
+        }
+
+        # Run
+        with pytest.raises(SynthesizerInputError, match='blah'):
+            instance.preprocess(data)
+
     @patch('sdv.multi_table.base.datetime')
     def test_fit_processed_data(self, mock_datetime, caplog):
         """Test that fit processed data calls ``_augment_tables`` and ``_model_tables``.
@@ -981,8 +1067,7 @@ class TestBaseMultiTableSynthesizer:
         instance._check_metadata_updated.assert_not_called()
 
     @patch('sdv.multi_table.base.datetime')
-    @patch('sdv.multi_table.base._validate_foreign_keys_not_null')
-    def test_fit(self, mock_validate_foreign_keys_not_null, mock_datetime, caplog):
+    def test_fit(self, mock_datetime, caplog):
         """Test that it calls the appropriate methods."""
         # Setup
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
@@ -1002,7 +1087,6 @@ class TestBaseMultiTableSynthesizer:
             BaseMultiTableSynthesizer.fit(instance, data)
 
         # Assert
-        mock_validate_foreign_keys_not_null.assert_called_once_with(instance.metadata, data)
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
         instance._check_metadata_updated.assert_called_once()
@@ -1520,6 +1604,21 @@ class TestBaseMultiTableSynthesizer:
             'SYNTHESIZER CLASS NAME': 'Mock',
             'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
+
+    def test_save_warning(self, tmp_path):
+        """Test that the synthesizer produces a warning if saved without fitting."""
+        # Setup
+        synthesizer = BaseMultiTableSynthesizer(MultiTableMetadata())
+
+        # Run and Assert
+        warn_msg = re.escape(
+            'You are saving a synthesizer that has not yet been fitted. You will not be able '
+            'to sample synthetic data without fitting. We recommend fitting the synthesizer '
+            'first and then saving.'
+        )
+        with pytest.warns(Warning, match=warn_msg):
+            filepath = os.path.join(tmp_path, 'output.pkl')
+            synthesizer.save(filepath)
 
     @patch('sdv.multi_table.base.datetime')
     @patch('sdv.multi_table.base.generate_synthesizer_id')

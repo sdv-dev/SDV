@@ -444,8 +444,7 @@ class TestPARSynthesizer:
             'columns': {'gender': {'sdtype': 'categorical'}, 'name': {'sdtype': 'id'}}
         })
         par._context_synthesizer = initial_synthesizer
-        par._get_context_metadata = Mock()
-        par._get_context_metadata.return_value = context_metadata
+        par._get_context_metadata = Mock(return_value=context_metadata)
 
         # Run
         par._fit_context_model(data)
@@ -460,6 +459,49 @@ class TestPARSynthesizer:
         expected_fitted_data = pd.DataFrame({
             'name': ['Doe', 'Jane', 'John'],
             'gender': ['M', 'F', 'M'],
+        })
+        pd.testing.assert_frame_equal(fitted_data.sort_values(by='name'), expected_fitted_data)
+
+    @patch('sdv.sequential.par.GaussianCopulaSynthesizer')
+    def test__fit_context_model_with_datetime_context_column(self, gaussian_copula_mock):
+        """Test that the method fits a synthesizer to the context columns.
+
+        If there are context columns, the method should create a new DataFrame that groups
+        the data by the sequence_key and only contains the context columns. Then a synthesizer
+        should be fit to this new data.
+        """
+        # Setup
+        metadata = self.get_metadata()
+        data = self.get_data()
+        data['time'] = pd.to_datetime(data['time'])
+        data['time'] = data['time'].apply(lambda x: x.timestamp())
+        par = PARSynthesizer(metadata, context_columns=['time'])
+        initial_synthesizer = Mock()
+        context_metadata = SingleTableMetadata.load_from_dict({
+            'columns': {'time': {'sdtype': 'datetime'}, 'name': {'sdtype': 'id'}}
+        })
+        par._context_synthesizer = initial_synthesizer
+        par._get_context_metadata = Mock()
+        par._get_context_metadata.return_value = context_metadata
+
+        # Run
+        par._fit_context_model(data)
+
+        converted_context_metadata = SingleTableMetadata.load_from_dict({
+            'columns': {'time': {'sdtype': 'numerical'}, 'name': {'sdtype': 'id'}}
+        })
+
+        # Assert
+        gaussian_copula_mock.assert_called_with(
+            context_metadata,
+            enforce_min_max_values=initial_synthesizer.enforce_min_max_values,
+            enforce_rounding=initial_synthesizer.enforce_rounding,
+        )
+        assert converted_context_metadata.columns == context_metadata.columns
+        fitted_data = gaussian_copula_mock().fit.mock_calls[0][1][0]
+        expected_fitted_data = pd.DataFrame({
+            'name': ['Doe', 'Jane', 'John'],
+            'time': [1.578010e09, 1.577837e09, 1.577923e09],
         })
         pd.testing.assert_frame_equal(fitted_data.sort_values(by='name'), expected_fitted_data)
 
@@ -544,6 +586,42 @@ class TestPARSynthesizer:
         model_mock.assert_called_once_with(epochs=128, sample_size=1, cuda=True, verbose=False)
         model_mock.return_value.fit_sequences.assert_called_once_with(
             sequences, ['categorical'], ['categorical', 'continuous']
+        )
+
+    @patch('sdv.sequential.par.PARModel')
+    @patch('sdv.sequential.par.assemble_sequences')
+    def test__fit_sequence_columns_with_categorical_float(
+        self, assemble_sequences_mock, model_mock
+    ):
+        """Test that the method ``_fit_sequence_columns`` is called with the right data types.
+
+        The method should use the ``assemble_sequences`` method to create a list of sequences
+        that the model can fit to. This tests to make sure that labeled categorical data is called
+        as categorical even if it's represented by floats.
+        """
+        # Setup
+        data = self.get_data()
+        data['measurement'] = data['measurement'].astype(float)
+        metadata = self.get_metadata()
+        metadata.update_column('measurement', sdtype='categorical')
+        par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
+        sequences = [
+            {'context': np.array(['M'], dtype=object), 'data': [['2020-01-03'], [65.0]]},
+            {'context': np.array(['F'], dtype=object), 'data': [['2020-01-01'], [55.0]]},
+            {'context': np.array(['M'], dtype=object), 'data': [['2020-01-02'], [60.0]]},
+        ]
+        assemble_sequences_mock.return_value = sequences
+
+        # Run
+        par._fit_sequence_columns(data)
+
+        # Assert
+        assemble_sequences_mock.assert_called_once_with(
+            data, ['name'], ['gender'], None, None, drop_sequence_index=False
+        )
+        model_mock.assert_called_once_with(epochs=128, sample_size=1, cuda=True, verbose=False)
+        model_mock.return_value.fit_sequences.assert_called_once_with(
+            sequences, ['categorical'], ['categorical', 'categorical']
         )
 
     @patch('sdv.sequential.par.PARModel')
