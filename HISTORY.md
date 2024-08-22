@@ -2,7 +2,7 @@
 
 ### v1.16.0 - 2024-08-22
 
-This release enables the `HMASynthesizer` and other utility functions to work with null foreign key values! It also adds an `anonymization` method to the metadata classes. Additionally, it patches bug that let SDV work with more Pandas data types.
+This release enables the `HMASynthesizer` and other utility functions to work with null foreign key values! It also adds an `anonymization` method to the metadata classes. Additionally, it patches a bug that lets SDV work with more Pandas data types.
 
 ### New Features
 
