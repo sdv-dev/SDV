@@ -1,6 +1,12 @@
 # Release Notes
 
-### v1.16.0 - 2024-08-22
+### v1.16.1 - 2024-08-27
+
+### Internal
+
+* [dtypes] `FixedIncrements` Fails with New Numerical Data Types - Issue [#2157](https://github.com/sdv-dev/SDV/issues/2157) by @R-Palazzo
+
+## v1.16.0 - 2024-08-22
 
 This release enables the `HMASynthesizer` and other utility functions to work with null foreign key values! It also adds an `anonymization` method to the metadata classes. Additionally, it patches a bug that lets SDV work with more Pandas data types.
 
