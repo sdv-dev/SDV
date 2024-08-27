@@ -1339,7 +1339,9 @@ class FixedIncrements(Constraint):
             pandas.DataFrame:
                 Data divided by increment.
         """
-        table_data[self.column_name] = table_data[self.column_name] / self.increment_value
+        table_data[self.column_name] = (table_data[self.column_name] / self.increment_value).astype(
+            self._dtype
+        )
         return table_data
 
     def _reverse_transform(self, table_data):

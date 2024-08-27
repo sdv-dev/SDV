@@ -4583,6 +4583,21 @@ class TestFixedIncrements:
         expected = pd.DataFrame({'column': [1, 2, np.nan, 5]})
         pd.testing.assert_frame_equal(transformed, expected)
 
+    @pytest.mark.parametrize('dtype', ['int16', 'Int16', 'int64', 'Int64'])
+    def test__transform_with_integer_columns(self, dtype):
+        """Test the `transform` method with integer columns"""
+        # Setup
+        data = pd.DataFrame({'column': pd.Series([7, 14, 21, 28], dtype=dtype)})
+        instance = FixedIncrements(column_name='column', increment_value=7)
+        instance._dtype = dtype
+
+        # Run
+        transformed = instance._transform(data)
+
+        # Assert
+        expected = pd.DataFrame({'column': pd.Series([1, 2, 3, 4], dtype=dtype)})
+        pd.testing.assert_frame_equal(transformed, expected)
+
     def test_reverse_transform(self):
         """Test the ``FixedIncrements.reverse_transform`` method.
 
