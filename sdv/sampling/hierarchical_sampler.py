@@ -96,10 +96,10 @@ class BaseHierarchicalSampler:
         if num_rows is None:
             num_rows = parent_row[f'__{child_name}__{foreign_key}__num_rows']
         with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', message=".*The 'SingleTableMetadata' is deprecated.*")
+            warnings.filterwarnings('ignore', message=".*The 'SingleTableMetadata' is deprecated.*")
             child_synthesizer = self._recreate_child_synthesizer(
-                child_name, parent_name, parent_row)
+                child_name, parent_name, parent_row
+            )
         sampled_rows = self._sample_rows(child_synthesizer, num_rows)
 
         if len(sampled_rows):
@@ -246,8 +246,7 @@ class BaseHierarchicalSampler:
                         num_rows=num_null_rows,
                     )
 
-                self._sample_children(table_name=child_name,
-                                      sampled_data=sampled_data, scale=scale)
+                self._sample_children(table_name=child_name, sampled_data=sampled_data, scale=scale)
 
     def _finalize(self, sampled_data):
         """Remove extra columns from sampled tables and apply finishing touches.
