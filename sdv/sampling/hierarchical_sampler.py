@@ -95,7 +95,11 @@ class BaseHierarchicalSampler:
         foreign_key = self.metadata._get_foreign_keys(parent_name, child_name)[0]
         if num_rows is None:
             num_rows = parent_row[f'__{child_name}__{foreign_key}__num_rows']
-        child_synthesizer = self._recreate_child_synthesizer(child_name, parent_name, parent_row)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', message=".*The 'SingleTableMetadata' is deprecated.*")
+            child_synthesizer = self._recreate_child_synthesizer(
+                child_name, parent_name, parent_row
+            )
         sampled_rows = self._sample_rows(child_synthesizer, num_rows)
 
         if len(sampled_rows):
