@@ -3,6 +3,7 @@
 import inspect
 import logging
 import uuid
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -121,11 +122,14 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             'verbose': verbose,
         }
         context_metadata = self._get_context_metadata()
-        self._context_synthesizer = GaussianCopulaSynthesizer(
-            metadata=context_metadata,
-            enforce_min_max_values=enforce_min_max_values,
-            enforce_rounding=enforce_rounding,
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', message=".*The 'SingleTableMetadata' is deprecated.*")
+            self._context_synthesizer = GaussianCopulaSynthesizer(
+                metadata=context_metadata,
+                enforce_min_max_values=enforce_min_max_values,
+                enforce_rounding=enforce_rounding,
+            )
 
     def get_parameters(self):
         """Return the parameters used to instantiate the synthesizer."""
@@ -334,7 +338,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         context_metadata: SingleTableMetadata = self._get_context_metadata()
         if self.context_columns or self._extra_context_columns:
             context_cols = (
-                self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
+                self._sequence_key + self.context_columns +
+                list(self._extra_context_columns.keys())
             )
             context = transformed[context_cols]
         else:
@@ -350,11 +355,14 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 if pd.api.types.is_numeric_dtype(context[column]):
                     context_metadata.update_column(column, sdtype='numerical')
 
-        self._context_synthesizer = GaussianCopulaSynthesizer(
-            context_metadata,
-            enforce_min_max_values=self._context_synthesizer.enforce_min_max_values,
-            enforce_rounding=self._context_synthesizer.enforce_rounding,
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', message=".*The 'SingleTableMetadata' is deprecated.*")
+            self._context_synthesizer = GaussianCopulaSynthesizer(
+                context_metadata,
+                enforce_min_max_values=self._context_synthesizer.enforce_min_max_values,
+                enforce_rounding=self._context_synthesizer.enforce_rounding,
+            )
         context = context.groupby(self._sequence_key).first().reset_index()
         self._context_synthesizer.fit(context)
 
@@ -367,7 +375,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             for column in timeseries_data.columns
             if column
             not in (
-                self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
+                self._sequence_key + self.context_columns +
+                list(self._extra_context_columns.keys())
             )
         ]
 
