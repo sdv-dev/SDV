@@ -110,6 +110,10 @@ class Metadata(MultiTableMetadata):
                 Name of the sequence index column.
         """
         self._validate_table_exists(table_name)
+        if len(self.tables) > 1:
+            warnings.warn(
+                'Sequential modeling will not support multi table models.'
+                ' This metadata contains multiple tables.')
         self.tables[table_name].set_sequence_index(column_name)
 
     def set_sequence_key(self, table_name, column_name):
@@ -122,4 +126,8 @@ class Metadata(MultiTableMetadata):
                 Name (or tuple of names) of the sequence key column(s).
         """
         self._validate_table_exists(table_name)
+        if len(self.tables) > 1:
+            warnings.warn(
+                'Sequential modeling will not support multi table models.'
+                ' This metadata contains multiple tables.')
         self.tables[table_name].set_sequence_key(column_name)
