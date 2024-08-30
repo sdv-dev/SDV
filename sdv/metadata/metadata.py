@@ -70,6 +70,10 @@ class Metadata(MultiTableMetadata):
         else:
             if single_table_name is None:
                 single_table_name = self.DEFAULT_SINGLE_TABLE_NAME
+                warnings.warn(
+                    'Did not assign a table name to single table. '
+                    f'Assigning name: {single_table_name}'
+                )
             self.tables[single_table_name] = SingleTableMetadata.load_from_dict(metadata)
 
     def _get_single_table_name(self):

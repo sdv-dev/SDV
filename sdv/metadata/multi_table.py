@@ -409,6 +409,8 @@ class MultiTableMetadata:
             **kwargs:
                 Any key word arguments that describe metadata for the columns.
         """
+        if not isinstance(column_names, list):
+            raise InvalidMetadataError('Please pass in a list to column_names arg.')
         self._validate_table_exists(table_name)
         table = self.tables.get(table_name)
         table.update_columns(column_names, **kwargs)
@@ -843,6 +845,9 @@ class MultiTableMetadata:
             A warning is being raised if ``datetime_format`` is missing from a column represented
             as ``object`` in the dataframe and its sdtype is ``datetime``.
         """
+        if not isinstance(data, dict):
+            raise InvalidMetadataError('Please pass in a dictionary mapping tables to dataframes.')
+
         errors = []
         errors += self._validate_missing_tables(data)
         errors += self._validate_all_tables(data)
@@ -880,7 +885,7 @@ class MultiTableMetadata:
 
         Args:
             table_name (str):
-                The name of the table to get column names for.s
+                The name of the table to get column names for.
             **kwargs:
                 Metadata keywords to filter on, for example sdtype='id' or pii=True.
 
