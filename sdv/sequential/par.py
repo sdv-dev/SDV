@@ -128,8 +128,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         }
         context_metadata = self._get_context_metadata()
         with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', message=".*The 'SingleTableMetadata' is deprecated.*")
+            warnings.filterwarnings('ignore', message=".*The 'SingleTableMetadata' is deprecated.*")
             self._context_synthesizer = GaussianCopulaSynthesizer(
                 metadata=context_metadata,
                 enforce_min_max_values=enforce_min_max_values,
@@ -343,8 +342,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         context_metadata: SingleTableMetadata = self._get_context_metadata()
         if self.context_columns or self._extra_context_columns:
             context_cols = (
-                self._sequence_key + self.context_columns +
-                list(self._extra_context_columns.keys())
+                self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
             )
             context = transformed[context_cols]
         else:
@@ -361,8 +359,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                     context_metadata.update_column(column, sdtype='numerical')
 
         with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', message=".*The 'SingleTableMetadata' is deprecated.*")
+            warnings.filterwarnings('ignore', message=".*The 'SingleTableMetadata' is deprecated.*")
             self._context_synthesizer = GaussianCopulaSynthesizer(
                 context_metadata,
                 enforce_min_max_values=self._context_synthesizer.enforce_min_max_values,
@@ -380,8 +377,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             for column in timeseries_data.columns
             if column
             not in (
-                self._sequence_key + self.context_columns +
-                list(self._extra_context_columns.keys())
+                self._sequence_key + self.context_columns + list(self._extra_context_columns.keys())
             )
         ]
 
