@@ -1075,9 +1075,7 @@ class TestPARSynthesizer:
 
         # Run and Assert
         PARSynthesizer(metadata)
-        error_msg = re.escape(
-            'Metadata contains more than one table, use a MultiTableSynthesizer instead.'
-        )
+        error_msg = re.escape('PARSynthesizer can only be used with a single table.')
 
         with pytest.raises(InvalidMetadataError, match=error_msg):
             PARSynthesizer(multi_metadata)
