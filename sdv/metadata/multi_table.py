@@ -834,8 +834,8 @@ class MultiTableMetadata:
             * all foreign keys belong to a primay key
 
         Args:
-            data (pd.DataFrame):
-                The data to validate.
+            data (dict):
+                A dictionary of table names to pd.DataFrames.
 
         Raises:
             InvalidDataError:
