@@ -99,3 +99,27 @@ class Metadata(MultiTableMetadata):
             )
 
         return next(iter(self.tables.values()), SingleTableMetadata())
+
+    def set_sequence_index(self, table_name, column_name):
+        """Set the sequence index of a table.
+
+        Args:
+            table_name (str):
+                Name of the table to set the sequence index.
+            column_name (str):
+                Name of the sequence index column.
+        """
+        self._validate_table_exists(table_name)
+        self.tables[table_name].set_sequence_index(column_name)
+
+    def set_sequence_key(self, table_name, column_name):
+        """Set the sequence key of a table.
+
+        Args:
+            table_name (str):
+                Name of the table to set the sequence key.
+            column_name (str, tulple[str]):
+                Name (or tuple of names) of the sequence key column(s).
+        """
+        self._validate_table_exists(table_name)
+        self.tables[table_name].set_sequence_key(column_name)
