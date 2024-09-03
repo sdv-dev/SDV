@@ -3066,6 +3066,7 @@ class TestMultiTableMetadata:
         }
 
     def test_update_columns_no_list_error(self):
+        """Test that ``update_columns`` only takes in list and that an error is thrown."""
         # Setup
         metadata = MultiTableMetadata()
         metadata.add_table('table')
@@ -3077,6 +3078,7 @@ class TestMultiTableMetadata:
             metadata.update_columns('table', 'col1', sdtype='categorical')
 
     def test_validate_data_without_dict(self):
+        """Test that ``validate_data`` only takes in dict and that an error is thrown otherwise."""
         # Setup
         metadata = MultiTableMetadata.load_from_dict({
             'tables': {
