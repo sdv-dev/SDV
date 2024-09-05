@@ -138,7 +138,7 @@ class MultiTableMetadata:
 
         for child in children:
             if child in parents:
-                break
+                continue
 
             parents.add(child)
             self._validate_circular_relationships(
