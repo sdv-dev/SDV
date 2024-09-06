@@ -1,4 +1,5 @@
 """Benchmark for supported data types."""
+
 import contextlib
 import logging
 from copy import deepcopy
@@ -18,25 +19,15 @@ LOGGER = logging.getLogger(__name__)
 SINGLE_COLUMN_PREDEFINED_CONSTRAINTS = {
     'Positive': {
         'constraint_class': 'Positive',
-        'constraint_parameters': {
-            'column_name': '',
-            'strict_boundaries': False
-        }
+        'constraint_parameters': {'column_name': '', 'strict_boundaries': False},
     },
     'Negative': {
         'constraint_class': 'Negative',
-        'constraint_parameters': {
-            'column_name': '',
-            'strict_boundaries': False
-        }
+        'constraint_parameters': {'column_name': '', 'strict_boundaries': False},
     },
     'ScalarInequality': {
         'constraint_class': 'ScalarInequality',
-        'constraint_parameters': {
-            'column_name': '',
-            'relation': '>=',
-            'value': 0
-        }
+        'constraint_parameters': {'column_name': '', 'relation': '>=', 'value': 0},
     },
     'ScalarRange': {
         'constraint_class': 'ScalarRange',
@@ -44,16 +35,16 @@ SINGLE_COLUMN_PREDEFINED_CONSTRAINTS = {
             'column_name': '',
             'low_value': 0,
             'high_value': 1,
-            'strict_boundaries': False
-        }
+            'strict_boundaries': False,
+        },
     },
     'FixedIncrements': {
         'constraint_class': 'FixedIncrements',
         'constraint_parameters': {
             'column_name': '',
             'increment': 1,
-        }
-    }
+        },
+    },
 }
 
 MULTI_COLUMN_PREDEFINED_CONSTRAINTS = {
@@ -61,15 +52,15 @@ MULTI_COLUMN_PREDEFINED_CONSTRAINTS = {
         'constraint_class': 'FixedCombinations',
         'constraint_parameters': {
             'column_names': [],
-        }
+        },
     },
     'Inequality': {
         'constraint_class': 'Inequality',
         'constraint_parameters': {
             'low_column_name': '',
             'high_column_name': '',
-            'strict_boundaries': False
-        }
+            'strict_boundaries': False,
+        },
     },
     'Range': {
         'constraint_class': 'Range',
@@ -77,14 +68,13 @@ MULTI_COLUMN_PREDEFINED_CONSTRAINTS = {
             'low_column_name': '',
             'middle_column_name': '',
             'high_column_name': '',
-            'strict_boundaries': False
-        }
-    }
+            'strict_boundaries': False,
+        },
+    },
 }
 
 
 EXPECTED_METADATA_SDTYPES = {
-
     # Pandas
     'pd.Int8': 'numerical',
     'pd.Int16': 'numerical',
@@ -104,7 +94,6 @@ EXPECTED_METADATA_SDTYPES = {
     'pd.timedelta64': 'datetime',
     'pd.Period': 'datetime',
     'pd.Complex': 'numerical',
-
     # NumPy
     'np.int8': 'numerical',
     'np.int16': 'numerical',
@@ -124,7 +113,7 @@ EXPECTED_METADATA_SDTYPES = {
     'np.object': 'categorical',
     'np.bool': 'categorical',
     'np.string': 'categorical',
-    'np.unicode': 'categorical'
+    'np.unicode': 'categorical',
 }
 
 
@@ -194,25 +183,19 @@ NUMPY_DTYPES = {
         'np.uint64': pd.Series([np.uint64(8), np.uint64(40), np.uint64(184467)], dtype='uint64')
     }),
     'np.float16': pd.DataFrame({
-        'np.float16': pd.Series([
-            np.float16(9.1),
-            np.float16(-9.1),
-            np.float16(65.0)
-        ], dtype='float16')
+        'np.float16': pd.Series(
+            [np.float16(9.1), np.float16(-9.1), np.float16(65.0)], dtype='float16'
+        )
     }),
     'np.float32': pd.DataFrame({
-        'np.float32': pd.Series([
-            np.float32(1.2),
-            np.float32(-1.2),
-            np.float32(3.40)
-        ], dtype='float32')
+        'np.float32': pd.Series(
+            [np.float32(1.2), np.float32(-1.2), np.float32(3.40)], dtype='float32'
+        )
     }),
     'np.float64': pd.DataFrame({
-        'np.float64': pd.Series([
-            np.float64(1.3),
-            np.float64(-11.3),
-            np.float64(1.7)
-        ], dtype='float64')
+        'np.float64': pd.Series(
+            [np.float64(1.3), np.float64(-11.3), np.float64(1.7)], dtype='float64'
+        )
     }),
     'np.complex64': pd.DataFrame({
         'np.complex64': pd.Series(
@@ -233,9 +216,11 @@ NUMPY_DTYPES = {
         'np.object': pd.Series(['object1', 'object2', 'object3'], dtype='object')
     }),
     'np.string': pd.DataFrame({
-        'np.string': pd.Series(
-            [np.string_('string1'), np.string_('string2'), np.string_('string3')]
-        )
+        'np.string': pd.Series([
+            np.string_('string1'),
+            np.string_('string2'),
+            np.string_('string3'),
+        ])
     }),
     'np.unicode': pd.DataFrame({
         'np.unicode': pd.Series(
@@ -510,8 +495,9 @@ def _create_multi_column_constraint_data_and_metadata(constraint, data, dtype, s
     return constraints, data, metadata
 
 
-@pytest.mark.parametrize('constraint_name, constraint',
-                         SINGLE_COLUMN_PREDEFINED_CONSTRAINTS.items())
+@pytest.mark.parametrize(
+    'constraint_name, constraint', SINGLE_COLUMN_PREDEFINED_CONSTRAINTS.items()
+)
 @pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
 def test_fit_and_sample_single_column_constraints(constraint_name, constraint, dtype, data):
     """Test fitting and sampling with single-column constraints for various data types.
@@ -550,10 +536,7 @@ def test_fit_and_sample_single_column_constraints(constraint_name, constraint, d
 
     # Prepare the constraint and data
     constraint, data = _create_single_column_constraint_and_data(
-        deepcopy(constraint),
-        data.copy(),
-        dtype,
-        sdtype
+        deepcopy(constraint), data.copy(), dtype, sdtype
     )
 
     # Initialize results
@@ -624,11 +607,7 @@ def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dt
 
     # Prepare constraints, data required and metadata
     constraints, data, metadata = _create_multi_column_constraint_data_and_metadata(
-        deepcopy(constraint),
-        data.copy(),
-        dtype,
-        sdtype,
-        metadata
+        deepcopy(constraint), data.copy(), dtype, sdtype, metadata
     )
 
     # Initialize results

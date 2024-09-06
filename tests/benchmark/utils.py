@@ -121,10 +121,7 @@ def save_to_gdrive(output_folder, results, output_filename=None):
             data.to_excel(writer, sheet_name=sheet_name, index=False)
             _set_column_width(writer, data, sheet_name)
 
-    file_config = {
-        'title': output_filename,
-        'parents': [{'id': output_folder}]
-    }
+    file_config = {'title': output_filename, 'parents': [{'id': output_folder}]}
     drive = _get_drive_client()
     drive_file = drive.CreateFile(file_config)
     drive_file.content = output
