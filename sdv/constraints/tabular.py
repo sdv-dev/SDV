@@ -36,7 +36,7 @@ import uuid
 import numpy as np
 import pandas as pd
 
-from sdv._utils import _convert_to_timedelta, _create_unique_name, _is_datetime_type
+from sdv._utils import _convert_to_timedelta, _create_unique_name, _is_datetime_type, _is_numerical
 from sdv.constraints.base import Constraint
 from sdv.constraints.errors import (
     AggregateConstraintsError,
@@ -604,7 +604,7 @@ class ScalarInequality(Constraint):
         sdtype = metadata.columns.get(column_name, {}).get('sdtype')
         value = kwargs.get('value')
         if sdtype == 'numerical':
-            if not isinstance(value, (int, float)):
+            if not _is_numerical(value):
                 raise ConstraintMetadataError("'value' must be an int or float.")
 
         elif sdtype == 'datetime':
@@ -632,7 +632,7 @@ class ScalarInequality(Constraint):
         if relation not in ['>', '>=', '<', '<=']:
             raise ValueError('`relation` must be one of the following: `>`, `>=`, `<`, `<=`')
 
-        if not (isinstance(value, (int, float)) or value_is_datetime):
+        if not (_is_numerical(value) or value_is_datetime):
             raise ValueError('`value` must be a number or a string that represents a datetime.')
 
         if value_is_datetime and not isinstance(value, str):
@@ -1071,9 +1071,7 @@ class ScalarRange(Constraint):
         if values_are_datetimes and not values_are_strings:
             raise ValueError('Datetime must be represented as a string.')
 
-        values_are_numerical = bool(
-            isinstance(low_value, (int, float)) and isinstance(high_value, (int, float))
-        )
+        values_are_numerical = bool(_is_numerical(low_value) and _is_numerical(high_value))
         if not (values_are_numerical or values_are_datetimes):
             raise ValueError(
                 '``low_value`` and ``high_value`` must be a number or a string that '
@@ -1092,7 +1090,7 @@ class ScalarRange(Constraint):
         high_value = kwargs.get('high_value')
         low_value = kwargs.get('low_value')
         if sdtype == 'numerical':
-            if not isinstance(high_value, (int, float)) or not isinstance(low_value, (int, float)):
+            if not _is_numerical(high_value) or not _is_numerical(low_value):
                 raise ConstraintMetadataError(
                     "Both 'high_value' and 'low_value' must be ints or floats"
                 )
