@@ -63,6 +63,7 @@ test = [
     'pytest-runner >= 2.11.1',
     'tomli>=2.0.0,<3',
     'pydrive',
+    'pyarrow',
 ]
 pomegranate = ['pomegranate>=0.14.3,<0.15']
 dev = [

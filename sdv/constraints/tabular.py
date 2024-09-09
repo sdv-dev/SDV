@@ -1185,11 +1185,7 @@ class ScalarRange(Constraint):
             self._operator(data, self._high_value),
             pd.isna(self._high_value),
         )
-
-        return np.logical_or(
-            np.logical_and(satisfy_low_bound, satisfy_high_bound),
-            pd.isna(data),
-        )
+        return (satisfy_low_bound & satisfy_high_bound) | pd.isna(data)
 
     def _transform(self, table_data):
         """Transform the table data.
@@ -1248,7 +1244,7 @@ class ScalarRange(Constraint):
             table_data[self._column_name] = data.round().astype(self._dtype)
 
         else:
-            table_data[self._column_name] = data.astype(self._dtype)
+            table_data[self._column_name] = data.astype(self._dtype, errors='ignore')
 
         table_data = table_data.drop(self._transformed_column, axis=1)
         return table_data

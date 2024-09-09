@@ -7,6 +7,7 @@ from functools import partialmethod
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import pytest
 from tqdm import tqdm
 
@@ -42,7 +43,7 @@ SINGLE_COLUMN_PREDEFINED_CONSTRAINTS = {
         'constraint_class': 'FixedIncrements',
         'constraint_parameters': {
             'column_name': '',
-            'increment': 1,
+            'increment_value': 1,
         },
     },
 }
@@ -242,6 +243,73 @@ NUMPY_DTYPES = {
     }),
 }
 
+PYARROW_DTYPES = {
+    'pa.int8': pd.DataFrame({'pa.int8': pd.Series([1, -1, 127], dtype=pd.ArrowDtype(pa.int8()))}),
+    'pa.int16': pd.DataFrame({
+        'pa.int16': pd.Series([2, -2, 32767], dtype=pd.ArrowDtype(pa.int16()))
+    }),
+    'pa.int32': pd.DataFrame({
+        'pa.int32': pd.Series([3, -3, 2147483647], dtype=pd.ArrowDtype(pa.int32()))
+    }),
+    'pa.int64': pd.DataFrame({
+        'pa.int64': pd.Series([4, -4, 9223372036854775807], dtype=pd.ArrowDtype(pa.int64()))
+    }),
+    'pa.uint8': pd.DataFrame({
+        'pa.uint8': pd.Series([5, 10, 255], dtype=pd.ArrowDtype(pa.uint8()))
+    }),
+    'pa.uint16': pd.DataFrame({
+        'pa.uint16': pd.Series([6, 20, 65535], dtype=pd.ArrowDtype(pa.uint16()))
+    }),
+    'pa.uint32': pd.DataFrame({
+        'pa.uint32': pd.Series([7, 30, 4294967295], dtype=pd.ArrowDtype(pa.uint32()))
+    }),
+    'pa.uint64': pd.DataFrame({
+        'pa.uint64': pd.Series([8, 40, 18446744073709551615], dtype=pd.ArrowDtype(pa.uint64()))
+    }),
+    'pa.float32': pd.DataFrame({
+        'pa.float32': pd.Series([1.2, -1.2, 3.40], dtype=pd.ArrowDtype(pa.float32()))
+    }),
+    'pa.float64': pd.DataFrame({
+        'pa.float64': pd.Series([1.3, -11.3, 1.7], dtype=pd.ArrowDtype(pa.float64()))
+    }),
+    'pa.bool': pd.DataFrame({
+        'pa.bool': pd.Series([True, False, True], dtype=pd.ArrowDtype(pa.bool_()))
+    }),
+    'pa.string': pd.DataFrame({
+        'pa.string': pd.Series(['string1', 'string2', 'string3'], dtype=pd.ArrowDtype(pa.string()))
+    }),
+    'pa.date32': pd.DataFrame({
+        'pa.date32': pd.Series(
+            [pd.Timestamp('2023-01-01'), pd.Timestamp('2024-01-01'), pd.Timestamp('2025-01-01')],
+            dtype=pd.ArrowDtype(pa.date32()),
+        )
+    }),
+    'pa.timestamp': pd.DataFrame({
+        'pa.timestamp': pd.Series(
+            [
+                pd.Timestamp('2023-01-01T00:00:00'),
+                pd.Timestamp('2024-01-01T00:00:00'),
+                pd.Timestamp('2025-01-01T00:00:00'),
+            ],
+            dtype=pd.ArrowDtype(pa.timestamp('ms')),
+        )
+    }),
+    'pa.duration': pd.DataFrame({
+        'pa.duration': pd.Series(
+            [pd.Timedelta(days=1), pd.Timedelta(hours=2), pd.Timedelta(minutes=3)],
+            dtype=pd.ArrowDtype(pa.duration('s')),
+        )
+    }),
+    'pa.binary': pd.DataFrame({
+        'pa.binary': pd.Series(
+            [b'binary1', b'binary2', b'binary3'], dtype=pd.ArrowDtype(pa.binary())
+        )
+    }),
+    'pa.utf8': pd.DataFrame({
+        'pa.utf8': pd.Series(['utf8_1', 'utf8_2', 'utf8_3'], dtype=pd.ArrowDtype(pa.utf8()))
+    }),
+}
+
 
 @contextlib.contextmanager
 def prevent_tqdm_output():
@@ -286,6 +354,7 @@ def test_metadata_detection(dtype, data):
     """
     metadata = SingleTableMetadata()
     previous_result = get_previous_result(dtype, 'METADATA_DETECTION')
+    result = False
     try:
         metadata.detect_from_dataframe(data)
         column = metadata.columns.get(dtype)
@@ -455,7 +524,7 @@ def _create_single_column_constraint_and_data(constraint, data, dtype, sdtype):
                 values.append(None)
 
             data[dtype] = pd.Series(values, dtype=_dtype)
-            constraint['constraint_parameters']['increment'] = 10
+            constraint['constraint_parameters']['increment_value'] = 10
 
     return constraint, data
 
