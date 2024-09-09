@@ -126,10 +126,10 @@ class MultiTableMetadata:
                 )
 
     def _validate_circular_relationships(
-        self, parent, children=None, parents=None, child_map=None, errors=None
+        self, parent, children=None, visited=None, child_map=None, errors=None
     ):
         """Validate that there is no circular relationship in the metadata."""
-        parents = set() if parents is None else parents
+        visited = set() if visited is None else visited
         if children is None:
             children = child_map[parent]
 
@@ -137,15 +137,15 @@ class MultiTableMetadata:
             errors.append(parent)
 
         for child in children:
-            if child in parents:
+            if child in visited:
                 continue
 
-            parents.add(child)
+            visited.add(child)
             self._validate_circular_relationships(
                 parent,
                 children=child_map.get(child, set()),
                 child_map=child_map,
-                parents=parents,
+                visited=visited,
                 errors=errors,
             )
 
