@@ -63,13 +63,19 @@ class Metadata(MultiTableMetadata):
         Args:
             data (dict):
                 Dictionary of table names to dataframes.
-        
+
         Returns:
             Metadata:
                 A new metadata object with the sdtypes detected from the data.
         """
-        metadata = MultiTableMetadata()
-        metadata.detect_from_dataframes(data)
+        if not data or not all(isinstance(df, pd.DataFrame) for df in data.values()):
+            raise ValueError('The provided dictionary must contain only pandas DataFrame objects.')
+
+        metadata = Metadata()
+        for table_name, dataframe in data.items():
+            metadata.detect_table_from_dataframe(table_name, dataframe)
+
+        metadata._detect_relationships(data)
         return metadata
 
     @classmethod

@@ -1286,8 +1286,7 @@ class TestHMASynthesizer:
         assert len(captured_warnings) == 0
 
         # Run 2
-        metadata_detect = Metadata()
-        metadata_detect.detect_from_dataframes(data)
+        metadata_detect = Metadata.detect_from_dataframes(data)
 
         metadata_detect.relationships = metadata.relationships
         for table_name, table_metadata in metadata.tables.items():
@@ -1326,8 +1325,7 @@ class TestHMASynthesizer:
         """
         # Setup
         data, metadata = download_demo('multi_table', 'got_families')
-        metadata_detect = Metadata()
-        metadata_detect.detect_from_dataframes(data)
+        metadata_detect = Metadata.detect_from_dataframes(data)
 
         metadata_detect.relationships = metadata.relationships
         for table_name, table_metadata in metadata.tables.items():
@@ -1456,8 +1454,7 @@ class TestHMASynthesizer:
 
         tables_dict = {'people': table1, 'company': table2}
 
-        metadata = Metadata()
-        metadata.detect_from_dataframes(tables_dict)
+        metadata = Metadata.detect_from_dataframes(tables_dict)
 
         # Run
         synth = HMASynthesizer(metadata)
@@ -1890,8 +1887,7 @@ def test_detect_from_dataframe_numerical_col():
         child_table_name='child_data',
     )
 
-    test_metadata = Metadata()
-    test_metadata.detect_from_dataframes(data)
+    test_metadata = Metadata.detect_from_dataframes(data)
     test_metadata.update_column('parent_data', '1', sdtype='id')
     test_metadata.update_column('child_data', '3', sdtype='id')
     test_metadata.update_column('child_data', '4', sdtype='id')
@@ -1914,8 +1910,7 @@ def test_detect_from_dataframe_numerical_col():
     assert sample['parent_data'].columns.tolist() == data['parent_data'].columns.tolist()
     assert sample['child_data'].columns.tolist() == data['child_data'].columns.tolist()
 
-    test_metadata = Metadata()
-    test_metadata.detect_from_dataframes(data)
+    test_metadata = Metadata.detect_from_dataframes(data)
 
 
 def test_table_name_logging(caplog):
@@ -1930,8 +1925,7 @@ def test_table_name_logging(caplog):
         'parent_data': parent_data,
         'child_data': child_data,
     }
-    metadata = Metadata()
-    metadata.detect_from_dataframes(data)
+    metadata = Metadata.detect_from_dataframes(data)
     instance = HMASynthesizer(metadata)
 
     # Run
@@ -2009,8 +2003,7 @@ def test_hma_synthesizer_with_fixed_combinations():
     }
 
     # Creating metadata for the dataset
-    metadata = Metadata()
-    metadata.detect_from_dataframes(data)
+    metadata = Metadata.detect_from_dataframes(data)
 
     metadata.update_column('users', 'user_id', sdtype='id')
     metadata.update_column('records', 'record_id', sdtype='id')
@@ -2059,8 +2052,7 @@ def test_fit_int_primary_key_regex_includes_zero(regex):
         'parent_data': parent_data,
         'child_data': child_data,
     }
-    metadata = Metadata()
-    metadata.detect_from_dataframes(data)
+    metadata = Metadata.detect_from_dataframes(data)
     metadata.update_column('parent_data', 'parent_id', sdtype='id', regex_format=regex)
     metadata.set_primary_key('parent_data', 'parent_id')
 

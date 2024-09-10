@@ -313,10 +313,9 @@ def test_config_creation_doesnt_raise_error():
         'address_col': ['223 Williams Rd', '75 Waltham St', '77 Mass Ave'],
         'numerical_col': [1, 2, 3],
     })
-    test_metadata = Metadata()
 
     # Run
-    test_metadata.detect_from_dataframes({'table': test_data})
+    test_metadata = Metadata.detect_from_dataframes({'table': test_data})
     test_metadata.update_column(
         table_name='table', column_name='address_col', sdtype='address', pii=False
     )
@@ -335,8 +334,7 @@ def test_transformers_correctly_auto_assigned():
         'categorical_col': ['a', 'b', 'a'],
     })
 
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
     metadata.update_column(
         table_name='table', column_name='primary_key', sdtype='id', regex_format='user-[0-9]{3}'
     )
@@ -425,8 +423,7 @@ def test_auto_assign_transformers_and_update_with_pii():
         }
     )
 
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
 
     # Run
     metadata.update_column(table_name='table', column_name='id', sdtype='first_name')
@@ -458,8 +455,7 @@ def test_refitting_a_model():
         }
     )
 
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
     metadata.update_column(table_name='table', column_name='name', sdtype='name')
     metadata.update_column('table', 'id', sdtype='id')
     metadata.set_primary_key('table', 'id')
@@ -619,8 +615,7 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
     assert len(captured_warnings) == 0
 
     # Run 2
-    metadata_detect = Metadata()
-    metadata_detect.detect_from_dataframes({'mock_table': data})
+    metadata_detect = Metadata.detect_from_dataframes({'mock_table': data})
     file_name = tmp_path / 'singletable.json'
     metadata_detect.save_to_json(file_name)
     with warnings.catch_warnings(record=True) as captured_warnings:
@@ -737,8 +732,7 @@ def test_fit_raises_version_error():
         'col 2': [4, 5, 6],
         'col 3': ['a', 'b', 'c'],
     })
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
     instance = BaseSingleTableSynthesizer(metadata)
     instance._fitted_sdv_version = '1.0.0'
 
@@ -813,10 +807,9 @@ def test_detect_from_dataframe_numerical_col(synthesizer_class):
         2: [4, 5, 6],
         3: ['a', 'b', 'c'],
     })
-    metadata = Metadata()
 
     # Run
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
     instance = synthesizer_class(metadata)
     instance.fit(data)
     sample = instance.sample(5)

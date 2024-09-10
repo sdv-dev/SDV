@@ -277,8 +277,7 @@ def test_update_transformers_with_id_generator():
     sample_num = 20
     data = pd.DataFrame({'user_id': list(range(4)), 'user_cat': ['a', 'b', 'c', 'd']})
 
-    stm = Metadata()
-    stm.detect_from_dataframes({'table': data})
+    stm = Metadata.detect_from_dataframes({'table': data})
     stm.update_column('table', 'user_id', sdtype='id')
     stm.set_primary_key('table', 'user_id')
 
@@ -406,8 +405,7 @@ def test_categorical_column_with_numbers():
         'numerical_col': np.random.rand(20),
     })
 
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
 
@@ -435,8 +433,7 @@ def test_unknown_sdtype():
         'numerical_col': np.random.rand(3),
     })
 
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
     metadata.update_column('table', 'unknown', sdtype='unknown')
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
