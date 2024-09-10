@@ -54,6 +54,25 @@ class Metadata(MultiTableMetadata):
         return instance
 
     @classmethod
+    def detect_from_dataframes(cls, data):
+        """Detect the metadata for all tables in a dictionary of dataframes.
+
+        This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
+        All data column names are converted to strings.
+
+        Args:
+            data (dict):
+                Dictionary of table names to dataframes.
+        
+        Returns:
+            Metadata:
+                A new metadata object with the sdtypes detected from the data.
+        """
+        metadata = MultiTableMetadata()
+        metadata.detect_from_dataframes(data)
+        return metadata
+
+    @classmethod
     def detect_from_dataframe(cls, data, table_name=DEFAULT_SINGLE_TABLE_NAME):
         """Detect the metadata for a DataFrame.
 
