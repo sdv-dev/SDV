@@ -368,7 +368,7 @@ def test_metadata_detection(dtype, data):
         assert result == previous_result, assertion_message
 
 
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
+@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
 def test_metadata_validate_data(dtype, data):
     """Test the validation of data using `SingleTableMetadata`.
 
@@ -406,7 +406,7 @@ def test_metadata_validate_data(dtype, data):
         assert result == previous_result, assertion_message
 
 
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
+@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
 def test_fit_and_sample_synthesizer(dtype, data):
     """Test fitting and sampling a synthesizer for different data types.
 
@@ -567,7 +567,7 @@ def _create_multi_column_constraint_data_and_metadata(constraint, data, dtype, s
 @pytest.mark.parametrize(
     'constraint_name, constraint', SINGLE_COLUMN_PREDEFINED_CONSTRAINTS.items()
 )
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
+@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
 def test_fit_and_sample_single_column_constraints(constraint_name, constraint, dtype, data):
     """Test fitting and sampling with single-column constraints for various data types.
 
@@ -638,7 +638,7 @@ def test_fit_and_sample_single_column_constraints(constraint_name, constraint, d
 
 
 @pytest.mark.parametrize('constraint_name, constraint', MULTI_COLUMN_PREDEFINED_CONSTRAINTS.items())
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
+@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
 def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dtype, data):
     """Test fitting and sampling with multi-column constraints for various data types.
 
