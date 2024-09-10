@@ -763,6 +763,7 @@ class TestBaseMultiTableSynthesizer:
                 'id_upravna_enota': np.arange(10),
             }),
         }
+        instance._transform_helper = Mock(return_value=data)
 
         synth_nesreca = Mock()
         synth_oseba = Mock()
@@ -782,6 +783,7 @@ class TestBaseMultiTableSynthesizer:
             'oseba': synth_oseba._preprocess.return_value,
             'upravna_enota': synth_upravna_enota._preprocess.return_value,
         }
+        instance._transform_helper.assert_called_once_with(data)
         instance.validate.assert_called_once_with(data)
         assert instance.metadata._get_all_foreign_keys.call_args_list == [
             call('nesreca'),
@@ -1212,6 +1214,7 @@ class TestBaseMultiTableSynthesizer:
             'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
         }
         instance._sample = Mock(return_value=data)
+        instance._reverse_transform_helper = Mock(return_value=data)
 
         synth_id = 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         instance._synthesizer_id = synth_id
@@ -1222,6 +1225,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Assert
         instance._sample.assert_called_once_with(scale=1.5)
+        instance._reverse_transform_helper.assert_called_once_with(data)
         assert caplog.messages[0] == str({
             'EVENT': 'Sample',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',

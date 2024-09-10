@@ -340,6 +340,10 @@ class BaseMultiTableSynthesizer:
             data[table] = dataframe
         return list_of_changed_tables
 
+    def _transform_helper(self, data):
+        """Stub method for transforming data patterns."""
+        return data
+
     def preprocess(self, data):
         """Transform the raw data to numerical space.
 
@@ -353,6 +357,7 @@ class BaseMultiTableSynthesizer:
         """
         list_of_changed_tables = self._store_and_convert_original_cols(data)
 
+        data = self._transform_helper(data)
         self.validate(data)
         if self._fitted:
             warnings.warn(
@@ -471,6 +476,10 @@ class BaseMultiTableSynthesizer:
     def _sample(self, scale):
         raise NotImplementedError()
 
+    def _reverse_transform_helper(self, sampled_data):
+        """Stub method for reverse transforming data patterns."""
+        return sampled_data
+
     def sample(self, scale=1.0):
         """Generate synthetic data for the entire dataset.
 
@@ -495,6 +504,7 @@ class BaseMultiTableSynthesizer:
 
         with self._set_temp_numpy_seed(), disable_single_table_logger():
             sampled_data = self._sample(scale=scale)
+            sampled_data = self._reverse_transform_helper(sampled_data)
 
         total_rows = 0
         total_columns = 0
