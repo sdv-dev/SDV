@@ -1,4 +1,4 @@
-from unittest.mock import Mock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
@@ -564,6 +564,16 @@ class TestMetadataClass:
             'hotels', hotels_table
         )
         mock_metadata.return_value._detect_relationships.assert_called_once_with(data)
+
+    def test_detect_from_dataframes_bad_input(self):
+        """Test that an error is raised if the dictionary contains something other than DataFrames."""
+        # Setup
+        data = {'guests': Mock(), 'hotels': Mock()}
+
+        # Run and Assert
+        expected_message = 'The provided dictionary must contain only pandas DataFrame objects.'
+        with pytest.raises(ValueError, match=expected_message):
+            Metadata.detect_from_dataframes(data)
 
     @patch('sdv.metadata.metadata.Metadata')
     def test_detect_from_dataframe(self, mock_metadata):
