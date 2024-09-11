@@ -25,8 +25,8 @@ class BaseLocalHandler:
                 Dictionary of table names to dataframes.
 
         Returns:
-            MultiTableMetadata:
-                An ``sdv.metadata.MultiTableMetadata`` object with the detected metadata
+            Metadata:
+                An ``sdv.metadata.Metadata`` object with the detected metadata
                 properties from the data.
         """
         metadata = Metadata()
