@@ -566,7 +566,10 @@ class TestMetadataClass:
         mock_metadata.return_value._detect_relationships.assert_called_once_with(data)
 
     def test_detect_from_dataframes_bad_input(self):
-        """Test that an error is raised if the dictionary contains something other than DataFrames."""
+        """Test that an error is raised if the dictionary contains something other than DataFrames.
+
+        If the data contains values that aren't pandas.DataFrames, it should error.
+        """
         # Setup
         data = {'guests': Mock(), 'hotels': Mock()}
 
