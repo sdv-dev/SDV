@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, Mock, patch
 
 import pandas as pd
 import pytest
@@ -538,6 +538,32 @@ class TestMetadataClass:
         # Run and Assert
         metadata.validate_data(data)
         assert metadata.METADATA_SPEC_VERSION == 'V1'
+
+    @patch('sdv.metadata.metadata.Metadata')
+    def test_detect_from_dataframes(self, mock_metadata):
+        """Test ``detect_from_dataframes``.
+
+        Expected to call ``detect_table_from_dataframe`` for each table name and dataframe
+        in the input.
+        """
+        # Setup
+        mock_metadata.detect_table_from_dataframe = Mock()
+        mock_metadata._detect_relationships = Mock()
+        guests_table = pd.DataFrame()
+        hotels_table = pd.DataFrame()
+        data = {'guests': guests_table, 'hotels': hotels_table}
+
+        # Run
+        Metadata.detect_from_dataframes(data)
+
+        # Assert
+        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+            'guests', guests_table
+        )
+        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+            'hotels', hotels_table
+        )
+        mock_metadata.return_value._detect_relationships.assert_called_once_with(data)
 
     @patch('sdv.metadata.metadata.Metadata')
     def test_detect_from_dataframe(self, mock_metadata):
