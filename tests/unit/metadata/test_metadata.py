@@ -1,9 +1,10 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
+import pandas as pd
 import pytest
 
 from sdv.metadata.metadata import Metadata
-from tests.utils import get_multi_table_data, get_multi_table_metadata
+from tests.utils import DataFrameMatcher, get_multi_table_data, get_multi_table_metadata
 
 
 class TestMetadataClass:
@@ -537,3 +538,29 @@ class TestMetadataClass:
         # Run and Assert
         metadata.validate_data(data)
         assert metadata.METADATA_SPEC_VERSION == 'V1'
+
+    @patch('sdv.metadata.metadata.Metadata')
+    def test_detect_from_dataframe(self, mock_metadata):
+        """Test that the method calls the detection method and returns the metadata.
+
+        Expected to call ``detect_table_from_dataframe`` for the dataframe.
+        """
+        # Setup
+        mock_metadata.detect_table_from_dataframe = Mock()
+        data = pd.DataFrame()
+
+        # Run
+        metadata = Metadata.detect_from_dataframe(data)
+
+        # Assert
+        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+            Metadata.DEFAULT_SINGLE_TABLE_NAME, DataFrameMatcher(data)
+        )
+        assert metadata == mock_metadata.return_value
+
+    def test_detect_from_dataframe_raises_error_if_not_dataframe(self):
+        """Test that the method raises an error if data isn't a DataFrame."""
+        # Run and assert
+        expected_message = 'The provided data must be a pandas DataFrame object.'
+        with pytest.raises(ValueError, match=expected_message):
+            Metadata.detect_from_dataframe(Mock())
