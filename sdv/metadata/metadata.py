@@ -32,6 +32,14 @@ class Metadata(MultiTableMetadata):
             A ``Metadata`` instance.
         """
         metadata = read_json(filepath)
+        if metadata.get('METADATA_SPEC_VERSION') == 'SINGLE_TABLE_V1':
+            single_table_name = single_table_name or cls.DEFAULT_SINGLE_TABLE_NAME
+            warnings.warn(
+                'You are loading an older SingleTableMetadata object. This will be converted '
+                f"into the new Metadata object with a placeholder table name ('{single_table_name}')."
+                ' Please save this new object for future usage.'
+            )
+
         return cls.load_from_dict(metadata, single_table_name)
 
     @classmethod
