@@ -32,10 +32,8 @@ def test_detect_from_dataframes_multi_table():
     # Setup
     real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
 
-    metadata = Metadata()
-
     # Run
-    metadata.detect_from_dataframes(real_data)
+    metadata = Metadata.detect_from_dataframes(real_data)
 
     # Assert
     metadata.update_column(
@@ -90,8 +88,7 @@ def test_detect_from_dataframes_single_table():
     # Setup
     data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
 
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table_1': data['hotels']})
+    metadata = Metadata.detect_from_dataframes({'table_1': data['hotels']})
 
     # Run
     metadata.validate()

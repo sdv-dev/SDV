@@ -474,8 +474,7 @@ class TestGaussianCopulaSynthesizer:
         """
         # Setup
         data = pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})
-        stm = Metadata()
-        stm.detect_from_dataframes({'table': data})
+        stm = Metadata.detect_from_dataframes({'table': data})
         gcs = GaussianCopulaSynthesizer(stm, numerical_distributions={'one': 'uniform'})
         gcs.fit(data)
 

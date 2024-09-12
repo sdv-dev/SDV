@@ -540,6 +540,46 @@ class TestMetadataClass:
         assert metadata.METADATA_SPEC_VERSION == 'V1'
 
     @patch('sdv.metadata.metadata.Metadata')
+    def test_detect_from_dataframes(self, mock_metadata):
+        """Test ``detect_from_dataframes``.
+
+        Expected to call ``detect_table_from_dataframe`` for each table name and dataframe
+        in the input.
+        """
+        # Setup
+        mock_metadata.detect_table_from_dataframe = Mock()
+        mock_metadata._detect_relationships = Mock()
+        guests_table = pd.DataFrame()
+        hotels_table = pd.DataFrame()
+        data = {'guests': guests_table, 'hotels': hotels_table}
+
+        # Run
+        metadata = Metadata.detect_from_dataframes(data)
+
+        # Assert
+        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+            'guests', guests_table
+        )
+        mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
+            'hotels', hotels_table
+        )
+        mock_metadata.return_value._detect_relationships.assert_called_once_with(data)
+        assert metadata == mock_metadata.return_value
+
+    def test_detect_from_dataframes_bad_input(self):
+        """Test that an error is raised if the dictionary contains something other than DataFrames.
+
+        If the data contains values that aren't pandas.DataFrames, it should error.
+        """
+        # Setup
+        data = {'guests': Mock(), 'hotels': Mock()}
+
+        # Run and Assert
+        expected_message = 'The provided dictionary must contain only pandas DataFrame objects.'
+        with pytest.raises(ValueError, match=expected_message):
+            Metadata.detect_from_dataframes(data)
+
+    @patch('sdv.metadata.metadata.Metadata')
     def test_detect_from_dataframe(self, mock_metadata):
         """Test that the method calls the detection method and returns the metadata.
 
