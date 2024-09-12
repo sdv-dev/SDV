@@ -35,8 +35,8 @@ class Metadata(MultiTableMetadata):
         if metadata.get('METADATA_SPEC_VERSION') == 'SINGLE_TABLE_V1':
             single_table_name = single_table_name or cls.DEFAULT_SINGLE_TABLE_NAME
             warnings.warn(
-                'You are loading an older SingleTableMetadata object. This will be converted '
-                f"into the new Metadata object with a placeholder table name ('{single_table_name}')."
+                'You are loading an older SingleTableMetadata object. This will be converted into'
+                f" the new Metadata object with a placeholder table name ('{single_table_name}')."
                 ' Please save this new object for future usage.'
             )
 

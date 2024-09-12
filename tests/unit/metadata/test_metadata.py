@@ -1,5 +1,5 @@
 import re
-from unittest.mock import call, Mock, patch
+from unittest.mock import Mock, call, patch
 
 import pandas as pd
 import pytest
@@ -122,7 +122,9 @@ class TestMetadataClass:
         )
 
         expected_warning_with_table_name = re.escape(warning_message.format('filepath'))
-        expected_warning_without_table_name = re.escape(warning_message.format('default_table_name'))
+        expected_warning_without_table_name = re.escape(
+            warning_message.format('default_table_name')
+        )
 
         # Run
         with pytest.warns(UserWarning, match=expected_warning_with_table_name):
