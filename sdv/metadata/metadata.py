@@ -184,3 +184,25 @@ class Metadata(MultiTableMetadata):
         """
         self._validate_table_exists(table_name)
         self.tables[table_name].set_sequence_key(column_name)
+
+    def validate_table(self, data, table_name=None):
+        """Validate a table against the metadata.
+
+        Args:
+            data (pandas.DataFrame):
+                Data to validate.
+            table_name (str):
+                Name of the table to validate.
+        """
+        if table_name is None:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                table_name = self._get_single_table_name()
+
+        if table_name is None:
+            raise InvalidMetadataError(
+                'Metadata contains more than one table, please specify the `table_name` '
+                'to validate.'
+            )
+
+        return self.validate_data({table_name: data})
