@@ -2,6 +2,8 @@
 
 import warnings
 
+import pandas as pd
+
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -50,6 +52,28 @@ class Metadata(MultiTableMetadata):
         instance = cls()
         instance._set_metadata_dict(metadata_dict, single_table_name)
         return instance
+
+    @classmethod
+    def detect_from_dataframe(cls, data, table_name=DEFAULT_SINGLE_TABLE_NAME):
+        """Detect the metadata for a DataFrame.
+
+        This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``.
+        All data column names are converted to strings.
+
+        Args:
+            data (pandas.DataFrame):
+                Dictionary of table names to dataframes.
+
+        Returns:
+            Metadata:
+                A new metadata object with the sdtypes detected from the data.
+        """
+        if not isinstance(data, pd.DataFrame):
+            raise ValueError('The provided data must be a pandas DataFrame object.')
+
+        metadata = Metadata()
+        metadata.detect_table_from_dataframe(table_name, data)
+        return metadata
 
     def _set_metadata_dict(self, metadata, single_table_name=None):
         """Set a ``metadata`` dictionary to the current instance.

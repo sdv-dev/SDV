@@ -85,7 +85,7 @@ def test_detect_from_dataframes_multi_table():
     assert metadata.to_dict() == expected_metadata
 
 
-def test_detect_from_data_frames_single_table():
+def test_detect_from_dataframes_single_table():
     """Test the ``detect_from_dataframes`` method works with a single table."""
     # Setup
     data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
@@ -101,6 +101,36 @@ def test_detect_from_data_frames_single_table():
         'METADATA_SPEC_VERSION': 'V1',
         'tables': {
             'table_1': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'id'},
+                    'city': {'sdtype': 'city', 'pii': True},
+                    'state': {'sdtype': 'administrative_unit', 'pii': True},
+                    'rating': {'sdtype': 'numerical'},
+                    'classification': {'sdtype': 'unknown', 'pii': True},
+                },
+                'primary_key': 'hotel_id',
+            }
+        },
+        'relationships': [],
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_from_dataframe():
+    """Test that a single table can be detected as a DataFrame."""
+    # Setup
+    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+
+    metadata = Metadata.detect_from_dataframe(data['hotels'])
+
+    # Run
+    metadata.validate()
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            DEFAULT_TABLE_NAME: {
                 'columns': {
                     'hotel_id': {'sdtype': 'id'},
                     'city': {'sdtype': 'city', 'pii': True},
