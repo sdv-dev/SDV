@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch
+import re
+from unittest.mock import call, Mock, patch
 
 import pandas as pd
 import pytest
@@ -94,17 +95,12 @@ class TestMetadataClass:
         with pytest.raises(ValueError, match=error_msg):
             Metadata.load_from_json('filepath.json')
 
-    @patch('sdv.metadata.utils.Path')
-    @patch('sdv.metadata.utils.json')
-    def test_load_from_json_single_table(self, mock_json, mock_path):
-        """Test the ``load_from_json`` method.
-
-        Test that ``load_from_json`` function creates an instance with the contents returned by the
-        ``json`` load function when passing in a single table metadata json.
+    @patch('sdv.metadata.metadata.read_json')
+    def test_load_from_json_single_table(self, mock_read_json):
+        """Test the ``load_from_json`` method for single table metadata.
 
         Mock:
-            - Mock the ``Path`` library in order to return ``True``.
-            - Mock the ``json`` library in order to use a custom return.
+            - Mock the ``read_json`` function in order to return a custom json.
 
         Input:
             - String representing a filepath.
@@ -114,26 +110,40 @@ class TestMetadataClass:
                 file (``json.load`` return value)
         """
         # Setup
-        instance = Metadata()
-        mock_path.return_value.exists.return_value = True
-        mock_path.return_value.name = 'filepath.json'
-        mock_json.load.return_value = {
+        mock_read_json.return_value = {
             'columns': {'animals': {'type': 'categorical'}},
             'primary_key': 'animals',
             'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
         }
+        warning_message = (
+            'You are loading an older SingleTableMetadata object. This will be converted'
+            " into the new Metadata object with a placeholder table name ('{}')."
+            ' Please save this new object for future usage.'
+        )
+
+        expected_warning_with_table_name = re.escape(warning_message.format('filepath'))
+        expected_warning_without_table_name = re.escape(warning_message.format('default_table_name'))
 
         # Run
-        instance = Metadata.load_from_json('filepath.json', 'filepath')
+        with pytest.warns(UserWarning, match=expected_warning_with_table_name):
+            instance_with_table_name = Metadata.load_from_json('filepath.json', 'filepath')
+        with pytest.warns(UserWarning, match=expected_warning_without_table_name):
+            instance_without_table_name = Metadata.load_from_json('filepath.json')
 
         # Assert
-        assert list(instance.tables.keys()) == ['filepath']
-        assert instance.tables['filepath'].columns == {'animals': {'type': 'categorical'}}
-        assert instance.tables['filepath'].primary_key == 'animals'
-        assert instance.tables['filepath'].sequence_key is None
-        assert instance.tables['filepath'].alternate_keys == []
-        assert instance.tables['filepath'].sequence_index is None
-        assert instance.tables['filepath']._version == 'SINGLE_TABLE_V1'
+        mock_read_json.assert_has_calls([call('filepath.json'), call('filepath.json')])
+        table_name_to_instance = {
+            'filepath': instance_with_table_name,
+            'default_table_name': instance_without_table_name,
+        }
+        for table_name, instance in table_name_to_instance.items():
+            assert list(instance.tables.keys()) == [table_name]
+            assert instance.tables[table_name].columns == {'animals': {'type': 'categorical'}}
+            assert instance.tables[table_name].primary_key == 'animals'
+            assert instance.tables[table_name].sequence_key is None
+            assert instance.tables[table_name].alternate_keys == []
+            assert instance.tables[table_name].sequence_index is None
+            assert instance.tables[table_name]._version == 'SINGLE_TABLE_V1'
 
     @patch('sdv.metadata.utils.Path')
     @patch('sdv.metadata.utils.json')
