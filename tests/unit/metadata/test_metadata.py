@@ -554,7 +554,7 @@ class TestMetadataClass:
         data = {'guests': guests_table, 'hotels': hotels_table}
 
         # Run
-        Metadata.detect_from_dataframes(data)
+        metadata = Metadata.detect_from_dataframes(data)
 
         # Assert
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
@@ -564,6 +564,7 @@ class TestMetadataClass:
             'hotels', hotels_table
         )
         mock_metadata.return_value._detect_relationships.assert_called_once_with(data)
+        assert metadata == mock_metadata.return_value
 
     def test_detect_from_dataframes_bad_input(self):
         """Test that an error is raised if the dictionary contains something other than DataFrames.
