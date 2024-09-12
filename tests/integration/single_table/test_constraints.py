@@ -339,8 +339,7 @@ def test_custom_constraints_from_file(tmpdir):
         'categorical_col': ['a', 'b', 'a'],
     })
 
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
     metadata.update_column(table_name='table', column_name='pii_col', sdtype='address', pii=True)
     synthesizer = GaussianCopulaSynthesizer(
         metadata, enforce_min_max_values=False, enforce_rounding=False
@@ -383,8 +382,7 @@ def test_custom_constraints_from_object(tmpdir):
         'categorical_col': ['a', 'b', 'a'],
     })
 
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
     metadata.update_column(table_name='table', column_name='pii_col', sdtype='address', pii=True)
     synthesizer = GaussianCopulaSynthesizer(
         metadata, enforce_min_max_values=False, enforce_rounding=False
@@ -816,8 +814,7 @@ def test_custom_constraint_with_key():
         'number': ['1', '2', '3'],
         'other': [7, 8, 9],
     })
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
     metadata.update_column('table', 'key', sdtype='id', regex_format=r'\w_\d')
     metadata.set_primary_key('table', 'key')
     synth = GaussianCopulaSynthesizer(metadata)

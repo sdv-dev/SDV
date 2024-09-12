@@ -29,8 +29,7 @@ class BaseLocalHandler:
                 An ``sdv.metadata.Metadata`` object with the detected metadata
                 properties from the data.
         """
-        metadata = Metadata()
-        metadata.detect_from_dataframes(data)
+        metadata = Metadata.detect_from_dataframes(data)
         return metadata
 
     def read(self):

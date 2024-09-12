@@ -156,8 +156,7 @@ class TestDataProcessor:
         """
         # Load metadata and data
         data, _ = download_demo('single_table', 'adult')
-        adult_metadata = Metadata()
-        adult_metadata.detect_from_dataframes({'adult': data})
+        adult_metadata = Metadata.detect_from_dataframes({'adult': data})
 
         # Add primary key field
         adult_metadata.add_column('adult', 'id', sdtype='id')
@@ -196,8 +195,7 @@ class TestDataProcessor:
         # Load metadata and data
         data, _ = download_demo('single_table', 'adult')
         data['fnlwgt'] = data['fnlwgt'].astype(str)
-        adult_metadata = Metadata()
-        adult_metadata.detect_from_dataframes({'adult': data})
+        adult_metadata = Metadata.detect_from_dataframes({'adult': data})
 
         # Add primary key field
         adult_metadata.add_column('adult', 'id', sdtype='id')

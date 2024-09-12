@@ -21,8 +21,7 @@ def _get_par_data_and_metadata():
         'entity': [1, 1, 2, 2],
         'context': ['a', 'a', 'b', 'b'],
     })
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
     metadata.update_column('table', 'entity', sdtype='id')
     metadata.set_sequence_key('table', 'entity')
     metadata.set_sequence_index('table', 'date')
@@ -34,8 +33,7 @@ def test_par():
     # Setup
     data = load_demo()
     data['date'] = pd.to_datetime(data['date'])
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
     metadata.update_column('table', 'store_id', sdtype='id')
     metadata.set_sequence_key('table', 'store_id')
     metadata.set_sequence_index('table', 'date')
@@ -68,8 +66,7 @@ def test_column_after_date_simple():
         'date': [date, date],
         'col2': ['hello', 'world'],
     })
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
     metadata.update_column('table', 'col', sdtype='id')
     metadata.set_sequence_key('table', 'col')
     metadata.set_sequence_index('table', 'date')
@@ -348,8 +345,7 @@ def test_par_unique_sequence_index_with_enforce_min_max():
     test_df[['visits', 'pre_date']] = test_df[['visits', 'pre_date']].apply(
         pd.to_datetime, format='%Y-%m-%d', errors='coerce'
     )
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': test_df})
+    metadata = Metadata.detect_from_dataframes({'table': test_df})
     metadata.update_column(table_name='table', column_name='s_key', sdtype='id')
     metadata.set_sequence_key('table', 's_key')
     metadata.set_sequence_index('table', 'visits')
