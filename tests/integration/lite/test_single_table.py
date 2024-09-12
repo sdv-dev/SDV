@@ -12,8 +12,7 @@ def test_sample():
     data = pd.DataFrame({'a': [1, 2, 3, np.nan]})
 
     # Run
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'adult': data})
+    metadata = Metadata.detect_from_dataframes({'adult': data})
     preset = SingleTablePreset(metadata, name='FAST_ML')
     preset.fit(data)
     samples = preset.sample(num_rows=10, max_tries_per_batch=20, batch_size=5)
@@ -29,8 +28,7 @@ def test_sample_with_constraints():
     data = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
 
     # Run
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
     preset = SingleTablePreset(metadata, name='FAST_ML')
     constraints = [
         {
@@ -57,8 +55,7 @@ def test_warnings_are_shown():
     data = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
 
     # Run
-    metadata = Metadata()
-    metadata.detect_from_dataframes({'table': data})
+    metadata = Metadata.detect_from_dataframes({'table': data})
 
     with pytest.warns(FutureWarning, match=warn_message):
         preset = SingleTablePreset(metadata, name='FAST_ML')
