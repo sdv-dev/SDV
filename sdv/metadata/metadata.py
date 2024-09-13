@@ -199,7 +199,7 @@ class Metadata(MultiTableMetadata):
                 warnings.simplefilter('ignore')
                 table_name = self._get_single_table_name()
 
-        if table_name is None:
+        if not table_name:
             raise InvalidMetadataError(
                 'Metadata contains more than one table, please specify the `table_name` '
                 'to validate.'
