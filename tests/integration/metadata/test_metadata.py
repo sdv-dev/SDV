@@ -27,6 +27,41 @@ def test_metadata():
     assert instance.relationships == []
 
 
+def test_load_from_json_single_table_metadata(tmp_path):
+    """Test the ``load_from_json`` method with a single table metadata."""
+    # Setup
+    old_metadata = SingleTableMetadata.load_from_dict({
+        'columns': {
+            'column_1': {'sdtype': 'numerical'},
+            'column_2': {'sdtype': 'categorical'},
+        },
+    })
+    old_metadata.save_to_json(tmp_path / 'metadata.json')
+    expected_warning = re.escape(
+        'You are loading an older SingleTableMetadata object. This will be converted '
+        f"into the new Metadata object with a placeholder table name ('{DEFAULT_TABLE_NAME}')."
+        ' Please save this new object for future usage.'
+    )
+
+    # Run
+    with pytest.warns(UserWarning, match=expected_warning):
+        metadata = Metadata.load_from_json(tmp_path / 'metadata.json')
+
+    # Assert
+    assert metadata.to_dict() == {
+        'tables': {
+            DEFAULT_TABLE_NAME: {
+                'columns': {
+                    'column_1': {'sdtype': 'numerical'},
+                    'column_2': {'sdtype': 'categorical'},
+                },
+            },
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+
+
 def test_detect_from_dataframes_multi_table():
     """Test the ``detect_from_dataframes`` method works with multi-table."""
     # Setup
