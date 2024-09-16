@@ -7,13 +7,15 @@ from functools import partialmethod
 
 import numpy as np
 import pandas as pd
-import pyarrow as pa
 import pytest
 from tqdm import tqdm
 
 from sdv.metadata import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
-from tests.benchmark.utils import get_previous_result
+from tests.benchmark.numpy_dtypes import NUMPY_DTYPES
+from tests.benchmark.pandas_dtypes import PANDAS_DTYPES
+from tests.benchmark.pyarrow_dtypes import PYARROW_DTYPES
+from tests.benchmark.utils import get_previous_dtype_result, save_results_to_json
 
 LOGGER = logging.getLogger(__name__)
 
@@ -115,199 +117,32 @@ EXPECTED_METADATA_SDTYPES = {
     'np.bool': 'categorical',
     'np.string': 'categorical',
     'np.unicode': 'categorical',
-}
-
-
-PANDAS_DTYPES = {
-    'pd.Int8': pd.DataFrame({'pd.Int8': pd.Series([1, 2, -3, None, 4, 5], dtype='Int8')}),
-    'pd.Int16': pd.DataFrame({'pd.Int16': pd.Series([1, 2, -3, None, 4, 5], dtype='Int16')}),
-    'pd.Int32': pd.DataFrame({'pd.Int32': pd.Series([1, 2, -3, None, 4, 5], dtype='Int32')}),
-    'pd.Int64': pd.DataFrame({'pd.Int64': pd.Series([1, 2, -3, None, 4, 5], dtype='Int64')}),
-    'pd.UInt8': pd.DataFrame({'pd.UInt8': pd.Series([1, 2, 3, None, 4, 5], dtype='UInt8')}),
-    'pd.UInt16': pd.DataFrame({'pd.UInt16': pd.Series([1, 2, 3, None, 4, 5], dtype='UInt16')}),
-    'pd.UInt32': pd.DataFrame({'pd.UInt32': pd.Series([1, 2, 3, None, 4, 5], dtype='UInt32')}),
-    'pd.UInt64': pd.DataFrame({'pd.UInt64': pd.Series([1, 2, 3, None, 4, 5], dtype='UInt64')}),
-    'pd.Float32': pd.DataFrame({
-        'pd.Float32': pd.Series([1.1, 1.2, 1.3, 1.4, None], dtype='Float32')
-    }),
-    'pd.Float64': pd.DataFrame({
-        'pd.Float64': pd.Series([1.1, 1.2, 1.3, 1.4, None], dtype='Float64')
-    }),
-    'pd.boolean': pd.DataFrame({
-        'pd.boolean': pd.Series([True, False, None, True, False], dtype='boolean')
-    }),
-    'pd.object': pd.DataFrame({'pd.object': pd.Series(['A', 'B', None, 'C'], dtype='object')}),
-    'pd.string': pd.DataFrame({'pd.string': pd.Series(['A', 'B', None, 'C'], dtype='string')}),
-    'pd.category': pd.DataFrame({
-        'pd.category': pd.Series(['A', 'B', None, 'D'], dtype='category')
-    }),
-    'pd.datetime64': pd.DataFrame({
-        'pd.datetime64': pd.Series(pd.date_range('2023-01-01', periods=3), dtype='datetime64[ns]')
-    }),
-    'pd.timedelta64': pd.DataFrame({
-        'pd.timedelta64': pd.Series(
-            [pd.Timedelta(days=1), pd.Timedelta(days=2), pd.Timedelta(days=3)],
-            dtype='timedelta64[ns]',
-        )
-    }),
-    'pd.Period': pd.DataFrame({
-        'pd.Period': pd.Series(pd.period_range('2023-01', periods=3, freq='M')),
-    }),
-    'pd.Complex': pd.DataFrame({
-        'pd.Complex': pd.Series([1 + 1j, 2 + 2j, 3 + 3j], dtype='complex128'),
-    }),
-}
-
-NUMPY_DTYPES = {
-    'np.int8': pd.DataFrame({
-        'np.int8': pd.Series([np.int8(1), np.int8(-1), np.int8(127)], dtype='int8')
-    }),
-    'np.int16': pd.DataFrame({
-        'np.int16': pd.Series([np.int16(2), np.int16(-2), np.int16(32767)], dtype='int16')
-    }),
-    'np.int32': pd.DataFrame({
-        'np.int32': pd.Series([np.int32(3), np.int32(-3), np.int32(2147483647)], dtype='int32')
-    }),
-    'np.int64': pd.DataFrame({
-        'np.int64': pd.Series([np.int64(4), np.int64(-4), np.int64(922)], dtype='int64')
-    }),
-    'np.uint8': pd.DataFrame({
-        'np.uint8': pd.Series([np.uint8(5), np.uint8(10), np.uint8(255)], dtype='uint8')
-    }),
-    'np.uint16': pd.DataFrame({
-        'np.uint16': pd.Series([np.uint16(6), np.uint16(20), np.uint16(65535)], dtype='uint16')
-    }),
-    'np.uint32': pd.DataFrame({
-        'np.uint32': pd.Series([np.uint32(7), np.uint32(30), np.uint32(42)], dtype='uint32')
-    }),
-    'np.uint64': pd.DataFrame({
-        'np.uint64': pd.Series([np.uint64(8), np.uint64(40), np.uint64(184467)], dtype='uint64')
-    }),
-    'np.float16': pd.DataFrame({
-        'np.float16': pd.Series(
-            [np.float16(9.1), np.float16(-9.1), np.float16(65.0)], dtype='float16'
-        )
-    }),
-    'np.float32': pd.DataFrame({
-        'np.float32': pd.Series(
-            [np.float32(1.2), np.float32(-1.2), np.float32(3.40)], dtype='float32'
-        )
-    }),
-    'np.float64': pd.DataFrame({
-        'np.float64': pd.Series(
-            [np.float64(1.3), np.float64(-11.3), np.float64(1.7)], dtype='float64'
-        )
-    }),
-    'np.complex64': pd.DataFrame({
-        'np.complex64': pd.Series(
-            [np.complex64(12 + 1j), np.complex64(-12 - 1j), np.complex64(3.4e38 + 1j)],
-            dtype='complex64',
-        )
-    }),
-    'np.complex128': pd.DataFrame({
-        'np.complex128': pd.Series(
-            [np.complex128(13 + 2j), np.complex128(-13 - 2j), np.complex128(1.7e308 + 2j)],
-            dtype='complex128',
-        )
-    }),
-    'np.bool': pd.DataFrame({
-        'np.bool': pd.Series([np.bool_(True), np.bool_(False), np.bool_(True)], dtype='bool')
-    }),
-    'np.object': pd.DataFrame({
-        'np.object': pd.Series(['object1', 'object2', 'object3'], dtype='object')
-    }),
-    'np.string': pd.DataFrame({
-        'np.string': pd.Series([
-            np.string_('string1'),
-            np.string_('string2'),
-            np.string_('string3'),
-        ])
-    }),
-    'np.unicode': pd.DataFrame({
-        'np.unicode': pd.Series(
-            [np.unicode_('unicode1'), np.unicode_('unicode2'), np.unicode_('unicode3')],
-            dtype='string',
-        )
-    }),
-    'np.datetime64': pd.DataFrame({
-        'np.datetime64': pd.Series([
-            np.datetime64('2023-01-01T00:00:00'),
-            np.datetime64('2024-01-01T00:00:00'),
-            np.datetime64('2025-01-01T00:00:00'),
-        ])
-    }),
-    'np.timedelta64': pd.DataFrame({
-        'np.timedelta64': pd.Series(
-            [np.timedelta64(1, 'D'), np.timedelta64(2, 'h'), np.timedelta64(3, 'm')],
-        )
-    }),
-}
-
-PYARROW_DTYPES = {
-    'pa.int8': pd.DataFrame({'pa.int8': pd.Series([1, -1, 127], dtype=pd.ArrowDtype(pa.int8()))}),
-    'pa.int16': pd.DataFrame({
-        'pa.int16': pd.Series([2, -2, 32767], dtype=pd.ArrowDtype(pa.int16()))
-    }),
-    'pa.int32': pd.DataFrame({
-        'pa.int32': pd.Series([3, -3, 2147483647], dtype=pd.ArrowDtype(pa.int32()))
-    }),
-    'pa.int64': pd.DataFrame({
-        'pa.int64': pd.Series([4, -4, 9223372036854775807], dtype=pd.ArrowDtype(pa.int64()))
-    }),
-    'pa.uint8': pd.DataFrame({
-        'pa.uint8': pd.Series([5, 10, 255], dtype=pd.ArrowDtype(pa.uint8()))
-    }),
-    'pa.uint16': pd.DataFrame({
-        'pa.uint16': pd.Series([6, 20, 65535], dtype=pd.ArrowDtype(pa.uint16()))
-    }),
-    'pa.uint32': pd.DataFrame({
-        'pa.uint32': pd.Series([7, 30, 4294967295], dtype=pd.ArrowDtype(pa.uint32()))
-    }),
-    'pa.uint64': pd.DataFrame({
-        'pa.uint64': pd.Series([8, 40, 18446744073709551615], dtype=pd.ArrowDtype(pa.uint64()))
-    }),
-    'pa.float32': pd.DataFrame({
-        'pa.float32': pd.Series([1.2, -1.2, 3.40], dtype=pd.ArrowDtype(pa.float32()))
-    }),
-    'pa.float64': pd.DataFrame({
-        'pa.float64': pd.Series([1.3, -11.3, 1.7], dtype=pd.ArrowDtype(pa.float64()))
-    }),
-    'pa.bool': pd.DataFrame({
-        'pa.bool': pd.Series([True, False, True], dtype=pd.ArrowDtype(pa.bool_()))
-    }),
-    'pa.string': pd.DataFrame({
-        'pa.string': pd.Series(['string1', 'string2', 'string3'], dtype=pd.ArrowDtype(pa.string()))
-    }),
-    'pa.date32': pd.DataFrame({
-        'pa.date32': pd.Series(
-            [pd.Timestamp('2023-01-01'), pd.Timestamp('2024-01-01'), pd.Timestamp('2025-01-01')],
-            dtype=pd.ArrowDtype(pa.date32()),
-        )
-    }),
-    'pa.timestamp': pd.DataFrame({
-        'pa.timestamp': pd.Series(
-            [
-                pd.Timestamp('2023-01-01T00:00:00'),
-                pd.Timestamp('2024-01-01T00:00:00'),
-                pd.Timestamp('2025-01-01T00:00:00'),
-            ],
-            dtype=pd.ArrowDtype(pa.timestamp('ms')),
-        )
-    }),
-    'pa.duration': pd.DataFrame({
-        'pa.duration': pd.Series(
-            [pd.Timedelta(days=1), pd.Timedelta(hours=2), pd.Timedelta(minutes=3)],
-            dtype=pd.ArrowDtype(pa.duration('s')),
-        )
-    }),
-    'pa.binary': pd.DataFrame({
-        'pa.binary': pd.Series(
-            [b'binary1', b'binary2', b'binary3'], dtype=pd.ArrowDtype(pa.binary())
-        )
-    }),
-    'pa.utf8': pd.DataFrame({
-        'pa.utf8': pd.Series(['utf8_1', 'utf8_2', 'utf8_3'], dtype=pd.ArrowDtype(pa.utf8()))
-    }),
+    # PyArrow
+    'pa.int8': 'numerical',
+    'pa.int16': 'numerical',
+    'pa.int32': 'numerical',
+    'pa.int64': 'numerical',
+    'pa.uint8': 'numerical',
+    'pa.uint16': 'numerical',
+    'pa.uint32': 'numerical',
+    'pa.uint64': 'numerical',
+    'pa.float32': 'numerical',
+    'pa.float64': 'numerical',
+    'pa.bool': 'categorical',
+    'pa.string': 'categorical',
+    'pa.utf8': 'categorical',
+    'pa.binary': 'categorical',
+    'pa.large_binary': 'categorical',
+    'pa.large_string': 'categorical',
+    'pa.binary_view': 'categorical',
+    'pa.string_view': 'categorical',
+    'pa.date32': 'datetime',
+    'pa.date64': 'datetime',
+    'pa.timestamp': 'datetime',
+    'pa.duration': 'datetime',
+    'pa.time32': 'datetime',
+    'pa.time64': 'datetime',
+    'pa.decimal128': 'numerical',
 }
 
 
@@ -329,7 +164,7 @@ def _get_metadata_for_dtype(dtype):
     return metadata
 
 
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
+@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
 def test_metadata_detection(dtype, data):
     """Test metadata detection for data types using `SingleTableMetadata`.
 
@@ -353,7 +188,7 @@ def test_metadata_detection(dtype, data):
         3. Assert if the sdtype matches the expected one.
     """
     metadata = SingleTableMetadata()
-    previous_result = get_previous_result(dtype, 'METADATA_DETECTION')
+    previous_result = get_previous_dtype_result(dtype, 'METADATA_DETECTION')
     result = False
     try:
         metadata.detect_from_dataframe(data)
@@ -364,6 +199,7 @@ def test_metadata_detection(dtype, data):
         LOGGER.debug(f"Error during 'metadata.validate_data' with dtype '{dtype}': {e}")
 
     assertion_message = f"{dtype} is no longer supported in 'METADATA_DETECTION'."
+    save_results_to_json({'dtype': dtype, 'METADATA_DETECTION': result})
     if result is False:
         assert result == previous_result, assertion_message
 
@@ -393,7 +229,7 @@ def test_metadata_validate_data(dtype, data):
         3. Assert if the result is as expected.
     """
     metadata = _get_metadata_for_dtype(dtype)
-    previous_result = get_previous_result(dtype, 'METADATA_VALIDATE_DATA')
+    previous_result = get_previous_dtype_result(dtype, 'METADATA_VALIDATE_DATA')
     result = False
     try:
         metadata.validate_data(data)
@@ -401,6 +237,7 @@ def test_metadata_validate_data(dtype, data):
     except BaseException as e:
         LOGGER.debug(f"Error during 'metadata.validate_data' with dtype '{dtype}': {e}")
 
+    save_results_to_json({'dtype': dtype, 'METADATA_VALIDATE_DATA': result})
     if result is False:
         assertion_message = f"{dtype} is no longer supported by 'METADATA_VALIDATE_DATA'."
         assert result == previous_result, assertion_message
@@ -436,8 +273,8 @@ def test_fit_and_sample_synthesizer(dtype, data):
     """
     metadata = _get_metadata_for_dtype(dtype)
     synthesizer = GaussianCopulaSynthesizer(metadata)
-    previous_fit_result = get_previous_result(dtype, 'SYNTHESIZER_FIT')
-    previous_sample_result = get_previous_result(dtype, 'SYNTHESIZER_SAMPLE')
+    previous_fit_result = get_previous_dtype_result(dtype, 'SYNTHESIZER_FIT')
+    previous_sample_result = get_previous_dtype_result(dtype, 'SYNTHESIZER_SAMPLE')
     fit_result = False
     sample_result = False
 
@@ -452,6 +289,11 @@ def test_fit_and_sample_synthesizer(dtype, data):
     except BaseException as e:
         LOGGER.debug(f"Error during fitting/sampling with dtype '{dtype}': {e}")
 
+    save_results_to_json({
+        'dtype': dtype,
+        'SYNTHESIZER_FIT': fit_result,
+        'SYNTHESIZER_SAMPLE': sample_result,
+    })
     fit_assertion_message = f"{dtype} is no longer supported by 'SYNTHESIZER_FIT'."
     if fit_result is False:
         assert fit_result == previous_fit_result, fit_assertion_message
@@ -600,8 +442,8 @@ def test_fit_and_sample_single_column_constraints(constraint_name, constraint, d
     metadata = _get_metadata_for_dtype(dtype)
     synthesizer = GaussianCopulaSynthesizer(metadata)
     sdtype = metadata.columns[dtype].get('sdtype')
-    previous_fit_result = get_previous_result(dtype, f'{constraint_name}_FIT')
-    previous_sample_result = get_previous_result(dtype, f'{constraint_name}_SAMPLE')
+    previous_fit_result = get_previous_dtype_result(dtype, f'{constraint_name}_FIT')
+    previous_sample_result = get_previous_dtype_result(dtype, f'{constraint_name}_SAMPLE')
 
     # Prepare the constraint and data
     constraint, data = _create_single_column_constraint_and_data(
@@ -628,6 +470,11 @@ def test_fit_and_sample_single_column_constraints(constraint_name, constraint, d
             f"'{constraint_name}': {e}"
         )
 
+    save_results_to_json({
+        'dtype': dtype,
+        f'{constraint_name}_FIT': fit_result,
+        f'{constraint_name}_SAMPLE': sample_result,
+    })
     if fit_result is False:
         fit_assertion_message = f"{dtype} is no longer supported by '{constraint_name}_FIT''."
         assert fit_result == previous_fit_result, fit_assertion_message
@@ -671,8 +518,8 @@ def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dt
 
     metadata = _get_metadata_for_dtype(dtype)
     sdtype = metadata.columns[dtype].get('sdtype')
-    previous_fit_result = get_previous_result(dtype, f'{constraint_name}_FIT')
-    previous_sample_result = get_previous_result(dtype, f'{constraint_name}_SAMPLE')
+    previous_fit_result = get_previous_dtype_result(dtype, f'{constraint_name}_FIT')
+    previous_sample_result = get_previous_dtype_result(dtype, f'{constraint_name}_SAMPLE')
 
     # Prepare constraints, data required and metadata
     constraints, data, metadata = _create_multi_column_constraint_data_and_metadata(
@@ -701,7 +548,11 @@ def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dt
             f"'{constraint_name}': {e}"
         )
 
-    # Assertions - Only if they are False
+    save_results_to_json({
+        'dtype': dtype,
+        f'{constraint_name}_FIT': fit_result,
+        f'{constraint_name}_SAMPLE': sample_result,
+    })
     if fit_result is False:
         assert fit_result == previous_fit_result, f"{dtype} failed during '{constraint_name}_FIT'."
 

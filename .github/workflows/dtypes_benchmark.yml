@@ -1,13 +1,9 @@
 name: Data Types Benchmark
 
 on:
-  workflow_dispatch:
-    inputs:
-      run_tests:
-        description: 'Run integration and unit tests'
-        required: true
-        type: boolean
-        default: true
+  push:
+    branches:
+      - main
 
 jobs:
   run_dtypes_benchmark:
@@ -43,13 +39,6 @@ jobs:
         run: |
           invoke benchmark-dtypes
 
-      - name: Compare Results
-        env:
-          PYDRIVE_CREDENTIALS: ${{ secrets.PYDRIVE_CREDENTIALS }}
-          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
-
-        run: python -m tests.benchmark.utils compare
-
       # Upload the CSV files as artifacts
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -68,9 +57,6 @@ jobs:
         with:
           path: results/
 
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       # Set up Python 3.10
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
@@ -88,4 +74,4 @@ jobs:
           PYDRIVE_CREDENTIALS: ${{ secrets.PYDRIVE_CREDENTIALS }}
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
 
-        run: python -m tests.benchmark.utils upload
+        run: python -m tests.benchmark.utils

@@ -5,14 +5,23 @@ import json
 import os
 import pathlib
 import tempfile
-from functools import lru_cache
+from datetime import date
 
+import git
 import pandas as pd
 import yaml
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
 PYDRIVE_CREDENTIALS = 'PYDRIVE_CREDENTIALS'
+
+
+def _generate_filename():
+    """Generate a filename with today's date and the commit id."""
+    repo = git.Repo(search_parent_directories=True)
+    commit_id = repo.head.object.hexsha
+    today = str(date.today())
+    return f'{today}-{commit_id}.xlsx'
 
 
 def _get_drive_client():
@@ -47,7 +56,24 @@ def _get_drive_client():
     return GoogleDrive(gauth)
 
 
-@lru_cache()
+def get_latest_file(folder_id):
+    """Get the latest file from the given Google Drive folder.
+
+    Args:
+        folder (str):
+            The string Google Drive folder ID.
+    """
+    drive = _get_drive_client()
+    drive_query = drive.ListFile({
+        'q': f"'{folder_id}' in parents and trashed=False",
+        'orderBy': 'modifiedDate desc',
+        'maxResults': 1,
+    })
+    file_list = drive_query.GetList()
+    if len(file_list) > 0:
+        return file_list[0]
+
+
 def read_excel(file_id):
     """Read a file as an XLSX from Google Drive.
 
@@ -96,7 +122,11 @@ def save_to_gdrive(output_folder, results, output_filename=None):
         str:
             Google drive file id of uploaded file.
     """
+    if not output_filename:
+        output_filename = _generate_filename()
+
     output = io.BytesIO()
+
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:  # pylint: disable=E0110
         for sheet_name, data in results.items():
             data.to_excel(writer, sheet_name=sheet_name, index=False)
