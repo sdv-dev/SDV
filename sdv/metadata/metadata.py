@@ -173,7 +173,7 @@ class Metadata(MultiTableMetadata):
         self._validate_table_exists(table_name)
         self.tables[table_name].set_sequence_index(column_name)
 
-    def set_sequence_key(self, table_name, column_name):
+    def set_sequence_key(self, *args, **kwargs):
         """Set the sequence key of a table.
 
         Args:
@@ -182,6 +182,9 @@ class Metadata(MultiTableMetadata):
             column_name (str, tulple[str]):
                 Name (or tuple of names) of the sequence key column(s).
         """
+        parameters = self._resolve_arguments(['column_name'], *args, **kwargs)
+        table_name = parameters['table_name']
+        column_name = parameters['column_name']
         self._validate_table_exists(table_name)
         self.tables[table_name].set_sequence_key(column_name)
 
@@ -206,3 +209,86 @@ class Metadata(MultiTableMetadata):
             )
 
         return self.validate_data({table_name: data})
+
+    def _resolve_arguments(self, arg_names, *args, **kwargs):
+        """Resolves the arguments from the provided args and kwargs.
+
+        Args:
+            arg_names (list):
+                List of argument names to resolve.
+        """
+        parameters = {}
+        is_single_table = len(self.tables) == 1
+        args_table_name = True
+        if is_single_table:
+            parameters['table_name'] = next(iter(self.tables))
+            if len(arg_names) != len(args):
+                args_table_name = False
+
+        else:
+            table_name = kwargs.get('table_name')
+            if table_name is None:
+                table_name = args[0]
+                args_table_name = False
+
+            parameters['table_name'] = table_name
+
+        parameters.update({
+            arg_name: arg for arg_name, arg in zip(arg_names, args[not args_table_name :])
+        })
+        for parameter_name, parameter in parameters.items():
+            kwargs_value = kwargs.get(parameter_name)
+            if kwargs_value is not None and kwargs_value != parameter:
+                raise ValueError(
+                    f"Conflicting values for '{parameter_name}': '{parameter}' and '{kwargs_value}'"
+                )
+
+        kwargs = {key: value for key, value in kwargs.items() if key not in parameters}
+        parameters.update(kwargs)
+
+        return parameters
+
+    def get_column_names(self, *args, **kwargs):
+        """Return a list of column names that match the given metadata keyword arguments."""
+        parameters = self._resolve_arguments([], *args, **kwargs)
+        return super().get_column_names(**parameters)
+
+    def update_column(self, *args, **kwargs):
+        """Update an existing column for a table in the ``Metadata``."""
+        parameters = self._resolve_arguments(['column_name'], *args, **kwargs)
+        super().update_column(**parameters)
+
+    def update_columns(self, *args, **kwargs):
+        """Update the metadata of multiple columns."""
+        parameters = self._resolve_arguments(['column_names'], *args, **kwargs)
+        super().update_columns(**parameters)
+
+    def update_columns_metadata(self, *args, **kwargs):
+        """Update the metadata of multiple columns."""
+        parameters = self._resolve_arguments(['column_metadata'], *args, **kwargs)
+        super().update_columns_metadata(**parameters)
+
+    def add_column(self, *args, **kwargs):
+        """Add a column to the metadata."""
+        parameters = self._resolve_arguments(['column_name'], *args, **kwargs)
+        super().add_column(**parameters)
+
+    def add_column_relationship(self, *args, **kwargs):
+        """Add a column relationship to the metadata."""
+        parameters = self._resolve_arguments(['relationship_type', 'column_names'], *args, **kwargs)
+        super().add_column_relationship(**parameters)
+
+    def set_primary_key(self, *args, **kwargs):
+        """Set the primary key of a table."""
+        parameters = self._resolve_arguments(['column_name'], *args, **kwargs)
+        super().set_primary_key(**parameters)
+
+    def remove_primary_key(self, *args, **kwargs):
+        """Remove the primary key of a table."""
+        parameters = self._resolve_arguments([], *args, **kwargs)
+        super().remove_primary_key(**parameters)
+
+    def add_alternate_keys(self, *args, **kwargs):
+        """Add alternate keys to a table."""
+        parameters = self._resolve_arguments(['column_names'], *args, **kwargs)
+        super().add_alternate_keys(**parameters)
