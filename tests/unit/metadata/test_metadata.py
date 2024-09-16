@@ -4,6 +4,8 @@ from unittest.mock import Mock, call, patch
 import pandas as pd
 import pytest
 
+from sdv.errors import InvalidDataError
+from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from tests.utils import DataFrameMatcher, get_multi_table_data, get_multi_table_metadata
 
@@ -550,6 +552,31 @@ class TestMetadataClass:
         # Run and Assert
         metadata.validate_data(data)
         assert metadata.METADATA_SPEC_VERSION == 'V1'
+
+    def test_validate_table(self):
+        """Test the ``validate_table``method."""
+        # Setup
+        metadata_multi_table = get_multi_table_metadata()
+        metadata_single_table = Metadata.load_from_dict(
+            metadata_multi_table.to_dict()['tables']['nesreca'], 'nesreca'
+        )
+        table = get_multi_table_data()['nesreca']
+
+        expected_error_wrong_name = re.escape(
+            'The provided data does not match the metadata:\n'
+            "The provided data is missing the tables {'nesreca'}."
+        )
+        expected_error_mutli_table = re.escape(
+            'Metadata contains more than one table, please specify the `table_name` to validate.'
+        )
+
+        # Run and Assert
+        metadata_single_table.validate_table(table)
+        metadata_single_table.validate_table(table, 'nesreca')
+        with pytest.raises(InvalidDataError, match=expected_error_wrong_name):
+            metadata_single_table.validate_table(table, 'wrong_name')
+        with pytest.raises(InvalidMetadataError, match=expected_error_mutli_table):
+            metadata_multi_table.validate_table(table)
 
     @patch('sdv.metadata.metadata.Metadata')
     def test_detect_from_dataframes(self, mock_metadata):
