@@ -467,7 +467,7 @@ class TestMetadataClass:
             }
         ]
 
-    def test__set_metadata_single_table(self):
+    def test__set_metadata(self):
         """Test the ``_set_metadata`` method for ``Metadata``.
 
         Setup:
@@ -557,7 +557,7 @@ class TestMetadataClass:
         """Test the ``validate_table``method."""
         # Setup
         metadata_multi_table = get_multi_table_metadata()
-        metadata_single_table = Metadata.load_from_dict(
+        metadata = Metadata.load_from_dict(
             metadata_multi_table.to_dict()['tables']['nesreca'], 'nesreca'
         )
         table = get_multi_table_data()['nesreca']
@@ -571,10 +571,10 @@ class TestMetadataClass:
         )
 
         # Run and Assert
-        metadata_single_table.validate_table(table)
-        metadata_single_table.validate_table(table, 'nesreca')
+        metadata.validate_table(table)
+        metadata.validate_table(table, 'nesreca')
         with pytest.raises(InvalidDataError, match=expected_error_wrong_name):
-            metadata_single_table.validate_table(table, 'wrong_name')
+            metadata.validate_table(table, 'wrong_name')
         with pytest.raises(InvalidMetadataError, match=expected_error_mutli_table):
             metadata_multi_table.validate_table(table)
 
@@ -643,3 +643,114 @@ class TestMetadataClass:
         expected_message = 'The provided data must be a pandas DataFrame object.'
         with pytest.raises(ValueError, match=expected_message):
             Metadata.detect_from_dataframe(Mock())
+
+    def test__resolve_arguments_single_table(self):
+        """Test the ``resolve_arguments`` method for single table metadata."""
+        # Setup
+        metadata = Mock()
+        metadata.tables = ['table1']
+        expected_error = re.escape(
+            "Conflicting values for 'table_name': 'table1' and 'wrong_table'"
+        )
+
+        # Run
+        result_without_table_name = Metadata._resolve_arguments(
+            metadata, ['column_name_1', 'column_name_2'], 'column1', 'column2'
+        )
+        result_with_table_name = Metadata._resolve_arguments(
+            metadata, ['column_name_1', 'column_name_2'], 'table1', 'column1', 'column2'
+        )
+        result_kwargs_without_table_name = Metadata._resolve_arguments(
+            metadata,
+            ['column_name_1', 'column_name_2'],
+            column_name_1='column1',
+            column_name_2='column2',
+        )
+        result_kwargs_with_table_name = Metadata._resolve_arguments(
+            metadata,
+            ['column_name_1', 'column_name_2'],
+            table_name='table1',
+            column_name_1='column1',
+            column_name_2='column2',
+        )
+        with pytest.raises(ValueError, match=expected_error):
+            Metadata._resolve_arguments(
+                metadata,
+                ['column_name_1', 'column_name_2'],
+                table_name='wrong_table',
+                column_name_1='column1',
+                column_name_2='column2',
+            )
+
+        # Assert
+        expected_result = {
+            'table_name': 'table1',
+            'column_name_1': 'column1',
+            'column_name_2': 'column2',
+        }
+        results = [
+            result_without_table_name,
+            result_with_table_name,
+            result_kwargs_without_table_name,
+            result_kwargs_with_table_name,
+        ]
+        for result in results:
+            assert result == expected_result
+
+    def test__resolve_argument_multi_table(self):
+        """Test the ``resolve_arguments`` method for multi table metadata."""
+        # Setup
+        metadata = Mock()
+        metadata.tables = ['table1', 'table2']
+
+        # Run
+        result_with_table_name = Metadata._resolve_arguments(
+            metadata, ['column_name_1', 'column_name_2'], 'table1', 'column1', 'column2'
+        )
+        result_kwargs_with_table_name = Metadata._resolve_arguments(
+            metadata,
+            ['column_name_1', 'column_name_2'],
+            table_name='table1',
+            column_name_1='column1',
+            column_name_2='column2',
+        )
+
+        # Assert
+        expected_result = {
+            'table_name': 'table1',
+            'column_name_1': 'column1',
+            'column_name_2': 'column2',
+        }
+        results = [result_with_table_name, result_kwargs_with_table_name]
+        for result in results:
+            assert result == expected_result
+
+    params = [
+        ('update_column', ['column_name']),
+        ('update_columns', ['column_names']),
+        ('update_columns_metadata', ['column_metadata']),
+        ('add_column', ['column_name']),
+        ('set_primary_key', ['column_name']),
+        ('remove_primary_key', []),
+        ('add_column_relationship', ['relationship_type', 'column_names']),
+        ('add_alternate_keys', ['column_names']),
+        ('get_column_names', []),
+    ]
+
+    @pytest.mark.parametrize('method, args', params)
+    def test_update_methods(self, method, args):
+        """Test that all update methods call the superclass method with the resolved arguments."""
+        # Setup
+        metadata = Metadata()
+        metadata._resolve_arguments = Mock(return_value={'parameter 1': 'value 1'})
+        superclass = Metadata.__bases__[0]
+
+        with patch.object(superclass, method) as mock_super_method:
+            # Run
+            getattr(metadata, method)('table_name', sdtype='numerical')
+
+            # Assert
+            metadata._resolve_arguments.assert_called_once_with(
+                args, 'table_name', sdtype='numerical'
+            )
+            mock_super_method.assert_called_once_with(**{'parameter 1': 'value 1'})
