@@ -1,5 +1,6 @@
 import os
 import re
+from copy import deepcopy
 
 import pytest
 
@@ -382,3 +383,90 @@ def test_multi_table_compatibility(tmp_path):
     assert expected_metadata == synthesizer_2.metadata.to_dict()
     for table in metadata_sample:
         assert metadata_sample[table].columns.to_list() == loaded_sample[table].columns.to_list()
+
+
+params = [
+    ('update_column', ['column_name'], {'column_name': 'has_rewards', 'sdtype': 'categorical'}),
+    (
+        'update_columns',
+        ['column_names'],
+        {'column_names': ['has_rewards', 'billing_address'], 'sdtype': 'categorical'},
+    ),
+    (
+        'update_columns_metadata',
+        ['column_metadata'],
+        {'column_metadata': {'has_rewards': {'sdtype': 'categorical'}}},
+    ),
+    ('add_column', ['column_name'], {'column_name': 'has_rewards_2', 'sdtype': 'categorical'}),
+    ('set_primary_key', ['column_name'], {'column_name': 'billing_address'}),
+    ('remove_primary_key', [], {}),
+    (
+        'add_column_relationship',
+        ['relationship_type', 'column_names'],
+        {'column_names': ['billing_address'], 'relationship_type': 'address'},
+    ),
+    ('add_alternate_keys', ['column_names'], {'column_names': ['billing_address']}),
+    ('set_sequence_key', ['column_name'], {'column_name': 'billing_address'}),
+    ('get_column_names', [], {'sdtype': 'datetime'}),
+]
+
+
+@pytest.mark.parametrize('method, args, kwargs', params)
+def test_any_metadata_update_single_table(method, args, kwargs):
+    """Test that any method that updates metadata works for single-table case."""
+    # Setup
+    _, metadata = download_demo('single_table', 'fake_hotel_guests')
+    metadata.update_column(
+        table_name='fake_hotel_guests', column_name='billing_address', sdtype='street_address'
+    )
+    metadata_kwargs = deepcopy(metadata)
+    metadata_args = deepcopy(metadata)
+    metadata_kwargs_with_table_name = deepcopy(metadata)
+    metadata_args_with_table_name = deepcopy(metadata)
+
+    # Run
+    result = getattr(metadata_kwargs, method)(**kwargs)
+    getattr(metadata_kwargs_with_table_name, method)(table_name='fake_hotel_guests', **kwargs)
+    arg_values = [kwargs[arg] for arg in args]
+    extra_param = {key: value for key, value in kwargs.items() if key not in args}
+    getattr(metadata_args, method)(*arg_values, **extra_param)
+    getattr(metadata_args_with_table_name, method)('fake_hotel_guests', *arg_values, **extra_param)
+
+    # Assert
+    expected_dict = metadata_kwargs.to_dict()
+    if method != 'get_column_names':
+        assert expected_dict != metadata.to_dict()
+    else:
+        assert result == ['checkin_date', 'checkout_date']
+
+    other_metadata = [metadata_args, metadata_kwargs_with_table_name, metadata_args_with_table_name]
+    for metadata_obj in other_metadata:
+        assert expected_dict == metadata_obj.to_dict()
+
+
+@pytest.mark.parametrize('method, args, kwargs', params)
+def test_any_metadata_update_multi_table(method, args, kwargs):
+    """Test that any method that updates metadata works for single-table case."""
+    # Setup
+    args.insert(0, 'table_name')
+    kwargs['table_name'] = 'guests'
+    _, metadata = download_demo('multi_table', 'fake_hotels')
+    metadata.update_column(
+        table_name='guests', column_name='billing_address', sdtype='street_address'
+    )
+    metadata_kwargs = deepcopy(metadata)
+    metadata_args = deepcopy(metadata)
+
+    # Run
+    result = getattr(metadata_kwargs, method)(**kwargs)
+    arg_values = [kwargs[arg] for arg in args]
+    extra_param = {key: value for key, value in kwargs.items() if key not in args}
+    getattr(metadata_args, method)(*arg_values, **extra_param)
+
+    # Assert
+    expected_dict = metadata_kwargs.to_dict()
+    assert expected_dict == metadata_args.to_dict()
+    if method != 'get_column_names':
+        assert expected_dict != metadata.to_dict()
+    else:
+        assert result == ['checkin_date', 'checkout_date']
