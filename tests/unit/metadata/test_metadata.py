@@ -467,7 +467,7 @@ class TestMetadataClass:
             }
         ]
 
-    def test__set_metadata(self):
+    def test__set_metadata_single_table(self):
         """Test the ``_set_metadata`` method for ``Metadata``.
 
         Setup:
@@ -557,7 +557,7 @@ class TestMetadataClass:
         """Test the ``validate_table``method."""
         # Setup
         metadata_multi_table = get_multi_table_metadata()
-        metadata = Metadata.load_from_dict(
+        metadata_single_table = Metadata.load_from_dict(
             metadata_multi_table.to_dict()['tables']['nesreca'], 'nesreca'
         )
         table = get_multi_table_data()['nesreca']
@@ -571,10 +571,10 @@ class TestMetadataClass:
         )
 
         # Run and Assert
-        metadata.validate_table(table)
-        metadata.validate_table(table, 'nesreca')
+        metadata_single_table.validate_table(table)
+        metadata_single_table.validate_table(table, 'nesreca')
         with pytest.raises(InvalidDataError, match=expected_error_wrong_name):
-            metadata.validate_table(table, 'wrong_name')
+            metadata_single_table.validate_table(table, 'wrong_name')
         with pytest.raises(InvalidMetadataError, match=expected_error_mutli_table):
             metadata_multi_table.validate_table(table)
 

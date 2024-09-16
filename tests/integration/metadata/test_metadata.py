@@ -446,7 +446,7 @@ def test_any_metadata_update_single_table(method, args, kwargs):
 
 @pytest.mark.parametrize('method, args, kwargs', params)
 def test_any_metadata_update_multi_table(method, args, kwargs):
-    """Test that any method that updates metadata works for single-table case."""
+    """Test that any method that updates metadata works for multi-table case."""
     # Setup
     args.insert(0, 'table_name')
     kwargs['table_name'] = 'guests'
