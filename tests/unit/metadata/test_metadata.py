@@ -644,6 +644,29 @@ class TestMetadataClass:
         with pytest.raises(ValueError, match=expected_message):
             Metadata.detect_from_dataframe(Mock())
 
+    def test__handle_table_name(self):
+        """Test the ``_handle_table_name`` method."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables = ['table_name']
+        expected_error = re.escape(
+            'Metadata contains more than one table, please specify the `table_name`.'
+        )
+
+        # Run
+        result_none = metadata._handle_table_name(None)
+        result_table_1 = metadata._handle_table_name('table_1')
+        metadata.tables = ['table_1', 'table_2']
+        with pytest.raises(ValueError, match=expected_error):
+            metadata._handle_table_name(None)
+
+        result_table_2 = metadata._handle_table_name('table_2')
+
+        # Assert
+        assert result_none == 'table_name'
+        assert result_table_1 == 'table_1'
+        assert result_table_2 == 'table_2'
+
     params = [
         ('update_column', ['column_name']),
         ('update_columns', ['column_names']),
