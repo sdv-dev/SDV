@@ -167,10 +167,10 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         mock_is_faker_function.return_value = True
         metadata = get_multi_table_metadata()
-        metadata.add_column('nesreca', 'lat', sdtype='latitude')
-        metadata.add_column('nesreca', 'lon', sdtype='longitude')
+        metadata.add_column('lat', 'nesreca', sdtype='latitude')
+        metadata.add_column('lon', 'nesreca', sdtype='longitude')
 
-        metadata.add_column_relationship('nesreca', 'gps', ['lat', 'lon'])
+        metadata.add_column_relationship('gps', ['lat', 'lon'], 'nesreca')
 
         expected_warning = (
             "The metadata contains a column relationship of type 'gps' "
@@ -538,7 +538,7 @@ class TestBaseMultiTableSynthesizer:
         metadata = get_multi_table_metadata()
         data = get_multi_table_data()
         data['nesreca']['val'] = list(range(4))
-        metadata.add_column('nesreca', 'val', sdtype='numerical')
+        metadata.add_column('val', 'nesreca', sdtype='numerical')
         instance = BaseMultiTableSynthesizer(metadata)
         inequality_constraint = {
             'constraint_class': 'Inequality',
@@ -1338,8 +1338,8 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        metadata.add_column('nesreca', 'positive_int', sdtype='numerical')
-        metadata.add_column('oseba', 'negative_int', sdtype='numerical')
+        metadata.add_column('positive_int', 'nesreca', sdtype='numerical')
+        metadata.add_column('negative_int', 'oseba', sdtype='numerical')
         positive_constraint = {
             'constraint_class': 'Positive',
             'table_name': 'nesreca',
@@ -1395,8 +1395,8 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        metadata.add_column('nesreca', 'positive_int', sdtype='numerical')
-        metadata.add_column('oseba', 'negative_int', sdtype='numerical')
+        metadata.add_column('positive_int', 'nesreca', sdtype='numerical')
+        metadata.add_column('negative_int', 'oseba', sdtype='numerical')
         positive_constraint = {
             'constraint_class': 'Positive',
             'table_name': 'nesreca',
@@ -1521,7 +1521,7 @@ class TestBaseMultiTableSynthesizer:
         data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
         metadata = Metadata()
         metadata.add_table('tab')
-        metadata.add_column('tab', 'col', sdtype='numerical')
+        metadata.add_column('col', 'tab', sdtype='numerical')
         mock_version.public = '1.0.0'
         mock_version.enterprise = None
 
@@ -1569,7 +1569,7 @@ class TestBaseMultiTableSynthesizer:
         data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
         metadata = Metadata()
         metadata.add_table('tab')
-        metadata.add_column('tab', 'col', sdtype='numerical')
+        metadata.add_column('col', 'tab', sdtype='numerical')
         mock_version.public = '1.0.0'
         mock_version.enterprise = '1.1.0'
 

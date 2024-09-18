@@ -166,9 +166,9 @@ class TestHMASynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = HMASynthesizer(metadata)
-        metadata.add_column('nesreca', 'value', sdtype='numerical')
-        metadata.add_column('oseba', 'oseba_value', sdtype='numerical')
-        metadata.add_column('upravna_enota', 'name', sdtype='categorical')
+        metadata.add_column('value', 'nesreca', sdtype='numerical')
+        metadata.add_column('oseba_value', 'oseba', sdtype='numerical')
+        metadata.add_column('name', 'upravna_enota', sdtype='categorical')
 
         data = get_multi_table_data()
         data['nesreca']['value'] = [0, 1, 2, 3]
@@ -712,9 +712,9 @@ class TestHMASynthesizer:
         """Test that ``get_learned_distributions`` raises an error."""
         # Setup
         metadata = get_multi_table_metadata()
-        metadata.add_column('nesreca', 'value', sdtype='numerical')
-        metadata.add_column('oseba', 'value', sdtype='numerical')
-        metadata.add_column('upravna_enota', 'a_value', sdtype='numerical')
+        metadata.add_column('value', 'nesreca', sdtype='numerical')
+        metadata.add_column('value', 'oseba', sdtype='numerical')
+        metadata.add_column('a_value', 'upravna_enota', sdtype='numerical')
         instance = HMASynthesizer(metadata)
 
         # Run and Assert

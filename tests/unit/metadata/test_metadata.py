@@ -742,15 +742,13 @@ class TestMetadataClass:
         """Test that all update methods call the superclass method with the resolved arguments."""
         # Setup
         metadata = Metadata()
-        metadata._resolve_arguments = Mock(return_value={'parameter 1': 'value 1'})
+        metadata._handle_table_name = Mock(return_value='table_name')
         superclass = Metadata.__bases__[0]
 
         with patch.object(superclass, method) as mock_super_method:
             # Run
-            getattr(metadata, method)('table_name', sdtype='numerical')
+            getattr(metadata, method)(*args, 'table_name')
 
             # Assert
-            metadata._resolve_arguments.assert_called_once_with(
-                args, 'table_name', sdtype='numerical'
-            )
-            mock_super_method.assert_called_once_with(**{'parameter 1': 'value 1'})
+            metadata._handle_table_name.assert_called_once_with('table_name')
+            mock_super_method.assert_called_once_with('table_name', *args)
