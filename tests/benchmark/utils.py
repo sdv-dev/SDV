@@ -1,6 +1,5 @@
 """Utility functions for the benchmarking."""
 
-import argparse
 import json
 import os
 import sys
@@ -13,24 +12,26 @@ import pandas as pd
 
 from sdv.io.local import CSVHandler
 from tests._external.gdrive_utils import get_latest_file, read_excel, save_to_gdrive
-from tests._external.slack_utils import post_slack_message
+from tests._external.slack_utils import post_slack_message, update_message
 
 GDRIVE_OUTPUT_FOLDER = '16SkTOyQ3xkJDPJbyZCusb168JwreW5bm'
 PYTHON_VERSION = f'{sys.version_info.major}.{sys.version_info.minor}'
 TEMPRESULTS = Path(f'results/{sys.version_info.major}.{sys.version_info.minor}.json')
 
 
-def get_previous_dtype_result(dtype, method):
+def get_previous_dtype_result(dtype, sdtype, method, python_version=PYTHON_VERSION):
     """Return previous result for a given ``dtype`` and method."""
     data = get_previous_results()
-    df = data[PYTHON_VERSION]
+    df = data[python_version]
     try:
-        filtered_row = df[df['dtype'] == dtype]
+        filtered_row = df[(df['dtype'] == dtype) & (df['sdtype'] == sdtype)]
         value = filtered_row[method].to_numpy()[0]
-    except IndexError:
+        previously_seen = True
+    except (IndexError, KeyError):
         value = False
+        previously_seen = False
 
-    return value
+    return value, previously_seen
 
 
 @lru_cache()
@@ -42,10 +43,13 @@ def get_previous_results():
 
 
 def _load_temp_results(filename):
-    current_results = pd.read_json(filename)
-    current_results = current_results.T.reset_index()
-    current_results = current_results.rename(columns={'index': 'dtype'})
-    return current_results
+    df = pd.read_json(filename)
+    df.iloc[:, 2:] = df.groupby(['dtype', 'sdtype']).transform(lambda x: x.ffill().bfill())
+    for column in df.columns:
+        if column not in ('sdtype', 'dtype'):
+            df[column] = df[column].astype(bool)
+
+    return df
 
 
 def _get_output_filename():
@@ -56,97 +60,146 @@ def _get_output_filename():
     return output_filename
 
 
-def compare_previous_result_with_current(args):
+def compare_previous_result_with_current():
     """Compare the previous result with the current and post a message on slack."""
-    output_filename = TEMPRESULTS
-    current_results = _load_temp_results(output_filename)
-    output_filename = _get_output_filename()
-    csv_output = Path(f'results/{PYTHON_VERSION}.csv')
-    current_results.to_csv(csv_output, index=False)
+    for result in Path('results/').rglob('*.json'):
+        python_version = result.stem
+        current_results = _load_temp_results(result)
+        csv_output = Path(f'results/{python_version}.csv')
+        current_results.to_csv(csv_output, index=False)
 
-    new_supported_dtypes = []
-    unsupported_dtypes = []
+        new_supported_dtypes = []
+        unsupported_dtypes = []
+        previously_unseen_dtypes = []
 
-    for index, row in current_results.iterrows():
-        dtype = row['dtype']
-        for col in current_results.columns[1:]:
-            current_value = row[col]
-            stored_value = get_previous_dtype_result(dtype, col)
+        for index, row in current_results.iterrows():
+            dtype = row['dtype']
+            sdtype = row['sdtype']
+            for col in current_results.columns[1:]:
+                current_value = row[col]
+                stored_value, previously_seen = get_previous_dtype_result(
+                    dtype,
+                    sdtype,
+                    col,
+                    python_version,
+                )
 
-            if current_value and not stored_value:
-                new_supported_dtypes.append(dtype)
+                if current_value and not stored_value:
+                    new_supported_dtypes.append({
+                        'dtype': dtype,
+                        'sdtype': sdtype,
+                        'method': col,
+                        'python_version': python_version,
+                    })
 
-            elif not current_value and stored_value:
-                unsupported_dtypes.append(dtype)
+                elif not current_value and stored_value:
+                    unsupported_dtypes.append({
+                        'dtype': dtype,
+                        'sdtype': sdtype,
+                        'method': col,
+                        'python_version': python_version,
+                    })
 
-    slack_message = ''
-    if new_supported_dtypes:
-        slack_message += (
-            f':party_blob: New data types supported for python: {PYTHON_VERSION} '
-            f'{set(new_supported_dtypes)}\n'
-       )
+                if not previously_seen:
+                    previously_unseen_dtypes.append({
+                        'dtype': dtype,
+                        'sdtype': sdtype,
+                        'method': col,
+                        'python_version': python_version,
+                    })
 
+    slack_messages = []
     if unsupported_dtypes:
-        slack_message += (
-            f':party_blob: New data types supported for python: {PYTHON_VERSION} '
-            f'{set(new_supported_dtypes)}\n'
-       )
-        slack_message += (
-            f':fire: New unsupported data types for python: {PYTHON_VERSION} for the following '
-            f'dtypes: {set(unsupported_dtype)}\n'
-        )
+        slack_messages.append(':fire: New unsupported DTypes!')
 
-    if slack_message:
-        post_slack_message('sdv-alerts-debug', slack_message)
-    else:
-        slack_message = ':party_parrot: No new changes to the DTypes in SDV.'
-        post_slack_message('sdv-alerts-debug', slack_message)
+    if new_supported_dtypes:
+        slack_messages.append(':party_blob: New DTypes supported!')
+
+    if slack_messages:
+        slack_message = '\n'.join(slack_messages)
+        response = post_slack_message('sdv-alerts-debug', slack_message)
+
+    if not new_supported_dtypes and not unsupported_dtypes:
+        slack_message = ':dealwithit: No new changes to the DTypes in SDV.'
+        response = post_slack_message('sdv-alerts-debug', slack_message)
+
+    results = {
+        'unsupported_dtypes': pd.DataFrame(unsupported_dtypes),
+        'new_supported_dtypes': pd.DataFrame(new_supported_dtypes),
+        'previously_unseen_dtypes': pd.DataFrame(previously_unseen_dtypes),
+    }
+    return results, response
 
 
-def save_results_to_json(results, filename=TEMPRESULTS):
-    dtype = results.pop('dtype')
+def save_results_to_json(results, filename=None):
+    """Save results to a JSON file, categorizing by `dtype`.
+
+    This function saves the `results` dictionary to a specified JSON file.
+    The dictionary must contain a `dtype` key, which is used as a category
+    to group the results in the file. If the file already exists, it loads
+    the existing data, updates the `dtype` category with new values from
+    `results`, and saves the updated content back to the file. If the file
+    does not exist it doesn't write.
+
+    Args:
+        results (dict):
+            A dictionary containing the data to save. Must include the
+            key `dtype` that specifies the category under which the data
+            will be stored in the JSON file.
+        filename (str, optional):
+            The name of the JSON file where the results will be saved.
+            Defaults to `None`.
+    """
+    filename = filename or TEMPRESULTS
+
     if os.path.exists(filename):
-        # Load existing data
         with open(filename, 'r') as file:
             try:
                 json_data = json.load(file)
             except json.JSONDecodeError:
-                json_data = {}
+                json_data = []
 
-        if dtype in json_data:
-            json_data[dtype].update(results)
-        else:
-            json_data[dtype] = results
-
+        json_data.append(results)
         with open(filename, 'w') as file:
             json.dump(json_data, file, indent=4)
 
 
-def store_results_in_gdrive(args):
+def calculate_support_percentage(df):
+    """Calculate the percentage of supported features (True) for each dtype in a DataFrame."""
+    feature_columns = df.drop(columns=['dtype'])
+    # Calculate percentage of TRUE values for each row (dtype)
+    percentage_support = feature_columns.mean(axis=1) * 100
+    return pd.DataFrame({'dtype': df['dtype'], 'percentage_supported': percentage_support})
+
+
+def compare_and_store_results_in_gdrive(args):
     csv_handler = CSVHandler()
+    comparison_results, response = compare_previous_result_with_current()
+
     results = csv_handler.read('results/')
-    save_to_gdrive(GDRIVE_OUTPUT_FOLDER, results)
+    summary_df = None
+    for version, df in results.items():
+        version_summary = calculate_support_percentage(df)
+        if summary_df is None:
+            summary_df = version_summary.copy()
+            summary_df[version] = version_summary['percentage_supported']
+        else:
+            summary_df[version] = version_summary['percentage_supported']
 
+    summary_df['average_supported'] = summary_df.mean(axis=1)
+    sorted_results = {}
+    sorted_results['summary'] = summary_df
+    for key, value in comparison_results.items():
+        if not value.empty:
+            sorted_results[key] = value
 
-def _get_parser():
-    """Return argparser to capture inputs from the command line."""
-    parser = argparse.ArgumentParser(description='Benchmark utility arg parsing')
-    parser.set_defaults(action=None)
-    action = parser.add_subparsers(title='action')
-    action.required = True
+    for key, value in results.items():
+        sorted_results[key] = value
 
-    # Compare with previous results
-    compare = action.add_parser('compare', help='Compare previous results to the current one.')
-    compare.set_defaults(action=compare_previous_result_with_current)
-
-    # Command Line package creation
-    upload = action.add_parser('upload', help='Upload a new spreadsheet with the results.')
-
-    upload.set_defaults(action=store_results_in_gdrive)
-    return parser
+    file_id = save_to_gdrive(GDRIVE_OUTPUT_FOLDER, sorted_results)
+    new_msg = f'See <https://docs.google.com/spreadsheets/d/{file_id}|dtypes summary and details>'
+    update_message('sdv-alerts-debug', new_msg, response['ts'])
 
 
 if __name__ == '__main__':
-    parser = _get_parser()
-    args = parser.parse_args()
-    args.action(args)
+    compare_and_store_results_in_gdrive()

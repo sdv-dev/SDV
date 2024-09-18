@@ -43,31 +43,18 @@ jobs:
         run: |
           invoke benchmark-dtypes
 
-      - name: Compare Results
-        env:
-          PYDRIVE_CREDENTIALS: ${{ secrets.PYDRIVE_CREDENTIALS }}
-          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
-
-        run: python -m tests.benchmark.utils compare
-
-      # Upload the CSV files as artifacts
+      # Upload the json files as artifacts
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: results-${{ matrix.python-version }}
-          path: results/*.csv
+          path: results/*.json
 
   generate_dtypes_report:
     runs-on: ubuntu-latest
     needs: run_dtypes_benchmark
 
     steps:
-      # Download the artifacts
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: results/
-
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -82,10 +69,16 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install .[test]
 
+      # Download the artifacts
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: results/
+
       # Generate the report
       - name: Generate the report
         env:
           PYDRIVE_CREDENTIALS: ${{ secrets.PYDRIVE_CREDENTIALS }}
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
 
-        run: python -m tests.benchmark.utils upload
+        run: python -m tests.benchmark.utils
