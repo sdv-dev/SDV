@@ -90,7 +90,7 @@ class TestCopulaGANSynthesizer:
         # Setup
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'field', sdtype='numerical')
+        metadata.add_column('field', 'table', sdtype='numerical')
         enforce_min_max_values = False
         enforce_rounding = False
         embedding_dim = 64
@@ -226,9 +226,9 @@ class TestCopulaGANSynthesizer:
         numerical_distributions = {'age': 'gamma'}
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'name', sdtype='categorical')
-        metadata.add_column('table', 'age', sdtype='numerical')
-        metadata.add_column('table', 'account', sdtype='numerical')
+        metadata.add_column('name', 'table', sdtype='categorical')
+        metadata.add_column('age', 'table', sdtype='numerical')
+        metadata.add_column('account', 'table', sdtype='numerical')
 
         instance = CopulaGANSynthesizer(metadata, numerical_distributions=numerical_distributions)
         processed_data = pd.DataFrame({
@@ -275,7 +275,7 @@ class TestCopulaGANSynthesizer:
         # Setup
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'col', sdtype='numerical')
+        metadata.add_column('col', 'table', sdtype='numerical')
         numerical_distributions = {'col': 'gamma'}
         instance = CopulaGANSynthesizer(metadata, numerical_distributions=numerical_distributions)
         processed_data = pd.DataFrame()

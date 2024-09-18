@@ -643,3 +643,54 @@ class TestMetadataClass:
         expected_message = 'The provided data must be a pandas DataFrame object.'
         with pytest.raises(ValueError, match=expected_message):
             Metadata.detect_from_dataframe(Mock())
+
+    def test__handle_table_name(self):
+        """Test the ``_handle_table_name`` method."""
+        # Setup
+        metadata = Metadata()
+        metadata.tables = ['table_name']
+        expected_error = re.escape(
+            'Metadata contains more than one table, please specify the `table_name`.'
+        )
+
+        # Run
+        result_none = metadata._handle_table_name(None)
+        result_table_1 = metadata._handle_table_name('table_1')
+        metadata.tables = ['table_1', 'table_2']
+        with pytest.raises(ValueError, match=expected_error):
+            metadata._handle_table_name(None)
+
+        result_table_2 = metadata._handle_table_name('table_2')
+
+        # Assert
+        assert result_none == 'table_name'
+        assert result_table_1 == 'table_1'
+        assert result_table_2 == 'table_2'
+
+    params = [
+        ('update_column', ['column_name']),
+        ('update_columns', ['column_names']),
+        ('update_columns_metadata', ['column_metadata']),
+        ('add_column', ['column_name']),
+        ('set_primary_key', ['column_name']),
+        ('remove_primary_key', []),
+        ('add_column_relationship', ['relationship_type', 'column_names']),
+        ('add_alternate_keys', ['column_names']),
+        ('get_column_names', []),
+    ]
+
+    @pytest.mark.parametrize('method, args', params)
+    def test_update_methods(self, method, args):
+        """Test that all update methods call the superclass method with the resolved arguments."""
+        # Setup
+        metadata = Metadata()
+        metadata._handle_table_name = Mock(return_value='table_name')
+        superclass = Metadata.__bases__[0]
+
+        with patch.object(superclass, method) as mock_super_method:
+            # Run
+            getattr(metadata, method)(*args, 'table_name')
+
+            # Assert
+            metadata._handle_table_name.assert_called_once_with('table_name')
+            mock_super_method.assert_called_once_with('table_name', *args)

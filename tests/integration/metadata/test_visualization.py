@@ -26,9 +26,9 @@ def test_visualize_graph_for_multi_table():
     data2 = pd.DataFrame({'\\|=/bla@#$324%^,"&*()><...': ['a', 'b', 'c']})
     tables = {'1': data1, '2': data2}
     metadata = Metadata.detect_from_dataframes(tables)
-    metadata.update_column('1', '\\|=/bla@#$324%^,"&*()><...', sdtype='id')
-    metadata.update_column('2', '\\|=/bla@#$324%^,"&*()><...', sdtype='id')
-    metadata.set_primary_key('1', '\\|=/bla@#$324%^,"&*()><...')
+    metadata.update_column('\\|=/bla@#$324%^,"&*()><...', '1', sdtype='id')
+    metadata.update_column('\\|=/bla@#$324%^,"&*()><...', '2', sdtype='id')
+    metadata.set_primary_key('\\|=/bla@#$324%^,"&*()><...', '1')
     metadata.add_relationship(
         '1', '2', '\\|=/bla@#$324%^,"&*()><...', '\\|=/bla@#$324%^,"&*()><...'
     )

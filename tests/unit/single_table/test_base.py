@@ -709,10 +709,11 @@ class TestBaseSingleTableSynthesizer:
         column_name_to_transformer = {'col2': RegexGenerator(), 'col3': FloatFormatter()}
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'col2', sdtype='id')
-        metadata.add_column('table', 'col3', sdtype='id')
-        metadata.set_sequence_key('table', 'col2')
-        metadata.add_alternate_keys('table', ['col3'])
+        metadata.add_column('col2', 'table', sdtype='id')
+        metadata.add_column('col3', 'table', sdtype='id')
+        metadata.set_sequence_key('col2', 'table')
+
+        metadata.add_alternate_keys(['col3'], 'table')
         instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
@@ -731,8 +732,8 @@ class TestBaseSingleTableSynthesizer:
         column_name_to_transformer = {'col1': BinaryEncoder(), 'col2': fitted_transformer}
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'col1', sdtype='boolean')
-        metadata.add_column('table', 'col2', sdtype='numerical')
+        metadata.add_column('col1', 'table', sdtype='boolean')
+        metadata.add_column('col2', 'table', sdtype='numerical')
         instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
@@ -746,8 +747,8 @@ class TestBaseSingleTableSynthesizer:
         column_name_to_transformer = {'col1': OneHotEncoder(), 'col2': FloatFormatter()}
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'col1', sdtype='categorical')
-        metadata.add_column('table', 'col2', sdtype='numerical')
+        metadata.add_column('col1', 'table', sdtype='categorical')
+        metadata.add_column('col2', 'table', sdtype='numerical')
         instance = GaussianCopulaSynthesizer(metadata)
         instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
 
@@ -774,8 +775,8 @@ class TestBaseSingleTableSynthesizer:
         column_name_to_transformer = {'col1': OneHotEncoder(), 'col2': FloatFormatter()}
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'col1', sdtype='categorical')
-        metadata.add_column('table', 'col2', sdtype='numerical')
+        metadata.add_column('col1', 'table', sdtype='categorical')
+        metadata.add_column('col2', 'table', sdtype='numerical')
 
         # NOTE: when PARSynthesizer is implemented, add it here as well
         for model in [CTGANSynthesizer, CopulaGANSynthesizer, TVAESynthesizer]:
@@ -800,8 +801,8 @@ class TestBaseSingleTableSynthesizer:
         column_name_to_transformer = {'col1': GaussianNormalizer(), 'col2': GaussianNormalizer()}
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'col1', sdtype='numerical')
-        metadata.add_column('table', 'col2', sdtype='numerical')
+        metadata.add_column('col1', 'table', sdtype='numerical')
+        metadata.add_column('col2', 'table', sdtype='numerical')
         instance = BaseSingleTableSynthesizer(metadata)
         instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
         instance._fitted = True
@@ -819,8 +820,8 @@ class TestBaseSingleTableSynthesizer:
         column_name_to_transformer = {'col1': GaussianNormalizer(), 'col2': GaussianNormalizer()}
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'col1', sdtype='numerical')
-        metadata.add_column('table', 'col2', sdtype='numerical')
+        metadata.add_column('col1', 'table', sdtype='numerical')
+        metadata.add_column('col2', 'table', sdtype='numerical')
         instance = BaseSingleTableSynthesizer(metadata)
         instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
 
@@ -2053,7 +2054,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'col', sdtype='numerical')
+        metadata.add_column('col', 'table', sdtype='numerical')
         instance = BaseSingleTableSynthesizer(metadata)
         positive_constraint = {
             'constraint_class': 'Positive',
@@ -2084,7 +2085,7 @@ class TestBaseSingleTableSynthesizer:
         # Setup
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'col', sdtype='numerical')
+        metadata.add_column('col', 'table', sdtype='numerical')
         instance = BaseSingleTableSynthesizer(metadata)
         positive_constraint = {
             'constraint_class': 'Positive',
@@ -2119,7 +2120,7 @@ class TestBaseSingleTableSynthesizer:
         mock_sdv_version.enterprise = None
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'col', sdtype='numerical')
+        metadata.add_column('col', 'table', sdtype='numerical')
 
         with patch('sdv.single_table.base.datetime.datetime') as mock_date:
             mock_date.today.return_value = datetime(2023, 1, 23)
@@ -2167,7 +2168,7 @@ class TestBaseSingleTableSynthesizer:
         mock_sdv_version.enterprise = '1.2.0'
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'col', sdtype='numerical')
+        metadata.add_column('col', 'table', sdtype='numerical')
 
         with patch('sdv.single_table.base.datetime.datetime') as mock_date:
             mock_date.today.return_value = datetime(2023, 1, 23)

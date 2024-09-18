@@ -23,7 +23,7 @@ def test_evaluate_quality():
     data2 = pd.DataFrame({'col': [2, 1, 3]})
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'col', sdtype='numerical')
+    metadata.add_column('col', 'table', sdtype='numerical')
     QualityReport.generate = Mock()
 
     # Run
@@ -59,7 +59,7 @@ def test_run_diagnostic():
     data2 = pd.DataFrame({'col': [2, 1, 3]})
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'col', sdtype='numerical')
+    metadata.add_column('col', 'table', sdtype='numerical')
     DiagnosticReport.generate = Mock(return_value=123)
 
     # Run
@@ -100,7 +100,7 @@ def test_get_column_plot_continuous_data(mock_get_plot):
     data2 = pd.DataFrame({'col': [2, 1, 3]})
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'col', sdtype='numerical')
+    metadata.add_column('col', 'table', sdtype='numerical')
 
     # Run
     plot = get_column_plot(data1, data2, metadata, 'col')
@@ -143,7 +143,7 @@ def test_get_column_plot_discrete_data(mock_get_plot):
     data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'col', sdtype='categorical')
+    metadata.add_column('col', 'table', sdtype='categorical')
 
     # Run
     plot = get_column_plot(data1, data2, metadata, 'col')
@@ -187,7 +187,7 @@ def test_get_column_plot_discrete_data_with_distplot(mock_get_plot):
     data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'col', sdtype='categorical')
+    metadata.add_column('col', 'table', sdtype='categorical')
 
     # Run
     plot = get_column_plot(data1, data2, metadata, 'col', plot_type='distplot')
@@ -231,7 +231,7 @@ def test_get_column_plot_invalid_sdtype(mock_get_plot):
     data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'col', sdtype='id')
+    metadata.add_column('col', 'table', sdtype='id')
 
     # Run and Assert
     error_msg = re.escape(
@@ -276,7 +276,7 @@ def test_get_column_plot_invalid_sdtype_with_plot_type(mock_get_plot):
     data2 = pd.DataFrame({'col': ['a', 'b', 'c']})
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'col', sdtype='id')
+    metadata.add_column('col', 'table', sdtype='id')
 
     # Run
     plot = get_column_plot(data1, data2, metadata, 'col', plot_type='bar')
@@ -319,7 +319,7 @@ def test_get_column_plot_with_datetime_sdtype(mock_get_plot):
     synthetic_data = pd.DataFrame({'datetime': ['2023-02-21', '2022-12-13']})
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'datetime', sdtype='datetime', datetime_format='%Y-%m-%d')
+    metadata.add_column('datetime', 'table', sdtype='datetime', datetime_format='%Y-%m-%d')
 
     # Run
     plot = get_column_plot(real_data, synthetic_data, metadata, 'datetime')
@@ -354,8 +354,8 @@ def test_get_column_pair_plot_with_continous_data(mock_get_plot):
     })
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'amount', sdtype='numerical')
-    metadata.add_column('table', 'date', sdtype='datetime')
+    metadata.add_column('amount', 'table', sdtype='numerical')
+    metadata.add_column('date', 'table', sdtype='datetime')
 
     # Run
     plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns)
@@ -389,8 +389,8 @@ def test_get_column_pair_plot_with_discrete_data(mock_get_plot):
     synthetic_data = pd.DataFrame({'name': ['John', 'Johanna'], 'subscriber': [False, False]})
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'name', sdtype='categorical')
-    metadata.add_column('table', 'subscriber', sdtype='boolean')
+    metadata.add_column('name', 'table', sdtype='categorical')
+    metadata.add_column('subscriber', 'table', sdtype='boolean')
 
     # Run
     plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns)
@@ -416,8 +416,8 @@ def test_get_column_pair_plot_with_mixed_data(mock_get_plot):
     synthetic_data = pd.DataFrame({'name': ['John', 'Johanna'], 'counts': [3, 1]})
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'name', sdtype='categorical')
-    metadata.add_column('table', 'counts', sdtype='numerical')
+    metadata.add_column('name', 'table', sdtype='categorical')
+    metadata.add_column('counts', 'table', sdtype='numerical')
 
     # Run
     plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns)
@@ -449,8 +449,8 @@ def test_get_column_pair_plot_with_forced_plot_type(mock_get_plot):
     })
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'amount', sdtype='numerical')
-    metadata.add_column('table', 'date', sdtype='datetime')
+    metadata.add_column('amount', 'table', sdtype='numerical')
+    metadata.add_column('date', 'table', sdtype='datetime')
 
     # Run
     plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns, plot_type='heatmap')
@@ -491,8 +491,8 @@ def test_get_column_pair_plot_with_invalid_sdtype(mock_get_plot):
     })
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'amount', sdtype='numerical')
-    metadata.add_column('table', 'id', sdtype='id')
+    metadata.add_column('amount', 'table', sdtype='numerical')
+    metadata.add_column('id', 'table', sdtype='id')
 
     # Run and Assert
     error_msg = re.escape(
@@ -522,8 +522,8 @@ def test_get_column_pair_plot_with_invalid_sdtype_and_plot_type(mock_get_plot):
     })
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'amount', sdtype='numerical')
-    metadata.add_column('table', 'id', sdtype='id')
+    metadata.add_column('amount', 'table', sdtype='numerical')
+    metadata.add_column('id', 'table', sdtype='id')
 
     # Run
     plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns, plot_type='heatmap')
@@ -551,8 +551,8 @@ def test_get_column_pair_plot_with_sample_size(mock_get_plot):
     })
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'amount', sdtype='numerical')
-    metadata.add_column('table', 'price', sdtype='numerical')
+    metadata.add_column('amount', 'table', sdtype='numerical')
+    metadata.add_column('price', 'table', sdtype='numerical')
 
     # Run
     get_column_pair_plot(real_data, synthetic_data, metadata, columns, sample_size=2)
@@ -614,8 +614,8 @@ def test_get_column_pair_plot_with_sample_size_too_big(mock_get_plot):
     })
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'amount', sdtype='numerical')
-    metadata.add_column('table', 'price', sdtype='numerical')
+    metadata.add_column('amount', 'table', sdtype='numerical')
+    metadata.add_column('price', 'table', sdtype='numerical')
 
     # Run
     plot = get_column_pair_plot(real_data, synthetic_data, metadata, columns, sample_size=10)

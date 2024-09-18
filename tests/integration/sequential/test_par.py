@@ -22,9 +22,11 @@ def _get_par_data_and_metadata():
         'context': ['a', 'a', 'b', 'b'],
     })
     metadata = Metadata.detect_from_dataframes({'table': data})
-    metadata.update_column('table', 'entity', sdtype='id')
-    metadata.set_sequence_key('table', 'entity')
-    metadata.set_sequence_index('table', 'date')
+    metadata.update_column('entity', 'table', sdtype='id')
+    metadata.set_sequence_key('entity', 'table')
+
+    metadata.set_sequence_index('date', 'table')
+
     return data, metadata
 
 
@@ -34,9 +36,11 @@ def test_par():
     data = load_demo()
     data['date'] = pd.to_datetime(data['date'])
     metadata = Metadata.detect_from_dataframes({'table': data})
-    metadata.update_column('table', 'store_id', sdtype='id')
-    metadata.set_sequence_key('table', 'store_id')
-    metadata.set_sequence_index('table', 'date')
+    metadata.update_column('store_id', 'table', sdtype='id')
+    metadata.set_sequence_key('store_id', 'table')
+
+    metadata.set_sequence_index('date', 'table')
+
     model = PARSynthesizer(
         metadata=metadata,
         context_columns=['region'],
@@ -67,9 +71,10 @@ def test_column_after_date_simple():
         'col2': ['hello', 'world'],
     })
     metadata = Metadata.detect_from_dataframes({'table': data})
-    metadata.update_column('table', 'col', sdtype='id')
-    metadata.set_sequence_key('table', 'col')
-    metadata.set_sequence_index('table', 'date')
+    metadata.update_column('col', 'table', sdtype='id')
+    metadata.set_sequence_key('col', 'table')
+
+    metadata.set_sequence_index('date', 'table')
 
     # Run
     model = PARSynthesizer(metadata=metadata, epochs=1)
@@ -347,8 +352,10 @@ def test_par_unique_sequence_index_with_enforce_min_max():
     )
     metadata = Metadata.detect_from_dataframes({'table': test_df})
     metadata.update_column(table_name='table', column_name='s_key', sdtype='id')
-    metadata.set_sequence_key('table', 's_key')
-    metadata.set_sequence_index('table', 'visits')
+    metadata.set_sequence_key('s_key', 'table')
+
+    metadata.set_sequence_index('visits', 'table')
+
     synthesizer = PARSynthesizer(
         metadata, enforce_min_max_values=True, enforce_rounding=False, epochs=100, verbose=True
     )
@@ -441,7 +448,7 @@ def test_par_categorical_column_represented_by_floats():
     # Setup
     data, metadata = download_demo('sequential', 'nasdaq100_2019')
     data['category'] = [100.0 if i % 2 == 0 else 50.0 for i in data.index]
-    metadata.add_column('nasdaq100_2019', 'category', sdtype='categorical')
+    metadata.add_column('category', 'nasdaq100_2019', sdtype='categorical')
 
     # Run
     synth = PARSynthesizer(metadata)
