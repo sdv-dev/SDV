@@ -221,44 +221,6 @@ class Metadata(MultiTableMetadata):
 
         return self.validate_data({table_name: data})
 
-    def _resolve_arguments(self, arg_names, *args, **kwargs):
-        """Resolves the arguments from the provided args and kwargs.
-
-        Args:
-            arg_names (list):
-                List of argument names to resolve.
-        """
-        parameters = {}
-        is_single_table = len(self.tables) == 1
-        args_table_name = True
-        if is_single_table:
-            parameters['table_name'] = next(iter(self.tables))
-            if len(arg_names) != len(args):
-                args_table_name = False
-
-        else:
-            table_name = kwargs.get('table_name')
-            if table_name is None:
-                table_name = args[0]
-                args_table_name = False
-
-            parameters['table_name'] = table_name
-
-        parameters.update({
-            arg_name: arg for arg_name, arg in zip(arg_names, args[not args_table_name :])
-        })
-        for parameter_name, parameter in parameters.items():
-            kwargs_value = kwargs.get(parameter_name)
-            if kwargs_value is not None and kwargs_value != parameter:
-                raise ValueError(
-                    f"Conflicting values for '{parameter_name}': '{parameter}' and '{kwargs_value}'"
-                )
-
-        kwargs = {key: value for key, value in kwargs.items() if key not in parameters}
-        parameters.update(kwargs)
-
-        return parameters
-
     def get_column_names(self, table_name=None, **kwargs):
         """Return a list of column names that match the given metadata keyword arguments."""
         table_name = self._handle_table_name(table_name)
