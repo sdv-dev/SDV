@@ -161,7 +161,18 @@ class Metadata(MultiTableMetadata):
 
         return next(iter(self.tables.values()), SingleTableMetadata())
 
-    def set_sequence_index(self, table_name, column_name):
+    def _handle_table_name(self, table_name):
+        if table_name is None:
+            if len(self.tables) == 1:
+                table_name = next(iter(self.tables))
+            else:
+                raise ValueError(
+                    'Metadata contains more than one table, please specify the `table_name`.'
+                )
+
+        return table_name
+
+    def set_sequence_index(self, column_name, table_name=None):
         """Set the sequence index of a table.
 
         Args:
@@ -170,21 +181,21 @@ class Metadata(MultiTableMetadata):
             column_name (str):
                 Name of the sequence index column.
         """
+        table_name = self._handle_table_name(table_name)
         self._validate_table_exists(table_name)
         self.tables[table_name].set_sequence_index(column_name)
 
-    def set_sequence_key(self, *args, **kwargs):
+    def set_sequence_key(self, column_name, table_name=None):
         """Set the sequence key of a table.
 
         Args:
-            table_name (str):
-                Name of the table to set the sequence key.
             column_name (str, tulple[str]):
                 Name (or tuple of names) of the sequence key column(s).
+            table_name (str):
+                Name of the table to set the sequence key.
+                Defaults to None.
         """
-        parameters = self._resolve_arguments(['column_name'], *args, **kwargs)
-        table_name = parameters['table_name']
-        column_name = parameters['column_name']
+        table_name = self._handle_table_name(table_name)
         self._validate_table_exists(table_name)
         self.tables[table_name].set_sequence_key(column_name)
 
@@ -248,47 +259,52 @@ class Metadata(MultiTableMetadata):
 
         return parameters
 
-    def get_column_names(self, *args, **kwargs):
+    def get_column_names(self, table_name=None, **kwargs):
         """Return a list of column names that match the given metadata keyword arguments."""
-        parameters = self._resolve_arguments([], *args, **kwargs)
-        return super().get_column_names(**parameters)
+        table_name = self._handle_table_name(table_name)
+        return super().get_column_names(table_name, **kwargs)
 
-    def update_column(self, *args, **kwargs):
+    def update_column(self, column_name, table_name=None, **kwargs):
         """Update an existing column for a table in the ``Metadata``."""
-        parameters = self._resolve_arguments(['column_name'], *args, **kwargs)
-        super().update_column(**parameters)
+        table_name = self._handle_table_name(table_name)
+        super().update_column(table_name, column_name, **kwargs)
 
-    def update_columns(self, *args, **kwargs):
+    def update_columns(self, column_names, table_name=None, **kwargs):
         """Update the metadata of multiple columns."""
-        parameters = self._resolve_arguments(['column_names'], *args, **kwargs)
-        super().update_columns(**parameters)
+        table_name = self._handle_table_name(table_name)
+        super().update_columns(table_name, column_names, **kwargs)
 
-    def update_columns_metadata(self, *args, **kwargs):
+    def update_columns_metadata(self, column_metadata, table_name=None):
         """Update the metadata of multiple columns."""
-        parameters = self._resolve_arguments(['column_metadata'], *args, **kwargs)
-        super().update_columns_metadata(**parameters)
+        table_name = self._handle_table_name(table_name)
+        super().update_columns_metadata(table_name, column_metadata)
 
-    def add_column(self, *args, **kwargs):
+    def add_column(self, column_name, table_name=None, **kwargs):
         """Add a column to the metadata."""
-        parameters = self._resolve_arguments(['column_name'], *args, **kwargs)
-        super().add_column(**parameters)
+        table_name = self._handle_table_name(table_name)
+        super().add_column(table_name, column_name, **kwargs)
 
-    def add_column_relationship(self, *args, **kwargs):
+    def add_column_relationship(
+        self,
+        relationship_type,
+        column_names,
+        table_name=None,
+    ):
         """Add a column relationship to the metadata."""
-        parameters = self._resolve_arguments(['relationship_type', 'column_names'], *args, **kwargs)
-        super().add_column_relationship(**parameters)
+        table_name = self._handle_table_name(table_name)
+        super().add_column_relationship(table_name, relationship_type, column_names)
 
-    def set_primary_key(self, *args, **kwargs):
+    def set_primary_key(self, column_name, table_name=None):
         """Set the primary key of a table."""
-        parameters = self._resolve_arguments(['column_name'], *args, **kwargs)
-        super().set_primary_key(**parameters)
+        table_name = self._handle_table_name(table_name)
+        super().set_primary_key(table_name, column_name)
 
-    def remove_primary_key(self, *args, **kwargs):
+    def remove_primary_key(self, table_name=None):
         """Remove the primary key of a table."""
-        parameters = self._resolve_arguments([], *args, **kwargs)
-        super().remove_primary_key(**parameters)
+        table_name = self._handle_table_name(table_name)
+        super().remove_primary_key(table_name)
 
-    def add_alternate_keys(self, *args, **kwargs):
+    def add_alternate_keys(self, column_names, table_name=None):
         """Add alternate keys to a table."""
-        parameters = self._resolve_arguments(['column_names'], *args, **kwargs)
-        super().add_alternate_keys(**parameters)
+        table_name = self._handle_table_name(table_name)
+        super().add_alternate_keys(table_name, column_names)
