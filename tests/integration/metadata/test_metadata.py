@@ -419,54 +419,46 @@ def test_any_metadata_update_single_table(method, args, kwargs):
     metadata.update_column(
         table_name='fake_hotel_guests', column_name='billing_address', sdtype='street_address'
     )
-    metadata_kwargs = deepcopy(metadata)
-    metadata_args = deepcopy(metadata)
-    metadata_kwargs_with_table_name = deepcopy(metadata)
-    metadata_args_with_table_name = deepcopy(metadata)
+    parameter = [kwargs[arg] for arg in args]
+    remaining_kwargs = {key: value for key, value in kwargs.items() if key not in args}
+    metadata_before = deepcopy(metadata).to_dict()
 
     # Run
-    result = getattr(metadata_kwargs, method)(**kwargs)
-    getattr(metadata_kwargs_with_table_name, method)(table_name='fake_hotel_guests', **kwargs)
-    arg_values = [kwargs[arg] for arg in args]
-    extra_param = {key: value for key, value in kwargs.items() if key not in args}
-    getattr(metadata_args, method)(*arg_values, **extra_param)
-    getattr(metadata_args_with_table_name, method)('fake_hotel_guests', *arg_values, **extra_param)
+    result = getattr(metadata, method)(*parameter, **remaining_kwargs)
 
     # Assert
-    expected_dict = metadata_kwargs.to_dict()
+    expected_dict = metadata.to_dict()
     if method != 'get_column_names':
-        assert expected_dict != metadata.to_dict()
+        assert expected_dict != metadata_before
     else:
         assert result == ['checkin_date', 'checkout_date']
-
-    other_metadata = [metadata_args, metadata_kwargs_with_table_name, metadata_args_with_table_name]
-    for metadata_obj in other_metadata:
-        assert expected_dict == metadata_obj.to_dict()
 
 
 @pytest.mark.parametrize('method, args, kwargs', params)
 def test_any_metadata_update_multi_table(method, args, kwargs):
     """Test that any method that updates metadata works for multi-table case."""
     # Setup
-    args.insert(0, 'table_name')
-    kwargs['table_name'] = 'guests'
     _, metadata = download_demo('multi_table', 'fake_hotels')
     metadata.update_column(
         table_name='guests', column_name='billing_address', sdtype='street_address'
     )
-    metadata_kwargs = deepcopy(metadata)
-    metadata_args = deepcopy(metadata)
+    parameter = [kwargs[arg] for arg in args]
+    remaining_kwargs = {key: value for key, value in kwargs.items() if key not in args}
+    metadata_before = deepcopy(metadata).to_dict()
+    expected_error = re.escape(
+        'Metadata contains more than one table, please specify the `table_name`.'
+    )
 
     # Run
-    result = getattr(metadata_kwargs, method)(**kwargs)
-    arg_values = [kwargs[arg] for arg in args]
-    extra_param = {key: value for key, value in kwargs.items() if key not in args}
-    getattr(metadata_args, method)(*arg_values, **extra_param)
+    with pytest.raises(ValueError, match=expected_error):
+        getattr(metadata, method)(*parameter, **remaining_kwargs)
+
+    parameter.append('guests')
+    result = getattr(metadata, method)(*parameter, **remaining_kwargs)
 
     # Assert
-    expected_dict = metadata_kwargs.to_dict()
-    assert expected_dict == metadata_args.to_dict()
+    expected_dict = metadata.to_dict()
     if method != 'get_column_names':
-        assert expected_dict != metadata.to_dict()
+        assert expected_dict != metadata_before
     else:
         assert result == ['checkin_date', 'checkout_date']

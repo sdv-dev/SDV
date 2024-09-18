@@ -74,9 +74,9 @@ def test_fit_with_unique_constraint_on_data_with_only_index_column():
 
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'key', sdtype='id')
-    metadata.add_column('table', 'index', sdtype='categorical')
-    metadata.set_primary_key('table', 'key')
+    metadata.add_column('key', 'table', sdtype='id')
+    metadata.add_column('index', 'table', sdtype='categorical')
+    metadata.set_primary_key('key', 'table')
 
     model = GaussianCopulaSynthesizer(metadata)
     constraint = {
@@ -139,10 +139,10 @@ def test_fit_with_unique_constraint_on_data_which_has_index_column():
 
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'key', sdtype='id')
-    metadata.add_column('table', 'index', sdtype='categorical')
-    metadata.add_column('table', 'test_column', sdtype='categorical')
-    metadata.set_primary_key('table', 'key')
+    metadata.add_column('key', 'table', sdtype='id')
+    metadata.add_column('index', 'table', sdtype='categorical')
+    metadata.add_column('test_column', 'table', sdtype='categorical')
+    metadata.set_primary_key('key', 'table')
 
     model = GaussianCopulaSynthesizer(metadata)
     constraint = {
@@ -198,9 +198,9 @@ def test_fit_with_unique_constraint_on_data_subset():
 
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'key', sdtype='id')
-    metadata.add_column('table', 'test_column', sdtype='categorical')
-    metadata.set_primary_key('table', 'key')
+    metadata.add_column('key', 'table', sdtype='id')
+    metadata.add_column('test_column', 'table', sdtype='categorical')
+    metadata.set_primary_key('key', 'table')
 
     test_df = test_df.iloc[[1, 3, 4]]
     constraint = {
@@ -295,9 +295,9 @@ def test_conditional_sampling_constraint_uses_reject_sampling(gm_mock, isinstanc
 
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'city', sdtype='categorical')
-    metadata.add_column('table', 'state', sdtype='categorical')
-    metadata.add_column('table', 'age', sdtype='numerical')
+    metadata.add_column('city', 'table', sdtype='categorical')
+    metadata.add_column('state', 'table', sdtype='categorical')
+    metadata.add_column('age', 'table', sdtype='numerical')
 
     model = GaussianCopulaSynthesizer(metadata)
 
@@ -815,8 +815,8 @@ def test_custom_constraint_with_key():
         'other': [7, 8, 9],
     })
     metadata = Metadata.detect_from_dataframes({'table': data})
-    metadata.update_column('table', 'key', sdtype='id', regex_format=r'\w_\d')
-    metadata.set_primary_key('table', 'key')
+    metadata.update_column('key', 'table', sdtype='id', regex_format=r'\w_\d')
+    metadata.set_primary_key('key', 'table')
     synth = GaussianCopulaSynthesizer(metadata)
     synth.add_custom_constraint_class(custom_constraint, 'custom')
 
@@ -845,8 +845,8 @@ def test_timezone_aware_constraints():
 
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'col1', sdtype='datetime')
-    metadata.add_column('table', 'col2', sdtype='datetime')
+    metadata.add_column('col1', 'table', sdtype='datetime')
+    metadata.add_column('col2', 'table', sdtype='datetime')
 
     my_constraint = {
         'constraint_class': 'Inequality',

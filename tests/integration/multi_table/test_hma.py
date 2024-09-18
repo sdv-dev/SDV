@@ -87,8 +87,8 @@ class TestHMASynthesizer:
         faker = Faker()
         data, metadata = download_demo('multi_table', 'got_families')
         metadata.add_column(
-            'characters',
             'ssn',
+            'characters',
             sdtype='ssn',
         )
         data['characters']['ssn'] = [faker.lexify() for _ in range(len(data['characters']))]
@@ -126,7 +126,7 @@ class TestHMASynthesizer:
         today = datetime.datetime.today().strftime('%Y-%m-%d')
         metadata = Metadata()
         metadata.add_table('tab')
-        metadata.add_column('tab', 'col', sdtype='numerical')
+        metadata.add_column('col', 'tab', sdtype='numerical')
         synthesizer = HMASynthesizer(metadata)
 
         # Run
@@ -221,12 +221,12 @@ class TestHMASynthesizer:
 
         metadata = Metadata()
         metadata.detect_table_from_dataframe('parent', parent_data)
-        metadata.update_column('parent', 'primary_key', sdtype='id')
+        metadata.update_column('primary_key', 'parent', sdtype='id')
         metadata.detect_table_from_dataframe('child', child_data)
-        metadata.update_column('child', 'user_id', sdtype='id')
-        metadata.update_column('child', 'id', sdtype='id')
-        metadata.set_primary_key('parent', 'primary_key')
-        metadata.set_primary_key('child', 'id')
+        metadata.update_column('user_id', 'child', sdtype='id')
+        metadata.update_column('id', 'child', sdtype='id')
+        metadata.set_primary_key('primary_key', 'parent')
+        metadata.set_primary_key('id', 'child')
         metadata.add_relationship(
             parent_primary_key='primary_key',
             parent_table_name='parent',
@@ -361,10 +361,10 @@ class TestHMASynthesizer:
 
         metadata = Metadata()
         metadata.detect_table_from_dataframe(table_name='parent_table', data=parent_table)
-        metadata.update_column('parent_table', 'id', sdtype='id')
+        metadata.update_column('id', 'parent_table', sdtype='id')
         metadata.detect_table_from_dataframe(table_name='child_table', data=child_table)
-        metadata.update_column('child_table', 'id', sdtype='id')
-        metadata.update_column('child_table', 'parent_id', sdtype='id')
+        metadata.update_column('id', 'child_table', sdtype='id')
+        metadata.update_column('parent_id', 'child_table', sdtype='id')
 
         metadata.set_primary_key(table_name='parent_table', column_name='id')
         metadata.set_primary_key(table_name='child_table', column_name='id')
@@ -452,14 +452,14 @@ class TestHMASynthesizer:
         for table_name, table in data.items():
             metadata.detect_table_from_dataframe(table_name, table)
 
-        metadata.update_column('users', 'user_id', sdtype='id')
-        metadata.update_column('sessions', 'session_id', sdtype='id')
-        metadata.update_column('games', 'game_id', sdtype='id')
-        metadata.update_column('games', 'session_id', sdtype='id')
-        metadata.update_column('games', 'user_id', sdtype='id')
-        metadata.set_primary_key('users', 'user_id')
-        metadata.set_primary_key('sessions', 'session_id')
-        metadata.set_primary_key('games', 'game_id')
+        metadata.update_column('user_id', 'users', sdtype='id')
+        metadata.update_column('session_id', 'sessions', sdtype='id')
+        metadata.update_column('game_id', 'games', sdtype='id')
+        metadata.update_column('session_id', 'games', sdtype='id')
+        metadata.update_column('user_id', 'games', sdtype='id')
+        metadata.set_primary_key('user_id', 'users')
+        metadata.set_primary_key('session_id', 'sessions')
+        metadata.set_primary_key('game_id', 'games')
         metadata.add_relationship('users', 'games', 'user_id', 'user_id')
         metadata.add_relationship('sessions', 'games', 'session_id', 'session_id')
 
@@ -1351,25 +1351,25 @@ class TestHMASynthesizer:
         metadata = Metadata()
 
         metadata.add_table('parent_table1')
-        metadata.add_column('parent_table1', 'id', sdtype='id')
-        metadata.set_primary_key('parent_table1', 'id')
+        metadata.add_column('id', 'parent_table1', sdtype='id')
+        metadata.set_primary_key('id', 'parent_table1')
 
         metadata.add_table('parent_table2')
-        metadata.add_column('parent_table2', 'id', sdtype='id')
-        metadata.set_primary_key('parent_table2', 'id')
+        metadata.add_column('id', 'parent_table2', sdtype='id')
+        metadata.set_primary_key('id', 'parent_table2')
 
         metadata.add_table('child_table1')
-        metadata.add_column('child_table1', 'id', sdtype='id')
-        metadata.set_primary_key('child_table1', 'id')
-        metadata.add_column('child_table1', 'fk1', sdtype='id')
-        metadata.add_column('child_table1', 'fk2', sdtype='id')
+        metadata.add_column('id', 'child_table1', sdtype='id')
+        metadata.set_primary_key('id', 'child_table1')
+        metadata.add_column('fk1', 'child_table1', sdtype='id')
+        metadata.add_column('fk2', 'child_table1', sdtype='id')
 
         metadata.add_table('child_table2')
-        metadata.add_column('child_table2', 'id', sdtype='id')
-        metadata.set_primary_key('child_table2', 'id')
-        metadata.add_column('child_table2', 'fk1', sdtype='id')
-        metadata.add_column('child_table2', 'fk2', sdtype='id')
-        metadata.add_column('child_table2', 'cat_type', sdtype='categorical')
+        metadata.add_column('id', 'child_table2', sdtype='id')
+        metadata.set_primary_key('id', 'child_table2')
+        metadata.add_column('fk1', 'child_table2', sdtype='id')
+        metadata.add_column('fk2', 'child_table2', sdtype='id')
+        metadata.add_column('cat_type', 'child_table2', sdtype='categorical')
 
         metadata.add_relationship(
             parent_table_name='parent_table1',
@@ -1842,7 +1842,7 @@ def test_fit_and_sample_numerical_col_names():
         }
     ]
     metadata = Metadata.load_from_dict(metadata_dict)
-    metadata.set_primary_key('0', '1')
+    metadata.set_primary_key('1', '0')
 
     # Run
     synth = HMASynthesizer(metadata)
@@ -1875,11 +1875,11 @@ def test_detect_from_dataframe_numerical_col():
     metadata = Metadata()
     metadata.detect_table_from_dataframe('parent_data', parent_data)
     metadata.detect_table_from_dataframe('child_data', child_data)
-    metadata.update_column('parent_data', '1', sdtype='id')
-    metadata.update_column('child_data', '3', sdtype='id')
-    metadata.update_column('child_data', '4', sdtype='id')
-    metadata.set_primary_key('parent_data', '1')
-    metadata.set_primary_key('child_data', '4')
+    metadata.update_column('1', 'parent_data', sdtype='id')
+    metadata.update_column('3', 'child_data', sdtype='id')
+    metadata.update_column('4', 'child_data', sdtype='id')
+    metadata.set_primary_key('1', 'parent_data')
+    metadata.set_primary_key('4', 'child_data')
     metadata.add_relationship(
         parent_primary_key='1',
         parent_table_name='parent_data',
@@ -1888,11 +1888,11 @@ def test_detect_from_dataframe_numerical_col():
     )
 
     test_metadata = Metadata.detect_from_dataframes(data)
-    test_metadata.update_column('parent_data', '1', sdtype='id')
-    test_metadata.update_column('child_data', '3', sdtype='id')
-    test_metadata.update_column('child_data', '4', sdtype='id')
-    test_metadata.set_primary_key('parent_data', '1')
-    test_metadata.set_primary_key('child_data', '4')
+    test_metadata.update_column('1', 'parent_data', sdtype='id')
+    test_metadata.update_column('3', 'child_data', sdtype='id')
+    test_metadata.update_column('4', 'child_data', sdtype='id')
+    test_metadata.set_primary_key('1', 'parent_data')
+    test_metadata.set_primary_key('4', 'child_data')
     test_metadata.add_relationship(
         parent_primary_key='1',
         parent_table_name='parent_data',
@@ -2005,13 +2005,13 @@ def test_hma_synthesizer_with_fixed_combinations():
     # Creating metadata for the dataset
     metadata = Metadata.detect_from_dataframes(data)
 
-    metadata.update_column('users', 'user_id', sdtype='id')
-    metadata.update_column('records', 'record_id', sdtype='id')
-    metadata.update_column('records', 'user_id', sdtype='id')
-    metadata.update_column('records', 'location_id', sdtype='id')
-    metadata.update_column('locations', 'location_id', sdtype='id')
-    metadata.set_primary_key('users', 'user_id')
-    metadata.set_primary_key('locations', 'location_id')
+    metadata.update_column('user_id', 'users', sdtype='id')
+    metadata.update_column('record_id', 'records', sdtype='id')
+    metadata.update_column('user_id', 'records', sdtype='id')
+    metadata.update_column('location_id', 'records', sdtype='id')
+    metadata.update_column('location_id', 'locations', sdtype='id')
+    metadata.set_primary_key('user_id', 'users')
+    metadata.set_primary_key('location_id', 'locations')
     metadata.add_relationship('users', 'records', 'user_id', 'user_id')
     metadata.add_relationship('locations', 'records', 'location_id', 'location_id')
 
@@ -2053,8 +2053,8 @@ def test_fit_int_primary_key_regex_includes_zero(regex):
         'child_data': child_data,
     }
     metadata = Metadata.detect_from_dataframes(data)
-    metadata.update_column('parent_data', 'parent_id', sdtype='id', regex_format=regex)
-    metadata.set_primary_key('parent_data', 'parent_id')
+    metadata.update_column('parent_id', 'parent_data', sdtype='id', regex_format=regex)
+    metadata.set_primary_key('parent_id', 'parent_data')
 
     # Run and Assert
     instance = HMASynthesizer(metadata)
