@@ -93,9 +93,9 @@ def test_sample_from_conditions_with_batch_size():
 
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'column1', sdtype='numerical')
-    metadata.add_column('table', 'column2', sdtype='numerical')
-    metadata.add_column('table', 'column3', sdtype='numerical')
+    metadata.add_column('column1', 'table', sdtype='numerical')
+    metadata.add_column('column2', 'table', sdtype='numerical')
+    metadata.add_column('column3', 'table', sdtype='numerical')
 
     model = GaussianCopulaSynthesizer(metadata)
     model.fit(data)
@@ -120,9 +120,9 @@ def test_sample_from_conditions_negative_float():
 
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'column1', sdtype='numerical')
-    metadata.add_column('table', 'column2', sdtype='numerical')
-    metadata.add_column('table', 'column3', sdtype='numerical')
+    metadata.add_column('column1', 'table', sdtype='numerical')
+    metadata.add_column('column2', 'table', sdtype='numerical')
+    metadata.add_column('column3', 'table', sdtype='numerical')
 
     model = GaussianCopulaSynthesizer(metadata)
     model.fit(data)
@@ -203,7 +203,7 @@ def test_sample_keys_are_scrambled():
     """Test that the keys are scrambled in the sampled data."""
     # Setup
     data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
-    metadata.update_column('fake_hotel_guests', 'guest_email', sdtype='id', regex_format='[A-Z]{3}')
+    metadata.update_column('guest_email', 'fake_hotel_guests', sdtype='id', regex_format='[A-Z]{3}')
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.fit(data)
 
@@ -234,9 +234,9 @@ def test_multiple_fits():
     })
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'city', sdtype='categorical')
-    metadata.add_column('table', 'state', sdtype='categorical')
-    metadata.add_column('table', 'measurement', sdtype='numerical')
+    metadata.add_column('city', 'table', sdtype='categorical')
+    metadata.add_column('state', 'table', sdtype='categorical')
+    metadata.add_column('measurement', 'table', sdtype='numerical')
     constraint = {
         'constraint_class': 'FixedCombinations',
         'constraint_parameters': {'column_names': ['city', 'state']},
@@ -338,7 +338,7 @@ def test_transformers_correctly_auto_assigned():
     metadata.update_column(
         table_name='table', column_name='primary_key', sdtype='id', regex_format='user-[0-9]{3}'
     )
-    metadata.set_primary_key('table', 'primary_key')
+    metadata.set_primary_key('primary_key', 'table')
     metadata.update_column(table_name='table', column_name='pii_col', sdtype='address', pii=True)
     synthesizer = GaussianCopulaSynthesizer(
         metadata, enforce_min_max_values=False, enforce_rounding=False
@@ -428,7 +428,7 @@ def test_auto_assign_transformers_and_update_with_pii():
     # Run
     metadata.update_column(table_name='table', column_name='id', sdtype='first_name')
     metadata.update_column(table_name='table', column_name='name', sdtype='name')
-    metadata.set_primary_key('table', 'id')
+    metadata.set_primary_key('id', 'table')
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.auto_assign_transformers(data)
 
@@ -457,8 +457,8 @@ def test_refitting_a_model():
 
     metadata = Metadata.detect_from_dataframes({'table': data})
     metadata.update_column(table_name='table', column_name='name', sdtype='name')
-    metadata.update_column('table', 'id', sdtype='id')
-    metadata.set_primary_key('table', 'id')
+    metadata.update_column('id', 'table', sdtype='id')
+    metadata.set_primary_key('id', 'table')
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
     synthesizer.fit(data)
@@ -483,7 +483,7 @@ def test_get_info():
     today = datetime.datetime.today().strftime('%Y-%m-%d')
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'col', sdtype='numerical')
+    metadata.add_column('col', 'table', sdtype='numerical')
     synthesizer = GaussianCopulaSynthesizer(metadata)
 
     # Run
@@ -628,7 +628,7 @@ def test_metadata_updated_no_warning(mock__fit, tmp_path):
 
     # Run 3
     instance = BaseSingleTableSynthesizer(metadata_detect)
-    metadata_detect.update_column('mock_table', 'col 1', sdtype='categorical')
+    metadata_detect.update_column('col 1', 'mock_table', sdtype='categorical')
     file_name = tmp_path / 'singletable_2.json'
     metadata_detect.save_to_json(file_name)
     with warnings.catch_warnings(record=True) as captured_warnings:

@@ -17,12 +17,12 @@ def test__estimate_num_columns():
     # Setup
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'numerical', sdtype='numerical')
-    metadata.add_column('table', 'categorical', sdtype='categorical')
-    metadata.add_column('table', 'categorical2', sdtype='categorical')
-    metadata.add_column('table', 'categorical3', sdtype='categorical')
-    metadata.add_column('table', 'datetime', sdtype='datetime')
-    metadata.add_column('table', 'boolean', sdtype='boolean')
+    metadata.add_column('numerical', 'table', sdtype='numerical')
+    metadata.add_column('categorical', 'table', sdtype='categorical')
+    metadata.add_column('categorical2', 'table', sdtype='categorical')
+    metadata.add_column('categorical3', 'table', sdtype='categorical')
+    metadata.add_column('datetime', 'table', sdtype='datetime')
+    metadata.add_column('boolean', 'table', sdtype='boolean')
     data = pd.DataFrame({
         'numerical': [0.1, 0.2, 0.3],
         'datetime': ['2020-01-01', '2020-01-02', '2020-01-03'],

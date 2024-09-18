@@ -1,5 +1,6 @@
 import os
 import re
+from copy import deepcopy
 
 import pytest
 
@@ -241,56 +242,6 @@ def test_detect_from_csvs(tmp_path):
     assert metadata.to_dict() == expected_metadata
 
 
-def test_detect_table_from_csv(tmp_path):
-    """Test the ``detect_table_from_csv`` method."""
-    # Setup
-    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
-
-    metadata = Metadata()
-
-    for table_name, dataframe in real_data.items():
-        csv_path = tmp_path / f'{table_name}.csv'
-        dataframe.to_csv(csv_path, index=False)
-
-    # Run
-    metadata.detect_table_from_csv('hotels', tmp_path / 'hotels.csv')
-
-    # Assert
-    metadata.update_column(
-        table_name='hotels',
-        column_name='city',
-        sdtype='categorical',
-    )
-    metadata.update_column(
-        table_name='hotels',
-        column_name='state',
-        sdtype='categorical',
-    )
-    metadata.update_column(
-        table_name='hotels',
-        column_name='classification',
-        sdtype='categorical',
-    )
-    expected_metadata = {
-        'tables': {
-            'hotels': {
-                'columns': {
-                    'hotel_id': {'sdtype': 'id'},
-                    'city': {'sdtype': 'categorical'},
-                    'state': {'sdtype': 'categorical'},
-                    'rating': {'sdtype': 'numerical'},
-                    'classification': {'sdtype': 'categorical'},
-                },
-                'primary_key': 'hotel_id',
-            }
-        },
-        'relationships': [],
-        'METADATA_SPEC_VERSION': 'V1',
-    }
-
-    assert metadata.to_dict() == expected_metadata
-
-
 def test_single_table_compatibility(tmp_path):
     """Test if SingleTableMetadata still has compatibility with single table synthesizers."""
     # Setup
@@ -432,3 +383,82 @@ def test_multi_table_compatibility(tmp_path):
     assert expected_metadata == synthesizer_2.metadata.to_dict()
     for table in metadata_sample:
         assert metadata_sample[table].columns.to_list() == loaded_sample[table].columns.to_list()
+
+
+params = [
+    ('update_column', ['column_name'], {'column_name': 'has_rewards', 'sdtype': 'categorical'}),
+    (
+        'update_columns',
+        ['column_names'],
+        {'column_names': ['has_rewards', 'billing_address'], 'sdtype': 'categorical'},
+    ),
+    (
+        'update_columns_metadata',
+        ['column_metadata'],
+        {'column_metadata': {'has_rewards': {'sdtype': 'categorical'}}},
+    ),
+    ('add_column', ['column_name'], {'column_name': 'has_rewards_2', 'sdtype': 'categorical'}),
+    ('set_primary_key', ['column_name'], {'column_name': 'billing_address'}),
+    ('remove_primary_key', [], {}),
+    (
+        'add_column_relationship',
+        ['relationship_type', 'column_names'],
+        {'column_names': ['billing_address'], 'relationship_type': 'address'},
+    ),
+    ('add_alternate_keys', ['column_names'], {'column_names': ['billing_address']}),
+    ('set_sequence_key', ['column_name'], {'column_name': 'billing_address'}),
+    ('get_column_names', [], {'sdtype': 'datetime'}),
+]
+
+
+@pytest.mark.parametrize('method, args, kwargs', params)
+def test_any_metadata_update_single_table(method, args, kwargs):
+    """Test that any method that updates metadata works for single-table case."""
+    # Setup
+    _, metadata = download_demo('single_table', 'fake_hotel_guests')
+    metadata.update_column(
+        table_name='fake_hotel_guests', column_name='billing_address', sdtype='street_address'
+    )
+    parameter = [kwargs[arg] for arg in args]
+    remaining_kwargs = {key: value for key, value in kwargs.items() if key not in args}
+    metadata_before = deepcopy(metadata).to_dict()
+
+    # Run
+    result = getattr(metadata, method)(*parameter, **remaining_kwargs)
+
+    # Assert
+    expected_dict = metadata.to_dict()
+    if method != 'get_column_names':
+        assert expected_dict != metadata_before
+    else:
+        assert result == ['checkin_date', 'checkout_date']
+
+
+@pytest.mark.parametrize('method, args, kwargs', params)
+def test_any_metadata_update_multi_table(method, args, kwargs):
+    """Test that any method that updates metadata works for multi-table case."""
+    # Setup
+    _, metadata = download_demo('multi_table', 'fake_hotels')
+    metadata.update_column(
+        table_name='guests', column_name='billing_address', sdtype='street_address'
+    )
+    parameter = [kwargs[arg] for arg in args]
+    remaining_kwargs = {key: value for key, value in kwargs.items() if key not in args}
+    metadata_before = deepcopy(metadata).to_dict()
+    expected_error = re.escape(
+        'Metadata contains more than one table, please specify the `table_name`.'
+    )
+
+    # Run
+    with pytest.raises(ValueError, match=expected_error):
+        getattr(metadata, method)(*parameter, **remaining_kwargs)
+
+    parameter.append('guests')
+    result = getattr(metadata, method)(*parameter, **remaining_kwargs)
+
+    # Assert
+    expected_dict = metadata.to_dict()
+    if method != 'get_column_names':
+        assert expected_dict != metadata_before
+    else:
+        assert result == ['checkin_date', 'checkout_date']

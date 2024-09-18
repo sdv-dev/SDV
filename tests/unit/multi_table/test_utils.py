@@ -1947,7 +1947,7 @@ def test__subsample_data(
 def test__subsample_data_with_null_foreing_keys():
     """Test the ``_subsample_data`` method when there are null foreign keys."""
     # Setup
-    metadata = MultiTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'tables': {
             'parent': {
                 'columns': {

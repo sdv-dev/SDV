@@ -12,7 +12,7 @@ def test_evaluation():
     data = pd.DataFrame({'col': [1, 2, 3]})
     metadata = Metadata()
     metadata.add_table('table')
-    metadata.add_column('table', 'col', sdtype='numerical')
+    metadata.add_column('col', 'table', sdtype='numerical')
     synthesizer = GaussianCopulaSynthesizer(metadata, default_distribution='truncnorm')
 
     # Run and Assert

@@ -21,15 +21,15 @@ class TestPARSynthesizer:
     def get_metadata(self, add_sequence_key=True, add_sequence_index=False):
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'time', sdtype='datetime')
-        metadata.add_column('table', 'gender', sdtype='categorical')
-        metadata.add_column('table', 'name', sdtype='id')
-        metadata.add_column('table', 'measurement', sdtype='numerical')
+        metadata.add_column('time', 'table', sdtype='datetime')
+        metadata.add_column('gender', 'table', sdtype='categorical')
+        metadata.add_column('name', 'table', sdtype='id')
+        metadata.add_column('measurement', 'table', sdtype='numerical')
         if add_sequence_key:
-            metadata.set_sequence_key('table', 'name')
+            metadata.set_sequence_key('name', 'table')
 
         if add_sequence_index:
-            metadata.set_sequence_index('table', 'time')
+            metadata.set_sequence_index('time', 'table')
 
         return metadata
 
@@ -261,11 +261,12 @@ class TestPARSynthesizer:
         })
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'sk_col1', sdtype='id')
-        metadata.add_column('table', 'sk_col2', sdtype='id')
-        metadata.add_column('table', 'ct_col1', sdtype='numerical')
-        metadata.add_column('table', 'ct_col2', sdtype='numerical')
-        metadata.set_sequence_key('table', 'sk_col1')
+        metadata.add_column('sk_col1', 'table', sdtype='id')
+        metadata.add_column('sk_col2', 'table', sdtype='id')
+        metadata.add_column('ct_col1', 'table', sdtype='numerical')
+        metadata.add_column('ct_col2', 'table', sdtype='numerical')
+        metadata.set_sequence_key('sk_col1', 'table')
+
         instance = PARSynthesizer(metadata=metadata, context_columns=['ct_col1', 'ct_col2'])
 
         # Run and Assert
@@ -529,7 +530,8 @@ class TestPARSynthesizer:
             'measurement': [55, 60, 65],
         })
         metadata = self.get_metadata()
-        metadata.set_sequence_index('table', 'time')
+        metadata.set_sequence_index('time', 'table')
+
         mock_get_transfomers.return_value = {'time': FloatFormatter}
 
         # Run
@@ -611,7 +613,7 @@ class TestPARSynthesizer:
         data = self.get_data()
         data['measurement'] = data['measurement'].astype(float)
         metadata = self.get_metadata()
-        metadata.update_column('table', 'measurement', sdtype='categorical')
+        metadata.update_column('measurement', 'table', sdtype='categorical')
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
         sequences = [
             {'context': np.array(['M'], dtype=object), 'data': [['2020-01-03'], [65.0]]},
@@ -649,7 +651,8 @@ class TestPARSynthesizer:
             'measurement': [55, 60, 65, 65, 70],
         })
         metadata = self.get_metadata()
-        metadata.set_sequence_index('table', 'time')
+        metadata.set_sequence_index('time', 'table')
+
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
         sequences = [
             {'context': np.array(['F'], dtype=object), 'data': [[1, 1], [55, 60], [1, 1]]},
@@ -840,7 +843,8 @@ class TestPARSynthesizer:
         """
         # Setup
         metadata = self.get_metadata()
-        metadata.set_sequence_index('table', 'time')
+        metadata.set_sequence_index('time', 'table')
+
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
         model_mock = Mock()
         par._model = model_mock

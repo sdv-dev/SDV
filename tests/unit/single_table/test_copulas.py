@@ -92,7 +92,7 @@ class TestGaussianCopulaSynthesizer:
         # Setup
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'field', sdtype='numerical')
+        metadata.add_column('field', 'table', sdtype='numerical')
         enforce_min_max_values = False
         enforce_rounding = False
         numerical_distributions = {'field': 'gamma'}
@@ -169,7 +169,7 @@ class TestGaussianCopulaSynthesizer:
         # Setup
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'col', sdtype='numerical')
+        metadata.add_column('col', 'table', sdtype='numerical')
         numerical_distributions = {'col': 'gamma'}
         instance = GaussianCopulaSynthesizer(
             metadata, numerical_distributions=numerical_distributions
@@ -197,8 +197,8 @@ class TestGaussianCopulaSynthesizer:
         # Setup
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'name', sdtype='numerical')
-        metadata.add_column('table', 'user.id', sdtype='numerical')
+        metadata.add_column('name', 'table', sdtype='numerical')
+        metadata.add_column('user.id', 'table', sdtype='numerical')
         numerical_distributions = {'name': 'uniform', 'user.id': 'gamma'}
 
         processed_data = pd.DataFrame({

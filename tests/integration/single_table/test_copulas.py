@@ -278,8 +278,8 @@ def test_update_transformers_with_id_generator():
     data = pd.DataFrame({'user_id': list(range(4)), 'user_cat': ['a', 'b', 'c', 'd']})
 
     stm = Metadata.detect_from_dataframes({'table': data})
-    stm.update_column('table', 'user_id', sdtype='id')
-    stm.set_primary_key('table', 'user_id')
+    stm.update_column('user_id', 'table', sdtype='id')
+    stm.set_primary_key('user_id', 'table')
 
     gc = GaussianCopulaSynthesizer(stm)
     custom_id = IDGenerator(starting_value=min_value_id)
@@ -434,7 +434,7 @@ def test_unknown_sdtype():
     })
 
     metadata = Metadata.detect_from_dataframes({'table': data})
-    metadata.update_column('table', 'unknown', sdtype='unknown')
+    metadata.update_column('unknown', 'table', sdtype='unknown')
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
 

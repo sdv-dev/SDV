@@ -1396,11 +1396,11 @@ class TestMultiTableMetadata:
             '20220826',
             '20220826',
         ])
-        metadata.add_column('upravna_enota', 'warning_date_str', sdtype='datetime')
+        metadata.add_column('warning_date_str', 'upravna_enota', sdtype='datetime')
         metadata.add_column(
-            'upravna_enota', 'valid_date', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f'
+            'valid_date', 'upravna_enota', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f'
         )
-        metadata.add_column('upravna_enota', 'datetime', sdtype='datetime')
+        metadata.add_column('datetime', 'upravna_enota', sdtype='datetime')
 
         # Run and Assert
         warning_df = pd.DataFrame({

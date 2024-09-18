@@ -189,9 +189,9 @@ class TestCTGANSynthesizer:
         # Setup
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'id', sdtype='numerical')
-        metadata.add_column('table', 'name', sdtype='categorical')
-        metadata.add_column('table', 'surname', sdtype='categorical')
+        metadata.add_column('id', 'table', sdtype='numerical')
+        metadata.add_column('name', 'table', sdtype='categorical')
+        metadata.add_column('surname', 'table', sdtype='categorical')
         data = pd.DataFrame({
             'id': np.random.rand(1_001),
             'name': [f'cat_{i}' for i in range(1_001)],
@@ -215,8 +215,8 @@ class TestCTGANSynthesizer:
         # Setup
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'name_longer_than_Original_Column_Name', sdtype='numerical')
-        metadata.add_column('table', 'categorical', sdtype='categorical')
+        metadata.add_column('name_longer_than_Original_Column_Name', 'table', sdtype='numerical')
+        metadata.add_column('categorical', 'table', sdtype='categorical')
         data = pd.DataFrame({
             'name_longer_than_Original_Column_Name': np.random.rand(1_001),
             'categorical': [f'cat_{i}' for i in range(1_001)],
@@ -246,8 +246,8 @@ class TestCTGANSynthesizer:
         # Setup
         metadata = Metadata()
         metadata.add_table('table')
-        metadata.add_column('table', 'name_longer_than_Original_Column_Name', sdtype='numerical')
-        metadata.add_column('table', 'categorical', sdtype='categorical')
+        metadata.add_column('name_longer_than_Original_Column_Name', 'table', sdtype='numerical')
+        metadata.add_column('categorical', 'table', sdtype='categorical')
         data = pd.DataFrame({
             'name_longer_than_Original_Column_Name': np.random.rand(10),
             'categorical': [f'cat_{i}' for i in range(10)],

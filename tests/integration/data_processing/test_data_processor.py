@@ -53,7 +53,7 @@ class TestDataProcessor:
         data, metadata = download_demo('single_table', 'adult')
 
         # Add anonymized field
-        metadata.update_column('adult', 'occupation', sdtype='job', pii=True)
+        metadata.update_column('occupation', 'adult', sdtype='job', pii=True)
 
         # Instance ``DataProcessor``
         dp = DataProcessor(metadata._convert_to_single_table())
@@ -101,11 +101,11 @@ class TestDataProcessor:
         data, metadata = download_demo('single_table', 'adult')
 
         # Add anonymized field
-        metadata.update_column('adult', 'occupation', sdtype='job', pii=True)
+        metadata.update_column('occupation', 'adult', sdtype='job', pii=True)
 
         # Add primary key field
-        metadata.add_column('adult', 'id', sdtype='id', regex_format='ID_\\d{4}[0-9]')
-        metadata.set_primary_key('adult', 'id')
+        metadata.add_column('id', 'adult', sdtype='id', regex_format='ID_\\d{4}[0-9]')
+        metadata.set_primary_key('id', 'adult')
 
         # Add id
         size = len(data)
@@ -159,8 +159,8 @@ class TestDataProcessor:
         adult_metadata = Metadata.detect_from_dataframes({'adult': data})
 
         # Add primary key field
-        adult_metadata.add_column('adult', 'id', sdtype='id')
-        adult_metadata.set_primary_key('adult', 'id')
+        adult_metadata.add_column('id', 'adult', sdtype='id')
+        adult_metadata.set_primary_key('id', 'adult')
 
         # Add id
         size = len(data)
@@ -198,13 +198,13 @@ class TestDataProcessor:
         adult_metadata = Metadata.detect_from_dataframes({'adult': data})
 
         # Add primary key field
-        adult_metadata.add_column('adult', 'id', sdtype='id')
-        adult_metadata.set_primary_key('adult', 'id')
+        adult_metadata.add_column('id', 'adult', sdtype='id')
+        adult_metadata.set_primary_key('id', 'adult')
 
-        adult_metadata.add_column('adult', 'secondary_id', sdtype='id')
-        adult_metadata.update_column('adult', 'fnlwgt', sdtype='id', regex_format='ID_\\d{4}[0-9]')
+        adult_metadata.add_column('secondary_id', 'adult', sdtype='id')
+        adult_metadata.update_column('fnlwgt', 'adult', sdtype='id', regex_format='ID_\\d{4}[0-9]')
 
-        adult_metadata.add_alternate_keys('adult', ['secondary_id', 'fnlwgt'])
+        adult_metadata.add_alternate_keys(['secondary_id', 'fnlwgt'], 'adult')
 
         # Add id
         size = len(data)
@@ -345,7 +345,7 @@ class TestDataProcessor:
         """Test data processor uses the default locale for anonymized columns."""
         # Setup
         data, metadata = download_demo('single_table', 'adult')
-        metadata.update_column('adult', 'occupation', sdtype='job', pii=True)
+        metadata.update_column('occupation', 'adult', sdtype='job', pii=True)
 
         dp = DataProcessor(metadata._convert_to_single_table(), locales=['en_CA', 'fr_CA'])
 

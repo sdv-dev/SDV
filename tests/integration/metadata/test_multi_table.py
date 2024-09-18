@@ -34,11 +34,11 @@ def test_add_column_relationship(mock_rdt_transformers):
 
     mock_rdt_transformers.address.RandomLocationGenerator = RandomLocationGeneratorMock
     _, instance = download_demo('multi_table', 'fake_hotels')
-    instance.update_column('hotels', 'city', sdtype='city')
-    instance.update_column('hotels', 'state', sdtype='state')
+    instance.update_column('city', 'hotels', sdtype='city')
+    instance.update_column('state', 'hotels', sdtype='state')
 
     # Run
-    instance.add_column_relationship('hotels', 'address', ['city', 'state'])
+    instance.add_column_relationship('address', ['city', 'state'], 'hotels')
 
     # Assert
     instance.validate()
@@ -303,9 +303,9 @@ def test_get_table_metadata():
     """Test the ``get_table_metadata`` method."""
     # Setup
     metadata = get_multi_table_metadata()
-    metadata.add_column('nesreca', 'latitude', sdtype='latitude')
-    metadata.add_column('nesreca', 'longitude', sdtype='longitude')
-    metadata.add_column_relationship('nesreca', 'gps', ['latitude', 'longitude'])
+    metadata.add_column('latitude', 'nesreca', sdtype='latitude')
+    metadata.add_column('longitude', 'nesreca', sdtype='longitude')
+    metadata.add_column_relationship('gps', ['latitude', 'longitude'], 'nesreca')
 
     # Run
     table_metadata = metadata.get_table_metadata('nesreca')
