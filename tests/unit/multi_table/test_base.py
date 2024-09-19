@@ -41,7 +41,7 @@ class TestBaseMultiTableSynthesizer:
         instance = Mock()
         instance._table_synthesizers = {}
         instance._table_parameters = {
-            'nesreca': {'default_distribution': 'gamma', 'locales': ['fr_CA', 'en_CA']},
+            'nesreca': {'default_distribution': 'gamma', 'locales': ['en_US']},
         }
         instance.locales = locales
         instance.metadata = get_multi_table_metadata()
@@ -59,7 +59,7 @@ class TestBaseMultiTableSynthesizer:
             call(
                 metadata=instance.metadata.tables['nesreca'],
                 default_distribution='gamma',
-                locales=['fr_CA', 'en_CA'],
+                locales=['en_US'],
             ),
             call(metadata=instance.metadata.tables['oseba'], locales=locales),
             call(metadata=instance.metadata.tables['upravna_enota'], locales=locales),
