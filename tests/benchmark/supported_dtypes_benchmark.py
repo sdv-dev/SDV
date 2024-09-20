@@ -196,8 +196,8 @@ def test_metadata_detection(dtype, data, sdtype):
     try:
         metadata.detect_from_dataframe(data)
         column = metadata.columns.get(dtype)
-        sdtype = column.get('sdtype')
-        result = sdtype == EXPECTED_METADATA_SDTYPES.get(dtype)
+        detected_sdtype = column.get('sdtype')
+        result = detected_sdtype == EXPECTED_METADATA_SDTYPES.get(dtype)
     except BaseException as e:
         LOGGER.debug(f"Error during 'metadata.validate_data' with dtype '{dtype}': {e}")
 

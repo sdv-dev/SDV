@@ -49,7 +49,7 @@ def _load_temp_results(filename):
         if column not in ('sdtype', 'dtype'):
             df[column] = df[column].astype(bool)
 
-    return df
+    return df.drop_duplicates().reset_index(drop=True)
 
 
 def _get_output_filename():
@@ -108,27 +108,11 @@ def compare_previous_result_with_current():
                         'python_version': python_version,
                     })
 
-    slack_messages = []
-    if unsupported_dtypes:
-        slack_messages.append(':fire: New unsupported DTypes!')
-
-    if new_supported_dtypes:
-        slack_messages.append(':party_blob: New DTypes supported!')
-
-    if slack_messages:
-        slack_message = '\n'.join(slack_messages)
-        response = post_slack_message('sdv-alerts-debug', slack_message)
-
-    if not new_supported_dtypes and not unsupported_dtypes:
-        slack_message = ':dealwithit: No new changes to the DTypes in SDV.'
-        response = post_slack_message('sdv-alerts-debug', slack_message)
-
-    results = {
+    return {
         'unsupported_dtypes': pd.DataFrame(unsupported_dtypes),
         'new_supported_dtypes': pd.DataFrame(new_supported_dtypes),
         'previously_unseen_dtypes': pd.DataFrame(previously_unseen_dtypes),
     }
-    return results, response
 
 
 def save_results_to_json(results, filename=None):
@@ -172,33 +156,35 @@ def calculate_support_percentage(df):
     return pd.DataFrame({'dtype': df['dtype'], 'percentage_supported': percentage_support})
 
 
-def compare_and_store_results_in_gdrive(args):
+def compare_and_store_results_in_gdrive():
     csv_handler = CSVHandler()
-    comparison_results, response = compare_previous_result_with_current()
+    comparison_results = compare_previous_result_with_current()
 
     results = csv_handler.read('results/')
-    summary_df = None
-    for version, df in results.items():
-        version_summary = calculate_support_percentage(df)
-        if summary_df is None:
-            summary_df = version_summary.copy()
-            summary_df[version] = version_summary['percentage_supported']
-        else:
-            summary_df[version] = version_summary['percentage_supported']
-
-    summary_df['average_supported'] = summary_df.mean(axis=1)
     sorted_results = {}
-    sorted_results['summary'] = summary_df
+
+    slack_messages = []
     for key, value in comparison_results.items():
         if not value.empty:
             sorted_results[key] = value
+            if key == 'unsupported_dtypes':
+                slack_messages.append(':fire: New unsupported DTypes!')
+            elif key == 'new_supported_dtypes':
+                slack_messages.append(':party_blob: New DTypes supported!')
+
+    if len(slack_messages) == 0:
+        slack_messages.append(':dealwithit: No new changes to the DTypes in SDV.')
 
     for key, value in results.items():
         sorted_results[key] = value
 
     file_id = save_to_gdrive(GDRIVE_OUTPUT_FOLDER, sorted_results)
-    new_msg = f'See <https://docs.google.com/spreadsheets/d/{file_id}|dtypes summary and details>'
-    update_message('sdv-alerts-debug', new_msg, response['ts'])
+
+    slack_messages.append(
+        f'See <https://docs.google.com/spreadsheets/d/{file_id}|dtypes summary and details>'
+    )
+    slack_message = '\n'.join(slack_messages)
+    post_slack_message('sdv-alerts-debug', slack_message)
 
 
 if __name__ == '__main__':

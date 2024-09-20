@@ -110,9 +110,15 @@ PYARROW_DTYPES = {
         'pa.string_view': pd.Series(['A', 'B', None, 'C'], dtype=pd.ArrowDtype(pa.string()))
     }),
     'pa.decimal128': pd.DataFrame({
-        'pa.decimal128': pd.Series(
-            [decimal.Decimal('123.45'), decimal.Decimal('678.90'), None],
-            dtype=pd.ArrowDtype(pa.decimal128(precision=10, scale=2)),
+        'pa.decimal128': pd.Series([
+            decimal.Decimal('123.45'),
+            decimal.Decimal('88.90'),
+            decimal.Decimal('78.90'),
+            decimal.Decimal('98.90'),
+            decimal.Decimal('678.90'),
+            decimal.Decimal('6.90'),
+            None
+        ], dtype=pd.ArrowDtype(pa.decimal128(precision=10, scale=2)),
         )
     }),
 }
