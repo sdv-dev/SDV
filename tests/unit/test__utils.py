@@ -240,6 +240,30 @@ def test__is_datetime_type_with_datetime_str():
     assert is_datetime
 
 
+def test__is_datetime_type_with_datetime_str_nanoseconds():
+    """Test it for a datetime string with nanoseconds."""
+    # Setup
+    value = '2011-10-15 20:11:03.498707'
+
+    # Run
+    is_datetime = _is_datetime_type(value)
+
+    # Assert
+    assert is_datetime
+
+
+def test__is_datetime_type_with_str_int():
+    """Test it for a string with an integer."""
+    # Setup
+    value = '123'
+
+    # Run
+    is_datetime = _is_datetime_type(value)
+
+    # Assert
+    assert is_datetime is False
+
+
 def test__is_datetime_type_with_invalid_str():
     """Test the ``_is_datetime_type`` function when an invalid string is passed.
 
