@@ -4,8 +4,8 @@ ctgan==0.10.1
 deepecho==0.6.0
 graphviz==0.20.3
 numpy==1.26.4
-pandas==2.2.2
-platformdirs==4.3.2
+pandas==2.2.3
+platformdirs==4.3.6
 rdt==1.12.4
 sdmetrics==0.15.1
 tqdm==4.66.5
