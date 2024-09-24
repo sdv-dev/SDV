@@ -63,28 +63,3 @@ def post_slack_message_in_thread(channel, text, thread_ts):
         raise RuntimeError(msg)
 
     return response
-
-
-def update_message(channel, new_text, message_ts):
-    """Update an existing message in a Slack channel.
-
-    Args:
-        channel (str):
-            The name of the channel where the message is located.
-        message_ts (str):
-            The timestamp of the message to be edited.
-        new_text (str):
-            The new text to update the message with.
-
-    Returns:
-        SlackResponse:
-            Response from Slack API call.
-    """
-    client = _get_slack_client()
-    response = client.chat_update(channel=channel, ts=message_ts, text=new_text)
-    if not response['ok']:
-        error = response.get('error', 'unknown_error')
-        msg = f'{error} occurred trying to update message in {channel}'
-        raise RuntimeError(msg)
-
-    return response

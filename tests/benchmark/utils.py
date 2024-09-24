@@ -12,7 +12,7 @@ import pandas as pd
 
 from sdv.io.local import CSVHandler
 from tests._external.gdrive_utils import get_latest_file, read_excel, save_to_gdrive
-from tests._external.slack_utils import post_slack_message, update_message
+from tests._external.slack_utils import post_slack_message
 
 GDRIVE_OUTPUT_FOLDER = '16SkTOyQ3xkJDPJbyZCusb168JwreW5bm'
 PYTHON_VERSION = f'{sys.version_info.major}.{sys.version_info.minor}'
@@ -184,7 +184,7 @@ def compare_and_store_results_in_gdrive():
         f'See <https://docs.google.com/spreadsheets/d/{file_id}|dtypes summary and details>'
     )
     slack_message = '\n'.join(slack_messages)
-    post_slack_message('sdv-alerts-debug', slack_message)
+    post_slack_message('sdv-alerts', slack_message)
 
 
 if __name__ == '__main__':
