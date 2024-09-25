@@ -62,6 +62,10 @@ test = [
     'rundoc>=0.4.3,<0.5',
     'pytest-runner >= 2.11.1',
     'tomli>=2.0.0,<3',
+    'pydrive',
+    'pyarrow',
+    'gitpython',
+    'slack-sdk>=3.23,<4.0',
 ]
 pomegranate = ['pomegranate>=0.14.3,<0.15']
 dev = [
@@ -181,6 +185,7 @@ exclude = [
     ".tox",
     ".git",
     "__pycache__",
+    "*.ipynb",
     ".ipynb_checkpoints",
     "tasks.py",
 ]
