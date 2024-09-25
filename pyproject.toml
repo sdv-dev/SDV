@@ -36,7 +36,7 @@ dependencies = [
     'ctgan>=0.10.0',
     'deepecho>=0.6.0',
     'rdt>=1.12.3',
-    'sdmetrics>=0.16.0.dev0',
+    'sdmetrics>=0.16.0',
     'platformdirs>=4.0',
     'pyyaml>=6.0.1',
 ]
