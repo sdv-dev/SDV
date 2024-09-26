@@ -1,6 +1,16 @@
 # Release Notes
 
-### v1.16.1 - 2024-08-27
+### v1.16.2 - 2024-09-25
+
+### New Features
+
+* Supported data types benchmark - Issue [#2200](https://github.com/sdv-dev/SDV/issues/2200) by @pvk-developer
+
+### Bugs Fixed
+
+* The `_validate_circular_relationships` method may fail to detect circular relationships - Issue [#2205](https://github.com/sdv-dev/SDV/issues/2205) by @fealho
+
+## v1.16.1 - 2024-08-27
 
 ### Internal
 

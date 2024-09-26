@@ -34,6 +34,11 @@ def integration(c):
     c.run('python -m pytest ./tests/integration --reruns 3')
 
 
+@task
+def benchmark_dtypes(c):
+    c.run('python -m pytest ./tests/benchmark/supported_dtypes_benchmark.py')
+
+
 def _get_minimum_versions(dependencies, python_version):
     min_versions = {}
     for dependency in dependencies:

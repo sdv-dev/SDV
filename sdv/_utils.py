@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
+from pandas.api.types import is_float, is_integer
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 from rdt.transformers.utils import _GENERATORS
 
@@ -81,6 +82,7 @@ def _is_datetime_type(value):
             bool(_get_datetime_format([value]))
             or isinstance(value, pd.Timestamp)
             or isinstance(value, datetime)
+            or (isinstance(value, str) and pd.notna(pd.to_datetime(value, errors='coerce')))
         ):
             return False
 
@@ -439,3 +441,11 @@ def get_possible_chars(regex, num_subpatterns=None):
         possible_chars += _get_chars_for_option(option, params)
 
     return possible_chars
+
+
+def _is_numerical(value):
+    """Determine if the input is a numerical type or not."""
+    try:
+        return is_integer(value) or is_float(value)
+    except Exception:
+        return False

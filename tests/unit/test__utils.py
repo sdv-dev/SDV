@@ -17,6 +17,7 @@ from sdv._utils import (
     _get_datetime_format,
     _get_root_tables,
     _is_datetime_type,
+    _is_numerical,
     _validate_foreign_keys_not_null,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
@@ -238,6 +239,30 @@ def test__is_datetime_type_with_datetime_str():
 
     # Assert
     assert is_datetime
+
+
+def test__is_datetime_type_with_datetime_str_nanoseconds():
+    """Test it for a datetime string with nanoseconds."""
+    # Setup
+    value = '2011-10-15 20:11:03.498707'
+
+    # Run
+    is_datetime = _is_datetime_type(value)
+
+    # Assert
+    assert is_datetime
+
+
+def test__is_datetime_type_with_str_int():
+    """Test it for a string with an integer."""
+    # Setup
+    value = '123'
+
+    # Run
+    is_datetime = _is_datetime_type(value)
+
+    # Assert
+    assert is_datetime is False
 
 
 def test__is_datetime_type_with_invalid_str():
@@ -713,3 +738,33 @@ def test_get_possible_chars():
     nums = [str(i) for i in range(10)]
     lowercase_letters = list(string.ascii_lowercase)
     assert possible_chars == prefix + nums + ['_'] + lowercase_letters
+
+
+def test__is_numerical():
+    """Test that ensures that if passed any numerical data type we will get a ``True``."""
+    # Setup
+    np_int = np.int16(10)
+    np_nan = np.nan
+
+    # Run
+    np_int_result = _is_numerical(np_int)
+    np_nan_result = _is_numerical(np_nan)
+
+    # Assert
+    assert np_int_result
+    assert np_nan_result
+
+
+def test__is_numerical_string():
+    """Test that ensures that if passed any other value but numerical it will return `False`."""
+    # Setup
+    str_value = 'None'
+    datetime_value = pd.to_datetime('2012-01-01')
+
+    # Run
+    str_result = _is_numerical(str_value)
+    datetime_result = _is_numerical(datetime_value)
+
+    # Assert
+    assert str_result is False
+    assert datetime_result is False

@@ -5,6 +5,10 @@ on:
   pull_request:
     types: [opened, reopened]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   integration:
     runs-on: ${{ matrix.os }}
@@ -29,4 +33,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install invoke .[test]
     - name: Run integration tests
-      run: invoke integration
+      env:
+        PYDRIVE_CREDENTIALS: ${{ secrets.PYDRIVE_CREDENTIALS }}
+
+      run: |
+        invoke integration
+        invoke benchmark-dtypes

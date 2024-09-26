@@ -7,7 +7,7 @@ from sdv.metadata.multi_table import MultiTableMetadata
 def test_evaluation():
     """Test ``evaluate_quality`` and ``run_diagnostic``."""
     # Setup
-    table = pd.DataFrame({'id': [0, 1, 2, 3], 'col': [1, 2, 3, 4]})
+    table = pd.DataFrame({'id': [0, 1, 2, 3], 'col': [1, 2, 3, 4.0]})
     slightly_different_table = pd.DataFrame({'id': [0, 1, 2, 3], 'col': [1, 2, 3, 3.5]})
     data = {
         'table1': table,
