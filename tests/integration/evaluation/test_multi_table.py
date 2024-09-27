@@ -60,7 +60,7 @@ def test_evaluation():
 def test_evaluation_metadata():
     """Test ``evaluate_quality`` and ``run_diagnostic`` with Metadata."""
     # Setup
-    table = pd.DataFrame({'id': [0, 1, 2, 3], 'col': [1, 2, 3, 4]})
+    table = pd.DataFrame({'id': [0, 1, 2, 3], 'col': [1, 2, 3, 4.0]})
     slightly_different_table = pd.DataFrame({'id': [0, 1, 2, 3], 'col': [1, 2, 3, 3.5]})
     data = {
         'table1': table,
