@@ -2,6 +2,8 @@
 
 ### v1.17.0 - 2024-10-01
 
+This release consolidates the `SingleTableMetadata` and `MultiTableMetadata` classes into one new class simply called `Metadata`. The old classes are now deprecated. The new class has the same structure as the `MultiTableMetadata` class, except it will work with single table synthesizers.
+
 ### New Features
 
 * Add `metadata.validate_table` method for single table usage - Issue [#2215](https://github.com/sdv-dev/SDV/issues/2215) by @R-Palazzo
