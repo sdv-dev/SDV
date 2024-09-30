@@ -7,5 +7,5 @@ numpy==1.26.4
 pandas==2.2.3
 platformdirs==4.3.6
 rdt==1.12.4
-sdmetrics==0.15.1
+sdmetrics==0.16.0
 tqdm==4.66.5
