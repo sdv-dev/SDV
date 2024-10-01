@@ -124,9 +124,7 @@ class TestMetadataClass:
         )
 
         expected_warning_with_table_name = re.escape(warning_message.format('filepath'))
-        expected_warning_without_table_name = re.escape(
-            warning_message.format('default_table_name')
-        )
+        expected_warning_without_table_name = re.escape(warning_message.format('table'))
 
         # Run
         with pytest.warns(UserWarning, match=expected_warning_with_table_name):
@@ -138,7 +136,7 @@ class TestMetadataClass:
         mock_read_json.assert_has_calls([call('filepath.json'), call('filepath.json')])
         table_name_to_instance = {
             'filepath': instance_with_table_name,
-            'default_table_name': instance_without_table_name,
+            'table': instance_without_table_name,
         }
         for table_name, instance in table_name_to_instance.items():
             assert list(instance.tables.keys()) == [table_name]
@@ -363,13 +361,13 @@ class TestMetadataClass:
         instance = Metadata.load_from_dict(my_metadata)
 
         # Assert
-        assert list(instance.tables.keys()) == ['default_table_name']
-        assert instance.tables['default_table_name'].columns == {'my_column': 'value'}
-        assert instance.tables['default_table_name'].primary_key == 'pk'
-        assert instance.tables['default_table_name'].sequence_key is None
-        assert instance.tables['default_table_name'].alternate_keys == []
-        assert instance.tables['default_table_name'].sequence_index is None
-        assert instance.tables['default_table_name']._version == 'SINGLE_TABLE_V1'
+        assert list(instance.tables.keys()) == ['table']
+        assert instance.tables['table'].columns == {'my_column': 'value'}
+        assert instance.tables['table'].primary_key == 'pk'
+        assert instance.tables['table'].sequence_key is None
+        assert instance.tables['table'].alternate_keys == []
+        assert instance.tables['table'].sequence_index is None
+        assert instance.tables['table']._version == 'SINGLE_TABLE_V1'
 
     def test_load_from_dict_integer_single_table(self):
         """Test that ``load_from_dict`` returns a instance of single-table ``Metadata``.
@@ -393,12 +391,12 @@ class TestMetadataClass:
         instance = Metadata.load_from_dict(my_metadata)
 
         # Assert
-        assert list(instance.tables.keys()) == ['default_table_name']
-        assert instance.tables['default_table_name'].columns == {'1': 'value'}
-        assert instance.tables['default_table_name'].primary_key == 'pk'
-        assert instance.tables['default_table_name'].sequence_key is None
-        assert instance.tables['default_table_name'].alternate_keys == []
-        assert instance.tables['default_table_name'].sequence_index is None
+        assert list(instance.tables.keys()) == ['table']
+        assert instance.tables['table'].columns == {'1': 'value'}
+        assert instance.tables['table'].primary_key == 'pk'
+        assert instance.tables['table'].sequence_key is None
+        assert instance.tables['table'].alternate_keys == []
+        assert instance.tables['table'].sequence_index is None
 
     @patch('sdv.metadata.multi_table.SingleTableMetadata')
     def test__set_metadata_multi_table(self, mock_singletablemetadata):
@@ -490,12 +488,12 @@ class TestMetadataClass:
         instance._set_metadata_dict(single_table_metadata)
 
         # Assert
-        assert instance.tables['default_table_name'].columns == {'my_column': 'value'}
-        assert instance.tables['default_table_name'].primary_key == 'pk'
-        assert instance.tables['default_table_name'].alternate_keys == []
-        assert instance.tables['default_table_name'].sequence_key is None
-        assert instance.tables['default_table_name'].sequence_index is None
-        assert instance.tables['default_table_name'].METADATA_SPEC_VERSION == 'SINGLE_TABLE_V1'
+        assert instance.tables['table'].columns == {'my_column': 'value'}
+        assert instance.tables['table'].primary_key == 'pk'
+        assert instance.tables['table'].alternate_keys == []
+        assert instance.tables['table'].sequence_key is None
+        assert instance.tables['table'].sequence_index is None
+        assert instance.tables['table'].METADATA_SPEC_VERSION == 'SINGLE_TABLE_V1'
 
     def test_validate(self):
         """Test the method ``validate``.

@@ -48,7 +48,7 @@ def test_evaluate_quality_metadata():
     evaluate_quality(data1, data2, metadata)
 
     # Assert
-    expected_metadata = metadata.tables['default_table_name'].to_dict()
+    expected_metadata = metadata.tables['table'].to_dict()
     QualityReport.generate.assert_called_once_with(data1, data2, expected_metadata, True)
 
 
@@ -84,7 +84,7 @@ def test_run_diagnostic_metadata():
     run_diagnostic(data1, data2, metadata)
 
     # Assert
-    expected_metadata = metadata.tables['default_table_name'].to_dict()
+    expected_metadata = metadata.tables['table'].to_dict()
     DiagnosticReport.generate.assert_called_once_with(data1, data2, expected_metadata, True)
 
 

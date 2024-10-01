@@ -14,7 +14,7 @@ class Metadata(MultiTableMetadata):
     """Metadata class that handles all metadata."""
 
     METADATA_SPEC_VERSION = 'V1'
-    DEFAULT_SINGLE_TABLE_NAME = 'default_table_name'
+    DEFAULT_SINGLE_TABLE_NAME = 'table'
 
     @classmethod
     def load_from_json(cls, filepath, single_table_name=None):
