@@ -2,8 +2,6 @@ name: Data Types Benchmark
 
 on:
   push:
-    branches:
-      - main
 
 jobs:
   run_dtypes_benchmark:
@@ -38,6 +36,8 @@ jobs:
           PYDRIVE_CREDENTIALS: ${{ secrets.PYDRIVE_CREDENTIALS }}
         run: |
           invoke benchmark-dtypes
+
+        continue-on-error: true
 
       # Upload the json files as artifacts
       - name: Upload artifacts
