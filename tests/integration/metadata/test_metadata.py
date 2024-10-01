@@ -11,7 +11,7 @@ from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
-DEFAULT_TABLE_NAME = 'default_table_name'
+DEFAULT_TABLE_NAME = 'table'
 
 
 def test_metadata():

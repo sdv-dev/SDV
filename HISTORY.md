@@ -16,6 +16,7 @@ This release consolidates the `SingleTableMetadata` and `MultiTableMetadata` cla
 * Enable multi table synthesizers to use new Metadata - Issue [#2129](https://github.com/sdv-dev/SDV/issues/2129) by @lajohn4747
 * Enable single table synthesizers to use new Metadata - Issue [#2128](https://github.com/sdv-dev/SDV/issues/2128) by @lajohn4747
 * Create unified Metadata class - Issue [#2104](https://github.com/sdv-dev/SDV/issues/2104) by @lajohn4747
+* Make "table" default table name - Issue [#2245](https://github.com/sdv-dev/SDV/issues/2245) by @fealho
 
 ## v1.16.2 - 2024-09-25
 
