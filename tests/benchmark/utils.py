@@ -152,28 +152,64 @@ def calculate_support_percentage(df):
     feature_columns = df.drop(columns=['dtype', 'sdtype'])
     # Calculate percentage of TRUE values for each row (dtype)
     percentage_support = feature_columns.mean(axis=1) * 100
-    return pd.DataFrame({
+
+    df = pd.DataFrame({
         'dtype': df['dtype'],
         'sdtype': df['sdtype'],
         'percentage_supported': percentage_support,
     })
+    df['percentage_supported'] = df['percentage_supported'].round(2)
+    return df
+
+
+def _version_tuple(version_str):
+    return tuple(int(part) for part in version_str.split('.'))
 
 
 def compare_and_store_results_in_gdrive():
+    """Compare results, store them in Google Drive, and post a message to Slack.
+
+    This function compares the current results with previous ones and processes the
+    results to create a summary.
+    """
     csv_handler = CSVHandler()
     comparison_results = compare_previous_result_with_current()
 
     results = csv_handler.read('results/')
     sorted_results = {}
+    # Sort dictionary by version keys
+    results = {
+        key: value
+        for key, value in sorted(results.items(), key=lambda item: _version_tuple(item[0]))
+    }
+
+    # Compute the summary
+    summary = pd.DataFrame()
+    for name, df in results.items():
+        df = calculate_support_percentage(df)
+        if summary.empty:
+            summary = df.rename(columns={'percentage_supported': name})
+        else:
+            summary[name] = df['percentage_supported']
+
+    summary['average'] = summary[list(results)].mean(axis=1).round(2)
+    for col in summary.columns:
+        if col not in ('sdtype', 'dtype'):
+            summary[col] = summary[col].apply(lambda x: f'{x}%')
+
+    sorted_results['Summary'] = summary
 
     slack_messages = []
     mark_results = {}
+    exit_code = 0
     for key, value in comparison_results.items():
         if not value.empty:
             sorted_results[key] = value
             if key == 'unsupported_dtypes':
                 slack_messages.append(':fire: New unsupported DTypes!')
                 mark_results['#EB9999'] = value
+                exit_code = 1
+
             elif key == 'new_supported_dtypes':
                 slack_messages.append(':party_blob: New DTypes supported!')
                 mark_results['#B7D7A8'] = value
@@ -190,6 +226,7 @@ def compare_and_store_results_in_gdrive():
     )
     slack_message = '\n'.join(slack_messages)
     post_slack_message('sdv-alerts-debug', slack_message)
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':
