@@ -7,6 +7,7 @@ import warnings
 
 import cloudpickle
 
+from sdv.metadata.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
 
 LOGGER = logging.getLogger(__name__)
@@ -20,13 +21,19 @@ DEPRECATION_MSG = (
     "functionality, please use the 'GaussianCopulaSynthesizer'."
 )
 
+META_DEPRECATION_MSG = (
+    "The 'SingleTableMetadata' is deprecated. Please use the new "
+    "'Metadata' class for synthesizers."
+)
+
 
 class SingleTablePreset:
     """Class for all single table synthesizer presets.
 
     Args:
-        metadata (sdv.metadata.SingleTableMetadata):
-            ``SingleTableMetadata`` instance.
+        metadata (sdv.metadata.Metadata):
+            ``Metadata`` instance.
+            * sdv.metadata.SingleTableMetadata can be used but will be deprecated.
         name (str):
             The preset to use.
         locales (list or str):
@@ -49,6 +56,10 @@ class SingleTablePreset:
             raise ValueError(f"'name' must be one of {PRESETS}.")
 
         self.name = name
+        if isinstance(metadata, Metadata):
+            metadata = metadata._convert_to_single_table()
+        else:
+            warnings.warn(META_DEPRECATION_MSG, FutureWarning)
         if name == FAST_ML_PRESET:
             self._setup_fast_preset(metadata, self.locales)
 
@@ -65,7 +76,7 @@ class SingleTablePreset:
         self._synthesizer.add_constraints(constraints)
 
     def get_metadata(self):
-        """Return the ``SingleTableMetadata`` for this synthesizer."""
+        """Return the ``Metadata`` for this synthesizer."""
         warnings.warn(DEPRECATION_MSG, FutureWarning)
         return self._synthesizer.get_metadata()
 

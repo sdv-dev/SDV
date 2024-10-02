@@ -25,6 +25,8 @@ from sdv.errors import (
     SynthesizerInputError,
     VersionError,
 )
+from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling.tabular import Condition
 from sdv.single_table import (
@@ -77,7 +79,7 @@ class TestBaseSingleTableSynthesizer:
     @patch('sdv.single_table.base.generate_synthesizer_id')
     @patch('sdv.single_table.base.DataProcessor')
     @patch('sdv.single_table.base.BaseSingleTableSynthesizer._check_metadata_updated')
-    def test___init__(
+    def test___init___l(
         self,
         mock_check_metadata_updated,
         mock_data_processor,
@@ -119,6 +121,59 @@ class TestBaseSingleTableSynthesizer:
             'SYNTHESIZER ID': 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
 
+    def test__init__with_old_metadata_future_warning(self):
+        """Test that future warning is thrown when using `SingleTableMetadata`"""
+        # Setup
+        metadata = SingleTableMetadata.load_from_dict({
+            'columns': {
+                'a': {'sdtype': 'categorical'},
+            }
+        })
+        warn_msg = re.escape(
+            "The 'SingleTableMetadata' is deprecated. Please use the new "
+            "'Metadata' class for synthesizers."
+        )
+        # Run and Assert
+        with pytest.warns(FutureWarning, match=warn_msg):
+            BaseSingleTableSynthesizer(metadata)
+
+    def test___init__with_unified_metadata(self):
+        """Test initialization with unified metadata."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table_1': {
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    },
+                }
+            }
+        })
+
+        multi_metadata = Metadata.load_from_dict({
+            'tables': {
+                'table_1': {
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    },
+                },
+                'table_2': {
+                    'columns': {
+                        'id': {'sdtype': 'id'},
+                    },
+                },
+            }
+        })
+
+        # Run and Assert
+        BaseSingleTableSynthesizer(metadata)
+        error_msg = re.escape(
+            'Metadata contains more than one table, use a MultiTableSynthesizer instead.'
+        )
+
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            BaseSingleTableSynthesizer(multi_metadata)
+
     @patch('sdv.single_table.base.DataProcessor')
     def test___init__custom(self, mock_data_processor):
         """Test that instantiating with custom parameters are properly stored in the instance."""
@@ -151,7 +206,7 @@ class TestBaseSingleTableSynthesizer:
             ' Please provide True or False.'
         )
         with pytest.raises(SynthesizerInputError, match=err_msg):
-            BaseSingleTableSynthesizer(SingleTableMetadata(), enforce_min_max_values='invalid')
+            BaseSingleTableSynthesizer(Metadata(), enforce_min_max_values='invalid')
 
     def test___init__invalid_enforce_rounding(self):
         """Test it crashes when ``enforce_rounding`` is not a boolean."""
@@ -161,12 +216,12 @@ class TestBaseSingleTableSynthesizer:
             ' Please provide True or False.'
         )
         with pytest.raises(SynthesizerInputError, match=err_msg):
-            BaseSingleTableSynthesizer(SingleTableMetadata(), enforce_rounding='invalid')
+            BaseSingleTableSynthesizer(Metadata(), enforce_rounding='invalid')
 
     def test_set_address_columns_warning(self):
         """Test ``set_address_columns`` method when the synthesizer has been fitted."""
         # Setup
-        synthesizer = BaseSingleTableSynthesizer(SingleTableMetadata())
+        synthesizer = BaseSingleTableSynthesizer(Metadata())
 
         # Run and Assert
         expected_message = re.escape(
@@ -199,19 +254,22 @@ class TestBaseSingleTableSynthesizer:
         }
 
     @patch('sdv.single_table.base.DataProcessor')
-    def test_get_metadata(self, mock_data_processor):
+    @patch('sdv.single_table.base.Metadata.load_from_dict')
+    def test_get_metadata(self, mock_load_from_dict, _):
         """Test that it returns the ``metadata`` object."""
         # Setup
-        metadata = Mock()
+        metadata = Mock(spec=Metadata)
         instance = BaseSingleTableSynthesizer(
             metadata, enforce_min_max_values=False, enforce_rounding=False
         )
+        mock_converted_metadata = Mock()
+        mock_load_from_dict.return_value = mock_converted_metadata
 
         # Run
         result = instance.get_metadata()
 
         # Assert
-        assert result == metadata
+        assert result == mock_converted_metadata
 
     def test_auto_assign_transformers(self):
         """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""
@@ -228,7 +286,7 @@ class TestBaseSingleTableSynthesizer:
     def test_auto_assign_transformers_with_invalid_data(self):
         """Test that auto_assign_transformer throws useful error about invalid data"""
         # Setup
-        metadata = SingleTableMetadata.load_from_dict({
+        metadata = Metadata.load_from_dict({
             'columns': {
                 'a': {'sdtype': 'categorical'},
             }
@@ -532,7 +590,7 @@ class TestBaseSingleTableSynthesizer:
         """
         # Setup
         data = pd.DataFrame()
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = BaseSingleTableSynthesizer(metadata)
         instance._validate_metadata = Mock()
         instance._validate_constraints = Mock()
@@ -554,7 +612,7 @@ class TestBaseSingleTableSynthesizer:
         """
         # Setup
         data = pd.DataFrame()
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = BaseSingleTableSynthesizer(metadata)
         instance._validate_metadata = Mock(return_value=[])
         instance._validate_constraints = Mock()
@@ -581,7 +639,7 @@ class TestBaseSingleTableSynthesizer:
         """
         # Setup
         data = pd.DataFrame()
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = BaseSingleTableSynthesizer(metadata)
         instance._validate_metadata = Mock(return_value=[])
         instance._validate_constraints = Mock()
@@ -649,11 +707,13 @@ class TestBaseSingleTableSynthesizer:
         """
         # Setup
         column_name_to_transformer = {'col2': RegexGenerator(), 'col3': FloatFormatter()}
-        metadata = SingleTableMetadata()
-        metadata.add_column('col2', sdtype='id')
-        metadata.add_column('col3', sdtype='id')
-        metadata.set_sequence_key(('col2'))
-        metadata.add_alternate_keys(['col3'])
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col2', 'table', sdtype='id')
+        metadata.add_column('col3', 'table', sdtype='id')
+        metadata.set_sequence_key('col2', 'table')
+
+        metadata.add_alternate_keys(['col3'], 'table')
         instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
@@ -670,9 +730,10 @@ class TestBaseSingleTableSynthesizer:
         fitted_transformer = FloatFormatter()
         fitted_transformer.fit(pd.DataFrame({'col': [1]}), 'col')
         column_name_to_transformer = {'col1': BinaryEncoder(), 'col2': fitted_transformer}
-        metadata = SingleTableMetadata()
-        metadata.add_column('col1', sdtype='boolean')
-        metadata.add_column('col2', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col1', 'table', sdtype='boolean')
+        metadata.add_column('col2', 'table', sdtype='numerical')
         instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
@@ -684,9 +745,10 @@ class TestBaseSingleTableSynthesizer:
         """Test warning is raised when ohe is used for categorical column in the GaussianCopula."""
         # Setup
         column_name_to_transformer = {'col1': OneHotEncoder(), 'col2': FloatFormatter()}
-        metadata = SingleTableMetadata()
-        metadata.add_column('col1', sdtype='categorical')
-        metadata.add_column('col2', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col1', 'table', sdtype='categorical')
+        metadata.add_column('col2', 'table', sdtype='numerical')
         instance = GaussianCopulaSynthesizer(metadata)
         instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
 
@@ -711,9 +773,10 @@ class TestBaseSingleTableSynthesizer:
         """
         # Setup
         column_name_to_transformer = {'col1': OneHotEncoder(), 'col2': FloatFormatter()}
-        metadata = SingleTableMetadata()
-        metadata.add_column('col1', sdtype='categorical')
-        metadata.add_column('col2', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col1', 'table', sdtype='categorical')
+        metadata.add_column('col2', 'table', sdtype='numerical')
 
         # NOTE: when PARSynthesizer is implemented, add it here as well
         for model in [CTGANSynthesizer, CopulaGANSynthesizer, TVAESynthesizer]:
@@ -736,9 +799,10 @@ class TestBaseSingleTableSynthesizer:
         """
         # Setup
         column_name_to_transformer = {'col1': GaussianNormalizer(), 'col2': GaussianNormalizer()}
-        metadata = SingleTableMetadata()
-        metadata.add_column('col1', sdtype='numerical')
-        metadata.add_column('col2', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col1', 'table', sdtype='numerical')
+        metadata.add_column('col2', 'table', sdtype='numerical')
         instance = BaseSingleTableSynthesizer(metadata)
         instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
         instance._fitted = True
@@ -754,9 +818,10 @@ class TestBaseSingleTableSynthesizer:
         """Test method correctly updates the transformers in the HyperTransformer."""
         # Setup
         column_name_to_transformer = {'col1': GaussianNormalizer(), 'col2': GaussianNormalizer()}
-        metadata = SingleTableMetadata()
-        metadata.add_column('col1', sdtype='numerical')
-        metadata.add_column('col2', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col1', 'table', sdtype='numerical')
+        metadata.add_column('col2', 'table', sdtype='numerical')
         instance = BaseSingleTableSynthesizer(metadata)
         instance._data_processor.fit(pd.DataFrame({'col1': [1, 2], 'col2': [1, 2]}))
 
@@ -1854,7 +1919,7 @@ class TestBaseSingleTableSynthesizer:
     def test_save_warning(self, tmp_path):
         """Test that the synthesizer produces a warning if saved without fitting."""
         # Setup
-        synthesizer = BaseSynthesizer(SingleTableMetadata())
+        synthesizer = BaseSynthesizer(Metadata())
 
         # Run and Assert
         warn_msg = re.escape(
@@ -1975,7 +2040,7 @@ class TestBaseSingleTableSynthesizer:
     def test_add_constraint_warning(self):
         """Test a warning is raised when the synthesizer had already been fitted."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = BaseSingleTableSynthesizer(metadata)
         instance._fitted = True
 
@@ -1987,8 +2052,9 @@ class TestBaseSingleTableSynthesizer:
     def test_add_constraints(self):
         """Test a list of constraints can be added to the synthesizer."""
         # Setup
-        metadata = SingleTableMetadata()
-        metadata.add_column('col', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col', 'table', sdtype='numerical')
         instance = BaseSingleTableSynthesizer(metadata)
         positive_constraint = {
             'constraint_class': 'Positive',
@@ -2017,8 +2083,9 @@ class TestBaseSingleTableSynthesizer:
     def test_get_constraints(self):
         """Test a list of constraints is returned by the method."""
         # Setup
-        metadata = SingleTableMetadata()
-        metadata.add_column('col', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col', 'table', sdtype='numerical')
         instance = BaseSingleTableSynthesizer(metadata)
         positive_constraint = {
             'constraint_class': 'Positive',
@@ -2051,8 +2118,9 @@ class TestBaseSingleTableSynthesizer:
         data = pd.DataFrame({'col': [1, 2, 3]})
         mock_sdv_version.public = '1.0.0'
         mock_sdv_version.enterprise = None
-        metadata = SingleTableMetadata()
-        metadata.add_column('col', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col', 'table', sdtype='numerical')
 
         with patch('sdv.single_table.base.datetime.datetime') as mock_date:
             mock_date.today.return_value = datetime(2023, 1, 23)
@@ -2098,8 +2166,9 @@ class TestBaseSingleTableSynthesizer:
         data = pd.DataFrame({'col': [1, 2, 3]})
         mock_sdv_version.public = '1.0.0'
         mock_sdv_version.enterprise = '1.2.0'
-        metadata = SingleTableMetadata()
-        metadata.add_column('col', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col', 'table', sdtype='numerical')
 
         with patch('sdv.single_table.base.datetime.datetime') as mock_date:
             mock_date.today.return_value = datetime(2023, 1, 23)

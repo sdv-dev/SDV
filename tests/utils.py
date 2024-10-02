@@ -5,7 +5,7 @@ import contextlib
 import pandas as pd
 
 from sdv.logging import get_sdv_logger
-from sdv.metadata.multi_table import MultiTableMetadata
+from sdv.metadata.metadata import Metadata
 
 
 class DataFrameMatcher:
@@ -80,7 +80,7 @@ def get_multi_table_metadata():
         'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
     }
 
-    return MultiTableMetadata.load_from_dict(dict_metadata)
+    return Metadata.load_from_dict(dict_metadata)
 
 
 def get_multi_table_data():

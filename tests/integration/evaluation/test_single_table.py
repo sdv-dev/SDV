@@ -2,7 +2,7 @@ import pandas as pd
 
 from sdv.datasets.demo import download_demo
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, run_diagnostic
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 
@@ -10,8 +10,34 @@ def test_evaluation():
     """Test ``evaluate_quality`` and ``run_diagnostic``."""
     # Setup
     data = pd.DataFrame({'col': [1, 2, 3]})
-    metadata = SingleTableMetadata()
-    metadata.add_column('col', sdtype='numerical')
+    metadata = Metadata()
+    metadata.add_table('table')
+    metadata.add_column('col', 'table', sdtype='numerical')
+    synthesizer = GaussianCopulaSynthesizer(metadata, default_distribution='truncnorm')
+
+    # Run and Assert
+    synthesizer.fit(data)
+    samples = synthesizer.sample(10)
+    score = evaluate_quality(data, samples, metadata).get_score()
+    assert score == 0.8666666666666667
+
+    report = run_diagnostic(data, samples, metadata)
+    assert report.get_score() == 1
+    pd.testing.assert_frame_equal(
+        report.get_properties(),
+        pd.DataFrame({
+            'Property': ['Data Validity', 'Data Structure'],
+            'Score': [1.0, 1.0],
+        }),
+    )
+
+
+def test_evaluation_metadata():
+    """Test ``evaluate_quality`` and ``run_diagnostic`` with Metadata."""
+    # Setup
+    data = pd.DataFrame({'col': [1, 2, 3]})
+    metadata_dict = {'columns': {'col': {'sdtype': 'numerical'}}}
+    metadata = Metadata.load_from_dict(metadata_dict)
     synthesizer = GaussianCopulaSynthesizer(metadata, default_distribution='truncnorm')
 
     # Run and Assert

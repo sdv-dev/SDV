@@ -7,13 +7,13 @@ import pytest
 
 from sdv.datasets.demo import download_demo
 from sdv.errors import InvalidDataError
-from sdv.metadata import MultiTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.utils import drop_unknown_references, get_random_sequence_subset
 
 
 @pytest.fixture
 def metadata():
-    return MultiTableMetadata.load_from_dict({
+    return Metadata.load_from_dict({
         'tables': {
             'parent': {
                 'columns': {
@@ -149,6 +149,7 @@ def test_get_random_sequence_subset():
     data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
 
     # Run
+    metadata = metadata._convert_to_single_table()
     subset = get_random_sequence_subset(data, metadata, num_sequences=3, max_sequence_length=5)
 
     # Assert
@@ -169,6 +170,7 @@ def test_get_random_sequence_subset_random_clipping():
     """
     # Setup
     data, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
+    metadata = metadata._convert_to_single_table()
 
     # Run
     subset = get_random_sequence_subset(

@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from sdv.io.local.local import BaseLocalHandler, CSVHandler, ExcelHandler
-from sdv.metadata.multi_table import MultiTableMetadata
+from sdv.metadata import Metadata
 
 
 class TestBaseLocalHandler:
@@ -34,9 +34,9 @@ class TestBaseLocalHandler:
         metadata = instance.create_metadata(data)
 
         # Assert
-        assert isinstance(metadata, MultiTableMetadata)
+        assert isinstance(metadata, Metadata)
         assert metadata.to_dict() == {
-            'METADATA_SPEC_VERSION': 'MULTI_TABLE_V1',
+            'METADATA_SPEC_VERSION': 'V1',
             'relationships': [],
             'tables': {
                 'guests': {

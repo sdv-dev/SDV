@@ -1396,11 +1396,11 @@ class TestMultiTableMetadata:
             '20220826',
             '20220826',
         ])
-        metadata.add_column('upravna_enota', 'warning_date_str', sdtype='datetime')
+        metadata.add_column('warning_date_str', 'upravna_enota', sdtype='datetime')
         metadata.add_column(
-            'upravna_enota', 'valid_date', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f'
+            'valid_date', 'upravna_enota', sdtype='datetime', datetime_format='%Y%m%d%H%M%S%f'
         )
-        metadata.add_column('upravna_enota', 'datetime', sdtype='datetime')
+        metadata.add_column('datetime', 'upravna_enota', sdtype='datetime')
 
         # Run and Assert
         warning_df = pd.DataFrame({
@@ -3160,3 +3160,42 @@ class TestMultiTableMetadata:
             'parent_primary_key': 'col1',
             'child_foreign_key': 'col2',
         }
+
+    def test_update_columns_no_list_error(self):
+        """Test that ``update_columns`` only takes in list and that an error is thrown."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata.add_table('table')
+        metadata.add_column('table', 'col1', sdtype='numerical')
+
+        error_msg = re.escape('Please pass in a list to column_names arg.')
+        # Run and Assert
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            metadata.update_columns('table', 'col1', sdtype='categorical')
+
+    def test_validate_data_without_dict(self):
+        """Test that ``validate_data`` only takes in dict and that an error is thrown otherwise."""
+        # Setup
+        metadata = MultiTableMetadata.load_from_dict({
+            'tables': {
+                'table_1': {
+                    'columns': {
+                        'col_1': {'sdtype': 'numerical'},
+                        'col_2': {'sdtype': 'categorical'},
+                        'latitude': {'sdtype': 'latitude'},
+                        'longitude': {'sdtype': 'longitude'},
+                    }
+                }
+            }
+        })
+        data = pd.DataFrame({
+            'col_1': [1, 2, 3],
+            'col_2': ['a', 'b', 'c'],
+            'latitude': [1, 2, 3],
+            'longitude': [1, 2, 3],
+        })
+        error_msg = re.escape('Please pass in a dictionary mapping tables to dataframes.')
+
+        # Run and Assert
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            metadata.validate_data(data)

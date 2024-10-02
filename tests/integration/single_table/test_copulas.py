@@ -15,7 +15,7 @@ from rdt.transformers import (
 from sdv.datasets.demo import download_demo
 from sdv.errors import ConstraintsNotMetError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
-from sdv.metadata import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
 from sdv.single_table import GaussianCopulaSynthesizer
 
@@ -106,7 +106,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     loaded_synthesizer = GaussianCopulaSynthesizer.load(model_path)
     assert isinstance(synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+    assert loaded_synthesizer.metadata.to_dict() == metadata._convert_to_single_table().to_dict()
     loaded_synthesizer.sample(20)
 
     # Assert - custom synthesizer
@@ -192,7 +192,7 @@ def test_adding_constraints(tmp_path):
 
     assert isinstance(loaded_synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+    assert loaded_synthesizer.metadata.to_dict() == metadata._convert_to_single_table().to_dict()
     sampled_data = loaded_synthesizer.sample(100)
     validation = sampled_data[sampled_data['has_rewards']]
     assert validation['amenities_fee'].sum() == 0.0
@@ -251,7 +251,7 @@ def test_custom_processing_anonymization():
     anonymized_sample = anonymization_synthesizer.sample(num_rows=100)
 
     # Assert - Pre-process data
-    assert pre_processed_data.index.name == metadata.primary_key
+    assert pre_processed_data.index.name == metadata.tables['fake_hotel_guests'].primary_key
     assert all(pre_processed_data.dtypes == 'float64')
     for column in sensitive_columns:
         assert default_sample[column].isin(real_data[column]).sum() == 0
@@ -277,10 +277,9 @@ def test_update_transformers_with_id_generator():
     sample_num = 20
     data = pd.DataFrame({'user_id': list(range(4)), 'user_cat': ['a', 'b', 'c', 'd']})
 
-    stm = SingleTableMetadata()
-    stm.detect_from_dataframe(data)
-    stm.update_column('user_id', sdtype='id')
-    stm.set_primary_key('user_id')
+    stm = Metadata.detect_from_dataframes({'table': data})
+    stm.update_column('user_id', 'table', sdtype='id')
+    stm.set_primary_key('user_id', 'table')
 
     gc = GaussianCopulaSynthesizer(stm)
     custom_id = IDGenerator(starting_value=min_value_id)
@@ -332,7 +331,7 @@ def test_numerical_columns_gets_pii():
     data = pd.DataFrame(
         data={'id': [0, 1, 2, 3, 4], 'city': [0, 0, 0, 0, 0], 'numerical': [21, 22, 23, 24, 25]}
     )
-    metadata = SingleTableMetadata.load_from_dict({
+    metadata = Metadata.load_from_dict({
         'primary_key': 'id',
         'columns': {
             'id': {'sdtype': 'id'},
@@ -406,8 +405,7 @@ def test_categorical_column_with_numbers():
         'numerical_col': np.random.rand(20),
     })
 
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
+    metadata = Metadata.detect_from_dataframes({'table': data})
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
 
@@ -435,9 +433,8 @@ def test_unknown_sdtype():
         'numerical_col': np.random.rand(3),
     })
 
-    metadata = SingleTableMetadata()
-    metadata.detect_from_dataframe(data)
-    metadata.update_column('unknown', sdtype='unknown')
+    metadata = Metadata.detect_from_dataframes({'table': data})
+    metadata.update_column('unknown', 'table', sdtype='unknown')
 
     synthesizer = GaussianCopulaSynthesizer(metadata)
 
@@ -482,7 +479,7 @@ def test_support_nullable_pandas_dtypes():
         'Float32': pd.Series([1.1, 2.2, 3.3, pd.NA], dtype='Float32'),
         'Float64': pd.Series([1.113, 2.22, 3.3, pd.NA], dtype='Float64'),
     })
-    metadata = SingleTableMetadata().load_from_dict({
+    metadata = Metadata().load_from_dict({
         'columns': {
             'Int8': {'sdtype': 'numerical', 'computer_representation': 'Int8'},
             'Int16': {'sdtype': 'numerical', 'computer_representation': 'Int16'},

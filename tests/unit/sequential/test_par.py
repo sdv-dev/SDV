@@ -9,6 +9,8 @@ from rdt.transformers import FloatFormatter, UnixTimestampEncoder
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.data_processing.errors import InvalidConstraintsError
 from sdv.errors import InvalidDataError, NotFittedError, SamplingError, SynthesizerInputError
+from sdv.metadata.errors import InvalidMetadataError
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.sampling import Condition
 from sdv.sequential.par import PARSynthesizer
@@ -17,16 +19,17 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 class TestPARSynthesizer:
     def get_metadata(self, add_sequence_key=True, add_sequence_index=False):
-        metadata = SingleTableMetadata()
-        metadata.add_column('time', sdtype='datetime')
-        metadata.add_column('gender', sdtype='categorical')
-        metadata.add_column('name', sdtype='id')
-        metadata.add_column('measurement', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('time', 'table', sdtype='datetime')
+        metadata.add_column('gender', 'table', sdtype='categorical')
+        metadata.add_column('name', 'table', sdtype='id')
+        metadata.add_column('measurement', 'table', sdtype='numerical')
         if add_sequence_key:
-            metadata.set_sequence_key('name')
+            metadata.set_sequence_key('name', 'table')
 
         if add_sequence_index:
-            metadata.set_sequence_index('time')
+            metadata.set_sequence_index('time', 'table')
 
         return metadata
 
@@ -74,7 +77,10 @@ class TestPARSynthesizer:
             'verbose': False,
         }
         assert isinstance(synthesizer._data_processor, DataProcessor)
-        assert synthesizer._data_processor.metadata == metadata
+        assert (
+            synthesizer._data_processor.metadata.to_dict()
+            == metadata._convert_to_single_table().to_dict()
+        )
         assert isinstance(synthesizer._context_synthesizer, GaussianCopulaSynthesizer)
         assert synthesizer._context_synthesizer.metadata.columns == {
             'gender': {'sdtype': 'categorical'},
@@ -236,13 +242,14 @@ class TestPARSynthesizer:
         result = instance.get_metadata()
 
         # Assert
-        assert result == metadata
+        assert result.to_dict() == metadata.to_dict()
+        assert isinstance(result, Metadata)
 
     def test_validate_context_columns_unique_per_sequence_key(self):
         """Test error is raised if context column values vary for each tuple of sequence keys.
 
         Setup:
-            A ``SingleTableMetadata`` instance where the context columns vary for different
+            A ``Metadata`` instance where the context columns vary for different
             combinations of values of the sequence keys.
         """
         # Setup
@@ -252,12 +259,14 @@ class TestPARSynthesizer:
             'ct_col1': [1, 2, 2, 3, 2],
             'ct_col2': [3, 3, 4, 3, 2],
         })
-        metadata = SingleTableMetadata()
-        metadata.add_column('sk_col1', sdtype='id')
-        metadata.add_column('sk_col2', sdtype='id')
-        metadata.add_column('ct_col1', sdtype='numerical')
-        metadata.add_column('ct_col2', sdtype='numerical')
-        metadata.set_sequence_key('sk_col1')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('sk_col1', 'table', sdtype='id')
+        metadata.add_column('sk_col2', 'table', sdtype='id')
+        metadata.add_column('ct_col1', 'table', sdtype='numerical')
+        metadata.add_column('ct_col2', 'table', sdtype='numerical')
+        metadata.set_sequence_key('sk_col1', 'table')
+
         instance = PARSynthesizer(metadata=metadata, context_columns=['ct_col1', 'ct_col2'])
 
         # Run and Assert
@@ -521,7 +530,8 @@ class TestPARSynthesizer:
             'measurement': [55, 60, 65],
         })
         metadata = self.get_metadata()
-        metadata.set_sequence_index('time')
+        metadata.set_sequence_index('time', 'table')
+
         mock_get_transfomers.return_value = {'time': FloatFormatter}
 
         # Run
@@ -603,7 +613,7 @@ class TestPARSynthesizer:
         data = self.get_data()
         data['measurement'] = data['measurement'].astype(float)
         metadata = self.get_metadata()
-        metadata.update_column('measurement', sdtype='categorical')
+        metadata.update_column('measurement', 'table', sdtype='categorical')
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
         sequences = [
             {'context': np.array(['M'], dtype=object), 'data': [['2020-01-03'], [65.0]]},
@@ -641,7 +651,8 @@ class TestPARSynthesizer:
             'measurement': [55, 60, 65, 65, 70],
         })
         metadata = self.get_metadata()
-        metadata.set_sequence_index('time')
+        metadata.set_sequence_index('time', 'table')
+
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
         sequences = [
             {'context': np.array(['F'], dtype=object), 'data': [[1, 1], [55, 60], [1, 1]]},
@@ -832,7 +843,8 @@ class TestPARSynthesizer:
         """
         # Setup
         metadata = self.get_metadata()
-        metadata.set_sequence_index('time')
+        metadata.set_sequence_index('time', 'table')
+
         par = PARSynthesizer(metadata=metadata, context_columns=['gender'])
         model_mock = Mock()
         par._model = model_mock
@@ -1024,3 +1036,50 @@ class TestPARSynthesizer:
                 metadata=metadata,
                 context_columns=['name'],
             )
+
+    def test___init__with_unified_metadata(self):
+        """Test initialization with unified metadata."""
+        # Setup
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table_1': {
+                    'columns': {
+                        'time': {'sdtype': 'datetime'},
+                        'gender': {'sdtype': 'categorical'},
+                        'name': {'sdtype': 'id'},
+                        'measurement': {'sdtype': 'numerical'},
+                    },
+                    'sequence_key': 'name',
+                }
+            }
+        })
+
+        multi_metadata = Metadata.load_from_dict({
+            'tables': {
+                'table_1': {
+                    'columns': {
+                        'time': {'sdtype': 'datetime'},
+                        'gender': {'sdtype': 'categorical'},
+                        'name': {'sdtype': 'id'},
+                        'measurement': {'sdtype': 'numerical'},
+                    },
+                    'sequence_key': 'name',
+                },
+                'table_2': {
+                    'columns': {
+                        'time': {'sdtype': 'datetime'},
+                        'gender': {'sdtype': 'categorical'},
+                        'name': {'sdtype': 'id'},
+                        'measurement': {'sdtype': 'numerical'},
+                    },
+                    'sequence_key': 'name',
+                },
+            }
+        })
+
+        # Run and Assert
+        PARSynthesizer(metadata)
+        error_msg = re.escape('PARSynthesizer can only be used with a single table.')
+
+        with pytest.raises(InvalidMetadataError, match=error_msg):
+            PARSynthesizer(multi_metadata)

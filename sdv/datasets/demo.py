@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import os
+import warnings
 from collections import defaultdict
 from pathlib import Path
 from zipfile import ZipFile
@@ -15,8 +16,7 @@ from botocore import UNSIGNED
 from botocore.client import Config
 from botocore.exceptions import ClientError
 
-from sdv.metadata.multi_table import MultiTableMetadata
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 
 LOGGER = logging.getLogger(__name__)
 BUCKET = 'sdv-demo-datasets'
@@ -104,15 +104,20 @@ def _get_data(modality, output_folder_name, in_memory_directory):
     return data
 
 
-def _get_metadata(modality, output_folder_name, in_memory_directory):
-    metadata = MultiTableMetadata() if modality == 'multi_table' else SingleTableMetadata()
+def _get_metadata(output_folder_name, in_memory_directory, dataset_name):
+    metadata = Metadata()
     if output_folder_name:
         metadata_path = os.path.join(output_folder_name, METADATA_FILENAME)
-        metadata = metadata.load_from_json(metadata_path)
+        metadata = metadata.load_from_json(metadata_path, dataset_name)
 
     else:
-        metadict = json.loads(in_memory_directory['metadata_v1.json'])
-        metadata = metadata.load_from_dict(metadict)
+        metadata_path = 'metadata_v2.json'
+        if metadata_path not in in_memory_directory:
+            warnings.warn(f'Metadata for {dataset_name} is missing updated version v2.')
+            metadata_path = 'metadata_v1.json'
+
+        metadict = json.loads(in_memory_directory[metadata_path])
+        metadata = metadata.load_from_dict(metadict, dataset_name)
 
     return metadata
 
@@ -134,22 +139,20 @@ def download_demo(modality, dataset_name, output_folder_name=None):
         tuple (data, metadata):
             If ``data`` is single table or sequential, it is a DataFrame.
             If ``data`` is multi table, it is a dictionary mapping table name to DataFrame.
-            If ``metadata`` is single table or sequential, it is a ``SingleTableMetadata`` object.
-            If ``metadata`` is multi table, it is a ``MultiTableMetadata`` object.
+            ``metadata`` is of class ``Metadata`` which can represent single table or multi table.
 
     Raises:
         Error:
             * If the ``dataset_name`` exists in the bucket but under a different modality.
             * If the ``dataset_name`` doesn't exist in the bucket.
             * If there is already a folder named ``output_folder_name``.
-            * If ``modality`` is not ``'single_table'``, ``'multi_table'`` or ``'sequential'``.
     """
     _validate_modalities(modality)
     _validate_output_folder(output_folder_name)
     bytes_io = _download(modality, dataset_name)
     in_memory_directory = _extract_data(bytes_io, output_folder_name)
     data = _get_data(modality, output_folder_name, in_memory_directory)
-    metadata = _get_metadata(modality, output_folder_name, in_memory_directory)
+    metadata = _get_metadata(output_folder_name, in_memory_directory, dataset_name)
 
     return data, metadata
 

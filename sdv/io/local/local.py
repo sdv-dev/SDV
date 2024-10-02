@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from sdv.metadata import MultiTableMetadata
+from sdv.metadata.metadata import Metadata
 
 
 class BaseLocalHandler:
@@ -25,12 +25,11 @@ class BaseLocalHandler:
                 Dictionary of table names to dataframes.
 
         Returns:
-            MultiTableMetadata:
-                An ``sdv.metadata.MultiTableMetadata`` object with the detected metadata
+            Metadata:
+                An ``sdv.metadata.Metadata`` object with the detected metadata
                 properties from the data.
         """
-        metadata = MultiTableMetadata()
-        metadata.detect_from_dataframes(data)
+        metadata = Metadata.detect_from_dataframes(data)
         return metadata
 
     def read(self):

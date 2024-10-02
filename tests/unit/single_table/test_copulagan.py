@@ -8,7 +8,7 @@ from copulas.univariate import BetaUnivariate, GammaUnivariate, UniformUnivariat
 from rdt.transformers import GaussianNormalizer
 
 from sdv.errors import SynthesizerInputError
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.single_table.copulagan import CopulaGANSynthesizer
 
 
@@ -16,7 +16,43 @@ class TestCopulaGANSynthesizer:
     def test___init__(self):
         """Test creating an instance of ``CopulaGANSynthesizer``."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
+        enforce_min_max_values = True
+        enforce_rounding = True
+
+        # Run
+        instance = CopulaGANSynthesizer(
+            metadata,
+            enforce_min_max_values=enforce_min_max_values,
+            enforce_rounding=enforce_rounding,
+        )
+
+        # Assert
+        assert instance.enforce_min_max_values is True
+        assert instance.enforce_rounding is True
+        assert instance.embedding_dim == 128
+        assert instance.generator_dim == (256, 256)
+        assert instance.discriminator_dim == (256, 256)
+        assert instance.generator_lr == 2e-4
+        assert instance.generator_decay == 1e-6
+        assert instance.discriminator_lr == 2e-4
+        assert instance.discriminator_decay == 1e-6
+        assert instance.batch_size == 500
+        assert instance.discriminator_steps == 1
+        assert instance.log_frequency is True
+        assert instance.verbose is False
+        assert instance.epochs == 300
+        assert instance.pac == 10
+        assert instance.cuda is True
+        assert instance.numerical_distributions == {}
+        assert instance.default_distribution == 'beta'
+        assert instance._numerical_distributions == {}
+        assert instance._default_distribution == BetaUnivariate
+
+    def test___init__with_unified_metadata(self):
+        """Test creating an instance of ``CopulaGANSynthesizer`` with Metadata."""
+        # Setup
+        metadata = Metadata()
         enforce_min_max_values = True
         enforce_rounding = True
 
@@ -52,8 +88,9 @@ class TestCopulaGANSynthesizer:
     def test___init__custom(self):
         """Test creating an instance of ``CopulaGANSynthesizer`` with custom parameters."""
         # Setup
-        metadata = SingleTableMetadata()
-        metadata.add_column('field', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('field', 'table', sdtype='numerical')
         enforce_min_max_values = False
         enforce_rounding = False
         embedding_dim = 64
@@ -121,7 +158,7 @@ class TestCopulaGANSynthesizer:
     def test___init__incorrect_numerical_distributions(self):
         """Test it crashes when ``numerical_distributions`` receives a non-dictionary."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         numerical_distributions = 'invalid'
 
         # Run
@@ -132,7 +169,7 @@ class TestCopulaGANSynthesizer:
     def test___init__invalid_column_numerical_distributions(self):
         """Test it crashes when ``numerical_distributions`` includes invalid columns."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         numerical_distributions = {'totally_fake_column_name': 'beta'}
 
         # Run
@@ -147,7 +184,7 @@ class TestCopulaGANSynthesizer:
     def test_get_params(self):
         """Test that inherited method ``get_params`` returns all the specific init parameters."""
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = CopulaGANSynthesizer(metadata)
 
         # Run
@@ -187,18 +224,11 @@ class TestCopulaGANSynthesizer:
         """
         # Setup
         numerical_distributions = {'age': 'gamma'}
-        metadata = SingleTableMetadata()
-        metadata.columns = {
-            'name': {
-                'sdtype': 'categorical',
-            },
-            'age': {
-                'sdtype': 'numerical',
-            },
-            'account': {
-                'sdtype': 'numerical',
-            },
-        }
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('name', 'table', sdtype='categorical')
+        metadata.add_column('age', 'table', sdtype='numerical')
+        metadata.add_column('account', 'table', sdtype='numerical')
 
         instance = CopulaGANSynthesizer(metadata, numerical_distributions=numerical_distributions)
         processed_data = pd.DataFrame({
@@ -243,8 +273,9 @@ class TestCopulaGANSynthesizer:
         were renamed/dropped during preprocessing.
         """
         # Setup
-        metadata = SingleTableMetadata()
-        metadata.add_column('col', sdtype='numerical')
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('col', 'table', sdtype='numerical')
         numerical_distributions = {'col': 'gamma'}
         instance = CopulaGANSynthesizer(metadata, numerical_distributions=numerical_distributions)
         processed_data = pd.DataFrame()
@@ -268,7 +299,7 @@ class TestCopulaGANSynthesizer:
         one of the ``copulas`` distributions.
         """
         # Setup
-        metadata = SingleTableMetadata()
+        metadata = Metadata()
         instance = CopulaGANSynthesizer(metadata)
         instance._create_gaussian_normalizer_config = Mock()
         processed_data = pd.DataFrame()
@@ -296,8 +327,8 @@ class TestCopulaGANSynthesizer:
         """
         # Setup
         data = pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})
-        stm = SingleTableMetadata()
-        stm.detect_from_dataframe(data)
+        stm = Metadata()
+        stm.detect_from_dataframes({'table': data})
         cgs = CopulaGANSynthesizer(stm)
         zero_transformer_mock = Mock(spec_set=GaussianNormalizer)
         zero_transformer_mock._univariate.to_dict.return_value = {
@@ -341,8 +372,8 @@ class TestCopulaGANSynthesizer:
         """Test that ``get_learned_distributions`` raises an error."""
         # Setup
         data = pd.DataFrame({'zero': [0, 0, 0], 'one': [1, 1, 1]})
-        stm = SingleTableMetadata()
-        stm.detect_from_dataframe(data)
+        stm = Metadata()
+        stm.detect_from_dataframes({'table': data})
         cgs = CopulaGANSynthesizer(stm)
 
         # Run and Assert

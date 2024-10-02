@@ -1,6 +1,24 @@
 # Release Notes
 
-### v1.16.2 - 2024-09-25
+### v1.17.0 - 2024-10-02
+
+This release consolidates the `SingleTableMetadata` and `MultiTableMetadata` classes into one new class simply called `Metadata`. The old classes are now deprecated. The new class has the same structure as the `MultiTableMetadata` class, except it will work with single table synthesizers.
+
+### New Features
+
+* Add `metadata.validate_table` method for single table usage - Issue [#2215](https://github.com/sdv-dev/SDV/issues/2215) by @R-Palazzo
+* Improve usage of `detect_from_dataframes` function - Issue [#2214](https://github.com/sdv-dev/SDV/issues/2214) by @amontanez24
+* For single-table use cases, make it frictionless to update Metadata - Issue [#2213](https://github.com/sdv-dev/SDV/issues/2213) by @R-Palazzo
+* Add a warning if you're loading a SingleTableMetadata object - Issue [#2210](https://github.com/sdv-dev/SDV/issues/2210) by @R-Palazzo
+* Move all tests over to use Metadata instead of SingleTableMetadata and MultiTableMetadata - Issue [#2151](https://github.com/sdv-dev/SDV/issues/2151) by @lajohn4747
+* Update demos to use new metadata - Issue [#2131](https://github.com/sdv-dev/SDV/issues/2131) by @lajohn4747
+* Enable evaluation methods to work with new metadata - Issue [#2130](https://github.com/sdv-dev/SDV/issues/2130) by @pvk-developer
+* Enable multi table synthesizers to use new Metadata - Issue [#2129](https://github.com/sdv-dev/SDV/issues/2129) by @lajohn4747
+* Enable single table synthesizers to use new Metadata - Issue [#2128](https://github.com/sdv-dev/SDV/issues/2128) by @lajohn4747
+* Create unified Metadata class - Issue [#2104](https://github.com/sdv-dev/SDV/issues/2104) by @lajohn4747
+* Make "table" default table name - Issue [#2245](https://github.com/sdv-dev/SDV/issues/2245) by @fealho
+
+## v1.16.2 - 2024-09-25
 
 ### New Features
 

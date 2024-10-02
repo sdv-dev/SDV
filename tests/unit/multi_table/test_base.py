@@ -19,6 +19,7 @@ from sdv.errors import (
     SynthesizerInputError,
     VersionError,
 )
+from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.multi_table.base import BaseMultiTableSynthesizer
@@ -57,13 +58,17 @@ class TestBaseMultiTableSynthesizer:
         }
         instance._synthesizer.assert_has_calls([
             call(
-                metadata=instance.metadata.tables['nesreca'],
+                metadata=ANY,
                 default_distribution='gamma',
                 locales=['en_US'],
             ),
-            call(metadata=instance.metadata.tables['oseba'], locales=locales),
-            call(metadata=instance.metadata.tables['upravna_enota'], locales=locales),
+            call(metadata=ANY, locales=locales),
+            call(metadata=ANY, locales=locales),
         ])
+
+        for call_args in instance._synthesizer.call_args_list:
+            metadata_arg = call_args[1].get('metadata', None)
+            assert isinstance(metadata_arg, Metadata)
 
     def test__get_pbar_args(self):
         """Test that ``_get_pbar_args`` returns a dictionary with disable opposite to verbose."""
@@ -119,7 +124,7 @@ class TestBaseMultiTableSynthesizer:
         mock_generate_synthesizer_id.return_value = synthesizer_id
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
         metadata = get_multi_table_metadata()
-        metadata.validate = Mock()
+        metadata.validate = Mock(spec=Metadata)
 
         # Run
         with catch_sdv_logs(caplog, logging.INFO, 'MultiTableSynthesizer'):
@@ -142,16 +147,32 @@ class TestBaseMultiTableSynthesizer:
             'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
         })
 
+    def test___init___deprecated(self):
+        """Test that init with old MultiTableMetadata gives a future warnging."""
+        # Setup
+        metadata = get_multi_table_metadata()
+        multi_metadata = MultiTableMetadata.load_from_dict(metadata.to_dict())
+        multi_metadata.validate = Mock()
+
+        deprecation_msg = re.escape(
+            "The 'MultiTableMetadata' is deprecated. Please use the new "
+            "'Metadata' class for synthesizers."
+        )
+
+        # Run
+        with pytest.warns(FutureWarning, match=deprecation_msg):
+            BaseMultiTableSynthesizer(multi_metadata)
+
     @patch('sdv.metadata.single_table.is_faker_function')
     def test__init__column_relationship_warning(self, mock_is_faker_function):
         """Test that a warning is raised only once when the metadata has column relationships."""
         # Setup
         mock_is_faker_function.return_value = True
         metadata = get_multi_table_metadata()
-        metadata.add_column('nesreca', 'lat', sdtype='latitude')
-        metadata.add_column('nesreca', 'lon', sdtype='longitude')
+        metadata.add_column('lat', 'nesreca', sdtype='latitude')
+        metadata.add_column('lon', 'nesreca', sdtype='longitude')
 
-        metadata.add_column_relationship('nesreca', 'gps', ['lat', 'lon'])
+        metadata.add_column_relationship('gps', ['lat', 'lon'], 'nesreca')
 
         expected_warning = (
             "The metadata contains a column relationship of type 'gps' "
@@ -211,7 +232,7 @@ class TestBaseMultiTableSynthesizer:
     def test_set_address_columns(self):
         """Test the ``set_address_columns`` method."""
         # Setup
-        metadata = MultiTableMetadata().load_from_dict({
+        metadata = Metadata().load_from_dict({
             'tables': {
                 'address_table': {
                     'columns': {
@@ -254,7 +275,7 @@ class TestBaseMultiTableSynthesizer:
     def test_set_address_columns_error(self):
         """Test that ``set_address_columns`` raises an error for unknown table."""
         # Setup
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         columns = ('country_column', 'city_column')
         metadata.validate = Mock()
         SingleTableMetadata.validate = Mock()
@@ -386,7 +407,9 @@ class TestBaseMultiTableSynthesizer:
         result = instance.get_metadata()
 
         # Assert
-        assert metadata == result
+        expected_metadata = Metadata.load_from_dict(metadata.to_dict())
+        assert type(result) is Metadata
+        assert expected_metadata.to_dict() == result.to_dict()
 
     def test_validate(self):
         """Test that no error is being raised when the data is valid."""
@@ -517,7 +540,7 @@ class TestBaseMultiTableSynthesizer:
         metadata = get_multi_table_metadata()
         data = get_multi_table_data()
         data['nesreca']['val'] = list(range(4))
-        metadata.add_column('nesreca', 'val', sdtype='numerical')
+        metadata.add_column('val', 'nesreca', sdtype='numerical')
         instance = BaseMultiTableSynthesizer(metadata)
         inequality_constraint = {
             'constraint_class': 'Inequality',
@@ -835,7 +858,7 @@ class TestBaseMultiTableSynthesizer:
                 }
             ],
         }
-        metadata = MultiTableMetadata.load_from_dict(metadata_dict)
+        metadata = Metadata.load_from_dict(metadata_dict)
         instance = BaseMultiTableSynthesizer(metadata)
         instance.validate = Mock()
         instance._table_synthesizers = {'first_table': Mock(), 'second_table': Mock()}
@@ -874,7 +897,7 @@ class TestBaseMultiTableSynthesizer:
     def test_preprocess_warning(self, mock_warnings):
         """Test that ``preprocess`` warns the user if the model has already been fitted."""
         # Setup
-        metadata = get_multi_table_metadata()
+        metadata = Metadata.load_from_dict(get_multi_table_metadata().to_dict())
         instance = BaseMultiTableSynthesizer(metadata)
         instance.validate = Mock()
         data = {
@@ -1321,8 +1344,8 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        metadata.add_column('nesreca', 'positive_int', sdtype='numerical')
-        metadata.add_column('oseba', 'negative_int', sdtype='numerical')
+        metadata.add_column('positive_int', 'nesreca', sdtype='numerical')
+        metadata.add_column('negative_int', 'oseba', sdtype='numerical')
         positive_constraint = {
             'constraint_class': 'Positive',
             'table_name': 'nesreca',
@@ -1378,8 +1401,8 @@ class TestBaseMultiTableSynthesizer:
         # Setup
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
-        metadata.add_column('nesreca', 'positive_int', sdtype='numerical')
-        metadata.add_column('oseba', 'negative_int', sdtype='numerical')
+        metadata.add_column('positive_int', 'nesreca', sdtype='numerical')
+        metadata.add_column('negative_int', 'oseba', sdtype='numerical')
         positive_constraint = {
             'constraint_class': 'Positive',
             'table_name': 'nesreca',
@@ -1403,7 +1426,7 @@ class TestBaseMultiTableSynthesizer:
         """Test error raised when ``table_name`` is missing."""
         # Setup
         data = pd.DataFrame({'col': [1, 2, 3]})
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         metadata.detect_table_from_dataframe('table', data)
         constraint = {'constraint_class': 'Inequality'}
         model = BaseMultiTableSynthesizer(metadata)
@@ -1502,9 +1525,9 @@ class TestBaseMultiTableSynthesizer:
         """
         # Setup
         data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         metadata.add_table('tab')
-        metadata.add_column('tab', 'col', sdtype='numerical')
+        metadata.add_column('col', 'tab', sdtype='numerical')
         mock_version.public = '1.0.0'
         mock_version.enterprise = None
 
@@ -1550,9 +1573,9 @@ class TestBaseMultiTableSynthesizer:
         """
         # Setup
         data = {'tab': pd.DataFrame({'col': [1, 2, 3]})}
-        metadata = MultiTableMetadata()
+        metadata = Metadata()
         metadata.add_table('tab')
-        metadata.add_column('tab', 'col', sdtype='numerical')
+        metadata.add_column('col', 'tab', sdtype='numerical')
         mock_version.public = '1.0.0'
         mock_version.enterprise = '1.1.0'
 
@@ -1614,7 +1637,7 @@ class TestBaseMultiTableSynthesizer:
     def test_save_warning(self, tmp_path):
         """Test that the synthesizer produces a warning if saved without fitting."""
         # Setup
-        synthesizer = BaseMultiTableSynthesizer(MultiTableMetadata())
+        synthesizer = BaseMultiTableSynthesizer(Metadata())
 
         # Run and Assert
         warn_msg = re.escape(

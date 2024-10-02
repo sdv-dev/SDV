@@ -100,8 +100,9 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
     """Model wrapping ``CTGAN`` model.
 
     Args:
-        metadata (sdv.metadata.SingleTableMetadata):
+        metadata (sdv.metadata.Metadata):
             Single table metadata representing the data that this synthesizer will be used for.
+            * sdv.metadata.SingleTableMetadata can be used but will be deprecated.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
@@ -285,9 +286,7 @@ class CTGANSynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
         _validate_no_category_dtype(processed_data)
 
         transformers = self._data_processor._hyper_transformer.field_transformers
-        discrete_columns = detect_discrete_columns(
-            self.get_metadata(), processed_data, transformers
-        )
+        discrete_columns = detect_discrete_columns(self.metadata, processed_data, transformers)
         self._model = CTGAN(**self._model_kwargs)
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', message='.*Attempting to run cuBLAS.*')
@@ -318,8 +317,9 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
     """Model wrapping ``TVAE`` model.
 
     Args:
-        metadata (sdv.metadata.SingleTableMetadata):
+        metadata (sdv.metadata.Metadata):
             Single table metadata representing the data that this synthesizer will be used for.
+            * sdv.metadata.SingleTableMetadata can be used but will be deprecated.
         enforce_min_max_values (bool):
             Specify whether or not to clip the data returned by ``reverse_transform`` of
             the numerical transformer, ``FloatFormatter``, to the min and max values seen
@@ -402,9 +402,7 @@ class TVAESynthesizer(LossValuesMixin, BaseSingleTableSynthesizer):
         _validate_no_category_dtype(processed_data)
 
         transformers = self._data_processor._hyper_transformer.field_transformers
-        discrete_columns = detect_discrete_columns(
-            self.get_metadata(), processed_data, transformers
-        )
+        discrete_columns = detect_discrete_columns(self.metadata, processed_data, transformers)
         self._model = TVAE(**self._model_kwargs)
         self._model.fit(processed_data, discrete_columns=discrete_columns)
 

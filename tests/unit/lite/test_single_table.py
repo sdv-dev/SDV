@@ -8,6 +8,7 @@ import pytest
 
 from sdv.lite import SingleTablePreset
 from sdv.metadata import SingleTableMetadata
+from sdv.metadata.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
 from tests.utils import DataFrameMatcher
 
@@ -20,7 +21,7 @@ class TestSingleTablePreset:
         """
         # Run and Assert
         with pytest.raises(ValueError, match=r"'name' must be one of *"):
-            SingleTablePreset(metadata=SingleTableMetadata(), name='invalid')
+            SingleTablePreset(metadata=Metadata(), name='invalid')
 
     @patch('sdv.lite.single_table.GaussianCopulaSynthesizer')
     def test__init__speed_passes_correct_parameters(self, gaussian_copula_mock):
@@ -79,14 +80,18 @@ class TestSingleTablePreset:
     def test_get_metadata(self, mock_data_processor):
         """Test that it returns the ``metadata`` object."""
         # Setup
-        metadata = Mock()
+        metadata = Mock(spec=SingleTableMetadata)
+        metadata._updated = False
+        metadata.columns = {}
+        metadata.to_dict.return_value = {'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'}
         instance = SingleTablePreset(metadata, 'FAST_ML')
 
         # Run
         result = instance.get_metadata()
 
         # Assert
-        assert result == metadata
+        assert isinstance(result, Metadata)
+        assert result._convert_to_single_table().to_dict() == metadata.to_dict()
 
     def test_fit(self):
         """Test that the synthesizer's fit method is called with the expected args."""
