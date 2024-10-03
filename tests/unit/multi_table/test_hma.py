@@ -451,7 +451,8 @@ class TestHMASynthesizer:
 
         assert result == expected_result
 
-    def test__recreate_child_synthesizer(self):
+    @patch('sdv.multi_table.hma.Metadata')
+    def test__recreate_child_synthesizer(self, mock_metadata):
         """Test that this method returns a synthesizer for the given child table."""
         # Setup
         instance = Mock()
@@ -477,7 +478,9 @@ class TestHMASynthesizer:
         # Assert
         assert synthesizer == instance._synthesizer.return_value
         assert synthesizer._data_processor == table_synthesizer._data_processor
-        instance._synthesizer.assert_called_once_with(table_meta, a=1)
+        instance._synthesizer.assert_called_once_with(
+            mock_metadata.load_from_dict.return_value, a=1
+        )
         synthesizer._set_parameters.assert_called_once_with(
             instance._extract_parameters.return_value,
             {'colA': 'default_param', 'colB': 'default_param'},

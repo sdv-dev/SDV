@@ -131,6 +131,7 @@ class Metadata(MultiTableMetadata):
                     'No table name was provided to metadata containing only one table. '
                     f'Assigning name: {single_table_name}'
                 )
+
             self.tables[single_table_name] = SingleTableMetadata.load_from_dict(metadata)
 
     def _get_single_table_name(self):
