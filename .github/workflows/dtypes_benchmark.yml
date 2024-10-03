@@ -2,6 +2,8 @@ name: Data Types Benchmark
 
 on:
   push:
+    branches:
+      - main
 
 jobs:
   run_dtypes_benchmark:
