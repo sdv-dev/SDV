@@ -3,15 +3,12 @@
 import io
 import json
 import os
-import pathlib
-import tempfile
 from datetime import date
 
 import git
 import pandas as pd
-import yaml
-from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
@@ -38,8 +35,7 @@ def _get_drive_client():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'client_secrets.json', SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file('client_secrets.json', SCOPES)
             creds = flow.run_local_server(port=0)
         with open('token.json', 'w') as token:
             token.write(creds.to_json())
@@ -53,12 +49,11 @@ def get_latest_file(folder_id):
     service = _get_drive_client()
 
     query = f"'{folder_id}' in parents and trashed = false"
-    results = service.files().list(
-        q=query,
-        orderBy="modifiedTime desc",
-        pageSize=1,
-        fields="files(id, name)"
-    ).execute()
+    results = (
+        service.files()
+        .list(q=query, orderBy='modifiedTime desc', pageSize=1, fields='files(id, name)')
+        .execute()
+    )
 
     files = results.get('files', [])
     if files:
@@ -88,7 +83,7 @@ def read_excel(file_id):
         # If it's a Google Sheet, export it to XLSX
         request = service.files().export_media(
             fileId=file_id,
-            mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         )
     else:
         # If it's already an XLSX or other binary format, download it directly
@@ -99,7 +94,7 @@ def read_excel(file_id):
     downloader = MediaIoBaseDownload(file_io, request)
     done = False
     while not done:
-        status, done = downloader.next_chunk()
+        _, done = downloader.next_chunk()
 
     file_io.seek(0)  # Reset stream position
 
@@ -174,7 +169,7 @@ def save_to_gdrive(output_folder, results, output_filename=None, mark_results=No
     file_metadata = {
         'name': output_filename,
         'parents': [output_folder],
-        'mimeType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        'mimeType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     }
 
     service = _get_drive_client()
