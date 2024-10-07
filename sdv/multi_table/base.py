@@ -209,12 +209,9 @@ class BaseMultiTableSynthesizer:
                 A dictionary with the parameters as keys and the values to be used to instantiate
                 the table's synthesizer.
         """
-        single_table_metadata = Metadata.load_from_dict(
-            self.metadata.tables[table_name].to_dict(), single_table_name=table_name
-        )
-
+        table_metadata = self.metadata.get_table_metadata(table_name)
         self._table_synthesizers[table_name] = self._synthesizer(
-            metadata=single_table_metadata, **table_parameters
+            metadata=table_metadata, **table_parameters
         )
         self._table_parameters[table_name].update(deepcopy(table_parameters))
 

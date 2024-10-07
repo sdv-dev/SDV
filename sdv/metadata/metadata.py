@@ -271,3 +271,18 @@ class Metadata(MultiTableMetadata):
         """Add alternate keys to a table."""
         table_name = self._handle_table_name(table_name)
         super().add_alternate_keys(table_name, column_names)
+
+    def get_table_metadata(self, table_name=None):
+        """Return the metadata for a table.
+
+        Args:
+            table_name (str):
+                The name of the table to get the metadata for.
+
+        Returns:
+            Metadata:
+                The metadata for the given table.
+        """
+        table_name = self._handle_table_name(table_name)
+        table_metadata = super().get_table_metadata(table_name)
+        return Metadata.load_from_dict(table_metadata.to_dict(), single_table_name=table_name)
