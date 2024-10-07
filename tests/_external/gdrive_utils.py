@@ -7,9 +7,7 @@ from datetime import date
 
 import git
 import pandas as pd
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
@@ -25,28 +23,17 @@ def _generate_filename():
     return f'{today}-{commit_id}.xlsx'
 
 
-def _get_drive_client():
+def _get_drive_service():
     tmp_credentials = os.getenv('PYDRIVE_CREDENTIALS')
-    creds = None
-    if tmp_credentials:
-        credentials = json.loads(tmp_credentials)
-        creds = Credentials.from_authorized_user_info(credentials, SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file('client_secrets.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
-
+    credentials_json = json.loads(tmp_credentials)
+    creds = Credentials.from_authorized_user_info(credentials_json, SCOPES)
     service = build('drive', 'v3', credentials=creds)
     return service
 
 
 def get_latest_file(folder_id):
     """Get the latest file from the given Google Drive folder."""
-    service = _get_drive_client()
+    service = _get_drive_service()
 
     query = f"'{folder_id}' in parents and trashed = false"
     results = (
@@ -56,6 +43,7 @@ def get_latest_file(folder_id):
     )
 
     files = results.get('files', [])
+    service.close()
     if files:
         return files[0]
 
@@ -73,7 +61,7 @@ def read_excel(file_id):
             each sheet
 
     """
-    service = _get_drive_client()
+    service = _get_drive_service()
 
     # Get file metadata to check mimeType
     file_metadata = service.files().get(fileId=file_id, fields='mimeType').execute()
@@ -98,6 +86,7 @@ def read_excel(file_id):
 
     file_io.seek(0)  # Reset stream position
 
+    service.close()
     # Load the file content into pandas
     return pd.read_excel(file_io, sheet_name=None)
 
@@ -172,8 +161,11 @@ def save_to_gdrive(output_folder, results, output_filename=None, mark_results=No
         'mimeType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     }
 
-    service = _get_drive_client()
+    service = _get_drive_service()
     media = MediaIoBaseUpload(output, mimetype=file_metadata['mimeType'], resumable=True)
 
     file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-    return file.get('id')
+    file_id = file.get('id')
+    service.close()
+
+    return file_id
