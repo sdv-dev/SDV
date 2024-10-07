@@ -134,7 +134,8 @@ def save_to_gdrive(output_folder, results, output_filename=None, mark_results=No
             String representing the filename to be used for the results spreadsheet. If None,
             uses to the current date and commit as the name. Defaults to None.
         mark_results (dict, optional):
-            A dict mapping to mark the results.
+            A dictionary that maps hex color codes to dataframes. Each dataframe associates
+            specific `data types`, `sdtypes` and methods to be highlighted with the hex color.
 
     Returns:
         str:

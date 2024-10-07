@@ -17,6 +17,8 @@ from tests._external.slack_utils import post_slack_message
 GDRIVE_OUTPUT_FOLDER = '16SkTOyQ3xkJDPJbyZCusb168JwreW5bm'
 PYTHON_VERSION = f'{sys.version_info.major}.{sys.version_info.minor}'
 TEMPRESULTS = Path(f'results/{sys.version_info.major}.{sys.version_info.minor}.json')
+GREEN_HEX = '#B7D7A8'
+RED_HEX = '#EB9999'
 
 
 def get_previous_dtype_result(dtype, sdtype, method, python_version=PYTHON_VERSION):
@@ -185,12 +187,12 @@ def compare_and_store_results_in_gdrive():
 
     # Compute the summary
     summary = pd.DataFrame()
-    for name, df in results.items():
-        df = calculate_support_percentage(df)
+    for name, current_results_df in results.items():
+        current_results_df = calculate_support_percentage(current_results_df)
         if summary.empty:
-            summary = df.rename(columns={'percentage_supported': name})
+            summary = current_results_df.rename(columns={'percentage_supported': name})
         else:
-            summary[name] = df['percentage_supported']
+            summary[name] = current_results_df['percentage_supported']
 
     summary['average'] = summary[list(results)].mean(axis=1).round(2)
     for col in summary.columns:
@@ -207,12 +209,12 @@ def compare_and_store_results_in_gdrive():
             sorted_results[key] = value
             if key == 'unsupported_dtypes':
                 slack_messages.append(':fire: New unsupported DTypes!')
-                mark_results['#EB9999'] = value
+                mark_results[RED_HEX] = value
                 exit_code = 1
 
             elif key == 'new_supported_dtypes':
                 slack_messages.append(':party_blob: New DTypes supported!')
-                mark_results['#B7D7A8'] = value
+                mark_results[GREEN_HEX] = value
 
     if len(slack_messages) == 0:
         slack_messages.append(':dealwithit: No new changes to the DTypes in SDV.')

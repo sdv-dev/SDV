@@ -8,6 +8,7 @@ on:
 jobs:
   run_dtypes_benchmark:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     strategy:
       matrix:
