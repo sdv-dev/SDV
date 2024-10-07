@@ -518,8 +518,7 @@ class TestMetadataClass:
             - Instance of ``Metadata`` with all valid tables and no relationships.
         """
         # Setup
-        metadata = metadata_instance
-        metadata_no_relationships = metadata.to_dict()
+        metadata_no_relationships = metadata_instance.to_dict()
         del metadata_no_relationships['relationships']
         test_metadata = Metadata.load_from_dict(metadata_no_relationships)
 
