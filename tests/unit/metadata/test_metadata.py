@@ -707,3 +707,16 @@ class TestMetadataClass:
 
         # Assert
         assert isinstance(single_table_metadata, SingleTableMetadata)
+
+    def test__handle_table_name_with_empty_tables(self):
+        """Test that the proper `ValueError` is raised when there are no `tables`."""
+        # Setup
+        instance = Metadata()
+
+        # Run and Assert
+        error_msg = (
+            'The metadata object is currently empty. To populate it, please use either '
+            "'detect_from_dataframe' or 'detect_from_dataframes'."
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            instance._handle_table_name(None)
