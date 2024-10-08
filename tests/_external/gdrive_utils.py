@@ -101,7 +101,23 @@ def _set_column_width(writer, results, sheet_name):
         writer.sheets[sheet_name].set_column(col_idx, col_idx, column_width + 2)
 
 
-def save_to_gdrive(output_folder, results, output_filename=None):
+def _set_color_fields(worksheet, data, marked_data, writer, color_code):
+    for _, row in marked_data.iterrows():
+        dtype = row['dtype']
+        sdtype = row['sdtype']
+        method = row['method']
+
+        format_code = writer.book.add_format({'bg_color': color_code})
+
+        for data_row in range(len(data)):
+            if data.loc[data_row, 'dtype'] == dtype and data.loc[data_row, 'sdtype'] == sdtype:
+                method_col = data.columns.get_loc(method)
+                worksheet.write(
+                    data_row + 1, method_col, bool(data.loc[data_row, method]), format_code
+                )
+
+
+def save_to_gdrive(output_folder, results, output_filename=None, mark_results=None):
     """Save a ``DataFrame`` to google drive folder as ``xlsx`` (spreadsheet).
 
     Given the output folder id (google drive folder id), store the given ``results`` as
@@ -117,6 +133,9 @@ def save_to_gdrive(output_folder, results, output_filename=None):
         output_filename (str, optional):
             String representing the filename to be used for the results spreadsheet. If None,
             uses to the current date and commit as the name. Defaults to None.
+        mark_results (dict, optional):
+            A dictionary that maps hex color codes to dataframes. Each dataframe associates
+            specific `data types`, `sdtypes` and methods to be highlighted with the hex color.
 
     Returns:
         str:
@@ -126,11 +145,16 @@ def save_to_gdrive(output_folder, results, output_filename=None):
         output_filename = _generate_filename()
 
     output = io.BytesIO()
-
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:  # pylint: disable=E0110
         for sheet_name, data in results.items():
             data.to_excel(writer, sheet_name=sheet_name, index=False)
             _set_column_width(writer, data, sheet_name)
+            if mark_results:
+                for color_code, marked_results in mark_results.items():
+                    marked_data = marked_results[marked_results['python_version'] == sheet_name]
+                    if not marked_data.empty:
+                        worksheet = writer.sheets[sheet_name]
+                        _set_color_fields(worksheet, data, marked_data, writer, color_code)
 
     file_config = {'title': output_filename, 'parents': [{'id': output_folder}]}
     drive = _get_drive_client()
