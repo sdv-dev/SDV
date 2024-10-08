@@ -4,6 +4,7 @@ import io
 import json
 import os
 from datetime import date
+from functools import lru_cache
 
 import git
 import pandas as pd
@@ -23,6 +24,7 @@ def _generate_filename():
     return f'{today}-{commit_id}.xlsx'
 
 
+@lru_cache()
 def _get_drive_service():
     tmp_credentials = os.getenv('PYDRIVE_CREDENTIALS')
     credentials_json = json.loads(tmp_credentials)
@@ -43,7 +45,6 @@ def get_latest_file(folder_id):
     )
 
     files = results.get('files', [])
-    service.close()
     if files:
         return files[0]
 
@@ -86,7 +87,6 @@ def read_excel(file_id):
 
     file_io.seek(0)  # Reset stream position
 
-    service.close()
     # Load the file content into pandas
     return pd.read_excel(file_io, sheet_name=None)
 
@@ -166,6 +166,5 @@ def save_to_gdrive(output_folder, results, output_filename=None, mark_results=No
 
     file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     file_id = file.get('id')
-    service.close()
 
     return file_id
