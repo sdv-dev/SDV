@@ -164,10 +164,7 @@ class Metadata(MultiTableMetadata):
 
     def _handle_table_name(self, table_name):
         if len(self.tables) == 0:
-            raise ValueError(
-                'The metadata object is currently empty. To populate it, please use either '
-                "'detect_from_dataframe' or 'detect_from_dataframes'."
-            )
+            raise ValueError('Metadata does not contain any tables. No columns can be added.')
         if table_name is None:
             if len(self.tables) == 1:
                 table_name = next(iter(self.tables))

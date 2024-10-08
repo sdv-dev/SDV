@@ -714,9 +714,6 @@ class TestMetadataClass:
         instance = Metadata()
 
         # Run and Assert
-        error_msg = (
-            'The metadata object is currently empty. To populate it, please use either '
-            "'detect_from_dataframe' or 'detect_from_dataframes'."
-        )
+        error_msg = 'Metadata does not contain any tables. No columns can be added.'
         with pytest.raises(ValueError, match=error_msg):
             instance._handle_table_name(None)
