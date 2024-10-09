@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+    workflow_dispatch:  # Enables manual triggering
 
 jobs:
   run_dtypes_benchmark:
@@ -79,5 +80,7 @@ jobs:
         env:
           PYDRIVE_CREDENTIALS: ${{ secrets.PYDRIVE_CREDENTIALS }}
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+          # Conditionally set TEST_OUTPUT_FOLDER if workflow_dispatch triggered the run
+          TEST_OUTPUT_FOLDER: ${{ github.event_name == 'workflow_dispatch' && '1tjre6vNnbAv6jyfsF8N8EZfDX7Rx2HCT' || '' }}
 
         run: python -m tests.benchmark.utils
