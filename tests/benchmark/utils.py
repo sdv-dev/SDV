@@ -222,12 +222,14 @@ def compare_and_store_results_in_gdrive():
     for key, value in results.items():
         sorted_results[key] = value
 
-    file_id = save_to_gdrive(GDRIVE_OUTPUT_FOLDER, sorted_results, mark_results=mark_results)
+    output_folder = os.getenv('TEST_OUTPUT_FOLDER', GDRIVE_OUTPUT_FOLDER)
+    file_id = save_to_gdrive(output_folder, sorted_results, mark_results=mark_results)
     slack_messages.append(
         f'See <https://docs.google.com/spreadsheets/d/{file_id}|dtypes summary and details>'
     )
     slack_message = '\n'.join(slack_messages)
-    post_slack_message('sdv-alerts', slack_message)
+    slack_channel = 'sdv-alerts' if output_folder == GDRIVE_OUTPUT_FOLDER else 'sdv-alerts-debug'
+    post_slack_message(slack_channel, slack_message)
     sys.exit(exit_code)
 
 

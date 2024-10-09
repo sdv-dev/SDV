@@ -3,8 +3,10 @@
 import io
 import json
 import os
+import random
+import time
 from datetime import date
-from functools import lru_cache
+from functools import lru_cache, wraps
 
 import git
 import pandas as pd
@@ -14,6 +16,31 @@ from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
 PYDRIVE_CREDENTIALS = 'PYDRIVE_CREDENTIALS'
+
+MAX_RETRIES = 5
+MAXIMUM_BACKOFF = 64
+
+
+def exponential_backoff(func):
+    """Exponential backoff decorator to prevent google drive timeout."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        tries = 0
+        while tries < MAX_RETRIES:
+            try:
+                return func(*args, **kwargs)
+
+            except Exception as exception:
+                tries += 1
+                if tries == MAX_RETRIES:
+                    raise exception
+
+            random_milliseconds = random.randint(0, 1000) / 1000
+            backoff_time = min((2**tries) + random_milliseconds, MAXIMUM_BACKOFF)
+            time.sleep(backoff_time)
+
+    return wrapper
 
 
 def _generate_filename():
@@ -28,11 +55,12 @@ def _generate_filename():
 def _get_drive_service():
     tmp_credentials = os.getenv('PYDRIVE_CREDENTIALS')
     credentials_json = json.loads(tmp_credentials)
-    creds = Credentials.from_authorized_user_info(credentials_json, SCOPES)
-    service = build('drive', 'v3', credentials=creds)
+    credentials = Credentials.from_authorized_user_info(credentials_json, SCOPES)
+    service = build('drive', 'v3', credentials=credentials)
     return service
 
 
+@exponential_backoff
 def get_latest_file(folder_id):
     """Get the latest file from the given Google Drive folder."""
     service = _get_drive_service()
@@ -49,6 +77,7 @@ def get_latest_file(folder_id):
         return files[0]
 
 
+@exponential_backoff
 def read_excel(file_id):
     """Read a file as an XLSX from Google Drive.
 
@@ -114,6 +143,7 @@ def _set_color_fields(worksheet, data, marked_data, writer, color_code):
                 )
 
 
+@exponential_backoff
 def save_to_gdrive(output_folder, results, output_filename=None, mark_results=None):
     """Save a ``DataFrame`` to google drive folder as ``xlsx`` (spreadsheet).
 
