@@ -477,7 +477,10 @@ class TestHMASynthesizer:
         # Assert
         assert synthesizer == instance._synthesizer.return_value
         assert synthesizer._data_processor == table_synthesizer._data_processor
-        instance._synthesizer.assert_called_once_with(table_meta, a=1)
+        instance.metadata.get_table_metadata.assert_called_once_with('users')
+        instance._synthesizer.assert_called_once_with(
+            instance.metadata.get_table_metadata.return_value, a=1
+        )
         synthesizer._set_parameters.assert_called_once_with(
             instance._extract_parameters.return_value,
             {'colA': 'default_param', 'colB': 'default_param'},

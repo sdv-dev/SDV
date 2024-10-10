@@ -17,6 +17,8 @@ from tests._external.slack_utils import post_slack_message
 GDRIVE_OUTPUT_FOLDER = '16SkTOyQ3xkJDPJbyZCusb168JwreW5bm'
 PYTHON_VERSION = f'{sys.version_info.major}.{sys.version_info.minor}'
 TEMPRESULTS = Path(f'results/{sys.version_info.major}.{sys.version_info.minor}.json')
+GREEN_HEX = '#B7D7A8'
+RED_HEX = '#EB9999'
 
 
 def get_previous_dtype_result(dtype, sdtype, method, python_version=PYTHON_VERSION):
@@ -62,20 +64,20 @@ def _get_output_filename():
 
 def compare_previous_result_with_current():
     """Compare the previous result with the current and post a message on slack."""
+
+    new_supported_dtypes = []
+    unsupported_dtypes = []
+    previously_unseen_dtypes = []
     for result in Path('results/').rglob('*.json'):
         python_version = result.stem
         current_results = _load_temp_results(result)
         csv_output = Path(f'results/{python_version}.csv')
         current_results.to_csv(csv_output, index=False)
 
-        new_supported_dtypes = []
-        unsupported_dtypes = []
-        previously_unseen_dtypes = []
-
         for index, row in current_results.iterrows():
             dtype = row['dtype']
             sdtype = row['sdtype']
-            for col in current_results.columns[1:]:
+            for col in current_results.columns[2:]:
                 current_value = row[col]
                 stored_value, previously_seen = get_previous_dtype_result(
                     dtype,
@@ -135,7 +137,6 @@ def save_results_to_json(results, filename=None):
             Defaults to `None`.
     """
     filename = filename or TEMPRESULTS
-
     if os.path.exists(filename):
         with open(filename, 'r') as file:
             try:
@@ -150,27 +151,70 @@ def save_results_to_json(results, filename=None):
 
 def calculate_support_percentage(df):
     """Calculate the percentage of supported features (True) for each dtype in a DataFrame."""
-    feature_columns = df.drop(columns=['dtype'])
+    feature_columns = df.drop(columns=['dtype', 'sdtype'])
     # Calculate percentage of TRUE values for each row (dtype)
     percentage_support = feature_columns.mean(axis=1) * 100
-    return pd.DataFrame({'dtype': df['dtype'], 'percentage_supported': percentage_support})
+
+    df = pd.DataFrame({
+        'dtype': df['dtype'],
+        'sdtype': df['sdtype'],
+        'percentage_supported': percentage_support,
+    })
+    df['percentage_supported'] = df['percentage_supported'].round(2)
+    return df
+
+
+def _version_tuple(version_str):
+    return tuple(int(part) for part in version_str.split('.'))
 
 
 def compare_and_store_results_in_gdrive():
+    """Compare results, store them in Google Drive, and post a message to Slack.
+
+    This function compares the current results with previous ones and processes the
+    results to create a summary.
+    """
     csv_handler = CSVHandler()
     comparison_results = compare_previous_result_with_current()
 
     results = csv_handler.read('results/')
     sorted_results = {}
+    # Sort dictionary by version keys
+    results = {
+        key: value
+        for key, value in sorted(results.items(), key=lambda item: _version_tuple(item[0]))
+    }
+
+    # Compute the summary
+    summary = pd.DataFrame()
+    for name, current_results_df in results.items():
+        current_results_df = calculate_support_percentage(current_results_df)
+        if summary.empty:
+            summary = current_results_df.rename(columns={'percentage_supported': name})
+        else:
+            summary[name] = current_results_df['percentage_supported']
+
+    summary['average'] = summary[list(results)].mean(axis=1).round(2)
+    for col in summary.columns:
+        if col not in ('sdtype', 'dtype'):
+            summary[col] = summary[col].apply(lambda x: f'{x}%')
+
+    sorted_results['Summary'] = summary
 
     slack_messages = []
+    mark_results = {}
+    exit_code = 0
     for key, value in comparison_results.items():
         if not value.empty:
             sorted_results[key] = value
             if key == 'unsupported_dtypes':
                 slack_messages.append(':fire: New unsupported DTypes!')
+                mark_results[RED_HEX] = value
+                exit_code = 1
+
             elif key == 'new_supported_dtypes':
                 slack_messages.append(':party_blob: New DTypes supported!')
+                mark_results[GREEN_HEX] = value
 
     if len(slack_messages) == 0:
         slack_messages.append(':dealwithit: No new changes to the DTypes in SDV.')
@@ -178,13 +222,15 @@ def compare_and_store_results_in_gdrive():
     for key, value in results.items():
         sorted_results[key] = value
 
-    file_id = save_to_gdrive(GDRIVE_OUTPUT_FOLDER, sorted_results)
-
+    output_folder = GDRIVE_OUTPUT_FOLDER
+    file_id = save_to_gdrive(output_folder, sorted_results, mark_results=mark_results)
     slack_messages.append(
         f'See <https://docs.google.com/spreadsheets/d/{file_id}|dtypes summary and details>'
     )
     slack_message = '\n'.join(slack_messages)
-    post_slack_message('sdv-alerts', slack_message)
+    slack_channel = 'sdv-alerts'
+    post_slack_message(slack_channel, slack_message)
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

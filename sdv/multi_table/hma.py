@@ -23,9 +23,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
     """Hierarchical Modeling Algorithm One.
 
     Args:
-        metadata (sdv.metadata.multi_table.MultiTableMetadata):
-            Multi table metadata representing the data tables that this synthesizer will be used
-            for.
+        metadata (sdv.metadata.Metadata):
+            Metadata representing the data tables that this synthesizer will be used for.
         locales (list or str):
             The default locale(s) to use for AnonymizedFaker transformers.
             Defaults to ``['en_US']``.
@@ -47,8 +46,8 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         """Get the number of data columns, ie colums that are not id, for each table.
 
         Args:
-            metadata (MultiTableMetadata):
-                Metadata of the datasets.
+            metadata (sdv.metadata.Metadata):
+                Metadata representing the data tables that this synthesizer will be used for.
         """
         columns_per_table = {}
         for table_name, table in metadata.tables.items():
@@ -552,8 +551,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         if parent_row is not None:
             parameters = self._extract_parameters(parent_row, child_name, foreign_key)
             default_parameters = getattr(self, '_default_parameters', {}).get(child_name, {})
-
-            table_meta = self.metadata.tables[child_name]
+            table_meta = self.metadata.get_table_metadata(child_name)
             synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
             synthesizer._set_parameters(parameters, default_parameters)
         else:

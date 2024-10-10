@@ -3,17 +3,44 @@
 import io
 import json
 import os
-import pathlib
-import tempfile
+import random
+import time
 from datetime import date
+from functools import lru_cache, wraps
 
 import git
 import pandas as pd
-import yaml
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
+SCOPES = ['https://www.googleapis.com/auth/drive']
 PYDRIVE_CREDENTIALS = 'PYDRIVE_CREDENTIALS'
+
+MAX_RETRIES = 5
+MAXIMUM_BACKOFF = 64
+
+
+def exponential_backoff(func):
+    """Exponential backoff decorator to prevent google drive timeout."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        tries = 0
+        while tries < MAX_RETRIES:
+            try:
+                return func(*args, **kwargs)
+
+            except Exception as exception:
+                tries += 1
+                if tries == MAX_RETRIES:
+                    raise exception
+
+            random_milliseconds = random.randint(0, 1000) / 1000
+            backoff_time = min((2**tries) + random_milliseconds, MAXIMUM_BACKOFF)
+            time.sleep(backoff_time)
+
+    return wrapper
 
 
 def _generate_filename():
@@ -24,56 +51,33 @@ def _generate_filename():
     return f'{today}-{commit_id}.xlsx'
 
 
-def _get_drive_client():
-    tmp_credentials = os.getenv(PYDRIVE_CREDENTIALS)
-    if not tmp_credentials:
-        gauth = GoogleAuth()
-        gauth.LocalWebserverAuth()
-    else:
-        with tempfile.TemporaryDirectory() as tempdir:
-            credentials_file_path = pathlib.Path(tempdir) / 'credentials.json'
-            credentials_file_path.write_text(tmp_credentials)
-
-            credentials = json.loads(tmp_credentials)
-
-            settings = {
-                'client_config_backend': 'settings',
-                'client_config': {
-                    'client_id': credentials['client_id'],
-                    'client_secret': credentials['client_secret'],
-                },
-                'save_credentials': True,
-                'save_credentials_backend': 'file',
-                'save_credentials_file': str(credentials_file_path),
-                'get_refresh_token': True,
-            }
-            settings_file = pathlib.Path(tempdir) / 'settings.yaml'
-            settings_file.write_text(yaml.safe_dump(settings))
-
-            gauth = GoogleAuth(str(settings_file))
-            gauth.LocalWebserverAuth()
-
-    return GoogleDrive(gauth)
+@lru_cache()
+def _get_drive_service():
+    tmp_credentials = os.getenv('PYDRIVE_CREDENTIALS')
+    credentials_json = json.loads(tmp_credentials)
+    credentials = Credentials.from_authorized_user_info(credentials_json, SCOPES)
+    service = build('drive', 'v3', credentials=credentials)
+    return service
 
 
+@exponential_backoff
 def get_latest_file(folder_id):
-    """Get the latest file from the given Google Drive folder.
+    """Get the latest file from the given Google Drive folder."""
+    service = _get_drive_service()
 
-    Args:
-        folder (str):
-            The string Google Drive folder ID.
-    """
-    drive = _get_drive_client()
-    drive_query = drive.ListFile({
-        'q': f"'{folder_id}' in parents and trashed=False",
-        'orderBy': 'modifiedDate desc',
-        'maxResults': 1,
-    })
-    file_list = drive_query.GetList()
-    if len(file_list) > 0:
-        return file_list[0]
+    query = f"'{folder_id}' in parents and trashed = false"
+    results = (
+        service.files()
+        .list(q=query, orderBy='modifiedTime desc', pageSize=1, fields='files(id, name)')
+        .execute()
+    )
+
+    files = results.get('files', [])
+    if files:
+        return files[0]
 
 
+@exponential_backoff
 def read_excel(file_id):
     """Read a file as an XLSX from Google Drive.
 
@@ -87,11 +91,33 @@ def read_excel(file_id):
             each sheet
 
     """
-    client = _get_drive_client()
-    drive_file = client.CreateFile({'id': file_id})
-    xlsx_mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    drive_file.FetchContent(mimetype=xlsx_mime)
-    return pd.read_excel(drive_file.content, sheet_name=None)
+    service = _get_drive_service()
+
+    # Get file metadata to check mimeType
+    file_metadata = service.files().get(fileId=file_id, fields='mimeType').execute()
+    mime_type = file_metadata.get('mimeType')
+
+    if mime_type == 'application/vnd.google-apps.spreadsheet':
+        # If it's a Google Sheet, export it to XLSX
+        request = service.files().export_media(
+            fileId=file_id,
+            mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+    else:
+        # If it's already an XLSX or other binary format, download it directly
+        request = service.files().get_media(fileId=file_id)
+
+    # Download file content
+    file_io = io.BytesIO()
+    downloader = MediaIoBaseDownload(file_io, request)
+    done = False
+    while not done:
+        _, done = downloader.next_chunk()
+
+    file_io.seek(0)  # Reset stream position
+
+    # Load the file content into pandas
+    return pd.read_excel(file_io, sheet_name=None)
 
 
 def _set_column_width(writer, results, sheet_name):
@@ -101,7 +127,24 @@ def _set_column_width(writer, results, sheet_name):
         writer.sheets[sheet_name].set_column(col_idx, col_idx, column_width + 2)
 
 
-def save_to_gdrive(output_folder, results, output_filename=None):
+def _set_color_fields(worksheet, data, marked_data, writer, color_code):
+    for _, row in marked_data.iterrows():
+        dtype = row['dtype']
+        sdtype = row['sdtype']
+        method = row['method']
+
+        format_code = writer.book.add_format({'bg_color': color_code})
+
+        for data_row in range(len(data)):
+            if data.loc[data_row, 'dtype'] == dtype and data.loc[data_row, 'sdtype'] == sdtype:
+                method_col = data.columns.get_loc(method)
+                worksheet.write(
+                    data_row + 1, method_col, bool(data.loc[data_row, method]), format_code
+                )
+
+
+@exponential_backoff
+def save_to_gdrive(output_folder, results, output_filename=None, mark_results=None):
     """Save a ``DataFrame`` to google drive folder as ``xlsx`` (spreadsheet).
 
     Given the output folder id (google drive folder id), store the given ``results`` as
@@ -117,6 +160,9 @@ def save_to_gdrive(output_folder, results, output_filename=None):
         output_filename (str, optional):
             String representing the filename to be used for the results spreadsheet. If None,
             uses to the current date and commit as the name. Defaults to None.
+        mark_results (dict, optional):
+            A dictionary that maps hex color codes to dataframes. Each dataframe associates
+            specific `data types`, `sdtypes` and methods to be highlighted with the hex color.
 
     Returns:
         str:
@@ -126,15 +172,29 @@ def save_to_gdrive(output_folder, results, output_filename=None):
         output_filename = _generate_filename()
 
     output = io.BytesIO()
-
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:  # pylint: disable=E0110
         for sheet_name, data in results.items():
             data.to_excel(writer, sheet_name=sheet_name, index=False)
             _set_column_width(writer, data, sheet_name)
+            if mark_results:
+                for color_code, marked_results in mark_results.items():
+                    marked_data = marked_results[marked_results['python_version'] == sheet_name]
+                    if not marked_data.empty:
+                        worksheet = writer.sheets[sheet_name]
+                        _set_color_fields(worksheet, data, marked_data, writer, color_code)
 
-    file_config = {'title': output_filename, 'parents': [{'id': output_folder}]}
-    drive = _get_drive_client()
-    drive_file = drive.CreateFile(file_config)
-    drive_file.content = output
-    drive_file.Upload({'convert': True})
-    return drive_file['id']
+    output.seek(0)
+
+    file_metadata = {
+        'name': output_filename,
+        'parents': [output_folder],
+        'mimeType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }
+
+    service = _get_drive_service()
+    media = MediaIoBaseUpload(output, mimetype=file_metadata['mimeType'], resumable=True)
+
+    file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+    file_id = file.get('id')
+
+    return file_id

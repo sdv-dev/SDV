@@ -131,6 +131,7 @@ class Metadata(MultiTableMetadata):
                     'No table name was provided to metadata containing only one table. '
                     f'Assigning name: {single_table_name}'
                 )
+
             self.tables[single_table_name] = SingleTableMetadata.load_from_dict(metadata)
 
     def _get_single_table_name(self):
@@ -162,6 +163,8 @@ class Metadata(MultiTableMetadata):
         return next(iter(self.tables.values()), SingleTableMetadata())
 
     def _handle_table_name(self, table_name):
+        if len(self.tables) == 0:
+            raise ValueError('Metadata does not contain any tables. No columns can be added.')
         if table_name is None:
             if len(self.tables) == 1:
                 table_name = next(iter(self.tables))
@@ -270,3 +273,18 @@ class Metadata(MultiTableMetadata):
         """Add alternate keys to a table."""
         table_name = self._handle_table_name(table_name)
         super().add_alternate_keys(table_name, column_names)
+
+    def get_table_metadata(self, table_name=None):
+        """Return the metadata for a table.
+
+        Args:
+            table_name (str):
+                The name of the table to get the metadata for.
+
+        Returns:
+            Metadata:
+                The metadata for the given table.
+        """
+        table_name = self._handle_table_name(table_name)
+        table_metadata = super().get_table_metadata(table_name)
+        return Metadata.load_from_dict(table_metadata.to_dict(), single_table_name=table_name)

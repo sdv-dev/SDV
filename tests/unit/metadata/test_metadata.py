@@ -1,5 +1,5 @@
 import re
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, call, mock_open, patch
 
 import pandas as pd
 import pytest
@@ -7,68 +7,71 @@ import pytest
 from sdv.errors import InvalidDataError
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
+from sdv.metadata.single_table import SingleTableMetadata
 from tests.utils import DataFrameMatcher, get_multi_table_data, get_multi_table_metadata
+
+
+@pytest.fixture
+def metadata_instance():
+    """Set the tables and relationships for metadata."""
+    metadata = {}
+    metadata['tables'] = {
+        'users': {
+            'columns': {'id': {'sdtype': 'id'}, 'country': {'sdtype': 'categorical'}},
+            'primary_key': 'id',
+        },
+        'payments': {
+            'columns': {
+                'payment_id': {'sdtype': 'id'},
+                'user_id': {'sdtype': 'id'},
+                'date': {'sdtype': 'datetime'},
+            },
+            'primary_key': 'payment_id',
+        },
+        'sessions': {
+            'columns': {
+                'session_id': {'sdtype': 'id'},
+                'user_id': {'sdtype': 'id'},
+                'device': {'sdtype': 'categorical'},
+            },
+            'primary_key': 'session_id',
+        },
+        'transactions': {
+            'columns': {
+                'transaction_id': {'sdtype': 'id'},
+                'session_id': {'sdtype': 'id'},
+                'timestamp': {'sdtype': 'datetime'},
+            },
+            'primary_key': 'transaction_id',
+        },
+    }
+
+    metadata['relationships'] = [
+        {
+            'parent_table_name': 'users',
+            'parent_primary_key': 'id',
+            'child_table_name': 'sessions',
+            'child_foreign_key': 'user_id',
+        },
+        {
+            'parent_table_name': 'sessions',
+            'parent_primary_key': 'session_id',
+            'child_table_name': 'transactions',
+            'child_foreign_key': 'session_id',
+        },
+        {
+            'parent_table_name': 'users',
+            'parent_primary_key': 'id',
+            'child_table_name': 'payments',
+            'child_foreign_key': 'user_id',
+        },
+    ]
+
+    return Metadata.load_from_dict(metadata)
 
 
 class TestMetadataClass:
     """Test ``Metadata`` class."""
-
-    def get_multi_table_metadata(self):
-        """Set the tables and relationships for metadata."""
-        metadata = {}
-        metadata['tables'] = {
-            'users': {
-                'columns': {'id': {'sdtype': 'id'}, 'country': {'sdtype': 'categorical'}},
-                'primary_key': 'id',
-            },
-            'payments': {
-                'columns': {
-                    'payment_id': {'sdtype': 'id'},
-                    'user_id': {'sdtype': 'id'},
-                    'date': {'sdtype': 'datetime'},
-                },
-                'primary_key': 'payment_id',
-            },
-            'sessions': {
-                'columns': {
-                    'session_id': {'sdtype': 'id'},
-                    'user_id': {'sdtype': 'id'},
-                    'device': {'sdtype': 'categorical'},
-                },
-                'primary_key': 'session_id',
-            },
-            'transactions': {
-                'columns': {
-                    'transaction_id': {'sdtype': 'id'},
-                    'session_id': {'sdtype': 'id'},
-                    'timestamp': {'sdtype': 'datetime'},
-                },
-                'primary_key': 'transaction_id',
-            },
-        }
-
-        metadata['relationships'] = [
-            {
-                'parent_table_name': 'users',
-                'parent_primary_key': 'id',
-                'child_table_name': 'sessions',
-                'child_foreign_key': 'user_id',
-            },
-            {
-                'parent_table_name': 'sessions',
-                'parent_primary_key': 'session_id',
-                'child_table_name': 'transactions',
-                'child_foreign_key': 'session_id',
-            },
-            {
-                'parent_table_name': 'users',
-                'parent_primary_key': 'id',
-                'child_table_name': 'payments',
-                'child_foreign_key': 'user_id',
-            },
-        ]
-
-        return Metadata.load_from_dict(metadata)
 
     @patch('sdv.metadata.utils.Path')
     def test_load_from_json_path_does_not_exist(self, mock_path):
@@ -147,9 +150,10 @@ class TestMetadataClass:
             assert instance.tables[table_name].sequence_index is None
             assert instance.tables[table_name]._version == 'SINGLE_TABLE_V1'
 
+    @patch('builtins.open', new_callable=mock_open)
     @patch('sdv.metadata.utils.Path')
     @patch('sdv.metadata.utils.json')
-    def test_load_from_json_multi_table(self, mock_json, mock_path):
+    def test_load_from_json_multi_table(self, mock_json, mock_path, mock_file):
         """Test the ``load_from_json`` method.
 
         Test that ``load_from_json`` function creates an instance with the contents returned by the
@@ -167,7 +171,6 @@ class TestMetadataClass:
               file (``json.load`` return value)
         """
         # Setup
-        instance = Metadata()
         mock_path.return_value.exists.return_value = True
         mock_path.return_value.name = 'filepath.json'
         mock_json.load.return_value = {
@@ -465,7 +468,7 @@ class TestMetadataClass:
             }
         ]
 
-    def test__set_metadata_single_table(self):
+    def test__set_metadata_single_table(self, metadata_instance):
         """Test the ``_set_metadata`` method for ``Metadata``.
 
         Setup:
@@ -495,7 +498,7 @@ class TestMetadataClass:
         assert instance.tables['table'].sequence_index is None
         assert instance.tables['table'].METADATA_SPEC_VERSION == 'SINGLE_TABLE_V1'
 
-    def test_validate(self):
+    def test_validate(self, metadata_instance):
         """Test the method ``validate``.
 
         Test that when a valid ``Metadata`` has been provided no errors are being raised.
@@ -503,13 +506,10 @@ class TestMetadataClass:
         Setup:
             - Instance of ``Metadata`` with all valid tables and relationships.
         """
-        # Setup
-        instance = self.get_multi_table_metadata()
-
         # Run
-        instance.validate()
+        metadata_instance.validate()
 
-    def test_validate_no_relationships(self):
+    def test_validate_no_relationships(self, metadata_instance):
         """Test the method ``validate`` without relationships.
 
         Test that when a valid ``Metadata`` has been provided no errors are being raised.
@@ -518,8 +518,7 @@ class TestMetadataClass:
             - Instance of ``Metadata`` with all valid tables and no relationships.
         """
         # Setup
-        metadata = self.get_multi_table_metadata()
-        metadata_no_relationships = metadata.to_dict()
+        metadata_no_relationships = metadata_instance.to_dict()
         del metadata_no_relationships['relationships']
         test_metadata = Metadata.load_from_dict(metadata_no_relationships)
 
@@ -692,3 +691,29 @@ class TestMetadataClass:
             # Assert
             metadata._handle_table_name.assert_called_once_with('table_name')
             mock_super_method.assert_called_once_with('table_name', *args)
+
+    def test_get_table_metadata(self, metadata_instance):
+        """Test that `get_table_metadata` return a `Metadata` instance."""
+        # Run
+        metadata = metadata_instance.get_table_metadata('users')
+
+        # Assert
+        assert isinstance(metadata, Metadata)
+
+    def test_accessing_tables_returns_single_table_metadata(self, metadata_instance):
+        """Test that accessing items from `metadata.tables` returns `SingleTableMetadata`."""
+        # Run
+        single_table_metadata = metadata_instance.tables['users']
+
+        # Assert
+        assert isinstance(single_table_metadata, SingleTableMetadata)
+
+    def test__handle_table_name_with_empty_tables(self):
+        """Test that the proper `ValueError` is raised when there are no `tables`."""
+        # Setup
+        instance = Metadata()
+
+        # Run and Assert
+        error_msg = 'Metadata does not contain any tables. No columns can be added.'
+        with pytest.raises(ValueError, match=error_msg):
+            instance._handle_table_name(None)
