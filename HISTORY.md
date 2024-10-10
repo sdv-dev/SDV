@@ -1,6 +1,21 @@
 # Release Notes
 
-### v1.17.0 - 2024-10-02
+### v1.17.1 - 2024-10-10
+
+### Bugs Fixed
+
+* Extraneous metadata warning is printed when customizing HMA Synthesizer - Issue [#2250](https://github.com/sdv-dev/SDV/issues/2250) by @pvk-developer
+
+### Internal
+
+* `ValueError` raised when adding columns to a new `Metadata` instance - Issue [#2252](https://github.com/sdv-dev/SDV/issues/2252) by @pvk-developer
+* Enhance Benchmark Report Generation - Issue [#2235](https://github.com/sdv-dev/SDV/issues/2235) by @pvk-developer
+
+### Maintenance
+
+* Use PyDrive2 instead of PyDrive - Issue [#2238](https://github.com/sdv-dev/SDV/issues/2238) by @pvk-developer
+
+## v1.17.0 - 2024-10-02
 
 This release consolidates the `SingleTableMetadata` and `MultiTableMetadata` classes into one new class simply called `Metadata`. The old classes are now deprecated. The new class has the same structure as the `MultiTableMetadata` class, except it will work with single table synthesizers.
 
