@@ -50,8 +50,7 @@ INT_REGEX_ZERO_ERROR_MESSAGE = (
 )
 
 DEPRECATION_MSG = (
-    "The 'SingleTableMetadata' is deprecated. Please use the new "
-    "'Metadata' class for synthesizers."
+    "The 'SingleTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
 )
 
 
@@ -898,7 +897,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         elif not graceful_reject_sampling:
             user_msg = (
-                'Unable to sample any rows for the given conditions ' f"'{transformed_condition}'. "
+                f"Unable to sample any rows for the given conditions '{transformed_condition}'. "
             )
             if hasattr(self, '_model') and isinstance(self._model, GaussianMultivariate):
                 user_msg = user_msg + (

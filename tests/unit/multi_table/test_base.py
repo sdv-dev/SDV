@@ -577,7 +577,7 @@ class TestBaseMultiTableSynthesizer:
 
         # Run and Assert
         error_msg = (
-            'The provided data does not match the metadata:\n' 'Invalid data for PAR synthesizer.'
+            'The provided data does not match the metadata:\nInvalid data for PAR synthesizer.'
         )
         with pytest.raises(InvalidDataError, match=error_msg):
             instance.validate(data)

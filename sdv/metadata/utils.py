@@ -9,8 +9,7 @@ def read_json(filepath):
     filepath = Path(filepath)
     if not filepath.exists():
         raise ValueError(
-            f"A file named '{filepath.name}' does not exist. "
-            'Please specify a different filename.'
+            f"A file named '{filepath.name}' does not exist. Please specify a different filename."
         )
 
     with open(filepath, 'r', encoding='utf-8') as metadata_file:

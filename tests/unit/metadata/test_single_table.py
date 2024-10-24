@@ -1660,7 +1660,7 @@ class TestSingleTableMetadata:
         instance.columns = {'a', 'd'}
 
         err_msg = (
-            "Unknown primary key values {'b'}." ' Keys should be columns that exist in the table.'
+            "Unknown primary key values {'b'}. Keys should be columns that exist in the table."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -1820,7 +1820,7 @@ class TestSingleTableMetadata:
         instance.columns = {'a', 'd'}
 
         err_msg = (
-            "Unknown sequence key values {'b'}." ' Keys should be columns that exist in the table.'
+            "Unknown sequence key values {'b'}. Keys should be columns that exist in the table."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -1934,8 +1934,7 @@ class TestSingleTableMetadata:
         instance.columns = {'abc', '213', '312'}
 
         err_msg = (
-            "Unknown alternate key values {'123'}."
-            ' Keys should be columns that exist in the table.'
+            "Unknown alternate key values {'123'}. Keys should be columns that exist in the table."
         )
         # Run / Assert
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -2265,8 +2264,7 @@ class TestSingleTableMetadata:
 
         # Run and Assert
         err_msg = re.escape(
-            "Error in 'relationship_one' relationship.\n"
-            "Error in 'relationship_two' relationship."
+            "Error in 'relationship_one' relationship.\nError in 'relationship_two' relationship."
         )
         with pytest.raises(InvalidMetadataError, match=err_msg):
             instance._validate_all_column_relationships(column_relationships)
@@ -2349,7 +2347,7 @@ class TestSingleTableMetadata:
         instance._validate_column_args = Mock(side_effect=InvalidMetadataError('column_error'))
 
         err_msg = re.escape(
-            'The following errors were found in the metadata:' '\n\ncolumn_error' '\ncolumn_error'
+            'The following errors were found in the metadata:\n\ncolumn_error\ncolumn_error'
         )
         # Run
         with pytest.raises(InvalidMetadataError, match=err_msg):
@@ -2891,8 +2889,7 @@ class TestSingleTableMetadata:
 
         # Run / Assert
         error_msg = (
-            'This metadata file is incompatible with the ``SingleTableMetadata`` '
-            'class and version.'
+            'This metadata file is incompatible with the ``SingleTableMetadata`` class and version.'
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             SingleTableMetadata.load_from_json('filepath.json')

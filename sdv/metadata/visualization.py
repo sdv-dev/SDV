@@ -20,7 +20,7 @@ def create_columns_node(columns):
         str:
             String representing the node that will be printed for the given columns.
     """
-    columns = [rf"{name} : {meta.get('sdtype')}" for name, meta in columns.items()]
+    columns = [rf'{name} : {meta.get("sdtype")}' for name, meta in columns.items()]
     return r'\l'.join(columns)
 
 

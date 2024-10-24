@@ -193,7 +193,7 @@ def test_sample_remaining_columns_with_some_nans():
 
     # Assert
     warn_msg = (
-        'Missing values are not yet supported. ' 'Rows with any missing values will not be created.'
+        'Missing values are not yet supported. Rows with any missing values will not be created.'
     )
     with pytest.warns(UserWarning, match=warn_msg):
         synthesizer.sample_remaining_columns(known_columns=known_columns)
