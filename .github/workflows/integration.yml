@@ -39,3 +39,9 @@ jobs:
       run: |
         invoke integration
         invoke benchmark-dtypes
+    - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8
+      name: Upload codecov report
+      uses: codecov/codecov-action@v4
+      with:
+        flags: integration
+        token: ${{ secrets.CODECOV_TOKEN }}
