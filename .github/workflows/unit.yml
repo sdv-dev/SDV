@@ -34,7 +34,7 @@ jobs:
           python -m pip install invoke .[test]
     - name: Run unit tests
       run: invoke unit
-    - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8
+    - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.9
       name: Upload codecov report
       uses: codecov/codecov-action@v4
       with:
