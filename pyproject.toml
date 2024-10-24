@@ -207,9 +207,7 @@ select = [
     # print statements
     "T201",
     # pandas-vet
-    "PD",
-    # numpy 2.0
-    "NPY201"
+    "PD"
 ]
 ignore = [
     # pydocstyle
