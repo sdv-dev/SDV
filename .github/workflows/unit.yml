@@ -35,7 +35,7 @@ jobs:
     - name: Run unit tests
       run: invoke unit
     - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.9
-      name: Upload codecov report
+      name: Upload unit codecov report
       uses: codecov/codecov-action@v4
       with:
         flags: unit
