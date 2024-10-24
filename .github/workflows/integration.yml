@@ -40,7 +40,7 @@ jobs:
         invoke integration
         invoke benchmark-dtypes
     - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.9
-      name: Upload codecov report
+      name: Upload integration codecov report
       uses: codecov/codecov-action@v4
       with:
         flags: integration
