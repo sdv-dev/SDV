@@ -32,8 +32,7 @@ from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
 DEPRECATION_MSG = (
-    "The 'MultiTableMetadata' is deprecated. Please use the new "
-    "'Metadata' class for synthesizers."
+    "The 'MultiTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
 )
 
 

@@ -189,8 +189,7 @@ class TestMultiTableMetadata:
 
         # Run / Assert
         error_msg = re.escape(
-            'Relationship between tables (users, sessions) contains '
-            "an unknown foreign key {'id'}."
+            "Relationship between tables (users, sessions) contains an unknown foreign key {'id'}."
         )
         with pytest.raises(InvalidMetadataError, match=error_msg):
             MultiTableMetadata._validate_missing_relationship_keys(

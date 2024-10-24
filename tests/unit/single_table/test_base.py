@@ -809,7 +809,7 @@ class TestBaseSingleTableSynthesizer:
 
         # Run and Assert
         warning_msg = re.escape(
-            'For this change to take effect, please refit the synthesizer ' 'using `fit`.'
+            'For this change to take effect, please refit the synthesizer using `fit`.'
         )
         with pytest.warns(UserWarning, match=warning_msg):
             instance.update_transformers(column_name_to_transformer)

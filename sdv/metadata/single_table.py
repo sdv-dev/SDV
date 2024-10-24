@@ -699,7 +699,7 @@ class SingleTableMetadata:
                 bad_keys.add(key)
         if bad_keys:
             raise InvalidMetadataError(
-                f"The {key_type}_keys {sorted(bad_keys)} must be type 'id' or " 'another PII type.'
+                f"The {key_type}_keys {sorted(bad_keys)} must be type 'id' or another PII type."
             )
 
     def _validate_key(self, column_name, key_type):
@@ -714,7 +714,7 @@ class SingleTableMetadata:
             if setting_sequence_as_primary or setting_primary_as_sequence:
                 raise InvalidMetadataError(
                     f'The column ({column_name}) cannot be set as {key_type}_key as it is already '
-                    f"set as the {'sequence' if key_type == 'primary' else 'primary'}_key."
+                    f'set as the {"sequence" if key_type == "primary" else "primary"}_key.'
                 )
 
             invalid_ids = keys - set(self.columns)
@@ -743,8 +743,7 @@ class SingleTableMetadata:
 
         if self.primary_key is not None:
             warnings.warn(
-                f"There is an existing primary key '{self.primary_key}'."
-                ' This key will be removed.'
+                f"There is an existing primary key '{self.primary_key}'. This key will be removed."
             )
 
         self._updated = True

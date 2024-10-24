@@ -120,7 +120,7 @@ class CSVHandler(BaseLocalHandler):
             missing_files = [file for file in file_names if not (folder_path / file).exists()]
             if missing_files:
                 raise FileNotFoundError(
-                    f"The following files do not exist in the folder: {', '.join(missing_files)}."
+                    f'The following files do not exist in the folder: {", ".join(missing_files)}.'
                 )
 
             file_paths = [folder_path / file for file in file_names]

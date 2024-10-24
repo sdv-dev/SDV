@@ -1038,9 +1038,9 @@ class MultiTableMetadata:
                 foreign_keys = r'\l'.join(info.get('foreign_keys', []))
                 keys = r'\l'.join([info['primary_key'], foreign_keys])
                 if foreign_keys:
-                    label = rf"{{{table}|{info['columns']}\l|{keys}\l}}"
+                    label = rf'{{{table}|{info["columns"]}\l|{keys}\l}}'
                 else:
-                    label = rf"{{{table}|{info['columns']}\l|{keys}}}"
+                    label = rf'{{{table}|{info["columns"]}\l|{keys}}}'
 
             else:
                 label = f'{table}'

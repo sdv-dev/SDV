@@ -1444,8 +1444,7 @@ class TestDataProcessor:
 
         # Run and Assert
         error_msg = (
-            'The DataProcessor must be prepared for fitting before the transformers can be '
-            'updated.'
+            'The DataProcessor must be prepared for fitting before the transformers can be updated.'
         )
         with pytest.raises(NotFittedError, match=error_msg):
             dp.update_transformers({'column': None})

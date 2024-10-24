@@ -126,8 +126,7 @@ def create_custom_constraint_class(is_valid_fn, transform_fn=None, reverse_trans
             if 'column_names' not in set(kwargs):
                 errors = [
                     ConstraintMetadataError(
-                        "Missing required values {'column_names'} in a"
-                        ' CustomConstraint constraint.'
+                        "Missing required values {'column_names'} in a CustomConstraint constraint."
                     )
                 ]
                 raise AggregateConstraintsError(errors)
