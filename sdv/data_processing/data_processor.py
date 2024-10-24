@@ -561,7 +561,8 @@ class DataProcessor:
             )
 
             if sdtype == 'id':
-                is_numeric = pd.api.types.is_numeric_dtype(data[column].dtype)
+                column_dtype = data[column].dtype
+                is_numeric = pd.api.types.is_numeric_dtype(column_dtype)
                 if column_metadata.get('regex_format', False):
                     transformers[column] = self.create_regex_generator(
                         column, sdtype, column_metadata, is_numeric
@@ -571,7 +572,13 @@ class DataProcessor:
                 else:
                     bothify_format = 'sdv-id-??????'
                     if is_numeric:
-                        bothify_format = '#########'
+                        column_dtype = str(column_dtype).lower()
+                        if 'int8' in column_dtype:
+                            bothify_format = '##'
+                        elif 'int16' in column_dtype:
+                            bothify_format = '####'
+                        else:
+                            bothify_format = '#########'
 
                     cardinality_rule = None
                     if column in self._keys:
