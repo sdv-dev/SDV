@@ -37,3 +37,6 @@ jobs:
     - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8
       name: Upload codecov report
       uses: codecov/codecov-action@v4
+      with:
+        flags: unit
+        token: ${{ secrets.CODECOV_TOKEN }}
