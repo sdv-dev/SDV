@@ -577,8 +577,8 @@ class DataProcessor:
                         column_dtype = str(column_dtype).lower()
                         for key in INTEGER_BOUNDS:
                             if key in column_dtype:
-                                min_value, max_value = INTEGER_BOUNDS[key]
-                                function_kwargs = {'min': min_value, 'max': max_value}
+                                _, max_value = INTEGER_BOUNDS[key]
+                                function_kwargs = {'min': 0, 'max': max_value}
 
                     else:
                         function_kwargs = {'text': 'sdv-id-??????'}

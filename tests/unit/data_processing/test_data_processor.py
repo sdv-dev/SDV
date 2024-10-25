@@ -1245,19 +1245,19 @@ class TestDataProcessor:
         id_numeric_int_8_transformer = config['transformers']['id_numeric_int8']
         assert isinstance(id_numeric_int_8_transformer, AnonymizedFaker)
         assert id_numeric_int_8_transformer.function_name == 'random_int'
-        assert id_numeric_int_8_transformer.function_kwargs == {'min': -128, 'max': 127}
+        assert id_numeric_int_8_transformer.function_kwargs == {'min': 0, 'max': 127}
         assert id_numeric_int_8_transformer.cardinality_rule == 'unique'
 
         id_numeric_int_16_transformer = config['transformers']['id_numeric_int16']
         assert isinstance(id_numeric_int_16_transformer, AnonymizedFaker)
         assert id_numeric_int_16_transformer.function_name == 'random_int'
-        assert id_numeric_int_16_transformer.function_kwargs == {'min': -32768, 'max': 32767}
+        assert id_numeric_int_16_transformer.function_kwargs == {'min': 0, 'max': 32767}
 
         id_numeric_int_32_transformer = config['transformers']['id_numeric_int32']
         assert isinstance(id_numeric_int_32_transformer, AnonymizedFaker)
         assert id_numeric_int_32_transformer.function_name == 'random_int'
         assert id_numeric_int_32_transformer.function_kwargs == {
-            'min': -2147483648,
+            'min': 0,
             'max': 2147483647,
         }
 
