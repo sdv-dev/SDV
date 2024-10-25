@@ -575,6 +575,7 @@ class DataProcessor:
                     if is_numeric:
                         function_name = 'random_int'
                         column_dtype = str(column_dtype).lower()
+                        function_kwargs = {'min': 0, 'max': 999999999}
                         for key in INTEGER_BOUNDS:
                             if key in column_dtype:
                                 _, max_value = INTEGER_BOUNDS[key]
