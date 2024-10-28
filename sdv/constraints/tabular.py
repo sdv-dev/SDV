@@ -336,9 +336,11 @@ class FixedCombinations(Constraint):
         """
         # To make the NaN to None mapping work for pd.Categorical data, we need to convert
         # the columns to object before replacing NaNs with None.
-        for column in self._columns:
-            if pd.api.types.is_categorical_dtype(table_data[column]):
-                table_data[column] = table_data[column].astype(object)
+        table_data[self._columns] = table_data[self._columns].astype({
+            col: object
+            for col in self._columns
+            if pd.api.types.is_categorical_dtype(table_data[col])
+        })
 
         table_data[self._columns] = table_data[self._columns].replace({np.nan: None})
         combinations = table_data[self._columns].itertuples(index=False, name=None)
