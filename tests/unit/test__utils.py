@@ -105,6 +105,7 @@ def test__is_datetime_type_with_datetime_series():
     # Assert
     assert is_datetime
 
+
 def test__is_datetime_type_with_period():
     """Test the ``_is_datetime_type`` function when a period series is passed.
 
