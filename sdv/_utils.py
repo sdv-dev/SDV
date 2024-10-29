@@ -82,6 +82,7 @@ def _is_datetime_type(value):
             bool(_get_datetime_format([value]))
             or isinstance(value, pd.Timestamp)
             or isinstance(value, datetime)
+            or isinstance(value, pd.Period)
             or (isinstance(value, str) and pd.notna(pd.to_datetime(value, errors='coerce')))
         ):
             return False
