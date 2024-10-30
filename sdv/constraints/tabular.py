@@ -334,6 +334,14 @@ class FixedCombinations(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
+        # To make the NaN to None mapping work for pd.Categorical data, we need to convert
+        # the columns to object before replacing NaNs with None.
+        table_data[self._columns] = table_data[self._columns].astype({
+            col: object
+            for col in self._columns
+            if pd.api.types.is_categorical_dtype(table_data[col])
+        })
+
         table_data[self._columns] = table_data[self._columns].replace({np.nan: None})
         combinations = table_data[self._columns].itertuples(index=False, name=None)
         uuids = map(self._combinations_to_uuids.get, combinations)

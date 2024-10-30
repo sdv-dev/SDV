@@ -106,6 +106,26 @@ def test__is_datetime_type_with_datetime_series():
     assert is_datetime
 
 
+def test__is_datetime_type_with_period():
+    """Test the ``_is_datetime_type`` function when a period series is passed.
+
+    Expect to return True when a period series is passed.
+
+    Input:
+    - A pandas.Series of type `period`
+    Output:
+    - True
+    """
+    # Setup
+    data = pd.Series(pd.period_range('2023-01', periods=3, freq='M'))
+
+    # Run
+    is_datetime = _is_datetime_type(data)
+
+    # Assert
+    assert is_datetime
+
+
 def test__is_datetime_type_with_mixed_array():
     """Test the ``_is_datetime_type`` function with a list of mixed datetime types."""
     # Setup

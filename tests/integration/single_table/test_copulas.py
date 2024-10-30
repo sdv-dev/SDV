@@ -347,31 +347,31 @@ def test_numerical_columns_gets_pii():
 
     # Assert
     expected_sampled = pd.DataFrame({
-        'id': {
-            0: 807994768,
-            1: 746439230,
-            2: 201363792,
-            3: 364823003,
-            4: 726973888,
-            5: 693331380,
-            6: 795819284,
-            7: 607278621,
-            8: 783746695,
-            9: 162118876,
-        },
-        'city': {
-            0: 'Danielfort',
-            1: 'Glendaside',
-            2: 'Port Jenniferchester',
-            3: 'Port Susan',
-            4: 'West Michellemouth',
-            5: 'West Jason',
-            6: 'Ryanfort',
-            7: 'West Stephenland',
-            8: 'Davidland',
-            9: 'Port Christopher',
-        },
-        'numerical': {0: 22, 1: 24, 2: 22, 3: 23, 4: 22, 5: 24, 6: 23, 7: 24, 8: 24, 9: 24},
+        'id': [
+            1089619006166876142,
+            8373046707753416652,
+            9070705361670139280,
+            7227045982112645011,
+            3461931576753619633,
+            1005734164466301683,
+            3312031189447929384,
+            82456842876428117,
+            1819741328868365520,
+            8019169766233150107,
+        ],
+        'city': [
+            'Danielfort',
+            'Glendaside',
+            'Port Jenniferchester',
+            'Port Susan',
+            'West Michellemouth',
+            'West Jason',
+            'Ryanfort',
+            'West Stephenland',
+            'Davidland',
+            'Port Christopher',
+        ],
+        'numerical': [22, 24, 22, 23, 22, 24, 23, 24, 24, 24],
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
 

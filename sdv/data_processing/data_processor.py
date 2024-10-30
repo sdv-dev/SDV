@@ -22,12 +22,13 @@ from sdv.constraints.errors import (
 )
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
-from sdv.data_processing.numerical_formatter import NumericalFormatter
+from sdv.data_processing.numerical_formatter import INTEGER_BOUNDS, NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
 from sdv.errors import SynthesizerInputError, log_exc_stacktrace
 from sdv.metadata.single_table import SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
+INTEGER_BOUNDS = {str(key).lower(): value for key, value in INTEGER_BOUNDS.items()}
 
 
 class DataProcessor:
@@ -561,7 +562,9 @@ class DataProcessor:
             )
 
             if sdtype == 'id':
-                is_numeric = pd.api.types.is_numeric_dtype(data[column].dtype)
+                function_name = 'bothify'
+                column_dtype = data[column].dtype
+                is_numeric = pd.api.types.is_numeric_dtype(column_dtype)
                 if column_metadata.get('regex_format', False):
                     transformers[column] = self.create_regex_generator(
                         column, sdtype, column_metadata, is_numeric
@@ -569,9 +572,17 @@ class DataProcessor:
                     sdtypes[column] = 'text'
 
                 else:
-                    bothify_format = 'sdv-id-??????'
                     if is_numeric:
-                        bothify_format = '#########'
+                        function_name = 'random_int'
+                        column_dtype = str(column_dtype).lower()
+                        function_kwargs = {'min': 0, 'max': 9999999}
+                        for key in INTEGER_BOUNDS:
+                            if key in column_dtype:
+                                _, max_value = INTEGER_BOUNDS[key]
+                                function_kwargs = {'min': 0, 'max': max_value}
+
+                    else:
+                        function_kwargs = {'text': 'sdv-id-??????'}
 
                     cardinality_rule = None
                     if column in self._keys:
@@ -579,8 +590,8 @@ class DataProcessor:
 
                     transformers[column] = AnonymizedFaker(
                         provider_name=None,
-                        function_name='bothify',
-                        function_kwargs={'text': bothify_format},
+                        function_name=function_name,
+                        function_kwargs=function_kwargs,
                         cardinality_rule=cardinality_rule,
                     )
 

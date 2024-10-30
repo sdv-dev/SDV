@@ -120,6 +120,7 @@ EXPECTED_METADATA_SDTYPES = {
     'np.object': 'categorical',
     'np.bool': 'categorical',
     'np.string': 'categorical',
+    'np.bytes': 'categorical',
     'np.unicode': 'categorical',
     # PyArrow
     'pa.int8': 'numerical',
@@ -378,7 +379,6 @@ def _create_single_column_constraint_and_data(constraint, data, dtype, sdtype):
 
 
 def _create_multi_column_constraint_data_and_metadata(constraint, data, dtype, sdtype, metadata):
-    _dtype = data.dtypes[dtype]
     constraint_class = constraint.get('constraint_class')
     constraints = []
     if constraint_class == 'FixedCombinations':

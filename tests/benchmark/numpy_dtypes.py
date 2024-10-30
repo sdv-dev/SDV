@@ -61,14 +61,17 @@ NUMPY_DTYPES = {
     }),
     'np.string': pd.DataFrame({
         'np.string': pd.Series([
-            np.string_('string1'),
-            np.string_('string2'),
-            np.string_('string3'),
+            np.str_('string1'),
+            np.str_('string2'),
+            np.str_('string3'),
         ])
+    }),
+    'np.bytes': pd.DataFrame({
+        'np.bytes': pd.Series([np.bytes_('bytes1'), np.bytes_('bytes2'), np.bytes_('bytes3')])
     }),
     'np.unicode': pd.DataFrame({
         'np.unicode': pd.Series(
-            [np.unicode_('unicode1'), np.unicode_('unicode2'), np.unicode_('unicode3')],
+            [np.str_('unicode1'), np.str_('unicode2'), np.str_('unicode3')],
             dtype='string',
         )
     }),

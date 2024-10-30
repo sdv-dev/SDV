@@ -889,6 +889,28 @@ class TestFixedCombinations:
         expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
         pd.testing.assert_series_equal(expected_out_a, out['a'])
 
+    def test_transform_categorical_dtype(self):
+        """Test ``transform`` with categorical columns."""
+        # Setup
+        table_data = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b': pd.Categorical(['d', None, 'f']),
+            'c': pd.Categorical(['g', 'h', np.nan]),
+        })
+        columns = ['b', 'c']
+        instance = FixedCombinations(column_names=columns)
+        instance.fit(table_data)
+
+        # Run
+        out = instance.transform(table_data)
+
+        # Assert
+        assert out['b#c'].isna().sum() == 0
+        assert instance._combinations_to_uuids is not None
+        assert instance._uuids_to_combinations is not None
+        expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
+        pd.testing.assert_series_equal(expected_out_a, out['a'])
+
     def test_transform_not_all_columns_provided(self):
         """Test the ``FixedCombinations.transform`` method.
 

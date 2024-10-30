@@ -25,16 +25,16 @@ dependencies = [
     'botocore>=1.31,<2.0.0',
     'cloudpickle>=2.1.0',
     'graphviz>=0.13.2',
-    "numpy>=1.21.0,<2.0.0;python_version<'3.10'",
-    "numpy>=1.23.3,<2.0.0;python_version>='3.10' and python_version<'3.12'",
-    "numpy>=1.26.0,<2.0.0;python_version>='3.12'",
+    "numpy>=1.21.0;python_version<'3.10'",
+    "numpy>=1.23.3;python_version>='3.10' and python_version<'3.12'",
+    "numpy>=1.26.0;python_version>='3.12'",
     "pandas>=1.4.0;python_version<'3.11'",
     "pandas>=1.5.0;python_version>='3.11' and python_version<'3.12'",
     "pandas>=2.1.1;python_version>='3.12'",
     'tqdm>=4.29',
     'copulas>=0.11.0',
-    'ctgan>=0.10.0',
-    'deepecho>=0.6.0',
+    'ctgan>=0.10.2',
+    'deepecho>=0.6.1',
     'rdt>=1.12.3',
     'sdmetrics>=0.16.0',
     'platformdirs>=4.0',
@@ -207,7 +207,10 @@ select = [
     # print statements
     "T201",
     # pandas-vet
-    "PD"
+    "PD",
+    # numpy 2.0
+    "NPY201"
+
 ]
 ignore = [
     # pydocstyle
