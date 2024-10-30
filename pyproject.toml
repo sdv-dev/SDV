@@ -92,7 +92,7 @@ dev = [
     'Jinja2>=2,<4',
 
     # style check
-    'ruff>=0.4.5,<0.7.2',
+    'ruff>=0.4.5,<1',
 
     # distribute on PyPI
     'twine>=1.10.0,<6',
