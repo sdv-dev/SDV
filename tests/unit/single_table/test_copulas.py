@@ -228,6 +228,23 @@ class TestGaussianCopulaSynthesizer:
         mock_warnings.catch_warnings.assert_called_once()
         instance._num_rows == 10
 
+    def test__fit_mocked_instance(self):
+        """Test that the `_fit` method calls the modularized functions."""
+        # Setup
+        instance = Mock(numerical_distributions={})
+        processed_data = Mock(columns=[])
+        numerical_distributions = Mock()
+        instance._get_numerical_distributions.return_value = numerical_distributions
+
+        # Run
+        GaussianCopulaSynthesizer._fit(instance, processed_data)
+
+        # Assert
+        instance._learn_num_rows.assert_called_once_with(processed_data)
+        instance._get_numerical_distributions.assert_called_once_with(processed_data)
+        instance._initialize_model.assert_called_once_with(numerical_distributions)
+        instance._fit_model.assert_called_once_with(processed_data)
+
     def test__get_nearest_correlation_matrix_valid(self):
         """Test ``_get_nearest_correlation_matrix`` with a psd input.
 
