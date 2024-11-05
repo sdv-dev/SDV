@@ -834,6 +834,39 @@ class TestBaseSingleTableSynthesizer:
         assert isinstance(field_transformers['col1'], GaussianNormalizer)
         assert isinstance(field_transformers['col2'], GaussianNormalizer)
 
+    def test_update_transformers_warns_rounding(self):
+        """Test warning is raised if model cannot round."""
+        # Setup
+        column_name_to_transformer = {
+            'col1': GaussianNormalizer(learn_rounding_scheme=False),
+            'col2': GaussianNormalizer(learn_rounding_scheme=True),
+            'col3': GaussianNormalizer(learn_rounding_scheme=False),
+        }
+        metadata = Metadata()
+        instance = BaseSingleTableSynthesizer(metadata)
+        instance._validate_transformers = MagicMock()
+        instance._warn_quality_and_performance = MagicMock()
+        instance._data_processor = MagicMock()
+        instance.enforce_rounding = True
+        instance._fitted = False
+
+        # Run
+        with pytest.warns(UserWarning) as record:
+            instance.update_transformers(column_name_to_transformer)
+
+        # Assert
+        assert len(record) == 2
+        assert str(record[0].message) == (
+            "Unable to turn off rounding scheme for column 'col1', because the overall "
+            "synthesizer is enforcing rounding. We recommend setting the synthesizer's "
+            "'enforce_rounding' parameter to False."
+        )
+        assert str(record[1].message) == (
+            "Unable to turn off rounding scheme for column 'col3', because the overall "
+            "synthesizer is enforcing rounding. We recommend setting the synthesizer's "
+            "'enforce_rounding' parameter to False."
+        )
+
     @patch('sdv.single_table.base.DataProcessor')
     def test__set_random_state(self, mock_data_processor):
         """Test that ``_model.set_random_state`` is being called with the input value.

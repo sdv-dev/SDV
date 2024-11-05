@@ -258,11 +258,14 @@ class BaseSynthesizer:
                     f"Replacing the default transformer for column '{column}' "
                     'might impact the quality of your synthetic data.'
                 )
-    
+
     def _warn_unable_to_enforce_rounding(self, column_name_to_transformer):
         if self.enforce_rounding:
             for column, transformer in column_name_to_transformer.items():
-                if not transformer.learn_rounding_scheme:
+                if (
+                    hasattr(transformer, 'learn_rounding_scheme')
+                    and not transformer.learn_rounding_scheme
+                ):
                     warnings.warn(
                         f"Unable to turn off rounding scheme for column '{column}', "
                         'because the overall synthesizer is enforcing rounding. We '
