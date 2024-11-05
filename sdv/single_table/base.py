@@ -244,8 +244,8 @@ class BaseSynthesizer:
                     f"Transformer for column '{column}' has already been fit on data."
                 )
 
-    def _warn_for_update_transformers(self, column_name_to_transformer):
-        """Raise warnings for update_transformers.
+    def _warn_quality_and_performance(self, column_name_to_transformer):
+        """Raise warning if the quality/performance may be impacted.
 
         Args:
             column_name_to_transformer (dict):
@@ -258,6 +258,17 @@ class BaseSynthesizer:
                     f"Replacing the default transformer for column '{column}' "
                     'might impact the quality of your synthetic data.'
                 )
+    
+    def _warn_unable_to_enforce_rounding(self, column_name_to_transformer):
+        if self.enforce_rounding:
+            for column, transformer in column_name_to_transformer.items():
+                if not transformer.learn_rounding_scheme:
+                    warnings.warn(
+                        f"Unable to turn off rounding scheme for column '{column}', "
+                        'because the overall synthesizer is enforcing rounding. We '
+                        "recommend setting the synthesizer's 'enforce_rounding' "
+                        'parameter to False.'
+                    )
 
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
@@ -267,7 +278,8 @@ class BaseSynthesizer:
                 Dict mapping column names to transformers to be used for that column.
         """
         self._validate_transformers(column_name_to_transformer)
-        self._warn_for_update_transformers(column_name_to_transformer)
+        self._warn_quality_and_performance(column_name_to_transformer)
+        self._warn_unable_to_enforce_rounding(column_name_to_transformer)
         self._data_processor.update_transformers(column_name_to_transformer)
         if self._fitted:
             msg = 'For this change to take effect, please refit the synthesizer using `fit`.'

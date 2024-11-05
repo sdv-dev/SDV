@@ -161,8 +161,8 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             warnings.filterwarnings('ignore', module='scipy')
             self._model.fit(processed_data)
 
-    def _warn_for_update_transformers(self, column_name_to_transformer):
-        """Raise warnings for update_transformers.
+    def _warn_quality_and_performance(self, column_name_to_transformer):
+        """Raise warning if the quality/performance may be impacted.
 
         Args:
             column_name_to_transformer (dict):
