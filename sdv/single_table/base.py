@@ -261,17 +261,21 @@ class BaseSynthesizer:
 
     def _warn_unable_to_enforce_rounding(self, column_name_to_transformer):
         if self.enforce_rounding:
+            invalid_columns = []
             for column, transformer in column_name_to_transformer.items():
                 if (
                     hasattr(transformer, 'learn_rounding_scheme')
                     and not transformer.learn_rounding_scheme
                 ):
-                    warnings.warn(
-                        f"Unable to turn off rounding scheme for column '{column}', "
-                        'because the overall synthesizer is enforcing rounding. We '
-                        "recommend setting the synthesizer's 'enforce_rounding' "
-                        'parameter to False.'
-                    )
+                    invalid_columns.append(column)
+
+            if invalid_columns:
+                warnings.warn(
+                    f'Unable to turn off rounding scheme for column(s) {invalid_columns}, '
+                    'because the overall synthesizer is enforcing rounding. We '
+                    "recommend setting the synthesizer's 'enforce_rounding' "
+                    'parameter to False.'
+                )
 
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.

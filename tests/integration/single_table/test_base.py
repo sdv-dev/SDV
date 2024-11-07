@@ -859,7 +859,7 @@ def test_update_transformers(warning_mock):
 
     # Assert
     warning_mock.warn.assert_called_once_with(
-        "Unable to turn off rounding scheme for column 'amenities_fee', because the overall "
+        "Unable to turn off rounding scheme for column(s) ['amenities_fee'], because the overall "
         "synthesizer is enforcing rounding. We recommend setting the synthesizer's "
         "'enforce_rounding' parameter to False."
     )

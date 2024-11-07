@@ -850,22 +850,14 @@ class TestBaseSingleTableSynthesizer:
         instance.enforce_rounding = True
         instance._fitted = False
 
-        # Run
-        with pytest.warns(UserWarning) as record:
+        # Run and Assert
+        warn_msg = re.escape(
+            "Unable to turn off rounding scheme for column(s) ['col1', 'col3'], "
+            'because the overall synthesizer is enforcing rounding. We recommend '
+            "setting the synthesizer's 'enforce_rounding' parameter to False."
+        )
+        with pytest.warns(UserWarning, match=warn_msg):
             instance.update_transformers(column_name_to_transformer)
-
-        # Assert
-        assert len(record) == 2
-        assert str(record[0].message) == (
-            "Unable to turn off rounding scheme for column 'col1', because the overall "
-            "synthesizer is enforcing rounding. We recommend setting the synthesizer's "
-            "'enforce_rounding' parameter to False."
-        )
-        assert str(record[1].message) == (
-            "Unable to turn off rounding scheme for column 'col3', because the overall "
-            "synthesizer is enforcing rounding. We recommend setting the synthesizer's "
-            "'enforce_rounding' parameter to False."
-        )
 
     @patch('sdv.single_table.base.DataProcessor')
     def test__set_random_state(self, mock_data_processor):
