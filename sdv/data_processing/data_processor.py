@@ -69,8 +69,6 @@ class DataProcessor:
         'M': 'datetime',
     }
 
-    _COLUMN_RELATIONSHIP_TO_TRANSFORMER = {'address': 'RandomLocationGenerator', 'gps': 'GPSNoiser'}
-
     def _update_numerical_transformer(self, enforce_rounding, enforce_min_max_values):
         custom_float_formatter = rdt.transformers.FloatFormatter(
             missing_value_replacement='mean',
@@ -123,6 +121,10 @@ class DataProcessor:
         self._constraints = []
         self._constraints_to_reverse = []
         self._custom_constraint_classes = {}
+        self._COLUMN_RELATIONSHIP_TO_TRANSFORMER = {
+            'address': 'RandomLocationGenerator',
+            'gps': 'GPSNoiser',
+        }
 
         self._transformers_by_sdtype = deepcopy(get_default_transformers())
         self._transformers_by_sdtype['id'] = rdt.transformers.RegexGenerator()
