@@ -22,13 +22,12 @@ from sdv.constraints.errors import (
 )
 from sdv.data_processing.datetime_formatter import DatetimeFormatter
 from sdv.data_processing.errors import InvalidConstraintsError, NotFittedError
-from sdv.data_processing.numerical_formatter import INTEGER_BOUNDS, NumericalFormatter
+from sdv.data_processing.numerical_formatter import NumericalFormatter
 from sdv.data_processing.utils import load_module_from_path
 from sdv.errors import SynthesizerInputError, log_exc_stacktrace
 from sdv.metadata.single_table import SingleTableMetadata
 
 LOGGER = logging.getLogger(__name__)
-INTEGER_BOUNDS = {str(key).lower(): value for key, value in INTEGER_BOUNDS.items()}
 
 
 class DataProcessor:
@@ -575,11 +574,11 @@ class DataProcessor:
                     if is_numeric:
                         function_name = 'random_int'
                         column_dtype = str(column_dtype).lower()
-                        function_kwargs = {'min': 0, 'max': 9999999}
-                        for key in INTEGER_BOUNDS:
-                            if key in column_dtype:
-                                _, max_value = INTEGER_BOUNDS[key]
-                                function_kwargs = {'min': 0, 'max': max_value}
+                        function_kwargs = {'min': 0, 'max': 16777216}
+                        if 'int8' in column_dtype:
+                            function_kwargs['max'] = 127
+                        elif 'int16' in column_dtype:
+                            function_kwargs['max'] = 32767
 
                     else:
                         function_kwargs = {'text': 'sdv-id-??????'}
