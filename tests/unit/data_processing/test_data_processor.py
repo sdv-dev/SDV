@@ -1258,7 +1258,7 @@ class TestDataProcessor:
         assert id_numeric_int_32_transformer.function_name == 'random_int'
         assert id_numeric_int_32_transformer.function_kwargs == {
             'min': 0,
-            'max': 2147483647,
+            'max': 16777216,
         }
 
         id_column_transformer = config['transformers']['id_column']
