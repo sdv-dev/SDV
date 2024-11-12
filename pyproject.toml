@@ -32,7 +32,7 @@ dependencies = [
     "pandas>=1.5.0;python_version>='3.11' and python_version<'3.12'",
     "pandas>=2.1.1;python_version>='3.12'",
     'tqdm>=4.29',
-    'copulas>=0.11.0',
+    'copulas>=0.12.0.dev0',
     'ctgan>=0.10.2',
     'deepecho>=0.6.1',
     'rdt>=1.12.3',
