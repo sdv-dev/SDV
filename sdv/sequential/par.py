@@ -87,7 +87,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         self,
         metadata,
         enforce_min_max_values=True,
-        enforce_rounding=False,
+        enforce_rounding=True,
         locales=['en_US'],
         context_columns=None,
         segment_size=None,
