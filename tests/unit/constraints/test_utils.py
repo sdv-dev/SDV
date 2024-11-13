@@ -9,7 +9,11 @@ from sdv.constraints.utils import (
     _cast_to_type,
     cast_to_datetime64,
     compute_nans_column,
+    downcast_datetime_to_lower_format,
+    format_datetime_array,
     get_datetime_diff,
+    get_datetime_format_precision,
+    get_lower_precision_format,
     get_mappable_combination,
     get_nan_component_value,
     logit,
@@ -305,6 +309,24 @@ def test_get_datetime_diff():
     assert np.array_equal(expected, diff, equal_nan=True)
 
 
+def test_get_datetime_diff_with_format_precision_missmatch():
+    """Test `get_datetime_diff` with miss matching datetime formats."""
+    # Setup
+    high = np.array(['2024-11-13 12:00:00.123', '2024-11-13 13:00:00.456'], dtype='O')
+    low = np.array(['2024-11-13 12:00:00', '2024-11-13 13:00:00'], dtype='O')
+    high_format = '%Y-%m-%d %H:%M:%S.%f'
+    low_format = '%Y-%m-%d %H:%M:%S'
+    expected_diff = np.array([0.0, 0.0], dtype=np.float64)
+
+    # Run
+    result = get_datetime_diff(
+        high, low, high_datetime_format=high_format, low_datetime_format=low_format
+    )
+
+    # Assert
+    np.testing.assert_array_almost_equal(result, expected_diff)
+
+
 def test_get_mappable_combination():
     """Test the ``get_mappable_combination`` method."""
     # Setup
@@ -319,3 +341,181 @@ def test_get_mappable_combination():
     expected_result_not_mappable = ('a', 1, None, 'b')
     assert result_already_mappable == already_mappable
     assert result_not_mappable == expected_result_not_mappable
+
+
+def test_get_datetime_format_precision_seconds():
+    """Test `get_datetime_format_precision` with second-level precision."""
+    # Setup
+    format_str = '%Y-%m-%d %H:%M:%S'
+    expected_precision = 6
+
+    # Run
+    result = get_datetime_format_precision(format_str)
+
+    # Assert
+    assert result == expected_precision
+
+
+def test_get_datetime_format_precision_microseconds():
+    """Test `get_datetime_format_precision` with microsecond-level precision."""
+    # Setup
+    format_str = '%Y-%m-%d %H:%M:%S.%f'
+    expected_precision = 7
+
+    # Run
+    result = get_datetime_format_precision(format_str)
+
+    # Assert
+    assert result == expected_precision
+
+
+def test_get_datetime_format_precision_minutes():
+    """Test `get_datetime_format_precision` with minute-level precision."""
+    # Setup
+    format_str = '%Y-%m-%d %H:%M'
+    expected_precision = 5
+
+    # Run
+    result = get_datetime_format_precision(format_str)
+
+    # Assert
+    assert result == expected_precision
+
+
+def test_get_datetime_format_precision_days():
+    """Test `get_datetime_format_precision` with day-level precision."""
+    # Setup
+    format_str = '%Y-%m-%d'
+    expected_precision = 3
+
+    # Run
+    result = get_datetime_format_precision(format_str)
+
+    # Assert
+    assert result == expected_precision
+
+
+def test_get_datetime_format_precision_no_precision():
+    """Test `get_datetime_format_precision` with no precision format."""
+    # Setup
+    format_str = '%Y'
+    expected_precision = 1
+
+    # Run
+    result = get_datetime_format_precision(format_str)
+
+    # Assert
+    assert result == expected_precision
+
+
+def test_get_datetime_format_precision_mixed_format_higher_precision():
+    """Test `get_datetime_format_precision` with mixed higher-precision format."""
+    # Setup
+    format_str = '%Y-%m-%d %H:%M:%S.%f %z'
+    expected_precision = 7
+
+    # Run
+    result = get_datetime_format_precision(format_str)
+
+    # Assert
+    assert result == expected_precision
+
+
+def test_get_lower_precision_format_with_different_precision():
+    """Test `get_lower_precision_format` with different precision levels."""
+    # Setup
+    primary_format = '%Y-%m-%d %H:%M:%S'
+    secondary_format = '%Y-%m-%d %H:%M:%S.%f'
+
+    # Run
+    result = get_lower_precision_format(primary_format, secondary_format)
+
+    # Assert
+    assert result == primary_format
+
+
+def test_get_lower_precision_format_with_equal_precision():
+    """Test `get_lower_precision_format` when both formats have the same precision."""
+    # Setup
+    primary_format = '%Y-%m-%d %H:%M:%S'
+    secondary_format = '%Y-%m-%d %H:%M:%S'
+
+    # Run
+    result = get_lower_precision_format(primary_format, secondary_format)
+
+    # Assert
+    assert result == secondary_format == primary_format
+
+
+def test_get_lower_precision_format_with_date_only():
+    """Test `get_lower_precision_format` with date-only formats."""
+    # Setup
+    primary_format = '%Y-%m-%d'
+    secondary_format = '%Y-%m'
+
+    # Run
+    result = get_lower_precision_format(primary_format, secondary_format)
+
+    # Assert
+    assert result == secondary_format
+
+
+def test_get_lower_precision_format_with_week_and_day_formats():
+    """Test `get_lower_precision_format` with week and day level formats."""
+    # Setup
+    primary_format = '%Y-%W'
+    secondary_format = '%Y-%m-%d'
+
+    # Run
+    result = get_lower_precision_format(primary_format, secondary_format)
+
+    # Assert
+    assert result == secondary_format
+
+
+def test_downcast_datetime_to_lower_format():
+    """Test `downcast_datetime_to_lower_format` to ensure datetime downcasting."""
+    # Setup
+    data = np.array(
+        ['2024-11-13 12:30:45.123456789', '2024-11-13 13:45:30.987654321'], dtype='datetime64[ns]'
+    )
+    target_format = '%Y-%m-%d %H:%M:%S'
+    expected_result = np.array(['2024-11-13 12:30:45', '2024-11-13 13:45:30'], dtype='O')
+
+    # Run
+    result = downcast_datetime_to_lower_format(data, target_format)
+
+    # Assert
+    np.testing.assert_array_equal(result, cast_to_datetime64(expected_result))
+
+
+def test_downcast_datetime_to_lower_format_to_day():
+    """Test `downcast_datetime_to_lower_format` to downcast datetime to day precision."""
+    # Setup
+    data = np.array(
+        ['2024-11-13 12:30:45.123456789', '2024-11-14 13:45:30.987654321'], dtype='datetime64[ns]'
+    )
+    target_format = '%Y-%m-%d'  # Downcasting to day precision
+    expected_result = np.array(['2024-11-13', '2024-11-14'], dtype='O')
+
+    # Run
+    result = downcast_datetime_to_lower_format(data, target_format)
+
+    # Assert
+    np.testing.assert_array_equal(result, cast_to_datetime64(expected_result))
+
+
+def test_format_datetime_array_with_lower_precision_format():
+    """Test `format_datetime_array` formatting datetime array to a lower-precision format."""
+    # Setup
+    datetime_array = np.array(
+        ['2024-11-13 12:30:45.123456789', '2024-11-13 13:45:30.987654321'], dtype='datetime64[ns]'
+    )
+    target_format = '%Y-%m-%d %H:%M:%S'
+    expected_result = np.array(['2024-11-13 12:30:45', '2024-11-13 13:45:30'], dtype='O')
+
+    # Run
+    result = format_datetime_array(datetime_array, target_format)
+
+    # Assert
+    np.testing.assert_array_equal(result, expected_result)

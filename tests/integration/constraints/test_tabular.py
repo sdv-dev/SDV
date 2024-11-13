@@ -228,3 +228,236 @@ def test_inequality_constraint_with_timestamp_and_date_strict_boundaries():
     with pytest.raises(ConstraintsNotMetError) as error:
         synthesizer.fit(data)
         assert error_msg in error
+
+
+def test_inequality_constraint_date_less_than_timestamp_strict_boundaries():
+    """Test that the inequality constraint fails when date is less than timestamp.
+
+    This case evaluates the `Inequality` constraint with
+    `strict_boundaries=True` when the `DUE_DATE` column contains dates, and the
+    `SUBMISSION_TIMESTAMP` contains a timestamp. Since `DUE_DATE` lacks
+    time precision, and `SUBMISSION_TIMESTAMP` contains a timestamp, it
+    violates the constraint when the date is less than the timestamp.
+    """
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'SUBMISSION_TIMESTAMP': [
+                '2024-11-12 02:34:45',
+                '2024-11-13 10:45:30',
+                '2024-11-14 14:30:00',
+                '2024-11-15 16:20:10',
+                '2024-11-16 08:00:00',
+            ],
+            'DUE_DATE': ['2024-11-12', '2024-11-13', '2024-11-14', '2024-11-15', '2024-11-16'],
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'SUBMISSION_TIMESTAMP': {
+                        'sdtype': 'datetime',
+                        'datetime_format': '%Y-%m-%d %H:%M:%S',
+                    },
+                    'DUE_DATE': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                }
+            }
+        }
+    })
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    constraint = {
+        'constraint_class': 'Inequality',
+        'constraint_parameters': {
+            'low_column_name': 'DUE_DATE',
+            'high_column_name': 'SUBMISSION_TIMESTAMP',
+            'strict_boundaries': True,
+        },
+    }
+    synthesizer.add_constraints([constraint])
+
+    # Run and Assert
+    with pytest.raises(ConstraintsNotMetError):
+        synthesizer.fit(data)
+
+
+def test_inequality_constraint_timestamp_less_than_date_strict_boundaries():
+    """Test that the inequality constraint fails when timestamp is less than date.
+
+    This case evaluates the `Inequality` constraint with
+    `strict_boundaries=True` when the `SUBMISSION_TIMESTAMP` column contains a
+    timestamp, and the `DUE_DATE` contains a date. This case should violate the
+    constraint, as the `SUBMISSION_TIMESTAMP` (which includes time) is not
+    strictly less than the `DUE_DATE` (which has no time).
+    """
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'SUBMISSION_TIMESTAMP': [
+                '2024-11-12 02:34:45',
+                '2024-11-13 08:23:15',
+                '2024-11-14 11:10:10',
+                '2024-11-15 13:55:30',
+                '2024-11-16 09:05:00',
+            ],
+            'DUE_DATE': ['2024-11-12', '2024-11-13', '2024-11-14', '2024-11-15', '2024-11-16'],
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'SUBMISSION_TIMESTAMP': {
+                        'sdtype': 'datetime',
+                        'datetime_format': '%Y-%m-%d %H:%M:%S',
+                    },
+                    'DUE_DATE': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                }
+            }
+        }
+    })
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    constraint = {
+        'constraint_class': 'Inequality',
+        'constraint_parameters': {
+            'low_column_name': 'SUBMISSION_TIMESTAMP',
+            'high_column_name': 'DUE_DATE',
+            'strict_boundaries': True,
+        },
+    }
+    synthesizer.add_constraints([constraint])
+
+    # Run and Assert
+    with pytest.raises(ConstraintsNotMetError):
+        synthesizer.fit(data)
+
+
+def test_inequality_constraint_date_less_than_timestamp_no_strict_boundaries():
+    """Test that the inequality constraint passes when date is less than timestamp.
+
+    This case evaluates the `Inequality` constraint with
+    `strict_boundaries=False`. Since `strict_boundaries` is set to `False`, we
+    assume that a date in the `DUE_DATE` column should be treated as the
+    beginning of the day,
+    so there will be no violation if the `SUBMISSION_TIMESTAMP` is later on the
+    same day.
+    """
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'SUBMISSION_TIMESTAMP': [
+                '2024-11-12 02:34:45',
+                '2024-11-13 10:45:30',
+                '2024-11-14 14:30:00',
+                '2024-11-15 16:20:10',
+                '2024-11-16 08:00:00',
+            ],
+            'DUE_DATE': ['2024-11-12', '2024-11-13', '2024-11-14', '2024-11-15', '2024-11-16'],
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'SUBMISSION_TIMESTAMP': {
+                        'sdtype': 'datetime',
+                        'datetime_format': '%Y-%m-%d %H:%M:%S',
+                    },
+                    'DUE_DATE': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                }
+            }
+        }
+    })
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    constraint = {
+        'constraint_class': 'Inequality',
+        'constraint_parameters': {
+            'low_column_name': 'DUE_DATE',
+            'high_column_name': 'SUBMISSION_TIMESTAMP',
+            'strict_boundaries': False,
+        },
+    }
+    synthesizer.add_constraints([constraint])
+
+    # Run
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(10)
+
+    # Assert
+    synthetic_data['SUBMISSION_TIMESTAMP'] = pd.to_datetime(
+        synthetic_data['SUBMISSION_TIMESTAMP'], errors='coerce'
+    )
+    synthetic_data['DUE_DATE'] = pd.to_datetime(synthetic_data['DUE_DATE'], errors='coerce')
+    invalid_rows = synthetic_data[
+        synthetic_data['SUBMISSION_TIMESTAMP'].dt.date > synthetic_data['DUE_DATE'].dt.date
+    ]
+    assert invalid_rows.empty
+
+
+def test_inequality_constraint_timestamp_less_than_date_no_strict_boundaries():
+    """Test that the inequality constraint passes when timestamp is less than date.
+
+    This case evaluates the `Inequality` constraint with
+    `strict_boundaries=False`. Since `strict_boundaries` is set to `False`, we
+    assume that a date in the `DUE_DATE` column should be treated as the end of
+    the day, so there will be no violation if the `SUBMISSION_TIMESTAMP` is
+    earlier on the same day.
+    """
+    # Setup
+    data = pd.DataFrame(
+        data={
+            'SUBMISSION_TIMESTAMP': [
+                '2024-11-12 02:34:45',
+                '2024-11-13 08:23:15',
+                '2024-11-14 11:10:10',
+                '2024-11-15 13:55:30',
+                '2024-11-16 09:05:00',
+            ],
+            'DUE_DATE': ['2024-11-12', '2024-11-13', '2024-11-14', '2024-11-15', '2024-11-16'],
+        }
+    )
+
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'SUBMISSION_TIMESTAMP': {
+                        'sdtype': 'datetime',
+                        'datetime_format': '%Y-%m-%d %H:%M:%S',
+                    },
+                    'DUE_DATE': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
+                }
+            }
+        }
+    })
+
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    constraint = {
+        'constraint_class': 'Inequality',
+        'constraint_parameters': {
+            'low_column_name': 'SUBMISSION_TIMESTAMP',
+            'high_column_name': 'DUE_DATE',
+            'strict_boundaries': False,
+        },
+    }
+    synthesizer.add_constraints([constraint])
+
+    # Run
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(10)
+
+    # Assert
+    synthetic_data['SUBMISSION_TIMESTAMP'] = pd.to_datetime(
+        synthetic_data['SUBMISSION_TIMESTAMP'], errors='coerce'
+    )
+    synthetic_data['DUE_DATE'] = pd.to_datetime(synthetic_data['DUE_DATE'], errors='coerce')
+    invalid_rows = synthetic_data[
+        synthetic_data['SUBMISSION_TIMESTAMP'].dt.date > synthetic_data['DUE_DATE'].dt.date
+    ]
+    assert invalid_rows.empty
