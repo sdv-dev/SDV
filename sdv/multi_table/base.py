@@ -240,15 +240,8 @@ class BaseMultiTableSynthesizer:
 
         return errors
 
-    def validate(self, data):
-        """Validate the data.
-
-        Validate that the metadata matches the data and thta every table's constraints are valid.
-
-        Args:
-            data (dict):
-                A dictionary of table names to pd.DataFrames.
-        """
+    def _validate(self, data):
+        """Validate metadata, constraints, and data."""
         errors = []
         constraints_errors = []
         self.metadata.validate_data(data)
@@ -267,6 +260,17 @@ class BaseMultiTableSynthesizer:
 
         elif errors:
             raise InvalidDataError(errors)
+
+    def validate(self, data):
+        """Validate the data.
+
+        Validate that the metadata matches the data and thta every table's constraints are valid.
+
+        Args:
+            data (dict):
+                A dictionary of table names to pd.DataFrames.
+        """
+        self._validate(data)
 
     def _validate_table_name(self, table_name):
         if table_name not in self._table_synthesizers:
@@ -368,8 +372,8 @@ class BaseMultiTableSynthesizer:
         """
         list_of_changed_tables = self._store_and_convert_original_cols(data)
 
-        data = self._transform_helper(data)
         self.validate(data)
+        data = self._transform_helper(data)
         if self._fitted:
             warnings.warn(
                 'This model has already been fitted. To use the new preprocessed data, '
