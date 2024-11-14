@@ -528,11 +528,9 @@ class BaseMultiTableSynthesizer:
             total_columns += len(table.columns)
 
         table_columns = getattr(self, '_original_table_columns', {})
-        if not hasattr(self, '_original_metadata'):
-            self._original_metadata = self.metadata
 
         for table in sampled_data:
-            table_data = sampled_data[table][self._original_metadata.get_column_names(table)]
+            table_data = sampled_data[table][self.get_metadata().get_column_names(table)]
             if table in table_columns:
                 if isinstance(table_columns[table], dict):
                     table_data = table_data.rename(columns=table_columns[table])
