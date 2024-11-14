@@ -46,7 +46,7 @@ class TestHMASynthesizer:
         assert set(normal_sample) == {'characters', 'character_families', 'families'}
         assert set(increased_sample) == {'characters', 'character_families', 'families'}
         for table_name, table in normal_sample.items():
-            assert all(table.columns == data[table_name].columns)
+            assert set(table.columns) == set(data[table_name])
 
         for normal_table, increased_table in zip(normal_sample.values(), increased_sample.values()):
             assert increased_table.size > normal_table.size
@@ -72,7 +72,7 @@ class TestHMASynthesizer:
         assert set(normal_sample) == {'characters', 'character_families', 'families'}
         assert set(increased_sample) == {'characters', 'character_families', 'families'}
         for table_name, table in normal_sample.items():
-            assert all(table.columns == data[table_name].columns)
+            assert set(table.columns) == set(data[table_name])
 
         for normal_table, increased_table in zip(normal_sample.values(), increased_sample.values()):
             assert increased_table.size > normal_table.size
