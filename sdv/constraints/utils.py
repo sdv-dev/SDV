@@ -260,7 +260,7 @@ def get_mappable_combination(combination):
 
 
 def match_datetime_precision(low, high, low_datetime_format, high_datetime_format):
-    """Match `low` or `high` datetime array to match the lower precision format.
+    """Match `low` or `high` datetime array to the lower precision format.
 
     Args:
         low (np.ndarray):
@@ -279,9 +279,9 @@ def match_datetime_precision(low, high, low_datetime_format, high_datetime_forma
     """
     lower_precision_format = get_lower_precision_format(low_datetime_format, high_datetime_format)
     if lower_precision_format == high_datetime_format:
-        low = downcast_datetime_to_lower_format(low, lower_precision_format)
+        low = downcast_datetime_to_lower_precision(low, lower_precision_format)
     else:
-        high = downcast_datetime_to_lower_format(high, lower_precision_format)
+        high = downcast_datetime_to_lower_precision(high, lower_precision_format)
 
     return low, high
 
@@ -320,7 +320,7 @@ def get_lower_precision_format(primary_format, secondary_format):
     return primary_format
 
 
-def downcast_datetime_to_lower_format(data, target_format):
+def downcast_datetime_to_lower_precision(data, target_format):
     """Convert a datetime string from a higher-precision format to a lower-precision format.
 
     Args:

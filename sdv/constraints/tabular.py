@@ -485,7 +485,8 @@ class Inequality(Constraint):
             low = cast_to_datetime64(low, self._low_datetime_format)
             high = cast_to_datetime64(high, self._high_datetime_format)
 
-            if self._low_datetime_format != self._high_datetime_format:
+            format_matches = bool(self._low_datetime_format == self._high_datetime_format)
+            if not format_matches and self._operator == np.greater_equal:
                 low, high = match_datetime_precision(
                     low=low,
                     high=high,

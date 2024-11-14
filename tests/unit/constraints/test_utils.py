@@ -1,6 +1,7 @@
 """Tests for the sdv.constraints.utils module."""
 
 from decimal import Decimal
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -9,7 +10,7 @@ from sdv.constraints.utils import (
     _cast_to_type,
     cast_to_datetime64,
     compute_nans_column,
-    downcast_datetime_to_lower_format,
+    downcast_datetime_to_lower_precision,
     format_datetime_array,
     get_datetime_diff,
     get_datetime_format_precision,
@@ -17,6 +18,7 @@ from sdv.constraints.utils import (
     get_mappable_combination,
     get_nan_component_value,
     logit,
+    match_datetime_precision,
     matches_datetime_format,
     revert_nans_columns,
     sigmoid,
@@ -473,8 +475,8 @@ def test_get_lower_precision_format_with_week_and_day_formats():
     assert result == secondary_format
 
 
-def test_downcast_datetime_to_lower_format():
-    """Test `downcast_datetime_to_lower_format` to ensure datetime downcasting."""
+def test_downcast_datetime_to_lower_precision():
+    """Test `downcast_datetime_to_lower_precision` to ensure datetime downcasting."""
     # Setup
     data = np.array(
         ['2024-11-13 12:30:45.123456789', '2024-11-13 13:45:30.987654321'], dtype='datetime64[ns]'
@@ -483,14 +485,14 @@ def test_downcast_datetime_to_lower_format():
     expected_result = np.array(['2024-11-13 12:30:45', '2024-11-13 13:45:30'], dtype='O')
 
     # Run
-    result = downcast_datetime_to_lower_format(data, target_format)
+    result = downcast_datetime_to_lower_precision(data, target_format)
 
     # Assert
     np.testing.assert_array_equal(result, cast_to_datetime64(expected_result))
 
 
-def test_downcast_datetime_to_lower_format_to_day():
-    """Test `downcast_datetime_to_lower_format` to downcast datetime to day precision."""
+def test_downcast_datetime_to_lower_precision_to_day():
+    """Test `downcast_datetime_to_lower_precision` to downcast datetime to day precision."""
     # Setup
     data = np.array(
         ['2024-11-13 12:30:45.123456789', '2024-11-14 13:45:30.987654321'], dtype='datetime64[ns]'
@@ -499,7 +501,7 @@ def test_downcast_datetime_to_lower_format_to_day():
     expected_result = np.array(['2024-11-13', '2024-11-14'], dtype='O')
 
     # Run
-    result = downcast_datetime_to_lower_format(data, target_format)
+    result = downcast_datetime_to_lower_precision(data, target_format)
 
     # Assert
     np.testing.assert_array_equal(result, cast_to_datetime64(expected_result))
@@ -519,3 +521,55 @@ def test_format_datetime_array_with_lower_precision_format():
 
     # Assert
     np.testing.assert_array_equal(result, expected_result)
+
+
+@patch('sdv.constraints.utils.downcast_datetime_to_lower_precision')
+def test_match_datetime_precision_low_has_higher_precision(mock_downcast):
+    """Test `match_datetime_precision` when `low` has higher precision than `high`.
+
+    This test checks that if the `low` array has a more precise format than `high`,
+    `low` is downcasted to match the `high` format.
+    """
+    # Setup
+    low = np.array(['2024-11-13 10:34:45.123456', '2024-11-14 12:20:10.654321'], dtype='O')
+    high = np.array(['2024-11-13 10:34:45', '2024-11-14 12:20:10'], dtype='O')
+    low_format = '%Y-%m-%d %H:%M:%S.%f'
+    high_format = '%Y-%m-%d %H:%M:%S'
+    expected_low = np.array(['2024-11-13 10:34:45', '2024-11-14 12:20:10'], dtype='O')
+
+    # Set the return value of the mock to simulate downcasting
+    mock_downcast.return_value = expected_low
+
+    # Run
+    result_low, result_high = match_datetime_precision(low, high, low_format, high_format)
+
+    # Assert
+    mock_downcast.assert_called_once_with(low, high_format)
+    np.testing.assert_array_equal(result_low, expected_low)
+    np.testing.assert_array_equal(result_high, high)
+
+
+@patch('sdv.constraints.utils.downcast_datetime_to_lower_precision')
+def test_match_datetime_precision_high_has_higher_precision(mock_downcast):
+    """Test `match_datetime_precision` when `high` has higher precision than `low`.
+
+    This test checks that if the `high` array has a more precise format than `low`,
+    `high` is downcasted to match the `low` format.
+    """
+    # Setup
+    low = np.array(['2024-11-13 10:34:45', '2024-11-14 12:20:10'], dtype='O')
+    high = np.array(['2024-11-13 10:34:45.123456', '2024-11-14 12:20:10.654321'], dtype='O')
+    low_format = '%Y-%m-%d %H:%M:%S'
+    high_format = '%Y-%m-%d %H:%M:%S.%f'
+    expected_high = np.array(['2024-11-13 10:34:45', '2024-11-14 12:20:10'], dtype='O')
+
+    # Set the return value of the mock to simulate downcasting
+    mock_downcast.return_value = expected_high
+
+    # Run
+    result_low, result_high = match_datetime_precision(low, high, low_format, high_format)
+
+    # Assert
+    mock_downcast.assert_called_once_with(high, low_format)
+    np.testing.assert_array_equal(result_low, low)
+    np.testing.assert_array_equal(result_high, expected_high)
