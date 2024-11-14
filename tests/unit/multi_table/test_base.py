@@ -1236,6 +1236,9 @@ class TestBaseMultiTableSynthesizer:
         instance._fitted = True
         data = get_multi_table_data()
         instance._sample = Mock(return_value=data)
+        instance._original_table_columns = {
+            'nesreca': ['upravna_enota', 'id_nesreca', 'nesreca_val'],
+        }
         instance._reverse_transform_helper = Mock(return_value=data)
 
         synth_id = 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
