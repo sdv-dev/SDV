@@ -341,14 +341,18 @@ class BaseMultiTableSynthesizer:
     def _store_and_convert_original_cols(self, data):
         list_of_changed_tables = []
         for table, dataframe in data.items():
-            self._original_table_columns[table] = dataframe.columns
-            for column in dataframe.columns:
+            data_columns = dataframe.columns
+            col_name_mapping = {str(col): col for col in data_columns}
+            reverse_col_name_mapping = {col: str(col) for col in data_columns}
+            self._original_table_columns[table] = col_name_mapping
+            dataframe = dataframe.rename(columns=reverse_col_name_mapping)
+            for column in data_columns:
                 if isinstance(column, int):
-                    dataframe.columns = dataframe.columns.astype(str)
                     list_of_changed_tables.append(table)
                     break
 
             data[table] = dataframe
+
         return list_of_changed_tables
 
     def _transform_helper(self, data):
@@ -392,7 +396,7 @@ class BaseMultiTableSynthesizer:
                 raise e
 
         for table in list_of_changed_tables:
-            data[table].columns = self._original_table_columns[table]
+            data[table] = data[table].rename(columns=self._original_table_columns[table])
 
         return processed_data
 
@@ -524,9 +528,16 @@ class BaseMultiTableSynthesizer:
             total_columns += len(table.columns)
 
         table_columns = getattr(self, '_original_table_columns', {})
+
         for table in sampled_data:
+            table_data = sampled_data[table][self.get_metadata().get_column_names(table)]
             if table in table_columns:
-                sampled_data[table].columns = table_columns[table]
+                if isinstance(table_columns[table], dict):
+                    table_data = table_data.rename(columns=table_columns[table])
+                else:
+                    table_data.columns = table_columns[table]
+
+            sampled_data[table] = table_data
 
         SYNTHESIZER_LOGGER.info({
             'EVENT': 'Sample',

@@ -846,7 +846,7 @@ class TestBaseMultiTableSynthesizer:
                     },
                 },
                 'second_table': {
-                    'columns': {'3': {'sdtype': 'id'}, 'str': {'sdtype': 'categorical'}}
+                    'columns': {'3': {'sdtype': 'id'}, 'another': {'sdtype': 'categorical'}}
                 },
             },
             'relationships': [
@@ -889,7 +889,7 @@ class TestBaseMultiTableSynthesizer:
                 'another': ['John', 'Doe', 'John Doe'],
             }),
         }
-
+        assert set(multi_data['first_table'].columns) == set(corrected_frame['first_table'].columns)
         pd.testing.assert_frame_equal(multi_data['first_table'], corrected_frame['first_table'])
         pd.testing.assert_frame_equal(multi_data['second_table'], corrected_frame['second_table'])
 
@@ -1234,11 +1234,11 @@ class TestBaseMultiTableSynthesizer:
         metadata = get_multi_table_metadata()
         instance = BaseMultiTableSynthesizer(metadata)
         instance._fitted = True
-        data = {
-            'table1': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
-            'table2': pd.DataFrame({'id': [1, 2, 3], 'name': ['John', 'Johanna', 'Doe']}),
-        }
+        data = get_multi_table_data()
         instance._sample = Mock(return_value=data)
+        instance._original_table_columns = {
+            'nesreca': ['upravna_enota', 'id_nesreca', 'nesreca_val'],
+        }
         instance._reverse_transform_helper = Mock(return_value=data)
 
         synth_id = 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
@@ -1256,9 +1256,9 @@ class TestBaseMultiTableSynthesizer:
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
             'SYNTHESIZER CLASS NAME': 'BaseMultiTableSynthesizer',
             'SYNTHESIZER ID': 'BaseMultiTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5',
-            'TOTAL NUMBER OF TABLES': 2,
-            'TOTAL NUMBER OF ROWS': 6,
-            'TOTAL NUMBER OF COLUMNS': 4,
+            'TOTAL NUMBER OF TABLES': 3,
+            'TOTAL NUMBER OF ROWS': 12,
+            'TOTAL NUMBER OF COLUMNS': 8,
         })
 
     def test_get_learned_distributions_raises_an_unfitted_error(self):

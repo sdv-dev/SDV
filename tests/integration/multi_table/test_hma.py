@@ -46,7 +46,7 @@ class TestHMASynthesizer:
         assert set(normal_sample) == {'characters', 'character_families', 'families'}
         assert set(increased_sample) == {'characters', 'character_families', 'families'}
         for table_name, table in normal_sample.items():
-            assert all(table.columns == data[table_name].columns)
+            assert set(table.columns) == set(data[table_name])
 
         for normal_table, increased_table in zip(normal_sample.values(), increased_sample.values()):
             assert increased_table.size > normal_table.size
@@ -72,7 +72,7 @@ class TestHMASynthesizer:
         assert set(normal_sample) == {'characters', 'character_families', 'families'}
         assert set(increased_sample) == {'characters', 'character_families', 'families'}
         for table_name, table in normal_sample.items():
-            assert all(table.columns == data[table_name].columns)
+            assert set(table.columns) == set(data[table_name])
 
         for normal_table, increased_table in zip(normal_sample.values(), increased_sample.values()):
             assert increased_table.size > normal_table.size
@@ -2172,3 +2172,52 @@ def test__estimate_num_columns_to_be_modeled_various_sdtypes():
             num_table_cols -= 1
 
         assert num_table_cols == estimated_num_columns[table_name]
+
+
+def test_column_order():
+    """Test that the column order of the synthetic data is the one of the metadata."""
+    # Setup
+    table_1 = pd.DataFrame({
+        'col_1': [1, 2, 3],
+        'col_3': [7, 8, 9],
+        'col_2': [4, 5, 6],
+    })
+    table_2 = pd.DataFrame({
+        'col_A': ['a', 'b', 'c'],
+        'col_B': ['d', 'e', 'f'],
+        'col_C': ['g', 'h', 'i'],
+    })
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table_1': {
+                'columns': {
+                    'col_1': {'sdtype': 'numerical'},
+                    'col_2': {'sdtype': 'numerical'},
+                    'col_3': {'sdtype': 'numerical'},
+                },
+            },
+            'table_2': {
+                'columns': {
+                    'col_A': {'sdtype': 'categorical'},
+                    'col_B': {'sdtype': 'categorical'},
+                    'col_C': {'sdtype': 'categorical'},
+                },
+            },
+        }
+    })
+    data = {
+        'table_1': table_1,
+        'table_2': table_2,
+    }
+
+    synthesizer = HMASynthesizer(metadata)
+    synthesizer.fit(data)
+
+    # Run
+    synthetic_data = synthesizer.sample()
+
+    # Assert
+    table_1_column = list(synthetic_data['table_1'].columns)
+    assert table_1_column != list(data['table_1'].columns)
+    assert table_1_column == ['col_1', 'col_2', 'col_3']
+    assert list(synthetic_data['table_2'].columns) == ['col_A', 'col_B', 'col_C']
