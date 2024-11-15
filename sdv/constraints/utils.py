@@ -1,10 +1,38 @@
 """Constraint utility functions."""
 
+import re
 from datetime import datetime
 from decimal import Decimal
 
 import numpy as np
 import pandas as pd
+
+PRECISION_LEVELS = {
+    '%Y': 1,  # Year
+    '%y': 1,  # Year without century (same precision as %Y)
+    '%B': 2,  # Full month name
+    '%b': 2,  # Abbreviated month name
+    '%m': 2,  # Month as a number
+    '%d': 3,  # Day of the month
+    '%j': 3,  # Day of the year
+    '%U': 3,  # Week number (Sunday-starting)
+    '%W': 3,  # Week number (Monday-starting)
+    '%A': 3,  # Full weekday name
+    '%a': 3,  # Abbreviated weekday name
+    '%w': 3,  # Weekday as a decimal
+    '%H': 4,  # Hour (24-hour clock)
+    '%I': 4,  # Hour (12-hour clock)
+    '%M': 5,  # Minute
+    '%S': 6,  # Second
+    '%f': 7,  # Microsecond
+    # Formats that don't add precision
+    '%p': 0,  # AM/PM
+    '%z': 0,  # UTC offset
+    '%Z': 0,  # Time zone name
+    '%c': 0,  # Locale-based date/time
+    '%x': 0,  # Locale-based date
+    '%X': 0,  # Locale-based time
+}
 
 
 def cast_to_datetime64(value, datetime_format=None):
@@ -199,6 +227,14 @@ def get_datetime_diff(high, low, high_datetime_format=None, low_datetime_format=
         low = cast_to_datetime64(low, low_datetime_format)
         high = cast_to_datetime64(high, high_datetime_format)
 
+        if low_datetime_format != high_datetime_format:
+            low, high = match_datetime_precision(
+                low=low,
+                high=high,
+                low_datetime_format=low_datetime_format,
+                high_datetime_format=high_datetime_format,
+            )
+
     diff_column = high - low
     nan_mask = pd.isna(diff_column)
     diff_column = diff_column.astype(np.float64)
@@ -221,3 +257,98 @@ def get_mappable_combination(combination):
             A mappable combination of values.
     """
     return tuple(None if pd.isna(x) else x for x in combination)
+
+
+def match_datetime_precision(low, high, low_datetime_format, high_datetime_format):
+    """Match `low` or `high` datetime array to the lower precision format.
+
+    Args:
+        low (np.ndarray):
+            Array of datetime values for the low column.
+        high (np.ndarray):
+            Array of datetime values for the high column.
+        low_datetime_format (str):
+            The datetime format of the `low` column.
+        high_datetime_format (str):
+            The datetime format of the `high` column.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]:
+            Adjusted `low` and `high` arrays where the higher precision format is
+            downcasted to the lower precision format.
+    """
+    lower_precision_format = get_lower_precision_format(low_datetime_format, high_datetime_format)
+    if lower_precision_format == high_datetime_format:
+        low = downcast_datetime_to_lower_precision(low, lower_precision_format)
+    else:
+        high = downcast_datetime_to_lower_precision(high, lower_precision_format)
+
+    return low, high
+
+
+def get_datetime_format_precision(format_str):
+    """Return the precision level of a datetime format string."""
+    # Find all format codes in the format string
+    found_formats = re.findall(r'%[A-Za-z]', format_str)
+    found_levels = (
+        PRECISION_LEVELS.get(found_format)
+        for found_format in found_formats
+        if found_format in PRECISION_LEVELS
+    )
+
+    return max(found_levels, default=0)
+
+
+def get_lower_precision_format(primary_format, secondary_format):
+    """Compare two datetime format strings and return the one with lower precision.
+
+    Args:
+        primary_format (str):
+            The first datetime format string to compare.
+        low_precision_format (str):
+            The second datetime format string to compare.
+
+    Returns:
+        str:
+            The datetime format string with the lower precision level.
+    """
+    primary_level = get_datetime_format_precision(primary_format)
+    secondary_level = get_datetime_format_precision(secondary_format)
+    if primary_level >= secondary_level:
+        return secondary_format
+
+    return primary_format
+
+
+def downcast_datetime_to_lower_precision(data, target_format):
+    """Convert a datetime string from a higher-precision format to a lower-precision format.
+
+    Args:
+        data (np.array):
+            The data to cast to the `target_format`.
+        target_format (str):
+            The datetime string to downcast.
+
+    Returns:
+        str: The datetime string in the lower precision format.
+    """
+    downcasted_data = format_datetime_array(data, target_format)
+    return cast_to_datetime64(downcasted_data, target_format)
+
+
+def format_datetime_array(datetime_array, target_format):
+    """Format each element in a numpy datetime64 array to a specified string format.
+
+    Args:
+        datetime_array (np.ndarray):
+            Array of datetime64[ns] elements.
+        target_format (str):
+            The datetime format to cast each element to.
+
+    Returns:
+        np.ndarray: Array of formatted datetime strings.
+    """
+    return np.array([
+        pd.to_datetime(date).strftime(target_format) if not pd.isna(date) else pd.NaT
+        for date in datetime_array
+    ])

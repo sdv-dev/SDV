@@ -50,6 +50,7 @@ from sdv.constraints.utils import (
     get_datetime_diff,
     get_mappable_combination,
     logit,
+    match_datetime_precision,
     matches_datetime_format,
     revert_nans_columns,
     sigmoid,
@@ -483,6 +484,15 @@ class Inequality(Constraint):
         if self._is_datetime and self._dtype == 'O':
             low = cast_to_datetime64(low, self._low_datetime_format)
             high = cast_to_datetime64(high, self._high_datetime_format)
+
+            format_matches = bool(self._low_datetime_format == self._high_datetime_format)
+            if not format_matches:
+                low, high = match_datetime_precision(
+                    low=low,
+                    high=high,
+                    low_datetime_format=self._low_datetime_format,
+                    high_datetime_format=self._high_datetime_format,
+                )
 
         valid = pd.isna(low) | pd.isna(high) | self._operator(high, low)
         return valid
