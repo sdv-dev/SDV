@@ -1,6 +1,26 @@
 # Release Notes
 
-### v1.17.1 - 2024-10-10
+### v1.17.2 - 2024-11-18
+
+### New Features
+
+* Update integer boundaries for ID columns - Issue [#2285](https://github.com/sdv-dev/SDV/issues/2285) by @R-Palazzo
+
+### Bugs Fixed
+
+* When using GaussianCopula, show a warning if a column in numerical_distributions cannot be applied - Issue [#2296](https://github.com/sdv-dev/SDV/issues/2296) by @pvk-developer 
+* Incorrect column name ordering for Multi-Table Synthesizer - Issue [#2280](https://github.com/sdv-dev/SDV/issues/2280) by @R-Palazzo
+* Inequality constraint cannot be applied to compare datetime to date - Issue [#2275](https://github.com/sdv-dev/SDV/issues/2275) by @pvk-developer
+* PARSynthesizer is not learning rounding scheme for numerical columns - Issue [#2274](https://github.com/sdv-dev/SDV/issues/2274) by @frances-h
+* Unable to turn off rounding scheme for a column (need a warning) - Issue [#2266](https://github.com/sdv-dev/SDV/issues/2266) by @fealho
+
+### Maintenance
+
+* Refactor `_fit` Method of `GaussianCopulaSynthesizer` for Modularity - Issue [#2267](https://github.com/sdv-dev/SDV/issues/2267) by @pvk-developer
+* Add integration tests to code coverage report - Issue [#2263](https://github.com/sdv-dev/SDV/issues/2263) by @amontanez24
+* Add support for numpy 2.0.0 - Issue [#2078](https://github.com/sdv-dev/SDV/issues/2078) by @R-Palazzo
+
+## v1.17.1 - 2024-10-10
 
 ### Bugs Fixed
 
