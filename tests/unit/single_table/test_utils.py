@@ -14,6 +14,7 @@ from sdv.single_table.utils import (
     handle_sampling_error,
     unflatten_dict,
     validate_file_path,
+    warn_missing_numerical_distributions,
 )
 
 
@@ -328,3 +329,18 @@ def test_validate_file_path(mock_open):
     assert output_path in result
     assert none_result is None
     mock_open.assert_called_once_with(result, 'w+')
+
+
+def test_warn_missing_numerical_distributions():
+    """Test the warn_missing_numerical_distributions function."""
+    # Setup
+    numerical_distributions = {'age': 'beta', 'height': 'uniform'}
+    processed_data_columns = ['height', 'weight']
+
+    # Run and Assert
+    message = (
+        "Cannot use distribution 'beta' for column 'age' because the column is not "
+        'statistically modeled.'
+    )
+    with pytest.warns(UserWarning, match=message):
+        warn_missing_numerical_distributions(numerical_distributions, processed_data_columns)

@@ -500,3 +500,25 @@ def test_support_nullable_pandas_dtypes():
     assert (synthetic_data.dtypes == data.dtypes).all()
     assert (synthetic_data['Float32'] == synthetic_data['Float32'].round(1)).all(skipna=True)
     assert (synthetic_data['Float64'] == synthetic_data['Float64'].round(3)).all(skipna=True)
+
+
+def test_user_warning_for_unused_numerical_distribution():
+    """Ensure that a `UserWarning` is raised when a numerical distribution is not applied.
+
+    This test verifies that the synthesizer warns the user if a specified numerical
+    distribution is not used because the corresponding column does not exist or is not
+    modeled after preprocessing.
+    """
+    # Setup
+    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    synthesizer = GaussianCopulaSynthesizer(
+        metadata, numerical_distributions={'credit_card_number': 'beta'}
+    )
+
+    # Run and Assert
+    message = (
+        "Cannot use distribution 'beta' for column 'credit_card_number' because the column is not "
+        'statistically modeled.'
+    )
+    with pytest.warns(UserWarning, match=message):
+        synthesizer.fit(data)
