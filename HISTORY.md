@@ -8,6 +8,7 @@
 
 ### Bugs Fixed
 
+* When using GaussianCopula, show a warning if a column in numerical_distributions cannot be applied - Issue [#2296](https://github.com/sdv-dev/SDV/issues/2296) by @pvk-developer 
 * Incorrect column name ordering for Multi-Table Synthesizer - Issue [#2280](https://github.com/sdv-dev/SDV/issues/2280) by @R-Palazzo
 * Inequality constraint cannot be applied to compare datetime to date - Issue [#2275](https://github.com/sdv-dev/SDV/issues/2275) by @pvk-developer
 * PARSynthesizer is not learning rounding scheme for numerical columns - Issue [#2274](https://github.com/sdv-dev/SDV/issues/2274) by @frances-h
