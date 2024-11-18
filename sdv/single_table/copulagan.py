@@ -8,8 +8,8 @@ import rdt
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from sdv.single_table.ctgan import CTGANSynthesizer
 from sdv.single_table.utils import (
-    log_numerical_distributions_error,
     validate_numerical_distributions,
+    warn_missing_numerical_distributions,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -204,10 +204,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
-        log_numerical_distributions_error(
-            self.numerical_distributions, processed_data.columns, LOGGER
-        )
-
+        warn_missing_numerical_distributions(self.numerical_distributions, processed_data.columns)
         gaussian_normalizer_config = self._create_gaussian_normalizer_config(processed_data)
         self._gaussian_normalizer_hyper_transformer = rdt.HyperTransformer()
         self._gaussian_normalizer_hyper_transformer.set_config(gaussian_normalizer_config)

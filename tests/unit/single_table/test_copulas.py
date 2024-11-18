@@ -159,11 +159,11 @@ class TestGaussianCopulaSynthesizer:
             'default_distribution': 'beta',
         }
 
-    @patch('sdv.single_table.copulas.LOGGER')
-    def test__fit_logging(self, mock_logger):
-        """Test a message is logged.
+    @patch('sdv.single_table.utils.warnings')
+    def test__fit_warning_numerical_distributions(self, mock_warnings):
+        """Test that a warning is shown when fitting numerical distributions on a dropped column.
 
-        A message should be logged if the columns passed in ``numerical_distributions``
+        A warning message should be printed if the columns passed in ``numerical_distributions``
         were renamed/dropped during preprocessing.
         """
         # Setup
@@ -180,10 +180,11 @@ class TestGaussianCopulaSynthesizer:
         instance._fit(processed_data)
 
         # Assert
-        mock_logger.info.assert_called_once_with(
-            "Requested distribution 'gamma' cannot be applied to column 'col' "
-            'because it no longer exists after preprocessing.'
+        warning_message = (
+            "Cannot use distribution 'gamma' for column 'col' because the column is not "
+            'statistically modeled.'
         )
+        mock_warnings.warn.assert_called_once_with(warning_message, UserWarning)
 
     @patch('sdv.single_table.copulas.warnings')
     @patch('sdv.single_table.copulas.multivariate')
