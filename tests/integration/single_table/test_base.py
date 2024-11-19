@@ -193,7 +193,7 @@ def test_sample_remaining_columns_with_some_nans():
 
     # Assert
     warn_msg = (
-        'Missing values are not yet supported. ' 'Rows with any missing values will not be created.'
+        'Missing values are not yet supported. Rows with any missing values will not be created.'
     )
     with pytest.warns(UserWarning, match=warn_msg):
         synthesizer.sample_remaining_columns(known_columns=known_columns)
@@ -844,3 +844,22 @@ def test_fit_int_primary_key_regex_includes_zero(synthesizer_class, regex):
     )
     with pytest.raises(SynthesizerInputError, match=message):
         instance.fit(data)
+
+
+@patch('sdv.single_table.base.warnings')
+def test_update_transformers(warning_mock):
+    """Test the proper warning is raised."""
+    # Setup
+    data, metadata = download_demo(modality='single_table', dataset_name='fake_hotel_guests')
+
+    # Run
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.auto_assign_transformers(data)
+    synthesizer.update_transformers({'amenities_fee': FloatFormatter(learn_rounding_scheme=False)})
+
+    # Assert
+    warning_mock.warn.assert_called_once_with(
+        "Unable to turn off rounding scheme for column(s) ['amenities_fee'], because the overall "
+        "synthesizer is enforcing rounding. We recommend setting the synthesizer's "
+        "'enforce_rounding' parameter to False."
+    )

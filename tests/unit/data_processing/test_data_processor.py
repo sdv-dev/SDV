@@ -1137,7 +1137,9 @@ class TestDataProcessor:
             'first_name': ['John', 'Doe', 'Johanna'],
             'id': ['ID_001', 'ID_002', 'ID_003'],
             'id_no_regex': ['ID_001', 'ID_002', 'ID_003'],
-            'id_numeric': [0, 1, 2],
+            'id_numeric_int8': pd.Series([1, 2, 3], dtype='Int8'),
+            'id_numeric_int16': pd.Series([1, 2, 3], dtype='Int16'),
+            'id_numeric_int32': pd.Series([1, 2, 3], dtype='Int32'),
             'id_column': ['ID_999', 'ID_999', 'ID_007'],
             'date': ['2021-02-01', '2022-03-05', '2023-01-31'],
             'unknown': ['a', 'b', 'c'],
@@ -1151,9 +1153,9 @@ class TestDataProcessor:
         dp.create_anonymized_transformer.return_value = 'AnonymizedFaker'
         dp.create_regex_generator.return_value = 'RegexGenerator'
         dp.metadata.primary_key = 'id'
-        dp.metadata.alternate_keys = ['id_no_regex', 'id_numeric']
+        dp.metadata.alternate_keys = ['id_no_regex', 'id_numeric_int8']
         dp._primary_key = 'id'
-        dp._keys = ['id', 'id_no_regex', 'id_numeric']
+        dp._keys = ['id', 'id_no_regex', 'id_numeric_int8']
         dp.metadata.columns = {
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
@@ -1163,7 +1165,9 @@ class TestDataProcessor:
             'first_name': {'sdtype': 'first_name'},
             'id': {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'},
             'id_no_regex': {'sdtype': 'id'},
-            'id_numeric': {'sdtype': 'id'},
+            'id_numeric_int8': {'sdtype': 'id'},
+            'id_numeric_int16': {'sdtype': 'id'},
+            'id_numeric_int32': {'sdtype': 'id'},
             'id_column': {'sdtype': 'id'},
             'date': {'sdtype': 'datetime', 'datetime_format': '%Y-%m-%d'},
             'unknown': {'sdtype': 'unknown'},
@@ -1188,7 +1192,9 @@ class TestDataProcessor:
             'first_name': 'pii',
             'id': 'text',
             'id_no_regex': 'text',
-            'id_numeric': 'text',
+            'id_numeric_int8': 'text',
+            'id_numeric_int16': 'text',
+            'id_numeric_int32': 'text',
             'id_column': 'text',
             'date': 'datetime',
             'unknown': 'pii',
@@ -1236,11 +1242,24 @@ class TestDataProcessor:
         assert id_no_regex_transformer.function_kwargs == {'text': 'sdv-id-??????'}
         assert id_no_regex_transformer.cardinality_rule == 'unique'
 
-        id_numeric_transformer = config['transformers']['id_numeric']
-        assert isinstance(id_numeric_transformer, AnonymizedFaker)
-        assert id_numeric_transformer.function_name == 'bothify'
-        assert id_numeric_transformer.function_kwargs == {'text': '#########'}
-        assert id_numeric_transformer.cardinality_rule == 'unique'
+        id_numeric_int_8_transformer = config['transformers']['id_numeric_int8']
+        assert isinstance(id_numeric_int_8_transformer, AnonymizedFaker)
+        assert id_numeric_int_8_transformer.function_name == 'random_int'
+        assert id_numeric_int_8_transformer.function_kwargs == {'min': 0, 'max': 127}
+        assert id_numeric_int_8_transformer.cardinality_rule == 'unique'
+
+        id_numeric_int_16_transformer = config['transformers']['id_numeric_int16']
+        assert isinstance(id_numeric_int_16_transformer, AnonymizedFaker)
+        assert id_numeric_int_16_transformer.function_name == 'random_int'
+        assert id_numeric_int_16_transformer.function_kwargs == {'min': 0, 'max': 32767}
+
+        id_numeric_int_32_transformer = config['transformers']['id_numeric_int32']
+        assert isinstance(id_numeric_int_32_transformer, AnonymizedFaker)
+        assert id_numeric_int_32_transformer.function_name == 'random_int'
+        assert id_numeric_int_32_transformer.function_kwargs == {
+            'min': 0,
+            'max': 16777216,
+        }
 
         id_column_transformer = config['transformers']['id_column']
         assert isinstance(id_column_transformer, AnonymizedFaker)
@@ -1444,8 +1463,7 @@ class TestDataProcessor:
 
         # Run and Assert
         error_msg = (
-            'The DataProcessor must be prepared for fitting before the transformers can be '
-            'updated.'
+            'The DataProcessor must be prepared for fitting before the transformers can be updated.'
         )
         with pytest.raises(NotFittedError, match=error_msg):
             dp.update_transformers({'column': None})

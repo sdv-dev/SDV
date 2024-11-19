@@ -347,31 +347,31 @@ def test_numerical_columns_gets_pii():
 
     # Assert
     expected_sampled = pd.DataFrame({
-        'id': {
-            0: 807994768,
-            1: 746439230,
-            2: 201363792,
-            3: 364823003,
-            4: 726973888,
-            5: 693331380,
-            6: 795819284,
-            7: 607278621,
-            8: 783746695,
-            9: 162118876,
-        },
-        'city': {
-            0: 'Danielfort',
-            1: 'Glendaside',
-            2: 'Port Jenniferchester',
-            3: 'Port Susan',
-            4: 'West Michellemouth',
-            5: 'West Jason',
-            6: 'Ryanfort',
-            7: 'West Stephenland',
-            8: 'Davidland',
-            9: 'Port Christopher',
-        },
-        'numerical': {0: 22, 1: 24, 2: 22, 3: 23, 4: 22, 5: 24, 6: 23, 7: 24, 8: 24, 9: 24},
+        'id': [
+            1982005,
+            15967014,
+            10406639,
+            15230483,
+            14028549,
+            16499516,
+            9244156,
+            13145920,
+            10106629,
+            6297216,
+        ],
+        'city': [
+            'Danielfort',
+            'Glendaside',
+            'Port Jenniferchester',
+            'Port Susan',
+            'West Michellemouth',
+            'West Jason',
+            'Ryanfort',
+            'West Stephenland',
+            'Davidland',
+            'Port Christopher',
+        ],
+        'numerical': [22, 24, 22, 23, 22, 24, 23, 24, 24, 24],
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
 
@@ -500,3 +500,25 @@ def test_support_nullable_pandas_dtypes():
     assert (synthetic_data.dtypes == data.dtypes).all()
     assert (synthetic_data['Float32'] == synthetic_data['Float32'].round(1)).all(skipna=True)
     assert (synthetic_data['Float64'] == synthetic_data['Float64'].round(3)).all(skipna=True)
+
+
+def test_user_warning_for_unused_numerical_distribution():
+    """Ensure that a `UserWarning` is raised when a numerical distribution is not applied.
+
+    This test verifies that the synthesizer warns the user if a specified numerical
+    distribution is not used because the corresponding column does not exist or is not
+    modeled after preprocessing.
+    """
+    # Setup
+    data, metadata = download_demo('single_table', 'fake_hotel_guests')
+    synthesizer = GaussianCopulaSynthesizer(
+        metadata, numerical_distributions={'credit_card_number': 'beta'}
+    )
+
+    # Run and Assert
+    message = (
+        "Cannot use distribution 'beta' for column 'credit_card_number' because the column is not "
+        'statistically modeled.'
+    )
+    with pytest.warns(UserWarning, match=message):
+        synthesizer.fit(data)

@@ -1,4 +1,4 @@
-Run started:2024-10-02 16:26:36.866545
+Run started:2024-10-10 22:39:15.948401
 
 Test results:
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '# Release Notes
@@ -59,17 +59,17 @@ Test results:
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/multi_table/hma.py:355:12
-354	                    index.append(foreign_key_value)
-355	            except Exception:
-356	                # Skip children rows subsets that fail
-357	                pass
-358	
+   Location: ./sdv/multi_table/hma.py:354:12
+353	                    index.append(foreign_key_value)
+354	            except Exception:
+355	                # Skip children rows subsets that fail
+356	                pass
+357	
 
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 12759
+	Total lines of code: 12769
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 

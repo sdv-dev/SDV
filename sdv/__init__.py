@@ -6,7 +6,7 @@
 
 __author__ = 'DataCebo, Inc.'
 __email__ = 'info@sdv.dev'
-__version__ = '1.17.1'
+__version__ = '1.17.2.dev2'
 
 
 import sys
@@ -109,10 +109,7 @@ def _find_addons():
         try:
             addon = entry_point.load()
         except Exception as e:  # pylint: disable=broad-exception-caught
-            msg = (
-                f'Failed to load "{entry_point.name}" from "{entry_point.value}" '
-                f'with error:\n{e}'
-            )
+            msg = f'Failed to load "{entry_point.name}" from "{entry_point.value}" with error:\n{e}'
             warnings.warn(msg)
             continue
 

@@ -69,8 +69,6 @@ class DataProcessor:
         'M': 'datetime',
     }
 
-    _COLUMN_RELATIONSHIP_TO_TRANSFORMER = {'address': 'RandomLocationGenerator', 'gps': 'GPSNoiser'}
-
     def _update_numerical_transformer(self, enforce_rounding, enforce_min_max_values):
         custom_float_formatter = rdt.transformers.FloatFormatter(
             missing_value_replacement='mean',
@@ -123,6 +121,10 @@ class DataProcessor:
         self._constraints = []
         self._constraints_to_reverse = []
         self._custom_constraint_classes = {}
+        self._COLUMN_RELATIONSHIP_TO_TRANSFORMER = {
+            'address': 'RandomLocationGenerator',
+            'gps': 'GPSNoiser',
+        }
 
         self._transformers_by_sdtype = deepcopy(get_default_transformers())
         self._transformers_by_sdtype['id'] = rdt.transformers.RegexGenerator()
@@ -561,7 +563,9 @@ class DataProcessor:
             )
 
             if sdtype == 'id':
-                is_numeric = pd.api.types.is_numeric_dtype(data[column].dtype)
+                function_name = 'bothify'
+                column_dtype = data[column].dtype
+                is_numeric = pd.api.types.is_numeric_dtype(column_dtype)
                 if column_metadata.get('regex_format', False):
                     transformers[column] = self.create_regex_generator(
                         column, sdtype, column_metadata, is_numeric
@@ -569,9 +573,17 @@ class DataProcessor:
                     sdtypes[column] = 'text'
 
                 else:
-                    bothify_format = 'sdv-id-??????'
                     if is_numeric:
-                        bothify_format = '#########'
+                        function_name = 'random_int'
+                        column_dtype = str(column_dtype).lower()
+                        function_kwargs = {'min': 0, 'max': 16777216}
+                        if 'int8' in column_dtype:
+                            function_kwargs['max'] = 127
+                        elif 'int16' in column_dtype:
+                            function_kwargs['max'] = 32767
+
+                    else:
+                        function_kwargs = {'text': 'sdv-id-??????'}
 
                     cardinality_rule = None
                     if column in self._keys:
@@ -579,8 +591,8 @@ class DataProcessor:
 
                     transformers[column] = AnonymizedFaker(
                         provider_name=None,
-                        function_name='bothify',
-                        function_kwargs={'text': bothify_format},
+                        function_name=function_name,
+                        function_kwargs=function_kwargs,
                         cardinality_rule=cardinality_rule,
                     )
 

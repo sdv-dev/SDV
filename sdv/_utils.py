@@ -82,6 +82,7 @@ def _is_datetime_type(value):
             bool(_get_datetime_format([value]))
             or isinstance(value, pd.Timestamp)
             or isinstance(value, datetime)
+            or isinstance(value, pd.Period)
             or (isinstance(value, str) and pd.notna(pd.to_datetime(value, errors='coerce')))
         ):
             return False
@@ -351,7 +352,7 @@ def check_synthesizer_version(synthesizer, is_fit_method=False, compare_operator
     static_message = 'Downgrading your SDV version is not supported.'
     if is_fit_method:
         static_message = (
-            'Fitting this synthesizer again is not supported. ' 'Please create a new synthesizer.'
+            'Fitting this synthesizer again is not supported. Please create a new synthesizer.'
         )
 
     fit_public_version = getattr(synthesizer, '_fitted_sdv_version', None)

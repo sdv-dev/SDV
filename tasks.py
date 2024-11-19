@@ -26,12 +26,12 @@ def check_dependencies(c):
 
 @task
 def unit(c):
-    c.run('python -m pytest ./tests/unit --cov=sdv --cov-report=xml')
+    c.run('python -m pytest ./tests/unit --cov=sdv --cov-report=xml:./unit_cov.xml')
 
 
 @task
 def integration(c):
-    c.run('python -m pytest ./tests/integration --reruns 3')
+    c.run('python -m pytest ./tests/integration --reruns 3 --cov=sdv --cov-report=xml:./integration_cov.xml')
 
 
 @task

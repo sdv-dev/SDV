@@ -17,9 +17,9 @@ from sdv.errors import NonParametricError
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from sdv.single_table.utils import (
     flatten_dict,
-    log_numerical_distributions_error,
     unflatten_dict,
     validate_numerical_distributions,
+    warn_missing_numerical_distributions,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -132,25 +132,35 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             processed_data (pandas.DataFrame):
                 Data to be learned.
         """
-        log_numerical_distributions_error(
-            self.numerical_distributions, processed_data.columns, LOGGER
-        )
-        self._num_rows = len(processed_data)
+        warn_missing_numerical_distributions(self.numerical_distributions, processed_data.columns)
+        self._num_rows = self._learn_num_rows(processed_data)
+        numerical_distributions = self._get_numerical_distributions(processed_data)
+        self._model = self._initialize_model(numerical_distributions)
+        self._fit_model(processed_data)
 
+    def _learn_num_rows(self, processed_data):
+        return len(processed_data)
+
+    def _get_numerical_distributions(self, processed_data):
         numerical_distributions = deepcopy(self._numerical_distributions)
         for column in processed_data.columns:
             if column not in numerical_distributions:
                 numerical_distributions[column] = self._numerical_distributions.get(
                     column, self._default_distribution
                 )
-        self._model = multivariate.GaussianMultivariate(distribution=numerical_distributions)
 
+        return numerical_distributions
+
+    def _initialize_model(self, numerical_distributions):
+        return multivariate.GaussianMultivariate(distribution=numerical_distributions)
+
+    def _fit_model(self, processed_data):
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', module='scipy')
             self._model.fit(processed_data)
 
-    def _warn_for_update_transformers(self, column_name_to_transformer):
-        """Raise warnings for update_transformers.
+    def _warn_quality_and_performance(self, column_name_to_transformer):
+        """Raise warning if the quality/performance may be impacted.
 
         Args:
             column_name_to_transformer (dict):

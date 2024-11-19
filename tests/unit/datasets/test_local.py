@@ -56,8 +56,7 @@ def test_load_csvs_no_csvs(tmp_path):
     with open(json_file_path, 'w') as outfile:
         json.dump(fake_json, outfile)
     error_message = re.escape(
-        f"No CSV files exist in '{tmp_path}'. Please make sure your files end in the "
-        "'.csv' suffix."
+        f"No CSV files exist in '{tmp_path}'. Please make sure your files end in the '.csv' suffix."
     )
     with pytest.raises(ValueError, match=error_message):
         load_csvs(tmp_path)

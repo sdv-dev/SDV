@@ -59,6 +59,7 @@ def test_par():
     assert len(loss_values) == 1
     assert all(sampled.groupby('store_id')['date'].is_monotonic_increasing)
     assert all(sampled.groupby('store_id')['date'].agg(lambda x: x.is_unique))
+    assert all(sampled['total_sales'].round(2) == sampled['total_sales'])
 
 
 def test_column_after_date_simple():

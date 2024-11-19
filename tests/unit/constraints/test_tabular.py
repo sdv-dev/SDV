@@ -889,6 +889,28 @@ class TestFixedCombinations:
         expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
         pd.testing.assert_series_equal(expected_out_a, out['a'])
 
+    def test_transform_categorical_dtype(self):
+        """Test ``transform`` with categorical columns."""
+        # Setup
+        table_data = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b': pd.Categorical(['d', None, 'f']),
+            'c': pd.Categorical(['g', 'h', np.nan]),
+        })
+        columns = ['b', 'c']
+        instance = FixedCombinations(column_names=columns)
+        instance.fit(table_data)
+
+        # Run
+        out = instance.transform(table_data)
+
+        # Assert
+        assert out['b#c'].isna().sum() == 0
+        assert instance._combinations_to_uuids is not None
+        assert instance._uuids_to_combinations is not None
+        expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
+        pd.testing.assert_series_equal(expected_out_a, out['a'])
+
     def test_transform_not_all_columns_provided(self):
         """Test the ``FixedCombinations.transform`` method.
 
@@ -1432,6 +1454,87 @@ class TestInequality:
         # Assert
         expected_out = [True, False, True]
         np.testing.assert_array_equal(expected_out, out)
+
+    @patch('sdv.constraints.tabular.match_datetime_precision')
+    def test_is_valid_datetimes_miss_matching_datetime_formats(self, mock_match_datetime_precision):
+        """Test the ``Inequality.is_valid`` method with datetimes.
+
+        Test that when passing miss matching datetime formats, this method will call
+        `match_datetime_pprecision` with the `low` and `high` values from `cast_to_datetime64`
+        and their formats in order to match the precision of the datetime.
+        """
+        # Setup
+        instance = Inequality(low_column_name='SUBMISSION_TIMESTAMP', high_column_name='DUE_DATE')
+        low_return = np.array([
+            datetime(2020, 5, 18),
+            datetime(2020, 9, 2),
+            datetime(2020, 9, 2),
+            datetime(2020, 5, 18),
+            datetime(2020, 9, 2),
+        ])
+        high_return = np.array([
+            datetime(2020, 5, 17),
+            datetime(2021, 9, 1),
+            datetime(2020, 5, 17),
+            datetime(2021, 9, 1),
+            datetime(2021, 9, 1),
+        ])
+        instance._dtype = 'O'
+        instance._is_datetime = True
+        instance._low_datetime_format = '%Y-%m-%d %H:%M:%S'
+        instance._high_datetime_format = '%Y-%m-%d'
+
+        mock_match_datetime_precision.return_value = (low_return, high_return)
+
+        # Run
+        table_data = pd.DataFrame({
+            'SUBMISSION_TIMESTAMP': [
+                '2016-07-10 17:04:00',
+                '2016-07-11 13:23:00',
+                '2016-07-12 08:45:30',
+                '2016-07-11 12:00:00',
+                '2016-07-12 10:30:00',
+            ],
+            'DUE_DATE': ['2016-07-10', '2016-07-11', '2016-07-12', '2016-07-13', '2016-07-14'],
+            'RANDOM_VALUE': [7, 8, 9, 10, 11],
+        })
+        out = instance.is_valid(table_data)
+
+        # Assert
+        expected_out = [False, True, False, True, True]
+        np.testing.assert_array_equal(expected_out, out)
+
+        expected_low = np.array(
+            [
+                '2016-07-10T17:04:00.000000000',
+                '2016-07-11T13:23:00.000000000',
+                '2016-07-12T08:45:30.000000000',
+                '2016-07-11T12:00:00.000000000',
+                '2016-07-12T10:30:00.000000000',
+            ],
+            dtype='datetime64[ns]',
+        )
+
+        expected_high = np.array(
+            [
+                '2016-07-10T00:00:00.000000000',
+                '2016-07-11T00:00:00.000000000',
+                '2016-07-12T00:00:00.000000000',
+                '2016-07-13T00:00:00.000000000',
+                '2016-07-14T00:00:00.000000000',
+            ],
+            dtype='datetime64[ns]',
+        )
+
+        call_low = mock_match_datetime_precision.call_args_list[0][1].pop('low')
+        call_high = mock_match_datetime_precision.call_args_list[0][1].pop('high')
+        np.testing.assert_array_equal(expected_low, call_low)
+        np.testing.assert_array_equal(expected_high, call_high)
+        expected_formats = {
+            'low_datetime_format': '%Y-%m-%d %H:%M:%S',
+            'high_datetime_format': '%Y-%m-%d',
+        }
+        assert expected_formats == mock_match_datetime_precision.call_args_list[0][1]
 
     def test__transform(self):
         """Test the ``Inequality._transform`` method.

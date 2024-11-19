@@ -50,6 +50,7 @@ from sdv.constraints.utils import (
     get_datetime_diff,
     get_mappable_combination,
     logit,
+    match_datetime_precision,
     matches_datetime_format,
     revert_nans_columns,
     sigmoid,
@@ -126,8 +127,7 @@ def create_custom_constraint_class(is_valid_fn, transform_fn=None, reverse_trans
             if 'column_names' not in set(kwargs):
                 errors = [
                     ConstraintMetadataError(
-                        "Missing required values {'column_names'} in a"
-                        ' CustomConstraint constraint.'
+                        "Missing required values {'column_names'} in a CustomConstraint constraint."
                     )
                 ]
                 raise AggregateConstraintsError(errors)
@@ -335,6 +335,14 @@ class FixedCombinations(Constraint):
             pandas.DataFrame:
                 Transformed data.
         """
+        # To make the NaN to None mapping work for pd.Categorical data, we need to convert
+        # the columns to object before replacing NaNs with None.
+        table_data[self._columns] = table_data[self._columns].astype({
+            col: object
+            for col in self._columns
+            if pd.api.types.is_categorical_dtype(table_data[col])
+        })
+
         table_data[self._columns] = table_data[self._columns].replace({np.nan: None})
         combinations = table_data[self._columns].itertuples(index=False, name=None)
         uuids = map(self._combinations_to_uuids.get, combinations)
@@ -476,6 +484,15 @@ class Inequality(Constraint):
         if self._is_datetime and self._dtype == 'O':
             low = cast_to_datetime64(low, self._low_datetime_format)
             high = cast_to_datetime64(high, self._high_datetime_format)
+
+            format_matches = bool(self._low_datetime_format == self._high_datetime_format)
+            if not format_matches:
+                low, high = match_datetime_precision(
+                    low=low,
+                    high=high,
+                    low_datetime_format=self._low_datetime_format,
+                    high_datetime_format=self._high_datetime_format,
+                )
 
         valid = pd.isna(low) | pd.isna(high) | self._operator(high, low)
         return valid

@@ -22,8 +22,7 @@ DEPRECATION_MSG = (
 )
 
 META_DEPRECATION_MSG = (
-    "The 'SingleTableMetadata' is deprecated. Please use the new "
-    "'Metadata' class for synthesizers."
+    "The 'SingleTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
 )
 
 

@@ -263,10 +263,10 @@ class TestCopulaGANSynthesizer:
         assert config == expected_config
         assert mock_rdt.transformers.GaussianNormalizer.call_args_list == expected_calls
 
-    @patch('sdv.single_table.copulagan.LOGGER')
+    @patch('sdv.single_table.utils.warnings')
     @patch('sdv.single_table.copulagan.CTGANSynthesizer._fit')
     @patch('sdv.single_table.copulagan.rdt')
-    def test__fit_logging(self, mock_rdt, mock_ctgansynthesizer__fit, mock_logger):
+    def test__fit_logging(self, mock_rdt, mock_ctgansynthesizer__fit, mock_warnings):
         """Test a message is logged.
 
         A message should be logged if the columns passed in ``numerical_distributions``
@@ -284,10 +284,11 @@ class TestCopulaGANSynthesizer:
         instance._fit(processed_data)
 
         # Assert
-        mock_logger.info.assert_called_once_with(
-            "Requested distribution 'gamma' cannot be applied to column 'col' "
-            'because it no longer exists after preprocessing.'
+        warning_message = (
+            "Cannot use distribution 'gamma' for column 'col' because the column is not "
+            'statistically modeled.'
         )
+        mock_warnings.warn.assert_called_once_with(warning_message, UserWarning)
 
     @patch('sdv.single_table.copulagan.CTGANSynthesizer._fit')
     @patch('sdv.single_table.copulagan.rdt')
