@@ -48,3 +48,4 @@ jobs:
         file: ${{ github.workspace }}/integration_cov.xml
         fail_ci_if_error: true
         token: ${{ secrets.CODECOV_TOKEN }}
+        threshold: 0.5  # Add 0.5% threshold
