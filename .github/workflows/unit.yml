@@ -37,9 +37,10 @@ jobs:
     - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.12
       name: Upload unit codecov report
       uses: codecov/codecov-action@v4
+      env:
+        CODECOV_THRESHOLD: "0.5"
       with:
         flags: unit
         file: ${{ github.workspace }}/unit_cov.xml
         fail_ci_if_error: true
         token: ${{ secrets.CODECOV_TOKEN }}
-        threshold: 0.5  # Add 0.5% threshold
