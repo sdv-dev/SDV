@@ -221,13 +221,13 @@ class TestBaseHierarchicalSampler:
             call(
                 child_name='sessions',
                 parent_name='users',
-                parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0)),
+                parent_row=SeriesMatcher(pd.Series({'user_id': 1}, name=0, dtype=object)),
                 sampled_data=result,
             ),
             call(
                 child_name='sessions',
                 parent_name='users',
-                parent_row=SeriesMatcher(pd.Series({'user_id': 3}, name=1)),
+                parent_row=SeriesMatcher(pd.Series({'user_id': 3}, name=1, dtype=object)),
                 sampled_data=result,
             ),
         ]
@@ -277,13 +277,20 @@ class TestBaseHierarchicalSampler:
         instance._null_foreign_key_percentages = {'__sessions__user_id': 0}
 
         # Run
-        result = {'users': pd.DataFrame({'user_id': [1], '__sessions__user_id__num_rows': [1]})}
+        result = {
+            'users': pd.DataFrame({
+                'user_id': [1],
+                '__sessions__user_id__num_rows': pd.Series([1], dtype=object),
+            })
+        }
         BaseHierarchicalSampler._sample_children(
             self=instance, table_name='users', sampled_data=result
         )
 
         # Assert
-        expected_parent_row = pd.Series({'user_id': 1, '__sessions__user_id__num_rows': 1}, name=0)
+        expected_parent_row = pd.Series(
+            {'user_id': 1, '__sessions__user_id__num_rows': 1}, name=0, dtype=object
+        )
         expected_calls = [
             call(
                 child_name='sessions',
@@ -300,7 +307,10 @@ class TestBaseHierarchicalSampler:
             ),
         ]
         expected_result = {
-            'users': pd.DataFrame({'user_id': [1], '__sessions__user_id__num_rows': [1]}),
+            'users': pd.DataFrame({
+                'user_id': [1],
+                '__sessions__user_id__num_rows': pd.Series([1], dtype=object),
+            }),
             'sessions': pd.DataFrame({
                 'user_id': [1],
                 'session_id': ['a'],
