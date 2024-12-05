@@ -1154,7 +1154,7 @@ class ScalarRange(Constraint):
         is_high_datetime = _is_datetime_type(self._high_value)
         is_datetime = is_low_datetime and is_high_datetime and is_column_datetime
 
-        if not is_datetime and any([is_low_datetime, is_column_datetime, is_high_datetime]):
+        if is_column_datetime and not all([is_low_datetime, is_column_datetime, is_high_datetime]):
             raise ValueError('The constraint column and bounds must all be datetime.')
 
         return is_datetime
