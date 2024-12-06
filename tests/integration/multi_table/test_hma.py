@@ -1480,6 +1480,79 @@ class TestHMASynthesizer:
         assert all(pd.api.types.is_numeric_dtype(dtype) for dtype in numeric_data)
         assert all(dtype == 'object' for dtype in object_data)
 
+    def test_large_integer_ids(self):
+        """Test that HMASynthesizer can handle large integer IDs correctly GH#919."""
+        # Setup
+        table_1 = pd.DataFrame({
+            'col_1': [1, 2, 3],
+            'col_3': [7, 8, 9],
+            'col_2': [4, 5, 6],
+        })
+        table_2 = pd.DataFrame({
+            'col_A': [1, 1, 2],
+            'col_B': ['d', 'e', 'f'],
+            'col_C': ['g', 'h', 'i'],
+        })
+        metadata = Metadata.load_from_dict({
+            'tables': {
+                'table_1': {
+                    'columns': {
+                        'col_1': {'sdtype': 'id', 'regex_format': '[1-9]{17}'},
+                        'col_2': {'sdtype': 'numerical'},
+                        'col_3': {'sdtype': 'numerical'},
+                    },
+                    'primary_key': 'col_1',
+                },
+                'table_2': {
+                    'columns': {
+                        'col_A': {'sdtype': 'id', 'regex_format': '[1-9]{17}'},
+                        'col_B': {'sdtype': 'categorical'},
+                        'col_C': {'sdtype': 'categorical'},
+                    },
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'table_1',
+                    'child_table_name': 'table_2',
+                    'parent_primary_key': 'col_1',
+                    'child_foreign_key': 'col_A',
+                }
+            ],
+        })
+        data = {
+            'table_1': table_1,
+            'table_2': table_2,
+        }
+
+        # Run
+        synthesizer = HMASynthesizer(metadata, verbose=False)
+        synthesizer.fit(data)
+        synthetic_data = synthesizer.sample()
+
+        # Assert
+        # Check that IDs match the regex pattern
+        for table_name, table in synthetic_data.items():
+            for col in table.columns:
+                if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
+                    values = table[col].astype(str)
+                    assert all(len(str(v)) == 17 for v in values), (
+                        f'ID length mismatch in {table_name}.{col}'
+                    )
+                    assert all(v.isdigit() for v in values), (
+                        f'Non-digit characters in {table_name}.{col}'
+                    )
+
+        # Check relationships are preserved
+        child_fks = set(synthetic_data['table_2']['col_A'])
+        parent_pks = set(synthetic_data['table_1']['col_1'])
+        assert child_fks.issubset(parent_pks), 'Foreign key constraint violated'
+
+        # Check that the diagnostic report is 1.0
+        report = DiagnosticReport()
+        report.generate(data, synthetic_data, metadata.to_dict(), verbose=False)
+        assert report.get_score() == 1.0
+
 
 @pytest.mark.parametrize('num_rows', [(10), (1000)])
 def test_hma_0_1_child(num_rows):
