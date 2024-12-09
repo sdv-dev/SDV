@@ -207,7 +207,7 @@ class BaseHierarchicalSampler:
             self._enforce_table_size(child_name, table_name, scale, sampled_data)
 
             if child_name not in sampled_data:  # Sample based on only 1 parent
-                for _, row in sampled_data[table_name].iterrows():
+                for _, row in sampled_data[table_name].astype(object).iterrows():
                     self._add_child_rows(
                         child_name=child_name,
                         parent_name=table_name,
@@ -219,7 +219,9 @@ class BaseHierarchicalSampler:
 
                 if child_name not in sampled_data:  # No child rows sampled, force row creation
                     num_rows_key = f'__{child_name}__{foreign_key}__num_rows'
-                    max_num_child_index = sampled_data[table_name][num_rows_key].idxmax()
+                    max_num_child_index = pd.to_numeric(
+                        sampled_data[table_name][num_rows_key], errors='coerce'
+                    ).idxmax()
                     parent_row = sampled_data[table_name].iloc[max_num_child_index]
 
                     self._add_child_rows(
