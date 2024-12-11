@@ -478,7 +478,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
             output.append(sequence_df)
 
-        output = pd.concat(output)
+        output = pd.concat([df.dropna(axis=1, how='all') for df in output])
         output = output[self._output_columns].reset_index(drop=True)
 
         return output
