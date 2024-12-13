@@ -468,27 +468,28 @@ def test_inequality_constraint_with_datetimes_and_nones():
     sampled = synth.sample(10)
 
     # Assert
+    synth.validate(sampled)
     expected_sampled = pd.DataFrame({
         'A': [
             '2020-01-02',
             '2020-01-02',
+            np.nan,
+            np.nan,
             '2020-01-02',
+            np.nan,
             '2020-01-02',
-            '2020-01-02',
-            '2020-01-02',
-            '2020-01-02',
-            '2020-01-02',
+            np.nan,
             '2020-01-02',
             np.nan,
         ],
         'B': [
-            np.nan,
             '2021-12-30',
             '2021-12-30',
             '2021-12-30',
-            np.nan,
             '2021-12-30',
             np.nan,
+            '2021-12-30',
+            '2021-12-30',
             '2021-12-30',
             np.nan,
             '2021-12-30',
@@ -529,19 +530,20 @@ def test_scalar_inequality_constraint_with_datetimes_and_nones():
     sampled = synth.sample(5)
 
     # Assert
+    synth.validate(sampled)
     expected_sampled = pd.DataFrame({
         'A': {
             0: np.nan,
             1: '2020-01-19',
             2: np.nan,
-            3: '2020-01-29',
+            3: np.nan,
             4: '2020-01-31',
         },
         'B': {
-            0: '2021-07-28',
-            1: '2021-07-14',
-            2: '2021-07-26',
-            3: '2021-07-02',
+            0: np.nan,
+            1: np.nan,
+            2: np.nan,
+            3: np.nan,
             4: '2021-06-06',
         },
     })
@@ -585,17 +587,18 @@ def test_scalar_range_constraint_with_datetimes_and_nones():
     sampled = synth.sample(10)
 
     # Assert
+    synth.validate(sampled)
     expected_sampled = pd.DataFrame({
         'A': {
-            0: '2020-02-04',
+            0: np.nan,
             1: np.nan,
             2: '2020-02-07',
             3: np.nan,
-            4: np.nan,
+            4: '2020-02-29',
             5: '2020-02-29',
             6: np.nan,
             7: np.nan,
-            8: np.nan,
+            8: '2020-01-26',
             9: '2020-02-02',
         },
         'B': {
@@ -603,9 +606,9 @@ def test_scalar_range_constraint_with_datetimes_and_nones():
             1: np.nan,
             2: np.nan,
             3: np.nan,
-            4: np.nan,
-            5: '2021-11-22',
-            6: np.nan,
+            4: '2021-06-21',
+            5: np.nan,
+            6: '2021-09-28',
             7: '2021-06-19',
             8: np.nan,
             9: np.nan,
@@ -657,14 +660,14 @@ def test_range_constraint_with_datetimes_and_nones():
         'A': [
             '2020-01-02',
             '2020-01-02',
+            np.nan,
+            '2020-01-02',
+            '2020-01-02',
+            np.nan,
             '2020-01-02',
             '2020-01-02',
             '2020-01-02',
-            '2020-01-02',
-            '2020-01-02',
-            '2020-01-02',
-            '2020-01-02',
-            '2020-01-02',
+            np.nan,
         ],
         'B': [
             np.nan,
@@ -674,7 +677,7 @@ def test_range_constraint_with_datetimes_and_nones():
             np.nan,
             '2021-12-30',
             np.nan,
-            np.nan,
+            '2021-12-30',
             np.nan,
             '2021-12-30',
         ],
@@ -686,12 +689,13 @@ def test_range_constraint_with_datetimes_and_nones():
             np.nan,
             '2022-12-30',
             np.nan,
-            np.nan,
+            '2022-12-30',
             np.nan,
             '2022-12-30',
         ],
     })
     pd.testing.assert_frame_equal(expected_sampled, sampled)
+    synth.validate(sampled)
 
 
 def test_inequality_constraint_all_possible_nans_configurations():
