@@ -2357,6 +2357,31 @@ class TestDataProcessor:
         })
         pd.testing.assert_frame_equal(reverse_transformed, expected_output)
 
+    def test_reverse_transform_overflow(self):
+        """Test it raises a warning when the reverse transform overflows."""
+        # Setup
+        data = pd.DataFrame({
+            'col': [99999999999999999990, 99999999999999999991, 99999999999999999992]
+        })
+        dp = DataProcessor(SingleTableMetadata())
+        dp._dtypes = {'col': 'int64'}
+        dp.metadata = Mock()
+        dp.metadata.columns = {'col': None}
+        dp.fitted = True
+        dp._hyper_transformer = Mock()
+        dp._hyper_transformer.reverse_transform_subset.return_value = data
+        dp._hyper_transformer._output_columns = ['col']
+        dp.table_name = 'table_name'
+
+        # Run
+        warn_msg = (
+            "The real data in 'table_name' and column 'col' was stored as 'int64' but the "
+            'synthetic data overflowed when casting back to this type. If this is a problem, '
+            'please check your input data and metadata settings.'
+        )
+        with pytest.warns(UserWarning, match=warn_msg):
+            dp.reverse_transform(data)
+
     @patch('sdv.data_processing.data_processor.LOGGER')
     def test_reverse_transform_hyper_transformer_errors(self, log_mock):
         """Test the ``reverse_transform`` method.
