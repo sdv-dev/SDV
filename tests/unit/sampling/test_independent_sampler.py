@@ -311,6 +311,32 @@ class TestBaseIndependentSampler:
         )
         assert mock_logger.info.call_args_list == [call(message_users), call(message_sessions)]
 
+    @patch('sdv.sampling.independent_sampler.LOGGER')
+    def test__finalize_overflow(self, mock_logger):
+        """Test it logs a warning when the synthetic data overflows."""
+        # Setup
+        sampled_data = {
+            'table': pd.DataFrame({
+                'id': [99999999999999999990, 99999999999999999991, 99999999999999999992]
+            }),
+        }
+        parent_synthesizer = Mock()
+        parent_synthesizer._data_processor._dtypes = {'id': 'int64'}
+        instance = Mock()
+        instance._table_synthesizers = {'table': parent_synthesizer}
+
+        # Run
+        BaseIndependentSampler._finalize(instance, sampled_data)
+
+        # Assert
+        message_users = (
+            "The real data in 'table' and column 'id' was stored as "
+            "'int64' but the synthetic data overflowed when casting back to "
+            'this type. If this is a problem, please check your input data '
+            'and metadata settings.'
+        )
+        assert mock_logger.debug.call_args_list == [call(message_users)]
+
     def test__sample(self):
         """Test that the ``_sample_table`` is called for root tables."""
         # Setup
