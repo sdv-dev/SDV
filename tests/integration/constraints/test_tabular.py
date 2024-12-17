@@ -69,7 +69,10 @@ def test_fixed_combinations_with_nans():
     assert len(synthetic_data) == 1000
     pd.testing.assert_frame_equal(
         synthetic_data.drop_duplicates(ignore_index=True),
-        data.drop_duplicates(ignore_index=True),
+        pd.DataFrame({
+            'A': [1, np.nan, 2],
+            'B': [10, 30, 20],
+        }).drop_duplicates(ignore_index=True),
         check_like=True,
     )
 
