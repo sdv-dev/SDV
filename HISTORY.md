@@ -1,6 +1,12 @@
 # Release Notes
 
-### v1.17.2 - 2024-11-18
+### v1.17.3 - 2024-12-17
+
+### Maintenance
+
+* Pandas FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated... - Issue [#2286](https://github.com/sdv-dev/SDV/issues/2286) by @fealho
+
+## v1.17.2 - 2024-11-18
 
 ### New Features
 
