@@ -34,10 +34,11 @@ jobs:
           python -m pip install invoke .[test]
     - name: Run unit tests
       run: invoke unit
-    - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.9
+    - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.12
       name: Upload unit codecov report
       uses: codecov/codecov-action@v4
       with:
         flags: unit
-        file: './unit_cov.xml'
+        file: ${{ github.workspace }}/unit_cov.xml
+        fail_ci_if_error: true
         token: ${{ secrets.CODECOV_TOKEN }}

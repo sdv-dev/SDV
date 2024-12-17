@@ -212,7 +212,7 @@ def test_sample_keys_are_scrambled():
 
     # Assert
     ids = sampled['guest_email'].head()
-    expected_keys = pd.Series(['ARH', 'BBH', 'BAP', 'AIF', 'AQP'], name='guest_email')
+    expected_keys = pd.Series(['AQQ', 'BBI', 'AET', 'AZM', 'AHZ'], name='guest_email')
     pd.testing.assert_series_equal(ids, expected_keys)
 
 

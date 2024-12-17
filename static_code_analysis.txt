@@ -1,4 +1,4 @@
-Run started:2024-10-10 22:39:15.948401
+Run started:2024-11-19 01:24:03.657171
 
 Test results:
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '# Release Notes
@@ -17,21 +17,21 @@ Test results:
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/_utils.py:328:8
-327	
-328	        except Exception:
-329	            pass
-330	
+   Location: ./sdv/_utils.py:329:8
+328	
+329	        except Exception:
+330	            pass
+331	
 
 --------------------------------------------------
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '#'
    Severity: Low   Confidence: Medium
    CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b105_hardcoded_password_string.html
-   Location: ./sdv/constraints/tabular.py:1126:16
-1125	    def _get_diff_column_name(self, table_data):
-1126	        token = '#'
-1127	        columns = [self._column_name, self._low_value, self._high_value]
+   Location: ./sdv/constraints/tabular.py:1143:16
+1142	    def _get_diff_column_name(self, table_data):
+1143	        token = '#'
+1144	        columns = [self._column_name, self._low_value, self._high_value]
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -69,7 +69,7 @@ Test results:
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 12769
+	Total lines of code: 12923
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 

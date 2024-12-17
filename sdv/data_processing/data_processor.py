@@ -138,6 +138,7 @@ class DataProcessor:
         self.fitted = False
         self.formatters = {}
         self._primary_key = self.metadata.primary_key
+        self._warned_overflow = False
         self._prepared_for_fitting = False
         self._keys = deepcopy(self.metadata.alternate_keys)
         if self._primary_key:
@@ -934,6 +935,15 @@ class DataProcessor:
                         self.formatters.pop(column_name)
                 else:
                     raise ValueError(e)
+            except OverflowError:
+                if not self._warned_overflow:
+                    warnings.warn(
+                        f"The real data in '{self.table_name}' and column '{column_name}' was "
+                        f"stored as '{dtype}' but the synthetic data overflowed when casting back "
+                        'to this type. If this is a problem, please check your input data '
+                        'and metadata settings.'
+                    )
+                self._warned_overflow = True
 
         # reformat columns using the formatters
         for column in sampled_columns:

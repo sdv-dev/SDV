@@ -118,6 +118,13 @@ class BaseIndependentSampler:
 
                     else:
                         raise ValueError(e)
+                except OverflowError:
+                    LOGGER.debug(
+                        f"The real data in '{table_name}' and column '{name}' was stored as "
+                        f"'{dtype}' but the synthetic data overflowed when casting back to "
+                        'this type. If this is a problem, please check your input data '
+                        'and metadata settings.'
+                    )
 
             final_data[table_name] = table_rows[list(dtypes.keys())]
 

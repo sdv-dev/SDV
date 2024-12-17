@@ -299,7 +299,7 @@ class FixedCombinations(Constraint):
         self._uuids_to_combinations = {}
         for combination in self._combinations.itertuples(index=False, name=None):
             mappable_combination = get_mappable_combination(combination)
-            uuid_str = str(uuid.uuid4())
+            uuid_str = str(uuid.uuid5(uuid.NAMESPACE_DNS, str(mappable_combination)))
             self._combinations_to_uuids[mappable_combination] = uuid_str
             self._uuids_to_combinations[uuid_str] = mappable_combination
 
