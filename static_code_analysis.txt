@@ -1,4 +1,4 @@
-Run started:2024-11-19 01:24:03.657171
+Run started:2024-12-17 20:19:16.200992
 
 Test results:
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '# Release Notes
@@ -69,7 +69,7 @@ Test results:
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 12923
+	Total lines of code: 12942
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
