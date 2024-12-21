@@ -103,7 +103,7 @@ def handle_sampling_error(output_file_path, sampling_error):
         )
 
     if error_msg:
-        raise type(sampling_error)(error_msg + '\n' + str(sampling_error))
+        raise type(sampling_error)(error_msg) from sampling_error
 
     raise sampling_error
 
