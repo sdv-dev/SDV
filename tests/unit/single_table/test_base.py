@@ -1546,15 +1546,17 @@ class TestBaseSingleTableSynthesizer:
         instance._fitted = True
         expected_message = re.escape(
             'Error: Sampling terminated. No results were saved due to unspecified '
-            '"output_file_path".\nMocked Error'
+            '"output_file_path".'
         )
         instance._sample_in_batches.side_effect = RuntimeError('Mocked Error')
 
         # Run and Assert
-        with pytest.raises(RuntimeError, match=expected_message):
+        with pytest.raises(RuntimeError, match=expected_message) as exception:
             BaseSingleTableSynthesizer._sample_with_progress_bar(
                 instance, output_file_path=None, num_rows=10
             )
+        assert isinstance(exception.value.__cause__, RuntimeError)
+        assert 'Mocked Error' in str(exception.value.__cause__)
 
     @patch('sdv.single_table.base.datetime')
     def test_sample(self, mock_datetime, caplog):
