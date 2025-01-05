@@ -6,6 +6,8 @@ import logging
 import os
 import warnings
 from collections import defaultdict
+from copy import deepcopy
+from functools import lru_cache
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -122,6 +124,18 @@ def _get_metadata(output_folder_name, in_memory_directory, dataset_name):
     return metadata
 
 
+@lru_cache()
+def _download_demo(modality, dataset_name, output_folder_name=None):
+    _validate_modalities(modality)
+    _validate_output_folder(output_folder_name)
+    bytes_io = _download(modality, dataset_name)
+    in_memory_directory = _extract_data(bytes_io, output_folder_name)
+    data = _get_data(modality, output_folder_name, in_memory_directory)
+    metadata = _get_metadata(output_folder_name, in_memory_directory, dataset_name)
+
+    return data, metadata
+
+
 def download_demo(modality, dataset_name, output_folder_name=None):
     """Download a demo dataset.
 
@@ -147,14 +161,8 @@ def download_demo(modality, dataset_name, output_folder_name=None):
             * If the ``dataset_name`` doesn't exist in the bucket.
             * If there is already a folder named ``output_folder_name``.
     """
-    _validate_modalities(modality)
-    _validate_output_folder(output_folder_name)
-    bytes_io = _download(modality, dataset_name)
-    in_memory_directory = _extract_data(bytes_io, output_folder_name)
-    data = _get_data(modality, output_folder_name, in_memory_directory)
-    metadata = _get_metadata(output_folder_name, in_memory_directory, dataset_name)
-
-    return data, metadata
+    data, metadata = _download_demo(modality, dataset_name, output_folder_name)
+    return deepcopy(data), deepcopy(metadata)
 
 
 def get_available_demos(modality):
