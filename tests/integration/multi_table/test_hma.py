@@ -19,6 +19,7 @@ from sdv.datasets.demo import download_demo
 from sdv.datasets.local import load_csvs
 from sdv.errors import SamplingError, SynthesizerInputError, VersionError
 from sdv.evaluation.multi_table import evaluate_quality, get_column_pair_plot, get_column_plot
+from sdv.metadata import MultiTableMetadata
 from sdv.metadata.metadata import Metadata
 from sdv.multi_table import HMASynthesizer
 from tests.integration.single_table.custom_constraints import MyConstraint
@@ -1536,12 +1537,12 @@ class TestHMASynthesizer:
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
                     values = table[col].astype(str)
-                    assert all(len(str(v)) == 17 for v in values), (
-                        f'ID length mismatch in {table_name}.{col}'
-                    )
-                    assert all(v.isdigit() for v in values), (
-                        f'Non-digit characters in {table_name}.{col}'
-                    )
+                    assert all(
+                        len(str(v)) == 17 for v in values
+                    ), f'ID length mismatch in {table_name}.{col}'
+                    assert all(
+                        v.isdigit() for v in values
+                    ), f'Non-digit characters in {table_name}.{col}'
 
         # Check relationships are preserved
         child_fks = set(synthetic_data['table_2']['col_A'])
@@ -1615,12 +1616,12 @@ class TestHMASynthesizer:
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
                     values = table[col].astype(str)
-                    assert all(len(str(v)) == 21 for v in values), (
-                        f'ID length mismatch in {table_name}.{col}'
-                    )
-                    assert all(v.isdigit() for v in values), (
-                        f'Non-digit characters in {table_name}.{col}'
-                    )
+                    assert all(
+                        len(str(v)) == 21 for v in values
+                    ), f'ID length mismatch in {table_name}.{col}'
+                    assert all(
+                        v.isdigit() for v in values
+                    ), f'Non-digit characters in {table_name}.{col}'
 
         # Check relationships are preserved
         child_fks = set(synthetic_data['table_2']['col_A'])
@@ -1717,12 +1718,12 @@ class TestHMASynthesizer:
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
                     values = table[col].astype(str)
-                    assert all(len(str(v)) == 20 for v in values), (
-                        f'ID length mismatch in {table_name}.{col}'
-                    )
-                    assert all(v.isdigit() for v in values), (
-                        f'Non-digit characters in {table_name}.{col}'
-                    )
+                    assert all(
+                        len(str(v)) == 20 for v in values
+                    ), f'ID length mismatch in {table_name}.{col}'
+                    assert all(
+                        v.isdigit() for v in values
+                    ), f'Non-digit characters in {table_name}.{col}'
 
         # Check relationships are preserved
         child_fks = set(synthetic_data['table_1']['col_0'])
@@ -1801,12 +1802,12 @@ class TestHMASynthesizer:
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
                     values = table[col].astype(str)
-                    assert all(len(str(v)) == 20 for v in values), (
-                        f'ID length mismatch in {table_name}.{col}'
-                    )
-                    assert all(v.isdigit() for v in values), (
-                        f'Non-digit characters in {table_name}.{col}'
-                    )
+                    assert all(
+                        len(str(v)) == 20 for v in values
+                    ), f'ID length mismatch in {table_name}.{col}'
+                    assert all(
+                        v.isdigit() for v in values
+                    ), f'Non-digit characters in {table_name}.{col}'
 
         # Check relationships are preserved
         child_fks = set(synthetic_data['table_2']['col_A'])
@@ -1876,12 +1877,12 @@ class TestHMASynthesizer:
             for col in table.columns:
                 if metadata.tables[table_name].columns[col].get('sdtype') == 'id':
                     values = table[col].astype(str)
-                    assert all(len(str(v)) == 1 for v in values), (
-                        f'ID length mismatch in {table_name}.{col}'
-                    )
-                    assert all(v.isdigit() for v in values), (
-                        f'Non-digit characters in {table_name}.{col}'
-                    )
+                    assert all(
+                        len(str(v)) == 1 for v in values
+                    ), f'ID length mismatch in {table_name}.{col}'
+                    assert all(
+                        v.isdigit() for v in values
+                    ), f'Non-digit characters in {table_name}.{col}'
 
         # Check relationships are preserved
         child_fks = set(synthetic_data['table_2']['col_A'])
@@ -2637,3 +2638,20 @@ def test_column_order():
     assert table_1_column != list(data['table_1'].columns)
     assert table_1_column == ['col_1', 'col_2', 'col_3']
     assert list(synthetic_data['table_2'].columns) == ['col_A', 'col_B', 'col_C']
+
+
+def test_no_depreciation_warning_single_table_metadata_sampling():
+    """Test that no single-table metadata depreciation warning raises with `MultiTableMetadata`."""
+    # Setup
+    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    multi_metadata = MultiTableMetadata()
+    multi_metadata.detect_from_dataframes(data)
+    synthesizer = HMASynthesizer(multi_metadata)
+    synthesizer.fit(data)
+
+    # Run
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        synthesizer.sample()
+
+    # Assert
+    assert len(captured_warnings) == 0
