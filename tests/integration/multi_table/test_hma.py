@@ -722,7 +722,7 @@ class TestHMASynthesizer:
         key_phrases = [
             r'PerformanceAlert:',
             r'large number of columns.',
-            r'contact us at info@sdv.dev for enterprise solutions.',
+            r'please visit datacebo.com and reach out to us for enterprise solutions.',
         ]
 
         # Run
