@@ -2640,8 +2640,8 @@ def test_column_order():
     assert list(synthetic_data['table_2'].columns) == ['col_A', 'col_B', 'col_C']
 
 
-def test_no_depreciation_warning_single_table_metadata_sampling():
-    """Test that no single-table metadata depreciation warning raises with `MultiTableMetadata`."""
+def test_no_deprecation_warning_single_table_metadata_sampling():
+    """Test that no single-table metadata deprecation warning raises with `MultiTableMetadata`."""
     # Setup
     data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
     multi_metadata = MultiTableMetadata()
