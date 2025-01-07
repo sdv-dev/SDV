@@ -965,6 +965,8 @@ class DataProcessor:
                 Table containing only the valid rows.
         """
         for constraint in self._constraints:
+            if data.empty:
+                return data
             data = constraint.filter_valid(data)
 
         return data
