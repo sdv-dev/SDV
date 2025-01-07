@@ -249,9 +249,9 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
                 + '\n'
             )
             self._print(
-                "We recommend simplifying your metadata schema using 'sdv.utils.poc.simplify_sch"
-                "ema'.\nIf this is not possible, contact us at info@sdv.dev for enterprise solut"
-                'ions.\n'
+                'We recommend simplifying your metadata schema using '
+                "'sdv.utils.poc.simplify_schema'.\nIf this is not possible, please visit "
+                'datacebo.com and reach out to us for enterprise solutions.\n'
             )
 
     def preprocess(self, data):
