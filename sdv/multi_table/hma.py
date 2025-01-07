@@ -1,6 +1,7 @@
 """Hierarchical Modeling Algorithms."""
 
 import logging
+import warnings
 from collections import defaultdict
 from copy import deepcopy
 
@@ -552,7 +553,12 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
             parameters = self._extract_parameters(parent_row, child_name, foreign_key)
             default_parameters = getattr(self, '_default_parameters', {}).get(child_name, {})
             table_meta = self.metadata.get_table_metadata(child_name)
-            synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    'ignore', message=".*The 'SingleTableMetadata' is deprecated.*"
+                )
+                synthesizer = self._synthesizer(table_meta, **self._table_parameters[child_name])
+
             synthesizer._set_parameters(parameters, default_parameters)
         else:
             synthesizer = self._null_child_synthesizers[f'__{child_name}__{foreign_key}']
