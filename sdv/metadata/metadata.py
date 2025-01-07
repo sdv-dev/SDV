@@ -288,3 +288,14 @@ class Metadata(MultiTableMetadata):
         table_name = self._handle_table_name(table_name)
         table_metadata = super().get_table_metadata(table_name)
         return Metadata.load_from_dict(table_metadata.to_dict(), single_table_name=table_name)
+
+    def anonymize(self):
+        """Anonymize metadata by obfuscating column names.
+
+        Returns:
+            MultiTableMetadata:
+                An anonymized MultiTableMetadata instance.
+        """
+        anonymized_metadata = self._get_anonymized_dict()
+
+        return Metadata.load_from_dict(anonymized_metadata)
