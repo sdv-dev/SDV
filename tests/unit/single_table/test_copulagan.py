@@ -369,6 +369,30 @@ class TestCopulaGANSynthesizer:
             },
         }
 
+    def test_get_learned_distributions_nothing_learned(self):
+        """Test that ``get_learned_distributions`` returns an empty dict when nothing is learned."""
+        # Setup
+        metadata = Metadata().load_from_dict({
+            'tables': {
+                'table1': {
+                    'columns': {
+                        'col_1': {'sdtype': 'id'},
+                        'col_2': {'sdtype': 'credit_card_number'},
+                    },
+                }
+            }
+        })
+        data = pd.DataFrame({'col_1': range(100), 'col_2': range(100)})
+
+        synthesizer = CopulaGANSynthesizer(metadata, default_distribution='beta')
+        synthesizer.fit(data)
+
+        # Run
+        result = synthesizer.get_learned_distributions()
+
+        # Assert
+        assert result == {}
+
     def test_get_learned_distributions_raises_an_error(self):
         """Test that ``get_learned_distributions`` raises an error."""
         # Setup
