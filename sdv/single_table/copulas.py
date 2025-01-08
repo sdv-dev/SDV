@@ -216,6 +216,9 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
                 "Distributions have not been learned yet. Please fit your model first using 'fit'."
             )
 
+        if self._model is None:
+            return {}
+
         parameters = self._model.to_dict()
         columns = parameters['columns']
         univariates = deepcopy(parameters['univariates'])
