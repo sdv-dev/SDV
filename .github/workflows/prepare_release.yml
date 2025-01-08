@@ -1,0 +1,57 @@
+name: Release Prep
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to merge release notes and code analysis into.'
+        required: true
+        default: 'main'
+      version:
+        description:
+          'Version to use for the release. Must be in format: X.Y.Z.'
+      date:
+        description:
+          'Date of the release. Must be in format YYYY-MM-DD.'
+
+jobs:
+  preparerelease:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+            python -m pip install --upgrade pip
+            python -m pip install requests==2.31.0
+            python -m pip install bandit==1.7.7
+            python -m pip install .[test]
+
+      - name: Generate release notes
+        env:
+            GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+        run: >
+            python scripts/release_notes_generator.py
+            -v ${{ inputs.version }}
+            -d ${{ inputs.date }}
+
+      - name: Save static code analysis
+        run: bandit -r . -x ./tests,./scripts,./build -f txt -o static_code_analysis.txt --exit-zero
+
+      - name: Create pull request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          commit-message: Prepare release for v${{ inputs.version }}
+          author: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+          committer: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+          title: v${{ inputs.version }} Release Preparation
+          body: "This is an auto-generated PR to prepare the release."
+          branch: prepared-release
+          branch-suffix: short-commit-hash
+          base: ${{ inputs.branch }}
