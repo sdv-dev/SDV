@@ -582,7 +582,6 @@ class TestGaussianCopulaSynthesizer:
             }
         })
         data = pd.DataFrame({'col_1': range(100), 'col_2': range(100)})
-
         synthesizer = GaussianCopulaSynthesizer(metadata, default_distribution='beta')
         synthesizer.fit(data)
 
