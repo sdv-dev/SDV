@@ -1,6 +1,22 @@
 # Release Notes
 
-### v1.17.3 - 2024-12-17
+### v1.17.4 - 2025-01-09
+
+### New Features
+
+* Update the warning that's displayed when using HMA on complex schemas - Issue [#2277](https://github.com/sdv-dev/SDV/issues/2277) by @R-Palazzo
+
+### Bugs Fixed
+
+* Metadata `anonymize` doesn't produce the right `METADATA_SPEC_VERSION` - Issue [#2304](https://github.com/sdv-dev/SDV/issues/2304) by @R-Palazzo
+* GaussianCopula `get_learned_distributions` crashes if nothing was learned - Issue [#2297](https://github.com/sdv-dev/SDV/issues/2297) by @R-Palazzo
+* Sampling with HMA Synthesizer generates many `SingleTableMetadata` deprecation warnings - Issue [#2290](https://github.com/sdv-dev/SDV/issues/2290) by @R-Palazzo
+
+### Maintenance
+
+* Combine  `static_code_analysis.yml` with `release_notes.yml` - Issue [#2305](https://github.com/sdv-dev/SDV/issues/2305) by @R-Palazzo
+
+## v1.17.3 - 2024-12-17
 
 ### Maintenance
 

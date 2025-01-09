@@ -1,18 +1,6 @@
-Run started:2024-12-17 20:19:16.200992
+Run started:2025-01-09 11:44:50.561554
 
 Test results:
->> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '# Release Notes
-
-'
-   Severity: Low   Confidence: Medium
-   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b105_hardcoded_password_string.html
-   Location: ./scripts/release_notes_generator.py:134:12
-133	
-134	    token = '# Release Notes\n\n'
-135	    split_index = history.find(token) + len(token) + 1
-
---------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
@@ -44,6 +32,16 @@ Test results:
 18	    module_path = path.parent
 
 --------------------------------------------------
+>> Issue: [B306:blacklist] Use of insecure and deprecated function (mktemp).
+   Severity: Medium   Confidence: High
+   CWE: CWE-377 (https://cwe.mitre.org/data/definitions/377.html)
+   More Info: https://bandit.readthedocs.io/en/1.7.7/blacklists/blacklist_calls.html#b306-mktemp-q
+   Location: ./sdv/logging/utils.py:23:19
+22	    else:
+23	        tmp_path = tempfile.mktemp(dir=store_path, suffix='.yml')
+24	        shutil.copyfile(config_path, tmp_path)
+
+--------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
@@ -59,29 +57,29 @@ Test results:
    Severity: Low   Confidence: High
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b110_try_except_pass.html
-   Location: ./sdv/multi_table/hma.py:354:12
-353	                    index.append(foreign_key_value)
-354	            except Exception:
-355	                # Skip children rows subsets that fail
-356	                pass
-357	
+   Location: ./sdv/multi_table/hma.py:355:12
+354	                    index.append(foreign_key_value)
+355	            except Exception:
+356	                # Skip children rows subsets that fail
+357	                pass
+358	
 
 --------------------------------------------------
 
 Code scanned:
-	Total lines of code: 12942
+	Total lines of code: 12828
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
 Run metrics:
 	Total issues (by severity):
 		Undefined: 0
-		Low: 6
-		Medium: 0
+		Low: 5
+		Medium: 1
 		High: 0
 	Total issues (by confidence):
 		Undefined: 0
 		Low: 0
-		Medium: 2
-		High: 4
+		Medium: 1
+		High: 5
 Files skipped (0):
