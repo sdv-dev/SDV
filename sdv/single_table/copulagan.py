@@ -247,7 +247,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             )
 
         learned_distributions = {}
-        if self._gaussian_normalizer_hyper_transformer is None:
+        if not hasattr(self._gaussian_normalizer_hyper_transformer, 'field_transformers'):
             return learned_distributions
 
         field_transformers = self._gaussian_normalizer_hyper_transformer.field_transformers
