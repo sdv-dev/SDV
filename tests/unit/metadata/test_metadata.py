@@ -717,3 +717,18 @@ class TestMetadataClass:
         error_msg = 'Metadata does not contain any tables. No columns can be added.'
         with pytest.raises(ValueError, match=error_msg):
             instance._handle_table_name(None)
+
+    @patch('sdv.metadata.metadata.Metadata.load_from_dict')
+    def test_anonymize(self, mock_load_from_dict):
+        """Test that the `anonymize` method."""
+        # Setup
+        metadata = Metadata()
+        metadata._get_anonymized_dict = Mock(return_value={})
+        metadata.load_from_dict = Mock()
+
+        # Run
+        metadata.anonymize()
+
+        # Assert
+        metadata._get_anonymized_dict.assert_called_once()
+        mock_load_from_dict.assert_called_once_with({})
