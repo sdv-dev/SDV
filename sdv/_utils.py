@@ -450,3 +450,31 @@ def _is_numerical(value):
         return is_integer(value) or is_float(value)
     except Exception:
         return False
+
+
+def _prepare_data_vizualisation(data, metadata, column_names, sample_size):
+    """Prepare the data for a column pair plot.
+
+    Args:
+        data (pd.DataFrame):
+            The data to be prepared.
+
+    Returns:
+        pd.DataFrame:
+            The prepared data.
+    """
+    if data is None:
+        return None
+
+    col_names = column_names if isinstance(column_names, list) else [column_names]
+    data = data.copy()
+    for column_name in col_names:
+        sdtype = metadata.columns[column_name]['sdtype']
+        if sdtype == 'datetime':
+            datetime_format = metadata.columns[column_name].get('datetime_format')
+            data[column_name] = pd.to_datetime(data[column_name], format=datetime_format)
+
+    if sample_size and sample_size < len(data):
+        data = data.sample(n=sample_size)
+
+    return data

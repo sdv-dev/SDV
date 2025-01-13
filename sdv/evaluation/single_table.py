@@ -1,10 +1,10 @@
 """Methods to compare the real and synthetic data for single-table."""
 
-import pandas as pd
 from sdmetrics import visualization
 from sdmetrics.reports.single_table.diagnostic_report import DiagnosticReport
 from sdmetrics.reports.single_table.quality_report import QualityReport
 
+from sdv._utils import _prepare_data_vizualisation
 from sdv.errors import VisualizationUnavailableError
 from sdv.metadata.metadata import Metadata
 
@@ -68,9 +68,9 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=
     """Get a plot of the real and synthetic data for a given column.
 
     Args:
-        real_data (pandas.DataFrame):
+        real_data (pandas.DataFrame or None):
             The real table data.
-        synthetic_data (pandas.DataFrame):
+        synthetic_data (pandas.DataFrame or None):
             The synthetic table data.
         metadata (Metadata):
             The table metadata.
@@ -103,14 +103,8 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=
                 "'plot_type'."
             )
 
-    if sdtype == 'datetime':
-        datetime_format = metadata.columns.get(column_name).get('datetime_format')
-        real_data = pd.DataFrame({
-            column_name: pd.to_datetime(real_data[column_name], format=datetime_format)
-        })
-        synthetic_data = pd.DataFrame({
-            column_name: pd.to_datetime(synthetic_data[column_name], format=datetime_format)
-        })
+    real_data = _prepare_data_vizualisation(real_data, metadata, column_name, None)
+    synthetic_data = _prepare_data_vizualisation(synthetic_data, metadata, column_name, None)
 
     return visualization.get_column_plot(
         real_data, synthetic_data, column_name, plot_type=plot_type
@@ -147,8 +141,6 @@ def get_column_pair_plot(
     if isinstance(metadata, Metadata):
         metadata = metadata._convert_to_single_table()
 
-    real_data = real_data.copy()
-    synthetic_data = synthetic_data.copy()
     if plot_type is None:
         plot_type = []
         for column_name in column_names:
@@ -169,18 +161,9 @@ def get_column_pair_plot(
         else:
             plot_type = plot_type.pop()
 
-    for column_name in column_names:
-        sdtype = metadata.columns.get(column_name)['sdtype']
-        if sdtype == 'datetime':
-            datetime_format = metadata.columns.get(column_name).get('datetime_format')
-            real_data[column_name] = pd.to_datetime(real_data[column_name], format=datetime_format)
-            synthetic_data[column_name] = pd.to_datetime(
-                synthetic_data[column_name], format=datetime_format
-            )
-
-    require_subsample = sample_size and sample_size < min(len(real_data), len(synthetic_data))
-    if require_subsample:
-        real_data = real_data.sample(n=sample_size)
-        synthetic_data = synthetic_data.sample(n=sample_size)
+    real_data = _prepare_data_vizualisation(real_data, metadata, column_names, sample_size)
+    synthetic_data = _prepare_data_vizualisation(
+        synthetic_data, metadata, column_names, sample_size
+    )
 
     return visualization.get_column_pair_plot(real_data, synthetic_data, column_names, plot_type)
