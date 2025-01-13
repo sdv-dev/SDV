@@ -246,9 +246,11 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
                 "Distributions have not been learned yet. Please fit your model first using 'fit'."
             )
 
-        field_transformers = self._gaussian_normalizer_hyper_transformer.field_transformers
-
         learned_distributions = {}
+        if not hasattr(self._gaussian_normalizer_hyper_transformer, 'field_transformers'):
+            return learned_distributions
+
+        field_transformers = self._gaussian_normalizer_hyper_transformer.field_transformers
         for column_name, transformer in field_transformers.items():
             if isinstance(transformer, rdt.transformers.GaussianNormalizer):
                 learned_params = deepcopy(transformer._univariate.to_dict())
