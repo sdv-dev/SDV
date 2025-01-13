@@ -452,7 +452,7 @@ def _is_numerical(value):
         return False
 
 
-def _prepare_data_vizualisation(data, metadata, column_names, sample_size):
+def _prepare_data_visualization(data, metadata, column_names, sample_size):
     """Prepare the data for a plot.
 
     Args:

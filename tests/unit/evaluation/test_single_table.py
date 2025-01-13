@@ -89,7 +89,7 @@ def test_run_diagnostic_metadata():
 
 
 @patch('sdmetrics.visualization.get_column_plot')
-@patch('sdv.evaluation.single_table._prepare_data_vizualisation')
+@patch('sdv.evaluation.single_table._prepare_data_visualization')
 def test_get_column_plot_continuous_data(mock_prepare, mock_get_plot):
     """Test the ``get_column_plot`` with continuous data.
 
@@ -113,7 +113,7 @@ def test_get_column_plot_continuous_data(mock_prepare, mock_get_plot):
 
 
 @patch('sdmetrics.visualization.get_column_plot')
-@patch('sdv.evaluation.single_table._prepare_data_vizualisation')
+@patch('sdv.evaluation.single_table._prepare_data_visualization')
 def test_get_column_plot_continuous_data_metadata(mock_prepare, mock_get_plot):
     """Test the ``get_column_plot`` with continuous data.
 
@@ -136,7 +136,7 @@ def test_get_column_plot_continuous_data_metadata(mock_prepare, mock_get_plot):
 
 
 @patch('sdmetrics.visualization.get_column_plot')
-@patch('sdv.evaluation.single_table._prepare_data_vizualisation')
+@patch('sdv.evaluation.single_table._prepare_data_visualization')
 def test_get_column_plot_discrete_data(mock_prepare, mock_get_plot):
     """Test the ``get_column_plot`` with discrete data.
 
@@ -160,7 +160,7 @@ def test_get_column_plot_discrete_data(mock_prepare, mock_get_plot):
 
 
 @patch('sdmetrics.visualization.get_column_plot')
-@patch('sdv.evaluation.single_table._prepare_data_vizualisation')
+@patch('sdv.evaluation.single_table._prepare_data_visualization')
 def test_get_column_plot_discrete_data_metadata(mock_prepare, mock_get_plot):
     """Test the ``get_column_plot`` with discrete data.
 
@@ -183,7 +183,7 @@ def test_get_column_plot_discrete_data_metadata(mock_prepare, mock_get_plot):
 
 
 @patch('sdmetrics.visualization.get_column_plot')
-@patch('sdv.evaluation.single_table._prepare_data_vizualisation')
+@patch('sdv.evaluation.single_table._prepare_data_visualization')
 def test_get_column_plot_discrete_data_with_distplot(mock_prepare, mock_get_plot):
     """Test the ``get_column_plot`` with discrete data.
 
@@ -208,7 +208,7 @@ def test_get_column_plot_discrete_data_with_distplot(mock_prepare, mock_get_plot
 
 
 @patch('sdmetrics.visualization.get_column_plot')
-@patch('sdv.evaluation.single_table._prepare_data_vizualisation')
+@patch('sdv.evaluation.single_table._prepare_data_visualization')
 def test_get_column_plot_discrete_data_with_distplot_metadata(mock_prepare, mock_get_plot):
     """Test the ``get_column_plot`` with discrete data.
 
@@ -232,7 +232,7 @@ def test_get_column_plot_discrete_data_with_distplot_metadata(mock_prepare, mock
 
 
 @patch('sdmetrics.visualization.get_column_plot')
-@patch('sdv.evaluation.single_table._prepare_data_vizualisation')
+@patch('sdv.evaluation.single_table._prepare_data_visualization')
 def test_get_column_plot_invalid_sdtype(mock_prepare, mock_get_plot):
     """Test the ``get_column_plot`` with sdtype that can't be plotted.
 
@@ -257,7 +257,7 @@ def test_get_column_plot_invalid_sdtype(mock_prepare, mock_get_plot):
 
 
 @patch('sdmetrics.visualization.get_column_plot')
-@patch('sdv.evaluation.single_table._prepare_data_vizualisation')
+@patch('sdv.evaluation.single_table._prepare_data_visualization')
 def test_get_column_plot_invalid_sdtype_metadata(mock_prepare, mock_get_plot):
     """Test the ``get_column_plot`` with sdtype that can't be plotted.
 
@@ -281,7 +281,7 @@ def test_get_column_plot_invalid_sdtype_metadata(mock_prepare, mock_get_plot):
 
 
 @patch('sdmetrics.visualization.get_column_plot')
-@patch('sdv.evaluation.single_table._prepare_data_vizualisation')
+@patch('sdv.evaluation.single_table._prepare_data_visualization')
 def test_get_column_plot_invalid_sdtype_with_plot_type(mock_prepare, mock_get_plot):
     """Test the ``get_column_plot`` with sdtype that can't be plotted.
 
@@ -305,7 +305,7 @@ def test_get_column_plot_invalid_sdtype_with_plot_type(mock_prepare, mock_get_pl
 
 
 @patch('sdmetrics.visualization.get_column_plot')
-@patch('sdv.evaluation.single_table._prepare_data_vizualisation')
+@patch('sdv.evaluation.single_table._prepare_data_visualization')
 def test_get_column_plot_invalid_sdtype_with_plot_type_metadata(mock_prepare, mock_get_plot):
     """Test the ``get_column_plot`` with sdtype that can't be plotted.
 
@@ -433,7 +433,7 @@ def test_get_column_pair_plot_with_continous_data(mock_get_plot):
 
 
 @patch('sdmetrics.visualization.get_column_pair_plot')
-@patch('sdv.evaluation.single_table._prepare_data_vizualisation')
+@patch('sdv.evaluation.single_table._prepare_data_visualization')
 def test_get_column_pair_plot_with_discrete_data(mock_prepare, mock_get_plot):
     """Test the ``get_column_pair_plot`` when using discrete data.
 

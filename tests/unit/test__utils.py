@@ -18,7 +18,7 @@ from sdv._utils import (
     _get_root_tables,
     _is_datetime_type,
     _is_numerical,
-    _prepare_data_vizualisation,
+    _prepare_data_visualization,
     _validate_foreign_keys_not_null,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
@@ -791,8 +791,8 @@ def test__is_numerical_string():
     assert datetime_result is False
 
 
-def test__prepare_data_vizualisation():
-    """Test ``_prepare_data_vizualisation``."""
+def test__prepare_data_visualization():
+    """Test ``_prepare_data_visualization``."""
     # Setup
     np.random.seed(0)
     metadata = SingleTableMetadata.load_from_dict({
@@ -809,7 +809,7 @@ def test__prepare_data_vizualisation():
     })
 
     # Run
-    result = _prepare_data_vizualisation(data, metadata, column_names, sample_size)
+    result = _prepare_data_visualization(data, metadata, column_names, sample_size)
 
     # Assert
     expected_result = pd.DataFrame(

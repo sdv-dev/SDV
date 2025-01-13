@@ -4,7 +4,7 @@ from sdmetrics import visualization
 from sdmetrics.reports.single_table.diagnostic_report import DiagnosticReport
 from sdmetrics.reports.single_table.quality_report import QualityReport
 
-from sdv._utils import _prepare_data_vizualisation
+from sdv._utils import _prepare_data_visualization
 from sdv.errors import VisualizationUnavailableError
 from sdv.metadata.metadata import Metadata
 
@@ -103,8 +103,8 @@ def get_column_plot(real_data, synthetic_data, metadata, column_name, plot_type=
                 "'plot_type'."
             )
 
-    real_data = _prepare_data_vizualisation(real_data, metadata, column_name, None)
-    synthetic_data = _prepare_data_vizualisation(synthetic_data, metadata, column_name, None)
+    real_data = _prepare_data_visualization(real_data, metadata, column_name, None)
+    synthetic_data = _prepare_data_visualization(synthetic_data, metadata, column_name, None)
 
     return visualization.get_column_plot(
         real_data, synthetic_data, column_name, plot_type=plot_type
@@ -161,8 +161,8 @@ def get_column_pair_plot(
         else:
             plot_type = plot_type.pop()
 
-    real_data = _prepare_data_vizualisation(real_data, metadata, column_names, sample_size)
-    synthetic_data = _prepare_data_vizualisation(
+    real_data = _prepare_data_visualization(real_data, metadata, column_names, sample_size)
+    synthetic_data = _prepare_data_visualization(
         synthetic_data, metadata, column_names, sample_size
     )
 
