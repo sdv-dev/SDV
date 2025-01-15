@@ -4,8 +4,8 @@ from sdmetrics import visualization
 from sdmetrics.reports.single_table.diagnostic_report import DiagnosticReport
 from sdmetrics.reports.single_table.quality_report import QualityReport
 
-from sdv._utils import _prepare_data_visualization
 from sdv.errors import VisualizationUnavailableError
+from sdv.evaluation._utils import _prepare_data_visualization
 from sdv.metadata.metadata import Metadata
 
 
