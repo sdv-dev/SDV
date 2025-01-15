@@ -487,7 +487,7 @@ class TestPARSynthesizer:
         par = PARSynthesizer(metadata, context_columns=['time'])
         initial_synthesizer = Mock()
         context_metadata = SingleTableMetadata.load_from_dict({
-            'columns': {'time': {'sdtype': 'datetime'}, 'name': {'sdtype': 'id'}}
+            'columns': {'time': {'sdtype': 'numerical'}, 'name': {'sdtype': 'id'}}
         })
         par._context_synthesizer = initial_synthesizer
         par._get_context_metadata = Mock()
@@ -934,6 +934,7 @@ class TestPARSynthesizer:
         """Test that the method uses the provided context columns to sample."""
         # Setup
         par = PARSynthesizer(metadata=self.get_metadata(), context_columns=['gender'])
+        par._get_context_datetime_columns = Mock(return_value=None)
         par._context_synthesizer = Mock()
         par._context_synthesizer._model.columns = ['gender', 'extra_col']
         par._context_synthesizer.sample_from_conditions.return_value = pd.DataFrame({
@@ -970,6 +971,7 @@ class TestPARSynthesizer:
         call_args, _ = par._sample.call_args
         pd.testing.assert_frame_equal(call_args[0], expected_call_arg)
         assert call_args[1] == 5
+        par._get_context_datetime_columns.assert_called_once_with()
 
     def test_sample_sequential_columns_no_context_columns(self):
         """Test that the method raises an error if the synthesizer has no context columns.
@@ -1083,3 +1085,44 @@ class TestPARSynthesizer:
 
         with pytest.raises(InvalidMetadataError, match=error_msg):
             PARSynthesizer(multi_metadata)
+
+    def test_sample_sequential_columns_with_datetime_values(self):
+        """Test that the method uses converts datetime values to numerical space before sampling."""
+        # Setup
+        par = PARSynthesizer(metadata=self.get_metadata(), context_columns=['time'])
+        data = self.get_data()
+        par.fit(data)
+
+        par._context_synthesizer = Mock()
+        par._context_synthesizer._model.columns = ['time', 'extra_col']
+        par._context_synthesizer.sample_from_conditions.return_value = pd.DataFrame({
+            'id_col': ['A', 'A', 'A'],
+            'time': ['2020-01-01', '2020-01-02', '2020-01-03'],
+            'extra_col': [0, 1, 1],
+        })
+        par._sample = Mock()
+        context_columns = pd.DataFrame({
+            'id_col': ['ID-1', 'ID-2', 'ID-3'],
+            'time': ['2020-01-01', '2020-01-02', '2020-01-03'],
+        })
+
+        # Run
+        par.sample_sequential_columns(context_columns, 5)
+
+        # Assert
+        time_values = par._data_processor.transform(
+            pd.DataFrame({'time': ['2020-01-01', '2020-01-02', '2020-01-03']})
+        )
+
+        time_values = time_values['time'].tolist()
+        expected_conditions = [
+            Condition({'time': time_values[0]}),
+            Condition({'time': time_values[1]}),
+            Condition({'time': time_values[2]}),
+        ]
+        call_args, _ = par._context_synthesizer.sample_from_conditions.call_args
+
+        assert len(call_args[0]) == len(expected_conditions)
+        for arg, expected in zip(call_args[0], expected_conditions):
+            assert arg.column_values == expected.column_values
+            assert arg.num_rows == expected.num_rows

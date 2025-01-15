@@ -76,12 +76,23 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
 
         for column in context_columns:
             context_columns_dict[column] = self.metadata.columns[column]
+            # Context datetime SDTypes for PAR have already been converted to float timestamp
+            if context_columns_dict[column]['sdtype'] == 'datetime':
+                context_columns_dict[column] = {'sdtype': 'numerical'}
 
         for column, column_metadata in self._extra_context_columns.items():
             context_columns_dict[column] = column_metadata
 
         context_metadata_dict = {'columns': context_columns_dict}
         return SingleTableMetadata.load_from_dict(context_metadata_dict)
+
+    def _get_context_datetime_columns(self):
+        datetime_columns = []
+        for column in self.context_columns:
+            if self.metadata.columns[column]['sdtype'] == 'datetime':
+                datetime_columns.append(column)
+
+        return datetime_columns
 
     def __init__(
         self,
@@ -352,12 +363,6 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             context[constant_column] = 0
             context_metadata.add_column(constant_column, sdtype='numerical')
 
-        for column in self.context_columns:
-            # Context datetime SDTypes for PAR have already been converted to float timestamp
-            if context_metadata.columns[column]['sdtype'] == 'datetime':
-                if pd.api.types.is_numeric_dtype(context[column]):
-                    context_metadata.update_column(column, sdtype='numerical')
-
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', message=".*The 'SingleTableMetadata' is deprecated.*")
             self._context_synthesizer = GaussianCopulaSynthesizer(
@@ -540,9 +545,15 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 set(context_columns.columns), set(self._context_synthesizer._model.columns)
             )
         )
+
+        datetime_columns = self._get_context_datetime_columns()
+        if datetime_columns:
+            context_columns[datetime_columns] = self._data_processor.transform(
+                context_columns[datetime_columns]
+            )
+
         condition_columns = context_columns[condition_columns].to_dict('records')
-        context = self._context_synthesizer.sample_from_conditions([
-            Condition(conditions) for conditions in condition_columns
-        ])
+        synthesizer_conditions = [Condition(conditions) for conditions in condition_columns]
+        context = self._context_synthesizer.sample_from_conditions(synthesizer_conditions)
         context.update(context_columns)
         return self._sample(context, sequence_length)
