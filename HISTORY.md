@@ -19,7 +19,7 @@
 * Include stack trace when sampling errors are surfaced - Issue [#2326](https://github.com/sdv-dev/SDV/issues/2326) by @amontanez24
 * Combine  `static_code_analysis.yml` with `release_notes.yml` - Issue [#2305](https://github.com/sdv-dev/SDV/issues/2305) by @R-Palazzo
 
-### v1.17.3 - 2024-12-17
+## v1.17.3 - 2024-12-17
 
 ### Maintenance
 
