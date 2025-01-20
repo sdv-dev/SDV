@@ -215,9 +215,12 @@ def test_unflatten_dict():
 def test_handle_sampling_error_temp_file():
     """Test that an error is raised when temp dir is ``False``."""
     # Run and Assert
-    error_msg = 'Error: Sampling terminated. Partial results are stored in test.csv.\nTest error'
-    with pytest.raises(ValueError, match=error_msg):
+    error_msg = 'Error: Sampling terminated. Partial results are stored in test.csv.'
+    with pytest.raises(ValueError, match=error_msg) as exception:
         handle_sampling_error('test.csv', ValueError('Test error'))
+
+    assert isinstance(exception.value.__cause__, ValueError)
+    assert 'Test error' in str(exception.value.__cause__)
 
 
 def test_handle_sampling_error_false_temp_file_none_output_file():
@@ -228,8 +231,11 @@ def test_handle_sampling_error_false_temp_file_none_output_file():
     """
     # Run and Assert
     error_msg = 'Test error'
-    with pytest.raises(ValueError, match=error_msg):
+    with pytest.raises(ValueError) as exception:
         handle_sampling_error('test.csv', ValueError('Test error'))
+
+    assert isinstance(exception.value.__cause__, ValueError)
+    assert error_msg in str(exception.value.__cause__)
 
 
 def test_handle_sampling_error_ignore():

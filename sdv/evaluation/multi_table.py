@@ -94,9 +94,9 @@ def get_column_pair_plot(
     """Get a plot of the real and synthetic data for a given column pair.
 
     Args:
-        real_data (dict):
+        real_data (dict or None):
             Dictionary containing the real table data.
-        synthetic_column (dict):
+        synthetic_column (dict or None):
             Dictionary containing the synthetic table data.
         metadata (Metadata):
             Metadata describing the data.

@@ -3160,6 +3160,86 @@ class TestMultiTableMetadata:
             'child_foreign_key': 'col2',
         }
 
+    def test__get_anonymized_dict(self):
+        """Test the ``_get_anonymized_dict`` method."""
+        # Setup
+        metadata_dict = {
+            'tables': {
+                'real_table1': {
+                    'columns': {
+                        'table1_primary_key': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{3}'},
+                        'table1_column2': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': 'table1_primary_key',
+                },
+                'real_table2': {
+                    'columns': {
+                        'table2_primary_key': {'sdtype': 'email'},
+                        'table2_foreign_key': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{3}'},
+                    },
+                    'primary_key': 'table2_primary_key',
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'real_table1',
+                    'parent_primary_key': 'table1_primary_key',
+                    'child_table_name': 'real_table2',
+                    'child_foreign_key': 'table2_foreign_key',
+                }
+            ],
+        }
+        metadata = MultiTableMetadata.load_from_dict(metadata_dict)
+
+        # Run
+        anonymized_dict = metadata._get_anonymized_dict()
+
+        # Assert
+        expected_anonymized_dict = {
+            'tables': {
+                'table1': {
+                    'columns': {
+                        'col1': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{3}'},
+                        'col2': {'sdtype': 'categorical'},
+                    },
+                    'primary_key': 'col1',
+                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+                },
+                'table2': {
+                    'columns': {
+                        'col1': {'sdtype': 'email'},
+                        'col2': {'sdtype': 'id', 'regex_format': 'ID_[0-9]{3}'},
+                    },
+                    'primary_key': 'col1',
+                    'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1',
+                },
+            },
+            'relationships': [
+                {
+                    'parent_table_name': 'table1',
+                    'child_table_name': 'table2',
+                    'child_foreign_key': 'col2',
+                    'parent_primary_key': 'col1',
+                }
+            ],
+        }
+        assert anonymized_dict == expected_anonymized_dict
+
+    @patch('sdv.metadata.metadata.MultiTableMetadata.load_from_dict')
+    def test_anonymize_mock(self, mock_load_from_dict):
+        """Test that the `anonymize` method."""
+        # Setup
+        metadata = MultiTableMetadata()
+        metadata._get_anonymized_dict = Mock(return_value={})
+        metadata.load_from_dict = Mock()
+
+        # Run
+        metadata.anonymize()
+
+        # Assert
+        metadata._get_anonymized_dict.assert_called_once()
+        mock_load_from_dict.assert_called_once_with({})
+
     def test_update_columns_no_list_error(self):
         """Test that ``update_columns`` only takes in list and that an error is thrown."""
         # Setup

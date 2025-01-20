@@ -914,13 +914,7 @@ class MultiTableMetadata:
         self._validate_table_exists(table_name)
         return deepcopy(self.tables[table_name])
 
-    def anonymize(self):
-        """Anonymize metadata by obfuscating column names.
-
-        Returns:
-            MultiTableMetadata:
-                An anonymized MultiTableMetadata instance.
-        """
+    def _get_anonymized_dict(self):
         anonymized_metadata = {'tables': {}, 'relationships': []}
         anonymized_table_map = {}
         counter = 1
@@ -952,6 +946,17 @@ class MultiTableMetadata:
                 'child_foreign_key': anonymized_foreign_key,
                 'parent_primary_key': anonymized_primary_key,
             })
+
+        return anonymized_metadata
+
+    def anonymize(self):
+        """Anonymize metadata by obfuscating column names.
+
+        Returns:
+            MultiTableMetadata:
+                An anonymized MultiTableMetadata instance.
+        """
+        anonymized_metadata = self._get_anonymized_dict()
 
         return MultiTableMetadata.load_from_dict(anonymized_metadata)
 
