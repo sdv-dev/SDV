@@ -1087,7 +1087,7 @@ class TestPARSynthesizer:
             PARSynthesizer(multi_metadata)
 
     def test_sample_sequential_columns_with_datetime_values(self):
-        """Test that the method uses converts datetime values to numerical space before sampling."""
+        """Test that the method converts datetime values to numerical space before sampling."""
         # Setup
         par = PARSynthesizer(metadata=self.get_metadata(), context_columns=['time'])
         data = self.get_data()
@@ -1126,3 +1126,25 @@ class TestPARSynthesizer:
         for arg, expected in zip(call_args[0], expected_conditions):
             assert arg.column_values == expected.column_values
             assert arg.num_rows == expected.num_rows
+
+    def test__process_datetime_columns_in_context_columns(self):
+        """Test that the method converts datetime columns into numerical space."""
+        # Setup
+        instance = Mock()
+        instance._get_context_datetime_columns.return_value = ['Date']
+        instance._data_processor.transform.return_value = pd.DataFrame({'datetime_col': [1, 2, 3]})
+        instance._get_context_datetime_columns.return_value = ['datetime_col']
+
+        context_columns = pd.DataFrame({
+            'datetime_col': ['2021-01-01', '2022-01-01', '2023-01-01'],
+            'col2': [4, 5, 6],
+        })
+
+        # Run
+        result = PARSynthesizer._process_datetime_columns_in_context_columns(
+            instance, context_columns
+        )
+
+        # Assert
+        expected_result = pd.DataFrame({'datetime_col': [1, 2, 3], 'col2': [4, 5, 6]})
+        pd.testing.assert_frame_equal(result, expected_result)

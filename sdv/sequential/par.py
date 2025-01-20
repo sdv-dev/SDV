@@ -545,15 +545,28 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 set(context_columns.columns), set(self._context_synthesizer._model.columns)
             )
         )
-
-        datetime_columns = self._get_context_datetime_columns()
-        if datetime_columns:
-            context_columns[datetime_columns] = self._data_processor.transform(
-                context_columns[datetime_columns]
-            )
+        context_columns = self._process_datetime_columns_in_context_columns(context_columns)
 
         condition_columns = context_columns[condition_columns].to_dict('records')
         synthesizer_conditions = [Condition(conditions) for conditions in condition_columns]
         context = self._context_synthesizer.sample_from_conditions(synthesizer_conditions)
         context.update(context_columns)
         return self._sample(context, sequence_length)
+
+    def _process_datetime_columns_in_context_columns(self, context_columns):
+        """Process datetime columns by transforming them using the data processor.
+
+        Args:
+            context_columns (pandas.DataFrame):
+                Context values containing potential datetime columns.
+
+        Returns:
+            context_columns (pandas.DataFrame):
+                Updated context columns with transformed datetime values.
+        """
+        datetime_columns = self._get_context_datetime_columns()
+        if datetime_columns:
+            transformed = self._data_processor.transform(context_columns[datetime_columns])
+            context_columns[datetime_columns] = transformed[datetime_columns]
+
+        return context_columns
