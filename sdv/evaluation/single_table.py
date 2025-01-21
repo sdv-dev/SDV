@@ -195,6 +195,9 @@ def plot_learning_curve(real_data, synthetic_generator, metadata, train_sizes=No
         plotly.graph_objects._figure.Figure:
             Interactive plot showing learning curves with confidence intervals.
     """
+    #import numpy as np
+    #import plotly.graph_objects as go
+    #from sklearn.model_selection import ShuffleSplit
     
     # Set default training sizes if none provided
     if train_sizes is None:
