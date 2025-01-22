@@ -4,6 +4,7 @@ import inspect
 import logging
 import uuid
 import warnings
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -74,14 +75,43 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         if self._sequence_key:
             context_columns += self._sequence_key
 
-        for column in context_columns:
-            context_columns_dict[column] = self.metadata.columns[column]
-
         for column, column_metadata in self._extra_context_columns.items():
             context_columns_dict[column] = column_metadata
 
+        for column in context_columns:
+            context_columns_dict[column] = self.metadata.columns[column]
+
+        context_columns_dict = self._update_context_column_dict(context_columns_dict)
         context_metadata_dict = {'columns': context_columns_dict}
         return SingleTableMetadata.load_from_dict(context_metadata_dict)
+
+    def _update_context_column_dict(self, context_columns_dict):
+        """Update context column dictionary based on available transformers.
+
+        Args:
+            context_columns_dict (dict):
+                Dictionary of context columns.
+
+        Returns:
+            dict:
+                Updated context column metadata.
+        """
+        default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
+        for column in self.context_columns:
+            column_metadata = self.metadata.columns[column]
+            if default_transformers_by_sdtype.get(column_metadata['sdtype']):
+                context_columns_dict[column] = {'sdtype': 'numerical'}
+
+        return context_columns_dict
+
+    def _get_context_columns_for_processing(self):
+        columns_to_be_processed = []
+        default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
+        for column in self.context_columns:
+            if default_transformers_by_sdtype.get(self.metadata.columns[column]['sdtype']):
+                columns_to_be_processed.append(column)
+
+        return columns_to_be_processed
 
     def __init__(
         self,
@@ -352,12 +382,6 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             context[constant_column] = 0
             context_metadata.add_column(constant_column, sdtype='numerical')
 
-        for column in self.context_columns:
-            # Context datetime SDTypes for PAR have already been converted to float timestamp
-            if context_metadata.columns[column]['sdtype'] == 'datetime':
-                if pd.api.types.is_numeric_dtype(context[column]):
-                    context_metadata.update_column(column, sdtype='numerical')
-
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', message=".*The 'SingleTableMetadata' is deprecated.*")
             self._context_synthesizer = GaussianCopulaSynthesizer(
@@ -540,9 +564,30 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 set(context_columns.columns), set(self._context_synthesizer._model.columns)
             )
         )
+        context_columns = self._process_context_columns(context_columns)
+
         condition_columns = context_columns[condition_columns].to_dict('records')
-        context = self._context_synthesizer.sample_from_conditions([
-            Condition(conditions) for conditions in condition_columns
-        ])
+        synthesizer_conditions = [Condition(conditions) for conditions in condition_columns]
+        context = self._context_synthesizer.sample_from_conditions(synthesizer_conditions)
         context.update(context_columns)
         return self._sample(context, sequence_length)
+
+    def _process_context_columns(self, context_columns):
+        """Process context columns by applying appropriate transformations.
+
+        Args:
+            context_columns (pandas.DataFrame):
+                Context values containing potential columns for transformation.
+
+        Returns:
+            context_columns (pandas.DataFrame):
+                Updated context columns with transformed values.
+        """
+        columns_to_be_processed = self._get_context_columns_for_processing()
+
+        if columns_to_be_processed:
+            context_columns[columns_to_be_processed] = self._data_processor.transform(
+                context_columns[columns_to_be_processed]
+            )
+
+        return context_columns
