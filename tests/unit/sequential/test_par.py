@@ -934,7 +934,8 @@ class TestPARSynthesizer:
         """Test that the method uses the provided context columns to sample."""
         # Setup
         par = PARSynthesizer(metadata=self.get_metadata(), context_columns=['gender'])
-        par._get_context_datetime_columns = Mock(return_value=None)
+        par._process_context_columns = Mock()
+        par._process_context_columns.side_effect = lambda value: value
         par._context_synthesizer = Mock()
         par._context_synthesizer._model.columns = ['gender', 'extra_col']
         par._context_synthesizer.sample_from_conditions.return_value = pd.DataFrame({
@@ -971,7 +972,7 @@ class TestPARSynthesizer:
         call_args, _ = par._sample.call_args
         pd.testing.assert_frame_equal(call_args[0], expected_call_arg)
         assert call_args[1] == 5
-        par._get_context_datetime_columns.assert_called_once_with()
+        par._process_context_columns.assert_called_once_with(context_columns)
 
     def test_sample_sequential_columns_no_context_columns(self):
         """Test that the method raises an error if the synthesizer has no context columns.
@@ -1127,24 +1128,25 @@ class TestPARSynthesizer:
             assert arg.column_values == expected.column_values
             assert arg.num_rows == expected.num_rows
 
-    def test__process_datetime_columns_in_context_columns(self):
-        """Test that the method converts datetime columns into numerical space."""
+    def test__process_context_columns(self):
+        """Test that the method processes specified columns using appropriate transformations."""
         # Setup
         instance = Mock()
-        instance._get_context_datetime_columns.return_value = ['Date']
+        instance._get_context_columns_for_processing.return_value = ['datetime_col']
         instance._data_processor.transform.return_value = pd.DataFrame({'datetime_col': [1, 2, 3]})
-        instance._get_context_datetime_columns.return_value = ['datetime_col']
 
         context_columns = pd.DataFrame({
             'datetime_col': ['2021-01-01', '2022-01-01', '2023-01-01'],
             'col2': [4, 5, 6],
         })
 
+        expected_result = pd.DataFrame({
+            'datetime_col': [1, 2, 3],
+            'col2': [4, 5, 6],
+        })
+
         # Run
-        result = PARSynthesizer._process_datetime_columns_in_context_columns(
-            instance, context_columns
-        )
+        result = PARSynthesizer._process_context_columns(instance, context_columns)
 
         # Assert
-        expected_result = pd.DataFrame({'datetime_col': [1, 2, 3], 'col2': [4, 5, 6]})
         pd.testing.assert_frame_equal(result, expected_result)

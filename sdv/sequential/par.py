@@ -4,6 +4,7 @@ import inspect
 import logging
 import uuid
 import warnings
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -74,25 +75,44 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         if self._sequence_key:
             context_columns += self._sequence_key
 
-        for column in context_columns:
-            context_columns_dict[column] = self.metadata.columns[column]
-            # Context datetime SDTypes for PAR have already been converted to float timestamp
-            if context_columns_dict[column]['sdtype'] == 'datetime':
-                context_columns_dict[column] = {'sdtype': 'numerical'}
-
         for column, column_metadata in self._extra_context_columns.items():
             context_columns_dict[column] = column_metadata
 
+        for column in context_columns:
+            context_columns_dict[column] = self.metadata.columns[column]
+
+        context_columns_dict = self._update_context_column_dict(context_columns_dict)
         context_metadata_dict = {'columns': context_columns_dict}
         return SingleTableMetadata.load_from_dict(context_metadata_dict)
 
-    def _get_context_datetime_columns(self):
-        datetime_columns = []
-        for column in self.context_columns:
-            if self.metadata.columns[column]['sdtype'] == 'datetime':
-                datetime_columns.append(column)
+    def _update_context_column_dict(self, context_columns_dict):
+        """Update context column dictionary based on available transformers.
 
-        return datetime_columns
+        Args:
+            context_columns_dict (dict):
+                Dictionary of context columns.
+
+        Returns:
+            dict:
+                Updated context column metadata.
+        """
+        default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
+        for column in self.context_columns:
+            column_metadata = self.metadata.columns[column]
+            sdtype = column_metadata['sdtype']
+            if default_transformers_by_sdtype.get(column_metadata['sdtype']):
+                context_columns_dict[column] = {'sdtype': 'numerical'}
+
+        return context_columns_dict
+
+    def _get_context_columns_for_processing(self):
+        columns_to_be_processed = []
+        default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
+        for column in self.context_columns:
+            if default_transformers_by_sdtype.get(self.metadata.columns[column]['sdtype']):
+                columns_to_be_processed.append(column)
+
+        return columns_to_be_processed
 
     def __init__(
         self,
@@ -545,7 +565,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
                 set(context_columns.columns), set(self._context_synthesizer._model.columns)
             )
         )
-        context_columns = self._process_datetime_columns_in_context_columns(context_columns)
+        context_columns = self._process_context_columns(context_columns)
 
         condition_columns = context_columns[condition_columns].to_dict('records')
         synthesizer_conditions = [Condition(conditions) for conditions in condition_columns]
@@ -553,20 +573,22 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         context.update(context_columns)
         return self._sample(context, sequence_length)
 
-    def _process_datetime_columns_in_context_columns(self, context_columns):
-        """Process datetime columns by transforming them using the data processor.
+    def _process_context_columns(self, context_columns):
+        """Process context columns by applying appropriate transformations.
 
         Args:
             context_columns (pandas.DataFrame):
-                Context values containing potential datetime columns.
+                Context values containing potential columns for transformation.
 
         Returns:
             context_columns (pandas.DataFrame):
-                Updated context columns with transformed datetime values.
+                Updated context columns with transformed values.
         """
-        datetime_columns = self._get_context_datetime_columns()
-        if datetime_columns:
-            transformed = self._data_processor.transform(context_columns[datetime_columns])
-            context_columns[datetime_columns] = transformed[datetime_columns]
+        columns_to_be_processed = self._get_context_columns_for_processing()
+
+        if columns_to_be_processed:
+            context_columns[columns_to_be_processed] = self._data_processor.transform(
+                context_columns[columns_to_be_processed]
+            )
 
         return context_columns
