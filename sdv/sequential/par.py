@@ -99,7 +99,6 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         default_transformers_by_sdtype = deepcopy(self._data_processor._transformers_by_sdtype)
         for column in self.context_columns:
             column_metadata = self.metadata.columns[column]
-            sdtype = column_metadata['sdtype']
             if default_transformers_by_sdtype.get(column_metadata['sdtype']):
                 context_columns_dict[column] = {'sdtype': 'numerical'}
 
