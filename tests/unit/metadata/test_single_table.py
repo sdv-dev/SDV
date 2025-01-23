@@ -1277,9 +1277,8 @@ class TestSingleTableMetadata:
 
         expected_error_message = re.escape(
             "Unsupported data type for column 'complex_dtype' (kind: c)."
-            "The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
+            " The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
         )
-
         with pytest.raises(InvalidMetadataError, match=expected_error_message):
             instance._detect_columns(non_supported_data)
 
@@ -1295,6 +1294,31 @@ class TestSingleTableMetadata:
         instance._determine_sdtype_for_numbers.assert_called_once()
         instance._determine_sdtype_for_objects.assert_called_once()
         mock__get_datetime_format.assert_called_once()
+
+    def test__detect_columns_invalid_data_format(self):
+        """Test the ``_detect_columns`` method with an invalid data format."""
+        # Setup
+        instance = SingleTableMetadata()
+        dict_data = [
+            {
+                'key1': i,
+                'key2': f'string_{i}',
+                'key3': np.random.random(),  # random float
+            }
+            for i in range(100)
+        ]
+        data = pd.DataFrame({
+            'dict_column': dict_data,
+            'numerical': [1.2] * 100,
+        })
+        expected_error_message = re.escape(
+            "Unable to detect metadata for column 'dict_column' due to an invalid data format."
+            "\n TypeError: unhashable type: 'dict'"
+        )
+
+        # Run / Assert
+        with pytest.raises(InvalidMetadataError, match=expected_error_message):
+            instance._detect_columns(data)
 
     def test__detect_primary_key_missing_sdtypes(self):
         """The method should raise an error if not all sdtypes were detected."""

@@ -2,9 +2,11 @@ import os
 import re
 from copy import deepcopy
 
+import pandas as pd
 import pytest
 
 from sdv.datasets.demo import download_demo
+from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -520,3 +522,34 @@ def test_anonymize():
 
     assert anonymized.tables['table1'].to_dict() == table1_metadata.anonymize().to_dict()
     assert anonymized.tables['table2'].to_dict() == table2_metadata.anonymize().to_dict()
+
+
+def test_detect_from_dataframes_invalid_format():
+    """Test the ``detect_from_dataframes`` method with an invalid data format."""
+    # Setup
+    dict_data = [
+        {
+            'key1': i,
+            'key2': f'string_{i}',
+            'key3': 1.5,
+        }
+        for i in range(100)
+    ]
+    data = {
+        'table_1': pd.DataFrame({
+            'dict_column': dict_data,
+            'numerical': [1.2] * 100,
+        }),
+        'table_2': pd.DataFrame({
+            'numerical': [1.5] * 10,
+            'categorical': ['A'] * 10,
+        }),
+    }
+    expected_error = re.escape(
+        "Unable to detect metadata for table 'table_1' column 'dict_column' due to an "
+        "invalid data format.\n TypeError: unhashable type: 'dict'"
+    )
+
+    # Run / Assert
+    with pytest.raises(InvalidMetadataError, match=expected_error):
+        Metadata.detect_from_dataframes(data)
