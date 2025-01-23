@@ -550,6 +550,6 @@ def test_detect_from_dataframes_invalid_format():
         "invalid data format.\n TypeError: unhashable type: 'dict'"
     )
 
-    # Run / Assert
+    # Run and Assert
     with pytest.raises(InvalidMetadataError, match=expected_error):
         Metadata.detect_from_dataframes(data)

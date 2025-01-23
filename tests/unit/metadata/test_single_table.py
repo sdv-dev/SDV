@@ -1316,7 +1316,7 @@ class TestSingleTableMetadata:
             "\n TypeError: unhashable type: 'dict'"
         )
 
-        # Run / Assert
+        # Run and Assert
         with pytest.raises(InvalidMetadataError, match=expected_error_message):
             instance._detect_columns(data)
 
