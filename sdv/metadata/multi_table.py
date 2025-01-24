@@ -544,7 +544,7 @@ class MultiTableMetadata:
         """
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
-        table._detect_columns(data)
+        table._detect_columns(data, table_name)
         self.tables[table_name] = table
         self._log_detected_table(table)
 

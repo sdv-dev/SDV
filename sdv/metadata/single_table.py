@@ -595,35 +595,53 @@ class SingleTableMetadata:
 
         return None
 
-    def _detect_columns(self, data):
+    def _detect_columns(self, data, table_name=None):
         """Detect the columns' sdtypes from the data.
 
         Args:
             data (pandas.DataFrame):
                 The data to be analyzed.
+            table_name (str):
+                The name of the table to be analyzed. Defaults to ``None``.
         """
         old_columns = data.columns
         data.columns = data.columns.astype(str)
         for field in data:
-            column_data = data[field]
-            clean_data = column_data.dropna()
-            dtype = clean_data.infer_objects().dtype.kind
+            try:
+                column_data = data[field]
+                clean_data = column_data.dropna()
+                dtype = clean_data.infer_objects().dtype.kind
 
-            sdtype = self._detect_pii_column(field)
-            if sdtype is None:
-                if dtype in self._DTYPES_TO_SDTYPES:
-                    sdtype = self._DTYPES_TO_SDTYPES[dtype]
-                elif dtype in ['i', 'f', 'u']:
-                    sdtype = self._determine_sdtype_for_numbers(column_data)
-
-                elif dtype == 'O':
-                    sdtype = self._determine_sdtype_for_objects(column_data)
-
+                sdtype = self._detect_pii_column(field)
                 if sdtype is None:
-                    raise InvalidMetadataError(
-                        f"Unsupported data type for column '{field}' (kind: {dtype})."
-                        "The valid data types are: 'object', 'int', 'float', 'datetime', 'bool'."
-                    )
+                    if dtype in self._DTYPES_TO_SDTYPES:
+                        sdtype = self._DTYPES_TO_SDTYPES[dtype]
+                    elif dtype in ['i', 'f', 'u']:
+                        sdtype = self._determine_sdtype_for_numbers(column_data)
+
+                    elif dtype == 'O':
+                        sdtype = self._determine_sdtype_for_objects(column_data)
+
+                    if sdtype is None:
+                        table_str = f"table '{table_name}' " if table_name else ''
+                        error_message = (
+                            f"Unsupported data type for {table_str}column '{field}' (kind: {dtype}"
+                            "). The valid data types are: 'object', 'int', 'float', 'datetime',"
+                            " 'bool'."
+                        )
+                        raise InvalidMetadataError(error_message)
+
+            except Exception as e:
+                error_type = type(e).__name__
+                if error_type == 'InvalidMetadataError':
+                    raise e
+
+                table_str = f"table '{table_name}' " if table_name else ''
+                error_message = (
+                    f"Unable to detect metadata for {table_str}column '{field}' due to an invalid "
+                    f'data format.\n {error_type}: {e}'
+                )
+                raise InvalidMetadataError(error_message) from e
 
             column_dict = {'sdtype': sdtype}
             sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
