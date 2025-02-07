@@ -1328,8 +1328,17 @@ class TestSingleTableMetadata:
             'id': ['id1', 'id2', 'id3', 'id4', 'id5', 'id6', 'id7', 'id8', 'id9', 'id10', 'id11'],
             'numerical': [1, 2, 3, 2, 5, 6, 7, 8, 9, 10, 11],
             'datetime': [
-                '2022-01-01', '2022-02-01', '2022-03-01', '2022-04-01', '2022-05-01', '2022-06-01',
-                '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01', '2022-11-01'
+                '2022-01-01',
+                '2022-02-01',
+                '2022-03-01',
+                '2022-04-01',
+                '2022-05-01',
+                '2022-06-01',
+                '2022-07-01',
+                '2022-08-01',
+                '2022-09-01',
+                '2022-10-01',
+                '2022-11-01',
             ],
             'alternate_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             'alternate_id_string': ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
@@ -1337,8 +1346,17 @@ class TestSingleTableMetadata:
             'bool': [True, False, True, False, True, False, True, False, True, False, True],
             'unknown': ['a', 'b', 'c', 'c', 1, 2.2, np.nan, None, 'd', 'e', 'f'],
             'first_name': [
-                'John', 'Jane', 'John', 'Jane', 'John', 'Jane',
-                'John', 'Jane', 'John', 'Jane', 'John'
+                'John',
+                'Jane',
+                'John',
+                'Jane',
+                'John',
+                'Jane',
+                'John',
+                'Jane',
+                'John',
+                'Jane',
+                'John',
             ],
         })
 

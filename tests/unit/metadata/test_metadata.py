@@ -637,7 +637,8 @@ class TestMetadataClass:
 
         # Run
         metadata = Metadata.detect_from_dataframes(
-            data, infer_sdtypes=False, infer_keys='primary_only')
+            data, infer_sdtypes=False, infer_keys='primary_only'
+        )
 
         # Assert
         mock_metadata.return_value.detect_table_from_dataframe.assert_any_call(
@@ -730,9 +731,7 @@ class TestMetadataClass:
         infer_keys = 'primary_and_foreign'
 
         # Run and Assert
-        expected_message = re.escape(
-            "'infer_keys' must be one of: 'primary_only', None."
-        )
+        expected_message = re.escape("'infer_keys' must be one of: 'primary_only', None.")
         with pytest.raises(ValueError, match=expected_message):
             Metadata.detect_from_dataframe(data, infer_keys=infer_keys)
 

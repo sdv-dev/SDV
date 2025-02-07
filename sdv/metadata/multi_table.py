@@ -536,13 +536,11 @@ class MultiTableMetadata:
             raise ValueError("'infer_sdtypes' must be a boolean value.")
 
         if infer_keys not in ['primary_only', None]:
-            raise ValueError(
-                "'infer_keys' must be one of: 'primary_only', None."
-            )
+            raise ValueError("'infer_keys' must be one of: 'primary_only', None.")
 
     def detect_table_from_dataframe(
-            self, table_name, data, infer_sdtypes=True, infer_keys='primary_only'
-        ):
+        self, table_name, data, infer_sdtypes=True, infer_keys='primary_only'
+    ):
         """Detect the metadata for a table from a dataframe.
 
         This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``,
