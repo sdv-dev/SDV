@@ -595,7 +595,7 @@ class SingleTableMetadata:
 
         return None
 
-    def _detect_columns(self, data, table_name=None, infer_sdtypes=True, infer_keys=True):
+    def _detect_columns(self, data, table_name=None, infer_sdtypes=True, infer_keys='primary_only'):
         """Detect the columns' sdtypes from the data.
 
         Args:
@@ -609,11 +609,10 @@ class SingleTableMetadata:
                 If False it does not infer the sdtypes and all columns are marked as unknown.
                 Defaults to True.
             infer_keys (str):
-                A string describing whether to infer the primary and/or foreign keys. Options are:
-                    - 'primary_and_foreign': Infer the primary keys in each table
-                    - 'primary_only': Same as 'primary_and_foreign', infer only the primary keys
-                    - None: Do not infer any keys
-                Defaults to 'primary_and_foreign'.
+                A string describing whether to infer the primary keys. Options are:
+                    - 'primary_only': Infer the primary keys.
+                    - None: Do not infer any keys.
+                Defaults to 'primary_only'.
         """
         old_columns = data.columns
         data.columns = data.columns.astype(str)
@@ -637,9 +636,9 @@ class SingleTableMetadata:
                         if sdtype is None:
                             table_str = f"table '{table_name}' " if table_name else ''
                             error_message = (
-                                f"Unsupported data type for {table_str}column '{field}' (kind: {dtype}"
-                                "). The valid data types are: 'object', 'int', 'float', 'datetime',"
-                                " 'bool'."
+                                f"Unsupported data type for {table_str}column '{field}' "
+                                f"(kind: {dtype}). The valid data types are: 'object', "
+                                "'int', 'float', 'datetime', 'bool'."
                             )
                             raise InvalidMetadataError(error_message)
 
@@ -650,8 +649,8 @@ class SingleTableMetadata:
 
                     table_str = f"table '{table_name}' " if table_name else ''
                     error_message = (
-                        f"Unable to detect metadata for {table_str}column '{field}' due to an invalid "
-                        f'data format.\n {error_type}: {e}'
+                        f"Unable to detect metadata for {table_str}column '{field}' due "
+                        f'to an invalid data format.\n {error_type}: {e}'
                     )
                     raise InvalidMetadataError(error_message) from e
 
@@ -670,7 +669,7 @@ class SingleTableMetadata:
 
             self.columns[field] = deepcopy(column_dict)
 
-        if infer_keys:
+        if infer_keys == 'primary_only':
             self.primary_key = self._detect_primary_key(data)
         self._updated = True
         data.columns = old_columns

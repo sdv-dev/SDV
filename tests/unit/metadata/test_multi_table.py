@@ -2499,7 +2499,8 @@ class TestMultiTableMetadata:
         metadata.detect_table_from_dataframe('table', data)
 
         # Assert
-        single_table_mock.return_value._detect_columns.assert_called_once_with(data, 'table')
+        single_table_mock.return_value._detect_columns.assert_called_once_with(
+            data, 'table', True, 'primary_only')
         assert metadata.tables == {'table': single_table_mock.return_value}
 
         expected_log_calls = call(
