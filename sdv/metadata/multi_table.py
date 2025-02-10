@@ -530,14 +530,6 @@ class MultiTableMetadata:
                         )
                         continue
 
-    @staticmethod
-    def _validate_infer_sdtypes_and_keys(infer_sdtypes, infer_keys):
-        if not isinstance(infer_sdtypes, bool):
-            raise ValueError("'infer_sdtypes' must be a boolean value.")
-
-        if infer_keys not in ['primary_only', None]:
-            raise ValueError("'infer_keys' must be one of: 'primary_only', None.")
-
     def detect_table_from_dataframe(
         self, table_name, data, infer_sdtypes=True, infer_keys='primary_only'
     ):
