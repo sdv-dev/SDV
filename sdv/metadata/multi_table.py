@@ -530,7 +530,9 @@ class MultiTableMetadata:
                         )
                         continue
 
-    def detect_table_from_dataframe(self, table_name, data):
+    def detect_table_from_dataframe(
+        self, table_name, data, infer_sdtypes=True, infer_keys='primary_only'
+    ):
         """Detect the metadata for a table from a dataframe.
 
         This method automatically detects the ``sdtypes`` for the given ``pandas.DataFrame``,
@@ -541,10 +543,20 @@ class MultiTableMetadata:
                 Name of the table to detect.
             data (pandas.DataFrame):
                 ``pandas.DataFrame`` to detect the metadata from.
+            infer_sdtypes (bool):
+                A boolean describing whether to infer the sdtypes of each column.
+                If True it infers the sdtypes based on the data.
+                If False it does not infer the sdtypes and all columns are marked as unknown.
+                Defaults to True.
+            infer_keys (str):
+                A string describing whether to infer the primary keys. Options are:
+                    - 'primary_only': Infer only the primary keys of each table
+                    - None: Do not infer any keys
+                Defaults to 'primary_only'.
         """
         self._validate_table_not_detected(table_name)
         table = SingleTableMetadata()
-        table._detect_columns(data, table_name)
+        table._detect_columns(data, table_name, infer_sdtypes, infer_keys)
         self.tables[table_name] = table
         self._log_detected_table(table)
 

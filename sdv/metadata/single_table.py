@@ -595,7 +595,7 @@ class SingleTableMetadata:
 
         return None
 
-    def _detect_columns(self, data, table_name=None):
+    def _detect_columns(self, data, table_name=None, infer_sdtypes=True, infer_keys='primary_only'):
         """Detect the columns' sdtypes from the data.
 
         Args:
@@ -603,45 +603,59 @@ class SingleTableMetadata:
                 The data to be analyzed.
             table_name (str):
                 The name of the table to be analyzed. Defaults to ``None``.
+            infer_sdtypes (bool):
+                A boolean describing whether to infer the sdtypes of each column.
+                If True it infers the sdtypes based on the data.
+                If False it does not infer the sdtypes and all columns are marked as unknown.
+                Defaults to True.
+            infer_keys (str):
+                A string describing whether to infer the primary keys. Options are:
+                    - 'primary_only': Infer the primary keys.
+                    - None: Do not infer any keys.
+                Defaults to 'primary_only'.
         """
         old_columns = data.columns
         data.columns = data.columns.astype(str)
         for field in data:
-            try:
-                column_data = data[field]
-                clean_data = column_data.dropna()
-                dtype = clean_data.infer_objects().dtype.kind
+            if infer_sdtypes:
+                try:
+                    column_data = data[field]
+                    clean_data = column_data.dropna()
+                    dtype = clean_data.infer_objects().dtype.kind
 
-                sdtype = self._detect_pii_column(field)
-                if sdtype is None:
-                    if dtype in self._DTYPES_TO_SDTYPES:
-                        sdtype = self._DTYPES_TO_SDTYPES[dtype]
-                    elif dtype in ['i', 'f', 'u']:
-                        sdtype = self._determine_sdtype_for_numbers(column_data)
-
-                    elif dtype == 'O':
-                        sdtype = self._determine_sdtype_for_objects(column_data)
-
+                    sdtype = self._detect_pii_column(field)
                     if sdtype is None:
-                        table_str = f"table '{table_name}' " if table_name else ''
-                        error_message = (
-                            f"Unsupported data type for {table_str}column '{field}' (kind: {dtype}"
-                            "). The valid data types are: 'object', 'int', 'float', 'datetime',"
-                            " 'bool'."
-                        )
-                        raise InvalidMetadataError(error_message)
+                        if dtype in self._DTYPES_TO_SDTYPES:
+                            sdtype = self._DTYPES_TO_SDTYPES[dtype]
+                        elif dtype in ['i', 'f', 'u']:
+                            sdtype = self._determine_sdtype_for_numbers(column_data)
 
-            except Exception as e:
-                error_type = type(e).__name__
-                if error_type == 'InvalidMetadataError':
-                    raise e
+                        elif dtype == 'O':
+                            sdtype = self._determine_sdtype_for_objects(column_data)
 
-                table_str = f"table '{table_name}' " if table_name else ''
-                error_message = (
-                    f"Unable to detect metadata for {table_str}column '{field}' due to an invalid "
-                    f'data format.\n {error_type}: {e}'
-                )
-                raise InvalidMetadataError(error_message) from e
+                        if sdtype is None:
+                            table_str = f"table '{table_name}' " if table_name else ''
+                            error_message = (
+                                f"Unsupported data type for {table_str}column '{field}' "
+                                f"(kind: {dtype}). The valid data types are: 'object', "
+                                "'int', 'float', 'datetime', 'bool'."
+                            )
+                            raise InvalidMetadataError(error_message)
+
+                except Exception as e:
+                    error_type = type(e).__name__
+                    if error_type == 'InvalidMetadataError':
+                        raise e
+
+                    table_str = f"table '{table_name}' " if table_name else ''
+                    error_message = (
+                        f"Unable to detect metadata for {table_str}column '{field}' due "
+                        f'to an invalid data format.\n {error_type}: {e}'
+                    )
+                    raise InvalidMetadataError(error_message) from e
+
+            else:
+                sdtype = 'unknown'
 
             column_dict = {'sdtype': sdtype}
             sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
@@ -655,7 +669,8 @@ class SingleTableMetadata:
 
             self.columns[field] = deepcopy(column_dict)
 
-        self.primary_key = self._detect_primary_key(data)
+        if infer_keys == 'primary_only':
+            self.primary_key = self._detect_primary_key(data)
         self._updated = True
         data.columns = old_columns
 
