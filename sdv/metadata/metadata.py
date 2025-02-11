@@ -134,7 +134,7 @@ class Metadata(MultiTableMetadata):
                 If False it does not infer the sdtypes and all columns are marked as unknown.
                 Defaults to True.
             infer_keys (str):
-                A string describing whether to infer the primary and/or foreign keys. Options are:
+                A string describing whether to infer the primary keys. Options are:
                     - 'primary_only': Infer only the primary keys of each table
                     - None: Do not infer any keys
                 Defaults to 'primary_only'.
