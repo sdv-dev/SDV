@@ -24,8 +24,8 @@ RED_HEX = '#EB9999'
 def get_previous_dtype_result(dtype, sdtype, method, python_version=PYTHON_VERSION):
     """Return previous result for a given ``dtype`` and method."""
     data = get_previous_results()
-    df = data[python_version]
     try:
+        df = data[python_version]
         filtered_row = df[(df['dtype'] == dtype) & (df['sdtype'] == sdtype)]
         value = filtered_row[method].to_numpy()[0]
         previously_seen = True
