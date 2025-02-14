@@ -1,6 +1,6 @@
 # Release Notes
 
-## v1.18.0 - 2025-02-17
+## v1.18.0 - 2025-02-14
 
 ### New Features
 
