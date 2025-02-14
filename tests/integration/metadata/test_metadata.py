@@ -2,9 +2,11 @@ import os
 import re
 from copy import deepcopy
 
+import pandas as pd
 import pytest
 
 from sdv.datasets.demo import download_demo
+from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
 from sdv.metadata.single_table import SingleTableMetadata
@@ -119,6 +121,149 @@ def test_detect_from_dataframes_multi_table():
     assert metadata.to_dict() == expected_metadata
 
 
+def test_detect_from_dataframes_multi_table_without_infer_sdtypes():
+    """Test it when infer_sdtypes is False."""
+    # Setup
+    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+
+    # Run
+    metadata = Metadata.detect_from_dataframes(real_data, infer_sdtypes=False)
+
+    # Assert
+    metadata.update_column(
+        table_name='hotels',
+        column_name='classification',
+        sdtype='categorical',
+    )
+
+    expected_metadata = {
+        'tables': {
+            'hotels': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'unknown', 'pii': True},
+                    'city': {'sdtype': 'unknown', 'pii': True},
+                    'state': {'sdtype': 'unknown', 'pii': True},
+                    'rating': {'sdtype': 'unknown', 'pii': True},
+                    'classification': {'sdtype': 'categorical'},
+                },
+            },
+            'guests': {
+                'columns': {
+                    'guest_email': {'sdtype': 'unknown', 'pii': True},
+                    'hotel_id': {'sdtype': 'unknown', 'pii': True},
+                    'has_rewards': {'sdtype': 'unknown', 'pii': True},
+                    'room_type': {'sdtype': 'unknown', 'pii': True},
+                    'amenities_fee': {'sdtype': 'unknown', 'pii': True},
+                    'checkin_date': {'sdtype': 'unknown', 'pii': True},
+                    'checkout_date': {'sdtype': 'unknown', 'pii': True},
+                    'room_rate': {'sdtype': 'unknown', 'pii': True},
+                    'billing_address': {'sdtype': 'unknown', 'pii': True},
+                    'credit_card_number': {'sdtype': 'unknown', 'pii': True},
+                },
+            },
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_from_dataframes_multi_table_with_infer_keys_primary_only():
+    """Test it when infer_keys is 'primary_only'."""
+    # Setup
+    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+
+    # Run
+    metadata = Metadata.detect_from_dataframes(real_data, infer_keys='primary_only')
+
+    # Assert
+    metadata.update_column(
+        table_name='hotels',
+        column_name='classification',
+        sdtype='categorical',
+    )
+
+    expected_metadata = {
+        'tables': {
+            'hotels': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'id'},
+                    'city': {'sdtype': 'city', 'pii': True},
+                    'state': {'sdtype': 'administrative_unit', 'pii': True},
+                    'rating': {'sdtype': 'numerical'},
+                    'classification': {'sdtype': 'categorical'},
+                },
+                'primary_key': 'hotel_id',
+            },
+            'guests': {
+                'columns': {
+                    'guest_email': {'sdtype': 'email', 'pii': True},
+                    'hotel_id': {'sdtype': 'categorical'},
+                    'has_rewards': {'sdtype': 'categorical'},
+                    'room_type': {'sdtype': 'categorical'},
+                    'amenities_fee': {'sdtype': 'numerical'},
+                    'checkin_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
+                    'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
+                    'room_rate': {'sdtype': 'numerical'},
+                    'billing_address': {'sdtype': 'unknown', 'pii': True},
+                    'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True},
+                },
+                'primary_key': 'guest_email',
+            },
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_from_dataframes_multi_table_with_infer_keys_none():
+    """Test it when infer_keys is None."""
+    # Setup
+    real_data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+
+    # Run
+    metadata = Metadata.detect_from_dataframes(real_data, infer_keys=None)
+
+    # Assert
+    metadata.update_column(
+        table_name='hotels',
+        column_name='classification',
+        sdtype='categorical',
+    )
+
+    expected_metadata = {
+        'tables': {
+            'hotels': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'id'},
+                    'city': {'sdtype': 'city', 'pii': True},
+                    'state': {'sdtype': 'administrative_unit', 'pii': True},
+                    'rating': {'sdtype': 'numerical'},
+                    'classification': {'sdtype': 'categorical'},
+                },
+            },
+            'guests': {
+                'columns': {
+                    'guest_email': {'sdtype': 'email', 'pii': True},
+                    'hotel_id': {'sdtype': 'categorical'},
+                    'has_rewards': {'sdtype': 'categorical'},
+                    'room_type': {'sdtype': 'categorical'},
+                    'amenities_fee': {'sdtype': 'numerical'},
+                    'checkin_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
+                    'checkout_date': {'sdtype': 'datetime', 'datetime_format': '%d %b %Y'},
+                    'room_rate': {'sdtype': 'numerical'},
+                    'billing_address': {'sdtype': 'unknown', 'pii': True},
+                    'credit_card_number': {'sdtype': 'credit_card_number', 'pii': True},
+                },
+            },
+        },
+        'relationships': [],
+        'METADATA_SPEC_VERSION': 'V1',
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
 def test_detect_from_dataframes_single_table():
     """Test the ``detect_from_dataframes`` method works with a single table."""
     # Setup
@@ -149,6 +294,93 @@ def test_detect_from_dataframes_single_table():
     assert metadata.to_dict() == expected_metadata
 
 
+def test_detect_from_dataframes_single_table_infer_sdtypes_false():
+    """Test it for a single table when infer_sdtypes is False."""
+    # Setup
+    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    metadata = Metadata.detect_from_dataframes({'table_1': data['hotels']}, infer_sdtypes=False)
+
+    # Run
+    metadata.validate()
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'table_1': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'unknown', 'pii': True},
+                    'city': {'sdtype': 'unknown', 'pii': True},
+                    'state': {'sdtype': 'unknown', 'pii': True},
+                    'rating': {'sdtype': 'unknown', 'pii': True},
+                    'classification': {'sdtype': 'unknown', 'pii': True},
+                },
+            }
+        },
+        'relationships': [],
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_from_dataframes_single_table_infer_keys_primary_only():
+    """Test it for a single table when infer_keys is 'primary_only'."""
+    # Setup
+    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    metadata = Metadata.detect_from_dataframes(
+        {'table_1': data['hotels']}, infer_keys='primary_only'
+    )
+
+    # Run
+    metadata.validate()
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'table_1': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'id'},
+                    'city': {'sdtype': 'city', 'pii': True},
+                    'state': {'sdtype': 'administrative_unit', 'pii': True},
+                    'rating': {'sdtype': 'numerical'},
+                    'classification': {'sdtype': 'unknown', 'pii': True},
+                },
+                'primary_key': 'hotel_id',
+            }
+        },
+        'relationships': [],
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_from_dataframes_single_table_infer_keys_none():
+    """Test it for a single table when infer_keys is None."""
+    # Setup
+    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    metadata = Metadata.detect_from_dataframes({'table_1': data['hotels']}, infer_keys=None)
+
+    # Run
+    metadata.validate()
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            'table_1': {
+                'columns': {
+                    'hotel_id': {'sdtype': 'id'},
+                    'city': {'sdtype': 'city', 'pii': True},
+                    'state': {'sdtype': 'administrative_unit', 'pii': True},
+                    'rating': {'sdtype': 'numerical'},
+                    'classification': {'sdtype': 'unknown', 'pii': True},
+                },
+            }
+        },
+        'relationships': [],
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
 def test_detect_from_dataframe():
     """Test that a single table can be detected as a DataFrame."""
     # Setup
@@ -172,6 +404,62 @@ def test_detect_from_dataframe():
                     'classification': {'sdtype': 'unknown', 'pii': True},
                 },
                 'primary_key': 'hotel_id',
+            }
+        },
+        'relationships': [],
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_from_dataframe_infer_sdtypes_false():
+    """Test it when infer_sdtypes is False."""
+    # Setup
+    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    metadata = Metadata.detect_from_dataframe(data['hotels'], infer_sdtypes=False)
+
+    # Run
+    metadata.validate()
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            DEFAULT_TABLE_NAME: {
+                'columns': {
+                    'hotel_id': {'sdtype': 'unknown', 'pii': True},
+                    'city': {'sdtype': 'unknown', 'pii': True},
+                    'state': {'sdtype': 'unknown', 'pii': True},
+                    'rating': {'sdtype': 'unknown', 'pii': True},
+                    'classification': {'sdtype': 'unknown', 'pii': True},
+                },
+            }
+        },
+        'relationships': [],
+    }
+    assert metadata.to_dict() == expected_metadata
+
+
+def test_detect_from_dataframe_infer_keys_none():
+    """Test it when infer_keys is None."""
+    # Setup
+    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    metadata = Metadata.detect_from_dataframe(data['hotels'], infer_keys=None)
+
+    # Run
+    metadata.validate()
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            DEFAULT_TABLE_NAME: {
+                'columns': {
+                    'hotel_id': {'sdtype': 'id'},
+                    'city': {'sdtype': 'city', 'pii': True},
+                    'state': {'sdtype': 'administrative_unit', 'pii': True},
+                    'rating': {'sdtype': 'numerical'},
+                    'classification': {'sdtype': 'unknown', 'pii': True},
+                },
             }
         },
         'relationships': [],
@@ -520,3 +808,34 @@ def test_anonymize():
 
     assert anonymized.tables['table1'].to_dict() == table1_metadata.anonymize().to_dict()
     assert anonymized.tables['table2'].to_dict() == table2_metadata.anonymize().to_dict()
+
+
+def test_detect_from_dataframes_invalid_format():
+    """Test the ``detect_from_dataframes`` method with an invalid data format."""
+    # Setup
+    dict_data = [
+        {
+            'key1': i,
+            'key2': f'string_{i}',
+            'key3': 1.5,
+        }
+        for i in range(100)
+    ]
+    data = {
+        'table_1': pd.DataFrame({
+            'dict_column': dict_data,
+            'numerical': [1.2] * 100,
+        }),
+        'table_2': pd.DataFrame({
+            'numerical': [1.5] * 10,
+            'categorical': ['A'] * 10,
+        }),
+    }
+    expected_error = re.escape(
+        "Unable to detect metadata for table 'table_1' column 'dict_column' due to an "
+        "invalid data format.\n TypeError: unhashable type: 'dict'"
+    )
+
+    # Run and Assert
+    with pytest.raises(InvalidMetadataError, match=expected_error):
+        Metadata.detect_from_dataframes(data)

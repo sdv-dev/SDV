@@ -1,5 +1,21 @@
 # Release Notes
 
+## v1.18.0 - 2025-02-14
+
+### New Features
+
+* When detecting metadata from dataframes, allow me the option to turn on/off sdtype and relationship detection - Issue [#2341](https://github.com/sdv-dev/SDV/issues/2341) by @fealho
+* Surface more detailed error info when detecting metadata from dataframes - Issue [#2327](https://github.com/sdv-dev/SDV/issues/2327) by @R-Palazzo
+
+### Bugs Fixed
+
+* Conditional sampling error when using a datetime column as a context column with PAR Synthesizer - Issue [#2187](https://github.com/sdv-dev/SDV/issues/2187) by @pvk-developer
+* PARSynthesizer is synthesizing integers for the `sequence_key` column when source data is text - Issue [#1880](https://github.com/sdv-dev/SDV/issues/1880) by @fealho
+
+### Maintenance
+
+* Update our upload-artifact github action version - Issue [#2370](https://github.com/sdv-dev/SDV/issues/2370) by @amontanez24
+
 ## v1.17.4 - 2025-01-20
 
 ### New Features

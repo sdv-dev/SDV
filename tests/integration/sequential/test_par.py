@@ -20,6 +20,7 @@ def _get_par_data_and_metadata():
         'column2': ['b', 'a', 'a', 'c'],
         'entity': [1, 1, 2, 2],
         'context': ['a', 'a', 'b', 'b'],
+        'context_date': [date, date, date, date],
     })
     metadata = Metadata.detect_from_dataframes({'table': data})
     metadata.update_column('entity', 'table', sdtype='id')
@@ -94,14 +95,20 @@ def test_column_after_date_complex():
     data, metadata = _get_par_data_and_metadata()
 
     # Run
-    model = PARSynthesizer(metadata=metadata, context_columns=['context'], epochs=1)
+    model = PARSynthesizer(metadata=metadata, context_columns=['context', 'context_date'], epochs=1)
     model.fit(data)
     sampled = model.sample(2)
+    context_columns = data[['context', 'context_date']]
+    sample_with_conditions = model.sample_sequential_columns(context_columns=context_columns)
 
     # Assert
     assert sampled.shape == data.shape
     assert (sampled.dtypes == data.dtypes).all()
     assert (sampled.notna().sum(axis=1) != 0).all()
+
+    expected_date = datetime.datetime.strptime('2020-01-01', '%Y-%m-%d')
+    assert all(sample_with_conditions['context_date'] == expected_date)
+    assert all(sample_with_conditions['context'].isin(['a', 'b']))
 
 
 def test_save_and_load(tmp_path):

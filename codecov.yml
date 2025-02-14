@@ -3,10 +3,6 @@ coverage:
   range: "90...100"
   status:
     project:
-      default:
-        target: auto
-        threshold: 1.0
+      default: false
     patch:
-      default:
-        target: auto
-        threshold: 1.0
+      default: false
