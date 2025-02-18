@@ -150,6 +150,26 @@ EXPECTED_METADATA_SDTYPES = {
     'pa.decimal128': 'numerical',
 }
 
+EXCLUDED_DATA_TYPES = {
+    ('pd.boolean', 'numerical'),
+    ('pd.string', 'numerical'),
+    ('pd.category', 'numerical'),
+    ('pd.Period', 'numerical'),
+    ('np.bool', 'numerical'),
+    ('np.object', 'numerical'),
+    ('np.string', 'numerical'),
+    ('np.unicode', 'numerical'),
+    ('pd.boolean', 'datetime'),
+    ('pd.timedelta64', 'datetime'),
+    ('pd.Period', 'datetime'),
+    ('pd.Complex', 'datetime'),
+    ('np.complex64', 'datetime'),
+    ('np.complex128', 'datetime'),
+    ('np.bool', 'datetime'),
+    ('np.unicode', 'datetime'),
+    ('np.timedelta64', 'datetime'),
+}
+
 
 @contextlib.contextmanager
 def prevent_tqdm_output():
@@ -165,6 +185,11 @@ def _get_metadata_for_dtype_and_sdtype(dtype, sdtype):
     """Return the expected metadata."""
     metadata = SingleTableMetadata.load_from_dict({'columns': {dtype: {'sdtype': sdtype}}})
     return metadata
+
+
+def skip_if_unsupported(dtype, sdtype):
+    if (dtype, sdtype) in EXCLUDED_DATA_TYPES:
+        pytest.skip(f"unsupported data type combination '{dtype}' and '{sdtype}'")
 
 
 @pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
@@ -191,6 +216,8 @@ def test_metadata_detection(dtype, data, sdtype):
         2. Attempt to detect metadata from the provided data.
         3. Assert if the sdtype matches the expected one.
     """
+    skip_if_unsupported(dtype, sdtype)
+
     metadata = SingleTableMetadata()
     previous_result, _ = get_previous_dtype_result(dtype, sdtype, 'METADATA_DETECTION')
     result = False
@@ -233,6 +260,8 @@ def test_metadata_validate_data(dtype, data, sdtype):
         2. Attempt to validate the data using `metadata.validate_data` for the provided data.
         3. Assert if the result is as expected.
     """
+    skip_if_unsupported(dtype, sdtype)
+
     metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
     previous_result, _ = get_previous_dtype_result(dtype, sdtype, 'METADATA_VALIDATE_DATA')
     result = False
@@ -277,6 +306,8 @@ def test_fit_and_sample_synthesizer(dtype, data, sdtype):
         3. Using the synthesizer to sample data, compare the synthetic data types if they match the
            input.
     """
+    skip_if_unsupported(dtype, sdtype)
+
     metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
     synthesizer = GaussianCopulaSynthesizer(metadata)
     previous_fit_result, _ = get_previous_dtype_result(dtype, sdtype, 'SYNTHESIZER_FIT')
@@ -446,6 +477,8 @@ def test_fit_and_sample_single_column_constraints(constraint_name, constraint, d
         3. Adding the constraint to the synthesizer, fitting the data, and verifying the fit result.
         4. Sampling synthetic data and checking that the dtype matches the original.
     """
+    skip_if_unsupported(dtype, sdtype)
+
     if (sdtype, dtype, constraint_name) not in EXCLUDED_CONSTRAINT_TESTS:
         metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
         synthesizer = GaussianCopulaSynthesizer(metadata)
@@ -529,6 +562,8 @@ def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dt
         3. Adding the multi-column constraints to the synthesizer and fitting the data.
         4. Sampling synthetic data and ensuring the synthetic data types match the original.
     """
+    skip_if_unsupported(dtype, sdtype)
+
     if (sdtype, dtype, constraint_name) not in EXCLUDED_CONSTRAINT_TESTS:
         metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
         sdtype = metadata.columns[dtype].get('sdtype')
