@@ -1,11 +1,11 @@
 cloudpickle==3.1.1
 copulas==0.12.1
 ctgan==0.10.2
-deepecho==0.6.1
+deepecho==0.7.0
 graphviz==0.20.3
 numpy==2.0.2
 pandas==2.2.3
 platformdirs==4.3.6
-rdt==1.13.2
+rdt==1.14.0
 sdmetrics==0.18.0
 tqdm==4.67.1
