@@ -273,6 +273,9 @@ def test_transformer(dtype, data, sdtype, transformer):
     """Test using a transformer with different data types."""
     skip_if_unsupported(dtype, sdtype)
 
+    if sdtype != transformer.INPUT_SDTYPE:
+        pytest.skip(f"sdtype '{sdtype}' does not match transfomer sdtype '{transformer.INPUT_SDTYPE}'")
+
     _transformer = transformer()
     transformer_name = _transformer.get_name()
     previous_fit_result, _ = get_previous_dtype_result(dtype, sdtype, f"{transformer_name}_FIT")
