@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
+      - issue-2365-improve-dtypes-benchmark
 
 jobs:
   run_dtypes_benchmark:
