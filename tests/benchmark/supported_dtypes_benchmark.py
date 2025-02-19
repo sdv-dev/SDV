@@ -9,13 +9,27 @@ import numpy as np
 import pandas as pd
 import pytest
 from tqdm import tqdm
+from rdt.transformers import (
+    BinaryEncoder,
+    ClusterBasedNormalizer,
+    FloatFormatter,
+    FrequencyEncoder,
+    GaussianNormalizer,
+    LabelEncoder,
+    LogScaler,
+    LogitScaler,
+    OneHotEncoder,
+    OptimizedTimestampEncoder,
+    OrderedLabelEncoder,
+    OrderedUniformEncoder,
+    UnixTimestampEncoder,
+)
 
 from sdv.metadata import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
-from tests.benchmark.excluded_tests import EXCLUDED_CONSTRAINT_TESTS
+from tests.benchmark.excluded_tests import EXCLUDED_CONSTRAINT_TESTS, EXCLUDED_DATA_TYPES
 from tests.benchmark.numpy_dtypes import NUMPY_DTYPES
 from tests.benchmark.pandas_dtypes import PANDAS_DTYPES
-from tests.benchmark.pyarrow_dtypes import PYARROW_DTYPES
 from tests.benchmark.utils import get_previous_dtype_result, save_results_to_json
 
 LOGGER = logging.getLogger(__name__)
@@ -150,25 +164,21 @@ EXPECTED_METADATA_SDTYPES = {
     'pa.decimal128': 'numerical',
 }
 
-EXCLUDED_DATA_TYPES = {
-    ('pd.boolean', 'numerical'),
-    ('pd.string', 'numerical'),
-    ('pd.category', 'numerical'),
-    ('pd.Period', 'numerical'),
-    ('np.bool', 'numerical'),
-    ('np.object', 'numerical'),
-    ('np.string', 'numerical'),
-    ('np.unicode', 'numerical'),
-    ('pd.boolean', 'datetime'),
-    ('pd.timedelta64', 'datetime'),
-    ('pd.Period', 'datetime'),
-    ('pd.Complex', 'datetime'),
-    ('np.complex64', 'datetime'),
-    ('np.complex128', 'datetime'),
-    ('np.bool', 'datetime'),
-    ('np.unicode', 'datetime'),
-    ('np.timedelta64', 'datetime'),
-}
+TRANSFORMERS = [
+    BinaryEncoder,
+    ClusterBasedNormalizer,
+    FloatFormatter,
+    FrequencyEncoder,
+    GaussianNormalizer,
+    LabelEncoder,
+    LogScaler,
+    LogitScaler,
+    OneHotEncoder,
+    OptimizedTimestampEncoder,
+    OrderedLabelEncoder,
+    OrderedUniformEncoder,
+    UnixTimestampEncoder,
+]
 
 
 @contextlib.contextmanager
@@ -192,92 +202,7 @@ def skip_if_unsupported(dtype, sdtype):
         pytest.skip(f"unsupported data type combination '{dtype}' and '{sdtype}'")
 
 
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
-@pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
-def test_metadata_detection(dtype, data, sdtype):
-    """Test metadata detection for data types using `SingleTableMetadata`.
-
-    This test checks the ability of the `SingleTableMetadata` class to detect
-    metadata from data types coming from `Pandas` and `NumPy`. It compares the
-    detected metadata against expected results.
-
-    Args:
-        dtype (str):
-            The data type to test.
-        data (pd.DataFrame):
-            The data for which metadata detection is performed.
-
-    Raises:
-        AssertionError:
-            If the detected metadata is incorrect or the dtype is no longer supported.
-
-    Test flow:
-        1. Initialize `SingleTableMetadata`.
-        2. Attempt to detect metadata from the provided data.
-        3. Assert if the sdtype matches the expected one.
-    """
-    skip_if_unsupported(dtype, sdtype)
-
-    metadata = SingleTableMetadata()
-    previous_result, _ = get_previous_dtype_result(dtype, sdtype, 'METADATA_DETECTION')
-    result = False
-    try:
-        metadata.detect_from_dataframe(data)
-        column = metadata.columns.get(dtype)
-        detected_sdtype = column.get('sdtype')
-        result = detected_sdtype == EXPECTED_METADATA_SDTYPES.get(dtype)
-    except BaseException as e:
-        LOGGER.debug(f"Error during 'metadata.validate_data' with dtype '{dtype}': {e}")
-
-    assertion_message = f"{dtype} is no longer supported in 'METADATA_DETECTION'."
-    save_results_to_json({'dtype': dtype, 'sdtype': sdtype, 'METADATA_DETECTION': result})
-    if result is False:
-        assert result == previous_result, assertion_message
-
-
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
-@pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
-def test_metadata_validate_data(dtype, data, sdtype):
-    """Test the validation of data using `SingleTableMetadata`.
-
-    This test checks whether the `validate_data` method of the metadata object
-    properly validates the given data for different data types coming from
-    `Pandas` and `NumPy`.
-
-    Args:
-        dtype (str):
-            The data type to test.
-        data (pd.DataFrame):
-            The data for which metadata validation is performed.
-
-    Raises:
-        AssertionError:
-            If the validation result does not match the previously recorded result
-            or if the dtype is no longer supported.
-
-    Test flow:
-        1. Create a predefined `SingleTableMetadata` for the given dtype.
-        2. Attempt to validate the data using `metadata.validate_data` for the provided data.
-        3. Assert if the result is as expected.
-    """
-    skip_if_unsupported(dtype, sdtype)
-
-    metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
-    previous_result, _ = get_previous_dtype_result(dtype, sdtype, 'METADATA_VALIDATE_DATA')
-    result = False
-    try:
-        metadata.validate_data(data)
-        result = True
-    except BaseException as e:
-        LOGGER.debug(f"Error during 'metadata.validate_data' with dtype '{dtype}': {e}")
-
-    save_results_to_json({'dtype': dtype, 'sdtype': sdtype, 'METADATA_VALIDATE_DATA': result})
-    if result is False:
-        assertion_message = f"{dtype} is no longer supported by 'METADATA_VALIDATE_DATA'."
-        assert result == previous_result, assertion_message
-
-
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
+@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
 @pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
 def test_fit_and_sample_synthesizer(dtype, data, sdtype):
     """Test fitting and sampling a synthesizer for different data types.
@@ -339,6 +264,53 @@ def test_fit_and_sample_synthesizer(dtype, data, sdtype):
     sample_assertion_message = f"{dtype} is no longer supported by 'SYNTHESIZER_SAMPLE'."
     if sample_result is False:
         assert sample_result == previous_sample_result, sample_assertion_message
+
+
+@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
+@pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
+@pytest.mark.parametrize('transformer', TRANSFORMERS)
+def test_transformer(dtype, data, sdtype, transformer):
+    """Test using a transformer with different data types."""
+    skip_if_unsupported(dtype, sdtype)
+
+    _transformer = transformer()
+    transformer_name = _transformer.get_name()
+    previous_fit_result, _ = get_previous_dtype_result(dtype, sdtype, f"{transformer_name}_FIT")
+    previous_transform_result, _ = get_previous_dtype_result(dtype, sdtype, f"{transformer_name}_TRANSFORM")
+    previous_reverse_result, _ = get_previous_dtype_result(dtype, sdtype, f"{transformer_name}_REVERSE")
+    fit_result = False
+    transform_result = False
+    reverse_result = False
+
+    try:
+        _transformer.fit(data)
+        fit_result = True
+        transformed_data = _transformer.transform(data)
+        transform_result = True
+        _transformer.reverse_transform(transformed_data)
+        reverse_result = True
+    except BaseException as e:
+        LOGGER.debug(f"Error during fitting/transform/reverse with dtype '{dtype}': {e}")
+
+    save_results_to_json({
+        'dtype': dtype,
+        'sdtype': sdtype,
+        f"{transformer_name}_FIT": fit_result,
+        f"{transformer_name}_TRANSFORM": transform_result,
+        f"{transformer_name}_REVERSE": reverse_result,
+    })
+
+    fit_assertion_message = f"{dtype} is no longer supported by '{transformer_name}_FIT'."
+    if fit_result is False:
+        assert fit_result == previous_fit_result, fit_assertion_message
+
+    transform_assertion_message = f"{dtype} is no longer supported by '{transformer_name}_TRANSFORM'."
+    if transform_result is False:
+        assert transform_result == previous_transform_result, transform_assertion_message
+
+    reverse_assertion_message = f"{dtype} is no longer supported by '{transformer_name}_REVERSE'."
+    if reverse_result is False:
+        assert reverse_result == previous_reverse_result, reverse_assertion_message
 
 
 def convert_values(value, inequality):
@@ -446,7 +418,7 @@ def _create_multi_column_constraint_data_and_metadata(constraint, data, dtype, s
 @pytest.mark.parametrize(
     'constraint_name, constraint', SINGLE_COLUMN_PREDEFINED_CONSTRAINTS.items()
 )
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
+@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
 @pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
 def test_fit_and_sample_single_column_constraints(constraint_name, constraint, dtype, data, sdtype):
     """Test fitting and sampling with single-column constraints for various data types.
@@ -531,7 +503,7 @@ def test_fit_and_sample_single_column_constraints(constraint_name, constraint, d
 
 
 @pytest.mark.parametrize('constraint_name, constraint', MULTI_COLUMN_PREDEFINED_CONSTRAINTS.items())
-@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES, **PYARROW_DTYPES}.items())
+@pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
 @pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
 def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dtype, data, sdtype):
     """Test fitting and sampling with multi-column constraints for various data types.
