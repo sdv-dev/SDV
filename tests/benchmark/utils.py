@@ -188,7 +188,7 @@ def compare_and_store_results_in_gdrive():
     # Compute the summary
     summary = pd.DataFrame()
     for name, current_results_df in results.items():
-        for startswith in ('RDT', 'CONSTRAINT'):
+        for startswith in ('SYNTHESIZER_FIT', 'SYNTHESIZER_SAMPLE', 'RDT', 'CONSTRAINT'):
             supported_df = calculate_support_percentage(current_results_df, startswith)
             column_name = f"{name} {startswith}"
             if summary.empty:
@@ -196,7 +196,7 @@ def compare_and_store_results_in_gdrive():
             else:
                 summary[column_name] = supported_df['percentage_supported']
 
-    for startswith in ('RDT', 'CONSTRAINT'):
+    for startswith in ('SYNTHESIZER_FIT', 'SYNTHESIZER_SAMPLE', 'RDT', 'CONSTRAINT'):
         summary[f"average {startswith}"] = summary[[f"{name} {startswith}" for name in results]].mean(axis=1).round(2)
 
     for col in summary.columns:
