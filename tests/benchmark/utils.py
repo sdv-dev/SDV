@@ -189,12 +189,12 @@ def compare_and_store_results_in_gdrive():
     summary = pd.DataFrame()
     for name, current_results_df in results.items():
         for startswith in ('RDT', 'CONSTRAINT'):
-            current_results_df = calculate_support_percentage(current_results_df, startswith)
+            supported_df = calculate_support_percentage(current_results_df, startswith)
             column_name = f"{name} {startswith}"
             if summary.empty:
-                summary = current_results_df.rename(columns={'percentage_supported': column_name})
+                summary = supported_df.rename(columns={'percentage_supported': column_name})
             else:
-                summary[column_name] = current_results_df['percentage_supported']
+                summary[column_name] = supported_df['percentage_supported']
 
     for startswith in ('RDT', 'CONSTRAINT'):
         summary[f"average {startswith}"] = summary[[f"{name} {startswith}" for name in results]].mean(axis=1).round(2)
