@@ -149,11 +149,11 @@ def save_results_to_json(results, filename=None):
             json.dump(json_data, file, indent=4)
 
 
-def calculate_support_percentage(df):
+def calculate_support_percentage(df, startswith):
     """Calculate the percentage of supported features (True) for each dtype in a DataFrame."""
-    feature_columns = df.drop(columns=['dtype', 'sdtype'])
+    feature_columns = [col for col in df.columns if col.startswith(startswith)]
     # Calculate percentage of TRUE values for each row (dtype)
-    percentage_support = feature_columns.mean(axis=1) * 100
+    percentage_support = df[feature_columns].mean(axis=1) * 100
 
     df = pd.DataFrame({
         'dtype': df['dtype'],
@@ -188,13 +188,16 @@ def compare_and_store_results_in_gdrive():
     # Compute the summary
     summary = pd.DataFrame()
     for name, current_results_df in results.items():
-        current_results_df = calculate_support_percentage(current_results_df)
-        if summary.empty:
-            summary = current_results_df.rename(columns={'percentage_supported': name})
-        else:
-            summary[name] = current_results_df['percentage_supported']
+        for startswith in ('TRANSFORMER', 'CONSTRAINT'):
+            current_results_df = calculate_support_percentage(current_results_df, startswith)
+            column_name = f"{name} {startswith}"
+            if summary.empty:
+                summary = current_results_df.rename(columns={'percentage_supported': column_name})
+            else:
+                summary[column_name] = current_results_df['percentage_supported']
 
-    summary['average'] = summary[list(results)].mean(axis=1).round(2)
+            summary[f"average {startswith}"] = summary[[f"{name} {startswith}" for name in results]].mean(axis=1).round(2)
+
     for col in summary.columns:
         if col not in ('sdtype', 'dtype'):
             summary[col] = summary[col].apply(lambda x: f'{x}%')
