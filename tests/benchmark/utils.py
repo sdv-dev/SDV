@@ -196,7 +196,8 @@ def compare_and_store_results_in_gdrive():
             else:
                 summary[column_name] = current_results_df['percentage_supported']
 
-            summary[f"average {startswith}"] = summary[[f"{name} {startswith}" for name in results]].mean(axis=1).round(2)
+    for startswith in ('TRANSFORMER', 'CONSTRAINT'):
+        summary[f"average {startswith}"] = summary[[f"{name} {startswith}" for name in results]].mean(axis=1).round(2)
 
     for col in summary.columns:
         if col not in ('sdtype', 'dtype'):
