@@ -186,9 +186,12 @@ def compare_and_store_results_in_gdrive():
     }
 
     # Compute the summary
+    measurement_prefixes = ('SYNTHESIZER_FIT', 'SYNTHESIZER_SAMPLE', 'RDT', 'CONSTRAINT')
+    data_type_columns = ('sdtype', 'dtype')
+
     summary = pd.DataFrame()
     for name, current_results_df in results.items():
-        for startswith in ('SYNTHESIZER_FIT', 'SYNTHESIZER_SAMPLE', 'RDT', 'CONSTRAINT'):
+        for startswith in measurement_prefixes:
             supported_df = calculate_support_percentage(current_results_df, startswith)
             column_name = f"{name} {startswith}"
             if summary.empty:
@@ -196,12 +199,14 @@ def compare_and_store_results_in_gdrive():
             else:
                 summary[column_name] = supported_df['percentage_supported']
 
-    for startswith in ('SYNTHESIZER_FIT', 'SYNTHESIZER_SAMPLE', 'RDT', 'CONSTRAINT'):
-        summary[f"average {startswith}"] = summary[[f"{name} {startswith}" for name in results]].mean(axis=1).round(2)
+    for startswith in measurement_prefixes:
+        summary[startswith] = summary[[f"{name} {startswith}" for name in results]].mean(axis=1).round(2)
 
     for col in summary.columns:
-        if col not in ('sdtype', 'dtype'):
+        if col not in data_type_columns:
             summary[col] = summary[col].apply(lambda x: f'{x}%')
+
+    summary = summary[data_type_columns + measurement_prefixes]
 
     sorted_results['Summary'] = summary
 
