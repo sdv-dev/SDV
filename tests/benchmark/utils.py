@@ -86,7 +86,7 @@ def compare_previous_result_with_current():
                     python_version,
                 )
 
-                if current_value and not stored_value:
+                if current_value is True and not stored_value is True:
                     new_supported_dtypes.append({
                         'dtype': dtype,
                         'sdtype': sdtype,
@@ -94,7 +94,7 @@ def compare_previous_result_with_current():
                         'python_version': python_version,
                     })
 
-                elif not current_value and stored_value:
+                elif not current_value is True and stored_value is True:
                     unsupported_dtypes.append({
                         'dtype': dtype,
                         'sdtype': sdtype,
