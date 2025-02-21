@@ -277,14 +277,7 @@ def test_transformer(dtype, data, sdtype, transformer):
     transformer_name = _transformer.get_name()
 
     if sdtype != transformer.INPUT_SDTYPE:
-        save_results_to_json({
-            'dtype': dtype,
-            'sdtype': sdtype,
-            f"RDT_{transformer_name}_FIT": None,
-            f"RDT_{transformer_name}_TRANSFORM": None,
-            f"RDT_{transformer_name}_REVERSE": None,
-        })
-        return
+        pytest.skip("Sdtype does not match transformer's input type, skipping.")
 
     previous_fit_result, _ = get_previous_dtype_result(dtype, sdtype, f"RDT_{transformer_name}_FIT")
     previous_transform_result, _ = get_previous_dtype_result(dtype, sdtype, f"RDT_{transformer_name}_TRANSFORM")
