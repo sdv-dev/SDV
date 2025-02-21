@@ -280,26 +280,26 @@ def test_transformer(dtype, data, sdtype, transformer):
         save_results_to_json({
             'dtype': dtype,
             'sdtype': sdtype,
-            f"RDT_{transformer_name}_FIT": None,
-            f"RDT_{transformer_name}_TRANSFORM": None,
-            f"RDT_{transformer_name}_REVERSE": None,
+            f"RDT_{transformer_name}_FIT": np.nan,
+            f"RDT_{transformer_name}_TRANSFORM": np.nan,
+            f"RDT_{transformer_name}_REVERSE": np.nan,
         })
         return
 
     previous_fit_result, _ = get_previous_dtype_result(dtype, sdtype, f"RDT_{transformer_name}_FIT")
     previous_transform_result, _ = get_previous_dtype_result(dtype, sdtype, f"RDT_{transformer_name}_TRANSFORM")
     previous_reverse_result, _ = get_previous_dtype_result(dtype, sdtype, f"RDT_{transformer_name}_REVERSE")
-    fit_result = False
-    transform_result = False
-    reverse_result = False
+    fit_result = 0.0
+    transform_result = 0.0
+    reverse_result = 0.0
 
     try:
         _transformer.fit(data, dtype)
-        fit_result = True
+        fit_result = 1.0
         transformed_data = _transformer.transform(data)
-        transform_result = True
+        transform_result = 1.0
         _transformer.reverse_transform(transformed_data)
-        reverse_result = True
+        reverse_result = 1.0
     except BaseException as e:
         LOGGER.debug(f"Error during fitting/transform/reverse with dtype '{dtype}': {e}")
 
@@ -312,15 +312,15 @@ def test_transformer(dtype, data, sdtype, transformer):
     })
 
     fit_assertion_message = f"{dtype} is no longer supported by 'RDT_{transformer_name}_FIT'."
-    if fit_result is False:
+    if fit_result == 0.0:
         assert fit_result == previous_fit_result, fit_assertion_message
 
     transform_assertion_message = f"{dtype} is no longer supported by 'RDT_{transformer_name}_TRANSFORM'."
-    if transform_result is False:
+    if transform_result == 0.0:
         assert transform_result == previous_transform_result, transform_assertion_message
 
     reverse_assertion_message = f"{dtype} is no longer supported by 'RDT_{transformer_name}_REVERSE'."
-    if reverse_result is False:
+    if reverse_result == 0.0:
         assert reverse_result == previous_reverse_result, reverse_assertion_message
 
 
@@ -477,18 +477,18 @@ def test_fit_and_sample_single_column_constraints(constraint_name, constraint, d
         )
 
         # Initialize results
-        sample_result = False
-        fit_result = False
+        sample_result = 0.0
+        fit_result = 0.0
         try:
             synthesizer.add_constraints([constraint])
             synthesizer.fit(data)
-            fit_result = True
+            fit_result = 1.0
 
             # Sample Synthetic Data
             with prevent_tqdm_output():
                 synthetic_data = synthesizer.sample(10)
 
-            sample_result = synthetic_data.dtypes[dtype] == data.dtypes[dtype]
+            sample_result = float(synthetic_data.dtypes[dtype] == data.dtypes[dtype])
 
         except BaseException as e:
             LOGGER.debug(
@@ -502,11 +502,11 @@ def test_fit_and_sample_single_column_constraints(constraint_name, constraint, d
             f'CONSTRAINT_{constraint_name}_FIT': fit_result,
             f'CONSTRAINT_{constraint_name}_SAMPLE': sample_result,
         })
-        if fit_result is False:
+        if fit_result == 0.0:
             fit_assertion_message = f"{dtype} is no longer supported by 'CONSTRAINT_{constraint_name}_FIT''."
             assert fit_result == previous_fit_result, fit_assertion_message
 
-        if sample_result is False:
+        if sample_result == 0.0:
             sample_assertion_message = (
                 f"{dtype} is no longer supported by 'CONSTRAINT_{constraint_name}_FIT''."
             )
@@ -561,20 +561,20 @@ def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dt
         )
 
         # Initialize results
-        sample_result = False
-        fit_result = False
+        sample_result = 0.0
+        fit_result = 0.0
 
         try:
             synthesizer = GaussianCopulaSynthesizer(metadata)
             synthesizer.add_constraints(constraints)
             synthesizer.fit(data)
-            fit_result = True
+            fit_result = 1.0
 
             # Generate Synthetic Data
             with prevent_tqdm_output():
                 synthetic_data = synthesizer.sample(10)
 
-            sample_result = synthetic_data.dtypes[dtype] == data.dtypes[dtype]
+            sample_result = float(synthetic_data.dtypes[dtype] == data.dtypes[dtype])
 
         except BaseException as e:
             LOGGER.debug(
@@ -588,10 +588,10 @@ def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dt
             f'CONSTRAINT_{constraint_name}_FIT': fit_result,
             f'CONSTRAINT_{constraint_name}_SAMPLE': sample_result,
         })
-        if fit_result is False:
+        if fit_result == 0.0:
             fit_message = f"{dtype} failed during 'CONSTRAINT_{constraint_name}_FIT'."
             assert fit_result == previous_fit_result, fit_message
 
-        if sample_result is False:
+        if sample_result == 0.0:
             sample_msg = f"{dtype} failed during 'CONSTRAINT_{constraint_name}_SAMPLE'."
             assert sample_result == previous_sample_result, sample_msg
