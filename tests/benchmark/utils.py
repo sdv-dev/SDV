@@ -186,8 +186,8 @@ def compare_and_store_results_in_gdrive():
     }
 
     # Compute the summary
-    measurement_prefixes = ('SYNTHESIZER_FIT', 'SYNTHESIZER_SAMPLE', 'RDT', 'CONSTRAINT')
-    data_type_columns = ('sdtype', 'dtype')
+    measurement_prefixes = ['SYNTHESIZER_FIT', 'SYNTHESIZER_SAMPLE', 'RDT', 'CONSTRAINT']
+    data_type_columns = ['sdtype', 'dtype']
 
     summary = pd.DataFrame()
     for name, current_results_df in results.items():
