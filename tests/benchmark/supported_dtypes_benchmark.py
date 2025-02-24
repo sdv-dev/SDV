@@ -172,7 +172,7 @@ TRANSFORMERS = {
     GaussianNormalizer: {},
     LabelEncoder: {},
     LogScaler: {'constant': np.iinfo(np.int64).min},
-    LogitScaler: {},
+    LogitScaler: {'min_value': np.iinfo(np.int64).min, 'max_value': np.iinfo(np.int64).max},
     OneHotEncoder: {},
     OptimizedTimestampEncoder: {},
     OrderedLabelEncoder: {},
