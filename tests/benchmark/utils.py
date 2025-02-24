@@ -27,7 +27,7 @@ def get_previous_dtype_result(dtype, sdtype, method, python_version=PYTHON_VERSI
     try:
         df = data[python_version]
         filtered_row = df[(df['dtype'] == dtype) & (df['sdtype'] == sdtype)]
-        value = filtered_row[method].to_numpy()[0]
+        value = filtered_row[method].astype('boolean')[0]
         previously_seen = True
     except (IndexError, KeyError):
         value = False
