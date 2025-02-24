@@ -164,21 +164,21 @@ EXPECTED_METADATA_SDTYPES = {
     'pa.decimal128': 'numerical',
 }
 
-TRANSFORMERS = [
-    BinaryEncoder,
-    ClusterBasedNormalizer,
-    FloatFormatter,
-    FrequencyEncoder,
-    GaussianNormalizer,
-    LabelEncoder,
-    LogScaler,
-    LogitScaler,
-    OneHotEncoder,
-    OptimizedTimestampEncoder,
-    OrderedLabelEncoder,
-    OrderedUniformEncoder,
-    UnixTimestampEncoder,
-]
+TRANSFORMERS = {
+    BinaryEncoder: {},
+    ClusterBasedNormalizer: {'max_clusters': 3},
+    FloatFormatter: {},
+    FrequencyEncoder: {},
+    GaussianNormalizer: {},
+    LabelEncoder: {},
+    LogScaler: {'constant': np.iinfo(np.int64).min},
+    LogitScaler: {},
+    OneHotEncoder: {},
+    OptimizedTimestampEncoder: {},
+    OrderedLabelEncoder: {},
+    OrderedUniformEncoder: {},
+    UnixTimestampEncoder: {},
+}
 
 
 @contextlib.contextmanager
@@ -268,12 +268,12 @@ def test_fit_and_sample_synthesizer(dtype, data, sdtype):
 
 @pytest.mark.parametrize('dtype, data', {**PANDAS_DTYPES, **NUMPY_DTYPES}.items())
 @pytest.mark.parametrize('sdtype', METADATA_SDTYPES)
-@pytest.mark.parametrize('transformer', TRANSFORMERS)
-def test_transformer(dtype, data, sdtype, transformer):
+@pytest.mark.parametrize('transformer, transformer_kwargs', TRANSFORMERS.items())
+def test_transformer(dtype, data, sdtype, transformer, transformer_kwargs):
     """Test using a transformer with different data types."""
     skip_if_unsupported(dtype, sdtype)
 
-    _transformer = transformer()
+    _transformer = transformer(**transformer_kwargs)
     transformer_name = _transformer.get_name()
 
     if sdtype != transformer.INPUT_SDTYPE:
