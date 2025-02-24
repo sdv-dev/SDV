@@ -3,6 +3,7 @@
 import json
 import os
 import sys
+import warnings
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -29,7 +30,9 @@ def get_previous_dtype_result(dtype, sdtype, method, python_version=PYTHON_VERSI
         filtered_row = df[(df['dtype'] == dtype) & (df['sdtype'] == sdtype)]
         value = filtered_row[method].astype('boolean')[0]
         previously_seen = True
-    except (IndexError, KeyError):
+    except (IndexError, KeyError) as e:
+        warnings.warn(e)
+        warnings.warn(filtered_row[method])
         value = False
         previously_seen = False
 
