@@ -28,11 +28,9 @@ def get_previous_dtype_result(dtype, sdtype, method, python_version=PYTHON_VERSI
     try:
         df = data[python_version]
         filtered_row = df[(df['dtype'] == dtype) & (df['sdtype'] == sdtype)]
-        value = filtered_row[method].astype('boolean')[0]
+        value = filtered_row[method].to_numpy()[0]
         previously_seen = True
-    except (IndexError, KeyError) as e:
-        warnings.warn(e)
-        warnings.warn(filtered_row[method])
+    except (IndexError, KeyError):
         value = False
         previously_seen = False
 
@@ -52,7 +50,7 @@ def _load_temp_results(filename):
     df.iloc[:, 2:] = df.groupby(['dtype', 'sdtype']).transform(lambda x: x.ffill().bfill())
     for column in df.columns:
         if column not in ('sdtype', 'dtype'):
-            df[column] = df[column].astype("boolean")
+            df[column] = df[column].astype("float")
 
     return df.drop_duplicates().reset_index(drop=True)
 
