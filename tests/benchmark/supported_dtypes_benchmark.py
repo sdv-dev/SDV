@@ -19,8 +19,6 @@ from rdt.transformers import (
     LogScaler,
     OneHotEncoder,
     OptimizedTimestampEncoder,
-    OrderedLabelEncoder,
-    OrderedUniformEncoder,
     UnixTimestampEncoder,
 )
 from tqdm import tqdm
@@ -175,8 +173,6 @@ TRANSFORMERS = {
     LogitScaler: {'min_value': np.iinfo(np.int8).min, 'max_value': np.iinfo(np.int8).max},
     OneHotEncoder: {},
     OptimizedTimestampEncoder: {},
-    OrderedLabelEncoder: {},
-    OrderedUniformEncoder: {},
     UnixTimestampEncoder: {},
 }
 
