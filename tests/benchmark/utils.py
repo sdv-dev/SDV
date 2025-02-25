@@ -49,7 +49,7 @@ def _load_temp_results(filename):
     df.iloc[:, 2:] = df.groupby(['dtype', 'sdtype']).transform(lambda x: x.ffill().bfill())
     for column in df.columns:
         if column not in ('sdtype', 'dtype'):
-            df[column] = df[column].astype("float")
+            df[column] = df[column].astype('float')
 
     return df.drop_duplicates().reset_index(drop=True)
 
@@ -193,14 +193,14 @@ def compare_and_store_results_in_gdrive():
     for name, current_results_df in results.items():
         for startswith in measurement_prefixes:
             supported_df = calculate_support_percentage(current_results_df, startswith)
-            column_name = f"{name} {startswith}"
+            column_name = f'{name} {startswith}'
             if summary.empty:
                 summary = supported_df.rename(columns={'percentage_supported': column_name})
             else:
                 summary[column_name] = supported_df['percentage_supported']
 
     for startswith in measurement_prefixes:
-        measurement_columns = [f"{name} {startswith}" for name in results]
+        measurement_columns = [f'{name} {startswith}' for name in results]
         summary[startswith] = summary[measurement_columns].mean(axis=1).round(2)
 
     for col in summary.columns:
