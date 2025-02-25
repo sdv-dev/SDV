@@ -39,7 +39,7 @@ dependencies = [
     'ctgan @ git+https://github.com/sdv-dev/CTGAN@main',
     'deepecho>=0.7.0',
     'rdt>=1.14.0',
-    'sdmetrics @ git+https://github.com/sdv-dev/SDMetrics@main',
+    'sdmetrics>=0.19.0',
     'platformdirs>=4.0',
     'pyyaml>=6.0.1',
 ]
