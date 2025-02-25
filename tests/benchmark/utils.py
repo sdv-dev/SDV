@@ -3,7 +3,6 @@
 import json
 import os
 import sys
-import warnings
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -87,7 +86,7 @@ def compare_previous_result_with_current():
                     python_version,
                 )
 
-                if current_value is True and not stored_value is True:
+                if current_value == True and not stored_value == True:
                     new_supported_dtypes.append({
                         'dtype': dtype,
                         'sdtype': sdtype,
@@ -95,7 +94,7 @@ def compare_previous_result_with_current():
                         'python_version': python_version,
                     })
 
-                elif not current_value is True and stored_value is True:
+                elif not current_value == True and stored_value == True:
                     unsupported_dtypes.append({
                         'dtype': dtype,
                         'sdtype': sdtype,
