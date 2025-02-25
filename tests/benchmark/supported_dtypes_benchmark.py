@@ -279,12 +279,12 @@ def test_transformer(dtype, data, sdtype, transformer, transformer_kwargs):
     if sdtype != transformer.INPUT_SDTYPE:
         pytest.skip("Sdtype does not match transformer's input type, skipping.")
 
-    previous_fit_result, _ = get_previous_dtype_result(dtype, sdtype, f"RDT_{transformer_name}_FIT")
+    previous_fit_result, _ = get_previous_dtype_result(dtype, sdtype, f'RDT_{transformer_name}_FIT')
     previous_transform_result, _ = get_previous_dtype_result(
-        dtype, sdtype, f"RDT_{transformer_name}_TRANSFORM"
+        dtype, sdtype, f'RDT_{transformer_name}_TRANSFORM'
     )
     previous_reverse_result, _ = get_previous_dtype_result(
-        dtype, sdtype, f"RDT_{transformer_name}_REVERSE"
+        dtype, sdtype, f'RDT_{transformer_name}_REVERSE'
     )
     fit_result = False
     transform_result = False
@@ -303,9 +303,9 @@ def test_transformer(dtype, data, sdtype, transformer, transformer_kwargs):
     save_results_to_json({
         'dtype': dtype,
         'sdtype': sdtype,
-        f"RDT_{transformer_name}_FIT": fit_result,
-        f"RDT_{transformer_name}_TRANSFORM": transform_result,
-        f"RDT_{transformer_name}_REVERSE": reverse_result,
+        f'RDT_{transformer_name}_FIT': fit_result,
+        f'RDT_{transformer_name}_TRANSFORM': transform_result,
+        f'RDT_{transformer_name}_REVERSE': reverse_result,
     })
 
     fit_assertion_message = f"{dtype} is no longer supported by 'RDT_{transformer_name}_FIT'."
