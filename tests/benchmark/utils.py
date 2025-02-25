@@ -86,7 +86,7 @@ def compare_previous_result_with_current():
                     python_version,
                 )
 
-                if current_value == True and not stored_value == True:
+                if current_value == 1.0 and not stored_value == 1.0:
                     new_supported_dtypes.append({
                         'dtype': dtype,
                         'sdtype': sdtype,
@@ -94,7 +94,7 @@ def compare_previous_result_with_current():
                         'python_version': python_version,
                     })
 
-                elif not current_value == True and stored_value == True:
+                elif not current_value == 1.0 and stored_value == 1.0:
                     unsupported_dtypes.append({
                         'dtype': dtype,
                         'sdtype': sdtype,
@@ -200,7 +200,8 @@ def compare_and_store_results_in_gdrive():
                 summary[column_name] = supported_df['percentage_supported']
 
     for startswith in measurement_prefixes:
-        summary[startswith] = summary[[f"{name} {startswith}" for name in results]].mean(axis=1).round(2)
+        measurement_columns = [f"{name} {startswith}" for name in results]
+        summary[startswith] = summary[measurement_columns].mean(axis=1).round(2)
 
     for col in summary.columns:
         if col not in data_type_columns:
