@@ -1,6 +1,7 @@
 name: Unit Tests Minimum Versions
 
 on:
+  push:
   pull_request:
     types: [opened, reopened]
 
