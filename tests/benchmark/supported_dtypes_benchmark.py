@@ -14,11 +14,13 @@ from rdt.transformers import (
     FloatFormatter,
     FrequencyEncoder,
     GaussianNormalizer,
+    IDGenerator,
     LabelEncoder,
     LogitScaler,
     LogScaler,
     OneHotEncoder,
     OptimizedTimestampEncoder,
+    RegexGenerator,
     UnixTimestampEncoder,
 )
 from tqdm import tqdm
@@ -168,11 +170,13 @@ TRANSFORMERS = {
     FloatFormatter: {},
     FrequencyEncoder: {},
     GaussianNormalizer: {},
+    IDGenerator: {},
     LabelEncoder: {},
     LogScaler: {'constant': np.iinfo(np.int8).min},
     LogitScaler: {'min_value': np.iinfo(np.int8).min, 'max_value': np.iinfo(np.int8).max},
     OneHotEncoder: {},
     OptimizedTimestampEncoder: {},
+    RegexGenerator: {},
     UnixTimestampEncoder: {},
 }
 
