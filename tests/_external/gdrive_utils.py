@@ -139,7 +139,7 @@ def _set_color_fields(worksheet, data, marked_data, writer, color_code):
             if data.loc[data_row, 'dtype'] == dtype and data.loc[data_row, 'sdtype'] == sdtype:
                 method_col = data.columns.get_loc(method)
                 worksheet.write(
-                    data_row + 1, method_col, bool(data.loc[data_row, method]), format_code
+                    data_row + 1, method_col, data.loc[data_row, method], format_code
                 )
 
 
