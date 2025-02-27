@@ -27,7 +27,8 @@ from tqdm import tqdm
 
 from sdv.metadata import SingleTableMetadata
 from sdv.single_table import GaussianCopulaSynthesizer
-from tests.benchmark.excluded_tests import EXCLUDED_CONSTRAINT_TESTS, EXCLUDED_DATA_TYPES
+from tests.benchmark.excluded_tests import EXCLUDED_DATA_TYPES
+from tests.benchmark.included_tests import INCLUDED_CONSTRAINT_TESTS
 from tests.benchmark.numpy_dtypes import NUMPY_DTYPES
 from tests.benchmark.pandas_dtypes import PANDAS_DTYPES
 from tests.benchmark.utils import get_previous_dtype_result, save_results_to_json
@@ -442,7 +443,7 @@ def test_fit_and_sample_single_column_constraints(constraint_name, constraint, d
     """
     skip_if_unsupported(dtype, sdtype)
 
-    if (sdtype, dtype, constraint_name) not in EXCLUDED_CONSTRAINT_TESTS:
+    if (sdtype, constraint_name) in INCLUDED_CONSTRAINT_TESTS:
         metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
         synthesizer = GaussianCopulaSynthesizer(metadata)
         sdtype = metadata.columns[dtype].get('sdtype')
@@ -531,7 +532,7 @@ def test_fit_and_sample_multi_column_constraints(constraint_name, constraint, dt
     """
     skip_if_unsupported(dtype, sdtype)
 
-    if (sdtype, dtype, constraint_name) not in EXCLUDED_CONSTRAINT_TESTS:
+    if (sdtype, constraint_name) in INCLUDED_CONSTRAINT_TESTS:
         metadata = _get_metadata_for_dtype_and_sdtype(dtype, sdtype)
         sdtype = metadata.columns[dtype].get('sdtype')
         previous_fit_result, _ = get_previous_dtype_result(
