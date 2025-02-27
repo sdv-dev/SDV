@@ -35,27 +35,6 @@ from tests.benchmark.utils import get_previous_dtype_result, save_results_to_jso
 LOGGER = logging.getLogger(__name__)
 
 SINGLE_COLUMN_PREDEFINED_CONSTRAINTS = {
-    'Positive': {
-        'constraint_class': 'Positive',
-        'constraint_parameters': {'column_name': '', 'strict_boundaries': False},
-    },
-    'Negative': {
-        'constraint_class': 'Negative',
-        'constraint_parameters': {'column_name': '', 'strict_boundaries': False},
-    },
-    'ScalarInequality': {
-        'constraint_class': 'ScalarInequality',
-        'constraint_parameters': {'column_name': '', 'relation': '>=', 'value': 0},
-    },
-    'ScalarRange': {
-        'constraint_class': 'ScalarRange',
-        'constraint_parameters': {
-            'column_name': '',
-            'low_value': 0,
-            'high_value': 1,
-            'strict_boundaries': False,
-        },
-    },
     'FixedIncrements': {
         'constraint_class': 'FixedIncrements',
         'constraint_parameters': {
