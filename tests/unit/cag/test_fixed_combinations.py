@@ -248,7 +248,7 @@ class TestFixedCombinations:
         assert instance._uuids_to_combinations is not None
         expected_out = pd.DataFrame({
             'a': ['a', 'b', 'c'],
-            'b#c#d': ['combination1', 'combination2', 'combination3']
+            'b#c#d': ['combination1', 'combination2', 'combination3'],
         })
         pd.testing.assert_frame_equal(expected_out, out)
 
