@@ -1,7 +1,6 @@
 name: Integration Tests
 
 on:
-  push:
   pull_request:
     types: [opened, reopened]
 
