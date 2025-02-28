@@ -116,9 +116,10 @@ class FixedCombinations(BasePattern):
 
     def _fit(self, data, metadata):
         """Fit the pattern."""
-        table_data = data[self._table_name]
+        table_name = self._get_single_table_name(metadata)
+        table_data = data[table_name]
         self._joint_column = _create_unique_name(
-            self._joint_column, metadata.tables[self._table_name].columns.keys()
+            self._joint_column, metadata.tables[table_name].columns.keys()
         )
         self._combinations = table_data[self.column_names].drop_duplicates().copy()
         self._combinations_to_uuids = {}
@@ -145,7 +146,8 @@ class FixedCombinations(BasePattern):
             dict[pd].DataFrame:
                 Transformed data.
         """
-        table_data = data[self._table_name]
+        table_name = self._get_single_table_name(self.metadata)
+        table_data = data[table_name]
         # To make the NaN to None mapping work for pd.Categorical data, we need to convert
         # the columns to object before replacing NaNs with None.
         table_data[self.column_names] = table_data[self.column_names].astype({
@@ -158,7 +160,7 @@ class FixedCombinations(BasePattern):
         combinations = table_data[self.column_names].itertuples(index=False, name=None)
         uuids = map(self._combinations_to_uuids.get, combinations)
         table_data[self._joint_column] = list(uuids)
-        data[self._table_name] = table_data.drop(self.column_names, axis=1)
+        data[table_name] = table_data.drop(self.column_names, axis=1)
         return data
 
     def _reverse_transform(self, data):
@@ -177,7 +179,8 @@ class FixedCombinations(BasePattern):
             dict[pd.DataFrame]:
                 Reverse transformed data.
         """
-        table_data = data[self._table_name]
+        table_name = self._get_single_table_name(self.metadata)
+        table_data = data[table_name]
         columns = table_data.pop(self._joint_column).map(self._uuids_to_combinations)
 
         for index, column in enumerate(self.column_names):
@@ -187,13 +190,14 @@ class FixedCombinations(BasePattern):
 
     def _is_valid(self, data):
         """Determine whether the data matches the pattern."""
+        table_name = self._get_single_table_name(self.metadata)
         is_valid = {
             table: pd.Series(True, index=table_data.index)
             for table, table_data in data.items()
-            if table != self._table_name
+            if table != table_name
         }
-        merged = data[self._table_name].merge(
+        merged = data[table_name].merge(
             self._combinations, how='left', on=self.column_names, indicator=self._joint_column
         )
-        is_valid[self._table_name] = merged[self._joint_column] == 'both'
+        is_valid[table_name] = merged[self._joint_column] == 'both'
         return is_valid

@@ -179,7 +179,6 @@ class TestFixedCombinations:
         # Setup
         columns = ['b', 'c']
         instance = FixedCombinations(column_names=columns)
-        instance._table_name = 'table'
         metadata = Metadata.load_from_dict({
             'tables': {
                 'table': {
