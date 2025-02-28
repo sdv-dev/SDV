@@ -172,7 +172,7 @@ def save_to_gdrive(output_folder, results, output_filename=None, mark_results=No
         output_filename = _generate_filename()
 
     output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:  # pylint: disable=E0110
+    with pd.ExcelWriter(output, engine='xlsxwriter', engine_kwargs={'options': {'nan_inf_to_errors': True}}) as writer:  # pylint: disable=E0110
         for sheet_name, data in results.items():
             data.to_excel(writer, sheet_name=sheet_name, index=False)
             _set_column_width(writer, data, sheet_name)
