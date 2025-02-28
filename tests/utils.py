@@ -19,6 +19,21 @@ class DataFrameMatcher:
         return True
 
 
+class DataFrameDictMatcher:
+    """Match a given dictionary of pandas DataFrames in a mock function call."""
+
+    def __init__(self, data):
+        self.data = data
+
+    def __eq__(self, other):
+        """Assert the data keys match, then use pandas to assert the values are equal."""
+        assert self.data.keys() == other.keys()
+        for key in self.data:
+            pd.testing.assert_frame_equal(self.data[key], other[key])
+
+        return True
+
+
 class SeriesMatcher:
     """Match a given Pandas Series in a mock function call."""
 
