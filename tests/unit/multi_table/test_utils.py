@@ -469,7 +469,7 @@ def test_drop_unknown_references_drop_all_rows(mock_get_rows_to_drop):
     # Run and Assert
     expected_message = re.escape(
         'The provided data does not match the metadata:\n'
-        "All references in table 'child' are unknown and must be dropped."
+        "All references in table 'child' are unknown and must be dropped. "
         'Try providing different data for this table.'
     )
     with pytest.raises(InvalidDataError, match=expected_message):
