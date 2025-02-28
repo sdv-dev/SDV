@@ -522,3 +522,35 @@ def test_user_warning_for_unused_numerical_distribution():
     )
     with pytest.warns(UserWarning, match=message):
         synthesizer.fit(data)
+
+
+def test_get_learned_distributions_fallback_distribution():
+    """Test it when the fallback distribution is used GH#2394."""
+    # Setup
+    data = pd.DataFrame(data={'A': np.concatenate([np.zeros(29), np.ones(21)])})
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'A': {
+                        'sdtype': 'numerical',
+                    },
+                },
+            },
+        },
+    })
+
+    # Run
+    synthesizer = GaussianCopulaSynthesizer(metadata, default_distribution='beta')
+    synthesizer.fit(data)
+
+    # Assert
+    assert synthesizer.get_learned_distributions() == {
+        'A': {
+            'distribution': 'norm',
+            'learned_parameters': {
+                'loc': 0.42,
+                'scale': 0.4935585071701226,
+            },
+        },
+    }

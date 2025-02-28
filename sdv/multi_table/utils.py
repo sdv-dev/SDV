@@ -443,7 +443,7 @@ def _drop_rows(data, metadata, drop_missing_values):
 
         if data[table].empty:
             raise InvalidDataError([
-                f"All references in table '{table}' are unknown and must be dropped."
+                f"All references in table '{table}' are unknown and must be dropped. "
                 'Try providing different data for this table.'
             ])
 
@@ -558,7 +558,7 @@ def _subsample_parent(
     parent_table = parent_table.drop(unreferenced_data_to_drop.index)
     if parent_table.empty:
         raise InvalidDataError([
-            f"All references in table '{parent_primary_key}' are unknown and must be dropped."
+            f"All references in table '{parent_primary_key}' are unknown and must be dropped. "
             'Try providing different data for this table.'
         ])
 
