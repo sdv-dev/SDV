@@ -179,6 +179,7 @@ class TestFixedCombinations:
         # Setup
         columns = ['b', 'c']
         instance = FixedCombinations(column_names=columns)
+        instance._table_name = 'table'
         metadata = Metadata.load_from_dict({
             'tables': {
                 'table': {
@@ -213,9 +214,11 @@ class TestFixedCombinations:
         pd.testing.assert_frame_equal(instance._combinations, expected_combinations)
         assert get_mappable_combination_mock.call_args_list == expected_calls
 
-    def test__transform(self):
+    @patch('sdv.cag.fixed_combinations.uuid')
+    def test__transform(self, mock_uuid):
         """Test the ``FixedCombinations.transform`` method."""
         # Setup
+        mock_uuid.uuid5.side_effect = ['combination1', 'combination2', 'combination3']
         metadata = Metadata.load_from_dict({
             'tables': {
                 'table': {
@@ -244,8 +247,11 @@ class TestFixedCombinations:
         # Assert
         assert instance._combinations_to_uuids is not None
         assert instance._uuids_to_combinations is not None
-        expected_out_a = pd.Series(['a', 'b', 'c'], name='a')
-        pd.testing.assert_series_equal(expected_out_a, out['a'])
+        expected_out = pd.DataFrame({
+            'a': ['a', 'b', 'c'],
+            'b#c#d': ['combination1', 'combination2', 'combination3']
+        })
+        pd.testing.assert_frame_equal(expected_out, out)
 
     def test__reverse_transform(self):
         """Test the ``FixedCombinations.reverse_transform`` method."""
@@ -279,13 +285,7 @@ class TestFixedCombinations:
         # Assert
         assert instance._combinations_to_uuids is not None
         assert instance._uuids_to_combinations is not None
-        expected_out = pd.DataFrame({
-            'a': ['a', 'b', 'c'],
-            'b': [1, 2, 3],
-            'c': ['g', 'h', 'i'],
-            'd': [2.4, 1.23, 5.6],
-        })
-        pd.testing.assert_frame_equal(expected_out, out)
+        pd.testing.assert_frame_equal(data, out)
 
     def test__is_valid(self):
         """Test the ``FixedCombinations.is_valid`` method."""
