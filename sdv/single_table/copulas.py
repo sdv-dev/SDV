@@ -224,10 +224,11 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
         univariates = deepcopy(parameters['univariates'])
         learned_distributions = {}
         valid_columns = self._get_valid_columns_from_metadata(columns)
+        distribution_names = {v.__name__: k for k, v in self._DISTRIBUTIONS.items()}
         for column, learned_params in zip(columns, univariates):
             if column in valid_columns:
-                distribution = self.numerical_distributions.get(column, self.default_distribution)
-                learned_params.pop('type')
+                distribution_name = learned_params.pop('type').split('.')[-1]
+                distribution = distribution_names[distribution_name]
                 learned_distributions[column] = {
                     'distribution': distribution,
                     'learned_parameters': learned_params,
