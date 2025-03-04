@@ -11,6 +11,7 @@ from sdv.cag._utils import _validate_table_and_column_names
 from sdv.cag.base import BasePattern
 from sdv.constraints.utils import get_mappable_combination
 from sdv.metadata import Metadata
+from sdv.cag._utils import _validate_table_name_if_defined
 
 
 class FixedCombinations(BasePattern):
@@ -45,8 +46,7 @@ class FixedCombinations(BasePattern):
         if len(column_names) < 2:
             raise ValueError('FixedCombinations pattern requires at least two columns.')
 
-        if table_name and not isinstance(table_name, str):
-            raise ValueError('`table_name` must be a string or None.')
+        _validate_table_name_if_defined(table_name)
 
         self.column_names = column_names
         self.table_name = table_name
@@ -143,7 +143,7 @@ class FixedCombinations(BasePattern):
                 Table data.
 
         Returns:
-            dict[pd].DataFrame:
+            (dict[pd.DataFrame]):
                 Transformed data.
         """
         table_name = self._get_single_table_name(self.metadata)
@@ -172,7 +172,7 @@ class FixedCombinations(BasePattern):
         names.
 
         Args:
-            table_data (dict[pd.DataFrame)]:
+            data (dict[pd.DataFrame)]:
                 Transformed data.
 
         Returns:
