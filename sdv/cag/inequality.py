@@ -1,6 +1,5 @@
 """FixedCombinations CAG pattern."""
 
-
 import numpy as np
 import pandas as pd
 
@@ -62,8 +61,6 @@ class Inequality(BasePattern):
         # Set during fit
         self._is_datetime = None
         self._dtype = None
-
-        # Only set if _is_datetime is True
         self._low_datetime_format = None
         self._high_datetime_format = None
 
@@ -94,7 +91,7 @@ class Inequality(BasePattern):
             col_sdtype = metadata.tables[table_name].columns[column]['sdtype']
             if col_sdtype not in ['numerical', 'datetime']:
                 raise PatternNotMetError(
-                    f"Column '{column}' has an incompatible sdtype ('{col_sdtype}'). The column "
+                    f"Column '{column}' has an incompatible sdtype '{col_sdtype}'. The column "
                     "sdtype must be either 'numerical' or 'datetime'."
                 )
 
@@ -102,8 +99,8 @@ class Inequality(BasePattern):
         high_column_sdtype = metadata.tables[table_name].columns[self._high_column_name]['sdtype']
         if low_column_sdtype != high_column_sdtype:
             raise PatternNotMetError(
-                f"Columns {self._low_column_name} and {self._high_column_name} must have the same sdtype. "
-                f"Found {low_column_sdtype} and {high_column_sdtype}."
+                f"Columns '{self._low_column_name}' and '{self._high_column_name}' must have the "
+                f"same sdtype. Found '{low_column_sdtype}' and '{high_column_sdtype}'."
             )
 
     def _get_data(self, data):
@@ -112,7 +109,7 @@ class Inequality(BasePattern):
         return low, high
 
     def _get_is_datetime(self, metadata, table_name):
-        return metadata.tables[table_name].columns[self._low_column_name]['sdtype']
+        return metadata.tables[table_name].columns[self._low_column_name]['sdtype'] == 'datetime'
 
     def _get_datetime_format(self, metadata, table_name, column_name):
         return metadata.tables[table_name].columns[column_name].get('datetime_format')
@@ -150,18 +147,17 @@ class Inequality(BasePattern):
             else:
                 first_five = ', '.join(str(i) for i in invalid_rows[:5])
                 remaining = len(invalid_rows) - 5
-                invalid_rows_str = f"{first_five}, +{remaining} more"
+                invalid_rows_str = f'{first_five}, +{remaining} more'
 
             raise PatternNotMetError(
-                f"The inequality requirement is not met for row indices: [{invalid_rows_str}]"
+                f'The inequality requirement is not met for row indices: [{invalid_rows_str}]'
             )
 
     def _get_updated_metadata(self, metadata):
         """Get the new output metadata after applying the pattern to the input metadata."""
         table_name = self._get_single_table_name(metadata)
         diff_column = _create_unique_name(
-            self._diff_column_name,
-            metadata.tables[table_name].columns.keys()
+            self._diff_column_name, metadata.tables[table_name].columns.keys()
         )
 
         metadata = metadata.to_dict()
@@ -181,17 +177,13 @@ class Inequality(BasePattern):
         table_name = self._get_single_table_name(metadata)
         table_data = data[table_name]
         self._dtype = table_data[self._high_column_name].dtypes
-        self._is_datetime = self._get_is_datetime()
+        self._is_datetime = self._get_is_datetime(metadata, table_name)
         if self._is_datetime:
             self._low_datetime_format = self._get_datetime_format(
-                metadata,
-                table_name,
-                self._low_column_name
+                metadata, table_name, self._low_column_name
             )
             self._high_datetime_format = self._get_datetime_format(
-                metadata,
-                table_name,
-                self._high_column_name
+                metadata, table_name, self._high_column_name
             )
 
     def _transform(self, data):
@@ -204,11 +196,11 @@ class Inequality(BasePattern):
         value stays positive when reverted afterwards using an exponential.
 
         Args:
-            data (dict[pd.DataFrame]):
+            data (dict[str, pd.DataFrame]):
                 Table data.
 
         Returns:
-            pandas.DataFrame:
+            dict[str, pd.DataFrame]:
                 Transformed data.
         """
         table_name = self._get_single_table_name(self.metadata)
@@ -240,7 +232,9 @@ class Inequality(BasePattern):
                 self._diff_column_name: table_data[self._diff_column_name].mean(),
             })
 
-        return table_data.drop(self._high_column_name, axis=1)
+        data[table_name] = table_data.drop(self._high_column_name, axis=1)
+
+        return data
 
     def _reverse_transform(self, data):
         """Reverse transform the table data.
@@ -251,11 +245,11 @@ class Inequality(BasePattern):
         value.
 
         Args:
-            data (dict[pd.DataFrame]):
+            data (dict[str, pd.DataFrame]):
                 Table data.
 
         Returns:
-            pandas.DataFrame:
+            dict[str, pd.DataFrame]:
                 Transformed data.
         """
         table_name = self._get_single_table_name(self.metadata)
@@ -276,20 +270,28 @@ class Inequality(BasePattern):
         if self._nan_column_name and self._nan_column_name in table_data.columns:
             table_data = revert_nans_columns(table_data, self._nan_column_name)
 
-        return table_data.drop(self._diff_column_name, axis=1)
+        data[table_name] = table_data.drop(self._diff_column_name, axis=1)
 
-    def is_valid(self, data):
+        return data
+
+    def _is_valid(self, data):
         """Check whether `high` is greater than `low` in each row.
 
         Args:
-            data (dict[pd.DataFrame]):
+            data (dict[str, pd.DataFrame]):
                 Table data.
 
         Returns:
-            pandas.Series:
+            dict[str, pd.Series]:
                 Whether each row is valid.
         """
         table_name = self._get_single_table_name(self.metadata)
+        is_valid = {
+            table: pd.Series(True, index=table_data.index)
+            for table, table_data in data.items()
+            if table != table_name
+        }
+
         table_data = data[table_name]
         low, high = self._get_data(table_data)
         if self._is_datetime and self._dtype == 'O':
@@ -306,5 +308,6 @@ class Inequality(BasePattern):
                 )
 
         valid = pd.isna(low) | pd.isna(high) | self._operator(high, low)
+        is_valid[table_name] = valid
 
-        return valid
+        return is_valid
