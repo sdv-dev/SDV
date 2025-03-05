@@ -7,11 +7,10 @@ import pandas as pd
 
 from sdv._utils import _create_unique_name
 from sdv.cag._errors import PatternNotMetError
-from sdv.cag._utils import _validate_table_and_column_names
+from sdv.cag._utils import _validate_table_and_column_names, _validate_table_name_if_defined
 from sdv.cag.base import BasePattern
 from sdv.constraints.utils import get_mappable_combination
 from sdv.metadata import Metadata
-from sdv.cag._utils import _validate_table_name_if_defined
 
 
 class FixedCombinations(BasePattern):

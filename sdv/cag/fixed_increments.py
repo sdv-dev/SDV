@@ -1,27 +1,23 @@
 """FixedIncrements CAG pattern."""
 
-import uuid
+from copy import deepcopy
 
-import numpy as np
 import pandas as pd
 
 from sdv._utils import _create_unique_name
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import (
-    _validate_table_and_column_names,
-    _validate_table_name,
+    _remove_columns_from_metadata,
     _validate_columns_in_metadata,
-    _remove_columns_from_metadata
+    _validate_table_name,
+    _validate_table_name_if_defined,
 )
-from copy import deepcopy
 from sdv.cag.base import BasePattern
-from sdv.cag._utils import _validate_table_name_if_defined
-from sdv.constraints.utils import get_mappable_combination
-from sdv.metadata import Metadata
-from sdv._utils import _convert_to_timedelta, _create_unique_name
+
 
 class FixedIncrements(BasePattern):
-    """
+    """Ensure that the combinations of values across several columns are the same after sampling.
+
     Args:
         column_name (str or list[str]):
             Name of the column(s).
@@ -32,12 +28,15 @@ class FixedIncrements(BasePattern):
             The name of the table that contains the columns. Optional if the
             data is only a single table. Defaults to None.
     """
+
     def __init__(self, column_name, increment_value, table_name=None):
         super().__init__()
 
         if isinstance(column_name, str):
             column_name = [column_name]
-        elif not isinstance(column_name, list) or not all(isinstance(col, str) for col in column_name):
+        elif not isinstance(column_name, list) or not all(
+            isinstance(col, str) for col in column_name
+        ):
             raise ValueError('`column_name` must be a string or list of strings.')
 
         if increment_value <= 0:
@@ -79,9 +78,9 @@ class FixedIncrements(BasePattern):
                     "sdtype must be 'numerical'."
                 )
 
-
     def _validate_pattern_with_data(self, data, metadata):
         """Validate the data is compatible with the pattern.
+
         Args:
             data (dict[pd.DataFrame]):
                 The Table data.
@@ -91,21 +90,19 @@ class FixedIncrements(BasePattern):
         """
         is_column_valid = []
         for column in self.column_name:
-            is_column_valid = self._check_if_divisible(data,
-                                                       self._get_single_table_name(metadata),
-                                                       column,
-                                                       self.increment_value)
+            is_column_valid = self._check_if_divisible(
+                data, self._get_single_table_name(metadata), column, self.increment_value
+            )
         return all(is_column_valid)
 
     def _get_updated_metadata(self, metadata):
-        """Get the updated metadata after applying the pattern to the metadata"""
+        """Get the updated metadata after applying the pattern to the metadata."""
         table_name = self._get_single_table_name(metadata)
         original_columns = list(metadata.tables[table_name].columns)
         updated_metadata = deepcopy(metadata)
         for column_name in original_columns:
             new_column_name = _create_unique_name(
-                f'{column_name}#increment',
-                metadata.tables[table_name].columns.keys()
+                f'{column_name}#increment', metadata.tables[table_name].columns.keys()
             )
             updated_metadata.add_column(
                 column_name=new_column_name,
@@ -146,10 +143,9 @@ class FixedIncrements(BasePattern):
             pandas.Series:
                 Whether each row is valid.
         """
-        return self._check_if_divisible(data,
-                                        self.table_name,
-                                        self.column_name,
-                                        self.increment_value)
+        return self._check_if_divisible(
+            data, self.table_name, self.column_name, self.increment_value
+        )
 
     def _transform(self, data):
         """Transform the data.
@@ -165,9 +161,9 @@ class FixedIncrements(BasePattern):
                 Transformed data.
         """
         table_name = self._get_single_table_name(self.metadata)
-        data[table_name][self.column_name] = (data[table_name][self.column_name] / self.increment_value).astype(
-            self._dtype
-        )
+        data[table_name][self.column_name] = (
+            data[table_name][self.column_name] / self.increment_value
+        ).astype(self._dtype)
         return data
 
     def _reverse_transform(self, data):
