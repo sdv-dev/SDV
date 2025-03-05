@@ -1,8 +1,10 @@
 """CAG _utils unit tests."""
 
 import re
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
+import numpy as np
+import pandas as pd
 import pytest
 
 from sdv.cag._errors import PatternNotMetError
