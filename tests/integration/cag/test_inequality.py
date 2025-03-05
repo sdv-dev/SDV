@@ -549,7 +549,7 @@ def test_inequality_pattern_date_less_than_timestamp_no_strict_boundaries():
 def test_inequality_pattern_timestamp_less_than_date_no_strict_boundaries():
     """Test that the inequality pattern passes when timestamp is less than date.
 
-    This case evaluates the `Inequality` constraint with
+    This case evaluates the `Inequality` pattern with
     `strict_boundaries=False`. Since `strict_boundaries` is set to `False`, we
     assume that a date in the `DUE_DATE` column should be treated as the end of
     the day, so there will be no violation if the `SUBMISSION_TIMESTAMP` is
