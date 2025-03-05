@@ -1,4 +1,4 @@
-"""Unit tests for FixedCombinations CAG pattern."""
+"""Unit tests for Inequality CAG pattern."""
 
 import re
 from datetime import datetime
