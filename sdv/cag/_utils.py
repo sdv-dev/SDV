@@ -1,9 +1,9 @@
-from sdv.cag._errors import PatternNotMetError
-import pandas as pd
-import numpy as np
 import re
-from decimal import Decimal
-from datetime import datetime
+
+import numpy as np
+import pandas as pd
+
+from sdv.cag._errors import PatternNotMetError
 
 PRECISION_LEVELS = {
     '%Y': 1,  # Year
@@ -31,6 +31,23 @@ PRECISION_LEVELS = {
     '%x': 0,  # Locale-based date
     '%X': 0,  # Locale-based time
 }
+
+
+def _validate_table_and_column_names(table_name, columns, metadata):
+    """Validate the table and column names for the pattern."""
+    if table_name is None and len(metadata.tables) > 1:
+        raise PatternNotMetError(
+            'Metadata contains more than 1 table but no ``table_name`` provided.'
+        )
+    if table_name is None:
+        table_name = metadata._get_single_table_name()
+    elif table_name not in metadata.tables:
+        raise PatternNotMetError(f"Table '{table_name}' missing from metadata.")
+
+    if not set(columns).issubset(set(metadata.tables[table_name].columns)):
+        missing_columns = columns - set(metadata.tables[table_name].columns)
+        missing_columns = "', '".join(sorted(missing_columns))
+        raise PatternNotMetError(f"Table '{table_name}' is missing columns '{missing_columns}'.")
 
 
 def cast_to_datetime64(value, datetime_format=None):
@@ -165,6 +182,24 @@ def get_datetime_diff(high, low, high_datetime_format=None, low_datetime_format=
     return diff_column
 
 
+def format_datetime_array(datetime_array, target_format):
+    """Format each element in a numpy datetime64 array to a specified string format.
+
+    Args:
+        datetime_array (np.ndarray):
+            Array of datetime64[ns] elements.
+        target_format (str):
+            The datetime format to cast each element to.
+
+    Returns:
+        np.ndarray: Array of formatted datetime strings.
+    """
+    return np.array([
+        pd.to_datetime(date).strftime(target_format) if not pd.isna(date) else pd.NaT
+        for date in datetime_array
+    ])
+
+
 def downcast_datetime_to_lower_precision(data, target_format):
     """Convert a datetime string from a higher-precision format to a lower-precision format.
 
@@ -179,33 +214,6 @@ def downcast_datetime_to_lower_precision(data, target_format):
     """
     downcasted_data = format_datetime_array(data, target_format)
     return cast_to_datetime64(downcasted_data, target_format)
-
-
-def match_datetime_precision(low, high, low_datetime_format, high_datetime_format):
-    """Match `low` or `high` datetime array to the lower precision format.
-
-    Args:
-        low (np.ndarray):
-            Array of datetime values for the low column.
-        high (np.ndarray):
-            Array of datetime values for the high column.
-        low_datetime_format (str):
-            The datetime format of the `low` column.
-        high_datetime_format (str):
-            The datetime format of the `high` column.
-
-    Returns:
-        Tuple[np.ndarray, np.ndarray]:
-            Adjusted `low` and `high` arrays where the higher precision format is
-            downcasted to the lower precision format.
-    """
-    lower_precision_format = get_lower_precision_format(low_datetime_format, high_datetime_format)
-    if lower_precision_format == high_datetime_format:
-        low = downcast_datetime_to_lower_precision(low, lower_precision_format)
-    else:
-        high = downcast_datetime_to_lower_precision(high, lower_precision_format)
-
-    return low, high
 
 
 def get_datetime_format_precision(format_str):
@@ -242,36 +250,28 @@ def get_lower_precision_format(primary_format, secondary_format):
     return primary_format
 
 
-def format_datetime_array(datetime_array, target_format):
-    """Format each element in a numpy datetime64 array to a specified string format.
+def match_datetime_precision(low, high, low_datetime_format, high_datetime_format):
+    """Match `low` or `high` datetime array to the lower precision format.
 
     Args:
-        datetime_array (np.ndarray):
-            Array of datetime64[ns] elements.
-        target_format (str):
-            The datetime format to cast each element to.
+        low (np.ndarray):
+            Array of datetime values for the low column.
+        high (np.ndarray):
+            Array of datetime values for the high column.
+        low_datetime_format (str):
+            The datetime format of the `low` column.
+        high_datetime_format (str):
+            The datetime format of the `high` column.
 
     Returns:
-        np.ndarray: Array of formatted datetime strings.
+        Tuple[np.ndarray, np.ndarray]:
+            Adjusted `low` and `high` arrays where the higher precision format is
+            downcasted to the lower precision format.
     """
-    return np.array([
-        pd.to_datetime(date).strftime(target_format) if not pd.isna(date) else pd.NaT
-        for date in datetime_array
-    ])
+    lower_precision_format = get_lower_precision_format(low_datetime_format, high_datetime_format)
+    if lower_precision_format == high_datetime_format:
+        low = downcast_datetime_to_lower_precision(low, lower_precision_format)
+    else:
+        high = downcast_datetime_to_lower_precision(high, lower_precision_format)
 
-
-def _validate_table_and_column_names(table_name, columns, metadata):
-    """Validate the table and column names for the pattern."""
-    if table_name is None and len(metadata.tables) > 1:
-        raise PatternNotMetError(
-            'Metadata contains more than 1 table but no ``table_name`` provided.'
-        )
-    if table_name is None:
-        table_name = metadata._get_single_table_name()
-    elif table_name not in metadata.tables:
-        raise PatternNotMetError(f"Table '{table_name}' missing from metadata.")
-
-    if not set(columns).issubset(set(metadata.tables[table_name].columns)):
-        missing_columns = columns - set(metadata.tables[table_name].columns)
-        missing_columns = "', '".join(sorted(missing_columns))
-        raise PatternNotMetError(f"Table '{table_name}' is missing columns '{missing_columns}'.")
+    return low, high
