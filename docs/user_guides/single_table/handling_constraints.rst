@@ -24,7 +24,7 @@ To illustrate some of the constraints, let's load a small table that contains so
 about employees from several companies.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.demo import load_tabular_demo
 
@@ -49,7 +49,7 @@ unique.
 Enforce this by creating a Unique constraint. This object accepts a list of 1 or more column names.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.constraints import Unique
 
@@ -75,7 +75,7 @@ Enforce this by creating a FixedCombinations constraint. This object accepts a l
 more column names.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.constraints import FixedCombinations
 
@@ -96,7 +96,7 @@ Enforce this by creating an Inequality constraint. This object accepts column na
 and low columns. The columns can be either numerical or datetime.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.constraints import Inequality
 
@@ -118,7 +118,7 @@ datetime column name and value. It also expects an inequality relation that must
 ">", ">=", "<" or "<=".
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.constraints import ScalarInequality
 
@@ -278,7 +278,7 @@ Then you can fit the model using the real data. During this process, the SDV ens
 model learns the constraints.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model.fit(employees)
 

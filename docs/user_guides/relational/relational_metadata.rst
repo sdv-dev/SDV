@@ -15,7 +15,7 @@ In order to follow this tutorial you will need to load one of the demo
 datasets included in SDV by calling the ``sdv.load_demo`` function.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv import load_demo
 
@@ -25,7 +25,7 @@ The output of this function will be a dict that contains several tables
 as ``pandas.DataFarmes``.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     tables
 
@@ -71,7 +71,7 @@ In order to create a ``Metadata`` for our dataset, you will first need
 to import the class and create an empty instance:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv import Metadata
 
@@ -94,7 +94,7 @@ your table has none, but if a table does not have one, you will not be
 able to add any child tables to it.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     metadata.add_table(
         name='users',
@@ -106,7 +106,7 @@ At this point, our metadata only contains one table and, of course, no
 relationships:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     metadata
 
@@ -120,7 +120,7 @@ You can see so by calling the ``visualize`` method of your ``metadata``
 instance:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     @suppress
     metadata.visualize('images/metadata_1.png');
@@ -133,7 +133,7 @@ Or you can obtain this information in a machine-readable format by
 calling the ``get_table_meta`` method:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     metadata.get_table_meta('users')
 
@@ -158,7 +158,7 @@ the ``user_id`` field that indicates that it is related to the
 ``user_id`` field in the ``users`` table.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     metadata.add_table(
         name='sessions',
@@ -171,7 +171,7 @@ the ``user_id`` field that indicates that it is related to the
 Now we can see how the table and the relationship have been registered:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     metadata
 
@@ -192,7 +192,7 @@ is related to the previous ``sessions`` table, and contains a
 ``datetime`` field which needs to have the datetime format specified.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     transactions_fields = {
         'timestamp': {
@@ -212,7 +212,7 @@ is related to the previous ``sessions`` table, and contains a
 Let's see what our Metadata looks like right now:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     metadata
     metadata.to_dict()
@@ -235,7 +235,7 @@ to do is call the ``to_json`` method passing the path to the JSON file
 that you want to create.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     metadata.to_json('demo_metadata.json')
 
@@ -243,7 +243,7 @@ You can see that the contents of the created file are very similar to
 the ``dict`` representation of the metadata:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     with open('demo_metadata.json') as meta_file:
         print(meta_file.read())
@@ -253,7 +253,7 @@ After creating the JSON file, loading it back as a ``metadata`` object
 is as simple as passing it to the ``Metadata`` constructor:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     loaded = Metadata('demo_metadata.json')
     loaded

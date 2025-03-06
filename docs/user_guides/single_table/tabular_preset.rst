@@ -49,7 +49,7 @@ For this guide, we'll load the demo data and metadata from the SDV. This data co
 information about students, including their grades, major and work experience.
 
 .. ipython:: python
-   :okwarning:
+   :okexcept:
 
    from sdv.demo import load_tabular_demo
 
@@ -95,7 +95,7 @@ Modeling
 Pass in your metadata to create the TabularPreset FAST_ML model.
 
 .. ipython:: python
-   :okwarning:
+   :okexcept:
 
    from sdv.lite import TabularPreset
 
@@ -105,7 +105,7 @@ Pass in your metadata to create the TabularPreset FAST_ML model.
 Then, simply pass in your data to train the model.
 
 .. ipython:: python
-   :okwarning:
+   :okexcept:
 
    model.fit(data)
 
@@ -119,7 +119,7 @@ rough benchmark, our analysis shows that:
 After you are finished modeling, you can save the fitted model and load it in again for future use.
 
 .. ipython:: python
-   :okwarning:
+   :okexcept:
 
    # save the model in a new file
    model.save('fast_ml_model.pkl')
@@ -133,7 +133,7 @@ Once you have your model, you can begin to create synthetic data. Use the sample
 pass in the number of rows you want to synthesize.
 
 .. ipython:: python
-   :okwarning:
+   :okexcept:
 
    synthetic_data = model.sample(num_rows=100)
    synthetic_data.head()
@@ -143,7 +143,7 @@ into multiple batches and shows a progress bar. Use the output_file_path paramet
 results to a file.
 
 .. ipython:: python
-   :okwarning:
+   :okexcept:
 
    model.sample(num_rows=1_000_000, batch_size=10_000, output_file_path='synthetic_data.csv')
 
@@ -160,7 +160,7 @@ First, use the Condition object to specify the exact values you want. You specif
 of column names and the exact value you want, along with the number of rows to synthesize.
 
 .. ipython:: python
-   :okwarning:
+   :okexcept:
 
    from sdv.sampling.tabular import Condition
 
@@ -175,7 +175,7 @@ of column names and the exact value you want, along with the number of rows to s
 You can now use the sample_conditions function and pass in a list of conditions.
 
 .. ipython:: python
-   :okwarning:
+   :okexcept:
 
    all_conditions = [science_students, commerce_students]
    model.sample_conditions(conditions=all_conditions)
@@ -196,7 +196,7 @@ We can describe this using a FixedIncrements constraint.
 
 
 .. ipython:: python
-   :okwarning:
+   :okexcept:
 
    from sdv.constraints import FixedIncrements
 
@@ -209,7 +209,7 @@ We can describe this using a FixedIncrements constraint.
 You can input constraints into the presets when creating your model.
 
 .. ipython:: python
-   :okwarning:
+   :okexcept:
 
    constrained_model = TabularPreset(
        name='FAST_ML',
@@ -221,7 +221,7 @@ You can input constraints into the presets when creating your model.
 When you sample from the model, the synthetic data will follow the constraints
 
 .. ipython:: python
-   :okwarning:
+   :okexcept:
 
    constrained_synthetic_data = constrained_model.sample(num_rows=1_000)
    constrained_synthetic_data.head(10)

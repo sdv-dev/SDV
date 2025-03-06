@@ -28,18 +28,17 @@ import sdv
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+nbsphinx_execute = 'never'
 extensions = [
-    'm2r2',
     'nbsphinx',
-    'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.githubpages',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
     'IPython.sphinxext.ipython_console_highlighting',
-    'IPython.sphinxext.ipython_directive',
-    'sphinx_toolbox.collapse'
+    'sphinx_toolbox.collapse',
+    'sphinx_reredirects'
 ]
 
 ipython_execlines = [
@@ -49,7 +48,25 @@ ipython_execlines = [
     "pd.set_option('display.max_columns', 1000)",
 ]
 
-autosummary_generate = True
+redirects = {
+    "api_reference/index": "https://docs.sdv.dev/sdv",
+    "api_reference/api/sdv.SDV": "https://docs.sdv.dev/sdv",
+}
+
+
+# Jupyter Notebooks
+nbsphinx_prolog = """
+.. raw:: html
+
+    <style>
+        .nbinput .prompt,
+        .nboutput .prompt {
+            display: none;
+        }
+    </style>
+"""
+
+autosummary_generate = False
 autodoc_typehints = "none"
 
 # Add any paths that contain templates here, relative to this directory.
@@ -61,19 +78,6 @@ source_suffix = ['.rst', '.md']
 
 # The master toctree document.
 master_doc = 'index'
-
-# Jupyter Notebooks
-nbsphinx_execute = 'never'
-nbsphinx_prolog = """
-.. raw:: html
-
-    <style>
-        .nbinput .prompt,
-        .nboutput .prompt {
-            display: none;
-        }
-    </style>
-"""
 
 # General information about the project.
 project = 'SDV'
