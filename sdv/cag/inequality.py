@@ -5,15 +5,15 @@ import pandas as pd
 
 from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import PatternNotMetError
-from sdv.cag._utils import (
-    _validate_table_and_column_names,
+from sdv.cag._utils import _validate_table_and_column_names
+from sdv.cag.base import BasePattern
+from sdv.constraints.utils import (
     cast_to_datetime64,
     compute_nans_column,
     get_datetime_diff,
     match_datetime_precision,
     revert_nans_columns,
 )
-from sdv.cag.base import BasePattern
 from sdv.metadata import Metadata
 
 
@@ -173,7 +173,14 @@ class Inequality(BasePattern):
         return Metadata.load_from_dict(metadata)
 
     def _fit(self, data, metadata):
-        """Fit the pattern."""
+        """Fit the pattern.
+
+        Args:
+            data (dict[str, pd.DataFrame]):
+                Table data.
+            metadata (Metadata):
+                Metadata.
+        """
         table_name = self._get_single_table_name(metadata)
         table_data = data[table_name]
         self._dtype = table_data[self._high_column_name].dtypes

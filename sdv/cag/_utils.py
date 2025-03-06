@@ -1,8 +1,3 @@
-import re
-
-import numpy as np
-import pandas as pd
-
 from sdv.cag._errors import PatternNotMetError
 
 from sdv.cag._errors import PatternNotMetError
