@@ -159,7 +159,10 @@ def get_nan_component_value(row):
 
     if columns_with_nans:
         return ', '.join(columns_with_nans)
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2cc3cc4a (Update tests)
     return 'None'
 
 
