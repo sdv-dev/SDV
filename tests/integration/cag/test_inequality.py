@@ -8,6 +8,17 @@ from sdv.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
 
 
+def run_pattern(pattern, data, metadata):
+    """Run a pattern."""
+    pattern.validate(data, metadata)
+    updated_metadata = pattern.get_updated_metadata(metadata)
+    pattern.fit(data, metadata)
+    transformed = pattern.transform(data)
+    reverse_transformed = pattern.reverse_transform(transformed)
+
+    return updated_metadata, transformed, reverse_transformed
+
+
 def test_inequality_pattern_integers():
     """Test that Inequality pattern works with integer columns."""
     # Setup
@@ -27,11 +38,7 @@ def test_inequality_pattern_integers():
     )
 
     # Run
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
+    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -65,11 +72,7 @@ def test_inequality_pattern_with_nans():
     )
 
     # Run
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
+    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -121,11 +124,7 @@ def test_inequality_pattern_datetime():
     )
 
     # Run
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
+    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -176,11 +175,7 @@ def test_inequality_pattern_datetime_nans():
     )
 
     # Run
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
+    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -233,11 +228,7 @@ def test_inequality_pattern_with_multi_table():
     )
 
     # Run
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
+    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -300,7 +291,6 @@ def test_inequality_with_timestamp_and_date():
         }
     })
     synthesizer = GaussianCopulaSynthesizer(metadata)
-
     pattern = Inequality(
         low_column_name='SUBMISSION_TIMESTAMP',
         high_column_name='DUE_DATE',

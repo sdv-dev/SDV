@@ -14,17 +14,13 @@ from sdv.metadata import Metadata
 
 
 class TestInequality:
-    def test___init___incorrect_low_column_name(self):
-        """Test it raises an error if low_column_name is not a string."""
+    def test___init___incorrect_column_name(self):
+        """Test it raises an error if column_name is not a string."""
         # Run and Assert
         err_msg = '`low_column_name` and `high_column_name` must be strings.'
         with pytest.raises(ValueError, match=err_msg):
             Inequality(low_column_name=1, high_column_name='b')
 
-    def test___init___incorrect_high_column_name(self):
-        """Test it raises an error if high_column_name is not a string."""
-        # Run and Assert
-        err_msg = '`low_column_name` and `high_column_name` must be strings.'
         with pytest.raises(ValueError, match=err_msg):
             Inequality(low_column_name='a', high_column_name=1)
 
@@ -470,10 +466,11 @@ class TestInequality:
         assert instance._low_datetime_format == '%y %m, %d'
         assert instance._high_datetime_format == '%y %m %d'
 
-    def test__fit_numerical(self):
+    @pytest.mark.parametrize('dtype', ['Float64', 'Float32', 'Int64', 'Int32', 'Int16', 'Int8'])
+    def test__fit_numerical(self, dtype):
         """Test it for numerical columns."""
         # Setup
-        table_data = {'table': pd.DataFrame({'a': [1, 2, 4], 'b': [4.0, 5.0, 6.0]})}
+        table_data = {'table': pd.DataFrame({'a': [1, 2, 4], 'b': [4, 5, 6]}, dtype=dtype)}
         metadata = Metadata.load_from_dict({
             'tables': {
                 'table': {
@@ -490,7 +487,7 @@ class TestInequality:
         instance._fit(table_data, metadata)
 
         # Assert
-        assert instance._dtype == np.dtype('float')
+        assert instance._dtype == dtype
         assert instance._is_datetime is False
         assert instance._low_datetime_format is None
         assert instance._high_datetime_format is None
