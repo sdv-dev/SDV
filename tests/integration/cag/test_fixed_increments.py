@@ -39,7 +39,7 @@ def test_fixed_increments_integers(dtype):
             dtype: {'sdtype': 'numerical', 'computer_representation': dtype},
         }
     })
-    pattern = FixedIncrements(column_name=[dtype], increment_value=increment_value)
+    pattern = FixedIncrements(dtype, increment_value=increment_value)
 
     # Run
     pattern.validate(data, metadata)
@@ -53,7 +53,7 @@ def test_fixed_increments_integers(dtype):
         'columns': {f'{dtype}#increment': {'sdtype': 'numerical'}}
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed.columns) == [dtype]
+    assert list(transformed.columns) == [f'{dtype}#increment']
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
@@ -61,8 +61,10 @@ def test_fixed_incremements_with_multi_table():
     """Test that FixedIncrements constraint works with multi-table data."""
     # Setup
     increment_value = 1000
-    A_values = (np.random.randint(low=1, high=10, size=10) * increment_value,)
-    B_values = (np.random.randint(low=1, high=100, size=10) * increment_value,)
+    A_values = np.random.randint(low=1, high=10, size=10)
+    B_values = np.random.randint(low=1, high=100, size=10)
+    A_values *= increment_value
+    B_values *= increment_value
 
     data = {
         'table1': pd.DataFrame({
@@ -86,9 +88,7 @@ def test_fixed_incremements_with_multi_table():
             },
         }
     })
-    pattern = FixedIncrements(
-        column_name=['A', 'B'], table_name='table1', increment_value=increment_value
-    )
+    pattern = FixedIncrements(column_name='A', table_name='table1', increment_value=increment_value)
 
     # Run
     pattern.validate(data, metadata)
@@ -103,7 +103,6 @@ def test_fixed_incremements_with_multi_table():
             'table1': {
                 'columns': {
                     'A#increment': {'sdtype': 'numerical'},
-                    'B#increment': {'sdtype': 'numerical'},
                 }
             },
             'table2': {
@@ -114,7 +113,7 @@ def test_fixed_incremements_with_multi_table():
         }
     }).to_dict()
     assert expected_updated_metadata == updated_metadata.to_dict()
-    assert list(transformed['table1'].columns) == ['A', 'B']
+    assert list(transformed['table1'].columns) == ['B', 'A#increment']
     assert set(data.keys()) == set(reverse_transformed.keys())
     for table_name, table in data.items():
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])

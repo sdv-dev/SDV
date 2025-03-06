@@ -1,3 +1,5 @@
+import numpy as np
+
 from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
 
@@ -12,7 +14,7 @@ def _validate_table_name(table_name, metadata):
 
 def _validate_columns_in_metadata(table_name, columns, metadata):
     if not set(columns).issubset(set(metadata.tables[table_name].columns)):
-        missing_columns = columns - set(metadata.tables[table_name].columns)
+        missing_columns = set(columns) - set(metadata.tables[table_name].columns)
         missing_columns = "', '".join(sorted(missing_columns))
         raise PatternNotMetError(f"Table '{table_name}' is missing columns '{missing_columns}'.")
 
@@ -35,7 +37,21 @@ def _validate_table_name_if_defined(table_name):
 
 
 def _remove_columns_from_metadata(metadata, table_name, columns_to_drop):
-    """Remove columns from metadata, including column relationships."""
+    """Remove columns from metadata, including column relationships.
+
+    Args:
+        metadata (sdv.metadata.Metadata): The Metadata which contains
+            the columns to drop.
+
+        table_name (str): Name of the table in the metadata, where the column(s)
+            are located.
+
+        columns_to_drop (list[str]): The list of column names to drop from the
+            Metadata.
+
+    Returns:
+        (sdv.metadata.Metadata): The new Metadata, with the columns removed.
+    """
     metadata = metadata.to_dict()
     for column in columns_to_drop:
         primary_key = metadata['tables'][table_name].get('primary_key')
@@ -48,9 +64,19 @@ def _remove_columns_from_metadata(metadata, table_name, columns_to_drop):
         for rel in metadata['tables'][table_name].get('column_relationships', [])
         if set(rel['column_names']).isdisjoint(columns_to_drop)
     ]
-
     return Metadata.load_from_dict(metadata)
 
 
 def _is_list_of_strings(values):
     return isinstance(values, list) and all(isinstance(value, str) for value in values)
+
+
+def _get_invalid_rows(valid):
+    invalid_rows = np.where(~valid)[0]
+    if len(invalid_rows) <= 5:
+        invalid_rows_str = ', '.join(str(i) for i in invalid_rows)
+    else:
+        first_five = ', '.join(str(i) for i in invalid_rows[:5])
+        remaining = len(invalid_rows) - 5
+        invalid_rows_str = f'{first_five}, +{remaining} more'
+    return invalid_rows_str
