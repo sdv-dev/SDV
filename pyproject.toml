@@ -90,6 +90,8 @@ dev = [
     'Sphinx>=3,<8',
     'pydata-sphinx-theme<1',
     'markupsafe<3',
+    'lxml_html_clean<0.5',
+    'sphinx-reredirects',
 
     # Jinja2>=3 makes the sphinx theme fail
     'Jinja2>=2,<4',

@@ -37,7 +37,7 @@ Quick Usage
 We will start by loading and exploring one of our demo datasets.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv import load_demo
 
@@ -49,7 +49,7 @@ This will return two objects:
    know about the dataset.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     metadata
 
@@ -67,7 +67,7 @@ dataset, please refer to the :ref:`relational_metadata` Guide.
    described in the metadata object.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     tables
 
@@ -81,7 +81,7 @@ to:
 -  Call its ``fit`` method passing the ``tables`` dict.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.relational import HMA1
 
@@ -104,7 +104,7 @@ Once the training process has finished you are ready to generate new
 synthetic data by calling the ``sample`` method from your model.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data = model.sample()
 
@@ -113,7 +113,7 @@ model was fitted on, but filled with new data which resembles the
 original one.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data
 
@@ -144,7 +144,7 @@ protocol used is
 `cloudpickle <https://github.com/cloudpipe/cloudpickle>`__.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model.save('my_model.pkl')
 
@@ -170,7 +170,7 @@ using the ``HMA1.load`` method, and then you are ready to sample new
 data from the loaded instance:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     loaded = HMA1.load('my_model.pkl')
     new_data = loaded.sample()
@@ -194,7 +194,7 @@ If you want to produce a different number of rows you can pass it as the
 ``num_rows`` argument and it will produce the indicated number of rows:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model.sample(num_rows=5)
 
@@ -222,7 +222,7 @@ model will only generate data for the ``sessions`` table and its child
 table, ``transactions``.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model.sample('sessions', num_rows=5)
 
@@ -235,7 +235,7 @@ For example, you can sample data from the table ``users`` only without
 producing any rows for the tables ``sessions`` and ``transactions``.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model.sample('users', num_rows=5, sample_children=False)
 

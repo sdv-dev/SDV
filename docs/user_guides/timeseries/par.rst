@@ -33,7 +33,7 @@ We will start by loading one of our demo datasets, the
 NASDAQ 100 companies during the year 2019.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.demo import load_timeseries_demo
 
@@ -66,7 +66,7 @@ In this case, the external ``entity`` is the company, and the identifier
 of the company within our data is the ``Symbol`` column.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     entity_columns = ['Symbol']
 
@@ -92,7 +92,7 @@ with each company and which have a great impact on what each timeseries
 look like.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     context_columns = ['MarketCap', 'Sector', 'Industry']
 
@@ -118,7 +118,7 @@ In this case, the column that indicates us the order of the rows within
 each sequence is the ``Date`` column:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     sequence_index = 'Date'
 
@@ -143,7 +143,7 @@ For this, you will need to:
    want to generate.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.timeseries import PAR
 
@@ -171,7 +171,7 @@ of the sequences that we want to generate.
 Let’s start by generating a single sequence.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data = model.sample(1)
 
@@ -179,7 +179,7 @@ This will return a table identical to the one which the model was fitted
 on, but filled with new synthetic data which resembles the original one.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data.head()
 
@@ -220,7 +220,7 @@ protocol used is
 `cloudpickle <https://github.com/cloudpipe/cloudpickle>`__.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model.save('my_model.pkl')
 
@@ -246,7 +246,7 @@ using the ``PAR.load`` method, and then you are ready to sample new data
 from the loaded instance:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     loaded = PAR.load('my_model.pkl')
     loaded.sample(num_sequences=1).head()
@@ -276,7 +276,7 @@ As an example, let’s generate values for two companies in the Technology
 and Health Care sectors.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     import pandas as pd
 
@@ -300,19 +300,19 @@ Once you have created this, you can simply pass the dataframe as the
 ``context`` argument to the ``sample`` method.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data = model.sample(context=context)
 
 And we can now see the data generated for the two companies:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data[new_data.Symbol == 'AAAA'].head()
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data[new_data.Symbol == 'BBBB'].head()
 
@@ -340,7 +340,7 @@ For this case in particular, we will indicate that the ``Symbol`` field
 needs to be generated using the regular expression ``[A-Z]{2,4}``.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     field_types = {
         'Symbol': {
@@ -361,7 +361,7 @@ After this, we can observe how the new ``Symbols`` are generated as
 indicated.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model.sample(num_sequences=1).head()
 
@@ -379,7 +379,7 @@ the lengths of the sequences, so each generated sequence may have a
 different length:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model.sample(num_sequences=5).groupby('Symbol').size()
 
@@ -387,7 +387,7 @@ If we want to force a specific length to the generated sequences we can
 pass the ``sequence_length`` argument to the ``sample`` method:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model.sample(num_sequences=5, sequence_length=100).groupby('Symbol').size()
 
@@ -402,7 +402,7 @@ Let’s simulate this situation by dropping the context columns from our
 data.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     no_context = data[['Symbol', 'Date', 'Open', 'Close', 'Volume']].copy()
     no_context.head()
@@ -412,7 +412,7 @@ model, and PAR will be able to learn the timeseries without imposing any
 conditions to them.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model = PAR(
         entity_columns=entity_columns,
@@ -428,7 +428,7 @@ that we want on the generated data by passing them in a
 ``pandas.DataFrame``
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     symbols = pd.DataFrame({
         'Symbol': ['TSLA']
@@ -443,7 +443,7 @@ sequence with no identifiers of external entities. For example, suppose
 we only had the data from one company:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     tsla = no_context[no_context.Symbol == 'TSLA'].copy()
     del tsla['Symbol']
@@ -453,7 +453,7 @@ In this case, we can simply omit the ``entity_columns`` argument when
 creating our PAR instance:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model = PAR(
         sequence_index=sequence_index,

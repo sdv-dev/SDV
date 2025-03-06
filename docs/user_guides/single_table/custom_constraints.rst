@@ -32,7 +32,7 @@ Example
 Let's demonstrate this using our demo dataset.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.demo import load_tabular_demo
 
@@ -124,7 +124,7 @@ You can name this class whatever you'd like. Since our constraint is similar to
 ``FixedIncrements``, let's call it ``FixedIncrementsWithExclusion``.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.constraints import create_custom_constraint
 
@@ -145,7 +145,7 @@ You can apply the same constraint to other columns by creating a different objec
 the **annual_bonus** column also follows the same logic.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     salary_divis_500 = FixedIncrementsWithExclusion(
        column_names=['salary'],
@@ -164,7 +164,7 @@ Finally, input these constraints into your model using the constraints parameter
 would for predefined constraints.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.tabular import GaussianCopula
 
@@ -182,7 +182,7 @@ Now, when you sample from the model, all rows of the synthetic data will follow 
 constraint.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     synthetic_data = model.sample(num_rows=10)
     synthetic_data

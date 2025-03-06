@@ -38,7 +38,7 @@ that applied for placements during the year 2020.
     by executing the command ``pip install sdv`` in a terminal.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.demo import load_tabular_demo
 
@@ -72,7 +72,7 @@ indicated above. In order to do this you will need to:
    that you want to generate.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.tabular import CTGAN
 
@@ -95,7 +95,7 @@ of rows that we want to generate. The number of rows (``num_rows``)
 is a required parameter.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data = model.sample(num_rows=200)
 
@@ -103,7 +103,7 @@ This will return a table identical to the one which the model was fitted
 on, but filled with new data which resembles the original one.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data.head()
 
@@ -144,7 +144,7 @@ protocol used is
 `cloudpickle <https://github.com/cloudpipe/cloudpickle>`__.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model.save('my_model.pkl')
 
@@ -170,7 +170,7 @@ using the ``CTGAN.load`` method, and then you are ready to sample new
 data from the loaded instance:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     loaded = CTGAN.load('my_model.pkl')
     new_data = loaded.sample(num_rows=200)
@@ -191,7 +191,7 @@ if we look at the number of times that each value appears, we see that
 all of them appear at most once:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     data.student_id.value_counts().max()
 
@@ -199,7 +199,7 @@ However, if we look at the synthetic data that we generated, we observe
 that there are some values that appear more than once:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data[new_data.student_id == new_data.student_id.value_counts().index[0]]
 
@@ -210,7 +210,7 @@ we can pass the argument ``primary_key`` to our model when we create it,
 indicating the name of the column that is the index of the table.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model = CTGAN(
         primary_key='student_id'
@@ -223,7 +223,7 @@ As a result, the model will learn that this column must be unique and
 generate a unique sequence of values for the column:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data.student_id.value_counts().max()
 
@@ -250,7 +250,7 @@ of it that do not contain any of the PII fields.
     from the real users.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     data_pii = load_tabular_demo('student_placements_pii')
     data_pii.head()
@@ -261,7 +261,7 @@ synthetic data that it generates discloses the addresses from the real
 students:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model = CTGAN(
         primary_key='student_id',
@@ -274,7 +274,7 @@ More specifically, we can see how all the addresses that have been generated
 actually come from the original dataset:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data_pii.address.isin(data_pii.address).sum()
 
@@ -308,7 +308,7 @@ In this case, since the field is an address, we will pass a
 dictionary indicating the category ``address``
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model = CTGAN(
         primary_key='student_id',
@@ -323,7 +323,7 @@ As a result, we can see how the real ``address`` values have been
 replaced by other fake addresses:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data_pii = model.sample(200)
     new_data_pii.head()
@@ -333,7 +333,7 @@ Which means that none of the original addresses can be found in the sampled
 data:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     data_pii.address.isin(new_data_pii.address).sum()
 
@@ -418,7 +418,7 @@ Before we start, we will evaluate the quality of the previously
 generated data using the ``sdv.evaluation.evaluate`` function
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.evaluation import evaluate
 
@@ -429,7 +429,7 @@ Afterwards, we create a new instance of the ``CTGAN`` model with the
 hyperparameter values that we want to use
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model = CTGAN(
         primary_key='student_id',
@@ -442,14 +442,14 @@ hyperparameter values that we want to use
 And fit to our data.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     model.fit(data)
 
 Finally, we are ready to generate new data and evaluate the results.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     new_data = model.sample(len(data))
     evaluate(new_data, data)
@@ -472,7 +472,7 @@ When specifying a ``sdv.sampling.Condition`` object, we can pass in the desired 
 as a dictionary, as well as specify the number of desired rows for that condition.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     from sdv.sampling import Condition
 
@@ -487,7 +487,7 @@ It's also possible to condition on multiple columns, such as
 ``gender = M, 'experience_years': 0``.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     condition = Condition({
         'gender': 'M',
@@ -506,7 +506,7 @@ samples where ``gender = M`` and three samples with ``gender = F``, we can do th
 following:
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     import pandas as pd
 
@@ -521,7 +521,7 @@ are within the range of seen numbers. For example, if all the values of the
 dataset are within 0 and 1, ``CTGAN`` will not be able to set this value to 1000.
 
 .. ipython:: python
-    :okwarning:
+    :okexcept:
 
     condition = Condition({
         'degree_perc': 70.0
