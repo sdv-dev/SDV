@@ -7,6 +7,7 @@ import pandas as pd
 from sdv._utils import _create_unique_name
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import (
+    _is_list_of_strings,
     _remove_columns_from_metadata,
     _validate_columns_in_metadata,
     _validate_table_name,
@@ -34,9 +35,7 @@ class FixedIncrements(BasePattern):
 
         if isinstance(column_name, str):
             column_name = [column_name]
-        elif not isinstance(column_name, list) or not all(
-            isinstance(col, str) for col in column_name
-        ):
+        elif not _is_list_of_strings(column_name):
             raise ValueError('`column_name` must be a string or list of strings.')
 
         if increment_value <= 0:

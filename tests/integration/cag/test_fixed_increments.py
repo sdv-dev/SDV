@@ -66,8 +66,8 @@ def test_fixed_incremements_with_multi_table():
 
     data = {
         'table1': pd.DataFrame({
-            'A': pd.Series(A_values, dtype='int64') * increment_value,
-            'B': pd.Series(B_values, dtype='Int64') * increment_value,
+            'A': pd.Series(A_values, dtype='int64'),
+            'B': pd.Series(B_values, dtype='Int64'),
         }),
         'table2': pd.DataFrame({'id': range(5)}),
     }
