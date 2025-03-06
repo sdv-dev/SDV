@@ -1,7 +1,6 @@
 """SDV CAG module."""
 
 from sdv.cag.fixed_combinations import FixedCombinations
-<<<<<<< HEAD
 from sdv.cag.fixed_increments import FixedIncrements
 from sdv.cag.inequality import Inequality
 from sdv.cag.range import Range
