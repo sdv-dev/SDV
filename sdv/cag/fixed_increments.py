@@ -92,8 +92,8 @@ class FixedIncrements(BasePattern):
             invalid_rows_str = _get_invalid_rows(valid)
             raise PatternNotMetError(
                 'The fixed increments requirement has been met because the data is not '
-                f"evenly divisible by '{self.increment_value}' or contains NaNs "
-                f'for row indices: [{invalid_rows_str}]'
+                f"evenly divisible by '{self.increment_value}' for row indices: "
+                f'[{invalid_rows_str}]'
             )
 
     def _get_updated_metadata(self, metadata):

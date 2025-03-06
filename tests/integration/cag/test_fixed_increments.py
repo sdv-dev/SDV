@@ -1,3 +1,5 @@
+"""Integration tests for FixedIncrements CAG pattern."""
+
 import numpy as np
 import pandas as pd
 import pytest

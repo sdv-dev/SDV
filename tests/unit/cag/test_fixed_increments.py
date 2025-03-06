@@ -171,7 +171,7 @@ class TestFixedIncremenets:
 
         err_msg = re.escape(
             'The fixed increments requirement has been met because the data is not '
-            f"evenly divisible by '{increment_value}' or contains NaNs "
+            f"evenly divisible by '{increment_value}' "
             f'for row indices: {indices}'
         )
         with pytest.raises(PatternNotMetError, match=err_msg):
