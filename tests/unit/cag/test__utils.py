@@ -1,10 +1,8 @@
 """CAG _utils unit tests."""
 
 import re
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
-import numpy as np
-import pandas as pd
 import pytest
 
 from sdv.cag._errors import PatternNotMetError
@@ -18,16 +16,6 @@ from sdv.cag._utils import (
 from sdv.metadata.metadata import Metadata
 =======
     _validate_table_and_column_names,
-    cast_to_datetime64,
-    compute_nans_column,
-    downcast_datetime_to_lower_precision,
-    format_datetime_array,
-    get_datetime_diff,
-    get_datetime_format_precision,
-    get_lower_precision_format,
-    get_nan_component_value,
-    match_datetime_precision,
-    revert_nans_columns,
 )
 >>>>>>> 3cc88e8f (Add tests + fix methods)
 
@@ -77,6 +65,7 @@ def test__validate_table_and_column_names_single_table():
 
     # Assert
     metadata._get_single_table_name.assert_called_once()
+<<<<<<< HEAD
 
 
 <<<<<<< HEAD
@@ -612,3 +601,5 @@ def test_match_datetime_precision_high_has_higher_precision(mock_downcast):
     np.testing.assert_array_equal(result_low, low)
     np.testing.assert_array_equal(result_high, expected_high)
 >>>>>>> 3cc88e8f (Add tests + fix methods)
+=======
+>>>>>>> 2cc3cc4a (Update tests)
