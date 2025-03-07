@@ -1,11 +1,8 @@
 import numpy as np
 import pandas as pd
-import pytest
 
 from sdv.cag import Range
-from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
-from sdv.single_table import GaussianCopulaSynthesizer
 
 
 def run_pattern(pattern, data, metadata):
