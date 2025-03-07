@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import operator
 
 from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import PatternNotMetError
@@ -69,7 +70,7 @@ class Range(BasePattern):
         low_column_name,
         middle_column_name,
         high_column_name,
-        strict_boundaries=False,
+        strict_boundaries=True,
         table_name=None,
     ):
         super().__init__()
@@ -85,7 +86,7 @@ class Range(BasePattern):
         self._high_column_name = high_column_name
         self._low_diff_column_name = f'{self._low_column_name}#{self._middle_column_name}'
         self._high_diff_column_name = f'{self._middle_column_name}#{self._high_column_name}'
-        self._operator = np.greater if strict_boundaries else np.greater_equal
+        self._operator = operator.lt if strict_boundaries else operator.le
         self.table_name = table_name
 
         # Set during fit
@@ -141,21 +142,15 @@ class Range(BasePattern):
         high = data[self._high_column_name].to_numpy()
         return low, mid, high
 
-    def _get_is_datetime(self, metadata, table_name):
-        return metadata.tables[table_name].columns[self._low_column_name]['sdtype'] == 'datetime'
-
-    def _get_datetime_format(self, metadata, table_name, column_name):
-        return metadata.tables[table_name].columns[column_name].get('datetime_format')
-
     def _validate_pattern_with_data(self, data, metadata):
         """Validate the data is compatible with the pattern."""
         table_name = self._get_single_table_name(metadata)
         data = data[table_name]
         low, mid, high = self._get_data(data)
 
-        low_is_nan = low.isna()
-        mid_is_nan = mid.isna()
-        high_is_nan = high.isna()
+        low_is_nan = pd.isna(low)
+        mid_is_nan = pd.isna(mid)
+        high_is_nan = pd.isna(high)
 
         low_lt_mid = self._operator(low, mid) | low_is_nan | mid_is_nan
         mid_lt_high = self._operator(mid, high) | mid_is_nan | high_is_nan
@@ -200,6 +195,12 @@ class Range(BasePattern):
         ]
 
         return Metadata.load_from_dict(metadata)
+
+    def _get_is_datetime(self, metadata, table_name):
+        return metadata.tables[table_name].columns[self._low_column_name]['sdtype'] == 'datetime'
+
+    def _get_datetime_format(self, metadata, table_name, column_name):
+        return metadata.tables[table_name].columns[column_name].get('datetime_format')
 
     def _fit(self, data, metadata):
         """Fit the pattern.
@@ -360,9 +361,9 @@ class Range(BasePattern):
 
         table_data = data[table_name]
         low, mid, high = self._get_data(table_data)
-        low_is_nan = low.isna()
-        mid_is_nan = mid.isna()
-        high_is_nan = high.isna()
+        low_is_nan = pd.isna(low)
+        mid_is_nan = pd.isna(mid)
+        high_is_nan = pd.isna(high)
 
         low_lt_middle = self._operator(low, mid) | low_is_nan | mid_is_nan
         mid_lt_high = self._operator(mid, high) | mid_is_nan | high_is_nan
