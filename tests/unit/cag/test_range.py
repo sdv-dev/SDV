@@ -763,7 +763,7 @@ class TestRange:
                 'a': np.dtype('float'),
                 'b': np.dtype('float'),
                 'c': np.dtype('float'),
-                'col': np.dtype('int'),
+                'col': pd.Series([1]).dtype,
             }
         }
 
@@ -805,7 +805,7 @@ class TestRange:
                 'a': np.dtype('<M8[ns]'),
                 'b': np.dtype('<M8[ns]'),
                 'c': np.dtype('<M8[ns]'),
-                'col': np.dtype('int64'),
+                'col': pd.Series([1]).dtype,
             }
         }
 
