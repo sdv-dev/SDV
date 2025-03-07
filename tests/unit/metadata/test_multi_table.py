@@ -2843,11 +2843,11 @@ class TestMultiTableMetadata:
         assert instance.tables['table1']._version == 'SINGLE_TABLE_V1'
 
     @patch('sdv.metadata.utils.Path')
-    def test_save_to_json_file_exists(self, mock_path):
+    def test_save_to_json_file_exists_write(self, mock_path):
         """Test the ``save_to_json`` method.
 
         Test that when attempting to write over a file that already exists, the method
-        raises a ``ValueError``.
+        raises a ``ValueError`` when using the mode 'write'.
 
         Setup:
             - instance of ``MultiTableMetadata``.
@@ -2868,7 +2868,64 @@ class TestMultiTableMetadata:
             'a different filename.'
         )
         with pytest.raises(ValueError, match=error_msg):
-            instance.save_to_json('filepath.json')
+            instance.save_to_json('filepath.json', 'write')
+
+    def test_save_to_json_file_exists_overwrite(self, tmp_path):
+        """Test the ``save_to_json`` method using 'overwrite' mode.
+
+        Test that when attempting to write over a file that already exists, the method
+        works as expected with the mode 'overwrite'`.
+
+        Setup:
+            - instance of ``MultiTableMetadata``.
+            - save file to tmp path
+
+        Assert:
+            - Running save_to_json to the same path does not raise a ValueError
+            - The data in the value matches the second run of save_to_json
+        """
+        # Setup
+        instance = MultiTableMetadata()
+        file_name = tmp_path / 'multitable.json'
+        instance.save_to_json(file_name, 'write')
+        with open(file_name, 'rb') as multi_table_file:
+            saved_metadata = json.load(multi_table_file)
+            assert saved_metadata == instance.to_dict()
+
+        # Run
+        new_table = 'table'
+        new_col = 'col1'
+        instance.add_table(new_table)
+        instance.add_column(new_table, new_col, sdtype='id')
+        instance.save_to_json(file_name, 'overwrite')
+
+        # Assert
+        with open(file_name, 'rb') as multi_table_file:
+            new_saved_metadata = json.load(multi_table_file)
+            assert new_table in new_saved_metadata['tables']
+            assert new_col in new_saved_metadata['tables'][new_table]['columns']
+            assert new_saved_metadata == instance.to_dict()
+
+    def test_save_to_json_file_check_mode(self, tmp_path):
+        """Test the ``save_to_json`` method with invalid modes.
+
+        Test that invalid modes raise an error.
+
+        Setup:
+            - instance of ``MultiTableMetadata``.
+
+        Side Effects:
+            - Raise ``ValueError``saying mode is invalid.
+        """
+        # Setup
+        instance = MultiTableMetadata()
+        bad_mode = 'bad_mode'
+        file_name = tmp_path / 'multitable.json'
+        error_msg = re.escape(f"Mode '{bad_mode}' must be in ['write', 'overwrite'].")
+
+        # Assert
+        with pytest.raises(ValueError, match=error_msg):
+            instance.save_to_json(file_name, bad_mode)
 
     @patch('sdv.metadata.multi_table.datetime')
     def test_save_to_json(self, mock_datetime, tmp_path, caplog):

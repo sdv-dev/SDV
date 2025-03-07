@@ -26,7 +26,7 @@ from sdv.errors import InvalidDataError
 from sdv.logging import get_sdv_logger
 from sdv.metadata.errors import InvalidMetadataError
 from sdv.metadata.metadata_upgrader import convert_metadata
-from sdv.metadata.utils import read_json, validate_file_does_not_exist
+from sdv.metadata.utils import _validate_file_mode, read_json, validate_file_does_not_exist
 from sdv.metadata.visualization import (
     create_columns_node,
     create_summarized_columns_node,
@@ -1332,17 +1332,23 @@ class SingleTableMetadata:
         node = {'': f'{{{node}}}'}
         return visualize_graph(node, [], output_filepath)
 
-    def save_to_json(self, filepath):
+    def save_to_json(self, filepath, mode='write'):
         """Save the current ``SingleTableMetadata`` in to a ``json`` file.
 
         Args:
             filepath (str):
                 String that represents the ``path`` to the ``json`` file to be written.
+            mode (str):
+                String that determines the mode of the function. Defaults to ``write``.
+                'write' mode will create and write a file if it does not exist.
+                'overwrite' mode will overwrite a file if that file does exist.
 
         Raises:
-            Raises an ``Error`` if the path already exists.
+            Raises an ``Error`` if the path already exists and the mode is 'write'.
         """
-        validate_file_does_not_exist(filepath)
+        _validate_file_mode(mode)
+        if mode == 'write':
+            validate_file_does_not_exist(filepath)
         metadata = self.to_dict()
         metadata['METADATA_SPEC_VERSION'] = self.METADATA_SPEC_VERSION
         SINGLETABLEMETADATA_LOGGER.info(
