@@ -51,10 +51,10 @@ class TestFixedIncremenets:
         assert instance._dtype is None
         assert instance.table_name == 'table1'
 
-    @patch('sdv.cag.fixed_increments._validate_table_name')
-    @patch('sdv.cag.fixed_increments._validate_columns_in_metadata')
+    @patch('sdv.cag.fixed_increments._validate_table_and_column_names')
     def test__validate_pattern_with_metadata(
-        self, _validate_columns_in_metadata_mock, _validate_table_name_mock
+        self,
+        _validate_table_and_column_names_mock,
     ):
         # Setup
         instance = FixedIncrements(column_name='a', increment_value=5)
@@ -73,8 +73,7 @@ class TestFixedIncremenets:
         instance._validate_pattern_with_metadata(metadata)
 
         # Assert
-        _validate_table_name_mock.assert_called_once()
-        _validate_columns_in_metadata_mock.assert_called_once()
+        _validate_table_and_column_names_mock.assert_called_once()
 
     def test__validate_pattern_with_metadata_incorrect_sdtype(self):
         # Setup

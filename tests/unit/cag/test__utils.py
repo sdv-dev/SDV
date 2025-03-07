@@ -10,7 +10,6 @@ from sdv.cag._utils import (
     _is_list_of_strings,
     _remove_columns_from_metadata,
     _validate_table_and_column_names,
-    _validate_table_name,
     _validate_table_name_if_defined,
 )
 from sdv.metadata.metadata import Metadata
@@ -61,13 +60,6 @@ def test__validate_table_and_column_names_single_table():
 
     # Assert
     metadata._get_single_table_name.assert_called_once()
-
-
-def test__validate_table_name():
-    metadata = Mock()
-    metadata.tables = {'parent': Mock(), 'child': Mock()}
-    with pytest.raises(PatternNotMetError, match=expected_not_single_table):
-        assert _validate_table_name(table_name=None, metadata=metadata)
 
 
 def test__validate_table_name_if_defined():
