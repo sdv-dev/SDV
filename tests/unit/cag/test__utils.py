@@ -14,10 +14,6 @@ from sdv.cag._utils import (
 )
 from sdv.metadata.metadata import Metadata
 
-expected_not_single_table = re.escape(
-    'Metadata contains more than 1 table but no ``table_name`` provided.'
-)
-
 
 def test__validate_table_and_column_names():
     """Test `_validate_table_and_column_names` method."""
@@ -27,6 +23,10 @@ def test__validate_table_and_column_names():
     metadata = Mock()
     metadata.tables = {'parent': Mock(), 'child': Mock()}
     metadata.tables['parent'].columns = columns_correct
+
+    expected_not_single_table = re.escape(
+        'Metadata contains more than 1 table but no ``table_name`` provided.'
+    )
 
     expected_error_wrong_table = re.escape("Table 'wrong_table' missing from metadata.")
     expected_error_wrong_columns = re.escape(
@@ -93,6 +93,7 @@ def test__remove_columns_from_metadata_single():
         'relationships': [],
         'METADATA_SPEC_VERSION': 'V1',
     })
+
     # Run
     column_to_drop = 'country_column'
     new_metadata = _remove_columns_from_metadata(
@@ -100,6 +101,7 @@ def test__remove_columns_from_metadata_single():
         table_name='table',
         columns_to_drop=[column_to_drop],
     )
+
     # Assert
     assert isinstance(new_metadata, Metadata)
     assert column_to_drop in original_metadata.tables['table'].columns
@@ -142,12 +144,14 @@ def test__remove_columns_from_metadata_multi():
         ],
     })
     columns_to_drop = ['A', 'B']
+
     # Run
     new_metadata = _remove_columns_from_metadata(
         metadata=original_metadata,
         table_name='parent',
         columns_to_drop=columns_to_drop,
     )
+
     # Assert
     assert isinstance(new_metadata, Metadata)
     for column in columns_to_drop:
@@ -177,6 +181,7 @@ def test__remove_columns_from_metadata_raises_pk():
             },
         ],
     })
+
     # Run and Assert
     cannot_remove_pk = 'Cannot remove primary key from Metadata'
     with pytest.raises(ValueError, match=cannot_remove_pk):

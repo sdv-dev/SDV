@@ -14,11 +14,19 @@ from sdv.metadata import Metadata
 
 class TestFixedIncremenets:
     def test__validate_init_inputs(self):
-        """Test column_name, increment_value, and table_name are checked."""
+        """Test column_name, increment_value, and table_name type is checked."""
         # Run and Assert
         err_msg = '`column_name` must be a string.'
         with pytest.raises(ValueError, match=err_msg):
             FixedIncrements(column_name=1, increment_value=10)
+
+        err_msg = 'increment_value` must be a integer or float.'
+        with pytest.raises(ValueError, match=err_msg):
+            FixedIncrements(column_name='a', increment_value='b')
+
+        err_msg = '`table_name` must be a string if not None.'
+        with pytest.raises(ValueError, match=err_msg):
+            FixedIncrements(column_name='a', increment_value=2, table_name=1)
 
         err_msg = '`increment_value` must be greater than 0.'
         with pytest.raises(ValueError, match=err_msg):
@@ -28,14 +36,12 @@ class TestFixedIncremenets:
         with pytest.raises(ValueError, match=err_msg):
             FixedIncrements(column_name='a', increment_value=1.5)
 
-        err_msg = '`table_name` must be a string or None.'
-        with pytest.raises(ValueError, match=err_msg):
-            FixedIncrements(column_name='a', increment_value=2, table_name=1)
-
     def test__init__(self):
         """Test init sets attributes"""
         # Setup
         column_name = 'a'
+
+        # Run
         instance = FixedIncrements(column_name=column_name, increment_value=10)
 
         # Asserts
@@ -47,7 +53,7 @@ class TestFixedIncremenets:
 
     def test__init__table_name(self):
         """Test init sets attributes with table_name defined"""
-        # Setup
+        # Run
         instance = FixedIncrements(column_name='a', increment_value=10, table_name='table1')
 
         # Asserts
@@ -99,6 +105,7 @@ class TestFixedIncremenets:
             "Column 'a' has an incompatible sdtype ('datetime')."
             "The column sdtype must be 'numerical'."
         )
+
         # Run and Assert
         with pytest.raises(PatternNotMetError, match=err_msg):
             instance._validate_pattern_with_metadata(metadata)
@@ -119,6 +126,7 @@ class TestFixedIncremenets:
             }
         })
         err_msg = re.escape(f"Table 'table' is missing columns '{column_name}")
+
         # Run and Assert
         with pytest.raises(PatternNotMetError, match=err_msg):
             instance._validate_pattern_with_metadata(metadata)
@@ -143,6 +151,7 @@ class TestFixedIncremenets:
             }
         })
         err_msg = re.escape('Metadata contains more than 1 table but no ``table_name`` provided.')
+
         # Run and Assert
         with pytest.raises(PatternNotMetError, match=err_msg):
             instance._validate_pattern_with_metadata(metadata)
@@ -177,12 +186,13 @@ class TestFixedIncremenets:
         indices = data[table_name].index.tolist()
         if len(indices) > 5:
             indices = '[0, 1, 2, 3, 4, +2 more]'
-
         err_msg = re.escape(
-            'The fixed increments requirement has been met because the data is not '
+            'The fixed increments requirement has not been met because the data is not '
             f"evenly divisible by '{increment_value}' "
             f'for row indices: {indices}'
         )
+
+        # Run and Assert
         with pytest.raises(PatternNotMetError, match=err_msg):
             instance._validate_pattern_with_data(data, metadata)
 

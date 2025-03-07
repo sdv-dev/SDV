@@ -31,6 +31,11 @@ class FixedIncrements(BasePattern):
     def _validate_init_inputs(column_name, increment_value, table_name):
         if not isinstance(column_name, str):
             raise ValueError('`column_name` must be a string.')
+        if not isinstance(increment_value, (int, float)):
+            raise ValueError('`increment_value` must be a integer or float.')
+        if table_name and not isinstance(table_name, str):
+            raise ValueError('`table_name` must be a string if not None.')
+
         if increment_value <= 0:
             raise ValueError('`increment_value` must be greater than 0.')
         if increment_value % 1 != 0:
@@ -88,7 +93,7 @@ class FixedIncrements(BasePattern):
         if not valid.all():
             invalid_rows_str = _get_invalid_rows(valid)
             raise PatternNotMetError(
-                'The fixed increments requirement has been met because the data is not '
+                'The fixed increments requirement has not been met because the data is not '
                 f"evenly divisible by '{self.increment_value}' for row indices: "
                 f'[{invalid_rows_str}]'
             )
@@ -158,9 +163,14 @@ class FixedIncrements(BasePattern):
                 The data.
 
         Returns:
-            pandas.Series:
-                For each row in column, returns a boolean if that row
-                is evenly divisible or not by the increment.
+            (dict[pd.DataFrame]):
+                For the specified table and column, returns a Series
+                which specifies if that row is evenly divisible or
+                not by the increment. The length of the Series
+                will be equal to the length of the input column.
+                The length of the dictionary will be equal to the
+                number of tables in the data and contain the same
+                table names.
         """
         table_name = self._get_single_table_name(self.metadata)
         is_valid = {
