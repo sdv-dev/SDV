@@ -1339,7 +1339,7 @@ class SingleTableMetadata:
             filepath (str):
                 String that represents the ``path`` to the ``json`` file to be written.
             mode (str):
-                String that determines the mode of the function.
+                String that determines the mode of the function. Defaults to ``write``.
                 'write' mode will create and write a file if it does not exist.
                 'overwrite' mode will overwrite a file if that file does exist.
 
