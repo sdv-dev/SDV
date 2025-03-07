@@ -32,7 +32,7 @@ class FixedIncrements(BasePattern):
         if not isinstance(column_name, str):
             raise ValueError('`column_name` must be a string.')
         if not isinstance(increment_value, (int, float)):
-            raise ValueError('`increment_value` must be a integer or float.')
+            raise ValueError('`increment_value` must be an integer or float.')
         if table_name and not isinstance(table_name, str):
             raise ValueError('`table_name` must be a string if not None.')
 

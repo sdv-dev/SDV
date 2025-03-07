@@ -20,7 +20,7 @@ class TestFixedIncremenets:
         with pytest.raises(ValueError, match=err_msg):
             FixedIncrements(column_name=1, increment_value=10)
 
-        err_msg = 'increment_value` must be a integer or float.'
+        err_msg = 'increment_value` must be an integer or float.'
         with pytest.raises(ValueError, match=err_msg):
             FixedIncrements(column_name='a', increment_value='b')
 
