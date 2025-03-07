@@ -466,7 +466,10 @@ class TestInequality:
         assert instance._low_datetime_format == '%y %m, %d'
         assert instance._high_datetime_format == '%y %m %d'
 
-    @pytest.mark.parametrize('dtype', ['float16', 'float32', 'float64', 'Float64', 'Float32', 'Int64', 'Int32', 'Int16', 'Int8'])
+    @pytest.mark.parametrize(
+        'dtype',
+        ['float16', 'float32', 'float64', 'Float64', 'Float32', 'Int64', 'Int32', 'Int16', 'Int8'],
+    )
     def test__fit_numerical(self, dtype):
         """Test it for numerical columns."""
         # Setup
