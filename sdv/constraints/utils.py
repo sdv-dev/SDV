@@ -159,8 +159,7 @@ def get_nan_component_value(row):
 
     if columns_with_nans:
         return ', '.join(columns_with_nans)
-    else:
-        return 'None'
+    return 'None'
 
 
 def compute_nans_column(table_data, list_column_names):

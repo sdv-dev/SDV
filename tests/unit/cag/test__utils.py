@@ -6,7 +6,9 @@ from unittest.mock import Mock
 import pytest
 
 from sdv.cag._errors import PatternNotMetError
-from sdv.cag._utils import _validate_table_and_column_names
+from sdv.cag._utils import (
+    _validate_table_and_column_names,
+)
 
 
 def test__validate_table_and_column_names():
