@@ -63,17 +63,20 @@ def test__validate_table_and_column_names_single_table():
 
 
 def test__validate_table_name_if_defined():
+    """Test `_validate_table_name_if_defined` method works with None or string"""
     _validate_table_name_if_defined(table_name='child')
     _validate_table_name_if_defined(table_name=None)
 
 
 def test__validate_table_name_if_defined_raises():
+    """Test `_validate_table_name_if_defined` method raises an error with wrong type"""
     expected_table_name_str_or_none = '`table_name` must be a string or None.'
     with pytest.raises(ValueError, match=expected_table_name_str_or_none):
         _validate_table_name_if_defined(table_name=1)
 
 
 def test__remove_columns_from_metadata_single():
+    """Test `_remove_columns_from_metadata` method removes columns from metadata (single-table)"""
     # Setup
     original_metadata = Metadata.load_from_dict({
         'tables': {
@@ -109,6 +112,7 @@ def test__remove_columns_from_metadata_single():
 
 
 def test__remove_columns_from_metadata_multi():
+    """Test `_remove_columns_from_metadata` method removes columns from metadata (multi-table)"""
     # Setup
     original_metadata = Metadata.load_from_dict({
         'tables': {
@@ -155,6 +159,7 @@ def test__remove_columns_from_metadata_multi():
 
 
 def test__remove_columns_from_metadata_raises_pk():
+    """Test `_remove_columns_from_metadata` method raises an error if primary key is dropped"""
     # Setup
     original_metadata = Metadata.load_from_dict({
         'tables': {
@@ -183,6 +188,7 @@ def test__remove_columns_from_metadata_raises_pk():
 
 
 def test__is_list_of_strings():
+    """Test `_is_list_of_strings` method"""
     assert _is_list_of_strings(['a', 'b'])
     assert not _is_list_of_strings(['a', 1])
     assert not _is_list_of_strings([1, 2])

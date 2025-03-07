@@ -6,6 +6,7 @@ import pytest
 
 from sdv.cag import FixedIncrements
 from sdv.metadata import Metadata
+from tests.utils import run_pattern
 
 
 @pytest.mark.parametrize(
@@ -44,11 +45,7 @@ def test_fixed_increments_integers(dtype):
     pattern = FixedIncrements(dtype, increment_value=increment_value)
 
     # Run
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
+    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -93,11 +90,7 @@ def test_fixed_incremements_with_multi_table():
     pattern = FixedIncrements(column_name='A', table_name='table1', increment_value=increment_value)
 
     # Run
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
+    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({

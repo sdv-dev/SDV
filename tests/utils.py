@@ -132,3 +132,14 @@ def catch_sdv_logs(caplog, level, logger):
     finally:
         logger.setLevel(orig_level)
         logger.removeHandler(caplog.handler)
+
+
+def run_pattern(pattern, data, metadata):
+    """Run a pattern."""
+    pattern.validate(data, metadata)
+    updated_metadata = pattern.get_updated_metadata(metadata)
+    pattern.fit(data, metadata)
+    transformed = pattern.transform(data)
+    reverse_transformed = pattern.reverse_transform(transformed)
+
+    return updated_metadata, transformed, reverse_transformed
