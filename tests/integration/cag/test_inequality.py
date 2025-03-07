@@ -254,6 +254,36 @@ def test_inequality_pattern_with_multi_table():
 
 
 @pytest.mark.skip(reason='Skipping until add_cag method is implemented')
+def test_inequality_with_numerical():
+    """Test it works with numerical columns."""
+    # Setup
+    data = pd.DataFrame({
+        'A': [1, 2, 3, 1, 2, 1],
+        'B': [10, 20, 30, 10, 20, 10],
+    })
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'A': {'sdtype': 'numerical'},
+            'B': {'sdtype': 'numerical'},
+        }
+    })
+    pattern = Inequality(
+        low_column_name='A',
+        high_column_name='B',
+    )
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern])
+
+    # Run
+    synthesizer.fit(data)
+    synthetic_data = synthesizer.sample(num_rows=10)
+
+    # Assert
+    assert (synthetic_data['A'] < synthetic_data['B']).all()
+    assert len(synthetic_data) == 10
+
+
+@pytest.mark.skip(reason='Skipping until add_cag method is implemented')
 def test_inequality_with_timestamp_and_date():
     """Test that the inequality pattern passes without strict boundaries.
 
