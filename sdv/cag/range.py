@@ -34,7 +34,7 @@ class Range(BasePattern):
             Name of the column that has to be between the lower bound and upper bound.
         high_column_name (str):
             Name of the column which will be the higher bound.
-        strict_boundaries (bool):
+        strict_boundaries (bool, optional):
             Whether the comparison of the values should be strict `>=` or
             not `>` when comparing them.
             Defaults to True.
@@ -143,21 +143,22 @@ class Range(BasePattern):
         high = data[self._high_column_name].to_numpy()
         return low, mid, high
 
-    def _validate_pattern_with_data(self, data, metadata):
-        """Validate the data is compatible with the pattern."""
-        table_name = self._get_single_table_name(metadata)
-        data = data[table_name]
-        low, mid, high = self._get_data(data)
-
+    def _get_valid_table_data(self, table_data):
+        low, mid, high = self._get_data(table_data)
         low_is_nan = pd.isna(low)
         mid_is_nan = pd.isna(mid)
         high_is_nan = pd.isna(high)
 
-        low_lt_mid = self._operator(low, mid) | low_is_nan | mid_is_nan
+        low_lt_middle = self._operator(low, mid) | low_is_nan | mid_is_nan
         mid_lt_high = self._operator(mid, high) | mid_is_nan | high_is_nan
         low_lt_high = self._operator(low, high) | low_is_nan | high_is_nan
 
-        valid = low_lt_mid & mid_lt_high & low_lt_high
+        return low_lt_middle & mid_lt_high & low_lt_high
+
+    def _validate_pattern_with_data(self, data, metadata):
+        """Validate the data is compatible with the pattern."""
+        table_name = self._get_single_table_name(metadata)
+        valid = self._get_valid_table_data(data[table_name])
 
         if not valid.all():
             invalid_rows = np.where(~valid)[0]
@@ -359,18 +360,6 @@ class Range(BasePattern):
             for table, table_data in data.items()
             if table != table_name
         }
-
-        table_data = data[table_name]
-        low, mid, high = self._get_data(table_data)
-        low_is_nan = pd.isna(low)
-        mid_is_nan = pd.isna(mid)
-        high_is_nan = pd.isna(high)
-
-        low_lt_middle = self._operator(low, mid) | low_is_nan | mid_is_nan
-        mid_lt_high = self._operator(mid, high) | mid_is_nan | high_is_nan
-        low_lt_high = self._operator(low, high) | low_is_nan | high_is_nan
-
-        valid = low_lt_middle & mid_lt_high & low_lt_high
-        is_valid[table_name] = valid
+        is_valid[table_name] = self._get_valid_table_data(data[table_name])
 
         return is_valid
