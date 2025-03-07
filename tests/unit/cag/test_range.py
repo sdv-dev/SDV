@@ -1,9 +1,10 @@
 """Unit tests for Range CAG pattern."""
 
+import operator
 import re
 from datetime import datetime
 from unittest.mock import patch
-import operator
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -846,7 +847,7 @@ class TestRange:
                 'a': np.dtype('O'),
                 'b': np.dtype('O'),
                 'c': np.dtype('O'),
-                'col': np.dtype('int64'),
+                'col': pd.Series([1]).dtype,
             }
         }
 

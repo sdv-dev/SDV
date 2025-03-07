@@ -1,8 +1,9 @@
-"""Inequality CAG pattern."""
+"""Range CAG pattern."""
+
+import operator
 
 import numpy as np
 import pandas as pd
-import operator
 
 from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import PatternNotMetError
