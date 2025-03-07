@@ -444,7 +444,7 @@ class TestInequality:
     def test__fit(self):
         """Test it learns the correct attributes."""
         # Setup
-        table_data = {'table': pd.DataFrame({'a': [1, 2, 4], 'b': [4, 5, 6]})}
+        data = {'table': pd.DataFrame({'a': [1, 2, 4], 'b': [4, 5, 6]})}
         metadata = Metadata.load_from_dict({
             'tables': {
                 'table': {
@@ -458,7 +458,7 @@ class TestInequality:
         instance = Inequality(low_column_name='a', high_column_name='b', table_name='table')
 
         # Run
-        instance._fit(table_data, metadata)
+        instance._fit(data, metadata)
 
         # Assert
         assert instance._is_datetime is True
@@ -795,7 +795,7 @@ class TestInequality:
         expected_out['b'] = expected_out['b'].astype(np.dtype('O'))
         pd.testing.assert_frame_equal(out, expected_out)
 
-    def test_is_valid(self):
+    def test__is_valid(self):
         """Test it checks if the data is valid."""
         # Setup
         table_data = {
