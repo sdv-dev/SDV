@@ -3,6 +3,7 @@
 import contextlib
 import datetime
 import inspect
+import logging
 import operator
 import warnings
 from collections import defaultdict
@@ -31,6 +32,7 @@ from sdv.single_table.base import INT_REGEX_ZERO_ERROR_MESSAGE
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
 
 SYNTHESIZER_LOGGER = get_sdv_logger('MultiTableSynthesizer')
+LOGGER = logging.getLogger(__name__)
 DEPRECATION_MSG = (
     "The 'MultiTableMetadata' is deprecated. Please use the new 'Metadata' class for synthesizers."
 )
@@ -386,7 +388,9 @@ class BaseMultiTableSynthesizer:
             try:
                 synthesizer = self._table_synthesizers[table_name]
                 self._assign_table_transformers(synthesizer, table_name, table_data)
+                SYNTHESIZER_LOGGER.info(f'Attempting to preprocess table {table_name}')
                 processed_data[table_name] = synthesizer._preprocess(table_data)
+                SYNTHESIZER_LOGGER.info(f'Successfully preprocessed table {table_name}')
             except SynthesizerInputError as e:
                 if INT_REGEX_ZERO_ERROR_MESSAGE in str(e):
                     raise SynthesizerInputError(
@@ -398,6 +402,7 @@ class BaseMultiTableSynthesizer:
         for table in list_of_changed_tables:
             data[table] = data[table].rename(columns=self._original_table_columns[table])
 
+        LOGGER.info('About to exit multi-table base preprocess')
         return processed_data
 
     def _model_tables(self, augmented_data):

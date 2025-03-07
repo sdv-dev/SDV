@@ -826,10 +826,10 @@ class DataProcessor:
             for column in self.get_sdtypes(primary_keys=not is_condition)
             if column in data.columns
         ]
-        LOGGER.debug(f'Transforming constraints for table {self.table_name}')
+        LOGGER.info(f'Transforming constraints for table {self.table_name}')
         data = self._transform_constraints(data[columns], is_condition)
 
-        LOGGER.debug(f'Transforming table {self.table_name}')
+        LOGGER.info(f'Transforming table {self.table_name}')
         if self._keys and not is_condition:
             data = data.set_index(self._primary_key, drop=False)
 
@@ -837,7 +837,7 @@ class DataProcessor:
             transformed = self._hyper_transformer.transform_subset(data)
         except (rdt.errors.NotFittedError, rdt.errors.ConfigNotSetError):
             transformed = data
-
+        LOGGER.info('Transformed table successfully')
         return transformed
 
     def reverse_transform(self, data, reset_keys=False):
