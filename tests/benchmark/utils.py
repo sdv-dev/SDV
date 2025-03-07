@@ -215,10 +215,10 @@ def compare_and_store_results_in_gdrive():
         for sdtype, group in current_results_df.groupby('sdtype'):
             group['version'] = name
 
-        if sdtype not in sorted_results:
-            sorted_results[sdtype] = group
-        else:
-            sorted_results[sdtype] = pd.concat([sorted_results[sdtype], group])
+            if sdtype not in sorted_results:
+                sorted_results[sdtype] = group
+            else:
+                sorted_results[sdtype] = pd.concat([sorted_results[sdtype], group])
 
     slack_messages = []
     mark_results = {}
