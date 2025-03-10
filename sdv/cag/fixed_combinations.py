@@ -7,7 +7,11 @@ import pandas as pd
 
 from sdv._utils import _create_unique_name
 from sdv.cag._errors import PatternNotMetError
-from sdv.cag._utils import _validate_table_and_column_names
+from sdv.cag._utils import (
+    _is_list_of_strings,
+    _validate_table_and_column_names,
+    _validate_table_name_if_defined,
+)
 from sdv.cag.base import BasePattern
 from sdv.constraints.utils import get_mappable_combination
 from sdv.metadata import Metadata
@@ -37,16 +41,13 @@ class FixedCombinations(BasePattern):
 
     def __init__(self, column_names, table_name=None):
         super().__init__()
-        if not isinstance(column_names, list) or not all(
-            isinstance(column_name, str) for column_name in column_names
-        ):
+        if not _is_list_of_strings(column_names):
             raise ValueError('`column_names` must be a list of strings.')
 
         if len(column_names) < 2:
             raise ValueError('FixedCombinations pattern requires at least two columns.')
 
-        if table_name and not isinstance(table_name, str):
-            raise ValueError('`table_name` must be a string or None.')
+        _validate_table_name_if_defined(table_name)
 
         self.column_names = column_names
         self.table_name = table_name
@@ -143,7 +144,7 @@ class FixedCombinations(BasePattern):
                 Table data.
 
         Returns:
-            dict[pd].DataFrame:
+            (dict[pd.DataFrame]):
                 Transformed data.
         """
         table_name = self._get_single_table_name(self.metadata)
@@ -172,7 +173,7 @@ class FixedCombinations(BasePattern):
         names.
 
         Args:
-            table_data (dict[pd.DataFrame)]:
+            data (dict[pd.DataFrame)]:
                 Transformed data.
 
         Returns:
