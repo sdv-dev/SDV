@@ -1,6 +1,0 @@
-﻿sdv.evaluation.evaluate
-=======================
-
-.. currentmodule:: sdv.evaluation
-
-.. autofunction:: evaluate

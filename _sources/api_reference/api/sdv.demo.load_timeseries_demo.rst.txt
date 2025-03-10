@@ -1,6 +1,0 @@
-﻿sdv.demo.load\_timeseries\_demo
-===============================
-
-.. currentmodule:: sdv.demo
-
-.. autofunction:: load_timeseries_demo

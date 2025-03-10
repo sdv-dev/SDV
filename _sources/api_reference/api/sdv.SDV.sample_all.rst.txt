@@ -1,6 +1,0 @@
-﻿sdv.SDV.sample\_all
-===================
-
-.. currentmodule:: sdv
-
-.. automethod:: SDV.sample_all
