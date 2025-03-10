@@ -1,4 +1,4 @@
-from sdv.cag._errors import PatternNotMetError
+import numpy as np
 
 from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
