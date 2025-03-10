@@ -5,6 +5,7 @@ import pandas as pd
 
 from sdv.cag import FixedCombinations
 from sdv.metadata import Metadata
+from tests.utils import run_pattern
 
 
 def test_fixed_combinations_integers():
@@ -23,11 +24,7 @@ def test_fixed_combinations_integers():
     pattern = FixedCombinations(['A', 'B'])
 
     # Run
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
+    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -57,11 +54,7 @@ def test_fixed_combinations_with_nans():
     pattern = FixedCombinations(['A', 'B'])
 
     # Run
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
+    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({
@@ -102,11 +95,7 @@ def test_fixed_null_combinations_with_multi_table():
     pattern = FixedCombinations(['A', 'B'], table_name='table1')
 
     # Run
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
+    updated_metadata, transformed, reverse_transformed = run_pattern(pattern, data, metadata)
 
     # Assert
     expected_updated_metadata = Metadata.load_from_dict({

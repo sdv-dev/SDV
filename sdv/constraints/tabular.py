@@ -1271,7 +1271,7 @@ class FixedIncrements(Constraint):
     """Ensure every value in a column is a multiple of the specified increment.
 
     Args:
-        column_name (str or list[str]):
+        column_name (str):
             Name of the column.
         increment_value (int):
             The increment that each value in the column must be a multiple of. Must be greater
