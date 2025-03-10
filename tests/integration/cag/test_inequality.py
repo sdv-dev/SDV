@@ -9,17 +9,6 @@ from sdv.single_table import GaussianCopulaSynthesizer
 from tests.utils import run_pattern
 
 
-def run_pattern(pattern, data, metadata):
-    """Run a pattern."""
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
-
-    return updated_metadata, transformed, reverse_transformed
-
-
 def test_inequality_pattern_integers():
     """Test that Inequality pattern works with integer columns."""
     # Setup

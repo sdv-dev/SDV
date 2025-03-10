@@ -21,7 +21,7 @@ from sdv.metadata import Metadata
 class Range(BasePattern):
     """Ensure that the `middle_column_name` is between `low_column_name` and `high_column_name`.
 
-    The transformation strategy works the same as the Inequality constraint but with two
+    The transformation strategy works the same as the Inequality pattern but with two
     columns instead of one. We compute the difference between the `middle_column_name`
     and the `low_column_name` column and then apply a logarithm to the difference + 1 to ensure
     that the value stays positive when reverted afterwards using an exponential.
@@ -113,7 +113,7 @@ class Range(BasePattern):
                 The metadata to validate against.
 
         Raises:
-            ValueError:
+            PatternNotMetError:
                 If any of the validations fail.
         """
         columns = [self._low_column_name, self._middle_column_name, self._high_column_name]
