@@ -42,18 +42,15 @@ class BasePattern:
             metadata = self.metadata
 
         self._validate_pattern_with_metadata(metadata)
-        if data is not None:
-            if isinstance(data, pd.DataFrame):
-                if self._single_table:
-                    data = {self._table_name: data}
-                else:
-                    table_name = self._get_single_table_name(metadata)
-                    data = {table_name: data}
 
-            elif isinstance(data, pd.DataFrame):
+        if isinstance(data, pd.DataFrame):
+            if self._single_table:
+                data = {self._table_name: data}
+            else:
                 table_name = self._get_single_table_name(metadata)
                 data = {table_name: data}
 
+        if data is not None:
             self._validate_pattern_with_data(data, metadata)
 
     def _get_updated_metadata(self, metadata):

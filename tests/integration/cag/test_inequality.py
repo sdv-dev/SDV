@@ -6,17 +6,7 @@ from sdv.cag import Inequality
 from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
 from sdv.single_table import GaussianCopulaSynthesizer
-
-
-def run_pattern(pattern, data, metadata):
-    """Run a pattern."""
-    pattern.validate(data, metadata)
-    updated_metadata = pattern.get_updated_metadata(metadata)
-    pattern.fit(data, metadata)
-    transformed = pattern.transform(data)
-    reverse_transformed = pattern.reverse_transform(transformed)
-
-    return updated_metadata, transformed, reverse_transformed
+from tests.utils import run_pattern
 
 
 def test_inequality_pattern_integers():
