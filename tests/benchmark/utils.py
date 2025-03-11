@@ -203,6 +203,7 @@ def compare_and_store_results_in_gdrive():
 
     slack_messages = []
     mark_results = {}
+    dtype_changes_detected = False
     exit_code = 0
     for key, value in comparison_results.items():
         if not value.empty:
@@ -211,25 +212,27 @@ def compare_and_store_results_in_gdrive():
                 slack_messages.append(':fire: New unsupported DTypes!')
                 mark_results[RED_HEX] = value
                 exit_code = 1
+                dtype_changes_detected = True
 
             elif key == 'new_supported_dtypes':
                 slack_messages.append(':party_blob: New DTypes supported!')
                 mark_results[GREEN_HEX] = value
-
-    if len(slack_messages) == 0:
-        slack_messages.append(':dealwithit: No new changes to the DTypes in SDV.')
+                dtype_changes_detected = True
 
     for key, value in results.items():
         sorted_results[key] = value
 
     output_folder = GDRIVE_OUTPUT_FOLDER
     file_id = save_to_gdrive(output_folder, sorted_results, mark_results=mark_results)
-    slack_messages.append(
-        f'See <https://docs.google.com/spreadsheets/d/{file_id}|dtypes summary and details>'
-    )
-    slack_message = '\n'.join(slack_messages)
-    slack_channel = 'sdv-alerts'
-    post_slack_message(slack_channel, slack_message)
+
+    if dtype_changes_detected:
+        slack_messages.append(
+            f'See <https://docs.google.com/spreadsheets/d/{file_id}|dtypes summary and details>'
+        )
+        slack_message = '\n'.join(slack_messages)
+        slack_channel = 'sdv-alerts'
+        post_slack_message(slack_channel, slack_message)
+
     sys.exit(exit_code)
 
 
