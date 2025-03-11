@@ -10,7 +10,7 @@ import os
 import uuid
 import warnings
 from collections import defaultdict
-
+from copy import deepcopy
 import cloudpickle
 import copulas
 import numpy as np
@@ -602,6 +602,52 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     The ``BaseSingleTableSynthesizer`` class defines the common sampling methods
     for all single-table synthesizers.
     """
+
+    def add_cag(self, patterns):
+        """Add the list of constraint-augmented generation patterns to the synthesizer.
+
+        Args:
+            patterns (list):
+                A list of CAG patterns to apply to the synthesizer.
+        """
+        if not hasattr(self, '_original_metadata'):
+            self._original_metadata = self.metadata
+
+        metadata = self.metadata
+        for pattern in patterns:
+            metadata = pattern.get_updated_metadata(metadata)
+
+        self.metadata = metadata
+        if hasattr(self, 'patterns'):
+            self.patterns += patterns
+        else:
+            self.patterns = patterns
+
+        self._initialize_models()
+
+    def get_cag(self):
+        """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
+        if hasattr(self, 'patterns'):
+            return deepcopy(self.patterns)
+        return []
+
+    def get_metadata(self, version='original'):
+        """Get the metadata, either original or modified after applying CAG patterns.
+
+        Args:
+            version (str, optional):
+                The version of metadata to return, must be one of 'original' or 'modified'. If
+                'original', will return the original metadata used to instantiate the
+                synthesizer. If 'modified', will return the modified metadata after applying this
+                synthesizer's CAG patterns. Defaults to 'original'.
+        """
+        if version not in ('original', 'modified'):
+            error_msg = f"Unrecognized version '{version}', please use 'original' or 'modified'."
+            raise ValueError(error_msg)
+
+        if version == 'original' and hasattr(self, '_original_metadata'):
+            return self._original_metadata
+        return self.metadata
 
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.
