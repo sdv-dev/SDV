@@ -118,7 +118,6 @@ class BaseSynthesizer:
         elif isinstance(metadata, SingleTableMetadata):
             warnings.warn(DEPRECATION_MSG, FutureWarning)
 
-        self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata.validate()
         self._check_metadata_updated()
         self.enforce_min_max_values = enforce_min_max_values
@@ -1050,6 +1049,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             output_file_path,
             show_progress_bar=show_progress_bar,
         )
+        sampled_data = self._reverse_transform_helper(sampled_data)
 
         original_columns = getattr(self, '_original_columns', pd.Index([]))
         if not original_columns.empty:

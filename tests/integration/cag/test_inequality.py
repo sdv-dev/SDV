@@ -555,7 +555,7 @@ def test_inequality_pattern_date_less_than_timestamp_no_strict_boundaries():
     assert invalid_rows.empty
 
 
-@pytest.mark.skip(reason='Skipping until add_cag method is implemented')
+#@pytest.mark.skip(reason='Skipping until add_cag method is implemented')
 def test_inequality_pattern_timestamp_less_than_date_no_strict_boundaries():
     """Test that the inequality pattern passes when timestamp is less than date.
 
@@ -604,6 +604,7 @@ def test_inequality_pattern_timestamp_less_than_date_no_strict_boundaries():
     # Run
     synthesizer.fit(data)
     synthetic_data = synthesizer.sample(10)
+    print(synthetic_data)
 
     # Assert
     synthetic_data['SUBMISSION_TIMESTAMP'] = pd.to_datetime(
