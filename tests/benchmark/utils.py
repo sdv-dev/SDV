@@ -203,6 +203,7 @@ def compare_and_store_results_in_gdrive():
 
     slack_messages = []
     mark_results = {}
+    dtype_changes_detected = False
     exit_code = 0
     for key, value in comparison_results.items():
         if not value.empty:
