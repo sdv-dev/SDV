@@ -1,10 +1,14 @@
 """One Hot Encoding CAG pattern."""
 
 import numpy as np
-import pandas as pd
 
 from sdv.cag._errors import PatternNotMetError
-from sdv.cag._utils import _get_invalid_rows, _is_list_of_strings, _validate_table_and_column_names
+from sdv.cag._utils import (
+    _get_invalid_rows,
+    _get_is_valid_dict,
+    _is_list_of_strings,
+    _validate_table_and_column_names,
+)
 from sdv.cag.base import BasePattern
 
 
@@ -46,7 +50,7 @@ class OneHotEncoding(BasePattern):
         - All input columns exist in the table in the metadata.
 
         Args:
-            metadata (Metadata):
+            metadata (sdv.metadata.Metadata):
                 The metadata to validate against.
 
         Raises:
@@ -81,7 +85,7 @@ class OneHotEncoding(BasePattern):
         Args:
             data (dict[str, pd.DataFrame]):
                 Table data.
-            metadata (Metadata):
+            metadata (sdv.metadata.Metadata):
                 Metadata.
         """
         pass
@@ -135,11 +139,7 @@ class OneHotEncoding(BasePattern):
                 Whether each row is valid.
         """
         table_name = self._get_single_table_name(self.metadata)
-        is_valid = {
-            table: pd.Series(True, index=table_data.index)
-            for table, table_data in data.items()
-            if table != table_name
-        }
+        is_valid = _get_is_valid_dict(data, table_name)
         is_valid[table_name] = self._get_valid_table_data(data[table_name])
 
         return is_valid

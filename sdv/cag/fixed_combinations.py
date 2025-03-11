@@ -8,6 +8,7 @@ import pandas as pd
 from sdv._utils import _create_unique_name
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import (
+    _get_is_valid_dict,
     _is_list_of_strings,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
@@ -192,11 +193,7 @@ class FixedCombinations(BasePattern):
     def _is_valid(self, data):
         """Determine whether the data matches the pattern."""
         table_name = self._get_single_table_name(self.metadata)
-        is_valid = {
-            table: pd.Series(True, index=table_data.index)
-            for table, table_data in data.items()
-            if table != table_name
-        }
+        is_valid = _get_is_valid_dict(data, table_name)
         merged = data[table_name].merge(
             self._combinations, how='left', on=self.column_names, indicator=self._joint_column
         )
