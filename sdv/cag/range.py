@@ -7,7 +7,10 @@ import pandas as pd
 
 from sdv._utils import _convert_to_timedelta, _create_unique_name
 from sdv.cag._errors import PatternNotMetError
-from sdv.cag._utils import _validate_table_and_column_names
+from sdv.cag._utils import (
+    _get_is_valid_dict,
+    _validate_table_and_column_names,
+)
 from sdv.cag.base import BasePattern
 from sdv.constraints.utils import (
     cast_to_datetime64,
@@ -355,11 +358,7 @@ class Range(BasePattern):
                 Whether each row is valid.
         """
         table_name = self._get_single_table_name(self.metadata)
-        is_valid = {
-            table: pd.Series(True, index=table_data.index)
-            for table, table_data in data.items()
-            if table != table_name
-        }
+        is_valid = _get_is_valid_dict(data, table_name)
         is_valid[table_name] = self._get_valid_table_data(data[table_name])
 
         return is_valid
