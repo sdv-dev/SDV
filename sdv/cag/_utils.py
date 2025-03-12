@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from sdv.cag._errors import PatternNotMetError
 from sdv.metadata import Metadata
@@ -93,9 +94,9 @@ def _remove_columns_from_metadata(metadata, table_name, columns_to_drop):
     return Metadata.load_from_dict(metadata)
 
 
-def _is_list_of_strings(values):
-    """Checks that a list contains all strings."""
-    return isinstance(values, list) and all(isinstance(value, str) for value in values)
+def _is_list_of_type(values, type_to_check=str):
+    """Checks that 'values' is a list and all elements are of type 'type_to_check'."""
+    return isinstance(values, list) and all(isinstance(value, type_to_check) for value in values)
 
 
 def _get_invalid_rows(valid):
@@ -117,3 +118,26 @@ def _get_invalid_rows(valid):
         remaining = len(invalid_rows) - 5
         invalid_rows_str = f'{first_five}, +{remaining} more'
     return invalid_rows_str
+
+
+def _get_is_valid_dict(data, table_name):
+    """Create a dictionary of True values for each table besides table_name.
+
+    Besides table_name, all rows of every other table are considered valid,
+    so the boolean Series will be True for all rows of every other table.
+
+    Args:
+        data (dict):
+            The data.
+        table_name (str):
+            The name of the table to exclude from the dictionary.
+
+    Returns:
+        dict:
+            Dictionary of table names to boolean Series of True values.
+    """
+    return {
+        table: pd.Series(True, index=table_data.index)
+        for table, table_data in data.items()
+        if table != table_name
+    }
