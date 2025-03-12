@@ -10,7 +10,7 @@ import os
 import uuid
 import warnings
 from collections import defaultdict
-
+from copy import deepcopy
 import cloudpickle
 import copulas
 import numpy as np
@@ -610,6 +610,123 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     for all single-table synthesizers.
     """
 
+    def add_cag(self, patterns):
+        """Add the list of constraint-augmented generation patterns to the synthesizer.
+
+        Args:
+            patterns (list):
+                A list of CAG patterns to apply to the synthesizer.
+        """
+        if not hasattr(self, '_original_metadata'):
+            if isinstance(self.metadata, Metadata):
+                self._original_metadata = self.metadata
+            else:
+                self._original_metadata = Metadata.load_from_dict(self.metadata.to_dict())
+
+        metadata = self.metadata
+        if isinstance(metadata, SingleTableMetadata):
+            metadata = Metadata.load_from_dict(metadata.to_dict())
+
+        for pattern in patterns:
+            metadata = pattern.get_updated_metadata(metadata)
+
+        if isinstance(metadata, Metadata):
+            metadata = metadata._convert_to_single_table()
+
+        self.metadata = metadata
+        self._data_processor = DataProcessor(
+            metadata=self.metadata,
+            enforce_rounding=self.enforce_rounding,
+            enforce_min_max_values=self.enforce_min_max_values,
+            locales=self.locales,
+        )
+        if hasattr(self, 'patterns'):
+            self.patterns += patterns
+        else:
+            self.patterns = patterns
+
+        #self._initialize_models()
+
+    def get_cag(self):
+        """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
+        if hasattr(self, 'patterns'):
+            return deepcopy(self.patterns)
+        return []
+
+    def get_metadata(self, version='original'):
+        """Get the metadata, either original or modified after applying CAG patterns.
+
+        Args:
+            version (str, optional):
+                The version of metadata to return, must be one of 'original' or 'modified'. If
+                'original', will return the original metadata used to instantiate the
+                synthesizer. If 'modified', will return the modified metadata after applying this
+                synthesizer's CAG patterns. Defaults to 'original'.
+        """
+        if version not in ('original', 'modified'):
+            error_msg = f"Unrecognized version '{version}', please use 'original' or 'modified'."
+            raise ValueError(error_msg)
+
+        if version == 'original' and hasattr(self, '_original_metadata'):
+            return self._original_metadata
+        return self.metadata
+
+    def _transform_helper(self, data):
+        """Validate and transform all CAG patterns during preprocessing.
+
+        Args:
+            data (dict[str, pd.DataFrame]):
+                The data dictionary.
+        """
+        if not hasattr(self, 'patterns'):
+            return data
+
+        metadata = self._original_metadata
+        for pattern in self.patterns:
+            if not self._fitted:
+                pattern.fit(data, metadata)
+                metadata = pattern.get_updated_metadata(metadata)
+
+            data = pattern.transform(data)
+
+        return data
+
+    def preprocess(self, data):
+        """Transform the raw data to numerical space.
+
+        Args:
+            data (pandas.DataFrame):
+                The raw data to be transformed.
+
+        Returns:
+            pandas.DataFrame:
+                The preprocessed data.
+        """
+        if self._fitted:
+            warnings.warn(
+                'This model has already been fitted. To use the new preprocessed data, '
+                "please refit the model using 'fit' or 'fit_processed_data'."
+            )
+
+        is_converted = self._store_and_convert_original_cols(data)
+        data = self._transform_helper(data)
+        preprocess_data = self._preprocess(data)
+
+        if is_converted:
+            data.columns = self._original_columns
+
+        return preprocess_data
+
+    def _reverse_transform_helper(self, sampled_data):
+        """Reverse transform CAG patterns after sampling."""
+        if not hasattr(self, 'patterns'):
+            return sampled_data
+
+        for pattern in reversed(self.patterns):
+            sampled_data = pattern.reverse_transform(sampled_data)
+
+        return sampled_data
+
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.
 
@@ -1011,6 +1128,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             output_file_path,
             show_progress_bar=show_progress_bar,
         )
+        sampled_data = self._reverse_transform_helper(sampled_data)
 
         original_columns = getattr(self, '_original_columns', pd.Index([]))
         if not original_columns.empty:
