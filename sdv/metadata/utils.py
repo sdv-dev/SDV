@@ -24,3 +24,9 @@ def validate_file_does_not_exist(filepath):
             f"A file named '{filepath.name}' already exists in this folder. Please specify "
             'a different filename.'
         )
+
+
+def _validate_file_mode(mode):
+    possible_modes = ['write', 'overwrite']
+    if mode not in possible_modes:
+        raise ValueError(f"Mode '{mode}' must be in {possible_modes}.")
