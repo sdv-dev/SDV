@@ -121,7 +121,7 @@ class TestBasePattern:
         instance._table_name = 'table1'
         instance._validate_pattern_with_data = Mock()
         instance._validate_pattern_with_metadata = Mock()
-        data_mock = Mock()
+        data_mock = Mock(spec=pd.DataFrame)
         metadata_mock = Mock()
 
         # Run
