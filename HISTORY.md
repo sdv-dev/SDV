@@ -1,5 +1,23 @@
 # Release Notes
 
+## v1.19.0 - 2025-03-12
+
+### New Features
+
+* Allow re-writes to metadata JSON files - Issue [#2392](https://github.com/sdv-dev/SDV/issues/2392) by @lajohn4747
+
+### Bugs Fixed
+
+* GaussianCopula is not reporting the correct distribution name in the case of a fallback - Issue [#2394](https://github.com/sdv-dev/SDV/issues/2394) by @fealho
+
+### Internal
+
+* Only Notify Slack on dtype Support Additions or Removals - Issue [#2406](https://github.com/sdv-dev/SDV/issues/2406) by @pvk-developer
+
+### Maintenance
+
+* Support Python 3.13 - Issue [#2270](https://github.com/sdv-dev/SDV/issues/2270) by @rwedge
+
 ## v1.18.0 - 2025-02-14
 
 ### New Features
