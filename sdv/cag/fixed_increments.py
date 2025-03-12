@@ -6,6 +6,7 @@ from sdv._utils import _create_unique_name
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import (
     _get_invalid_rows,
+    _get_is_valid_dict,
     _remove_columns_from_metadata,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
@@ -173,11 +174,7 @@ class FixedIncrements(BasePattern):
                 table names.
         """
         table_name = self._get_single_table_name(self.metadata)
-        is_valid = {
-            table: pd.Series(True, index=table_data.index)
-            for table, table_data in data.items()
-            if table != table_name
-        }
+        is_valid = _get_is_valid_dict(data, table_name)
         valid = self._check_if_divisible(data, table_name, self.column_name, self.increment_value)
         is_valid[table_name] = valid
         return is_valid
