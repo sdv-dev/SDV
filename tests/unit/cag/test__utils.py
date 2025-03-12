@@ -7,7 +7,7 @@ import pytest
 
 from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import (
-    _is_list_of_strings,
+    _is_list_of_type,
     _remove_columns_from_metadata,
     _validate_table_and_column_names,
     _validate_table_name_if_defined,
@@ -192,10 +192,10 @@ def test__remove_columns_from_metadata_raises_pk():
         )
 
 
-def test__is_list_of_strings():
-    """Test `_is_list_of_strings` method"""
-    assert _is_list_of_strings(['a', 'b'])
-    assert not _is_list_of_strings(['a', 1])
-    assert not _is_list_of_strings([1, 2])
-    assert not _is_list_of_strings(1)
-    assert not _is_list_of_strings('a')
+def test__is_list_of_type():
+    """Test `_is_list_of_type` method"""
+    assert _is_list_of_type(['a', 'b'])
+    assert not _is_list_of_type(['a', 1])
+    assert not _is_list_of_type([1, 2])
+    assert not _is_list_of_type(1)
+    assert not _is_list_of_type('a')
