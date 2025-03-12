@@ -6,7 +6,7 @@ from sdv.cag._errors import PatternNotMetError
 from sdv.cag._utils import (
     _get_invalid_rows,
     _get_is_valid_dict,
-    _is_list_of_strings,
+    _is_list_of_type,
     _validate_table_and_column_names,
 )
 from sdv.cag.base import BasePattern
@@ -30,7 +30,7 @@ class OneHotEncoding(BasePattern):
 
     @staticmethod
     def _validate_init_inputs(column_names, table_name):
-        if not _is_list_of_strings(column_names):
+        if not _is_list_of_type(column_names):
             raise ValueError('`column_names` must be a list of strings.')
 
         if table_name and not isinstance(table_name, str):

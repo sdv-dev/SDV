@@ -94,9 +94,9 @@ def _remove_columns_from_metadata(metadata, table_name, columns_to_drop):
     return Metadata.load_from_dict(metadata)
 
 
-def _is_list_of_strings(values):
-    """Checks that a list contains all strings."""
-    return isinstance(values, list) and all(isinstance(value, str) for value in values)
+def _is_list_of_type(values, type_to_check=str):
+    """Checks that 'values' is a list and all elements are of type 'type_to_check'."""
+    return isinstance(values, list) and all(isinstance(value, type_to_check) for value in values)
 
 
 def _get_invalid_rows(valid):
