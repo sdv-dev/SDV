@@ -8,6 +8,7 @@ from sdmetrics import visualization
 
 from sdv.errors import InvalidDataTypeError, NotFittedError
 from sdv.metadata.metadata import Metadata
+from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.ctgan import CTGANSynthesizer, TVAESynthesizer, _validate_no_category_dtype
 
 
@@ -273,8 +274,7 @@ class TestCTGANSynthesizer:
         """
         # Setup
         metadata = Metadata()
-        single_metadata = metadata._convert_to_single_table()
-        instance = CTGANSynthesizer(single_metadata)
+        instance = CTGANSynthesizer(metadata)
         processed_data = Mock()
 
         # Run
@@ -282,8 +282,9 @@ class TestCTGANSynthesizer:
 
         # Assert
         mock_category_validate.assert_called_once_with(processed_data)
-        mock_detect_discrete_columns.assert_called_once_with(
-            single_metadata,
+        args = mock_detect_discrete_columns.call_args[0]
+        assert isinstance(args[0], SingleTableMetadata)
+        assert args[1:] == (
             processed_data,
             instance._data_processor._hyper_transformer.field_transformers,
         )
@@ -475,8 +476,7 @@ class TestTVAESynthesizer:
         """
         # Setup
         metadata = Metadata()
-        single_metadata = metadata._convert_to_single_table()
-        instance = TVAESynthesizer(single_metadata)
+        instance = TVAESynthesizer(metadata)
         processed_data = Mock()
 
         # Run
@@ -484,8 +484,9 @@ class TestTVAESynthesizer:
 
         # Assert
         mock_category_validate.assert_called_once_with(processed_data)
-        mock_detect_discrete_columns.assert_called_once_with(
-            single_metadata,
+        args = mock_detect_discrete_columns.call_args[0]
+        assert isinstance(args[0], SingleTableMetadata)
+        assert args[1:] == (
             processed_data,
             instance._data_processor._hyper_transformer.field_transformers,
         )

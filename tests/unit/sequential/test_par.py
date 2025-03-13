@@ -82,7 +82,7 @@ class TestPARSynthesizer:
             == metadata._convert_to_single_table().to_dict()
         )
         assert isinstance(synthesizer._context_synthesizer, GaussianCopulaSynthesizer)
-        assert synthesizer._context_synthesizer.metadata.columns == {
+        assert synthesizer._context_synthesizer.metadata.tables['table'].columns == {
             'gender': {'sdtype': 'categorical'},
             'name': {'sdtype': 'id'},
         }

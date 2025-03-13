@@ -110,7 +110,7 @@ class TestBaseMultiTableSynthesizer:
 
     @patch('sdv.multi_table.base.datetime')
     @patch('sdv.multi_table.base.generate_synthesizer_id')
-    @patch('sdv.multi_table.base.BaseMultiTableSynthesizer._check_metadata_updated')
+    @patch('sdv.multi_table.base._check_metadata_updated')
     def test___init__(
         self, mock_check_metadata_updated, mock_generate_synthesizer_id, mock_datetime, caplog
     ):
@@ -131,7 +131,6 @@ class TestBaseMultiTableSynthesizer:
             instance = BaseMultiTableSynthesizer(metadata)
 
         # Assert
-        assert instance.metadata == metadata
         assert isinstance(instance._table_synthesizers['nesreca'], GaussianCopulaSynthesizer)
         assert isinstance(instance._table_synthesizers['oseba'], GaussianCopulaSynthesizer)
         assert isinstance(instance._table_synthesizers['upravna_enota'], GaussianCopulaSynthesizer)
@@ -212,10 +211,10 @@ class TestBaseMultiTableSynthesizer:
     def test__check_metadata_updated(self):
         """Test the ``_check_metadata_updated`` method."""
         # Setup
-        instance = Mock()
-        instance.metadata = Mock()
-        instance.metadata._check_updated_flag = Mock()
-        instance.metadata._reset_updated_flag = Mock()
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('column', 'table', sdtype='numerical')
+        metadata.tables['table']._updated = True
 
         # Run
         expected_message = re.escape(
@@ -223,11 +222,10 @@ class TestBaseMultiTableSynthesizer:
             ' in future SDV versions.'
         )
         with pytest.warns(UserWarning, match=expected_message):
-            BaseMultiTableSynthesizer._check_metadata_updated(instance)
+            instance = BaseMultiTableSynthesizer(metadata)
 
         # Assert
-        instance.metadata._check_updated_flag.assert_called_once()
-        instance.metadata._reset_updated_flag.assert_called_once()
+        assert instance.metadata.tables['table']._updated is False
 
     def test_set_address_columns(self):
         """Test the ``set_address_columns`` method."""
@@ -1094,7 +1092,8 @@ class TestBaseMultiTableSynthesizer:
         instance._check_metadata_updated.assert_not_called()
 
     @patch('sdv.multi_table.base.datetime')
-    def test_fit(self, mock_datetime, caplog):
+    @patch('sdv.multi_table.base._check_metadata_updated')
+    def test_fit(self, mock_check_metadata_updated, mock_datetime, caplog):
         """Test that it calls the appropriate methods."""
         # Setup
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
@@ -1116,7 +1115,7 @@ class TestBaseMultiTableSynthesizer:
         # Assert
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
-        instance._check_metadata_updated.assert_called_once()
+        mock_check_metadata_updated.assert_called_once()
         assert caplog.messages[0] == str({
             'EVENT': 'Fit',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',

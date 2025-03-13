@@ -450,3 +450,24 @@ def _is_numerical(value):
         return is_integer(value) or is_float(value)
     except Exception:
         return False
+
+
+def _check_metadata_updated(metadata):
+    """Check if the metadata has been updated and warn the user if so.
+
+    Args:
+        metadata (Metadata):
+            The metadata to check.
+
+    Returns:
+        Metadata:
+            The updated metadata object.
+    """
+    if metadata._check_updated_flag():
+        metadata._reset_updated_flag()
+        warnings.warn(
+            "We strongly recommend saving the metadata using 'save_to_json' for replicability"
+            ' in future SDV versions.'
+        )
+
+    return metadata

@@ -14,6 +14,7 @@ from tqdm import tqdm
 
 from sdv import version
 from sdv._utils import (
+    _check_metadata_updated,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
@@ -95,14 +96,6 @@ class BaseMultiTableSynthesizer:
         if self.verbose:
             print(text, **kwargs)  # noqa: T201
 
-    def _check_metadata_updated(self):
-        if self.metadata._check_updated_flag():
-            self.metadata._reset_updated_flag()
-            warnings.warn(
-                "We strongly recommend saving the metadata using 'save_to_json' for replicability"
-                ' in future SDV versions.'
-            )
-
     def __init__(self, metadata, locales=['en_US'], synthesizer_kwargs=None):
         self.metadata = metadata
         if type(metadata) is MultiTableMetadata:
@@ -111,7 +104,7 @@ class BaseMultiTableSynthesizer:
             warnings.filterwarnings('ignore', message=r'.*column relationship.*')
             self.metadata.validate()
 
-        self._check_metadata_updated()
+        self.metadata = _check_metadata_updated(self.metadata)
         self.locales = locales
         self.verbose = False
         self.extended_columns = defaultdict(dict)
@@ -476,7 +469,7 @@ class BaseMultiTableSynthesizer:
         })
 
         check_synthesizer_version(self, is_fit_method=True, compare_operator=operator.lt)
-        self._check_metadata_updated()
+        self.metadata = _check_metadata_updated(self.metadata)
         self._fitted = False
         processed_data = self.preprocess(data)
         self._print(text='\n', end='')

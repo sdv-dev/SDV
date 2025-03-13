@@ -164,7 +164,8 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
             cuda=cuda,
         )
 
-        validate_numerical_distributions(numerical_distributions, self.metadata.columns)
+        table_metadata = self._get_table_metadata()
+        validate_numerical_distributions(numerical_distributions, table_metadata.columns)
         self.numerical_distributions = numerical_distributions or {}
         self.default_distribution = default_distribution or 'beta'
 
@@ -177,7 +178,7 @@ class CopulaGANSynthesizer(CTGANSynthesizer):
         }
 
     def _create_gaussian_normalizer_config(self, processed_data):
-        columns = self.metadata.columns
+        columns = self._get_table_metadata().columns
         transformers = {}
         sdtypes = {}
         for column in processed_data.columns:

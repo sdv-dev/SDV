@@ -60,9 +60,10 @@ class TestBaseSingleTableSynthesizer:
     def test__check_metadata_updated(self):
         """Test the ``_check_metadata_updated`` method."""
         # Setup
-        instance = Mock()
-        instance.metadata = Mock()
-        instance.metadata._updated = True
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('column', 'table', sdtype='categorical')
+        metadata.tables['table']._updated = True
 
         # Run
         expected_message = re.escape(
@@ -70,15 +71,15 @@ class TestBaseSingleTableSynthesizer:
             ' in future SDV versions.'
         )
         with pytest.warns(UserWarning, match=expected_message):
-            BaseSingleTableSynthesizer._check_metadata_updated(instance)
+            instance = BaseSingleTableSynthesizer(metadata)
 
         # Assert
-        instance.metadata._updated = False
+        assert instance.metadata.tables['table']._updated is False
 
     @patch('sdv.single_table.base.datetime')
     @patch('sdv.single_table.base.generate_synthesizer_id')
     @patch('sdv.single_table.base.DataProcessor')
-    @patch('sdv.single_table.base.BaseSingleTableSynthesizer._check_metadata_updated')
+    @patch('sdv.single_table.base._check_metadata_updated')
     def test___init___l(
         self,
         mock_check_metadata_updated,
@@ -89,7 +90,7 @@ class TestBaseSingleTableSynthesizer:
     ):
         """Test instantiating with default values."""
         # Setup
-        metadata = Mock()
+        metadata = Metadata()
         synthesizer_id = 'BaseSingleTableSynthesizer_1.0.0_92aff11e9a5649d1a280990d1231a5f5'
         mock_generate_synthesizer_id.return_value = synthesizer_id
         mock_datetime.datetime.now.return_value = '2024-04-19 16:20:10.037183'
@@ -105,13 +106,7 @@ class TestBaseSingleTableSynthesizer:
         assert instance._random_state_set is False
         assert instance._fitted is False
         assert instance._synthesizer_id == synthesizer_id
-        mock_data_processor.assert_called_once_with(
-            metadata=metadata,
-            enforce_rounding=instance.enforce_rounding,
-            enforce_min_max_values=instance.enforce_min_max_values,
-            locales=instance.locales,
-        )
-        metadata.validate.assert_called_once_with()
+
         mock_check_metadata_updated.assert_called_once()
         mock_generate_synthesizer_id.assert_called_once_with(instance)
         assert caplog.messages[0] == str({
@@ -178,7 +173,7 @@ class TestBaseSingleTableSynthesizer:
     def test___init__custom(self, mock_data_processor):
         """Test that instantiating with custom parameters are properly stored in the instance."""
         # Setup
-        metadata = Mock()
+        metadata = Metadata()
 
         # Run
         instance = BaseSingleTableSynthesizer(
@@ -190,13 +185,12 @@ class TestBaseSingleTableSynthesizer:
         assert instance.enforce_rounding is False
         assert instance.locales == 'en_CA'
         assert instance._data_processor == mock_data_processor.return_value
-        mock_data_processor.assert_called_once_with(
-            metadata=metadata,
-            enforce_rounding=instance.enforce_rounding,
-            enforce_min_max_values=instance.enforce_min_max_values,
-            locales=instance.locales,
-        )
-        metadata.validate.assert_called_once_with()
+        mock_data_processor.assert_called_once()
+        call_args = mock_data_processor.call_args[1]
+        assert isinstance(call_args['metadata'], SingleTableMetadata)
+        assert call_args['enforce_rounding'] == instance.enforce_rounding
+        assert call_args['enforce_min_max_values'] == instance.enforce_min_max_values
+        assert call_args['locales'] == instance.locales
 
     def test___init__invalid_enforce_min_max_values(self):
         """Test it crashes when ``enforce_min_max_values`` is not a boolean."""
@@ -237,7 +231,7 @@ class TestBaseSingleTableSynthesizer:
     def test_get_parameters(self, mock_data_processor):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
         # Setup
-        metadata = Mock()
+        metadata = Metadata()
         instance = BaseSingleTableSynthesizer(
             metadata, enforce_min_max_values=False, enforce_rounding=False, locales='en_CA'
         )
@@ -258,18 +252,16 @@ class TestBaseSingleTableSynthesizer:
     def test_get_metadata(self, mock_load_from_dict, _):
         """Test that it returns the ``metadata`` object."""
         # Setup
-        metadata = Mock(spec=Metadata)
+        metadata = Metadata()
         instance = BaseSingleTableSynthesizer(
             metadata, enforce_min_max_values=False, enforce_rounding=False
         )
-        mock_converted_metadata = Mock()
-        mock_load_from_dict.return_value = mock_converted_metadata
 
         # Run
         result = instance.get_metadata()
 
         # Assert
-        assert result == mock_converted_metadata
+        assert result == metadata
 
     def test_auto_assign_transformers(self):
         """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""
@@ -307,21 +299,16 @@ class TestBaseSingleTableSynthesizer:
     def test_get_transformers(self):
         """Test that this returns the field transformers from the ``HyperTransformer``."""
         # Setup
-        instance = Mock()
+        instance = BaseSingleTableSynthesizer(Metadata())
         instance._data_processor._hyper_transformer.field_transformers = {
             'name': 'FrequencyEncoder',
             'salary': 'FloatFormatter',
             'salary#name': 'LabelEncoder',
             'address': None,
         }
-        instance.metadata.columns = {
-            'salary': {'sdtype': 'numerical'},
-            'name': {'sdtype': 'categorical'},
-            'address': {'sdtype': 'address'},
-        }
 
         # Run
-        result = BaseSingleTableSynthesizer.get_transformers(instance)
+        result = instance.get_transformers()
 
         # Assert
         assert result == {
@@ -334,19 +321,14 @@ class TestBaseSingleTableSynthesizer:
     def test_get_transformers_with_columns_dropped_by_constraint(self):
         """Test that this returns the transformers that are within the ``field_transformers``."""
         # Setup
-        instance = Mock()
+        instance = BaseSingleTableSynthesizer(Metadata())
         instance._data_processor._hyper_transformer.field_transformers = {
             'salary#name': 'LabelEncoder',
             'address': None,
         }
-        instance.metadata.columns = {
-            'salary': {'sdtype': 'numerical'},
-            'name': {'sdtype': 'categorical'},
-            'address': {'sdtype': 'address'},
-        }
 
         # Run
-        result = BaseSingleTableSynthesizer.get_transformers(instance)
+        result = instance.get_transformers()
 
         # Assert
         assert result == {'address': None, 'salary#name': 'LabelEncoder'}
@@ -445,7 +427,7 @@ class TestBaseSingleTableSynthesizer:
     def test__fit(self, mock_data_processor):
         """Test that ``NotImplementedError`` is being raised."""
         # Setup
-        metadata = Mock()
+        metadata = Metadata()
         data = Mock()
         instance = BaseSingleTableSynthesizer(metadata)
 
@@ -506,7 +488,8 @@ class TestBaseSingleTableSynthesizer:
             BaseSingleTableSynthesizer.fit_processed_data(instance, processed_data)
 
     @patch('sdv.single_table.base.datetime')
-    def test_fit(self, mock_datetime, caplog):
+    @patch('sdv.single_table.base._check_metadata_updated')
+    def test_fit(self, mock_check_metadata_updated, mock_datetime, caplog):
         """Test that ``fit`` calls ``preprocess`` and the ``fit_processed_data``.
 
         When fitting, the synthsizer has to ``preprocess`` the data and with the output
@@ -532,7 +515,7 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reset_sampling.assert_called_once_with()
         instance.preprocess.assert_called_once_with(data)
         instance.fit_processed_data.assert_called_once_with(instance.preprocess.return_value)
-        instance._check_metadata_updated.assert_called_once()
+        mock_check_metadata_updated.assert_called_once()
         assert caplog.messages[0] == str({
             'EVENT': 'Fit',
             'TIMESTAMP': '2024-04-19 16:20:10.037183',
@@ -668,10 +651,16 @@ class TestBaseSingleTableSynthesizer:
         """
         # Setup
         data = pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
-        metadata = Mock()
+        metadata = SingleTableMetadata()
         metadata.primary_key = 'key'
         metadata.column_relationships = []
-        metadata.columns = {'key': {'sdtype': 'id', 'regex_format': '[0-9]{3,4}'}}
+        metadata.columns = {
+            'key': {
+                'sdtype': 'id',
+                'regex_format': '[0-9]{3,4}',
+            },
+            'info': {'sdtype': 'categorical'},
+        }
         instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
@@ -690,10 +679,16 @@ class TestBaseSingleTableSynthesizer:
         """
         # Setup
         data = pd.DataFrame({'key': [1, 2, 3], 'info': ['a', 'b', 'c']})
-        metadata = Mock()
+        metadata = SingleTableMetadata()
         metadata.primary_key = 'key'
         metadata.column_relationships = []
-        metadata.columns = {'key': {'sdtype': 'id', 'regex_format': '[1-9]{3,4}'}}
+        metadata.columns = {
+            'key': {
+                'sdtype': 'id',
+                'regex_format': '[1-9]{3,4}',
+            },
+            'info': {'sdtype': 'categorical'},
+        }
         instance = BaseSingleTableSynthesizer(metadata)
 
         # Run and Assert
@@ -868,7 +863,7 @@ class TestBaseSingleTableSynthesizer:
         """
         # Setup
         rng_seed = Mock()
-        metadata = Mock()
+        metadata = Metadata()
         instance = BaseSingleTableSynthesizer(metadata)
         instance._model = Mock()
 
@@ -1636,7 +1631,7 @@ class TestBaseSingleTableSynthesizer:
         """Test that it raises an error when nans are in the data."""
         # Setup
         conditions = [pd.DataFrame({'names': [np.nan], 'surname': ['Doe']})]
-        synthesizer = BaseSingleTableSynthesizer(MagicMock())
+        synthesizer = BaseSingleTableSynthesizer(Metadata())
         synthesizer._validate_conditions_unseen_columns = Mock()
 
         # Run and Assert
@@ -1771,8 +1766,7 @@ class TestBaseSingleTableSynthesizer:
         removed.
         """
         # Setup
-        metadata = Mock()
-        instance = BaseSingleTableSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(Metadata())
         conditions = [Condition({'name': 'John Doe'})]
         mock_validate_file_path.return_value = '.sample.csv.temp'
 
@@ -1831,8 +1825,7 @@ class TestBaseSingleTableSynthesizer:
     ):
         """Test the this method calls ``_sample_with_conditions`` with the ``known_column."""
         # Setup
-        metadata = Mock()
-        instance = BaseSingleTableSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(Metadata())
         known_columns = pd.DataFrame({'name': ['Johanna Doe']})
 
         instance._validate_known_columns = Mock()
@@ -1868,8 +1861,7 @@ class TestBaseSingleTableSynthesizer:
         This should properly handle the errors with the ``handle_sampling_error`` function.
         """
         # Setup
-        metadata = Mock()
-        instance = BaseSingleTableSynthesizer(metadata)
+        instance = BaseSingleTableSynthesizer(Metadata())
         known_columns = pd.DataFrame({'name': ['Johanna Doe']})
 
         instance._validate_known_columns = Mock()
@@ -1893,7 +1885,7 @@ class TestBaseSingleTableSynthesizer:
         """Test that it crashes when condition has nans."""
         # Setup
         conditions = pd.DataFrame({'names': [np.nan], 'surname': ['Doe']})
-        synthesizer = BaseSingleTableSynthesizer(MagicMock())
+        synthesizer = BaseSingleTableSynthesizer(Metadata())
         synthesizer._validate_conditions_unseen_columns = Mock()
 
         # Run and Assert
@@ -1908,7 +1900,7 @@ class TestBaseSingleTableSynthesizer:
         """Test that it warns when condition has a few nans, but at least a valid row."""
         # Setup
         conditions = pd.DataFrame({'names': [np.nan, 'Dae'], 'surname': ['Doe', 'Due']})
-        synthesizer = BaseSingleTableSynthesizer(MagicMock())
+        synthesizer = BaseSingleTableSynthesizer(Metadata())
         synthesizer._validate_conditions_unseen_columns = Mock()
 
         # Run and Assert

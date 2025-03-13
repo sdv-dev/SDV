@@ -534,12 +534,18 @@ class TestGaussianCopulaSynthesizer:
     def test__get_valid_columns_from_metadata(self):
         """Test that it returns a list with columns that are from the metadata."""
         # Seutp
-        instance = Mock()
-        instance.metadata.columns = {'a_value': object(), 'n_value': object(), 'b_value': object()}
+        metadata = Metadata()
+        metadata.add_table('table')
+        metadata.tables['table'].columns = {
+            'a_value': object(),
+            'n_value': object(),
+            'b_value': object(),
+        }
+        instance = GaussianCopulaSynthesizer(metadata)
         columns = ['a', 'a_value.is_null', '__b_value', '__a_value__b_value', 'n_value']
 
         # Run
-        result = GaussianCopulaSynthesizer._get_valid_columns_from_metadata(instance, columns)
+        result = instance._get_valid_columns_from_metadata(columns)
 
         # Assert
         assert result == ['a_value.is_null', 'n_value']

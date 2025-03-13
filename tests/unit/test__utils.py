@@ -25,7 +25,7 @@ from sdv._utils import (
     get_possible_chars,
 )
 from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
-from sdv.metadata.single_table import SingleTableMetadata
+from sdv.metadata import Metadata
 from sdv.single_table.base import BaseSingleTableSynthesizer
 from tests.utils import SeriesMatcher
 
@@ -671,7 +671,7 @@ def test_generate_synthesizer_id(mock_version, mock_uuid):
     # Setup
     mock_version.public = '1.0.0'
     mock_uuid.uuid4.return_value = '92aff11e-9a56-49d1-a280-990d1231a5f5'
-    metadata = SingleTableMetadata()
+    metadata = Metadata()
     synthesizer = BaseSingleTableSynthesizer(metadata)
 
     # Run
