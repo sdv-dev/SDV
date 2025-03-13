@@ -11,6 +11,7 @@ import uuid
 import warnings
 from collections import defaultdict
 from copy import deepcopy
+
 import cloudpickle
 import copulas
 import numpy as np
@@ -610,6 +611,17 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     for all single-table synthesizers.
     """
 
+    def __init__(
+        self,
+        metadata,
+        enforce_min_max_values=True,
+        enforce_rounding=True,
+        locales=['en_US'],
+    ):
+        super().__init__(metadata, enforce_min_max_values, enforce_rounding, locales)
+        self._invalid_patterns = []
+        self._valid_patterns = []
+
     def add_cag(self, patterns):
         """Add the list of constraint-augmented generation patterns to the synthesizer.
 
@@ -618,24 +630,13 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 A list of CAG patterns to apply to the synthesizer.
         """
         if not hasattr(self, '_original_metadata'):
-            if isinstance(self.metadata, Metadata):
-                self._original_metadata = self.metadata
-            else:
-                self._original_metadata = Metadata.load_from_dict(self.metadata.to_dict())
-
-        metadata = self.metadata
-        if isinstance(metadata, SingleTableMetadata):
-            metadata = Metadata.load_from_dict(metadata.to_dict())
+            self._original_metadata = self.metadata
 
         for pattern in patterns:
-            metadata = pattern.get_updated_metadata(metadata)
+            self.metadata = pattern.get_updated_metadata(self.metadata)
 
-        if isinstance(metadata, Metadata):
-            metadata = metadata._convert_to_single_table()
-
-        self.metadata = metadata
         self._data_processor = DataProcessor(
-            metadata=self.metadata,
+            metadata=self.metadata._convert_to_single_table(),
             enforce_rounding=self.enforce_rounding,
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
@@ -645,7 +646,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         else:
             self.patterns = patterns
 
-        #self._initialize_models()
+        # self._initialize_models()
 
     def get_cag(self):
         """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
@@ -682,12 +683,21 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             return data
 
         metadata = self._original_metadata
+        original_data = deepcopy(data)
         for pattern in self.patterns:
+            skip_pattern = False
             if not self._fitted:
-                pattern.fit(data, metadata)
-                metadata = pattern.get_updated_metadata(metadata)
+                try:
+                    pattern.fit(data, metadata)
+                    metadata = pattern.get_updated_metadata(metadata)
+                    self._valid_patterns.append(pattern)
+                except Exception:
+                    pattern.fit(original_data, self._original_metadata)
+                    self._invalid_patterns.append(pattern)
+                    skip_pattern = True
 
-            data = pattern.transform(data)
+            if not skip_pattern:
+                data = pattern.transform(data)
 
         return data
 
@@ -716,16 +726,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             data.columns = self._original_columns
 
         return preprocess_data
-
-    def _reverse_transform_helper(self, sampled_data):
-        """Reverse transform CAG patterns after sampling."""
-        if not hasattr(self, 'patterns'):
-            return sampled_data
-
-        for pattern in reversed(self.patterns):
-            sampled_data = pattern.reverse_transform(sampled_data)
-
-        return sampled_data
 
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.
@@ -836,6 +836,15 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     set(raw_sampled.columns) - set(input_columns) - set(sampled.columns)
                 )
                 sampled = pd.concat([sampled, raw_sampled[missing_cols]], axis=1)
+
+            for pattern in reversed(self._valid_patterns):
+                sampled = pattern.reverse_transform(sampled)
+                valid_rows = pattern.is_valid(sampled)
+                sampled = sampled[valid_rows]
+
+            for pattern in reversed(self._invalid_patterns):
+                valid_rows = pattern.is_valid(sampled)
+                sampled = sampled[valid_rows]
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
@@ -1128,7 +1137,6 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             output_file_path,
             show_progress_bar=show_progress_bar,
         )
-        sampled_data = self._reverse_transform_helper(sampled_data)
 
         original_columns = getattr(self, '_original_columns', pd.Index([]))
         if not original_columns.empty:

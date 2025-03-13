@@ -243,7 +243,6 @@ def test_inequality_pattern_with_multi_table():
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
 
 
-@pytest.mark.skip(reason='Skipping until add_cag method is implemented')
 def test_inequality_with_numerical():
     """Test it works with numerical columns."""
     # Setup
@@ -273,7 +272,6 @@ def test_inequality_with_numerical():
     assert len(synthetic_data) == 10
 
 
-@pytest.mark.skip(reason='Skipping until add_cag method is implemented')
 def test_inequality_with_timestamp_and_date():
     """Test that the inequality pattern passes without strict boundaries.
 
@@ -334,7 +332,6 @@ def test_inequality_with_timestamp_and_date():
     assert invalid_rows.empty
 
 
-@pytest.mark.skip(reason='Skipping until add_cag method is implemented')
 def test_inequality_with_timestamp_and_date_strict_boundaries():
     """Test that the inequality pattern fails with strict boundaries.
 
@@ -387,7 +384,6 @@ def test_inequality_with_timestamp_and_date_strict_boundaries():
         assert error_msg in error
 
 
-@pytest.mark.skip(reason='Skipping until add_cag method is implemented')
 def test_inequality_pattern_date_less_than_timestamp_strict_boundaries():
     """Test that the inequality pattern fails when date is less than timestamp.
 
@@ -440,7 +436,6 @@ def test_inequality_pattern_date_less_than_timestamp_strict_boundaries():
         assert error_msg in error
 
 
-@pytest.mark.skip(reason='Skipping until add_cag method is implemented')
 def test_inequality_pattern_timestamp_less_than_date_strict_boundaries():
     """Test that the inequality pattern fails when timestamp is less than date.
 
@@ -493,7 +488,6 @@ def test_inequality_pattern_timestamp_less_than_date_strict_boundaries():
         assert err_msg in error
 
 
-@pytest.mark.skip(reason='Skipping until add_cag method is implemented')
 def test_inequality_pattern_date_less_than_timestamp_no_strict_boundaries():
     """Test that the inequality pattern passes when date is less than timestamp.
 
