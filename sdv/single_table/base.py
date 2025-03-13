@@ -674,9 +674,14 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             return data
 
         metadata = self._original_metadata
+        original_data = deepcopy(data)
         for pattern in self.patterns:
             if not self._fitted:
-                pattern.fit(data, metadata)
+                try:
+                    pattern.fit(data, metadata)
+                    metadata = pattern.get_updated_metadata(metadata)
+                except Exception:  # TODO: Add a specific exception for metadata
+                    pattern.fit(original_data, self._original_metadata)
                 metadata = pattern.get_updated_metadata(metadata)
 
             data = pattern.transform(data)
