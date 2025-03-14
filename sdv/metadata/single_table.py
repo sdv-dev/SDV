@@ -520,10 +520,8 @@ class SingleTableMetadata:
             unique_values = data.nunique()
             if unique_values == len(data):
                 sdtype = 'id'
-            elif unique_values <= round(len(data) / 5):
-                sdtype = 'categorical'
             else:
-                sdtype = 'unknown'
+                sdtype = 'categorical'
 
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=UserWarning)
