@@ -1107,7 +1107,7 @@ class TestSingleTableMetadata:
         assert sdtype_categorical_small == 'categorical'
         assert sdtype_all_unique == 'id'
         assert sdtype_categorical_large == 'categorical'
-        assert sdtype_unknown == 'unknown'
+        assert sdtype_unknown == 'categorical'
 
     @patch.object(pd.Series, 'sample')
     def test__determine_sdtype_for_objects_subsample_datetime(self, mock_sample):
@@ -1168,8 +1168,8 @@ class TestSingleTableMetadata:
         assert instance.columns['alternate_id_string']['sdtype'] == 'unknown'
         assert instance.columns['alternate_id_string']['pii'] is True
         assert instance.columns['categorical']['sdtype'] == 'categorical'
-        assert instance.columns['unknown']['sdtype'] == 'unknown'
-        assert instance.columns['unknown']['pii'] is True
+        assert instance.columns['unknown']['sdtype'] == 'categorical'
+        assert 'pii' not in instance.columns['unknown']
         assert instance.columns['bool']['sdtype'] == 'categorical'
         assert instance.columns['first_name']['sdtype'] == 'first_name'
         assert instance.columns['first_name']['pii'] is True
@@ -1354,8 +1354,8 @@ class TestSingleTableMetadata:
         assert instance.columns['alternate_id']['sdtype'] == 'id'
         assert instance.columns['alternate_id_string']['sdtype'] == 'id'
         assert instance.columns['categorical']['sdtype'] == 'categorical'
-        assert instance.columns['unknown']['sdtype'] == 'unknown'
-        assert instance.columns['unknown']['pii'] is True
+        assert instance.columns['unknown']['sdtype'] == 'categorical'
+        assert 'pii' not in instance.columns['unknown']
         assert instance.columns['bool']['sdtype'] == 'categorical'
         assert instance.columns['first_name']['sdtype'] == 'first_name'
         assert instance.columns['first_name']['pii'] is True
