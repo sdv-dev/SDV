@@ -526,12 +526,7 @@ def test_save_and_load(tmp_path):
 
     # Assert
     assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
-    assert loaded_instance.metadata.columns == {}
-    assert loaded_instance.metadata.primary_key is None
-    assert loaded_instance.metadata.alternate_keys == []
-    assert loaded_instance.metadata.sequence_key is None
-    assert loaded_instance.metadata.sequence_index is None
-    assert loaded_instance.metadata._version == 'SINGLE_TABLE_V1'
+    assert loaded_instance.metadata.tables == {}
     assert instance._synthesizer_id == loaded_instance._synthesizer_id
 
 
@@ -550,12 +545,8 @@ def test_save_and_load_no_id(tmp_path):
 
     # Assert
     assert isinstance(loaded_instance, BaseSingleTableSynthesizer)
-    assert loaded_instance.metadata.columns == {}
-    assert loaded_instance.metadata.primary_key is None
-    assert loaded_instance.metadata.alternate_keys == []
-    assert loaded_instance.metadata.sequence_key is None
-    assert loaded_instance.metadata.sequence_index is None
-    assert loaded_instance.metadata._version == 'SINGLE_TABLE_V1'
+
+    assert loaded_instance.metadata.tables == {}
     assert hasattr(instance, '_synthesizer_id') is False
     assert hasattr(loaded_instance, '_synthesizer_id') is True
     assert isinstance(loaded_instance._synthesizer_id, str) is True
@@ -718,10 +709,10 @@ def test_metadata_updated_warning(method, kwargs):
     single_metadata = metadata._convert_to_single_table()
     single_metadata.__getattribute__(method)(**kwargs)
     with pytest.warns(UserWarning, match=expected_message):
-        BaseSingleTableSynthesizer(single_metadata)
+        instance = BaseSingleTableSynthesizer(single_metadata)
 
     # Assert
-    assert single_metadata._updated is False
+    assert instance.metadata.tables['table']._updated is False
 
 
 def test_fit_raises_version_error():

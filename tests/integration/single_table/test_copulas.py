@@ -106,7 +106,7 @@ def test_synthesize_table_gaussian_copula(tmp_path):
     loaded_synthesizer = GaussianCopulaSynthesizer.load(model_path)
     assert isinstance(synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata._convert_to_single_table().to_dict()
+    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
     loaded_synthesizer.sample(20)
 
     # Assert - custom synthesizer
@@ -192,7 +192,7 @@ def test_adding_constraints(tmp_path):
 
     assert isinstance(loaded_synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata._convert_to_single_table().to_dict()
+    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
     sampled_data = loaded_synthesizer.sample(100)
     validation = sampled_data[sampled_data['has_rewards']]
     assert validation['amenities_fee'].sum() == 0.0
