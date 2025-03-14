@@ -110,7 +110,10 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
             enforce_rounding=enforce_rounding,
             locales=locales,
         )
-        validate_numerical_distributions(numerical_distributions, self.metadata.columns)
+        validate_numerical_distributions(
+            numerical_distributions,
+            self._get_table_metadata().columns,
+        )
 
         self.default_distribution = default_distribution or 'beta'
         self._default_distribution = self.get_distribution_class(self.default_distribution)
@@ -192,8 +195,9 @@ class GaussianCopulaSynthesizer(BaseSingleTableSynthesizer):
 
     def _get_valid_columns_from_metadata(self, columns):
         valid_columns = []
+        table_metadata = self._get_table_metadata()
         for column in columns:
-            for valid_column in self.metadata.columns:
+            for valid_column in table_metadata.columns:
                 if column.startswith(valid_column):
                     valid_columns.append(column)
                     break

@@ -99,8 +99,8 @@ class BaseSynthesizer:
                 self._data_processor._update_transformers_by_sdtypes(sdtype, transformer)
 
     def _check_metadata_updated(self):
-        if self.metadata._updated:
-            self.metadata._updated = False
+        if self.metadata._check_updated_flag():
+            self.metadata._reset_updated_flag()
             warnings.warn(
                 "We strongly recommend saving the metadata using 'save_to_json' for replicability"
                 ' in future SDV versions.'
@@ -110,22 +110,22 @@ class BaseSynthesizer:
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
     ):
         self._validate_inputs(enforce_min_max_values, enforce_rounding)
-        self.metadata = metadata
-        self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
         if isinstance(metadata, Metadata):
             self._table_name = metadata._get_single_table_name()
-            self.metadata = metadata._convert_to_single_table()
-        elif isinstance(metadata, SingleTableMetadata):
+            self.metadata = metadata
+        else:
             warnings.warn(DEPRECATION_MSG, FutureWarning)
+            self._table_name = Metadata.DEFAULT_SINGLE_TABLE_NAME
+            self.metadata = Metadata.load_from_dict(metadata.to_dict(), self._table_name)
+            self.metadata.tables[self._table_name]._updated = metadata._updated
 
-        self._validate_inputs(enforce_min_max_values, enforce_rounding)
         self.metadata.validate()
         self._check_metadata_updated()
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
         self.locales = locales
         self._data_processor = DataProcessor(
-            metadata=self.metadata,
+            metadata=self.metadata._convert_to_single_table(),
             enforce_rounding=self.enforce_rounding,
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
@@ -183,10 +183,13 @@ class BaseSynthesizer:
         """
         return []
 
+    def _get_table_metadata(self):
+        return self.metadata.tables.get(self._table_name, SingleTableMetadata())
+
     def _validate_primary_key(self, data):
-        primary_key = self.metadata.primary_key
+        primary_key = self._get_table_metadata().primary_key
         is_int = primary_key and pd.api.types.is_integer_dtype(data[primary_key])
-        regex = self.metadata.columns.get(primary_key, {}).get('regex_format')
+        regex = self._get_table_metadata().columns.get(primary_key, {}).get('regex_format')
         if is_int and regex:
             possible_characters = get_possible_chars(regex, 1)
             if '0' in possible_characters:
@@ -225,8 +228,8 @@ class BaseSynthesizer:
             raise InvalidDataError(synthesizer_errors)
 
     def _validate_transformers(self, column_name_to_transformer):
-        primary_and_alternate_keys = self.metadata._get_primary_and_alternate_keys()
-        sequence_keys = self.metadata._get_set_of_sequence_keys()
+        primary_and_alternate_keys = self._get_table_metadata()._get_primary_and_alternate_keys()
+        sequence_keys = self._get_table_metadata()._get_set_of_sequence_keys()
         keys = primary_and_alternate_keys | sequence_keys
         for column, transformer in column_name_to_transformer.items():
             if transformer is None:
@@ -251,8 +254,9 @@ class BaseSynthesizer:
             column_name_to_transformer (dict):
                 Dict mapping column names to transformers to be used for that column.
         """
+        table_metadata = self._get_table_metadata()
         for column in column_name_to_transformer:
-            sdtype = self.metadata.columns.get(column, {}).get('sdtype')
+            sdtype = table_metadata.columns.get(column, {}).get('sdtype')
             if sdtype in {'categorical', 'boolean'}:
                 warnings.warn(
                     f"Replacing the default transformer for column '{column}' "
@@ -304,8 +308,7 @@ class BaseSynthesizer:
 
     def get_metadata(self):
         """Return the ``Metadata`` for this synthesizer."""
-        table_name = getattr(self, '_table_name', None)
-        return Metadata.load_from_dict(self.metadata.to_dict(), table_name)
+        return self.metadata
 
     def load_custom_constraint_classes(self, filepath, class_names):
         """Load a custom constraint class for the current synthesizer.
@@ -387,9 +390,10 @@ class BaseSynthesizer:
             )
 
         # Order the output to match metadata
+        table_metadata = self._get_table_metadata()
         ordered_field_transformers = {
             column_name: field_transformers.get(column_name)
-            for column_name in self.metadata.columns
+            for column_name in table_metadata.columns
             if column_name in field_transformers
         }
 
