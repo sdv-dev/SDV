@@ -114,6 +114,7 @@ class SingleTableMetadata:
         'vin': 'vin',
         'licenseplate': 'license_plate',
         'license': 'license_plate',
+        'id': 'id',
     }
 
     _SDTYPES_WITHOUT_SUBSTRINGS = {
@@ -133,6 +134,8 @@ class SingleTableMetadata:
 
     METADATA_SPEC_VERSION = 'SINGLE_TABLE_V1'
     _DEFAULT_SDTYPES = list(_SDTYPE_KWARGS) + list(SDTYPE_ANONYMIZERS)
+    _MIN_ROWS_FOR_PREDICTION = 5
+    _NUMERIC_DTYPES = set('i', 'f', 'u')
 
     def _validate_numerical(self, column_name, **kwargs):
         representation = kwargs.get('computer_representation')
@@ -488,7 +491,7 @@ class SingleTableMetadata:
                 The data to be analyzed.
         """
         sdtype = 'numerical'
-        if len(data) > 5:
+        if len(data) > self._MIN_ROWS_FOR_PREDICTION:
             is_not_null = ~data.isna()
             clean_data = (data == data.round()).loc[is_not_null]
             if clean_data.empty:
@@ -514,7 +517,7 @@ class SingleTableMetadata:
             data (pandas.Series):
                 The data to be analyzed.
         """
-        if len(data) <= 5:
+        if len(data) <= self._MIN_ROWS_FOR_PREDICTION:
             sdtype = 'categorical'
         else:
             unique_values = data.nunique()
@@ -561,33 +564,36 @@ class SingleTableMetadata:
         original_columns = data.columns
         stringified_columns = data.columns.astype(str)
         data.columns = stringified_columns
-        for column in data.columns:
-            if not self.columns.get(column, {}).get('sdtype'):
-                raise RuntimeError(
-                    'All columns must have sdtypes detected or set manually to detect the primary '
-                    'key.'
-                )
-
-        candidates = []
         first_pii_field = None
-        for column, column_meta in self.columns.items():
-            sdtype = column_meta['sdtype']
+        for column in self.columns.keys():
             column_data = data[column]
             has_nan = column_data.isna().any()
             valid_potential_primary_key = column_data.is_unique and not has_nan
-            sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
-            if sdtype == 'id':
-                candidates.append(column)
-                if len(candidates) > 1:
-                    self.columns[column]['sdtype'] = 'unknown'
-                    self.columns[column]['pii'] = True
+            if not valid_potential_primary_key:
+                continue
 
-            elif sdtype_in_reference and first_pii_field is None and valid_potential_primary_key:
+            if len(column) > self._MIN_ROWS_FOR_PREDICTION:
+                dtype = column_data.infer_objects().dtype.kind
+                if dtype in self._NUMERIC_DTYPES:
+                    # check for whole numbers
+                    all_whole_numbers = (column_data == column_data.round()).all()
+                    all_positive = (column_data > 0).all()
+                    if all_whole_numbers and all_positive:
+                        self.columns[column]['sdtype'] = 'id'
+                        data.columns = original_columns
+                        return column
+
+                if dtype == 'O':
+                    self.columns[column]['sdtype'] = 'id'
+                    data.columns = original_columns
+                    return column
+
+            sdtype = self._detect_pii_column(column_data)
+            sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
+            if sdtype_in_reference and first_pii_field is None:
                 first_pii_field = column
 
         data.columns = original_columns
-        if candidates:
-            return candidates[0]
         if first_pii_field:
             return first_pii_field
 
