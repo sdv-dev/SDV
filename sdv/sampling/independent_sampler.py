@@ -3,6 +3,8 @@
 import logging
 import warnings
 
+from sdv.metadata import Metadata
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -98,7 +100,10 @@ class BaseIndependentSampler:
         final_data = {}
         for table_name, table_rows in sampled_data.items():
             synthesizer = self._table_synthesizers.get(table_name)
-            metadata = synthesizer.get_metadata()._convert_to_single_table()
+            if isinstance(synthesizer.metadata, Metadata):
+                metadata = synthesizer.metadata.tables[synthesizer._table_name]
+            else:
+                metadata = synthesizer.metadata
             dtypes = synthesizer._data_processor._dtypes
             dtypes_to_sdtype = synthesizer._data_processor._DTYPE_TO_SDTYPE
 
@@ -106,8 +111,7 @@ class BaseIndependentSampler:
                 try:
                     table_rows[name] = table_rows[name].dropna().astype(dtype)
                 except ValueError as e:
-                    column_metadata = metadata.columns.get(name)
-                    sdtype = column_metadata.get('sdtype')
+                    sdtype = metadata.columns.get(name).get('sdtype')
                     if sdtype not in dtypes_to_sdtype.values():
                         LOGGER.info(
                             f"The real data in '{table_name}' and column '{name}' was stored as "
