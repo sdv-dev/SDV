@@ -153,20 +153,6 @@ class Metadata(MultiTableMetadata):
         metadata.detect_table_from_dataframe(table_name, data, infer_sdtypes, infer_keys)
         return metadata
 
-    def validate_data(self, data):
-        """Validate the data matches the metadata.
-
-        Args:
-            data (dict):
-                A dictionary of table names to pd.DataFrames.
-        """
-        if isinstance(data, pd.DataFrame):
-            table_name = self._get_single_table_name()
-            table_metadata = self.tables.get(table_name, SingleTableMetadata())
-            table_metadata.validate_data(data)
-        else:
-            super().validate_data(data)
-
     def _set_metadata_dict(self, metadata, single_table_name=None):
         """Set a ``metadata`` dictionary to the current instance.
 

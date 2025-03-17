@@ -776,9 +776,11 @@ class MultiTableMetadata:
                     self.tables[table_name].validate_data(table_data, table_sdtype_warnings)
 
             except InvalidDataError as error:
-                error_msg = f"Table: '{table_name}'"
-                for _error in error.errors:
-                    error_msg += f'\nError: {_error}'
+                error_msg = '' if len(self.tables) == 1 else f"Table: '{table_name}'\n"
+                for i, _error in enumerate(error.errors):
+                    if i > 0:
+                        error_msg += '\n'
+                    error_msg += f'Error: {_error}'
 
                 errors.append(error_msg)
 

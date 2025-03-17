@@ -158,7 +158,7 @@ class BaseSynthesizer:
         """Validate that the data follows the metadata."""
         errors = []
         try:
-            self.metadata.validate_data(data)
+            self.metadata.validate_data({self._table_name: data})
         except InvalidDataError as error:
             errors += error.errors
 
