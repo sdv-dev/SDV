@@ -466,3 +466,35 @@ def test_par_categorical_column_represented_by_floats():
     # Assert
     synth.validate(sampled)
     assert sampled['category'].isin(data['category']).all()
+
+
+def test_par_multiple_sequence_keys():
+    """Test the ``PARSynthesizer`` end to end."""
+    # Setup
+    data = load_demo()
+    data['date'] = pd.to_datetime(data['date'])
+    metadata = Metadata.detect_from_dataframes({'table': data})
+    metadata.update_column('store_id', 'table', sdtype='id')
+    metadata.set_sequence_key('store_id', 'table')
+
+    metadata.set_sequence_index('date', 'table')
+
+    model = PARSynthesizer(
+        metadata=metadata,
+        context_columns=['region'],
+        epochs=1,
+    )
+
+    # Run
+    model.fit(data)
+    sampled = model.sample(100)
+
+    # Assert
+    assert sampled.shape == data.shape
+    assert (sampled.dtypes == data.dtypes).all()
+    assert (sampled.notna().sum(axis=1) != 0).all()
+    loss_values = model.get_loss_values()
+    assert len(loss_values) == 1
+    assert all(sampled.groupby('store_id')['date'].is_monotonic_increasing)
+    assert all(sampled.groupby('store_id')['date'].agg(lambda x: x.is_unique))
+    assert all(sampled['total_sales'].round(2) == sampled['total_sales'])

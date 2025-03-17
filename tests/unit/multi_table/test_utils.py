@@ -677,11 +677,9 @@ def test__simplify_grandchildren():
     # Assert
     expected_child_1 = {
         'col_7': {'sdtype': 'email'},
-        'col_8': {'sdtype': 'id'},
         'col_9': {'sdtype': 'unknown'},
     }
     expected_child_2 = {
-        'col_10': {'sdtype': 'id'},
         'col_11': {'sdtype': 'phone_number'},
     }
     assert metadata.tables['child_1'].columns == expected_child_1
@@ -930,11 +928,19 @@ def test__simplify_metadata_no_child_simplification(mock_hma):
     """
     # Setup
     relationships = [
-        {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
-        {'parent_table_name': 'parent', 'child_table_name': 'child'},
-        {'parent_table_name': 'child', 'child_table_name': 'grandchild'},
-        {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
-        {'parent_table_name': 'other_root', 'child_table_name': 'child'},
+        {
+            'parent_table_name': 'grandparent',
+            'child_table_name': 'parent',
+            'child_foreign_key': 'fk',
+        },
+        {'parent_table_name': 'parent', 'child_table_name': 'child', 'child_foreign_key': 'fk'},
+        {'parent_table_name': 'child', 'child_table_name': 'grandchild', 'child_foreign_key': 'fk'},
+        {
+            'parent_table_name': 'grandparent',
+            'child_table_name': 'other_table',
+            'child_foreign_key': 'fk',
+        },
+        {'parent_table_name': 'other_root', 'child_table_name': 'child', 'child_foreign_key': 'fk'},
     ]
     tables = {
         'grandparent': {'columns': {'col_1': {'sdtype': 'numerical'}}},
@@ -966,16 +972,23 @@ def test__simplify_metadata_no_child_simplification(mock_hma):
         'parent': {'columns': {'col_2': {'sdtype': 'numerical'}}},
         'child': {
             'columns': {
-                'col_4': {'sdtype': 'id'},
                 'col_5': {'sdtype': 'email'},
             }
         },
         'other_table': {'columns': {'col_8': {'sdtype': 'numerical'}}},
     }
     expected_relationships = [
-        {'parent_table_name': 'grandparent', 'child_table_name': 'parent'},
-        {'parent_table_name': 'parent', 'child_table_name': 'child'},
-        {'parent_table_name': 'grandparent', 'child_table_name': 'other_table'},
+        {
+            'parent_table_name': 'grandparent',
+            'child_table_name': 'parent',
+            'child_foreign_key': 'fk',
+        },
+        {'parent_table_name': 'parent', 'child_table_name': 'child', 'child_foreign_key': 'fk'},
+        {
+            'parent_table_name': 'grandparent',
+            'child_table_name': 'other_table',
+            'child_foreign_key': 'fk',
+        },
     ]
     metadata_dict = metadata_result.to_dict()
     assert metadata_dict['tables'] == expected_tables
@@ -1082,7 +1095,6 @@ def test__simplify_metadata(mock_get_columns_to_drop_child, mock_hma):
         'child': {
             'columns': {
                 'col_8': {'sdtype': 'email'},
-                'col_7': {'sdtype': 'id'},
                 'child_foreign_key': {'sdtype': 'id'},
             }
         },

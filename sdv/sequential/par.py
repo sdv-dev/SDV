@@ -70,10 +70,12 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
     _model_sdtype_transformers = {'categorical': None, 'numerical': None, 'boolean': None}
 
     def _get_context_metadata(self):
+        context_metadata_dict = {}
         context_columns_dict = {}
         context_columns = self.context_columns.copy() if self.context_columns else []
         if self._sequence_key:
             context_columns += self._sequence_key
+            context_metadata_dict['primary_key'] = self._sequence_key[0]
 
         for column, column_metadata in self._extra_context_columns.items():
             context_columns_dict[column] = column_metadata
@@ -81,8 +83,7 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
         for column in context_columns:
             context_columns_dict[column] = self.metadata.columns[column]
 
-        context_columns_dict = self._update_context_column_dict(context_columns_dict)
-        context_metadata_dict = {'columns': context_columns_dict}
+        context_metadata_dict['columns'] = self._update_context_column_dict(context_columns_dict)
         return SingleTableMetadata.load_from_dict(context_metadata_dict)
 
     def _update_context_column_dict(self, context_columns_dict):

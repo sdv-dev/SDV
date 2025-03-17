@@ -896,7 +896,7 @@ class TestDataProcessor:
         # Assert
         assert output == mock_rdt.transformers.RegexGenerator.return_value
         mock_rdt.transformers.RegexGenerator.assert_called_once_with(
-            regex_format='ID_00', enforce_uniqueness=True, generation_order='scrambled'
+            regex_format='ID_00', cardinality_rule='unique', generation_order='scrambled'
         )
 
     @patch('sdv.data_processing.data_processor.get_anonymized_transformer')
@@ -1155,7 +1155,7 @@ class TestDataProcessor:
         dp.metadata.primary_key = 'id'
         dp.metadata.alternate_keys = ['id_no_regex', 'id_numeric_int8']
         dp._primary_key = 'id'
-        dp._keys = ['id', 'id_no_regex', 'id_numeric_int8']
+        dp._keys = ['id', 'id_no_regex', 'id_numeric_int8', 'id_numeric_int16', 'id_numeric_int32']
         dp.metadata.columns = {
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
@@ -1195,7 +1195,7 @@ class TestDataProcessor:
             'id_numeric_int8': 'text',
             'id_numeric_int16': 'text',
             'id_numeric_int32': 'text',
-            'id_column': 'text',
+            'id_column': 'id',
             'date': 'datetime',
             'unknown': 'pii',
             'address': 'categorical',
@@ -1261,11 +1261,7 @@ class TestDataProcessor:
             'max': 16777216,
         }
 
-        id_column_transformer = config['transformers']['id_column']
-        assert isinstance(id_column_transformer, AnonymizedFaker)
-        assert id_column_transformer.function_name == 'bothify'
-        assert id_column_transformer.function_kwargs == {'text': 'sdv-id-??????'}
-        assert id_column_transformer.cardinality_rule is None
+        assert isinstance(config['transformers']['id_column'], UniformEncoder)
 
         dp.create_anonymized_transformer.calls == [
             call('email', {'sdtype': 'email', 'pii': True, 'locales': locales}),
@@ -1340,7 +1336,7 @@ class TestDataProcessor:
             'id_pii_true': 'pii',
             'example_pii_false': 'example',
             'unknown_pii_false': 'pii',
-            'id_pii_false': 'text',
+            'id_pii_false': 'id',
             'example_pii_true': 'example',
             'city_categorical': 'categorical',
         }
@@ -1352,7 +1348,7 @@ class TestDataProcessor:
             'id_pii_true': AnonymizedFaker,
             'example_pii_false': FloatFormatter,
             'unknown_pii_false': AnonymizedFaker,
-            'id_pii_false': AnonymizedFaker,
+            'id_pii_false': UniformEncoder,
             'example_pii_true': FloatFormatter,
             'city_categorical': UniformEncoder,
         }
