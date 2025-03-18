@@ -489,13 +489,13 @@ class TestBaseMultiTableSynthesizer:
         # Run and Assert
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
-            "Table: 'nesreca'\n"
+            'Errors in nesreca:\n'
             "Error: Invalid values found for numerical column 'nesreca_val': ['0', '1', '2', "
             "'+ 7 more']."
-            "\n\nTable: 'oseba'\n"
+            '\n\nErrors in oseba:\n'
             "Error: Invalid values found for numerical column 'oseba_val': ['0', '1', '2', "
             "'+ 7 more']."
-            "\n\nTable: 'upravna_enota'\n"
+            '\n\nErrors in upravna_enota:\n'
             "Error: Invalid values found for numerical column 'upravna_val': ['0', '1', '2', "
             "'+ 7 more']."
         )
@@ -651,6 +651,7 @@ class TestBaseMultiTableSynthesizer:
         # Run
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
+            'Errors in nesreca:\n'
             "Error: The columns ['col1'] are not present in the metadata.\n"
             "Error: The metadata columns ['id_nesreca', 'nesreca_val', 'upravna_enota'] "
             'are not present in the data.'

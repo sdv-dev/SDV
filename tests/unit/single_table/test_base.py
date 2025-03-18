@@ -291,6 +291,7 @@ class TestBaseSingleTableSynthesizer:
         data = pd.DataFrame({'b': list(np.random.choice(['M', 'F'], size=10))})
         error_msg = re.escape(
             'The provided data does not match the metadata:\n'
+            'Errors in table:\n'
             "Error: The columns ['b'] are not present in the metadata.\n"
             "Error: The metadata columns ['a'] are not present in the data."
         )
