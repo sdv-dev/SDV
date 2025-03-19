@@ -124,7 +124,7 @@ def test_save_and_load(tmp_path):
 
     # Assert
     assert isinstance(loaded_instance, PARSynthesizer)
-    assert metadata._convert_to_single_table().to_dict() == instance.metadata.to_dict()
+    assert metadata.to_dict() == instance.metadata.to_dict()
 
 
 def test_synthesize_sequences(tmp_path):
@@ -193,7 +193,7 @@ def test_synthesize_sequences(tmp_path):
     assert model_path.exists()
     assert model_path.is_file()
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata._convert_to_single_table().to_dict()
+    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
     synthesizer.validate(synthetic_data)
     synthesizer.validate(custom_synthetic_data)
     synthesizer.validate(custom_synthetic_data_conditional)
