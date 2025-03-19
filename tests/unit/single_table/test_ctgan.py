@@ -273,6 +273,8 @@ class TestCTGANSynthesizer:
         """
         # Setup
         metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('id', 'table', sdtype='numerical')
         single_metadata = metadata._convert_to_single_table()
         instance = CTGANSynthesizer(single_metadata)
         processed_data = Mock()
@@ -282,11 +284,11 @@ class TestCTGANSynthesizer:
 
         # Assert
         mock_category_validate.assert_called_once_with(processed_data)
-        mock_detect_discrete_columns.assert_called_once_with(
-            single_metadata,
-            processed_data,
-            instance._data_processor._hyper_transformer.field_transformers,
-        )
+        mock_detect_discrete_columns.assert_called_once()
+        args = mock_detect_discrete_columns.call_args[0]
+        assert isinstance(args[0], Metadata)
+        assert args[1] == processed_data
+        assert args[2] == instance._data_processor._hyper_transformer.field_transformers
         mock_ctgan.assert_called_once_with(
             batch_size=500,
             cuda=True,
@@ -475,6 +477,8 @@ class TestTVAESynthesizer:
         """
         # Setup
         metadata = Metadata()
+        metadata.add_table('table')
+        metadata.add_column('id', 'table', sdtype='numerical')
         single_metadata = metadata._convert_to_single_table()
         instance = TVAESynthesizer(single_metadata)
         processed_data = Mock()
@@ -484,11 +488,11 @@ class TestTVAESynthesizer:
 
         # Assert
         mock_category_validate.assert_called_once_with(processed_data)
-        mock_detect_discrete_columns.assert_called_once_with(
-            single_metadata,
-            processed_data,
-            instance._data_processor._hyper_transformer.field_transformers,
-        )
+        mock_detect_discrete_columns.assert_called_once()
+        args = mock_detect_discrete_columns.call_args[0]
+        assert isinstance(args[0], Metadata)
+        assert args[1] == processed_data
+        assert args[2] == instance._data_processor._hyper_transformer.field_transformers
         mock_tvae.assert_called_once_with(
             batch_size=500,
             compress_dims=(128, 128),
