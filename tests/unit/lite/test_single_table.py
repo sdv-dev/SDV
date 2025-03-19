@@ -63,12 +63,11 @@ class TestSingleTablePreset:
             locales=['en_US', 'fr_CA'],
         )
 
-    @patch('sdv.single_table.base.DataProcessor')
-    def test_get_parameters(self, mock_data_processor):
+    def test_get_parameters(self):
         """Test that it returns every ``init`` parameter without the ``metadata``."""
         # Setup
-        metadata = Mock()
-        metadata.get_column_names.return_value = []
+        metadata = SingleTableMetadata()
+        metadata.add_column('key', sdtype='id')
         instance = SingleTablePreset(metadata, name='FAST_ML')
 
         # Run
@@ -77,15 +76,12 @@ class TestSingleTablePreset:
         # Assert
         assert parameters == {'name': 'FAST_ML', 'locales': ['en_US']}
 
-    @patch('sdv.single_table.base.DataProcessor')
-    def test_get_metadata(self, mock_data_processor):
+    def test_get_metadata(self):
         """Test that it returns the ``metadata`` object."""
         # Setup
-        metadata = Mock(spec=SingleTableMetadata)
+        metadata = SingleTableMetadata()
+        metadata.add_column('key', sdtype='id')
         metadata._updated = False
-        metadata.columns = {}
-        metadata.get_column_names.return_value = []
-        metadata.to_dict.return_value = {'METADATA_SPEC_VERSION': 'SINGLE_TABLE_V1'}
         instance = SingleTablePreset(metadata, 'FAST_ML')
 
         # Run
@@ -286,7 +282,9 @@ class TestSingleTablePreset:
     def test___repr__(self):
         """Test that a string of format 'SingleTablePreset(name=<name>)' is returned"""
         # Setup
-        instance = SingleTablePreset(metadata=SingleTableMetadata(), name='FAST_ML')
+        metadata = SingleTableMetadata()
+        metadata.add_column('key', sdtype='id')
+        instance = SingleTablePreset(metadata=metadata, name='FAST_ML')
 
         # Run
         res = repr(instance)

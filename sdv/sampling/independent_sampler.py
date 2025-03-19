@@ -106,8 +106,7 @@ class BaseIndependentSampler:
                 try:
                     table_rows[name] = table_rows[name].dropna().astype(dtype)
                 except ValueError as e:
-                    column_metadata = metadata.columns.get(name)
-                    sdtype = column_metadata.get('sdtype')
+                    sdtype = metadata.columns.get(name).get('sdtype')
                     if sdtype not in dtypes_to_sdtype.values():
                         LOGGER.info(
                             f"The real data in '{table_name}' and column '{name}' was stored as "
