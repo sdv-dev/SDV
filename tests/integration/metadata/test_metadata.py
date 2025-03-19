@@ -610,7 +610,7 @@ def test_single_table_compatibility(tmp_path):
     loaded_synthesizer = GaussianCopulaSynthesizer.load(model_path)
     assert isinstance(synthesizer, GaussianCopulaSynthesizer)
     assert loaded_synthesizer.get_info() == synthesizer.get_info()
-    assert loaded_synthesizer.metadata.to_dict() == metadata.to_dict()
+    assert loaded_synthesizer.metadata._convert_to_single_table().to_dict() == metadata.to_dict()
     loaded_sample = loaded_synthesizer.sample(10)
     synthesizer.validate(loaded_sample)
 
