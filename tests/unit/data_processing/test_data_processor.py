@@ -1275,14 +1275,14 @@ class TestDataProcessor:
 
         assert isinstance(config['transformers']['id_column'], UniformEncoder)
 
-        dp.create_anonymized_transformer.calls == [
+        dp.create_anonymized_transformer.assert_has_calls([
             call('email', {'sdtype': 'email', 'pii': True, 'locales': locales}),
             call('first_name', {'sdtype': 'first_name', 'locales': locales}),
-        ]
+        ], any_order=True)
         dp.create_regex_generator.assert_has_calls([
             call('id_regex', 'id', {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'}, False),
             call('id_regex_key', 'id', {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'}, False),
-        ])
+        ], any_order=True)
 
         expected_kwargs = {
             'text': 'sdv-pii-?????',
