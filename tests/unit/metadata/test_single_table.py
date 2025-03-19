@@ -1016,7 +1016,7 @@ class TestSingleTableMetadata:
             - A series of numbers with less than 5 rows. Should be detected as numerical sdtype
             - A series of numbers with less than 10% unique values. Should be detected as
               categorical sdtype
-            - A series of numbers with all unique values. Should be detected as id sdtype
+            - A series of numbers with all unique values. Should be detected as numerical sdtypes
             - A series of integers. Should be detected as numerical sdtype
         - A series of floats. Should be detected as numerical sdtype
         """
@@ -1075,7 +1075,7 @@ class TestSingleTableMetadata:
         # Assert
         assert sdtype_less_than_5_rows == 'numerical'
         assert sdtype_less_than_10_percent_unique_values == 'categorical'
-        assert sdtype_all_unique == 'id'
+        assert sdtype_all_unique == 'numerical'
         assert sdtype_numerical_int == 'numerical'
         assert sdtype_numerical_float == 'numerical'
         assert sdtype_large_numerical_series == 'numerical'
@@ -1105,7 +1105,7 @@ class TestSingleTableMetadata:
         assert sdtype_datetime == 'datetime'
         assert sdtype_wrong_datetime == 'categorical'
         assert sdtype_categorical_small == 'categorical'
-        assert sdtype_all_unique == 'id'
+        assert sdtype_all_unique == 'categorical'
         assert sdtype_categorical_large == 'categorical'
         assert sdtype_unknown == 'categorical'
 
@@ -1163,10 +1163,10 @@ class TestSingleTableMetadata:
         assert instance.columns['numerical']['sdtype'] == 'numerical'
         assert instance.columns['datetime']['sdtype'] == 'datetime'
         assert instance.columns['datetime']['datetime_format'] == expected_datetime_format
-        assert instance.columns['alternate_id']['sdtype'] == 'unknown'
-        assert instance.columns['alternate_id']['pii'] is True
-        assert instance.columns['alternate_id_string']['sdtype'] == 'unknown'
-        assert instance.columns['alternate_id_string']['pii'] is True
+        assert instance.columns['alternate_id']['sdtype'] == 'id'
+        assert instance.columns['alternate_id'].get('pii') is None
+        assert instance.columns['alternate_id_string']['sdtype'] == 'id'
+        assert instance.columns['alternate_id_string'].get('pii') is None
         assert instance.columns['categorical']['sdtype'] == 'categorical'
         assert instance.columns['unknown']['sdtype'] == 'categorical'
         assert 'pii' not in instance.columns['unknown']
@@ -1323,7 +1323,10 @@ class TestSingleTableMetadata:
             instance._detect_columns(data)
 
     def test__detect_columns_without_infer_sdtypes(self, data):
-        """Test the _detect_columns when infer_sdtypes is False."""
+        """Test the _detect_columns when infer_sdtypes is False.
+
+        The primary key should be set as an 'id', while the other sdtypes should be 'unknown'.
+        """
         # Setup
         instance = SingleTableMetadata()
 
@@ -1332,10 +1335,13 @@ class TestSingleTableMetadata:
 
         # Assert
         for column in data.columns:
-            assert instance.columns[column]['sdtype'] == 'unknown'
-            assert instance.columns[column]['pii'] is True
+            if column == instance.primary_key:
+                assert instance.columns[column]['sdtype'] == 'id'
+            else:
+                assert instance.columns[column]['sdtype'] == 'unknown'
+                assert instance.columns[column]['pii'] is True
 
-        assert instance.primary_key is None
+        assert instance.primary_key == 'id'
         assert instance._updated is True
 
     def test__detect_columns_without_infer_keys(self, data):
@@ -1364,21 +1370,20 @@ class TestSingleTableMetadata:
         assert instance._updated is True
 
     def test__detect_primary_key_missing_sdtypes(self):
-        """The method should raise an error if not all sdtypes were detected."""
+        """The primary key should be detected even if sdtypes are not."""
         # Setup
         data = pd.DataFrame({
             'string_id': ['1', '2', '3', '4', '5', '6'],
             'num_id': [1, 2, 3, 4, 5, 6],
         })
         metadata = SingleTableMetadata()
-        metadata.columns = {'string_id': {'sdtype': 'id'}}
+        metadata.columns = {'string_id': {'sdtype': 'unknown'}}
 
-        # Run and Assert
-        message = (
-            'All columns must have sdtypes detected or set manually to detect the primary key.'
-        )
-        with pytest.raises(RuntimeError, match=message):
-            metadata._detect_primary_key(data)
+        # Run
+        primary_key = metadata._detect_primary_key(data)
+
+        # Assert
+        assert primary_key == 'string_id'
 
     def test_detect_from_dataframe_raises_error(self):
         """Test the ``detect_from_dataframe`` method.

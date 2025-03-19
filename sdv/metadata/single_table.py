@@ -135,7 +135,7 @@ class SingleTableMetadata:
     METADATA_SPEC_VERSION = 'SINGLE_TABLE_V1'
     _DEFAULT_SDTYPES = list(_SDTYPE_KWARGS) + list(SDTYPE_ANONYMIZERS)
     _MIN_ROWS_FOR_PREDICTION = 5
-    _NUMERIC_DTYPES = set('i', 'f', 'u')
+    _NUMERICAL_DTYPES = frozenset(['i', 'f', 'u'])
 
     def _validate_numerical(self, column_name, **kwargs):
         representation = kwargs.get('computer_representation')
@@ -505,8 +505,6 @@ class SingleTableMetadata:
 
             if whole_values and positive_values and unique_lt_categorical_threshold:
                 sdtype = 'categorical'
-            elif unique_values == len(data) and whole_values:
-                sdtype = 'id'
 
         return sdtype
 
@@ -517,14 +515,7 @@ class SingleTableMetadata:
             data (pandas.Series):
                 The data to be analyzed.
         """
-        if len(data) <= self._MIN_ROWS_FOR_PREDICTION:
-            sdtype = 'categorical'
-        else:
-            unique_values = data.nunique()
-            if unique_values == len(data):
-                sdtype = 'id'
-            else:
-                sdtype = 'categorical'
+        sdtype = 'categorical'
 
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=UserWarning)
@@ -540,6 +531,25 @@ class SingleTableMetadata:
                 pass
 
         return sdtype
+
+    def _handle_detection_error(self, error, column, table_name=None):
+        """Add user friendly error message with column name to underlying exception.
+
+        Args:
+            error (Exception):
+                The exception to handle.
+            column (str):
+                The name of the column being detected.
+            table_name (str):
+                The name of the table name being detected.
+        """
+        error_type = type(error).__name__
+        table_str = f"table '{table_name}' " if table_name else ''
+        error_message = (
+            f"Unable to detect metadata for {table_str}column '{column}' due "
+            f'to an invalid data format.\n {error_type}: {error}'
+        )
+        raise InvalidMetadataError(error_message) from error
 
     def _detect_primary_key(self, data):
         """Detect the table's primary key.
@@ -566,32 +576,37 @@ class SingleTableMetadata:
         data.columns = stringified_columns
         first_pii_field = None
         for column in self.columns.keys():
-            column_data = data[column]
-            has_nan = column_data.isna().any()
-            valid_potential_primary_key = column_data.is_unique and not has_nan
-            if not valid_potential_primary_key:
-                continue
+            try:
+                column_data = data[column]
+                has_nan = column_data.isna().any()
+                valid_potential_primary_key = column_data.is_unique and not has_nan
+                if not valid_potential_primary_key:
+                    continue
 
-            if len(column) > self._MIN_ROWS_FOR_PREDICTION:
-                dtype = column_data.infer_objects().dtype.kind
-                if dtype in self._NUMERIC_DTYPES:
-                    # check for whole numbers
-                    all_whole_numbers = (column_data == column_data.round()).all()
-                    all_positive = (column_data > 0).all()
-                    if all_whole_numbers and all_positive:
-                        self.columns[column]['sdtype'] = 'id'
-                        data.columns = original_columns
-                        return column
+                if len(column_data) > self._MIN_ROWS_FOR_PREDICTION:
+                    dtype = column_data.infer_objects().dtype.kind
+                    if dtype in self._NUMERICAL_DTYPES:
+                        # check for whole numbers
+                        all_whole_numbers = (column_data == column_data.round()).all()
+                        all_positive = (column_data > 0).all()
+                        if all_whole_numbers and all_positive:
+                            self.columns[column]['sdtype'] = 'id'
+                            data.columns = original_columns
+                            return column
 
-                if dtype == 'O':
-                    self.columns[column]['sdtype'] = 'id'
-                    data.columns = original_columns
-                    return column
+                    if dtype == 'O':
+                        sdtype = self._determine_sdtype_for_objects(column_data)
+                        if sdtype != 'datetime':
+                            self.columns[column]['sdtype'] = 'id'
+                            data.columns = original_columns
+                            return column
 
-            sdtype = self._detect_pii_column(column_data)
-            sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
-            if sdtype_in_reference and first_pii_field is None:
-                first_pii_field = column
+                sdtype = self._detect_pii_column(column)
+                sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
+                if sdtype_in_reference and first_pii_field is None:
+                    first_pii_field = column
+            except Exception as e:
+                self._handle_detection_error(e, column)
 
         data.columns = original_columns
         if first_pii_field:
@@ -631,7 +646,7 @@ class SingleTableMetadata:
                     if sdtype is None:
                         if dtype in self._DTYPES_TO_SDTYPES:
                             sdtype = self._DTYPES_TO_SDTYPES[dtype]
-                        elif dtype in ['i', 'f', 'u']:
+                        elif dtype in self._NUMERICAL_DTYPES:
                             sdtype = self._determine_sdtype_for_numbers(column_data)
 
                         elif dtype == 'O':
@@ -646,17 +661,10 @@ class SingleTableMetadata:
                             )
                             raise InvalidMetadataError(error_message)
 
+                except InvalidMetadataError as e:
+                    raise e
                 except Exception as e:
-                    error_type = type(e).__name__
-                    if error_type == 'InvalidMetadataError':
-                        raise e
-
-                    table_str = f"table '{table_name}' " if table_name else ''
-                    error_message = (
-                        f"Unable to detect metadata for {table_str}column '{field}' due "
-                        f'to an invalid data format.\n {error_type}: {e}'
-                    )
-                    raise InvalidMetadataError(error_message) from e
+                    self._handle_detection_error(e, field, table_name)
 
             else:
                 sdtype = 'unknown'
@@ -664,7 +672,7 @@ class SingleTableMetadata:
             column_dict = {'sdtype': sdtype}
             sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
 
-            if sdtype_in_reference or sdtype == 'unknown':
+            if (sdtype_in_reference or sdtype == 'unknown') and sdtype != 'id':
                 column_dict['pii'] = True
 
             if sdtype == 'datetime' and dtype == 'O':
