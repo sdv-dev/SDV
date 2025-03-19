@@ -1135,7 +1135,8 @@ class TestDataProcessor:
             'created_categorical': ['d', 'e', 'f'],
             'email': ['a@aol.com', 'b@gmail.com', 'c@gmx.com'],
             'first_name': ['John', 'Doe', 'Johanna'],
-            'id': ['ID_001', 'ID_002', 'ID_003'],
+            'id_regex_key': ['ID_001', 'ID_002', 'ID_003'],
+            'id_regex': ['ID_001', 'ID_002', 'ID_003'],
             'id_no_regex': ['ID_001', 'ID_002', 'ID_003'],
             'id_numeric_int8': pd.Series([1, 2, 3], dtype='Int8'),
             'id_numeric_int16': pd.Series([1, 2, 3], dtype='Int16'),
@@ -1152,10 +1153,16 @@ class TestDataProcessor:
         dp.create_regex_generator = Mock()
         dp.create_anonymized_transformer.return_value = 'AnonymizedFaker'
         dp.create_regex_generator.return_value = 'RegexGenerator'
-        dp.metadata.primary_key = 'id'
+        dp.metadata.primary_key = 'id_regex_key'
         dp.metadata.alternate_keys = ['id_no_regex', 'id_numeric_int8']
-        dp._primary_key = 'id'
-        dp._keys = ['id', 'id_no_regex', 'id_numeric_int8', 'id_numeric_int16', 'id_numeric_int32']
+        dp._primary_key = 'id_regex_key'
+        dp._keys = [
+            'id_regex_key',
+            'id_no_regex',
+            'id_numeric_int8',
+            'id_numeric_int16',
+            'id_numeric_int32',
+        ]
         dp.metadata.columns = {
             'int': {'sdtype': 'numerical'},
             'float': {'sdtype': 'numerical'},
@@ -1163,7 +1170,8 @@ class TestDataProcessor:
             'categorical': {'sdtype': 'categorical'},
             'email': {'sdtype': 'email', 'pii': True},
             'first_name': {'sdtype': 'first_name'},
-            'id': {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'},
+            'id_regex_key': {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'},
+            'id_regex': {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'},
             'id_no_regex': {'sdtype': 'id'},
             'id_numeric_int8': {'sdtype': 'id'},
             'id_numeric_int16': {'sdtype': 'id'},
@@ -1190,7 +1198,8 @@ class TestDataProcessor:
             'created_categorical': 'categorical',
             'email': 'pii',
             'first_name': 'pii',
-            'id': 'text',
+            'id_regex_key': 'text',
+            'id_regex': 'text',
             'id_no_regex': 'text',
             'id_numeric_int8': 'text',
             'id_numeric_int16': 'text',
@@ -1222,7 +1231,10 @@ class TestDataProcessor:
         anonymized_transformer = config['transformers']['email']
         assert anonymized_transformer == 'AnonymizedFaker'
 
-        primary_regex_generator = config['transformers']['id']
+        primary_regex_generator = config['transformers']['id_regex_key']
+        assert primary_regex_generator == 'RegexGenerator'
+
+        primary_regex_generator = config['transformers']['id_regex']
         assert primary_regex_generator == 'RegexGenerator'
 
         first_name_transformer = config['transformers']['first_name']
@@ -1234,7 +1246,7 @@ class TestDataProcessor:
         assert datetime_transformer.missing_value_generation == 'random'
         assert datetime_transformer.datetime_format == '%Y-%m-%d'
         assert datetime_transformer.enforce_min_max_values is True
-        assert dp._primary_key == 'id'
+        assert dp._primary_key == 'id_regex_key'
 
         id_no_regex_transformer = config['transformers']['id_no_regex']
         assert isinstance(id_no_regex_transformer, AnonymizedFaker)
@@ -1267,9 +1279,10 @@ class TestDataProcessor:
             call('email', {'sdtype': 'email', 'pii': True, 'locales': locales}),
             call('first_name', {'sdtype': 'first_name', 'locales': locales}),
         ]
-        dp.create_regex_generator.assert_called_once_with(
-            'id', 'id', {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'}, False
-        )
+        dp.create_regex_generator.assert_has_calls([
+            call('id_regex', 'id', {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'}, False),
+            call('id_regex_key', 'id', {'sdtype': 'id', 'regex_format': 'ID_\\d{3}[0-9]'}, False),
+        ])
 
         expected_kwargs = {
             'text': 'sdv-pii-?????',
