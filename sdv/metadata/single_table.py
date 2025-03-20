@@ -628,6 +628,97 @@ class SingleTableMetadata:
 
         return None
 
+    def _detect_sdtype_and_primary_key(
+        self, column_data, column_name, pii_pk_candidates, pk_candidates, table_name
+    ):
+        """Detect the sdtype for a column and whether or not it could be a primary key.
+
+        Args:
+            column_data (pandas.DataFrame):
+                The data to detect.
+            column_name (str):
+                The name of the column to detect.
+            pii_pk_candidates (list):
+                A list of column names that are detected as pii columns.
+            pk_candidates (list):
+                A list of column names that are potential primary keys.
+            table_name (str):
+                The name of the data table.
+        """
+        try:
+            clean_data = column_data.dropna()
+            dtype = clean_data.infer_objects().dtype.kind
+            pk_candidate = False
+            has_nan = column_data.isna().any()
+            valid_potential_primary_key = column_data.is_unique and not has_nan
+            sdtype = self._detect_pii_column(column_name)
+            if sdtype is None:
+                if dtype in self._DTYPES_TO_SDTYPES:
+                    sdtype = self._DTYPES_TO_SDTYPES[dtype]
+                elif dtype in self._NUMERICAL_DTYPES:
+                    sdtype, pk_candidate = self._determine_sdtype_for_numbers(
+                        column_data, valid_potential_primary_key
+                    )
+
+                elif dtype == 'O':
+                    sdtype, pk_candidate = self._determine_sdtype_for_objects(
+                        column_data, valid_potential_primary_key
+                    )
+
+                if sdtype is None:
+                    table_str = f"table '{table_name}' " if table_name else ''
+                    error_message = (
+                        f"Unsupported data type for {table_str}column '{column_name}' "
+                        f"(kind: {dtype}). The valid data types are: 'object', "
+                        "'int', 'float', 'datetime', 'bool'."
+                    )
+                    raise InvalidMetadataError(error_message)
+            elif valid_potential_primary_key:
+                if sdtype == 'id':
+                    pk_candidate = True
+                else:
+                    pii_pk_candidates.append(column_name)
+
+            if pk_candidate:
+                pk_candidates.append(column_name)
+
+            return sdtype, dtype
+
+        except InvalidMetadataError as e:
+            raise e
+        except Exception as e:
+            self._handle_detection_error(e, column_name, table_name)
+
+    def _select_primary_key(self, infer_sdtypes, pk_candidates, pii_pk_candidates):
+        """Select the primary from a list of candidates.
+
+        If there ary any non-pii candidates, we select the first one. Otherwise, we select the
+        first pii_candidate. If we select a non-pii candidate or we select a pii candidate and
+        ``infer_sdtypes`` is False, we set the sdtype to 'id' and delete the 'pii' field if it
+        exists.
+
+        Args:
+            infer_sdtypes (bool):
+                Whether or not the sdtypes were inferred.
+            pk_candidates (list):
+                A list of primary key candidates that aren't pii.
+            pii_pk_candidates (list):
+                A list of primary key candidates that are pii.
+        """
+        if pk_candidates:
+            selected_pk = pk_candidates[0]
+            self.primary_key = selected_pk
+            self.columns[self.primary_key]['sdtype'] = 'id'
+
+        elif pii_pk_candidates:
+            self.primary_key = pii_pk_candidates[0]
+            if not infer_sdtypes:
+                self.columns[self.primary_key]['sdtype'] = 'id'
+
+        if self.primary_key and self.columns[self.primary_key].get('sdtype') == 'id':
+            if self.columns[self.primary_key].get('pii') is not None:
+                del self.columns[self.primary_key]['pii']
+
     def _detect_columns(self, data, table_name=None, infer_sdtypes=True, infer_keys='primary_only'):
         """Detect metadata information for each column in the data.
 
@@ -649,53 +740,18 @@ class SingleTableMetadata:
         """
         old_columns = data.columns
         data.columns = data.columns.astype(str)
-        pii_columns = []
         pk_candidates = []
+        pii_pk_candidates = []
         for field in data:
+            column_data = data[field]
             if infer_sdtypes or infer_keys == 'primary_only':
-                try:
-                    column_data = data[field]
-                    clean_data = column_data.dropna()
-                    dtype = clean_data.infer_objects().dtype.kind
-                    pk_candidate = False
-                    has_nan = column_data.isna().any()
-                    valid_potential_primary_key = column_data.is_unique and not has_nan
-                    sdtype = self._detect_pii_column(field)
-                    if sdtype is None:
-                        if dtype in self._DTYPES_TO_SDTYPES:
-                            sdtype = self._DTYPES_TO_SDTYPES[dtype]
-                        elif dtype in self._NUMERICAL_DTYPES:
-                            sdtype, pk_candidate = self._determine_sdtype_for_numbers(
-                                column_data, valid_potential_primary_key
-                            )
-
-                        elif dtype == 'O':
-                            sdtype, pk_candidate = self._determine_sdtype_for_objects(
-                                column_data, valid_potential_primary_key
-                            )
-
-                        if sdtype is None:
-                            table_str = f"table '{table_name}' " if table_name else ''
-                            error_message = (
-                                f"Unsupported data type for {table_str}column '{field}' "
-                                f"(kind: {dtype}). The valid data types are: 'object', "
-                                "'int', 'float', 'datetime', 'bool'."
-                            )
-                            raise InvalidMetadataError(error_message)
-                    else:
-                        if valid_potential_primary_key:
-                            if sdtype == 'id':
-                                pk_candidate = True
-                            else:
-                                pii_columns.append(field)
-
-                    if pk_candidate:
-                        pk_candidates.append(field)
-
-                except InvalidMetadataError as e:
-                    raise e
-                except Exception as e:
-                    self._handle_detection_error(e, field, table_name)
+                sdtype, dtype = self._detect_sdtype_and_primary_key(
+                    column_data=column_data,
+                    column_name=field,
+                    pii_pk_candidates=pii_pk_candidates,
+                    pk_candidates=pk_candidates,
+                    table_name=table_name,
+                )
 
             column_dict = {}
             if infer_sdtypes:
@@ -714,19 +770,11 @@ class SingleTableMetadata:
             self.columns[field] = deepcopy(column_dict)
 
         if infer_keys == 'primary_only':
-            if pk_candidates:
-                selected_pk = pk_candidates[0]
-                self.primary_key = selected_pk
-                self.columns[self.primary_key]['sdtype'] = 'id'
-                if self.columns[self.primary_key].get('pii') is not None:
-                    del self.columns[self.primary_key]['pii']
-
-            elif pii_columns:
-                self.primary_key = pii_columns[0]
-                if not infer_sdtypes:
-                    self.columns[self.primary_key]['sdtype'] = 'id'
-                    if self.columns[self.primary_key].get('pii') is not None:
-                        del self.columns[self.primary_key]['pii']
+            self._select_primary_key(
+                infer_sdtypes=infer_sdtypes,
+                pk_candidates=pk_candidates,
+                pii_pk_candidates=pii_pk_candidates,
+            )
 
         self._updated = True
         data.columns = old_columns
