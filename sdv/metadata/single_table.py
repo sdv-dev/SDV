@@ -489,10 +489,7 @@ class SingleTableMetadata:
             column_name (str):
                 The column name to be analyzed.
         """
-        # To handle the cases where the sdtype could be a substring of another word,
-        # tokenize the column name based on (1) symbols and (2) camelCase
         tokens = self._tokenize_column_name(column_name)
-
         for token in tokens:
             if token == 'id':
                 return 'id'
