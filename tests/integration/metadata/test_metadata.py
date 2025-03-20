@@ -149,7 +149,7 @@ def test_detect_from_dataframes_multi_table_without_infer_sdtypes():
             },
             'guests': {
                 'columns': {
-                    'guest_email': {'sdtype': 'unknown', 'pii': True},
+                    'guest_email': {'sdtype': 'unknown'},
                     'hotel_id': {'sdtype': 'unknown', 'pii': True},
                     'has_rewards': {'sdtype': 'unknown', 'pii': True},
                     'room_type': {'sdtype': 'unknown', 'pii': True},

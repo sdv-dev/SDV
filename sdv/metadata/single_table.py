@@ -483,19 +483,22 @@ class SingleTableMetadata:
             None,
         )
 
-    def _determine_sdtype_for_numbers(self, data):
+    def _determine_sdtype_for_numbers(self, data, valid_potential_primary_key):
         """Determine the sdtype for a numerical column.
 
         Args:
             data (pandas.Series):
                 The data to be analyzed.
+            valid_potential_primary_key(bool):
+                If the column is unique and doesn't have NaNs.
         """
         sdtype = 'numerical'
+        pk_candidate = False
         if len(data) > self._MIN_ROWS_FOR_PREDICTION:
             is_not_null = ~data.isna()
             clean_data = (data == data.round()).loc[is_not_null]
             if clean_data.empty:
-                return sdtype
+                return sdtype, pk_candidate
 
             whole_values = clean_data.all()
             positive_values = (data >= 0).loc[is_not_null].all()
@@ -506,14 +509,18 @@ class SingleTableMetadata:
             if whole_values and positive_values and unique_lt_categorical_threshold:
                 sdtype = 'categorical'
 
-        return sdtype
+            pk_candidate = valid_potential_primary_key and whole_values and positive_values
 
-    def _determine_sdtype_for_objects(self, data):
+        return sdtype, pk_candidate
+
+    def _determine_sdtype_for_objects(self, data, valid_potential_primary_key):
         """Determine the sdtype for an object column.
 
         Args:
             data (pandas.Series):
                 The data to be analyzed.
+            valid_potential_primary_key(bool):
+                If the column is unique and doesn't have NaNs.
         """
         sdtype = 'categorical'
 
@@ -530,7 +537,8 @@ class SingleTableMetadata:
             except Exception:
                 pass
 
-        return sdtype
+        pk_candidate = sdtype == 'categorical' and valid_potential_primary_key
+        return sdtype, pk_candidate
 
     def _handle_detection_error(self, error, column, table_name=None):
         """Add user friendly error message with column name to underlying exception.
@@ -546,8 +554,8 @@ class SingleTableMetadata:
         error_type = type(error).__name__
         table_str = f"table '{table_name}' " if table_name else ''
         error_message = (
-            f"Unable to detect metadata for {table_str}column '{column}' due "
-            f'to an invalid data format.\n {error_type}: {error}'
+            f"Unable to detect metadata for {table_str}column '{column}'. This may be because "
+            f'the data type is not supported.\n {error_type}: {error}'
         )
         raise InvalidMetadataError(error_message) from error
 
@@ -583,6 +591,13 @@ class SingleTableMetadata:
                 if not valid_potential_primary_key:
                     continue
 
+                sdtype = self._detect_pii_column(column)
+                sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
+                if sdtype_in_reference:
+                    if first_pii_field is None:
+                        first_pii_field = column
+                    continue
+
                 if len(column_data) > self._MIN_ROWS_FOR_PREDICTION:
                     dtype = column_data.infer_objects().dtype.kind
                     if dtype in self._NUMERICAL_DTYPES:
@@ -601,10 +616,6 @@ class SingleTableMetadata:
                             data.columns = original_columns
                             return column
 
-                sdtype = self._detect_pii_column(column)
-                sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
-                if sdtype_in_reference and first_pii_field is None:
-                    first_pii_field = column
             except Exception as e:
                 self._handle_detection_error(e, column)
 
@@ -615,7 +626,7 @@ class SingleTableMetadata:
         return None
 
     def _detect_columns(self, data, table_name=None, infer_sdtypes=True, infer_keys='primary_only'):
-        """Detect the columns' sdtypes from the data.
+        """Detect metadata information for each column in the data.
 
         Args:
             data (pandas.DataFrame):
@@ -635,22 +646,30 @@ class SingleTableMetadata:
         """
         old_columns = data.columns
         data.columns = data.columns.astype(str)
+        pii_columns = []
+        pk_candidates = []
         for field in data:
-            if infer_sdtypes:
+            if infer_sdtypes or infer_keys == 'primary_only':
                 try:
                     column_data = data[field]
                     clean_data = column_data.dropna()
                     dtype = clean_data.infer_objects().dtype.kind
-
+                    pk_candidate = False
+                    has_nan = column_data.isna().any()
+                    valid_potential_primary_key = column_data.is_unique and not has_nan
                     sdtype = self._detect_pii_column(field)
                     if sdtype is None:
                         if dtype in self._DTYPES_TO_SDTYPES:
                             sdtype = self._DTYPES_TO_SDTYPES[dtype]
                         elif dtype in self._NUMERICAL_DTYPES:
-                            sdtype = self._determine_sdtype_for_numbers(column_data)
+                            sdtype, pk_candidate = self._determine_sdtype_for_numbers(
+                                column_data, valid_potential_primary_key
+                            )
 
                         elif dtype == 'O':
-                            sdtype = self._determine_sdtype_for_objects(column_data)
+                            sdtype, pk_candidate = self._determine_sdtype_for_objects(
+                                column_data, valid_potential_primary_key
+                            )
 
                         if sdtype is None:
                             table_str = f"table '{table_name}' " if table_name else ''
@@ -660,29 +679,46 @@ class SingleTableMetadata:
                                 "'int', 'float', 'datetime', 'bool'."
                             )
                             raise InvalidMetadataError(error_message)
+                    else:
+                        if valid_potential_primary_key:
+                            if sdtype == 'id':
+                                pk_candidate = True
+                            else:
+                                pii_columns.append(field)
+
+                    if pk_candidate:
+                        pk_candidates.append(field)
 
                 except InvalidMetadataError as e:
                     raise e
                 except Exception as e:
                     self._handle_detection_error(e, field, table_name)
 
+            column_dict = {}
+            if infer_sdtypes:
+                sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
+                if sdtype_in_reference and sdtype != 'id':
+                    column_dict['pii'] = True
+
+                if sdtype == 'datetime' and dtype == 'O':
+                    datetime_format = _get_datetime_format(column_data.iloc[:100])
+                    column_dict['datetime_format'] = datetime_format
             else:
                 sdtype = 'unknown'
-
-            column_dict = {'sdtype': sdtype}
-            sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
-
-            if (sdtype_in_reference or sdtype == 'unknown') and sdtype != 'id':
                 column_dict['pii'] = True
 
-            if sdtype == 'datetime' and dtype == 'O':
-                datetime_format = _get_datetime_format(column_data.iloc[:100])
-                column_dict['datetime_format'] = datetime_format
-
+            column_dict['sdtype'] = sdtype
             self.columns[field] = deepcopy(column_dict)
 
         if infer_keys == 'primary_only':
-            self.primary_key = self._detect_primary_key(data)
+            # self.primary_key = self._detect_primary_key(data)
+            if pk_candidates:
+                self.primary_key = pk_candidates[0]
+                self.columns[pk_candidates[0]]['sdtype'] = 'id'
+
+            elif pii_columns:
+                self.primary_key = pii_columns[0]
+
         self._updated = True
         data.columns = old_columns
 

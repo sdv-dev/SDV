@@ -1058,22 +1058,27 @@ class TestSingleTableMetadata:
         data_numerical_float = pd.Series([1.1, 2.2, 3.3, 4.4, 5.5, 6.6])
 
         # Run
-        sdtype_less_than_5_rows = instance._determine_sdtype_for_numbers(data_less_than_5_rows)
-        sdtype_less_than_10_percent_unique_values = instance._determine_sdtype_for_numbers(
-            data_less_than_10_percent_unique_values
+        sdtype_less_than_5_rows, candidate = instance._determine_sdtype_for_numbers(
+            data_less_than_5_rows, False
         )
-        sdtype_all_unique = instance._determine_sdtype_for_numbers(data_all_unique)
-        sdtype_numerical_int = instance._determine_sdtype_for_numbers(data_numerical_int)
-        sdtype_numerical_float = instance._determine_sdtype_for_numbers(data_numerical_float)
-        sdtype_large_numerical_series = instance._determine_sdtype_for_numbers(
-            large_numerical_series
+        sdtype_less_than_10_percent_unique_values, _ = instance._determine_sdtype_for_numbers(
+            data_less_than_10_percent_unique_values, False
         )
-        sdtype_large_categorical_series = instance._determine_sdtype_for_numbers(
-            large_categorical_series
+        sdtype_all_unique, _ = instance._determine_sdtype_for_numbers(data_all_unique, False)
+        sdtype_numerical_int, _ = instance._determine_sdtype_for_numbers(data_numerical_int, False)
+        sdtype_numerical_float, _ = instance._determine_sdtype_for_numbers(
+            data_numerical_float, False
+        )
+        sdtype_large_numerical_series, _ = instance._determine_sdtype_for_numbers(
+            large_numerical_series, False
+        )
+        sdtype_large_categorical_series, _ = instance._determine_sdtype_for_numbers(
+            large_categorical_series, False
         )
 
         # Assert
         assert sdtype_less_than_5_rows == 'numerical'
+        assert candidate is False
         assert sdtype_less_than_10_percent_unique_values == 'categorical'
         assert sdtype_all_unique == 'numerical'
         assert sdtype_numerical_int == 'numerical'
@@ -1091,23 +1096,25 @@ class TestSingleTableMetadata:
         data_categorical_small = pd.Series(['a', 'b', 'c', 'd', 'e'])
         data_all_unique = pd.Series(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'])
         data_categorical_large = pd.Series(['a'] * 10 + ['b'] * 4)
-        data_unknown = pd.Series(['a', 'b', 'c', 'c', 1, 2.2, np.nan, None, 'd', 'e', 'f'])
 
         # Run
-        sdtype_datetime = instance._determine_sdtype_for_objects(data_datetime)
-        sdtype_wrong_datetime = instance._determine_sdtype_for_objects(wrong_datetime)
-        sdtype_categorical_small = instance._determine_sdtype_for_objects(data_categorical_small)
-        sdtype_all_unique = instance._determine_sdtype_for_objects(data_all_unique)
-        sdtype_categorical_large = instance._determine_sdtype_for_objects(data_categorical_large)
-        sdtype_unknown = instance._determine_sdtype_for_objects(data_unknown)
+        sdtype_datetime, candidate = instance._determine_sdtype_for_objects(data_datetime, False)
+        sdtype_wrong_datetime, _ = instance._determine_sdtype_for_objects(wrong_datetime, False)
+        sdtype_categorical_small, _ = instance._determine_sdtype_for_objects(
+            data_categorical_small, False
+        )
+        sdtype_all_unique, _ = instance._determine_sdtype_for_objects(data_all_unique, False)
+        sdtype_categorical_large, _ = instance._determine_sdtype_for_objects(
+            data_categorical_large, False
+        )
 
         # Assert
         assert sdtype_datetime == 'datetime'
+        assert candidate is False
         assert sdtype_wrong_datetime == 'categorical'
         assert sdtype_categorical_small == 'categorical'
         assert sdtype_all_unique == 'categorical'
         assert sdtype_categorical_large == 'categorical'
-        assert sdtype_unknown == 'categorical'
 
     @patch.object(pd.Series, 'sample')
     def test__determine_sdtype_for_objects_subsample_datetime(self, mock_sample):
@@ -1118,7 +1125,7 @@ class TestSingleTableMetadata:
         data_datetime = pd.Series(['2022-01-01'] * 15000)
 
         # Run
-        instance._determine_sdtype_for_objects(data_datetime)
+        instance._determine_sdtype_for_objects(data_datetime, False)
 
         # Assert
         mock_sample.assert_called_once_with(10000)
@@ -1132,7 +1139,7 @@ class TestSingleTableMetadata:
         # Run
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
-            instance._determine_sdtype_for_objects(data)
+            instance._determine_sdtype_for_objects(data, False)
 
         # Assert
         assert len(w) == 0
@@ -1144,10 +1151,11 @@ class TestSingleTableMetadata:
         data = pd.Series([None] * 100)
 
         # Run
-        sdtype = instance._determine_sdtype_for_objects(data)
+        sdtype, candidate = instance._determine_sdtype_for_objects(data, False)
 
         # Assert
         assert sdtype == 'categorical'
+        assert candidate is False
 
     def test__detect_columns(self, data):
         """Test the ``_detect_columns`` method."""
@@ -1271,8 +1279,8 @@ class TestSingleTableMetadata:
             'numerical': [1, 2, 3],
         })
 
-        instance._determine_sdtype_for_numbers = Mock(return_value='numerical')
-        instance._determine_sdtype_for_objects = Mock(return_value='datetime')
+        instance._determine_sdtype_for_numbers = Mock(return_value=('numerical', 'False'))
+        instance._determine_sdtype_for_objects = Mock(return_value=('datetime', 'False'))
 
         # Run
         instance._detect_columns(data)
@@ -1314,8 +1322,8 @@ class TestSingleTableMetadata:
             'numerical': [1.2] * 100,
         })
         expected_error_message = re.escape(
-            "Unable to detect metadata for column 'dict_column' due to an invalid data format."
-            "\n TypeError: unhashable type: 'dict'"
+            "Unable to detect metadata for column 'dict_column'. This may be because the data type"
+            " is not supported.\n TypeError: unhashable type: 'dict'"
         )
 
         # Run and Assert
