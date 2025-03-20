@@ -140,17 +140,18 @@ def test_detect_from_dataframes_multi_table_without_infer_sdtypes():
         'tables': {
             'hotels': {
                 'columns': {
-                    'hotel_id': {'sdtype': 'unknown', 'pii': True},
+                    'hotel_id': {'sdtype': 'id'},
                     'city': {'sdtype': 'unknown', 'pii': True},
                     'state': {'sdtype': 'unknown', 'pii': True},
                     'rating': {'sdtype': 'unknown', 'pii': True},
                     'classification': {'sdtype': 'categorical'},
                 },
+                'primary_key': 'hotel_id',
             },
             'guests': {
                 'columns': {
-                    'guest_email': {'sdtype': 'unknown'},
-                    'hotel_id': {'sdtype': 'unknown', 'pii': True},
+                    'guest_email': {'sdtype': 'id'},
+                    'hotel_id': {'sdtype': 'id'},
                     'has_rewards': {'sdtype': 'unknown', 'pii': True},
                     'room_type': {'sdtype': 'unknown', 'pii': True},
                     'amenities_fee': {'sdtype': 'unknown', 'pii': True},
@@ -160,9 +161,17 @@ def test_detect_from_dataframes_multi_table_without_infer_sdtypes():
                     'billing_address': {'sdtype': 'unknown', 'pii': True},
                     'credit_card_number': {'sdtype': 'unknown', 'pii': True},
                 },
+                'primary_key': 'guest_email',
             },
         },
-        'relationships': [],
+        'relationships': [
+            {
+                'child_foreign_key': 'hotel_id',
+                'child_table_name': 'guests',
+                'parent_primary_key': 'hotel_id',
+                'parent_table_name': 'hotels',
+            }
+        ],
         'METADATA_SPEC_VERSION': 'V1',
     }
     assert metadata.to_dict() == expected_metadata
@@ -198,7 +207,7 @@ def test_detect_from_dataframes_multi_table_with_infer_keys_primary_only():
             'guests': {
                 'columns': {
                     'guest_email': {'sdtype': 'email', 'pii': True},
-                    'hotel_id': {'sdtype': 'categorical'},
+                    'hotel_id': {'sdtype': 'id'},
                     'has_rewards': {'sdtype': 'categorical'},
                     'room_type': {'sdtype': 'categorical'},
                     'amenities_fee': {'sdtype': 'numerical'},
@@ -246,7 +255,7 @@ def test_detect_from_dataframes_multi_table_with_infer_keys_none():
             'guests': {
                 'columns': {
                     'guest_email': {'sdtype': 'email', 'pii': True},
-                    'hotel_id': {'sdtype': 'categorical'},
+                    'hotel_id': {'sdtype': 'id'},
                     'has_rewards': {'sdtype': 'categorical'},
                     'room_type': {'sdtype': 'categorical'},
                     'amenities_fee': {'sdtype': 'numerical'},
@@ -309,12 +318,13 @@ def test_detect_from_dataframes_single_table_infer_sdtypes_false():
         'tables': {
             'table_1': {
                 'columns': {
-                    'hotel_id': {'sdtype': 'unknown', 'pii': True},
+                    'hotel_id': {'sdtype': 'id'},
                     'city': {'sdtype': 'unknown', 'pii': True},
                     'state': {'sdtype': 'unknown', 'pii': True},
                     'rating': {'sdtype': 'unknown', 'pii': True},
                     'classification': {'sdtype': 'unknown', 'pii': True},
                 },
+                'primary_key': 'hotel_id',
             }
         },
         'relationships': [],
@@ -426,13 +436,14 @@ def test_detect_from_dataframe_infer_sdtypes_false():
         'tables': {
             DEFAULT_TABLE_NAME: {
                 'columns': {
-                    'hotel_id': {'sdtype': 'unknown', 'pii': True},
+                    'hotel_id': {'sdtype': 'id'},
                     'city': {'sdtype': 'unknown', 'pii': True},
                     'state': {'sdtype': 'unknown', 'pii': True},
                     'rating': {'sdtype': 'unknown', 'pii': True},
                     'classification': {'sdtype': 'unknown', 'pii': True},
                 },
-            }
+                'primary_key': 'hotel_id',
+            },
         },
         'relationships': [],
     }
@@ -832,8 +843,8 @@ def test_detect_from_dataframes_invalid_format():
         }),
     }
     expected_error = re.escape(
-        "Unable to detect metadata for table 'table_1' column 'dict_column' due to an "
-        "invalid data format.\n TypeError: unhashable type: 'dict'"
+        "Unable to detect metadata for table 'table_1' column 'dict_column'. This may be because "
+        "the data type is not supported.\n TypeError: unhashable type: 'dict'"
     )
 
     # Run and Assert

@@ -523,7 +523,7 @@ class SingleTableMetadata:
                 If the column is unique and doesn't have NaNs.
         """
         sdtype = 'categorical'
-
+        pk_candidate = False
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=UserWarning)
             data_test = data.sample(10000) if len(data) > 10000 else data
@@ -537,7 +537,10 @@ class SingleTableMetadata:
             except Exception:
                 pass
 
-        pk_candidate = sdtype == 'categorical' and valid_potential_primary_key
+        enough_data = len(data) > self._MIN_ROWS_FOR_PREDICTION
+        if enough_data and sdtype == 'categorical' and valid_potential_primary_key:
+            pk_candidate = True
+
         return sdtype, pk_candidate
 
     def _handle_detection_error(self, error, column, table_name=None):
@@ -711,13 +714,19 @@ class SingleTableMetadata:
             self.columns[field] = deepcopy(column_dict)
 
         if infer_keys == 'primary_only':
-            # self.primary_key = self._detect_primary_key(data)
             if pk_candidates:
-                self.primary_key = pk_candidates[0]
-                self.columns[pk_candidates[0]]['sdtype'] = 'id'
+                selected_pk = pk_candidates[0]
+                self.primary_key = selected_pk
+                self.columns[self.primary_key]['sdtype'] = 'id'
+                if self.columns[self.primary_key].get('pii') is not None:
+                    del self.columns[self.primary_key]['pii']
 
             elif pii_columns:
                 self.primary_key = pii_columns[0]
+                if not infer_sdtypes:
+                    self.columns[self.primary_key]['sdtype'] = 'id'
+                    if self.columns[self.primary_key].get('pii') is not None:
+                        del self.columns[self.primary_key]['pii']
 
         self._updated = True
         data.columns = old_columns
