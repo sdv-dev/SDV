@@ -1162,6 +1162,7 @@ class TestSingleTableMetadata:
         # Setup
         instance = SingleTableMetadata()
         expected_datetime_format = '%Y-%m-%d'
+        data['categorical_pk_candidate'] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
 
         # Run
         instance._detect_columns(data)
@@ -1176,6 +1177,7 @@ class TestSingleTableMetadata:
         assert instance.columns['alternate_id_string']['sdtype'] == 'id'
         assert instance.columns['alternate_id_string'].get('pii') is None
         assert instance.columns['categorical']['sdtype'] == 'categorical'
+        assert instance.columns['categorical_pk_candidate']['sdtype'] == 'categorical'
         assert instance.columns['unknown']['sdtype'] == 'categorical'
         assert 'pii' not in instance.columns['unknown']
         assert instance.columns['bool']['sdtype'] == 'categorical'
@@ -1377,21 +1379,31 @@ class TestSingleTableMetadata:
         assert instance.primary_key is None
         assert instance._updated is True
 
-    def test__detect_primary_key_missing_sdtypes(self):
-        """The primary key should be detected even if sdtypes are not."""
+    def test__detect_columns_infer_sdtypes_false_infer_keys_primary_only(self, data):
+        """Test the _detect_columns when infer_keys is True and infer sdtypes is False."""
         # Setup
-        data = pd.DataFrame({
-            'string_id': ['1', '2', '3', '4', '5', '6'],
-            'num_id': [1, 2, 3, 4, 5, 6],
-        })
-        metadata = SingleTableMetadata()
-        metadata.columns = {'string_id': {'sdtype': 'unknown'}}
+        instance = SingleTableMetadata()
+        data = data.rename(columns={'id': 'email'})
+        data = data.drop(['alternate_id', 'alternate_id_string'], axis=1)
 
         # Run
-        primary_key = metadata._detect_primary_key(data)
+        instance._detect_columns(data, infer_keys='primary_only', infer_sdtypes=False)
 
         # Assert
-        assert primary_key == 'string_id'
+        assert instance.columns['email']['sdtype'] == 'id'
+        assert instance.columns['numerical']['sdtype'] == 'unknown'
+        assert instance.columns['datetime']['sdtype'] == 'unknown'
+        assert instance.columns['datetime'].get('datetime_format') is None
+        assert instance.columns['categorical']['sdtype'] == 'unknown'
+        assert instance.columns['unknown']['sdtype'] == 'unknown'
+        assert instance.columns['bool']['sdtype'] == 'unknown'
+        assert instance.columns['first_name']['sdtype'] == 'unknown'
+        for column in instance.columns:
+            if column != 'email':
+                assert instance.columns[column]['pii'] is True
+
+        assert instance.primary_key == 'email'
+        assert instance._updated is True
 
     def test_detect_from_dataframe_raises_error(self):
         """Test the ``detect_from_dataframe`` method.

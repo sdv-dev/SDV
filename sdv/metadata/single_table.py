@@ -114,7 +114,6 @@ class SingleTableMetadata:
         'vin': 'vin',
         'licenseplate': 'license_plate',
         'license': 'license_plate',
-        'id': 'id',
     }
 
     _SDTYPES_WITHOUT_SUBSTRINGS = {
@@ -483,6 +482,23 @@ class SingleTableMetadata:
             None,
         )
 
+    def _detect_id_column(self, column_name):
+        """Detect if the column has id in one of the words.
+
+        Args:
+            column_name (str):
+                The column name to be analyzed.
+        """
+        # To handle the cases where the sdtype could be a substring of another word,
+        # tokenize the column name based on (1) symbols and (2) camelCase
+        tokens = self._tokenize_column_name(column_name)
+
+        for token in tokens:
+            if token == 'id':
+                return 'id'
+
+        return None
+
     def _determine_sdtype_for_numbers(self, data, valid_potential_primary_key):
         """Determine the sdtype for a numerical column.
 
@@ -562,72 +578,6 @@ class SingleTableMetadata:
         )
         raise InvalidMetadataError(error_message) from error
 
-    def _detect_primary_key(self, data):
-        """Detect the table's primary key.
-
-        This method will loop through the columns and select the first column that was detected as
-        an id. If there are none of those, it will pick the first unique pii column. If there is
-        still no primary key, it will return None. All other id columns after the first will be
-        reassigned to the 'unknown' sdtype.
-
-        Args:
-            data (pandas.DataFrame):
-                The data to be analyzed.
-
-        Returns:
-            str:
-                The column name of the selected primary key.
-
-        Raises:
-            RuntimeError:
-                If the sdtypes for all columns haven't been detected or set yet.
-        """
-        original_columns = data.columns
-        stringified_columns = data.columns.astype(str)
-        data.columns = stringified_columns
-        first_pii_field = None
-        for column in self.columns.keys():
-            try:
-                column_data = data[column]
-                has_nan = column_data.isna().any()
-                valid_potential_primary_key = column_data.is_unique and not has_nan
-                if not valid_potential_primary_key:
-                    continue
-
-                sdtype = self._detect_pii_column(column)
-                sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
-                if sdtype_in_reference:
-                    if first_pii_field is None:
-                        first_pii_field = column
-                    continue
-
-                if len(column_data) > self._MIN_ROWS_FOR_PREDICTION:
-                    dtype = column_data.infer_objects().dtype.kind
-                    if dtype in self._NUMERICAL_DTYPES:
-                        # check for whole numbers
-                        all_whole_numbers = (column_data == column_data.round()).all()
-                        all_positive = (column_data > 0).all()
-                        if all_whole_numbers and all_positive:
-                            self.columns[column]['sdtype'] = 'id'
-                            data.columns = original_columns
-                            return column
-
-                    if dtype == 'O':
-                        sdtype = self._determine_sdtype_for_objects(column_data)
-                        if sdtype != 'datetime':
-                            self.columns[column]['sdtype'] = 'id'
-                            data.columns = original_columns
-                            return column
-
-            except Exception as e:
-                self._handle_detection_error(e, column)
-
-        data.columns = original_columns
-        if first_pii_field:
-            return first_pii_field
-
-        return None
-
     def _detect_sdtype_and_primary_key(
         self, column_data, column_name, pii_pk_candidates, pk_candidates, table_name
     ):
@@ -651,7 +601,8 @@ class SingleTableMetadata:
             pk_candidate = False
             has_nan = column_data.isna().any()
             valid_potential_primary_key = column_data.is_unique and not has_nan
-            sdtype = self._detect_pii_column(column_name)
+            sdtype = self._detect_pii_column(column_name) or self._detect_id_column(column_name)
+
             if sdtype is None:
                 if dtype in self._DTYPES_TO_SDTYPES:
                     sdtype = self._DTYPES_TO_SDTYPES[dtype]
@@ -752,7 +703,6 @@ class SingleTableMetadata:
                     pk_candidates=pk_candidates,
                     table_name=table_name,
                 )
-
             column_dict = {}
             if infer_sdtypes:
                 sdtype_in_reference = sdtype in self._REFERENCE_TO_SDTYPE.values()
