@@ -477,6 +477,7 @@ def test_detect_from_dataframe_infer_keys_none():
     }
     assert metadata.to_dict() == expected_metadata
 
+
 def test_detect_from_dataframe_infer_keys_none_infer_sdtypes_false():
     """Test it when infer_keys is None and infer_sdtypes is False."""
     # Setup
