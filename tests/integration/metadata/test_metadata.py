@@ -477,6 +477,33 @@ def test_detect_from_dataframe_infer_keys_none():
     }
     assert metadata.to_dict() == expected_metadata
 
+def test_detect_from_dataframe_infer_keys_none_infer_sdtypes_false():
+    """Test it when infer_keys is None and infer_sdtypes is False."""
+    # Setup
+    data, _ = download_demo(modality='multi_table', dataset_name='fake_hotels')
+    metadata = Metadata.detect_from_dataframe(data['hotels'], infer_keys=None, infer_sdtypes=False)
+
+    # Run
+    metadata.validate()
+
+    # Assert
+    expected_metadata = {
+        'METADATA_SPEC_VERSION': 'V1',
+        'tables': {
+            DEFAULT_TABLE_NAME: {
+                'columns': {
+                    'hotel_id': {'sdtype': 'unknown', 'pii': True},
+                    'city': {'sdtype': 'unknown', 'pii': True},
+                    'state': {'sdtype': 'unknown', 'pii': True},
+                    'rating': {'sdtype': 'unknown', 'pii': True},
+                    'classification': {'sdtype': 'unknown', 'pii': True},
+                },
+            }
+        },
+        'relationships': [],
+    }
+    assert metadata.to_dict() == expected_metadata
+
 
 def test_detect_from_csvs(tmp_path):
     """Test the ``detect_from_csvs`` method."""
