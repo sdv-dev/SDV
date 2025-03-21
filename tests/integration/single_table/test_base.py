@@ -363,7 +363,7 @@ def test_transformers_correctly_auto_assigned():
     assert transformers['pii_col'].function_name == 'address'
 
     assert transformers['primary_key'].regex_format == 'user-[0-9]{3}'
-    assert transformers['primary_key'].enforce_uniqueness is True
+    assert transformers['primary_key'].cardinality_rule == 'unique'
 
 
 def test_modeling_with_complex_datetimes():

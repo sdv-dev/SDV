@@ -154,9 +154,13 @@ def _simplify_grandchildren(metadata, grandchildren):
             Set of the grandchildren of the root table.
     """
     for grandchild in grandchildren:
+        key_columns = metadata._get_all_keys(grandchild)
         columns = metadata.tables[grandchild].columns
         columns_to_drop = [
-            col_name for col_name in columns if columns[col_name]['sdtype'] in MODELABLE_SDTYPE
+            col_name
+            for col_name in columns
+            if columns[col_name]['sdtype'] in MODELABLE_SDTYPE
+            or (columns[col_name]['sdtype'] == 'id' and col_name not in key_columns)
         ]
         for column in columns_to_drop:
             del columns[column]

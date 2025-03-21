@@ -52,8 +52,14 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
         """
         columns_per_table = {}
         for table_name, table in metadata.tables.items():
+            key_columns = metadata._get_all_keys(table_name)
             columns_per_table[table_name] = sum([
-                1 for col in table.columns.values() if col['sdtype'] != 'id'
+                1
+                for col_name, col_meta in table.columns.items()
+                if (
+                    col_meta['sdtype'] != 'id'
+                    or (col_name not in key_columns and col_meta.get('pii', False) is False)
+                )
             ])
 
         return columns_per_table

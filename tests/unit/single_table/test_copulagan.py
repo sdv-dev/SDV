@@ -379,6 +379,7 @@ class TestCopulaGANSynthesizer:
                         'col_1': {'sdtype': 'id'},
                         'col_2': {'sdtype': 'credit_card_number'},
                     },
+                    'primary_key': 'col_1',
                 }
             }
         })

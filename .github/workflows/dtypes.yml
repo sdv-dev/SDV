@@ -1,4 +1,4 @@
-name: Integration Tests
+name: Dtypes Tests
 
 on:
   push:
@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  integration:
+  dtypes:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
@@ -32,18 +32,9 @@ jobs:
       run: |
           python -m pip install --upgrade pip
           python -m pip install invoke .[test]
-    - name: Run integration tests
+    - name: Run dtypes benchmark tests
       env:
         PYDRIVE_CREDENTIALS: ${{ secrets.PYDRIVE_CREDENTIALS }}
 
       run: |
-        invoke integration
-
-    - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.13
-      name: Upload integration codecov report
-      uses: codecov/codecov-action@v4
-      with:
-        flags: integration
-        file: ${{ github.workspace }}/integration_cov.xml
-        fail_ci_if_error: true
-        token: ${{ secrets.CODECOV_TOKEN }}
+        invoke benchmark-dtypes
