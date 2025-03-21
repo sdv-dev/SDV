@@ -638,7 +638,7 @@ class SingleTableMetadata:
             self._handle_detection_error(e, column_name, table_name)
 
     def _select_primary_key(self, infer_sdtypes, pk_candidates, pii_pk_candidates):
-        """Select the primary from a list of candidates.
+        """Select the primary key from a list of candidates.
 
         If there ary any non-pii candidates, we select the first one. Otherwise, we select the
         first pii_candidate. If we select a non-pii candidate or we select a pii candidate and
