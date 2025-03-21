@@ -27,6 +27,7 @@ from sdv._utils import (
     generate_synthesizer_id,
     get_possible_chars,
 )
+from sdv.cag._errors import PatternNotMetError
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import (
@@ -619,8 +620,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         locales=['en_US'],
     ):
         super().__init__(metadata, enforce_min_max_values, enforce_rounding, locales)
-        self._invalid_patterns = []
-        self._valid_patterns = []
+        self._chained_patterns = []  # chain of patterns used to preprocess the data
+        self._reject_sampling_patterns = []  # patterns used only for reject sampling
+        self._original_metadata = self.metadata
 
     def add_cag(self, patterns):
         """Add the list of constraint-augmented generation patterns to the synthesizer.
@@ -629,11 +631,13 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             patterns (list):
                 A list of CAG patterns to apply to the synthesizer.
         """
-        if not hasattr(self, '_original_metadata'):
-            self._original_metadata = self.metadata
-
         for pattern in patterns:
-            self.metadata = pattern.get_updated_metadata(self.metadata)
+            try:
+                self.metadata = pattern.get_updated_metadata(self.metadata)
+                self._chained_patterns.append(pattern)
+            except PatternNotMetError:
+                self.metadata = pattern.get_updated_metadata(self._original_metadata)
+                self._reject_sampling_patterns.append(pattern)
 
         self._data_processor = DataProcessor(
             metadata=self.metadata._convert_to_single_table(),
@@ -641,18 +645,10 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
         )
-        if hasattr(self, 'patterns'):
-            self.patterns += patterns
-        else:
-            self.patterns = patterns
-
-        # self._initialize_models()
 
     def get_cag(self):
         """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
-        if hasattr(self, 'patterns'):
-            return deepcopy(self.patterns)
-        return []
+        return deepcopy(self._chained_patterns + self._reject_sampling_patterns)
 
     def get_metadata(self, version='original'):
         """Get the metadata, either original or modified after applying CAG patterns.
@@ -665,12 +661,11 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 synthesizer's CAG patterns. Defaults to 'original'.
         """
         if version not in ('original', 'modified'):
-            error_msg = f"Unrecognized version '{version}', please use 'original' or 'modified'."
-            raise ValueError(error_msg)
+            raise ValueError(
+                f"Unrecognized version '{version}', please use 'original' or 'modified'."
+            )
 
-        if version == 'original' and hasattr(self, '_original_metadata'):
-            return self._original_metadata
-        return self.metadata
+        return self._original_metadata if version == 'original' else self.metadata
 
     def _transform_helper(self, data):
         """Validate and transform all CAG patterns during preprocessing.
@@ -679,25 +674,25 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             data (dict[str, pd.DataFrame]):
                 The data dictionary.
         """
-        if not hasattr(self, 'patterns'):
+        if self._fitted:
+            for pattern in self._chained_patterns:
+                data = pattern.transform(data)
             return data
 
         metadata = self._original_metadata
-        original_data = deepcopy(data)
-        for pattern in self.patterns:
-            skip_pattern = False
-            if not self._fitted:
-                try:
-                    pattern.fit(data, metadata)
-                    metadata = pattern.get_updated_metadata(metadata)
-                    self._valid_patterns.append(pattern)
-                except Exception:
-                    pattern.fit(original_data, self._original_metadata)
-                    self._invalid_patterns.append(pattern)
-                    skip_pattern = True
-
-            if not skip_pattern:
+        original_data = data
+        for pattern in self._chained_patterns[:]:
+            try:
+                pattern.fit(data, metadata)
+                metadata = pattern.get_updated_metadata(metadata)
                 data = pattern.transform(data)
+            except Exception:
+                pattern.fit(original_data, self._original_metadata)
+                self._chained_patterns.remove(pattern)
+                self._reject_sampling_patterns.append(pattern)
+
+        for pattern in self._reject_sampling_patterns:
+            pattern.fit(original_data, self._original_metadata)
 
         return data
 
@@ -837,12 +832,12 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 )
                 sampled = pd.concat([sampled, raw_sampled[missing_cols]], axis=1)
 
-            for pattern in reversed(self._valid_patterns):
+            for pattern in reversed(self._chained_patterns):
                 sampled = pattern.reverse_transform(sampled)
                 valid_rows = pattern.is_valid(sampled)
                 sampled = sampled[valid_rows]
 
-            for pattern in reversed(self._invalid_patterns):
+            for pattern in reversed(self._reject_sampling_patterns):
                 valid_rows = pattern.is_valid(sampled)
                 sampled = sampled[valid_rows]
 

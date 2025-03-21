@@ -607,3 +607,47 @@ def test_inequality_pattern_timestamp_less_than_date_no_strict_boundaries():
         synthetic_data['SUBMISSION_TIMESTAMP'].dt.date > synthetic_data['DUE_DATE'].dt.date
     ]
     assert invalid_rows.empty
+
+
+def test_inequality_multiple_patterns():
+    """Test that Inequality pattern works with multiple patterns."""
+    # Setup
+    data = pd.DataFrame({
+        'low': [1, 2, 3, 1, 2, 1],
+        'high': [10, 20, 30, 10, 20, 10],
+    })
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'high': {'sdtype': 'numerical'},
+        }
+    })
+    pattern1 = Inequality(
+        low_column_name='low',
+        high_column_name='high',
+    )
+    pattern2 = Inequality(
+        low_column_name='low',
+        high_column_name='high',
+    )
+
+    # Run
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.fit(data)
+    samples = synthesizer.sample(10)
+    updated_metadata = synthesizer.get_metadata('modified')
+    original_metadata = synthesizer.get_metadata('original')
+
+    # Assert
+    expected_updated_metadata = Metadata.load_from_dict({
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'low#high': {'sdtype': 'numerical'},
+        }
+    }).to_dict()
+    assert expected_updated_metadata == updated_metadata.to_dict()
+
+    assert original_metadata.to_dict() == metadata.to_dict()
+
+    assert all(samples['low'] < samples['high'])
