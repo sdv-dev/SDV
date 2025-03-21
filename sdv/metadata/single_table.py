@@ -640,7 +640,7 @@ class SingleTableMetadata:
     def _select_primary_key(self, infer_sdtypes, pk_candidates, pii_pk_candidates):
         """Select the primary key from a list of candidates.
 
-        If there ary any non-pii candidates, we select the first one. Otherwise, we select the
+        If there are any non-pii candidates, we select the first one. Otherwise, we select the
         first pii_candidate. If we select a non-pii candidate or we select a pii candidate and
         ``infer_sdtypes`` is False, we set the sdtype to 'id' and delete the 'pii' field if it
         exists.
