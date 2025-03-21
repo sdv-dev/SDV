@@ -397,6 +397,7 @@ class TestBaseSingleTableSynthesizer:
         instance._fitted = True
         instance._store_and_convert_original_cols.return_value = False
         data = pd.DataFrame({'name': ['John', 'Doe', 'John Doe']})
+        instance._transform_helper.return_value = data
 
         # Run
         BaseSingleTableSynthesizer.preprocess(instance, data)
@@ -943,6 +944,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor.filter_valid.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
+        instance._reject_sampling_patterns = []
+        instance._chained_patterns = []
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(instance, 3)
@@ -970,6 +973,8 @@ class TestBaseSingleTableSynthesizer:
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
         conditions = {'salary': 80.0}
         transformed_conditions = {'salary': 80.0}
+        instance._reject_sampling_patterns = []
+        instance._chained_patterns = []
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
@@ -1001,6 +1006,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor._hyper_transformer._input_columns = []
         instance._data_processor.filter_valid = lambda x: x
         instance._data_processor.reverse_transform.return_value = data
+        instance._reject_sampling_patterns = []
+        instance._chained_patterns = []
 
         # Run
         sampled, num_valid = BaseSingleTableSynthesizer._sample_rows(
@@ -1027,6 +1034,8 @@ class TestBaseSingleTableSynthesizer:
         instance._data_processor.reverse_transform.return_value = data
         instance._data_processor._hyper_transformer._input_columns = []
         instance._filter_conditions.return_value = data[data.name == 'John Doe']
+        instance._reject_sampling_patterns = []
+        instance._chained_patterns = []
         conditions = {'salary': 80.0}
         transformed_conditions = {'salary': 80.0}
         instance._sample.side_effect = [NotImplementedError, pd.DataFrame()]
@@ -1574,6 +1583,7 @@ class TestBaseSingleTableSynthesizer:
         )
         instance.get_metadata.return_value._constraints = False
         instance._sample_with_progress_bar.return_value = pd.DataFrame({'col': [1, 2, 3]})
+        instance._reverse_transform_helper.return_value = pd.DataFrame({'col': [1, 2, 3]})
 
         # Run
         with catch_sdv_logs(caplog, logging.INFO, logger='SingleTableSynthesizer'):
