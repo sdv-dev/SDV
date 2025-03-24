@@ -614,6 +614,54 @@ def test_inequality_multiple_patterns():
     # Setup
     data = pd.DataFrame({
         'low': [1, 2, 3, 1, 2, 1],
+        'high1': [10, 20, 30, 10, 20, 10],
+        'high2': [10, 20, 30, 10, 20, 10],
+    })
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'high1': {'sdtype': 'numerical'},
+            'high2': {'sdtype': 'numerical'},
+        }
+    })
+    pattern1 = Inequality(
+        low_column_name='low',
+        high_column_name='high1',
+    )
+    pattern2 = Inequality(
+        low_column_name='low',
+        high_column_name='high2',
+    )
+
+    # Run
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.fit(data)
+    samples = synthesizer.sample(100)
+    updated_metadata = synthesizer.get_metadata('modified')
+    original_metadata = synthesizer.get_metadata('original')
+
+    # Assert
+    expected_updated_metadata = Metadata.load_from_dict({
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'low#high1': {'sdtype': 'numerical'},
+            'low#high2': {'sdtype': 'numerical'},
+        }
+    }).to_dict()
+    assert expected_updated_metadata == updated_metadata.to_dict()
+
+    assert original_metadata.to_dict() == metadata.to_dict()
+
+    assert all(samples['low'] <= samples['high1'])
+    assert all(samples['low'] <= samples['high2'])
+
+
+def test_inequality_multiple_patterns_reject_sampling():
+    """Test that Inequality pattern works with multiple patterns using reject sampling."""
+    # Setup
+    data = pd.DataFrame({
+        'low': [1, 2, 3, 1, 2, 1],
         'high': [10, 20, 30, 10, 20, 10],
     })
     metadata = Metadata.load_from_dict({
@@ -650,4 +698,96 @@ def test_inequality_multiple_patterns():
 
     assert original_metadata.to_dict() == metadata.to_dict()
 
-    assert all(samples['low'] < samples['high'])
+    assert all(samples['low'] <= samples['high'])
+
+
+def test_inequality_multiple_patterns_one_pattern_invalid_column():
+    """Test that Inequality pattern works with multiple patterns."""
+    # Setup
+    values = np.random.randint(0, 100, size=1000)
+    data = pd.DataFrame({
+        'low': values,
+        'mid': values + 1,
+        'high': values + 2,
+    })
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'mid': {'sdtype': 'numerical'},
+            'high': {'sdtype': 'numerical'},
+        }
+    })
+    pattern1 = Inequality(
+        low_column_name='low',
+        high_column_name='mid',
+    )
+    pattern2 = Inequality(
+        low_column_name='mid',
+        high_column_name='high',
+    )
+
+    # Run
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.fit(data)
+    samples = synthesizer.sample(1000000)
+
+    updated_metadata = synthesizer.get_metadata('modified')
+    original_metadata = synthesizer.get_metadata('original')
+
+    # Assert
+    expected_updated_metadata = Metadata.load_from_dict({
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'low#mid': {'sdtype': 'numerical'},
+            'high': {'sdtype': 'numerical'},
+        }
+    }).to_dict()
+
+    assert expected_updated_metadata == updated_metadata.to_dict()
+
+    assert original_metadata.to_dict() == metadata.to_dict()
+
+    assert all(samples['low'] <= samples['mid'])
+    assert all(samples['mid'] <= samples['high'])
+
+
+def test_inequality_many_patterns():
+    """Test that Inequality pattern works with multiple patterns."""
+    # Setup
+    values = np.random.randint(0, 100, size=1000)
+    data = pd.DataFrame({i: values + i for i in range(10)})
+    metadata = Metadata.load_from_dict({'columns': {i: {'sdtype': 'numerical'} for i in range(10)}})
+    patterns = [Inequality(low_column_name=f'{i}', high_column_name=f'{i + 1}') for i in range(9)]
+
+    # Run
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=patterns)
+    synthesizer.fit(data)
+    samples = synthesizer.sample(100)
+
+    updated_metadata = synthesizer.get_metadata('modified')
+    original_metadata = synthesizer.get_metadata('original')
+
+    # Assert
+    expected_updated_metadata = Metadata.load_from_dict({
+        'columns': {
+            '0': {'sdtype': 'numerical'},
+            '0#1': {'sdtype': 'numerical'},
+            '2': {'sdtype': 'numerical'},
+            '2#3': {'sdtype': 'numerical'},
+            '4': {'sdtype': 'numerical'},
+            '4#5': {'sdtype': 'numerical'},
+            '6': {'sdtype': 'numerical'},
+            '6#7': {'sdtype': 'numerical'},
+            '8': {'sdtype': 'numerical'},
+            '8#9': {'sdtype': 'numerical'},
+        }
+    }).to_dict()
+
+    assert expected_updated_metadata == updated_metadata.to_dict()
+
+    assert original_metadata.to_dict() == metadata.to_dict()
+
+    for i in range(9):
+        assert all(samples[i] <= samples[i + 1])

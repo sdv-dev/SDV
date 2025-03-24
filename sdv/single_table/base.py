@@ -635,9 +635,16 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
             try:
                 self.metadata = pattern.get_updated_metadata(self.metadata)
                 self._chained_patterns.append(pattern)
-            except PatternNotMetError:
-                self.metadata = pattern.get_updated_metadata(self._original_metadata)
-                self._reject_sampling_patterns.append(pattern)
+            except PatternNotMetError as e:
+                LOGGER.info(
+                    'Enforcing pattern %s using reject sampling.', pattern.__class__.__name__
+                )
+
+                try:
+                    pattern.get_updated_metadata(self._original_metadata)
+                    self._reject_sampling_patterns.append(pattern)
+                except PatternNotMetError:
+                    raise e
 
         self._data_processor = DataProcessor(
             metadata=self.metadata._convert_to_single_table(),
@@ -681,15 +688,10 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         metadata = self._original_metadata
         original_data = data
-        for pattern in self._chained_patterns[:]:
-            try:
-                pattern.fit(data, metadata)
-                metadata = pattern.get_updated_metadata(metadata)
-                data = pattern.transform(data)
-            except Exception:
-                pattern.fit(original_data, self._original_metadata)
-                self._chained_patterns.remove(pattern)
-                self._reject_sampling_patterns.append(pattern)
+        for pattern in self._chained_patterns:
+            pattern.fit(data, metadata)
+            metadata = pattern.get_updated_metadata(metadata)
+            data = pattern.transform(data)
 
         for pattern in self._reject_sampling_patterns:
             pattern.fit(original_data, self._original_metadata)
