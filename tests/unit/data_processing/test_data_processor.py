@@ -1044,12 +1044,11 @@ class TestDataProcessor:
         dp._transformers_by_sdtype['numerical'] = FloatFormatter(
             missing_value_replacement='random',
             missing_value_generation='from_column',
-            learn_rounding_scheme=False
+            learn_rounding_scheme=False,
         )
 
         # Run
-        result = dp._get_transformer_instance(
-            'numerical', {'computer_representation': 'Int32'})
+        result = dp._get_transformer_instance('numerical', {'computer_representation': 'Int32'})
 
         # Assert
         assert isinstance(result, FloatFormatter)
