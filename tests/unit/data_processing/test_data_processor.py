@@ -1033,6 +1033,30 @@ class TestDataProcessor:
         assert isinstance(result, FloatFormatter)
         assert result.computer_representation == 'Int32'
 
+    def test__get_transformer_instance_passes_kwargs_from_default(self):
+        """Test the ``_get_transformer_instance`` uses the default transformers kwargs.
+
+        Test than when the default transformer has custom kwargs, they are also used
+        when creating a new instance of a transformer.
+        """
+        # Setup
+        dp = DataProcessor(SingleTableMetadata())
+        dp._transformers_by_sdtype['numerical'] = FloatFormatter(
+            missing_value_replacement='random',
+            missing_value_generation='from_column',
+            learn_rounding_scheme=False
+        )
+
+        # Run
+        result = dp._get_transformer_instance(
+            'numerical', {'computer_representation': 'Int32'})
+
+        # Assert
+        assert isinstance(result, FloatFormatter)
+        assert result.missing_value_replacement == 'random'
+        assert result.missing_value_generation == 'from_column'
+        assert result.learn_rounding_scheme is False
+
     @patch('sdv.data_processing.data_processor.LOGGER')
     @patch('sdv.data_processing.data_processor.rdt')
     def test__update_constraint_transformers(self, mock_rdt, mock_log):
