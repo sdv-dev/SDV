@@ -1,5 +1,6 @@
 """Single table data processing."""
 
+import inspect
 import json
 import logging
 import warnings
@@ -494,6 +495,15 @@ class DataProcessor:
 
         return transformer
 
+    @staticmethod
+    def _get_transformer_kwargs(transformer):
+        args = inspect.getfullargspec(transformer.__init__).args[1:]
+        return {
+            key: getattr(transformer, key)
+            for key in args
+            if key != 'model_missing_values' and hasattr(transformer, key)
+        }
+
     def _get_transformer_instance(self, sdtype, column_metadata):
         transformer = self._transformers_by_sdtype[sdtype]
         if isinstance(transformer, AnonymizedFaker):
@@ -512,7 +522,8 @@ class DataProcessor:
 
         if kwargs and transformer is not None:
             transformer_class = transformer.__class__
-            return transformer_class(**kwargs)
+            default_transformer_kwargs = self._get_transformer_kwargs(transformer)
+            return transformer_class(**{**default_transformer_kwargs, **kwargs})
 
         return deepcopy(transformer)
 
