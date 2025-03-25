@@ -572,7 +572,7 @@ class DataProcessor:
                         column, sdtype, column_metadata, is_numeric
                     )
                     sdtypes[column] = 'text'
-                elif column in self._keys or column_metadata.get('pii'):
+                elif column in self._keys:
                     if is_numeric:
                         function_name = 'random_int'
                         column_dtype = str(column_dtype).lower()
