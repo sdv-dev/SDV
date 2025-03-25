@@ -314,10 +314,10 @@ def test_fixed_combinations_multiple_patterns_three_patterns_reject_sampling():
     expected_updated_metadata = Metadata.load_from_dict({
         'columns': {
             'A#B': {'sdtype': 'categorical'},
-            'C': {'sdtype': 'categorical'},
-            'D': {'sdtype': 'categorical'},
+            'C#D': {'sdtype': 'categorical'},
         }
     }).to_dict()
+
     assert expected_updated_metadata == updated_metadata.to_dict()
 
     assert original_metadata.to_dict() == metadata.to_dict()
