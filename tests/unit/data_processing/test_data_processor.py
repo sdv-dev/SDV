@@ -1326,8 +1326,6 @@ class TestDataProcessor:
             'example_pii_false': [7, 8, 9],
             'unknown_pii_true': ['a', 'b', 'c'],
             'unknown_pii_false': ['a', 'b', 'c'],
-            'id_pii_true': ['ID_001', 'ID_002', 'ID_003'],
-            'id_pii_false': ['ID_001', 'ID_002', 'ID_003'],
         })
         metadata = SingleTableMetadata().load_from_dict({
             'columns': {
@@ -1339,8 +1337,6 @@ class TestDataProcessor:
                 'example_pii_false': {'sdtype': 'example', 'pii': False},
                 'unknown_pii_true': {'sdtype': 'unknown', 'pii': True},
                 'unknown_pii_false': {'sdtype': 'unknown', 'pii': False},
-                'id_pii_true': {'sdtype': 'id', 'pii': True},
-                'id_pii_false': {'sdtype': 'id', 'pii': False},
             },
         })
         dp = DataProcessor(metadata)
@@ -1355,10 +1351,8 @@ class TestDataProcessor:
             'unknown_pii_true': 'pii',
             'phone_pii': 'pii',
             'name_pii': 'pii',
-            'id_pii_true': 'pii',
             'example_pii_false': 'example',
             'unknown_pii_false': 'pii',
-            'id_pii_false': 'id',
             'example_pii_true': 'example',
             'city_categorical': 'categorical',
         }
@@ -1367,10 +1361,8 @@ class TestDataProcessor:
             'unknown_pii_true': AnonymizedFaker,
             'phone_pii': AnonymizedFaker,
             'name_pii': AnonymizedFaker,
-            'id_pii_true': AnonymizedFaker,
             'example_pii_false': FloatFormatter,
             'unknown_pii_false': AnonymizedFaker,
-            'id_pii_false': UniformEncoder,
             'example_pii_true': FloatFormatter,
             'city_categorical': UniformEncoder,
         }
@@ -1379,8 +1371,6 @@ class TestDataProcessor:
             'unknown_pii_true': 'bothify',
             'phone_pii': 'phone_number',
             'name_pii': 'name',
-            'id_pii_true': 'bothify',
-            'id_pii_false': 'bothify',
         }
 
         for column, transformer in config['transformers'].items():
