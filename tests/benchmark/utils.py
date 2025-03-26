@@ -213,10 +213,10 @@ def compare_and_store_results_in_gdrive():
 
     for name, current_results_df in results.items():
         for sdtype, group in current_results_df.groupby('sdtype'):
-            group['version'] = name
+            group.insert(2, 'version', name)
 
             if sdtype not in sorted_results:
-                sorted_results.insert(2, sdtype, group)
+                sorted_results[sdtype] = group
             else:
                 sorted_results[sdtype] = pd.concat([sorted_results[sdtype], group])
 
