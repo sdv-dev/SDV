@@ -3,6 +3,7 @@ import pandas as pd
 
 from sdv.cag import Range
 from sdv.metadata import Metadata
+from sdv.single_table.copulas import GaussianCopulaSynthesizer
 from tests.utils import run_pattern
 
 
@@ -278,3 +279,115 @@ def test_range_pattern_with_multi_table():
     assert set(data.keys()) == set(reverse_transformed.keys())
     for table_name, table in data.items():
         pd.testing.assert_frame_equal(table, reverse_transformed[table_name])
+
+
+def test_range_multiple_patterns():
+    """Test that Range pattern works with multiple patterns."""
+    # Setup
+    data = pd.DataFrame({
+        'low': [1, 2, 3, 1, 2, 1],
+        'mid': [5, 6, 7, 8, 9, 9],
+        'high1': [10, 20, 30, 10, 20, 10],
+        'high2': [10, 20, 30, 10, 20, 10],
+    })
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'mid': {'sdtype': 'numerical'},
+            'high1': {'sdtype': 'numerical'},
+            'high2': {'sdtype': 'numerical'},
+        }
+    })
+    pattern1 = Range(
+        low_column_name='low',
+        middle_column_name='mid',
+        high_column_name='high1',
+    )
+    pattern2 = Range(
+        low_column_name='low',
+        middle_column_name='mid',
+        high_column_name='high2',
+    )
+
+    # Run
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.fit(data)
+    samples = synthesizer.sample(100)
+    updated_metadata = synthesizer.get_metadata('modified')
+    original_metadata = synthesizer.get_metadata('original')
+
+    # Assert
+    expected_updated_metadata = Metadata.load_from_dict({
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'low#mid': {'sdtype': 'numerical'},
+            'mid#high1': {'sdtype': 'numerical'},
+            'high2': {'sdtype': 'numerical'},
+        }
+    }).to_dict()
+    assert expected_updated_metadata == updated_metadata.to_dict()
+
+    assert original_metadata.to_dict() == metadata.to_dict()
+
+    assert all(samples['low'] < samples['mid'])
+    assert all(samples['mid'] < samples['high1'])
+    assert all(samples['mid'] < samples['high2'])
+
+
+def test_range_multiple_patterns_different_mid_columns():
+    """Test that Range pattern works with multiple patterns."""
+    # Setup
+    data = pd.DataFrame({
+        'low': [1, 2, 3, 1, 2, 1],
+        'mid1': [5, 6, 7, 8, 9, 9],
+        'mid2': [5, 6, 7, 8, 9, 9],
+        'high1': [10, 20, 30, 10, 20, 10],
+        'high2': [10, 20, 30, 10, 20, 10],
+    })
+    metadata = Metadata.load_from_dict({
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'mid1': {'sdtype': 'numerical'},
+            'mid2': {'sdtype': 'numerical'},
+            'high1': {'sdtype': 'numerical'},
+            'high2': {'sdtype': 'numerical'},
+        }
+    })
+    pattern1 = Range(
+        low_column_name='low',
+        middle_column_name='mid1',
+        high_column_name='high1',
+    )
+    pattern2 = Range(
+        low_column_name='low',
+        middle_column_name='mid2',
+        high_column_name='high2',
+    )
+
+    # Run
+    synthesizer = GaussianCopulaSynthesizer(metadata)
+    synthesizer.add_cag(patterns=[pattern1, pattern2])
+    synthesizer.fit(data)
+    samples = synthesizer.sample(100)
+    updated_metadata = synthesizer.get_metadata('modified')
+    original_metadata = synthesizer.get_metadata('original')
+
+    # Assert
+    expected_updated_metadata = Metadata.load_from_dict({
+        'columns': {
+            'low': {'sdtype': 'numerical'},
+            'low#mid1': {'sdtype': 'numerical'},
+            'mid1#high1': {'sdtype': 'numerical'},
+            'mid2#high2': {'sdtype': 'numerical'},
+            'low#mid2': {'sdtype': 'numerical'},
+        }
+    }).to_dict()
+    assert expected_updated_metadata == updated_metadata.to_dict()
+
+    assert original_metadata.to_dict() == metadata.to_dict()
+
+    assert all(samples['low'] < samples['mid1'])
+    assert all(samples['mid1'] < samples['high1'])
+    assert all(samples['low'] < samples['mid2'])
+    assert all(samples['mid2'] < samples['high2'])
