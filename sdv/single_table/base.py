@@ -10,6 +10,7 @@ import os
 import uuid
 import warnings
 from collections import defaultdict
+from copy import deepcopy
 
 import cloudpickle
 import copulas
@@ -27,6 +28,7 @@ from sdv._utils import (
     generate_synthesizer_id,
     get_possible_chars,
 )
+from sdv.cag._errors import PatternNotMetError
 from sdv.constraints.errors import AggregateConstraintsError
 from sdv.data_processing.data_processor import DataProcessor
 from sdv.errors import (
@@ -618,6 +620,118 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
     for all single-table synthesizers.
     """
 
+    def __init__(
+        self,
+        metadata,
+        enforce_min_max_values=True,
+        enforce_rounding=True,
+        locales=['en_US'],
+    ):
+        super().__init__(metadata, enforce_min_max_values, enforce_rounding, locales)
+        self._chained_patterns = []  # chain of patterns used to preprocess the data
+        self._reject_sampling_patterns = []  # patterns used only for reject sampling
+        self._original_metadata = self.metadata
+
+    def add_cag(self, patterns):
+        """Add the list of constraint-augmented generation patterns to the synthesizer.
+
+        Args:
+            patterns (list):
+                A list of CAG patterns to apply to the synthesizer.
+        """
+        for pattern in patterns:
+            try:
+                self.metadata = pattern.get_updated_metadata(self.metadata)
+                self._chained_patterns.append(pattern)
+            except PatternNotMetError as e:
+                LOGGER.info(
+                    'Enforcing pattern %s using reject sampling.', pattern.__class__.__name__
+                )
+
+                try:
+                    pattern.get_updated_metadata(self._original_metadata)
+                    self._reject_sampling_patterns.append(pattern)
+                except PatternNotMetError:
+                    raise e
+
+        self._data_processor = DataProcessor(
+            metadata=self.metadata._convert_to_single_table(),
+            enforce_rounding=self.enforce_rounding,
+            enforce_min_max_values=self.enforce_min_max_values,
+            locales=self.locales,
+        )
+
+    def get_cag(self):
+        """Get a list of constraint-augmented generation patterns applied to the synthesizer."""
+        return deepcopy(self._chained_patterns + self._reject_sampling_patterns)
+
+    def get_metadata(self, version='original'):
+        """Get the metadata, either original or modified after applying CAG patterns.
+
+        Args:
+            version (str, optional):
+                The version of metadata to return, must be one of 'original' or 'modified'. If
+                'original', will return the original metadata used to instantiate the
+                synthesizer. If 'modified', will return the modified metadata after applying this
+                synthesizer's CAG patterns. Defaults to 'original'.
+        """
+        if version not in ('original', 'modified'):
+            raise ValueError(
+                f"Unrecognized version '{version}', please use 'original' or 'modified'."
+            )
+
+        return self._original_metadata if version == 'original' else self.metadata
+
+    def _transform_helper(self, data):
+        """Validate and transform all CAG patterns during preprocessing.
+
+        Args:
+            data (dict[str, pd.DataFrame]):
+                The data dictionary.
+        """
+        if self._fitted:
+            for pattern in self._chained_patterns:
+                data = pattern.transform(data)
+            return data
+
+        metadata = self._original_metadata
+        original_data = data
+        for pattern in self._chained_patterns:
+            pattern.fit(data, metadata)
+            metadata = pattern.get_updated_metadata(metadata)
+            data = pattern.transform(data)
+
+        for pattern in self._reject_sampling_patterns:
+            pattern.fit(original_data, self._original_metadata)
+
+        return data
+
+    def preprocess(self, data):
+        """Transform the raw data to numerical space.
+
+        Args:
+            data (pandas.DataFrame):
+                The raw data to be transformed.
+
+        Returns:
+            pandas.DataFrame:
+                The preprocessed data.
+        """
+        if self._fitted:
+            warnings.warn(
+                'This model has already been fitted. To use the new preprocessed data, '
+                "please refit the model using 'fit' or 'fit_processed_data'."
+            )
+
+        is_converted = self._store_and_convert_original_cols(data)
+        data = self._transform_helper(data)
+        preprocess_data = self._preprocess(data)
+
+        if is_converted:
+            data.columns = self._original_columns
+
+        return preprocess_data
+
     def _set_random_state(self, random_state):
         """Set the random state of the model's random number generator.
 
@@ -727,6 +841,15 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                     set(raw_sampled.columns) - set(input_columns) - set(sampled.columns)
                 )
                 sampled = pd.concat([sampled, raw_sampled[missing_cols]], axis=1)
+
+            for pattern in reversed(self._chained_patterns):
+                sampled = pattern.reverse_transform(sampled)
+                valid_rows = pattern.is_valid(sampled)
+                sampled = sampled[valid_rows]
+
+            for pattern in reversed(self._reject_sampling_patterns):
+                valid_rows = pattern.is_valid(sampled)
+                sampled = sampled[valid_rows]
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
