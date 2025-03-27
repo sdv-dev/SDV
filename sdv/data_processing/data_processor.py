@@ -1,6 +1,5 @@
 """Single table data processing."""
 
-import inspect
 import json
 import logging
 import warnings
@@ -14,6 +13,7 @@ from pandas.errors import IntCastingNaNError
 from rdt.transformers import AnonymizedFaker, get_default_transformers
 from rdt.transformers.pii.anonymization import get_anonymized_transformer
 
+from sdv._utils import _get_transformer_init_kwargs
 from sdv.constraints import Constraint
 from sdv.constraints.base import get_subclasses
 from sdv.constraints.errors import (
@@ -495,15 +495,6 @@ class DataProcessor:
 
         return transformer
 
-    @staticmethod
-    def _get_transformer_kwargs(transformer):
-        args = inspect.getfullargspec(transformer.__init__).args[1:]
-        return {
-            key: getattr(transformer, key)
-            for key in args
-            if key != 'model_missing_values' and hasattr(transformer, key)
-        }
-
     def _get_transformer_instance(self, sdtype, column_metadata):
         transformer = self._transformers_by_sdtype[sdtype]
         if isinstance(transformer, AnonymizedFaker):
@@ -522,7 +513,7 @@ class DataProcessor:
 
         if kwargs and transformer is not None:
             transformer_class = transformer.__class__
-            default_transformer_kwargs = self._get_transformer_kwargs(transformer)
+            default_transformer_kwargs = _get_transformer_init_kwargs(transformer)
             return transformer_class(**{**default_transformer_kwargs, **kwargs})
 
         return deepcopy(transformer)
