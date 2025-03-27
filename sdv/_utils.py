@@ -1,5 +1,6 @@
 """Miscellaneous utility functions."""
 
+import inspect
 import operator
 import uuid
 import warnings
@@ -450,3 +451,13 @@ def _is_numerical(value):
         return is_integer(value) or is_float(value)
     except Exception:
         return False
+
+
+def _get_transformer_init_kwargs(transformer):
+    """Get the dict of arguments used to instantiate the given transformer."""
+    args = inspect.getfullargspec(transformer.__init__).args[1:]
+    return {
+        key: getattr(transformer, key)
+        for key in args
+        if key != 'model_missing_values' and hasattr(transformer, key)
+    }
