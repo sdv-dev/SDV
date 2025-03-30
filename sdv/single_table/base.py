@@ -834,14 +834,15 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 )
                 sampled = pd.concat([sampled, raw_sampled[missing_cols]], axis=1)
 
-            for pattern in reversed(self._chained_patterns):
-                sampled = pattern.reverse_transform(sampled)
-                valid_rows = pattern.is_valid(sampled)
-                sampled = sampled[valid_rows]
+            if hasattr(self, '_chained_patterns') and hasattr(self, '_reject_sampling_patterns'):
+                for pattern in reversed(self._chained_patterns):
+                    sampled = pattern.reverse_transform(sampled)
+                    valid_rows = pattern.is_valid(sampled)
+                    sampled = sampled[valid_rows]
 
-            for pattern in reversed(self._reject_sampling_patterns):
-                valid_rows = pattern.is_valid(sampled)
-                sampled = sampled[valid_rows]
+                for pattern in reversed(self._reject_sampling_patterns):
+                    valid_rows = pattern.is_valid(sampled)
+                    sampled = sampled[valid_rows]
 
             if previous_rows is not None:
                 sampled = pd.concat([previous_rows, sampled], ignore_index=True)
