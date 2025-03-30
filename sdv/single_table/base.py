@@ -160,7 +160,10 @@ class BaseSynthesizer:
         """Validate that the data follows the metadata."""
         errors = []
         try:
-            self.metadata.validate_data({self._table_name: data})
+            if isinstance(self.metadata, Metadata):
+                self.metadata.validate_data({self._table_name: data})
+            else:
+                self.metadata.validate_data(data)
         except InvalidDataError as error:
             errors += error.errors
 
@@ -186,7 +189,9 @@ class BaseSynthesizer:
         return []
 
     def _get_table_metadata(self):
-        return self.metadata.tables.get(self._table_name, SingleTableMetadata())
+        if isinstance(self.metadata, Metadata):
+            return self.metadata.tables.get(self._table_name, SingleTableMetadata())
+        return self.metadata
 
     def _validate_primary_key(self, data):
         primary_key = self._get_table_metadata().primary_key
@@ -622,7 +627,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
         super().__init__(metadata, enforce_min_max_values, enforce_rounding, locales)
         self._chained_patterns = []  # chain of patterns used to preprocess the data
         self._reject_sampling_patterns = []  # patterns used only for reject sampling
-        self._original_metadata = self.metadata
+        self._original_metadata = deepcopy(self.metadata)
 
     def add_cag(self, patterns):
         """Add the list of constraint-augmented generation patterns to the synthesizer.
