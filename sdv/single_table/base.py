@@ -672,7 +672,9 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
                 f"Unrecognized version '{version}', please use 'original' or 'modified'."
             )
 
-        return self._original_metadata if version == 'original' else self.metadata
+        if hasattr(self, '_original_metadata') and version == 'original':
+            return self._original_metadata
+        return self.metadata
 
     def _transform_helper(self, data):
         """Validate and transform all CAG patterns during preprocessing.
