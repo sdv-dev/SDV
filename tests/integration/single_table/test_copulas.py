@@ -564,7 +564,7 @@ def test_unsupported_regex():
         'tables': {
             'table': {
                 'columns': {
-                    'id': {'sdtype': 'id', 'regex_format': '(10|20|30)[0-9]{4}'},
+                    'id': {'sdtype': 'id'},
                     'A': {'sdtype': 'numerical'},
                 }
             }
@@ -577,5 +577,9 @@ def test_unsupported_regex():
     )
 
     # Run and Assert
+    GaussianCopulaSynthesizer(metadata)
+    metadata.update_column(
+        column_name='id', sdtype='id', regex_format='(10|20|30)[0-9]{4}', table_name='table'
+    )
     with pytest.raises(SynthesizerInputError, match=expected_error):
         GaussianCopulaSynthesizer(metadata)
