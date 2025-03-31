@@ -153,7 +153,7 @@ TRANSFORMERS = {
     IDGenerator: {},
     LabelEncoder: {},
     LogScaler: {'constant': np.iinfo(np.int8).min},
-    LogitScaler: {'min_value': np.iinfo(np.int8).min, 'max_value': np.iinfo(np.int8).max},
+    LogitScaler: {'min_value': np.iinfo(np.int64).min, 'max_value': np.iinfo(np.int64).max},
     OneHotEncoder: {},
     OptimizedTimestampEncoder: {},
     RegexGenerator: {},
