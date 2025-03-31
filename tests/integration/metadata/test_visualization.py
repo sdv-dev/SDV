@@ -1,8 +1,25 @@
 import pandas as pd
 
+from sdv.datasets.demo import download_demo
 from sdv.metadata.metadata import Metadata
 from sdv.multi_table.hma import HMASynthesizer
 from sdv.single_table.copulas import GaussianCopulaSynthesizer
+
+
+def test_visualize_graph_for_sequential_data():
+    """Test visualization has sequence key and index with sequential data."""
+    # Setup
+    _, metadata = download_demo(modality='sequential', dataset_name='nasdaq100_2019')
+
+    # Run
+    graph = metadata.visualize()
+
+    # Assert
+    assert 'Sequence index' in graph.source
+    assert 'Sequence key' in graph.source
+    assert 'Primary key' in graph.source
+    assert 'nasdaq100_2019' in graph.source
+    assert 'relationships' not in graph.source
 
 
 def test_visualize_graph_for_single_table():
