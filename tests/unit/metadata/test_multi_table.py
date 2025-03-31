@@ -3337,3 +3337,35 @@ class TestMultiTableMetadata:
         # Run and Assert
         with pytest.raises(InvalidMetadataError, match=error_msg):
             metadata.validate_data(data)
+
+    @patch('sdv.metadata.multi_table.create_summarized_columns_node')
+    @patch('sdv.metadata.multi_table.create_columns_node')
+    def test__get_table_info(self, mock_columns_node, mock_summarized_columns_node):
+        """Test that the `_get_table_info` method."""
+        # Setup
+        mock_columns_node.return_value = 'column'
+        mock_summarized_columns_node.return_value = 'column'
+        metadata = MultiTableMetadata()
+        table = Mock()
+        table.primary_key = 'primary_key'
+        table.sequence_key = None
+        table.sequence_index = None
+        table_all = Mock()
+        table_all.primary_key = 'primary_key'
+        table_all.sequence_index = 'sequence_index'
+        table_all.sequence_key = 'sequence_key'
+        metadata.tables = {'table': table, 'table_all': table_all}
+
+        # Run
+        result = metadata._get_table_info('table', show_table_details='full')
+        result_all = metadata._get_table_info('table_all', show_table_details='summarized')
+        result_no_info = metadata._get_table_info('table_all', show_table_details=None)
+
+        # Assert
+        assert result['primary_key'] == 'Primary key: primary_key'
+        assert 'sequence_index' not in result
+        assert 'sequence_key' not in result
+        assert result_all['primary_key'] == 'Primary key: primary_key'
+        assert result_all['sequence_key'] == 'Sequence key: sequence_key'
+        assert result_all['sequence_index'] == 'Sequence index: sequence_index'
+        assert result_no_info is None
