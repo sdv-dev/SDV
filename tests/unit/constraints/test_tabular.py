@@ -1829,6 +1829,15 @@ class TestInequality:
 
 
 class TestScalarInequality:
+    def test__deprecation_warning(self):
+        """Test that a deprecation warning is thrown when used."""
+        deprecation_msg = re.escape(
+            'Warning: The `ScalarInequality` constraint is deprecated. '
+            'Please use the `enforce_min_max_values` parameter instead.'
+        )
+        with pytest.warns(FutureWarning, match=deprecation_msg):
+            ScalarInequality('column_name', '<', 10)
+
     def test__validate_inputs(self):
         """Test the ``ScalarInequality._validate_inputs`` method.
 
@@ -2511,6 +2520,15 @@ class TestScalarInequality:
 
 
 class TestPositive:
+    def test__deprecation_warning(self):
+        """Test that a deprecation warning is thrown when used."""
+        deprecation_msg = re.escape(
+            'Warning: The `Positive` constraint is deprecated. '
+            'Please use the `enforce_min_max_values` parameter instead.'
+        )
+        with pytest.warns(FutureWarning, match=deprecation_msg):
+            Positive('column_name')
+
     def test__validate_inputs(self):
         """Test the ``Positive._validate_inputs`` method.
 
@@ -2641,6 +2659,15 @@ class TestPositive:
 
 
 class TestNegative:
+    def test__deprecation_warning(self):
+        """Test that a deprecation warning is thrown when used."""
+        deprecation_msg = re.escape(
+            'Warning: The `Negative` constraint is deprecated. '
+            'Please use the `enforce_min_max_values` parameter instead.'
+        )
+        with pytest.warns(FutureWarning, match=deprecation_msg):
+            Negative('column_name')
+
     def test__validate_inputs(self):
         """Test the ``Negative._validate_inputs`` method.
 
@@ -3328,6 +3355,15 @@ class TestRange:
 
 
 class TestScalarRange:
+    def test__deprecation_warning(self):
+        """Test that a deprecation warning is thrown when used."""
+        deprecation_msg = re.escape(
+            'Warning: The `ScalarRange` constraint is deprecated. '
+            'Please use the `enforce_min_max_values` parameter instead.'
+        )
+        with pytest.warns(FutureWarning, match=deprecation_msg):
+            ScalarRange('column_name', 0, 10)
+
     def test__validate_inputs(self):
         """Test the ``ScalarRange._validate_inputs`` method.
 
