@@ -19,6 +19,7 @@ from sdv._utils import (
     _is_datetime_type,
     _is_numerical,
     _validate_foreign_keys_not_null,
+    _check_regex_format,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
     generate_synthesizer_id,
@@ -789,3 +790,23 @@ def test__is_numerical_string():
     # Assert
     assert str_result is False
     assert datetime_result is False
+
+
+@patch('sdv._utils.strings_from_regex')
+def test__check_regex_format(mock_strings_from_regex):
+    """Test the ``_check_regex_format``."""
+    # Setup
+    regex = '[a-z]{3}'
+    mock_strings_from_regex.return_value = KeyError
+    expected_error = re.escape(
+        'SDV synthesizers do not currently support complex regex formats such as '
+        f"'regex', which you have provided for table 'table_name', column 'column_name'."
+        " Please use a simplified format or update to a different sdtype."
+    )
+
+    # Run
+    with pytest.raises(SynthesizerInputError, match=expected_error):
+        _check_regex_format('table_name', 'column_name', regex)
+
+    # Assert
+    mock_strings_from_regex.assert_called_once_with(regex)

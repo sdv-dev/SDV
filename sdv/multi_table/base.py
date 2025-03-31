@@ -24,6 +24,7 @@ from sdv.errors import (
     SamplingError,
     SynthesizerInputError,
 )
+from rdt.transformers.utils import strings_from_regex
 from sdv.logging import disable_single_table_logger, get_sdv_logger
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.multi_table import MultiTableMetadata
@@ -111,6 +112,7 @@ class BaseMultiTableSynthesizer:
             warnings.filterwarnings('ignore', message=r'.*column relationship.*')
             self.metadata.validate()
 
+        self._validate_regex_format()
         self._check_metadata_updated()
         self.locales = locales
         self.verbose = False

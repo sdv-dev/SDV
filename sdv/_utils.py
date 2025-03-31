@@ -12,6 +12,8 @@ import pandas as pd
 from pandas.api.types import is_float, is_integer
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 from rdt.transformers.utils import _GENERATORS
+from rdt.transformers.utils import strings_from_regex
+
 
 from sdv import version
 from sdv.errors import SDVVersionWarning, SynthesizerInputError, VersionError
@@ -450,3 +452,15 @@ def _is_numerical(value):
         return is_integer(value) or is_float(value)
     except Exception:
         return False
+
+
+def _check_regex_format(table_name, column_name, regex):
+    if regex:
+        try:
+            strings_from_regex(regex)
+        except Exception as e:
+            raise SynthesizerInputError(
+                'SDV synthesizers do not currently support complex regex formats such as '
+                f"'{regex}', which you have provided for table '{table_name}', column '{column_name}'."
+                " Please use a simplified format or update to a different sdtype."
+            ) from e
