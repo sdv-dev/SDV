@@ -1,3 +1,4 @@
+import re
 from uuid import UUID
 
 import numpy as np
@@ -13,7 +14,7 @@ from rdt.transformers import (
 )
 
 from sdv.datasets.demo import download_demo
-from sdv.errors import ConstraintsNotMetError
+from sdv.errors import ConstraintsNotMetError, SynthesizerInputError
 from sdv.evaluation.single_table import evaluate_quality, get_column_pair_plot, get_column_plot
 from sdv.metadata.metadata import Metadata
 from sdv.sampling import Condition
@@ -554,3 +555,27 @@ def test_get_learned_distributions_fallback_distribution():
             },
         },
     }
+
+
+def test_unsupported_regex():
+    """Test that the synthesizer raises an error when unsupported regex is used."""
+    # Setup
+    metadata = Metadata.load_from_dict({
+        'tables': {
+            'table': {
+                'columns': {
+                    'id': {'sdtype': 'id', 'regex_format': '(10|20|30)[0-9]{4}'},
+                    'A': {'sdtype': 'numerical'},
+                }
+            }
+        }
+    })
+    expected_error = re.escape(
+        'SDV synthesizers do not currently support complex regex formats such as '
+        "'(10|20|30)[0-9]{4}', which you have provided for table 'table', column 'id'. Please use"
+        ' a simplified format or update to a different sdtype.'
+    )
+
+    # Run and Assert
+    with pytest.raises(SynthesizerInputError, match=expected_error):
+        GaussianCopulaSynthesizer(metadata)

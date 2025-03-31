@@ -21,6 +21,7 @@ from copulas.multivariate import GaussianMultivariate
 
 from sdv import version
 from sdv._utils import (
+    _check_regex_format,
     _groupby_list,
     check_sdv_versions_and_warn,
     check_synthesizer_version,
@@ -40,8 +41,6 @@ from sdv.logging import get_sdv_logger
 from sdv.metadata.metadata import Metadata
 from sdv.metadata.single_table import SingleTableMetadata
 from sdv.single_table.utils import check_num_rows, handle_sampling_error, validate_file_path
-from sdv._utils import _check_regex_format
-
 
 LOGGER = logging.getLogger(__name__)
 SYNTHESIZER_LOGGER = get_sdv_logger('SingleTableSynthesizer')
@@ -111,11 +110,13 @@ class BaseSynthesizer:
             )
 
     def _validate_regex_format(self):
-            id_columns = self.metadata.get_column_names(sdtype='id')
+        if self.metadata.tables:
+            id_columns = self.metadata.get_column_names(table_name=self._table_name, sdtype='id')
             for column_name in id_columns:
-                regex = self.metadata.columns[column_name].get('regex_format')
+                regex = (
+                    self.metadata.tables[self._table_name].columns[column_name].get('regex_format')
+                )
                 _check_regex_format(self._table_name, column_name, regex)
-
 
     def __init__(
         self, metadata, enforce_min_max_values=True, enforce_rounding=True, locales=['en_US']
@@ -131,7 +132,6 @@ class BaseSynthesizer:
             self.metadata.tables[self._table_name]._updated = metadata._updated
 
         self.metadata.validate()
-        self._validate_regex_format()
         self._check_metadata_updated()
         self.enforce_min_max_values = enforce_min_max_values
         self.enforce_rounding = enforce_rounding
@@ -142,6 +142,7 @@ class BaseSynthesizer:
             enforce_min_max_values=self.enforce_min_max_values,
             locales=self.locales,
         )
+        self._validate_regex_format()
         self._original_columns = pd.Index([])
         self._fitted = False
         self._random_state_set = False
