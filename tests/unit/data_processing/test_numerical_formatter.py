@@ -93,7 +93,7 @@ class TestNumericalFormatter:
         formatter.learn_format(data)
 
         # Asserts
-        assert formatter._rounding_digits is None
+        assert formatter._rounding_digits == 15
 
     def test_learn_format_enforce_rounding_true_inf(self):
         """Test ``learn_format`` with ``enforce_rounding`` set to ``True``.
