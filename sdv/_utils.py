@@ -453,6 +453,7 @@ def _is_numerical(value):
 
 
 def _check_regex_format(table_name, column_name, regex):
+    """Check if SDV can generate data for the given regex."""
     if regex:
         try:
             strings_from_regex(regex)
