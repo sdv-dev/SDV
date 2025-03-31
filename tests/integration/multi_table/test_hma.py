@@ -2428,8 +2428,6 @@ def test_hma_synthesizer_with_fixed_combinations():
     metadata.update_column('location_id', 'locations', sdtype='id')
     metadata.set_primary_key('user_id', 'users')
     metadata.set_primary_key('location_id', 'locations')
-    metadata.add_relationship('users', 'records', 'user_id', 'user_id')
-    metadata.add_relationship('locations', 'records', 'location_id', 'location_id')
 
     # Adding FixedCombinations to HMASynthesizer
     synthesizer = HMASynthesizer(metadata)
