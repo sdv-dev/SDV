@@ -353,7 +353,7 @@ class TestBaseSingleTableSynthesizer:
         result = instance.get_metadata()
 
         # Assert
-        assert result == metadata
+        assert result.to_dict() == metadata.to_dict()
 
     def test_auto_assign_transformers(self):
         """Test that the ``DataProcessor.prepare_for_fitting`` is being called."""
