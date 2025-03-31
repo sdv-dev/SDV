@@ -191,6 +191,7 @@ class BaseSynthesizer:
     def _get_table_metadata(self):
         if isinstance(self.metadata, Metadata):
             return self.metadata.tables.get(self._table_name, SingleTableMetadata())
+
         return self.metadata
 
     def _validate_primary_key(self, data):
@@ -679,6 +680,7 @@ class BaseSingleTableSynthesizer(BaseSynthesizer):
 
         if hasattr(self, '_original_metadata') and version == 'original':
             return self._original_metadata
+
         return super().get_metadata()
 
     def _transform_helper(self, data):
