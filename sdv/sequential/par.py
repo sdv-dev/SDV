@@ -137,6 +137,8 @@ class PARSynthesizer(LossValuesMixin, BaseSynthesizer):
             locales=locales,
         )
 
+        # Cast the sequence key to an iterable. While the metadata only supports a single sequence
+        # key, but PAR is set up to handle composite sequence keys
         sequence_key = self.metadata.sequence_key
         self._sequence_key = list(_cast_to_iterable(sequence_key)) if sequence_key else None
         if not self._sequence_key:

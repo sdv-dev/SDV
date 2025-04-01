@@ -44,7 +44,7 @@ class HMASynthesizer(BaseHierarchicalSampler, BaseMultiTableSynthesizer):
 
     @staticmethod
     def _get_num_data_columns(metadata):
-        """Get the number of data columns, ie colums that are not id, for each table.
+        """Get the number of data columns (i.e. columns that are not keys) for each table.
 
         Args:
             metadata (sdv.metadata.Metadata):
